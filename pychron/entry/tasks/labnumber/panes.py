@@ -15,15 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 from enable.component_editor import ComponentEditor
 from pyface.action.menu_manager import MenuManager
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Instance, Int
 from traitsui.api import View, Item, TabularEditor, VGroup, HGroup, \
-    EnumEditor, UItem, Label, VSplit, TextEditor
+    EnumEditor, UItem, Label, VSplit, TextEditor, Readonly
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
@@ -50,8 +48,10 @@ class LevelInfoPane(TraitsDockPane):
     name = 'Level'
 
     def traits_view(self):
-        v = View(Item('level_production_name', label='Production', style='readonly'),
-                 Item('irradiation_tray', label='Irradiation Tray', style='readonly'),
+        v = View(Readonly('level_production_name', label='Production'),
+                 Readonly('irradiation_tray', label='Irradiation Tray'),
+                 Readonly('monitor_age', label='Monitor Age'),
+                 Readonly('monitor_decay_constant', label='LambdaK Total'),
                  VGroup(UItem('level_note', style='custom', editor=TextEditor(read_only=True)),
                         show_border=True, label='Note'))
         return v

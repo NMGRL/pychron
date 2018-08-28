@@ -18,17 +18,14 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-# import numpy as np
-# cimport numpy as np
-# def _area(np.ndarray[np.float64_t, ndim=2] data):
-from __future__ import absolute_import
-from six.moves import range
+
+
 def _area(data):
-#    cdef int n = data.shape[0]
-#    cdef int j = n - 1
-#    cdef float x = 0
-#    cdef float y = 0
-#    cdef float a = 0
+    #    cdef int n = data.shape[0]
+    #    cdef int j = n - 1
+    #    cdef float x = 0
+    #    cdef float y = 0
+    #    cdef float a = 0
 
     n = data.shape[0]
     j = n - 1
@@ -40,6 +37,7 @@ def _area(data):
         a -= (p1[1] * p2[0])
         j = i
     return a / 2.
+
 
 def calculate_centroid(data):
     n = data.shape[0]
@@ -56,6 +54,5 @@ def calculate_centroid(data):
 
     a = _area(data)
     return x / (6. * a), y / (6. * a)
-
 
 # ============= EOF =============================================

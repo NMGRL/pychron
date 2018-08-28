@@ -14,8 +14,6 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
 import hashlib
 import os
 import time
@@ -23,6 +21,7 @@ from datetime import datetime
 from threading import Thread, Lock
 
 import yaml
+# ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Instance, Bool, Int
 
@@ -32,8 +31,6 @@ from pychron.labspy.database_adapter import LabspyDatabaseAdapter
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pychron_constants import SCRIPT_NAMES, NULL_STR
-from six.moves import map
-from six.moves import range
 
 
 def auto_connect(func):
@@ -349,7 +346,7 @@ class LabspyClient(Loggable):
                                                   ('state', 'State'))}
 
         for si in SCRIPT_NAMES:
-            k = ''.join(map(str.capitalize, si.split('_')[:-1]))
+            k = ''.join([sii.capitalize() for sii in si.split('_')[:-1]])
             d[k] = getattr(spec, si)
 
         return d

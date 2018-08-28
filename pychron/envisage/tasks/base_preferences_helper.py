@@ -14,25 +14,18 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
 import re
 
 import requests
 from apptools.preferences.api import PreferencesHelper
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from pyface.constant import OK
-from pyface.file_dialog import FileDialog
-from traits.api import List, Button, Any, Int, Str, Enum, Color, String, Property, BaseStr
+# ============= enthought library imports =======================
+from traits.api import List, Button, Any, Str, Enum, Color, BaseStr
 from traitsui.api import View, VGroup, UItem, HGroup, Item
 from traitsui.list_str_adapter import ListStrAdapter
 
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.icon_button_editor import icon_button_editor
-from six.moves import map
-import six
-from six.moves import zip
 
 
 class FavoritesAdapter(ListStrAdapter):

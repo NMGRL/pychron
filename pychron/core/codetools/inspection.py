@@ -18,14 +18,12 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from __future__ import absolute_import
-from __future__ import print_function
 import inspect
 import logging
 import traceback
-from six.moves import map
 
-logger=logging.getLogger('Inspection')
+logger = logging.getLogger('Inspection')
+
 
 def caller(func):
     def dec(*args, **kw):
@@ -46,6 +44,7 @@ def caller(func):
 
     return dec
 
+
 def conditional_caller(func):
     def dec(*args, **kw):
         ret = func(*args, **kw)
@@ -55,9 +54,10 @@ def conditional_caller(func):
             cstack = stack[0]
             rstack = stack[1]
 
+            v = ''.join([r.strip() for r in rstack[4]])
             msg = '{} called by {}. parent call={} {}'.format(func.__name__, rstack[3],
                                                               cstack[0].f_back.f_locals['self'],
-                                                              ''.join(map(str.strip, rstack[4])))
+                                                              v)
 
             logger.debug(msg)
         return ret
@@ -91,6 +91,5 @@ def caller_stack(func):
         return func(*args, **kw)
 
     return dec
-
 
 # ============= EOF =============================================

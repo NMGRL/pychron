@@ -13,10 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from __future__ import absolute_import
 from pychron.hardware.kerr.kerr_manager import KerrManager
-from six.moves import map
-from six.moves import range
 
 '''
 Fusions Control board
@@ -110,7 +107,7 @@ class FusionsLogicBoard(CoreDevice):
         """
         """
         if self.prefix is not None:
-            cmd = ' '.join(map(str, args))
+            cmd = ' '.join([str(a) for a in args])
             return ''.join((self.prefix, cmd))
         else:
             self.warning('Prefix not set')

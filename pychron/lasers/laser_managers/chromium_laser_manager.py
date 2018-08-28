@@ -15,16 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
-from traits.api import HasTraits, provides, Float
 # ============= standard library imports ========================
 import time
+
 # ============= local library imports  ==========================
+from pychron.core.helpers.strtools import csv_to_floats
 from pychron.lasers.laser_managers.ethernet_laser_manager import EthernetLaserManager
-from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
-from six.moves import map
-from six.moves import zip
 
 
 class ChromiumLaserManager(EthernetLaserManager):
@@ -189,8 +185,8 @@ class ChromiumLaserManager(EthernetLaserManager):
                 if not self._alive:
                     return True
 
-                ps = [float(p) for p in xyz.split(',')]
-
+                # ps = [float(p) for p in xyz.split(',')]
+                ps = csv_to_floats(xyz)
                 # return not all([abs(ab[0] - ab[1]) <= 2 for ab in zip(list(map(float, xyz.split(','))),
                 #                        (xm, ym, zm))])
 

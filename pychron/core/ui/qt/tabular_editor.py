@@ -15,23 +15,20 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
+
 from pickle import dumps
 
+import six
 from pyface.qt import QtCore, QtGui
-from pyface.qt.QtGui import QColor, QHeaderView, QApplication
+from pyface.qt.QtGui import QHeaderView, QApplication
 from traits.api import Bool, Str, List, Any, Instance, Property, Int, HasTraits, Color, Either, Callable
-from traits.trait_base import SequenceTypes
 from traitsui.api import View, Item, TabularEditor, Handler
 from traitsui.mimedata import PyMimeData
 from traitsui.qt4.tabular_editor import TabularEditor as qtTabularEditor, \
     _TableView as TableView, HeaderEventFilter, _ItemDelegate
-from traitsui.qt4.tabular_model import TabularModel, alignment_map, tabular_mime_type
+from traitsui.qt4.tabular_model import TabularModel, tabular_mime_type
 
 from pychron.core.helpers.ctx_managers import no_update
-import six
-from six.moves import range
 
 
 class myTabularEditor(TabularEditor):

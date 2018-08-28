@@ -14,21 +14,16 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
+# ============= standard library imports ========================
 from numpy import std, mean, where, delete
+# ============= enthought library imports =======================
 from traits.api import CStr, Str, CInt, Float, \
     TraitError, Property, Any, Either, Dict, Bool, List
 from uncertainties import ufloat
 
-from pychron.loggable import Loggable
-import six
-from six.moves import map
-from six.moves import range
-
-
-# ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.strtools import csv_to_ints
+from pychron.loggable import Loggable
 
 
 class MassSpecExportSpec(Loggable):
@@ -343,7 +338,7 @@ class MassSpecExportSpec(Loggable):
     def _set_position(self, pos):
         if pos:
             if ',' in pos:
-                self._position = list(map(int, pos.split(',')))
+                self._position = csv_to_ints(pos)
             else:
                 self._position = pos
 

@@ -14,15 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
-
 import os
 
 import yaml
+# ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
 from pyface.constant import YES, CANCEL
-from six.moves import zip
 from traits.api import Property, Str, cached_property, List, Event, Button, Instance, Bool, on_trait_change, \
     Float, HasTraits, Any
 from uncertainties import nominal_value
@@ -115,6 +112,8 @@ class LabnumberEntry(DVCIrradiationable):
 
     monitor_name = Str
     monitor_material = Str
+    monitor_age = Str
+    monitor_decay_constant = Str
 
     _level_editor = None
     _irradiation_editor = None
@@ -666,6 +665,8 @@ THIS CHANGE CANNOT BE UNDONE')
         pname, prod = meta_repo.get_production(self.irradiation, name)
         self.level_production_name = prod.name
         self.level_note = prod.note
+
+        self.monitor_age, self.monitor_decay_constant = meta_repo.get_monitor_info(self.irradiation, name)
 
         if level.holder:
             self.irradiation_tray = level.holder

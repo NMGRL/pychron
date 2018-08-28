@@ -16,20 +16,18 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from __future__ import absolute_import
-
 import datetime
 import os
 import time
+from operator import attrgetter
 
-from six.moves import map
-from six.moves import zip
 from uncertainties import ufloat, std_dev, nominal_value
 
 from pychron.core.helpers.binpack import unpack, format_blob
 from pychron.core.helpers.datetime_tools import make_timef
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.iterfuncs import partition
+from pychron.core.helpers.strtools import to_csv_str
 from pychron.dvc import dvc_dump, dvc_load, analysis_path, make_ref_list, get_spec_sha, get_masses, repository_path
 from pychron.experiment.utilities.environmentals import set_environmentals
 from pychron.experiment.utilities.identifier import make_aliquot_step, make_step
@@ -160,12 +158,11 @@ class DVCAnalysis(Analysis):
 
         pd = jd.get('positions')
         if pd:
-            ps = sorted(pd, key=lambda x: x['position'])
-            self.position = ','.join([str(pp['position']) for pp in ps])
-
-            self.xyz_position = ';'.join([','.join(map(str, (pp['x'], pp['y'], pp['z']))) for pp in ps if pp['x'] is
-                                          not None])
-
+            ps = sorted(pd, key=attrgetter('position'))
+            # self.position = ','.join([str(pp['position']) for pp in ps])
+            self.position = to_csv_str(ps)
+            self.xyz_position = to_csv_str(['{},{},{}'.format(pp['x'], pp['y'], pp['z'])
+                                            for pp in ps if pp['x'] is not None], delimiter=';')
         if not self.extract_units:
             self.extract_units = 'W'
 

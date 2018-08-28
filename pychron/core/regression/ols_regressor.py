@@ -14,14 +14,9 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-
-from __future__ import absolute_import
-from __future__ import print_function
-
 import logging
 
 from numpy import asarray, column_stack, matrix, sqrt, dot, linalg, zeros_like, hstack, ones_like
-from six.moves import range
 from statsmodels.api import OLS
 from traits.api import Int, Property
 

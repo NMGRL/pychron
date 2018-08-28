@@ -14,16 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
-
+# ============= standard library imports ========================
 import csv
 
-from six.moves import range
+# ============= enthought library imports =======================
 from traits.api import HasTraits, provides
 
-# ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.i_column_parser import IColumnParser
 
@@ -31,6 +27,7 @@ from pychron.core.i_column_parser import IColumnParser
 @provides(IColumnParser)
 class BaseColumnParser(HasTraits):
     _header_offset = 1
+    _header_idx = 0
 
     def load(self, p, header_idx=0, **kw):
         self._header_idx = header_idx

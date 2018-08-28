@@ -17,8 +17,10 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
+
 import os
 
+import six
 from traits.api import HasTraits, Button, String, List, Any, Instance
 from traitsui.api import View, UItem, HGroup, VGroup, ListStrEditor, HSplit, \
     TabularEditor
@@ -33,8 +35,6 @@ from pychron.experiment.automated_run.uv.spec import UVAutomatedRunSpec
 from pychron.experiment.queue.parser import RunParser, UVRunParser
 from pychron.loggable import Loggable
 from pychron.paths import paths
-from six.moves import map
-import six
 
 
 class RunBlock(Loggable):
@@ -59,8 +59,7 @@ class RunBlock(Loggable):
     def _runs_gen(self, line_gen):
         delim = '\t'
 
-        header = list(map(str.strip, next(line_gen).split(delim)))
-
+        header = [l.strip() for l in next(line_gen).split(delim)]
         pklass = RunParser
         if self.extract_device == 'Fusions UV':
             pklass = UVRunParser

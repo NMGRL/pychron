@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ========== standard library imports ==========
-from __future__ import absolute_import
 import glob
 import os
 import re
@@ -25,8 +24,6 @@ import sys
 from datetime import datetime
 
 import yaml
-from six.moves import map
-from six.moves import range
 
 
 def subdirize(root, name, n=1, l=2, mode='r'):
@@ -344,7 +341,7 @@ def parse_file(p, delimiter=None, cast=None):
             if delimiter:
                 if cast is None:
                     cast = str
-                r = [list(map(cast, ri.split(delimiter))) for ri in r]
+                r = [[cast(rii) for rii in ri.split(delimiter)] for ri in r]
 
             return r
 
@@ -359,9 +356,9 @@ def parse_setupfile(p):
 
 
 def parse_canvasfile(p, kw):
-    '''
-    
-    '''
+    """
+
+    """
     # kw=['origin','valvexy','valvewh','opencolor','closecolor']
 
     if os.path.exists(p) and os.path.isfile(p):

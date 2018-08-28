@@ -13,16 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
-from __future__ import absolute_import
-from __future__ import print_function
-
 import os
 import shutil
 import time
 from datetime import datetime
 
-from six.moves import map
 # ============= enthought library imports =======================
 from traits.api import Bool
 from uncertainties import ufloat, std_dev
@@ -35,7 +30,7 @@ from pychron.core.helpers.filetools import list_directory2, add_extension, \
 from pychron.dvc import dvc_dump, dvc_load
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths, r_mkdir
-from pychron.pychron_constants import INTERFERENCE_KEYS, RATIO_KEYS, DEFAULT_MONITOR_NAME, DATE_FORMAT
+from pychron.pychron_constants import INTERFERENCE_KEYS, RATIO_KEYS, DEFAULT_MONITOR_NAME, DATE_FORMAT, NULL_STR
 
 
 class MetaObject(object):
@@ -339,6 +334,23 @@ cached = Cached
 
 class MetaRepo(GitRepoManager):
     clear_cache = Bool
+
+    def get_monitor_info(self, irrad, level):
+        age, decay = NULL_STR, NULL_STR
+        positions = self._get_level_positions(irrad, level)
+        # assume all positions have same monitor_age/decay constant. Not strictly true. Potential some ambiquity but
+        # will not be resolved now 8/26/18.
+        if positions:
+            position = positions[0]
+            opt = position.get('options')
+            if opt:
+                age = position.get('monitor_age', NULL_STR)
+
+            decayd = position.get('decay_constants')
+            if decayd:
+                decay = decayd.get('lambda_k_total', NULL_STR)
+
+        return str(age), str(decay)
 
     def get_molecular_weights(self):
         p = os.path.join(paths.meta_root, 'molecular_weights.json')

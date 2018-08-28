@@ -21,17 +21,14 @@
 import re
 import struct
 from binascii import hexlify
-from six.moves import map
-from six.moves import range
 
+import six
 from numpy import array, Inf, polyfit, gradient
 from uncertainties import ufloat, nominal_value, std_dev
 
 from pychron.core.geometry.geometry import curvature_at
 from pychron.core.helpers.fits import natural_name_fit, fit_to_degree
 from pychron.core.regression.mean_regressor import MeanRegressor
-import six
-from six.moves import zip
 
 
 def fit_abbreviation(fit, ):
@@ -227,8 +224,7 @@ class IsotopicMeasurement(BaseMeasurement):
             for m in re.finditer(r'\([\w\d\s,]*\)', fit):
                 a = m.group(0)
                 a = a[1:-1]
-                s, e, f = list(map(str.strip, a.split(',')))
-
+                s, e, f = (ai.strip() for ai in a.split(','))
                 if s is '':
                     s = -1
                 else:

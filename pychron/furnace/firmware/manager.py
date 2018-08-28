@@ -17,14 +17,13 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 from __future__ import absolute_import
+
 import json
+import time
 from threading import Thread, Event
 
-from cStringIO import StringIO
-import time
-from six.moves.cPickle import dumps
-import struct
 import yaml
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.strtools import to_bool
 from pychron.furnace.firmware import PARAMETER_REGISTRY, __version__
@@ -39,7 +38,6 @@ from pychron.headless_loggable import HeadlessLoggable
 from pychron.image.rpi_camera import RPiCamera
 from pychron.messaging.broadcaster import Broadcaster
 from pychron.paths import paths
-from six.moves import map
 
 DEVICES = {'controller': HeadlessEurotherm,
            'switch_controller': HeadlessU3LV,
@@ -664,11 +662,8 @@ class FirmwareManager(HeadlessLoggable):
                     ch = None
                 return ch
 
-            open_ch, close_ch = list(map(prep, open_ch.split(',')))
-
-            # ch = o if action.lower() == 'open' else c
-            # if not ch or ch == '-':
-            #     ch = None
+            # open_ch, close_ch = list(map(prep, open_ch.split(',')))
+            open_ch, close_ch = [prep(ci) for ci in open_ch.split(',')]
 
         return open_ch, close_ch, action
 

@@ -18,17 +18,17 @@
 
 
 # =============enthought library imports=======================
-from __future__ import absolute_import
+
+# =============standard library imports ========================
+import re
+
 from traits.api import HasTraits, Any, Int, List, Enum, String, Float, Str
 from traitsui.api import View, Item, VGroup, TableEditor
 from traitsui.list_str_adapter import ListStrAdapter
-
 from traitsui.table_column import ObjectColumn
-# =============standard library imports ========================
 
-import re
-from six.moves import zip
 # =============local library imports  ==========================
+from pychron.core.helpers.strtools import csv_to_floats
 
 func_regex = re.compile(r'p\[[0-9]\]')
 
@@ -96,7 +96,7 @@ class RegressionEditor(HasTraits):
                     ff = ff.replace(ci, a)
 
                 self.fitfunc = ff
-                self.graph.initial_guess = [float(ci) for ci in c.initial_guess.split(',')]
+                self.graph.initial_guess = csv_to_floats(c.initial_guess)
 
             else:
                 return

@@ -16,12 +16,12 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import Str, Password, Bool
+from traits.api import Str, Bool
 from traitsui.api import View, Item, VGroup, UItem, TextEditor, EnumEditor, TableEditor, HGroup, spring, Spring, Label
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 
-from pychron.core.helpers.strtools import to_bool
+from pychron.core.helpers.strtools import to_bool, to_csv_str
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.database.tasks.connection_preferences import ConnectionPreferences, ConnectionPreferencesPane, \
     ConnectionFavoriteItem
@@ -64,9 +64,10 @@ class DVCConnectionItem(ConnectionFavoriteItem):
                 self.load_names()
 
     def to_string(self):
-        return ','.join([str(getattr(self, attr)) for attr in ('name', 'kind', 'username', 'host',
-                                                               'dbname', 'password', 'enabled', 'default', 'path',
-                                                               'organization', 'meta_repo_name', 'meta_repo_dir')])
+        attrs = [getattr(self, attr) for attr in ('name', 'kind', 'username', 'host',
+                                                  'dbname', 'password', 'enabled', 'default', 'path',
+                                                  'organization', 'meta_repo_name', 'meta_repo_dir')]
+        return to_csv_str(attrs)
 
 
 class DVCConnectionPreferences(ConnectionPreferences):

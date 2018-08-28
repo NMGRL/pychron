@@ -18,13 +18,16 @@
 
 from __future__ import absolute_import
 from __future__ import print_function
-from traits.api import Str, Bool, List, Instance, Event
-from traitsui.api import View, ListEditor, InstanceEditor, UItem, VGroup, HGroup, VSplit
+
 # ============= standard library imports ========================
 import random
 import struct
 import time
+
 import yaml
+from traits.api import Str, Bool, List, Instance, Event
+from traitsui.api import View, ListEditor, InstanceEditor, UItem, VGroup, HGroup, VSplit
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import unique_path2
 from pychron.dashboard.conditional import DashboardConditional
@@ -34,8 +37,6 @@ from pychron.graph.stream_graph import StreamStackedGraph
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.loggable import Loggable
 from pychron.paths import paths
-from six.moves import range
-from six.moves import zip
 
 
 class DashboardDevice(Loggable):
@@ -218,7 +219,7 @@ class DashboardDevice(Loggable):
 
         if blob:
             step = 4 * fmt.count('f')
-            args = list(zip(*[struct.unpack(fmt, blob[i:i + step]) for i in range(0, len(blob), step)]))
+            args = zip(*[struct.unpack(fmt, blob[i:i + step]) for i in range(0, len(blob), step)])
             ns = []
             for blobv, lastv in zip(args, new_args):
                 blobv = list(blobv)

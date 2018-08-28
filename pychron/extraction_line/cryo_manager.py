@@ -13,16 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from __future__ import absolute_import
 import os
+
 import yaml
 from traits.api import Enum
-from traitsui.api import View, UItem, Item, InstanceEditor, ListEditor
+from traitsui.api import View, Item, InstanceEditor, ListEditor
 
-import time
+from pychron.core.helpers.strtools import csv_to_floats
 from pychron.managers.manager import Manager
 from pychron.paths import paths
-from six.moves import map
 
 
 class CryoManager(Manager):
@@ -113,7 +112,7 @@ class CryoManager(Manager):
         if os.path.isfile(p):
             with open(p, 'r') as fp:
                 yd = yaml.load(fp)
-                return list(map(float, yd[v].split(',')))
+                return csv_to_floats(yd[v])
         else:
             self.warning('File {} does not exist. Cryostat setpoint can not be set')
 

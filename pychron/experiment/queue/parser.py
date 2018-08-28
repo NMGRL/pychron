@@ -15,13 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from pychron.core.helpers.strtools import to_bool
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.strtools import to_bool
 from pychron.loggable import Loggable
 from pychron.regex import ALIQUOT_REGEX
-from six.moves import map
 
 
 class RunParser(Loggable):
@@ -30,7 +28,7 @@ class RunParser(Loggable):
         if not isinstance(line, list):
             line = line.split(delim)
 
-        args = list(map(str.strip, line))
+        args = [l.strip() for l in line]
         script_info = self._load_scripts(header, args)
         ln = args[header.index('labnumber')]
         if ALIQUOT_REGEX.match(ln):
@@ -136,8 +134,7 @@ class UVRunParser(RunParser):
         if not isinstance(line, list):
             line = line.split(delim)
 
-        args = list(map(str.strip, line))
-
+        args = [l.strip() for l in line]
         def _set(attr, cast):
             try:
                 idx = self._get_idx(header, attr)

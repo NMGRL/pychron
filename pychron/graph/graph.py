@@ -31,9 +31,6 @@ from chaco.axis import PlotAxis
 from enable.component_editor import ComponentEditor
 from numpy import array, hstack, Inf, column_stack
 from pyface.timer.api import do_after as do_after_timer
-from six.moves import map
-from six.moves import range
-from six.moves import zip
 from traits.api import Instance, List, Str, Property, Dict, Event, Bool
 from traitsui.api import View, Item, UItem
 
@@ -1072,24 +1069,6 @@ class Graph(ContextMenuMixin):
                                      color=color)
         plot.overlays.append(guide_overlay)
 
-    def _add_rule(self, v, orientation, plotid=0, add_move_tool=False, **kw):
-        if v is None:
-            return
-
-        if 'plot' in kw:
-            plot = kw['plot']
-        else:
-            plot = self.plots[plotid]
-
-        from pychron.graph.guide_overlay import GuideOverlay, GuideOverlayMoveTool
-        l = GuideOverlay(plot, value=v, orientation=orientation, **kw)
-        plot.underlays.append(l)
-
-        if add_move_tool:
-            plot.tools.append(GuideOverlayMoveTool(overlay=l))
-
-        return l
-
     def add_vertical_rule(self, v, **kw):
         return self._add_rule(v, 'v', **kw)
 
@@ -1172,24 +1151,24 @@ class Graph(ContextMenuMixin):
         """
         return container_factory(**self.container_dict)
 
-    # def _add_line_inspector(self, plot, axis='x', color='red'):
-    #     """
-    #     """
-    #     from chaco.tools.line_inspector import LineInspector
-    #     plot.overlays.append(LineInspector(component=plot,
-    #                                        axis='index_%s' % axis,
-    #                                        write_metadata=self.line_inspectors_write_metadata,
-    #                                        inspect_mode='indexed',
-    #                                        is_listener=False,
-    #                                        color=color))
+    # private
+    def _add_rule(self, v, orientation, plotid=0, add_move_tool=False, **kw):
+        if v is None:
+            return
 
-    # def _crosshairs_factory(self, plot=None, color='black'):
-    #     """
-    #     """
-    #     if plot is None:
-    #         plot = self.plots[0].plots['plot0'][0]
-    #     self._add_line_inspector(plot, axis='x', color=color)
-    #     self._add_line_inspector(plot, axis='y', color=color)
+        if 'plot' in kw:
+            plot = kw['plot']
+        else:
+            plot = self.plots[plotid]
+
+        from pychron.graph.guide_overlay import GuideOverlay, GuideOverlayMoveTool
+        l = GuideOverlay(plot, value=v, orientation=orientation, **kw)
+        plot.underlays.append(l)
+
+        if add_move_tool:
+            plot.tools.append(GuideOverlayMoveTool(overlay=l))
+
+        return l
 
     def _export_data(self, path, plotid):
         # names = []
@@ -1218,42 +1197,7 @@ class Graph(ContextMenuMixin):
                     write(k)
                     write(header)
                     for row in a:
-                        write(','.join(map('{:0.8f}'.format, row)))
-                        # print 'fff', pp, pp[0].yerror
-                        # data = plot.data
-                        # names.extend(sorted(data.list_data()))
-                        # if a is None:
-                        #     a = array(data.get_data(names[0]))
-                        #
-                        # for ni in names[1:]:
-                        #     d = data.get_data(ni)
-                        #     try:
-                        #         a = column_stack((a, d))
-                        #     except ValueError:
-                        #         a = column_stack((a, zeros_like(a)))
-
-                        # savetxt(path, a, fmt='%.8f', delimiter=',', header=','.join(names))
-
-                        # if plotid is not None:
-                        #     plot = self.plots[plotid]
-                        # else:
-                        #     plot = self.selected_plot
-                        #
-                        # if plot is None:
-                        #     return
-                        #
-                        # data = plot.data
-                        # names = sorted(data.list_data())
-                        #
-                        # a = array(data.get_data(names[0]))
-                        # for ni in names[1:]:
-                        #     d = data.get_data(ni)
-                        #     try:
-                        #         a = column_stack((a, d))
-                        #     except ValueError:
-                        #         a = column_stack((a, zeros_like(a)))
-                        #
-                        # savetxt(path, a, fmt='%.8f', delimiter=',', header=','.join(names))
+                        write(','.join(['{:0.8f}'.format(r) for r in row]))
 
     def _series_factory(self, x, y, yer=None, plotid=0, add=True, **kw):
         """

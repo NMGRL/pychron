@@ -16,19 +16,16 @@
 
 # ============= enthought library imports =======================
 
+import six
 # ============= standard library imports ========================
-# ============= local library imports  ==========================
-from __future__ import absolute_import
 import xlrd
 
 from pychron.core.csv.csv_parser import BaseColumnParser
-from six.moves import map
-import six
-from six.moves import range
 
 
+# ============= local library imports  ==========================
 
-# @provides(IColumnParser)
+
 class XLSParser(BaseColumnParser):
     # def load(self, p, header_idx=0):
     # wb = xlrd.open_workbook(p)
@@ -36,6 +33,9 @@ class XLSParser(BaseColumnParser):
     # self.sheet = sheet
     # self._header = map(str.strip, map(str, sheet.row_values(header_idx)))
     # self._header_offset=header_idx+1
+    sheet = None
+    _header = None
+
     def _load(self, p, header_idx, sheet=None):
         wb = xlrd.open_workbook(p)
         self.workbook = wb
@@ -54,7 +54,8 @@ class XLSParser(BaseColumnParser):
         elif isinstance(sheet, (str, six.text_type)):
             sheet = wb.sheet_by_name(sheet)
         self.sheet = sheet
-        self._header = list(map(str.strip, list(map(str, sheet.row_values(header_idx)))))
+        self._header = [str(r).strip() for r in sheet.row_values(header_idx)]
+
     # def has_key(self, key):
     #     """
     #         if key is an int return true if key valid index

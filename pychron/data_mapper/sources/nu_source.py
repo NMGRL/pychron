@@ -13,14 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from __future__ import absolute_import
-
 import os
 from datetime import datetime
 
 from numpy import array
-from six.moves import map
-from six.moves import range
 from traits.api import File
 
 from pychron.data_mapper.sources.file_source import FileSource, get_next, get_int
@@ -130,7 +126,7 @@ class NuFileSource(FileSource):
             _type = int(line[-1])
 
             if _type:
-                signals.append(list(map(float, line)))
+                signals.append([float(li) for li in line])
 
         signals = array(signals)
 

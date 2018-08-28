@@ -31,16 +31,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 from enable.abstract_overlay import AbstractOverlay
 from kiva import Font
-from six.moves import zip
 from traits.api import Any
 
-from pychron.canvas.canvas2D.scene.loading_scene import LoadingScene
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.canvas.canvas2D.scene.loading_scene import LoadingScene
 from pychron.canvas.canvas2D.scene.primitives.primitives import LoadIndicator
 from pychron.canvas.canvas2D.scene.scene_canvas import SceneCanvas
 

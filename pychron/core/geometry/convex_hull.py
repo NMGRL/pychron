@@ -16,25 +16,27 @@
 '''
 http://www.scipy.org/Cookbook/Finding_Convex_Hull
 '''
+
+
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from __future__ import absolute_import
-import numpy as np
-from six.moves import zip
+from numpy import arctan, pi, cross, asarray, apply_along_axis, arange
+from numpy.linalg import norm
+
 
 def _angle_to_point(point, centre):
     '''calculate angle in 2-D between points and x axis'''
     delta = point - centre
-    res = np.arctan(delta[1] / delta[0])
+    res = arctan(delta[1] / delta[0])
     if delta[0] < 0:
-        res += np.pi
+        res += pi
     return res
 
 
 def area_of_triangle(p1, p2, p3):
     '''calculate area of any triangle given co-ordinates of the corners'''
-    return np.linalg.norm(np.cross((p2 - p1), (p3 - p1))) / 2.
+    return norm(cross((p2 - p1), (p3 - p1))) / 2.
 
 
 def convex_hull(points):
@@ -53,15 +55,15 @@ Recursively eliminates points that lie inside two neighbouring points until only
         convex hull surrounding points
 '''
 
-#    if not isinstance(points[0], (tuple, np.ndarray)):
-#        points = [(pi.x, pi.y) for pi in points]
+    #    if not isinstance(points[0], (tuple, np.ndarray)):
+    #        points = [(pi.x, pi.y) for pi in points]
 
-    points = np.asarray(points)
+    points = asarray(points)
     points = points.T
     n_pts = points.shape[1]
-    assert(n_pts > 1)
+    assert (n_pts > 1)
     centre = points.mean(1)
-    angles = np.apply_along_axis(_angle_to_point, 0, points, centre)
+    angles = apply_along_axis(_angle_to_point, 0, points, centre)
     pts_ord = points[:, angles.argsort()]
 
     pts = [x[0] for x in zip(pts_ord.transpose())]
@@ -79,7 +81,8 @@ Recursively eliminates points that lie inside two neighbouring points until only
                 del pts[i + 1]
             i += 1
             n_pts = len(pts)
-    return np.asarray(pts)
+    return asarray(pts)
+
 
 def convex_hull_area(pts):
     """
@@ -87,10 +90,10 @@ def convex_hull_area(pts):
     """
     from pychron.core.codetools.simple_timeit import timethis
     hull = timethis(convex_hull, args=(pts,))
-#    hull = convex_hull(pts)
+    #    hull = convex_hull(pts)
     x, y = list(zip(*hull))
-    ind_arr = np.arange(len(x)) - 1  # for indexing convenience
-    s = np.sum([x[ii] * y[ii + 1] - x[ii + 1] * y[ii] for ii in ind_arr])
+    ind_arr = arange(len(x)) - 1  # for indexing convenience
+    s = sum([x[ii] * y[ii + 1] - x[ii + 1] * y[ii] for ii in ind_arr])
     return abs(s) * 0.5
 
 # ============= EOF =============================================

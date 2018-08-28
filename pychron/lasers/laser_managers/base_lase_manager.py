@@ -14,22 +14,18 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
 import os
 import time
 
-from traits.api import Instance, Event, Bool, Any, Property, Str, Float, provides
+# ============= enthought library imports =======================
+from traits.api import Instance, Event, Bool, Any, Property, Float, provides
 
 from pychron.core.helpers.filetools import list_directory
-from pychron.core.helpers.strtools import to_bool
+from pychron.core.helpers.strtools import to_bool, csv_to_floats
 from pychron.hardware.meter_calibration import MeterCalibration
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.managers.manager import Manager
 from pychron.paths import paths
-from six.moves import map
-from six.moves import zip
 
 
 @provides(ILaserManager)
@@ -279,7 +275,7 @@ class BaseLaserManager(Manager):
         if config.has_section(section):
             cs = config.get(section, 'coefficients')
             try:
-                coeffs = list(map(float, cs.split(',')))
+                coeffs = csv_to_floats(cs)
             except ValueError:
                 self.warning_dialog('Invalid power calibration {}'.format(cs))
                 return

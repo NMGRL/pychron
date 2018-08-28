@@ -15,11 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
-from six.moves import map
 from traits.api import Float, Str, List, Property, cached_property, Button, Bool
 from traitsui.api import Item, EnumEditor, UItem, VGroup, HGroup
 
@@ -380,7 +377,8 @@ class FindReferencesNode(FindNode):
         return v
 
     def _available_analysis_types_default(self):
-        return sorted([' '.join(map(str.capitalize, k.split('_'))) for k in SPECIAL_MAPPING.keys()])
+        return sorted([' '.join([ki.capitalize() for ki in k.split('_')])
+                       for k in SPECIAL_MAPPING.keys()])
 
     def _get_display_loads(self):
         if self.limit_to_analysis_loads:

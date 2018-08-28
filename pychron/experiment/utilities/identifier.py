@@ -16,13 +16,11 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from __future__ import absolute_import
 
 import os
 import re
 
 import yaml
-from six.moves import map
 
 # ============= local library imports  ==========================
 from pychron.file_defaults import IDENTIFIERS_DEFAULT
@@ -385,11 +383,10 @@ def pretty_extract_device(ident):
     if ident:
         args = ident.split('_')
         if args[-1] in ('uv, co2'):
-            n = ' '.join(map(str.capitalize, args[:-1]))
+            n = ' '.join([a.capitalize() for a in args[:-1]])
             n = '{} {}'.format(n, args[-1].upper())
         else:
-            n = ' '.join(map(str.capitalize, args))
-            # n=ident.replace(' ', '_')
+            n = ' '.join([a.capitalize() for a in args])
     return n
 
 # ============= EOF =============================================

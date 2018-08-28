@@ -15,14 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
-from math import isnan, isinf
 
 from chaco.array_data_source import ArrayDataSource
 from chaco.legend import Legend
 from enable.font_metrics_provider import font_metrics_provider
-from numpy import zeros_like, array, asarray
+from numpy import zeros_like, array, asarray, isinf, isnan
 from pyface.message_dialog import warning
 from pyface.timer.do_later import do_later
 from traits.api import Property, on_trait_change, List, Array
@@ -33,9 +30,6 @@ from pychron.core.regression.base_regressor import BaseRegressor
 from pychron.core.regression.interpolation_regressor import InterpolationRegressor
 from pychron.pipeline.plot.plotter.series import BaseSeries
 from pychron.pychron_constants import PLUSMINUS
-import six
-from six.moves import map
-from six.moves import zip
 
 
 def calc_limits(ys, ye, n):
@@ -56,7 +50,9 @@ class ReferenceLegend(Legend):
         if len(self.plots) == 0:
             return [0, 0]
 
-        plot_names, visible_plots = list(map(list, list(zip(*sorted(self.plots.items())))))
+        # plot_names, visible_plots = list(map(list, list(zip(*sorted(self.plots.items())))))
+        plot_names, visible_plots = [list(a) for a in zip(*sorted(self.plots.items()))]
+
         label_names, names = list(zip(*self.labels))
         if len(label_names) == 0:
             if len(self.plots) > 0:
@@ -238,10 +234,13 @@ class ReferencesSeries(BaseSeries):
         xs = [(ai.timestamp - ma) / self._normalization_factor for ai in ans]
         p_uys = reg.predict(xs)
         p_ues = reg.predict_error(xs)
-        if any(map(isnan, p_ues)) or any(map(isinf, p_ues)):
+
+        # if any(map(isnan, p_ues)) or any(map(isinf, p_ues)):
+        if any(isnan(p_ues)) or any(isinf(p_ues)):
             p_ues = zeros_like(p_ues)
 
-        if any(map(isnan, p_uys)) or any(map(isinf, p_uys)):
+        # if any(map(isnan, p_uys)) or any(map(isinf, p_uys)):
+        if any(isnan(p_uys)) or any(isinf(p_uys)):
             p_uys = zeros_like(p_uys)
 
         self._set_interpolated_values(iso, fit, ans, p_uys, p_ues)
@@ -288,8 +287,7 @@ class ReferencesSeries(BaseSeries):
                 self._set_values(plotobj, reg, key)
 
     def _get_isotope(self, po, analysis):
-        iso = next((iso for iso in analysis.itervalues() if iso.name == po.name), None)
-        return iso
+        return analysis.get_isotope(po.name)
 
     def _calc_limits(self, ys, ye):
         return calc_limits(ys, ye, self.options.nsigma)
@@ -343,16 +341,14 @@ class ReferencesSeries(BaseSeries):
             scatter._layout_needed = True
 
     def reference_data(self, po):
-        try:
-            rs = self._get_reference_data(po)
-            return array(list(map(nominal_value, rs))), array(list(map(std_dev, rs)))
-        except ValueError as e:
-            print(e)
+        return self._get_data(self._get_reference_data(po))
 
     def current_data(self, po):
+        return self._get_data(self._get_current_data(po))
+
+    def _get_data(self, data):
         try:
-            cs = self._get_current_data(po)
-            return array(list(map(nominal_value, cs))), array(list(map(std_dev, cs)))
+            return array([nominal_value(ri) for ri in data]), array([std_dev(ri) for ri in data])
         except ValueError as e:
             print(e)
 

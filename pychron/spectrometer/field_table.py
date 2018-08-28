@@ -26,8 +26,6 @@ import shutil
 import six
 from numpy import asarray, array, nonzero, polyval
 from scipy.optimize import leastsq, brentq
-from six.moves import map
-from six.moves import zip
 from traits.api import HasTraits, List, Str, Dict, Bool, Property
 
 from pychron.core.helpers.filetools import add_extension, backup
@@ -325,7 +323,8 @@ class FieldTable(Loggable):
             else:
                 mass_func = line0[0].strip()
                 detline = next(reader)
-            detectors = list(map(str.strip, detline[1:]))
+
+            detectors = [d.strip() for d in detline[1:]]
 
             if mass_func is None:
                 self.warning('Using default ')

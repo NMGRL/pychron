@@ -14,20 +14,17 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
-
 import hashlib
 import uuid
 from datetime import datetime
 
-from six.moves import map
+# ============= enthought library imports =======================
 from traits.api import Str, Int, Bool, Float, Property, \
     Enum, on_trait_change, CStr, Long, HasTraits, Instance
 
 from pychron.core.helpers.filetools import remove_extension
 from pychron.core.helpers.logger_setup import new_logger
+from pychron.core.helpers.strtools import csv_to_ints, to_csv_str
 from pychron.experiment.automated_run.result import AutomatedRunResult, AirResult, UnknownResult, BlankResult
 from pychron.experiment.utilities.identifier import get_analysis_type, make_rid, make_runid, is_special, \
     convert_extract_device
@@ -205,7 +202,7 @@ class AutomatedRunSpec(HasTraits):
                  'mass_spectrometer', 'extract_device',
                  'extraction_script', 'measurement_script',
                  'post_equilibration_script', 'post_measurement_script']
-        return ','.join(map(str, self.to_string_attrs(attrs)))
+        return to_csv_str(self.to_string_attrs(attrs))
 
     def test_scripts(self, script_context=None, warned=None, duration=True):
         if script_context is None:
@@ -508,7 +505,7 @@ post_equilibration_script, extraction_script, script_options, position, duration
             args = v
         else:
             try:
-                args = list(map(int, v.split(',')))
+                args = csv_to_ints(v)
             except ValueError:
                 logger.debug('Invalid overlap string "{}". Should be of the form "10,60" or "10" '.format(v))
                 return

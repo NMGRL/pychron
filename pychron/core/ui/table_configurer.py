@@ -15,6 +15,7 @@
 # ===============================================================================
 
 from __future__ import absolute_import
+
 import os
 # ============= enthought library imports =======================
 import pickle
@@ -33,7 +34,6 @@ from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.paths import paths
 from pychron.pychron_constants import ISOTOPES
-from six.moves import range
 
 SIZES = (6, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36)
 

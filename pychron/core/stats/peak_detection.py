@@ -22,15 +22,12 @@
 """
     https://gist.github.com/sixtenbe/1178136
 """
-from __future__ import absolute_import
-from numpy import Inf, isscalar, array, argmax, polyfit, asarray, argsort, vstack
-from six.moves import range
-from six.moves import zip
+from numpy import Inf, isscalar, array, argmax, polyfit, asarray, argsort, vstack, arange
 
 
 def _datacheck_peakdetect(x_axis, y_axis):
     if x_axis is None:
-        x_axis = list(range(len(y_axis)))
+        x_axis = arange(len(y_axis))
 
     if len(y_axis) != len(x_axis):
         raise ValueError

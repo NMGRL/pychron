@@ -15,10 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
-
-from six.moves import map
 from traits.api import Any, Str, List, Bool, Int, CInt, Instance
 from traitsui.api import View
 from traitsui.item import Item
@@ -37,9 +33,11 @@ def get_maxs(lns):
             x = 0
         return x
 
-    lns = list(map(func, lns))
+    lns = [func(li) for li in lns]
+    return [max(gi) for gi in group_runs(lns)]
 
-    return list(map(max, group_runs(lns)))
+    # lns = list(map(func, lns))
+    # return list(map(max, group_runs(lns)))
 
 
 def group_runs(li, tolerance=1000):
