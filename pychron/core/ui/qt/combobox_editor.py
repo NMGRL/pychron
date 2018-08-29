@@ -139,7 +139,6 @@ class _ComboboxEditor(SimpleEditor):
 
             self._no_enum_update += 1
             try:
-                print('asetinaf ava', value, self.str_value)
                 self.value = value
                 self._set_background(OKColor)
                 if self.factory.addable:

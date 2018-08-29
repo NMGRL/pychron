@@ -32,7 +32,7 @@ class Globals(object):
     # use_debug_logger = True
 
     open_logger_on_launch = True
-
+    quit_on_last_window = False
     # force display flags
     show_warnings = True
     show_infos = True
@@ -124,6 +124,8 @@ class Globals(object):
                            ('ignore_shareable', to_bool),
                            ('show_infos', to_bool),
                            ('show_warnings', to_bool),
+                           ('open_logger_on_launch', to_bool),
+                           ('quit_on_last_window', to_bool),
                            ('video_test', to_bool),
                            ('load_valve_states', to_bool),
                            ('load_soft_locks', to_bool),
