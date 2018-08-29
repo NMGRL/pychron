@@ -515,7 +515,7 @@ class Analysis(ArArAge, IdeogramPlotable):
 
     def _get_isotope_dict(self, get):
         d = dict()
-        for ki, v in six.iteritems(self.isotopes):
+        for ki, v in self.isotopes.items():
             d[ki] = (v.detector, get(v))
 
         return d

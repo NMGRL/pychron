@@ -14,31 +14,25 @@
 # limitations under the License.
 # ===============================================================================
 
+import binascii
+# =============standard library imports ========================
+import struct
+import time
+
 # =============enthought library imports=======================
-from __future__ import absolute_import
-from __future__ import print_function
-
-import codecs
-
-import sys
 from traits.api import Float, Property, Bool, Int, CInt, Button
 from traitsui.api import View, Item, HGroup, VGroup, EnumEditor, RangeEditor, \
     spring
-# from pyface.timer.api import Timer
 
-# =============standard library imports ========================
-import struct
-import binascii
-# =============local library imports  ==========================
-from .kerr_device import KerrDevice
-from pychron.hardware.base_linear_drive import BaseLinearDrive
-from pychron.hardware.core.data_helper import make_bitarray
-import time
-from pychron.globals import globalv
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.ui.qt.progress_editor import ProgressEditor
-from six.moves import map
-# from pyface.progress_dialog import ProgressDialog
+from pychron.globals import globalv
+from pychron.hardware.base_linear_drive import BaseLinearDrive
+from pychron.hardware.core.data_helper import make_bitarray
+# =============local library imports  ==========================
+from .kerr_device import KerrDevice
+
+# from pyface.timer.api import Timer
 
 SIGN = ['negative', 'positive']
 
@@ -362,12 +356,9 @@ class KerrMotor(KerrDevice, BaseLinearDrive):
 
         if status_byte in ('simulation', None):
             status_byte = 'DFDF'
-        # else:
-            # status_byte = binascii.hexlify(status_byte).decode('utf-8')
 
-        status_register = list(map(int, make_bitarray(int.from_bytes(status_byte[:1], 'little'))))
+        status_register = [int(bi) for bi in make_bitarray(int.from_bytes(status_byte[:1], 'little'))]
 
-        # status_register = list(map(int, make_bitarray(int.from_bytes(status_byte[:1], sys.byteorder))))
         return not status_register[7]
 
     def _clear_bits(self):

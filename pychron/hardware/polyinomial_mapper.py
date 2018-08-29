@@ -16,11 +16,15 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from numpy import poly1d
 from scipy import optimize
 from traits.api import HasTraits, List, Float
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.strtools import csv_to_floats
+
 
 class PolynomialMapper(HasTraits):
     """
@@ -40,7 +44,7 @@ class PolynomialMapper(HasTraits):
         self._polynomial = poly1d(cs)
 
     def parse_coefficient_string(self, s):
-        self.set_coefficients([float(si) for si in s.split(',')])
+        self.set_coefficients(csv_to_floats(s))
 
     def map_measured(self, v):
         """

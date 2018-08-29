@@ -16,13 +16,15 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import os
 import time
-from six.moves.queue import Queue
 from threading import Thread
 
 import yaml
 from pyface.timer.do_later import do_later
+from six.moves import zip
+from six.moves.queue import Queue
 from traits.api import Instance, Any, DelegatesTo, List, Property, \
     Bool, Button, String, cached_property, \
     Str, TraitError
@@ -40,8 +42,6 @@ from pychron.spectrometer.jobs.dac_scanner import DACScanner
 from pychron.spectrometer.jobs.mass_scanner import MassScanner
 from pychron.spectrometer.jobs.rise_rate import RiseRate
 from pychron.spectrometer.readout_view import ReadoutView
-import six
-from six.moves import zip
 
 
 class ScanManager(StreamGraphManager):
@@ -485,7 +485,7 @@ class ScanManager(StreamGraphManager):
             # self.scanner.detector = self.detector
             nominal_width = 1
             emphasize_width = 2
-            for name, plot in six.iteritems(self.graph.plots[0].plots):
+            for name, plot in self.graph.plots[0].plots.items():
                 plot = plot[0]
                 plot.line_width = emphasize_width if name == self.detector.name else nominal_width
 

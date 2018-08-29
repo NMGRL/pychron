@@ -18,28 +18,23 @@
 
 from __future__ import absolute_import
 from __future__ import print_function
-from traits.api import provides, HasTraits
 
+# from threading import Lock
+import inspect
 # from pyface.timer.api import Timer
 # =============standard library imports ========================
 import random
-# from threading import Lock
-import inspect
 import time
-# =============local library imports  ==========================
-# from traits.has_traits import provides
-from .i_core_device import ICoreDevice
-# from pychron.core.helpers.timer import Timer
-# from pychron.managers.data_managers.csv_data_manager import CSVDataManager
-# from pychron.core.helpers.datetime_tools import generate_datetimestamp
+
+from traits.api import provides
+
+from pychron.consumer_mixin import ConsumerMixin
 from pychron.globals import globalv
+from pychron.hardware.core.communicators.scheduler import CommunicationScheduler
 from pychron.hardware.core.exceptions import TimeoutError, CRCError
 from pychron.has_communicator import HasCommunicator
-from pychron.hardware.core.communicators.scheduler import CommunicationScheduler
-from pychron.consumer_mixin import ConsumerMixin
-import six
-from six.moves import map
-from six.moves import range
+# =============local library imports  ==========================
+from .i_core_device import ICoreDevice
 
 
 def crc_caller(func):
@@ -194,7 +189,8 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
         """
         """
         if self.communicator is not None:
-            cmd = ' '.join(list(map(str, args)) + list(map(str, six.iteritems(kw))))
+            cmd = ' '.join([str(a) for a in args] + [str(a) for a in kw.items()])
+
             self._communicate_hook(cmd, '-')
             return self.communicator.tell(*args, **kw)
 

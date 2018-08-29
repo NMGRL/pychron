@@ -14,13 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
-
-import re
 from datetime import datetime, timedelta
+from operator import attrgetter
 
+# ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Button, Instance, Str
 
@@ -30,9 +27,6 @@ from pychron.envisage.browser.browser_model import BrowserModel
 from pychron.envisage.browser.find_references_config import FindReferencesConfigModel, FindReferencesConfigView
 from pychron.envisage.browser.time_view import TimeViewModel
 from pychron.envisage.browser.util import get_pad
-
-NCHARS = 60
-REG = re.compile(r'.' * NCHARS)
 
 
 class SampleBrowserModel(BrowserModel):
@@ -60,13 +54,14 @@ class SampleBrowserModel(BrowserModel):
         bind_preference(self, 'monitor_sample_name', 'pychron.entry.monitor_name')
 
     def reattach(self):
+
         self.debug('reattach')
 
-        oans = self.analysis_table.oanalyses
-        uuids = [ai.uuid for ai in oans]
+        ans = sorted(self.analysis_table.oanalyses, key=attrgetter('uuid'))
+        uuids = [ai.uuid for ai in ans]
         nans = self.db.get_analyses_uuid(uuids)
 
-        for ni, ai in zip(nans, oans):
+        for ni, ai in zip(nans, ans):
             ai.dbrecord = ni
 
         if self.selected_projects:
@@ -244,7 +239,13 @@ class SampleBrowserModel(BrowserModel):
         try:
             ans = self.analysis_table.get_analysis_set(new)
             ans = self.db.get_analyses_uuid([a[0] for a in ans])
+            for a in (ans[0], ans[-1]):
+                print('a', a.record_id, a.timestampf)
             xx = self._make_records(ans)
+
+            for a in (xx[0], xx[-1]):
+                print('ab', a.record_id, a.timestampf)
+
             self.analysis_table.set_analyses(xx)
         except StopIteration:
             pass

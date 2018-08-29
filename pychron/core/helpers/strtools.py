@@ -18,8 +18,6 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
-from __future__ import absolute_import
-from six.moves import map
 def camel_case(name, delimiters=None):
     if delimiters is None:
         delimiters = ('_', '/', ' ')
@@ -35,7 +33,8 @@ def camel_case(name, delimiters=None):
 def to_list(a, delimiter=',', mapping=None):
     l = a.split(delimiter)
     if mapping:
-        l = list(map(mapping, l))
+        l = [mapping[li] for li in l]
+
     return l
 
 
@@ -68,4 +67,20 @@ def to_bool(a):
         return False
     else:
         return False
+
+
+def csv_to_floats(*args, **kw):
+    return csv_to_cast(float, *args, **kw)
+
+
+def csv_to_ints(*args, **kw):
+    return csv_to_cast(int, *args, **kw)
+
+
+def csv_to_cast(cast, a, delimiter=','):
+    return [cast(ai) for ai in a.split(delimiter)]
+
+
+def to_csv_str(iterable, delimiter=','):
+    return delimiter.join([str(v) for v in iterable])
 # ============= EOF =============================================

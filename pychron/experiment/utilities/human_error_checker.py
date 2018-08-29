@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traits.api import Bool
 
 # ============= standard library imports ========================
@@ -24,7 +25,6 @@ from pychron.core.ui.preference_binding import bind_preference
 from pychron.experiment.utilities.identifier import get_analysis_type
 from pychron.loggable import Loggable
 from pychron.pychron_constants import LINE_STR, SCRIPT_NAMES, NULL_STR
-import six
 
 
 class HumanErrorChecker(Loggable):
@@ -102,7 +102,7 @@ class HumanErrorChecker(Loggable):
 
     def report_errors(self, errdict):
 
-        msg = '\n'.join(['{} {}'.format(k, v) for k, v in six.iteritems(errdict)])
+        msg = '\n'.join(['{} {}'.format(k, v) for k, v in errdict.items()])
         self.warning_dialog(msg)
 
     def check_run(self, run, inform=True, test=False):

@@ -14,14 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
-
 import csv
 import os
 
-from six.moves import zip
+# ============= enthought library imports =======================
 from traits.api import Str, Instance, List, HasTraits, Bool, Button
 from traitsui.api import Item, UItem, VGroup, HGroup
 from traitsui.editors import DirectoryEditor, CheckListEditor, TableEditor
@@ -223,7 +219,8 @@ class FluxPersistNode(DVCPersistNode):
                        use_weighted_fit=po.use_weighted_fit,
                        monte_carlo_ntrials=po.monte_carlo_ntrials,
                        use_monte_carlo=po.use_monte_carlo,
-                       monitor_sample_name=po.monitor_sample_name)
+                       monitor_sample_name=po.monitor_sample_name,
+                       monitor_age=po.monitor_age)
 
         self.dvc.save_j(irp, options, decay_constants, add=False)
         # self.dvc.save_j(irp.irradiation, irp.level, irp.hole_id, irp.identifier,

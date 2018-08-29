@@ -14,21 +14,18 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
-
 # ============= standard library imports ========================
 import re
 
+# ============= enthought library imports =======================
 from enable.component_editor import ComponentEditor
-from six.moves import map
-from six.moves import range
 from traits.api import HasTraits, Instance, DelegatesTo, \
     Button, String
 from traitsui.api import View, UItem, HGroup, VGroup, Controller, Action, TabularEditor, EnumEditor
 from traitsui.tabular_adapter import TabularAdapter
 
 # ============= local library imports  ==========================
+from pychron.core.helpers.strtools import csv_to_ints
 from pychron.loading.loading_manager import LoadPosition
 
 POSITION_RANGE_REGEX = re.compile(r'^\d+(-\d+)*(,\d+(-\d+)*)*$')
@@ -67,7 +64,7 @@ class LoadViewSelectionModel(HasTraits):
             ss = []
             for r in new.split(','):
                 if '-' in r:
-                    s, e = list(map(int, r.split('-')))
+                    s, e = csv_to_ints(r, '-')
                     e += 1
                 else:
                     s = int(r)

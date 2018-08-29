@@ -16,21 +16,18 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from __future__ import absolute_import
-
 import datetime
 import os
 import time
+from operator import attrgetter
 
-import six
-from six.moves import map
-from six.moves import zip
 from uncertainties import ufloat, std_dev, nominal_value
 
 from pychron.core.helpers.binpack import unpack, format_blob
 from pychron.core.helpers.datetime_tools import make_timef
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.iterfuncs import partition
+from pychron.core.helpers.strtools import to_csv_str
 from pychron.dvc import dvc_dump, dvc_load, analysis_path, make_ref_list, get_spec_sha, get_masses, repository_path
 from pychron.experiment.utilities.environmentals import set_environmentals
 from pychron.experiment.utilities.identifier import make_aliquot_step, make_step
@@ -161,12 +158,11 @@ class DVCAnalysis(Analysis):
 
         pd = jd.get('positions')
         if pd:
-            ps = sorted(pd, key=lambda x: x['position'])
-            self.position = ','.join([str(pp['position']) for pp in ps])
-
-            self.xyz_position = ';'.join([','.join(map(str, (pp['x'], pp['y'], pp['z']))) for pp in ps if pp['x'] is
-                                          not None])
-
+            ps = sorted(pd, key=attrgetter('position'))
+            # self.position = ','.join([str(pp['position']) for pp in ps])
+            self.position = to_csv_str(ps)
+            self.xyz_position = to_csv_str(['{},{},{}'.format(pp['x'], pp['y'], pp['z'])
+                                            for pp in ps if pp['x'] is not None], delimiter=';')
         if not self.extract_units:
             self.extract_units = 'W'
 
@@ -410,7 +406,7 @@ class DVCAnalysis(Analysis):
             self.peak_center_data = unpack(pd['points'], jd['fmt'], decode=True)
 
             self.additional_peak_center_data = {k: unpack(pd['points'], jd['fmt'], decode=True)
-                                                for k, pd in six.iteritems(jd) if k not in (refdet, 'fmt',
+                                                for k, pd in jd.items() if k not in (refdet, 'fmt',
                                                                                             'reference_detector',
                                                                                             'reference_isotope')}
 

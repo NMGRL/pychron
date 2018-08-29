@@ -26,12 +26,13 @@ from traitsui.editors import TextEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
-from pychron.pychron_constants import NULL_STR
-from pychron.core.helpers.strtools import to_bool
+
+from pychron.core.helpers.strtools import to_bool, to_csv_str
 from pychron.core.pychron_traits import HostStr
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_preferences_helper import FavoritesPreferencesHelper
+from pychron.pychron_constants import NULL_STR
 
 
 # IPREGEX = re.compile(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$')
@@ -71,7 +72,7 @@ def show_databases(kind, host, user, password, schema_identifier='AnalysisTbl', 
             records = cur.fetchall()
         except pymssql.OperationalError:
             pass
-        
+
     names = [di[0] for di in records if di[0] not in exclude]
     return names
 
@@ -174,8 +175,12 @@ class ConnectionFavoriteItem(HasTraits):
                 self.names = names
 
     def to_string(self):
-        return ','.join([str(getattr(self, attr)) for attr in ('name', 'kind', 'username', 'host',
-                                                               'dbname', 'password', 'enabled', 'default', 'path')])
+        attrs = [getattr(self, attr) for attr in ('name', 'kind', 'username', 'host',
+                                                  'dbname', 'password', 'enabled', 'default', 'path')]
+        return to_csv_str(attrs)
+
+        # return ','.join([str(getattr(self, attr)) for attr in ('name', 'kind', 'username', 'host',
+        #                                                        'dbname', 'password', 'enabled', 'default', 'path')])
 
     def __repr__(self):
         return self.name

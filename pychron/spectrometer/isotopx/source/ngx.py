@@ -13,9 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from __future__ import absolute_import
+from pychron.core.helpers.strtools import csv_to_floats
 from pychron.spectrometer.isotopx.source.base import IsotopxSource
-from six.moves import map
 
 
 class NGXSource(IsotopxSource):
@@ -26,21 +25,21 @@ class NGXSource(IsotopxSource):
         resp = self.ask('GSO IE', verbose=True)
         actual = 0
         if ',' in resp:
-            setpoint, actual = list(map(float, resp.split(',')))
+            setpoint, actual = csv_to_floats(resp)
         return actual
 
     def read_trap_current(self):
         resp = self.ask('GSO TC')
         actual = 0
         if ',' in resp:
-            setpoint, actual = list(map(float, resp.split(',')))
+            setpoint, actual = csv_to_floats(resp)
         return actual
 
     def read_emission(self):
         resp = self.ask('GSO EC')
         actual = 0
         if ',' in resp:
-            setpoint, actual = list(map(float, resp.split(',')))
+            setpoint, actual = csv_to_floats(resp)
         return actual
         # return self.ask('GSO ')
 # ============= EOF =============================================

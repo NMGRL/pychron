@@ -24,13 +24,12 @@
 # ===============================================================================
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from __future__ import absolute_import
 import math
 import struct
+
 # ============= local library imports  ==========================
+from pychron.core.helpers.strtools import to_csv_str
 from pychron.hardware.ncd.ncd_device import NCDDevice
-from six.moves import map
-from six.moves import range
 
 
 class ProXRADCExpansion(NCDDevice):
@@ -81,7 +80,7 @@ class ProXRADC(NCDDevice):
         resp = self.ask(cmdstr, nchars=nbytes, verbose=False)
         vs = self._map_to_voltage(resp, nbits, nbytes)
         if verbose:
-            self.debug('bank={} nbits={} values={}'.format(bank, nbits, ','.join(map(str, vs))))
+            self.debug('bank={} nbits={} values={}'.format(bank, nbits, to_csv_str(vs)))
         return vs
 
     def read_channel(self, channel, nbits=8, verbose=True):

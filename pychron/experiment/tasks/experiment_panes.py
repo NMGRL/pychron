@@ -16,11 +16,11 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traits.api import Color, Instance, DelegatesTo, List, Any, Property, Button, Event
 from traitsui.api import View, Item, UItem, VGroup, HGroup, spring, \
-    Group, Spring, VFold, Label, InstanceEditor, \
-    VSplit, TabularEditor, UReadonly, ListEditor, Readonly
+    Group, Spring, VFold, Label, VSplit, TabularEditor, UReadonly, ListEditor, Readonly
 from traitsui.editors import TableEditor, EnumEditor
 from traitsui.table_column import ObjectColumn
 from traitsui.tabular_adapter import TabularAdapter
@@ -35,7 +35,7 @@ from pychron.experiment.utilities.identifier import SPECIAL_NAMES
 from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR, \
     NOT_EXECUTABLE_COLOR, SKIP_COLOR, SUCCESS_COLOR, CANCELED_COLOR, \
     TRUNCATED_COLOR, FAILED_COLOR, END_AFTER_COLOR, SPECIAL_IDENTIFIER
-import six
+
 
 # ===============================================================================
 # editing
@@ -451,7 +451,7 @@ class ExplanationPane(TraitsDockPane):
     end_after = Color(END_AFTER_COLOR)
 
     def set_colors(self, cd):
-        for k, v in six.iteritems(cd):
+        for k, v in cd.items():
             if hasattr(self, k):
                 setattr(self, k, v)
 

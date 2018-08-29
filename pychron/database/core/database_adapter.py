@@ -15,18 +15,12 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-
-from __future__ import absolute_import
-from __future__ import print_function
-
 import os
 import sys
 from datetime import datetime, timedelta
 from threading import Lock
 
 import six
-from six.moves import range
-from six.moves import zip
 from sqlalchemy import create_engine, distinct, MetaData
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, StatementError, \
     DBAPIError, OperationalError

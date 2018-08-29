@@ -14,17 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
-
 import os
 import re
 from datetime import timedelta, datetime
 
 import six.moves.cPickle as pickle
-from six.moves import filter
-from six.moves import map
+# ============= enthought library imports =======================
 from traits.api import List, Str, Bool, Any, Enum, Button, \
     Int, Property, cached_property, DelegatesTo, Date, Instance, HasTraits, Event, Float
 from traits.trait_types import BaseStr
@@ -747,7 +742,9 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         if comp == 'fuzzy':
             self.samples = fuzzyfinder(new, self.osamples, name)
         else:
-            self.samples = list(filter(filter_func(new, name, comp), self.osamples))
+            func = filter_func(new, name, comp)
+            self.samples = [s for s in self.osamples if func(s)]
+            # self.samples = list(filter(filter_func(new, name, comp), self.osamples))
 
     # property get/set
     def _set_low_post(self, v):
@@ -815,7 +812,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     def _get_analysis_include_types(self):
         if self.use_analysis_type_filtering:
             ats = self._analysis_include_types
-            return list(map(str.lower, ats))
+            return [a.lower() for a in ats]
 
     def _handle_source_change(self, new):
         self.activate_browser(force=True)

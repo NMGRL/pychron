@@ -318,7 +318,7 @@ class AutomatedRun(Loggable):
             iso.set_fit_blocks(fi)
             self.debug('set "{}" to "{}"'.format(k, fi))
 
-            idx = self._get_plot_id_by_ytitle(g, iso, k)
+            idx = self._get_plot_id_by_ytitle(g, k, iso)
             if idx is not None:
                 g.set_regressor(iso.regressor, idx)
 
@@ -495,11 +495,11 @@ class AutomatedRun(Loggable):
                 ii = a.isotopes[name]
                 if ii.detector != det:
                     name = '{}{}'.format(iso, det)
-                    ii = a.isotope_factory(name=name, detector=det)
+                    ii = a.isotope_factory(name=iso, detector=det)
             else:
                 ii = a.isotope_factory(name=name, detector=det)
 
-            pid = self._get_plot_id_by_ytitle(g, ii, det)
+            pid = self._get_plot_id_by_ytitle(g, name)
             if pid is None:
                 plot = self.plot_panel.new_isotope_plot()
                 pid = g.plots.index(plot)
@@ -2003,7 +2003,7 @@ anaylsis_type={}
     def _update_detectors(self):
         for det in self._active_detectors:
             self.isotope_group.set_isotope_detector(det)
-        # print 'aaaa',self.isotope_group.keys()
+
         for det in self._active_detectors:
             self.isotope_group.set_isotope_detector(det, add=True)
 
@@ -2025,8 +2025,9 @@ anaylsis_type={}
             change = ion.position(pos, detector, use_dac=use_dac, update_isotopes=update_isotopes)
 
         if update_labels:
-            from pychron.core.ui.gui import invoke_in_main_thread
-            invoke_in_main_thread(self._update_labels)
+            self._update_labels()
+            # from pychron.core.ui.gui import invoke_in_main_thread
+            # invoke_in_main_thread(self._update_labels)
 
         if update_detectors:
             self._update_detectors()
@@ -2044,6 +2045,7 @@ anaylsis_type={}
             def key2(v):
                 return v[1].detector
 
+            self.debug('per cleaned {}'.format(list(self.isotope_group.keys())))
             # for name, items in groupby(sorted(list(self.isotope_group.items()), key=key), key=key):
             for name, items in groupby_key(self.isotope_group.items(), key):
                 items = list(items)
@@ -2304,7 +2306,7 @@ anaylsis_type={}
         series = self.collector.series_idx
         for k, iso in self.isotope_group.items():
 
-            idx = self._get_plot_id_by_ytitle(graph, iso.name, k)
+            idx = self._get_plot_id_by_ytitle(graph, k, iso)
 
             if idx is not None:
                 try:
@@ -2320,9 +2322,16 @@ anaylsis_type={}
                                      add_inspector=False,
                                      add_tools=False)
 
-    def _get_plot_id_by_ytitle(self, graph, iso, k):
-        idx = graph.get_plotid_by_ytitle(k)
-        if idx is None:
+    def _get_plot_id_by_ytitle(self, graph, pair, iso=None):
+        """
+        pair is string in form <Iso><Det>, iso is just <Iso>
+        :param graph:
+        :param pair:
+        :param secondary:
+        :return:
+        """
+        idx = graph.get_plotid_by_ytitle(pair)
+        if idx is None and iso:
             if not isinstance(iso, str):
                 iso = iso.name
             idx = graph.get_plotid_by_ytitle(iso)
@@ -2352,8 +2361,8 @@ anaylsis_type={}
         graph.set_x_limits(min_=min_, max_=max_)
         regressing = grpname != 'sniff'
         series = self.collector.series_idx
-        for k, iso in self.isotope_group.iteritems():
-            idx = self._get_plot_id_by_ytitle(graph, iso.name, k)
+        for k, iso in self.isotope_group.items():
+            idx = self._get_plot_id_by_ytitle(graph, k, iso)
             if idx is not None:
                 try:
                     graph.series[idx][series]

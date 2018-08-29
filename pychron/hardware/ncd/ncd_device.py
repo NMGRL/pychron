@@ -24,9 +24,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from pychron.hardware.core.core_device import CoreDevice
-from six.moves import map
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -39,8 +37,6 @@ class NCDDevice(CoreDevice):
         return True
 
     def _make_cmdstr(self, *args):
-#        formatter = lambda x:'{:02X}'.format
-        formatter = lambda x:chr(x)
-        return ''.join(map(formatter, args))
+        return ''.join([chr(a) for a in args])
 
 # ============= EOF =============================================

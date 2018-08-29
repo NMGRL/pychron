@@ -14,13 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-from __future__ import absolute_import
+import six
+from traits.api import Bool
 from traitsui.editors import CheckListEditor as tCheckListEditor
 from traitsui.qt4.check_list_editor import CustomEditor, parse_value
-
-from traits.api import Bool
-import six
-from six.moves import range
 
 
 class _CheckListEditor(CustomEditor):

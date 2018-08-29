@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from __future__ import absolute_import
+
 import os
 import re
 
@@ -26,8 +26,6 @@ import yaml
 from pychron.file_defaults import IDENTIFIERS_DEFAULT
 from pychron.paths import paths
 from pychron.pychron_constants import LINE_STR, ALPHAS, SPECIAL_IDENTIFIER
-import six
-from six.moves import map
 
 IDENTIFIER_REGEX = re.compile(r'(?P<identifier>\d+)-(?P<aliquot>\d+)(?P<step>\w*)')
 SPECIAL_IDENTIFIER_REGEX = re.compile(r'(?P<identifier>\w{1,2}-[\d\w]+-\w{1})-(?P<aliquot>\d+)')
@@ -189,7 +187,7 @@ def get_analysis_type(idn):
         idn: str like 'a-...' or '43513'
     """
     idn = idn.lower()
-    for atype, tag in six.iteritems(SPECIAL_MAPPING):
+    for atype, tag in SPECIAL_MAPPING.items():
         if idn.startswith(tag):
             return atype
     else:
@@ -385,11 +383,10 @@ def pretty_extract_device(ident):
     if ident:
         args = ident.split('_')
         if args[-1] in ('uv, co2'):
-            n = ' '.join(map(str.capitalize, args[:-1]))
+            n = ' '.join([a.capitalize() for a in args[:-1]])
             n = '{} {}'.format(n, args[-1].upper())
         else:
-            n = ' '.join(map(str.capitalize, args))
-            # n=ident.replace(' ', '_')
+            n = ' '.join([a.capitalize() for a in args])
     return n
 
 # ============= EOF =============================================

@@ -21,7 +21,6 @@ from __future__ import print_function
 import os
 import pickle
 
-import six
 import yaml
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import String, Str, Property, Any, Float, Instance, Int, List, \
@@ -847,7 +846,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             defaults = yaml.load(rfile)
 
         # convert keys to lowercase
-        defaults = dict([(k.lower(), v) for k, v in six.iteritems(defaults)])
+        defaults = dict([(k.lower(), v) for k, v in defaults.items()])
         return defaults
 
     def _load_labnumber_meta(self, labnumber):

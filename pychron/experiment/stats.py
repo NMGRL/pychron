@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import time
 from datetime import datetime, timedelta
 
@@ -26,7 +27,6 @@ from pychron.core.ui.pie_clock import PieClockModel
 from pychron.experiment.duration_tracker import AutomatedRunDurationTracker
 from pychron.loggable import Loggable
 from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR, NULL_STR
-from six.moves import map
 
 
 class ExperimentStats(Loggable):
@@ -157,12 +157,13 @@ class ExperimentStats(Loggable):
 
             def convert_hexcolor_to_int(c):
                 c = c[1:]
-                func = lambda i: int(c[i:i + 2], 16)
-                return list(map(func, (0, 2, 4)))
+                # func = lambda i: int(c[i:i + 2], 16)
+                # return list(map(func, (0, 2, 4)))
+                return [int(c[i:i + 2], 16) for i in (0, 2, 4)]
 
-            ec, mc = list(map(convert_hexcolor_to_int,
-                         (EXTRACTION_COLOR, MEASUREMENT_COLOR)))
-
+            # ec, mc = list(map(convert_hexcolor_to_int,
+            #                   (EXTRACTION_COLOR, MEASUREMENT_COLOR)))
+            ec, mc = convert_hexcolor_to_int(EXTRACTION_COLOR), convert_hexcolor_to_int(MEASUREMENT_COLOR)
             self.clock.set_slices([extraction_slice, measurement_slice],
                                   [ec, mc])
             self.clock.start()

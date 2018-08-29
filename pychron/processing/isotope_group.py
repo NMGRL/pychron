@@ -16,11 +16,13 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import logging
 import os
-from six.moves.configparser import ConfigParser
 
 from numpy import append as npappend
+from six.moves import zip
+from six.moves.configparser import ConfigParser
 from traits.api import Property, Dict, Str
 from traits.has_traits import HasTraits
 from uncertainties import ufloat
@@ -28,8 +30,6 @@ from uncertainties import ufloat
 from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.paths import paths
 from pychron.processing.isotope import Isotope, Baseline
-import six
-from six.moves import zip
 
 logger = logging.getLogger('ISO')
 
@@ -297,21 +297,18 @@ class IsotopeGroup(HasTraits):
         #
         # name = '{}{}'.format(det.isotope, det.name)
 
-        # print 'name ={} detector={}'.format(name, det)
         if name in self.isotopes:
             iso = self.isotopes.pop(name)
             if add:
-                nn = '{}{}'.format(iso.name, iso.detector)
-                self.isotopes[nn] = iso
-                #
-                # # iso = self.isotopes[name]
-                # # if iso.detector != det:
-                # #     iso.detector = det
-                # #     # self.isotopes[name] = iso
-                # #
-                iso = Isotope(name, det)
-                name = '{}{}'.format(name, det)
-                self.isotopes[name] = iso
+                if iso.detector != det:
+                    nn = '{}{}'.format(iso.name, iso.detector)
+                    self.isotopes[nn] = iso
+
+                    iso = Isotope(name, det)
+                    name = '{}{}'.format(name, det)
+                    self.isotopes[name] = iso
+                else:
+                    self.isotopes[name] = iso
         else:
             iso = Isotope(name, det)
             self.isotopes[name] = iso
@@ -331,19 +328,27 @@ class IsotopeGroup(HasTraits):
             if iso.detector == det:
                 yield iso
 
+    def get_isotope_title(self, name, detector):
+        iso = self.isotopes[name]
+        title = name
+        if iso.detector != detector:
+            title = '{}{}'.format(name, detector)
+        return title
+
     def get_isotope(self, name=None, detector=None, kind=None):
         if name is None and detector is None:
             raise NotImplementedError('name or detector required')
 
-        # print('get istop, name={}  keys={}'.format(name, self.isotopes.keys()))
         iso = None
         if name:
             try:
                 iso = self.isotopes[name]
                 if detector:
                     if iso.detector != detector:
-                        return
-
+                        iso = next((i for i in self.isotopes.values()
+                                    if i.name == name and i.detector == detector), None)
+                        if not iso:
+                            return
             except KeyError:
                 if detector:
                     try:
@@ -369,7 +374,7 @@ class IsotopeGroup(HasTraits):
             niso = self.isotopes[iso]
 
         niso.set_uvalue(v)
-        for k, v in six.iteritems(kw):
+        for k, v in kw.items():
             setattr(niso, k, v)
         # niso.trait_set(**kw)
 

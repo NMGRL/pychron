@@ -16,16 +16,17 @@
 
 # =============enthought library imports=======================
 from __future__ import absolute_import
+
 from chaco.api import PlotGrid, BarPlot, ArrayDataSource, \
     DataRange1D, LinearMapper, add_default_axes
 
-# =============standard library imports ========================
-
 # =============local library imports  ==========================
 from pychron.graph.graph import container_factory
-from .regression_graph import RegressionGraph
 from pychron.graph.guide_overlay import GuideOverlay
-import six
+from .regression_graph import RegressionGraph
+
+
+# =============standard library imports ========================
 
 
 class ResidualsGraph(RegressionGraph):
@@ -42,7 +43,7 @@ class ResidualsGraph(RegressionGraph):
         """
         """
         kw = {'type': 'v', 'stack_order': 'top_to_bottom'}
-        for k, v in six.iteritems(self.container_dict):
+        for k, v in self.container_dict.items():
             kw[k] = v
         return container_factory(**kw)
 

@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import csv
 import os
 
@@ -25,6 +26,7 @@ from traits.trait_errors import TraitError
 from traitsui.api import View, UItem, HGroup, Item, spring, VGroup
 from traitsui.tabular_adapter import TabularAdapter
 
+from pychron.core.helpers.strtools import to_csv_str
 from pychron.core.ui.enum_editor import myEnumEditor
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
@@ -32,8 +34,6 @@ from pychron.experiment.utilities.save_dialog import IncrementalHeatTemplateSave
 from pychron.paths import paths
 from pychron.pychron_constants import alphas
 from pychron.viewable import Viewable
-from six.moves import map
-from six.moves import range
 
 
 # paths.build('_experiment')
@@ -115,7 +115,7 @@ class BaseIncrementalHeatStep(HasTraits):
         return d
 
     def to_string(self):
-        return ','.join(map(str, self.make_row()))
+        return to_csv_str(self.make_row())
 
     @property
     def is_valid(self):

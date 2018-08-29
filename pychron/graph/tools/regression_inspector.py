@@ -15,16 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from pychron.core.helpers.formatting import floatfmt, format_percent_error
-from pychron.core.regression.mean_regressor import MeanRegressor
-from pychron.graph.tools.info_inspector import InfoInspector, InfoOverlay
-from six.moves import map
-import six
-
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.formatting import floatfmt, format_percent_error
+from pychron.graph.tools.info_inspector import InfoInspector, InfoOverlay
 
 
 class RegressionInspectorTool(InfoInspector):

@@ -14,13 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
+import six
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus.paragraph import Paragraph
+# ============= enthought library imports =======================
 from traits.api import HasTraits, List, Int, Str, Any, Either, Callable
-import six
-from six.moves import range
 
 # ============= local library imports  ==========================
 

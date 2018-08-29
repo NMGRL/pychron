@@ -14,22 +14,22 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
-from traits.api import Dict
 # ============= standard library imports ========================
-from numpy.random import random
 import os
+
+# ============= enthought library imports =======================
+from traits.api import Dict
+
 # ============= local library imports  ==========================
+from pychron.core.helpers.strtools import to_csv_str
 from pychron.loggable import Loggable
 from pychron.paths import paths
-from six.moves import map
 
 
 def write_txt_file(p, out):
     with open(p, 'w') as wfile:
         for line in out:
-            wfile.write('{}\n'.format(','.join(map(str, line))))
+            wfile.write('{}\n'.format(to_csv_str(line)))
 
 
 class AutomatedRunDurationTracker(Loggable):

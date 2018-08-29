@@ -14,22 +14,20 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
 import os
 import time
 from threading import Thread
 
 from numpy import array, hstack, average
+# ============= enthought library imports =======================
 from traits.api import Instance, HasTraits, Str, Bool, Float
 
 from pychron.core.helpers.filetools import pathtolist
+from pychron.core.helpers.strtools import csv_to_floats
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.view_util import open_view
 from pychron.lasers.stage_managers.stage_visualizer import StageVisualizer
 from pychron.stage.calibration.calibrator import TrayCalibrator
-from six.moves import map
-from six.moves import range
 
 
 class Result(HasTraits):
@@ -346,7 +344,7 @@ class AutoCalibrator(SemiAutoCalibrator):
         if os.path.isfile(path):
             try:
                 guess = pathtolist(path)
-                return list(map(float, guess[0].split(',')))
+                return csv_to_floats(guess[0])
             except BaseException as e:
                 self.debug('Failed parsing center guess file {}. error={}'.format(path, e))
 

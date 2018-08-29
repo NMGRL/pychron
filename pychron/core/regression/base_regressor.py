@@ -16,15 +16,11 @@
 
 # ============= enthought library imports =======================
 
-from __future__ import absolute_import
-
 import logging
 import math
 import re
 
 from numpy import where, delete, polyfit
-from six.moves import range
-from six.moves import zip
 from traits.api import Array, List, Event, Property, Any, \
     Dict, Str, Bool, cached_property, HasTraits
 
