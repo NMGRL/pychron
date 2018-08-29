@@ -33,6 +33,7 @@ from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.graph.contour_graph import ContourGraph
 from pychron.graph.error_bar_overlay import ErrorBarOverlay
 from pychron.graph.error_envelope_overlay import ErrorEnvelopeOverlay
+from pychron.graph.explicit_legend import ExplicitLegend
 from pychron.graph.graph import Graph
 from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
 from pychron.pipeline.editors.irradiation_tray_overlay import IrradiationTrayOverlay
@@ -528,6 +529,14 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             self.suppress_metadata_change = True
             iscatter.index.metadata['selections'] = sel
             self.suppress_metadata_change = False
+
+            # add a legend
+            legend = ExplicitLegend(plots=self.graph.plots[0].plots,
+                                    labels=[('plot1', 'Individual'),
+                                            ('plot2', 'Mean'),
+                                            ('plot0', 'Fit'),
+                                            ('Unknowns-predicted0', 'Unk. Predicted')])
+            p.overlays.append(legend)
 
         else:
             plot = g.plots[0]
