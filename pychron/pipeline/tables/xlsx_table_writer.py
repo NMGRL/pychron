@@ -33,7 +33,7 @@ from pychron.pipeline.tables.util import iso_value, icf_value, icf_error, correc
     subreg, interpolate_noteline, value
 from pychron.pipeline.tables.xlsx_table_options import XLSXAnalysisTableWriterOptions
 from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
-from pychron.pychron_constants import PLUSMINUS_NSIGMA, NULL_STR, DESCENDING
+from pychron.pychron_constants import PLUSMINUS_NSIGMA, NULL_STR, DESCENDING, PLUSMINUS
 
 
 def format_mswd(t):
@@ -928,6 +928,19 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             sh.write_number(self._current_row, idx, nominal_value(iage), nfmt)
             sh.write_number(self._current_row, idx + 1, std_dev(iage) * nsigma, nfmt)
 
+            mt = group.isochron_mswd()
+            try:
+                trapped = 1/group.isochron_4036
+                trapped_value, trapped_error = nominal_value(trapped), std_dev(trapped)
+            except ZeroDivisionError:
+                trapped_value, trapped_error = 'NaN', 'NaN'
+
+            sh.write_rich_string(self._current_row, idx + 3, format_mswd(mt), fmt)
+            sh.write_rich_string(self._current_row, idx + 4,
+                                 '(', self._superscript, '40',
+                                 'Ar/',
+                                 self._superscript, '36', 'Ar', ')', self._subscript, 'trapped',
+                                 '={:0.3f}{}{:0.3f}'.format(trapped_value, PLUSMINUS, trapped_error), fmt)
             self._current_row += 1
 
     def _make_notes(self, groups, sh, ncols, name):
