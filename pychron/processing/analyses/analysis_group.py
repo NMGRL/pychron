@@ -92,6 +92,7 @@ class AnalysisGroup(IdeogramPlotable):
 
     arar_constants = AGProperty()
     production_ratios = AGProperty()
+    monitor_info = AGProperty()
 
     isochron_4036 = None
     isochron_regressor = None
@@ -99,6 +100,7 @@ class AnalysisGroup(IdeogramPlotable):
 
     def __init__(self, *args, **kw):
         super(AnalysisGroup, self).__init__(make_arar_constants=False, *args, **kw)
+
 
     @property
     def nratio(self):
@@ -202,6 +204,11 @@ class AnalysisGroup(IdeogramPlotable):
 
     def _set_aliquot(self, a):
         self._aliquot = a
+
+    @cached_property
+    def _get_monitor_info(self):
+        a = self.analyses[0]
+        return a.monitor_age, a.monitor_reference
 
     @cached_property
     def _get_identifier(self):

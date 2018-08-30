@@ -482,7 +482,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             self._current_row += 1
             ug.set_temporary_age_units(None)
 
-        self._make_notes(sh, len(cols), 'summary')
+        self._make_notes(None, sh, len(cols), 'summary')
 
     def _sort_groups(self, groups):
         # def group_age(group):
@@ -598,7 +598,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             self._current_row += 1
             group.set_temporary_age_units(None)
 
-        self._make_notes(worksheet, len(cols), name)
+        self._make_notes(groups, worksheet, len(cols), name)
         self._current_row = 1
 
         for i, c in enumerate(cols):
@@ -930,7 +930,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
             self._current_row += 1
 
-    def _make_notes(self, sh, ncols, name):
+    def _make_notes(self, groups, sh, ncols, name):
         top = self._workbook.add_format({'top': 1})
         sh.write_rich_string(self._current_row, 0, self._bold, 'Notes:', top)
         for i in range(1, ncols):
@@ -938,12 +938,12 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         self._current_row += 1
 
         func = getattr(self, '_make_{}_notes'.format(name.lower()))
-        func(sh)
+        func(groups, sh)
 
         for i in range(0, ncols):
             sh.write_blank(self._current_row, i, 'Notes:', cell_format=top)
 
-    def _make_summary_notes(self, sh):
+    def _make_summary_notes(self, groups, sh):
         notes = six.text_type(self._options.summary_notes)
         self._write_notes(sh, notes)
         # sh.write(self._current_row, 0, 'Plateau Criteria:')
@@ -959,9 +959,16 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         #                                                                    self.fixed_step_high))
         #     self._current_row += 1
 
-    def _make_unknowns_notes(self, sh):
-        monitor_age = 28.201
-        decay_ref = u'Steiger and J\u00E4ger (1977)'
+    def _make_unknowns_notes(self, groups, sh):
+
+        g = groups[0]
+        monitor_age, decay_ref = g.monitor_info
+
+        if monitor_age is None:
+            monitor_age = '<PLACEHOLDER'
+        if decay_ref is None:
+            decay_ref = '<PLACEHOLDER>'
+
         opt = self._options
         notes = opt.unknown_notes
 
