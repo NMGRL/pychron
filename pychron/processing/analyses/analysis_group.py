@@ -484,6 +484,13 @@ class AnalysisGroup(IdeogramPlotable):
 
         return ret
 
+    def isochron_mswd(self):
+        if not self.isochron_4036:
+            self.calculate_isochron_age()
+        reg = self.isochron_regressor
+
+        return reg.mswd, reg.valid_mswd, reg.n
+
 
 class StepHeatAnalysisGroup(AnalysisGroup):
     plateau_age = AGProperty()
