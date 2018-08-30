@@ -213,7 +213,6 @@ class ArArAge(IsotopeGroup):
         if verbose:
             self.debug('temp blank {}({:0.4f}+/-{:0.4f}) fit={}'.format(k, v, e, f))
 
-        # tol = 1e-10
         if k in self.isotopes:
             iso = self.isotopes[k]
             tb = iso.temporary_blank
@@ -221,18 +220,6 @@ class ArArAge(IsotopeGroup):
                 iso.temporary_blank = tb = Blank(iso.name, iso.detector)
 
             tb.value, tb.error, tb.fit = v, e, f
-
-            # if iso.temporary_blank is not None:
-            #     tb = iso.temporary_blank
-            #     # if abs(tb.value - v) < tol and abs(tb.error - e) < tol:
-            #     #     return
-            #     # else:
-            #     tb.value, tb.error, tb.fit = v, e, f
-            # else:
-            #     iso.temporary_blank = b = Blank(k, iso.detector)
-            #     b.value = v
-            #     b.error = e
-            #     b.fit = f
 
     def set_j(self, s, e):
         self.j = ufloat(s, std_dev=e, tag='J')

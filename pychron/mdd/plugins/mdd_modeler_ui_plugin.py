@@ -16,11 +16,13 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import  on_trait_change
-# ============= standard library imports ========================
 
 # ============= local library imports  ==========================
 from pychron.envisage.core.core_ui_plugin import CoreUIPlugin
+from traits.api import on_trait_change
+
+
+# ============= standard library imports ========================
 
 class MDDModelerUIPlugin(CoreUIPlugin):
     '''

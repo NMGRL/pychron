@@ -16,13 +16,16 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import HasTraits, String
-from traitsui.api import View, Item
 
 # ============= standard library imports ========================
 import os
+
+from traits.api import HasTraits, String
+from traitsui.api import View, Item
+
 # ============= local library imports  ==========================
-from pychron.modeling.model_data_directory import ModelDataDirectory
+from pychron.mdd.model_data_directory import ModelDataDirectory
+
 
 # ============= views ===================================
 class SummaryView(HasTraits):

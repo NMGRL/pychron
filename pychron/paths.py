@@ -450,6 +450,8 @@ class Paths(object):
         # ==============================================================================
         # lovera exectuables
         # ==============================================================================
+        self.clovera_root = join(root, 'lovera', 'bin')
+        self.clovera_root = '/Users/ross/Programming/github/pychron3/resources/lovera/bin'
         # self.clovera_root = join(pychron_src_root, 'pychron', 'modeling', 'lovera', 'bin')
         # =======================================================================
         # files

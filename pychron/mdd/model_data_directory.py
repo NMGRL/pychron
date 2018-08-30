@@ -19,12 +19,16 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
-from traits.api import HasTraits, Bool, List, \
- Property, Str, Any, Color
-from traitsui.api import View, Item
+
 # ============= standard library imports ========================
 import os
+
 import six
+from traits.api import HasTraits, Bool, List, \
+    Property, Str, Any, Color
+from traitsui.api import View, Item
+
+
 # ============= local library imports  ==========================
 
 # ============= views ===================================

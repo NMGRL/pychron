@@ -16,15 +16,18 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
+from apptools.preferences.preference_binding import bind_preference
+from pychron.envisage.core.envisage_editor import EnvisageEditor
+from pychron.envisage.core.envisage_manager import EnvisageManager
 from traits.api import Instance, DelegatesTo, List, Property
 from traitsui.api import View, Item
+
 # ============= standard library imports ========================
 # import os
 # ============= local library imports  ==========================
 from .modeler import Modeler
-from pychron.envisage.core.envisage_manager import EnvisageManager
-from pychron.envisage.core.envisage_editor import EnvisageEditor
-from apptools.preferences.preference_binding import bind_preference
+
 
 class MEditor(EnvisageEditor):
     '''

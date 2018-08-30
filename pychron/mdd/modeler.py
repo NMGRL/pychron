@@ -17,35 +17,38 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
-from pyface.api import FileDialog, OK
-from pyface.directory_dialog import DirectoryDialog
-from traits.api import  Any, Instance, Str, \
-    Directory, List, on_trait_change, Property, Enum, Int, Button
-from traitsui.api import View, Item, VSplit, TableEditor, EnumEditor, HGroup, VGroup
-from traitsui.extras.checkbox_column import CheckboxColumn
-from traitsui.table_column import ObjectColumn
 
 # from enthought.pyface.timer import do_later
 # from traitsui.menu import Action, Menu, MenuBar
 # import apptools.sweet_pickle as pickle
 # ============= standard library imports ========================
 import os
-from six.moves.queue import Queue
-from threading import Thread
-import time
 import sys
-# ============= local library imports  ==========================
-from pychron.paths import paths
-# from pychron.core.helpers.paths import LOVERA_PATH
-from pychron.graph.diffusion_graph import DiffusionGraph  # , GROUPNAMES
-from pychron.loggable import Loggable
-from pychron.modeling.data_loader import DataLoader
-from pychron.modeling.model_data_directory import ModelDataDirectory
-from pychron.core.helpers.color_generators import paired_colorname_generator
-from pychron.modeling.fortran_process import FortranProcess
-from pychron.graph.diffusion_graph import GROUPNAMES
+import time
+from threading import Thread
+
+from pyface.api import FileDialog, OK
+from pyface.directory_dialog import DirectoryDialog
 from six.moves import range
 from six.moves import zip
+from six.moves.queue import Queue
+from traits.api import Any, Instance, Str, \
+    Directory, List, on_trait_change, Property, Enum, Int, Button
+from traitsui.api import View, Item, VSplit, TableEditor, EnumEditor, HGroup, VGroup
+from traitsui.extras.checkbox_column import CheckboxColumn
+from traitsui.table_column import ObjectColumn
+
+from pychron.core.helpers.color_generators import paired_colorname_generator
+# from pychron.core.helpers.paths import LOVERA_PATH
+from pychron.graph.diffusion_graph import DiffusionGraph  # , GROUPNAMES
+from pychron.graph.diffusion_graph import GROUPNAMES
+from pychron.loggable import Loggable
+from pychron.mdd.data_loader import DataLoader
+from pychron.mdd.fortran_process import FortranProcess
+from pychron.mdd.model_data_directory import ModelDataDirectory
+# ============= local library imports  ==========================
+from pychron.paths import paths
+
 
 class DummyDirectoryDialog(object):
     path = os.path.join(paths.modeling_data_dir, '59702-43')

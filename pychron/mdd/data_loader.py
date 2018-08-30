@@ -19,17 +19,19 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
-from traits.api import Str
 
+import csv
 # ============= standard library imports ========================
 import os
-import csv
+
 from numpy import array, loadtxt
-# ============= local library imports  ==========================
-from pychron.loggable import Loggable
 from six.moves import map
 from six.moves import range
 from six.moves import zip
+from traits.api import Str
+
+# ============= local library imports  ==========================
+from pychron.loggable import Loggable
 
 TAB = chr(9)
 # labtable = {"temp":21, "time":27, "39Armol":34, "er39Ar":35, "Age":109, "erAge":110, "terAge":21, "SenseMol":26} # autoupdate column numbers for each header of interest
