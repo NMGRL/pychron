@@ -37,6 +37,13 @@ def calc_limits(ys, ye, n):
     return ymi, yma
 
 
+def unzip_data(data):
+    try:
+        return array([nominal_value(ri) for ri in data]), array([std_dev(ri) for ri in data])
+    except ValueError as e:
+        print(e)
+
+
 class ReferencesSeries(BaseSeries):
     references = List
     sorted_references = Property(depends_on='references')
@@ -54,11 +61,9 @@ class ReferencesSeries(BaseSeries):
         p_uys = reg.predict(xs)
         p_ues = reg.predict_error(xs)
 
-        # if any(map(isnan, p_ues)) or any(map(isinf, p_ues)):
         if any(isnan(p_ues)) or any(isinf(p_ues)):
             p_ues = zeros_like(p_ues)
 
-        # if any(map(isnan, p_uys)) or any(map(isinf, p_uys)):
         if any(isnan(p_uys)) or any(isinf(p_uys)):
             p_uys = zeros_like(p_uys)
 
@@ -84,10 +89,10 @@ class ReferencesSeries(BaseSeries):
             self.xpad = '0.1'
 
             legend = ExplicitLegend(plots=self.graph.plots[0].plots,
-                                     labels=[('plot1', 'Reference'),
-                                             ('data0', 'Reference'),
-                                             ('plot0', 'Unk. Current'),
-                                             ('Unknowns-predicted0', 'Unk. Predicted')])
+                                    labels=[('plot1', 'Reference'),
+                                            ('data0', 'Reference'),
+                                            ('plot0', 'Unk. Current'),
+                                            ('Unknowns-predicted0', 'Unk. Predicted')])
             self.graph.plots[-1].overlays.append(legend)
 
     # private
@@ -117,7 +122,6 @@ class ReferencesSeries(BaseSeries):
             reg, a, b = args
             ymi = min(ymi, a)
             yma = max(yma, b)
-            # print 'asdfa', reg
             if reg:
                 a, b = self._plot_interpolated(pid, po, reg)
                 ymi = min(ymi, a)
@@ -131,17 +135,6 @@ class ReferencesSeries(BaseSeries):
         mi = min(self.sorted_references[0].timestamp, self.sorted_analyses[0].timestamp)
         ma = max(self.sorted_references[-1].timestamp, self.sorted_analyses[-1].timestamp)
         return mi, ma
-
-    # def _get_reference_values(self, name):
-    #     ys = self._get_references_ve(name)
-    #     return array(map(nominal_value, ys))
-    #
-    # def _get_reference_errors(self, name):
-    #     ys = self._get_references_ve(name)
-    #     return array(map(std_dev, ys))
-
-    # def _get_references_ve(self, name):
-    #     raise NotImplementedError
 
     def _get_sorted_references(self):
         return sorted(self.references,
@@ -159,22 +152,16 @@ class ReferencesSeries(BaseSeries):
             scatter._layout_needed = True
 
     def reference_data(self, po):
-        return self._get_data(self._get_reference_data(po))
+        return unzip_data(self._get_reference_data(po))
 
     def current_data(self, po):
-        return self._get_data(self._get_current_data(po))
-
-    def _get_data(self, data):
-        try:
-            return array([nominal_value(ri) for ri in data]), array([std_dev(ri) for ri in data])
-        except ValueError as e:
-            print(e)
+        return unzip_data(self._get_current_data(po))
 
     def _get_current_data(self, po):
         return self._unpack_attr(po.name)
 
     def _get_reference_data(self, po):
-        pass
+        raise NotImplementedError
 
     # plotting
     def _plot_unknowns_current(self, pid, po):
@@ -187,26 +174,16 @@ class ReferencesSeries(BaseSeries):
             ys, ye = self.current_data(po)
             ymi, yma = self._calc_limits(ys, ye)
 
-            kw = dict(y=ys, yerror=ye, type='scatter')
-
-            args = graph.new_series(x=self.xs,
-                                    display_index=ArrayDataSource(data=n),
-                                    fit=False,
-                                    # fit=po.fit,
-                                    plotid=pid,
-                                    # type='scatter',
-                                    add_tools=False,
-                                    add_inspector=False,
-                                    marker=po.marker,
-                                    marker_size=po.marker_size, **kw)
-            if len(args) == 2:
-                scatter, p = args
-            else:
-                p, scatter, l = args
-
-            # sel = scatter.index.metadata.get('selections', [])
-            # sel += omits
-            # scatter.index.metadata['selections'] = list(set(sel))
+            scatter, plot = graph.new_series(x=self.xs,
+                                             y=ys, yerror=ye, type='scatter',
+                                             display_index=ArrayDataSource(data=n),
+                                             fit=False,
+                                             plotid=pid,
+                                             bind_id=-2,
+                                             add_tools=False,
+                                             add_inspector=False,
+                                             marker=po.marker,
+                                             marker_size=po.marker_size)
 
             def af(i, x, y, analysis):
                 v, e = self._get_interpolated_value(po, analysis)
@@ -270,7 +247,9 @@ class ReferencesSeries(BaseSeries):
             update_meta_func = None
             if efit in ['preceding', 'bracketing interpolate', 'bracketing average']:
                 reg = InterpolationRegressor(xs=r_xs, ys=r_ys, yserr=r_es, kind=efit)
-                scatter, _p = graph.new_series(r_xs, r_ys, yerror=r_es, type='scatter', fit=False, **kw)
+                kw['add_tools'] = False
+                scatter, _p = graph.new_series(r_xs, r_ys, yerror=r_es, type='scatter', fit=False,
+                                               **kw)
 
                 def update_meta_func(obj, b, c, d):
                     self.update_interpolation_regressor(po.name, reg, obj)
@@ -283,6 +262,7 @@ class ReferencesSeries(BaseSeries):
                 _, scatter, l = graph.new_series(r_xs, r_ys,
                                                  yerror=ArrayDataSource(data=r_es),
                                                  fit=ffit,
+                                                 bind_id=1,
                                                  **kw)
                 if hasattr(l, 'regressor'):
                     reg = l.regressor

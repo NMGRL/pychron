@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+
 from pychron.graph.regression_graph import RegressionGraph
 from pychron.graph.stacked_graph import StackedGraph
 
@@ -6,7 +7,18 @@ __author__ = 'ross'
 
 
 class StackedRegressionGraph(RegressionGraph, StackedGraph):
-    pass
+    def new_series(self, *args, **kw):
+        ret = super(StackedRegressionGraph, self).new_series(*args, **kw)
+        if len(ret) == 3:
+            plot, scatter, line = ret
+        else:
+            scatter, plot = ret
+
+        if self.bind_index:
+            bind_id = kw.get('bind_id')
+            if bind_id:
+                self._bind_index(scatter, bind_id)
+        return ret
 
 
 if __name__ == '__main__':
@@ -16,6 +28,7 @@ if __name__ == '__main__':
     # rg.new_plot()
     from numpy.random import RandomState
     from numpy import linspace
+
     n = 50
     x = linspace(0, 10, n)
 
@@ -38,7 +51,7 @@ if __name__ == '__main__':
 
     fod = {'filter_outliers': False, 'iterations': 1, 'std_devs': 2}
     rg.new_series(x, y,
-                  #yerror=random.rand(n)*5,
+                  # yerror=random.rand(n)*5,
                   fit='linear_SD',
                   # truncate='x<1',
                   filter_outliers_dict=fod)
@@ -50,7 +63,7 @@ if __name__ == '__main__':
     #               filter_outliers_dict=fod, plotid=1)
     # fod = {'filter_outliers': True, 'iterations': 1, 'std_devs': 2}
     rg.new_series(x, y2,
-                  #yerror=random.rand(n)*5,
+                  # yerror=random.rand(n)*5,
                   fit='average_SD',
                   # truncate='x<1',
                   filter_outliers_dict=fod, plotid=1)

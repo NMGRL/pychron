@@ -107,9 +107,7 @@ class BaseTasksApplication(TasksApplication, Loggable):
 
     def get_task(self, tid, activate=True):
         for win in self.windows:
-            print('wer', win.active_task)
             if win.active_task:
-                print('fff', win.active_task.id)
                 if win.active_task.id == tid:
                     if activate and win.control:
                         win.activate()
