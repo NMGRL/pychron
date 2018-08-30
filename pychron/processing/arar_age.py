@@ -46,6 +46,8 @@ class ArArAge(IsotopeGroup):
     irradiation_position = None
     irradiation_time = 0
     production_name = None
+    monitor_age = None
+    monitor_reference = None
 
     chron_segments = None
     chron_dosages = None

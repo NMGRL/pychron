@@ -1474,7 +1474,7 @@ class DVC(Loggable):
                     if lk:
                         a.arar_constants.lambda_k = lk
 
-                    for attr in ('age', 'name', 'material'):
+                    for attr in ('age', 'name', 'material', 'reference'):
                         skey = 'monitor_{}'.format(attr)
                         try:
                             setattr(a, skey, fd[skey])
