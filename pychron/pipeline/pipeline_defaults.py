@@ -311,4 +311,11 @@ nodes:
   - klass: UnknownNode
   - klass: MassSpecReducedNode
 """
+
+# ============= MDD =============================================
+FILES = """
+required:
+nodes:
+  - klass: FilesNode
+"""
 # ============= EOF =============================================

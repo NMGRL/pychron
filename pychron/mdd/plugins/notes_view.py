@@ -16,29 +16,53 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import HasTraits, Instance
-from traitsui.api import View, Item
+
 # ============= standard library imports ========================
+import os
+
+from traits.api import HasTraits, Button, String
+from traitsui.api import View, Item, HGroup, spring
+
+from pychron.mdd.model_data_directory import ModelDataDirectory
+
 
 # ============= local library imports  ==========================
-from pychron.modeling.model_data_directory import ModelDataDirectory
 
 # ============= views ===================================
-class InfoView(HasTraits):
-    data_directory = Instance(ModelDataDirectory)
-
+class NotesView(HasTraits):
+    notes = String('')
+    save = Button()
     def selected_update(self, obj, name, old, new):
         if not isinstance(new, ModelDataDirectory):
             try:
                 new = new[0]
             except (IndexError, TypeError):
                 return
-        self.data_directory = new
+        try:
+            if os.path.isdir(new.path):
+#
+                p = os.path.join(new.path, 'notes.txt')
+                if os.path.isfile(p):
+                    with open(p, 'r') as f:
+                        self.notes = f.read()
+                        self.path = p
+                else:
+                    self.path = p
+                    self.notes = ''
+        except AttributeError:
+            pass
+
+
+    def _save_fired(self):
+        if self.path is not None:
+            with open(self.path, 'w') as f:
+                f.write(self.notes)
 
     def traits_view(self):
         v = View(
-               Item('data_directory',
+               Item('notes',
                      style='custom',
                      show_label=False),
+                 HGroup(spring, Item('save', show_label=False))
                  )
         return v

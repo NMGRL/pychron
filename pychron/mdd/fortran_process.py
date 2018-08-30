@@ -17,18 +17,22 @@
 # =============enthought library imports=======================
 from __future__ import absolute_import
 from __future__ import print_function
-from traits.api import  Str
-# from pyface.timer.do_later import do_later
-from pyface.message_dialog import warning
-# ============= standard library imports ========================
-from threading import Thread
-import subprocess
+
 import os
+import subprocess
 import sys
 import time
+# ============= standard library imports ========================
+from threading import Thread
+
+# from pyface.timer.do_later import do_later
+from pyface.message_dialog import warning
+from traits.api import Str
 
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
+
+
 # from pychron.progress_dialog import myProgressDialog
 
 class FortranProcess(Loggable):

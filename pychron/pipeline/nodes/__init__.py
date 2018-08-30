@@ -39,6 +39,7 @@ from pychron.pipeline.nodes.group_age import GroupAgeNode
 from pychron.pipeline.nodes.grouping import GroupingNode, GraphGroupingNode, SubGroupingNode
 from pychron.pipeline.nodes.ia import SetInterpretedAgeNode
 from pychron.pipeline.nodes.mass_spec_reduced import MassSpecReducedNode
+from pychron.pipeline.nodes.mdd import FilesNode
 from pychron.pipeline.nodes.ml import MLDataNode, MLRegressionNode
 from pychron.pipeline.nodes.persist import DVCPersistNode, PDFFigureNode, \
     BlanksPersistNode, IsotopeEvolutionPersistNode, ICFactorPersistNode, FluxPersistNode, XLSXAnalysisTablePersistNode, \

@@ -16,13 +16,15 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import Int, Enum, Directory
-from traitsui.api import View, Item, VGroup, Group, Label
-# ============= standard library imports ========================
 
 # ============= local library imports  ==========================
 # from pychron.managers.plugins.manager_preferences_page import ManagerPreferencesPage
 from apptools.preferences.ui.preferences_page import PreferencesPage
+from traits.api import Int, Enum, Directory
+from traitsui.api import View, Item, VGroup, Group, Label
+
+
+# ============= standard library imports ========================
 
 class MDDPreferencesPage(PreferencesPage):
     '''

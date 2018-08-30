@@ -1,11 +1,11 @@
 # ===============================================================================
-# Copyright 2012 Jake Ross
+# Copyright 2018 ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,25 +14,5 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from traitsui.api import Item, ListEditor, InstanceEditor, View
 
-
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-
-
-def instance_item(name, **kw):
-    return Item(name, style='custom', show_label=False, **kw)
-
-
-def listeditor(name, **kw):
-    return Item(name,
-                show_label=False,
-                editor=ListEditor(mutable=False, style='custom', editor=InstanceEditor()),
-                **kw)
-
-
-def okcancel_view(*args, **kw):
-    return View(buttons=['OK', 'Cancel'], *args, **kw)
 # ============= EOF =============================================
