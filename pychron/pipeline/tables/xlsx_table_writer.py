@@ -585,7 +585,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                     label = pv.computed_kind.lower()
                     is_plateau_step = None
                     if label == 'plateau':
-                        is_plateau_step = a.get_is_plateau_step(j)
+                        is_plateau_step = group.get_is_plateau_step(j)
                     self._make_analysis(worksheet, cols, a, is_last=j == n - 1, is_plateau_step=is_plateau_step)
 
             if nsubgroups == 1 and isinstance(a, InterpretedAgeGroup):
