@@ -901,7 +901,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         mt = group.get_preferred_mswd_tuple()
         sh.write_rich_string(self._current_row, idx + 3, format_mswd(mt), fmt)
 
-        if label == 'Plateau':
+        if age.computed_kind == 'Plateau':
             if self._options.include_plateau_age and hasattr(group, 'plateau_age'):
                 sh.write(self._current_row, idx + 4, 'steps {}'.format(group.plateau_steps_str), fmt)
 

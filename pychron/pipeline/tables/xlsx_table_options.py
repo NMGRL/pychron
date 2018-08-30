@@ -151,6 +151,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
     individual_age_sorting = dumpable(Enum(*AGE_SORT_KEYS))
 
     _persistence_name = 'xlsx_table_options'
+
     # include_j_error_in_individual_analyses = dumpable(Bool(False))
     # include_j_error_in_mean = dumpable(Bool(True))
     # _suppress = False
@@ -305,17 +306,18 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
         arar_col_grp = VGroup(Item('include_F', label='40Ar*/39ArK'),
                               Item('include_percent_ar39', label='Cumulative %39Ar'),
                               Item('include_radiogenic_yield', label='%40Ar*'),
-                              Item('include_kca', label='K/Ca'),
                               # Item('use_weighted_kca', label='K/Ca Weighted Mean'),
                               # Item('kca_error_kind', label='K/Ca Error'),
                               Item('include_sensitivity', label='Sensitivity'),
                               Item('include_k2o', label='K2O wt. %'),
                               Item('include_production_ratios', label='Production Ratios'),
-                              Item('include_plateau_age', label='Plateau'),
-                              Item('include_integrated_age', label='Integrated'),
-                              Item('include_isochron_age', label='Isochron'),
                               Item('include_isochron_ratios', label='Isochron Ratios'),
                               Item('include_time_delta', label='Time since Irradiation'),
+                              VGroup(Item('include_kca', label='Integrated K/Ca'),
+                                     Item('include_plateau_age', label='Plateau Age'),
+                                     Item('include_integrated_age', label='Total Integrated Age'),
+                                     Item('include_isochron_age', label='Isochron Age'),
+                                     label='Summary Rows'),
                               label='Ar/Ar')
 
         general_col_grp = VGroup(Item('include_rundate', label='Analysis RunDate'),
