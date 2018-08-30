@@ -239,12 +239,10 @@ class SampleBrowserModel(BrowserModel):
         try:
             ans = self.analysis_table.get_analysis_set(new)
             ans = self.db.get_analyses_uuid([a[0] for a in ans])
-            for a in (ans[0], ans[-1]):
-                print('a', a.record_id, a.timestampf)
             xx = self._make_records(ans)
 
-            for a in (xx[0], xx[-1]):
-                print('ab', a.record_id, a.timestampf)
+            # for a in (xx[0], xx[-1]):
+            #     print('ab', a.record_id, a.timestampf)
 
             self.analysis_table.set_analyses(xx)
         except StopIteration:

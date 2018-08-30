@@ -347,9 +347,12 @@ class GraphicalFilterModel(HasTraits):
 
 
 class GraphicalFilterView(Controller):
-    is_append = Bool
-    append_button = Button('Append')
-    replace_button = Button('Replace')
+
+    accept_button = Button('Accept')
+
+    is_append = False
+    # append_button = Button('Append')
+    # replace_button = Button('Replace')
     help_str = Str('Select the analyses you want to EXCLUDE')
 
     search_backward = Button
@@ -361,28 +364,26 @@ class GraphicalFilterView(Controller):
     def controller_search_forward_changed(self, info):
         self.model.search_forward()
 
-    def controller_append_button_changed(self, info):
-        self.is_append = True
-        self.info.ui.dispose(result=True)
+    # def controller_append_button_changed(self, info):
+    #     self.is_append = True
+    #     self.info.ui.dispose(result=True)
+    #
+    # def controller_replace_button_changed(self, info):
+    #     self.is_append = False
+    #     self.info.ui.dispose(result=True)
 
-    def controller_replace_button_changed(self, info):
-        self.is_append = False
+    def controller_accept_button_changed(self, info):
         self.info.ui.dispose(result=True)
 
     def traits_view(self):
-        egrp = HGroup(UItem('use_project_exclusion'),
-                      Item('exclusion_pad',
-                           enabled_when='use_project_exclusion')),
+        # egrp = HGroup(UItem('use_project_exclusion'),
+        #               Item('exclusion_pad',
+        #                    enabled_when='use_project_exclusion')),
+        # bgrp = HGroup(spring, UItem('controller.append_button'), UItem('controller.replace_button'))
+
         ctrl_grp = VGroup(HGroup(Item('use_offset_analyses', label='Use Offset')))
-        # VGroup(HGroup(Item('toggle_analysis_types', label='Toggle')),
-        #       UItem('analysis_types',
-        #             tooltip='Only select these types of analyses',
-        #             style='custom',
-        #             editor=CheckListEditor(cols=1,
-        #                                    name='available_analysis_types')),
-        #       label='Analysis Types',
-        #       show_border=True))
-        bgrp = HGroup(spring, UItem('controller.append_button'), UItem('controller.replace_button'))
+
+        bgrp = HGroup(spring, UItem('controller.accept_button'))
         tgrp = HGroup(UItem('controller.help_str', style='readonly'), show_border=True)
         sgrp = HGroup(UItem('controller.search_backward'),
                       spring,
@@ -397,94 +398,3 @@ class GraphicalFilterView(Controller):
         return v
 
 # ============= EOF =============================================
-
-# def _filter_projects(self, ans):
-#     if not self.projects or not self.use_project_exclusion:
-#         return ans
-#
-#     def gen():
-#         projects = self.projects
-#
-#         def test(aa):
-#             """
-#                 is ai within X hours of an analysis from projects
-#             """
-#             at = aa.analysis_timestamp
-#             threshold = 3600. * self.exclusion_pad
-#             idx = ans.index(aa)
-#             # search backwards
-#             for i in xrange(idx - 1, -1, -1):
-#                 ta = ans[i]
-#                 if abs(ta.analysis_timestamp - at) > threshold:
-#                     return
-#                 elif ta.project in projects:
-#                     return True
-#             # search forwards
-#             for i in xrange(idx, len(ans), 1):
-#                 ta = ans[i]
-#                 if abs(ta.analysis_timestamp - at) > threshold:
-#                     return
-#                 elif ta.project in projects:
-#                     return True
-#
-#         for ai in ans:
-#             if self.use_project_exclusion and ai.project == ('references', 'j-curve'):
-#                 if test(ai):
-#                     yield ai
-#             elif ai.project in projects:
-#                 yield ai
-#
-#     return list(gen())
-# if __name__ == '__main__':
-#     from traits.api import Button
-#
-#     class Demo(HasTraits):
-#         test_button = Button
-#
-#         def traits_view(self):
-#             return View('test_button')
-#
-#         def _test_button_fired(self):
-#             g = GraphicalFilterModel(analyses=self.analyses)
-#             g.setup()
-#             gv = GraphicalFilterView(model=g)
-#
-#             info = gv.edit_traits()
-#             if info.result:
-#                 s = g.get_selection()
-#                 for si in s:
-#                     print si, si.analysis_type
-#
-#     from pychron.database.isotope_database_manager import IsotopeDatabaseManager
-#     from pychron.database.records.isotope_record import IsotopeRecordView
-#
-#     man = IsotopeDatabaseManager(bind=False, connect=False)
-#     db = man.db
-#     db.trait_set(name='pychrondata',
-#                  kind='mysql',
-#                  host=os.environ.get('HOST'),
-#                  username='root',
-#                  password='',
-#                  echo=False)
-#     db.connect()
-#
-#     with db.session_ctx():
-#         # for si in sams:
-#         _ans, n = db.get_labnumber_analyses([
-#             # '57493',
-#             '62118'
-#         ])
-#         ts = [xi.analysis_timestamp for xi in _ans]
-#         lpost, hpost = min(ts), max(ts)
-#         _ans = db.get_analyses_by_date_range(lpost, hpost, order='asc')
-#         # _ans = db.get_date_range_analyses(lpost, hpost, ordering='asc')
-#         _ans = [IsotopeRecordView(xi) for xi in _ans]
-#         # _ans = sorted(_ans, key=lambda x: x.timestamp)
-#
-#     d = Demo(analyses=_ans)
-#     d.configure_traits()
-#     # print info.result
-#     # if info.result:
-#     # s = g.get_selection()
-#     # for si in s:
-#     # print si, si.analysis_type

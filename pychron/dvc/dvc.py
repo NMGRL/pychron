@@ -1507,9 +1507,11 @@ class DVC(Loggable):
         path = repository_path(repo, '{}.json'.format(irradiation))
 
         fd = {}
+        print('fffafaf',path )
         if path:
             fd = dvc_load(path)
             for fi in fd.values():
+                print('fff', fi)
                 fi['j'] = ufloat(*fi['j'], tag='J')
         return fd
 

@@ -337,6 +337,7 @@ class FindReferencesNode(FindNode):
             if info.result:
                 refs = model.get_filtered_selection()
                 refs = self.dvc.make_analyses(refs)
+
                 if obj.is_append:
                     state.append_references = True
                     state.references.extend(refs)
@@ -344,9 +345,6 @@ class FindReferencesNode(FindNode):
                     state.append_references = False
                     state.references = list(refs)
 
-                # if unks is not None:
-                #     state.unknowns.extend( unks)
-                # state.has_references = True
             else:
                 state.veto = self
                 return True
