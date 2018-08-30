@@ -61,9 +61,9 @@ class AnalysisTableNode(GroupAgeNode):
 
         groups = {
             # 'unknowns': unk_group,
-                  'blanks': blank_group,
-                  'airs': air_group,
-                  'machine_unknowns': munk_group}
+            'blanks': blank_group,
+            'airs': air_group,
+            'machine_unknowns': munk_group}
 
         state.run_groups = groups
 
