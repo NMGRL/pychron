@@ -330,4 +330,28 @@ required:
 nodes:
   - klass: AutoArrNode
 """
+
+MDDFIGURE = """
+required:
+nodes:
+  - klass: MDDFigureNode
+"""
+
+AGESME = """
+required:
+nodes:
+  - klass: AgesMeNode
+"""
+
+AUTOAGEFREE = """
+required:
+nodes:
+  - klass: AutoAgeFreeNode
+"""
+
+AUTOAGEMON = """
+required:
+nodes:
+  - klass: AutoAgeMonNode
+"""
 # ============= EOF =============================================

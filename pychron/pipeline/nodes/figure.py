@@ -92,6 +92,10 @@ class FigureNode(SortableNode):
                     editor.set_items(list(unks))
                     if hasattr(editor, 'component'):
                         editor.component.invalidate_and_redraw()
+            else:
+                editor = self._editor_factory()
+                state.editors.append(editor)
+
             self.editor = editor
 
             for name, es in groupby_key(state.editors, 'name'):

@@ -18,10 +18,12 @@ import subprocess
 import time
 from multiprocessing import Queue
 
-from traits.api import Str, Enum, Bool, Int
-from traitsui.api import UItem, Item
+from traits.api import Str, Enum, Bool, Int, Float, HasTraits, List, Instance
+from traitsui.api import UItem, Item, View, TableEditor, VGroup
+from traitsui.table_column import ObjectColumn
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+from pychron.options.options_manager import MDDFigureOptionsManager
 from pychron.paths import paths
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.nodes.figure import FigureNode
@@ -47,20 +49,11 @@ class FortranProcess:
 
 # files
 # arrme
-# change age.sd.samp to age.in
 # autoarr
 
 # --- generate thermal histories
 # autoagemon
 # autoagefree
-
-
-class MDDInFilesNode(BaseNode):
-    def run(self, state):
-        # create necessary input file
-        # columns
-        # nstp,t,dtim,a39,sig39,f,age ,sig,terrage,clage,errclage
-        pass
 
 
 class MDDNode(BaseNode):
@@ -102,13 +95,24 @@ class MDDNode(BaseNode):
     def configuration_path(self):
         if not self.configuration_name:
             raise NotImplementedError
-        return os.path.join(paths.clovera_root, self.root_dir, '{}.cl'.format(self.configuration_name))
+        return self.get_path('{}.cl'.format(self.configuration_name))
 
     @property
     def executable_path(self):
         if not self.executable_name:
             raise NotImplementedError
         return os.path.join(paths.clovera_root, self.executable_name)
+
+    def get_path(self, name):
+        return os.path.join(paths.clovera_root, self.root_dir, name)
+
+
+class MDDLabTable(MDDNode):
+    def run(self, state):
+        # from the list of unknowns in the current state
+        # assemble the <sample>.in file
+        # for use with files_py
+        pass
 
 
 class FilesNode(MDDNode):
@@ -129,16 +133,20 @@ class FilesNode(MDDNode):
 GEOMETRIES = ('Slab', 'Sphere', 'Cylinder')
 
 
-class ArrMeNode(MDDNode):
-    name = 'Arrme'
-    configuration_name = 'arrme'
-    executable_name = 'arrme_py3'
+class GeometryMixin(HasTraits):
     geometry = Enum(*GEOMETRIES)
 
-    _dumpables = ('_geometry', )
     @property
     def _geometry(self):
         return GEOMETRIES.index(self.geometry) + 1
+
+
+class ArrMeNode(MDDNode, GeometryMixin):
+    name = 'Arrme'
+    configuration_name = 'arrme'
+    executable_name = 'arrme_py3'
+
+    _dumpables = ('_geometry',)
 
     def traits_view(self):
         v = okcancel_view(UItem('root_dir'),
@@ -166,14 +174,113 @@ class AutoArrNode(MDDNode):
         return v
 
 
-class CompositeFigureNode(FigureNode):
-    pass
+class CoolingStep(HasTraits):
+    ctime = Float
+    ctemp = Float
+
+    def __init__(self, time, temp):
+        self.ctime = float(time)
+        self.ctemp = float(temp)
 
 
-class LogRNode(MDDNode):
-    pass
+class CoolingHistory(HasTraits):
+    steps = List
+
+    def load(self):
+        steps = []
+        if os.path.isfile(self.path):
+            with open(self.path, 'r') as rfile:
+                for line in rfile:
+                    try:
+                        a, b = line.split(',')
+                        step = CoolingStep(a, b)
+                        steps.append(step)
+                    except ValueError:
+                        continue
+        else:
+            for i in range(10):
+                step = CoolingStep(10 - 0.5 * i, 500 - i * 50)
+                steps.append(step)
+
+        self.steps = steps
+
+    def dump(self):
+        with open(self.path, 'w') as wfile:
+            for c in self.steps:
+                wfile.write('{},{}\n'.format(c.ctime, c.ctemp))
+
+    @property
+    def path(self):
+        return os.path.join(paths.appdata_dir, 'cooling_history.txt')
+
+    def traits_view(self):
+        cols = [ObjectColumn(name='ctime'),
+                ObjectColumn(name='ctemp')]
+        v = View(UItem('steps', editor=TableEditor(columns=cols, sortable=False)))
+        return v
 
 
-class ArrheniusNode(MDDNode):
-    pass
+class AgesMeNode(MDDNode, GeometryMixin):
+    name = 'AgesMe'
+    configuration_name = 'agesme'
+    executable_name = 'agesme_py3'
+    cooling_history = Instance(CoolingHistory, ())
+
+    _dumpables = ('_geometry',)
+
+    def _pre_run_hook(self, state):
+        self.cooling_history.load()
+
+    def _finish_configure(self):
+        super(AgesMeNode, self)._finish_configure()
+
+        # write the agesme.in file from specified cooling history
+        p = self.get_path('agesme.in')
+        with open(p, 'w') as wfile:
+            steps = self.cooling_history.steps
+            wfile.write('{}\n'.format(len(steps)))
+            for ci in steps:
+                line = '{}\t{}\n'.format(ci.ctime, ci.ctemp)
+                wfile.write(line)
+
+            # include contents of arr-me file
+            pp = self.get_path('arr-me.in')
+            with open(pp, 'r') as rfile:
+                wfile.write(rfile.read())
+
+        self.cooling_history.dump()
+
+    def traits_view(self):
+        a = UItem('cooling_history', style='custom')
+        g = Item('geometry')
+        return okcancel_view(g, a, resizable=True, width=300, height=400)
+
+
+class AutoAgeFreeNode(MDDNode):
+    name = 'AutoAge Free'
+    configuration_name = 'autoagefree'
+    executable_name = 'autoagefree_py3'
+
+
+class AutoAgeMonNode(MDDNode):
+    name = 'AutoAge Monotonic'
+    configuration_name = 'autoagemon'
+    executable_name = 'autoagemon_py3'
+
+    nruns = Int
+    max_age = Float
+
+    _dumpables = ['nruns', 'max_age']
+
+    def traits_view(self):
+        g = VGroup(Item('nruns'),
+                   Item('max_age'))
+        return okcancel_view(g)
+
+
+class MDDFigureNode(FigureNode):
+    name = 'MDD Figure'
+    editor_klass = 'pychron.pipeline.plot.editors.mdd_figure_editor,MDDFigureEditor'
+    plotter_options_manager_klass = MDDFigureOptionsManager
+
 # ============= EOF =============================================

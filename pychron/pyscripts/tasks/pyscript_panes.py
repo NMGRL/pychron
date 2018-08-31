@@ -16,11 +16,12 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import os
 
 from pyface.action.menu_manager import MenuManager
 from pyface.tasks.traits_dock_pane import TraitsDockPane
-from traits.api import List, Instance, Str, Property, Any, String, Button, Int
+from traits.api import List, Instance, Str, Property, Any, String, Button
 from traitsui.api import View, Item, UItem, InstanceEditor, ButtonEditor, VGroup, TabularEditor, \
     HGroup, spring, VSplit, Label
 from traitsui.handler import Handler
@@ -30,8 +31,6 @@ from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
-
-
 # from pychron.pyscripts.commands.core import ICommand
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -78,15 +77,14 @@ class ControlPane(TraitsDockPane):
     id = 'pychron.pyscript.control'
 
     def traits_view(self):
-        v = View(
-            VGroup(
-                UItem('execute',
-                      editor=ButtonEditor(label_value='execute_label')),
-                VGroup(
-                    UItem('use_trace'),
-                    UItem('trace_delay', label='Delay (ms)'),
-                    show_border=True,
-                    label='Trace')))
+        v = View(VGroup(UItem('execute',
+                              editor=ButtonEditor(label_value='execute_label')),
+                        # VGroup(
+                        #     # UItem('use_trace'),
+                        #     # UItem('trace_delay', label='Delay (ms)'),
+                        #     show_border=True,
+                        #     label='Trace')
+                        ))
         return v
 
 
