@@ -29,18 +29,14 @@ from pychron.entry.editors.production import IrradiationProduction
 from pychron.loggable import Loggable
 from pychron.paths import paths
 
-vg = VGroup(Item('name'),
-            Group(UItem('chronology', style='custom'),
-                  label='Chronology', show_border=True),
-            HGroup(UItem('selected_reactor_name', editor=EnumEditor(name='reactor_names')),
-                   label='Reactor', show_border=True))
-
 
 class AddView(ModelView):
     def traits_view(self):
         v = View(VGroup(Item('name'),
                         Group(UItem('chronology', style='custom'),
                               label='Chronology', show_border=True)),
+                 HGroup(UItem('selected_reactor_name', editor=EnumEditor(name='reactor_names')),
+                        label='Reactor', show_border=True),
                  title='Add Irradiation',
                  kind='livemodal',
                  buttons=['OK', 'Cancel'],
