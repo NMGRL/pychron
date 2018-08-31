@@ -318,4 +318,16 @@ required:
 nodes:
   - klass: FilesNode
 """
+
+ARRME = """
+required:
+nodes:
+  - klass: ArrMeNode
+"""
+
+AUTOARR = """
+required:
+nodes:
+  - klass: AutoArrNode
+"""
 # ============= EOF =============================================

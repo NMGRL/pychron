@@ -18,8 +18,8 @@ import subprocess
 import time
 from multiprocessing import Queue
 
-from traits.api import Str
-from traitsui.api import UItem
+from traits.api import Str, Enum, Bool, Int
+from traitsui.api import UItem, Item
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.paths import paths
@@ -68,7 +68,7 @@ class MDDNode(BaseNode):
     configuration_name = ''
     _dumpables = None
 
-    runid = Str('12H')
+    root_dir = Str('12H')
 
     def run(self, state):
         self.run_fortan()
@@ -92,7 +92,7 @@ class MDDNode(BaseNode):
     def run_fortan(self):
         queue = Queue()
         process = FortranProcess(self.executable_path, queue)
-        process.start(self.runid)
+        process.start(self.root_dir)
         self.post_fortran()
 
     def post_fortran(self):
@@ -102,7 +102,7 @@ class MDDNode(BaseNode):
     def configuration_path(self):
         if not self.configuration_name:
             raise NotImplementedError
-        return os.path.join(paths.clovera_root, self.runid, '{}.cl'.format(self.configuration_name))
+        return os.path.join(paths.clovera_root, self.root_dir, '{}.cl'.format(self.configuration_name))
 
     @property
     def executable_path(self):
@@ -116,20 +116,54 @@ class FilesNode(MDDNode):
     configuration_name = 'files'
     executable_name = 'files_py3'
 
-    _dumpables = ['runid']
+    _dumpables = ['root_dir']
 
     def post_fortran(self):
         pass
 
     def traits_view(self):
-        v = okcancel_view(UItem('runid'))
+        v = okcancel_view(UItem('root_dir'))
         return v
 
 
-class ArrmeNode(MDDNode):
+GEOMETRIES = ('Slab', 'Sphere', 'Cylinder')
+
+
+class ArrMeNode(MDDNode):
     name = 'Arrme'
     configuration_name = 'arrme'
     executable_name = 'arrme_py3'
+    geometry = Enum(*GEOMETRIES)
+
+    _dumpables = ('_geometry', )
+    @property
+    def _geometry(self):
+        return GEOMETRIES.index(self.geometry) + 1
+
+    def traits_view(self):
+        v = okcancel_view(UItem('root_dir'),
+                          Item('geometry'))
+        return v
+
+
+class AutoArrNode(MDDNode):
+    name = 'AutoArr'
+    configuration_name = 'autoarr'
+    executable_name = 'autoarr_py3'
+
+    use_defaults = Bool
+    n_max_domains = Int(8)
+    n_min_domains = Int(3)
+    use_do_fix = Bool
+    _dumpables = ('use_defaults', 'n_max_domains', 'n_min_domains', 'use_do_fix')
+
+    def traits_view(self):
+        v = okcancel_view(UItem('root_dir'),
+                          Item('use_defaults'),
+                          Item('n_max_domains'),
+                          Item('n_min_domains'),
+                          Item('use_do_fix'))
+        return v
 
 
 class CompositeFigureNode(FigureNode):
