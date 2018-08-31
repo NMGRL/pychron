@@ -32,6 +32,7 @@ from pychron.options.icfactor import ICFactorOptions
 from pychron.options.ideogram import IdeogramOptions
 from pychron.options.iso_evo import IsotopeEvolutionOptions
 from pychron.options.isochron import InverseIsochronOptions
+from pychron.options.mdd_figure import MDDFigureOptions
 from pychron.options.options import BaseOptions, SubOptions
 from pychron.options.radial import RadialOptions
 from pychron.options.regression_series import RegressionSeriesOptions
@@ -367,6 +368,11 @@ class RadialOptionsManager(FigureOptionsManager):
     options_klass = RadialOptions
     _defaults = (('screen', RADIAL_SCREEN),)
     _default_options_txt = RADIAL_SCREEN
+
+
+class MDDFigureOptionsManager(FigureOptionsManager):
+    id = 'mdd'
+    options_klass = MDDFigureOptions
 
 
 class OptionsController(Controller):
