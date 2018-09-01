@@ -63,6 +63,7 @@ class EngineState(HasTraits):
 
     report_path = None
 
+    mdd_workspace = None
     # @cached_property
     # def _get_udetectors(self):
     #     return get_detector_set(self.unknowns)

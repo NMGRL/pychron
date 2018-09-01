@@ -91,9 +91,9 @@ do 32 mi = 1, nn
     if(m.gt.200)nsum = nsum + 1
     lc(mi) = m
 32    continue
+
 call lab(r39, d0, e, vc, telab, tilab, lc, xmat, ni, nst, nn)
 call agesamp(r39, ys, wt, ni)
-
 call chebft(a, tt(1, 1), c, nc, slope, tt, np)
 do 13 i = 1, mfit
     lista(i) = i
@@ -107,11 +107,15 @@ call mrqmin(r39, ys, wt, ni, c, nc, lista, mfit, covar, alpha, &
 k = 1
 itst = 0
 write(20, *)'  chi-squared:  ', ni * chisq
+print *, '  chi-squared:  ', ni * chisq
+
 alam = alamda
 1       write(20, *)'it #=', k, '   alamda:', alamda
+       print *,'it #=', k, '   alamda:', alamda
 if(dch.gt.0.d0)then
     write(20, *)
     write(20, *)'  chi-squared:  ', ni * chisq
+    print *,'  chi-squared:  ', ni * chisq
 endif
 k = k + 1
 ochisq = chisq
@@ -122,16 +126,19 @@ cht = cht0 * chisq
 if (dch.lt.cht.and.alamda.lt.alam) then
     itst = itst + 1
     write(20, *)'itst= ', itst
+    print *,'itst= ', itst
 endif
 alam = alamda
 if (itst.lt.3.) then
     goto 1
 endif
 write(20, *)'difference= ', (ochisq - chisq) * ni
+print *,'difference= ', (ochisq - chisq) * ni
 chq(ncyc) = chisq
 aq = 0.5d0 * (ni - 2.d0)
 q = gammq(aq, 0.5 * ni * chisq)
 write(20, *)'chisq= ', ni * chisq, '  GOF= ', q
+print *,'chisq= ', ni * chisq, '  GOF= ', q
 alamda = 0.d0
 c40 = 1.d0 - dexp(-xlambd * tt(1, 1))
 call zita(c, nc, lista, mfit, lc, xi, tt(1, 1), d0, E, tt, nst&

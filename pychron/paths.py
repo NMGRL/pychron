@@ -176,7 +176,7 @@ class Paths(object):
     data_dir = None
     csv_data_dir = None
     report_dir = None
-    modeling_data_dir = None
+    mdd_data_dir = None
     argus_data_dir = None
     positioning_error_dir = None
     snapshot_dir = None
@@ -406,7 +406,7 @@ class Paths(object):
         self.report_dir = join(data_dir, 'reports')
         self.spectrometer_scans_dir = join(data_dir, 'spectrometer_scans')
         self.furnace_scans_dir = join(data_dir, 'furnace_scans')
-        self.modeling_data_dir = join(data_dir, 'modeling')
+        self.mdd_data_dir = join(data_dir, 'mdd')
         self.argus_data_dir = join(data_dir, 'argusVI')
         self.positioning_error_dir = join(data_dir, 'positioning_error')
         self.snapshot_dir = join(data_dir, 'snapshots')
