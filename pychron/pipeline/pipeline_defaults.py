@@ -316,18 +316,21 @@ nodes:
 FILES = """
 required:
 nodes:
+  - klass: MDDWorkspaceNode
   - klass: FilesNode
 """
 
 ARRME = """
 required:
 nodes:
+  - klass: MDDWorkspaceNode
   - klass: ArrMeNode
 """
 
 AUTOARR = """
 required:
 nodes:
+  - klass: MDDWorkspaceNode
   - klass: AutoArrNode
 """
 

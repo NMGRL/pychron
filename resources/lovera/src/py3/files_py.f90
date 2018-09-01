@@ -85,7 +85,8 @@ close(23)
 close(24)
 close(25)
 close(30)
-goto 1
+
+!goto 1
 501    stop
 END
 

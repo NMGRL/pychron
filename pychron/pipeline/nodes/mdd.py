@@ -13,38 +13,41 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+import logging
 import os
 import subprocess
 import time
-from multiprocessing import Queue
 
-from traits.api import Str, Enum, Bool, Int, Float, HasTraits, List, Instance
-from traitsui.api import UItem, Item, View, TableEditor, VGroup
+from pyface.constant import OK
+from pyface.directory_dialog import DirectoryDialog
+from pyface.message_dialog import warning
+from traits.api import Str, Enum, Bool, Int, Float, HasTraits, List, Instance, Button
+from traitsui.api import UItem, Item, View, TableEditor, VGroup, InstanceEditor, ListStrEditor
 from traitsui.table_column import ObjectColumn
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.options_manager import MDDFigureOptionsManager
 from pychron.paths import paths
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.nodes.figure import FigureNode
 
-
-class FortranProcess:
-    def __init__(self, path, queue):
-        self.path = path
-        self.queue = queue
-
-    def start(self, name):
-        os.chdir(os.path.join(os.path.dirname(self.path), name))
-        p = subprocess.Popen([self.path],
-                             shell=False,
-                             bufsize=1024,
-                             stdout=subprocess.PIPE
-                             )
-
-        while p.poll() is None:
-            self.queue.put(p.stdout.readline(), timeout=0.1)
-            time.sleep(1e-6)
+# class FortranProcess:
+#     def __init__(self, path, queue):
+#         self.path = path
+#
+#     def start(self, name):
+#         # os.chdir(os.path.join(os.path.dirname(self.path), name))
+#         p = subprocess.Popen([self.path],
+#                              shell=False,
+#                              bufsize=1024,
+#                              stdout=subprocess.PIPE
+#                              )
+#         return p
+#
+#         # while p.poll() is None:
+#         #     self.queue.put(p.stdout.readline(), timeout=0.1)
+#         #     time.sleep(1e-6)
 
 
 # files
@@ -55,19 +58,64 @@ class FortranProcess:
 # autoagemon
 # autoagefree
 
+EOF = 1
+
+
+class MDDWorkspace(HasTraits):
+    roots = List
+    add_root_button = Button
+
+    def _add_root_button_fired(self):
+        dlg = DirectoryDialog(default_path=paths.mdd_data_dir)
+        if dlg.open() == OK and dlg.path:
+            name = os.path.basename(dlg.path)
+            if os.path.isfile(os.path.join(dlg.path, '{}.in'.format(name))):
+                self.roots.append(dlg.path)
+            else:
+                warning(None, 'Invalid MDD directory. {}. Directory must contain file '
+                              'named {}.in'.format(dlg.path, name))
+
+    def traits_view(self):
+        v = View(VGroup(icon_button_editor('add_root_button', 'add'),
+                        UItem('roots', editor=ListStrEditor())))
+        return v
+
+    # def _roots_default(self):
+    #     return ['/Users/ross/Desktop/12H',
+    #             '/Users/ross/Desktop/13H']
+
+
+class MDDWorkspaceNode(BaseNode):
+    name = 'MDD Workspace'
+    workspace = Instance(MDDWorkspace, ())
+
+    def run(self, state):
+        state.mdd_workspace = self.workspace
+
+    def traits_view(self):
+        g = VGroup(UItem('workspace', style='custom', editor=InstanceEditor()))
+        return okcancel_view(g)
+
+
+fortranlogger = logging.getLogger('FortranProcess')
+
 
 class MDDNode(BaseNode):
     executable_name = ''
     configuration_name = ''
     _dumpables = None
 
-    root_dir = Str('12H')
+    root_dir = Str
 
     def run(self, state):
-        self.run_fortan()
+        if state.mdd_workspace:
+            for root in state.mdd_workspace.roots:
+                self.root_dir = root
 
-    def _finish_configure(self):
-        self._write_configuration_file()
+                self._write_configuration_file()
+                os.chdir(root)
+                fortranlogger.info('changing to workspace {}'.format(root))
+                self.run_fortan()
 
     def _write_configuration_file(self):
         with open(self.configuration_path, 'w') as wfile:
@@ -83,9 +131,19 @@ class MDDNode(BaseNode):
                 wfile.write(line)
 
     def run_fortan(self):
-        queue = Queue()
-        process = FortranProcess(self.executable_path, queue)
-        process.start(self.root_dir)
+        path = self.executable_path
+        name = self.executable_name
+
+        fortranlogger.info('------ started {}'.format(name))
+        p = subprocess.Popen([path],
+                             shell=False,
+                             bufsize=1024,
+                             stdout=subprocess.PIPE)
+
+        while p.poll() is None:
+            fortranlogger.info(p.stdout.readline().decode('utf8').strip())
+            time.sleep(1e-6)
+        fortranlogger.info('------ complete {}'.format(name))
         self.post_fortran()
 
     def post_fortran(self):
@@ -103,8 +161,12 @@ class MDDNode(BaseNode):
             raise NotImplementedError
         return os.path.join(paths.clovera_root, self.executable_name)
 
+    @property
+    def rootname(self):
+        return os.path.basename(self.root_dir)
+
     def get_path(self, name):
-        return os.path.join(paths.clovera_root, self.root_dir, name)
+        return os.path.join(self.root_dir, name)
 
 
 class MDDLabTable(MDDNode):
@@ -120,14 +182,8 @@ class FilesNode(MDDNode):
     configuration_name = 'files'
     executable_name = 'files_py3'
 
-    _dumpables = ['root_dir']
-
-    def post_fortran(self):
-        pass
-
-    def traits_view(self):
-        v = okcancel_view(UItem('root_dir'))
-        return v
+    configurable = False
+    _dumpables = ['rootname']
 
 
 GEOMETRIES = ('Slab', 'Sphere', 'Cylinder')
@@ -149,8 +205,7 @@ class ArrMeNode(MDDNode, GeometryMixin):
     _dumpables = ('_geometry',)
 
     def traits_view(self):
-        v = okcancel_view(UItem('root_dir'),
-                          Item('geometry'))
+        v = okcancel_view(Item('geometry'))
         return v
 
 
@@ -265,10 +320,10 @@ class AutoAgeFreeNode(MDDNode):
 class AutoAgeMonNode(MDDNode):
     name = 'AutoAge Monotonic'
     configuration_name = 'autoagemon'
-    executable_name = 'autoagemon_py3'
+    executable_name = 'autoage-mon_py3'
 
-    nruns = Int
-    max_age = Float
+    nruns = Int(10)
+    max_age = Float(600)
 
     _dumpables = ['nruns', 'max_age']
 
