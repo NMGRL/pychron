@@ -26,13 +26,13 @@ from pychron.file_defaults import SPECTRUM_SCREEN, IDEOGRAM_SCREEN, IDEOGRAM_PRE
     ICFACTOR_SCREEN, INVERSE_ISOCHRON_SCREEN, INVERSE_ISOCHRON_PRESENTATION, ISO_EVO_SCREEN, BLANKS_PRESENTATION
 from pychron.globals import globalv
 from pychron.loggable import Loggable
+from pychron.mdd.tasks.mdd_figure import MDDFigureOptions
 from pychron.options.blanks import BlanksOptions
 from pychron.options.flux import FluxOptions, VerticalFluxOptions
 from pychron.options.icfactor import ICFactorOptions
 from pychron.options.ideogram import IdeogramOptions
 from pychron.options.iso_evo import IsotopeEvolutionOptions
 from pychron.options.isochron import InverseIsochronOptions
-from pychron.options.mdd_figure import MDDFigureOptions
 from pychron.options.options import BaseOptions, SubOptions
 from pychron.options.radial import RadialOptions
 from pychron.options.regression_series import RegressionSeriesOptions

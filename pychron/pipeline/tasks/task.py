@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
+
 import os
 
 from pyface.tasks.action.schema import SToolBar, SMenu
@@ -64,6 +65,7 @@ def select_experiment_repo():
 class PipelineTask(BaseBrowserTask):
     name = 'Pipeline Data Processing'
     engine = Instance(PipelineEngine)
+
     tool_bars = [
 
         # SToolBar(PipelineRecallAction(),

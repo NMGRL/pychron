@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2016 Jake Ross
+# Copyright 2018 ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,19 +14,5 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from traits.api import List
-
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-from pychron.options.options import FigureOptions
-from pychron.options.views.mdd_views import VIEWS
-
-
-class MDDFigureOptions(FigureOptions):
-    subview_names = List(['Main', 'Appearance'])
-
-    def _get_subview(self, name):
-        return VIEWS[name]
 
 # ============= EOF =============================================

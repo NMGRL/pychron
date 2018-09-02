@@ -16,24 +16,21 @@
 
 
 # ============= enthought library imports =======================
-# ============= standard library imports ========================
-from __future__ import absolute_import
-
 from chaco.default_colormaps import color_map_name_dict
-from six.moves import range
 
-from pychron.graph.graph import name_generator
+# ============= standard library imports ========================
+from pychron.graph.graph import Graph, name_generator
+
+
 # ============= local library imports  ==========================
-from .graph import Graph
 
 # GROUPNAMES=['spectrum','logr_ro','arrhenius','cooling_history', 'unconstrained_thermal_history']
 # GROUPNAMES = ['spectrum', 'logr_ro', 'arrhenius', 'cooling_history', 'unconstrained_thermal_history']
-GROUPNAMES = ['spectrum', 'arrhenius', 'cooling_history', 'unconstrained_thermal_history', 'logr_ro']
-
-LABELS = dict(spectrum='Spectrum', arrhenius='Arrhenius', logr_ro='LogR/Ro',
-              unconstrained_thermal_history='Uncon. Thermal History',
-              cooling_history='Cooling History'
-              )
+# GROUPNAMES = ['spectrum', 'arrhenius', 'cooling_history', 'unconstrained_thermal_history', 'logr_ro']
+# LABELS = dict(spectrum='Spectrum', arrhenius='Arrhenius', logr_ro='LogR/Ro',
+#               unconstrained_thermal_history='Uncon. Thermal History',
+#               cooling_history='Cooling History'
+#               )
 
 
 class DiffusionGraph(Graph):
@@ -47,27 +44,13 @@ class DiffusionGraph(Graph):
     4.cooling histories
     5.unconstrained thermal histories
     """
-    # plot_editor_klass = DiffusionPlotEditor
-    # bindings = None
-    # runids = None
-    # include_panels = None
 
     zdataname_generators = None
 
-    # def clear(self):
-    #     super(DiffusionGraph, self).clear()
-    #     self.runids = []
-    #
-    # def add_runid(self, rid, kind=None):
-    #     if kind == 'path':
-    #         rid = os.path.basename(rid)
-    #     self.runids.append(rid)
-    #     return rid
-
-    def new_graph(self):
+    def new_graph(self, n):
 
         self.plotcontainer = self.container_factory()
-        n = len(self.include_panels)
+        # n = len(self.include_panels)
         padding = [50, 5, 10, 30]  # if n>2 else [25,5,50,30]
 
         for _i in range(n):
@@ -75,7 +58,7 @@ class DiffusionGraph(Graph):
                               pan=True,
                               zoom=True)
 
-    def build_spectrum(self, ar39, age, ar39_err=None, age_err=None, pid=0, ngroup=True, **kw):
+    def build_spectrum(self, ar39, age, ar39_err=None, age_err=None, pid=0, **kw):
         """
 
         """
@@ -84,8 +67,7 @@ class DiffusionGraph(Graph):
         if ar39_err is not None and age_err is not None:
             a, _p = self.new_series(ar39_err, age_err, plotid=pid,
                                     type='polygon',
-                                    color=kw['color'] if 'color' in kw else 'orange'
-                                    )
+                                    color=kw['color'] if 'color' in kw else 'orange')
 
         b, _p = self.new_series(ar39, age, plotid=pid, **kw)
         plots = [b, a] if a is not None else [b]
@@ -95,26 +77,27 @@ class DiffusionGraph(Graph):
         self.set_y_title('Age (Ma)', plotid=pid)
         return plots
 
-    def build_logr_ro(self, ar39, logr, pid=1, ngroup=True, **kw):
+    def build_logr_ro(self, ar39, logr, pid=1, **kw):
         """
         """
         a, _ = self.new_series(ar39, logr, plotid=pid, **kw)
 
         self.set_x_title('Cum. 39Ar %', plotid=pid)
 
-        ytitle = 'log r/r' + u'\u2092'
+        ytitle = 'log r/ro'
 
         self.set_y_title(ytitle, plotid=pid)
 
         return [a]
 
-    def build_arrhenius(self, T, Dta, pid=2, ngroup=True, **kw):
+    def build_arrhenius(self, T, Dta, pid=2, **kw):
         """
         """
         a, _p = self.new_series(T, Dta, type='scatter', plotid=pid, marker_size=2.5, **kw)
 
         self.set_x_title('10000/T (K)', plotid=pid)
-        ytitle = 'log D/a' + u'\u00B2 (' + 's' + u'\u207B\u2071)'
+        # ytitle = 'log D/a' + u'\u00B2 (' + 's' + u'\u207B\u2071)'
+        ytitle = 'log D/a (1/s)'
         self.set_y_title(ytitle, plotid=pid)
         return [a]
 

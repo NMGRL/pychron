@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
-
+from envisage.extension_point import ExtensionPoint
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema import SMenu, SGroup
 from pyface.tasks.action.schema_addition import SchemaAddition
+# ============= enthought library imports =======================
+from traits.api import List
 
 from pychron.dvc.dvc import DVC
 from pychron.envisage.browser.interpreted_age_browser_model import InterpretedAgeBrowserModel
@@ -40,6 +40,9 @@ from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 
 
 class PipelinePlugin(BaseTaskPlugin):
+    nodes = ExtensionPoint(List, id='pychron.pipeline.nodes')
+    predefined_templates = ExtensionPoint(List, id='pychron.pipeline.predefined_templates')
+
     def _file_defaults_default(self):
         files = [('flux_constants', 'FLUX_CONSTANTS_DEFAULT', True)]
         return files
@@ -86,6 +89,9 @@ class PipelinePlugin(BaseTaskPlugin):
                          dvc=dvc,
                          interpreted_age_browser_model=iamodel,
                          application=self.application)
+        t.engine.nodes = self.nodes
+        t.engine.predefined_templates = self.predefined_templates
+        t.engine.load_predefined_templates()
         return t
 
     # def _browser_factory(self):
@@ -101,6 +107,7 @@ class PipelinePlugin(BaseTaskPlugin):
         dvc = self.application.get_service(DVC)
         return InterpretedAgeBrowserModel(application=self.application,
                                           dvc=dvc)
+
     # defaults
     def _service_offers_default(self):
         so = self.service_offer_factory(protocol=SampleBrowserModel,
