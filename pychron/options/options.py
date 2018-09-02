@@ -255,7 +255,7 @@ class BaseOptions(HasTraits):
         return True
 
     def load_factory_defaults(self, path):
-        if not os.path.isfile(path):
+        if path and not os.path.isfile(path):
             yd = yaml.load(path)
         else:
             with open(path, 'r') as rfile:

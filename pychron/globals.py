@@ -85,8 +85,8 @@ class Globals(object):
     use_logger_display = True
     use_warning_display = True
     # recall_debug = False
-    # pipeline_debug = False
-
+    pipeline_debug = False
+    mdd_workspace_debug = False
     pipeline_template = None
     select_default_data = True
     run_pipeline = False
@@ -135,6 +135,7 @@ class Globals(object):
                            ('run_pipeline', to_bool),
                            ('select_default_data', to_bool),
                            ('pipeline_template', str),
+                           ('mdd_workspace_debug', to_bool),
 
                            ('auto_pipeline_debug', to_bool),
                            ('pipeline_debug', to_bool),

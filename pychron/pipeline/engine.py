@@ -46,7 +46,7 @@ from pychron.pipeline.pipeline_defaults import ISOEVO, BLANKS, ICFACTOR, IDEO, S
     CSV_IDEO, XY_SCATTER, INTERPRETED_AGE_IDEOGRAM, ANALYSIS_TABLE, INTERPRETED_AGE_TABLE, AUTO_IDEOGRAM, AUTO_SERIES, \
     AUTO_REPORT, REPORT, CORRECTION_FACTORS, REGRESSION_SERIES, GEOCHRON, VERTICAL_FLUX, \
     CSV_ANALYSES_EXPORT, BULK_EDIT, HISTORY_IDEOGRAM, HISTORY_SPECTRUM, AUDIT, SUBGROUP_IDEOGRAM, HYBRID_IDEOGRAM, \
-    ANALYSIS_TABLE_W_IA, MASSSPEC_REDUCED, FILES, ARRME, AUTOARR, MDDFIGURE, AGESME, AUTOAGEFREE, AUTOAGEMON
+    ANALYSIS_TABLE_W_IA, MASSSPEC_REDUCED
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
 # from pychron.pipeline.plot.inspector_item import BaseInspectorItem
@@ -211,6 +211,8 @@ class PipelineEngine(Loggable):
     interpreted_age_browser_model = Instance('pychron.envisage.browser.base_browser_model.BaseBrowserModel')
     pipeline = Instance(Pipeline)
     pipeline_group = Instance(PipelineGroup, ())
+    nodes = List
+    predefined_templates = List
 
     selected = Any
     selected_node = Instance(BaseNode, ())
@@ -259,8 +261,6 @@ class PipelineEngine(Loggable):
     def __init__(self, *args, **kw):
         super(PipelineEngine, self).__init__(*args, **kw)
         self._confirmation_cache = {}
-
-        self._load_predefined_templates()
 
     def drop_factory(self, items):
 
@@ -633,7 +633,7 @@ class PipelineEngine(Loggable):
             with open(path, 'w') as wfile:
                 obj = self.pipeline.to_template()
                 yaml.dump(obj, wfile, default_flow_style=False)
-            self._load_predefined_templates()
+            self.load_predefined_templates()
             self.selected_pipeline_template = v.name
 
     # def run_persist(self, state):
@@ -929,55 +929,49 @@ class PipelineEngine(Loggable):
 
         return path, user_path
 
-    def _load_predefined_templates(self):
+    def load_predefined_templates(self):
         self.debug('load predefined templates')
 
         root = PipelineTemplateRoot()
         self.pipeline_template_root = root
+        nodes = {n.__name__: n for n in self.nodes}
 
         groups = []
-        for name, gs in (('Fit', (('Iso Evo', ISOEVO),
-                                  ('Blanks', BLANKS),
-                                  ('IC Factor', ICFACTOR),
-                                  ('Flux', FLUX),
-                                  ('Correction Factors', CORRECTION_FACTORS),
-                                  ('Bulk Edit', BULK_EDIT),
-                                  ('Audit', AUDIT))),
-                         ('Plot', (('Ideogram', IDEO),
-                                   ('CSV Ideogram', CSV_IDEO),
-                                   ('Interpreted Age Ideogram', INTERPRETED_AGE_IDEOGRAM),
-                                   ('Hybrid Ideogram', HYBRID_IDEOGRAM),
-                                   ('SubGroup Ideogram', SUBGROUP_IDEOGRAM),
-                                   ('Spectrum', SPEC),
-                                   ('Series', SERIES),
-                                   ('InverseIsochron', INVERSE_ISOCHRON),
-                                   ('XY Scatter', XY_SCATTER),
-                                   ('Regresssion', REGRESSION_SERIES),
-                                   ('Vertical Flux', VERTICAL_FLUX))),
-                         ('Table', (('Analysis', ANALYSIS_TABLE),
-                                    ('Analysis w/Set IA', ANALYSIS_TABLE_W_IA),
-                                    ('Interpreted Age', INTERPRETED_AGE_TABLE),
-                                    ('Report', REPORT))),
-                         ('History', (('Ideogram', HISTORY_IDEOGRAM),
-                                      ('Spectrum', HISTORY_SPECTRUM))),
-                         ('Auto', (('Ideogram', AUTO_IDEOGRAM),
-                                   ('Series', AUTO_SERIES),
-                                   ('Report', AUTO_REPORT))),
-                         ('MDD', (('Files', FILES),
-                                  ('ArrMe', ARRME),
-                                  ('AgesMe', AGESME),
-                                  ('AutoArr', AUTOARR),
-                                  ('AutoAgeMon', AUTOAGEMON),
-                                  ('AutoAgeFree', AUTOAGEFREE),
-                                  ('MDD Figure', MDDFIGURE))),
-                         # ('Edit', (('Analysis Metadata', ANALYSIS_METADATA),)),
-                         ('Share', (('Geochron', GEOCHRON),
-                                    ('CSV Analyses Export', CSV_ANALYSES_EXPORT))),
-                         ('Transfer', (('Mass Spec Reduced', MASSSPEC_REDUCED),))
 
-                         ):
+        default = [('Fit', (('Iso Evo', ISOEVO),
+                            ('Blanks', BLANKS),
+                            ('IC Factor', ICFACTOR),
+                            ('Flux', FLUX),
+                            ('Correction Factors', CORRECTION_FACTORS),
+                            ('Bulk Edit', BULK_EDIT),
+                            ('Audit', AUDIT))),
+                   ('Plot', (('Ideogram', IDEO),
+                             ('CSV Ideogram', CSV_IDEO),
+                             ('Interpreted Age Ideogram', INTERPRETED_AGE_IDEOGRAM),
+                             ('Hybrid Ideogram', HYBRID_IDEOGRAM),
+                             ('SubGroup Ideogram', SUBGROUP_IDEOGRAM),
+                             ('Spectrum', SPEC),
+                             ('Series', SERIES),
+                             ('InverseIsochron', INVERSE_ISOCHRON),
+                             ('XY Scatter', XY_SCATTER),
+                             ('Regresssion', REGRESSION_SERIES),
+                             ('Vertical Flux', VERTICAL_FLUX))),
+                   ('Table', (('Analysis', ANALYSIS_TABLE),
+                              ('Analysis w/Set IA', ANALYSIS_TABLE_W_IA),
+                              ('Interpreted Age', INTERPRETED_AGE_TABLE),
+                              ('Report', REPORT))),
+                   ('History', (('Ideogram', HISTORY_IDEOGRAM),
+                                ('Spectrum', HISTORY_SPECTRUM))),
+                   ('Auto', (('Ideogram', AUTO_IDEOGRAM),
+                             ('Series', AUTO_SERIES),
+                             ('Report', AUTO_REPORT))),
+                   ('Share', (('Geochron', GEOCHRON),
+                              ('CSV Analyses Export', CSV_ANALYSES_EXPORT))),
+                   ('Transfer', (('Mass Spec Reduced', MASSSPEC_REDUCED),))]
+
+        for name, gs in default + self.predefined_templates:
             grp = PipelineTemplateGroup(name=name)
-            grp.templates = [PipelineTemplate(n, t) for n, t in gs]
+            grp.templates = [PipelineTemplate(n, t, nodes) for n, t in gs]
             groups.append(grp)
 
         grp = PipelineTemplateGroup(name='User')
@@ -985,7 +979,8 @@ class PipelineEngine(Loggable):
         for temp in list_directory2(paths.user_pipeline_template_dir, extension='.yaml',
                                     remove_extension=True):
             user_templates.append(PipelineTemplate(temp, os.path.join(paths.user_pipeline_template_dir,
-                                                                      '{}.yaml'.format(temp))))
+                                                                      '{}.yaml'.format(temp)),
+                                                   nodes))
 
         grp.templates = user_templates
         groups.append(grp)

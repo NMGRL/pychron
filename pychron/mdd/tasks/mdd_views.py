@@ -15,9 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
-from traitsui.api import View
+from traitsui.api import View, HGroup, VGroup, UItem
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -30,23 +28,12 @@ class MDDFigureAppearanceOptions(AppearanceSubOptions):
 
 class MDDFigureMainOptions(SubOptions):
     def traits_view(self):
-        v = View()
+        r1 = HGroup(UItem('panel_ul'), UItem('panel_ur'))
+        r2 = HGroup(UItem('panel_ll'), UItem('panel_lr'))
+
+        panel_grp = VGroup(r1, r2, show_border=True, label='Panels')
+        v = View(panel_grp)
         return v
-    # def _get_edit_view(self):
-    #     x = HGroup(Item('x_n',
-    #                     editor=EnumEditor(name='available_names'),
-    #                     label='X'),
-    #                Label('/'),
-    #                UItem('x_d',
-    #                      editor=EnumEditor(name='available_names')))
-    #     y = HGroup(Item('y_n',
-    #                     editor=EnumEditor(name='available_names'),
-    #                     label='Y'),
-    #                Label('/'),
-    #                UItem('y_d',
-    #                      editor=EnumEditor(name='available_names')))
-    #     v = View(VGroup(Item('name', editor=EnumEditor(name='names')), x, y))
-    #     return v
 
 
 VIEWS = {'main': MDDFigureMainOptions, 'appearance': MDDFigureAppearanceOptions}

@@ -67,11 +67,12 @@ class PipelineTemplateGroup(HasTraits):
 
 
 class PipelineTemplate(HasTraits):
-    def __init__(self, name, path, *args, **kw):
+    def __init__(self, name, path, nodes, *args, **kw):
         super(PipelineTemplate, self).__init__(*args, **kw)
 
         self.name = name
         self.path = path
+        self.nodes = nodes
 
     def render(self, application, pipeline, bmodel, iabmodel, dvc, clear=True, exclude_klass=None):
         # if first node is an unknowns node
@@ -131,8 +132,12 @@ class PipelineTemplate(HasTraits):
                     pipeline.add_node(node)
 
     def _node_factory(self, klass, ni, application, bmodel, iabmodel, dvc):
-        mod = __import__('pychron.pipeline.nodes', fromlist=[klass])
-        node = getattr(mod, klass)()
+        if klass in self.nodes:
+            node = self.nodes[klass]()
+        else:
+            mod = __import__('pychron.pipeline.nodes', fromlist=[klass])
+            node = getattr(mod, klass)()
+
         node.pre_load(ni)
         node.load(ni)
         if isinstance(node, InterpretedAgeNode):

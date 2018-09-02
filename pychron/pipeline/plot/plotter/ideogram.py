@@ -121,6 +121,7 @@ class Ideogram(BaseArArFigure):
     ytitle = 'Relative Probability'
     subgroup_id = 0
     subgroup = None
+
     # xlimits_updated = Event
     # ylimits_updated = Event
 
@@ -373,7 +374,7 @@ class Ideogram(BaseArArFigure):
                                     visible=False,
                                     color=line.color,
                                     line_style='dash')
-        dline.history_id =  self.group_id
+        dline.history_id = self.group_id
 
         graph.set_series_label('Original-{}'.format(gid), series=sgid + 1, plotid=pid)
 
@@ -424,9 +425,10 @@ class Ideogram(BaseArArFigure):
                                     location=self.options.inset_location)
             plot.overlays.append(o)
 
-            cfunc = lambda x1, x2: cumulative_probability(self.xs, self.xes, x1, x2, n=N)
+            def cfunc(x1, x2):
+                return cumulative_probability(self.xs, self.xes, x1, x2, n=N)
+
             xs, ys, xmi, xma = self._calculate_asymptotic_limits(cfunc,
-                                                                 # asymptotic_width=10,
                                                                  tol=self.options.asymptotic_height_percent)
             oo = IdeogramInset(xs, ys,
                                color=d['color'],
@@ -742,7 +744,8 @@ class Ideogram(BaseArArFigure):
 
         else:
             if opt.use_asymptotic_limits and calculate_limits:
-                cfunc = lambda x1, x2: cumulative_probability(ages, errors, x1, x2, n=N)
+                def cfunc(x1, x2):
+                    return cumulative_probability(ages, errors, x1, x2, n=N)
 
                 bins, probs, x1, x2 = self._calculate_asymptotic_limits(cfunc,
                                                                         tol=(opt.asymptotic_height_percent or 10))
