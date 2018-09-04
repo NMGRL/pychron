@@ -39,13 +39,7 @@ nodes:
   - klass: UnknownNode
   - klass: YieldNode
 """
-GEOCHRON = """
-required:
- - pychron.geochron.geochron_service.GeochronService
-nodes:
- - klass: UnknownNode
- - klass: GeochronNode
-"""
+
 ICFACTOR = """
 required:
 nodes:

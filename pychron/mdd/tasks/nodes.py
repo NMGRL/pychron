@@ -395,7 +395,7 @@ class AutoAgeMonNode(MDDNode):
 
 class MDDFigureNode(FigureNode):
     name = 'MDD Figure'
-    editor_klass = 'pychron.pipeline.mdd.taskss.mdd_figure_editor,MDDFigureEditor'
+    editor_klass = 'pychron.mdd.tasks.mdd_figure_editor,MDDFigureEditor'
     plotter_options_manager_klass = MDDFigureOptionsManager
 
     def run(self, state):

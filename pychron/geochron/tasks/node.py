@@ -15,6 +15,7 @@
 # ===============================================================================
 
 from __future__ import absolute_import
+
 from traits.api import Instance
 
 from pychron.pipeline.nodes.base import BaseNode
