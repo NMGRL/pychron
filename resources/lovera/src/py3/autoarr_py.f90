@@ -84,7 +84,7 @@ open(unit = 42, file = 'autoarr.cl', status = 'old')
 
 read (42, *) yes
 
-If(yes.eq.1) then
+If(yes.eq.'1') then
     !		print *, 'if you still want to use the default
     !     $ value of an specific parameter, type 0 at the prompt'
     !		print *
