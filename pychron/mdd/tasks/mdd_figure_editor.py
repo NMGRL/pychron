@@ -61,7 +61,7 @@ class MDDFigureEditor(BaseTraitsEditor):
                     continue
             return age, low_conf, high_conf
 
-        return self._get_data(root, name, 'Cooling History', func)
+        return self._get_data(root, name, 'Cooling History', func, '\t')
 
     def _get_logr_ro_data(self, root, name='logr.samp'):
         def func(reader):

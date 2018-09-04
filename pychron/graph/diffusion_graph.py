@@ -75,7 +75,6 @@ class DiffusionGraph(Graph):
         xtitle = 'Cum. 39Ar %'
         self.set_x_title(xtitle, plotid=pid)
         self.set_y_title('Age (Ma)', plotid=pid)
-        return plots
 
     def build_logr_ro(self, ar39, logr, pid=1, **kw):
         """
@@ -88,8 +87,6 @@ class DiffusionGraph(Graph):
 
         self.set_y_title(ytitle, plotid=pid)
 
-        return [a]
-
     def build_arrhenius(self, T, Dta, pid=2, **kw):
         """
         """
@@ -99,9 +96,8 @@ class DiffusionGraph(Graph):
         # ytitle = 'log D/a' + u'\u00B2 (' + 's' + u'\u207B\u2071)'
         ytitle = 'log D/a (1/s)'
         self.set_y_title(ytitle, plotid=pid)
-        return [a]
 
-    def build_cooling_history(self, ts, Tsl, Tsh, pid=3, colors=None):
+    def build_cooling_history(self, ts, tsl, tsh, pid=3, colors=None):
         """
         """
         self.set_x_title('t (Ma)', plotid=pid)
@@ -115,11 +111,11 @@ class DiffusionGraph(Graph):
             p1 = next(cg)
             p2 = next(cg)
 
-        a, _p = self.new_series(ts, Tsl, type='polygon', plotid=pid, color=p1)
-        b, _p = self.new_series(ts, Tsh, type='polygon', plotid=pid, color=p2)
+        if ts:
+            self.new_series(ts, tsl, type='polygon', plotid=pid, color=p1)
+            self.new_series(ts, tsh, type='polygon', plotid=pid, color=p2)
 
-        self.redraw()
-        return [a, b]
+            self.redraw()
 
     def build_unconstrained_thermal_history(self, datacontainer, pid=4, contour=True):
         self.set_x_title('t (Ma)', plotid=pid)
