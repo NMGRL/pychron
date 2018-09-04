@@ -205,12 +205,13 @@ class MDDLabTableNode(MDDNode):
             roots.append(root)
             ag = StepHeatAnalysisGroup(analyses=unks)
             with open(os.path.join(root, '{}.in'.format(name)), 'w') as wfile:
-                step = 1
+                step = 0
                 for unk in ag.analyses:
                     if unk.age > 0:
                         cum39 = ag.cumulative_ar39(step)
                         line = self._assemble(step, unk, cum39)
                         wfile.write(line)
+                        step += 1
 
         state.mdd_workspace.roots = roots
 
@@ -233,7 +234,7 @@ class MDDLabTableNode(MDDNode):
         age_err = unk.age_err_wo_j
         age_err_w_j = unk.age_err
 
-        cols = [step, temp, time_at_temp, mol_39, mol_39_perr, cum39, age, age_err, age_err_w_j, age, age_err]
+        cols = [step+1, temp, time_at_temp, mol_39, mol_39_perr, cum39, age, age_err, age_err_w_j, age, age_err]
         cols = ','.join([str(v) for v in cols])
         return '{}\n'.format(cols)
 
