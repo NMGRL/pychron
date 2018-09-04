@@ -41,42 +41,12 @@ from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 
 class PipelinePlugin(BaseTaskPlugin):
     nodes = ExtensionPoint(List, id='pychron.pipeline.nodes')
+    node_factories = ExtensionPoint(List, id='pychron.pipeline.node_factories')
     predefined_templates = ExtensionPoint(List, id='pychron.pipeline.predefined_templates')
 
     def _file_defaults_default(self):
         files = [('flux_constants', 'FLUX_CONSTANTS_DEFAULT', True)]
         return files
-
-    #     ov = True
-    #     files = [['pipeline_template_file', 'PIPELINE_TEMPLATES', ov],
-    #              ['icfactor_template', 'ICFACTOR', ov],
-    #              ['blanks_template', 'BLANKS', ov],
-    #              ['iso_evo_template', 'ISOEVO', ov],
-    #              ['ideogram_template', 'IDEO', ov],
-    #              ['spectrum_template', 'SPEC', ov],
-    #              ['series_template', 'SERIES', ov],
-    #              ['inverse_isochron_template', 'INVERSE_ISOCHRON', ov],
-    #              ['radial_template', 'RADIAL', ov],
-    #              ['regression_series_template', 'REGRESSION_SERIES', ov],
-    #              ['csv_ideogram_template', 'CSV_IDEO', ov],
-    #              ['flux_template', 'FLUX', ov],
-    #              ['vertical_flux_template', 'VERTICAL_FLUX', ov],
-    #              ['xy_scatter_template', 'XY_SCATTER', ov],
-    #              ['analysis_table_template', 'ANALYSIS_TABLE', ov],
-    #              ['interpreted_age_ideogram_template', 'INTERPRETED_AGE_IDEOGRAM', ov],
-    #              ['interpreted_age_table_template', 'INTERPRETED_AGE_TABLE', ov],
-    #              ['auto_ideogram_template', 'AUTO_IDEOGRAM', ov],
-    #              ['auto_series_template', 'AUTO_SERIES', ov],
-    #              ['auto_report_template', 'AUTO_REPORT', ov],
-    #              ['report_template', 'REPORT', ov],
-    #              ['geochron_template', 'GEOCHRON', ov],
-    #              ['yield_template', 'YIELD', ov],
-    #              ['csv_analyses_export_template', 'CSV_ANALYSES_EXPORT', ov],
-    #              ['correction_factors_template', 'CORRECTION_FACTORS', ov],
-    #              ['analysis_metadata_template', 'ANALYSIS_METADATA', ov]]
-    #
-    #     files = paths.set_template_manifest(files)
-    #     return files
 
     def _pipeline_factory(self):
         model = self.application.get_service(SampleBrowserModel)
@@ -90,15 +60,10 @@ class PipelinePlugin(BaseTaskPlugin):
                          interpreted_age_browser_model=iamodel,
                          application=self.application)
         t.engine.nodes = self.nodes
+        t.engine.node_factories = self.node_factories
         t.engine.predefined_templates = self.predefined_templates
         t.engine.load_predefined_templates()
         return t
-
-    # def _browser_factory(self):
-    #     model = self.application.get_service(SampleBrowserModel)
-    #     t = BrowserTask(browser_model=model,
-    #                     application=self.application)
-    #     return t
 
     def _browser_model_factory(self):
         return SampleBrowserModel(application=self.application)

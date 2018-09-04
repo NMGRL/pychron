@@ -16,7 +16,7 @@
 
 import os
 import time
-from operator import attrgetter
+from operator import attrgetter, itemgetter
 
 import yaml
 # ============= enthought library imports =======================
@@ -24,6 +24,7 @@ from traits.api import HasTraits, Str, Instance, List, Event, on_trait_change, A
 
 from pychron.core.confirmation import remember_confirmation_dialog
 from pychron.core.helpers.filetools import list_directory2, add_extension
+from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.dvc.tasks.repo_task import RepoItem
 from pychron.globals import globalv
 from pychron.loggable import Loggable
@@ -44,7 +45,7 @@ from pychron.pipeline.nodes.persist import PDFFigureNode, IsotopeEvolutionPersis
     BlanksPersistNode, ICFactorPersistNode
 from pychron.pipeline.pipeline_defaults import ISOEVO, BLANKS, ICFACTOR, IDEO, SPEC, SERIES, INVERSE_ISOCHRON, FLUX, \
     CSV_IDEO, XY_SCATTER, INTERPRETED_AGE_IDEOGRAM, ANALYSIS_TABLE, INTERPRETED_AGE_TABLE, AUTO_IDEOGRAM, AUTO_SERIES, \
-    AUTO_REPORT, REPORT, CORRECTION_FACTORS, REGRESSION_SERIES, GEOCHRON, VERTICAL_FLUX, \
+    AUTO_REPORT, REPORT, CORRECTION_FACTORS, REGRESSION_SERIES, VERTICAL_FLUX, \
     CSV_ANALYSES_EXPORT, BULK_EDIT, HISTORY_IDEOGRAM, HISTORY_SPECTRUM, AUDIT, SUBGROUP_IDEOGRAM, HYBRID_IDEOGRAM, \
     ANALYSIS_TABLE_W_IA, MASSSPEC_REDUCED
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
@@ -212,6 +213,7 @@ class PipelineEngine(Loggable):
     pipeline = Instance(Pipeline)
     pipeline_group = Instance(PipelineGroup, ())
     nodes = List
+    node_factories = List
     predefined_templates = List
 
     selected = Any
@@ -935,7 +937,7 @@ class PipelineEngine(Loggable):
         root = PipelineTemplateRoot()
         self.pipeline_template_root = root
         nodes = {n.__name__: n for n in self.nodes}
-
+        node_factories = {v.name: v for v in self.node_factories}
         groups = []
 
         default = [('Fit', (('Iso Evo', ISOEVO),
@@ -965,13 +967,12 @@ class PipelineEngine(Loggable):
                    ('Auto', (('Ideogram', AUTO_IDEOGRAM),
                              ('Series', AUTO_SERIES),
                              ('Report', AUTO_REPORT))),
-                   ('Share', (('Geochron', GEOCHRON),
-                              ('CSV Analyses Export', CSV_ANALYSES_EXPORT))),
+                   ('Share', (('CSV Analyses Export', CSV_ANALYSES_EXPORT),)),
                    ('Transfer', (('Mass Spec Reduced', MASSSPEC_REDUCED),))]
-
-        for name, gs in default + self.predefined_templates:
+        for name, gs in groupby_key(default + self.predefined_templates, key=itemgetter(0)):
             grp = PipelineTemplateGroup(name=name)
-            grp.templates = [PipelineTemplate(n, t, nodes) for n, t in gs]
+
+            grp.templates = [PipelineTemplate(n, t, nodes, node_factories) for nn, gg in gs for n, t in gg]
             groups.append(grp)
 
         grp = PipelineTemplateGroup(name='User')
@@ -980,7 +981,7 @@ class PipelineEngine(Loggable):
                                     remove_extension=True):
             user_templates.append(PipelineTemplate(temp, os.path.join(paths.user_pipeline_template_dir,
                                                                       '{}.yaml'.format(temp)),
-                                                   nodes))
+                                                   nodes, node_factories))
 
         grp.templates = user_templates
         groups.append(grp)

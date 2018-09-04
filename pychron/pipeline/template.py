@@ -32,7 +32,6 @@ from pychron.pipeline.nodes.data import DataNode, UnknownNode, DVCNode, Interpre
 from pychron.pipeline.nodes.diff import DiffNode
 from pychron.pipeline.nodes.email_node import EmailNode
 from pychron.pipeline.nodes.find import FindNode
-from pychron.pipeline.nodes.geochron import GeochronNode
 
 
 class PipelineTemplateSaveView(HasTraits):
@@ -67,12 +66,13 @@ class PipelineTemplateGroup(HasTraits):
 
 
 class PipelineTemplate(HasTraits):
-    def __init__(self, name, path, nodes, *args, **kw):
+    def __init__(self, name, path, nodes, factories, *args, **kw):
         super(PipelineTemplate, self).__init__(*args, **kw)
 
         self.name = name
         self.path = path
         self.nodes = nodes
+        self.node_factories = factories
 
     def render(self, application, pipeline, bmodel, iabmodel, dvc, clear=True, exclude_klass=None):
         # if first node is an unknowns node
@@ -134,6 +134,8 @@ class PipelineTemplate(HasTraits):
     def _node_factory(self, klass, ni, application, bmodel, iabmodel, dvc):
         if klass in self.nodes:
             node = self.nodes[klass]()
+        elif klass in self.node_factories:
+            node = self.node_factories[klass]()
         else:
             mod = __import__('pychron.pipeline.nodes', fromlist=[klass])
             node = getattr(mod, klass)()
@@ -151,9 +153,9 @@ class PipelineTemplate(HasTraits):
             node.trait_set(recaller=recaller)
             if isinstance(node, MassSpecReducedNode):
                 node.trait_set(dvc=dvc)
-        elif isinstance(node, GeochronNode):
-            service = application.get_service('pychron.geochron.geochron_service.GeochronService')
-            node.trait_set(service=service)
+        # elif isinstance(node, GeochronNode):
+        #     service = application.get_service('pychron.geochron.geochron_service.GeochronService')
+        #     node.trait_set(service=service)
         elif isinstance(node, EmailNode):
             emailer = application.get_service('pychron.social.email.emailer.Emailer')
             if emailer is None:
