@@ -269,7 +269,8 @@ goto 26
 130    format(6x, "tinv", 8x, "Log(D/r2)", 7x, "f(k)*100", 8x, &
         "Log(r/ro)", 8x, "39Ar-av")
 140    format(1x, 'domain #', 10x, 'volume fraction', 15x, 'domain size')
-150    format(1x, '&')
+150    format(1x, '&
+        &')
 160    format(A7)
 170    format(1x, i4, 4(a1, g20.8))
 end
@@ -345,8 +346,10 @@ subroutine arr(f, tilab, telab, ni, e, ord)
         write(18, 110)f(k - 1) * 100., tab1, xlogr
         write(18, 110)f(k) * 100., tab1, xlogr
     26    write(16, 110)tinv, tab1, dzx
-    write(16, *)'&'
-    write(18, *)'&'
+    write(16, *)'&
+            &'
+    write(18, *)'&
+            &'
     2    continue
 
     110    format(1X, 5(F12.8, A1))
