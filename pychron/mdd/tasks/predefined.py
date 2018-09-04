@@ -63,12 +63,28 @@ nodes:
 AUTOAGEFREE = """
 required:
 nodes:
+  - klass: MDDWorkspaceNode
   - klass: AutoAgeFreeNode
 """
 
 AUTOAGEMON = """
 required:
 nodes:
+  - klass: MDDWorkspaceNode
   - klass: AutoAgeMonNode
+"""
+
+CORRFFT = """
+required:
+nodes:
+  - klass: MDDWorkspaceNode
+  - klass: CorrFFT
+"""
+
+CONFINT = """
+required:
+nodes:
+  - klass: MDDWorkspaceNode
+  - klass: ConfInt
 """
 # ============= EOF =============================================

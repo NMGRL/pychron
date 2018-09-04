@@ -202,10 +202,14 @@ if (ncyc.eq.nwcy.or.nchini.eq.nrun)then
             write(42, 100)tto(j, 1, j1), tab1, tto(j, 2, j1)
         342               continue
         if(kcyc.ne.nrun)then
-            write(40, *)'&  cycle #', kcyc
-            write(42, *)'&  cycle #', kcyc, ' chisq= ', chq(j) * ni
-            write(44, *)'&  cycle #', kcyc
-            write(46, *)'&  cycle #', kcyc
+            write(40, *)'&
+                    &  cycle #', kcyc
+            write(42, *)'&
+                    &  cycle #', kcyc, ' chisq= ', chq(j) * ni
+            write(44, *)'&
+                    &  cycle #', kcyc
+            write(46, *)'&
+                    &  cycle #', kcyc
         endif
         if(kcyc / 30 * 30 - kcyc.eq.0.and.kcyc.ne.nrun)then
             kc1 = kc1 + 1

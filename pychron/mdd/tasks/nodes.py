@@ -393,6 +393,29 @@ class AutoAgeMonNode(MDDNode):
         return okcancel_view(g)
 
 
+class ConfIntNode(MDDNode):
+    name = 'Conf. Int'
+    configuration_name = 'confint'
+    executable_name = 'confint_py3'
+
+    agein = Float
+    agend = Float
+    nsteps = Int
+
+    _dumpables = ('agein', 'agend', 'nsteps')
+
+    def traits_view(self):
+        g = VGroup(Item('agein', label='Initial Age'),
+                   Item('agend', label='Final Age'),
+                   Item('nsteps', label='Number of Age Intervals'))
+        return okcancel_view(g)
+
+
+class CorrFFTNode(MDDNode):
+    name = 'Corr. FFT'
+    executable_name = 'corrfft_py3'
+
+
 class MDDFigureNode(FigureNode):
     name = 'MDD Figure'
     editor_klass = 'pychron.mdd.tasks.mdd_figure_editor,MDDFigureEditor'
