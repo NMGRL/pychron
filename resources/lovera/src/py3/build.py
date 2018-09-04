@@ -41,7 +41,7 @@ def gfort_build(name, out):
         print('invalid source file {}'.format(name))
 
 
-def build(names, dest):
+def build(names):
     # p = path.join(path.dirname(os.getcwd()), 'bin')
     # if not path.exists(p):
     #     os.mkdir(p)
@@ -52,11 +52,11 @@ def build(names, dest):
         os.mkdir(root)
 
     for f in names:
-        out = '{}_py'.format(f)
+        out = '{}_py3'.format(f)
         out = os.path.join(root, out)
         #
         f = os.path.join(srcroot, f)
-        f = '{}.f90'.format(f)
+        f = '{}_py.f90'.format(f)
         print('src:     ', f)
         print('building:', out)
 
