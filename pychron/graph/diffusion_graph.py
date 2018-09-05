@@ -87,10 +87,13 @@ class DiffusionGraph(Graph):
 
         self.set_y_title(ytitle, plotid=pid)
 
-    def build_arrhenius(self, T, Dta, pid=2, **kw):
+    def build_model_arrhenius(self, *args, **kw):
+        self.build_arrhenius(*args, **kw)
+
+    def build_arrhenius(self, t, dta, pid=2, **kw):
         """
         """
-        a, _p = self.new_series(T, Dta, type='scatter', plotid=pid, marker_size=2.5, **kw)
+        a, _p = self.new_series(t, dta, type='scatter', plotid=pid, marker_size=2.5, **kw)
 
         self.set_x_title('10000/T (K)', plotid=pid)
         # ytitle = 'log D/a' + u'\u00B2 (' + 's' + u'\u207B\u2071)'

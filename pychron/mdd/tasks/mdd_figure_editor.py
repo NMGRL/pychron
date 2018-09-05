@@ -36,18 +36,26 @@ class MDDFigureEditor(BaseTraitsEditor):
         else:
             self.warning('Cannot load {}. No file at {}'.format(msg, path))
 
-    def _get_arrhenius_data(self, root, name='arr.samp'):
+    def _get_model_arrhenius_data(self, root):
+        return self._get_arrhenius(root, 'arr.dat', 'Modeled Arrhenius')
+
+    def _get_arrhenius_data(self, root):
+        return self._get_arrhenius(root, 'arr.samp', 'Measured Arrhenius')
+
+    def _get_arrhenius(self, root, name, tag):
         def func(reader):
             inv_temp = []
             log_d = []
             for row in reader:
-                if '&' not in row:
+                try:
                     inv_temp.append(float(row[0]))
                     log_d.append(float(row[1]))
+                except ValueError:
+                    continue
 
             return inv_temp, log_d
 
-        return self._get_data(root, name, 'Arrhenius', func, '\t')
+        return self._get_data(root, name, tag, func, '\t')
 
     def _get_cooling_history_data(self, root, name='confmed.dat'):
         def func(reader):
@@ -79,7 +87,13 @@ class MDDFigureEditor(BaseTraitsEditor):
 
         return self._get_data(root, name, 'Log R/Ro', func, '\t')
 
-    def _get_spectrum_data(self, root, name='age.in'):
+    def _get_model_spectrum_data(self, root):
+        return self._get_spectrum(root, 'ages-me.dat', 'Model Spectrum')
+
+    def _get_spectrum_data(self, root):
+        return self._get_spectrum(root, 'age.in', 'Spectrum')
+
+    def _get_spectrum(self, root, name, tag):
         def func(reader):
             a = []
             e = []
@@ -106,7 +120,7 @@ class MDDFigureEditor(BaseTraitsEditor):
                     pass
             return a, e
 
-        age, ar39 = self._get_data(root, name, 'Spectrum', func)
+        age, ar39 = self._get_data(root, name, tag, func)
         age_err, ar39_err = self._get_data(root, 'age-sd.smp', 'Spectrum Errors', func2)
 
         return ar39[:-1], age[1:], ar39_err, age_err
@@ -139,11 +153,12 @@ class MDDFigureEditor(BaseTraitsEditor):
             graph.new_graph(n)
 
             for root in self.roots:
-                for i, tag in ps:
-                    tag = tag.lower().replace(' ', '_')
-                    data = getattr(self, '_get_{}_data'.format(tag))(root)
-                    if data is not None:
-                        getattr(graph, 'build_{}'.format(tag))(*data, pid=i)
+                for i, tags in ps:
+                    for tag in tags:
+                        tag = tag.lower().replace(' ', '_')
+                        data = getattr(self, '_get_{}_data'.format(tag))(root)
+                        if data is not None:
+                            getattr(graph, 'build_{}'.format(tag))(*data, pid=i)
         else:
             graph.clear()
 
