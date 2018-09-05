@@ -63,8 +63,7 @@ dimension wksp(nca), iwksp(nca), orde(20), wf(ns), dzx(ns)
 common /var/ f(0:ns), telab(ns), tilab(ns), xlogd(0:ns), sig39(ns), &
         xlogr(0:ns), a39(ns), acut, b, sige, sigo, qmax, chisqe
 common /int/ ni, imp, nimax, ke
-character  tab1*9, sname*50
-!, yes*1, yes1*1
+character  tab1*9, sname*50, yes*1, yes1*1
 tab1 = char(09)
 iseed = -3
 iflag = 0
@@ -179,6 +178,15 @@ print *, 'E=', e, ' +- ', sige, '     Ordinate=', ord, ' +-', sigo
 !    sigo = sigo1
 !    print *, 'E=', e1, '+-', sige1, '  Ordinate=', ord1, '+-', sigo1
 !endif
+
+print *, 'PYCHRON_INTERRUPT'
+read *, e, sige, ord, sigo
+!read *, sige
+!read *, ord
+!read *, sigo
+
+print *, 'Model Params E=', e, ' +- ', sige, '     Ordinate=', ord, ' +-', sigo
+
 write(28, *)sname
 write(28, *)'E=', e, '+-', sige, '     Ordinate=', ord, '+-', sigo
 e0 = e
