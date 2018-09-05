@@ -25,7 +25,7 @@ from pyface.confirmation_dialog import confirm
 from pyface.constant import OK, YES
 from pyface.directory_dialog import DirectoryDialog
 from pyface.message_dialog import warning
-from traits.api import Str, Enum, Bool, Int, Float, HasTraits, List, Instance, Button
+from traits.api import Str, Enum, Bool, Int, Float, HasTraits, List, Instance, Button, CFloat
 from traitsui.api import UItem, Item, View, TableEditor, VGroup, InstanceEditor, ListStrEditor, HGroup
 from traitsui.table_column import ObjectColumn
 from uncertainties import nominal_value, std_dev
@@ -40,6 +40,7 @@ from pychron.paths import paths
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.nodes.figure import FigureNode
 from pychron.processing.analyses.analysis_group import StepHeatAnalysisGroup
+from pychron.regex import MDD_PARAM_REGEX
 
 EOF = 1
 
@@ -66,9 +67,10 @@ class MDDWorkspace(HasTraits):
     def _roots_default(self):
         r = []
         if globalv.mdd_workspace_debug:
-            r = [os.path.join(paths.mdd_data_dir, '66208-01'),
-                 # os.path.join(paths.mdd_data_dir, '13H')
-                 ]
+            r = [
+                # os.path.join(paths.mdd_data_dir, '66208-01'),
+                os.path.join(paths.mdd_data_dir, '12H')
+            ]
         return r
 
 
@@ -123,15 +125,32 @@ class MDDNode(BaseNode):
 
         fortranlogger.info('------ started {}'.format(name))
         p = subprocess.Popen([path],
-                             shell=False,
-                             bufsize=1024,
+                             # shell=True,
+                             # bufsize=1024,
+                             # close_fds=True,
+                             # universal_newlines=True,
+                             stderr=subprocess.PIPE,
+                             stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE)
 
         while p.poll() is None:
-            fortranlogger.info(p.stdout.readline().decode('utf8').strip())
+            msg = p.stdout.readline().decode('utf8').strip()
+            # msg = p.stdout.readline().strip()
+            if msg == 'PYCHRON_INTERRUPT':
+                self.handle_interrupt(p)
+            else:
+                self.handle_stdout(p, msg)
+                fortranlogger.info(msg)
             time.sleep(1e-6)
+
         fortranlogger.info('------ complete {}'.format(name))
         self.post_fortran()
+
+    def handle_stdout(self, proc, msg):
+        pass
+
+    def handle_interrupt(self, proc):
+        pass
 
     def post_fortran(self):
         pass
@@ -271,6 +290,37 @@ class ArrMultiNode(MDDNode):
 
     npoints = Int(10)
     _dumpables = ('npoints', 'rootname')
+
+    e = CFloat
+    e_err = CFloat
+    ordinate = CFloat
+    ordinate_err = CFloat
+
+    def handle_stdout(self, proc, msg):
+        mt = MDD_PARAM_REGEX.match(msg)
+        if mt:
+            self.e = mt.group('E')
+            self.e_err = mt.group('Eerr')
+            self.ordinate = mt.group('O')
+            self.ordinate_err = mt.group('Oerr')
+
+    def handle_interrupt(self, proc):
+        fortranlogger.debug('starting interrupt')
+        v = okcancel_view(VGroup(HGroup(Item('e', format_str='%0.5f'),
+                                        UItem('e_err', format_str='%0.5f')),
+                          HGroup(Item('ordinate', format_str='%0.5f'),
+                                 UItem('ordinate_err', format_str='%0.5f'))),
+                          width=500,
+                          title='Edit Model Parameters')
+
+        info = self.edit_traits(v, kind='livemodal')
+        if info.result:
+            # print([str(getattr(self, v)).encode() for v in ('e', 'e_err', 'ordinate', 'ordinate_err')])
+            l = ' '.join([str(getattr(self, v)) for v in ('e', 'e_err', 'ordinate', 'ordinate_err')])
+            proc.stdin.write(l.encode())
+            proc.stdin.flush()
+            proc.stdin.close()
+        fortranlogger.debug('finished interrupt')
 
     def traits_view(self):
         return okcancel_view(Item('npoints'),
