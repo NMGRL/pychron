@@ -46,6 +46,13 @@ nodes:
   - klass: AutoArrNode
 """
 
+ARRMULTI = """
+required:
+nodes:
+  - klass: MDDWorkspaceNode
+  - klass: ArrMultiNode
+"""
+
 MDDFIGURE = """
 required:
 nodes:

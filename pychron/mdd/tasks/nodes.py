@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+
+
 import logging
 import os
 import shutil
@@ -24,42 +26,20 @@ from pyface.constant import OK, YES
 from pyface.directory_dialog import DirectoryDialog
 from pyface.message_dialog import warning
 from traits.api import Str, Enum, Bool, Int, Float, HasTraits, List, Instance, Button
-from traitsui.api import UItem, Item, View, TableEditor, VGroup, InstanceEditor, ListStrEditor
+from traitsui.api import UItem, Item, View, TableEditor, VGroup, InstanceEditor, ListStrEditor, HGroup
 from traitsui.table_column import ObjectColumn
 from uncertainties import nominal_value, std_dev
 
 from pychron.core.helpers.iterfuncs import groupby_group_id, groupby_key
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.envisage.icon_button_editor import icon_button_editor
+from pychron.envisage.tasks.base_editor import grouped_name
 from pychron.globals import globalv
 from pychron.options.options_manager import MDDFigureOptionsManager
 from pychron.paths import paths
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.nodes.figure import FigureNode
-# --- generate thermal histories
-# autoagemon
-# autoagefree
 from pychron.processing.analyses.analysis_group import StepHeatAnalysisGroup
-
-# class FortranProcess:
-#     def __init__(self, path, queue):
-#         self.path = path
-#
-#     def start(self, name):
-#         # os.chdir(os.path.join(os.path.dirname(self.path), name))
-#         p = subprocess.Popen([self.path],
-#                              shell=False,
-#                              bufsize=1024,
-#                              stdout=subprocess.PIPE
-#                              )
-#         return p
-#
-#         # while p.poll() is None:
-#         #     self.queue.put(p.stdout.readline(), timeout=0.1)
-#         #     time.sleep(1e-6)
-# files
-# arrme
-# autoarr
 
 EOF = 1
 
@@ -86,8 +66,9 @@ class MDDWorkspace(HasTraits):
     def _roots_default(self):
         r = []
         if globalv.mdd_workspace_debug:
-            r = [os.path.join(paths.mdd_data_dir, '12H'),
-                 os.path.join(paths.mdd_data_dir, '13H')]
+            r = [os.path.join(paths.mdd_data_dir, '66208-01'),
+                 # os.path.join(paths.mdd_data_dir, '13H')
+                 ]
         return r
 
 
@@ -177,7 +158,9 @@ class MDDNode(BaseNode):
 
 class MDDLabTableNode(MDDNode):
     name = 'MDD Lab Table'
-    configurable = False
+
+    temp_offset = Float
+    time_offset = Float
 
     def run(self, state):
         # from the list of unknowns in the current state
@@ -224,7 +207,7 @@ class MDDLabTableNode(MDDNode):
         :return:
         """
         temp = unk.extract_value
-        time_at_temp = unk.extract_duration
+        time_at_temp = unk.extract_duration / 60.
         molv = unk.moles_k39
 
         mol_39, e = nominal_value(molv), std_dev(molv)
@@ -234,9 +217,19 @@ class MDDLabTableNode(MDDNode):
         age_err = unk.age_err_wo_j
         age_err_w_j = unk.age_err
 
-        cols = [step+1, temp, time_at_temp, mol_39, mol_39_perr, cum39, age, age_err, age_err_w_j, age, age_err]
+        cols = [step + 1, temp - self.temp_offset, time_at_temp - self.time_offset,
+                mol_39, mol_39_perr, cum39, age, age_err, age_err_w_j, age, age_err]
         cols = ','.join([str(v) for v in cols])
         return '{}\n'.format(cols)
+
+    def traits_view(self):
+        g = VGroup(Item('temp_offset', label='Temp. Offset (C)', tooltip='Subtract Temp Offset from nominal lab '
+                                                                         'extraction temperature. e.g '
+                                                                         'temp = lab_temp - temp_offset'),
+                   Item('time_offset', label='Time Offset (Min)', tooltip='Subtract Time Offset from nominal lab '
+                                                                          'extraction time. e.g '
+                                                                          'time = lab_time - time_offset'))
+        return okcancel_view(g, title='Configure Lab Table')
 
 
 class FilesNode(MDDNode):
@@ -267,8 +260,21 @@ class ArrMeNode(MDDNode, GeometryMixin):
     _dumpables = ('_geometry',)
 
     def traits_view(self):
-        v = okcancel_view(Item('geometry'))
+        v = okcancel_view(Item('geometry'), title='Configure ArrMe')
         return v
+
+
+class ArrMultiNode(MDDNode):
+    name = 'ArrMulti'
+    configuration_name = 'arrmulti'
+    executable_name = 'arrmulti_py3'
+
+    npoints = Int(10)
+    _dumpables = ('npoints', 'rootname')
+
+    def traits_view(self):
+        return okcancel_view(Item('npoints'),
+                             title='Configure ArrMulti')
 
 
 class AutoArrNode(MDDNode):
@@ -286,7 +292,7 @@ class AutoArrNode(MDDNode):
         v = okcancel_view(Item('use_defaults'),
                           Item('n_max_domains'),
                           Item('n_min_domains'),
-                          Item('use_do_fix'))
+                          Item('use_do_fix'), title='Configure AutoArr')
         return v
 
 
@@ -301,6 +307,13 @@ class CoolingStep(HasTraits):
 
 class CoolingHistory(HasTraits):
     steps = List
+    kind = Enum('Linear')
+    start_age = Float(10)
+    stop_age = Float(0)
+    start_temp = Float(600)
+    stop_temp = Float(300)
+    nsteps = Int(10)
+    generate_curve = Button
 
     def load(self):
         steps = []
@@ -329,10 +342,29 @@ class CoolingHistory(HasTraits):
     def path(self):
         return os.path.join(paths.appdata_dir, 'cooling_history.txt')
 
+    def _generate_curve_fired(self):
+        s = []
+        tstep = (self.start_age - self.stop_age) / (self.nsteps - 1)
+        ttstep = (self.start_temp - self.stop_temp) / (self.nsteps - 1)
+        for i in range(self.nsteps):
+            ctime = self.start_age - i * tstep
+            ctemp = self.start_temp - i * ttstep
+            cs = CoolingStep(ctime, ctemp)
+            s.append(cs)
+
+        self.steps = s
+
     def traits_view(self):
-        cols = [ObjectColumn(name='ctime'),
-                ObjectColumn(name='ctemp')]
-        v = View(UItem('steps', editor=TableEditor(columns=cols, sortable=False)))
+
+        cgrp = VGroup(HGroup(Item('start_age', label='Start'), Item('stop_age', label='Stop'), show_border=True,
+                             label='Time'),
+                      HGroup(Item('start_temp', label='Start'), Item('stop_temp', label='Stop'), show_border=True,
+                             label='Temp.'),
+                      HGroup(Item('nsteps', label='N Steps'), icon_button_editor('generate_curve', '')))
+        cols = [ObjectColumn(name='ctime', format='%0.1f', label='Time (Ma)'),
+                ObjectColumn(name='ctemp', format='%0.1f', label='Temp. (C)')]
+
+        v = View(VGroup(cgrp, UItem('steps', editor=TableEditor(columns=cols, sortable=False))))
         return v
 
 
@@ -367,9 +399,10 @@ class AgesMeNode(MDDNode, GeometryMixin):
         self.cooling_history.dump()
 
     def traits_view(self):
-        a = UItem('cooling_history', style='custom')
-        g = Item('geometry')
-        return okcancel_view(g, a, resizable=True, width=300, height=400)
+        cool = VGroup(UItem('cooling_history', style='custom'), show_border=True)
+        geom = VGroup(Item('geometry'), show_border=True)
+        g = VGroup(geom, cool)
+        return okcancel_view(g, resizable=True, width=300, height=600, title='Configure AgesMe')
 
 
 class AutoAgeFreeNode(MDDNode):
@@ -390,7 +423,7 @@ class AutoAgeMonNode(MDDNode):
 
     def traits_view(self):
         g = VGroup(Item('nruns'),
-                   Item('max_age'))
+                   Item('max_age'), title='Configure AutoAgeMon')
         return okcancel_view(g)
 
 
@@ -429,6 +462,11 @@ class MDDFigureNode(FigureNode):
 
         editor = self._editor_factory()
         editor.roots = state.mdd_workspace.roots
+
+        na = sorted((os.path.basename(ni) for ni in editor.roots))
+        na = grouped_name(na)
+        editor.name = '{} mdd'.format(na)
+
         editor.replot()
 
         state.editors.append(editor)

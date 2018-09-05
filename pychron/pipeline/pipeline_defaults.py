@@ -189,19 +189,6 @@ nodes:
   - klass: IdeogramNode
 """
 
-AUTO_IDEOGRAM = """
-required:
-nodes:
-  - klass: ListenUnknownNode
-  - klass: FilterNode
-    filters:
-     - age>0
-  - klass: GroupingNode
-    key: Identifier
-  - klass: IdeogramNode
-    no_analyses_warning: False
-"""
-
 HISTORY_IDEOGRAM = """
 required:
 nodes:
@@ -223,20 +210,6 @@ required:
 nodes:
   - klass: UnknownNode
   - klass: ReportNode
-"""
-
-AUTO_REPORT = """
-required:
-nodes:
-  - klass: CalendarUnknownNode 
-  - klass: ReportNode
-  - klass: EmailNode
-"""
-AUTO_SERIES = """
-required:
-nodes:
-  - klass: ListenUnknownNode
-  - klass: SeriesNode
 """
 
 SERIES = """

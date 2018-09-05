@@ -67,6 +67,7 @@ def main(args):
     names = ['files',
              'autoarr',
              'autoage-mon',
+             'arrmulti',
              # 'autoage-free',
              'conf_int',
              'corrfft',
