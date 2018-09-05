@@ -50,6 +50,7 @@ PACKAGE_DICT = dict(
 
     ClassifierPlugin='pychron.classifier.tasks.plugin',
     MDDPlugin='pychron.mdd.tasks.plugin',
+    AutoPlugin='pychron.pipeline.tasks.auto_plugin',
 
     # data mappers
     USGSVSCDataPlugin='pychron.data_mapper.tasks.usgs_vsc.plugin',

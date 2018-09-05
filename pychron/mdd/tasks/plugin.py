@@ -17,9 +17,9 @@ from traits.api import List
 
 from pychron.envisage.tasks.base_plugin import BasePlugin
 from pychron.mdd.tasks.nodes import AgesMeNode, ArrMeNode, FilesNode, MDDWorkspaceNode, MDDFigureNode, \
-    AutoAgeFreeNode, MDDLabTableNode, AutoAgeMonNode, AutoArrNode, CorrFFTNode, ConfIntNode
+    AutoAgeFreeNode, MDDLabTableNode, AutoAgeMonNode, AutoArrNode, CorrFFTNode, ConfIntNode, ArrMultiNode
 from pychron.mdd.tasks.predefined import LABTABLE, FILES, ARRME, AGESME, AUTOARR, AUTOAGEMON, MDDFIGURE, AUTOAGEFREE, \
-    CORRFFT, CONFINT
+    CORRFFT, CONFINT, ARRMULTI
 
 
 class MDDPlugin(BasePlugin):
@@ -29,6 +29,7 @@ class MDDPlugin(BasePlugin):
     def _predefined_templates_default(self):
         return [('MDD', (('LabTable', LABTABLE),
                          ('Files', FILES),
+                         ('ArrMulti', ARRMULTI),
                          ('AutoArr', AUTOARR),
                          ('ArrMe', ARRME),
                          ('AgesMe', AGESME),
@@ -42,6 +43,6 @@ class MDDPlugin(BasePlugin):
         return [AutoArrNode, AgesMeNode, ArrMeNode, FilesNode,
                 MDDWorkspaceNode, MDDFigureNode, MDDLabTableNode,
                 AutoAgeFreeNode,
-                AutoAgeMonNode, CorrFFTNode, ConfIntNode]
+                AutoAgeMonNode, CorrFFTNode, ConfIntNode, ArrMultiNode]
 
 # ============= EOF =============================================

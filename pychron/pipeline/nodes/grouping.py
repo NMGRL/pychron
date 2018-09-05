@@ -72,11 +72,12 @@ class GroupingNode(BaseNode):
 
         if self.by_key != 'No Grouping':
             key = self._generate_key()
-            group_analyses_by_key(unks, key=key, attr=self._attr, id_func=self._id_func,
-                                  sorting_enabled=self._sorting_enabled,
-                                  parent_group=self._parent_group)
+            items = group_analyses_by_key(unks, key=key, attr=self._attr, id_func=self._id_func,
+                                          sorting_enabled=self._sorting_enabled,
+                                          parent_group=self._parent_group)
 
-            setattr(state, self.analysis_kind, sorted(unks, key=key))
+            setattr(state, self.analysis_kind, items)
+            setattr(self, self.analysis_kind, items)
 
     def _clear_grouping(self, unk):
         setattr(unk, self._attr, 0)

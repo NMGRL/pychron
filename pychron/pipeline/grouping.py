@@ -35,12 +35,12 @@ def group_analyses_by_key(items, key, attr='group_id', id_func=None, sorting_ena
     if parent_group is None:
         parent_group = 'group_id'
 
-    for _, items in groupby(items, attrgetter(parent_group)):
-        for k, analyses in groupby(items, key=keyfunc):
+    for _, gitems in groupby(items, attrgetter(parent_group)):
+        for k, analyses in groupby(gitems, key=keyfunc):
             gid = ids.index(k)
             if id_func:
                 gid = id_func(gid, analyses)
             for it in analyses:
                 setattr(it, attr, gid)
-
+    return items
 # ============= EOF =============================================
