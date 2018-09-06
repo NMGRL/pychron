@@ -16,16 +16,103 @@
 import csv
 import os
 
-from traits.api import Instance, List
+from traits.api import Instance, List, HasTraits, Str, Event, Any, Bool, Color
 from traitsui.api import View, UItem, VGroup
+# from traitsui.editors import TreeEditor
+from traitsui.tree_node import TreeNode
 
+from pychron.core.ui.tree_editor import TreeEditor
+from pychron.envisage.resources import icon
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.graph.diffusion_graph import DiffusionGraph
+
+visible = icon('eye')
+
+
+# not_visible = icon('fo')
+
+class MDDItemNode(TreeNode):
+    def get_icon(self, obj, is_expanded):
+        icon = visible if obj.visible else ''
+        return icon
+
+
+class BaseItem(HasTraits):
+    name = Str
+    enabled = Bool(True)
+
+
+class MDDItem(BaseItem):
+    plots = List
+    background = Color
+    visible = Bool(True)
+
+    def toggle_visible(self):
+        for p in self.plots:
+            p.visible = not p.visible
+            p.request_redraw()
+
+        self.visible = p.visible
+        self.background = 'white' if p.visible else 'lightgrey'
+
+
+class MDDGraph(BaseItem):
+    items = List(MDDItem)
+
+
+class MDDTree(HasTraits):
+    graphs = List(MDDGraph)
+
+    def add_node(self, tag, name, plots):
+        if plots is None:
+            plots = []
+        graph = self._get_graph(tag)
+        if graph is None:
+            g = MDDGraph(name=tag)
+            self.graphs.append(g)
+
+        g.items.append(MDDItem(name=name, plots=plots))
+
+    def _get_graph(self, tag):
+        return next((g for g in self.graphs if g.name == tag), None)
+
+
+class EditorOptions(HasTraits):
+    tree = Instance(MDDTree, ())
+    selected = Any
+    dclicked = Event
+    refresh_needed = Event
+
+    def _dclicked_fired(self):
+        self.selected.toggle_visible()
+        self.refresh_needed = True
+        # self.selected = MDDItem()
+        # self.refresh_needed = True
+
+    def traits_view(self):
+        nodes = [TreeNode(node_for=[MDDTree],
+                          icon_open='',
+                          children='graphs'),
+                 TreeNode(node_for=[MDDGraph],
+                          children='items',
+                          label='name'),
+                 MDDItemNode(node_for=[MDDItem],
+                             label='name',
+                             background='background')]
+        v = View(UItem('tree', editor=TreeEditor(nodes=nodes,
+                                                 hide_root=True,
+                                                 editable=False,
+                                                 refresh_icons='refresh_needed',
+                                                 refresh='refresh_needed',
+                                                 selected='selected',
+                                                 dclick='dclicked')))
+        return v
 
 
 class MDDFigureEditor(BaseTraitsEditor):
     graph = Instance(DiffusionGraph)
     roots = List
+    editor_options = Instance(EditorOptions, ())
 
     def _get_data(self, root, path, msg, func, delimiter=' '):
         path = os.path.join(root, path)
@@ -151,14 +238,16 @@ class MDDFigureEditor(BaseTraitsEditor):
                                                        shape=(r, c)))
             ps = self.plotter_options.panels()
             graph.new_graph(n)
-
+            opt = self.editor_options
             for root in self.roots:
                 for i, tags in ps:
                     for tag in tags:
-                        tag = tag.lower().replace(' ', '_')
-                        data = getattr(self, '_get_{}_data'.format(tag))(root)
+
+                        ltag = tag.lower().replace(' ', '_')
+                        data = getattr(self, '_get_{}_data'.format(ltag))(root)
                         if data is not None:
-                            getattr(graph, 'build_{}'.format(tag))(*data, pid=i)
+                            plots = getattr(graph, 'build_{}'.format(ltag))(*data, pid=i)
+                            opt.tree.add_node(tag, os.path.basename(root), plots)
         else:
             graph.clear()
 

@@ -62,19 +62,20 @@ class DiffusionGraph(Graph):
         """
 
         """
-        a = None
-
+        plots = []
         if ar39_err is not None and age_err is not None:
             a, _p = self.new_series(ar39_err, age_err, plotid=pid,
                                     type='polygon',
                                     color=kw['color'] if 'color' in kw else 'orange')
+            plots.append(a)
 
         b, _p = self.new_series(ar39, age, plotid=pid, **kw)
-        plots = [b, a] if a is not None else [b]
+        plots.append(b)
 
         xtitle = 'Cum. 39Ar %'
         self.set_x_title(xtitle, plotid=pid)
         self.set_y_title('Age (Ma)', plotid=pid)
+        return plots
 
     def build_logr_ro(self, ar39, logr, pid=1, **kw):
         """
@@ -86,9 +87,10 @@ class DiffusionGraph(Graph):
         ytitle = 'log r/ro'
 
         self.set_y_title(ytitle, plotid=pid)
+        return [a]
 
     def build_model_arrhenius(self, *args, **kw):
-        self.build_arrhenius(*args, **kw)
+        return self.build_arrhenius(*args, **kw)
 
     def build_arrhenius(self, t, dta, pid=2, **kw):
         """
@@ -96,9 +98,9 @@ class DiffusionGraph(Graph):
         a, _p = self.new_series(t, dta, type='scatter', plotid=pid, marker_size=2.5, **kw)
 
         self.set_x_title('10000/T (K)', plotid=pid)
-        # ytitle = 'log D/a' + u'\u00B2 (' + 's' + u'\u207B\u2071)'
         ytitle = 'log D/a (1/s)'
         self.set_y_title(ytitle, plotid=pid)
+        return [a]
 
     def build_cooling_history(self, ts, tsl, tsh, pid=3, colors=None):
         """

@@ -41,6 +41,16 @@ class SimpleEditor(_SimpleEditor):
         self.sync_value(self.factory.expand_all, 'expand_all', 'from')
         self.sync_value(self.factory.update, 'update', 'from')
 
+    def _refresh_changed( self ):
+        nids = self._tree.selectedItems()
+        obj, node = self._node_for(self.selected)
+        bg = node.get_background(obj)
+        b = self._get_brush(bg)
+        for ni in nids:
+            ni.setBackground(0, b)
+
+        super(SimpleEditor, self)._refresh_changed()
+
     def _label_updated(self, obj, name, label):
         """  Handles the label of an object being changed.
         """

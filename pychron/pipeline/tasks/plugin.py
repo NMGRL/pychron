@@ -19,7 +19,6 @@ from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema import SMenu, SGroup
 from pyface.tasks.action.schema_addition import SchemaAddition
-# ============= enthought library imports =======================
 from traits.api import List
 
 from pychron.dvc.dvc import DVC
@@ -35,8 +34,7 @@ from pychron.pipeline.tasks.actions import ConfigureRecallAction, IdeogramAction
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 
 
-# LastNAnalysesSeriesAction,LastNHoursSeriesAction, LastMonthSeriesAction,
-# LastWeekSeriesAction, LastDaySeriesAction, \
+# ============= enthought library imports =======================
 
 
 class PipelinePlugin(BaseTaskPlugin):
