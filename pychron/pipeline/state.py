@@ -22,7 +22,6 @@ from traits.api import HasTraits, List, Bool, Any, Set, Str, Dict
 
 def get_detector_set(ans):
     return {iso.detector for ai in ans for iso in ai.itervalues()}
-    # return {iso.detector for ai in ans if ai.isotopes for iso in six.itervalues(ai.isotopes)}
 
 
 def get_isotope_set(ans):
@@ -39,18 +38,14 @@ class EngineState(HasTraits):
     tables = List
     editors = List
     append_references = Bool
-    # has_references = Bool
     has_flux_monitors = Bool
     saveable_keys = List
     saveable_fits = List
     saveable_irradiation_positions = List
-    # user_review = Bool
     veto = Any
     canceled = Bool
     run_groups = Dict
-    # udetectors = Property(depends_on='unknowns[]')
-    # rdetectors = Property(depends_on='references[]')
-    # union_detectors = Property(depends_on='udetectors, rdetectors')
+
     iso_evo_results = List
 
     modified_projects = Set
@@ -64,17 +59,6 @@ class EngineState(HasTraits):
     report_path = None
 
     mdd_workspace = None
-    # @cached_property
-    # def _get_udetectors(self):
-    #     return get_detector_set(self.unknowns)
-    #
-    # @cached_property
-    # def _get_rdetectors(self):
-    #     return get_detector_set(self.references)
-    #
-    # @cached_property
-    # def _get_union_detectors(self):
-    #     x = set(self.udetectors).union(self.rdetectors)
-    #     return sort_isotopes(x)
+
 
 # ============= EOF =============================================
