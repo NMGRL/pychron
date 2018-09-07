@@ -50,6 +50,7 @@ from pychron.pipeline.pipeline_defaults import ISOEVO, BLANKS, ICFACTOR, IDEO, S
     ANALYSIS_TABLE_W_IA, MASSSPEC_REDUCED
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
+from pychron.pipeline.plot.editors.spectrum_editor import SpectrumEditor
 from pychron.pipeline.state import EngineState
 from pychron.pipeline.template import PipelineTemplate, PipelineTemplateSaveView, PipelineTemplateGroup, \
     PipelineTemplateRoot
@@ -336,23 +337,27 @@ class PipelineEngine(Loggable):
             return
 
         if node.configure():
-            if isinstance(node, IdeogramNode):
-                e = node.editor
-                es = [ei for ei in self.editors if isinstance(ei, IdeogramEditor) and ei != node.editor]
-                if es:
-                    memory = self._confirmation_cache.get('Ideogram', None)
-                    if memory is None:
-                        yes, remember = remember_confirmation_dialog(
-                            'Would you like to apply these changes to all open '
-                            'Ideograms?')
+            for tag, klass, editor in (('Ideogram', IdeogramNode, IdeogramEditor),
+                                       ('Spectrum', SpectrumNode, SpectrumEditor),
+                                       ):
 
-                    if yes:
-                        for ni in es:
-                            ni.plotter_options = e.plotter_options
-                            ni.refresh_needed = True
+                if isinstance(node, klass):
+                    e = node.editor
+                    es = [ei for ei in self.editors if isinstance(ei, editor) and ei != node.editor]
+                    if es:
+                        memory = self._confirmation_cache.get(tag, None)
+                        if memory is None:
+                            yes, remember = remember_confirmation_dialog(
+                                'Would you like to apply these changes to all open '
+                                '{}?'.format(tag))
 
-                    if remember:
-                        self._confirmation_cache['Ideogram'] = yes
+                        if yes:
+                            for ni in es:
+                                ni.plotter_options = e.plotter_options
+                                ni.refresh_needed = True
+
+                        if remember:
+                            self._confirmation_cache[tag] = yes
 
             osel = self.selected
             self.update_needed = True

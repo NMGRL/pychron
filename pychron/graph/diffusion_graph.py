@@ -47,16 +47,19 @@ class DiffusionGraph(Graph):
 
     zdataname_generators = None
 
-    def new_graph(self, n):
 
+    def new_graph(self, n, bgcolor=None, padding=None):
         self.plotcontainer = self.container_factory()
         # n = len(self.include_panels)
-        padding = [50, 5, 10, 30]  # if n>2 else [25,5,50,30]
+        # padding = [50, 5, 10, 30]  # if n>2 else [25,5,50,30]
 
-        for _i in range(n):
-            _ = self.new_plot(padding=padding,
-                              pan=True,
+        for _ in range(n):
+            p = self.new_plot(pan=True,
                               zoom=True)
+            if padding:
+                p.padding = padding
+            if bgcolor:
+                p.bgcolor = bgcolor
 
     def build_spectrum(self, ar39, age, ar39_err=None, age_err=None, pid=0, **kw):
         """
