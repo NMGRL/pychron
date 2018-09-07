@@ -460,31 +460,26 @@ class Ideogram(BaseArArFigure):
                     ov.set_y_limits(0, yma2)
 
     def _add_peak_labels(self, line):
-        if self.options.label_all_peaks:
+        opt = self.options
+        if opt.label_all_peaks:
             xs = line.index.get_data()
             ys = line.value.get_data()
             if xs.shape[0]:
                 xp, yp = fast_find_peaks(ys, xs)
 
-                border = self.options.peak_label_border
-                border_color = self.options.peak_label_border_color
+                border = opt.peak_label_border
+                border_color = opt.peak_label_border_color
 
-                bgcolor = self.options.peak_label_bgcolor if self.options.peak_label_bgcolor_enabled else 'transparent'
+                bgcolor = opt.peak_label_bgcolor if opt.peak_label_bgcolor_enabled else 'transparent'
 
                 for xi, yi in zip(xp, yp):
                     label = PeakLabel(line,
                                       data_point=(xi, yi),
-                                      label_text=floatfmt(xi, n=3),
+                                      label_text=floatfmt(xi, n=opt.peak_label_sigfigs),
                                       border_visible=bool(border),
                                       border_width=border,
                                       border_color=border_color,
-                                      bgcolor=bgcolor,
-                                      # label_style='bubble',
-
-                                      # border_visible=False,
-                                      # marker_visible=False,
-                                      # show_label_coords=False
-                                      )
+                                      bgcolor=bgcolor)
                     line.overlays.append(label)
 
     def _add_info(self, g, plot):
@@ -508,32 +503,41 @@ class Ideogram(BaseArArFigure):
                     plot.overlays.append(pl)
 
     def _add_mean_indicator(self, g, line, po, bins, probs, pid):
-        wm, we, mswd, valid_mswd = self._calculate_stats(bins, probs)
+        wm, we, mswd, valid_mswd, n = self._calculate_stats(bins, probs)
         ogid = self.group_id
         gid = ogid + 1
 
-        we = self.options.nsigma
+        opt = self.options
+        we = opt.nsigma
         text = ''
-        if self.options.display_mean:
-            n = self.xs.shape[0]
-            mswd_args = (mswd, valid_mswd, n)
-            text = self._make_mean_label(wm, we * self.options.nsigma, n, n, mswd_args)
+        if opt.display_mean:
+            total_n = self.xs.shape[0]
+
+            mswd_args = None
+            if opt.display_mean_mswd:
+                mswd_args = (mswd, valid_mswd, n)
+
+            if opt.display_mean_n:
+                pass
+
+            text = self._make_mean_label(wm, we * opt.nsigma, n, total_n, mswd_args,
+                                         display_n=opt.display_mean_n)
 
         # group = self.options.get_group(self.group_id)
         # color = group.color
 
-        plotkw = self.options.get_plot_dict(ogid, self.subgroup_id)
+        plotkw = opt.get_plot_dict(ogid, self.subgroup_id)
 
         m = MeanIndicatorOverlay(component=line,
                                  x=wm,
                                  y=20 * gid,
                                  error=we,
-                                 nsgima=self.options.nsigma,
+                                 nsgima=opt.nsigma,
                                  color=plotkw['color'],
-                                 visible=self.options.display_mean_indicator,
+                                 visible=opt.display_mean_indicator,
                                  id='mean_{}'.format(self.group_id))
 
-        font = self.options.mean_indicator_font
+        font = opt.mean_indicator_font
         m.font = str(font).lower()
         m.text = text
 
@@ -611,9 +615,8 @@ class Ideogram(BaseArArFigure):
 
         if fxs:
             fxes = [a for i, a in enumerate(self.xes) if i not in sel]
-            n = len(fxs)
             xs, ys = self._calculate_probability_curve(fxs, fxes)
-            wm, we, mswd, valid_mswd = self._calculate_stats(xs, ys)
+            wm, we, mswd, valid_mswd, n = self._calculate_stats(xs, ys)
         else:
             n = 0
             ys = []
@@ -624,13 +627,21 @@ class Ideogram(BaseArArFigure):
         lp.index.set_data(xs)
 
         total_n = self.xs.shape[0]
+        opt = self.options
         for ov in lp.overlays:
             if isinstance(ov, MeanIndicatorOverlay):
                 ov.set_x(wm)
                 ov.error = we
                 if ov.label:
-                    mswd_args = mswd, valid_mswd, n
-                    text = self._make_mean_label(wm, we * self.options.nsigma, n, total_n, mswd_args)
+
+                    mswd_args = None
+                    if opt.display_mean_mswd:
+                        mswd_args = (mswd, valid_mswd, n)
+
+                    text = self._make_mean_label(wm, we * opt.nsigma, n, total_n, mswd_args,
+                                                 display_n=opt.display_mean_n)
+                    # mswd_args = mswd, valid_mswd, n
+                    # text = self._make_mean_label(wm, we * self.options.nsigma, n, total_n, mswd_args)
                     ov.label.text = text
 
         lp.overlays = [o for o in lp.overlays if not isinstance(o, PeakLabel)]
@@ -666,13 +677,13 @@ class Ideogram(BaseArArFigure):
     # ===============================================================================
     # utils
     # ===============================================================================
-    def _make_mean_label(self, wm, we, n, total_n, mswd_args):
-
+    def _make_mean_label(self, wm, we, n, total_n, mswd_args, **kw):
         text = self._build_label_text(wm, we, n,
                                       total_n=total_n,
                                       mswd_args=mswd_args,
                                       sig_figs=self.options.mean_sig_figs,
-                                      percent_error=self.options.display_percent_error)
+                                      percent_error=self.options.display_percent_error,
+                                      **kw)
 
         f = self.options.mean_label_format
         if f:
@@ -868,7 +879,7 @@ class Ideogram(BaseArArFigure):
         else:
             wage = self.analysis_group.weighted_age
             wm, we = nominal_value(wage), std_dev(wage)
-        return wm, we, mswd, valid_mswd
+        return wm, we, mswd, valid_mswd, n
 
         # def _handle_xlimits(self):
         #     self.xlimits_updated = True

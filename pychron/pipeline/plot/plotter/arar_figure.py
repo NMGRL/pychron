@@ -625,11 +625,12 @@ class BaseArArFigure(SelectionFigure):
     def _build_label_text(self, x, we, n,
                           total_n=None,
                           mswd_args=None,
+                          display_n=True,
+                          display_mswd=True,
                           percent_error=False,
                           sig_figs=3):
 
-        display_n = True
-        display_mswd = n >= 2
+        display_mswd = n >= 2 and display_mswd
 
         if display_n:
             if total_n and n != total_n:

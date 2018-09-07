@@ -59,10 +59,13 @@ class IdeogramOptions(AgeOptions):
 
     display_mean_indicator = Bool(True)
     display_mean = Bool(True)
+    display_mean_mswd = Bool(True)
+    display_mean_n = Bool(True)
     display_percent_error = Bool(True)
     # display_identifier_on_mean = Bool(False)
     # display_sample_on_mean = Bool(False)
     label_all_peaks = Bool(True)
+    peak_label_sigfigs = Int
     peak_label_bgcolor = Color
     peak_label_border = Int
     peak_label_border_color = Color

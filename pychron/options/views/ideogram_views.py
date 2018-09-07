@@ -26,6 +26,7 @@ from pychron.processing.j_error_mixin import J_ERROR_GROUP
 
 
 class DisplaySubOptions(TitleSubOptions):
+
     def traits_view(self):
         errbar_grp = VGroup(HGroup(Item('x_end_caps', label='X End Caps'),
                                    Item('y_end_caps', label='Y End Caps'),
@@ -53,30 +54,39 @@ class DisplaySubOptions(TitleSubOptions):
                    HGroup(Item('peak_label_border', label='Border Width',
                                tooltip='Border width in pixels, user 0 to disable'),
                           Item('peak_label_border_color', label='Border'), enabled_when='peak_label_border'),
+                   Item('peak_label_sigfigs', label='SigFigs'),
                    show_border=True,
                    label='Peaks'),
             show_border=True, label='Label')
+
         inset_grp = VGroup(HGroup(Item('display_inset', label='Use'),
                                   Item('inset_location', label='Location'),
                                   Item('inset_width', label='Width'),
                                   Item('inset_height', label='Height')),
                            show_border=True,
                            label='Inset')
-        mean_grp = VGroup(HGroup(Item('display_mean_indicator', label='Indicator'),
-                                 Item('display_mean', label='Value',
-                                      enabled_when='display_mean_indicator'),
-                                 Item('display_percent_error', label='%Error',
-                                      enabled_when='display_mean_indicator'),
-                                 Item('mean_sig_figs', label='SigFigs')),
-                          HGroup(Item('mean_label_display',
-                                      label='Mean Label Format',
-                                      width=100,
-                                      style='readonly'),
-                                 spring,
-                                 icon_button_editor('edit_mean_format_button', 'cog',
-                                                    tooltip='Open Mean Label maker')),
+
+        mean_label = HGroup(Item('mean_label_display',
+                                 label='Mean Label Format',
+                                 width=100,
+                                 style='readonly'),
+                            spring,
+                            icon_button_editor('edit_mean_format_button', 'cog',
+                                               tooltip='Open Mean Label maker'))
+
+        submean = HGroup(VGroup(Item('display_mean', label='Value', ),
+                                Item('display_percent_error', label='%Error', )),
+                         VGroup(Item('display_mean_mswd', label='MSWD', ),
+                                Item('display_mean_n', label='N')),
+                         Item('mean_sig_figs', label='SigFigs'),
+                         enabled_when='display_mean_indicator')
+
+        mean_grp = VGroup(Item('display_mean_indicator', label='Indicator'),
+                          submean,
+                          mean_label,
                           show_border=True,
                           label='Mean')
+
         info_grp = HGroup(Item('show_info', label='Show'),
                           Item('show_mean_info', label='Mean', enabled_when='show_info'),
                           Item('show_error_type_info', label='Error Type', enabled_when='show_info'),
