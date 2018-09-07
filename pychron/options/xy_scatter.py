@@ -34,12 +34,25 @@ class XYScatterAuxPlot(AuxPlot):
     y_key = Str
     available_names = List
 
+    def _make_ratio(self, axis):
+        d = getattr(self, '{}_d'.format(axis))
+        n = getattr(self, '{}_n'.format(axis))
+        if d:
+            if n:
+                r = '{}/{}'.format(n, d)
+            else:
+                r = d
+        elif n:
+            r = n
+
+        return r
+
     @property
     def ytitle(self):
         r = ''
         name = self.name
         if name == 'Ratio':
-            r = '{}/{}'.format(self.y_n, self.y_d)
+            r = self._make_ratio('y')
         elif name == 'Scatter':
             r = self.y_key
         return r
@@ -51,7 +64,7 @@ class XYScatterAuxPlot(AuxPlot):
         if name == 'TimeSeries':
             r = 'Time (hrs)'
         elif name == 'Ratio':
-            r = '{}/{}'.format(self.x_n, self.x_d)
+            self._make_ratio('x')
         elif name == 'Scatter':
             r = self.x_key
 
@@ -67,7 +80,7 @@ class XYScatterOptions(AuxPlotFigureOptions):
 
     def set_names(self, isotope_keys):
         nn = isotope_keys + NAMES
-        anames = isotope_keys + ['age', 'age_err', 'kca', 'kca_err',
+        anames = isotope_keys + ['age', 'kca',
                                  'extract_value', 'extract_duration', 'cleanup_duration']
         for ai in self.aux_plots:
             if ai.name not in nn:
