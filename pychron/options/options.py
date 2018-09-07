@@ -353,6 +353,8 @@ class FigureOptions(BaseOptions):
     ytitle_fontsize = Enum(*SIZES)
     ytitle_fontname = Enum(*FONTS)
 
+    layout = Instance(FigureLayout, ())
+
     groups = List
     # group = Property
     # group_editor_klass = None
@@ -497,8 +499,6 @@ class AuxPlotFigureOptions(FigureOptions):
     aux_plots = List
     aux_plot_klass = AuxPlot
     selected = List
-
-    layout = Instance(FigureLayout, ())
 
     error_info_font = Property
     error_info_fontname = Enum(*FONTS)

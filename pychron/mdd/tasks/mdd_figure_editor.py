@@ -29,8 +29,6 @@ from pychron.graph.diffusion_graph import DiffusionGraph
 visible = icon('eye')
 
 
-# not_visible = icon('fo')
-
 class MDDItemNode(TreeNode):
     def get_icon(self, obj, is_expanded):
         icon = visible if obj.visible else ''
@@ -66,12 +64,13 @@ class MDDTree(HasTraits):
     def add_node(self, tag, name, plots):
         if plots is None:
             plots = []
+
         graph = self._get_graph(tag)
         if graph is None:
-            g = MDDGraph(name=tag)
-            self.graphs.append(g)
+            graph = MDDGraph(name=tag)
+            self.graphs.append(graph)
 
-        g.items.append(MDDItem(name=name, plots=plots))
+        graph.items.append(MDDItem(name=name, plots=plots))
 
     def _get_graph(self, tag):
         return next((g for g in self.graphs if g.name == tag), None)
@@ -86,8 +85,6 @@ class EditorOptions(HasTraits):
     def _dclicked_fired(self):
         self.selected.toggle_visible()
         self.refresh_needed = True
-        # self.selected = MDDItem()
-        # self.refresh_needed = True
 
     def traits_view(self):
         nodes = [TreeNode(node_for=[MDDTree],
@@ -110,9 +107,14 @@ class EditorOptions(HasTraits):
 
 
 class MDDFigureEditor(BaseTraitsEditor):
+    refresh_needed = Event
     graph = Instance(DiffusionGraph)
     roots = List
     editor_options = Instance(EditorOptions, ())
+    plotter_options = Any
+
+    def _refresh_needed_fired(self):
+        self.replot(force=True)
 
     def _get_data(self, root, path, msg, func, delimiter=' '):
         path = os.path.join(root, path)
@@ -227,17 +229,21 @@ class MDDFigureEditor(BaseTraitsEditor):
 
         return self._get_data(root, name, 'Spectrum', func, '\t')
 
-    def replot(self):
+    def replot(self, force=False):
         graph = self.graph
+        if force:
+            self.editor_options = EditorOptions()
+            graph = None
 
         if graph is None:
+            opt = self.plotter_options
             k, n, r, c = self.plotter_options.rc()
             graph = DiffusionGraph(container_dict=dict(kind=k,
-                                                       bgcolor='white',
-                                                       padding=[10, 10, 40, 10],
+                                                       bgcolor=opt.bgcolor,
+                                                       # padding=[10, 10, 40, 10],
                                                        shape=(r, c)))
-            ps = self.plotter_options.panels()
-            graph.new_graph(n)
+            ps = opt.panels()
+            graph.new_graph(n, bgcolor=opt.plot_bgcolor, padding=opt.paddings())
             opt = self.editor_options
             for root in self.roots:
                 for i, tags in ps:

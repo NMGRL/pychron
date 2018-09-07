@@ -18,9 +18,11 @@
 
 # ============= standard library imports ========================
 from __future__ import absolute_import
+
 from numpy import array
 # ============= local library imports  ==========================
 from uncertainties import nominal_value
+
 # from pychron.processing.plotters.xy.xy_scatter_tool import XYScatterTool
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 
@@ -49,9 +51,6 @@ class XYScatter(BaseArArFigure):
                 elif po.name == 'TimeSeries':
                     self._plot_series(po, i)
 
-                    # self.xmi, self.xma = self.min_x(), self.max_x()
-                    # self.xpad = '0.1'
-
     def _plot_ratio(self, po, i):
         xs = [nominal_value(ai) for ai in self._unpack_attr(po.xtitle)]
         ys = [nominal_value(ai) for ai in self._unpack_attr(po.ytitle)]
@@ -64,7 +63,7 @@ class XYScatter(BaseArArFigure):
                                      marker_size=po.marker_size)
 
     def _plot_scatter(self, po, i):
-        pass
+        self._plot_ratio(po, i)
 
     def _plot_series(self, po, i):
         pass

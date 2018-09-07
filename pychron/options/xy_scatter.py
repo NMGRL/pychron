@@ -15,8 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from traits.api import Str, List
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.options.aux_plot import AuxPlot
@@ -29,38 +29,54 @@ class XYScatterAuxPlot(AuxPlot):
     y_d = Str
     x_n = Str
     x_d = Str
+
+    x_key = Str
+    y_key = Str
     available_names = List
 
     @property
     def ytitle(self):
         r = ''
-        if self.name == 'Ratio':
+        name = self.name
+        if name == 'Ratio':
             r = '{}/{}'.format(self.y_n, self.y_d)
+        elif name == 'Scatter':
+            r = self.y_key
         return r
 
     @property
     def xtitle(self):
         r = ''
-        if self.name == 'TimeSeries':
+        name = self.name
+        if name == 'TimeSeries':
             r = 'Time (hrs)'
-        elif self.name == 'Ratio':
+        elif name == 'Ratio':
             r = '{}/{}'.format(self.x_n, self.x_d)
+        elif name == 'Scatter':
+            r = self.x_key
+
         return r
+
+
+NAMES = ['Ratio', 'TimeSeries', 'Scatter']
 
 
 class XYScatterOptions(AuxPlotFigureOptions):
     subview_names = List(['Main', 'Appearance'])
     aux_plot_klass = XYScatterAuxPlot
 
-    def set_names(self, names):
+    def set_names(self, isotope_keys):
+        nn = isotope_keys + NAMES
+        anames = isotope_keys + ['age', 'age_err', 'kca', 'kca_err',
+                                 'extract_value', 'extract_duration', 'cleanup_duration']
         for ai in self.aux_plots:
-            if ai.name not in names:
+            if ai.name not in nn:
                 ai.plot_enabled = False
                 ai.save_enabled = False
                 ai.name = ''
 
-            ai.names = ['Ratio', 'TimeSeries', 'Scatter']
-            ai.available_names = names
+            ai.names = NAMES
+            ai.available_names = anames
 
     def _get_subview(self, name):
         return VIEWS[name]
