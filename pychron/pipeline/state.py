@@ -26,7 +26,7 @@ def get_detector_set(ans):
 
 
 def get_isotope_set(ans):
-    return {iso.name for ai in ans for iso in ai.itervalues()}
+    return {k for ai in ans for k in ai.isotope_keys}
 
 
 class EngineState(HasTraits):
