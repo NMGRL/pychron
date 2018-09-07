@@ -47,6 +47,7 @@ class DiffusionGraph(Graph):
 
     zdataname_generators = None
 
+
     def new_graph(self, n, bgcolor=None, padding=None):
         self.plotcontainer = self.container_factory()
         # n = len(self.include_panels)
