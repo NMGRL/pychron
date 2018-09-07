@@ -15,9 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Instance, Button
+from traits.api import HasTraits, Str, Instance
 from traitsui.api import View, UItem, HGroup, VGroup, Group, spring, Handler, EnumEditor
 
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.browser.sample_view import BrowserSampleView, BrowserInterpretedAgeView
 from pychron.envisage.browser.time_view import TimeViewModel
@@ -74,11 +75,9 @@ class BaseBrowserView(HasTraits):
                       icon_button_editor('find_references_button',
                                          '3d_glasses',
                                          tooltip='Find references associated with current selection'),
-                      # icon_button_editor('toggle_view',
-                      #                    'arrow_switch',
-                      #                    tooltip='Toggle between Sample and Time views'),
                       icon_button_editor('refresh_selectors_button', 'arrow_refresh',
-                                         tooltip='Refresh the database selectors e.g PI, Project, Load, Irradiation, etc'),
+                                         tooltip='Refresh the database selectors'
+                                                 ' e.g PI, Project, Load, Irradiation, etc'),
                       UItem('object.dvc.data_source', editor=EnumEditor(name='object.dvc.data_sources')),
                       spring,
                       CustomLabel('datasource_url', color='maroon'),
@@ -134,6 +133,7 @@ class PaneBrowserView(BaseBrowserView):
 
 class BrowserView(BaseBrowserView):
     is_append = False
+
     # append_button = Button('Append')
     # replace_button = Button('Replace')
     # show_append_replace_buttons = Bool(True)
@@ -144,19 +144,16 @@ class BrowserView(BaseBrowserView):
 
         # bgrp = HGroup(spring, UItem('pane.append_button'), UItem('pane.replace_button'),
         #               defined_when='pane.show_append_replace_buttons')
-        v = View(VGroup(tool_grp, main_grp),
-                 buttons=['OK', 'Cancel'],
-                 handler=BrowserViewHandler(),
-                 title='Browser',
-                 width=1200,
-                 resizable=True)
+        v = okcancel_view(VGroup(tool_grp, main_grp),
+                          handler=BrowserViewHandler(),
+                          title='Browser',
+                          width=1200,
+                          resizable=True)
 
         return v
 
 
 class InterpretedAgeBrowserView(HasTraits):
-    append_button = Button('Append')
-    replace_button = Button('Replace')
     sample_view = Instance(BrowserInterpretedAgeView)
 
     def _sample_view_default(self):
@@ -170,13 +167,23 @@ class InterpretedAgeBrowserView(HasTraits):
         return super(InterpretedAgeBrowserView, self).trait_context()
 
     def traits_view(self):
-        bgrp = HGroup(spring, UItem('pane.append_button'), UItem('pane.replace_button'))
-        v = View(VGroup(UItem('pane.sample_view', style='custom'),
-                        bgrp),
-                 handler=BrowserViewHandler(),
-                 title='Browser',
-                 width=900,
-                 resizable=True)
+        tool_grp = HGroup(icon_button_editor('filter_by_button',
+                                             'find',
+                                             tooltip='Search for analyses using defined criteria'),
+                          icon_button_editor('refresh_selectors_button', 'arrow_refresh',
+                                             tooltip='Refresh the database selectors'
+                                                     ' e.g PI, Project, Load, Irradiation, etc'),
+                          UItem('object.dvc.data_source', editor=EnumEditor(name='object.dvc.data_sources')),
+                          spring,
+                          CustomLabel('datasource_url', color='maroon'),
+                          show_border=True)
+
+        v = okcancel_view(VGroup(tool_grp,
+                                 UItem('pane.sample_view', style='custom')),
+                          handler=BrowserViewHandler(),
+                          title='Browser',
+                          width=900,
+                          resizable=True)
 
         return v
 

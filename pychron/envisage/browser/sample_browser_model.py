@@ -32,7 +32,6 @@ from pychron.envisage.browser.util import get_pad
 class SampleBrowserModel(BrowserModel):
     graphical_filter_button = Button
     find_references_button = Button
-    refresh_selectors_button = Button
 
     load_recent_button = Button
     toggle_view = Button
@@ -48,8 +47,6 @@ class SampleBrowserModel(BrowserModel):
         prefid = 'pychron.browser'
         bind_preference(self.search_criteria, 'reference_hours_padding',
                         '{}.reference_hours_padding'.format(prefid))
-        bind_preference(self, 'load_selection_enabled', '{}.load_selection_enabled'.format(prefid))
-        bind_preference(self, 'auto_load_database', '{}.auto_load_database'.format(prefid))
 
         bind_preference(self, 'monitor_sample_name', 'pychron.entry.monitor_name')
 
@@ -247,11 +244,6 @@ class SampleBrowserModel(BrowserModel):
             self.analysis_table.set_analyses(xx)
         except StopIteration:
             pass
-
-    def _refresh_selectors_button_fired(self):
-        self.debug('refresh selectors fired')
-        if self.sample_view_active:
-            self.load_selectors()
 
     def _find_references_button_fired(self):
         self.debug('find references button fired')

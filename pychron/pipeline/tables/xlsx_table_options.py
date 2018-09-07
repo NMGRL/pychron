@@ -13,13 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
-
 import os
 
 import yaml
 from traits.api import Enum, Bool, Str, Int, Float, Color, List, Directory
-from traitsui.api import VGroup, HGroup, Tabbed, View, Item, UItem, Label, EnumEditor
+from traitsui.api import VGroup, HGroup, Tabbed, View, Item, UItem, EnumEditor
 
 from pychron.core.helpers.filetools import unique_path2, add_extension
 from pychron.core.persistence_options import BasePersistenceOptions
@@ -47,9 +45,6 @@ class XLSXAnalysisTableWriterOptions(BasePersistenceOptions, JErrorMixin):
     cumulative_ar39_sig_figs = dumpable(Int(6))
 
     signal_sig_figs = dumpable(Int(6))
-    j_sig_figs = dumpable(Int(6))
-    ic_sig_figs = dumpable(Int(6))
-    disc_sig_figs = dumpable(Int(6))
     decay_sig_figs = dumpable(Int(6))
     correction_sig_figs = dumpable(Int(6))
     sens_sig_figs = dumpable(Int(2))
@@ -219,40 +214,33 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
 
         return path
 
-    # def load_notes(self):
-    #     p = os.path.join(paths.user_pipeline_dir, 'table_notes.yaml')
-    #     if os.path.isfile(p):
-    #         with open(p, 'r') as rf:
-    #             obj = yaml.load(rf)
-    #             for k, v in obj.items():
-    #                 if k == 'summary_notes':
-    #                     setattr(self, 'summary_notes', v)
-
     def traits_view(self):
-        unknown_grp = VGroup(Item('unknown_title', label='Table Heading', springy=True),
-                             VGroup(VGroup(UItem('unknown_note_name',
-                                                 editor=EnumEditor(name='available_unknown_note_names')),
-                                           UItem('unknown_notes', style='custom'), label='Main', show_border=True),
-                                    VGroup(UItem('unknown_corrected_note', height=-50, style='custom'),
-                                           label='Corrected', show_border=True),
-                                    VGroup(UItem('unknown_intercept_note', height=-50, style='custom'),
-                                           label='Intercept', show_border=True),
-                                    VGroup(UItem('unknown_time_note', height=-50, style='custom'), label='Time',
-                                           show_border=True),
-                                    VGroup(UItem('unknown_x_note', height=-50, style='custom'), label='X',
-                                           show_border=True),
-                                    VGroup(UItem('unknown_px_note', height=-50, style='custom'), label='pX',
-                                           show_border=True),
-                                    show_border=True, label='Notes'), label='Unknowns')
+        class VBorder(VGroup):
+            show_border = True
 
-        air_grp = VGroup(Item('air_title', label='Table Heading'),
-                         VGroup(UItem('air_notes', style='custom'), show_border=True, label='Notes'), label='Airs')
-        blank_grp = VGroup(Item('blank_title', label='Table Heading'),
-                           VGroup(UItem('blank_notes', style='custom'), show_border=True, label='Notes'),
-                           label='Blanks')
-        monitor_grp = VGroup(Item('monitor_title', label='Table Heading'),
-                             VGroup(UItem('monitor_notes', style='custom'), show_border=True,
-                                    label='Notes'), label='Monitors')
+        class UUItem(UItem):
+            height = -50
+            style = 'custom'
+
+        unknown_grp = VGroup(Item('unknown_title', label='Table Heading', springy=True),
+                             VBorder(VBorder(UItem('unknown_note_name',
+                                                   editor=EnumEditor(name='available_unknown_note_names')),
+                                             UItem('unknown_notes', style='custom'), label='Main'),
+                                     VBorder(UUItem('unknown_corrected_note'), label='Corrected'),
+                                     VBorder(UUItem('unknown_intercept_note'), label='Intercept'),
+                                     VBorder(UUItem('unknown_time_note'), label='Time'),
+                                     VBorder(UUItem('unknown_x_note'), label='X'),
+                                     VBorder(UUItem('unknown_px_note'), label='pX'),
+                                     label='Notes'), label='Unknowns')
+
+        def note(name):
+            tag = '{}s'.format(name.capitalize())
+            return VGroup(Item('{}_title'.format(name), label='Table Heading'),
+                          VBorder(UItem('{}_notes'.format(name), style='custom'), label='Notes'), label=tag)
+
+        air_grp = note('air')
+        blank_grp = note('blank')
+        monitor_grp = note('monitor')
 
         grp = VGroup(Item('name', label='Filename'),
                      Item('root_directory'),
@@ -275,54 +263,54 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                                        UItem('highlight_color', enabled_when='highlight_non_plateau')),
                                 show_border=True, label='Appearance')
 
+        def sigfig(k):
+            return '{}_sig_figs'.format(k)
+
+        def isigfig(k, label, **kw):
+            return Item(sigfig(k), label=label, **kw)
+
         sig_figs_grp = VGroup(Item('sig_figs', label='Default'),
-
-                              Item('age_sig_figs', label='Age'),
-                              Item('summary_age_sig_figs', label='Summary Age'),
-
-                              Item('kca_sig_figs', label='K/Ca'),
-                              Item('summary_kca_sig_figs', label='Summary K/Ca'),
-
-                              Item('rad40_percent_sig_figs', label='%40Ar*'),
-                              Item('cumulative_ar39_sig_figs', label='Cum. %39Ar'),
-
-                              Item('signal_sig_figs', label='Signal'),
-                              Item('j_sig_figs', label='Flux'),
-                              Item('ic_sig_figs', label='IC'),
-                              Item('disc_sig_figs', label='Disc.'),
-                              Item('decay_sig_figs', label='Decay'),
-                              Item('correction_sig_figs', label='Correction Factors'),
-                              Item('sens_sig_figs', label='Sensitivity'),
-                              Item('k2o_sig_figs', label='K2O'),
-                              # Item('subgroup_sig_figs', label='Subgroup'),
-                              # Item('j_sig_figs', label='Flux'),
-                              # Item('summary_sig_figs', label='Summary'),
-                              # Item('ic_sig_figs', label='IC'),
-                              # Item('disc_sig_figs', label='Disc.'),
-
+                              isigfig('age', 'Age'),
+                              isigfig('summary_age', 'Summary Age'),
+                              isigfig('kca', 'K/Ca'),
+                              isigfig('summary_kca', 'Summary K/Ca'),
+                              isigfig('rad40_percent', '%40Ar*'),
+                              isigfig('cumulative_ar39', 'Cum. %39Ar'),
+                              isigfig('signal', 'Signal'),
+                              isigfig('j', 'Flux'),
+                              isigfig('ic', 'IC'),
+                              isigfig('disc', 'Disc.'),
+                              isigfig('decay', 'Decay'),
+                              isigfig('correction', 'Correction Factors'),
+                              isigfig('sens', 'Sensitivity'),
+                              isigfig('k2o', 'K2O'),
                               Item('ensure_trailing_zeros', label='Ensure Trailing Zeros'),
                               show_border=True, label='Significant Figures')
 
-        arar_col_grp = VGroup(Item('include_F', label='40Ar*/39ArK'),
-                              Item('include_percent_ar39', label='Cumulative %39Ar'),
-                              Item('include_radiogenic_yield', label='%40Ar*'),
-                              # Item('use_weighted_kca', label='K/Ca Weighted Mean'),
-                              # Item('kca_error_kind', label='K/Ca Error'),
-                              Item('include_sensitivity', label='Sensitivity'),
-                              Item('include_k2o', label='K2O wt. %'),
-                              Item('include_production_ratios', label='Production Ratios'),
-                              Item('include_isochron_ratios', label='Isochron Ratios'),
-                              Item('include_time_delta', label='Time since Irradiation'),
-                              VGroup(Item('include_kca', label='Integrated K/Ca'),
-                                     Item('include_plateau_age', label='Plateau Age'),
-                                     Item('include_integrated_age', label='Total Integrated Age'),
-                                     Item('include_isochron_age', label='Isochron Age'),
+        def inc(k):
+            return 'include_{}'.format(k)
+
+        def iinc(k, label, **kw):
+            return Item(inc(k), label=label, **kw)
+
+        arar_col_grp = VGroup(iinc('F', '40Ar*/39ArK'),
+                              iinc('percent_ar39', 'Cumulative %39Ar'),
+                              iinc('radiogenic_yield', '%40Ar*'),
+                              iinc('sensitivity', 'Sensitivity'),
+                              iinc('k2o', 'K2O wt. %'),
+                              iinc('production_ratios', 'Production Ratios'),
+                              iinc('isochron_ratios', 'Isochron Ratios'),
+                              iinc('time_delta', 'Time since Irradiation'),
+                              VGroup(iinc('kca', 'Integrated K/Ca'),
+                                     iinc('plateau_age', 'Plateau Age'),
+                                     iinc('integrated_age', 'Total Integrated Age'),
+                                     iinc('isochron_age', 'Isochron Age'),
                                      label='Summary Rows'),
                               label='Ar/Ar')
 
-        general_col_grp = VGroup(Item('include_rundate', label='Analysis RunDate'),
-                                 Item('include_blanks', label='Applied Blank'),
-                                 Item('include_intercepts', label='Intercepts'),
+        general_col_grp = VGroup(iinc('rundate', 'Analysis RunDate'),
+                                 iinc('blanks', 'Applied Blank'),
+                                 iinc('intercepts', 'Intercepts'),
                                  label='General')
         columns_grp = HGroup(general_col_grp, arar_col_grp,
                              label='Columns', show_border=True)
@@ -330,41 +318,34 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
         g1 = VGroup(HGroup(grp, appearence_grp),
                     HGroup(columns_grp, sig_figs_grp), label='Main')
 
-        summary_grp = VGroup(Item('include_summary_sheet', label='Summary Sheet'),
-                             VGroup(
+        def isum(k):
+            return inc('summary_{}'.format(k))
 
-                                 Item('include_summary_sample', label='Sample'),
-                                 Item('include_summary_identifier', label='Identifier'),
-                                 Item('include_summary_unit', label='Unit'),
-                                 Item('include_summary_location', label='Location'),
-                                 Item('include_summary_material', label='Material'),
-                                 Item('include_summary_irradiation', label='Irradiation'),
-                                 Item('include_summary_age_type', label='Age Type'),
-                                 Item('include_summary_n', label='N'),
-                                 Item('include_summary_percent_ar39', label='%39Ar'),
-                                 Item('include_summary_mswd', label='MSWD'),
-                                 HGroup(Item('include_summary_kca', label='KCA'),
-                                        Item('summary_kca_nsigma', label=SIGMA)),
-                                 HGroup(Item('include_summary_age', label='Age'),
-                                        Item('summary_age_nsigma', label=SIGMA)),
-                                 Item('include_summary_comments', label='Comments'),
-                                 enabled_when='include_summary_sheet',
-                                 label='Columns',
-                                 show_border=True),
-                             VGroup(UItem('summary_notes', style='custom'), show_border=True, label='Notes'),
+        def iisum(k, label, **kw):
+            return Item(isum(k), label=label, **kw)
+
+        summary_grp = VGroup(iisum('sheet', 'Summary Sheet'),
+                             VGroup(iisum('sample', 'Sample'),
+                                    iisum('identifier', 'Identifier'),
+                                    iisum('unit', 'Unit'),
+                                    iisum('location', 'Location'),
+                                    iisum('material', 'Material'),
+                                    iisum('irradiation', 'Irradiation'),
+                                    iisum('age_type', 'Age Type'),
+                                    iisum('n', 'N'),
+                                    iisum('percent_ar39', '%39Ar'),
+                                    iisum('mswd', 'MSWD'),
+                                    HGroup(iisum('kca', 'KCA'),
+                                           Item('summary_kca_nsigma', label=SIGMA)),
+                                    HGroup(iisum('age', 'Age'),
+                                           Item('summary_age_nsigma', label=SIGMA)),
+                                    iisum('comments', 'Comments'),
+                                    enabled_when=isum('sheet'),
+                                    label='Columns',
+                                    show_border=True),
+                             VGroup(UItem('summary_notes', style='custom'),
+                                    show_border=True, label='Notes'),
                              label='Summary')
-
-        plat_grp = VGroup(Item('plateau_nsteps', label='Num. Steps', tooltip='Number of contiguous steps'),
-                          Item('plateau_gas_fraction', label='Min. Gas%',
-                               tooltip='Plateau must represent at least Min. Gas% release'),
-                          HGroup(UItem('fixed_step_low'),
-                                 Label('To'),
-                                 UItem('fixed_step_high'),
-                                 show_border=True,
-                                 label='Fixed Steps'),
-                          visible_when='table_kind=="Step Heat"',
-                          show_border=True,
-                          label='Plateau')
 
         calc_grp = VGroup(J_ERROR_GROUP, label='Calc.')
 

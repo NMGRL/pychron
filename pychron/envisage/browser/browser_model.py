@@ -37,6 +37,7 @@
 from traits.api import Str, Bool, Property, on_trait_change, Button, List
 
 from pychron.core.codetools.inspection import caller
+from pychron.core.ui.preference_binding import bind_preference
 from pychron.envisage.browser.base_browser_model import BaseBrowserModel
 from pychron.envisage.browser.record_views import ProjectRecordView
 
@@ -59,6 +60,7 @@ class BrowserModel(BaseBrowserModel):
     advanced_filter_button = Button
     toggle_focus = Button
     load_view_button = Button
+    refresh_selectors_button = Button
 
     datasource_url = Str
     irradiation_enabled = Bool
@@ -71,6 +73,13 @@ class BrowserModel(BaseBrowserModel):
     is_activated = False
 
     _top_level_filter = None
+
+    def __init__(self, *args, **kw):
+        super(BrowserModel, self).__init__(*args, **kw)
+
+        prefid = 'pychron.browser'
+        bind_preference(self, 'load_selection_enabled', '{}.load_selection_enabled'.format(prefid))
+        bind_preference(self, 'auto_load_database', '{}.auto_load_database'.format(prefid))
 
     def activated(self, force=False):
         self.reattach()
@@ -234,6 +243,11 @@ class BrowserModel(BaseBrowserModel):
     def _selected_samples_changed(self, new):
         self._selected_samples_changed_hook(new)
         self.dump_browser()
+
+    def _refresh_selectors_button_fired(self):
+        self.debug('refresh selectors fired')
+        if self.sample_view_active:
+            self.load_selectors()
 
     # private
     def _selected_samples_changed_hook(self, new):
