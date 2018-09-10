@@ -15,16 +15,25 @@
 # ===============================================================================
 from traits.api import List
 
-from pychron.envisage.tasks.base_plugin import BasePlugin
+from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.mdd.tasks.nodes import AgesMeNode, ArrMeNode, FilesNode, MDDWorkspaceNode, MDDFigureNode, \
     AutoAgeFreeNode, MDDLabTableNode, AutoAgeMonNode, AutoArrNode, CorrFFTNode, ConfIntNode, ArrMultiNode
 from pychron.mdd.tasks.predefined import LABTABLE, FILES, ARRME, AGESME, AUTOARR, AUTOAGEMON, MDDFIGURE, AUTOAGEFREE, \
     CORRFFT, CONFINT, ARRMULTI
+from pychron.mdd.tasks.preferences import MDDPreferencesPane
+from pychron.paths import paths
 
 
-class MDDPlugin(BasePlugin):
+class MDDPlugin(BaseTaskPlugin):
     nodes = List(contributes_to='pychron.pipeline.nodes')
     predefined_templates = List(contributes_to='pychron.pipeline.predefined_templates')
+
+    def _preferences_panes_default(self):
+        return [MDDPreferencesPane]
+
+    def _executable_path_changed(self, new):
+        if new:
+            paths.clovera_root = new
 
     def _predefined_templates_default(self):
         return [('MDD', (('LabTable', LABTABLE),

@@ -21,6 +21,7 @@ import shutil
 import subprocess
 import time
 
+from apptools.preferences.preference_binding import bind_preference
 from pyface.confirmation_dialog import confirm
 from pyface.constant import OK, YES
 from pyface.directory_dialog import DirectoryDialog
@@ -35,6 +36,7 @@ from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_editor import grouped_name
 from pychron.globals import globalv
+from pychron.mdd import GEOMETRIES
 from pychron.options.options_manager import MDDFigureOptionsManager
 from pychron.paths import paths
 from pychron.pipeline.nodes.base import BaseNode
@@ -95,6 +97,11 @@ class MDDNode(BaseNode):
     _dumpables = None
 
     root_dir = Str
+    executable_root = Str
+
+    def __init__(self, *args, **kw):
+        super(MDDNode, self).__init__(*args, **kw)
+        bind_preference(self, 'executable_root', 'pychron.mdd.executable_root')
 
     def run(self, state):
         if state.mdd_workspace:
@@ -125,17 +132,12 @@ class MDDNode(BaseNode):
 
         fortranlogger.info('------ started {}'.format(name))
         p = subprocess.Popen([path],
-                             # shell=True,
-                             # bufsize=1024,
-                             # close_fds=True,
-                             # universal_newlines=True,
                              stderr=subprocess.PIPE,
                              stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE)
 
         while p.poll() is None:
             msg = p.stdout.readline().decode('utf8').strip()
-            # msg = p.stdout.readline().strip()
             if msg == 'PYCHRON_INTERRUPT':
                 self.handle_interrupt(p)
             else:
@@ -165,7 +167,12 @@ class MDDNode(BaseNode):
     def executable_path(self):
         if not self.executable_name:
             raise NotImplementedError
-        return os.path.join(paths.clovera_root, self.executable_name)
+
+        root = self.executable_root
+        if not root:
+            root = paths.clovera_root
+
+        return os.path.join(root, self.executable_name)
 
     @property
     def rootname(self):
@@ -180,6 +187,10 @@ class MDDLabTableNode(MDDNode):
 
     temp_offset = Float
     time_offset = Float
+
+    def __init__(self, *args, **kw):
+        super(MDDLabTableNode, self).__init__(*args, **kw)
+        bind_preference(self, 'temp_offset', 'pychron.mdd.default_temp_offset')
 
     def run(self, state):
         # from the list of unknowns in the current state
@@ -260,15 +271,20 @@ class FilesNode(MDDNode):
     _dumpables = ['rootname']
 
 
-GEOMETRIES = ('Slab', 'Sphere', 'Cylinder')
-
-
 class GeometryMixin(HasTraits):
     geometry = Enum(*GEOMETRIES)
 
+    def __init__(self, *args, **kw):
+        super(GeometryMixin, self).__init__(*args, **kw)
+        bind_preference(self, 'geometry', 'pychron.mdd.default_geometry')
+
     @property
     def _geometry(self):
-        return GEOMETRIES.index(self.geometry) + 1
+        idx = 0
+        if self.geometry in GEOMETRIES:
+            idx = GEOMETRIES.index(self.geometry)
+
+        return idx+1
 
 
 class ArrMeNode(MDDNode, GeometryMixin):
@@ -308,8 +324,8 @@ class ArrMultiNode(MDDNode):
         fortranlogger.debug('starting interrupt')
         v = okcancel_view(VGroup(HGroup(Item('e', format_str='%0.5f'),
                                         UItem('e_err', format_str='%0.5f')),
-                          HGroup(Item('ordinate', format_str='%0.5f'),
-                                 UItem('ordinate_err', format_str='%0.5f'))),
+                                 HGroup(Item('ordinate', format_str='%0.5f'),
+                                        UItem('ordinate_err', format_str='%0.5f'))),
                           width=500,
                           title='Edit Model Parameters')
 
