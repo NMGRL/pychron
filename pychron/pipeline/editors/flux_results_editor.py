@@ -524,6 +524,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             ymi = min(lyy.min(), min(iys))
             yma = max(uyy.max(), max(iys))
             g.set_x_limits(-3.5, 3.5)
+            g.set_y_limits(ymi, yma, pad='0.1')
 
             # set metadata last because it will trigger a refresh
             self.suppress_metadata_change = True
@@ -552,13 +553,9 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             g.set_data(fys, plotid=0, series=0, axis=1)
 
             s2 = plot.plots['plot1'][0]
-            iys = s2.value.get_data()
-            ymi = min(fys.min(), lyy.min(), iys.min())
-            yma = max(fys.max(), uyy.max(), iys.max())
 
             s2.index.metadata['selections'] = sel
 
-        g.set_y_limits(ymi, yma, pad='0.1')
         self._model_sin_flux(fxs, fys)
 
     def _graph_individual_analyses(self):
