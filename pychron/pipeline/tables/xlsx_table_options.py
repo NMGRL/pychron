@@ -18,6 +18,7 @@ import os
 import yaml
 from traits.api import Enum, Bool, Str, Int, Float, Color, List, Directory
 from traitsui.api import VGroup, HGroup, Tabbed, View, Item, UItem, EnumEditor
+from traitsui.item import UCustom
 
 from pychron.core.helpers.filetools import unique_path2, add_extension
 from pychron.core.persistence_options import BasePersistenceOptions
@@ -218,9 +219,9 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
         class VBorder(VGroup):
             show_border = True
 
-        class UUItem(UItem):
+        class UUItem(UCustom):
             height = -50
-            style = 'custom'
+
 
         unknown_grp = VGroup(Item('unknown_title', label='Table Heading', springy=True),
                              VBorder(VBorder(UItem('unknown_note_name',
