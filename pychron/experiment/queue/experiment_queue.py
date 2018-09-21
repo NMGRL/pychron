@@ -17,8 +17,8 @@
 # ============= enthought library imports =======================
 
 import os
-
 import time
+
 from pyface.timer.do_later import do_later
 from traits.api import Any, on_trait_change, Int, List, Bool, \
     Instance, Property, Str, HasTraits, Event, Long
@@ -174,22 +174,14 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
                 for gi in reversed(gs):
                     self.automated_runs.insert(0, gi)
 
-                # for _, ans in groupby(sorted(self.automated_runs, key=key), key=key):
-
-
-        # key = attrgetter('extract_value')
-        #     for si in s:
-        #         self.automated_runs.remove(si)
-        #
-        #     for e, rs in groupby(sorted(s, key=key, reverse=True), key=key):
-        #         for ri in reversed(rs):
-        #             self.automated_runs.insert(0, ri)
-
     def repeat_block(self):
-        rbv = RepeatRunBlockView()
-        info = rbv.edit_traits()
-        if info.result:
-            self.add_runs(self.selected, freq=rbv.value, is_repeat_block=True)
+        if self.selected:
+            rbv = RepeatRunBlockView()
+            info = rbv.edit_traits()
+            if info.result:
+                self.add_runs(self.selected, freq=rbv.value, is_repeat_block=True)
+        else:
+            self.information_dialog('Please select a set of analyses to repeat')
 
     def make_run_block(self):
         nrbv = NewRunBlockView()

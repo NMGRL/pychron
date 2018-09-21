@@ -21,6 +21,7 @@ from traits.api import Any, Bool, Instance
 from traitsui.api import View
 
 from pychron.core.helpers.iterfuncs import groupby_key
+from pychron.core.helpers.strtools import ratio
 from pychron.core.progress import progress_iterator
 from pychron.options.options_manager import IdeogramOptionsManager, OptionsController, SeriesOptionsManager, \
     SpectrumOptionsManager, InverseIsochronOptionsManager, VerticalFluxOptionsManager, XYScatterOptionsManager, \
@@ -92,6 +93,10 @@ class FigureNode(SortableNode):
                     editor.set_items(list(unks))
                     if hasattr(editor, 'component'):
                         editor.component.invalidate_and_redraw()
+            # else:
+            #     editor = self._editor_factory()
+            #     state.editors.append(editor)
+
             self.editor = editor
 
             for name, es in groupby_key(state.editors, 'name'):
@@ -199,13 +204,7 @@ class SeriesNode(FigureNode):
                 names.extend(['{}bs'.format(ki) for ki in iso_keys])
                 names.extend(['{}ic'.format(ki) for ki in iso_keys])
 
-                for iso in iso_keys:
-                    for jiso in iso_keys:
-                        if iso == jiso:
-                            continue
-
-                        if '{}/{}'.format(jiso, iso) not in names:
-                            names.append('{}/{}'.format(iso, jiso))
+                names.extend(ratio(iso_keys))
 
                 if unk.analysis_type in (UNKNOWN, COCKTAIL):
                     names.append(AGE)

@@ -120,9 +120,9 @@ class AuxPlot(HasTraits):
         self.xlimits = (0, 0)
 
     def _name_changed(self):
-        # if self.initialized:
-        if self.name and self.name != NULL_STR:
-            self.plot_enabled = True
+        if self.initialized:
+            if self.name and self.name != NULL_STR:
+                self.plot_enabled = True
 
     def _get_plot_name(self):
 

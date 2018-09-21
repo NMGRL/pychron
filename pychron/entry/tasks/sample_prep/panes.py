@@ -222,7 +222,7 @@ class SamplePrepFilterPane(TraitsDockPane):
                       label='Project',
                       show_border=True)
         sgrp = VGroup(icon_button_editor('add_selection_button', 'add',
-                                         enabled_when='selected',
+                                         enabled_when='selection_enabled',
                                          tooltip='Add selection to current Sample Prep Session'),
                       UItem('samples', editor=TabularEditor(adapter=SimpleSampleAdapter(),
                                                             multi_select=True,

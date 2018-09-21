@@ -20,7 +20,7 @@ import shutil
 
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
-from git import Repo, GitCommandError
+from git import Repo, GitCommandError, InvalidGitRepositoryError
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem
 from traits.api import List, Str, Any, HasTraits, Bool, Instance, Int, Event, Date, Property
@@ -60,7 +60,10 @@ class RepoItem(HasTraits):
         name = self.name
         p = repository_path(name)
         try:
-            a, b = ahead_behind(p, fetch=fetch)
+            try:
+                a, b = ahead_behind(p, fetch=fetch)
+            except InvalidGitRepositoryError:
+                return True
 
             self.ahead = a
             self.behind = b

@@ -164,6 +164,7 @@ class SamplePrep(DVCAble, PersistenceMixin):
     prep_step = Instance(PrepStepRecord, ())
 
     selected = List
+    selection_enabled = Property(depends_on='worker, selected, session')
     add_selection_button = Button
     add_session_button = Button
     add_worker_button = Button
@@ -205,6 +206,11 @@ class SamplePrep(DVCAble, PersistenceMixin):
 
         self.load()
 
+        if self.worker not in self.workers:
+            self.worker = ''
+        if self.session not in self.sessions:
+            self.session = ''
+
         if DEBUG:
             self.worker = self.workers[0]
             self.session = self.sessions[0]
@@ -243,6 +249,9 @@ class SamplePrep(DVCAble, PersistenceMixin):
             self._load_session_samples()
 
     # private
+    def _get_selection_enabled(self):
+        return self.worker and self.session and self.selected
+
     def _load_choices(self):
         # load choices
         for k in SAMPLE_PREP_STEPS:
@@ -374,6 +383,7 @@ class SamplePrep(DVCAble, PersistenceMixin):
             self._load_choices()
 
     def _add_selection_button_fired(self):
+
         if self.selected:
             dvc = self.dvc
             for s in self.selected:

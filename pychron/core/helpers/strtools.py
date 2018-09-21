@@ -83,4 +83,27 @@ def csv_to_cast(cast, a, delimiter=','):
 
 def to_csv_str(iterable, delimiter=','):
     return delimiter.join([str(v) for v in iterable])
+
+
+def ratio(xs, ys=None):
+    def r(a, b):
+        return '{}/{}'.format(a, b)
+
+    if ys is None:
+        ys = xs
+
+    ret = []
+    for iso in xs:
+        for jiso in ys:
+            if iso == jiso:
+                continue
+            if r(iso, jiso) not in ret:
+                ret.append(r(jiso, iso))
+
+    return ret
+
+
+if __name__ == '__main__':
+    for ret in ratio('abc'):
+        print(ret)
 # ============= EOF =============================================

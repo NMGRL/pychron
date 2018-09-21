@@ -312,7 +312,7 @@ class LevelEditor(Loggable):
         if irrad.levels:
             level = irrad.levels[-1]
 
-            self.z = level.z
+            self.z = level.z or 0
 
             if level.holder:
                 self.selected_tray = next((t for t in self.trays if t == level.holder), '')

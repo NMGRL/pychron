@@ -33,7 +33,7 @@ from pychron.pipeline.tables.util import iso_value, icf_value, icf_error, correc
     subreg, interpolate_noteline, value
 from pychron.pipeline.tables.xlsx_table_options import XLSXAnalysisTableWriterOptions
 from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
-from pychron.pychron_constants import PLUSMINUS_NSIGMA, NULL_STR, DESCENDING
+from pychron.pychron_constants import PLUSMINUS_NSIGMA, NULL_STR, DESCENDING, PLUSMINUS
 
 
 def format_mswd(t):
@@ -482,7 +482,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             self._current_row += 1
             ug.set_temporary_age_units(None)
 
-        self._make_notes(sh, len(cols), 'summary')
+        self._make_notes(None, sh, len(cols), 'summary')
 
     def _sort_groups(self, groups):
         # def group_age(group):
@@ -585,7 +585,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                     label = pv.computed_kind.lower()
                     is_plateau_step = None
                     if label == 'plateau':
-                        is_plateau_step = a.get_is_plateau_step(j)
+                        is_plateau_step = group.get_is_plateau_step(j)
                     self._make_analysis(worksheet, cols, a, is_last=j == n - 1, is_plateau_step=is_plateau_step)
 
             if nsubgroups == 1 and isinstance(a, InterpretedAgeGroup):
@@ -598,7 +598,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             self._current_row += 1
             group.set_temporary_age_units(None)
 
-        self._make_notes(worksheet, len(cols), name)
+        self._make_notes(groups, worksheet, len(cols), name)
         self._current_row = 1
 
         for i, c in enumerate(cols):
@@ -901,7 +901,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         mt = group.get_preferred_mswd_tuple()
         sh.write_rich_string(self._current_row, idx + 3, format_mswd(mt), fmt)
 
-        if label == 'Plateau':
+        if age.computed_kind == 'Plateau':
             if self._options.include_plateau_age and hasattr(group, 'plateau_age'):
                 sh.write(self._current_row, idx + 4, 'steps {}'.format(group.plateau_steps_str), fmt)
 
@@ -928,9 +928,22 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             sh.write_number(self._current_row, idx, nominal_value(iage), nfmt)
             sh.write_number(self._current_row, idx + 1, std_dev(iage) * nsigma, nfmt)
 
+            mt = group.isochron_mswd()
+            try:
+                trapped = 1/group.isochron_4036
+                trapped_value, trapped_error = nominal_value(trapped), std_dev(trapped)
+            except ZeroDivisionError:
+                trapped_value, trapped_error = 'NaN', 'NaN'
+
+            sh.write_rich_string(self._current_row, idx + 3, format_mswd(mt), fmt)
+            sh.write_rich_string(self._current_row, idx + 4,
+                                 '(', self._superscript, '40',
+                                 'Ar/',
+                                 self._superscript, '36', 'Ar', ')', self._subscript, 'trapped',
+                                 '={:0.3f}{}{:0.3f}'.format(trapped_value, PLUSMINUS, trapped_error), fmt)
             self._current_row += 1
 
-    def _make_notes(self, sh, ncols, name):
+    def _make_notes(self, groups, sh, ncols, name):
         top = self._workbook.add_format({'top': 1})
         sh.write_rich_string(self._current_row, 0, self._bold, 'Notes:', top)
         for i in range(1, ncols):
@@ -938,12 +951,12 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         self._current_row += 1
 
         func = getattr(self, '_make_{}_notes'.format(name.lower()))
-        func(sh)
+        func(groups, sh)
 
         for i in range(0, ncols):
             sh.write_blank(self._current_row, i, 'Notes:', cell_format=top)
 
-    def _make_summary_notes(self, sh):
+    def _make_summary_notes(self, groups, sh):
         notes = six.text_type(self._options.summary_notes)
         self._write_notes(sh, notes)
         # sh.write(self._current_row, 0, 'Plateau Criteria:')
@@ -959,9 +972,16 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         #                                                                    self.fixed_step_high))
         #     self._current_row += 1
 
-    def _make_unknowns_notes(self, sh):
-        monitor_age = 28.201
-        decay_ref = u'Steiger and J\u00E4ger (1977)'
+    def _make_unknowns_notes(self, groups, sh):
+
+        g = groups[0]
+        monitor_age, decay_ref = g.monitor_info
+
+        if monitor_age is None:
+            monitor_age = '<PLACEHOLDER'
+        if decay_ref is None:
+            decay_ref = '<PLACEHOLDER>'
+
         opt = self._options
         notes = opt.unknown_notes
 

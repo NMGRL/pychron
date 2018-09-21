@@ -41,9 +41,10 @@ class GroupingNode(BaseNode):
     # _attr = 'group_id'
     _id_func = None
 
-    sorting_enabled = True
+    _sorting_enabled = True
     _cached_items = None
     _state = None
+    _parent_group = None
 
     def load(self, nodedict):
         self.by_key = nodedict.get('key', 'Identifier')
@@ -63,16 +64,23 @@ class GroupingNode(BaseNode):
 
     def _run(self, state):
         unks = getattr(state, self.analysis_kind)
+        self._state = state
+
+        # print('clearsd', self._attr)
+        for unk in unks:
+            self._clear_grouping(unk)
+
         if self.by_key != 'No Grouping':
-            for unk in unks:
-                setattr(unk, self._attr, 0)
-
-            self._state = state
             key = self._generate_key()
-            group_analyses_by_key(unks, key=key, attr=self._attr, id_func=self._id_func,
-                                  sorting_enabled=self.sorting_enabled)
+            items = group_analyses_by_key(unks, key=key, attr=self._attr, id_func=self._id_func,
+                                          sorting_enabled=self._sorting_enabled,
+                                          parent_group=self._parent_group)
 
-            setattr(state, self.analysis_kind, sorted(unks, key=key))
+            setattr(state, self.analysis_kind, items)
+            setattr(self, self.analysis_kind, items)
+
+    def _clear_grouping(self, unk):
+        setattr(unk, self._attr, 0)
 
     @property
     def _attr(self):
@@ -108,15 +116,19 @@ class SubGroupingNode(GroupingNode, Preferred):
     keys = ('Aliquot', 'Identifier', 'Step', 'Comment', 'No Grouping')
     name = 'SubGroup'
     by_key = 'Aliquot'
-    _attr = 'subgroup'
+    attribute = 'subgroup'
 
     # include_j_error_in_individual_analyses = Bool(False)
     # include_j_error_in_mean = Bool(True)
 
-    sorting_enabled = False
+    _sorting_enabled = False
+    _parent_group = 'group_id'
 
     def load(self, nodedict):
         self.by_key = nodedict.get('key', 'Aliquot')
+
+    def _clear_grouping(self, unk):
+        unk.subgroup = None
 
     def _id_func(self, gid, analyses):
         analyses = list(analyses)

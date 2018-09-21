@@ -19,7 +19,7 @@
 import datetime
 import os
 import time
-from operator import attrgetter
+from operator import attrgetter, itemgetter
 
 from uncertainties import ufloat, std_dev, nominal_value
 
@@ -158,7 +158,7 @@ class DVCAnalysis(Analysis):
 
         pd = jd.get('positions')
         if pd:
-            ps = sorted(pd, key=attrgetter('position'))
+            ps = sorted(pd, key=itemgetter('position'))
             # self.position = ','.join([str(pp['position']) for pp in ps])
             self.position = to_csv_str(ps)
             self.xyz_position = to_csv_str(['{},{},{}'.format(pp['x'], pp['y'], pp['z'])

@@ -46,6 +46,8 @@ class ArArAge(IsotopeGroup):
     irradiation_position = None
     irradiation_time = 0
     production_name = None
+    monitor_age = None
+    monitor_reference = None
 
     chron_segments = None
     chron_dosages = None
@@ -132,7 +134,7 @@ class ArArAge(IsotopeGroup):
             klambda = 9.54
             moles_39k = self.computed['k39'] * self.sensitivity
             try:
-                moles_k = moles_39k * klambda / (k40_k*nominal_value(self.j))
+                moles_k = moles_39k * klambda / (k40_k * nominal_value(self.j))
                 k2o = (moles_k * mw_k2o * 100) / (2 * self.weight * 0.001)
             except ZeroDivisionError:
                 pass
@@ -207,23 +209,17 @@ class ArArAge(IsotopeGroup):
         self.temporary_ic_factors[k] = uv = ufloat(v, e, tag=tag)
         return uv
 
-    def set_temporary_blank(self, k, v, e, f):
-        tol = 0.00001
+    def set_temporary_blank(self, k, v, e, f, verbose=False):
+        if verbose:
+            self.debug('temp blank {}({:0.4f}+/-{:0.4f}) fit={}'.format(k, v, e, f))
+
         if k in self.isotopes:
             iso = self.isotopes[k]
-            if iso.temporary_blank is not None:
-                tb = iso.temporary_blank
-                if abs(tb.value - v) < tol and abs(tb.error - e) < tol:
-                    return
-                else:
-                    self.debug('temp blank {}({:0.4f}+/-{:0.4f}) fit={}'.format(k, v, e, f))
-                    tb.value, tb.error, tb.fit = v, e, f
-            else:
-                self.debug('temp blank {}({:0.4f}+/-{:0.4f}) fit={}'.format(k, v, e, f))
-                iso.temporary_blank = b = Blank(k, iso.detector)
-                b.value = v
-                b.error = e
-                b.fit = f
+            tb = iso.temporary_blank
+            if tb is None:
+                iso.temporary_blank = tb = Blank(iso.name, iso.detector)
+
+            tb.value, tb.error, tb.fit = v, e, f
 
     def set_j(self, s, e):
         self.j = ufloat(s, std_dev=e, tag='J')

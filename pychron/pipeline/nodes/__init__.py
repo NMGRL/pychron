@@ -34,7 +34,6 @@ from pychron.pipeline.nodes.find import FindReferencesNode, FindFluxMonitorsNode
     FindBlanksNode, FindRepositoryAnalysesNode
 from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode, FitFluxNode
 from pychron.pipeline.nodes.gain import GainCalibrationNode
-from pychron.pipeline.nodes.geochron import GeochronNode
 from pychron.pipeline.nodes.group_age import GroupAgeNode
 from pychron.pipeline.nodes.grouping import GroupingNode, GraphGroupingNode, SubGroupingNode
 from pychron.pipeline.nodes.ia import SetInterpretedAgeNode
@@ -47,4 +46,11 @@ from pychron.pipeline.nodes.push import PushNode
 from pychron.pipeline.nodes.report import ReportNode
 from pychron.pipeline.nodes.review import ReviewNode
 from pychron.pipeline.nodes.table import AnalysisTableNode, InterpretedAgeTableNode
+
+
+
+class NodeFactory:
+    def __init__(self, name, factory):
+        self.name = name
+        self.factory = factory
 # ============= EOF =============================================

@@ -16,6 +16,11 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
+# ============= standard library imports ========================
+import os
+import pickle
+
 from pyface.action.menu_manager import MenuManager
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
@@ -24,9 +29,6 @@ from traitsui.api import View, UItem, Handler, VGroup, HGroup, EnumEditor, Item
 from traitsui.menu import Action
 from traitsui.tree_node import TreeNode
 
-# ============= standard library imports ========================
-import os
-import pickle
 # ============= local library imports  ==========================
 from pychron.core.ui.tree_editor import TreeEditor
 from pychron.envisage.initialization.nodes import Plugin, PluginTree, PluginTreeNode, GlobalsTreeNode, GlobalTree, \
@@ -164,7 +166,7 @@ class InitializationEditView(HasTraits):
                             auto_open=True,
                             children='values')]
 
-        v = View(VGroup(HGroup(Item('default', label='Predefined Initialiation',
+        v = View(VGroup(HGroup(Item('default', label='Predefined Initialization',
                                     editor=EnumEditor(name='defaults'))),
                         UItem('model', editor=TreeEditor(nodes=nodes,
                                                          editable=False,

@@ -255,7 +255,7 @@ class BaseOptions(HasTraits):
         return True
 
     def load_factory_defaults(self, path):
-        if not os.path.isfile(path):
+        if path and not os.path.isfile(path):
             yd = yaml.load(path)
         else:
             with open(path, 'r') as rfile:
@@ -352,6 +352,8 @@ class FigureOptions(BaseOptions):
     ytitle_font = Property
     ytitle_fontsize = Enum(*SIZES)
     ytitle_fontname = Enum(*FONTS)
+
+    layout = Instance(FigureLayout, ())
 
     groups = List
     # group = Property
@@ -497,8 +499,6 @@ class AuxPlotFigureOptions(FigureOptions):
     aux_plots = List
     aux_plot_klass = AuxPlot
     selected = List
-
-    layout = Instance(FigureLayout, ())
 
     error_info_font = Property
     error_info_fontname = Enum(*FONTS)

@@ -736,7 +736,6 @@ available holder positions {}'.format(n, len(self.irradiated_positions)))
                     item.monitor_indicator = True
 
                 set_color(item, v)
-
                 if dbpos.sample.material:
                     ir.material = v = dbpos.sample.material.name
                     ir.grainsize = dbpos.sample.material.grainsize or ''
