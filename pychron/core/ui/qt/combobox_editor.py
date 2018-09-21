@@ -155,6 +155,7 @@ class _ComboboxEditor(SimpleEditor):
                         self.control.showPopup()
                     else:
                         names = self.names
+                        self.control.clear()
                         self.control.addItems(names)
 
                     try:
