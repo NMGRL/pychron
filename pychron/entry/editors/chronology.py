@@ -80,7 +80,7 @@ class IrradiationChronology(HasTraits):
                                      end_date=e.date(),
                                      end_time=e.time(), power=p)
 
-        self.dosages = [dose_factory[d] for d in ds]
+        self.dosages = [dose_factory(d) for d in ds]
 
     def get_doses(self):
         """
