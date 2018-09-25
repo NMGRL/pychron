@@ -149,8 +149,10 @@ class RecallAction(PipelineAction):
     name = 'Recall...'
     action = 'pipeline_recall'
 
-    # def perform(self, event):
-    #     self._get_task(event)
+
+class InterpretedAgeRecallAction(PipelineAction):
+    name = 'Interpreted Age Recall...'
+    action = 'pipeline_interpreted_age_recall'
 
 
 class TimeViewBrowserAction(BrowserAction):
@@ -309,6 +311,7 @@ class MassSpecReducedAction(PipelineAction):
     name = 'Mass Spec Reduced Transfer'
     dname = 'Mass Spec Reduced Transfer'
     action = 'mass_spec_reduced_transfer'
+
 
 # ============= Quick Series ====================================
 # class LastNAnalysesSeriesAction(PipelineAction):

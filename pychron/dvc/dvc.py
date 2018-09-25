@@ -102,6 +102,7 @@ class DVCInterpretedAge(InterpretedAge):
     labnumber = None
     isotopes = None
     repository_identifier = None
+    analyses = None
 
     def load_tag(self, obj):
         self.tag = obj.get('name', '')
@@ -116,11 +117,13 @@ class DVCInterpretedAge(InterpretedAge):
             try:
                 setattr(self, a, obj.get(a, NULL_STR))
             except BaseException as a:
-                print('excception DVCInterpretdAge.from_json', a)
+                print('exception DVCInterpretdAge.from_json', a)
 
         self.labnumber = self.identifier
         self.uage = ufloat(self.age, self.age_err)
         self._record_id = '{} {}'.format(self.identifier, self.name)
+
+        self.analyses = obj.get('analyses', [])
 
         pkinds = obj.get('preferred_kinds')
         if pkinds:
@@ -730,6 +733,9 @@ class DVC(Loggable):
             return records
 
     def make_interpreted_ages(self, ias):
+        if not isinstance(ias, (tuple, list)):
+            ias = (ias,)
+
         def func(x, prog, i, n):
             if prog:
                 prog.change_message('Making Interpreted age {}'.format(x.name))
@@ -1075,6 +1081,7 @@ class DVC(Loggable):
                                 age_err=ai.age_err,
                                 age_err_wo_j=ai.age_err_wo_j,
                                 radiogenic_yield=nominal_value(ai.rad40_percent),
+                                radiogenic_yield_err=std_dev(ai.rad40_percent),
                                 kca=float(nominal_value(ai.kca)),
                                 kca_err=float(std_dev(ai.kca)),
                                 kcl=float(nominal_value(ai.kcl)),
