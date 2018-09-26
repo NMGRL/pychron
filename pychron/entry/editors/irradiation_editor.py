@@ -89,15 +89,15 @@ class IrradiationEditor(Loggable):
 
                 if not self.dvc.get_irradiation(name):
                     if not self.selected_reactor_name:
-                        self.information_dialog('Please select a reator')
+                        self.information_dialog('Please select a reactor')
                         continue
 
                     self._add_irradiation()
                     return name
 
                 else:
-                    if self.confirmation_dialog(
-                            'Irradiation "{}" already exists. Would you like to try again ?'.format(name)):
+                    if self.confirmation_dialog('Irradiation "{}" already exists. '
+                                                'Would you like to try again ?'.format(name)):
                         info = v.edit_traits()
                         continue
                     else:
@@ -106,8 +106,6 @@ class IrradiationEditor(Loggable):
                 break
 
     def edit(self):
-        original_name = self.name
-
         self._load_reactors()
 
         chronology = self.dvc.get_chronology(self.name)
@@ -115,21 +113,6 @@ class IrradiationEditor(Loggable):
         v = EditView(model=self)
         info = v.edit_traits()
         if info.result:
-            # if original_name != self.name:
-            #     ret = self.confirmation_dialog('You have changed the irradiation name.\n\n'
-            #                                    'Would you like to rename "{}" to "{}" (Yes) '
-            #                                    'or make a new irradiation "{}" (No)'.format(original_name,
-            #                                                                                 self.name, self.name),
-            #                                    return_retval=True,
-            #                                    cancel=True)
-            #     if ret == YES:
-            #         print('asdfadfasd')
-            #         # irrad.name = self.name
-            #     elif ret == NO:
-            #         self._add_irradiation()
-            #     else:
-            #         return
-
             self._add_irradiation()
             if self.selected_reactor_name:
                 self.dvc.add_production_to_irradiation(self.name, self.reactor.name, self.reactor.get_params())
@@ -140,7 +123,7 @@ class IrradiationEditor(Loggable):
 
     def _add_irradiation(self):
         self.debug('add irradiation={}'.format(self.name))
-        self.dvc.add_irradiation(self.name, self.chronology.get_doses())
+        self.dvc.add_irradiation(self.name, self.chronology.get_doses(), verbose=False)
         if self.selected_reactor_name:
             self.dvc.add_production_to_irradiation(self.name, self.reactor.name, self.reactor.get_params())
 

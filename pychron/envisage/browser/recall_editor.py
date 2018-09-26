@@ -36,7 +36,7 @@ class BaseRecallEditor(BaseTraitsEditor):
         self.name = name
 
 
-class RecallEditor(BaseTraitsEditor):
+class RecallEditor(BaseRecallEditor):
     analysis = Instance('pychron.processing.analyses.analysis.Analysis')
     analysis_view = Instance('pychron.processing.analyses.view.analysis_view.AnalysisView')
 

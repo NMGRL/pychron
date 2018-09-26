@@ -43,16 +43,13 @@ class FluxMonitor(HasTraits):
                     decay_constant_err=self.decay_constant_err)
 
     def traits_view(self):
-        v = View(VGroup(
-            HGroup(Item('name', enabled_when='added')),
-            HGroup(Item('age'), Item('age_err', label=PLUSMINUS_ONE_SIGMA)),
-            HGroup(Item('decay_constant'), Item('decay_constant_err', label=PLUSMINUS_ONE_SIGMA))))
+        v = View(VGroup(HGroup(Item('name', enabled_when='added')),
+                        HGroup(Item('age'), Item('age_err', label=PLUSMINUS_ONE_SIGMA)),
+                        HGroup(Item('decay_constant'), Item('decay_constant_err', label=PLUSMINUS_ONE_SIGMA))))
         return v
 
 
 class FluxMonitorEditor(Loggable):
-    # dbname = Str
-    # names = List
     monitors = List
     monitor_names = Property(depends_on='name_update_needed,monitors[]')
     selected_monitor_name = Str
@@ -109,7 +106,6 @@ class FluxMonitorEditor(Loggable):
         if new:
             m = next((mi for mi in self.monitors if mi.name == new))
             self.trait_set(selected_monitor=m)
-            # self.selected_monitor=
 
     def _add_button_fired(self):
 
@@ -121,10 +117,6 @@ class FluxMonitorEditor(Loggable):
         self.selected_monitor = fm
         self.selected_monitor_name = fm.name
 
-    #     name=self.selected_monitor.name
-    #     db=self.db
-    #     with db.session_ctx():
-    #         if db.get_flux_monitor(name):
     def _handle_name_change(self):
         self.name_update_needed = True
 
@@ -156,4 +148,4 @@ class FluxMonitorEditor(Loggable):
             title='Edit Flux Monitor')
         return v
 
-        # ============= EOF =============================================
+# ============= EOF =============================================

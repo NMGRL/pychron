@@ -19,14 +19,14 @@ from __future__ import print_function
 
 import os
 import shutil
-import time
 from datetime import datetime
-from math import isnan
 from operator import itemgetter
 
+import time
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
 from git import Repo
+from math import isnan
 from traits.api import Instance, Str, Set, List, provides
 from uncertainties import nominal_value, std_dev, ufloat
 
@@ -1233,9 +1233,10 @@ class DVC(Loggable):
 
                 return ret
 
-    def add_irradiation(self, name, doses=None):
+    def add_irradiation(self, name, doses=None, verbose=True):
         if self.db.get_irradiation(name):
-            self.warning('irradiation {} already exists'.format(name))
+            if verbose:
+                self.warning('irradiation {} already exists'.format(name))
             return
 
         self.db.add_irradiation(name)
