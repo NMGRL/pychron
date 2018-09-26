@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from traits.api import HasTraits, Str, List, Instance
 from traitsui.api import View, UItem, Item, TableEditor
 from traitsui.table_column import ObjectColumn
@@ -56,7 +55,7 @@ class ConflictResolver(HasTraits):
                 ObjectColumn(name='identifier', editable=False),
                 ObjectColumn(name='position', editable=False),
                 ObjectColumn(name='repository_identifier',
-                             label='Repository',
+                             label='Assigned Repository',
                              tooltip='Repository assigned to this analysis in the Experiment Queue',
                              editor=myEnumEditor(name='available_ids')),
                 ObjectColumn(name='repository_ids',
@@ -65,7 +64,7 @@ class ConflictResolver(HasTraits):
                              editable=False)]
 
         v = View(UItem('conflicts', editor=TableEditor(columns=cols)),
-                 title='Resolve Experiment Conflicts',
+                 title='Resolve Repository Conflicts',
                  resizable=True,
                  buttons=['OK', 'Cancel'])
         return v

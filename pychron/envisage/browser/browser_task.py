@@ -17,16 +17,17 @@
 # ============= enthought library imports =======================
 
 from __future__ import absolute_import
+
+from six.moves import range
 from traits.api import Any, on_trait_change, Date, Time, Instance, Bool
 
 from pychron.core.ui.table_configurer import RecallTableConfigurer
+from pychron.envisage.browser.interpreted_age_recall_editor import InterpretedAgeRecallEditor
 from pychron.envisage.browser.recall_editor import RecallEditor
 from pychron.envisage.tasks.editor_task import BaseEditorTask
 from pychron.envisage.view_util import open_view
 from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter, IntermediateTabularAdapter
 from pychron.processing.analyses.view.edit_analysis_view import AnalysisEditView
-from pychron.pychron_constants import DVC_PROTOCOL
-from six.moves import range
 
 '''
 add toolbar action to open another editor tab
@@ -53,6 +54,8 @@ def unique_list(seq):
 class BaseBrowserTask(BaseEditorTask):
     default_task_name = 'Recall'
     browser_model = Instance('pychron.envisage.browser.sample_browser_model.SampleBrowserModel')
+    interpreted_age_browser_model = Instance('pychron.envisage.browser.'
+                                             'interpreted_age_browser_model.InterpretedAgeBrowserModel')
     dvc = Instance('pychron.dvc.dvc.DVC')
 
     isotope_adapter = Instance(IsotopeTabularAdapter, ())
@@ -135,6 +138,18 @@ class BaseBrowserTask(BaseEditorTask):
                 else:
                     self.warning('failed making records')
 
+    def interpreted_age_recall(self, record):
+        existing = [e.basename for e in self.get_editors(InterpretedAgeRecallEditor)]
+
+        items = self.dvc.make_interpreted_ages(record)
+        for item in items:
+            editor = InterpretedAgeRecallEditor(item)
+            if existing and editor.basename in existing:
+                editor.instance_id = existing.count(editor.basename)
+
+            editor.set_name(item.name)
+            self._open_editor(editor)
+
     def configure_recall(self):
         self.debug('configure recall')
         tc = self.recall_configurer
@@ -216,9 +231,6 @@ class BaseBrowserTask(BaseEditorTask):
     def _closed_hook(self):
         self.dvc.close_session()
 
-    def _find_refs(self, an):
-        self.information_dialog('Finding references not currently implemented')
-
     def _get_editor_by_uuid(self, uuid):
         return next((editor for editor in self.editor_area.editors
                      if isinstance(editor, RecallEditor) and
@@ -269,9 +281,6 @@ class BaseBrowserTask(BaseEditorTask):
     def _graphical_filter_hook(self, ans, is_append):
         pass
 
-    def _recall_item(self, item, open_copy=False):
-        self.recall(item, open_copy=open_copy)
-
     def _open_recall_editors(self, ans):
         existing = [e.basename for e in self.get_recall_editors()]
         if ans:
@@ -314,17 +323,23 @@ class BaseBrowserTask(BaseEditorTask):
                         open_copy = modifiers.get('open_copy')
 
                     for it in sel:
-                        self._recall_item(it, open_copy=open_copy)
-            elif action == 'find_refs':
-                if sel:
-                    self._find_refs(sel[-1])
+                        self.recall(it, open_copy=open_copy)
+
+    @on_trait_change('interpreted_age_browser_model:[table:dclicked]')
+    def _handle_ia_dclicked(self, new):
+        if new:
+            try:
+                self.interpreted_age_recall(new.item)
+            except BaseException as e:
+                import traceback
+                traceback.print_exc()
+                self.critical('interpeted_age_table:dclicked error {}'.format(str(e)))
 
     @on_trait_change('browser_model:[analysis_table:dclicked]')
     def _handle_dclicked(self, new):
         if new:
-            # if self.editor_area.control:
             try:
-                self._recall_item(new.item)
+                self.recall(new.item)
             except BaseException as e:
                 import traceback
                 traceback.print_exc()

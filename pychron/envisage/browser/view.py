@@ -16,35 +16,13 @@
 
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Instance
-from traitsui.api import View, UItem, HGroup, VGroup, Group, spring, Handler, EnumEditor
+from traitsui.api import View, UItem, HGroup, VGroup, Group, spring, EnumEditor
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.browser.sample_view import BrowserSampleView, BrowserInterpretedAgeView
 from pychron.envisage.browser.time_view import TimeViewModel
 from pychron.envisage.icon_button_editor import icon_button_editor
-
-
-# class AnalysisGroupAdapter(BrowserAdapter):
-#     all_columns = [('Name', 'name'),
-#                    ('Created', 'create_date'),
-#                    ('Modified', 'last_modified')]
-#
-#     columns = [('Name', 'name'),
-#                ('Create Date', 'create_date'),
-#                ('Modified', 'last_modified')]
-#
-
-class BrowserViewHandler(Handler):
-    pass
-
-    # def pane_append_button_changed(self, info):
-    #     info.ui.context['pane'].is_append = True
-    #     info.ui.dispose(True)
-    #
-    # def pane_replace_button_changed(self, info):
-    #     info.ui.context['pane'].is_append = False
-    #     info.ui.dispose(True)
 
 
 class BaseBrowserView(HasTraits):
@@ -123,7 +101,6 @@ class StandaloneBrowserView(BaseBrowserView):
 class PaneBrowserView(BaseBrowserView):
     def traits_view(self):
         main_grp = self._get_browser_group()
-
         tool_grp = self._get_browser_tool_group()
 
         v = View(VGroup(tool_grp, main_grp))
@@ -134,18 +111,10 @@ class PaneBrowserView(BaseBrowserView):
 class BrowserView(BaseBrowserView):
     is_append = False
 
-    # append_button = Button('Append')
-    # replace_button = Button('Replace')
-    # show_append_replace_buttons = Bool(True)
-
     def traits_view(self):
         main_grp = self._get_browser_group()
         tool_grp = self._get_browser_tool_group()
-
-        # bgrp = HGroup(spring, UItem('pane.append_button'), UItem('pane.replace_button'),
-        #               defined_when='pane.show_append_replace_buttons')
         v = okcancel_view(VGroup(tool_grp, main_grp),
-                          handler=BrowserViewHandler(),
                           title='Browser',
                           width=1200,
                           resizable=True)
@@ -180,8 +149,7 @@ class InterpretedAgeBrowserView(HasTraits):
 
         v = okcancel_view(VGroup(tool_grp,
                                  UItem('pane.sample_view', style='custom')),
-                          handler=BrowserViewHandler(),
-                          title='Browser',
+                          title='Interpreted Age Browser',
                           width=900,
                           resizable=True)
 

@@ -157,7 +157,7 @@ class IrradiationEditorPane(TraitsDockPane):
 
         g2 = VGroup(sample_grp,
                     HGroup(UItem('packet', tooltip='Packet label. Must be in the form '
-                                                   '<prefix><number>. e.g. p1 or packet01'),
+                                                   '<number> or <prefix><number>. e.g. 1 or p1 or packet01'),
                            icon_button_editor('set_packet_event', 'arrow_right',
                                               enabled_when='packet',
                                               tooltip='Apply the Packet to current selection'),

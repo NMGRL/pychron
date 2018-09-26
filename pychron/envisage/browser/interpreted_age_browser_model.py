@@ -26,24 +26,24 @@ from pychron.envisage.browser.interpreted_age_table import InterpretedAgeTable
 
 
 class InterpretedAgeBrowserModel(BrowserModel):
-    interpreted_age_table = Instance(InterpretedAgeTable)
+    table = Instance(InterpretedAgeTable)
     persistence_name = 'ia_browser_options'
     selection_persistence_name = 'ia_browser_selection'
 
     def get_interpreted_age_records(self):
-        records = self.interpreted_age_table.selected
+        records = self.table.selected
         if not records:
-            records = self.interpreted_age_table.interpreted_ages
+            records = self.table.interpreted_ages
         return records
 
     def _selected_samples_changed_hook(self, new):
-        self.interpreted_age_table.selected = []
+        self.table.selected = []
 
         ias = []
         if new:
             ias = self._retrieve_interpreted_ages(new)
 
-        self.interpreted_age_table.set_interpreted_ages(ias)
+        self.table.set_interpreted_ages(ias)
 
     def _retrieve_interpreted_ages(self, identifiers):
         # ses = self.selected_repositories
@@ -58,7 +58,7 @@ class InterpretedAgeBrowserModel(BrowserModel):
 
         return ias
 
-    def _interpreted_age_table_default(self):
+    def _table_default(self):
         return InterpretedAgeTable(dvc=self.dvc)
 
 # ============= EOF =============================================

@@ -30,7 +30,7 @@ from pychron.pipeline.tasks.actions import ConfigureRecallAction, IdeogramAction
     FluxAction, \
     FreezeProductionRatios, InverseIsochronAction, IsoEvolutionAction, ExtractionAction, RecallAction, \
     AnalysisTableAction, ClearAnalysisSetsAction, SubgroupIdeogramAction, HistoryIdeogramAction, HybridIdeogramAction, \
-    MassSpecReducedAction
+    MassSpecReducedAction, InterpretedAgeRecallAction
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 
 
@@ -116,6 +116,8 @@ class PipelinePlugin(BaseTaskPlugin):
                                          path='MenuBar/data.menu'),
                           SchemaAddition(factory=RecallAction,
                                          path=reg),
+                          SchemaAddition(factory=InterpretedAgeRecallAction,
+                                         path=reg)
                           # SchemaAddition(factory=TimeViewBrowserAction,
                           #                path=reg)
                           ]
@@ -168,21 +170,6 @@ class PipelinePlugin(BaseTaskPlugin):
         configure_recall = SchemaAddition(factory=ConfigureRecallAction,
                                           path='MenuBar/Edit')
 
-        # browser_actions = [configure_recall]
-
-        # quick_series_actions = [SchemaAddition(factory=quick_series_group,
-        #                                        path='MenuBar/data.menu'),
-        #                         SchemaAddition(factory=LastNAnalysesSeriesAction,
-        #                                        path=qsg),
-        #                         SchemaAddition(factory=LastNHoursSeriesAction,
-        #                                        path=qsg),
-        #                         SchemaAddition(factory=LastDaySeriesAction,
-        #                                        path=qsg),
-        #                         SchemaAddition(factory=LastWeekSeriesAction,
-        #                                        path=qsg),
-        #                         SchemaAddition(factory=LastMonthSeriesAction,
-        #                                        path=qsg), ]
-
         actions = recall_actions
         actions.extend(plotting_actions)
         actions.extend(reduction_actions)
@@ -191,19 +178,12 @@ class PipelinePlugin(BaseTaskPlugin):
 
         return [TaskExtension(task_id='pychron.pipeline.task',
                               actions=[configure_recall]),
-                # TaskExtension(task_id='pychron.browser.task',
-                #               actions=browser_actions),
                 TaskExtension(actions=actions)]
 
     def _tasks_default(self):
         return [TaskFactory(id='pychron.pipeline.task',
                             name='Pipeline',
                             accelerator='Ctrl+p',
-                            factory=self._pipeline_factory),
-                # TaskFactory(id='pychron.browser.task',
-                #             name='Browser',
-                #             accelerator='Ctrl+b',
-                #             factory=self._browser_factory)
-                ]
+                            factory=self._pipeline_factory)]
 
 # ============= EOF =============================================
