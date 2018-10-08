@@ -160,7 +160,7 @@ class DVCAnalysis(Analysis):
         if pd:
             ps = sorted(pd, key=itemgetter('position'))
             # self.position = ','.join([str(pp['position']) for pp in ps])
-            self.position = to_csv_str(ps)
+            self.position = to_csv_str([pp['position'] for pp in ps])
             self.xyz_position = to_csv_str(['{},{},{}'.format(pp['x'], pp['y'], pp['z'])
                                             for pp in ps if pp['x'] is not None], delimiter=';')
         if not self.extract_units:
@@ -204,7 +204,6 @@ class DVCAnalysis(Analysis):
     def load_raw_data(self, keys=None, n_only=False, use_name_pairs=True):
 
         path = self._analysis_path(modifier='.data')
-        isotopes = self.isotopes
 
         jd = dvc_load(path)
 
@@ -219,20 +218,13 @@ class DVCAnalysis(Analysis):
             if isok is None or det is None:
                 continue
 
-            # print isok, keys
             key = isok
             if use_name_pairs:
                 key = '{}{}'.format(isok, det)
 
             if keys and key not in keys and isok not in keys:
                 continue
-            #
-            # try:
-            #     iso = isotopes[isok]
-            # except KeyError, e:
-            #     print e, isotopes.keys()
-            #     continue
-            # iso = next((i for i in self.itervalues() if i.detector == det and i.name == isok), None)
+
             iso = self.get_isotope(name=isok, detector=det)
             if not iso:
                 continue
@@ -388,7 +380,6 @@ class DVCAnalysis(Analysis):
                       'reviewed': reviewed,
                       'fit': fi,
                       'references': make_ref_list(refs)}
-        # jd['reviewed'] = reviewed
         self._dump(jd, path)
 
     def make_path(self, modifier):
