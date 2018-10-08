@@ -842,13 +842,10 @@ class DVCDatabase(DatabaseAdapter):
 
             return dbpos
 
-    def add_load_position(self, ln, position, weight=0, note='', loadtable=None):
+    def add_load_position(self, ln, position, weight=0, note='', nxtals=0):
         with self.session_ctx():
             a = LoadPositionTbl(identifier=ln, position=position, weight=weight,
-                                note=note)
-            if loadtable:
-                loadtable.loaded_positions.append(a)
-
+                                note=note, nxtals=nxtals)
             return self._add_item(a)
 
     def add_repository(self, name, principal_investigator, **kw):

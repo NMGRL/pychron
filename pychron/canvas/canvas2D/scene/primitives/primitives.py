@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import time
 
 from PIL import Image as PImage
@@ -317,32 +318,37 @@ class LoadIndicator(Circle):
     degas_indicator = False
     measured_indicator = False
     monitor_indicator = False
-    degas_color = Color('orange')
+    degas_color= Color('orange')
     measured_color = Color('purple')
     default_color = 'black'
     fill_color = Color('lightblue')
-    labnumber_label = None
+    identifier_label = None
     weight_label = None
+    nxtals_label = None
     weight = None
     sample = ''
     irradiation = ''
     note = ''
 
     def clear_text(self):
-        if self.labnumber_label:
-            self.primitives.remove(self.labnumber_label)
-            self.labnumber_label = None
+        if self.identifier_label:
+            self.primitives.remove(self.identifier_label)
+            self.identifier_label = None
 
         if self.weight_label:
             self.primitives.remove(self.weight_label)
             self.weight_label = None
 
-    def add_labnumber_label(self, *args, **kw):
-        if self.labnumber_label:
-            self.primitives.remove(self.labnumber_label)
+        if self.nxtals_label:
+            self.primitives.remove(self.nxtals_label)
+            self.nxtals_label = None
+
+    def add_identifier_label(self, *args, **kw):
+        if self.identifier_label:
+            self.primitives.remove(self.identifier_label)
 
         lb = self.add_text(*args, **kw)
-        self.labnumber_label = lb
+        self.identifier_label = lb
 
     def add_weight_label(self, *args, **kw):
         if self.weight_label:
@@ -350,6 +356,13 @@ class LoadIndicator(Circle):
 
         lb = self.add_text(*args, **kw)
         self.weight_label = lb
+
+    def add_nxtals_label(self, *args, **kw):
+        if self.nxtals_label:
+            self.primitives.remove(self.nxtals_label)
+
+        lb = self.add_text(*args, **kw)
+        self.nxtals_label = lb
 
     def add_text(self, t, ox=0, oy=0, **kw):
         # x, y = self.get_xy()
