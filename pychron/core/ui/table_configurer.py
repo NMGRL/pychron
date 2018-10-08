@@ -227,7 +227,9 @@ class TableConfigurer(HasTraits):
 
         # set all available columns
         self.available_columns = acols
-        self._set_font(adp.font)
+        if adp.font:
+            self._set_font(adp.font)
+
         self._load_state()
 
     def traits_view(self):

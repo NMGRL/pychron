@@ -138,7 +138,7 @@ class LoadingManager(DVCIrradiationable):
     available_user_names = List
 
     identifier = Str
-    identifiers = Property(depends_on='level')
+    identifiers = List
 
     weight = Float
     note = Str
@@ -491,14 +491,10 @@ class LoadingManager(DVCIrradiationable):
             loads = []
         return loads
 
-    def _get_last_load(self, set_tray=True):
-
-        # with self.dvc.db.session_():
+    def _get_last_load(self):
         lt = self.dvc.db.get_loadtable()
         if lt:
             self.load_name = lt.name
-            #                 if set_tray and lt.holder_:
-            #                     self.load_load(lt, set_tray=set_tray)
 
         return self.load_name
 
@@ -576,7 +572,7 @@ class LoadingManager(DVCIrradiationable):
         db = self.dvc.db
         nln = self.new_load_name
         if nln:
-            lln = self._get_last_load(set_tray=False)
+            lln = self._get_last_load()
             if nln == lln:
                 return 'duplicate name'
             else:
@@ -605,8 +601,7 @@ class LoadingManager(DVCIrradiationable):
         for pp in self.positions:
             ln = pp.identifier
             self.info('updating positions for load:{}, identifier: {}'.format(lt.name, ln))
-            # scene = self.canvas.scene
-            # ip = scene.get_item(str(pp.position))
+
             self.debug('weight: {} note: {}'.format(pp.weight, pp.note))
 
             i = db.add_load_position(ln,
@@ -629,18 +624,6 @@ class LoadingManager(DVCIrradiationable):
 
         return gs
 
-    @cached_property
-    def _get_identifiers(self):
-        db = self.dvc.db
-        r = []
-        if db.connected:
-            level = db.get_irradiation_level(self.irradiation, self.level)
-            if level:
-                r = sorted([str(li.identifier) for li in level.positions if li.identifier])
-                if r:
-                    self.identifier = r[0]
-        return r
-
     def _get_sample_info(self):
         return '{} {}{} {}'.format(self.identifier, self.level, self.irradiation_hole, self.sample)
 
@@ -656,6 +639,19 @@ class LoadingManager(DVCIrradiationable):
     # ==========================================================================
     # handlers
     # ==========================================================================
+    @on_trait_change('level')
+    def _get_identifiers(self):
+        db = self.dvc.db
+        r = []
+        if db.connected:
+            level = db.get_irradiation_level(self.irradiation, self.level)
+            if level:
+                r = sorted([str(li.identifier) for li in level.positions if li.identifier])
+                if r:
+                    self.identifier = r[0]
+
+        self.identifiers = r
+
     def _identifier_changed(self, new):
         if self.dvc.db.connected and new:
             pos = self.dvc.db.get_identifier(new)
