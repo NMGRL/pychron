@@ -16,7 +16,6 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from __future__ import absolute_import
 
 from sqlalchemy import Column, Integer, String, TIMESTAMP, Float, func, Boolean, ForeignKey, DATE, DATETIME, TEXT, \
     DateTime
@@ -226,14 +225,6 @@ class AnalysisTbl(Base, IDMixin):
     def tag(self):
         return self.change.tag
 
-    # @property
-    # def tag_dict(self):
-    #     return {k: getattr(self.change.tag_item, k) for k in ('name',) + OMIT_KEYS}
-
-    # @property
-    # def labnumber(self):
-    #     return self.irradiation_position
-
     @property
     def analysis_timestamp(self):
         return self.timestamp
@@ -420,19 +411,6 @@ class IrradiationPositionTbl(Base, IDMixin):
     @property
     def analyzed(self):
         return bool(self.analysis_count)
-        # @property
-        # def irradiation_position(self):
-        #     return self
-
-
-# class TagTbl(Base, BaseMixin):
-#     name = Column(String(40), primary_key=True)
-#     omit_ideo = Column(Boolean)
-#     omit_spec = Column(Boolean)
-#     omit_iso = Column(Boolean)
-#     omit_series = Column(Boolean)
-#
-#     analyses = relationship('AnalysisChangeTbl', backref='tag_item')
 
 
 class MassSpectrometerTbl(Base, BaseMixin):
@@ -497,6 +475,7 @@ class LoadPositionTbl(Base, IDMixin):
     loadName = Column(String(45), ForeignKey('LoadTbl.name'))
     weight = Column(Float)
     note = Column(TEXT)
+    nxtals = Column(Integer)
 
 
 class MeasuredPositionTbl(Base, IDMixin):

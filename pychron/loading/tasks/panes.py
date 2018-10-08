@@ -15,28 +15,37 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 from enable.component_editor import ComponentEditor
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Int, Property
-from traitsui.api import View, UItem, Item, VGroup, TabularEditor, HGroup, spring
+from traitsui.api import View, UItem, Item, VGroup, TabularEditor, HGroup, spring, EnumEditor, Tabbed
 from traitsui.tabular_adapter import TabularAdapter
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 
 
 class PositionsAdapter(TabularAdapter):
-    columns = [('Labnumber', 'labnumber'),
+    columns = [('Identifier', 'identifier'),
                ('Irradiation', 'irradiation_str'),
                ('Sample', 'sample'),
+               ('Material', 'material'),
+               ('Position', 'position'),
+               ('Weight', 'weight'),
+               ('N. Xtals', 'nxtals'),
+               ('Note', 'note')]
+
+
+class GroupedPositionsAdapter(TabularAdapter):
+    columns = [('Identifier', 'identifier'),
+               ('Irradiation', 'irradiation_str'),
+               ('Sample', 'sample'),
+               ('Material', 'material'),
                ('Positions', 'position_str')]
     font = 'arial 10'
-    labnumber_width = Int(80)
+    identifier_width = Int(80)
     irradiation_str_width = Int(80)
     sample_width = Int(80)
     position_str_width = Int(80)
@@ -58,10 +67,10 @@ class PositionsAdapter(TabularAdapter):
 
 
 class BaseLoadPane(TraitsDockPane):
-    display_load_name = Property(depends_on='model.load_name')
+    display_load_name = Property(depends_on='model.display_load_name')
 
     def _get_display_load_name(self):
-        return '<font size=12 color="blue"><b>{}</b></font>'.format(self.model.load_name)
+        return '<font size=12 color="blue"><b>{}</b></font>'.format(self.model.display_load_name)
 
 
 class LoadTablePane(BaseLoadPane):
@@ -71,30 +80,25 @@ class LoadTablePane(BaseLoadPane):
     def traits_view(self):
         a = HGroup(Item('pane.display_load_name',
                         style='readonly',
-                        label='Load'),
-                   spring,
-                   Item('group_positions',
-                        label='Group Positions as Single Analysis',
-                        tooltip='If this option is checked, all selected positions will '
-                                'be treated as a single analysis',
-                        visible_when='show_group_positions'))
+                        label='Load'))
+
         b = UItem('positions',
                   editor=TabularEditor(adapter=PositionsAdapter(),
-                                       refresh='refresh_table',
-                                       scroll_to_row='scroll_to_row',
-                                       selected='selected_positions',
+                                       # refresh='refresh_table',
+                                       # scroll_to_row='scroll_to_row',
+                                       # selected='selected_positions',
                                        multi_select=True))
-        v = View(VGroup(a, b))
+        c = UItem('grouped_positions',
+                  editor=TabularEditor(adapter=GroupedPositionsAdapter()))
+        v = View(VGroup(a, Tabbed(b, c)))
         return v
 
 
 class LoadPane(TraitsTaskPane):
     def traits_view(self):
-        v = View(VGroup(
-            # CustomLabel('interaction_mode'),
-            UItem('canvas',
-                  style='custom',
-                  editor=ComponentEditor())))
+        v = View(VGroup(UItem('canvas',
+                              style='custom',
+                              editor=ComponentEditor())))
         return v
 
 
@@ -104,11 +108,13 @@ class LoadDockPane(BaseLoadPane):
 
     def traits_view(self):
         a = HGroup(Item('pane.display_load_name', style='readonly', label='Load'),
-                   spring, Item('group_positions',
-                                label='Group Positions as Single Analysis',
-                                tooltip='If this option is checked, all selected positions will '
-                                        'be treated as a single analysis',
-                                visible_when='show_group_positions'))
+                   spring,
+                   # Item('group_positions',
+                   #      label='Group Positions as Single Analysis',
+                   #      tooltip='If this option is checked, all selected positions will '
+                   #              'be treated as a single analysis',
+                   #      visible_when='show_group_positions')
+                   )
         b = UItem('canvas',
                   style='custom',
                   editor=ComponentEditor())
@@ -122,27 +128,26 @@ class LoadControlPane(TraitsDockPane):
     id = 'pychron.loading.controls'
 
     def traits_view(self):
-        notegrp = VGroup(
-            Item('retain_note',
-                 tooltip='Retain the Note for the next hole',
-                 label='Lock'),
-            Item('note', style='custom', show_label=False),
-            show_border=True,
-            label='Note')
+        notegrp = VGroup(Item('retain_note',
+                              tooltip='Retain the Note for the next hole',
+                              label='Lock'),
+                         Item('note', style='custom', show_label=False),
+                         show_border=True,
+                         label='Note')
 
-        viewgrp = VGroup(
-            HGroup(Item('use_cmap', label='Color Map'),
-                   UItem('cmap_name', enabled_when='use_cmap')),
-            Item('show_hole_numbers'),
-            Item('show_labnumbers'),
-            Item('show_weights'),
-            # Item('show_spans'),
-            show_border=True,
-            label='View')
+        viewgrp = VGroup(HGroup(Item('use_cmap', label='Color Map'),
+                                UItem('cmap_name', enabled_when='use_cmap')),
+                         Item('show_hole_numbers'),
+                         Item('show_identifiers'),
+                         Item('show_weights'),
+                         Item('show_nxtals'),
+                         # Item('show_spans'),
+                         show_border=True,
+                         label='View')
 
-        load_grp = VGroup(Item('username', editor=ComboboxEditor(name='available_user_names')),
+        load_grp = VGroup(Item('username', editor=EnumEditor(name='available_user_names')),
                           HGroup(Item('load_name',
-                                      editor=ComboboxEditor(name='loads'),
+                                      editor=EnumEditor(name='loads'),
                                       label='Loads'),
                                  icon_button_editor('fetch_load_button', 'goo',
                                                     enabled_when='load_name',
@@ -153,23 +158,22 @@ class LoadControlPane(TraitsDockPane):
                                                     tooltip='Archive a set of loads')),
                           label='Load',
                           show_border=True)
-        samplegrp = VGroup(
-            Item('irradiation',
-                 editor=ComboboxEditor(name='irradiations', refresh='refresh_irradiation')),
-            Item('level', editor=ComboboxEditor(name='levels', refresh='refresh_level')),
-            # Item('level'),
-            Item('labnumber', editor=ComboboxEditor(name='labnumbers', refresh='refresh_labnumber')),
-            Item('sample_info', style='readonly'),
-            Item('packet', style='readonly'),
-            HGroup(
-                Item('weight', label='Weight (mg)'),
-                Item('retain_weight', label='Lock',
-                     tooltip='Retain the Weight for the next hole')),
-            HGroup(Item('npositions', label='NPositions'),
-                   Item('auto_increment')),
-            enabled_when='load_name',
-            show_border=True,
-            label='Sample')
+        samplegrp = VGroup(HGroup(Item('irradiation', editor=EnumEditor(name='irradiations')),
+                                  Item('level', editor=EnumEditor(name='levels'))),
+                           Item('identifier', editor=EnumEditor(name='identifiers')),
+                           Item('sample_info', style='readonly'),
+                           Item('packet', style='readonly'),
+                           HGroup(Item('weight', label='Weight (mg)'),
+                                  Item('retain_weight', label='Lock',
+                                       tooltip='Retain the Weight for the next hole')),
+                           HGroup(Item('nxtals', label='N. Xtals'),
+                                  Item('retain_nxtals', label='Lock',
+                                       tooltip='Retain the N. Xtals for the next hole')),
+                           HGroup(Item('npositions', label='NPositions'),
+                                  Item('auto_increment')),
+                           enabled_when='load_name',
+                           show_border=True,
+                           label='Sample')
 
         v = View(VGroup(load_grp,
                         samplegrp,

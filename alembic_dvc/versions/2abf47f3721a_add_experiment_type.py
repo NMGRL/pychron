@@ -15,9 +15,11 @@ from alembic import op
 
 
 def upgrade():
-    op.add_column('AnalysisTbl',
+    try:
+        op.add_column('AnalysisTbl',
                   sa.Column('experiment_type', sa.String(32)))
-
+    except sa.exc.InternalError:
+        pass
 
 def downgrade():
     op.drop_column('AnalysisTbl', 'experiment_type')

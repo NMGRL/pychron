@@ -15,12 +15,9 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from __future__ import absolute_import
-
 import binascii
 import math
 
-import six
 from sqlalchemy.exc import InvalidRequestError
 from sqlalchemy.sql.expression import func, distinct
 from traits.api import provides
@@ -76,12 +73,6 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         bind_preference(self, 'password', '{}.password'.format(prefid))
         bind_preference(self, 'name', '{}.name'.format(prefid))
 
-    # @property
-    # def selector_klass(self):
-    # # lazy load selector klass.
-    #     from pychron.database.selectors.massspec_selector import MassSpecSelector
-    #
-    #     return MassSpecSelector
     def get_irradiation_import_spec(self, name):
         from pychron.data_mapper.import_spec import ImportSpec, Irradiation, Level, \
             Sample, Project, Position, Production
@@ -482,7 +473,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         kw['ClOverKMultiplierEr'] = 0
         kw['CaOverKMultiplier'] = pr['Ca_K']
         kw['CaOverKMultiplierEr'] = 0
-        v = binascii.crc32(''.join([str(v) for v in six.itervalues(kw)]))
+        v = binascii.crc32(''.join([str(v) for v in kw.values()]))
         q = self.session.query(IrradiationProductionTable)
         q = q.filter(IrradiationProductionTable.ProductionRatiosID == v)
         if not self._query_one(q):

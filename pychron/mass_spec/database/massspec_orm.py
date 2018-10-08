@@ -18,9 +18,6 @@
 # =============enthought library imports=======================
 
 # =============standard library imports ========================
-
-from __future__ import absolute_import
-
 import os
 
 from sqlalchemy import Column, Integer, Float, String, \
@@ -81,7 +78,7 @@ class AnalysesTable(Base):
     PwrAchieved_Max = Column(Float, default=0)
     TotDurHeating = Column(Integer)
     TotDurHeatingAtReqPwr = Column(Integer)
-
+    Emissivity = Column(Float, default=0)
     FirstStageDly = Column(Integer)
     SecondStageDly = Column(Integer)
 

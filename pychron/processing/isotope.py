@@ -27,6 +27,7 @@ from numpy import array, Inf, polyfit, gradient
 from uncertainties import ufloat, nominal_value, std_dev
 
 from pychron.core.geometry.geometry import curvature_at
+from pychron.core.helpers.binpack import unpack
 from pychron.core.helpers.fits import natural_name_fit, fit_to_degree
 from pychron.core.regression.mean_regressor import MeanRegressor
 
@@ -101,7 +102,8 @@ class BaseMeasurement(object):
             endianness = self.endianness
 
         try:
-            x, y = zip(*[struct.unpack('{}ff'.format(endianness), blob[i:i + 8]) for i in range(0, len(blob), 8)])
+            x, y = unpack(blob, fmt='{}ff'.format(endianness))
+            # x, y = zip(*[struct.unpack('{}ff'.format(endianness), blob[i:i + 8]) for i in range(0, len(blob), 8)])
             if self.reverse_unpack:
                 return y, x
             else:
