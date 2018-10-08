@@ -16,18 +16,24 @@
 
 # ============= enthought library imports =======================
 from enable.component_editor import ComponentEditor
+from pyface.action.menu_manager import MenuManager
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
-from traits.api import Int, Property
-from traitsui.api import View, UItem, Item, VGroup, TabularEditor, HGroup, spring, EnumEditor, Tabbed
+from traits.api import Int, Property, Instance
+from traitsui.api import View, UItem, Item, VGroup, TabularEditor, HGroup, spring, \
+    EnumEditor, Tabbed, Handler, CheckListEditor
+from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.configurable_tabular_adapter import ConfigurableMixin
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+from pychron.core.ui.table_configurer import TableConfigurer, TableConfigurerHandler
 from pychron.envisage.icon_button_editor import icon_button_editor
 
 
-class PositionsAdapter(TabularAdapter):
+class PositionsAdapter(TabularAdapter, ConfigurableMixin):
     columns = [('Identifier', 'identifier'),
                ('Irradiation', 'irradiation_str'),
                ('Sample', 'sample'),
@@ -36,19 +42,44 @@ class PositionsAdapter(TabularAdapter):
                ('Weight', 'weight'),
                ('N. Xtals', 'nxtals'),
                ('Note', 'note')]
+    all_columns = [('Identifier', 'identifier'),
+                   ('Irradiation', 'irradiation_str'),
+                   ('Sample', 'sample'),
+                   ('Material', 'material'),
+                   ('Position', 'position'),
+                   ('Weight', 'weight'),
+                   ('N. Xtals', 'nxtals'),
+                   ('Note', 'note')]
+    font = 'arial 12'
+
+    def get_menu(self, obj, trait, row, column):
+        actions = [Action(name='Configure', action='configure_position_table'), ]
+        mm = MenuManager(*actions)
+        return mm
 
 
-class GroupedPositionsAdapter(TabularAdapter):
+class GroupedPositionsAdapter(TabularAdapter, ConfigurableMixin):
     columns = [('Identifier', 'identifier'),
                ('Irradiation', 'irradiation_str'),
                ('Sample', 'sample'),
                ('Material', 'material'),
                ('Positions', 'position_str')]
-    font = 'arial 10'
+
+    all_columns = [('Identifier', 'identifier'),
+               ('Irradiation', 'irradiation_str'),
+               ('Sample', 'sample'),
+               ('Material', 'material'),
+               ('Positions', 'position_str')]
+    font = 'arial 12'
     identifier_width = Int(80)
     irradiation_str_width = Int(80)
     sample_width = Int(80)
     position_str_width = Int(80)
+
+    def get_menu(self, obj, trait, row, column):
+        actions = [Action(name='Configure', action='configure_grouped_position_table'), ]
+        mm = MenuManager(*actions)
+        return mm
 
     def get_bg_color(self, obj, trait, row, column=0):
         item = getattr(obj, trait)[row]
@@ -73,9 +104,78 @@ class BaseLoadPane(TraitsDockPane):
         return '<font size=12 color="blue"><b>{}</b></font>'.format(self.model.display_load_name)
 
 
+class PositionTableConfigurer(TableConfigurer):
+    id = 'position_table'
+
+    def traits_view(self):
+        v = VGroup(UItem('columns',
+                         style='custom',
+                         editor=CheckListEditor(name='available_columns', cols=3)))
+        return okcancel_view(v,
+                             # kind='modal',
+                             title='Configure Position Table',
+                             handler=TableConfigurerHandler())
+
+
+class GroupedPositionTableConfigurer(TableConfigurer):
+    id = 'grouped_position_table'
+
+    def traits_view(self):
+        v = VGroup(UItem('columns',
+                         style='custom',
+                         editor=CheckListEditor(name='available_columns', cols=3)))
+        return okcancel_view(v,
+                             # kind='modal',
+                             title='Configure Grouped Position Table',
+                             handler=TableConfigurerHandler())
+
+
+class LoadTableHandler(Handler):
+    def configure_position_table(self, info, obj):
+        pane = info.ui.context['pane']
+        # tb = PositionTableConfigurer()
+        # tb.set_adapter(pane.position_adapter)
+        tb = pane.position_configurer
+        tb.edit_traits()
+
+    def configure_grouped_position_table(self, info, obj):
+        pane = info.ui.context['pane']
+        # tb = GroupedPositionTableConfigurer()
+        # tb.set_adapter(pane.grouped_position_adapter)
+        tb = pane.grouped_position_configurer
+        tb.edit_traits()
+
+
 class LoadTablePane(BaseLoadPane):
     name = 'Positions'
     id = 'pychron.loading.positions'
+
+    position_configurer = Instance(PositionTableConfigurer)
+    grouped_position_configurer = Instance(GroupedPositionTableConfigurer)
+
+    position_adapter = Instance(PositionsAdapter)
+    grouped_position_adapter = Instance(GroupedPositionsAdapter)
+
+    def __init__(self, *args, **kw):
+        super(LoadTablePane, self).__init__(*args, **kw)
+        self.position_configurer.load()
+        self.grouped_position_configurer.load()
+
+    def _position_configurer_default(self):
+        c = PositionTableConfigurer()
+        c.set_adapter(self.position_adapter)
+        return c
+
+    def _grouped_position_configurer_default(self):
+        c = GroupedPositionTableConfigurer()
+        c.set_adapter(self.grouped_position_adapter)
+        return c
+
+    def _position_adapter_default(self):
+        return PositionsAdapter()
+
+    def _grouped_position_adapter_default(self):
+        return GroupedPositionsAdapter()
 
     def traits_view(self):
         a = HGroup(Item('pane.display_load_name',
@@ -83,14 +183,15 @@ class LoadTablePane(BaseLoadPane):
                         label='Load'))
 
         b = UItem('positions',
-                  editor=TabularEditor(adapter=PositionsAdapter(),
+                  editor=TabularEditor(adapter=self.position_adapter,
                                        # refresh='refresh_table',
                                        # scroll_to_row='scroll_to_row',
                                        # selected='selected_positions',
                                        multi_select=True))
         c = UItem('grouped_positions',
-                  editor=TabularEditor(adapter=GroupedPositionsAdapter()))
-        v = View(VGroup(a, Tabbed(b, c)))
+                  editor=TabularEditor(adapter=self.grouped_position_adapter))
+
+        v = View(VGroup(a, Tabbed(b, c)), handler=LoadTableHandler())
         return v
 
 
@@ -158,9 +259,9 @@ class LoadControlPane(TraitsDockPane):
                                                     tooltip='Archive a set of loads')),
                           label='Load',
                           show_border=True)
-        samplegrp = VGroup(HGroup(Item('irradiation', editor=EnumEditor(name='irradiations')),
-                                  Item('level', editor=EnumEditor(name='levels'))),
-                           Item('identifier', editor=EnumEditor(name='identifiers')),
+        samplegrp = VGroup(HGroup(UItem('irradiation', editor=EnumEditor(name='irradiations')),
+                                  UItem('level', editor=EnumEditor(name='levels')),
+                                  UItem('identifier', editor=EnumEditor(name='identifiers'))),
                            Item('sample_info', style='readonly'),
                            Item('packet', style='readonly'),
                            HGroup(Item('weight', label='Weight (mg)'),

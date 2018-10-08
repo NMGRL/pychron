@@ -97,9 +97,8 @@ class GitHostService(Loggable):
         bind_preference(self, 'default_remote_name', '{}.default_remote_name'.format(self.preference_path))
 
     def remote_exists(self, organization, name):
-        text = subprocess.call(['git', 'ls-remote',
-                         'https://{}/{}/{}'.format(self.remote_url, organization, name)])
-        return GITREFREGEX.match(text)
+        out = subprocess.check_output(['git', 'ls-remote', '{}/{}/{}'.format(self.remote_url, organization, name)])
+        return GITREFREGEX.match(out.decode())
 
     def test_api(self):
         raise NotImplementedError
