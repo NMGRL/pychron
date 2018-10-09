@@ -98,10 +98,12 @@ class GroupedPositionsAdapter(TabularAdapter, ConfigurableMixin):
 
 
 class BaseLoadPane(TraitsDockPane):
-    display_load_name = Property(depends_on='model.display_load_name')
+    display_load_name = Property(depends_on='model.load_name')
+    display_tray_name = Property(depends_on='model.tray')
 
     def _get_display_load_name(self):
-        return '<font size=12 color="blue"><b>{}</b></font>'.format(self.model.display_load_name)
+        return '<font size=12 color="blue"><b>{} ({})</b></font>'.format(self.model.load_name,
+                                                                         self.model.tray)
 
 
 class PositionTableConfigurer(TableConfigurer):
@@ -110,7 +112,8 @@ class PositionTableConfigurer(TableConfigurer):
     def traits_view(self):
         v = VGroup(UItem('columns',
                          style='custom',
-                         editor=CheckListEditor(name='available_columns', cols=3)))
+                         editor=CheckListEditor(name='available_columns', cols=3)),
+                   Item('font', enabled_when='fontsize_enabled'))
         return okcancel_view(v,
                              # kind='modal',
                              title='Configure Position Table',
@@ -123,7 +126,8 @@ class GroupedPositionTableConfigurer(TableConfigurer):
     def traits_view(self):
         v = VGroup(UItem('columns',
                          style='custom',
-                         editor=CheckListEditor(name='available_columns', cols=3)))
+                         editor=CheckListEditor(name='available_columns', cols=3)),
+                   Item('font', enabled_when='fontsize_enabled'))
         return okcancel_view(v,
                              # kind='modal',
                              title='Configure Grouped Position Table',
@@ -133,15 +137,11 @@ class GroupedPositionTableConfigurer(TableConfigurer):
 class LoadTableHandler(Handler):
     def configure_position_table(self, info, obj):
         pane = info.ui.context['pane']
-        # tb = PositionTableConfigurer()
-        # tb.set_adapter(pane.position_adapter)
         tb = pane.position_configurer
         tb.edit_traits()
 
     def configure_grouped_position_table(self, info, obj):
         pane = info.ui.context['pane']
-        # tb = GroupedPositionTableConfigurer()
-        # tb.set_adapter(pane.grouped_position_adapter)
         tb = pane.grouped_position_configurer
         tb.edit_traits()
 
@@ -184,9 +184,6 @@ class LoadTablePane(BaseLoadPane):
 
         b = UItem('positions',
                   editor=TabularEditor(adapter=self.position_adapter,
-                                       # refresh='refresh_table',
-                                       # scroll_to_row='scroll_to_row',
-                                       # selected='selected_positions',
                                        multi_select=True))
         c = UItem('grouped_positions',
                   editor=TabularEditor(adapter=self.grouped_position_adapter))
@@ -208,14 +205,7 @@ class LoadDockPane(BaseLoadPane):
     id = 'pychron.loading.load'
 
     def traits_view(self):
-        a = HGroup(Item('pane.display_load_name', style='readonly', label='Load'),
-                   spring,
-                   # Item('group_positions',
-                   #      label='Group Positions as Single Analysis',
-                   #      tooltip='If this option is checked, all selected positions will '
-                   #              'be treated as a single analysis',
-                   #      visible_when='show_group_positions')
-                   )
+        a = HGroup(Item('pane.display_load_name', style='readonly', label='Load'), spring)
         b = UItem('canvas',
                   style='custom',
                   editor=ComponentEditor())
@@ -250,9 +240,6 @@ class LoadControlPane(TraitsDockPane):
                           HGroup(Item('load_name',
                                       editor=EnumEditor(name='loads'),
                                       label='Loads'),
-                                 icon_button_editor('fetch_load_button', 'goo',
-                                                    enabled_when='load_name',
-                                                    tooltip='Fetch load from database'),
                                  icon_button_editor('add_button', 'add', tooltip='Add a load'),
                                  icon_button_editor('delete_button', 'delete', tooltip='Delete selected load'),
                                  icon_button_editor('archive_button', 'application-x-archive',

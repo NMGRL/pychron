@@ -165,7 +165,6 @@ class LoadingManager(DVCIrradiationable):
 
     canvas = Any
 
-    fetch_load_button = Button
     add_button = Button
     delete_button = Button
     archive_button = Button
@@ -612,6 +611,45 @@ class LoadingManager(DVCIrradiationable):
             lt.loaded_positions.append(i)
         db.commit()
 
+    def _new_load_view(self):
+        v = View(Item('new_load_name', label='Name'),
+                 Item('tray', editor=EnumEditor(name='trays')),
+                 kind='livemodal',
+                 title='New Load Name',
+                 width=300,
+                 buttons=['OK', 'Cancel'])
+        return v
+
+    def _refresh_loads(self):
+        self.loads = self._get_load_names()
+        self.load_name = self.loads[0]
+
+    def _set_group_colors(self, canvas=None):
+        if canvas is None:
+            canvas = self.canvas
+
+        cs = {}
+        if self.use_cmap:
+            c = next((k for k, v in color_map_dict.items() if v == self.cmap_name), None)
+            if c:
+                c = c(DataRange1D(low=0.0, high=1.0))
+
+            lns = sorted(list({p.identifier for p in self.positions}))
+            nl = len(lns)
+
+            scene = canvas.scene
+
+            vs = c.map_screen(linspace(0, 1, nl))
+            cs = dict(zip(lns, [list(vi[:-1]) for vi in vs]))
+
+        for i, p in enumerate(self.positions):
+            color = cs.get(p.identifier, (1, 1, 0))
+            fcolor = ','.join([str(int(x * 255)) for x in color])
+            p.color = color
+            # for pp in p.positions:
+            pp = scene.get_item(p.position, klass=LoadIndicator)
+            pp.fill_color = fcolor
+
     @cached_property
     def _get_grouped_positions(self):
         gs = []
@@ -626,15 +664,6 @@ class LoadingManager(DVCIrradiationable):
 
     def _get_sample_info(self):
         return '{} {}{} {}'.format(self.identifier, self.level, self.irradiation_hole, self.sample)
-
-    def _new_load_view(self):
-        v = View(Item('new_load_name', label='Name'),
-                 Item('tray', editor=EnumEditor(name='trays')),
-                 kind='livemodal',
-                 title='New Load Name',
-                 width=300,
-                 buttons=['OK', 'Cancel'])
-        return v
 
     # ==========================================================================
     # handlers
@@ -726,14 +755,12 @@ class LoadingManager(DVCIrradiationable):
 
             self._refresh_loads()
 
-    def _refresh_loads(self):
-        self.loads = self._get_load_names()
-        self.load_name = self.loads[0]
-
-    def _fetch_load_button_fired(self):
-        self.tray = ''
-        self.load_load_by_name(self.load_name)
-        self.display_load_name = self.load_name
+    @on_trait_change('load_name')
+    def _fetch_load(self):
+        if self.load_name:
+            self.tray = ''
+            self.load_load_by_name(self.load_name)
+            self.display_load_name = self.load_name
 
     def _show_identifiers_changed(self, new):
         if self.canvas:
@@ -877,30 +904,5 @@ class LoadingManager(DVCIrradiationable):
         self.dirty = True
         self.canvas.request_redraw()
 
-    def _set_group_colors(self, canvas=None):
-        if canvas is None:
-            canvas = self.canvas
-
-        cs = {}
-        if self.use_cmap:
-            c = next((k for k, v in color_map_dict.items() if v == self.cmap_name), None)
-            if c:
-                c = c(DataRange1D(low=0.0, high=1.0))
-
-            lns = sorted(list({p.identifier for p in self.positions}))
-            nl = len(lns)
-
-            scene = canvas.scene
-
-            vs = c.map_screen(linspace(0, 1, nl))
-            cs = dict(zip(lns, [list(vi[:-1]) for vi in vs]))
-
-        for i, p in enumerate(self.positions):
-            color = cs.get(p.identifier, (1, 1, 0))
-            fcolor = ','.join([str(int(x * 255)) for x in color])
-            p.color = color
-            # for pp in p.positions:
-            pp = scene.get_item(p.position, klass=LoadIndicator)
-            pp.fill_color = fcolor
 
 # ============= EOF =============================================
