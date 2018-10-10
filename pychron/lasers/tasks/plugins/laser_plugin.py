@@ -39,13 +39,16 @@ from pychron.paths import paths
 
 
 def pattern_action(name, application, manager_name, lase=False):
-    a = PatternAction(id='pattern.action.{}'.format(name),
-                      name=name.capitalize(),
-                      application=application,
-                      manager_name=manager_name,
-                      pattern_path=os.path.join(paths.pattern_dir, name),
-                      lase=lase)
-    return lambda: a
+    def factory():
+        a = PatternAction(id='pattern.action.{}'.format(name),
+                          name=name.capitalize(),
+                          application=application,
+                          manager_name=manager_name,
+                          pattern_path=os.path.join(paths.pattern_dir, name),
+                          lase=lase)
+        return a
+
+    return factory
 
 
 class CoreLaserPlugin(BaseTaskPlugin):

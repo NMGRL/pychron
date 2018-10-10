@@ -16,12 +16,13 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from envisage.ui.tasks.task_extension import TaskExtension
 from pyface.action.group import Group
 from pyface.tasks.action.schema_addition import SchemaAddition
 
 from pychron.lasers.tasks.laser_actions import PowerMapAction, PowerCalibrationAction, PyrometerCalibrationAction, \
-    PIDTuningAction, ExecutePatternAction
+    PIDTuningAction
 from pychron.lasers.tasks.laser_preferences import FusionsDiodePreferencesPane
 from pychron.lasers.tasks.plugins.laser_plugin import FusionsPlugin
 
@@ -54,9 +55,10 @@ class FusionsDiodePlugin(FusionsPlugin):
                      # SchemaAddition(
                      #     factory=TestDegasAction,
                      #     path='MenuBar/Laser'),
-                     SchemaAddition(
-                         factory=lambda: ExecutePatternAction(self._get_manager()),
-                         path='MenuBar/Laser')])
+                     # SchemaAddition(
+                     #     factory=lambda: ExecutePatternAction(self._get_manager()),
+                     #     path='MenuBar/Laser')
+                     ])
 
         return exts + [ext1]
 

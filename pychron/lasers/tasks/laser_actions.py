@@ -18,6 +18,7 @@
 # from traits.api import HasTraits
 # from traitsui.api import View, Item
 from __future__ import absolute_import
+
 from pyface.action.action import Action
 from pyface.tasks.action.task_action import TaskAction
 
@@ -56,22 +57,22 @@ class LocalLaserAction(BaseLaserAction):
         self.manager = manager
 
 
-class ExecutePatternAction(LocalLaserAction):
-    name = 'Execute Pattern'
+# class ExecutePatternAction(LocalLaserAction):
+#     name = 'Execute Pattern'
+#
+#     def perform(self, event):
+#         manager = self._get_manager(event)
+#         if manager is not None:
+#             manager.execute_pattern()
+#
 
-    def perform(self, event):
-        manager = self._get_manager(event)
-        if manager is not None:
-            manager.execute_pattern()
-
-
-class ExecuteAndLasePatternAction(LocalLaserAction):
-    name = 'Execute Pattern and Lase'
-
-    def perform(self, event):
-        manager = self._get_manager(event)
-        if manager is not None:
-            manager.execute_pattern(lase=True)
+# class ExecuteAndLasePatternAction(LocalLaserAction):
+#     name = 'Execute Pattern and Lase'
+#
+#     def perform(self, event):
+#         manager = self._get_manager(event)
+#         if manager is not None:
+#             manager.execute_pattern(lase=True)
 
 
 class OpenScannerAction(LocalLaserAction):

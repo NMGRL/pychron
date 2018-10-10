@@ -91,11 +91,17 @@ class ChromiumLaserManager(EthernetLaserManager):
     def ask(self, cmd, **kw):
         return self._ask('{}\n'.format(cmd), **kw)
 
-    # private
-    def _stage_stop_button_fired(self):
+    def linear_move(self, x, y, block=False, *args, **kw):
+        self._move_to_position((x, y), block=block)
+
+    def stop(self):
         self.ask('stage.stop')
         self._alive = False
         self.update_position()
+
+    # private
+    def _stage_stop_button_fired(self):
+        self.stop()
 
     def _fire_laser_button_fired(self):
         if self._firing:
@@ -153,7 +159,7 @@ class ChromiumLaserManager(EthernetLaserManager):
         self._alive = False
         self.update_position()
 
-    def _move_to_position(self, pos, *args, **kw):
+    def _move_to_position(self, pos, block=True, *args, **kw):
         if isinstance(pos, tuple):
             x, y = pos
 
@@ -175,28 +181,30 @@ class ChromiumLaserManager(EthernetLaserManager):
         self.info('sending {}'.format(cmd))
         self.ask(cmd)
 
-        return self._moving(xm, ym, zm)
+        return self._moving(xm, ym, zm, block)
 
-    def _moving(self, xm, ym, zm):
-        time.sleep(0.05)
+    def _moving(self, xm, ym, zm, block=True):
+        r = True
+        if block:
+            time.sleep(0.05)
 
-        def cmpfunc(xyz):
-            try:
-                if not self._alive:
-                    return True
+            def cmpfunc(xyz):
+                try:
+                    if not self._alive:
+                        return True
 
-                # ps = [float(p) for p in xyz.split(',')]
-                ps = csv_to_floats(xyz)
-                # return not all([abs(ab[0] - ab[1]) <= 2 for ab in zip(list(map(float, xyz.split(','))),
-                #                        (xm, ym, zm))])
+                    # ps = [float(p) for p in xyz.split(',')]
+                    ps = csv_to_floats(xyz)
+                    # return not all([abs(ab[0] - ab[1]) <= 2 for ab in zip(list(map(float, xyz.split(','))),
+                    #                        (xm, ym, zm))])
 
-                return not all(abs(a - b) <= 10 for a, b in zip(ps, (xm, ym, zm)))
-            except ValueError as e:
-                print('_moving exception {}'.format(e))
+                    return not all(abs(a - b) <= 10 for a, b in zip(ps, (xm, ym, zm)))
+                except ValueError as e:
+                    print('_moving exception {}'.format(e))
 
-        r = self._block(cmd='stage.pos?\n', cmpfunc=cmpfunc)
-        self._alive = False
-        self.update_position()
+            r = self._block(cmd='stage.pos?\n', cmpfunc=cmpfunc)
+            self._alive = False
+            self.update_position()
         return r
 
     def _stage_manager_default(self):
@@ -218,6 +226,14 @@ class ChromiumLaserManager(EthernetLaserManager):
         sm.id = self.stage_manager_id
 
         return sm
+
+    def _pattern_executor_default(self):
+        from pychron.lasers.pattern.pattern_executor import PatternExecutor
+
+        pm = PatternExecutor(application=self.application,
+                             controller=self,
+                             laser_manager=self)
+        return pm
 
 
 class ChromiumCO2Manager(ChromiumLaserManager):
