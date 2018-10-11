@@ -53,20 +53,14 @@ def pattern_action(name, application, manager_name, lase=False):
 
 class CoreLaserPlugin(BaseTaskPlugin):
     def _task_extensions_default(self):
-        actions = [
-            SchemaAddition(factory=OpenPowerMapAction,
-                           path='MenuBar/file.menu/Open')]
-
-        # if experiment plugin available dont add pattern actions
-        ids = [p.id for p in self.application.plugin_manager._plugins]
-        if 'pychron.experiment.task' not in ids:
-            actions.extend([
-                SchemaAddition(id='Open Pattern',
-                               factory=OpenPatternAction,
-                               path='MenuBar/file.menu/Open'),
-                SchemaAddition(id='New Pattern',
-                               factory=NewPatternAction,
-                               path='MenuBar/file.menu/New')])
+        actions = [SchemaAddition(factory=OpenPowerMapAction,
+                           path='MenuBar/file.menu/Open'),
+                   SchemaAddition(id='Open Pattern',
+                                  factory=OpenPatternAction,
+                                  path='MenuBar/file.menu/Open'),
+                   SchemaAddition(id='New Pattern',
+                                  factory=NewPatternAction,
+                                  path='MenuBar/file.menu/New')]
 
         return [TaskExtension(actions=actions)]
 

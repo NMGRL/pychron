@@ -83,9 +83,11 @@ class ChromiumLaserManager(EthernetLaserManager):
     def get_position(self):
         x, y, z = self._x, self._y, self._z
         xyz_microns = self.ask('stage.pos?\n')
-        print('fsad', xyz_microns, type(xyz_microns))
         if xyz_microns:
             x, y, z = [float(v) / 1000. for v in xyz_microns.split(',')]
+            x = x * self.stage_manager.x_sign
+            y = y * self.stage_manager.y_sign
+            z = z * self.stage_manager.z_sign
         return x, y, z
 
     def ask(self, cmd, **kw):
@@ -154,7 +156,7 @@ class ChromiumLaserManager(EthernetLaserManager):
             except ValueError as e:
                 print('_moving exception {}'.format(e))
 
-        r = self._block(cmd='stage.pos?\n', cmpfunc=cmpfunc)
+        self._block(cmd='stage.pos?\n', cmpfunc=cmpfunc)
         time.sleep(0.25)
         self._alive = False
         self.update_position()
@@ -177,7 +179,7 @@ class ChromiumLaserManager(EthernetLaserManager):
                      self.stage_manager.y_sign * y * 1000, \
                      self.stage_manager.z_sign * z * 1000
 
-        cmd = 'stage.moveto {},{},{},{},{},{}'.format(xm, ym, zm, xs, ys, zs)
+        cmd = 'stage.moveto {:0.0f},{:0.0f},{:0.0f},{:0.0f},{:0.0f},{:0.0f}'.format(xm, ym, zm, xs, ys, zs)
         self.info('sending {}'.format(cmd))
         self.ask(cmd)
 
@@ -202,7 +204,7 @@ class ChromiumLaserManager(EthernetLaserManager):
                 except ValueError as e:
                     print('_moving exception {}'.format(e))
 
-            r = self._block(cmd='stage.pos?\n', cmpfunc=cmpfunc)
+            r = self._block(cmd='stage.pos?\n', cmpfunc=cmpfunc, period=1)
             self._alive = False
             self.update_position()
         return r
