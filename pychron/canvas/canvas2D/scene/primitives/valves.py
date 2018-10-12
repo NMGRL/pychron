@@ -112,6 +112,18 @@ class Valve(BaseValve, RoundedRectangle):
     use_border_gaps = False
     not_connected_color = (100, 100, 100)
 
+    def __init__(self, *args, **kw):
+        super(Valve, self).__init__(*args, **kw)
+        self.state = None
+
+    def _get_border_color(self):
+        c = self.get_color()
+        c = [ci / 2. for ci in c]
+        if len(c) == 4:
+            c[3] = 1
+
+        return c
+
     def set_stroke_color(self, gc):
         gc.set_stroke_color(self.get_color())
 
