@@ -173,7 +173,9 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
                                             kwargs=kw)
             else:
                 r = comm.ask(cmd, **kw)
-            self._communicate_hook(cmd, r)
+
+            if hasattr(self, '_communicate_hook'):
+                self._communicate_hook(cmd, r)
             return r
         else:
             self.info('no communicator for this device {}'.format(self.name))
@@ -201,7 +203,7 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
         if self.communicator is not None:
             return self.communicator.read(*args, **kw)
 
-    #        if self.simulation:
+    # if self.simulation:
     #            return 'simulation'
 
     #            gdict = globals()
@@ -247,6 +249,7 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
             self.communicator.scheduler = s
 
     def repeat_command(self, cmd, ntries=2, check_val=None, check_type=None,
+                       break_val=None,
                        verbose=True, **kw):
 
         if isinstance(cmd, tuple):
@@ -262,6 +265,10 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
                                                                      resp,
                                                                      len(str(resp)) if resp is not None else None)
                 self.debug(m)
+
+            if break_val and resp == break_val:
+                return
+
             if check_val is not None:
                 if self.simulation:
                     resp = check_val
@@ -288,23 +295,20 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
     # ===============================================================================
     # scanable interface
     # ===============================================================================
-    def _scan_hook(self, v):
-        for a in self.alarms:
-            if a.test_condition(v):
-                alarm_msg = a.get_message(v)
-                self.warning(alarm_msg)
-                manager = self.application.get_service('pychron.social.twitter_manager.TwitterManager')
-                if manager is not None:
-                    manager.post(alarm_msg)
-                break
+    # def _scan_hook(self, v):
+    #     for a in self.alarms:
+    #         if a.test_condition(v):
+    #             alarm_msg = a.get_message(v)
+    #             self.warning(alarm_msg)
+    #             manager = self.application.get_service('pychron.social.twitter_manager.TwitterManager')
+    #             if manager is not None:
+    #                 manager.post(alarm_msg)
+    #             break
 
     def _parse_response(self, v):
         return v
 
-    def _communicate_hook(self, cmd, r):
-        self.last_command = cmd
-        self.last_response = str(r) if r else ''
-
     def _load_hook(self, config):
         pass
+
 # ========================= EOF ============================================

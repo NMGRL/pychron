@@ -34,12 +34,16 @@ class Pneumatics(AddressableAbstractDevice, PolynomialMapperMixin):
         super(Pneumatics, self).__init__(*args, **kw)
         tx_register_functions(self)
 
+    # def initialize(self, *args, **kw):
+        # self._cdevice.auto_handle_response = False
+
+        # return True
         # self.register_functions()
 
     def load_additional_args(self, config):
         self.load_mapping(config)
         self.set_attribute(config, 'nbits', 'General', 'nbits', cast='int')
-        if self.nbits not in (8,12):
+        if self.nbits not in (8, 12):
             self.warning('nbits must be 8 or 12')
             self.nbits = 8
         return super(Pneumatics, self).load_additional_args(config)
@@ -53,6 +57,9 @@ class Pneumatics(AddressableAbstractDevice, PolynomialMapperMixin):
         if v is not None:
             if self.poly_mapper:
                 v = self.poly_mapper.map_measured(v)
+
+        v = round(v, 1)
+        self.last_response = v
         return v
 
 
@@ -65,6 +72,3 @@ class PychronPneumatics(CoreDevice):
         return self.ask('Read {}'.format(self.name))
 
 # ============= EOF =============================================
-
-
-

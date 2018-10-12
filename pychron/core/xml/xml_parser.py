@@ -146,6 +146,7 @@ class XMLParser(object):
     def _parse_file(self, p):
         txt = None
         if isinstance(p, (str, six.text_type)):
+            txt=''
             if os.path.isfile(p):
                 with open(p, 'rb') as rfile:
                     txt = rfile.read()

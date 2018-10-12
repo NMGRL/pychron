@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from __future__ import absolute_import
-from __future__ import print_function
 import time
 from socket import gethostbyname, gethostname
 from threading import Thread
@@ -33,12 +31,12 @@ from pychron.extraction_line.extraction_line_canvas import ExtractionLineCanvas
 from pychron.extraction_line.graph.extraction_line_graph import ExtractionLineGraph
 from pychron.extraction_line.sample_changer import SampleChanger
 from pychron.globals import globalv
+from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.managers.manager import Manager
 from pychron.monitors.system_monitor import SystemMonitor
 from pychron.pychron_constants import NULL_STR
 from pychron.wait.wait_group import WaitGroup
-import six
-from six.moves import range
+
 
 
 class ExtractionLineManager(Manager, Consoleable):
@@ -58,9 +56,9 @@ class ExtractionLineManager(Manager, Consoleable):
     switch_manager = Any
     gauge_manager = Any
     cryo_manager = Any
-
     multiplexer_manager = Any
     network = Instance(ExtractionLineGraph)
+    readback_items = List
 
     runscript = None
     learner = None
@@ -98,15 +96,13 @@ class ExtractionLineManager(Manager, Consoleable):
         pass
 
     def activate(self):
-        self._load_additional_canvases()
-
         self._active = True
-
-        # need to wait until now to load the ptrackers
-        # this way our canvases are created
-        self.reload_canvas()
-
+        self._load_additional_canvases()
         self._activate_hook()
+
+        self.reload_canvas()
+        devs = self.application.get_services(ICoreDevice)
+        self.devices = devs
 
     def deactivate(self):
         if self.gauge_manager:
@@ -301,14 +297,14 @@ class ExtractionLineManager(Manager, Consoleable):
             # c.load_canvas_file(c.config_name)
 
             if self.switch_manager:
-                for k, v in six.iteritems(self.switch_manager.switches):
+                for k, v in self.switch_manager.switches.items():
                     vc = c.get_object(k)
                     if vc:
                         vc.soft_lock = v.software_lock
                         vc.state = v.state
 
     def update_switch_state(self, name, state, *args, **kw):
-        #self.debug('update switch state {} {} args={} kw={}'.format(name, state, args, kw))
+        # self.debug('update switch state {} {} args={} kw={}'.format(name, state, args, kw))
 
         if self.use_network:
             self.network.set_valve_state(name, state)
@@ -529,6 +525,7 @@ class ExtractionLineManager(Manager, Consoleable):
             self.canvases.append(c)
 
     def _activate_hook(self):
+
         self.monitor = SystemMonitor(manager=self, name='system_monitor')
         self.monitor.monitor()
 
@@ -537,19 +534,21 @@ class ExtractionLineManager(Manager, Consoleable):
             self.gauge_manager.start_scans()
 
         if self.switch_manager and self.use_hardware_update:
-            def func():
-                t = Thread(target=self._update)
-                t.setDaemon(True)
-                t.start()
-            do_after(1000, func)
+            # def func():
+            # t = Thread(target=self._update)
+            # t.setDaemon(True)
+            # t.start()
+            do_after(1000, self._update)
 
     def _update(self):
-        p = self.hardware_update_period
-        sm = self.switch_manager
-        while 1:
-            sm.load_hardware_states()
-            # self.refresh_canvas()
-            time.sleep(p)
+        if self.use_hardware_update:
+            self.switch_manager.load_hardware_states()
+            do_after(self.hardware_update_period*1000, self._update)
+        # sm = self.switch_manager
+        # while 1:
+        #     sm.load_hardware_states()
+        #     # self.refresh_canvas()
+        #     time.sleep(self.hardware_update_period)
 
     #     self._trigger_update()
     #
@@ -784,7 +783,7 @@ class ExtractionLineManager(Manager, Consoleable):
         else:
             net = self.network
             if self.switch_manager:
-                for k, vi in six.iteritems(self.switch_manager.switches):
+                for k, vi in self.switch_manager.switches.items():
                     net.set_valve_state(k, vi.state)
             self.reload_canvas()
 
@@ -798,7 +797,7 @@ class ExtractionLineManager(Manager, Consoleable):
         if isinstance(new, tuple):
             self.update_switch_state(*new)
         else:
-            n = len(new)
+            # n = len(new)
             for i, ni in enumerate(new):
                 self.update_switch_state(*ni)
                 # self.update_switch_state(refresh=i == n - 1, *ni)
