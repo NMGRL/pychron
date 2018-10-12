@@ -101,11 +101,9 @@ class ExtractionLineCanvas2D(SceneCanvas):
         switch = self._get_switch_by_name(name)
         if switch is not None:
             switch.state = nstate
-            self.invalidate_and_redraw()
-            # if refresh:
-            #     # print 'referehs {} {}'.format(name, nstate)
-            #     # self.draw_valid = False
-            #     self.invalidate_and_redraw()
+            if refresh:
+                print('refreshing canvas', name)
+                self.invalidate_and_redraw()
 
     def update_switch_owned_state(self, name, owned):
         switch = self._get_switch_by_name(name)

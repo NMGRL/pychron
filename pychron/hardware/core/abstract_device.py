@@ -42,6 +42,10 @@ class AbstractDevice(ScanableDevice, ConfigLoadable, HasCommunicator):
 
     dev_klass = Property(depends_on='_cdevice')
     graph = DelegatesTo('_cdevice')
+    last_command = DelegatesTo('_cdevice')
+    last_response = DelegatesTo('_cdevice')
+    timestamp = DelegatesTo('_cdevice')
+    current_scan_value = DelegatesTo('_cdevice')
 
     def load_additional_args(self, config):
         """
@@ -49,13 +53,6 @@ class AbstractDevice(ScanableDevice, ConfigLoadable, HasCommunicator):
         """
         cklass = self.config_get(config, 'General', 'type')
 
-        # if 'Argus' in klass:
-        #     klass = 'ArgusGPActuator'
-
-        # if klass is not None:
-        #     if 'subsystem' in klass:
-        #         pass
-        #     else:
         factory = self.get_factory(PACKAGES[cklass], cklass)
         # self.debug('constructing cdevice: name={}, klass={}'.format(name, klass))
         self._cdevice = factory(name=cklass, application=self.application,

@@ -16,9 +16,12 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import Str, Any, Bool, Property, Float, List
+
 # ============= standard library imports ========================
 import time
+
+from traits.api import Str, Any, Bool, Property, Float, List
+
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
 
@@ -99,32 +102,21 @@ class Switch(BaseSwitch):
 
     def get_hardware_indicator_state(self, verbose=True):
         result = None
+        msg = 'Get hardware indicator state err'
         if self.actuator is not None:
-            action = 'closed'
-            result = self.actuator.get_indicator_state(self, action, verbose=verbose)
-            # self.debug('Switch indicator state {}, {}'.format(result, 'Open' if result else 'Closed'))
-            if isinstance(result, bool):
-                self.set_state(result)
-            else:
-                self.debug('Get hardware indicator state err: {}'.format(result))
-                result = False
+            result = self.actuator.get_indicator_state(self, 'closed', verbose=verbose)
 
-        return result
+        return self._set_state(result, msg)
 
     def get_hardware_state(self, verbose=True):
         """
         """
         result = None
+        msg = 'Get hardware state err'
         if self.actuator is not None:
             result = self.actuator.get_channel_state(self, verbose=verbose)
-            # self.debug('Switch state {}, {}'.format(result, 'Open' if result else 'Closed'))
-            if isinstance(result, bool):
-                self.set_state(result)
-            else:
-                self.debug('Get hardware state err: {}'.format(result))
-                result = False
 
-        return result
+        return self._set_state(result, msg)
 
     def get_lock_state(self):
         if self.actuator:
@@ -137,6 +129,15 @@ class Switch(BaseSwitch):
         return self._actuate_state(self._close, mode, True, False, force)
 
     # private
+    def _set_state(self, result, msg):
+        if isinstance(result, bool):
+            self.set_state(result)
+        else:
+            self.debug('{}: {}'.format(msg, result))
+            result = False
+
+        return result
+
     def _actuate_state(self, func, mode, cur, set_value, force):
         """
             func: self._close, self._open

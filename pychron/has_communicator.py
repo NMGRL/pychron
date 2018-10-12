@@ -54,10 +54,10 @@ class HasCommunicator(object):
         if self.communicator is not None:
             return self.communicator.open(**kw)
 
-    def _communicate_hook(self, cmd, r):
-        """
-            hook for subclasses. command and response are passed in
-        """
+    # def _communicate_hook(self, cmd, r):
+    #     """
+    #         hook for subclasses. command and response are passed in
+    #     """
 
     def _load_communicator(self, config, comtype):
         communicator = self._communicator_factory(comtype)

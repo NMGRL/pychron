@@ -17,9 +17,9 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from __future__ import absolute_import
-from socket import gethostbyname, gethostname
+from traits.api import Bool
 
+from socket import gethostbyname, gethostname
 import zmq
 
 from pychron.headless_loggable import HeadlessLoggable
@@ -28,6 +28,7 @@ from pychron.headless_loggable import HeadlessLoggable
 class Broadcaster(HeadlessLoggable):
     _sock = None
     _req_sock = None
+    enabled = Bool(False)
 
     @property
     def url(self):
@@ -50,10 +51,13 @@ class Broadcaster(HeadlessLoggable):
         self._sock = sock
 
     def _send(self, msg):
+        if not self.enabled:
+            return
+        
         with self._lock:
             if self._sock:
                 try:
-                    self._sock.send(msg)
+                    self._sock.send_string(msg)
                 except zmq.ZMQBaseError as e:
                     self.warning('failed sending message: error {}: {}'.format(e, msg))
             else:

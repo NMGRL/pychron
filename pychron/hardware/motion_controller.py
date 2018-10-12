@@ -94,6 +94,9 @@ class MotionController(CoreDevice):
     _not_moving_count = 0
     _homing = False
 
+    def update_position(self):
+        pass
+
     def update_axes(self):
         for a in self.axes:
             pos = self.get_current_position(a)
