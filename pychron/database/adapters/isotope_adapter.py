@@ -14,55 +14,44 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-
-from __future__ import absolute_import
-from traits.api import provides
-
+import hashlib
 # ============= standard library imports ========================
 from datetime import datetime, timedelta
-from cStringIO import StringIO
-import hashlib
+
+import six
 from sqlalchemy import Date, distinct
-from sqlalchemy.sql.functions import count
-from sqlalchemy.sql.expression import and_, func, not_, cast as sql_cast
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.sql.expression import and_, func, not_, cast as sql_cast
+from sqlalchemy.sql.functions import count
+# ============= enthought library imports =======================
+from traits.api import provides
+
+from pychron.database.core.database_adapter import DatabaseAdapter
 # ============= local library imports  ==========================
 from pychron.database.core.functions import delete_one
-from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.database.core.query import compile_query, in_func
 from pychron.database.i_browser import IBrowser
-
-# spec_
-from pychron.database.orms.isotope.spec import spec_MassCalHistoryTable, spec_MassCalScanTable, spec_MFTableTable
-
-# med_
-from pychron.database.orms.isotope.med import med_ImageTable, med_SnapshotTable, med_SampleImageTable
-
 # flux_
 from pychron.database.orms.isotope.flux import flux_FluxTable, flux_HistoryTable, flux_MonitorTable
-
-
-# loading_
-from pychron.database.orms.isotope.loading import loading_LoadTable, loading_PositionsTable
-
 # gen_
 from pychron.database.orms.isotope.gen import gen_LoadHolderTable, gen_DetectorTable, \
     gen_ExtractionDeviceTable, gen_ProjectTable, \
     gen_MolecularWeightTable, gen_MaterialTable, gen_MassSpectrometerTable, \
     gen_SampleTable, gen_LabTable, gen_AnalysisTypeTable, gen_UserTable, \
     gen_ImportTable, gen_SensitivityTable
-
 # irrad_
 from pychron.database.orms.isotope.irrad import irrad_HolderTable, irrad_ProductionTable, irrad_IrradiationTable, \
     irrad_ChronologyTable, irrad_LevelTable, irrad_PositionTable
+# loading_
+from pychron.database.orms.isotope.loading import loading_LoadTable, loading_PositionsTable
 # meas_
 from pychron.database.orms.isotope.meas import meas_AnalysisTable, \
     meas_ExperimentTable, meas_ExtractionTable, meas_IsotopeTable, meas_MeasurementTable, \
     meas_SpectrometerParametersTable, meas_SpectrometerDeflectionsTable, \
     meas_SignalTable, meas_PeakCenterTable, meas_PositionTable, \
     meas_ScriptTable, meas_MonitorTable, meas_GainHistoryTable, meas_GainTable
-
+# med_
+from pychron.database.orms.isotope.med import med_ImageTable, med_SnapshotTable, med_SampleImageTable
 # proc_
 from pychron.database.orms.isotope.proc import proc_DetectorIntercalibrationHistoryTable, \
     proc_DetectorIntercalibrationTable, proc_SelectedHistoriesTable, \
@@ -74,9 +63,9 @@ from pychron.database.orms.isotope.proc import proc_DetectorIntercalibrationHist
     proc_SensitivityHistoryTable, proc_SensitivityTable, \
     proc_AnalysisGroupTable, proc_AnalysisGroupSetTable, proc_DataReductionTagTable, proc_DataReductionTagSetTable, \
     proc_BlanksSetValueTable, proc_ActionTable, proc_BlanksSetTable
-
+# spec_
+from pychron.database.orms.isotope.spec import spec_MassCalHistoryTable, spec_MassCalScanTable, spec_MFTableTable
 from pychron.pychron_constants import ALPHAS, alpha_to_int, NULL_STR
-import six
 
 
 def binfunc(ds, hours):
@@ -1418,25 +1407,32 @@ class IsotopeAdapter(DatabaseAdapter):
                                 order='asc',
                                 exclude_invalid=True):
         with self.session_ctx() as sess:
-            q = self._analysis_query(sess, meas_MeasurementTable)
+            # q = self._analysis_query(sess, meas_MeasurementTable)
+            q = sess.query(meas_AnalysisTable)
+
             if labnumber:
                 q = q.join(gen_LabTable)
+                if projects:
+                    q = q.join(gen_SampleTable, gen_ProjectTable)
             elif samples:
                 q = q.join(gen_LabTable, gen_SampleTable)
                 # if irradiations:
                 #     q = q.join(irrad_PositionTable, irrad_LevelTable, irrad_IrradiationTable)
             elif projects:
-                q = q.join(gen_SampleTable, gen_ProjectTable)
+                q = q.join(gen_LabTable, gen_SampleTable, gen_ProjectTable)
 
             if mass_spectrometers:
-                q = q.join(gen_MassSpectrometerTable)
+                q = q.join(meas_MeasurementTable, gen_MassSpectrometerTable)
             if extract_device:
                 q = q.join(meas_ExtractionTable, gen_ExtractionDeviceTable)
             if analysis_type:
                 q = q.join(gen_AnalysisTypeTable)
 
             if labnumber:
-                q = q.filter(gen_LabTable.identifier == labnumber)
+                if isinstance(labnumber, (list, tuple)):
+                    q = q.filter(gen_LabTable.identifier.in_(labnumber))
+                else:
+                    q = q.filter(gen_LabTable.identifier == labnumber)
 
             if samples:
                 # if isinstance(samples, (tuple, list)):
