@@ -30,7 +30,7 @@ class BaseSwitch(Loggable):
     display_name = Str
     description = Str
     prefix_name = 'BASE_SWITCH'
-    state = Bool(False)
+    state = False
     software_lock = Bool(False)
     ignore_lock_warning = Bool(False)
     enabled = Bool(True)
@@ -105,8 +105,12 @@ class Switch(BaseSwitch):
         msg = 'Get hardware indicator state err'
         if self.actuator is not None:
             result = self.actuator.get_indicator_state(self, 'closed', verbose=verbose)
-
-        return self._set_state(result, msg)
+        s = result
+        if isinstance(result, bool):
+            self.debug('{}: {}'.format(msg, result))
+            s = None
+        self.set_state(s)
+        return result
 
     def get_hardware_state(self, verbose=True):
         """
@@ -116,7 +120,12 @@ class Switch(BaseSwitch):
         if self.actuator is not None:
             result = self.actuator.get_channel_state(self, verbose=verbose)
 
-        return self._set_state(result, msg)
+        s = result
+        if not isinstance(result, bool):
+            self.warning('{}: {}'.format(msg, result))
+            s = None
+        self.set_state(s)
+        return result
 
     def get_lock_state(self):
         if self.actuator:
@@ -129,15 +138,6 @@ class Switch(BaseSwitch):
         return self._actuate_state(self._close, mode, True, False, force)
 
     # private
-    def _set_state(self, result, msg):
-        if isinstance(result, bool):
-            self.set_state(result)
-        else:
-            self.debug('{}: {}'.format(msg, result))
-            result = False
-
-        return result
-
     def _actuate_state(self, func, mode, cur, set_value, force):
         """
             func: self._close, self._open

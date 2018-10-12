@@ -238,7 +238,7 @@ class SwitchManager(Manager):
 
             keys.append(k)
 
-            states.append('{}{}'.format(k, int(v.state)))
+            states.append('{}{}'.format(k, int(v.state if v.state is not None else 0)))
             if time.time() - st > timeout:
                 self.debug('get states timeout. timeout={}'.format(timeout))
                 break
@@ -533,7 +533,6 @@ class SwitchManager(Manager):
                 ostate = v.state
                 s = v.get_hardware_indicator_state(verbose=False)
                 states.append((k, s, False))
-                # self.refresh_state = (k, s, False)
                 if ostate != s:
                     update = update or ostate != s
 
@@ -553,6 +552,8 @@ class SwitchManager(Manager):
             ostate = v.state
             s = v.get_hardware_state()
             self.debug('hardware state {},{},{}'.format(k, v, s))
+            if not isinstance(s, bool):
+                s = None
             if v.state != s:
                 update = update or ostate != s
             self.refresh_state = (k, s, False)
