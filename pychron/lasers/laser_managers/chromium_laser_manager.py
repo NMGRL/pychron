@@ -28,10 +28,6 @@ class ChromiumLaserManager(EthernetLaserManager):
     configuration_dir_name = 'chromium'
     _alive = False
 
-    # y_sign = -1  # these should be config values
-    # x_sign = 1
-    # z_sign = 1
-
     def end_extract(self, *args, **kw):
         self.ask('laser.stop')
 
@@ -85,9 +81,10 @@ class ChromiumLaserManager(EthernetLaserManager):
         xyz_microns = self.ask('stage.pos?\n')
         if xyz_microns:
             x, y, z = [float(v) / 1000. for v in xyz_microns.split(',')]
-            x = x * self.stage_manager.x_sign
-            y = y * self.stage_manager.y_sign
-            z = z * self.stage_manager.z_sign
+            if self.stage_manager.use_sign_position_correction:
+                x = x * self.stage_manager.x_sign
+                y = y * self.stage_manager.y_sign
+                z = z * self.stage_manager.z_sign
         return x, y, z
 
     def ask(self, cmd, **kw):
