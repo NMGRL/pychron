@@ -17,19 +17,18 @@
 # =============enthought library imports=======================
 # ============= standard library imports ========================
 import time
-from threading import Event, Thread
+from threading import Event
 
-
-# try:
-#     from pyface.qt.QtCore import QThread
-# except ImportError:
-#     from threading import Thread as QThread
+try:
+    from pyface.qt.QtCore import QThread
+except ImportError:
+    from threading import Thread as QThread
 
 
 # ============= local library imports  ==========================
 
 
-class Timer(Thread):
+class Timer(QThread):
     def __init__(self, period, func, delay=0, *args, **kw):
         super(Timer, self).__init__()
         self._period = period / 1000.0
