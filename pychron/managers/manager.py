@@ -17,19 +17,21 @@
 # =============enthought library imports=======================
 from __future__ import absolute_import
 from __future__ import print_function
+
+# =============standard library imports ========================
+import os
+import time
+from threading import Thread
+
 from pyface.api import FileDialog, OK, DirectoryDialog
 from traits.api import Str, Float, Any, Button, Int, List, Bool, Property
 from traitsui.api import Item, HGroup, VGroup, \
     ButtonEditor, spring
 
-# =============standard library imports ========================
-import os
-from threading import Thread
-import time
 # =============local library imports  ==========================
 from pychron.config_loadable import ConfigLoadable
-from pychron.viewable import Viewable, ViewableHandler
 from pychron.saveable import SaveableHandler
+from pychron.viewable import Viewable, ViewableHandler
 
 
 class MassSpecParam(object):
@@ -297,9 +299,6 @@ class Manager(Viewable, ConfigLoadable):
             return MassSpecParam(v)
         except Exception:
             pass
-            #        return
-
-            #        return next((f for f in self.flags if f.name == name), None)
 
     def get_flag(self, name):
         return next((f for f in self.flags if f.name == name), None)
@@ -446,138 +445,5 @@ class Manager(Viewable, ConfigLoadable):
         for name, label, enabled in buttons:
             vg.content.append(HGroup(self._button_factory(name, label, enabled), springy=False))
         return vg
+
 # =================== EOF =================================================
-
-    # def _led_factory(self, name, color='green'):
-    #     """
-    #
-    #     """
-    #     i = Item(name, show_label=False)
-    #     return i
-
-    # def _switch_factory(self, name, label=False, enabled=None):
-    #     '''
-    #     '''
-    #     if label == True:
-    #         label = '{}_label'.format(name)
-    #
-    #     v = VGroup(HGroup(spring, Label(name.upper()), spring),
-    #              HGroup(spring, self._led_factory('{}_led'.format(name)), spring),
-    #              self._button_factory(name, label, enabled)
-    #              )
-    #     return v
-    #
-    # def _switch_group_factory(self, switches, orientation='h', **kw):
-    #     '''
-    #
-    #     '''
-    #     if orientation == 'h':
-    #         g = HGroup(**kw)
-    #     else:
-    #         g = VGroup(**kw)
-    #
-    #     for s, label, enabled in switches:
-    #         sw = self._switch_factory(s, label=label, enabled=enabled)
-    #         g.content.append(sw)
-    #     return g
-    #
-    # def _scrubber_factory(self, name, range_dict):
-    #     '''
-    #
-    #     '''
-    #     return Item(name, editor=ScrubberEditor(**range_dict))
-    #
-    # def _scrubber_group_factory(self, scrubbers, **kw):
-    #     '''
-    #
-    #
-    #     '''
-    #     vg = VGroup(**kw)
-    #     for name, prefix in scrubbers:
-    #         range_dict = dict(low=getattr(self, '%smin' % prefix), high=getattr(self, '%smax' % prefix))
-    #         vg.content.append(self._scrubber_factory(name, range_dict))
-    #     return vg
-    #
-    # def _readonly_slider_factory(self, *args, **kw):
-    #     '''
-    #
-    #     '''
-    #     return self._slider_factory(
-    #         enabled_when='0',
-    #         *args, **kw)
-    #
-    # def _slider_factory(self, name, prefix, mode='slider', **kw):
-    #     '''
-    #     '''
-    #     return Item(name, editor=RangeEditor(mode=mode,
-    #                                          low_name='%smin' % prefix,
-    #                                          high_name='%smax' % prefix,
-    #
-    #                                          format='%0.2f'
-    #     ),
-    #
-    #                 **kw)
-    #
-    # def _update_slider_factory(self, name, prefix, **kw):
-    #     '''
-    #
-    #     '''
-    #     vg = VGroup()
-    #
-    #     r = self._slider_factory(name, prefix, **kw)
-    #     vg.content.append(r)
-    #
-    #     ur = self._slider_factory('update_%s' % name, name, show_label=False, enabled_when='0')
-    #
-    #     vg.content.append(ur)
-    #
-    #     return vg
-    #
-    # def _update_slider_group_factory(self, sliders, **kw):
-    #     '''
-    #
-    #     '''
-    #     vg = VGroup(**kw)
-    #
-    #     for si, prefix, options in sliders:
-    #         if not options:
-    #             options = {}
-    #         vg.content.append(self._update_slider_factory(si, prefix, **options))
-    #     return vg
-    #
-    # def _slider_group_factory(self, sliders, **kw):
-    #     '''
-    #
-    #     '''
-    #     vg = VGroup(**kw)
-    #     for si, prefix, options in sliders:
-    #         if not options:
-    #             options = {}
-    #         vg.content.append(self._slider_factory(si, prefix, **options))
-    #     return vg
-    # def get_menus(self):
-    #     '''
-    #     '''
-    #     pass
-    #
-    # def _menu_factory(self, name, actions):
-    #     '''
-    #     '''
-    #     a = [Action(**a) for a in actions]
-    #     return Menu(name=name, *a)
-    #
-    # def menus_factory(self):
-    #     '''
-    #     '''
-    #     menus = self.get_menus()
-    #     if menus:
-    #         return [self._menu_factory(m, actions) for m, actions in menus]
-    #
-    # def _menubar_factory(self):
-    #     '''
-    #     '''
-    #
-    #     menus = self.menus_factory()
-    #     return MenuBar(*menus)
-
-

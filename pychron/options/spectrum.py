@@ -45,6 +45,9 @@ class SpectrumOptions(AgeOptions):
     step_nsigma = Int(2)
     pc_nsteps = Int(3)
     pc_gas_fraction = Float(50)
+
+    volume_weight = Bool(True)
+
     include_j_error_in_plateau = Bool(True)
     plateau_age_error_kind = Enum(*ERROR_TYPES)
     weighted_age_error_kind = Enum(*ERROR_TYPES)

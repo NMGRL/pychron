@@ -18,11 +18,10 @@
 import binascii
 import os
 import pickle
+import time
 from operator import itemgetter
 from pickle import PickleError
 
-import six
-import time
 from six.moves import range
 from six.moves import zip
 from traits.api import Any, Dict, List, Bool, Event, Str
@@ -409,6 +408,46 @@ class SwitchManager(Manager):
 
         return next((False for vi in v.interlocks if self.get_switch_by_name(vi).state), True)
 
+    def load_valve_states(self):
+        self.load_indicator_states()
+
+    def load_valve_lock_states(self, *args, **kw):
+        self._load_soft_lock_states()
+
+    def load_valve_owners(self):
+        pass
+
+    def load_hardware_states(self, force=False, indicator=True, verbose=False):
+        self.debug('load hardware states')
+        update = False
+        states = []
+        for k, v in self.switches.items():
+            if v.query_state or force:
+                ostate = v.state
+
+                if indicator:
+                    func = v.get_hardware_indicator_state
+                else:
+                    func = v.get_hardware_state
+
+                s = func(verbose=verbose)
+
+                if not isinstance(s, bool):
+                    s = None
+
+                states.append((k, s, False))
+                if ostate != s:
+                    update = update or ostate != s
+
+        if states:
+            self.refresh_state = states
+            if update:
+                self.refresh_canvas_needed = True
+
+    def load_indicator_states(self):
+        self.debug('load indicator states')
+        self.load_hardware_states()
+
     # private
     def _save_states(self):
         self._save_soft_lock_states()
@@ -515,51 +554,9 @@ class SwitchManager(Manager):
                 self.critical('switch_manager._parse_word exception. {}'.format(v))
         return d
 
-    def load_valve_states(self):
-        self.load_indicator_states()
-
-    def load_valve_lock_states(self, *args, **kw):
-        self._load_soft_lock_states()
-
-    def load_valve_owners(self):
-        pass
-
-    def load_hardware_states(self):
-        self.debug('load hardware states')
-        update = False
-        states = []
-        for k, v in self.switches.items():
-            if v.query_state:
-                ostate = v.state
-                s = v.get_hardware_indicator_state(verbose=False)
-                states.append((k, s, False))
-                if ostate != s:
-                    update = update or ostate != s
-
-        if states:
-            self.refresh_state = states
-            if update:
-                self.refresh_canvas_needed = True
-
-    def load_indicator_states(self):
-        self.debug('load indicator states')
-        self.load_hardware_states()
-
     def _load_states(self):
         self.debug('$$$$$$$$$$$$$$$$$$$$$ Load states')
-        update = False
-        for k, v in self.switches.items():
-            ostate = v.state
-            s = v.get_hardware_state()
-            self.debug('hardware state {},{},{}'.format(k, v, s))
-            if not isinstance(s, bool):
-                s = None
-            if v.state != s:
-                update = update or ostate != s
-            self.refresh_state = (k, s, False)
-
-        if update:
-            self.refresh_canvas_needed = True
+        self.load_hardware_states(force=True)
 
     def _load_manual_states(self):
         p = os.path.join(paths.hidden_dir, '{}_manual_states'.format(self.name))

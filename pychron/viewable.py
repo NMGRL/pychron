@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traits.api import Either, Int, Float, Str, List, Event, \
     Bool
 from traitsui.api import Handler
@@ -106,8 +107,6 @@ class Viewable(Loggable):
 
         return True
 
-    #        return True
-    #
     def closed(self, ok):
         pass
 
@@ -126,23 +125,6 @@ class Viewable(Loggable):
             kw['raised'] = True
 
         func(*args, **kw)
-
-    #     def add_window(self, ui):
-    #
-    #         try:
-    #             if self.application is not None:
-    #                 self.application.uis.append(ui)
-    #         except AttributeError:
-    #             pass
-    #
-    #     def open_view(self, obj, **kw):
-    #         def _open_():
-    #             ui = obj.edit_traits(**kw)
-    #             self.add_window(ui)
-    #
-    #         invoke_in_main_thread(_open_)
-    #        _open_()
-    #        do_after(1, _open_)
 
     def view_factory(self, *args, **kw):
         if self.window_x:

@@ -17,7 +17,7 @@
 
 import math
 
-from numpy import array, nan
+from numpy import array, nan, average
 # ============= enthought library imports =======================
 from traits.api import List, Property, cached_property, Str, Bool, Int, Event, Float, Any, Enum, on_trait_change
 from uncertainties import ufloat, nominal_value, std_dev
@@ -45,6 +45,7 @@ class AnalysisGroup(IdeogramPlotable):
     analyses = List
     nanalyses = AGProperty()
 
+    volume_weight = Bool(True)
     weighted_age = AGProperty()
     arith_age = AGProperty()
     integrated_age = AGProperty()
@@ -100,7 +101,6 @@ class AnalysisGroup(IdeogramPlotable):
 
     def __init__(self, *args, **kw):
         super(AnalysisGroup, self).__init__(make_arar_constants=False, *args, **kw)
-
 
     @property
     def nratio(self):
@@ -400,7 +400,7 @@ class AnalysisGroup(IdeogramPlotable):
 
             prs = ans[0].production_ratios
 
-            def apply_pr(n, d, k):
+            def apply_pr(r, k):
                 pr = 1
                 if prs:
                     pr = prs.get(k, 1)
@@ -409,31 +409,45 @@ class AnalysisGroup(IdeogramPlotable):
 
                     pr = 1 / pr
 
-                try:
-                    v = sum(n) / sum(d) * pr
-                except ZeroDivisionError:
-                    v = 0
+                v = r*pr
 
                 return v
 
-            if attr == 'kca':
-                ks = [ai.get_computed_value('k39') for ai in ans]
-                cas = [ai.get_non_ar_isotope('ca37') for ai in ans]
-                uv = apply_pr(ks, cas, 'Ca_K')
-            elif attr == 'kcl':
-                ks = [ai.get_computed_value('k39') for ai in ans]
-                cls = [ai.get_non_ar_isotope('cl38') for ai in ans]
-                uv = apply_pr(ks, cls, 'Cl_k')
+            if attr in ('kca', 'kcl'):
+                ks = array([ai.get_computed_value('k39') for ai in ans])
+                sks = ks.sum()
+
+                if attr == 'kca':
+                    cas = array([ai.get_non_ar_isotope('ca37') for ai in ans])
+                    if self.volume_weight:
+                        weights = ks / sks
+                        wmean, sum_weights = average([nominal_value(fi) for fi in ks/cas], weights=weights, returned=True)
+                        werr = sum_weights ** -0.5
+                        f = ufloat(wmean, werr)
+                    else:
+                        f = sks/cas.sum()
+                    uv = apply_pr(f, 'Ca_K')
+                elif attr == 'kcl':
+
+                    cls = array([ai.get_non_ar_isotope('cl38') for ai in ans])
+                    if self.volume_weight:
+                        weights = ks / sks
+                        wmean, sum_weights = average([nominal_value(fi) for fi in ks / cls], weights=weights, returned=True)
+                        werr = sum_weights ** -0.5
+                        f = ufloat(wmean, werr)
+                    else:
+                        f = sks/cls.sum()
+                    uv = apply_pr(f, 'Cl_K')
+
+                elif attr == 'signal_k39':
+                    uv = sks
+
             elif attr == 'rad40_percent':
                 ns = [ai.rad40 for ai in ans]
                 ds = [ai.total40 for ai in ans]
                 uv = apply_pr(ns, ds, '') * 100
             elif attr == 'moles_k39':
                 uv = sum([ai.moles_k39 for ai in ans])
-            elif attr == 'signal_k39':
-                vv = [ai.get_computed_value('k39') for ai in ans]
-                # vv = [ai.signal_k39 for ai in ans]
-                uv = sum(vv)
             elif attr == 'age':
                 uv = self._calculate_integrated_age(ans)
 
@@ -472,13 +486,21 @@ class AnalysisGroup(IdeogramPlotable):
         ret = ufloat(0, 0)
         if ans and all((not isinstance(a, InterpretedAgeGroup) for a in ans)):
 
-            rad40 = sum([a.get_computed_value('rad40') for a in ans])
-            k39 = sum([a.get_computed_value('k39') for a in ans])
+            rs = array([a.get_computed_value('rad40') for a in ans])
+            ks = array([a.get_computed_value('k39') for a in ans])
+            sks = ks.sum()
+            if self.volume_weight:
+                weights = ks / sks
+                wmean, sum_weights = average([nominal_value(fi) for fi in rs/ks], weights=weights, returned=True)
+                werr = sum_weights ** -0.5
+                f = ufloat(wmean, werr)
+            else:
+                f = rs.sum()/sks
 
             a = ans[0]
             j = a.j
             try:
-                ret = age_equation(rad40 / k39, j, a.arar_constants)  # / self.age_scalar
+                ret = age_equation(f, j, a.arar_constants)  # / self.age_scalar
             except ZeroDivisionError:
                 pass
 
