@@ -248,9 +248,13 @@ class LoadingManager(DVCIrradiationable):
             dbpos = self.dvc.db.get_identifier(ln)
             sample = ''
             project = ''
+            material = ''
             if dbpos.sample:
                 sample = dbpos.sample.name
-                project = dbpos.sample.project.name
+                if dbpos.sample.project:
+                    project = dbpos.sample.project.name
+                if dbpos.sample.material:
+                    material = dbpos.sample.material.name
 
             dblevel = dbpos.level
             irrad = dblevel.irradiation.name
@@ -275,6 +279,7 @@ class LoadingManager(DVCIrradiationable):
 
                 p = LoadPosition(identifier=ln,
                                  sample=sample,
+                                 material=material,
                                  project=project,
                                  irradiation=irrad,
                                  level=level,
