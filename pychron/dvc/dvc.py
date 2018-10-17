@@ -19,14 +19,14 @@ from __future__ import print_function
 
 import os
 import shutil
+import time
 from datetime import datetime
+from math import isnan
 from operator import itemgetter
 
-import time
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
 from git import Repo
-from math import isnan
 from traits.api import Instance, Str, Set, List, provides
 from uncertainties import nominal_value, std_dev, ufloat
 
@@ -1472,9 +1472,9 @@ class DVC(Loggable):
                             level_flux = fluxes[a.irradiation][a.irradiation_level]
                             fd = meta_repo.get_flux_from_positions(a.irradiation_position, level_flux)
                         else:
-                            fd = meta_repo.get_flux(record.irradiation,
-                                                    record.irradiation_level,
-                                                    record.irradiation_position_position)
+                            fd = meta_repo.get_flux(a.irradiation,
+                                                    a.irradiation_level,
+                                                    a.irradiation_position_position)
                     a.j = fd['j']
                     a.position_jerr = fd.get('position_jerr', 0)
 
