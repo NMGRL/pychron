@@ -107,9 +107,7 @@ class LabspyClient(Loggable):
 
         self.debug('Start Connection status timer')
         if self.application and self.use_connection_status:
-            self.debug(
-                'timer started period={}'.format(
-                    self.connection_status_period))
+            self.debug('timer started period={}'.format(self.connection_status_period))
 
             devs = self.application.get_services(ICoreDevice)
             if devs:
@@ -196,11 +194,10 @@ class LabspyClient(Loggable):
         except ValueError:
             pass
 
-        with self.db.session_ctx():
-            self.db.set_connection(ts,
-                                   appname.strip(),
-                                   user.strip(),
-                                   devname, com, addr, status)
+        self.db.set_connection(ts,
+                               appname.strip(),
+                               user.strip(),
+                               devname, com, addr, status)
 
     @auto_connect
     def update_status(self, **kw):
@@ -241,7 +238,7 @@ class LabspyClient(Loggable):
                     v = getattr(run, value)(*args)
                 except AttributeError:
                     continue
-                    
+
                 self.db.add_measurement('{}Monitor'.format(ms), '{}{}'.format(ms, name), v, units)
 
     @auto_connect

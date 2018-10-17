@@ -15,9 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from traits.api import provides
 # ============= standard library imports ========================
+import binascii
 # ============= local library imports  ==========================
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.core.data_helper import make_bitarray
@@ -48,10 +48,11 @@ class ThermoRack(CoreDevice):
     convert_to_C = True
 
     scan_func = 'get_coolant_out_temperature'
-
+    scan_func = 'get_faults'
     def __init__(self, *args, **kw):
         super(ThermoRack, self).__init__(*args, **kw)
         tx_register_functions(self)
+        # self.auto_handle_response = False
 
     # ===========================================================================
     # icore device interface
@@ -89,10 +90,12 @@ class ThermoRack(CoreDevice):
         cmd = self._get_write_command_str(SETPOINT_BITS)
         self.write(cmd)
 
-        data_bits = make_bitarray(int(v * 10), 16)
-        high_byte = '{:02x}'.format(int(data_bits[:8], 2))
-        low_byte = '{:02x}'.format(int(data_bits[8:], 2))
-
+        # data_bits = make_bitarray(int(v * 10), 16)
+        # high_byte = '{:02x}'.format(int(data_bits[:8], 2))
+        # low_byte = '{:02x}'.format(int(data_bits[8:], 2))
+        b = binascii.hexlify(int(v * 10).to_bytes(2), 'little')
+        high_byte = b[2:]
+        low_byte = b[:2]
         self.write(low_byte)
         self.write(high_byte)
 
@@ -114,12 +117,12 @@ class ThermoRack(CoreDevice):
         """
         cmd = self._get_read_command_str(FAULT_BITS)
         resp = self.ask(cmd, nbytes=1, verbose=verbose)
-
         if self.simulation:
             resp = '0'
 
         # parse the fault byte
-        fault_byte = make_bitarray(int(resp, 16))
+        fault_byte = make_bitarray(int.from_bytes(resp, 'big'))
+
         # faults = []
         # for i, fault in enumerate(FAULTS_TABLE):
         #            if fault and fault_byte[7 - i] == '1':
@@ -129,9 +132,10 @@ class ThermoRack(CoreDevice):
         return faults
 
     @register(camel_case=True)
-    def get_coolant_out_temperature(self, force=False, verbose=False, **kw):
+    def get_coolant_out_temperature(self, verbose=True, **kw):
         """
         """
+        self.debug('get coolant out temperature')
         cmd = self._get_read_command_str(COOLANT_BITS)
 
         resp = self.ask(cmd, nbytes=2, verbose=verbose, **kw)
@@ -140,6 +144,10 @@ class ThermoRack(CoreDevice):
         else:
             temp = self.get_random_value(0, 40)
 
+        temp = round(temp, 1)
+        self.last_response = str(temp)
+        # self.response_updated = {'value': temp, 'command': self.last_command}
+        self.debug('coolant temp {}'.format(temp))
         return temp
 
     # private
@@ -156,16 +164,12 @@ class ThermoRack(CoreDevice):
     def _parse_response(self, resp, scale=1.0):
         """
         """
-        # resp low byte high byte
-        # flip to high byte low byte
-        # split the response into high and low bytes
         if resp is not None:
-            h = resp[2:]
-            l = resp[:2]
             try:
-                resp = int(h + l, 16) * scale
-            except ValueError:
-                return 0
+                # byteorder ==little flips high and low bytes
+                resp = int.from_bytes(resp, 'little') * scale
+            except ValueError as e:
+                self.debug('parse response {}'.format(e))
 
             if self.convert_to_C:
                 resp = 5.0 * (resp - 32) / 9.0

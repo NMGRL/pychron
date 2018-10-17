@@ -382,16 +382,15 @@ class SerialCommunicator(Communicator):
         """
 
         if not self.simulation:
-            cmd = bytes(cmd, 'utf-8')
+            if not isinstance(cmd, bytes):
+                cmd = bytes(cmd, 'utf-8')
+
             if is_hex:
                 cmd = codecs.decode(cmd, 'hex')
                 # cmd = cmd.decode('hex')
             else:
-                wt = self.write_terminator
-                if wt is not None:
-                    if isinstance(wt, str):
-                        wt = bytes(wt, 'utf-8')
-                    cmd += wt
+                if self.write_terminator is not None:
+                    cmd += bytes(self.write_terminator, 'utf-8')
 
             try:
                 self.handle.write(cmd)

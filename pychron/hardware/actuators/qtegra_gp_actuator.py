@@ -43,8 +43,8 @@ class QtegraGPActuator(GPActuator):
                 return True
             else:
                 return False
-        else:
-            return False
+        # else:
+        #     return False
 
     def close_channel(self, obj):
         """

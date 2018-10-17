@@ -15,8 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from traits.api import Instance, on_trait_change, List, Button
+from apptools.preferences.preference_binding import bind_preference
+from traits.api import Instance, on_trait_change, List, Button, Bool
 # ============= standard library imports ========================
 from threading import Thread
 import os
@@ -76,10 +76,15 @@ class DashboardServer(Loggable):
     use_db = False
     _alive = False
 
+    def bind_preferences(self):
+        bind_preference(self.notifier, 'enabled', 'pychron.dashboard.server.notifier_enabled')
+
     def activate(self):
+        emailer = self.application.get_service('pychron.social.emailer.Emailer')
+        self.emailer = emailer
+
         if not self.extraction_line_manager:
             self.warning_dialog('Extraction Line Plugin not initialized. Will not be able to take valve actions')
-
         self.setup_notifier()
 
         self.load_devices()
@@ -101,21 +106,22 @@ class DashboardServer(Loggable):
     # self.db_manager.start()
 
     def setup_notifier(self):
-        parser = get_parser()
+        if self.notifier.enabled:
+            parser = get_parser()
 
-        port = 8100
-        elem = parser.get_elements('port')
-        if elem is not None:
-            try:
-                port = int(elem[0].text.strip())
-            except (IndexError, ValueError):
-                pass
+            port = 8100
+            elem = parser.get_elements('port')
+            if elem is not None:
+                try:
+                    port = int(elem[0].text.strip())
+                except (IndexError, ValueError):
+                    pass
 
-        self.notifier.port = port
-        # host = gethostbyname(gethostname())
-        # self.url = '{}:{}'.format(host, port)
-        # add a config request handler
-        self.notifier.add_request_handler('config', self._handle_config)
+            self.notifier.port = port
+            # host = gethostbyname(gethostname())
+            # self.url = '{}:{}'.format(host, port)
+            # add a config request handler
+            self.notifier.add_request_handler('config', self._handle_config)
 
     def start_poll(self):
         self.info('starting dashboard poll')

@@ -15,11 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from threading import Thread, Lock
+from traits.api import Int, Dict, Bool
 
 import zmq
-from traits.api import Int, Dict
+from threading import Thread, Lock
 
 from pychron.messaging.broadcaster import Broadcaster
 
@@ -70,7 +69,8 @@ class Notifier(Broadcaster):
 
     # private
     def _port_changed(self):
-        self.setup(self.port)
+        if self.enabled:
+            self.setup(self.port)
 
     def _handle_request(self):
         sock = self._req_sock

@@ -856,9 +856,16 @@ class PipelineEngine(Loggable):
         grp.templates = user_templates
         groups.append(grp)
 
+        # reorder groups
+        ngroups = []
+        for gi in ['Fit', 'Plot', 'Table', 'History', 'Share', 'Transfer', 'MDD', 'User']:
+            g = next((gii for gii in groups if gii.name == gi), None)
+            if g is not None:
+                ngroups.append(g)
+
         self.debug('loaded {} user templates'.format(len(user_templates)))
 
-        root.groups = groups
+        root.groups = ngroups
 
     # private
     def _active_repositories(self):
@@ -883,7 +890,7 @@ class PipelineEngine(Loggable):
         self.refresh_table_needed = True
 
     def _set_template(self, name, clear=True, exclude_klass=None):
-        if isinstance(name, str):
+        if isinstance(name, (str, tuple)):
             pt = self.pipeline_template_root.get_template(name)
         else:
             pt = name
@@ -976,7 +983,7 @@ class PipelineEngine(Loggable):
             self.recall_references()
 
     def _selected_pipeline_template_changed(self, new):
-        if isinstance(new, PipelineTemplate) or isinstance(new, str):
+        if isinstance(new, (PipelineTemplate, str, tuple)):
             if self.run_enabled and not self.pipeline.active:
                 self.debug('Pipeline template {} selected'.format(new))
                 self._set_template(new)

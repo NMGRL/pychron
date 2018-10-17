@@ -16,7 +16,6 @@
 
 # =============enthought library imports=======================
 # ============= standard library imports ========================
-from __future__ import absolute_import
 import time
 from threading import Event
 

@@ -54,10 +54,17 @@ class PipelineTemplateRoot(HasTraits):
     groups = List
 
     def get_template(self, name):
-        for group in self.groups:
-            for t in group.templates:
-                if t.name == name:
-                    return t
+        if isinstance(name, tuple):
+            name, group = name
+        else:
+            group = None
+
+        for gi in self.groups:
+            print(name, group, gi.name)
+            if group is None or group == gi.name:
+                for t in gi.templates:
+                    if t.name == name:
+                        return t
 
 
 class PipelineTemplateGroup(HasTraits):

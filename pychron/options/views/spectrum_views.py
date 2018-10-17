@@ -26,13 +26,8 @@ from pychron.options.options import SubOptions, AppearanceSubOptions, GroupSubOp
 
 class SpectrumSubOptions(SubOptions):
     def traits_view(self):
-        weighted_grp = HGroup(Item('weighted_age_error_kind'))
-        # integrated_grp = HGroup(Item('integrated_age_error_kind'))
-        v = View(
-            # integrated_grp,
-            weighted_grp
-        )
-        return v
+        integrated_grp = VGroup(Item('integrated_age_weighting', label='Integrated Age Weighting'))
+        return self._make_view(integrated_grp)
 
 
 class SpectrumAppearance(AppearanceSubOptions):
@@ -155,7 +150,9 @@ class CalculationSubOptions(SubOptions):
                                        label='N. Sigma')),
                            show_border=True,
                            label='Error Envelope')
-        return self._make_view(VGroup(plat_grp, error_grp))
+        integrated_grp = VGroup(Item('integrated_age_weighting', label='Integrated Age Weighting'))
+
+        return self._make_view(VGroup(plat_grp, error_grp, integrated_grp))
 
 
 class SpectrumMainOptions(MainOptions):

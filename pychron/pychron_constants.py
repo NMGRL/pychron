@@ -91,6 +91,7 @@ SUBGROUPINGS = [WEIGHTED_MEAN,
 
 SUBGROUPING_ATTRS = ('age', 'kca', 'kcl', 'rad40_percent', 'moles_k39', 'signal_k39')
 
+WEIGHTINGS = (NULL_STR, 'Volume', 'Variance')
 INTERPOLATE_TYPES = ['Preceding', 'Bracketing Interpolate', 'Bracketing Average']
 FIT_TYPES_INTERPOLATE = FIT_TYPES + INTERPOLATE_TYPES
 DELIMITERS = {',': 'comma', '\t': 'tab', ' ': 'space'}

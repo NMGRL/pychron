@@ -1358,6 +1358,7 @@ anaylsis_type={}
     # private
     # ===============================================================================
     def _get_environmentals(self):
+        self.info('getting environmentals')
         env = {}
         lclient = self.labspy_client
         if lclient:

@@ -202,18 +202,23 @@ class BaseLaserManager(Manager):
     def _move_to_position(self, *args, **kw):
         pass
 
-    def _block(self, cmd='GetDriveMoving', cmpfunc=None, period=0.25, position_callback=None, nsuccess=2):
+    def _block(self, cmd='GetDriveMoving', cmpfunc=None, period=0.25, position_callback=None, nsuccess=2, timeout=50):
 
         ask = self._ask
 
         cnt = 0
-        tries = 0
-        maxtries = int(50 / float(period))  # timeout after 50 s
         self._cancel_blocking = False
         if cmpfunc is None:
             cmpfunc = to_bool
 
-        while tries < maxtries and cnt < nsuccess:
+        st = time.time()
+        while 1:
+            if cnt > nsuccess:
+                break
+
+            if time.time() - st > timeout:
+                break
+
             if self._cancel_blocking:
                 break
 
@@ -241,7 +246,6 @@ class BaseLaserManager(Manager):
                             position_callback(*xyz)
             else:
                 cnt = 0
-                tries += 1
 
         state = cnt >= nsuccess
         if state:
@@ -250,7 +254,7 @@ class BaseLaserManager(Manager):
             if self._cancel_blocking:
                 self.info('Block failed. canceled by user')
             else:
-                self.warning('Block failed. timeout after {}s'.format(maxtries * period))
+                self.warning('Block failed. timeout after {}s'.format(timeout))
 
         return state
 
