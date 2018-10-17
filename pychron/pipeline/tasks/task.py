@@ -374,10 +374,10 @@ class PipelineTask(BaseBrowserTask):
         self._set_action_template('Flux')
 
     def set_ideogram_template(self):
-        self._set_action_template('Ideogram')
+        self._set_action_template('Ideogram', 'Plot')
 
     def set_spectrum_template(self):
-        self._set_action_template('Spectrum')
+        self._set_action_template('Spectrum', 'Plot')
 
     def set_isochron_template(self):
         self._set_action_template('Isochron')
@@ -401,7 +401,7 @@ class PipelineTask(BaseBrowserTask):
         self._set_action_template('Hybrid Ideogram')
 
     def set_history_ideogram_template(self):
-        self._set_action_template('History Ideogram')
+        self._set_action_template('Ideogram', 'History')
 
     def set_last_n_analyses_template(self):
         self.engine.selected_pipeline_template = 'Series'
@@ -450,9 +450,9 @@ class PipelineTask(BaseBrowserTask):
             node.set_last_n_hours_analyses(n)
             self.run()
 
-    def _set_action_template(self, name):
+    def _set_action_template(self, name, group=None):
         self.activated()
-        self.engine.selected_pipeline_template = name
+        self.engine.selected_pipeline_template = (name, group)
         self.run()
 
     def _make_save_figure_object(self, editor):

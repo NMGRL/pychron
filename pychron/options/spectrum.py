@@ -24,7 +24,7 @@ from pychron.options.aux_plot import AuxPlot
 from pychron.options.group.spectrum_group_options import SpectrumGroupOptions
 from pychron.options.options import AgeOptions
 from pychron.options.views.spectrum_views import VIEWS
-from pychron.pychron_constants import NULL_STR, ERROR_TYPES, SIZES, FONTS, SIG_FIGS
+from pychron.pychron_constants import NULL_STR, ERROR_TYPES, SIZES, FONTS, SIG_FIGS, WEIGHTINGS
 
 
 class SpectrumAuxPlot(AuxPlot):
@@ -46,7 +46,7 @@ class SpectrumOptions(AgeOptions):
     pc_nsteps = Int(3)
     pc_gas_fraction = Float(50)
 
-    volume_weight = Bool(True)
+    integrated_age_weighting = Enum(WEIGHTINGS)
 
     include_j_error_in_plateau = Bool(True)
     plateau_age_error_kind = Enum(*ERROR_TYPES)
