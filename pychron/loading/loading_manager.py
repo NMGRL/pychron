@@ -263,23 +263,25 @@ class LoadingManager(DVCIrradiationable):
 
             for pi in poss:
                 item = self.canvas.scene.get_item(str(pi.position))
+                wt = '' if pi.weight is None else str(pi.weight)
+                nxtals = '' if pi.nxtals is None else str(pi.nxtals)
                 if item:
                     item.fill = True
                     item.add_identifier_label(ln, visible=self.show_identifiers)
 
                     oy = -10 if not self.show_identifiers else -20
-                    wt = '' if pi.weight is None else str(pi.weight)
                     item.add_weight_label(wt, oy=oy, visible=self.show_weights)
 
-                    nxtals = '' if pi.nxtals is None else str(pi.nxtals)
                     item.add_nxtals_label(nxtals, oy=oy, visible=self.show_nxtals)
 
-                    item.nxtals = pi.nxtals
-                    item.weight = pi.weight
+                    item.nxtals = nxtals
+                    item.weight = wt
 
                 p = LoadPosition(identifier=ln,
                                  sample=sample,
                                  material=material,
+                                 weight=wt,
+                                 nxtals=nxtals,
                                  project=project,
                                  irradiation=irrad,
                                  level=level,
@@ -908,6 +910,5 @@ class LoadingManager(DVCIrradiationable):
         # self.refresh_table = True
         self.dirty = True
         self.canvas.request_redraw()
-
 
 # ============= EOF =============================================
