@@ -150,7 +150,7 @@ class TableConfigurer(HasTraits):
                 self.font = font
 
             self._load_hook(state)
-            self.set_columns()
+            self.update()
 
     def _dump_state(self):
         p = os.path.join(paths.hidden_dir, self.id)
