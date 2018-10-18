@@ -17,11 +17,12 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 from __future__ import absolute_import
-from numpy import average, ones, asarray, where, ones_like
 
-from .base_regressor import BaseRegressor
+from numpy import average, where, ones_like
+
 from pychron.core.helpers.formatting import floatfmt
 from pychron.pychron_constants import SEM, MSEM
+from .base_regressor import BaseRegressor
 
 
 class MeanRegressor(BaseRegressor):
@@ -132,7 +133,7 @@ sem={}
         return s
 
     def make_equation(self):
-        return ''
+        return 'Mean'
 
     def predict_error(self, x, error_calc=None):
         if error_calc is None:

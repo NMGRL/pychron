@@ -23,6 +23,7 @@ class StackedRegressionGraph(RegressionGraph, StackedGraph):
 
 if __name__ == '__main__':
     rg = StackedRegressionGraph(bind_index=False)
+    rg.plotcontainer.spacing = 10
     rg.new_plot()
     rg.new_plot()
     # rg.new_plot()
@@ -54,7 +55,8 @@ if __name__ == '__main__':
                   # yerror=random.rand(n)*5,
                   fit='linear_SD',
                   # truncate='x<1',
-                  filter_outliers_dict=fod)
+                  filter_outliers_dict=fod, plotid=0)
+    rg.add_statistics(plotid=0)
     # fod = {'filter_outliers': True, 'iterations': 1, 'std_devs': 2}
     # rg.new_series(x, y,
     #               #yerror=random.rand(n)*5,
@@ -67,6 +69,7 @@ if __name__ == '__main__':
                   fit='average_SD',
                   # truncate='x<1',
                   filter_outliers_dict=fod, plotid=1)
+    rg.add_statistics(plotid=1)
     rg.set_y_limits(0, 20, plotid=0)
     rg.set_y_limits(0, 20, plotid=1)
     # rg.set_y_limits(0,20, plotid=2)
