@@ -15,8 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
+
 import re
 import time
 
@@ -257,6 +256,9 @@ class Series(BaseSeries):
                 scatter, p = args
             else:
                 p, scatter, l = args
+
+                if self.options.show_statistics:
+                    graph.add_statistics(plotid=pid)
 
             sel = scatter.index.metadata.get('selections', [])
             sel += omits
