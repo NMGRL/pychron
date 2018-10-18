@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 
 from __future__ import absolute_import
+
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema import SMenu
@@ -27,7 +28,8 @@ from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.pyscripts.tasks.pyscript_actions import OpenPyScriptAction, \
     NewPyScriptAction, OpenHopsEditorAction, NewHopsEditorAction
 from pychron.pyscripts.tasks.pyscript_preferences import PyScriptPreferencesPane
-from pychron.pyscripts.tasks.visual_el_programmer.actions import OpenVisualELScriptAction, NewVisualELScriptAction
+from pychron.pyscripts.tasks.visual_el_programmer.actions import OpenVisualELScriptAction, NewVisualELScriptAction, \
+    SwitchRenamerAction
 
 
 class PyScriptPlugin(BaseTaskPlugin):
@@ -71,7 +73,10 @@ class PyScriptPlugin(BaseTaskPlugin):
                                    factory=NewVisualELScriptAction),
                     SchemaAddition(id='open_visual',
                                    path='MenuBar/file.menu/Open',
-                                   factory=OpenVisualELScriptAction)])]
+                                   factory=OpenVisualELScriptAction),
+                SchemaAddition(id='switch_renamer',
+                               path='MenuBar/tools.menu',
+                               factory=SwitchRenamerAction)])]
         return exts
 
     def _tasks_default(self):

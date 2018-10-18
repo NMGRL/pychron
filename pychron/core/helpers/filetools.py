@@ -346,43 +346,43 @@ def parse_file(p, delimiter=None, cast=None):
             return r
 
 
-def parse_setupfile(p):
-    """
-    """
-
-    rfile = parse_file(p)
-    if rfile:
-        return [line.split(',') for line in file]
-
-
-def parse_canvasfile(p, kw):
-    """
-
-    """
-    # kw=['origin','valvexy','valvewh','opencolor','closecolor']
-
-    if os.path.exists(p) and os.path.isfile(p):
-        with open(p, 'r') as rfile:
-            indices = {}
-            i = 0
-            f = filetolist(rfile)
-            count = 1
-            for i in range(len(f)):
-                if f[i][:1] == '!':
-                    for k in kw:
-                        if f[i][1:] == k:
-                            i += 1
-                            if k in indices:
-                                k = k + str(count)
-                                count += 1
-
-                            indices[k] = f[i].split(',')
-
-                            i += 1
-                            break
-
-            return indices
-
+# def parse_setupfile(p):
+#     """
+#     """
+#
+#     rfile = parse_file(p)
+#     if rfile:
+#         return [line.split(',') for line in file]
+#
+#
+# def parse_canvasfile(p, kw):
+#     """
+#
+#     """
+#     # kw=['origin','valvexy','valvewh','opencolor','closecolor']
+#
+#     if os.path.exists(p) and os.path.isfile(p):
+#         with open(p, 'r') as rfile:
+#             indices = {}
+#             i = 0
+#             f = filetolist(rfile)
+#             count = 1
+#             for i in range(len(f)):
+#                 if f[i][:1] == '!':
+#                     for k in kw:
+#                         if f[i][1:] == k:
+#                             i += 1
+#                             if k in indices:
+#                                 k = k + str(count)
+#                                 count += 1
+#
+#                             indices[k] = f[i].split(',')
+#
+#                             i += 1
+#                             break
+#
+#             return indices
+#
 
 def pathtolist(p, **kw):
     """
