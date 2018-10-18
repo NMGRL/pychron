@@ -96,7 +96,19 @@ class SwitchRenamer(Loggable):
                 wfile.write(text)
             self.info('updated script {}'.format(s.path))
 
+        self._update_valve()
         self._scan()
+
+    def _update_valve(self):
+        src = self.valves_path
+        dest = os.path.join(os.path.dirname(src), '~{}'.format(os.path.basename(src)))
+        shutil.copyfile(src, dest)
+        with open(src, 'r') as rfile:
+            text = rfile.read()
+
+        with open(src, 'w') as wfile:
+            text = text.replace(self.description, self.new_description)
+            wfile.write(text)
 
     def _scan_button_fired(self):
         self._scan()
