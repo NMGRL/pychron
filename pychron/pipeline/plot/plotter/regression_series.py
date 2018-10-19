@@ -14,7 +14,6 @@
 # limitations under the License.
 # ===============================================================================
 from __future__ import absolute_import
-from traits.api import HasTraits
 
 from pychron.core.helpers.color_generators import colorname_generator
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
@@ -66,10 +65,15 @@ class RegressionSeries(BaseArArFigure):
 
     def plot(self, plots, legend=None):
         a = self.analyses[0]
-
+        a.load_raw_data()
         cg = colorname_generator()
         for i, po in enumerate(plots):
-            iso = a.isotopes[po.name]
+            name = po.name
+            kind = 'signal'
+            if name.endswith('bs'):
+                kind = 'baseline'
+                name = name[:-2]
+            iso = a.get_isotope(name, kind=kind)
 
             xs = iso.xs
             ys = iso.ys
