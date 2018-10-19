@@ -200,7 +200,8 @@ class MeasurementPyScript(ValvePyScript):
                                         self._time_zero,
                                         self._time_zero_offset,
                                         fit_series=self._fit_series_count,
-                                        series=self._series_count):
+                                        series=self._series_count,
+                                        integration_time=integration_time):
             self.cancel()
 
     @count_verbose_skip
@@ -249,7 +250,8 @@ class MeasurementPyScript(ValvePyScript):
                                         use_dac=use_dac,
                                         fit_series=self._fit_series_count,
                                         settling_time=settling_time,
-                                        series=series):
+                                        series=series,
+                                        integration_time=integration_time):
             self.cancel()
         self._baseline_series = series
         # self._series_count += 2
