@@ -75,21 +75,13 @@ class Script(Loggable):
     # names = Property(depends_on='mass_spectrometer, directory, refresh_lists')
     names = Property(depends_on='_name_prefix, directory, refresh_lists, mass_spectrometer')
     edit = Button
-    editable = Bool
+    editable = Bool(True)
+    enabled = Property(depends_on='name')
     kind = 'ExtractionLine'
     shared_logger = True
 
     directory = Str(NULL_STR)
     directories = Property(depends_on='refresh_lists')
-
-    def _get_name_prefix(self):
-        r = ''
-        if self.use_name_prefix:
-            r = self._name_prefix if self._name_prefix else '{}_'.format(self.mass_spectrometer.lower())
-        return r
-
-    def _set_name_prefix(self, new):
-        self._name_prefix = new
 
     def get_parameter(self, key, default=None):
         p = self.script_path()
@@ -134,7 +126,7 @@ class Script(Loggable):
                   editor=myEnumEditor(name='names')),
             UItem('edit',
                   visible_when='editable',
-                  enabled_when='name and name!="---" and name is not "None"')))
+                  enabled_when='enabled')))
 
     def _clean_script_name(self, name):
         if self.name_prefix:
@@ -170,10 +162,23 @@ class Script(Loggable):
             self.warning_dialog('{} script directory does not exist!'.format(p))
 
     @cached_property
+    def _get_enabled(self):
+        return self.name and self.name != NULL_STR and self.name is not None and self.name in self.names
+
+    def _get_name_prefix(self):
+        r = ''
+        if self.use_name_prefix:
+            r = self._name_prefix if self._name_prefix else '{}_'.format(self.mass_spectrometer.lower())
+        return r
+
+    def _set_name_prefix(self, new):
+        self._name_prefix = new
+
+    @cached_property
     def _get_directories(self):
         p = self._get_root()
         return [NULL_STR] + [s for s in os.listdir(p)
-                           if os.path.isdir(os.path.join(p, s)) and s != 'zobs']
+                             if os.path.isdir(os.path.join(p, s)) and s != 'zobs']
 
     @cached_property
     def _get_names(self):
