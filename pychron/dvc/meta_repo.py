@@ -279,6 +279,14 @@ class BaseHolder(MetaObject):
         radius = float(radius)
 
         for c, line in enumerate(rfile):
+            # skip blank lines
+            if not line.strip():
+                continue
+
+            # skip commented lines
+            if line.strip().startswith('#'):
+                continue
+
             args = line.split(',')
             if len(args) == 2:
                 x, y = args

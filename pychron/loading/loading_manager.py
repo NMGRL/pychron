@@ -337,6 +337,7 @@ class LoadingManager(DVCIrradiationable):
 
             ts = self.dvc.get_load_holders()
             if ts:
+                ts = self._check_load_holders(ts)
                 self.trays = ts
 
             us = db.get_usernames()
@@ -491,6 +492,17 @@ class LoadingManager(DVCIrradiationable):
         self.interaction_mode = 'Info'
 
     # private
+    def _check_load_holders(self, ts):
+        ns = []
+        for ti in ts:
+            try:
+                self.dvc.get_load_holder_holes(ti)
+                ns.append(ti)
+            except BaseException:
+                self.warning_dialog('"{}" is an invalid load holder file. '
+                                    'Holder unavailable until its fixed'.format(ti))
+        return ns
+
     def _get_load_names(self):
         loads = self.dvc.db.get_load_names()
         if loads is None:
