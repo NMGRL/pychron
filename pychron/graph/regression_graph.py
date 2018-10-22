@@ -14,13 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
 
 from chaco.lineplot import LinePlot
 from chaco.text_box_overlay import TextBoxOverlay
 from numpy import linspace
-from six.moves import zip
 from traits.api import List, Any, Event, Callable, Dict
 
 from pychron.core.helpers.fits import convert_fit
@@ -163,12 +160,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         if use_error_envelope:
             self._add_error_envelope_overlay(line)
 
-            # # test
-            # o = ErrorEnvelopeOverlay(component=line, line_color=(0,1,0))
-            # line.underlays.append(o)
-            # line.error_envelope2 = o
-
-        # print x, y
         if x is not None and y is not None:
             if not self.suppress_regression:
                 self._regress(plot, scatter, line)
@@ -177,8 +168,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
             self._set_bottom_axis(plot, plot, plotid)
         except:
             pass
-
-        # self._bind_index(scatter, **kw)
 
         if add_tools:
             self.add_tools(plot, scatter, line,
@@ -212,7 +201,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
         scatter.overlays.append(rect_overlay)
         scatter.tools.append(rect_tool)
-        # broadcaster.tools.append(rect_tool)
 
     def add_statistics(self, plotid=0):
         plot = self.plots[plotid]
@@ -240,9 +228,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         fi = fi.lower()
         plot = self.plots[plotid]
         key = 'data{}'.format(series)
-        # print 'set fit', fi, plotid, key, plot.plots.keys()
-        # print('a', key, plot.plots)
-        # print('b', key in plot.plots)
 
         if key in plot.plots:
             scatter = plot.plots[key][0]
@@ -255,7 +240,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
         fi = fi.lower()
         plot = self.plots[plotid]
-        # for idx in range(series, -1, -1):
         key = 'data{}'.format(series)
         if key in plot.plots:
             scatter = plot.plots[key][0]
@@ -268,12 +252,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
                 print('fit for {}={}, {}'.format(key, fi, scatter))
                 scatter.fit = fi
-                # scatter.index.metadata['selections'] = []
-                # scatter.index.metadata['filtered'] = None
 
-                # if redraw:
-                #     self.redraw()
-                # break
         else:
             print('invalid key', fi, plotid, key, plot.plots.keys())
 
@@ -288,7 +267,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
     _outside_regressor = False
 
     def set_regressor(self, reg, plotid=0):
-        # print('setting regressor to {} {}'.format(plotid, id(reg)))
         self._outside_regressor = True
         plot = self.plots[plotid]
         for pp in plot.plots.values():
@@ -297,7 +275,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                     ppp.regressor = reg
 
     def clear(self):
-        # self.regressors = []
         self.selected_component = None
 
         for p in self.plots:
@@ -328,6 +305,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
         self._update_graph()
 
+    # private
     def _update_graph(self, *args, **kw):
         regs = []
         for i, plot in enumerate(self.plots):

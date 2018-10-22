@@ -295,6 +295,9 @@ class SampleBrowserModel(BrowserModel):
     # private
     def _load_recent(self):
         from pychron.envisage.browser.recent_view import RecentView
+        if not self.available_mass_spectrometers:
+            self._load_mass_spectrometers()
+
         v = RecentView(mass_spectrometers=self.available_mass_spectrometers)
         v.load()
         info = v.edit_traits()

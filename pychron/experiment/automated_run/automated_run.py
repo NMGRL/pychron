@@ -323,8 +323,6 @@ class AutomatedRun(Loggable):
                 g.set_regressor(iso.regressor, idx)
 
     def py_set_baseline_fits(self, fits):
-        isotopes = self.isotope_group.isotopes
-
         if not fits:
             fits = self._get_default_fits(is_baseline=True)
         elif len(fits) == 1:
@@ -355,7 +353,7 @@ class AutomatedRun(Loggable):
         if self.spectrometer_manager:
             self.spectrometer_manager.spectrometer.set_parameter(name, v)
 
-    def py_data_collection(self, obj, ncounts, starttime, starttime_offset, series=0, fit_series=0, group='signal'):
+    def py_data_collection(self, obj, ncounts, starttime, starttime_offset, series=0, fit_series=0, group='signal', integration_time=None):
         if not self._alive:
             return
 
@@ -369,6 +367,9 @@ class AutomatedRun(Loggable):
         self.multi_collector.fit_series_idx = fit_series
 
         check_conditionals = obj == self.measurement_script
+
+        if integration_time:
+            self.set_integration_time(integration_time)
 
         result = self._measure(group,
                                self.persister.get_data_writer(group),
@@ -414,7 +415,7 @@ class AutomatedRun(Loggable):
             return True
 
     def py_baselines(self, ncounts, starttime, starttime_offset, mass, detector,
-                     series=0, fit_series=0, settling_time=4, use_dac=False):
+                     series=0, fit_series=0, settling_time=4, integration_time=None, use_dac=False):
 
         if not self._alive:
             return
@@ -450,6 +451,9 @@ class AutomatedRun(Loggable):
 
         self.collector.for_peak_hop = self.plot_panel.is_peak_hop
         self.plot_panel.is_peak_hop = False
+
+        if integration_time:
+            self.set_integration_time(integration_time)
 
         result = self._measure(gn,
                                self.persister.get_data_writer(gn),
@@ -2297,7 +2301,7 @@ anaylsis_type={}
         min_ = mi
         tc = self.plot_panel.total_counts
         if tc > ma or ma == Inf:
-            max_ = tc * 1.1
+            max_ = tc * self._integration_seconds
 
         if starttime_offset > mi:
             min_ = -starttime_offset
@@ -2354,7 +2358,7 @@ anaylsis_type={}
         min_ = mi
         tc = self.plot_panel.total_counts
         if tc > ma or ma == Inf:
-            max_ = tc * 1.1
+            max_ = tc * self._integration_seconds
 
         if starttime_offset > mi:
             min_ = -starttime_offset
