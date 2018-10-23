@@ -1,9 +1,6 @@
-from __future__ import absolute_import
-from pychron.core.helpers.strtools import camel_case
-
-__author__ = 'ross'
-
 import unittest
+
+from pychron.core.helpers.strtools import camel_case, ratio
 
 
 class CamelCaseTestCase(unittest.TestCase):
@@ -34,3 +31,9 @@ class CamelCaseTestCase(unittest.TestCase):
         n = 'abqvolc'
         cn = camel_case(n)
         self.assertEqual('Abqvolc', cn)
+
+
+class RatioTestCase(unittest.TestCase):
+    def test_ratio1(self):
+        rs = ratio(['Ar40', 'Ar39', 'Ar38'])
+        self.assertListEqual(['Ar40/Ar39', 'Ar40/Ar38', 'Ar39/Ar38'], rs)
