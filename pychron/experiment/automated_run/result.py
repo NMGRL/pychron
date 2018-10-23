@@ -91,7 +91,7 @@ RUN TIME= {}
                  'Ar40/Ar36= {} {}'.format(floatfmt(nominal_value(a4036)), errorfmt(nominal_value(a4036),
                                                                                     std_dev(a4036))),
                  'Ar40/Ar38= {} {}'.format(floatfmt(nominal_value(a4038)), errorfmt(nominal_value(a4038),
-                                                                                    std_dev(a4036)))]
+                                                                                    std_dev(a4038)))]
 
         return self._make_lines(lines)
 
