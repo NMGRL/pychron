@@ -667,7 +667,8 @@ class LoadingManager(DVCIrradiationable):
             p.color = color
             # for pp in p.positions:
             pp = scene.get_item(p.position, klass=LoadIndicator)
-            pp.fill_color = fcolor
+            if pp is not None:
+                pp.fill_color = fcolor
 
     @cached_property
     def _get_grouped_positions(self):
