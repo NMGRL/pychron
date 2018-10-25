@@ -458,6 +458,7 @@ class LoadTbl(Base, BaseMixin):
     name = Column(String(45), primary_key=True)
     create_date = Column(TIMESTAMP, default=func.now())
     archived = Column(Boolean, default=False)
+    username = Column(String(140), ForeignKey('UserTbl.name'))
 
     holderName = Column(String(45), ForeignKey('LoadHolderTbl.name'))
     loaded_positions = relationship('LoadPositionTbl', backref='load')

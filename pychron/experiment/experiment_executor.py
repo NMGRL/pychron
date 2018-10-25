@@ -18,11 +18,11 @@
 from __future__ import absolute_import
 
 import os
+import time
 from datetime import datetime
 from operator import itemgetter
 from threading import Thread, Lock, currentThread
 
-import time
 import yaml
 from pyface.constant import CANCEL, YES, NO
 from pyface.timer.do_later import do_after
@@ -1007,14 +1007,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
             v = ConditionalsView()
 
-            v.add_pre_run_terminations(self._load_system_conditionals('pre_run_terminations'))
-            v.add_pre_run_terminations(self._load_queue_conditionals('pre_run_terminations'))
-
-            v.add_system_conditionals(self._load_system_conditionals(None))
-            v.add_conditionals(self._load_queue_conditionals(None))
-
-            v.add_post_run_terminations(self._load_system_conditionals('post_run_terminations'))
-            v.add_post_run_terminations(self._load_queue_conditionals('post_run_terminations'))
             self.debug('Show conditionals active run: {}'.format(active_run))
             self.debug('Show conditionals measuring run: {}'.format(self.measuring_run))
             self.debug('active_run same as measuring_run: {}'.format(self.measuring_run == active_run))
@@ -1042,6 +1034,15 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                         id2 = 'RowIdx={}'.format(idx)
 
                     v.title = '{} ({}, {})'.format(v.title, runid, id2)
+                else:
+                    v.add_pre_run_terminations(self._load_system_conditionals('pre_run_terminations'))
+                    v.add_pre_run_terminations(self._load_queue_conditionals('pre_run_terminations'))
+
+                    v.add_system_conditionals(self._load_system_conditionals(None))
+                    v.add_conditionals(self._load_queue_conditionals(None))
+
+                    v.add_post_run_terminations(self._load_system_conditionals('post_run_terminations'))
+                    v.add_post_run_terminations(self._load_queue_conditionals('post_run_terminations'))
 
             if tripped:
                 v.select_conditional(tripped, tripped=True)

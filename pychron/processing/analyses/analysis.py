@@ -19,6 +19,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 from collections import namedtuple
+from operator import attrgetter
 
 import six
 from numpy import Inf
@@ -107,7 +108,7 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
     g.window_x = OX + XOFFSET * WINDOW_CNT
     g.window_y = OY + YOFFSET * WINDOW_CNT
 
-    isotopes = sort_isotopes(isotopes, reverse=False, key=lambda x: x.name)
+    isotopes = sort_isotopes(isotopes, reverse=False, key=attrgetter('name'))
 
     for i, iso in enumerate(isotopes):
         ymi, yma = Inf, -Inf

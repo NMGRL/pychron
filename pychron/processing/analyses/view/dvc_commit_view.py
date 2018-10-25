@@ -282,13 +282,8 @@ class DVCCommitView(HasTraits):
     commits_func = Str
     modifier = Str
     record_id = Str
-
-    def __init__(self, an, *args, **kw):
-        super(DVCCommitView, self).__init__(*args, **kw)
-
-        self.repo = Repo(os.path.join(paths.repository_dataset_dir, an.repository_identifier))
-        self.record_id = an.record_id
-        self.repository_identifier = an.repository_identifier
+    repository_identifier = Str
+    repo = None
 
     def initialize(self, an):
         pass
@@ -399,6 +394,10 @@ class HistoryView(DVCCommitView):
     name = 'History'
 
     def initialize(self, an, force=False):
+        self.repo = Repo(os.path.join(paths.repository_dataset_dir, an.repository_identifier))
+        self.record_id = an.record_id
+        self.repository_identifier = an.repository_identifier
+
         if not self.commits or force:
             repo = self.repo
             cs = []

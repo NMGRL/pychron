@@ -568,13 +568,13 @@ class DVCDatabase(DatabaseAdapter):
             a = LoadHolderTbl(name=name)
             return self._add_item(a)
 
-    def add_load(self, name, holder):
+    def add_load(self, name, holder, username):
         with self.session_ctx():
             if not self.get_loadtable(name):
                 if not self.get_load_holder(holder):
                     self.add_load_holder(holder)
 
-                a = LoadTbl(name=name, holderName=holder)
+                a = LoadTbl(name=name, holderName=holder, username=username)
                 return self._add_item(a)
 
     def add_user(self, name, **kw):

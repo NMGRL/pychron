@@ -102,8 +102,12 @@ class BaseLoadPane(TraitsDockPane):
     display_tray_name = Property(depends_on='model.tray')
 
     def _get_display_load_name(self):
-        return '<font size=12 color="blue"><b>{} ({})</b></font>'.format(self.model.load_name,
-                                                                         self.model.tray)
+        if self.model.load_name:
+            ret = '<font size=12 color="blue"><b>{} ({})</b></font>'.format(self.model.load_name,
+                                                                             self.model.tray)
+        else:
+            ret = ''
+        return ret
 
 
 class PositionTableConfigurer(TableConfigurer):
@@ -178,17 +182,16 @@ class LoadTablePane(BaseLoadPane):
         return GroupedPositionsAdapter()
 
     def traits_view(self):
-        a = HGroup(Item('pane.display_load_name',
-                        style='readonly',
-                        label='Load'))
+        a = HGroup(spring, UItem('pane.display_load_name', style='readonly'), spring)
 
         b = UItem('positions',
                   editor=TabularEditor(adapter=self.position_adapter,
                                        multi_select=True))
         c = UItem('grouped_positions',
+                  label='Grouped Positions',
                   editor=TabularEditor(adapter=self.grouped_position_adapter))
 
-        v = View(VGroup(a, Tabbed(b, c)), handler=LoadTableHandler())
+        v = View(VGroup(spring, a, Tabbed(b, c)), handler=LoadTableHandler())
         return v
 
 
@@ -236,7 +239,7 @@ class LoadControlPane(TraitsDockPane):
                          show_border=True,
                          label='View')
 
-        load_grp = VGroup(Item('username', editor=EnumEditor(name='available_user_names')),
+        load_grp = VGroup(Item('username', label='User', editor=EnumEditor(name='available_user_names')),
                           HGroup(Item('load_name',
                                       editor=EnumEditor(name='loads'),
                                       label='Loads'),
@@ -251,13 +254,13 @@ class LoadControlPane(TraitsDockPane):
                                   UItem('identifier', editor=EnumEditor(name='identifiers'))),
                            Item('sample_info', style='readonly'),
                            Item('packet', style='readonly'),
-                           HGroup(Item('weight', label='Weight (mg)'),
+                           HGroup(Item('weight', label='Weight (mg)', springy=True),
                                   Item('retain_weight', label='Lock',
                                        tooltip='Retain the Weight for the next hole')),
-                           HGroup(Item('nxtals', label='N. Xtals'),
+                           HGroup(Item('nxtals', label='N. Xtals', springy=True),
                                   Item('retain_nxtals', label='Lock',
                                        tooltip='Retain the N. Xtals for the next hole')),
-                           HGroup(Item('npositions', label='NPositions'),
+                           HGroup(Item('npositions', label='NPositions', springy=True),
                                   Item('auto_increment')),
                            enabled_when='load_name',
                            show_border=True,
