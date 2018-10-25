@@ -234,6 +234,9 @@ class BaseRegressor(HasTraits):
         #     func = self.calculate_mc_error_envelope
 
         es = self.predict_error(rx, error_calc=error_calc)
+        if es is None:
+            es = 0
+
         return rmodel-es, rmodel+es
         # return func(rx, rmodel)
 
