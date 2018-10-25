@@ -755,7 +755,7 @@ available holder positions {}'.format(n, len(self.irradiated_positions)))
                     ir.j = nominal_value(j)
                     ir.j_err = std_dev(j)
 
-                ir.note = dbpos.note or ''
+                ir.note = dbpos.note.decode('utf-8') if dbpos.note else ''
                 ir.weight = dbpos.weight or 0
                 ir.nanalyses = dbpos.analysis_count
                 ir.analyzed = dbpos.analyzed
