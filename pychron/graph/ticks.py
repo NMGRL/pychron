@@ -16,10 +16,9 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-import math
 
 from chaco.ticks import DefaultTickGenerator
-from numpy import hstack, array
+from numpy import array
 from numpy.core.umath import log10
 from traits.api import Int
 
@@ -73,10 +72,10 @@ class SparseLogTicks(DefaultTickGenerator):
                   scale='log'):
         i = 1
         while 1:
-            data_low = max(10 ** -i, data_low)
-            i += 1
             if data_low < data_high:
                 break
+            data_low = min(10 ** -i, data_low)
+            i += 1
 
         oticks = super(SparseLogTicks, self).get_ticks(data_low, data_high, bounds_low,
                                                        bounds_high, interval, use_endpoints=use_endpoints,

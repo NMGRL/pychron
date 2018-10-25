@@ -182,6 +182,10 @@ Enter a <b>Title</b>, select a few <b>Labels</b> and add a <b>Description</b> of
 
 class ExceptionHandler(Controller):
     def submit(self, info):
+        if not self.model.title:
+            warning(None, 'Please enter a Title for this issue')
+            return
+
         self.submit_issue_github()
         info.ui.dispose()
 
