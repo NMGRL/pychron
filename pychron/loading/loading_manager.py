@@ -88,13 +88,15 @@ class LoadPosition(HasTraits):
     irrad_position = Int
 
     irradiation_str = Property
+    level_str = Property
 
     color = RGBColor
 
+    def _get_level_str(self):
+        return '{}{}'.format(self.level, self.irrad_position)
+
     def _get_irradiation_str(self):
-        return '{} {}{}'.format(self.irradiation,
-                                self.level,
-                                self.irrad_position)
+        return '{} {}'.format(self.irradiation, self.level_str)
 
 
 class GroupedPosition(LoadPosition):
@@ -106,6 +108,9 @@ class GroupedPosition(LoadPosition):
     material = Property
     project = Property
     packet = Property
+
+    def _get_level_str(self):
+        return self.meta_position.level_str
 
     def _get_irradiation_str(self):
         return self.meta_position.irradiation_str
@@ -415,8 +420,7 @@ class LoadingManager(DVCIrradiationable):
             if not root or not os.path.isdir(root):
                 root = paths.loading_dir
 
-            positions = self.positions
-            ps = ', '.join({p.project for p in positions})
+            ps = ', '.join({p.project for p in self.grouped_positions})
 
             un = self.username
 
@@ -439,7 +443,7 @@ class LoadingManager(DVCIrradiationable):
                 setattr(self, attr, getattr(options, attr))
 
             # c = self.canvas.clone_traits()
-            self._pdf_writer.build(path, positions, self.canvas, meta)
+            self._pdf_writer.build(path, self.positions, self.grouped_positions, self.canvas, meta)
             if options.view_pdf:
                 view_file(path)
             on = self.load_name

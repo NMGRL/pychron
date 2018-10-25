@@ -39,32 +39,35 @@ class RegressionView(HasTraits):
         sg.plotcontainer.stack_order = 'top_to_bottom'
 
         isos = an.sorted_values(reverse=False)
-        for iso in isos:
+        for i, iso in enumerate(isos):
             sniff = iso.sniff
             sg.new_plot(ytitle=iso.name, xtitle='Time (s)', title='Equilibration')
             if sniff.xs.shape[0]:
                 sg.new_series(sniff.xs, sniff.ys, marker='circle', type='scatter')
+            sg.set_y_limits(pad='0.1', plotid=i)
 
         bg = StackedRegressionGraph()
         bg.plotcontainer.spacing = 5
         bg.plotcontainer.stack_order = 'top_to_bottom'
 
-        for iso in isos:
+        for i, iso in enumerate(isos):
             baseline = iso.baseline
             bg.new_plot(ytitle=baseline.detector, xtitle='Time (s)', title='Baseline')
             if baseline.xs.shape[0]:
                 bg.new_series(baseline.xs, baseline.ys,
                               color='red', type='scatter', fit=baseline.fit)
+            bg.set_y_limits(pad='0.1', plotid=i)
 
         ig = StackedRegressionGraph()
         ig.plotcontainer.spacing = 5
         ig.plotcontainer.stack_order = 'top_to_bottom'
 
-        for iso in isos:
+        for i, iso in enumerate(isos):
             ig.new_plot(ytitle=iso.name, xtitle='Time (s)', title='Isotope')
             if iso.xs.shape[0]:
                 ig.new_series(iso.xs, iso.ys,
                               color='blue', type='scatter', fit=iso.fit)
+            ig.set_y_limits(pad='0.1', plotid=i)
 
         container.add(sg.plotcontainer)
         container.add(ig.plotcontainer)
@@ -76,12 +79,5 @@ class RegressionView(HasTraits):
         v = View(UItem('container', style='custom', editor=ComponentEditor()),
                  resizable=True)
         return v
-
-
-if __name__ == '__main__':
-    r = RegressionView()
-    r.setup_graph(None)
-    r.configure_traits()
-
 
 # ============= EOF =============================================
