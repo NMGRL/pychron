@@ -473,7 +473,7 @@ class AnalysisGroup(IdeogramPlotable):
             elif attr == 'rad40_percent':
                 ns = [ai.rad40 for ai in ans]
                 ds = [ai.total40 for ai in ans]
-                uv = apply_pr(ns, ds, '') * 100
+                uv = sum(ns)/sum(ds)*100
             elif attr == 'moles_k39':
                 uv = sum([ai.moles_k39 for ai in ans])
             elif attr == 'age':
