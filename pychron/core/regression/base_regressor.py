@@ -14,20 +14,19 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-
 import logging
 import math
 import re
 
 from numpy import where, delete, polyfit
+# ============= enthought library imports =======================
 from traits.api import Array, List, Event, Property, Any, \
     Dict, Str, Bool, cached_property, HasTraits
 
+from pychron.core.regression.tinv import tinv
 from pychron.core.stats.core import calculate_mswd, validate_mswd
 from pychron.core.stats.monte_carlo import RegressionEstimator
 from pychron.pychron_constants import ALPHAS, PLUSMINUS
-from .tinv import tinv
 
 logger = logging.getLogger('BaseRegressor')
 

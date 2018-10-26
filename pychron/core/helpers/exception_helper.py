@@ -83,33 +83,6 @@ class NoPasswordException(BaseException):
     pass
 
 
-# def report_issues():
-#     if not check_github_access():
-#         return
-#
-#     p = os.path.join(paths.hidden_dir, 'issues.p')
-#     if os.path.isfile(p):
-#         nonreported = []
-#         with open(p, 'rb') as rfile:
-#             try:
-#                 issues = pickle.load(rfile)
-#             except BaseException:
-#                 os.remove(p)
-#                 return
-#
-#             for issue in issues:
-#                 result = create_issue(issue)
-#
-#                 if not result:
-#                     nonreported.append(issue)
-#
-#         if nonreported:
-#             with open(p, 'wb') as wfile:
-#                 pickle.dump(nonreported, wfile)
-#         else:
-#             os.remove(p)
-
-
 def create_card(card):
     column_id = os.environ.get('GITHUB_BUG_CARD', 2279248)
     cmd = '{}/projects/columns/{}/cards'.format(GITHUB_API_URL, column_id)
@@ -134,9 +107,6 @@ def git_post(cmd, return_json=True, **kw):
                       'Pychron will quit when this window is closed'.format(usr))
         sys.exit()
 
-    # kw = {'data': json.dumps(issue),
-    #       'auth': (usr, pwd)}
-    #
     kw['auth'] = (usr, pwd)
     if globalv.cert_file:
         kw['verify'] = globalv.cert_file
@@ -190,19 +160,13 @@ class ExceptionHandler(Controller):
         info.ui.dispose()
 
     def submit_issue_github(self):
-        # issue_obj = {'id': 326660371}
-        # card = self._make_card(issue_obj)
-        # ret = create_card(card)
-        # print('createadsa car', ret)
+
         issue = self._make_issue()
         issue_obj = create_issue(issue)
         if issue_obj:
-        #     card = self._make_card(issue_obj)
-        #     create_card(card)
             return True
 
     def _make_card(self, issue_obj):
-        print(issue_obj)
         card = {'content_id': issue_obj['id'], 'content_type': 'Issue'}
         return card
 
@@ -325,13 +289,4 @@ def set_exception_handler():
     traits.trait_notifiers.handle_exception = traits_except_handler
     set_thread_exception_handler()
 
-
-if __name__ == '__main__':
-    # em = ExceptionModel()
-    # e = ExceptionHandler(model=em)
-    # e.configure_traits()
-    # print check_github_access()
-    # print keyring.get_password('github', 'foo')
-    # print keyring.get_password('github', 'foob')
-    pass
 # ============= EOF =============================================

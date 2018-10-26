@@ -15,15 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 from chaco.ticks import DefaultTickGenerator
 from numpy import array
 from numpy.core.umath import log10
 from traits.api import Int
 
 # ============= standard library imports ========================
-# from numpy import log10
 # ============= local library imports  ==========================
 from pychron.graph.graph import Graph
 

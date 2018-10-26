@@ -15,13 +15,13 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from __future__ import absolute_import
 from chaco.api import AbstractOverlay
 from enable.colors import color_table
-from traits.api import Enum, Bool, Float, on_trait_change
-
 # ============= standard library imports ========================
 from numpy import column_stack
+from traits.api import Enum, Bool, Float, on_trait_change
+
+
 # ============= local library imports  ==========================
 
 
@@ -36,7 +36,6 @@ class ErrorBarOverlay(AbstractOverlay):
     _cache_valid = False
 
     def _get_cached_points(self):
-        # print 'laa', self.layout_needed, self._layout_needed, self._cache_valid
         pts = self._cached_points
         if pts is None or not self._cache_valid:
             comp = self.component
@@ -58,12 +57,12 @@ class ErrorBarOverlay(AbstractOverlay):
             else:
                 x = comp.index_mapper.map_screen(x)
                 err = comp.yerror.get_data()
-                # print 'fff', len(x), len(err), comp.color
+
                 scaled_err = err * self.nsigma
                 ylow, yhigh = y - scaled_err, y + scaled_err
                 ylow = comp.value_mapper.map_screen(ylow)
                 yhigh = comp.value_mapper.map_screen(yhigh)
-                # idx = arange(len(x))
+
                 start, end = column_stack((x, ylow)), column_stack((x, yhigh))
                 lstart, lend = column_stack((x - 5, ylow)), column_stack((x + 5, ylow))
                 ustart, uend = column_stack((x - 5, yhigh)), column_stack((x + 5, yhigh))
@@ -82,7 +81,6 @@ class ErrorBarOverlay(AbstractOverlay):
             color = component.color
             if isinstance(color, str):
                 color = color_table[color]
-                # print 'ebo color',color
 
             gc.set_line_width(self.line_width)
             gc.set_stroke_color(color)

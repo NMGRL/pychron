@@ -14,7 +14,6 @@
 # limitations under the License.
 # ===============================================================================
 
-
 import os
 
 from pyface.tasks.action.schema import SToolBar, SMenu
