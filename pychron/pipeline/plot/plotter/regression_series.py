@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from __future__ import absolute_import
 
 from pychron.core.helpers.color_generators import colorname_generator
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
@@ -26,7 +25,6 @@ class RegressionSeries(BaseArArFigure):
             make plots
         """
 
-        self._plots = plots
         graph = self.graph
 
         graph.clear_has_title()

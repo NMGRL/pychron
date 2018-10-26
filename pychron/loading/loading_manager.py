@@ -24,16 +24,15 @@ from traits.api import HasTraits, cached_property, List, Str, Instance, \
     Property, Int, Any, Bool, Button, Float, on_trait_change, Enum, \
     RGBColor
 from traitsui.api import View, Item, EnumEditor, UItem, ListStrEditor
-from xlwt import Workbook
 
 from pychron.canvas.canvas2D.loading_canvas import LoadingCanvas, group_position
 from pychron.canvas.canvas2D.scene.primitives.primitives import LoadIndicator
 from pychron.canvas.utils import load_holder_canvas
-from pychron.core.helpers.filetools import view_file, unique_path
+from pychron.core.helpers.filetools import view_file
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.pdf.pdf_graphics_context import PdfPlotGraphicsContext
-from pychron.core.progress import progress_iterator
 from pychron.dvc.dvc_irradiationable import DVCIrradiationable
+from pychron.dvc.meta_repo import MetaObjectException
 from pychron.envisage.view_util import open_view
 from pychron.loading.loading_pdf_writer import LoadingPDFWriter
 from pychron.paths import paths
@@ -89,13 +88,15 @@ class LoadPosition(HasTraits):
     irrad_position = Int
 
     irradiation_str = Property
+    level_str = Property
 
     color = RGBColor
 
+    def _get_level_str(self):
+        return '{}{}'.format(self.level, self.irrad_position)
+
     def _get_irradiation_str(self):
-        return '{} {}{}'.format(self.irradiation,
-                                self.level,
-                                self.irrad_position)
+        return '{} {}'.format(self.irradiation, self.level_str)
 
 
 class GroupedPosition(LoadPosition):
@@ -107,6 +108,9 @@ class GroupedPosition(LoadPosition):
     material = Property
     project = Property
     packet = Property
+
+    def _get_level_str(self):
+        return self.meta_position.level_str
 
     def _get_irradiation_str(self):
         return self.meta_position.irradiation_str
@@ -347,50 +351,50 @@ class LoadingManager(DVCIrradiationable):
             return True
 
     # actions
-    def generate_results(self):
-        self.debug('generate results')
-        dvc = self.dvc
-        db = dvc.db
-
-        positions = sorted([pp for p in self.positions
-                            for pp in p.positions])
-
-        wb = Workbook()
-        sh = wb.add_sheet('Results')
-
-        for i, attr in enumerate(('Analysis', 'Position', 'Age',
-                                  'Error', 'Weight', 'Note')):
-            wb.sheet(0, i, attr)
-
-        wb.nrows = 1
-
-        def func(x, prog, i, n):
-            dbmps = db.get_measured_positions(self.load_name, x)
-            dbpos = db.get_load_position(self.load_name, x)
-
-            weight, note = dbpos.weight, dbpos.note
-
-            for dbmp in dbmps:
-                rid = dbmp.analysis.record_id
-                # rid = 1
-                if prog:
-                    prog.change_message('Write results for {},{}'.format(rid, x))
-
-                # ai = dvc.make_analyses((rid,))
-                age, error = 0, 0
-
-                sh.write(wb.nrows, 0, rid)
-                sh.write(wb.nrows, 1, x)
-                sh.write(wb.nrows, 2, age)
-                sh.write(wb.nrows, 3, error)
-                sh.write(wb.nrows, 4, weight)
-                sh.write(wb.nrows, 5, note)
-                wb.nrows += 1
-
-        progress_iterator(positions, func, threshold=1)
-
-        path, _ = unique_path(paths.load_results_dir, self.load_name, extension='.xls')
-        wb.save(path)
+    # def generate_results(self):
+    #     self.debug('generate results')
+    #     dvc = self.dvc
+    #     db = dvc.db
+    #
+    #     positions = sorted([pp for p in self.positions
+    #                         for pp in p.positions])
+    #
+    #     wb = Workbook()
+    #     sh = wb.add_sheet('Results')
+    #
+    #     for i, attr in enumerate(('Analysis', 'Position', 'Age',
+    #                               'Error', 'Weight', 'Note')):
+    #         wb.sheet(0, i, attr)
+    #
+    #     wb.nrows = 1
+    #
+    #     def func(x, prog, i, n):
+    #         dbmps = db.get_measured_positions(self.load_name, x)
+    #         dbpos = db.get_load_position(self.load_name, x)
+    #
+    #         weight, note = dbpos.weight, dbpos.note
+    #
+    #         for dbmp in dbmps:
+    #             rid = dbmp.analysis.record_id
+    #             # rid = 1
+    #             if prog:
+    #                 prog.change_message('Write results for {},{}'.format(rid, x))
+    #
+    #             # ai = dvc.make_analyses((rid,))
+    #             age, error = 0, 0
+    #
+    #             sh.write(wb.nrows, 0, rid)
+    #             sh.write(wb.nrows, 1, x)
+    #             sh.write(wb.nrows, 2, age)
+    #             sh.write(wb.nrows, 3, error)
+    #             sh.write(wb.nrows, 4, weight)
+    #             sh.write(wb.nrows, 5, note)
+    #             wb.nrows += 1
+    #
+    #     progress_iterator(positions, func, threshold=1)
+    #
+    #     path, _ = unique_path(paths.load_results_dir, self.load_name, extension='.xls')
+    #     wb.save(path)
 
     def configure_pdf(self):
         options = self._pdf_writer.options
@@ -416,8 +420,7 @@ class LoadingManager(DVCIrradiationable):
             if not root or not os.path.isdir(root):
                 root = paths.loading_dir
 
-            positions = self.positions
-            ps = ', '.join({p.project for p in positions})
+            ps = ', '.join({p.project for p in self.grouped_positions})
 
             un = self.username
 
@@ -440,7 +443,7 @@ class LoadingManager(DVCIrradiationable):
                 setattr(self, attr, getattr(options, attr))
 
             # c = self.canvas.clone_traits()
-            self._pdf_writer.build(path, positions, self.canvas, meta)
+            self._pdf_writer.build(path, self.positions, self.grouped_positions, self.canvas, meta)
             if options.view_pdf:
                 view_file(path)
             on = self.load_name
@@ -474,22 +477,22 @@ class LoadingManager(DVCIrradiationable):
 
         return True
 
-    def set_edit(self):
-        if self.canvas:
-            self.canvas.event_state = 'edit'
-        self.interaction_mode = 'Edit'
-
-    def set_entry(self):
-
-        if self.canvas:
-            self.canvas.event_state = 'normal'
-        self.interaction_mode = 'Entry'
-
-    def set_info(self):
-
-        if self.canvas:
-            self.canvas.event_state = 'info'
-        self.interaction_mode = 'Info'
+    # def set_edit(self):
+    #     if self.canvas:
+    #         self.canvas.event_state = 'edit'
+    #     self.interaction_mode = 'Edit'
+    #
+    # def set_entry(self):
+    #
+    #     if self.canvas:
+    #         self.canvas.event_state = 'normal'
+    #     self.interaction_mode = 'Entry'
+    #
+    # def set_info(self):
+    #
+    #     if self.canvas:
+    #         self.canvas.event_state = 'info'
+    #     self.interaction_mode = 'Info'
 
     # private
     def _check_load_holders(self, ts):
@@ -498,6 +501,8 @@ class LoadingManager(DVCIrradiationable):
             try:
                 self.dvc.get_load_holder_holes(ti)
                 ns.append(ti)
+            except MetaObjectException as e:
+                self.warning(e)
             except BaseException:
                 self.warning_dialog('"{}" is an invalid load holder file. '
                                     'Holder unavailable until its fixed'.format(ti))
@@ -589,26 +594,25 @@ class LoadingManager(DVCIrradiationable):
     def _save_load(self):
         db = self.dvc.db
         nln = self.new_load_name
-        ntn = self.tray
+        if not self.username:
+            self.warning_dialog('Please select a User')
+            return
+
         if nln:
-            lln = self._get_last_load()
-            if nln == lln:
-                return 'duplicate name'
-            else:
-                self.info('adding load {} {} to database'.format(nln, self.tray))
+            self.info('adding load {} {} to database'.format(nln, self.tray))
 
-                dbtray = db.get_load_holder(ntn)
-                if dbtray is None:
-                    db.add_load_holder(ntn)
-                    db.flush()
-
-                db.add_load(nln, holder=ntn)
+            dbtray = db.get_load_holder(self.tray)
+            if dbtray is None:
+                db.add_load_holder(self.tray)
                 db.flush()
 
-                ls = self._get_load_names()
-                self.loads = ls
-                self._get_last_load()
-                self.new_load_name = ''
+            db.add_load(nln, holder=self.tray, username=self.username)
+            db.flush()
+
+            ls = self._get_load_names()
+            self.loads = ls
+            self._get_last_load()
+            self.new_load_name = ''
 
     def _save_positions(self, name):
         db = self.dvc.db

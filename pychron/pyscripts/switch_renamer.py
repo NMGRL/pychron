@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 import os
+import re
 import shutil
 
 from apptools.preferences.preference_binding import bind_preference
@@ -39,6 +40,9 @@ class ScriptItem(HasTraits):
 
 class ScriptItemAdapter(TabularAdapter):
     columns = [('Name', 'name'), ('Directory', 'directory')]
+
+
+PATTERN = '[\'\"]{}[\'\"]'
 
 
 class SwitchRenamer(Loggable):
@@ -86,14 +90,12 @@ class SwitchRenamer(Loggable):
             r_mkdir(dest)
 
             destpath = os.path.join(dest, s.name)
-            shutil.copyfile(s.path, destpath)
-            self.info('backup script to {}'.format(destpath))
-            with open(s.path, 'r') as rfile:
-                text = rfile.read()
 
-            with open(s.path, 'w') as wfile:
-                text = text.replace(self.description, self.new_description)
-                wfile.write(text)
+            self.info('backup script to {}'.format(destpath))
+            shutil.copyfile(s.path, destpath)
+
+            self._modify_file(s.path)
+
             self.info('updated script {}'.format(s.path))
 
         self._update_valve()
@@ -103,11 +105,15 @@ class SwitchRenamer(Loggable):
         src = self.valves_path
         dest = os.path.join(os.path.dirname(src), '~{}'.format(os.path.basename(src)))
         shutil.copyfile(src, dest)
-        with open(src, 'r') as rfile:
+        self._modify_file(src)
+
+    def _modify_file(self, path):
+        with open(path, 'r') as rfile:
             text = rfile.read()
 
-        with open(src, 'w') as wfile:
-            text = text.replace(self.description, self.new_description)
+        with open(path, 'w') as wfile:
+            pattern = PATTERN.format(self.description)
+            re.sub(pattern, '"{}"'.format(self.new_description), text)
             wfile.write(text)
 
     def _scan_button_fired(self):
@@ -130,10 +136,10 @@ class SwitchRenamer(Loggable):
         self.selected = []
 
     def _find_description(self, path):
-        description = self.description
+        pattern = re.compile(PATTERN.format(self.description))
         with open(path, 'r') as rfile:
             for line in rfile:
-                if description in line:
+                if pattern.search(line):
                     return True
 
     def _load_descriptions(self):

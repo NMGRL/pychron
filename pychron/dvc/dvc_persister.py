@@ -305,12 +305,14 @@ class DVCPersister(BasePersister):
                 db.add_repository('NoRepo', self.default_principal_investigator)
 
     def _save_analysis_db(self, timestamp):
-        rs = self.per_spec.run_spec
+
+        ps = self.per_spec
+        rs = ps.run_spec
         d = {k: getattr(rs, k) for k in ('uuid', 'analysis_type', 'aliquot',
                                          'increment', 'mass_spectrometer', 'weight', 'comment',
                                          'cleanup', 'duration', 'extract_value', 'extract_units')}
 
-        ed = self.per_spec.run_spec.extract_device
+        ed = rs.extract_device
         if ed in (None, '', NULL_STR, LINE_STR, 'Extract Device'):
             d['extract_device'] = 'No Extract Device'
         else:
@@ -319,23 +321,23 @@ class DVCPersister(BasePersister):
         d['timestamp'] = timestamp
 
         # save script names
-        d['measurementName'] = self.per_spec.measurement_name
-        d['extractionName'] = self.per_spec.extraction_name
+        d['measurementName'] = ps.measurement_name
+        d['extractionName'] = ps.extraction_name
 
         db = self.dvc.db
         an = db.add_analysis(**d)
 
         # save results
-        for iso in self.per_spec.isotope_group.isotopes.values():
+        for iso in ps.isotope_group.isotopes.values():
             db.add_analysis_result(an, iso)
 
         # save media
-        if self.per_spec.snapshots:
-            for p in self.per_spec.snapshots:
+        if ps.snapshots:
+            for p in ps.snapshots:
                 db.add_media(p, an)
 
-        if self.per_spec.videos:
-            for p in self.per_spec.videos:
+        if ps.videos:
+            for p in ps.videos:
                 db.add_media(p, an)
 
         if self._positions:
@@ -343,7 +345,7 @@ class DVCPersister(BasePersister):
             load_name = rs.load_name
             load_holder = rs.load_holder
 
-            db.add_load(load_name, load_holder)
+            db.add_load(load_name, load_holder, rs.username)
             db.flush()
             db.commit()
 
@@ -358,7 +360,7 @@ class DVCPersister(BasePersister):
         # all associations are handled by the ExperimentExecutor._retroactive_experiment_identifiers
         # *** _retroactive_experiment_identifiers is currently disabled ***
 
-        if self.per_spec.use_repository_association:
+        if ps.use_repository_association:
             db.add_repository_association(rs.repository_identifier, an)
 
         self.debug('get identifier "{}"'.format(rs.identifier))
@@ -366,7 +368,7 @@ class DVCPersister(BasePersister):
         self.debug('setting analysis irradiation position={}'.format(pos))
         an.irradiation_position = pos
 
-        t = self.per_spec.tag
+        t = ps.tag
 
         db.flush()
 

@@ -17,10 +17,11 @@
 # ============= enthought library imports =======================
 
 from __future__ import absolute_import
-from traits.api import HasTraits, Instance, Event, Str, Bool, List, Any, on_trait_change
-from traitsui.api import View, UItem, InstanceEditor, VGroup, Tabbed, Group, Handler, spring, HGroup, ListEditor, Spring
 
-from pychron.core.helpers.binpack import unpack, format_blob
+from traits.api import HasTraits, Instance, Event, Str, Bool, List, Any, on_trait_change
+from traitsui.api import View, UItem, VGroup, Group, Handler, spring, HGroup, ListEditor, Spring
+
+from pychron.core.helpers.binpack import unpack
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.graph.stacked_graph import StackedGraph
 from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter, IntermediateTabularAdapter
@@ -30,6 +31,7 @@ from pychron.processing.analyses.view.error_components_view import ErrorComponen
 from pychron.processing.analyses.view.interferences_view import InterferencesView
 from pychron.processing.analyses.view.main_view import MainView
 from pychron.processing.analyses.view.peak_center_view import PeakCenterView
+from pychron.processing.analyses.view.regression_view import RegressionView
 from pychron.processing.analyses.view.snapshot_view import SnapshotView
 from pychron.processing.analyses.view.spectrometer_view import SpectrometerView
 from pychron.processing.analyses.view.text_view import ExperimentView, MeasurementView
@@ -206,13 +208,18 @@ class AnalysisView(HasTraits):
     def _selected_tab_changed(self, new):
         if isinstance(new, HistoryView):
             new.initialize(self.model)
+        elif isinstance(new, RegressionView):
+            new.initialize(self.model)
 
     def _make_subviews(self, an):
-        view = HistoryView(an)
+        view = HistoryView()
         self.groups.append(view)
 
         view = MetaView(interference=InterferencesView(an),
                         spectrometer=SpectrometerView(an))
+        self.groups.append(view)
+
+        view = RegressionView()
         self.groups.append(view)
         if an.measured_response_stream:
             ev = ExtractionView()

@@ -619,7 +619,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     @cached_property
     def _get_integrated_age(self):
         ans = list(self.clean_analyses())
-        return self._calculate_integrated_age(ans, self.integrate_age_weighting)
+        return self._calculate_integrated_age(ans, self.integrated_age_weighting)
 
     @property
     def fixed_steps(self):

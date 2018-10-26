@@ -55,8 +55,11 @@ class IsotopeGroup(HasTraits):
     def values(self):
         return list(self.isotopes.values())
 
-    def sorted_values(self):
-        return [self.isotopes[k] for k in self.isotope_keys]
+    def sorted_values(self, reverse=False):
+        keys = self.isotope_keys
+        if reverse:
+            keys = reversed(keys)
+        return [self.isotopes[k] for k in keys]
 
     def items(self):
         return list(self.isotopes.items())

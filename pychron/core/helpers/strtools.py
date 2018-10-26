@@ -97,8 +97,8 @@ def ratio(xs, ys=None):
         for jiso in ys:
             if iso == jiso:
                 continue
-            if r(iso, jiso) not in ret:
-                ret.append(r(jiso, iso))
+            if r(jiso, iso) not in ret:
+                ret.append(r(iso, jiso))
 
     return ret
 

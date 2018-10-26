@@ -33,6 +33,14 @@ from pychron.paths import paths, r_mkdir
 from pychron.pychron_constants import INTERFERENCE_KEYS, RATIO_KEYS, DEFAULT_MONITOR_NAME, DATE_FORMAT, NULL_STR
 
 
+class MetaObjectException(BaseException):
+    def __init__(self, msg):
+        self.msg = msg
+
+    def __repr__(self):
+        return self.msg
+
+
 class MetaObject(object):
     def __init__(self, path, new=False):
         self.path = path
@@ -40,7 +48,8 @@ class MetaObject(object):
             with open(path, 'r') as rfile:
                 self._load_hook(path, rfile)
         elif not new:
-            print('failed loading {} {}'.format(path, os.path.isfile(path)))
+            msg = 'failed loading {} {}'.format(path, os.path.isfile(path))
+            raise MetaObjectException(msg)
 
     def _load_hook(self, path, rfile):
         pass
