@@ -363,10 +363,10 @@ class DVCPersister(BasePersister):
         if ps.use_repository_association:
             db.add_repository_association(rs.repository_identifier, an)
 
-        # self.debug('get identifier "{}"'.format(rs.identifier))
-        # pos = db.get_identifier(rs.identifier)
-        # self.debug('setting analysis irradiation position={}'.format(pos))
-        # an.irradiation_position = pos
+        self.debug('get identifier "{}"'.format(rs.identifier))
+        pos = db.get_identifier(rs.identifier)
+        self.debug('setting analysis irradiation position={}'.format(pos))
+        an.irradiation_position = pos
 
         t = ps.tag
 
