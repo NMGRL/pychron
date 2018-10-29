@@ -32,7 +32,8 @@ class IdeogramAuxPlot(AuxPlot):
                   'Radiogenic 40Ar', 'K/Ca', 'K/Cl', 'Mol K39', 'Signal K39', 'Ideogram'],
                  transient=True)
     _plot_names = List(['', 'analysis_number_nonsorted', 'analysis_number', 'radiogenic_yield',
-                        'kca', 'kcl', 'moles_k39', 'signal_k39', 'relative_probability'])
+                        'kca', 'kcl', 'moles_k39', 'signal_k39', 'relative_probability'],
+                       transient=True)
 
 
 class IdeogramOptions(AgeOptions):
