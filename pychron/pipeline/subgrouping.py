@@ -95,7 +95,7 @@ def make_interpreted_age_group(ans, gid):
     return ag
 
 
-def make_interpreted_age_groups(ans):
+def make_interpreted_age_groups(ans, group_id=0):
     groups = []
     analyses = []
     for i, (subgroup, items) in enumerate(groupby(ans, key=subgrouping_key)):
@@ -109,9 +109,11 @@ def make_interpreted_age_groups(ans):
                                      group=sg)
             ag.set_preferred_kinds(sg)
             kind = ag.get_preferred_kind('age')
-            ag.label_name = '{:02n}{}'.format(ag.aliquot, kind[:2])
-            ag.record_id = '{:02n}{}'.format(ag.aliquot, kind[:2])
+            n = '{:02n}-{:02n}:{}'.format(group_id, ag.aliquot, kind[:2])
+            ag.label_name = n
+            ag.record_id = n
             ag.subgroup_id = i
+            ag.group_id = group_id
             groups.append(ag)
         else:
             analyses.extend(items)
