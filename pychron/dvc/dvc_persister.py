@@ -20,6 +20,7 @@ import shutil
 import struct
 from datetime import datetime
 
+from apptools.preferences.preference_binding import bind_preference
 from git.exc import GitCommandError
 # ============= enthought library imports =======================
 from traits.api import Instance, Bool, Str
@@ -51,12 +52,17 @@ class DVCPersister(BasePersister):
     active_repository = Instance(GitRepoManager)
     dvc = Instance(DVC_PROTOCOL)
     use_isotope_classifier = Bool(False)
+    use_uuid_path_name = Bool(False)
     # isotope_classifier = Instance(IsotopeClassifier, ())
     stage_files = Bool(True)
     default_principal_investigator = Str
     _positions = None
 
     save_log_enabled = Bool(False)
+
+    def __init__(self, *args, **kw):
+        super(DVCPersister, self).__init__(*args, **kw)
+        bind_preference(self, 'use_uuid_path_name', 'pychron.experiment.use_uuid_path_name')
 
     def per_spec_save(self, pr, repository_identifier=None, commit=False, commit_tag=None, push=True):
         self.per_spec = pr
@@ -578,7 +584,13 @@ class DVCPersister(BasePersister):
         runid = self.per_spec.run_spec.runid
         uuid = self.per_spec.run_spec.uuid
         repository_identifier = self.per_spec.run_spec.repository_identifier
-        return analysis_path((uuid, runid), repository_identifier, modifier, extension, mode='w')
+
+        if self.use_uuid_path_name:
+            name = uuid, runid
+        else:
+            name = runid, runid
+
+        return analysis_path(name, repository_identifier, modifier, extension, mode='w')
 
     def _make_analysis_dict(self, keys=None):
         if keys is None:
