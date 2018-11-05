@@ -17,15 +17,11 @@
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Str, Bool
-from traitsui.api import View, Item, VGroup, UItem, TextEditor, EnumEditor, TableEditor, HGroup, spring, Spring, Label
-from traitsui.extras.checkbox_column import CheckboxColumn
-from traitsui.table_column import ObjectColumn
+from traitsui.api import View, Item, VGroup
 
 from pychron.core.helpers.strtools import to_bool, to_csv_str
-from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.database.tasks.connection_preferences import ConnectionPreferences, ConnectionPreferencesPane, \
     ConnectionFavoriteItem
-from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
@@ -82,47 +78,49 @@ class DVCConnectionPreferencesPane(ConnectionPreferencesPane):
     category = 'DVC'
 
     def traits_view(self):
-        cols = [CheckboxColumn(name='enabled'),
-                CheckboxColumn(name='default'),
-                ObjectColumn(name='kind'),
-                ObjectColumn(name='name'),
-                ObjectColumn(name='username'),
-                ObjectColumn(name='password',
-                             format_func=lambda x: '*' * len(x),
-                             editor=TextEditor(password=True)),
-                ObjectColumn(name='host'),
-                ObjectColumn(name='dbname',
-                             label='Database',
-                             editor=EnumEditor(name='names')),
-                ObjectColumn(name='path', style='readonly')]
-
+        # cols = [CheckboxColumn(name='enabled'),
+        #         CheckboxColumn(name='default'),
+        #         ObjectColumn(name='kind'),
+        #         ObjectColumn(name='name'),
+        #         ObjectColumn(name='username'),
+        #         ObjectColumn(name='password',
+        #                      format_func=lambda x: '*' * len(x),
+        #                      editor=TextEditor(password=True)),
+        #         ObjectColumn(name='host'),
+        #         ObjectColumn(name='dbname',
+        #                      label='Database',
+        #                      editor=EnumEditor(name='names')),
+        #         ObjectColumn(name='path', style='readonly')]
+        #
+        #
+        #
+        # fav_grp = VGroup(UItem('_fav_items',
+        #                        width=100,
+        #                        editor=TableEditor(columns=cols,
+        #                                           selected='_selected',
+        #                                           sortable=False,
+        #                                           edit_view=ev)),
+        #                  HGroup(
+        #                      icon_button_editor('add_favorite', 'database_add',
+        #                                         tooltip='Add saved connection'),
+        #                      icon_button_editor('add_favorite_path', 'dbs_sqlite',
+        #                                         tooltip='Add sqlite database'),
+        #                      icon_button_editor('delete_favorite', 'delete',
+        #                                         tooltip='Delete saved connection'),
+        #                      icon_button_editor('test_connection_button', 'database_connect',
+        #                                         tooltip='Test connection'),
+        #                      Spring(width=10, springy=False),
+        #                      Label('Status:'),
+        #                      CustomLabel('_connected_label',
+        #                                  label='Status',
+        #                                  weight='bold',
+        #                                  color_name='_connected_color'),
+        #                      spring,
+        #                      show_labels=False))
         ev = View(Item('organization'),
                   Item('meta_repo_name'),
                   Item('meta_repo_dir'))
-
-        fav_grp = VGroup(UItem('_fav_items',
-                               width=100,
-                               editor=TableEditor(columns=cols,
-                                                  selected='_selected',
-                                                  sortable=False,
-                                                  edit_view=ev)),
-                         HGroup(
-                             icon_button_editor('add_favorite', 'database_add',
-                                                tooltip='Add saved connection'),
-                             icon_button_editor('add_favorite_path', 'dbs_sqlite',
-                                                tooltip='Add sqlite database'),
-                             icon_button_editor('delete_favorite', 'delete',
-                                                tooltip='Delete saved connection'),
-                             icon_button_editor('test_connection_button', 'database_connect',
-                                                tooltip='Test connection'),
-                             Spring(width=10, springy=False),
-                             Label('Status:'),
-                             CustomLabel('_connected_label',
-                                         label='Status',
-                                         weight='bold',
-                                         color_name='_connected_color'),
-                             spring,
-                             show_labels=False))
+        fav_grp = self.get_fav_group(edit_view=ev)
 
         return View(fav_grp)
 
