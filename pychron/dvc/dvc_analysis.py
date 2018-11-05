@@ -18,6 +18,7 @@
 # ============= standard library imports ========================
 import datetime
 import os
+
 import time
 from operator import attrgetter, itemgetter
 
@@ -69,10 +70,11 @@ class DVCAnalysis(Analysis):
     chronology_obj = None
     use_repository_suffix = False
 
-    def __init__(self, record_id, repository_identifier, *args, **kw):
+    def __init__(self, uuid, record_id, repository_identifier, *args, **kw):
+    # def __init__(self, uuid, repository_identifier, *args, **kw):
         super(DVCAnalysis, self).__init__(*args, **kw)
         self.record_id = record_id
-        path = analysis_path(record_id, repository_identifier)
+        path = analysis_path((uuid, record_id), repository_identifier)
         self.repository_identifier = repository_identifier
         self.rundate = datetime.datetime.now()
 
@@ -520,7 +522,7 @@ class DVCAnalysis(Analysis):
         if repository_identifier is None:
             repository_identifier = self.repository_identifier
 
-        return analysis_path(self.record_id, repository_identifier, **kw)
+        return analysis_path2((self.uuid, self.record_id), repository_identifier, **kw)
 
     @property
     def intercepts_path(self):

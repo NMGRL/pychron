@@ -26,11 +26,11 @@ from datetime import datetime
 import yaml
 
 
-def subdirize(root, name, n=1, l=2, mode='r'):
+def subdirize(root, name, n=1, sublen=2, mode='r'):
     for i in range(n):
 
-        n, name = name[:l], name[l:]
-        path = os.path.join(root, n)
+        d, name = name[:sublen], name[sublen:]
+        path = os.path.join(root, d)
         if not os.path.isdir(path):
             if mode == 'r':
                 return

@@ -21,6 +21,7 @@ from __future__ import print_function
 
 import glob
 import os
+import re
 from pprint import pformat
 
 from pychron import json
@@ -83,23 +84,42 @@ def get_spec_sha(p):
     return SPEC_SHAS[p]
 
 
-def analysis_path(runid, repository, modifier=None, extension='.json', mode='r', root=None):
+def analysis_path2(analysis, *args, **kw):
+    if isinstance(analysis, tuple):
+        uuid, record_id = analysis
+    else:
+        uuid, record_id = analysis.uuid, analysis.record_id
 
+    try:
+        ret = analysis_path(uuid, *args, **kw)
+    except AnalysisNotAnvailableError:
+        ret = analysis_path(record_id, *args, **kw)
+
+    return ret
+
+
+UUID_RE = re.compile(r'[0-9a-f]{8}\-[0-9a-f]{4}\-4[0-9a-f]{3}\-[89ab][0-9a-f]{3}\-[0-9a-f]{12}', re.I)
+
+
+def analysis_path(runid, repository, modifier=None, extension='.json', mode='r', root=None):
     if root is None:
         root = paths.repository_dataset_dir
 
     root = os.path.join(root, repository)
 
-    l = 3
-    if runid.count('-') > 1:
-        args = runid.split('-')[:-1]
-        if len(args[0]) == 1:
-            l = 4
-        else:
-            l = 5
+    if UUID_RE.match(runid):
+        sublen = 5
+    else:
+        sublen = 3
+        if runid.count('-') > 1:
+            args = runid.split('-')[:-1]
+            if len(args[0]) == 1:
+                sublen = 4
+            else:
+                sublen = 5
 
     try:
-        root, tail = subdirize(root, runid, l=l, mode=mode)
+        root, tail = subdirize(root, runid, sublen=sublen, mode=mode)
     except TypeError:
         raise AnalysisNotAnvailableError(root, runid)
 
