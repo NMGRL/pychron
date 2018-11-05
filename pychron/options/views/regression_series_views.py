@@ -13,7 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from __future__ import absolute_import
+from traitsui.api import View, Item
+
 from pychron.options.options import MainOptions, SubOptions, AppearanceSubOptions, TitleSubOptions, GroupSubOptions
 
 
@@ -22,7 +23,9 @@ class RegressionSeriesMainOptions(MainOptions):
 
 
 class RegressionSeriesSubOptions(SubOptions):
-    pass
+    def traits_view(self):
+        v = View(Item('show_statistics'))
+        return v
 
 
 class RegressionSeriesAppearance(AppearanceSubOptions):
@@ -37,11 +40,9 @@ class DisplaySubOptions(TitleSubOptions):
     pass
 
 
-
-
 VIEWS = {}
 VIEWS['main'] = RegressionSeriesMainOptions
-# VIEWS['regression_series'] = RegressionSeriesSubOptions
+VIEWS['regression series'] = RegressionSeriesSubOptions
 VIEWS['appearance'] = RegressionSeriesAppearance
 # VIEWS['calculations'] = CalculationSubOptions
 VIEWS['display'] = DisplaySubOptions

@@ -16,11 +16,13 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traits.api import HasTraits, Str, Int, Any, Property, List
 from traitsui.api import View, UItem, VGroup, TabularEditor, Group, HGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
+
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.helpers.isotope_utils import sort_detectors
 
@@ -47,9 +49,9 @@ class DValue(HasTraits):
 
 
 class SpectrometerView(HasTraits):
-    # model = Any
     name = 'Spectrometer'
     source_parameters = List
+    filament_parameters = List
     deflections = List
     gains = List
 
@@ -60,6 +62,19 @@ class SpectrometerView(HasTraits):
         sp = an.source_parameters
         sd = [DValue(k, v) for k, v in sp.items()]
         self.source_parameters = sd
+
+        # filament
+        sp = an.filament_parameters
+        sd = [DValue(k.capitalize(), v) for k, v in sp.items()]
+
+        t = sp.get('trap')
+        e = sp.get('emission')
+        et = 0
+        if t and e:
+            et = e / t
+        sd.append(DValue('E/T', et))
+
+        self.filament_parameters = sd
 
         # deflections
         defls = an.deflections
@@ -79,6 +94,12 @@ class SpectrometerView(HasTraits):
                    show_border=True,
                    label='Source')
 
+        g4 = Group(UItem('filament_parameters',
+                         editor=TabularEditor(adapter=DictTabularAdapter(),
+                                              editable=False)),
+                   show_border=True,
+                   label='Filament')
+
         g2 = Group(UItem('deflections',
                          editor=TabularEditor(adapter=DictTabularAdapter(),
                                               editable=False)),
@@ -90,7 +111,7 @@ class SpectrometerView(HasTraits):
                                               editable=False)),
                    show_border=True,
                    label='Gains')
-        v = View(HGroup(g1, g2, g3))
+        v = View(HGroup(VGroup(g1, g4), VGroup(g2, g3)))
         return v
 
 # ============= EOF =============================================

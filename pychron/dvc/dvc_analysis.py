@@ -19,7 +19,7 @@
 import datetime
 import os
 import time
-from operator import attrgetter, itemgetter
+from operator import itemgetter
 
 from uncertainties import ufloat, std_dev, nominal_value
 
@@ -69,10 +69,10 @@ class DVCAnalysis(Analysis):
     chronology_obj = None
     use_repository_suffix = False
 
-    def __init__(self, record_id, repository_identifier, *args, **kw):
+    def __init__(self, uuid, record_id, repository_identifier, *args, **kw):
         super(DVCAnalysis, self).__init__(*args, **kw)
         self.record_id = record_id
-        path = analysis_path(record_id, repository_identifier)
+        path = analysis_path((uuid, record_id), repository_identifier)
         self.repository_identifier = repository_identifier
         self.rundate = datetime.datetime.now()
 
@@ -85,13 +85,15 @@ class DVCAnalysis(Analysis):
             jd = dvc_load(ep)
 
             self.load_extraction(jd)
-            self.load_spectrometer_parameters(jd.get('spec_sha'))
-            self.load_environmentals(jd.get('environmental'))
+
         else:
             self.warning('Invalid analysis. RunID="{}". No extraction file {}'.format(record_id, ep))
 
         if os.path.isfile(path):
             jd = dvc_load(path)
+            self.load_spectrometer_parameters(jd.get('spec_sha'))
+            self.load_environmentals(jd.get('environmental'))
+
             self.load_meta(jd)
         else:
             self.warning('Invalid analysis. RunID="{}". No meta file {}'.format(record_id, path))
@@ -105,6 +107,10 @@ class DVCAnalysis(Analysis):
     def load_meta(self, jd):
         self.measurement_script_name = jd.get('measurement', NULL_STR)
         self.extraction_script_name = jd.get('extraction', NULL_STR)
+
+        src = jd.get('source')
+        if src:
+            self.filament_parameters = src
 
         for attr in META_ATTRS:
             v = jd.get(attr)
@@ -520,7 +526,7 @@ class DVCAnalysis(Analysis):
         if repository_identifier is None:
             repository_identifier = self.repository_identifier
 
-        return analysis_path(self.record_id, repository_identifier, **kw)
+        return analysis_path((self.uuid, self.record_id), repository_identifier, **kw)
 
     @property
     def intercepts_path(self):

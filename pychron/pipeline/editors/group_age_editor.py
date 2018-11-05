@@ -34,7 +34,7 @@ from pychron.processing.analyses.preferred import get_preferred_grp
 
 class GroupAdapter(BaseAdapter):
     columns = [('Group', 'group_id'),
-               ('Name', 'name'),
+               # ('Name', 'name'),
                ('Age Kind', 'age_kind'),
                ('Error', 'age_error_kind')
                ]
@@ -182,11 +182,12 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
         gs = []
         unks = []
         for gid, ans in groupby_group_id(self.items):
+            ans = list(ans)
             if self.skip_meaning:
                 if 'Human Table' in self.skip_meaning:
                     ans = (ai for ai in ans if ai.tag.lower() != 'skip')
 
-            groups, analyses = make_interpreted_age_groups(ans)
+            groups, analyses = make_interpreted_age_groups(ans, group_id=gid)
             sgs.extend(groups)
             unks.extend(groups)
             unks.extend(analyses)

@@ -604,7 +604,10 @@ class PipelineTask(BaseBrowserTask):
     @on_trait_change('engine:run_needed')
     def _handle_run_needed(self, new):
         self.debug('run needed for {}'.format(new))
-        self.run()
+        if self.engine.resume_enabled:
+            self.resume()
+        else:
+            self.run()
 
     @on_trait_change('engine:recall_analyses_needed')
     def _handle_recall(self, new):

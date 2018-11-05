@@ -65,6 +65,7 @@ class RegressionSeries(BaseArArFigure):
         a = self.analyses[0]
         a.load_raw_data()
         cg = colorname_generator()
+        graph = self.graph
         for i, po in enumerate(plots):
             name = po.name
             kind = 'signal'
@@ -80,5 +81,8 @@ class RegressionSeries(BaseArArFigure):
                                   filter_outliers_dict=iso.filter_outliers_dict,
                                   type='scatter', plotid=i, color=next(cg),
                                   add_point_inspector=False)
+
+            if self.options.show_statistics:
+                graph.add_statistics(plotid=i)
 
 # ============= EOF =============================================

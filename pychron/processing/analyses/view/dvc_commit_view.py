@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
 
 import os
 
@@ -284,6 +282,7 @@ class DVCCommitView(HasTraits):
     record_id = Str
     repository_identifier = Str
     repo = None
+    uuid = Str
 
     def initialize(self, an):
         pass
@@ -362,7 +361,7 @@ class DVCCommitView(HasTraits):
 
             diffs = []
             for a in ('blanks', 'icfactors', 'intercepts'):
-                p = analysis_path(self.record_id, self.repository_identifier, modifier=a)
+                p = analysis_path((self.uuid, self.record_id), self.repository_identifier, modifier=a)
                 dd = get_diff(self.repo, lhs.hexsha, rhs.hexsha, p)
                 if dd:
                     diffs.append((a, dd))

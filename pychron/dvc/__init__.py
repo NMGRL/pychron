@@ -16,18 +16,17 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from __future__ import absolute_import
-from __future__ import print_function
 
 import glob
 import os
+import re
 from pprint import pformat
 
 from pychron import json
 from pychron.core.helpers.filetools import subdirize, add_extension
 from pychron.paths import paths
 
-__version__ = '1.0'
+__version__ = '2.0'
 
 
 class AnalysisNotAnvailableError(BaseException):
@@ -83,23 +82,47 @@ def get_spec_sha(p):
     return SPEC_SHAS[p]
 
 
-def analysis_path(runid, repository, modifier=None, extension='.json', mode='r', root=None):
+def analysis_path(analysis, *args, **kw):
+    if isinstance(analysis, tuple):
+        uuid, record_id = analysis
+    elif isinstance(analysis, str):
+        uuid, record_id = analysis, analysis
+    else:
+        uuid, record_id = analysis.uuid, analysis.record_id
 
+    try:
+        ret = _analysis_path(record_id, *args, **kw)
+    except AnalysisNotAnvailableError:
+        ret = _analysis_path(uuid, *args, **kw)
+
+    return ret
+
+
+UUID_RE = re.compile(r'^[0-9a-f]{8}\-[0-9a-f]{4}\-4[0-9a-f]{3}\-[89ab][0-9a-f]{3}\-[0-9a-f]{12}$', re.IGNORECASE)
+WISCARID_RE = re.compile(r'^[A-Z]{3}[0-9]{4}$', re.IGNORECASE)
+
+
+def _analysis_path(runid, repository, modifier=None, extension='.json', mode='r', root=None):
     if root is None:
         root = paths.repository_dataset_dir
 
     root = os.path.join(root, repository)
 
-    l = 3
-    if runid.count('-') > 1:
-        args = runid.split('-')[:-1]
-        if len(args[0]) == 1:
-            l = 4
-        else:
-            l = 5
+    if UUID_RE.match(runid):
+        sublen = 5
+    elif WISCARID_RE.match(runid):
+        sublen = 3
+    else:
+        sublen = 3
+        if runid.count('-') > 1:
+            args = runid.split('-')[:-1]
+            if len(args[0]) == 1:
+                sublen = 4
+            else:
+                sublen = 5
 
     try:
-        root, tail = subdirize(root, runid, l=l, mode=mode)
+        root, tail = subdirize(root, runid, sublen=sublen, mode=mode)
     except TypeError:
         raise AnalysisNotAnvailableError(root, runid)
 
