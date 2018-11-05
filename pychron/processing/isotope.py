@@ -150,6 +150,7 @@ class IsotopicMeasurement(BaseMeasurement):
     _value = 0
     _error = 0
     _regressor = None
+    _truncate = None
     _fit = None
 
     _oerror = None
@@ -283,6 +284,7 @@ class IsotopicMeasurement(BaseMeasurement):
             if isinstance(fit, (int, str, six.text_type)):
                 self.attr_set(fit=fit)
             else:
+
                 fitname = fit.fit
                 if fitname == 'Auto':
                     fitname = fit.auto_fit(self.n)
@@ -302,6 +304,7 @@ class IsotopicMeasurement(BaseMeasurement):
                 self.set_filter_outliers_dict(filter_outliers=bool(fit.filter_outliers),
                                               iterations=int(fit.filter_outlier_iterations or 0),
                                               std_devs=int(fit.filter_outlier_std_devs or 0))
+                self._truncate = fit.truncate
                 # if self._regressor:
                 #     self._regressor.error_calc_type = self.error_type
 
@@ -379,7 +382,8 @@ class IsotopicMeasurement(BaseMeasurement):
         xs = self.offset_xs
         reg = MeanRegressor(xs=xs, ys=self.ys,
                             filter_outliers_dict=self.filter_outliers_dict,
-                            error_calc_type=self.error_type or 'SEM')
+                            error_calc_type=self.error_type or 'SEM',
+                            truncate=self._truncate)
         return reg
 
     @property
@@ -416,6 +420,7 @@ class IsotopicMeasurement(BaseMeasurement):
         reg.filter_outliers_dict = self.filter_outliers_dict
 
         reg.trait_set(xs=self.offset_xs, ys=self.ys)
+        reg.set_truncate(self._truncate)
         reg.calculate()
 
         self._regressor = reg

@@ -20,16 +20,18 @@
 # set_toolkit('qt4')
 # ============= standard library imports ========================
 from __future__ import absolute_import
+
 from unittest import TestCase
 
 from numpy import linspace, polyval
 
 # ============= local library imports  ==========================
-from pychron.core.regression.mean_regressor import MeanRegressor  #, WeightedMeanRegressor
+from pychron.core.regression.mean_regressor import MeanRegressor  # , WeightedMeanRegressor
 from pychron.core.regression.new_york_regressor import ReedYorkRegressor, NewYorkRegressor
 from pychron.core.regression.ols_regressor import OLSRegressor
 # from pychron.core.regression.york_regressor import YorkRegressor
-from pychron.core.regression.tests.standard_data import mean_data, filter_data, ols_data, pearson
+from pychron.core.regression.tests.standard_data import mean_data, filter_data, ols_data, pearson, pre_truncated_data
+
 
 # class RegressionTestCase(TestCase):
 #     def setUp(self):
@@ -45,6 +47,29 @@ class RegressionTestCase(object):
 
     def testN(self):
         self.assertEqual(self.reg.n, self.solution['n'])
+
+
+class TruncateRegressionTest(TestCase):
+    def setUp(self):
+        self.reg = MeanRegressor()
+
+    def test_pre_truncate(self):
+        xs, ys, sol = pre_truncated_data()
+        self.reg.trait_set(xs=xs, ys=ys)
+        self.solution = sol
+        self.reg.trait_set(xs=xs, ys=ys)
+        self.reg.set_truncate('x<5')
+
+        self.assertEqual(self.reg.mean, self.solution['pre_mean'])
+
+    def test_post_truncate(self):
+        xs, ys, sol = pre_truncated_data()
+        self.reg.trait_set(xs=xs, ys=ys)
+        self.solution = sol
+        self.reg.trait_set(xs=xs, ys=ys)
+        self.reg.set_truncate('x>=5')
+
+        self.assertEqual(self.reg.mean, self.solution['post_mean'])
 
 
 class MeanRegressionTest(RegressionTestCase, TestCase):

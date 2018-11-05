@@ -13,9 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from __future__ import absolute_import
-
-from traits.api import List
+from traits.api import List, Bool
 
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.options import AgeOptions
@@ -32,9 +30,10 @@ class RegressionSeriesAuxPlot(AuxPlot):
 
 
 class RegressionSeriesOptions(AgeOptions):
-    subview_names = List(['Main', 'Appearance', 'Display', 'Groups'],
+    subview_names = List(['Main', 'Regression Series', 'Appearance', 'Display', 'Groups'],
                          transient=True)
     aux_plot_klass = RegressionSeriesAuxPlot
+    show_statistics = Bool(False)
 
     def set_names(self, names, clear_missing=True):
         for ai in self.aux_plots:

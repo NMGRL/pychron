@@ -147,6 +147,7 @@ class BaseRegressor(HasTraits):
                 exclude = eval(self.truncate, {k: self.xs})
                 excludes = list(exclude.nonzero()[0])
                 self.truncate_excluded = excludes
+                self.dirty = True
 
     def calculate(self, *args, **kw):
         pass
@@ -224,38 +225,11 @@ class BaseRegressor(HasTraits):
         if error_calc is None:
             error_calc = self.error_calc_type
 
-        # func = self.calculate_ci
-        # if error_calc == 'SEM':
-        #     func = self.calculate_sem_error_envelope
-        # elif error_calc == 'SD':
-        #     func = self.calculate_sd_error_envelope
-        # elif error_calc == 'MC':
-        #     func = self.calculate_mc_error_envelope
-
         es = self.predict_error(rx, error_calc=error_calc)
         if es is None:
             es = 0
 
         return rmodel-es, rmodel+es
-        # return func(rx, rmodel)
-
-    # def calculate_sd_error_envelope(self, rx, rmodel):
-    #     es = self.predict_error(rx, error_calc='MC')
-    #     return rmodel-es, rmodel+es
-    #
-    # def calculate_sd_error_envelope(self, rx, rmodel):
-    #     es = self.predict_error(rx, error_calc='SD')
-    #     return rmodel - es, rmodel + es
-    #
-    # def calculate_sem_error_envelope(self, rx, rmodel):
-    #     es = self.predict_error(rx, error_calc='SEM')
-    #     return rmodel - es, rmodel + es
-
-    # def calculate_ci(self, rx, rmodel):
-    #     cors = self.calculate_ci_error(rx)
-    #     if rmodel is not None and cors is not None:
-    #         if rmodel.shape[0] and cors.shape[0]:
-    #             return rmodel - cors, rmodel + cors
 
     def calculate_mc_error(self, rx):
         if isinstance(rx, (float, int)):
@@ -354,8 +328,6 @@ class BaseRegressor(HasTraits):
             d = n ** -1 + (rx - xm) ** 2 / ssx
             cors = ti * syx * d ** 0.5
 
-            # print rx, cors[0]
-
             return cors / 2.
 
     def _delete_filtered_hook(self, outliers):
@@ -392,7 +364,7 @@ class BaseRegressor(HasTraits):
         return delete(v, list(exc), 0)
 
     def _clean_array(self, v):
-        exc = set(self.user_excluded) ^ set(self.truncate_excluded) ^ set(self.outlier_excluded)
+        exc = self.get_excluded()
         return delete(v, list(exc), 0)
 
     def _check_integrity(self, x, y, verbose=False):
