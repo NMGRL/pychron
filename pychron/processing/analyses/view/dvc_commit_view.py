@@ -27,7 +27,7 @@ from traitsui.tabular_adapter import TabularAdapter
 from pychron import json
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.ui.tabular_editor import myTabularEditor
-from pychron.dvc import analysis_path2
+from pychron.dvc import analysis_path
 from pychron.dvc.tasks.panes import CommitAdapter
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.view_util import open_view
@@ -361,7 +361,7 @@ class DVCCommitView(HasTraits):
 
             diffs = []
             for a in ('blanks', 'icfactors', 'intercepts'):
-                p = analysis_path2((self.uuid, self.record_id), self.repository_identifier, modifier=a)
+                p = analysis_path((self.uuid, self.record_id), self.repository_identifier, modifier=a)
                 dd = get_diff(self.repo, lhs.hexsha, rhs.hexsha, p)
                 if dd:
                     diffs.append((a, dd))

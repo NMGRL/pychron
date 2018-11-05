@@ -90,7 +90,7 @@ def get_review_status(record):
         for m, func in (('blanks', is_blank_reviewed),
                         ('intercepts', is_intercepts_reviewed),
                         ('icfactors', is_icfactors_reviewed)):
-            p = analysis_path2(record, record.repository_identifier, modifier=m)
+            p = analysis_path(record, record.repository_identifier, modifier=m)
             if os.path.isfile(p):
                 with open(p, 'r') as rfile:
                     obj = json.load(rfile)

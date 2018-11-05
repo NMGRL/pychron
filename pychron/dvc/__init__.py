@@ -16,8 +16,6 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from __future__ import absolute_import
-from __future__ import print_function
 
 import glob
 import os
@@ -28,7 +26,7 @@ from pychron import json
 from pychron.core.helpers.filetools import subdirize, add_extension
 from pychron.paths import paths
 
-__version__ = '1.0'
+__version__ = '2.0'
 
 
 class AnalysisNotAnvailableError(BaseException):
@@ -84,24 +82,27 @@ def get_spec_sha(p):
     return SPEC_SHAS[p]
 
 
-def analysis_path2(analysis, *args, **kw):
+def analysis_path(analysis, *args, **kw):
     if isinstance(analysis, tuple):
         uuid, record_id = analysis
+    elif isinstance(analysis, str):
+        uuid, record_id = analysis, analysis
     else:
         uuid, record_id = analysis.uuid, analysis.record_id
 
     try:
-        ret = analysis_path(uuid, *args, **kw)
+        ret = _analysis_path(record_id, *args, **kw)
     except AnalysisNotAnvailableError:
-        ret = analysis_path(record_id, *args, **kw)
+        ret = _analysis_path(uuid, *args, **kw)
 
     return ret
 
 
-UUID_RE = re.compile(r'[0-9a-f]{8}\-[0-9a-f]{4}\-4[0-9a-f]{3}\-[89ab][0-9a-f]{3}\-[0-9a-f]{12}', re.I)
+UUID_RE = re.compile(r'^[0-9a-f]{8}\-[0-9a-f]{4}\-4[0-9a-f]{3}\-[89ab][0-9a-f]{3}\-[0-9a-f]{12}$', re.IGNORECASE)
+WISCARID_RE = re.compile(r'^[A-Z]{3}[0-9]{4}$', re.IGNORECASE)
 
 
-def analysis_path(runid, repository, modifier=None, extension='.json', mode='r', root=None):
+def _analysis_path(runid, repository, modifier=None, extension='.json', mode='r', root=None):
     if root is None:
         root = paths.repository_dataset_dir
 
@@ -109,6 +110,8 @@ def analysis_path(runid, repository, modifier=None, extension='.json', mode='r',
 
     if UUID_RE.match(runid):
         sublen = 5
+    elif WISCARID_RE.match(runid):
+        sublen = 3
     else:
         sublen = 3
         if runid.count('-') > 1:

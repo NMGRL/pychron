@@ -578,7 +578,7 @@ class DVCPersister(BasePersister):
         runid = self.per_spec.run_spec.runid
         uuid = self.per_spec.run_spec.uuid
         repository_identifier = self.per_spec.run_spec.repository_identifier
-        return analysis_path2((uuid, runid), repository_identifier, modifier, extension, mode='w')
+        return analysis_path((uuid, runid), repository_identifier, modifier, extension, mode='w')
 
     def _make_analysis_dict(self, keys=None):
         if keys is None:

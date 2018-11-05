@@ -420,7 +420,8 @@ class IsotopicMeasurement(BaseMeasurement):
         reg.filter_outliers_dict = self.filter_outliers_dict
 
         reg.trait_set(xs=self.offset_xs, ys=self.ys)
-        reg.set_truncate(self._truncate)
+        if self._truncate:
+            reg.set_truncate(self._truncate)
         reg.calculate()
 
         self._regressor = reg

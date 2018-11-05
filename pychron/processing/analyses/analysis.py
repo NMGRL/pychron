@@ -332,6 +332,7 @@ class Analysis(ArArAge, IdeogramPlotable):
     additional_peak_center_data = None
     collection_version = ''
     source_parameters = Dict
+    filament_parameters = Dict
     deflections = Dict
     gains = Dict
     repository_identifier = ''
