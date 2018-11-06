@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Str, Int, \
     Bool, Password, Color, Property, Float, Enum
@@ -46,6 +47,7 @@ class ExperimentPreferences(BasePreferencesHelper):
     experiment_type = Enum('Ar/Ar', 'Generic', 'He', 'Kr', 'Ne', 'Xe')
     instrument_name = Str
 
+    use_uuid_path_name = Bool
     use_notifications = Bool
     notifications_port = Int
     use_autoplot = Bool
@@ -234,6 +236,7 @@ class ExperimentPreferencesPane(PreferencesPane):
 
         persist_grp = Group(Item('use_xls_persistence', label='Save analyses to Excel workbook'),
                             Item('use_db_persistence', label='Save analyses to Database'),
+                            Item('use_uuid_path_name', label='Use UUID Path Names'),
                             label='Persist', show_border=True)
 
         pc_grp = Group(Item('use_peak_center_threshold', label='Use Peak Center Threshold',

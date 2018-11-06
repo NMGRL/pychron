@@ -382,8 +382,7 @@ class IsotopicMeasurement(BaseMeasurement):
         xs = self.offset_xs
         reg = MeanRegressor(xs=xs, ys=self.ys,
                             filter_outliers_dict=self.filter_outliers_dict,
-                            error_calc_type=self.error_type or 'SEM',
-                            truncate=self._truncate)
+                            error_calc_type=self.error_type or 'SEM')
         return reg
 
     @property

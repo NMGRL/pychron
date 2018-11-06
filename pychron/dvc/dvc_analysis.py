@@ -122,10 +122,16 @@ class DVCAnalysis(Analysis):
             self.step = make_step(self.increment)
 
         ts = jd['timestamp']
-        try:
-            self.rundate = datetime.datetime.strptime(ts, '%Y-%m-%dT%H:%M:%S')
-        except ValueError:
-            self.rundate = datetime.datetime.strptime(ts, '%Y-%m-%dT%H:%M:%S.%f')
+        for fmt in ('%Y-%m-%dT%H:%M:%S', '%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%d %H:%M:%S'):
+            try:
+                self.rundate = datetime.datetime.strptime(ts, fmt)
+                break
+            except ValueError:
+                continue
+        # try:
+        #     self.rundate = datetime.datetime.strptime(ts, '%Y-%m-%dT%H:%M:%S')
+        # except ValueError:
+        #     self.rundate = datetime.datetime.strptime(ts, '%Y-%m-%dT%H:%M:%S.%f')
 
         self.timestamp = self.timestampf = make_timef(self.rundate)
         self.aliquot_step_str = make_aliquot_step(self.aliquot, self.step)
