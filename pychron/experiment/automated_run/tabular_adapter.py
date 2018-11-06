@@ -195,7 +195,12 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
             elif item.end_after:
                 color = END_AFTER_COLOR
             elif self.use_analysis_type_colors:
-                color = self.analysis_type_colors.get(item.analysis_type)
+
+                atype = item.analysis_type
+                if atype.startswith('blank'):
+                    atype = 'blank'
+                color = self.analysis_type_colors.get(atype)
+
             if color is None:
                 if self.row % 2 == 0:
                     color = self.even_bg_color

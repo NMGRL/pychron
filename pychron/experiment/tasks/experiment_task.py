@@ -24,6 +24,7 @@ from pyface.timer.do_later import do_after
 from traits.api import on_trait_change, Bool, Instance, Event
 
 from pychron.core.helpers.filetools import add_extension, backup
+from pychron.core.helpers.strtools import to_bool
 from pychron.envisage.tasks.editor_task import EditorTask
 from pychron.envisage.tasks.pane_helpers import ConsolePane
 from pychron.envisage.tasks.wait_pane import WaitPane
@@ -241,7 +242,7 @@ class ExperimentEditorTask(EditorTask):
         prefid = 'pychron.experiment'
         bgcolor = prefs.get('{}.bg_color'.format(prefid))
         even_bgcolor = prefs.get('{}.even_bg_color'.format(prefid))
-        use_analysis_type_colors = prefs.get('{}.use_analysis_type_colors'.format(prefid))
+        use_analysis_type_colors = to_bool(prefs.get('{}.use_analysis_type_colors'.format(prefid)))
 
         editor.setup_tabular_adapters(bgcolor, even_bgcolor,
                                       self._assemble_state_colors(),
@@ -251,7 +252,7 @@ class ExperimentEditorTask(EditorTask):
 
     def _assemble_analysis_type_colors(self):
         colors = {}
-        for c in ('blank', 'air', 'cocktail', 'unknown'):
+        for c in ('blank', 'air', 'cocktail'):
             v = self.application.preferences.get('pychron.experiment.{}_color'.format(c))
             colors[c] = v or '#FFFFFF'
 

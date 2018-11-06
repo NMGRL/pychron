@@ -97,7 +97,6 @@ class ExperimentPreferences(BasePreferencesHelper):
     use_analysis_type_colors = Bool
     blank_color = Color
     air_color = Color
-    unknown_color = Color
     cocktail_color = Color
 
     use_peak_center_threshold = Bool
@@ -204,11 +203,10 @@ class ExperimentPreferencesPane(PreferencesPane):
                                     Item('invalid_color', label='Invalid'),
                                     show_border=True,
                                     label='State Colors'),
-                             VGroup(Item('use_analysis_type_color', label='Use Analysis Type Colors'),
+                             VGroup(Item('use_analysis_type_colors', label='Use Analysis Type Colors'),
                                     Item('blank_color', label='Blank'),
                                     Item('air_color', label='Air'),
-                                    Item('cocktail_color', label='Cocktail'),
-                                    Item('unknown_color', label='Unknown')),
+                                    Item('cocktail_color', label='Cocktail')),
                              label='Colors')
 
         # system_health_grp = VGroup(Item('use_system_health'),
