@@ -62,9 +62,6 @@ class TIsotope:
 
 
 class DVCAnalysis(Analysis):
-    # icfactor_reviewed = False
-    # blank_reviewed = False
-
     production_obj = None
     chronology_obj = None
     use_repository_suffix = False
@@ -128,10 +125,6 @@ class DVCAnalysis(Analysis):
                 break
             except ValueError:
                 continue
-        # try:
-        #     self.rundate = datetime.datetime.strptime(ts, '%Y-%m-%dT%H:%M:%S')
-        # except ValueError:
-        #     self.rundate = datetime.datetime.strptime(ts, '%Y-%m-%dT%H:%M:%S.%f')
 
         self.timestamp = self.timestampf = make_timef(self.rundate)
         self.aliquot_step_str = make_aliquot_step(self.aliquot, self.step)
@@ -171,7 +164,6 @@ class DVCAnalysis(Analysis):
         pd = jd.get('positions')
         if pd:
             ps = sorted(pd, key=itemgetter('position'))
-            # self.position = ','.join([str(pp['position']) for pp in ps])
             self.position = to_csv_str([pp['position'] for pp in ps])
             self.xyz_position = to_csv_str(['{},{},{}'.format(pp['x'], pp['y'], pp['z'])
                                             for pp in ps if pp['x'] is not None], delimiter=';')
