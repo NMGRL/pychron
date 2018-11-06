@@ -51,12 +51,12 @@ class ExperimentNotifier(Loggable):
                 self._send(addrs, subject, message)
 
     def start_queue(self, ctx):
-        if ctx.get('use_email'):
+        if ctx.get('use_email') or ctx.get('use_group_email'):
             subject = 'Experiment "{}" Started'.format(ctx.get('experiment_name'))
             self.notify(ctx, subject)
 
     def end_queue(self, ctx):
-        if ctx.get('use_email'):
+        if ctx.get('use_email') or ctx.get('use_group_email'):
             tag = 'Finished'
             if ctx.get('err_message'):
                 tag = 'Stopped'

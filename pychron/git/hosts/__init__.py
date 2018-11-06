@@ -19,7 +19,7 @@ import subprocess
 import requests
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
-from traits.api import Str, Interface, Password, provides
+from traits.api import Str, Interface, Password, provides, Dict
 
 from pychron import json
 from pychron.git_archive.repo_manager import GitRepoManager
@@ -89,6 +89,8 @@ class GitHostService(Loggable):
     oauth_token = Str
     default_remote_name = Str
     remote_url = Str
+    _cached_repo_names = Dict
+    _clear_cached_repo_names = False
 
     def bind_preferences(self):
         bind_preference(self, 'username', '{}.username'.format(self.preference_path))
@@ -97,8 +99,24 @@ class GitHostService(Loggable):
         bind_preference(self, 'default_remote_name', '{}.default_remote_name'.format(self.preference_path))
 
     def remote_exists(self, organization, name):
-        out = subprocess.check_output(['git', 'ls-remote', '{}/{}/{}'.format(self.remote_url, organization, name)])
-        return GITREFREGEX.match(out.decode())
+        try:
+            out = subprocess.check_output(['git', 'ls-remote', '{}/{}/{}'.format(self.remote_url, organization, name)])
+            if out:
+                ret = GITREFREGEX.match(out.decode())
+            else:
+                ret = self.manual_remote_exists(organization, name)
+        except subprocess.CalledProcessError:
+            ret = self.manual_remote_exists(organization, name)
+        return ret
+
+    def manual_remote_exists(self, organization, name):
+        repos = self._cached_repo_names.get(organization)
+        if not repos or self._clear_cached_repo_names:
+            repos = self.get_repository_names(organization)
+            self._cached_repo_names[organization] = repos
+            self._clear_cached_repo_names = False
+
+        return name in repos
 
     def test_api(self):
         raise NotImplementedError
