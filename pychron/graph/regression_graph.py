@@ -84,6 +84,10 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         self.set_fit('quartic', plotid=self.selected_plotid)
         self._update_graph()
 
+    def cm_exponential(self):
+        self.set_fit('exponential', plotid=self.selected_plotid)
+        self._update_graph()
+
     def cm_average_std(self):
         self.set_fit('average_std', plotid=self.selected_plotid)
         self._update_graph()
@@ -251,6 +255,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                     line.regressor = None
 
                 print('fit for {}={}, {}'.format(key, fi, scatter))
+                scatter.ofit = scatter.fit
                 scatter.fit = fi
 
         else:
@@ -345,7 +350,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
     def _regress(self, plot, scatter, line):
         fit, err = convert_fit(scatter.fit)
-
         if fit is None:
             print('fit is none, {}'.format(scatter.fit))
             return
@@ -353,18 +357,15 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         r = None
         if line and hasattr(line, 'regressor'):
             r = line.regressor
-            # if self._outside_regressor:
-            #     print 'line has {} regressor={}'.format(id(plot), id(r))
 
         if fit in [1, 2, 3, 4]:
             r = self._poly_regress(scatter, r, fit)
-
+        elif fit == 'exponential':
+            r = self._exponential_regress(scatter, r, fit)
         elif isinstance(fit, tuple):
             r = self._least_square_regress(scatter, r, fit)
-
         elif isinstance(fit, BaseRegressor):
             r = self._custom_regress(scatter, r, fit)
-
         else:
             r = self._mean_regress(scatter, r, fit)
 
@@ -456,6 +457,22 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         r.calculate()
 
         self._set_excluded(scatter, r)
+        return r
+
+    def _exponential_regress(self, scatter, r, fit):
+
+        from pychron.core.regression.least_squares_regressor import ExponentialRegressor, FitError
+        if r is None or not isinstance(r, ExponentialRegressor):
+            r = ExponentialRegressor()
+
+        self._set_regressor(scatter, r)
+        try:
+            r.calculate()
+            self._set_excluded(scatter, r)
+        except FitError:
+            f, e = convert_fit(scatter.ofit)
+            r = self._poly_regress(scatter, r, f)
+
         return r
 
     def _least_square_regress(self, scatter, r, fit):

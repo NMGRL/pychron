@@ -15,45 +15,49 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
+
+from numpy import asarray, sqrt, matrix, diagonal, array, exp
+# ============= standard library imports ========================
+from scipy import optimize
 from traits.api import Callable, List
 
 from pychron.core.regression.base_regressor import BaseRegressor
 
-# ============= standard library imports ========================
-from scipy import optimize
-from numpy import asarray, sqrt, matrix, diagonal, array
+
 # ============= local library imports  ==========================
-import re
-from pychron.core.helpers.formatting import floatfmt
+
+
+class FitError(BaseException):
+    pass
+
+
 class LeastSquaresRegressor(BaseRegressor):
     fitfunc = Callable
     initial_guess = List
-    def make_equation(self):
-        import inspect
-        eq = inspect.getsource(self.fitfunc).strip()
 
-        def func(match):
-            m = match.group(0)
-            idx = int(m[2:-1])
-            return floatfmt(self._coefficients[idx])
+    _covariance = None
 
-        for ci in self._coefficients:
-            eq = re.sub(r'p\[\d]', func, eq)
+    # def make_equation(self):
+    #     import inspect
+    #     eq = inspect.getsource(self.fitfunc).strip()
+    #
+    #     def func(match):
+    #         m = match.group(0)
+    #         idx = int(m[2:-1])
+    #         return floatfmt(self._coefficients[idx])
+    #
+    #     for ci in self._coefficients:
+    #         eq = re.sub(r'p\[\d]', func, eq)
+    #
+    #     h, t = eq.split(':')
+    #     return 'fitfunc={}'.format(t)
 
-        h, t = eq.split(':')
-        return 'fitfunc={}'.format(t)
+    # def _fitfunc_changed(self):
+    #     self.calculate()
 
-    def _fitfunc_changed(self):
-        self.calculate()
-#
-    def _initial_guess_changed(self):
-        self._degree = len(self.initial_guess) - 1
-#         self.calculate()
-#
-#    def _errfunc_changed(self):
-#        self.calculate()
-#
+    # def _initial_guess_changed(self):
+    #     self._degree = len(self.initial_guess) - 1
+
     def calculate(self, filtering=False):
         cxs = self.pre_clean_xs
         cys = self.pre_clean_ys
@@ -65,32 +69,19 @@ class LeastSquaresRegressor(BaseRegressor):
             return
 
         if not filtering:
-            #prevent infinite recursion
+            # prevent infinite recursion
             fx, fy = self.calculate_filtered_data()
         else:
             fx, fy = cxs, cys
-
-        if self.fitfunc and \
-            self.initial_guess is not None and \
-                 len(self.initial_guess) and \
-                    len(fx) >= len(self.initial_guess):
-            errfunc = lambda p, x, v: self.fitfunc(p, x) - v
-            r = optimize.leastsq(errfunc,
-                                 self.initial_guess,
-                                 args=(fx, fy), full_output=True)
-#            r = optimize.curve_fit(self.fitfunc,
-#                                   self.xs, self.ys,
-#                                   p0=self.initial_guess)
-            if r:
-                coeffs, cov, _infodict, _msg, _ier = r
-#                print r, self.initial_guess
-                self._coefficients = list(coeffs)
-                self._covariance = cov
-                try:
-                    self._coefficient_errors = list(sqrt(diagonal(cov)))
-
-                except ValueError:
-                    pass
+        try:
+            coeffs, cov = optimize.curve_fit(self.fitfunc, fx, fy, p0=self._calculate_initial_guess())
+            self._coefficients = list(coeffs)
+            self._covariance = cov
+            self._coefficient_errors = list(sqrt(diagonal(cov)))
+        except RuntimeError:
+            from pyface.message_dialog import warning
+            warning(None, 'Exponential failed to converge. Choose a different fit')
+            raise FitError()
 
     def _calculate_coefficients(self):
         return self._coefficients
@@ -106,18 +97,16 @@ class LeastSquaresRegressor(BaseRegressor):
 
         x = asarray(x)
 
-        fx = self.fitfunc(self._coefficients, x)
+        fx = self.fitfunc(x, *self._coefficients)
         if return_single:
             fx = fx[0]
-
 
         return fx
 
     def predict_error(self, x, error_calc='sem'):
-
-        '''
+        """
             returns percent error
-        '''
+        """
         return_single = False
         if not hasattr(x, '__iter__'):
             x = [x]
@@ -125,6 +114,7 @@ class LeastSquaresRegressor(BaseRegressor):
 
         sef = self.calculate_standard_error_fit()
         r, _ = self._covariance.shape
+
         def calc_error(xi):
             Xk = matrix([xi, ] * r).T
 
@@ -144,4 +134,19 @@ class LeastSquaresRegressor(BaseRegressor):
 
         return fx
 
+
+class ExponentialRegressor(LeastSquaresRegressor):
+    def __init__(self, *args, **kw):
+        def fitfunc(x, a, b, c):
+            return a * exp(-b * x) + c
+
+        self.fitfunc = fitfunc
+        super(ExponentialRegressor, self).__init__(*args, **kw)
+
+    def _calculate_initial_guess(self):
+        if self.ys[0] > self.ys[-1]:
+            ig = 100, 0.1, -100
+        else:
+            ig = -10, 0.1, 10
+        return ig
 # ============= EOF =============================================

@@ -59,7 +59,7 @@ def convert_fit(f):
         #     f = 'weighted mean'
         #     if not err:
         #         err = 'SEM' if 'sem' in f else 'SD'
-        elif f in ('average', 'weighted mean'):
+        elif f in ('average', 'weighted mean', 'exponential'):
             if not err:
                 err = 'SEM' if 'sem' in f else 'SD'
         else:
