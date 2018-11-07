@@ -136,6 +136,7 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
 
             g.new_series(iso.xs, iso.ys,
                          fit=iso.fit,
+                         truncate=iso.truncate,
                          filter_outliers_dict=iso.filter_outliers_dict,
                          color='black')
             ymi, yma = min_max(ymi, yma, iso.ys)

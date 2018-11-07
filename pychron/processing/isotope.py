@@ -29,7 +29,9 @@ from uncertainties import ufloat, nominal_value, std_dev
 from pychron.core.geometry.geometry import curvature_at
 from pychron.core.helpers.binpack import unpack
 from pychron.core.helpers.fits import natural_name_fit, fit_to_degree
+from pychron.core.regression.least_squares_regressor import ExponentialRegressor
 from pychron.core.regression.mean_regressor import MeanRegressor
+from pychron.core.regression.ols_regressor import PolynomialRegressor
 
 
 def fit_abbreviation(fit, ):
@@ -150,7 +152,7 @@ class IsotopicMeasurement(BaseMeasurement):
     _value = 0
     _error = 0
     _regressor = None
-    _truncate = None
+    truncate = None
     _fit = None
 
     _oerror = None
@@ -289,11 +291,6 @@ class IsotopicMeasurement(BaseMeasurement):
                 if fitname == 'Auto':
                     fitname = fit.auto_fit(self.n)
 
-                # self.filter_outliers_dict = dict(filter_outliers=bool(fit.filter_outliers),
-                #                                  iterations=int(fit.filter_outlier_iterations or 0),
-                #                                  std_devs=int(fit.filter_outlier_std_devs or 0))
-                # self._fn =
-                # self.error_type=fit.error_type or 'SEM'
                 self.attr_set(fit=fitname,
                               time_zero_offset=fit.time_zero_offset or 0,
                               error_type=fit.error_type or 'SEM',
@@ -304,16 +301,7 @@ class IsotopicMeasurement(BaseMeasurement):
                 self.set_filter_outliers_dict(filter_outliers=bool(fit.filter_outliers),
                                               iterations=int(fit.filter_outlier_iterations or 0),
                                               std_devs=int(fit.filter_outlier_std_devs or 0))
-                self._truncate = fit.truncate
-                # if self._regressor:
-                #     self._regressor.error_calc_type = self.error_type
-
-                # self.include_baseline_error = fit.include_baseline_error or False
-
-                # self._value = 0
-                # self._error = 0
-                # if notify:
-                #     self._dirty = True
+                self.truncate = fit.truncate
 
     def set_uvalue(self, v):
         if isinstance(v, tuple):
@@ -376,51 +364,43 @@ class IsotopicMeasurement(BaseMeasurement):
         except ValueError:
             pass
 
-    def _mean_regressor_factory(self):
-        # from pychron.core.regression.mean_regressor import MeanRegressor
-
-        xs = self.offset_xs
-        reg = MeanRegressor(xs=xs, ys=self.ys,
-                            filter_outliers_dict=self.filter_outliers_dict,
-                            error_calc_type=self.error_type or 'SEM')
-        return reg
-
     @property
     def regressor(self):
-        # print self.name, self.fit, self.__class__.__name__
         fit = self.fit
         if fit is None:
-            print('no fit for {} ({} {})'.format(self.name, self.__class__.__name__, id(self)))
             fit = 'linear'
             self.fit = fit
 
-        is_mean = 'average' in fit.lower()
+        lfit = fit.lower()
+        is_mean = 'average' in lfit
+        is_expo = lfit == 'exponential'
+        is_poly = not (is_mean or is_expo)
+
         reg = self._regressor
         if reg is None:
             if is_mean:
-                reg = self._mean_regressor_factory()
+                reg = MeanRegressor()
+            elif is_expo:
+                reg = ExponentialRegressor()
             else:
-                # print 'doing import of regressor {}'.format(self.__class__)
-                # st=time.time()
-                from pychron.core.regression.ols_regressor import PolynomialRegressor
-                # print 'doing import of regressor {}'.format(time.time()-st)
-
-                reg = PolynomialRegressor(tag=self.name,
-                                          xs=self.offset_xs,
-                                          ys=self.ys,
-                                          # fit=self.fit,
-                                          # filter_outliers_dict=self.filter_outliers_dict,
-                                          error_calc_type=self.error_type)
+                reg = PolynomialRegressor()
+        elif is_poly and not isinstance(reg, PolynomialRegressor):
+            reg = PolynomialRegressor()
         elif is_mean and not isinstance(reg, MeanRegressor):
-            reg = self._mean_regressor_factory()
+            reg = MeanRegressor()
+        elif is_expo and not isinstance(reg, ExponentialRegressor):
+            reg = ExponentialRegressor()
 
-        if not is_mean:
+        if is_poly:
             reg.set_degree(fit_to_degree(fit), refresh=False)
-        reg.filter_outliers_dict = self.filter_outliers_dict
 
-        reg.trait_set(xs=self.offset_xs, ys=self.ys)
-        if self._truncate:
-            reg.set_truncate(self._truncate)
+        reg.trait_set(xs=self.offset_xs, ys=self.ys,
+                      error_calc_type=self.error_type or 'SEM',
+                      filter_outliers_dict=self.filter_outliers_dict,
+                      tag=self.name)
+
+        if self.truncate:
+            reg.set_truncate(self.truncate)
         reg.calculate()
 
         self._regressor = reg

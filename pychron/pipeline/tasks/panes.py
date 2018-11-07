@@ -40,7 +40,7 @@ from pychron.pipeline.nodes import FindReferencesNode
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.nodes.data import DataNode, InterpretedAgeNode
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, SeriesNode
-from pychron.pipeline.nodes.filter import FilterNode
+from pychron.pipeline.nodes.filter import FilterNode, MSWDFilterNode
 from pychron.pipeline.nodes.find import FindFluxMonitorsNode
 from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode, FitFluxNode
 from pychron.pipeline.nodes.grouping import GroupingNode, SubGroupingNode
@@ -286,7 +286,7 @@ class PipelinePane(TraitsDockPane):
                                    auto_open=True,
                                    label='name'),
                  DataTreeNode(node_for=[DataNode, InterpretedAgeNode], menu=data_menu_factory()),
-                 FilterTreeNode(node_for=[FilterNode], menu=filter_menu_factory()),
+                 FilterTreeNode(node_for=[FilterNode, MSWDFilterNode], menu=filter_menu_factory()),
                  IdeogramTreeNode(node_for=[IdeogramNode], menu=figure_menu_factory()),
                  SpectrumTreeNode(node_for=[SpectrumNode], menu=figure_menu_factory()),
                  SeriesTreeNode(node_for=[SeriesNode], menu=figure_menu_factory()),

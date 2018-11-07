@@ -75,7 +75,7 @@ VALID_INTEGRATED = 'Valid Integrated'
 PLATEAU_INTEGRATED = 'Plateau Integrated'
 
 FIT_TYPES = ['Linear', 'Parabolic', 'Cubic',
-             'Average', WEIGHTED_MEAN]
+             'Average', 'Exponential', WEIGHTED_MEAN]
 
 FIT_ERROR_TYPES = [SD, SEM, 'CI', 'MonteCarlo']
 

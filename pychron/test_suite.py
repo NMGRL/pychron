@@ -1,6 +1,7 @@
 import os
 import unittest
 
+
 use_logger = False
 
 
@@ -26,7 +27,7 @@ def suite():
     from pychron.core.helpers.tests.strtools import CamelCaseTestCase
     from pychron.core.xml.tests.xml_parser import XMLParserTestCase
     from pychron.core.regression.tests.regression import OLSRegressionTest, MeanRegressionTest, \
-        FilterOLSRegressionTest, OLSRegressionTest2, TruncateRegressionTest
+        FilterOLSRegressionTest, OLSRegressionTest2, TruncateRegressionTest, ExpoRegressionTest, ExpoRegressionTest2
 
     # DataMapper
     from pychron.data_mapper.tests.usgs_vsc_file_source import USGSVSCFileSourceUnittest, \
@@ -83,6 +84,8 @@ def suite():
         XMLParserTestCase,
         OLSRegressionTest,
         MeanRegressionTest,
+        ExpoRegressionTest,
+        ExpoRegressionTest2,
         FilterOLSRegressionTest,
         OLSRegressionTest2,
         TruncateRegressionTest,

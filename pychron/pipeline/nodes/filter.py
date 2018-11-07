@@ -16,14 +16,17 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import datetime
 import re
+from operator import attrgetter
 
-from traits.api import HasTraits, Str, Property, List, Enum, Button, Bool, on_trait_change
+from traits.api import HasTraits, Str, Property, List, Enum, Button, Bool
 from traitsui.api import View, UItem, HGroup, EnumEditor, InstanceEditor, Item, VGroup
 from traitsui.editors import ListEditor
 from uncertainties import std_dev, nominal_value
 
+from pychron.core.stats import calculate_mswd, validate_mswd
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.pipeline.nodes.base import BaseNode
 
@@ -237,6 +240,7 @@ class FilterNode(BaseNode):
                 else:
                     flag = flag or b
             return flag
+
         ans = getattr(state, self.analysis_kind)
         if self.remove:
             # vs = list(filter(filterfunc, getattr(state, self.analysis_kind)))
@@ -256,6 +260,31 @@ class FilterNode(BaseNode):
     def _to_template(self, d):
         vs = [fi.to_string() for fi in self.filters] * 3
         d['filters'] = vs
+
+
+class MSWDFilterNode(BaseNode):
+    name = 'MSWD Filter'
+    configurable = False
+
+    def run(self, state):
+        unks = state.unknowns
+        unks = sorted(unks, key=attrgetter('age'))
+        for i in range(len(unks)-2):
+            if self._validate_mswd(unks):
+                break
+            else:
+                unks = self._filter_mswd(unks)
+
+    def _validate_mswd(self, unks):
+        xs = [u.age for u in unks]
+        es = [u.age_err_wo_j for u in unks]
+        mswd = calculate_mswd(xs, es)
+        return validate_mswd(mswd, len(xs))
+
+    def _filter_mswd(self, unks):
+        # remove oldest age
+        unks[-1].tag = 'omit'
+        return unks[:-1]
 
 
 if __name__ == '__main__':
