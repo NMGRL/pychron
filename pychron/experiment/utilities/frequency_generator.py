@@ -69,7 +69,7 @@ def render_template(freq, runs, sidx):
     for j, (g, rs) in enumerate(groupby(runs, key=lambda x: x[1].aliquot)):
         if start:
             if excl:
-                rs=list(rs)
+                rs = list(rs)
                 force = rs[0][0] != s
                 if not j or force:
                     if force:
@@ -82,10 +82,10 @@ def render_template(freq, runs, sidx):
             a = 0
 
             t = idxs[:]
-            sc=0
+            sc = 0
             for i, (k, ai) in enumerate(rs):
                 if ai.skip:
-                    sc+=1
+                    sc += 1
 
                 if i + 1 in idxs:
                     k -= i
@@ -132,7 +132,7 @@ def render_simple(freq, runs, sidx, before, after):
 
 def frequency_index_gen(runs, freq, incrementable, before, after, sidx=0):
     runs = compress_runs(runs, incrementable)
-    if isinstance(freq, (str,six.text_type)):
+    if isinstance(freq, (str, six.text_type)):
         return render_template(freq, runs, sidx)
     else:
         return render_simple(freq, runs, sidx, before, after)

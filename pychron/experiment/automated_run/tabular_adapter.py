@@ -15,10 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports=======================
-from __future__ import absolute_import
-
 from pyface.action.menu_manager import MenuManager
-from traits.api import Property, Int, Dict
+from traits.api import Property, Int, Dict, Bool
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
@@ -165,6 +163,9 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     use_cdd_warming_text = Property
     colors = Dict(COLORS)
 
+    use_analysis_type_colors = Bool
+    analysis_type_colors = Dict
+
     AutomatedRunSpec_tooltip = Property
     AutomatedRunSpec_bg_color = Property
     AutomatedRunSpec_menu = Property
@@ -186,13 +187,21 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
         if not item.executable:
             color = NOT_EXECUTABLE_COLOR
         else:
+            color = None
             if item.skip:
                 color = SKIP_COLOR  # '#33CCFF'  # light blue
             elif item.state in self.colors:
                 color = self.colors[item.state]
             elif item.end_after:
                 color = END_AFTER_COLOR
-            else:
+            elif self.use_analysis_type_colors:
+
+                atype = item.analysis_type
+                if atype.startswith('blank'):
+                    atype = 'blank'
+                color = self.analysis_type_colors.get(atype)
+
+            if color is None:
                 if self.row % 2 == 0:
                     color = self.even_bg_color
                 else:

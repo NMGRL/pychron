@@ -101,6 +101,8 @@ class MainView(HasTraits):
                                value=an.branch),
               MeasurementValue(name='DAQ Version',
                                value=an.collection_version),
+              MeasurementValue(name='UUID',
+                               value=an.uuid),
               MeasurementValue(name='RepositoryID',
                                value=an.repository_identifier),
               MeasurementValue(name='Spectrometer',

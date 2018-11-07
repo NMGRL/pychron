@@ -237,8 +237,8 @@ class BaseExperimentQueue(RunBlock):
                     t = '_'.join(rtype.split('_')[1:])
                     incrementable_types = (t, )
 
-        for idx in reversed(frequency_index_gen(runblock, freq, incrementable_types,
-                                                freq_before, freq_after, sidx=sidx)):
+        for idx in reversed(list(frequency_index_gen(runblock, freq, incrementable_types,
+                                                freq_before, freq_after, sidx=sidx))):
             for ri in reversed(runspecs):
                 run = ri.clone_traits()
                 run.frequency_group = fcnt

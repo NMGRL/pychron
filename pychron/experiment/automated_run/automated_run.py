@@ -2306,7 +2306,7 @@ anaylsis_type={}
         if starttime_offset > mi:
             min_ = -starttime_offset
 
-        graph.set_x_limits(min_=min_, max_=max_)
+        graph.set_x_limits(min_=min_, max_=max_*1.1)
 
         series = self.collector.series_idx
         for k, iso in self.isotope_group.items():
@@ -2363,7 +2363,7 @@ anaylsis_type={}
         if starttime_offset > mi:
             min_ = -starttime_offset
 
-        graph.set_x_limits(min_=min_, max_=max_)
+        graph.set_x_limits(min_=min_, max_=max_*1.1)
         regressing = grpname != 'sniff'
         series = self.collector.series_idx
         for k, iso in self.isotope_group.items():
