@@ -450,7 +450,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         self._set_regressor(scatter, r)
         r.trait_set(degree=fit)
         r.set_truncate(scatter.truncate)
-
         if r.ys.shape[0] < fit + 1:
             return
 

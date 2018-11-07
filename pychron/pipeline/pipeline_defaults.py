@@ -95,6 +95,7 @@ required:
 nodes:
   - klass: UnknownNode
   - klass: GroupingNode
+  - klass: MSWDFilterNode
   - klass: IdeogramNode
 """
 

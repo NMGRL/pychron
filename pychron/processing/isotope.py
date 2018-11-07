@@ -152,7 +152,7 @@ class IsotopicMeasurement(BaseMeasurement):
     _value = 0
     _error = 0
     _regressor = None
-    _truncate = None
+    truncate = None
     _fit = None
 
     _oerror = None
@@ -291,11 +291,6 @@ class IsotopicMeasurement(BaseMeasurement):
                 if fitname == 'Auto':
                     fitname = fit.auto_fit(self.n)
 
-                # self.filter_outliers_dict = dict(filter_outliers=bool(fit.filter_outliers),
-                #                                  iterations=int(fit.filter_outlier_iterations or 0),
-                #                                  std_devs=int(fit.filter_outlier_std_devs or 0))
-                # self._fn =
-                # self.error_type=fit.error_type or 'SEM'
                 self.attr_set(fit=fitname,
                               time_zero_offset=fit.time_zero_offset or 0,
                               error_type=fit.error_type or 'SEM',
@@ -306,16 +301,7 @@ class IsotopicMeasurement(BaseMeasurement):
                 self.set_filter_outliers_dict(filter_outliers=bool(fit.filter_outliers),
                                               iterations=int(fit.filter_outlier_iterations or 0),
                                               std_devs=int(fit.filter_outlier_std_devs or 0))
-                self._truncate = fit.truncate
-                # if self._regressor:
-                #     self._regressor.error_calc_type = self.error_type
-
-                # self.include_baseline_error = fit.include_baseline_error or False
-
-                # self._value = 0
-                # self._error = 0
-                # if notify:
-                #     self._dirty = True
+                self.truncate = fit.truncate
 
     def set_uvalue(self, v):
         if isinstance(v, tuple):
@@ -413,8 +399,8 @@ class IsotopicMeasurement(BaseMeasurement):
                       filter_outliers_dict=self.filter_outliers_dict,
                       tag=self.name)
 
-        if self._truncate:
-            reg.set_truncate(self._truncate)
+        if self.truncate:
+            reg.set_truncate(self.truncate)
         reg.calculate()
 
         self._regressor = reg
