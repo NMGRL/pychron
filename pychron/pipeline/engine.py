@@ -37,7 +37,7 @@ from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode, InterpretedAgeNode
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, SeriesNode, NoAnalysesError, \
     InverseIsochronNode
-from pychron.pipeline.nodes.filter import FilterNode
+from pychron.pipeline.nodes.filter import FilterNode, MSWDFilterNode
 from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode
 from pychron.pipeline.nodes.grouping import GroupingNode, GraphGroupingNode, SubGroupingNode
 from pychron.pipeline.nodes.ia import SetInterpretedAgeNode
@@ -488,6 +488,10 @@ class PipelineEngine(Loggable):
         # self._set_template('isotope_evolution', clear=False, exclude_klass=['UnknownsNode'])
 
     # preprocess
+    def add_mswd_filter(self, node=None):
+        newnode = MSWDFilterNode()
+        self._add_node(node, newnode)
+
     def add_filter(self, node=None):
         newnode = FilterNode()
         self._add_node(node, newnode)

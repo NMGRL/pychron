@@ -65,7 +65,7 @@ def node_adder(name):
 class PipelineHandlerMeta(MetaHasTraits):
     def __new__(cls, *args, **kwargs):
         klass = MetaHasTraits.__new__(cls, *args, **kwargs)
-        for t in ('review', 'pdf_figure', 'iso_evo_persist', 'data', 'filter', 'ideogram', 'spectrum',
+        for t in ('review', 'pdf_figure', 'iso_evo_persist', 'data', 'filter', 'mswd_filter', 'ideogram', 'spectrum',
                   'series', 'isotope_evolution', 'blanks', 'detector_ic', 'flux', 'find_blanks', 'find_airs',
                   'icfactor', 'push', 'inverse_isochron',
                   'grouping', 'graph_grouping', 'subgrouping',
@@ -183,6 +183,8 @@ class PipelinePane(TraitsDockPane):
                                       action='add_subgrouping'),
                                Action(name='Add Filter',
                                       action='add_filter'),
+                               Action(name='Add MSWD Filter',
+                                      action='add_mswd_filter'),
                                Action(name='Add Inverse Isochron',
                                       action='add_inverse_isochron'),
                                Action(name='Add Ideogram',
