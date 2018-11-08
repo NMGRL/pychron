@@ -22,6 +22,7 @@ from pyface.constant import YES
 # ============= enthought library imports =======================
 from traits.api import Bool, List, HasTraits, Str, Float, Instance
 
+from pychron.core.helpers.formatting import floatfmt
 from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.core.progress import progress_loader
 from pychron.options.options_manager import BlanksOptionsManager, ICFactorOptionsManager, \
@@ -216,8 +217,9 @@ class FitICFactorNode(FitReferencesNode):
                      for a in self.plotter_options.aux_plots]
 
 
-GOODNESS_TAGS = ('int_err', 'slope', 'outlier', 'curvature', 'rsquared')
-GOODNESS_NAMES = ('Intercept Error', 'Slope', 'Outliers', 'Curvature', 'RSquared')
+GOODNESS_TAGS = ('int_err', 'slope', 'outlier', 'curvature', 'rsquared', 'signal_to_blank', 'signal_to_baseline')
+GOODNESS_NAMES = (
+'Intercept Error', 'Slope', 'Outliers', 'Curvature', 'RSquared', 'Blank/Signal %', 'Baseline/Signal %')
 INVERTED_GOODNESS = ('rsquared',)
 
 
@@ -235,18 +237,24 @@ class IsoEvoResult(HasTraits):
     outlier_goodness = None
     curvature_goodness = None
     rsquared_goodness = None
+    signal_to_blank_goodness = None
+    signal_to_baseline_goodness = None
 
     int_err_threshold = None
     slope_threshold = None
     outlier_threshold = None
     curvature_threshold = None
     rsquared_threshold = None
+    signal_to_blank_threshold = None
+    signal_to_baseline_threshold = None
 
     int_err = None
     slope = None
     outlier = None
     curvature = None
     rsquared = None
+    signal_to_blank = None
+    signal_to_baseline = None
 
     analysis = Instance('pychron.processing.analyses.analysis.Analysis')
 
@@ -264,13 +272,16 @@ class IsoEvoResult(HasTraits):
     def tooltip(self):
 
         def f(t, m):
-            v = getattr(self, '{}_goodness'.format(t))
-            if v is not None:
+            g = getattr(self, '{}_goodness'.format(t))
+            v = getattr(self, t)
+            th = getattr(self, '{}_threshold'.format(t))
+            if g is not None:
                 comp = '<' if t in INVERTED_GOODNESS else '>'
-                v = 'OK' if v else "Bad {}{}{}".format('{}'.format(t), comp, '{}_threshold'.format(t))
+                g = 'OK' if g else "Bad {}{}{}".format(floatfmt(v, n=4), comp, th)
             else:
-                v = 'Not Tested'
-            return '{:<25}: {}'.format(m, v)
+                g = 'Not Tested'
+
+            return '{:<25}: {}'.format(m, g)
 
         return '\n'.join([f(g, n) for g, n in zip(GOODNESS_TAGS, GOODNESS_NAMES)])
 
@@ -419,6 +430,22 @@ class FitIsotopeEvolutionNode(FitNode):
                     rsquared_threshold = f.rsquared_goodness
                     rsquared_goodness = rsquared > rsquared_threshold
 
+                signal_to_blank_goodness = None
+                signal_to_blank = 0
+                signal_to_blank_threshold = 0
+                if f.signal_to_blank_goodness:
+                    signal_to_blank = iso.blank.value / iso.value * 100
+                    signal_to_blank_threshold = f.signal_to_blank_goodness
+                    signal_to_blank_goodness = signal_to_blank < signal_to_blank_threshold
+
+                signal_to_baseline_goodness = None
+                signal_to_baseline = 0
+                signal_to_baseline_threshold = 0
+                if f.signal_to_baseline_goodness:
+                    signal_to_baseline = iso.baseline.value / iso.value * 100
+                    signal_to_baseline_threshold = f.signal_to_baseline_goodness
+                    signal_to_baseline_goodness = signal_to_baseline < signal_to_baseline_threshold
+
                 yield IsoEvoResult(analysis=xi,
                                    nstr=nstr,
                                    intercept_value=i,
@@ -443,6 +470,14 @@ class FitIsotopeEvolutionNode(FitNode):
                                    rsquared=rsquared,
                                    rsquared_threshold=rsquared_threshold,
                                    rsquared_goodness=rsquared_goodness,
+
+                                   signal_to_blank=signal_to_blank,
+                                   signal_to_blank_threshold=signal_to_blank_threshold,
+                                   signal_to_blank_goodness=signal_to_blank_goodness,
+
+                                   signal_to_baseline=signal_to_baseline,
+                                   signal_to_baseline_threshold=signal_to_baseline_threshold,
+                                   signal_to_baseline_goodness=signal_to_baseline_goodness,
 
                                    regression_str=iso.regressor.tostring(),
                                    fit=iso.fit,
@@ -476,9 +511,9 @@ class DefineEquilibrationNode(FitNode):
         progress_loader(unks, self._assemble_result, threshold=1, step=10)
         self._set_saveable(state)
         # if fs:
-            # e = IsoEvolutionResultsEditor(fs)
-            # e.plotter_options = po
-            # state.editors.append(e)
+        # e = IsoEvolutionResultsEditor(fs)
+        # e.plotter_options = po
+        # state.editors.append(e)
 
     def _set_saveable(self, state):
         ps = self.plotter_options.get_saveable_aux_plots()
