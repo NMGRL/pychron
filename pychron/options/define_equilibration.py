@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.api import List, Str
+from traits.api import List, Int
 
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.fit import FitOptions
@@ -21,7 +21,7 @@ from pychron.options.views.define_equilibration_views import VIEWS
 
 
 class DefineEquilibrationAuxPlot(AuxPlot):
-    truncate = Str('x<100')
+    equilibration_time = Int(100)
 
 
 class DefineEquilibrationOptions(FitOptions):
