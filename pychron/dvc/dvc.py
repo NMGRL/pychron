@@ -640,7 +640,7 @@ class DVC(Loggable):
     def update_analyses(self, ans, modifier, msg):
         mod_repositories = []
         for expid, ais in groupby_repo(ans):
-            ps = [analysis_path(x.record_id, x.repository_identifier, modifier=modifier) for x in ais]
+            ps = [analysis_path(x, x.repository_identifier, modifier=modifier) for x in ais]
             if self.repository_add_paths(expid, ps):
                 self.repository_commit(expid, msg)
                 mod_repositories.append(expid)

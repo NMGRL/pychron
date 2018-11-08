@@ -203,15 +203,24 @@ class AnalysisTbl(Base, IDMixin):
 
     @property
     def project(self):
-        return self.irradiation_position.sample.project.name
+        try:
+            return self.irradiation_position.sample.project.name
+        except AttributeError:
+            return ''
 
     @property
     def principal_investigator(self):
-        return self.irradiation_position.sample.project.principal_investigator.name
+        try:
+            return self.irradiation_position.sample.project.principal_investigator.name
+        except AttributeError:
+            return ''
 
     @property
     def sample(self):
-        return self.irradiation_position.sample.name
+        try:
+            return self.irradiation_position.sample.name
+        except AttributeError:
+            return ''
 
     @property
     def irradiation_position_position(self):
@@ -219,7 +228,10 @@ class AnalysisTbl(Base, IDMixin):
 
     @property
     def material(self):
-        return self.irradiation_position.sample.material.name
+        try:
+            return self.irradiation_position.sample.material.name
+        except AttributeError:
+            return ''
 
     @property
     def tag(self):
