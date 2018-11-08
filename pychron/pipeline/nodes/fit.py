@@ -14,19 +14,19 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
+import re
 
-from numpy import inf
+from numpy import inf, hstack, invert
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
-from six.moves import zip
+# ============= enthought library imports =======================
 from traits.api import Bool, List, HasTraits, Str, Float, Instance
 
 from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.core.progress import progress_loader
 from pychron.options.options_manager import BlanksOptionsManager, ICFactorOptionsManager, \
     IsotopeEvolutionOptionsManager, \
-    FluxOptionsManager
+    FluxOptionsManager, DefineEquilibrationOptionsManager
 from pychron.options.views.views import view
 from pychron.pipeline.editors.flux_results_editor import FluxResultsEditor
 from pychron.pipeline.editors.results_editor import IsoEvolutionResultsEditor
@@ -323,6 +323,8 @@ class FitIsotopeEvolutionNode(FitNode):
                 dets = unk.detector_keys
                 if dets:
                     names.extend(dets)
+
+                names.insert(0, NULL_STR)
                 pom.set_names(names)
 
             atypes = list({a.analysis_type for a in self.unknowns})
@@ -445,6 +447,78 @@ class FitIsotopeEvolutionNode(FitNode):
                                    regression_str=iso.regressor.tostring(),
                                    fit=iso.fit,
                                    isotope=k)
+
+
+class DefineEquilibrationNode(FitNode):
+    name = 'Define Equilibration'
+
+    plotter_options_manager_klass = DefineEquilibrationOptionsManager
+    use_plotting = False
+    _refit_message = 'The selected Equilibrations have already been fit. Would you like to skip refitting?'
+
+    def _configure_hook(self):
+        pom = self.plotter_options_manager
+        if self.unknowns:
+            unk = self.unknowns[0]
+            names = unk.isotope_keys
+            names.insert(0, NULL_STR)
+            pom.set_names(names)
+
+    def run(self, state):
+        super(DefineEquilibrationNode, self).run(state)
+        po = self.plotter_options
+
+        self._fits = list(reversed([pi for pi in po.get_saveable_aux_plots()]))
+        self._keys = [fi.name for fi in self._fits]
+
+        unks = state.unknowns
+
+        progress_loader(unks, self._assemble_result, threshold=1, step=10)
+        self._set_saveable(state)
+        # if fs:
+            # e = IsoEvolutionResultsEditor(fs)
+            # e.plotter_options = po
+            # state.editors.append(e)
+
+    def _set_saveable(self, state):
+        ps = self.plotter_options.get_saveable_aux_plots()
+        state.saveable_keys = [p.name for p in ps]
+        state.saveable_fits = [p.truncate for p in ps]
+
+    def _assemble_result(self, xi, prog, i, n):
+        fits = self._fits
+        xi.load_raw_data(self._keys)
+
+        isotopes = xi.isotopes
+        for fi in fits:
+            k = fi.name
+
+            if k in isotopes:
+                iso = isotopes[k]
+
+                m = re.match(r'[A-Za-z]+', fi.truncate)
+                if m:
+                    # recombine sniff and isotope data
+                    xs = hstack((iso.sniff.xs, iso.xs))
+                    ys = hstack((iso.sniff.ys, iso.ys))
+
+                    k = m.group(0)
+                    exclude = eval(fi.truncate, {k: xs})
+                    ex = exclude.nonzero()[0]
+                    iex = invert(ex)
+
+                    # split data based on trunc criteria
+                    sniff_xs = xs[ex]
+                    iso_xs = xs[iex]
+
+                    sniff_ys = ys[ex]
+                    iso_ys = ys[iex]
+
+                    iso.sniff.xs = sniff_xs
+                    iso.sniff.ys = sniff_ys
+
+                    iso.xs = iso_xs
+                    iso.ys = iso_ys
 
 
 class FitFluxNode(FitNode):

@@ -15,17 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 import datetime
 import re
 from operator import attrgetter
 
-from traits.api import HasTraits, Str, Property, List, Enum, Button, Bool
+from traits.api import HasTraits, Str, Property, List, Enum, Button, Bool, Float, Range
 from traitsui.api import View, UItem, HGroup, EnumEditor, InstanceEditor, Item, VGroup
 from traitsui.editors import ListEditor
 from uncertainties import std_dev, nominal_value
 
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.stats import calculate_mswd, validate_mswd
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.pipeline.nodes.base import BaseNode
@@ -249,7 +248,7 @@ class FilterNode(BaseNode):
         else:
             for a in ans:
                 if not filterfunc(a):
-                    a.tag = 'omit'
+                    a.temp_status = 'omit'
 
     def add_filter(self, attr, comp, crit):
         self.filters.append(PipelineFilter(attribute=attr, comparator=comp, criterion=crit))
@@ -264,26 +263,57 @@ class FilterNode(BaseNode):
 
 class MSWDFilterNode(BaseNode):
     name = 'MSWD Filter'
-    configurable = False
+    kind = Enum('Mahon', 'Threshold', 'Plateau')
+    mswd_threshold = Float
+    plateau_threshold = Range(0.0, 5.0)
+    attr = Enum('Age', 'KCa')
+    _prev_mswd = 0
+
+    def traits_view(self):
+        v = okcancel_view(VGroup(HGroup(UItem('kind'), UItem('attr')),
+                          VGroup(Item('mswd_threshold', label='Threshold', visible_when='kind=="Threshold"'),
+                                 Item('plateau_threshold', label='% Threshold', visible_when='kind=="Plateau"'))),
+                          title='Configure MSWD Filter',
+                          width=300,
+                          height=100,
+                          resizable=True)
+        return v
 
     def run(self, state):
         unks = state.unknowns
-        unks = sorted(unks, key=attrgetter('age'))
-        for i in range(len(unks)-2):
-            if self._validate_mswd(unks):
+        attr = self.attr.lower()
+        unks = sorted(unks, key=attrgetter(attr))
+        kind = self.kind.lower()
+        self._prev_mswd = 0
+        for i in range(len(unks) - 2):
+            if self._validate_mswd(kind, unks, attr):
                 break
             else:
                 unks = self._filter_mswd(unks)
 
-    def _validate_mswd(self, unks):
-        xs = [u.age for u in unks]
-        es = [u.age_err_wo_j for u in unks]
+    def _validate_mswd(self, kind, unks, attr):
+        if attr == 'age':
+            xs = [u.age for u in unks]
+            es = [u.age_err_wo_j for u in unks]
+        elif attr == 'kca':
+            vs = [u.kca for u in unks]
+            xs = [nominal_value(v) for v in vs]
+            es = [std_dev(v) for v in vs]
+
         mswd = calculate_mswd(xs, es)
-        return validate_mswd(mswd, len(xs))
+        if kind == 'mahon':
+            v = validate_mswd(mswd, len(xs))
+        elif kind == 'threshold':
+            v = mswd < self.mswd_threshold
+        else:
+            v = abs(mswd - self._prev_mswd) / mswd * 100 < self.plateau_threshold
+            self._prev_mswd = mswd
+
+        return v
 
     def _filter_mswd(self, unks):
         # remove oldest age
-        unks[-1].tag = 'omit'
+        unks[-1].temp_status = 'omit'
         return unks[:-1]
 
 

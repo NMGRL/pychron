@@ -340,6 +340,7 @@ def make_presentation(**kw):
     return yaml.dump(obj, default_flow_style=False)
 
 
+DEFINE_EQUILIBRATION_SCREEN = make_screen()
 ISO_EVO_SCREEN = make_screen()
 SERIES_SCREEN = make_screen()
 BLANKS_SCREEN = make_screen()

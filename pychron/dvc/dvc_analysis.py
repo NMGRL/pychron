@@ -23,7 +23,7 @@ from operator import itemgetter
 
 from uncertainties import ufloat, std_dev, nominal_value
 
-from pychron.core.helpers.binpack import unpack, format_blob
+from pychron.core.helpers.binpack import unpack, format_blob, encode_blob
 from pychron.core.helpers.datetime_tools import make_timef
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.iterfuncs import partition
@@ -252,10 +252,14 @@ class DVCAnalysis(Analysis):
         for sn in sniffs:
             isok = sn.get('isotope')
             det = sn.get('detector')
-            if use_name_pairs:
-                isok = '{}{}'.format(isok, det)
+            # if use_name_pairs:
+            #     isok = '{}{}'.format(isok, det)
 
-            if keys and isok not in keys:
+            key = isok
+            if use_name_pairs:
+                key = '{}{}'.format(isok, det)
+
+            if keys and key not in keys and isok not in keys:
                 continue
 
             data = format_blob(sn.get('blob', ''))
@@ -303,6 +307,45 @@ class DVCAnalysis(Analysis):
                 continue
 
             iso.set_fit(fi)
+
+    def dump_equilibration(self, keys, reviewed=False):
+        path = self._analysis_path(modifier='.data')
+
+        jd = dvc_load(path)
+        endianness = jd['format'][0]
+
+        nsignals = []
+        nsniffs = []
+
+        for (new, existing) in ((nsignals, 'signals'), (nsniffs, 'sniffs')):
+            for sig in jd[existing]:
+                key = sig['isotope']
+                if key in keys:
+                    iso = self.get_isotope(key)
+                    if existing == 'sniffs':
+                        iso = iso.sniff
+
+                    sblob = encode_blob(iso.pack(endianness, as_hex=False))
+                    new.append({'isotope': iso.name, 'blob': sblob, 'detector': iso.detector})
+                else:
+                    new.append(sig)
+
+        for k in keys:
+            # check to make sure signals/sniffs fully populated
+            for new, issniff in ((nsignals, False), (nsniffs, True)):
+                if not next((n for n in new if n['isotope'] == k), None):
+                    iso = self.get_isotope(key)
+                    if issniff:
+                        iso = iso.sniff
+
+                    sblob = encode_blob(iso.pack(endianness, as_hex=False))
+                    new.append({'isotope': iso.name, 'blob': sblob, 'detector': iso.detector})
+        jd['reviewed'] = reviewed
+        jd['signals'] = nsignals
+        jd['sniffs'] = nsniffs
+        dvc_dump(jd, path)
+
+        return path
 
     def dump_fits(self, keys, reviewed=False):
 
@@ -402,8 +445,8 @@ class DVCAnalysis(Analysis):
 
             self.additional_peak_center_data = {k: unpack(pd['points'], jd['fmt'], decode=True)
                                                 for k, pd in jd.items() if k not in (refdet, 'fmt',
-                                                                                            'reference_detector',
-                                                                                            'reference_isotope')}
+                                                                                     'reference_detector',
+                                                                                     'reference_isotope')}
 
         self.peak_center = pd['center_dac']
         self.peak_center_reference_detector = refdet

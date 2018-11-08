@@ -37,7 +37,7 @@ from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode, InterpretedAgeNode
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, SeriesNode, NoAnalysesError, \
     InverseIsochronNode
-from pychron.pipeline.nodes.filter import FilterNode
+from pychron.pipeline.nodes.filter import FilterNode, MSWDFilterNode
 from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode
 from pychron.pipeline.nodes.grouping import GroupingNode, GraphGroupingNode, SubGroupingNode
 from pychron.pipeline.nodes.ia import SetInterpretedAgeNode
@@ -47,7 +47,7 @@ from pychron.pipeline.pipeline_defaults import ISOEVO, BLANKS, ICFACTOR, IDEO, S
     CSV_IDEO, XY_SCATTER, INTERPRETED_AGE_IDEOGRAM, ANALYSIS_TABLE, INTERPRETED_AGE_TABLE, REPORT, CORRECTION_FACTORS, \
     REGRESSION_SERIES, VERTICAL_FLUX, \
     CSV_ANALYSES_EXPORT, BULK_EDIT, HISTORY_IDEOGRAM, HISTORY_SPECTRUM, AUDIT, SUBGROUP_IDEOGRAM, HYBRID_IDEOGRAM, \
-    ANALYSIS_TABLE_W_IA, MASSSPEC_REDUCED
+    ANALYSIS_TABLE_W_IA, MASSSPEC_REDUCED, DEFINE_EQUILIBRATION
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
 from pychron.pipeline.plot.editors.spectrum_editor import SpectrumEditor
@@ -488,6 +488,10 @@ class PipelineEngine(Loggable):
         # self._set_template('isotope_evolution', clear=False, exclude_klass=['UnknownsNode'])
 
     # preprocess
+    def add_mswd_filter(self, node=None):
+        newnode = MSWDFilterNode()
+        self._add_node(node, newnode)
+
     def add_filter(self, node=None):
         newnode = FilterNode()
         self._add_node(node, newnode)
@@ -813,7 +817,8 @@ class PipelineEngine(Loggable):
         node_factories = {v.name: v for v in self.node_factories}
         groups = []
 
-        default = [('Fit', (('Iso Evo', ISOEVO),
+        default = [('Fit', (('Define Equilibration', DEFINE_EQUILIBRATION),
+                            ('Iso Evo', ISOEVO),
                             ('Blanks', BLANKS),
                             ('IC Factor', ICFACTOR),
                             ('Flux', FLUX),

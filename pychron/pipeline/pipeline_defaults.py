@@ -61,6 +61,16 @@ nodes:
   - klass: ICFactorPersistNode
 """
 
+DEFINE_EQUILIBRATION = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: DefineEquilibrationNode
+  # - klass: ReviewNode
+  - klass: DefineEquilibrationPersistNode
+    use_editor: False
+"""
+
 ISOEVO = """
 required:
 nodes:
@@ -95,7 +105,6 @@ required:
 nodes:
   - klass: UnknownNode
   - klass: GroupingNode
-  - klass: MSWDFilterNode
   - klass: IdeogramNode
 """
 

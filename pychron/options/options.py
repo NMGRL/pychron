@@ -217,7 +217,7 @@ class MainOptions(SubOptions):
                              show_label=False,
                              editor=myTableEditor(columns=self._get_columns(),
                                                   sortable=False,
-                                                  deletable=True,
+                                                  # deletable=True,
                                                   clear_selection_on_dclicked=True,
                                                   orientation='vertical',
                                                   selected='selected',
@@ -517,9 +517,6 @@ class AuxPlotFigureOptions(FigureOptions):
     #                      if pi.name and pi.name != NULL_STR and (pi.save_enabled or pi.plot_enabled)])
 
     def get_saveable_aux_plots(self):
-        # for a in self.aux_plots:
-        # print a.name, a.save_enabled
-
         return list(reversed([pi for pi in self.aux_plots
                               if pi.name and pi.name != NULL_STR and pi.save_enabled]))
 

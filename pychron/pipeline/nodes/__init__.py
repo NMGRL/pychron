@@ -32,7 +32,8 @@ from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, SeriesNode
 from pychron.pipeline.nodes.filter import FilterNode, MSWDFilterNode
 from pychron.pipeline.nodes.find import FindReferencesNode, FindFluxMonitorsNode, FindVerticalFluxNode, \
     FindBlanksNode, FindRepositoryAnalysesNode
-from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode, FitFluxNode
+from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode, \
+    FitFluxNode, DefineEquilibrationNode
 from pychron.pipeline.nodes.gain import GainCalibrationNode
 from pychron.pipeline.nodes.group_age import GroupAgeNode
 from pychron.pipeline.nodes.grouping import GroupingNode, GraphGroupingNode, SubGroupingNode
@@ -40,8 +41,8 @@ from pychron.pipeline.nodes.ia import SetInterpretedAgeNode
 from pychron.pipeline.nodes.mass_spec_reduced import MassSpecReducedNode
 from pychron.pipeline.nodes.ml import MLDataNode, MLRegressionNode
 from pychron.pipeline.nodes.persist import DVCPersistNode, PDFFigureNode, \
-    BlanksPersistNode, IsotopeEvolutionPersistNode, ICFactorPersistNode, FluxPersistNode, XLSXAnalysisTablePersistNode, \
-    InterpretedAgePersistNode, CSVAnalysesExportNode
+    BlanksPersistNode, IsotopeEvolutionPersistNode, ICFactorPersistNode, FluxPersistNode, \
+    XLSXAnalysisTablePersistNode, InterpretedAgePersistNode, CSVAnalysesExportNode, DefineEquilibrationPersistNode
 from pychron.pipeline.nodes.push import PushNode
 from pychron.pipeline.nodes.report import ReportNode
 from pychron.pipeline.nodes.review import ReviewNode

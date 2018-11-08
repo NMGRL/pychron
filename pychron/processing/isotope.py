@@ -87,7 +87,7 @@ class BaseMeasurement(object):
             xs, ys = self._unpack_blob(blob)
         except (ValueError, TypeError, IndexError, AttributeError) as e:
             self.unpack_error = e
-            print(e)
+            print('unpack', self.name, e)
             return
 
         if n_only:
