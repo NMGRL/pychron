@@ -59,6 +59,9 @@ class IsoEvoMainOptions(MainOptions):
     curvature_goodness = Float
     curvature_goodness_at = Float
     rsquared_goodness = Range(0.0, 1.0, 0.95)
+    signal_to_blank_goodness = Float
+    signal_to_baseline_goodness = Float
+    global_goodness_visible = Bool
 
     def _get_edit_view(self):
         main = VGroup(HGroup(Item('name', editor=EnumEditor(name='names')),
@@ -87,6 +90,11 @@ class IsoEvoMainOptions(MainOptions):
                           HGroup(Item('curvature_goodness', label='Curvature'),
                                  Item('curvature_goodness_at', label='Curvature At')),
                           HGroup(Item('rsquared_goodness', label='R-Squared Adj')),
+                          HGroup(Item('signal_to_blank_goodness',
+                                      tooltip='If Blank/Signal*100 greater than threshold mark regression as "Bad"')),
+                          HGroup(Item('signal_to_baseline_goodness',
+                                      tooltip='If Baseline/Signal*100 is greater than threshold '
+                                              'mark regression as "Bad"')),
                           label='Goodness')
 
         auto = VGroup(VGroup(Item('n_threshold', label='Threshold'),
@@ -117,15 +125,23 @@ class IsoEvoMainOptions(MainOptions):
                                        'then mark regression as "Bad"'),
                           HGroup(Item('controller.curvature_goodness'),
                                  Item('controller.curvature_goodness_at')),
-                          HGroup(Item('controller.rsquared_goodness')))
+                          HGroup(Item('controller.rsquared_goodness',
+                                      tooltip='If R-squared is less than threshold mark regression as "Bad"')),
+                          HGroup(Item('controller.signal_to_blank_goodness',
+                                 tooltip='If Blank/Signal*100 greater than threshold mark regression as "Bad"')),
+                          HGroup(Item('controller.signal_to_baseline_goodness',
+                                      tooltip='If Baseline/Signal*100 is greater than threshold '
+                                              'mark regression as "Bad"')))
 
         agrp = self._get_analysis_group()
-        return VGroup(agrp, BorderVGroup(g, gg, label='Global'))
+        return VGroup(agrp,
+                      Item('controller.global_goodness_visible', label='Global Edit Visible'),
+                      BorderVGroup(g, gg, label='Global', visible_when='controller.global_goodness_visible'))
 
     @on_trait_change('plot_enabled, save_enabled, fit, error_type, filter_outliers,'
                      'goodness_threshold, slope_goodness, slope_goodness_intensity,'
                      'outlier_goodness, curvature_goodness, curvature_goodness_at,'
-                     'rsquared_goodness')
+                     'rsquared_goodness, signal_to_blank_goodness, signal_to_baseline_goodness')
     def _handle_global(self, name, new):
         self._toggle_attr(name, new)
 
