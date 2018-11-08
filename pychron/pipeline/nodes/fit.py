@@ -503,8 +503,7 @@ class DefineEquilibrationNode(FitNode):
                     ys = hstack((iso.sniff.ys, iso.ys))
 
                     k = m.group(0)
-                    exclude = eval(fi.truncate, {k: xs})
-                    ex = exclude.nonzero()[0]
+                    ex = eval(fi.truncate, {k: xs})
                     iex = invert(ex)
 
                     # split data based on trunc criteria
