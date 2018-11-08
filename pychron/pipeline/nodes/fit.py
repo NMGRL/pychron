@@ -14,8 +14,6 @@
 # limitations under the License.
 # ===============================================================================
 
-import re
-
 from numpy import inf, hstack, invert
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
@@ -518,7 +516,7 @@ class DefineEquilibrationNode(FitNode):
     def _set_saveable(self, state):
         ps = self.plotter_options.get_saveable_aux_plots()
         state.saveable_keys = [p.name for p in ps]
-        state.saveable_fits = [p.truncate for p in ps]
+        state.saveable_fits = [p.equilibration_time for p in ps]
 
     def _assemble_result(self, xi, prog, i, n):
         fits = self._fits
@@ -531,28 +529,27 @@ class DefineEquilibrationNode(FitNode):
             if k in isotopes:
                 iso = isotopes[k]
 
-                m = re.match(r'[A-Za-z]+', fi.truncate)
-                if m:
-                    # recombine sniff and isotope data
-                    xs = hstack((iso.sniff.xs, iso.xs))
-                    ys = hstack((iso.sniff.ys, iso.ys))
+                # recombine sniff and isotope data
+                xs = hstack((iso.sniff.xs, iso.xs))
+                ys = hstack((iso.sniff.ys, iso.ys))
 
-                    k = m.group(0)
-                    ex = eval(fi.truncate, {k: xs})
-                    iex = invert(ex)
+                # ex = eval('x', {'x': xs})
 
-                    # split data based on trunc criteria
-                    sniff_xs = xs[ex]
-                    iso_xs = xs[iex]
+                ex = xs < fi.equilibration_time
+                iex = invert(ex)
 
-                    sniff_ys = ys[ex]
-                    iso_ys = ys[iex]
+                # split data based on trunc criteria
+                sniff_xs = xs[ex]
+                iso_xs = xs[iex]
 
-                    iso.sniff.xs = sniff_xs
-                    iso.sniff.ys = sniff_ys
+                sniff_ys = ys[ex]
+                iso_ys = ys[iex]
 
-                    iso.xs = iso_xs
-                    iso.ys = iso_ys
+                iso.sniff.xs = sniff_xs
+                iso.sniff.ys = sniff_ys
+
+                iso.xs = iso_xs
+                iso.ys = iso_ys
 
 
 class FitFluxNode(FitNode):
