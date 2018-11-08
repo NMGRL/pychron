@@ -21,13 +21,15 @@ from traits.api import Str, List, Button, Instance, Tuple, Property, cached_prop
 from traitsui.api import Controller, View, Item
 
 from pychron.core.helpers.filetools import list_directory2
-from pychron.file_defaults import SPECTRUM_PRESENTATION, RADIAL_SCREEN, REGRESSION_SERIES_SCREEN
+from pychron.file_defaults import SPECTRUM_PRESENTATION, RADIAL_SCREEN, REGRESSION_SERIES_SCREEN, \
+    DEFINE_EQUILIBRATION_SCREEN
 from pychron.file_defaults import SPECTRUM_SCREEN, IDEOGRAM_SCREEN, IDEOGRAM_PRESENTATION, SERIES_SCREEN, BLANKS_SCREEN, \
     ICFACTOR_SCREEN, INVERSE_ISOCHRON_SCREEN, INVERSE_ISOCHRON_PRESENTATION, ISO_EVO_SCREEN, BLANKS_PRESENTATION
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.mdd.tasks.mdd_figure import MDDFigureOptions
 from pychron.options.blanks import BlanksOptions
+from pychron.options.define_equilibration import DefineEquilibrationOptions
 from pychron.options.flux import FluxOptions, VerticalFluxOptions
 from pychron.options.icfactor import ICFactorOptions
 from pychron.options.ideogram import IdeogramOptions
@@ -293,6 +295,12 @@ class IsotopeEvolutionOptionsManager(FigureOptionsManager):
     id = 'iso_evo'
     options_klass = IsotopeEvolutionOptions
     _default_options_txt = ISO_EVO_SCREEN
+
+
+class DefineEquilibrationOptionsManager(FigureOptionsManager):
+    id = 'define_equilibration'
+    options_klass = DefineEquilibrationOptions
+    _default_options_txt = DEFINE_EQUILIBRATION_SCREEN
 
 
 class FluxOptionsManager(FigureOptionsManager):

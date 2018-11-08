@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from pyface.action.menu_manager import MenuManager
 from traits.trait_types import Int, Str
 from traits.traits import Property
@@ -166,7 +167,7 @@ class ComputedValueTabularAdapter(BaseTabularAdapter):
 
 
 class IntermediateTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
-    all_columns = [('Iso.', 'name'),
+    all_columns = [('Name', 'name'),
                    ('I', 'intercept'),
                    (SIGMA_1, 'intercept_error'),
                    ('%', 'intercept_percent_error'),
@@ -184,7 +185,7 @@ class IntermediateTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
                    ('IFC', 'interference_corrected'),
                    (sigmaf('IFC'), 'interference_corrected_error'),
                    ('%(IFC)', 'interference_corrected_percent_error')]
-    columns = [('Iso.', 'name')]
+    columns = [('Name', 'name')]
 
     intercept_text = Property
     intercept_error_text = Property
@@ -324,11 +325,11 @@ class IntermediateTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
 
 
 class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
-    all_columns = [('Iso.', 'name'),
+    all_columns = [('Name', 'name'),
                    ('Det.', 'detector'),
                    ('Fit', 'fit_abbreviation'),
                    ('Error', 'error_type'),
-                   ('Int.', 'value'),
+                   ('Iso', 'value'),
                    (SIGMA_1, 'error'),
                    ('%', 'value_percent_error'),
                    ('I. BsEr', 'include_baseline_error'),
@@ -344,11 +345,11 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
                    (sigmaf('IC'), 'ic_factor_error'),
                    ('Disc', 'discrimination'),
                    ('Error Comp.', 'age_error_component')]
-    columns = [('Iso.', 'name'),
+    columns = [('Name', 'name'),
                ('Det.', 'detector'),
                ('Fit', 'fit_abbreviation'),
                ('Error', 'error_type'),
-               ('Int.', 'value'),
+               ('Iso', 'value'),
                (SIGMA_1, 'error'),
                ('%', 'value_percent_error'),
                # ('I. BsEr', 'include_baseline_error'),

@@ -18,6 +18,7 @@ import os
 import shutil
 import time
 from datetime import datetime
+from itertools import groupby
 from math import isnan
 from operator import itemgetter
 
@@ -616,19 +617,33 @@ class DVC(Loggable):
         # else:
         #     self.debug('{} {} not reviewed'.format(ai, attr))
 
-    def update_analyses(self, ans, modifier, msg):
+    def update_analysis_paths(self, items, msg):
+        """
+        items is a list of (analysis, path) tuples
+        :param items:
+        :param msg:
+        :return:
+        """
         mod_repositories = []
-        for expid, ais in groupby_repo(ans):
-            paths = [analysis_path(x.record_id, x.repository_identifier, modifier=modifier) for x in ais]
-            # print expid, modifier, paths
-            if self.repository_add_paths(expid, paths):
+
+        def key(x):
+            return x[0].repository_identifier
+
+        for expid, ais in groupby(sorted(items, key=key), key=key):
+            ps = [p for _, p in ais]
+            if self.repository_add_paths(expid, ps):
                 self.repository_commit(expid, msg)
                 mod_repositories.append(expid)
 
-        # ais = map(analysis_path, ais)
-        #     if self.experiment_add_analyses(exp, ais):
-        #         self.experiment_commit(exp, msg)
-        #         mod_experiments.append(exp)
+        return mod_repositories
+
+    def update_analyses(self, ans, modifier, msg):
+        mod_repositories = []
+        for expid, ais in groupby_repo(ans):
+            ps = [analysis_path(x.record_id, x.repository_identifier, modifier=modifier) for x in ais]
+            if self.repository_add_paths(expid, ps):
+                self.repository_commit(expid, msg)
+                mod_repositories.append(expid)
         return mod_repositories
 
     def update_tag(self, an, add=True, **kw):
@@ -650,6 +665,11 @@ class DVC(Loggable):
         if keys:
             self.info('Saving blanks for {}'.format(ai))
             ai.dump_blanks(keys, refs, reviewed=True)
+
+    def save_defined_equilibration(self, ai, keys):
+        if keys:
+            self.info('Saving equilibration for {}'.format(ai))
+            return ai.dump_equilibration(keys, reviewed=True)
 
     def save_fits(self, ai, keys):
         if keys:
@@ -1434,7 +1454,7 @@ class DVC(Loggable):
                     if chronos:
                         chronology = chronos[a.irradiation]
                     else:
-                        chronology = meta_repo.get_chronology(a.irradiation )
+                        chronology = meta_repo.get_chronology(a.irradiation)
                     a.set_chronology(chronology)
 
                     # frozen_production = self._get_frozen_production(rid, a.repository_identifier)
@@ -1517,7 +1537,7 @@ class DVC(Loggable):
         path = repository_path(repo, '{}.json'.format(irradiation))
 
         fd = {}
-        print('fffafaf',path )
+        print('fffafaf', path)
         if path:
             fd = dvc_load(path)
             for fi in fd.values():

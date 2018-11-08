@@ -57,25 +57,7 @@ class IsotopeEvolutionOptions(FitOptions):
     aux_plot_klass = IsoFilterFitAuxPlot
     subview_names = List(['Main', 'IsoEvo'])
 
-    # global_goodness_threshold = Float  # in percent
-    # global_slope_goodness = Float
-    # global_outlier_goodness = Int
-    # global_curvature_goodness = Float
-    # global_curvature_goodness_at = Float
-    #
-    # # _main_options_klass = IsoEvoMainOptions
     show_sniff = Bool(False)
-
-    #
-    # @on_trait_change('global_+')
-    # def _handle_goodness_global(self, name, new):
-    #     items = self.selected
-    #     if not items:
-    #         items = self.aux_plots
-    #
-    #     name = name[7:]
-    #     for a in items:
-    #         setattr(a, name, new)
 
     def _get_subview(self, name):
         return VIEWS[name]
