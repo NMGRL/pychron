@@ -441,6 +441,8 @@ class DefineEquilibrationNode(FitNode):
         xi.load_raw_data(self._keys)
 
         isotopes = xi.isotopes
+        ks = []
+        eqs = []
         for fi in fits:
             k = fi.name
 
@@ -468,7 +470,12 @@ class DefineEquilibrationNode(FitNode):
 
                 iso.xs = iso_xs
                 iso.ys = iso_ys
-                yield DefineEquilibrationResult(analysis=xi, isotope=k, equilibration_time=fi.equilibration_time)
+                ks.append(k)
+                eqs.append('{}({})'.format(k, fi.equilibration_time))
+        if ks:
+            yield DefineEquilibrationResult(analysis=xi,
+                                            isotopes=ks,
+                                            equilibration_times=','.join(eqs))
 
 
 class FitFluxNode(FitNode):

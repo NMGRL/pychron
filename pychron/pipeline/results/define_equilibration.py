@@ -13,10 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from traits.api import List, Str
 
 from pychron.pipeline.results.base import BaseResult
 
 
 class DefineEquilibrationResult(BaseResult):
-    pass
+    isotopes = List
+    equilibration_times = Str
 # ============= EOF =============================================

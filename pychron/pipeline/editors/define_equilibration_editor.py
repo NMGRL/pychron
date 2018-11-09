@@ -13,21 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.api import List, Instance, Int, Any
-from traitsui.api import View, UItem, TabularEditor, VSplit
+from traits.api import List, Instance, Int, Any, Event, Bool
+from traitsui.api import View, UItem, TabularEditor, VSplit, VGroup, HGroup
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.column_sorter_mixin import ColumnSorterMixin
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor, grouped_name
 from pychron.graph.stacked_regression_graph import StackedRegressionGraph
 
 
 class DefineEquilibrationResultsAdapter(TabularAdapter):
     columns = [('RunID', 'record_id'),
-               ('Isotope', 'isotope'),
-               ('Equilibration Time', 'equilibration_time')]
+               ('Equilibration Times', 'equilibration_times')]
     record_id_width = Int(100)
-    isotope_width = Int(75)
 
 
 class DefineEquilibrationResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
@@ -36,6 +35,10 @@ class DefineEquilibrationResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
     # dclicked = Event
     graph = Instance(StackedRegressionGraph)
     selected = Any
+    next_button = Event
+    previous_button = Event
+    next_enabled = Bool
+    previous_enabled = Bool
 
     def __init__(self, results, *args, **kw):
         super(DefineEquilibrationResultsEditor, self).__init__(*args, **kw)
@@ -44,28 +47,52 @@ class DefineEquilibrationResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
         self.name = 'Define Eq. Results {}'.format(na)
 
         self.results = results
+        self.selected = results[0]
+
+    def _next_button_fired(self):
+        self._select(1)
+
+    def _previous_button_fired(self):
+        self._select(-1)
+
+    def _select(self, direction):
+        idx = 0
+        if self.selected:
+            idx = self.results.index(self.selected)
+        try:
+            self.selected = self.results[idx + direction]
+        except IndexError:
+            pass
 
     def _selected_changed(self, new):
         if new:
-            self.graph = new.analysis.get_isotope_evolutions((new.isotope,),
+            self.graph = new.analysis.get_isotope_evolutions(new.isotopes,
                                                              load_data=False,
                                                              show_equilibration=True)
-    # def _dclicked_fired(self, new):
-    #     if new:
-    #         result = new.item
-    #         result.analysis.show_isotope_evolutions((result.isotope,),
-    #                                                 load_data=False,
-    #                                                 show_equilibration=True)
+            idx = self.results.index(new)
+            if idx == len(self.results) - 1:
+                self.next_enabled = False
+                self.previous_enabled = True
+            elif idx == 0:
+                self.next_enabled = True
+                self.previous_enabled = False
+            else:
+                self.next_enabled = True
+                self.previous_enabled = True
 
     def traits_view(self):
-        v = View(VSplit(UItem('results', editor=TabularEditor(adapter=self.adapter,
-                                                              editable=False,
-                                                              multi_select=False,
-                                                              selected='selected',
-                                                              column_clicked='column_clicked',
-                                                              # dclicked='dclicked'
-                                                              )),
-                        UItem('graph', style='custom', height=600))
-                 )
+        v = View(VSplit(VGroup(HGroup(icon_button_editor('previous_button', 'arrow_left',
+                                                         enabled_when='previous_enabled'),
+                                      icon_button_editor('next_button', 'arrow_right',
+                                                         enabled_when='next_enabled')),
+
+                               UItem('results', editor=TabularEditor(adapter=self.adapter,
+                                                                     editable=False,
+                                                                     multi_select=False,
+                                                                     selected='selected',
+                                                                     column_clicked='column_clicked',
+                                                                     # dclicked='dclicked'
+                                                                     ))),
+                        UItem('graph', style='custom', height=600)))
         return v
 # ============= EOF =============================================
