@@ -139,7 +139,7 @@ class BaseRegressor(HasTraits):
         return list(set(self.user_excluded + self.outlier_excluded + self.truncate_excluded))
 
     def set_truncate(self, trunc):
-        self.truncate = trunc
+        self.truncate = trunc or ''
         if self.truncate:
             m = re.match(r'[A-Za-z]+', self.truncate)
             if m:
