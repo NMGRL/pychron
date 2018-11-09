@@ -60,7 +60,6 @@ class IsoEvoMainOptions(MainOptions):
     curvature_goodness_at = Float
     rsquared_goodness = Range(0.0, 1.0, 0.95)
     signal_to_blank_goodness = Float
-    signal_to_baseline_goodness = Float
     global_goodness_visible = Bool
 
     def _get_edit_view(self):
@@ -92,9 +91,6 @@ class IsoEvoMainOptions(MainOptions):
                           HGroup(Item('rsquared_goodness', label='R-Squared Adj')),
                           HGroup(Item('signal_to_blank_goodness',
                                       tooltip='If Blank/Signal*100 greater than threshold mark regression as "Bad"')),
-                          HGroup(Item('signal_to_baseline_goodness',
-                                      tooltip='If Baseline/Signal*100 is greater than threshold '
-                                              'mark regression as "Bad"')),
                           label='Goodness')
 
         auto = VGroup(VGroup(Item('n_threshold', label='Threshold'),
@@ -141,7 +137,7 @@ class IsoEvoMainOptions(MainOptions):
     @on_trait_change('plot_enabled, save_enabled, fit, error_type, filter_outliers,'
                      'goodness_threshold, slope_goodness, slope_goodness_intensity,'
                      'outlier_goodness, curvature_goodness, curvature_goodness_at,'
-                     'rsquared_goodness, signal_to_blank_goodness, signal_to_baseline_goodness')
+                     'rsquared_goodness, signal_to_blank_goodness')
     def _handle_global(self, name, new):
         self._toggle_attr(name, new)
 

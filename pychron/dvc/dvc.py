@@ -34,13 +34,12 @@ from pychron.core.helpers.iterfuncs import groupby_key, groupby_repo
 from pychron.core.i_datastore import IDatastore
 from pychron.core.progress import progress_loader, progress_iterator
 from pychron.database.interpreted_age import InterpretedAge
-from pychron.dvc import dvc_dump, dvc_load, analysis_path, repository_path, AnalysisNotAnvailableError, \
-    list_frozen_productions
+from pychron.dvc import dvc_dump, dvc_load, analysis_path, repository_path, AnalysisNotAnvailableError
 from pychron.dvc.defaults import TRIGA, HOLDER_24_SPOKES, LASER221, LASER65
 from pychron.dvc.dvc_analysis import DVCAnalysis, PATH_MODIFIERS
 from pychron.dvc.dvc_database import DVCDatabase
 from pychron.dvc.func import find_interpreted_age_path, GitSessionCTX, push_repositories
-from pychron.dvc.meta_repo import MetaRepo, Production
+from pychron.dvc.meta_repo import MetaRepo, get_frozen_flux, get_frozen_productions
 from pychron.dvc.tasks.dvc_preferences import DVCConnectionItem
 from pychron.envisage.browser.record_views import InterpretedAgeRecordView
 from pychron.git.hosts import IGitHost, CredentialException
@@ -817,14 +816,14 @@ class DVC(Loggable):
         frozen_productions = {}
         if not quick:
             for exp in exps:
-                ps = self._get_frozen_productions(exp)
+                ps = get_frozen_productions(exp)
                 frozen_productions.update(ps)
 
             for r in records:
                 irrad = r.irradiation
                 if irrad != 'NoIrradiation':
                     if irrad not in frozen_fluxes:
-                        frozen_fluxes[irrad] = self._get_frozen_flux(r.repository_identifier, r.irradiation)
+                        frozen_fluxes[irrad] = get_frozen_flux(r.repository_identifier, r.irradiation)
 
                     level = r.irradiation_level
                     if irrad in fluxes:
@@ -1520,30 +1519,6 @@ class DVC(Loggable):
                     else:
                         a.calculate_age()
         return a
-
-    def _get_frozen_productions(self, repo):
-        prods = {}
-        for name, path in list_frozen_productions(repo):
-            prods[name] = Production(path)
-
-        return prods
-
-    # def _get_frozen_production(self, rid, repo):
-    #     path = analysis_path(rid, repo, 'productions')
-    #     if path:
-    #         return Production(path)
-
-    def _get_frozen_flux(self, repo, irradiation):
-        path = repository_path(repo, '{}.json'.format(irradiation))
-
-        fd = {}
-        print('fffafaf', path)
-        if path:
-            fd = dvc_load(path)
-            for fi in fd.values():
-                print('fff', fi)
-                fi['j'] = ufloat(*fi['j'], tag='J')
-        return fd
 
     def get_repository(self, repo):
         return self._get_repository(repo, as_current=False)
