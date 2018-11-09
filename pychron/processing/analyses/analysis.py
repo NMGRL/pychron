@@ -406,7 +406,7 @@ class Analysis(ArArAge, IdeogramPlotable):
 
         return r
 
-    def show_isotope_evolutions(self, isotopes=None, **kw):
+    def get_isotope_evolutions(self, isotopes=None, load_data=True, **kw):
         if isotopes:
             if isinstance(isotopes[0], (str, six.text_type)):
                 nisotopes = []
@@ -418,17 +418,19 @@ class Analysis(ArArAge, IdeogramPlotable):
                     if iso:
                         nisotopes.append(iso)
                 isotopes = nisotopes
-                # isotopes = [self.isotopes[i] for i in isotopes]
         else:
             isotopes = list(self.isotopes.values())
 
-        keys = ['{}{}'.format(k.name, k.detector) for k in isotopes]
+        if load_data:
+            keys = ['{}{}'.format(k.name, k.detector) for k in isotopes]
+            self.load_raw_data(keys=keys)
 
-        self.load_raw_data(keys=keys)
-        g = show_evolutions_factory(self.record_id, isotopes, **kw)
+        return show_evolutions_factory(self.record_id, isotopes, **kw)
+
+    def show_isotope_evolutions(self, *args, **kw):
+        g = self.get_isotope_evolutions(*args, **kw)
         if g:
             open_view(g, handler=CloseHandler())
-
             return g
 
     def trigger_recall(self, analyses=None):

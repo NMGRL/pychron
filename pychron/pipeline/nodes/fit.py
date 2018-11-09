@@ -18,18 +18,20 @@ from numpy import inf, hstack, invert
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
 # ============= enthought library imports =======================
-from traits.api import Bool, List, HasTraits, Str, Float, Instance
+from traits.api import Bool, List
 
-from pychron.core.helpers.formatting import floatfmt
 from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.core.progress import progress_loader
 from pychron.options.options_manager import BlanksOptionsManager, ICFactorOptionsManager, \
     IsotopeEvolutionOptionsManager, \
     FluxOptionsManager, DefineEquilibrationOptionsManager
 from pychron.options.views.views import view
+from pychron.pipeline.editors.define_equilibration_editor import DefineEquilibrationResultsEditor
 from pychron.pipeline.editors.flux_results_editor import FluxResultsEditor
 from pychron.pipeline.editors.results_editor import IsoEvolutionResultsEditor
 from pychron.pipeline.nodes.figure import FigureNode
+from pychron.pipeline.results.define_equilibration import DefineEquilibrationResult
+from pychron.pipeline.results.iso_evo import IsoEvoResult
 from pychron.pipeline.state import get_detector_set
 from pychron.pychron_constants import NULL_STR
 
@@ -215,89 +217,6 @@ class FitICFactorNode(FitReferencesNode):
                      for a in self.plotter_options.aux_plots]
 
 
-GOODNESS_TAGS = ('int_err', 'slope', 'outlier', 'curvature', 'rsquared', 'signal_to_blank', 'signal_to_baseline')
-GOODNESS_NAMES = (
-'Intercept Error', 'Slope', 'Outliers', 'Curvature', 'RSquared', 'Blank/Signal %', 'Baseline/Signal %')
-INVERTED_GOODNESS = ('rsquared',)
-
-
-class IsoEvoResult(HasTraits):
-    # record_id = Str
-    isotope = Str
-    n = Str
-    fit = Str
-    intercept_value = Float
-    intercept_error = Float
-    percent_error = Float
-    regression_str = Str
-    int_err_goodness = None
-    slope_goodness = None
-    outlier_goodness = None
-    curvature_goodness = None
-    rsquared_goodness = None
-    signal_to_blank_goodness = None
-    signal_to_baseline_goodness = None
-
-    int_err_threshold = None
-    slope_threshold = None
-    outlier_threshold = None
-    curvature_threshold = None
-    rsquared_threshold = None
-    signal_to_blank_threshold = None
-    signal_to_baseline_threshold = None
-
-    int_err = None
-    slope = None
-    outlier = None
-    curvature = None
-    rsquared = None
-    signal_to_blank = None
-    signal_to_baseline = None
-
-    analysis = Instance('pychron.processing.analyses.analysis.Analysis')
-
-    @property
-    def goodness(self):
-        good = True
-        for g in GOODNESS_TAGS:
-            v = getattr(self, '{}_goodness'.format(g))
-            if v is not None:
-                good &= v
-
-        return good
-
-    @property
-    def tooltip(self):
-
-        def f(t, m):
-            g = getattr(self, '{}_goodness'.format(t))
-            v = getattr(self, t)
-            th = getattr(self, '{}_threshold'.format(t))
-            if g is not None:
-                comp = '<' if t in INVERTED_GOODNESS else '>'
-                g = 'OK' if g else "Bad {}{}{}".format(floatfmt(v, n=4), comp, th)
-            else:
-                g = 'Not Tested'
-
-            return '{:<25}: {}'.format(m, g)
-
-        return '\n'.join([f(g, n) for g, n in zip(GOODNESS_TAGS, GOODNESS_NAMES)])
-
-    @property
-    def record_id(self):
-        r = ''
-        if self.analysis:
-            r = self.analysis.record_id
-        return r
-
-    @property
-    def identifier(self):
-        r = ''
-        if self.analysis:
-            r = self.analysis.identifier
-        return r
-
-
 class FitIsotopeEvolutionNode(FitNode):
     editor_klass = 'pychron.pipeline.plot.editors.isotope_evolution_editor,' \
                    'IsotopeEvolutionEditor'
@@ -360,7 +279,7 @@ class FitIsotopeEvolutionNode(FitNode):
             self._set_saveable(state)
             if fs:
                 e = IsoEvolutionResultsEditor(fs)
-                e.plotter_options = po
+                # e.plotter_options = po
                 state.editors.append(e)
 
     def _assemble_result(self, xi, prog, i, n):
@@ -506,12 +425,11 @@ class DefineEquilibrationNode(FitNode):
 
         unks = state.unknowns
 
-        progress_loader(unks, self._assemble_result, threshold=1, step=10)
+        fs = progress_loader(unks, self._assemble_result, threshold=1, step=10)
         self._set_saveable(state)
-        # if fs:
-        # e = IsoEvolutionResultsEditor(fs)
-        # e.plotter_options = po
-        # state.editors.append(e)
+        if fs:
+            e = DefineEquilibrationResultsEditor(fs)
+            state.editors.append(e)
 
     def _set_saveable(self, state):
         ps = self.plotter_options.get_saveable_aux_plots()
@@ -550,6 +468,7 @@ class DefineEquilibrationNode(FitNode):
 
                 iso.xs = iso_xs
                 iso.ys = iso_ys
+                yield DefineEquilibrationResult(analysis=xi, isotope=k, equilibration_time=fi.equilibration_time)
 
 
 class FitFluxNode(FitNode):

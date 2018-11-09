@@ -66,7 +66,7 @@ required:
 nodes:
   - klass: UnknownNode
   - klass: DefineEquilibrationNode
-  # - klass: ReviewNode
+  - klass: ReviewNode
   - klass: DefineEquilibrationPersistNode
     use_editor: False
 """
