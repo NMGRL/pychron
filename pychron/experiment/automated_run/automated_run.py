@@ -276,10 +276,10 @@ class AutomatedRun(Loggable):
     def py_position_hv(self, pos, detector):
         self._set_hv_position(pos, detector)
 
-    def py_position_magnet(self, pos, detector, use_dac=False):
+    def py_position_magnet(self, pos, detector, use_dac=False, for_collection=True):
         if not self._alive:
             return
-        self._set_magnet_position(pos, detector, use_dac=use_dac)
+        self._set_magnet_position(pos, detector, use_dac=use_dac, for_collection=for_collection)
 
     def py_activate_detectors(self, dets, peak_center=False):
         if not self._alive:
@@ -2023,52 +2023,53 @@ anaylsis_type={}
     def _set_magnet_position(self, pos, detector,
                              use_dac=False, update_detectors=True,
                              update_labels=True, update_isotopes=True,
-                             remove_non_active=True):
+                             remove_non_active=True, for_collection=True):
         change = False
         ion = self.ion_optics_manager
         if ion is not None:
             change = ion.position(pos, detector, use_dac=use_dac, update_isotopes=update_isotopes)
 
-        if update_labels:
-            self._update_labels()
-            # from pychron.core.ui.gui import invoke_in_main_thread
-            # invoke_in_main_thread(self._update_labels)
+        if for_collection:
+            if update_labels:
+                self._update_labels()
+                # from pychron.core.ui.gui import invoke_in_main_thread
+                # invoke_in_main_thread(self._update_labels)
 
-        if update_detectors:
-            self._update_detectors()
+            if update_detectors:
+                self._update_detectors()
 
-        if remove_non_active:
-            for k in self.isotope_group.keys():
-                iso = self.isotope_group.isotopes[k]
-                det = next((di for di in self._active_detectors if di.isotope == iso.name), None)
-                if det is None:
-                    self.isotope_group.pop(k)
+            if remove_non_active:
+                for k in self.isotope_group.keys():
+                    iso = self.isotope_group.isotopes[k]
+                    det = next((di for di in self._active_detectors if di.isotope == iso.name), None)
+                    if det is None:
+                        self.isotope_group.pop(k)
 
-            def key(v):
-                return v[1].name
+                def key(v):
+                    return v[1].name
 
-            def key2(v):
-                return v[1].detector
+                def key2(v):
+                    return v[1].detector
 
-            self.debug('per cleaned {}'.format(list(self.isotope_group.keys())))
-            # for name, items in groupby(sorted(list(self.isotope_group.items()), key=key), key=key):
-            for name, items in groupby_key(self.isotope_group.items(), key):
-                items = list(items)
-                if len(items) > 1:
-                    for det, items in groupby_key(items, key2):
+                self.debug('per cleaned {}'.format(list(self.isotope_group.keys())))
+                # for name, items in groupby(sorted(list(self.isotope_group.items()), key=key), key=key):
+                for name, items in groupby_key(self.isotope_group.items(), key):
+                    items = list(items)
+                    if len(items) > 1:
+                        for det, items in groupby_key(items, key2):
 
-                        items = list(items)
-                        if len(items) > 1:
-                            for k, v in items:
-                                if v.name == k:
-                                    self.isotope_group.isotopes.pop(k)
+                            items = list(items)
+                            if len(items) > 1:
+                                for k, v in items:
+                                    if v.name == k:
+                                        self.isotope_group.isotopes.pop(k)
 
-            self.debug('cleaned isotoped group {}'.format(list(self.isotope_group.keys())))
+                self.debug('cleaned isotoped group {}'.format(list(self.isotope_group.keys())))
 
-        if self.plot_panel:
-            self.debug('load analysis view')
-            self.plot_panel.analysis_view.load(self)
-            self.plot_panel.analysis_view.refresh_needed = True
+            if self.plot_panel:
+                self.debug('load analysis view')
+                self.plot_panel.analysis_view.load(self)
+                self.plot_panel.analysis_view.refresh_needed = True
 
         return change
 
