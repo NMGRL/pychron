@@ -171,6 +171,10 @@ class ThermoSpectrometer(BaseSpectrometer):
             self.set_parameter(name, it)
             self.trait_setq(integration_time=it)
 
+            # this is a hail mary to potential make qtegra happier post setting integration time
+            self.debug('sleeping 2 seconds after setting integration time')
+            time.sleep(2)
+
         return it
 
     def set_parameter(self, name, v):

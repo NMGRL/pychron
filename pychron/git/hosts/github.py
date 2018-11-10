@@ -33,6 +33,14 @@ class GitHubService(GitHostService):
     def remote_url(self):
         return paths.github_url
 
+    def get_repo(self, organization, name):
+        cmd = '{}/repos/{}/{}'.format(paths.github_api_url, organization, name)
+        resp = self._get(cmd)
+        try:
+            return resp[0]
+        except IndexError:
+            pass
+
     def test_api(self):
         ret, err = True, ''
         try:

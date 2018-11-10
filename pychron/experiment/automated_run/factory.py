@@ -1167,14 +1167,9 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
         identifier = self.labnumber
 
-        print(attr, identifier, self.suppress_meta, self.irrad_hole)
         if not (self.suppress_meta or '-##-' in identifier):
             if identifier and self.irrad_hole:
-
-                print(identifier, self.selected_irradiation, self.selected_level, self.irrad_hole)
-
                 j = self.dvc.get_flux(self.selected_irradiation, self.selected_level, int(self.irrad_hole)) or 0
-                print(j)
                 if attr == 'err':
                     j = std_dev(j)
                 else:
