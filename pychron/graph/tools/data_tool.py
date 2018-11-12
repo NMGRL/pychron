@@ -91,6 +91,7 @@ class DataToolOverlay(TextBoxOverlay):
     tool = Any
     visibility = Enum("auto", True, False)
     visible = False
+    font = 'arial 12'
     #    visible = True
     #    tooltip_mode = Bool(True)
     tooltip_mode = Bool(False)

@@ -1376,11 +1376,15 @@ class Graph(ContextMenuMixin):
 
         axis = getattr(self.plots[plotid], axis)
         params = dict(title=title)
-        if font is not None or size is not None:
-            if font not in VALID_FONTS:
-                font = 'modern'
 
-            tfont = '{} {}'.format(font, size + 2)
+        if font not in VALID_FONTS:
+            font = 'arial'
+
+        if font is not None or size is not None:
+            if size is None:
+                size = 12
+
+            tfont = '{} {}'.format(font, size)
             params.update(title_font=tfont)
 
         axis.trait_set(**params)

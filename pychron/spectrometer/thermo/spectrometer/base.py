@@ -211,12 +211,12 @@ class ThermoSpectrometer(BaseSpectrometer):
         return deflection
 
     def read_deflection_word(self, keys):
-        x = self.ask('GetDeflections {}'.format(','.join(keys)), verbose=False)
+        x = self.ask('GetDeflections {}'.format(','.join(keys)), verbose=False, quiet=True)
         x = self._parse_word(x)
         return x
 
     def read_parameter_word(self, keys):
-        x = self.ask('GetParameters {}'.format(','.join(keys)), verbose=False)
+        x = self.ask('GetParameters {}'.format(','.join(keys)), verbose=False, quiet=True)
         x = self._parse_word(x)
         return x
 
