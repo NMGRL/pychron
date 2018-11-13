@@ -53,10 +53,10 @@ class InterferenceAdapter(TabularAdapter):
     font = '10'
 
     def _get_value_text(self):
-        return floatfmt(self.item.value, n=5, use_scientific=True)
+        return floatfmt(self.item.value, n=7, use_scientific=True)
 
     def _get_error_text(self):
-        return floatfmt(self.item.error, n=5, use_scientific=True)
+        return floatfmt(self.item.error, n=7, use_scientific=True)
 
     def _get_percent_error_text(self):
         return format_percent_error(self.item.value, self.item.error)
