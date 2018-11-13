@@ -118,7 +118,7 @@ def make_at_filter(analysis_types):
     analysis_types = [xi.replace(' ', '_') for xi in analysis_types]
 
     if 'blank' in analysis_types:
-        analysis_types.remove('blank')
+        # analysis_types.remove('blank')
         ret = or_(AnalysisTbl.analysis_type.startswith('blank'),
                   AnalysisTbl.analysis_type.in_(analysis_types))
     else:
@@ -207,26 +207,6 @@ class DVCDatabase(DatabaseAdapter):
     def __init__(self, clear=False, auto_add=False, *args, **kw):
         super(DVCDatabase, self).__init__(*args, **kw)
 
-        # self._bind_preferences()
-        # if path is None:
-        #     path = paths.meta_db
-
-        # self.path = path
-
-        # self.synced_path = '{}.sync'.format(paths.meta_db)
-        # self.merge_path = '{}.merge'.format(paths.meta_db)
-        # self.remote_path = '/var/pychronmeta.sqlite'
-
-        # if clear and os.path.isfile(self.path):
-        #     os.remove(self.path)
-
-        # if not os.path.isfile(self.path):
-        # self.create_all(Base.metadata)
-        # self.connect()
-        # else:
-        # with self.session_ctx() as sess:
-        # print sess
-        # Base.metadata.init(sess.bind)
         if auto_add:
             if self.connect():
                 with self.session_ctx():
@@ -247,20 +227,6 @@ class DVCDatabase(DatabaseAdapter):
                     if not self.get_users():
                         self.add_user('root')
 
-    # def add_invalid_tag(self):
-    #     return self._add_default_tag('invalid', True)
-    #
-    # def add_ok_tag(self):
-    #     return self._add_default_tag('ok', False)
-    #
-    # def _add_default_tag(self, name, v):
-    #     with self.session_ctx():
-    #         tag = TagTbl(name=name,
-    #                      omit_ideo=v,
-    #                      omit_spec=v,
-    #                      omit_iso=v,
-    #                      omit_series=v)
-    #         return self._add_item(tag)
     def check_restricted_name(self, name, category, check_principal_investigator=False):
         """
         return True is name is restricted
@@ -336,8 +302,6 @@ class DVCDatabase(DatabaseAdapter):
                 level = dbpos.level.name
                 pos = dbpos.position
                 irradiation = dbpos.level.irradiation.name
-                # irradiation = '{} {}:{}'.format(level.irradiation.name,
-                #                                 level.name, dbpos.position)
 
             return project, pi, sample, material, irradiation, level, pos
 
@@ -348,11 +312,9 @@ class DVCDatabase(DatabaseAdapter):
                 an = self.get_analysis_runid(item.identifier, item.aliquot, item.step)
 
             change = an.change
-            # print 'asdfasdf', change, an.id, change.idanalysischangeTbl, tagname, self.save_username
             change.tag = tagname
             change.user = self.save_username
             sess.add(change)
-            # sess.commit()
 
     def find_references_by_load(self, load, analysis_types, extract_devices=None, mass_spectrometers=None,
                                 exclude_invalid=True):
@@ -382,7 +344,6 @@ class DVCDatabase(DatabaseAdapter):
                         exclude_invalid=True):
 
         with self.session_ctx():
-            # delta = 60 * 60 * hours  # seconds
             delta = timedelta(hours=hours)
             refs = OrderedSet()
             ex = None
@@ -419,7 +380,6 @@ class DVCDatabase(DatabaseAdapter):
     def retrieve_blank(self, kind, ms, ed, last, repository):
         self.debug('retrieve blank. kind={}, ms={}, '
                    'ed={}, last={}, repository={}'.format(kind, ms, ed, last, repository))
-        # with self.session_ctx() as sess:
         sess = self.session
         q = sess.query(AnalysisTbl)
 
@@ -445,27 +405,6 @@ class DVCDatabase(DatabaseAdapter):
         q = q.order_by(AnalysisTbl.timestamp.desc())
         return self._query_one(q, verbose_query=True)
 
-    # def get_analyses_data_range(self, low, high, atypes, exclude=None, exclude_uuids=None):
-    #     with self.session_ctx() as sess:
-    #         q = sess.query(AnalysisTbl)
-    #         q = q.filter(AnalysisTbl.timestamp >= low.strftime('%Y-%m-%d %H:%M:%S'))
-    #         q = q.filter(AnalysisTbl.timestamp <= high.strftime('%Y-%m-%d %H:%M:%S'))
-    #
-    #         if isinstance(atypes, (list, tuple)):
-    #             if len(atypes) == 1:
-    #                 atypes = atypes[0]
-    #
-    #         if not isinstance(atypes, (list, tuple)):
-    #             q = q.filter(AnalysisTbl.analysis_type == atypes)
-    #         else:
-    #             q = q.filter(AnalysisTbl.analysis_type.in_(atypes))
-    #
-    #         if exclude:
-    #             q = q.filter(not_(AnalysisTbl.idanalysisTbl.in_(exclude)))
-    #         if exclude_uuids:
-    #             q = q.filter(not_(AnalysisTbl.uuid.in_(exclude_uuids)))
-    #
-    #         return self._query_all(q, verbose_query=False)
     def get_min_max_analysis_timestamp(self, lns=None, projects=None, delta=0):
         """
             lns: list of labnumbers/identifiers
@@ -482,13 +421,6 @@ class DVCDatabase(DatabaseAdapter):
             elif projects:
                 q = q.join(IrradiationPositionTbl, SampleTbl, ProjectTbl)
                 q = q.filter(ProjectTbl.name.in_(projects))
-            # q = self._analysis_query(sess, attr='analysis_timestamp')
-            # if lns:
-            #     q = q.filter(gen_LabTable.identifier.in_(lns))
-            #
-            # elif projects:
-            #     q = q.join(gen_SampleTable, gen_ProjectTable)
-            #     q = q.filter(gen_ProjectTable.name.in_(projects))
 
             return self._get_date_range(q, hours=delta)
 
@@ -504,13 +436,6 @@ class DVCDatabase(DatabaseAdapter):
             q = q.filter(IrradiationPositionTbl.identifier.in_(lns))
             q = q.filter(distinct(AnalysisTbl.mass_spectrometer.name))
             return self._query_all(q)
-            # q = self._analysis_query(sess,
-            #                          meas_MeasurementTable, meas_AnalysisTable,
-            #                          before=True,
-            #                          cols=(distinct(gen_MassSpectrometerTable.name),))
-            #
-            # q = q.filter(gen_LabTable.identifier.in_(lns))
-            # return [di[0] for di in q.all()]
 
     def get_analysis_date_ranges(self, lns, hours):
         """
@@ -524,13 +449,6 @@ class DVCDatabase(DatabaseAdapter):
             q = q.order_by(AnalysisTbl.timestamp.asc())
             ts = self._query_all(q)
             return list(binfunc(ts, hours))
-            # q = self._analysis_query(sess, attr='analysis_timestamp')
-            #
-            # q = q.filter(gen_LabTable.identifier.in_(lns))
-            # q = q.order_by(meas_AnalysisTable.analysis_timestamp.asc())
-            # ts = self._query_all(q)
-            #
-            # return list(binfunc(ts, hours))
 
     def get_production_name(self, irrad, level):
         with self.session_ctx() as sess:
@@ -543,11 +461,6 @@ class DVCDatabase(DatabaseAdapter):
             if not self.get_user(self.save_username):
                 obj = UserTbl(name=self.save_username)
                 self._add_item(obj)
-
-    # def add_tag(self, **kw):
-    #     with self.session_ctx():
-    #         obj = TagTbl(**kw)
-    #         return self._add_item(obj)
 
     def add_production(self, name):
         with self.session_ctx():
@@ -639,8 +552,6 @@ class DVCDatabase(DatabaseAdapter):
             q = s1.union(s2)
             return self._query_all(q)
 
-            # q = sess.query(AnalysisIntensitiesTbl)
-
     def get_analyses_advanced(self, queries, isotopes=None, detectors=None, return_labnumbers=False):
         if isotopes is None:
             with self.session_ctx() as sess:
@@ -692,16 +603,6 @@ class DVCDatabase(DatabaseAdapter):
 
             q = q.filter(ff)
             return self._query_all(q, verbose_query=True)
-
-    # def add_analysis_group_set(self, group, analysis, **kw):
-    #     obj = AnalysisGroupSetTbl(analysisID=analysis.id, **kw)
-    #     self._add_item(obj)
-    #
-    #     if isinstance(group, (int, long)):
-    #         obj.groupID = group
-    #     else:
-    #         group.analyses.append(obj)
-    #     return obj
 
     def add_analysis(self, **kw):
         with self.session_ctx():
@@ -862,18 +763,6 @@ class DVCDatabase(DatabaseAdapter):
             a = RepositoryTbl(name=name, **kw)
             a.principal_investigator = principal_investigator
             return self._add_item(a)
-
-    # def add_interpreted_age(self, **kw):
-    #     with self.session_ctx():
-    #         a = InterpretedAgeTbl(**kw)
-    #         return self._add_item(a)
-    #
-    # def add_interpreted_age_set(self, interpreted_age, analysis, **kw):
-    #     with self.session_ctx():
-    #         a = InterpretedAgeSetTbl(**kw)
-    #         a.interpreted_age = interpreted_age
-    #         a.analysis = analysis
-    #         return self._add_item(a)
 
     # fuzzy getters
     def get_fuzzy_projects(self, search_str):
@@ -1361,13 +1250,6 @@ class DVCDatabase(DatabaseAdapter):
 
             self.debug(compile_query(q))
             return self._query_all(q)
-
-    # def get_experiment_labnumbers(self, expnames):
-    #     with self.session_ctx() as sess:
-    #         q = sess.query(distinct(IrradiationPositionTbl.idirradiationpositionTbl), IrradiationPositionTbl)
-    #         q = q.join(AnalysisTbl, ExperimentAssociationTbl)
-    #         q = q.filter(ExperimentAssociationTbl.experimentName.in_(expnames))
-    #         return self._query_all(q)
 
     def get_level_names(self, irrad):
         with self.session_ctx():
@@ -1880,16 +1762,6 @@ class DVCDatabase(DatabaseAdapter):
             return self._query_all(q, verbose_query=True, **kw)
 
     def get_samples(self, projects=None, principal_investigators=None, project_like=None, name_like=None, **kw):
-        # if projects:
-        #     if hasattr(projects, '__iter__'):
-        #         kw = self._append_filters(ProjectTbl.name.in_(projects), kw)
-        #     else:
-        #         kw = self._append_filters(ProjectTbl.name == projects, kw)
-        #     kw = self._append_joins(ProjectTbl, kw)
-        #
-        # if principal_investigators:
-        #
-        # return self._retrieve_items(SampleTbl, verbose_query=False, **kw)
         with self.session_ctx() as sess:
             q = sess.query(SampleTbl)
             if projects or project_like:
@@ -2020,12 +1892,6 @@ class DVCDatabase(DatabaseAdapter):
             ps = self._retrieve_items(ProjectTbl, order=order, verbose_query=True)
         return ps
 
-    # def get_tag(self, name):
-    #     return self._retrieve_item(TagTbl, name)
-
-    # def get_tags(self):
-    #     return self._retrieve_items(TagTbl)
-
     def get_repositories(self):
         return self._retrieve_items(RepositoryTbl)
 
@@ -2073,14 +1939,11 @@ class DVCDatabase(DatabaseAdapter):
             q = sess.query(AnalysisTbl)
             q = q.join(IrradiationPositionTbl, LevelTbl, IrradiationTbl,
                        SampleTbl, AnalysisChangeTbl)
-            # q = q.options(joinedload('experiment_associations'))
-            # q = q.options(joinedload('irradiation_position'))
+
             q = q.filter(IrradiationTbl.name == irradiation)
             q = q.filter(LevelTbl.name == level)
             q = q.filter(SampleTbl.name == sample)
             q = q.filter(AnalysisChangeTbl.tag != 'invalid')
-            # q = q.filter(not_(IrradiationPositionTbl.identifier.in_(('24061','24062', '24063', '24076'))))
-            # q = q.filter(SampleTbl.name.in_(('BW-2014-3', 'BW-2014-4')))
 
             return self._query_all(q, verbose_query=True)
 
@@ -2114,15 +1977,6 @@ class DVCDatabase(DatabaseAdapter):
     # ============================================================
     # Sample Prep
     # ============================================================
-    # with self.session_ctx():
-    #     a = self.get_sample(name, project, material, grainsize)
-    #     if a is None:
-    #         self.debug('Adding sample {},{},{}'.format(name, project, material))
-    #         a = SampleTbl(name=name)
-    #         a.project = self.get_project(project)
-    #         a.material = self.get_material(material, grainsize)
-    #         a = self._add_item(a)
-    #     return a
     def add_sample_prep_worker(self, name, fullname, email, phone, comment):
         with self.session_ctx():
             w = self.get_sample_prep_worker(name)
@@ -2154,10 +2008,6 @@ class DVCDatabase(DatabaseAdapter):
             ss = self._query_all(q)
             for si in ss:
                 si.sessionID = session.id
-
-                # for s in samples:
-                #     sample = self.get_sample()
-                #
 
     def add_sample_prep_session(self, name, worker, comment):
         with self.session_ctx():

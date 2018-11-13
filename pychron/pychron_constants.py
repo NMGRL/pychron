@@ -18,6 +18,7 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 import os
+import string
 
 import yaml
 
@@ -30,25 +31,13 @@ EL_PROTOCOL = 'pychron.extraction_line.extraction_line_manager.ExtractionLineMan
 DVC_PROTOCOL = 'pychron.dvc.dvc.DVC'
 FURNACE_PROTOCOL = 'pychron.furnace.furnace_manager.BaseFurnaceManager'
 
-# FONTS = ['Andale Mono', 'Arial',
-#          'Calibri', 'Cambria', 'Consolas', 'Courier New',
-#          'Georgia',
-#          'Impact',
-#          'Helvetica',
-#          'Trebuchet MS',
-#          'Verdana']
-# FONTS = ['Helvetica',
-#          'Arial',
-#          #'Courier New', 'Consolas'
-#          ]
+
 TTF_FONTS = ['Courier New', 'Arial', 'Georgia', 'Impact', 'Verdana']
-# FONTS = pdfmetrics.standardFonts
 FONTS = ['Helvetica'] + TTF_FONTS
 SIZES = [10, 6, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36]
 
 PLUSMINUS = '\N{Plus-minus sign}'
 SIGMA = '\N{Greek Small Letter Sigma}'
-# LAMBDA = '\N{Greek Small Letter Lambda}'
 LAMBDA = '\u03BB'
 
 PLUSMINUS_NSIGMA = '{}{{}}{}'.format(PLUSMINUS, SIGMA)
@@ -100,7 +89,6 @@ AGE_MA_SCALARS = {'Ma': 1, 'ka': 1e-3, 'a': 1e-6, 'Ga': 1e3}
 DESCENDING = 'Descending'
 ASCENDING = 'Ascending'
 AGE_SORT_KEYS = (NULL_STR, ASCENDING, DESCENDING)
-OMIT_KEYS = ('omit_ideo', 'omit_spec', 'omit_iso', 'omit_series')
 
 UNKNOWN = 'unknown'
 COCKTAIL = 'cocktail'
@@ -114,8 +102,6 @@ WHIFF = 'whiff'
 
 EXTRACT_DEVICE = 'Extract Device'
 NO_EXTRACT_DEVICE = 'No Extract Device'
-
-import string
 
 seeds = string.ascii_uppercase
 ALPHAS = [a for a in seeds] + ['{}{}'.format(a, b)
@@ -191,10 +177,9 @@ QTEGRA_INTEGRATION_TIMES = [0.065536, 0.131072, 0.262144, 0.524288,
                             1.048576, 2.097152, 4.194304, 8.388608,
                             16.777216, 33.554432, 67.108864]
 QTEGRA_DEFAULT_INTEGRATION_TIME = 1.048576
-DEFAULT_INTEGRATION_TIME = 1
-
 ISOTOPX_INTEGRATION_TIMES = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 2.0, 3.0, 4.0, 5.0, 10.0]
 ISOTOPX_DEFAULT_INTEGRATION_TIME = 1
+
 DEFAULT_INTEGRATION_TIME = 1
 
 K_DECAY_CONSTANTS = {'Min et al., 2000': (5.80e-11, 0, 4.884e-10, 0),
@@ -215,17 +200,12 @@ if paths.setup_dir:
                 pass
 
 AR_AR = 'Ar/Ar'
-# MINNA_BLUFF_IRRADIATIONS = [('NM-205', ['E', 'F' , 'G', 'H', 'O']),
-# ('NM-213', ['A', 'C', 'I', 'J', 'K', 'L']),
-# ('NM-216', ['C', 'D', 'E', 'F']),
-# ('NM-220', ['L', 'M', 'N', 'O']),
-# ('NM-222', ['A', 'B', 'C', 'D']),
-# ('NM-256', ['E', 'F'])]
 
 QTEGRA_SOURCE_KEYS = ('extraction_lens', 'ysymmetry', 'zsymmetry', 'zfocus')
 QTEGRA_SOURCE_NAMES = ('ExtractionLens', 'Y-Symmetry', 'Z-Symmetry', 'Z-Focus')
 
-ANALYSIS_TYPES = ['Unknown', 'Air', 'Cocktail', 'Blank Unknown', 'Blank Air', 'Blank Cocktail', 'Blank']
+REFERENCE_ANALYSIS_TYPES = ['Air', 'Cocktail', 'Blank Unknown', 'Blank Air', 'Blank Cocktail', 'Blank']
+ANALYSIS_TYPES = ['Unknown'] + REFERENCE_ANALYSIS_TYPES
 
 DEFAULT_MONITOR_NAME = 'FC-2'
 
@@ -242,8 +222,5 @@ HIGH_GRADE_STEPS = ('frantz', 'heavy_liquid', 'gold_table', 'acid', 'pick')
 IMAGE_STEPS = ('mount', 'us_wand', 'eds', 'cl', 'bse', 'se')
 
 SAMPLE_PREP_STEPS = INITIAL_STEPS+HIGH_GRADE_STEPS+IMAGE_STEPS
-
-    # ('crush', 'sieve', 'wash', 'frantz', 'heavy_liquid', 'acid',
-    #                  'mount', 'gold_table', 'us_wand', 'eds', 'cl', 'bse', 'se', 'pick')
 
 # ============= EOF =============================================
