@@ -140,7 +140,7 @@ def analysis_type_filter(q, analysis_types):
     analysis_types = [xi.replace(' ', '_') for xi in analysis_types]
 
     if 'blank' in analysis_types:
-        analysis_types.remove('blank')
+        # analysis_types.remove('blank')
         q = q.filter(
             or_(AnalysisTbl.analysis_type.startswith('blank'),
                 AnalysisTbl.analysis_type.in_(analysis_types)))

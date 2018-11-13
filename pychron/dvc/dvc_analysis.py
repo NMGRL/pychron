@@ -132,6 +132,9 @@ class DVCAnalysis(Analysis):
         # self.collection_version = jd['collection_version']
         self._set_isotopes(jd)
 
+        if self.analysis_type.lower() == 'sample':
+            self.analysis_type = 'unknown'
+
     def load_extraction(self, jd):
         for attr in EXTRACTION_ATTRS:
             tag = attr

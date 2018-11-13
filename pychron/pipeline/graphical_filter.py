@@ -55,11 +55,12 @@ def analysis_type_func(analyses, offset=True):
 
     """
     if offset:
-        counts = {k: float(len(list(v))) for k, v in groupby_key(analyses, 'analysis_type')}
+        counts = {k.lower(): float(len(list(v))) for k, v in groupby_key(analyses, 'analysis_type')}
 
     __cache__ = {}
 
     def f(x):
+        x = x.lower()
         c = 0
         if offset:
             if x in __cache__:
