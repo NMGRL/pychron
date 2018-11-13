@@ -22,11 +22,10 @@ from traitsui.api import Item, EnumEditor, UItem, VGroup, HGroup
 
 from pychron.core.helpers.iterfuncs import partition, groupby_group_id
 from pychron.core.ui.check_list_editor import CheckListEditor
-from pychron.experiment.utilities.identifier import SPECIAL_MAPPING
 from pychron.pipeline.editors.flux_results_editor import FluxPosition
 from pychron.pipeline.graphical_filter import GraphicalFilterModel, GraphicalFilterView
 from pychron.pipeline.nodes.data import DVCNode
-from pychron.pychron_constants import DEFAULT_MONITOR_NAME, NULL_STR
+from pychron.pychron_constants import DEFAULT_MONITOR_NAME, NULL_STR, REFERENCE_ANALYSIS_TYPES
 
 
 class FindNode(DVCNode):
@@ -228,8 +227,6 @@ class FindReferencesNode(FindNode):
         self.threshold = nodedict.get('threshold', 10)
         self.analysis_types = nodedict.get('analysis_types', [])
         self.name = nodedict.get('name', 'Find References')
-        # if self.analysis_types:
-        #     self.name = 'Find {}'.format(','.join(self.analysis_types))
         self.limit_to_analysis_loads = nodedict.get('limit_to_analysis_loads', True)
 
     def finish_load(self):
@@ -247,10 +244,6 @@ class FindReferencesNode(FindNode):
         d['analysis_types'] = self.analysis_types
         d['limit_to_analysis_loads'] = self.limit_to_analysis_loads
 
-    # def _analysis_types_changed(self, new):
-    #     if new == 'Blank Unknown':
-    #         new = 'Blank'
-    #     self.name = 'Find {}s'.format(new)
     def _load_analysis_types(self, state):
         pass
 
@@ -375,8 +368,7 @@ class FindReferencesNode(FindNode):
         return v
 
     def _available_analysis_types_default(self):
-        return sorted([' '.join([ki.capitalize() for ki in k.split('_')])
-                       for k in SPECIAL_MAPPING.keys()])
+        return list(REFERENCE_ANALYSIS_TYPES)
 
     def _get_display_loads(self):
         if self.limit_to_analysis_loads:
