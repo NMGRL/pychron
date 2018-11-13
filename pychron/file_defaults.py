@@ -58,6 +58,10 @@ from pychron.core.helpers.strtools import to_bool
 # '''
 
 IDENTIFIERS_DEFAULT = """
+- name: Blank
+  shortname: b
+  extractable: False
+  special: True
 - name: Blank Air
   shortname: ba
   extractable: False

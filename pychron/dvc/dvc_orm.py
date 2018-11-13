@@ -18,7 +18,7 @@
 # ============= standard library imports ========================
 
 from sqlalchemy import Column, Integer, String, TIMESTAMP, Float, func, Boolean, ForeignKey, DATE, DATETIME, TEXT, \
-    DateTime
+    DateTime, BLOB
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import object_session, deferred
 from sqlalchemy.orm import relationship

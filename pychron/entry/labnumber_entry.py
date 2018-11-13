@@ -90,6 +90,7 @@ class LabnumberEntry(DVCIrradiationable):
 
     default_principal_investigator = Str
     allow_multiple_null_identifiers = Bool(True)
+    use_packet_for_default_identifier = Bool(True)
     # ===========================================================================
     # irradiation positions table events
     # ===========================================================================
@@ -129,7 +130,8 @@ class LabnumberEntry(DVCIrradiationable):
         for key in ('irradiation_prefix',
                     'irradiation_project_prefix',
                     'monitor_name',
-                     # 'allow_multiple_null_identifiers',
+                    'allow_multiple_null_identifiers',
+                    'use_packet_for_default_identifier',
                     'monitor_material', 'j_multiplier'):
             bind_preference(self, key, 'pychron.entry.{}'.format(key))
 
@@ -478,6 +480,11 @@ class LabnumberEntry(DVCIrradiationable):
 
                 if n:
                     no.append('Position={} L#={}\n    {}'.format(irs.hole, irs.identifier, ', '.join(n)))
+            else:
+                if self.use_packet_for_default_identifier and (self.dvc.kind == 'mssql' or not self.allow_multiple_null_identifiers):
+                    if irs.sample and not irs.packet:
+                        no.append('Packet needs to be set for Hole:{}, Sample:{}'.format(irs.hole, irs.sample))
+
         if no:
             self.information_dialog('Missing Information\n{}'.format('\n'.join(no)))
             return
@@ -509,8 +516,15 @@ class LabnumberEntry(DVCIrradiationable):
             # mssql will not allow multiple null identifiers
             # so need to use placeholder
 
-            if not ir.identifier and (db.kind == 'mssql' or not self.allow_multiple_null_identifiers):
-                ir.identifier = '{}:{}{:02n}'.format(irradiation, level, ir.hole)
+            # if not ir.identifier and (db.kind == 'mssql' or not self.allow_multiple_null_identifiers):
+            if db.kind == 'mssql' or not self.allow_multiple_null_identifiers:
+                k = '{:02n}'.format(ir.hole)
+                if self.use_packet_for_default_identifier:
+                    k = ir.packet
+
+                temp = '{}:{}{}'.format(irradiation, level, k)
+                if not ir.identifier or ir.identifier != temp:
+                    ir.identifier = temp
 
             ln = ir.identifier
             dbpos = db.get_irradiation_position(irradiation, level, ir.hole)
