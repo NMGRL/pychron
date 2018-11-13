@@ -64,7 +64,7 @@ class FindReferencesConfigView(Controller):
         v = View(VGroup(VGroup(UItem('analysis_types',
                                      style='custom',
                                      editor=CheckListEditor(values=['Blank Unknown', 'Blank Air',
-                                                                    'Blank Cocktail',
+                                                                    'Blank Cocktail', 'Blank',
                                                                     'Air', 'Cocktail'])),
                                show_border=True,
                                label='Analysis Types'),
