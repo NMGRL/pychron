@@ -32,7 +32,7 @@ from pychron.core.helpers.filetools import view_file
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.pdf.pdf_graphics_context import PdfPlotGraphicsContext
 from pychron.dvc.dvc_irradiationable import DVCIrradiationable
-from pychron.dvc.meta_repo import MetaObjectException
+from pychron.dvc.meta_object import MetaObjectException
 from pychron.envisage.view_util import open_view
 from pychron.loading.loading_pdf_writer import LoadingPDFWriter
 from pychron.paths import paths

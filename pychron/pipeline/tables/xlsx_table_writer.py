@@ -536,7 +536,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         worksheet = self._workbook.add_worksheet(name)
 
         cols = self._get_columns(name, groups)
-        self._format_worksheet(worksheet, cols, (7, 2))
+        self._format_worksheet(worksheet, cols, (8, 2))
 
         self._make_title(worksheet, name, cols)
 

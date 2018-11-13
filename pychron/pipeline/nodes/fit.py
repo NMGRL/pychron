@@ -355,14 +355,6 @@ class FitIsotopeEvolutionNode(FitNode):
                     signal_to_blank_threshold = f.signal_to_blank_goodness
                     signal_to_blank_goodness = signal_to_blank < signal_to_blank_threshold
 
-                signal_to_baseline_goodness = None
-                signal_to_baseline = 0
-                signal_to_baseline_threshold = 0
-                if f.signal_to_baseline_goodness:
-                    signal_to_baseline = iso.baseline.value / iso.value * 100
-                    signal_to_baseline_threshold = f.signal_to_baseline_goodness
-                    signal_to_baseline_goodness = signal_to_baseline < signal_to_baseline_threshold
-
                 yield IsoEvoResult(analysis=xi,
                                    nstr=nstr,
                                    intercept_value=i,
@@ -391,10 +383,6 @@ class FitIsotopeEvolutionNode(FitNode):
                                    signal_to_blank=signal_to_blank,
                                    signal_to_blank_threshold=signal_to_blank_threshold,
                                    signal_to_blank_goodness=signal_to_blank_goodness,
-
-                                   signal_to_baseline=signal_to_baseline,
-                                   signal_to_baseline_threshold=signal_to_baseline_threshold,
-                                   signal_to_baseline_goodness=signal_to_baseline_goodness,
 
                                    regression_str=iso.regressor.tostring(),
                                    fit=iso.fit,

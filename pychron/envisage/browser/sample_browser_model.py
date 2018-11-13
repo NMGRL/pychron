@@ -321,8 +321,8 @@ class SampleBrowserModel(BrowserModel):
 
     def _find_references_hook(self):
         ans = self.analysis_table.analyses
-        ms = list({a.mass_spectrometer for a in ans})
-        es = list({a.extract_device for a in ans})
+        ms = list({a.mass_spectrometer for a in ans if a.mass_spectrometer})
+        es = list({a.extract_device for a in ans if a.extract_device})
         irs = list({'{},{}'.format(a.irradiation, a.irradiation_level.upper()) for a in ans})
 
         samples = []

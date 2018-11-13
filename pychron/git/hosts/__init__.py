@@ -100,7 +100,10 @@ class GitHostService(Loggable):
 
     def remote_exists(self, organization, name):
         try:
-            out = subprocess.check_output(['git', 'ls-remote', '{}/{}/{}'.format(self.remote_url, organization, name)])
+            cmd = ['git', 'ls-remote', '{}/{}/{}'.format(self.remote_url, organization, name)]
+            self.debug('remote exists cmd={}'.format(' '.join(cmd)))
+            out = subprocess.check_output(cmd)
+            self.debug('remote exists: out={}'.format(out))
             if out:
                 ret = GITREFREGEX.match(out.decode())
             else:
@@ -110,13 +113,12 @@ class GitHostService(Loggable):
         return ret
 
     def manual_remote_exists(self, organization, name):
-        repos = self._cached_repo_names.get(organization)
-        if not repos or self._clear_cached_repo_names:
-            repos = self.get_repository_names(organization)
-            self._cached_repo_names[organization] = repos
-            self._clear_cached_repo_names = False
+        repo = self.get_repo(organization, name)
+        if repo:
+            return repo['name'].lower() == name.lower()
 
-        return name in repos
+    def get_repo(self, organization, name):
+        raise NotImplementedError
 
     def test_api(self):
         raise NotImplementedError

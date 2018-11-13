@@ -559,12 +559,18 @@ class ScanManager(StreamGraphManager):
 
         plot = g.new_plot(padding=[70, 5, 5, bottom_pad],
                           data_limit=n,
-                          xtitle='Time',
-                          ytitle='Signal',
+                          # xtitle='Time',
+                          # ytitle='Signal',
                           scale=self.graph_scale,
                           bgcolor='lightgoldenrodyellow',
                           zoom=False)
+        plot.x_axis.title = 'Time'
+        plot.y_axis.title = 'Signal'
 
+        plot.x_axis.title_font = 'Arial 14'
+        plot.x_axis.tick_label_font = 'Arial 12'
+        plot.y_axis.title_font = 'Arial 14'
+        plot.y_axis.tick_label_font = 'Arial 12'
         plot.x_grid.visible = False
 
         for i, det in enumerate(self.detectors):

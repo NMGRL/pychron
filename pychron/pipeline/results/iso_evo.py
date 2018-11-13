@@ -18,9 +18,8 @@ from traits.api import Str, Float
 from pychron.core.helpers.formatting import floatfmt
 from pychron.pipeline.results.base import BaseResult
 
-GOODNESS_TAGS = ('int_err', 'slope', 'outlier', 'curvature', 'rsquared', 'signal_to_blank', 'signal_to_baseline')
-GOODNESS_NAMES = (
-    'Intercept Error', 'Slope', 'Outliers', 'Curvature', 'RSquared', 'Blank/Signal %', 'Baseline/Signal %')
+GOODNESS_TAGS = ('int_err', 'slope', 'outlier', 'curvature', 'rsquared', 'signal_to_blank')
+GOODNESS_NAMES = ('Intercept Error', 'Slope', 'Outliers', 'Curvature', 'RSquared', 'Blank/Signal %')
 INVERTED_GOODNESS = ('rsquared',)
 
 
@@ -37,7 +36,6 @@ class IsoEvoResult(BaseResult):
     curvature_goodness = None
     rsquared_goodness = None
     signal_to_blank_goodness = None
-    signal_to_baseline_goodness = None
 
     int_err_threshold = None
     slope_threshold = None
@@ -53,7 +51,6 @@ class IsoEvoResult(BaseResult):
     curvature = None
     rsquared = None
     signal_to_blank = None
-    signal_to_baseline = None
 
     @property
     def goodness(self):

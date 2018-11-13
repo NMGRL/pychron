@@ -508,7 +508,7 @@ class MeasurementPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def position_magnet(self, pos, detector='AX', use_dac=False):
+    def position_magnet(self, pos, detector='AX', use_dac=False, for_collection=True):
         """
 
         :param pos: location to set magnetic field
@@ -525,7 +525,7 @@ class MeasurementPyScript(ValvePyScript):
             position_magnet('Ar40', detector='AX') #Ar40 will be converted to 39.962 use mole weight dict
 
         """
-        self._automated_run_call('py_position_magnet', pos, detector, use_dac=use_dac)
+        self._automated_run_call('py_position_magnet', pos, detector, use_dac=use_dac, for_collection=for_collection)
 
     @verbose_skip
     @command_register
