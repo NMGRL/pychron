@@ -112,10 +112,14 @@ class GraphEditor(BaseEditor):
             if model == omodel:
                 self.figure_container.model_changed()
 
+            self._get_component_hook()
             return self.figure_container.component
 
         else:
             return self._no_component_factory()
+
+    def _get_component_hook(self):
+        pass
 
     def _no_component_factory(self):
         container = self.figure_container

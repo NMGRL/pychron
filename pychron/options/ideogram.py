@@ -90,6 +90,7 @@ class IdeogramOptions(AgeOptions):
     use_cmap_analysis_number = Bool(False)
     cmap_analysis_number = Enum(list(color_map_name_dict.keys()))
     use_latest_overlay = Bool(False)
+    show_results_table = Bool(False)
 
     group_options_klass = IdeogramGroupOptions
 

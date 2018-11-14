@@ -20,6 +20,7 @@ from __future__ import absolute_import
 from enable.markers import marker_names
 from traitsui.api import UItem, Item, HGroup, VGroup, Group, EnumEditor, spring, View
 
+from pychron.core.pychron_traits import BorderVGroup
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.options import SubOptions, AppearanceSubOptions, GroupSubOptions, MainOptions, TitleSubOptions
 from pychron.processing.j_error_mixin import J_ERROR_GROUP
@@ -173,11 +174,16 @@ class IdeogramSubOptions(SubOptions):
                              show_border=True),
                       show_border=True,
                       label='X')
-        tgrp = VGroup(Item('omit_by_tag', label='Omit Tags',
-                           tooltip='If selected only analyses tagged as "OK" are included in the calculations'),
-                      label='Tags', show_border=True)
 
-        return self._make_view(VGroup(xgrp, tgrp))
+        tgrp = BorderVGroup(Item('omit_by_tag', label='Omit Tags',
+                                 tooltip='If selected only analyses tagged as "OK" are included in the calculations'),
+                            label='Tags')
+
+        rtgrp = BorderVGroup(Item('show_results_table', label='Show',
+                                  tooltip='Display a summary table below the ideogram'),
+                             label='Summary Table')
+
+        return self._make_view(VGroup(xgrp, tgrp, rtgrp))
 
 
 class IdeogramAppearance(AppearanceSubOptions):

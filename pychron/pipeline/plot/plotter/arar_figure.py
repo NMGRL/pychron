@@ -679,7 +679,8 @@ class BaseArArFigure(SelectionFigure):
     def _get_analysis_group(self):
         ag = self._analysis_group
         if ag is None:
-            ag = self._analysis_group_klass(analyses=self.sorted_analyses)
+            ag = self._analysis_group_klass(group_id=self.group_id,
+                                            analyses=self.sorted_analyses)
         return ag
 
     def _set_analysis_group(self, v):
