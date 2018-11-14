@@ -40,7 +40,7 @@ from pychron.experiment.utilities.save_dialog import ExperimentSaveDialog
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.paths import paths
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
-from pychron.pychron_constants import SPECTROMETER_PROTOCOL, DVC_PROTOCOL
+from pychron.pychron_constants import SPECTROMETER_PROTOCOL, DVC_PROTOCOL, COCKTAIL, AIR, BLANK
 
 
 class ExperimentEditorTask(EditorTask):
@@ -252,7 +252,7 @@ class ExperimentEditorTask(EditorTask):
 
     def _assemble_analysis_type_colors(self):
         colors = {}
-        for c in ('blank', 'air', 'cocktail'):
+        for c in (BLANK, AIR, COCKTAIL):
             v = self.application.preferences.get('pychron.experiment.{}_color'.format(c))
             colors[c] = v or '#FFFFFF'
 

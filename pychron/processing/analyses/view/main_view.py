@@ -30,7 +30,7 @@ from pychron.processing.analyses.view.values import ExtractionValue, ComputedVal
 #     def show_isotope_evolution(self, uiinfo, obj):
 #         isos = obj.selected
 #         obj.show_iso_evo_needed = isos
-from pychron.pychron_constants import PLUSMINUS
+from pychron.pychron_constants import PLUSMINUS, COCKTAIL, BLANK_TYPES, UNKNOWN, AIR
 
 
 class MainView(HasTraits):
@@ -195,14 +195,14 @@ class MainView(HasTraits):
         self.extraction_values = ev
 
     def load_computed(self, an, new_list=True):
-        if self.analysis_type == 'unknown':
+        if self.analysis_type == UNKNOWN:
             self._load_unknown_computed(an, new_list)
             if self._corrected_enabled:
                 self._load_corrected_values(an, new_list)
 
-        elif self.analysis_type in ('air', 'blank_air', 'blank_unknown', 'blank_cocktail'):
+        elif self.analysis_type == AIR or self.analysis_type in BLANK_TYPES:
             self._load_air_computed(an, new_list)
-        elif self.analysis_type == 'cocktail':
+        elif self.analysis_type == COCKTAIL:
             self._load_cocktail_computed(an, new_list)
 
     # def _get_isotope(self, name):

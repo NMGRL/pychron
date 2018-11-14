@@ -26,7 +26,7 @@ from pychron.envisage.resources import icon
 from pychron.experiment.utilities.identifier import make_aliquot_step
 from pychron.pychron_constants import EXTRACTION_COLOR, MEASUREMENT_COLOR, SUCCESS_COLOR, \
     SKIP_COLOR, NOT_EXECUTABLE_COLOR, CANCELED_COLOR, TRUNCATED_COLOR, \
-    FAILED_COLOR, END_AFTER_COLOR
+    FAILED_COLOR, END_AFTER_COLOR, BLANK_UNKNOWN, DEGAS, UNKNOWN
 
 # ============= local library imports  ==========================
 COLORS = {'success': SUCCESS_COLOR,
@@ -243,11 +243,11 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
         at = self.item.analysis_type
         p = self.item.position
 
-        if at == 'blank_unknown':
+        if at == BLANK_UNKNOWN:
             if ',' not in p:
                 p = ''
 
-        elif at not in ('unknown', 'degas'):
+        elif at not in (UNKNOWN, DEGAS):
             p = ''
 
         return p

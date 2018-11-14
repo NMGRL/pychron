@@ -339,7 +339,11 @@ class _TableView(TableView):
     def _paste(self):
         clipboard = QApplication.clipboard()
         md = clipboard.mimeData()
-        items = md.instance()
+        try:
+            items = md.instance()
+        except AttributeError:
+            return
+        
         if items is not None:
             editor = self._editor
             model = editor.model

@@ -107,18 +107,13 @@ def principal_investigator_filter(q, principal_investigator):
 
 def make_at_filter(analysis_types):
     if hasattr(analysis_types, '__iter__'):
-        # analysis_types = list(map(str.lower, analysis_types))
         analysis_types = [at.lower() for at in analysis_types]
     else:
         analysis_types = (analysis_types.lower(),)
 
-    # q = in_func(q, AnalysisTbl.analysis_type, analysis_types)
-    # if 'blank' in analysis_types or any(ai.startswith('blank') for ai in analysis_types):
-    #     q = q.filter(AnalysisTbl.analysis_type.like('blank_%'))
     analysis_types = [xi.replace(' ', '_') for xi in analysis_types]
 
     if 'blank' in analysis_types:
-        # analysis_types.remove('blank')
         ret = or_(AnalysisTbl.analysis_type.startswith('blank'),
                   AnalysisTbl.analysis_type.in_(analysis_types))
     else:
@@ -128,24 +123,8 @@ def make_at_filter(analysis_types):
 
 
 def analysis_type_filter(q, analysis_types):
-    if hasattr(analysis_types, '__iter__'):
-        # analysis_types = list(map(str.lower, analysis_types))
-        analysis_types = [at.lower() for at in analysis_types]
-    else:
-        analysis_types = (analysis_types.lower(),)
-
-    # q = in_func(q, AnalysisTbl.analysis_type, analysis_types)
-    # if 'blank' in analysis_types or any(ai.startswith('blank') for ai in analysis_types):
-    #     q = q.filter(AnalysisTbl.analysis_type.like('blank_%'))
-    analysis_types = [xi.replace(' ', '_') for xi in analysis_types]
-
-    if 'blank' in analysis_types:
-        # analysis_types.remove('blank')
-        q = q.filter(
-            or_(AnalysisTbl.analysis_type.startswith('blank'),
-                AnalysisTbl.analysis_type.in_(analysis_types)))
-    else:
-        q = q.filter(AnalysisTbl.analysis_type.in_(analysis_types))
+    ret = make_at_filter(analysis_types)
+    q = q.filter(ret)
     return q
 
 

@@ -52,7 +52,8 @@ from pychron.experiment.utilities.position_regex import SLICE_REGEX, PSLICE_REGE
 from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceLoggable
-from pychron.pychron_constants import NULL_STR, SCRIPT_KEYS, SCRIPT_NAMES, LINE_STR, DVC_PROTOCOL, SPECIAL_IDENTIFIER
+from pychron.pychron_constants import NULL_STR, SCRIPT_KEYS, SCRIPT_NAMES, LINE_STR, DVC_PROTOCOL, SPECIAL_IDENTIFIER, \
+    BLANK_UNKNOWN, BLANK_EXTRACTIONLINE, UNKNOWN, PAUSE, DEGAS
 
 
 class AutomatedRunFactory(DVCAble, PersistenceLoggable):
@@ -484,11 +485,11 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         if excludes is None:
             excludes = []
 
-        if arv.analysis_type in ('blank_unknown', 'pause', 'blank_extractionline'):
+        if arv.analysis_type in (BLANK_UNKNOWN, PAUSE, BLANK_EXTRACTIONLINE):
             excludes.extend(('extract_value', 'extract_units', 'pattern', 'beam_diameter'))
-            if arv.analysis_type == 'pause':
+            if arv.analysis_type == PAUSE:
                 excludes.extend(('cleanup', 'position'))
-        elif arv.analysis_type not in ('unknown', 'degas'):
+        elif arv.analysis_type not in (UNKNOWN, DEGAS):
             excludes.extend(('position', 'extract_value', 'extract_units', 'pattern',
                              'cleanup', 'duration', 'beam_diameter'))
 

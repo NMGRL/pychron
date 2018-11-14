@@ -14,8 +14,6 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 import math
 from datetime import timedelta
 
@@ -34,6 +32,7 @@ from pychron.graph.graph import Graph
 from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
 from pychron.graph.tools.point_inspector import PointInspectorOverlay
 from pychron.graph.tools.rect_selection_tool import RectSelectionTool, RectSelectionOverlay
+from pychron.pychron_constants import BLANK_TYPES
 
 REVERSE_ANALYSIS_MAPPING = {v: k.replace('_', ' ') for k, v in ANALYSIS_MAPPING_INTS.items()}
 
@@ -309,7 +308,7 @@ class GraphicalFilterModel(HasTraits):
         i = -1
         for i, (dx, x) in enumerate(self.graph.grouping_tool.dividers):
             # convert to idx
-            idx = where(ts < dx)[0][-1]+1
+            idx = where(ts < dx)[0][-1] + 1
             if i == 0:
                 l, h = (0, idx)
             else:
@@ -321,16 +320,16 @@ class GraphicalFilterModel(HasTraits):
             px = idx
 
         for ai in ans[px:]:
-            ai.group_id = int('{}{:02n}'.format(self.gid, i+1))
+            ai.group_id = int('{}{:02n}'.format(self.gid, i + 1))
 
     def _filter_analysis_types(self, ans):
         """
             only use analyses with analysis_type in self.analyses_types
         """
+        ats = [x.lower().replace(' ', '_') for x in self.analysis_types]
+        if 'blank' in ats:
+            ats.extend(BLANK_TYPES)
 
-        ats = [str(x).lower().replace(' ', '_') for x in self.analysis_types]
-        # f = lambda x: x.analysis_type.lower() in ats
-        # ans = list(filter(f, ans))
         ans = [a for a in ans if a.analysis_type.lower() in ats]
         return ans
 
@@ -348,7 +347,6 @@ class GraphicalFilterModel(HasTraits):
 
 
 class GraphicalFilterView(Controller):
-
     accept_button = Button('Accept')
 
     is_append = False

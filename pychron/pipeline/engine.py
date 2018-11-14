@@ -54,6 +54,7 @@ from pychron.pipeline.plot.editors.spectrum_editor import SpectrumEditor
 from pychron.pipeline.state import EngineState
 from pychron.pipeline.template import PipelineTemplate, PipelineTemplateSaveView, PipelineTemplateGroup, \
     PipelineTemplateRoot
+from pychron.pychron_constants import BLANK_UNKNOWN, AIR
 
 
 class ActiveCTX(object):
@@ -510,10 +511,10 @@ class PipelineEngine(Loggable):
 
     # find
     def add_find_airs(self, node=None):
-        self._add_find_node(node, 'air')
+        self._add_find_node(node, AIR)
 
     def add_find_blanks(self, node=None):
-        self._add_find_node(node, 'blank_unknown')
+        self._add_find_node(node, BLANK_UNKNOWN)
 
     # figures
     def add_spectrum(self, node=None):

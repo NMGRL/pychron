@@ -94,6 +94,13 @@ UNKNOWN = 'unknown'
 COCKTAIL = 'cocktail'
 BLANK = 'blank'
 DETECTOR_IC = 'detector_ic'
+PAUSE = 'pause'
+DEGAS = 'degas'
+AIR = 'air'
+
+BLANK_UNKNOWN = 'blank_unknown'
+BLANK_EXTRACTIONLINE = 'blank_extractionline'
+BLANK_TYPES = [BLANK_UNKNOWN, 'blank_air', 'blank_cocktail']
 
 SNIFF = 'sniff'
 SIGNAL = 'signal'
