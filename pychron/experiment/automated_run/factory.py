@@ -14,9 +14,6 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
 
 import os
 import pickle
@@ -86,8 +83,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     set_position = True
 
     delay_after = Float
-    labnumber = String(enter_set=True, auto_set=False)
-    update_labnumber = Event
+    labnumber = Str
 
     aliquot = EKlass(Int)
     special_labnumber = Str(SPECIAL_IDENTIFIER)
@@ -127,9 +123,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     weight = Float
     comment = String(auto_set=False, enter_set=True)
     auto_fill_comment = Bool
-    comment_template = Str
-    comment_templates = List
     edit_comment_template = Button
+    _comment_templater = None
 
     position = Property(depends_on='_position')
     _position = EKlass(String)
@@ -278,7 +273,6 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
     def set_identifiers(self, v):
         self._identifiers = v
-        self.update_labnumber = True
 
     def setup_files(self):
         self.load_templates()
@@ -395,9 +389,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
         if auto_increment_id:
             v = increment_value(self.labnumber)
+            self.debug('auto increment labnumber: prev={}, new={}'.format(self.labnumber, v))
             self.labnumber = v
-            # invoke_in_main_thread(self.trait_set, _labnumber=v)
-            # invoke_in_main_thread(self.trait_set, labnumber=v)
 
         if auto_increment_position:
             pos = self.position
@@ -860,13 +853,12 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         if labnumber in self._meta_cache:
             self.debug('using cached meta values for {}'.format(labnumber))
             d = self._meta_cache[labnumber]
-            for attr in ('sample', 'comment', 'repository_identifier'):
+            for attr in ('sample', 'comment', 'repository_identifier', 'display_irradiation'):
                 setattr(self, attr, d[attr])
 
             self.selected_irradiation = d['irradiation']
             self.selected_level = d['irradiation_level']
             self.irrad_hole = d['irradiation_position']
-            self.display_irradiation = d['display_irradiation']
 
             if self.use_project_based_repository_identifier:
                 ipp = self.irradiation_project_prefix
@@ -1194,10 +1186,13 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         self._end_after = v
 
     def _set_auto_comment(self, temp=None):
-        if not temp:
-            from pychron.experiment.utilities.comment_template import CommentTemplater
+        if temp is None:
+            temp = self._comment_templater
 
+        if temp is None:
+            from pychron.experiment.utilities.comment_template import CommentTemplater
             temp = CommentTemplater()
+            self._comment_templater = temp
 
         c = temp.render(self)
         self.debug('Comment template rendered = {}'.format(c))
@@ -1285,7 +1280,9 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         from pychron.experiment.utilities.comment_template import CommentTemplater
         from pychron.experiment.utilities.template_view import CommentTemplateView
 
-        ct = CommentTemplater()
+        if self._comment_templater is None:
+            ct = CommentTemplater()
+            self._comment_templater = ct
 
         ctv = CommentTemplateView(model=ct)
         info = ctv.edit_traits()
