@@ -332,7 +332,7 @@ class PychronLaserManager(EthernetLaserManager):
 
         if block:
             time.sleep(0.5)
-            if not self._block('IsPatterning', period=1):
+            if not self._block('IsPatterning', period=1, timeout=100):
                 self._ask('AbortPattern')
 
     # ===============================================================================

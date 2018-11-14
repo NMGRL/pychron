@@ -551,6 +551,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             excludes.append('labnumber')
         if not set_position:
             excludes.append('position')
+        if self.auto_fill_comment:
+            excludes.append('comment')
 
         for attr in ('labnumber',
                      'extract_value', 'extract_units', 'cleanup', 'duration',
