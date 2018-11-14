@@ -124,10 +124,7 @@ class IsoEvoMainOptions(MainOptions):
                           HGroup(Item('controller.rsquared_goodness',
                                       tooltip='If R-squared is less than threshold mark regression as "Bad"')),
                           HGroup(Item('controller.signal_to_blank_goodness',
-                                 tooltip='If Blank/Signal*100 greater than threshold mark regression as "Bad"')),
-                          HGroup(Item('controller.signal_to_baseline_goodness',
-                                      tooltip='If Baseline/Signal*100 is greater than threshold '
-                                              'mark regression as "Bad"')))
+                                 tooltip='If Blank/Signal*100 greater than threshold mark regression as "Bad"')))
 
         agrp = self._get_analysis_group()
         return VGroup(agrp,
