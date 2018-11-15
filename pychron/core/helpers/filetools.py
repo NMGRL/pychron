@@ -90,7 +90,7 @@ def view_file(p, application='Preview', logger=None):
             subprocess.call(['open', p])
 
 
-def ilist_directory2(root, extension=None, filtername=None, remove_extension=False):
+def ilist_directory(root, extension=None, filtername=None, remove_extension=False):
     """
         uses glob
         root: directory to list
@@ -130,8 +130,12 @@ def list_subdirectories(root):
     return [di for di in os.listdir(root) if os.path.isdir(os.path.join(root, di)) and not di.startswith('.')]
 
 
-def list_directory2(root, extension=None, filtername=None, remove_extension=False):
-    return list(ilist_directory2(root, extension, filtername, remove_extension))
+def glob_list_directory(root, extension=None, filtername=None, remove_extension=False):
+    if os.path.isdir(root):
+        ret = list(ilist_directory(root, extension, filtername, remove_extension))
+    else:
+        ret = []
+    return ret
 
 
 def ilist_gits(root):
@@ -147,12 +151,6 @@ def list_gits(root):
 
 def list_directory(p, extension=None, filtername=None, remove_extension=False):
     ds = []
-    # if extension:
-
-    # return any([path.endswith(ext) for ext in extension.split(',')])
-    # else:
-    #    def test(path):
-    #        return True
 
     if os.path.isdir(p):
         ds = os.listdir(p)
@@ -162,8 +160,8 @@ def list_directory(p, extension=None, filtername=None, remove_extension=False):
                     if path.endswith(ext):
                         return True
 
-            ds = [pi for pi in ds
-                  if test(pi)]
+            ds = [pi for pi in ds if test(pi)]
+
         if filtername:
             ds = [pi for pi in ds if pi.startswith(filtername)]
 
@@ -179,7 +177,6 @@ def replace_extension(p, ext='.txt'):
 
 def add_extension(p, ext='.txt'):
     if not p.endswith(ext):
-        # p += ext
         p = '{}{}'.format(p, ext)
     return p
 

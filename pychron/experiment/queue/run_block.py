@@ -27,7 +27,7 @@ from traitsui.api import View, UItem, HGroup, VGroup, ListStrEditor, HSplit, \
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.helpers.filetools import list_directory2, add_extension
+from pychron.core.helpers.filetools import glob_list_directory, add_extension
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
 from pychron.experiment.automated_run.tabular_adapter import RunBlockAdapter
@@ -124,7 +124,7 @@ class RunBlockEditView(HasTraits):
 
     def _load_blocks(self):
         p = paths.run_block_dir
-        blocks = list_directory2(p, '.txt', remove_extension=True)
+        blocks = glob_list_directory(p, '.txt', remove_extension=True)
         self.blocks = blocks
 
     def _delete_run_fired(self):

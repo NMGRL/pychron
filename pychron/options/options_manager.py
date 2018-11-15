@@ -20,7 +20,7 @@ import apptools.sweet_pickle as pickle
 from traits.api import Str, List, Button, Instance, Tuple, Property, cached_property
 from traitsui.api import Controller, View, Item
 
-from pychron.core.helpers.filetools import list_directory2
+from pychron.core.helpers.filetools import glob_list_directory
 from pychron.file_defaults import SPECTRUM_PRESENTATION, RADIAL_SCREEN, REGRESSION_SERIES_SCREEN, \
     DEFINE_EQUILIBRATION_SCREEN
 from pychron.file_defaults import SPECTRUM_SCREEN, IDEOGRAM_SCREEN, IDEOGRAM_PRESENTATION, SERIES_SCREEN, BLANKS_SCREEN, \
@@ -222,9 +222,9 @@ class OptionsManager(Loggable):
         self._load_names()
 
     def _load_names(self):
-        self.names = [n for n in list_directory2(self.persistence_root,
-                                                 extension='.p',
-                                                 remove_extension=True) if n != 'selected']
+        self.names = [n for n in glob_list_directory(self.persistence_root,
+                                                     extension='.p',
+                                                     remove_extension=True) if n != 'selected']
 
     def _selected_subview_changed(self, new):
         if new:

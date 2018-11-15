@@ -16,19 +16,22 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import Str, Property, cached_property, Int, \
-    Any, String, Event, Bool, Dict, List, Button
+
 # ============= standard library imports ========================
 import os
+
 from six.moves.configparser import ConfigParser
+from traits.api import Str, Property, cached_property, Int, \
+    Any, String, Event, Bool, Dict, List, Button
+
 # ============= local library imports  ==========================
-from pychron.core.helpers.filetools import list_directory2
+from pychron.core.helpers.filetools import glob_list_directory
 from pychron.dvc.dvc_irradiationable import DVCAble
 from pychron.entry.entry_views.user_entry import UserEntry
-from pychron.persistence_loggable import PersistenceLoggable
 from pychron.globals import globalv
-from pychron.pychron_constants import NULL_STR, LINE_STR
 from pychron.paths import paths
+from pychron.persistence_loggable import PersistenceLoggable
+from pychron.pychron_constants import NULL_STR, LINE_STR
 
 
 class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
@@ -102,7 +105,7 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
 
     def _load_queue_conditionals(self):
         root = paths.queue_conditionals_dir
-        cs = list_directory2(root, remove_extension=True)
+        cs = glob_list_directory(root, remove_extension=True)
         self.available_conditionals = [NULL_STR] + cs
 
     # ===============================================================================

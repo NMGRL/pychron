@@ -26,7 +26,7 @@ from pyface.tasks.action.schema import SMenu
 from pyface.tasks.action.schema_addition import SchemaAddition
 from traits.api import List, Str
 
-from pychron.core.helpers.filetools import list_directory2
+from pychron.core.helpers.filetools import glob_list_directory
 from pychron.core.helpers.strtools import to_bool
 from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
@@ -161,7 +161,7 @@ class BaseLaserPlugin(BaseTaskPlugin):
             actions = []
 
         lactions = []
-        for f in list_directory2(paths.pattern_dir, extension='.lp', remove_extension=True):
+        for f in glob_list_directory(paths.pattern_dir, extension='.lp', remove_extension=True):
             actions.append(SchemaAddition(id='pattern.{}'.format(f),
                                           factory=pattern_action(f, self.application, self.name),
                                           path='MenuBar/laser.menu/patterns.menu'))

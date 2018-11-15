@@ -17,31 +17,33 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
-from traits.api import Event, Str, List, Instance, String
+
 # ============= standard library imports ========================
 import os
 import pickle
+
+from traits.api import Event, Str, List, Instance, String
+
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.map_canvas import MapCanvas
-from pychron.core.helpers.filetools import list_directory2, add_extension
+from pychron.core.helpers.filetools import glob_list_directory, add_extension
 from pychron.core.ui.stage_component_editor import LaserComponentEditor
 from pychron.core.ui.thread import Thread
-
 from pychron.managers.manager import Manager
 from pychron.paths import paths
+from pychron.stage.calibration.tray_calibration_manager import TrayCalibrationManager, get_hole_calibration
 from pychron.stage.maps.base_stage_map import BaseStageMap
 from pychron.stage.maps.laser_stage_map import LaserStageMap
-from pychron.stage.calibration.tray_calibration_manager import TrayCalibrationManager, get_hole_calibration
 
 
 def get_stage_map_names(root=None):
     if root is None:
         root = paths.map_dir
 
-    sms = list_directory2(root, '.txt', remove_extension=True)
+    sms = glob_list_directory(root, '.txt', remove_extension=True)
     print(root, sms)
     sms = [si for si in sms if not si.endswith('.center')]
-    us = list_directory2(paths.user_points_dir, '.yaml', remove_extension=True)
+    us = glob_list_directory(paths.user_points_dir, '.yaml', remove_extension=True)
     if us:
         sms.extend(us)
     return sms

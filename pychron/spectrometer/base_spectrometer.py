@@ -19,7 +19,7 @@ from random import random
 from numpy import array
 from traits.api import Any, cached_property, List, TraitError, Str, Property, Bool
 
-from pychron.core.helpers.filetools import list_directory2
+from pychron.core.helpers.filetools import glob_list_directory
 from pychron.globals import globalv
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR
@@ -364,8 +364,8 @@ class BaseSpectrometer(SpectrometerDevice):
         self.load_detectors()
         self.magnet.load()
         # load local configurations
-        self.spectrometer_configurations = list_directory2(paths.spectrometer_config_dir, remove_extension=True,
-                                                           extension='.cfg')
+        self.spectrometer_configurations = glob_list_directory(paths.spectrometer_config_dir, remove_extension=True,
+                                                               extension='.cfg')
 
         name = get_spectrometer_config_name()
         sc, _ = os.path.splitext(name)

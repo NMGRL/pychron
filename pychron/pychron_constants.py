@@ -222,6 +222,7 @@ ELLIPSE_KIND_SCALE_FACTORS = dict(zip(ELLIPSE_KINDS, (1, 2, 2.4477)))
 DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 MASS_SPEC_REDUCED = 'MASS SPEC REDUCED'
+DEFAULT_PIPELINE_ROOTS = ('Fit', 'Plot', 'Table', 'History', 'Share', 'Transfer', 'MDD', 'User')
 
 # SAMPLE PREP ===================================================
 INITIAL_STEPS = ('crush', 'sieve', 'wash')

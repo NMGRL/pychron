@@ -23,7 +23,7 @@ import yaml
 from traits.api import HasTraits, Str, Instance, List, Event, on_trait_change, Any, Bool
 
 from pychron.core.confirmation import remember_confirmation_dialog
-from pychron.core.helpers.filetools import list_directory2, add_extension
+from pychron.core.helpers.filetools import glob_list_directory, add_extension
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.dvc.tasks.repo_task import RepoItem
 from pychron.globals import globalv
@@ -54,7 +54,7 @@ from pychron.pipeline.plot.editors.spectrum_editor import SpectrumEditor
 from pychron.pipeline.state import EngineState
 from pychron.pipeline.template import PipelineTemplate, PipelineTemplateSaveView, PipelineTemplateGroup, \
     PipelineTemplateRoot
-from pychron.pychron_constants import BLANK_UNKNOWN, AIR
+from pychron.pychron_constants import BLANK_UNKNOWN, AIR, DEFAULT_PIPELINE_ROOTS
 
 
 class ActiveCTX(object):
@@ -813,7 +813,6 @@ class PipelineEngine(Loggable):
         self.debug('load predefined templates')
 
         root = PipelineTemplateRoot()
-        self.pipeline_template_root = root
         nodes = {n.__name__: n for n in self.nodes}
         node_factories = {v.name: v for v in self.node_factories}
         groups = []
@@ -845,33 +844,51 @@ class PipelineEngine(Loggable):
                                 ('Spectrum', HISTORY_SPECTRUM))),
                    ('Share', (('CSV Analyses Export', CSV_ANALYSES_EXPORT),)),
                    ('Transfer', (('Mass Spec Reduced', MASSSPEC_REDUCED),))]
+
+        # predefined_templates contributed to by other plugins
         for name, gs in groupby_key(default + self.predefined_templates, key=itemgetter(0)):
             grp = PipelineTemplateGroup(name=name)
 
-            grp.templates = [PipelineTemplate(n, t, nodes, node_factories) for nn, gg in gs for n, t in gg]
+            templates = [PipelineTemplate(n, t, nodes, node_factories) for nn, gg in gs for n, t in gg]
+            utemplates = []
+            pp = os.path.join(paths.user_pipeline_dir, name)
+            if not os.path.isdir(pp):
+                pp = os.path.join(paths.user_pipeline_dir, name.lower())
+
+            # add templates from named user directory
+            for temp in glob_list_directory(pp, extension='.yaml', remove_extension=True):
+                path = os.path.join(pp, '{}.yaml'.format(temp))
+                utemplates.append(PipelineTemplate(temp, path, nodes, node_factories))
+
+            grp.templates = templates
             groups.append(grp)
 
+        # add user templates from user directory
         grp = PipelineTemplateGroup(name='User')
         user_templates = []
-        for temp in list_directory2(paths.user_pipeline_template_dir, extension='.yaml',
-                                    remove_extension=True):
-            user_templates.append(PipelineTemplate(temp, os.path.join(paths.user_pipeline_template_dir,
-                                                                      '{}.yaml'.format(temp)),
-                                                   nodes, node_factories))
+        for temp in glob_list_directory(paths.user_pipeline_template_dir, extension='.yaml', remove_extension=True):
+            path = os.path.join(paths.user_pipeline_template_dir, '{}.yaml'.format(temp))
+            user_templates.append(PipelineTemplate(temp, path, nodes, node_factories))
 
         grp.templates = user_templates
         groups.append(grp)
 
         # reorder groups
         ngroups = []
-        for gi in ['Fit', 'Plot', 'Table', 'History', 'Share', 'Transfer', 'MDD', 'User']:
+        for gi in DEFAULT_PIPELINE_ROOTS:  #('Fit', 'Plot', 'Table',...)
             g = next((gii for gii in groups if gii.name == gi), None)
             if g is not None:
                 ngroups.append(g)
 
+        # add in groups contributed to by plugins or from users template directories
+        for gi in groups:
+            if gi.name not in DEFAULT_PIPELINE_ROOTS:
+                ngroups.append(gi)
+
         self.debug('loaded {} user templates'.format(len(user_templates)))
 
         root.groups = ngroups
+        self.pipeline_template_root = root
 
     # private
     def _active_repositories(self):

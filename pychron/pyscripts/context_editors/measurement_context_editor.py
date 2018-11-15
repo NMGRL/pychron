@@ -16,23 +16,26 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
+import ast
+# ============= standard library imports ========================
+import os
+
+import six
+import yaml
 from traits.api import Int, on_trait_change, Str, Property, cached_property, \
     Float, Bool, HasTraits, Instance, TraitError, Button, List, Enum
 from traitsui.api import View, Item, EnumEditor, VGroup, HGroup, CheckListEditor
-# ============= standard library imports ========================
-import os
-import ast
-import yaml
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
-from pychron.core.helpers.filetools import list_directory2
+from pychron.core.helpers.filetools import glob_list_directory
 from pychron.core.ui.qt.combobox_editor import ComboboxEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.paths import paths
 from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES
 from pychron.pyscripts.context_editors.context_editor import ContextEditor
 from pychron.pyscripts.hops_editor import HopEditorModel, HopEditorView
-import six
 
 
 class YamlObject(HasTraits):
@@ -214,12 +217,12 @@ class MeasurementContextEditor(ContextEditor):
 
     @cached_property
     def _get_available_default_fits(self):
-        return list_directory2(paths.fits_dir, extension='.yaml', remove_extension=True)
+        return glob_list_directory(paths.fits_dir, extension='.yaml', remove_extension=True)
 
     @cached_property
     def _get_available_hops(self):
-        return list_directory2(os.path.join(paths.measurement_dir, 'hops'),
-                               extension='.txt', remove_extension=True)
+        return glob_list_directory(os.path.join(paths.measurement_dir, 'hops'),
+                                   extension='.txt', remove_extension=True)
 
     def traits_view(self):
         mc_grp = VGroup(HGroup(Item('object.multicollect.isotope',

@@ -24,7 +24,7 @@ from uncertainties import ufloat
 from pychron import json
 from pychron.canvas.utils import iter_geom
 from pychron.core.helpers.datetime_tools import ISO_FORMAT_STR
-from pychron.core.helpers.filetools import list_directory2, add_extension, \
+from pychron.core.helpers.filetools import glob_list_directory, add_extension, \
     list_directory
 from pychron.dvc import dvc_dump, dvc_load, repository_path, list_frozen_productions
 from pychron.dvc.meta_object import IrradiationHolder, Chronology, Production, cached, Gains, LoadHolder
@@ -393,9 +393,9 @@ class MetaRepo(GitRepoManager):
         self.add(p, commit=False)
 
     def get_irradiation_holder_names(self):
-        return list_directory2(os.path.join(paths.meta_root, 'irradiation_holders'),
-                               extension='.txt',
-                               remove_extension=True)
+        return glob_list_directory(os.path.join(paths.meta_root, 'irradiation_holders'),
+                                   extension='.txt',
+                                   remove_extension=True)
 
     def get_default_productions(self):
         p = os.path.join(paths.meta_root, 'reactors.json')
