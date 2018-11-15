@@ -1,8 +1,5 @@
-import time
-
-from pylab import *
 import hglib
-
+from pylab import *
 
 p = '/Users/ross/Programming/mercurial/pychron_dev/'
 repo = hglib.open(p)

@@ -17,19 +17,19 @@
 
 
 import csv
-from threading import Thread
 from multiprocessing import Pool
+from threading import Thread
 
-from traits.api import HasTraits, Instance, Button
-from traitsui.api import View, Item
 from numpy import array, polyval, zeros, hstack, sum
 from numpy.ma import masked_array
-
-from pychron.graph.graph import Graph
-from pychron.data_processing.regression.regressor import Regressor
-from pychron.graph.stacked_graph import StackedGraph
 from pychron.data_processing.regression.ols import OLS
+from pychron.data_processing.regression.regressor import Regressor
+from traits.api import HasTraits, Instance, Button
+from traitsui.api import View, Item
+
 from pychron.core.stats import calculate_mswd
+from pychron.graph.graph import Graph
+from pychron.graph.stacked_graph import StackedGraph
 
 
 def mcalculate_mswd(d):

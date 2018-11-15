@@ -16,17 +16,19 @@
 
 
 
+import os
+
+from numpy import loadtxt
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Instance, Int, Bool
 from traitsui.api import View, Item, HGroup
-# ============= standard library imports ========================
 
-# ============= local library imports  ==========================
-
-import os
-from pychron.paths import paths
 from pychron.graph.time_series_graph import TimeSeriesGraph
-from numpy import loadtxt
+from pychron.paths import paths
+
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 class Grapher(HasTraits):
