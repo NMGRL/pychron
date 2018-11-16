@@ -690,7 +690,7 @@ THIS CHANGE CANNOT BE UNDONE')
 
         try:
             positions = level.positions
-            n = len(self.irradiated_positions)
+            n = len(positions)
             self.debug('positions in level {}.  \
 available holder positions {}'.format(n, len(self.irradiated_positions)))
             if positions:
@@ -725,55 +725,52 @@ available holder positions {}'.format(n, len(self.irradiated_positions)))
                     ii.fill_color = next(cgen)
 
         if dbpos:
-            if dbpos.sample:
-                ir.sample = v = dbpos.sample.name
-                item = None
-                if include_canvas:
-                    item = self.canvas.scene.get_item(str(ir.hole))
-                    item.fill = True
+            v = ''
+            if dbpos.identifier:
+                v = str(dbpos.identifier)
+
+            ir.identifier = v
+            ir.hole = dbpos.position
+
+            item = None
+            if include_canvas:
+                item = self.canvas.scene.get_item(str(ir.hole))
+                item.fill = True
+                if v:
+                    set_color(item, v)
+
+            fd = self.dvc.meta_repo.get_flux(self.irradiation, self.level, ir.hole)
+            j = fd['j']
+            if j:
+                ir.j = nominal_value(j)
+                ir.j_err = std_dev(j)
+
+            ir.note = dbpos.note.decode('utf-8') if dbpos.note else ''
+            ir.weight = dbpos.weight or 0
+            ir.nanalyses = dbpos.analysis_count
+            ir.analyzed = dbpos.analyzed
+            ir.packet = dbpos.packet or ''
+
+            dbsam = dbpos.sample
+            if dbsam:
+                ir.sample = v = dbsam.name
 
                 if v == self.monitor_name:
                     item.monitor_indicator = True
 
                 set_color(item, v)
-                if dbpos.sample.material:
-                    ir.material = v = dbpos.sample.material.name
-                    ir.grainsize = dbpos.sample.material.grainsize or ''
+                if dbsam.material:
+                    ir.material = v = dbsam.material.name
+                    ir.grainsize = dbsam.material.grainsize or ''
                     set_color(item, v)
 
-                if dbpos.sample.project:
-                    ir.project = v = dbpos.sample.project.name
+                if dbsam.project:
+                    ir.project = v = dbsam.project.name
                     set_color(item, v)
-                    if dbpos.sample.project.principal_investigator:
-                        ir.principal_investigator = dbpos.sample.project.principal_investigator.name
+                    if dbsam.project.principal_investigator:
+                        ir.principal_investigator = dbsam.project.principal_investigator.name
 
-                v = ''
-                if dbpos.identifier:
-                    v = str(dbpos.identifier)
-                    # ignore if place holder value is used
-                    # level = dbpos.level
-                    # irrad = dbpos.irradiation
-                    # if v == '{}{}{}'.format(irrad.name, level.name, dbpos.position):
-                    #     v = ''
-
-                ir.identifier = v
-                if v:
-                    set_color(item, v)
-
-                ir.igsn = dbpos.sample.igsn or ''
-                ir.hole = dbpos.position
-
-                fd = self.dvc.meta_repo.get_flux(self.irradiation, self.level, ir.hole)
-                j = fd['j']
-                if j:
-                    ir.j = nominal_value(j)
-                    ir.j_err = std_dev(j)
-
-                ir.note = dbpos.note.decode('utf-8') if dbpos.note else ''
-                ir.weight = dbpos.weight or 0
-                ir.nanalyses = dbpos.analysis_count
-                ir.analyzed = dbpos.analyzed
-                ir.packet = dbpos.packet or ''
+                ir.igsn = dbsam.igsn or ''
 
     def _get_irradiation_editor(self, **kw):
         ie = self._irradiation_editor
