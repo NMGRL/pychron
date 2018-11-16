@@ -281,6 +281,7 @@ class MSWDFilterNode(BaseNode):
 
     def run(self, state):
         unks = state.unknowns
+        unks = [ui for ui in unks if not ui.is_omitted_by_tag()]
         attr = self.attr.lower()
         unks = sorted(unks, key=attrgetter(attr))
         kind = self.kind.lower()
