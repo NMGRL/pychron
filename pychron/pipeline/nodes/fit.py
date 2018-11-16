@@ -364,7 +364,7 @@ class FitIsotopeEvolutionNode(FitNode):
                                    intercept_value=i,
                                    intercept_error=e,
                                    percent_error=pe,
-                                   int_err=e,
+                                   int_err=pe,
                                    int_err_threshold=goodness_threshold,
                                    int_err_goodness=int_err_goodness,
 
