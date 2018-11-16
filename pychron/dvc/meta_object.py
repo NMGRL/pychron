@@ -69,7 +69,11 @@ class Chronology(MetaObject):
         self._doses = []
         d = 0
         for line in rfile:
-            power, start, end = line.strip().split(',')
+            try:
+                power, start, end = line.strip().split(',')
+            except ValueError:
+                continue
+
             start = datetime.strptime(start, '%Y-%m-%d %H:%M:%S')
             end = datetime.strptime(end, '%Y-%m-%d %H:%M:%S')
             ds = (end - start).total_seconds()
