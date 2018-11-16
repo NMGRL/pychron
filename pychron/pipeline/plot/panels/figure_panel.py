@@ -51,8 +51,11 @@ class FigurePanel(HasTraits):
     def make_figures(self):
         self.figures = self._make_figures()
 
+    def _figure_factory(self, *args, **kw):
+        return self._figure_klass(*args, **kw)
+
     def _make_figures(self, **kw):
-        gs = [self._figure_klass(analyses=list(ais), group_id=gid, **kw)
+        gs = [self._figure_factory(analyses=list(ais), group_id=gid, **kw)
               for gid, ais in groupby_group_id(self.analyses)]
         return gs
 

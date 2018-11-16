@@ -121,7 +121,6 @@ class FitBlanksNode(FitReferencesNode):
     editor_klass = 'pychron.pipeline.plot.editors.blanks_editor,BlanksEditor'
     plotter_options_manager_klass = BlanksOptionsManager
     name = 'Fit Blanks'
-    basename = 'Blanks'
     _refit_message = 'The selected Isotopes have already been fit for blanks. Would you like to skip refitting?'
 
     def _check_refit(self, ai):
@@ -157,10 +156,15 @@ class FitICFactorNode(FitReferencesNode):
                    'IntercalibrationFactorEditor'
     plotter_options_manager_klass = ICFactorOptionsManager
     name = 'Fit ICFactor'
-    basename = 'ICFactor'
 
     predefined = List
     _refit_message = 'The selected IC Factors have already been fit. Would you like to skip refitting?'
+
+    def _editor_factory(self):
+        e = super(FitICFactorNode, self)._editor_factory()
+        a = self.plotter_options.aux_plots[0]
+        e.references_name = a.analysis_type
+        return e
 
     def _get_reference_analysis_types(self):
         return ['air', 'cocktail']

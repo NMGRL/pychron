@@ -145,10 +145,10 @@ class MetaRepo(GitRepoManager):
         else:
             self.warning_dialog('Invalid production name'.format(prname))
 
-    def add_production_to_irradiation(self, irrad, name, params, add=True, commit=False, new=False):
+    def add_production_to_irradiation(self, irrad, name, params, add=True, commit=False):
         self.debug('adding production {} to irradiation={}'.format(name, irrad))
         p = os.path.join(paths.meta_root, irrad, 'productions', add_extension(name, '.json'))
-        prod = Production(p, new=new)
+        prod = Production(p, new=not os.path.isfile(p))
 
         prod.update(params)
         prod.dump()

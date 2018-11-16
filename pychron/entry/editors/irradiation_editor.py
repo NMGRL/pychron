@@ -90,6 +90,7 @@ class IrradiationEditor(Loggable):
                 if not self.dvc.get_irradiation(name):
                     if not self.selected_reactor_name:
                         self.information_dialog('Please select a reactor')
+                        info = v.edit_traits()
                         continue
 
                     self._add_irradiation()

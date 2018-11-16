@@ -17,12 +17,12 @@
 # ============= enthought library imports =======================
 
 import os
+import time
 from datetime import datetime, timedelta
 
-import time
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
-from pyface.message_dialog import warning
+from pyface.message_dialog import warning, information
 from pyface.timer.do_later import do_after
 from traits.api import Instance, Bool, Int, Str, List, Enum, Float, Time
 from traitsui.api import View, Item, EnumEditor, CheckListEditor
@@ -146,6 +146,23 @@ class CSVNode(BaseNode):
             self._manual_configured = True
 
         if not self.path or not os.path.isfile(self.path):
+            msg = '''CSV File Format
+Create/select a file with a column header as the first line. 
+The following columns are required:
+
+runid, age, age_err
+
+Optional columns are:
+
+group, aliquot
+
+e.x.
+runid, age, age_error
+SampleA, 10, 0.24
+SampleB, 11, 0.32
+SampleC, 10, 0.40'''
+            information(None, msg)
+
             dlg = FileDialog()
             if dlg.open() == OK:
                 self.path = dlg.path

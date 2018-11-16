@@ -70,12 +70,16 @@ class FigureModel(HasTraits):
         self.panels = ps
         self.panel_gen = (gi for gi in self.panels)
 
+    def _panel_factory(self, *args, **kw):
+        p = self._panel_klass(*args, **kw)
+        return p
+
     def _make_panels(self):
         if self.analysis_groups:
-            gs = [self._panel_klass(analyses=ag, plot_options=self.plot_options, graph_id=gid) for gid, ag in
+            gs = [self._panel_factory(analyses=ag, plot_options=self.plot_options, graph_id=gid) for gid, ag in
                   enumerate(self.analysis_groups)]
         else:
-            gs = [self._panel_klass(analyses=list(ais),
+            gs = [self._panel_factory(analyses=list(ais),
                                     plot_options=self.plot_options,
                                     graph_id=gid)
                   for gid, ais in groupby_key(self.analyses, 'graph_id')]

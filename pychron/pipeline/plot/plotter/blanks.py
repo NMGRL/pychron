@@ -19,13 +19,16 @@
 # ============= local library imports  ==========================
 # from pychron.pipeline.plot. import ReferencesSeries
 from __future__ import absolute_import
+
+from six.moves import zip
 from uncertainties import ufloat
 
 from pychron.pipeline.plot.plotter.references_series import ReferencesSeries
-from six.moves import zip
 
 
 class Blanks(ReferencesSeries):
+    references_name = 'Blanks'
+
     def _get_interpolated_value(self, po, analysis):
         v, e = 0, 0
         iso = self._get_isotope(po, analysis)

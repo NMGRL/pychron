@@ -49,6 +49,7 @@ class ReferencesSeries(BaseSeries):
     sorted_references = Property(depends_on='references')
     show_current = True
     rxs = Array
+    references_name = 'References'
 
     _normalization_factor = 3600.
 
@@ -61,11 +62,11 @@ class ReferencesSeries(BaseSeries):
         p_uys = reg.predict(xs)
         p_ues = reg.predict_error(xs)
 
-        if any(isnan(p_ues)) or any(isinf(p_ues)):
-            p_ues = zeros_like(p_ues)
+        if p_ues is None or any(isnan(p_ues)) or any(isinf(p_ues)):
+            p_ues = zeros_like(xs)
 
-        if any(isnan(p_uys)) or any(isinf(p_uys)):
-            p_uys = zeros_like(p_uys)
+        if p_uys is None or any(isnan(p_uys)) or any(isinf(p_uys)):
+            p_uys = zeros_like(xs)
 
         self._set_interpolated_values(iso, fit, ans, p_uys, p_ues)
         return asarray(p_uys), asarray(p_ues)
@@ -89,8 +90,8 @@ class ReferencesSeries(BaseSeries):
             self.xpad = '0.1'
 
             legend = ExplicitLegend(plots=self.graph.plots[0].plots,
-                                    labels=[('plot1', 'Reference'),
-                                            ('data0', 'Reference'),
+                                    labels=[('plot1', self.references_name),
+                                            ('data0', self.references_name),
                                             ('plot0', 'Unk. Current'),
                                             ('Unknowns-predicted0', 'Unk. Predicted')])
             self.graph.plots[-1].overlays.append(legend)

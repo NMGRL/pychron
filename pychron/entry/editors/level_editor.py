@@ -470,8 +470,7 @@ class LevelEditor(Loggable):
             self.debug('saving production {}'.format(prname))
 
             self.meta_repo.add_production_to_irradiation(self.irradiation, prname,
-                                                         self.selected_production.get_params(),
-                                                         new=name is not None)
+                                                         self.selected_production.get_params())
             self.meta_repo.commit('Edited production {} for Irradiation {}'.format(prname, self.irradiation))
 
     def _add_production_button_fired(self):
