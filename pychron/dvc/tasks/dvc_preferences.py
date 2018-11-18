@@ -17,21 +17,13 @@
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Str, Bool
-from traitsui.api import View, Item, VGroup
+from traitsui.api import View, Item
 
 from pychron.core.helpers.strtools import to_bool, to_csv_str
+from pychron.core.pychron_traits import BorderVGroup
 from pychron.database.tasks.connection_preferences import ConnectionPreferences, ConnectionPreferencesPane, \
     ConnectionFavoriteItem
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
-
-
-#
-# class DVCPreferences(BasePreferencesHelper):
-#     preferences_path = 'pychron.dvc'
-#     meta_repo_name = Str
-#     meta_repo_dirname = Str
-#     organization = Str
-#     default_team = Str
 
 
 class DVCConnectionItem(ConnectionFavoriteItem):
@@ -78,45 +70,6 @@ class DVCConnectionPreferencesPane(ConnectionPreferencesPane):
     category = 'DVC'
 
     def traits_view(self):
-        # cols = [CheckboxColumn(name='enabled'),
-        #         CheckboxColumn(name='default'),
-        #         ObjectColumn(name='kind'),
-        #         ObjectColumn(name='name'),
-        #         ObjectColumn(name='username'),
-        #         ObjectColumn(name='password',
-        #                      format_func=lambda x: '*' * len(x),
-        #                      editor=TextEditor(password=True)),
-        #         ObjectColumn(name='host'),
-        #         ObjectColumn(name='dbname',
-        #                      label='Database',
-        #                      editor=EnumEditor(name='names')),
-        #         ObjectColumn(name='path', style='readonly')]
-        #
-        #
-        #
-        # fav_grp = VGroup(UItem('_fav_items',
-        #                        width=100,
-        #                        editor=TableEditor(columns=cols,
-        #                                           selected='_selected',
-        #                                           sortable=False,
-        #                                           edit_view=ev)),
-        #                  HGroup(
-        #                      icon_button_editor('add_favorite', 'database_add',
-        #                                         tooltip='Add saved connection'),
-        #                      icon_button_editor('add_favorite_path', 'dbs_sqlite',
-        #                                         tooltip='Add sqlite database'),
-        #                      icon_button_editor('delete_favorite', 'delete',
-        #                                         tooltip='Delete saved connection'),
-        #                      icon_button_editor('test_connection_button', 'database_connect',
-        #                                         tooltip='Test connection'),
-        #                      Spring(width=10, springy=False),
-        #                      Label('Status:'),
-        #                      CustomLabel('_connected_label',
-        #                                  label='Status',
-        #                                  weight='bold',
-        #                                  color_name='_connected_color'),
-        #                      spring,
-        #                      show_labels=False))
         ev = View(Item('organization'),
                   Item('meta_repo_name'),
                   Item('meta_repo_dir'))
@@ -125,26 +78,21 @@ class DVCConnectionPreferencesPane(ConnectionPreferencesPane):
         return View(fav_grp)
 
 
-# class DVCPreferencesPane(PreferencesPane):
-#     model_factory = DVCPreferences
-#     category = 'DVC'
-#
-#     def traits_view(self):
-#         org = VGroup(UItem('organization', resizable=True),
-#                      Item('default_team', tooltip='Name of the GitHub Team to add to new repositories'),
-#                      label='Organization', show_border=True)
-#         meta = VGroup(Item('meta_repo_name', label='MetaData Repository Name',
-#                            tooltip='Name of repository on GitHub',
-#                            resizable=True),
-#                       Item('meta_repo_dirname',
-#                            label='MetaData Directory Name',
-#                            tooltip='Name of local MetaData directory that links to the MetaData repository.'
-#                                    'Leave blank if you do not understand'),
-#                       label='MetaData Repo', show_border=True)
-#
-#         v = View(VGroup(VGroup(org, meta), label='Git',
-#                         show_border=True))
-#         return v
+class DVCPreferences(BasePreferencesHelper):
+    preferences_path = 'pychron.dvc'
+    use_cocktail_irradiation = Bool
+
+
+class DVCPreferencesPane(PreferencesPane):
+    model_factory = DVCPreferences
+    category = 'DVC'
+
+    def traits_view(self):
+        v = View(BorderVGroup(Item('use_cocktail_irradiation',
+                                   tooltip='Use the special cocktail.json for defining the '
+                                           'irradiation flux and chronology',
+                                   label='Use Cocktail Irradiation')))
+        return v
 
 
 class DVCExperimentPreferences(BasePreferencesHelper):
@@ -157,8 +105,8 @@ class DVCExperimentPreferencesPane(PreferencesPane):
     category = 'Experiment'
 
     def traits_view(self):
-        v = View(VGroup(Item('use_dvc_persistence', label='Use DVC Persistence'),
-                        label='DVC', show_border=True))
+        v = View(BorderVGroup(Item('use_dvc_persistence', label='Use DVC Persistence'),
+                              label='DVC'))
         return v
 
 
@@ -172,7 +120,7 @@ class DVCRepositoryPreferencesPane(PreferencesPane):
     category = 'Repositories'
 
     def traits_view(self):
-        v = View(VGroup(Item('check_for_changes', label='Check for Changes'),
-                        label='', show_border=True))
+        v = View(BorderVGroup(Item('check_for_changes', label='Check for Changes'),
+                              label=''))
         return v
 # ============= EOF =============================================

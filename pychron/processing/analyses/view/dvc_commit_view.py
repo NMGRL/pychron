@@ -32,9 +32,10 @@ from pychron.dvc.tasks.panes import CommitAdapter
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.view_util import open_view
 from pychron.git_archive.repo_manager import isoformat_date
-from pychron.git_archive.utils import get_commits, get_diff, get_head_commit
+from pychron.git_archive.utils import get_commits, get_diff, get_head_commit, from_gitlog
 from pychron.paths import paths
-from pychron.pychron_constants import LIGHT_RED, PLUSMINUS_ONE_SIGMA, LIGHT_YELLOW, MASS_SPEC_REDUCED
+from pychron.pychron_constants import LIGHT_RED, PLUSMINUS_ONE_SIGMA, LIGHT_YELLOW, HISTORY_PATHS, \
+    HISTORY_TAGS
 
 TAGS = 'TAG', 'BLANK', 'ISOEVO', 'ICFactor'
 TAG_COLORS = {'TAG': '#f5f7c8', 'BLANKS': '#cac8f7',
@@ -393,48 +394,23 @@ class HistoryView(DVCCommitView):
     name = 'History'
 
     def initialize(self, an, force=False):
-        self.repo = Repo(os.path.join(paths.repository_dataset_dir, an.repository_identifier))
+        self.repo = repo = Repo(os.path.join(paths.repository_dataset_dir, an.repository_identifier))
         self.record_id = an.record_id
         self.repository_identifier = an.repository_identifier
 
         if not self.commits or force:
-            repo = self.repo
-            cs = []
-            hexshas = []
-            for a, b in (('TAG', 'tag'),
-                         ('ISOEVO', 'intercepts'),
-                         ('ISOEVO', 'baselines'),
-                         ('BLANKS', 'blanks'),
-                         ('ICFactor', 'icfactors')):
-                path = an.make_path(b)
-                if path:
-                    for aa in (a, MASS_SPEC_REDUCED):
-                        css = get_commits(repo, repo.active_branch.name, path, aa, '--grep=^<{}>'.format(aa))
-                        for ci in css:
-                            if ci.hexsha not in hexshas:
-                                ci.path = path
-                                hexshas.append(ci.hexsha)
-                                cs.append(ci)
+            ps = [an.make_path(p) for p in HISTORY_PATHS]
 
-                            # css = [c for c]
-                            # cs.extend(css)
+            greps = '\|'.join(['<{}>'.format(t) for t in HISTORY_TAGS])
+            txt = repo.git.log(repo.active_branch.name,
+                               '--remove-empty',
+                               '--simplify-merges',
+                               '--grep=^{}'.format(greps),
+                               '--pretty=%H|%cn|%ce|%ct|%s',
+                               '--', *ps)
 
-            # logtxt = get_log(repo, repo.active_branch.name, path)
-            # if logtxt:
-            #     cs.extend((from_gitlog(l.strip(), path) for l in logtxt.split('\n')))
+            cs = [from_gitlog(l.strip()) for l in txt.split('\n')]
 
-            self.commits = sorted(cs, key=lambda x: x.date, reverse=True)
-
-# class FitsView(DVCCommitView):
-#     commit_tag = 'ISOEVO'
-#
-#
-# class BlanksView(DVCCommitView):
-#     commit_tag = 'BLANK'
-
-
-# class TagsView(DVCCommitView):
-#     commit_tag = 'TAG'
-#     modifier = 'tag'
+            self.commits = cs
 
 # ============= EOF =============================================

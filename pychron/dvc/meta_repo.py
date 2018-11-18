@@ -21,7 +21,6 @@ from datetime import datetime
 from traits.api import Bool
 from uncertainties import ufloat
 
-from pychron import json
 from pychron.canvas.utils import iter_geom
 from pychron.core.helpers.datetime_tools import ISO_FORMAT_STR
 from pychron.core.helpers.filetools import glob_list_directory, add_extension, \
@@ -397,6 +396,28 @@ class MetaRepo(GitRepoManager):
                                    extension='.txt',
                                    remove_extension=True)
 
+    def get_cocktail_irradiation(self):
+        """
+        example cocktail.json
+
+        {
+            "chronology": ["1.0,2016-06-01 08:00:00,2016-06-01 17:00:00"],
+            "j": 4e-4,
+            "j_err": 4e-9
+        }
+
+        :return:
+        """
+        p = os.path.join(paths.meta_root, 'cocktail.json')
+        ret = dvc_load(p)
+        nret = {}
+        if ret:
+            c = Chronology.from_lines(ret['chronology'])
+            nret['chronology'] = c
+            nret['flux'] = ufloat(ret['j'], ret['j_err'])
+
+        return nret
+
     def get_default_productions(self):
         p = os.path.join(paths.meta_root, 'reactors.json')
         if not os.path.isfile(p):
@@ -404,8 +425,7 @@ class MetaRepo(GitRepoManager):
                 from pychron.file_defaults import REACTORS_DEFAULT
                 wfile.write(REACTORS_DEFAULT)
 
-        with open(os.path.join(paths.meta_root, 'reactors.json'), 'r') as rfile:
-            return json.load(rfile)
+        return dvc_load(p)
 
     def get_flux_positions(self, irradiation, level):
         positions = self._get_level_positions(irradiation, level)

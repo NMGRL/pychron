@@ -33,9 +33,9 @@ class MetaObjectException(BaseException):
 
 
 class MetaObject(object):
-    def __init__(self, path, new=False):
+    def __init__(self, path=None, new=False):
         self.path = path
-        if os.path.isfile(path):
+        if path is not None and os.path.isfile(path):
             with open(path, 'r') as rfile:
                 self._load_hook(path, rfile)
         elif not new:
@@ -65,10 +65,19 @@ class Chronology(MetaObject):
         self._doses = []
         super(Chronology, self).__init__(*args, **kw)
 
+    @classmethod
+    def from_lines(cls, lines):
+        c = cls(new=False)
+        c._load(lines)
+        return c
+
     def _load_hook(self, path, rfile):
+        self._load([line for line in rfile])
+
+    def _load(self, lines):
         self._doses = []
         d = 0
-        for line in rfile:
+        for line in lines:
             try:
                 power, start, end = line.strip().split(',')
             except ValueError:

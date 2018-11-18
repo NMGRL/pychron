@@ -34,7 +34,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str, Bool, Property, on_trait_change, Button, List
+from traits.api import String, Bool, Property, on_trait_change, Button, List, Str
 
 from pychron.core.codetools.inspection import caller
 from pychron.core.ui.preference_binding import bind_preference
@@ -45,8 +45,7 @@ from pychron.envisage.browser.record_views import ProjectRecordView
 class BrowserModel(BaseBrowserModel):
     filter_focus = Bool(True)
     use_focus_switching = Bool(True)
-    fuzzy_search_entry = Str(auto_set=False, enter_set=True)
-    # filter_label = Property(Str, depends_on='filter_focus')
+    fuzzy_search_entry = String(auto_set=False, enter_set=True)
 
     irradiation_visible = Property(depends_on='filter_focus')
     analysis_types_visible = Property(depends_on='filter_focus')
@@ -145,8 +144,6 @@ class BrowserModel(BaseBrowserModel):
             db = self.db
             ps1 = db.get_fuzzy_projects(new)
 
-            # pis = db.get_fuzzy_principal_investigators(new)
-            # print pis
             ss, ps2 = db.get_fuzzy_labnumbers(new)
             sams = self._load_sample_record_views(ss)
 
@@ -157,7 +154,6 @@ class BrowserModel(BaseBrowserModel):
             ad = self._make_project_records(ps, include_recent=False)
             self.projects = ad
             self.oprojects = ad
-            # print sams
 
     def _irradiation_enabled_changed(self, new):
         if not new:

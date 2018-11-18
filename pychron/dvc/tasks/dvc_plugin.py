@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 import time
 
 # ============= standard library imports ========================
@@ -33,7 +31,7 @@ from pychron.dvc.dvc_persister import DVCPersister
 from pychron.dvc.tasks import list_local_repos
 from pychron.dvc.tasks.actions import WorkOfflineAction, UseOfflineDatabase, ShareChangesAction
 from pychron.dvc.tasks.dvc_preferences import DVCConnectionPreferencesPane, DVCExperimentPreferencesPane, \
-    DVCRepositoryPreferencesPane
+    DVCRepositoryPreferencesPane, DVCPreferencesPane
 from pychron.dvc.tasks.repo_task import ExperimentRepoTask
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.git.hosts import IGitHost
@@ -119,8 +117,6 @@ class DVCPlugin(BaseTaskPlugin):
         return [('fetch', self._fetch)]
 
     def _service_offers_default(self):
-        # p = {'dvc': self.dvc_factory()}
-        # self.debug('DDDDD {}'.format(p))
         so = self.service_offer_factory(protocol=DVCPersister,
                                         factory=DVCPersister,
                                         properties={'dvc': self._dvc_factory()})
@@ -134,7 +130,10 @@ class DVCPlugin(BaseTaskPlugin):
         return self._preferences_factory('dvc')
 
     def _preferences_panes_default(self):
-        return [DVCConnectionPreferencesPane, DVCExperimentPreferencesPane, DVCRepositoryPreferencesPane]
+        return [DVCPreferencesPane,
+                DVCConnectionPreferencesPane,
+                DVCExperimentPreferencesPane,
+                DVCRepositoryPreferencesPane]
 
     def _tasks_default(self):
         return [TaskFactory(id='pychron.experiment_repo.task',
@@ -148,11 +147,7 @@ class DVCPlugin(BaseTaskPlugin):
                    SchemaAddition(factory=UseOfflineDatabase,
                                   path='MenuBar/tools.menu'),
                    SchemaAddition(factory=ShareChangesAction,
-                                  path='MenuBar/tools.menu'),
-                   # SchemaAddition(factory=SyncMetaDataAction,
-                   #                path='MenuBar/tools.menu')
-                   # SchemaAddition(factory=PullAction),
-                   ]
+                                  path='MenuBar/tools.menu')]
 
         return [TaskExtension(actions=actions), ]
 

@@ -39,6 +39,9 @@ class AnalysisNotAnvailableError(BaseException):
 
 
 def dvc_dump(obj, path):
+    if obj is None:
+        return
+
     with open(path, 'w') as wfile:
         try:
             json.dump(obj, wfile, indent=4, sort_keys=True)

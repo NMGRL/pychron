@@ -237,26 +237,6 @@ class UnknownNode(DataNode):
         return super(UnknownNode, self).pre_run(state, configure=True)
 
     def run(self, state):
-        # if not self.unknowns and not state.unknowns:
-        #     if not self.configure():
-        #         state.canceled = True
-        #         return
-
-        # review_req = []
-        # unks = self.unknowns
-        # for ai in unks:
-        #     ai.group_id = 0
-        #     if self.check_reviewed:
-        #         for attr in ('blanks', 'iso_evo'):
-        #             # check analyses to see if they have been reviewed
-        #             if attr not in review_req:
-        #                 if not self.dvc.analysis_has_review(ai, attr):
-        #                     review_req.append(attr)
-        #
-        # if review_req:
-        #     information(None, 'The current data set has been '
-        #                       'analyzed and requires {}'.format(','.join(review_req)))
-
         # add our analyses to the state
         items = getattr(state, self.analysis_kind)
         items.extend(self.unknowns)
