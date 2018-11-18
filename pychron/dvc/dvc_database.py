@@ -33,7 +33,7 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
     IrradiationTbl, LevelTbl, SampleTbl, \
     MaterialTbl, IrradiationPositionTbl, UserTbl, ExtractDeviceTbl, LoadTbl, \
     LoadHolderTbl, LoadPositionTbl, \
-    MeasuredPositionTbl, ProductionTbl, VersionTbl, RepositoryAssociationTbl, \
+    MeasuredPositionTbl, VersionTbl, RepositoryAssociationTbl, \
     RepositoryTbl, AnalysisChangeTbl, \
     PrincipalInvestigatorTbl, SamplePrepWorkerTbl, SamplePrepSessionTbl, \
     SamplePrepStepTbl, SamplePrepImageTbl, RestrictedNameTbl, AnalysisGroupTbl, AnalysisGroupSetTbl, \
@@ -441,10 +441,10 @@ class DVCDatabase(DatabaseAdapter):
                 obj = UserTbl(name=self.save_username)
                 self._add_item(obj)
 
-    def add_production(self, name):
-        with self.session_ctx():
-            obj = ProductionTbl(name=name)
-            return self._add_item(obj)
+    # def add_production(self, name):
+    #     with self.session_ctx():
+    #         obj = ProductionTbl(name=name)
+    #         return self._add_item(obj)
 
     def add_measured_position(self, position=None, load=None, **kw):
         with self.session_ctx():
@@ -655,16 +655,16 @@ class DVCDatabase(DatabaseAdapter):
             if dblevel is None:
 
                 irradiation = self.get_irradiation(irradiation)
-                production = self.get_production(production_name)
-                if not production:
-                    production = self.add_production(production_name)
+                # production = self.get_production(production_name)
+                # if not production:
+                #     production = self.add_production(production_name)
 
                 a = LevelTbl(name=name,
                              irradiation=irradiation,
                              holder=holder,
                              z=z,
                              note=note)
-                a.production = production
+                # a.production = production
                 dblevel = self._add_item(a)
             return dblevel
 
@@ -1428,8 +1428,8 @@ class DVCDatabase(DatabaseAdapter):
 
         return self._query_one(q)
 
-    def get_production(self, name):
-        return self._retrieve_item(ProductionTbl, name)
+    # def get_production(self, name):
+    #     return self._retrieve_item(ProductionTbl, name)
 
     def get_project_by_id(self, pid):
         with self.session_ctx() as sess:

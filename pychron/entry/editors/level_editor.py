@@ -248,10 +248,10 @@ class LevelEditor(Loggable):
                     self._save_production()
                     prname = self.selected_production.name
 
-                    pr = db.get_production(prname)
-                    if not pr:
-                        pr = db.add_production(prname)
-                    level.production = pr
+                    # pr = db.get_production(prname)
+                    # if not pr:
+                    #     pr = db.add_production(prname)
+                    # level.production = pr
 
                     self.meta_repo.update_level_production(self.irradiation, self.name, prname, self.level_note)
 

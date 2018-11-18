@@ -20,7 +20,7 @@
 
 from pychron.pipeline.nodes.audit import AuditNode
 from pychron.pipeline.nodes.bulk_edit import BulkEditNode
-from pychron.pipeline.nodes.correction_factors import CorrectionFactorsNode
+from pychron.pipeline.nodes.correction_factors import CaCorrectionFactorsNode, KCorrectionFactorsNode
 from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode, FluxMonitorsNode, ListenUnknownNode, CSVNode, \
     InterpretedAgeNode, CalendarUnknownNode
 from pychron.pipeline.nodes.detector_yield import YieldNode

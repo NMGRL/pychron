@@ -253,11 +253,19 @@ nodes:
   - klass: CSVAnalysesExportNode
 """
 
-CORRECTION_FACTORS = """
+CA_CORRECTION_FACTORS = """
 required:
 nodes:
   - klass: UnknownNode
-  - klass: CorrectionFactorsNode
+  - klass: CaCorrectionFactorsNode
+
+"""
+
+K_CORRECTION_FACTORS = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: KCorrectionFactorsNode
 
 """
 

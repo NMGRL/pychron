@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from enable.markers import marker_names
 from traits.api import Bool, Enum, on_trait_change, Float, Int, Range
 from traitsui.api import EnumEditor, Item, HGroup, UItem, View, VGroup, Tabbed
 
@@ -26,19 +25,6 @@ from pychron.pychron_constants import FIT_TYPES, FIT_ERROR_TYPES
 
 class IsoEvoSubOptions(SubOptions):
     pass
-    # def traits_view(self):
-    #     return self._make_view(Item('global_goodness_threshold', label='Intercept Goodness',
-    #                                 tooltip='If % error is greater than "Goodness Threshold" '
-    #                                         'mark regression as "Bad"'),
-    #                            Item('global_slope_goodness', label='Slope Goodness',
-    #                                 tooltip='If slope of regression is positive and the isotope '
-    #                                         'intensity is greater than "Slope Goodness Intensity" '
-    #                                         'then mark regression as "Bad"'),
-    #                            Item('global_outlier_goodness', label='Outlier Goodness',
-    #                                 tooltip='If more than "Outlier Goodness" points are identified as outliers'
-    #                                         'then mark regression as "Bad"'),
-    #                            HGroup(Item('global_curvature_goodness'),
-    #                                   Item('global_curvature_goodness_at')))
 
 
 class IsoEvoAppearanceOptions(AppearanceSubOptions):
@@ -64,15 +50,8 @@ class IsoEvoMainOptions(MainOptions):
 
     def _get_edit_view(self):
         main = VGroup(HGroup(Item('name', editor=EnumEditor(name='names')),
-                             Item('scale', editor=EnumEditor(values=['linear', 'log']))),
-                      Item('height'),
-                      HGroup(UItem('marker', editor=EnumEditor(values=marker_names)),
-                             Item('marker_size', label='Size'),
-                             show_border=True, label='Marker'),
-                      HGroup(Item('ymin', label='Min'),
-                             Item('ymax', label='Max'),
-                             show_border=True,
-                             label='Y Limits'),
+                             Item('fit', editor=EnumEditor(values=FIT_TYPES)),
+                             UItem('error_type', editor=EnumEditor(values=FIT_ERROR_TYPES))),
                       label='Fits')
 
         goodness = VGroup(Item('goodness_threshold', label='Intercept',

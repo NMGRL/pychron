@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 import six
 from pyface.action.menu_manager import MenuManager
 from pyface.tasks.traits_dock_pane import TraitsDockPane
@@ -104,7 +102,6 @@ class PipelineHandler(six.with_metaclass(PipelineHandlerMeta, Handler)):
 
     def toggle_skip_configure(self, info, obj):
         obj.skip_configure = not obj.skip_configure
-        # info.object.refresh_all_needed = True
         info.object.update_needed = True
 
     def configure(self, info, obj):
@@ -124,7 +121,6 @@ class PipelineHandler(six.with_metaclass(PipelineHandlerMeta, Handler)):
 
     def _toggle_enable(self, info, obj, state):
         obj.enabled = state
-        # info.object.run_needed = True
         info.object.refresh_all_needed = True
         info.object.update_needed = True
 
@@ -150,25 +146,18 @@ class PipelinePane(TraitsDockPane):
                                name='Enable/Disable')
 
         def menu_factory(*actions):
-            return MenuManager(
-                # Action(name='Enable',
-                #        action='enable',
-                #        visible_when='not object.enabled'),
-                # Action(name='Disable',
-                #        action='disable',
-                #        visible_when='object.enabled'),
-                Action(name='Configure', action='configure'),
-                Action(name='Enable Auto Configure',
-                       action='toggle_skip_configure',
-                       visible_when='object.skip_configure'),
-                Action(name='Disable Auto Configure',
-                       action='toggle_skip_configure',
-                       visible_when='not object.skip_configure'),
-                Action(name='Move Up', action='move_up'),
-                Action(name='Move Down', action='move_down'),
-                Action(name='Delete', action='delete_node'),
-                Action(name='Save Template', action='save_template'),
-                *actions)
+            return MenuManager(Action(name='Configure', action='configure'),
+                               Action(name='Enable Auto Configure',
+                                      action='toggle_skip_configure',
+                                      visible_when='object.skip_configure'),
+                               Action(name='Disable Auto Configure',
+                                      action='toggle_skip_configure',
+                                      visible_when='not object.skip_configure'),
+                               Action(name='Move Up', action='move_up'),
+                               Action(name='Move Down', action='move_down'),
+                               Action(name='Delete', action='delete_node'),
+                               Action(name='Save Template', action='save_template'),
+                               *actions)
 
         def add_menu_factory():
             return MenuManager(Action(name='Add Unknowns',
@@ -266,11 +255,6 @@ class PipelinePane(TraitsDockPane):
                                 enable_disable_menu_factory(),
                                 add_menu_factory(), fit_menu_factory())
 
-        # def default_menu():
-        #     return MenuManager(Action(name='Add Data',
-        #                        action='add_data'),
-        #                        chain_menu_factory())
-
         nodes = [PipelineGroupTreeNode(node_for=[PipelineGroup],
                                        children='pipelines',
                                        auto_open=True
@@ -280,9 +264,7 @@ class PipelinePane(TraitsDockPane):
                                   children='nodes',
                                   icon_open='',
                                   label='name',
-                                  auto_open=True,
-                                  # menu=default_menu()
-                                  ),
+                                  auto_open=True),
                  NodeGroupTreeNode(node_for=[NodeGroup],
                                    children='nodes',
                                    auto_open=True,
@@ -326,11 +308,6 @@ class PipelinePane(TraitsDockPane):
                              selected='selected_pipeline_template',
                              hide_root=True,
                              lines_mode='off')
-
-        # HGroup(UItem('selected_pipeline_template',
-        #              editor=myEnumEditor(name='available_pipeline_templates')),
-        #        icon_button_editor('run_needed', 'start'),
-        #        icon_button_editor('add_pipeline', 'add')),
 
         v = View(VSplit(UItem('pipeline_template_root',
                               editor=teditor),
@@ -551,16 +528,6 @@ class EditorOptionsPane(TraitsDockPane):
         return v
 
 
-# class InspectorPane(TraitsDockPane):
-#     name = 'Inspector'
-#     id = 'pychron.pipeline.inspector'
-#
-#     def traits_view(self):
-#         v = View(UItem('object.active_inspector_item', style='custom',
-#                        editor=InstanceEditor()))
-#         return v
-
-
 class BrowserPane(TraitsDockPane, PaneBrowserView):
     id = 'pychron.browser.pane'
     name = 'Analysis Selection'
@@ -586,34 +553,5 @@ class SearcherPane(TraitsDockPane):
                                                      selected='object.analysis_table.selected',
                                                      dclicked='object.analysis_table.dclicked'))))
         return v
-
-# class AnalysisGroupsAdapter(TabularAdapter):
-#     columns = [('Set', 'name'),
-#                ('Date', 'create_date')]
-#
-#     font = 'Arial 10'
-
-#
-# class AnalysisGroupsPane(TraitsDockPane, BaseBrowserSampleView):
-#     name = 'Analysis Groups'
-#     id = 'pychron.browser.analysis_groups.pane'
-#
-#     def traits_view(self):
-#         tgrp = UItem('object.analysis_table.analyses',
-#                      height=400,
-#                      editor=myTabularEditor(adapter=self.model.analysis_table.tabular_adapter,
-#                                             operations=['move', 'delete'],
-#                                             column_clicked='object.analysis_table.column_clicked',
-#                                             refresh='object.analysis_table.refresh_needed',
-#                                             selected='object.analysis_table.selected',
-#                                             dclicked='object.analysis_table.dclicked'))
-#
-#         pgrp = HGroup(self._get_pi_group(), self._get_project_group())
-#         agrp = UItem('object.analysis_groups',
-#                      height=100, editor=myTabularEditor(adapter=AnalysisGroupsAdapter(),
-#                                                         multi_select=True,
-#                                                         selected='object.selected_analysis_groups'))
-#         v = View(VSplit(pgrp, agrp, tgrp))
-#         return v
 
 # ============= EOF =============================================

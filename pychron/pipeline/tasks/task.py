@@ -267,12 +267,9 @@ class PipelineTask(BaseBrowserTask):
                 if self.active_editor:
                     self.active_editor.figure_model = None
                     self.active_editor.refresh_needed = True
-                    # self.active_editor.figure_model.refresh()
 
                 self.browser_model.analysis_table.set_tags(tag, items)
                 self.browser_model.analysis_table.remove_invalid()
-                # self.browser_model.analysis_table.refresh_needed = True
-                # self.engine.refresh_table_needed = True
                 self.engine.remove_invalid()
 
     def set_invalid(self):
@@ -305,7 +302,6 @@ class PipelineTask(BaseBrowserTask):
                 save_pdf(ed.component,
                          path=path,
                          options=sfm.pdf_options,
-                         # path='/Users/ross/Documents/test.pdf',
                          view=True)
 
     def run(self):
@@ -335,8 +331,6 @@ class PipelineTask(BaseBrowserTask):
     def reset(self):
         self.engine.run_enabled = True
         self.engine.resume_enabled = False
-        # self._temp_state = None
-        # self.state = None
         self.engine.reset()
 
     def save_pipeline_template(self):
@@ -411,7 +405,6 @@ class PipelineTask(BaseBrowserTask):
         node = self.engine.get_unknowns_node()
         if node:
             # get last n analyses as unks
-            # set node.unknowns = unks
             node.set_last_n_analyses(n)
 
             self.run()
@@ -665,15 +658,6 @@ class PipelineTask(BaseBrowserTask):
         info = tv.edit_traits()
         if info.result:
             return model.tag, model.get_items(), model.use_filter, model.note
-
-    # def _get_dr_tagname(self, items):
-    #     from pychron.pipeline.tagging.data_reduction_tags import DataReductionTagModel
-    #     from pychron.pipeline.tagging.views import DataReductionTagView
-    #
-    #     tv = DataReductionTagView(model=DataReductionTagModel(items=items))
-    #     info = tv.edit_traits()
-    #     if info.result:
-    #         return tv.model
 
     def _engine_default(self):
         e = PipelineEngine(application=self.application)

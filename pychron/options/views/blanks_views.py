@@ -15,8 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from traitsui.api import View, EnumEditor, UItem, HGroup, CheckListEditor, Item
+from enable.markers import marker_names
+from traitsui.api import View, EnumEditor, UItem, HGroup, Item, VGroup
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.table_editor import myTableEditor
@@ -35,6 +36,20 @@ class BlanksAppearance(AppearanceSubOptions):
 
 
 class BlanksMainOptions(MainOptions):
+    def _get_edit_view(self):
+        v = View(VGroup(HGroup(Item('name', editor=EnumEditor(name='names')),
+                               Item('fit', editor=EnumEditor(values=FIT_TYPES_INTERPOLATE)),
+                               UItem('error_type', editor=EnumEditor(values=FIT_ERROR_TYPES))),
+                        HGroup(UItem('marker', editor=EnumEditor(values=marker_names)),
+                               Item('marker_size', label='Size'),
+                               show_border=True, label='Marker'),
+                        HGroup(Item('ymin', label='Min'),
+                               Item('ymax', label='Max'),
+                               show_border=True,
+                               label='Y Limits'),
+                        show_border=True))
+        return v
+
     def _get_columns(self):
         return [object_column(name='name'),
                 checkbox_column(name='plot_enabled', label='Enabled'),

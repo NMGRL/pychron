@@ -44,10 +44,10 @@ from pychron.pipeline.nodes.ia import SetInterpretedAgeNode
 from pychron.pipeline.nodes.persist import PDFFigureNode, IsotopeEvolutionPersistNode, \
     BlanksPersistNode, ICFactorPersistNode
 from pychron.pipeline.pipeline_defaults import ISOEVO, BLANKS, ICFACTOR, IDEO, SPEC, SERIES, INVERSE_ISOCHRON, FLUX, \
-    CSV_IDEO, XY_SCATTER, INTERPRETED_AGE_IDEOGRAM, ANALYSIS_TABLE, INTERPRETED_AGE_TABLE, REPORT, CORRECTION_FACTORS, \
+    CSV_IDEO, XY_SCATTER, INTERPRETED_AGE_IDEOGRAM, ANALYSIS_TABLE, INTERPRETED_AGE_TABLE, REPORT, \
     REGRESSION_SERIES, VERTICAL_FLUX, \
     CSV_ANALYSES_EXPORT, BULK_EDIT, HISTORY_IDEOGRAM, HISTORY_SPECTRUM, AUDIT, SUBGROUP_IDEOGRAM, HYBRID_IDEOGRAM, \
-    ANALYSIS_TABLE_W_IA, MASSSPEC_REDUCED, DEFINE_EQUILIBRATION
+    ANALYSIS_TABLE_W_IA, MASSSPEC_REDUCED, DEFINE_EQUILIBRATION, CA_CORRECTION_FACTORS, K_CORRECTION_FACTORS
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
 from pychron.pipeline.plot.editors.spectrum_editor import SpectrumEditor
@@ -822,7 +822,8 @@ class PipelineEngine(Loggable):
                             ('Blanks', BLANKS),
                             ('IC Factor', ICFACTOR),
                             ('Flux', FLUX),
-                            ('Correction Factors', CORRECTION_FACTORS),
+                            ('Ca Correction Factors', CA_CORRECTION_FACTORS),
+                            ('K Correction Factors', K_CORRECTION_FACTORS),
                             ('Bulk Edit', BULK_EDIT),
                             ('Audit', AUDIT))),
                    ('Plot', (('Ideogram', IDEO),
