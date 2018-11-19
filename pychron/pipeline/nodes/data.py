@@ -504,11 +504,11 @@ class ListenUnknownNode(BaseAutoUnknownNode):
         self.pipeline = engine.pipeline
         engine.pipeline.active = True
 
-    def configure(self, pre_run=False, *args, **kw):
-        if pre_run:
-            info = self.edit_traits()
-            return info.result
-        return BaseNode.configure(self, pre_run=pre_run, *args, **kw)
+    # def configure(self, pre_run=False, *args, **kw):
+    #     if pre_run:
+    #         info = self.edit_traits()
+    #         return info.result
+    #     return BaseNode.configure(self, pre_run=pre_run, *args, **kw)
 
     def traits_view(self):
         v = View(Item('mode', tooltip='Normal: get analyses between now and start of pipeline - hours\n'

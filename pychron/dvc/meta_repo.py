@@ -401,7 +401,7 @@ class MetaRepo(GitRepoManager):
         example cocktail.json
 
         {
-            "chronology": ["1.0,2016-06-01 08:00:00,2016-06-01 17:00:00"],
+            "chronology": "2016-06-01 17:00:00",
             "j": 4e-4,
             "j_err": 4e-9
         }
@@ -412,7 +412,8 @@ class MetaRepo(GitRepoManager):
         ret = dvc_load(p)
         nret = {}
         if ret:
-            c = Chronology.from_lines(ret['chronology'])
+            lines = ['1.0, {}, {}'.format(ret['chronology'], ret['chronology'])]
+            c = Chronology.from_lines(lines)
             nret['chronology'] = c
             nret['flux'] = ufloat(ret['j'], ret['j_err'])
 
