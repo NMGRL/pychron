@@ -239,6 +239,14 @@ class AnalysisGroup(IdeogramPlotable):
     def _set_aliquot(self, a):
         self._aliquot = a
 
+    @property
+    def monitor_age(self):
+        return self.analyses[0].monitor_age
+
+    @property
+    def monitor_reference(self):
+        return self.analyses[0].monitor_reference
+
     @cached_property
     def _get_monitor_info(self):
         a = self.analyses[0]
@@ -966,5 +974,6 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
         if isinstance(pa, tuple):
             pa = ufloat(*pa)
         return pa, kind
+
 
 # ============= EOF =============================================
