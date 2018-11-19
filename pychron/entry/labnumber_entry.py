@@ -690,12 +690,14 @@ THIS CHANGE CANNOT BE UNDONE')
 
         try:
             positions = level.positions
-            n = len(positions)
+            pn = len(positions)
+            ipn = len(self.irradiated_positions)
+
             self.debug('positions in level {}.  \
-available holder positions {}'.format(n, len(self.irradiated_positions)))
+available holder positions {}'.format(pn, ipn))
             if positions:
                 with dirty_ctx(self):
-                    self._make_positions(n, positions)
+                    self._make_positions(ipn, positions)
         except BaseException as e:
             import traceback
             traceback.print_exc()
