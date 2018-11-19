@@ -434,51 +434,6 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     def _update_irradiations(self):
         self.manager.updated = True
 
-    # def _generate_identifiers_button_fired(self):
-    #     self.generate_identifiers()
-    #
-    # def _preview_generate_identifiers_button_fired(self):
-    #     self.preview_generate_identifiers()
-
-    # # def _add_project_button_fired(self):
-    # #     dvc = self.manager.dvc
-    # #     pr = ProjectEntry(dvc=self.manager.dvc)
-    # #     pr.available = dvc.get_project_names()
-    # #     if pr.do():
-    # #         self.load_projects(include_recent=False)
-    # #
-    # # def _add_sample_button_fired(self):
-    # #     project = ''
-    # #     if self.selected_projects:
-    # #         project = self.selected_projects[0].name
-    # #
-    # #     mats = self.db.get_material_names()
-    # #     sam = SampleEntry(dvc=self.manager.dvc,
-    # #                       project=project,
-    # #                       projects=[p.name for p in self.projects],
-    # #                       materials=mats)
-    # #     if sam.do():
-    # #         self._load_associated_samples()
-    #
-    # def _add_material_button_fired(self):
-    #     dvc = self.manager.dvc
-    #     mat = MaterialEntry(dvc=dvc)
-    #     mat.available = dvc.get_material_names()
-    #     mat.do()
-    #     # self._load_materials()
-
-    # def _edit_project_button_fired(self):
-    #     pr = ProjectEntry(db=self.manager.db)
-    #     pr.edit_project(self.selected_projects)
-    #
-    # def _edit_sample_button_fired(self):
-    #     se = SampleEntry(db=self.manager.db)
-    #     sam = self.selected_samples
-    #
-    #     se.edit_sample(sam.name,
-    #                    self.selected_projects,
-    #                    sam.material)
-    #
     def _principal_investigator_changed(self, new):
         if new:
             self._load_projects_for_principal_investigators(pis=[new])

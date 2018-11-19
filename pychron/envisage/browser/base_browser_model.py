@@ -485,30 +485,33 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     def _make_project_records(self, ps, ms=None, include_recent=True, include_recent_first=True):
         if not ps:
             return []
+        pss = sorted([ProjectRecordView(p) for p in ps], key=lambda x: x.name)
+        return pss
 
-        db = self.db
-        if not ms:
-            ms = db.get_active_mass_spectrometer_names()
-
-        recents = []
+        # db = self.db
+        # if not ms:
+        #     ms = db.get_active_mass_spectrometer_names()
+        #
+        # recents = []
         # if include_recent:
         #     recents = [ProjectRecordView('RECENT {}'.format(mi.upper())) for mi in ms]
-
-        pss = sorted([ProjectRecordView(p) for p in ps], key=lambda x: x.name)
-
-        if include_recent:
-            # move references project to after Recent
-            p = next((p for p in pss if p.name.lower() == 'references'), None)
-            if p is not None:
-                rp = pss.pop(pss.index(p))
-                pss.insert(0, rp)
-        else:
-            pss = [p for p in pss if p.name.lower() != 'references']
-
-        if include_recent_first:
-            return recents + pss
-        else:
-            return pss + recents
+        #
+        # pss = sorted([ProjectRecordView(p) for p in ps], key=lambda x: x.name)
+        # return pss
+        #
+        # if include_recent:
+        #     # move references project to after Recent
+        #     p = next((p for p in pss if p.name.lower() == 'references'), None)
+        #     if p is not None:
+        #         rp = pss.pop(pss.index(p))
+        #         pss.insert(0, rp)
+        # else:
+        #     pss = [p for p in pss if p.name.lower() != 'references']
+        #
+        # if include_recent_first:
+        #     return recents + pss
+        # else:
+        #     return pss + recents
 
     def _make_records(self, ans):
         n = len(ans)
