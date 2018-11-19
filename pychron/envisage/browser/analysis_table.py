@@ -164,6 +164,11 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
         self.calculate_dts(self.analyses)
         self.scroll_to_row = len(self.analyses) - 1
 
+    def clear_non_frozen(self):
+        self.analyses = [a for a in self.analyses if a.frozen]
+        self.oanalyses = self.analyses
+        self.selected = []
+
     def clear(self):
         self.analyses = []
         self.oanalyses = []

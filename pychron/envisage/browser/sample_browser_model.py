@@ -401,7 +401,8 @@ class SampleBrowserModel(BrowserModel):
     def _selected_projects_change_hook(self, names):
 
         self.selected_samples = []
-        self.analysis_table.analyses = []
+
+        self.analysis_table.clear_non_frozen()
 
         if not self._top_level_filter:
             self._top_level_filter = 'project'
