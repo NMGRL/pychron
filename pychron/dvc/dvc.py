@@ -32,7 +32,7 @@ from pychron import json
 from pychron.core.helpers.filetools import remove_extension, list_subdirectories
 from pychron.core.helpers.iterfuncs import groupby_key, groupby_repo
 from pychron.core.i_datastore import IDatastore
-from pychron.core.progress import progress_loader, progress_iterator
+from pychron.core.progress import progress_loader, progress_iterator, open_progress
 from pychron.database.interpreted_age import InterpretedAge
 from pychron.dvc import dvc_dump, dvc_load, analysis_path, repository_path, AnalysisNotAnvailableError
 from pychron.dvc.defaults import TRIGA, HOLDER_24_SPOKES, LASER221, LASER65
@@ -258,13 +258,17 @@ class DVC(Loggable):
         with db.session_ctx():
             ans = db.get_repository_analyses(reponame)
 
-            for ln, ans in groupby_key(ans, 'identifier'):
+            groups = list(groupby_key(ans, 'identifier'))
+            progress = open_progress(len(groups))
+
+            for ln, ais in groups:
+                progress.change_message('Syncing identifier: {}'.format(ln))
                 ip = db.get_identifier(ln)
                 dblevel = ip.level
                 irrad = dblevel.irradiation.name
                 level = dblevel.name
                 pos = ip.position
-                for ai in ans:
+                for ai in ais:
                     p = analysis_path(ai, reponame)
 
                     try:
@@ -293,6 +297,7 @@ class DVC(Loggable):
                         ps.append(p)
                         if not dry_run:
                             dvc_dump(obj, p)
+            progress.close()
 
         if ps and not dry_run:
             # repo.pull()

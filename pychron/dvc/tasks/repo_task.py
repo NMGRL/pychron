@@ -279,6 +279,7 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
             if self.confirmation_dialog('Are you sure you want to copy values from the '
                                         'database into the repository "{}"'.format(name)):
                 self.dvc.repository_db_sync(name)
+                self.information_dialog('Sync complete')
 
     def sync_repo(self):
         selected = self._has_selected_local()
