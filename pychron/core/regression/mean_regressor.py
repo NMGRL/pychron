@@ -16,9 +16,8 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from __future__ import absolute_import
 
-from numpy import average, where, ones_like
+from numpy import average, where, full
 
 from pychron.core.helpers.formatting import floatfmt
 from pychron.pychron_constants import SEM, MSEM
@@ -28,6 +27,12 @@ from .base_regressor import BaseRegressor
 class MeanRegressor(BaseRegressor):
     ddof = 0
     _fit = 'average'
+
+    def get_exog(self, pts):
+        return pts
+
+    def fast_predict2(self, endog, exog):
+        return full(exog.shape[0], endog.mean())
 
     def calculate(self, filtering=False, **kw):
         # cxs, cys = self.pre_clean_ys, self.pre_clean_ys
@@ -64,6 +69,9 @@ sem={}
 
     @property
     def mean(self):
+        if self._mean is not None:
+            return self._mean
+
         ys = self.clean_ys
         if self._check_integrity(ys, ys):
             return ys.mean()
@@ -99,7 +107,12 @@ sem={}
 
     def predict(self, xs=None, *args):
         if xs is not None:
-            return ones_like(xs) * self.mean
+            if isinstance(xs, (list, tuple)):
+                n = len(xs)
+            else:
+                n = xs.shape[0]
+
+            return full(n, self.mean)
         else:
             return self.mean
 
@@ -148,7 +161,12 @@ sem={}
         else:
             e = self.std
 
-        return ones_like(x) * e
+        if isinstance(x, (list, tuple)):
+            n = len(x)
+        else:
+            n = x.shape[0]
+
+        return full(n, e)
 
     def calculate_standard_error_fit(self):
         return self.std
@@ -164,6 +182,12 @@ sem={}
 
 
 class WeightedMeanRegressor(MeanRegressor):
+
+    def fast_predict2(self, endog, exog):
+        ws = 1 / self.clean_yserr ** 2
+        mean = average(endog, weights=ws)
+        return full(exog.shape[0], mean)
+
     @property
     def mean(self):
         ys = self.clean_ys
@@ -183,6 +207,5 @@ class WeightedMeanRegressor(MeanRegressor):
         e = self.clean_yserr
         if self._check_integrity(e, e):
             return 1 / e ** 2
-
 
 # ============= EOF =============================================

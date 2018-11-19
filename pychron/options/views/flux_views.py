@@ -28,6 +28,8 @@ class FluxSubOptions(SubOptions):
         calc_grp = VGroup(Item('selected_decay', label='Decay Const.'),
                           Readonly('lambda_k', label=u'Total \u03BB K'),
                           Readonly('monitor_age'),
+
+                          Item('model_kind'),
                           Item('error_kind', label='Mean J Error'),
                           Item('predicted_j_error_type', label='Predicted J Error'),
                           Item('use_weighted_fit'),
@@ -62,7 +64,6 @@ class FluxAppearanceSubOptions(AppearanceSubOptions):
                                      label='Color Map',
                                      editor=EnumEditor(values=sorted(color_map_name_dict.keys()))),
                                 Item('levels')),
-                         Item('model_kind'),
                          visible_when='plot_kind=="2D"',
                          label='Options',
                          show_border=True)

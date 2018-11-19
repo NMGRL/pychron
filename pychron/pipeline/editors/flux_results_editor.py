@@ -27,7 +27,8 @@ from uncertainties import nominal_value, std_dev, ufloat
 
 from pychron.core.helpers.formatting import calc_percent_error, floatfmt
 from pychron.core.helpers.iterfuncs import groupby_key
-from pychron.core.regression.flux_regressor import PlaneFluxRegressor, BowlFluxRegressor
+from pychron.core.regression.flux_regressor import PlaneFluxRegressor, BowlFluxRegressor, MatchingFluxRegressor
+from pychron.core.regression.mean_regressor import WeightedMeanRegressor
 from pychron.core.stats import calculate_weighted_mean, calculate_mswd
 from pychron.core.stats.monte_carlo import FluxEstimator
 from pychron.envisage.icon_button_editor import icon_button_editor
@@ -70,7 +71,6 @@ def mean_j(ans, error_kind, monitor_age, lambda_k):
 
 
 def omean_j(ans, error_kind, monitor_age, lambda_k):
-
     fs = [nominal_value(ai.uF) for ai in ans]
     es = [std_dev(ai.uF) for ai in ans]
 
@@ -330,17 +330,22 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             return
 
         options = self.plotter_options
-        if options.use_monte_carlo:
+        if options.use_monte_carlo and options.model_kind != 'Matching':
             fe = FluxEstimator(options.monte_carlo_ntrials, reg)
 
-            for positions in (self.unknown_positions, self.monitor_positions):
-                pts = array([[p.x, p.y] for p in positions])
-                nominals, errors = fe.estimate(pts)
+            split = len(self.unknown_positions)
+            pts = array([[p.x, p.y] for p in self.unknown_positions + self.monitor_positions])
+            nominals, errors = fe.estimate(pts)
+            if options.position_error:
                 _, pos_errors = fe.estimate_position_err(pts, options.position_error)
+            else:
+                pos_errors = zeros(pts.shape[0])
 
-                for p, j, je, pe in zip(positions, nominals, errors, pos_errors):
+            for positions, s, e in ((self.unknown_positions, 0, split),
+                                    (self.monitor_positions, split, None)):
+                noms, es, ps = nominals[s:e], errors[s:e], pos_errors[s:e]
+                for p, j, je, pe in zip(positions, noms, es, ps):
                     oj = p.saved_j
-
                     p.j = j
                     p.jerr = je
                     p.position_jerr = pe
@@ -349,7 +354,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             for positions in (self.unknown_positions, self.monitor_positions):
                 for p in positions:
                     j = reg.predict([(p.x, p.y)])[0]
-                    je = reg.predict_error([[(p.x, p.y)]])[0]
+                    je = reg.predict_error([(p.x, p.y)])[0]
                     oj = p.saved_j
 
                     p.j = float(j)
@@ -392,7 +397,6 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                             style='contour')
         g.add_colorbar(s)
 
-        # pts = vstack((x, y)).T
         s = g.new_series(x, y,
                          z=z,
                          style='cmap_scatter',
@@ -415,6 +419,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             self.graph = g
 
         po = self.plotter_options
+        is_matching = po.model_kind == 'Matching'
 
         xs = arctan2(x, y)
         ys = reg.ys
@@ -428,13 +433,11 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         fys = reg.predict(pts)
         yserr = reg.yserr
 
-        # if self.plotter_options.use_weighted_fit:
-        # l, u = reg.calculate_error_envelope(pts, rmodel=fys)
-        # else:
-        try:
-            l, u = reg.calculate_error_envelope(fxs, rmodel=fys)
-        except:
-            l, u = reg.calculate_error_envelope(pts, rmodel=fys)
+        if not is_matching:
+            try:
+                l, u = reg.calculate_error_envelope(fxs, rmodel=fys)
+            except:
+                l, u = reg.calculate_error_envelope(pts, rmodel=fys)
 
         lyy = ys - yserr
         uyy = ys + yserr
@@ -451,16 +454,19 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             g.add_axis_tool(p, p.x_axis)
             g.add_axis_tool(p, p.y_axis)
 
-            p.y_axis.tick_label_formatter = lambda x: floatfmt(x, n=2, s=4, use_scientific=True)
+            def label_fmt(xx):
+                return floatfmt(xx, n=2, s=4, use_scientific=True)
+            p.y_axis.tick_label_formatter = label_fmt
 
             # plot fit line
             # plot0 == line
-            line, _p = g.new_series(fxs, fys)
+            if not is_matching:
+                line, _p = g.new_series(fxs, fys)
 
-            ee = ErrorEnvelopeOverlay(component=line,
-                                      xs=fxs, lower=l, upper=u)
-            line.error_envelope = ee
-            line.underlays.append(ee)
+                ee = ErrorEnvelopeOverlay(component=line,
+                                          xs=fxs, lower=l, upper=u)
+                line.error_envelope = ee
+                line.underlays.append(ee)
 
             # plot the individual analyses
             # plot1 == scatter
@@ -493,31 +499,39 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             self.suppress_metadata_change = False
 
             # add a legend
+            if not is_matching:
+                labels = [('plot1', 'Individual'),
+                          ('plot2', 'Mean'),
+                          ('plot0', 'Fit'),
+                          ]
+            else:
+                labels = [('plot0', 'Individual'),
+                          ('plot1', 'Mean')]
+
             legend = ExplicitLegend(plots=self.graph.plots[0].plots,
-                                    labels=[('plot1', 'Individual'),
-                                            ('plot2', 'Mean'),
-                                            ('plot0', 'Fit'),
-                                            ('Unknowns-predicted0', 'Unk. Predicted')])
+                                    labels=labels)
             p.overlays.append(legend)
 
         else:
             plot = g.plots[0]
-            s1 = plot.plots['plot2'][0]
+
+            s1 = plot.plots['plot1' if is_matching else 'plot2'][0]
             s1.yerror.set_data(yserr)
             s1.error_bars.invalidate()
 
-            l1 = plot.plots['plot0'][0]
-            l1.error_envelope.trait_set(xs=fxs, lower=l, upper=u)
-            l1.error_envelope.invalidate()
+            g.set_data(ys, plotid=0, series=1 if is_matching else 2, axis=1)
 
-            g.set_data(ys, plotid=0, series=2, axis=1)
-            g.set_data(fys, plotid=0, series=0, axis=1)
+            if not is_matching:
+                l1 = plot.plots['plot0'][0]
+                l1.error_envelope.trait_set(xs=fxs, lower=l, upper=u)
+                l1.error_envelope.invalidate()
+                g.set_data(fys, plotid=0, series=0, axis=1)
 
-            s2 = plot.plots['plot1'][0]
-
+            s2 = plot.plots['plot1' if is_matching else 'plot0'][0]
             s2.index.metadata['selections'] = sel
 
-        self._model_sin_flux(fxs, fys)
+        self.max_j = fys.max()
+        self.min_j = fys.min()
 
     def _graph_individual_analyses(self):
         g = self.graph
@@ -571,10 +585,6 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
 
         self.predict_values(refresh=True)
 
-    def _model_sin_flux(self, fxs, fys):
-        self.max_j = fys.max()
-        self.min_j = fys.min()
-
     def _model_flux(self, reg, r):
 
         n = reg.n * 10
@@ -594,24 +604,26 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         return gx, gy, nz, ne
 
     def _regressor_factory(self, x, y, z, ze):
-        klass = PlaneFluxRegressor
-        if self.plotter_options.plot_kind == '2D':
-            if self.plotter_options.model_kind == 'Bowl':
-                klass = BowlFluxRegressor
-            else:
-                klass = PlaneFluxRegressor
+        po = self.plotter_options
+        model_kind = po.model_kind
+        if model_kind == 'Bowl':
+            klass = BowlFluxRegressor
+        elif model_kind == 'Plane':
+            klass = PlaneFluxRegressor
+        elif model_kind == 'Weighted Mean':
+            klass = WeightedMeanRegressor
+        elif model_kind == 'Matching':
+            klass = MatchingFluxRegressor
 
         x = array(x)
         y = array(y)
         xy = vstack((x, y)).T
-        wf = self.plotter_options.use_weighted_fit
+        wf = po.use_weighted_fit
 
-        ec = self.plotter_options.predicted_j_error_type
-
+        ec = po.predicted_j_error_type
         reg = klass(xs=xy, ys=z, yserr=ze,
                     error_calc_type=ec,
                     use_weighted_fit=wf)
-        # error_calc_type=self.tool.predicted_j_error_type)
         reg.calculate()
         return reg
 

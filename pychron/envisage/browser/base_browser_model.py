@@ -488,31 +488,6 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         pss = sorted([ProjectRecordView(p) for p in ps], key=lambda x: x.name)
         return pss
 
-        # db = self.db
-        # if not ms:
-        #     ms = db.get_active_mass_spectrometer_names()
-        #
-        # recents = []
-        # if include_recent:
-        #     recents = [ProjectRecordView('RECENT {}'.format(mi.upper())) for mi in ms]
-        #
-        # pss = sorted([ProjectRecordView(p) for p in ps], key=lambda x: x.name)
-        # return pss
-        #
-        # if include_recent:
-        #     # move references project to after Recent
-        #     p = next((p for p in pss if p.name.lower() == 'references'), None)
-        #     if p is not None:
-        #         rp = pss.pop(pss.index(p))
-        #         pss.insert(0, rp)
-        # else:
-        #     pss = [p for p in pss if p.name.lower() != 'references']
-        #
-        # if include_recent_first:
-        #     return recents + pss
-        # else:
-        #     return pss + recents
-
     def _make_records(self, ans):
         n = len(ans)
         self.debug('make records {}'.format(n))

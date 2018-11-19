@@ -301,6 +301,10 @@ class BaseRegressor(HasTraits):
         s = '{}({})    y={}+{}'.format(fit, self.error_calc_type or 'CI', eq, constant)
         return s
 
+    def get_exog(self, x):
+        return x
+
+    # private
     def _calculate_ci(self, rx):
         if isinstance(rx, (float, int)):
             rx = [rx]
