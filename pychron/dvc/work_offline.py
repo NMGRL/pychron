@@ -182,7 +182,7 @@ class WorkOffline(Loggable):
             with db.session_ctx(use_parent_session=False) as sess:
                 metadata.create_all(sess.bind)
 
-            tables = ['ProductionTbl', 'MassSpectrometerTbl', 'ExtractDeviceTbl', 'VersionTbl', 'UserTbl']
+            tables = ['MassSpectrometerTbl', 'ExtractDeviceTbl', 'VersionTbl', 'UserTbl']
 
             for table in tables:
                 mod = __import__('pychron.dvc.dvc_orm', fromlist=[table])

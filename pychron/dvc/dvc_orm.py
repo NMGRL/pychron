@@ -343,7 +343,7 @@ class SampleTbl(Base, NameMixin):
 
 class LevelTbl(Base, NameMixin):
     irradiationID = Column(Integer, ForeignKey('IrradiationTbl.id'))
-    productionID = Column(Integer, ForeignKey('ProductionTbl.id'))
+    # productionID = Column(Integer, ForeignKey('ProductionTbl.id'))
     holder = stringcolumn(45)
     z = Column(Float)
 
