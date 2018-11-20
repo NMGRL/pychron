@@ -590,10 +590,15 @@ class PipelineEngine(Loggable):
         v = PipelineTemplateSaveView()
         info = v.edit_traits()
         if info.result and v.path:
+            if v.group_path:
+                if not os.path.isdir(v.group_path):
+                    os.mkdir(v.group_path)
+
             path = add_extension(v.path, '.yaml')
             with open(path, 'w') as wfile:
                 obj = self.pipeline.to_template()
                 yaml.dump(obj, wfile, default_flow_style=False)
+
             self.load_predefined_templates()
             self.selected_pipeline_template = v.name
 
@@ -851,15 +856,12 @@ class PipelineEngine(Loggable):
             grp = PipelineTemplateGroup(name=name)
 
             templates = [PipelineTemplate(n, t, nodes, node_factories) for nn, gg in gs for n, t in gg]
-            utemplates = []
-            pp = os.path.join(paths.user_pipeline_dir, name)
-            if not os.path.isdir(pp):
-                pp = os.path.join(paths.user_pipeline_dir, name.lower())
 
+            pp = os.path.join(paths.user_pipeline_template_dir, name.lower())
             # add templates from named user directory
             for temp in glob_list_directory(pp, extension='.yaml', remove_extension=True):
                 path = os.path.join(pp, '{}.yaml'.format(temp))
-                utemplates.append(PipelineTemplate(temp, path, nodes, node_factories))
+                templates.append(PipelineTemplate(temp, path, nodes, node_factories))
 
             grp.templates = templates
             groups.append(grp)

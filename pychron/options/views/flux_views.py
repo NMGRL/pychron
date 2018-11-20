@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 from chaco.default_colormaps import color_map_name_dict
 from traitsui.api import Item, HGroup, VGroup, Readonly, EnumEditor
 
@@ -34,19 +32,13 @@ class FluxSubOptions(SubOptions):
                           Item('predicted_j_error_type', label='Predicted J Error'),
                           Item('use_weighted_fit'),
 
-                          Item('position_error', label='Position Error (Beta)',
-                               tooltip='Set this value to the radius (same units as hole XY positions) of the '
-                                       'irradiation hole. '
-                                       'This is to test "monte carloing" the irradiation geometry'),
-                          # Item('position_only', label='Position Only (Beta)',
-                          #      enabled_when='position_error',
-                          #      tooltip='Monte carlo only the position error, not J error. '
-                          #              'used to see affect of position error'
-                          #      ),
-
-                          HGroup(Item('use_monte_carlo', label='Use'),
+                          VGroup(HGroup(Item('use_monte_carlo', label='Use'),
                                  Item('monte_carlo_ntrials', label='N. Trials',
-                                      tooltip='Number of trials to perform monte carlo simulation'),
+                                      tooltip='Number of trials to perform monte carlo simulation')),
+                                 Item('position_error', label='Position Error (Beta)',
+                                      tooltip='Set this value to the radius (same units as hole XY positions) of the '
+                                              'irradiation hole. '
+                                              'This is to test "monte carloing" the irradiation geometry'),
                                  show_border=True,
                                  label='Monte Carlo'),
                           show_border=True,

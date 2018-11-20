@@ -14,7 +14,6 @@
 # limitations under the License.
 # ===============================================================================
 
-from functools import partial
 from operator import itemgetter
 
 from numpy import array, zeros, vstack, linspace, meshgrid, arctan2, sin, cos
@@ -27,7 +26,8 @@ from uncertainties import nominal_value, std_dev, ufloat
 
 from pychron.core.helpers.formatting import calc_percent_error, floatfmt
 from pychron.core.helpers.iterfuncs import groupby_key
-from pychron.core.regression.flux_regressor import PlaneFluxRegressor, BowlFluxRegressor, MatchingFluxRegressor
+from pychron.core.regression.flux_regressor import PlaneFluxRegressor, BowlFluxRegressor, MatchingFluxRegressor, \
+    BracketingFluxRegressor
 from pychron.core.regression.mean_regressor import WeightedMeanRegressor
 from pychron.core.stats import calculate_weighted_mean, calculate_mswd
 from pychron.core.stats.monte_carlo import FluxEstimator
@@ -330,11 +330,12 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             return
 
         options = self.plotter_options
-        if options.use_monte_carlo and options.model_kind != 'Matching':
+        ipositions = self.unknown_positions + self.monitor_positions
+        pts = array([[p.x, p.y] for p in ipositions])
+        if options.use_monte_carlo and options.model_kind not in ['Matching', 'Bracketing']:
             fe = FluxEstimator(options.monte_carlo_ntrials, reg)
 
             split = len(self.unknown_positions)
-            pts = array([[p.x, p.y] for p in self.unknown_positions + self.monitor_positions])
             nominals, errors = fe.estimate(pts)
             if options.position_error:
                 _, pos_errors = fe.estimate_position_err(pts, options.position_error)
@@ -351,19 +352,19 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                     p.position_jerr = pe
                     p.dev = (oj - j) / j * 100
         else:
-            for positions in (self.unknown_positions, self.monitor_positions):
-                for p in positions:
-                    j = reg.predict([(p.x, p.y)])[0]
-                    je = reg.predict_error([(p.x, p.y)])[0]
-                    oj = p.saved_j
+            js = reg.predict(pts)
+            jes = reg.predict_error(pts)
 
-                    p.j = float(j)
-                    p.jerr = float(je)
+            for j, je, p in zip(js, jes, ipositions):
+                p.j = float(j)
+                p.jerr = float(je)
 
-                    p.dev = (oj - j) / j * 100
+                p.dev = (p.saved_j - j) / j * 100
 
         if options.plot_kind == '2D':
             self._graph_contour(x, y, z, r, reg, refresh)
+        elif options.plot_kind == 'Grid':
+            self._graph_grid(x, y, z, r, reg, refresh)
         else:
             self._graph_hole_vs_j(x, y, r, reg, refresh)
 
@@ -410,6 +411,18 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         return ['Pos: {}'.format(fm.hole_id),
                 'Identifier: {}'.format(fm.identifier)]
 
+    def _graph_grid(self, x, y, z, r, reg, refresh):
+        g = self.graph
+        if not isinstance(g, Graph):
+            g = Graph(container_dict={'bgcolor': self.plotter_options.bgcolor})
+            self.graph = g
+
+        g.new_plot()
+        data = zip(x, y, z)
+        for yi, row in groupby_key(data, key=itemgetter(1)):
+            xx, yy = zip(*[(ri[0], ri[2]) for ri in row])
+            g.new_series(xx, yy)
+
     def _graph_hole_vs_j(self, x, y, r, reg, refresh):
 
         sel = [i for i, (a, x, y, e) in enumerate(zip(*self._analyses)) if a.is_omitted()]
@@ -421,26 +434,25 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         po = self.plotter_options
         is_matching = po.model_kind == 'Matching'
 
-        xs = arctan2(x, y)
         ys = reg.ys
+        xs = arctan2(x, y)
+
+        yserr = reg.yserr
+        lyy = ys - yserr
+        uyy = ys + yserr
         a = max((abs(min(xs)), abs(max(xs))))
         fxs = linspace(-a, a)
 
         a = r * sin(fxs)
         b = r * cos(fxs)
         pts = vstack((a, b)).T
-
         fys = reg.predict(pts)
-        yserr = reg.yserr
 
         if not is_matching:
             try:
                 l, u = reg.calculate_error_envelope(fxs, rmodel=fys)
-            except:
+            except BaseException:
                 l, u = reg.calculate_error_envelope(pts, rmodel=fys)
-
-        lyy = ys - yserr
-        uyy = ys + yserr
 
         if not refresh:
             g.clear()
@@ -456,6 +468,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
 
             def label_fmt(xx):
                 return floatfmt(xx, n=2, s=4, use_scientific=True)
+
             p.y_axis.tick_label_formatter = label_fmt
 
             # plot fit line
@@ -485,8 +498,6 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             scatter.error_bars = ebo
 
             add_inspector(scatter, self._additional_info)
-
-            # s.index.metadata_changed = True
 
             ymi = min(lyy.min(), min(iys))
             yma = max(uyy.max(), max(iys))
@@ -614,6 +625,8 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             klass = WeightedMeanRegressor
         elif model_kind == 'Matching':
             klass = MatchingFluxRegressor
+        elif model_kind == 'Bracketing':
+            klass = BracketingFluxRegressor
 
         x = array(x)
         y = array(y)
@@ -634,10 +647,8 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         def sciformat(x):
             return '{:0.6E}'.format(x) if x else ''
 
-        ff2 = partial(floatfmt, n=2)
-
         def ff(x):
-            return ff2(x) if x else ''
+            return floatfmt(x, n=2) if x else ''
 
         cols = [
             column(klass=CheckboxColumn, name='use', label='Use', editable=True, width=30),
@@ -653,7 +664,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                    format_func=sciformat),
             column(name='percent_saved_error',
                    label='%',
-                   format_func=ff2),
+                   format_func=ff),
             column(name='mean_j', label='Mean J',
                    format_func=sciformat),
             column(name='mean_jerr', label=PLUSMINUS_ONE_SIGMA,
@@ -663,7 +674,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                    format_func=ff),
             column(name='mean_j_mswd',
                    label='MSWD',
-                   format_func=ff2),
+                   format_func=ff),
             column(name='j', label='Pred. J',
                    format_func=sciformat,
                    width=75),
@@ -678,9 +689,11 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                    format='%0.2f',
                    width=70),
             column(name='position_jerr',
-                   format_func=sciformat),
+                   format_func=sciformat,
+                   label='Position Err.'),
             column(name='percent_position_jerr',
-                   format_func=ff2)]
+                   label='%',
+                   format_func=ff)]
 
         unk_cols = [column(klass=CheckboxColumn, name='save', label='Save', editable=True, width=30),
                     column(name='hole_id', label='Hole'),
@@ -692,7 +705,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                            format_func=sciformat),
                     column(name='percent_saved_error',
                            label='%',
-                           format_func=lambda x: floatfmt(x, n=2)),
+                           format_func=ff),
                     column(name='j', label='Pred. J',
                            format_func=sciformat,
                            width=75),
@@ -702,7 +715,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                            width=75),
                     column(name='percent_pred_error',
                            label='%',
-                           format_func=lambda x: floatfmt(x, n=2) if x else ''),
+                           format_func=ff),
                     column(name='dev', label='dev',
                            format='%0.2f',
                            width=70)]
@@ -712,8 +725,10 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         unk_editor = TableEditor(columns=unk_cols, sortable=False,
                                  reorderable=False)
 
-        pgrp = VGroup(UItem('monitor_positions', editor=mon_editor),
-                      UItem('unknown_positions', editor=unk_editor),
+        pgrp = VGroup(HGroup(UItem('monitor_positions', editor=mon_editor),
+                             show_border=True, label='Monitors'),
+                      HGroup(UItem('unknown_positions', editor=unk_editor),
+                             show_border=True, label='Unknowns'),
                       label='Tables')
 
         ggrp = UItem('graph', style='custom')

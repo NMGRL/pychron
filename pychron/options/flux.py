@@ -33,13 +33,13 @@ class FluxOptions(FigureOptions):
     selected_decay = Enum(list(FLUX_CONSTANTS.keys()))
     lambda_k = Property(depends_on='selected_decay')
     monitor_age = Property(depends_on='selected_decay')
-    model_kind = Enum('Plane', 'Bowl', 'Weighted Mean', 'Matching')
+    model_kind = Enum('Plane', 'Bowl', 'Weighted Mean', 'Matching', 'Bracketing')
     predicted_j_error_type = Enum(*ERROR_TYPES)
     use_weighted_fit = Bool(False)
     monte_carlo_ntrials = Int(10)
     use_monte_carlo = Bool(False)
     monitor_sample_name = Str
-    plot_kind = Enum('1D', '2D')
+    plot_kind = Enum('1D', '2D', 'Grid')
 
     # position_only = Bool(False)
     position_error = Float

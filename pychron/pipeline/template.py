@@ -15,13 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 
 import os
 
 import yaml
 from pyface.message_dialog import warning
-from traits.api import HasTraits, List, Str
+from traits.api import HasTraits, List, Str, Enum
 from traitsui.api import View, UItem
 
 from pychron.core.ui.strings import PascalCase
@@ -32,18 +31,32 @@ from pychron.pipeline.nodes.data import DataNode, UnknownNode, DVCNode, Interpre
 from pychron.pipeline.nodes.diff import DiffNode
 from pychron.pipeline.nodes.email_node import EmailNode
 from pychron.pipeline.nodes.find import FindNode
+from pychron.pychron_constants import DEFAULT_PIPELINE_ROOTS
 
 
 class PipelineTemplateSaveView(HasTraits):
     name = PascalCase()
+    group = Enum(DEFAULT_PIPELINE_ROOTS)
+
+    def _group_default(self):
+        return 'User'
+
+    @property
+    def group_path(self):
+        if self.group != 'User':
+            return os.path.join(paths.user_pipeline_template_dir, self.group.lower())
 
     @property
     def path(self):
         if self.name:
-            return os.path.join(paths.user_pipeline_template_dir, self.name)
+            root = self.group_path
+            if root is None:
+                root = paths.user_pipeline_template_dir
+            return os.path.join(root, self.name)
 
     def traits_view(self):
         v = View(UItem('name'),
+                 UItem('group'),
                  kind='livemodal', title='New Template Name',
                  resizable=True,
                  buttons=['OK', 'Cancel'])
