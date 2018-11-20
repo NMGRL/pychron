@@ -96,11 +96,11 @@ def make_grid(r, n):
     return meshgrid(xi, yi)
 
 
-def add_inspector(scatter, func):
+def add_inspector(scatter, func, **kw):
     from pychron.graph.tools.point_inspector import PointInspector
     from pychron.graph.tools.point_inspector import PointInspectorOverlay
 
-    point_inspector = PointInspector(scatter, additional_info=func)
+    point_inspector = PointInspector(scatter, additional_info=func, **kw)
     pinspector_overlay = PointInspectorOverlay(component=scatter,
                                                tool=point_inspector)
 
@@ -363,7 +363,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         if options.plot_kind == '2D':
             self._graph_contour(x, y, z, r, reg, refresh)
         elif options.plot_kind == 'Grid':
-            self._graph_grid(x, y, z, r, reg, refresh)
+            self._graph_grid(x, y, z, ze, r, reg, refresh)
         else:
             self._graph_hole_vs_j(x, y, r, reg, refresh)
 
@@ -410,17 +410,44 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         return ['Pos: {}'.format(fm.hole_id),
                 'Identifier: {}'.format(fm.identifier)]
 
-    def _graph_grid(self, x, y, z, r, reg, refresh):
+    def _grid_additional_info(self, ind, y):
+        ps = [p for p in self.monitor_positions if p.y==y]
+        fm = ps[ind]
+        return ['Pos: {}'.format(fm.hole_id),
+                'Identifier: {}'.format(fm.identifier)]
+
+    def _graph_grid(self, x, y, z, ze, r, reg, refresh):
         g = self.graph
         if not isinstance(g, Graph):
             g = Graph(container_dict={'bgcolor': self.plotter_options.bgcolor})
             self.graph = g
+        ps = [pos.hole_id for pos in self.monitor_positions if pos.use]
+        plot = g.new_plot()
+        data = zip(x, y, z, ze, ps)
+        labels= []
+        for i, (yi, row) in enumerate(groupby_key(data, key=itemgetter(1))):
+            xx, yy, ye, pis = zip(*[(ri[0], ri[2], ri[3], ri[4]) for ri in row])
+            scatter, _ = g.new_series(xx, yy,
+                                      yerror=ye,
+                                      type='scatter')
+            ebo = ErrorBarOverlay(component=scatter,
+                                  orientation='y')
+            scatter.underlays.append(ebo)
+            scatter.error_bars = ebo
+            add_inspector(scatter, self._grid_additional_info, id=yi)
 
-        g.new_plot()
-        data = zip(x, y, z)
-        for yi, row in groupby_key(data, key=itemgetter(1)):
-            xx, yy = zip(*[(ri[0], ri[2]) for ri in row])
-            g.new_series(xx, yy)
+            labels.append(('plot{}'.format(i),
+                           'Pos {}-{}'.format(min(pis), max(pis))))
+
+        legend = ExplicitLegend(plots=self.graph.plots[0].plots,
+                                labels=labels)
+        plot.overlays.append(legend)
+
+        g.set_x_limits(pad='0.1')
+        g.set_y_limits(pad='0.1')
+
+        self.min_j = min(z)
+        self.max_j = max(z)
 
     def _graph_hole_vs_j(self, x, y, r, reg, refresh):
 

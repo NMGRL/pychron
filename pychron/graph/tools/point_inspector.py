@@ -30,6 +30,7 @@ class PointInspector(InfoInspector):
     additional_info = Callable
 
     single_point = True
+    id = None
 
     def get_selected_index(self):
         threshold = self.hittest_threshold
@@ -91,7 +92,10 @@ class PointInspector(InfoInspector):
                         lines.append('{}'.format(x))
 
                     if self.additional_info is not None:
-                        ad = self.additional_info(i)
+                        try:
+                            ad = self.additional_info(i, self.id)
+                        except BaseException:
+                            ad = self.additional_info(i)
                         if isinstance(ad, (list, tuple)):
                             lines.extend(ad)
                         else:

@@ -41,11 +41,11 @@ class BracketingFluxRegressor(BaseRegressor):
             :param p:
             :return:
             """
-            tol = 1
+            tol = 0.001
 
             # idx = (i for i, p in enumerate(self.clean_xs) if ((x - p[0]) ** 2 + (y - p[1]) ** 2) ** 0.5 < tol)
             # idx = (i for i, p in enumerate(self.clean_xs) if )
-            idx = [((x - p[0]) ** 2 + (y - p[1]) ** 2) ** 0.5 < tol for p in self.clean_xs]
+            idx = [abs(y - p[1]) < tol for p in self.clean_xs]
             v = 0
             if idx:
                 vs = self.clean_ys[idx]
