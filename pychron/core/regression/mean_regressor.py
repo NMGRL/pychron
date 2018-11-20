@@ -104,7 +104,7 @@ sem={}
 
     def predict(self, xs=None, *args):
         if xs is not None:
-            if isinstance(xs, float, int):
+            if isinstance(xs, (float, int)):
                 return self.mean
 
             if isinstance(xs, (list, tuple)):
