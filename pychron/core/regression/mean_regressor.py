@@ -104,6 +104,9 @@ sem={}
 
     def predict(self, xs=None, *args):
         if xs is not None:
+            if isinstance(xs, float, int):
+                return self.mean
+
             if isinstance(xs, (list, tuple)):
                 n = len(xs)
             else:
@@ -158,12 +161,15 @@ sem={}
         else:
             e = self.std
 
-        if isinstance(x, (list, tuple)):
-            n = len(x)
+        if isinstance(x, (float, int)):
+            return e
         else:
-            n = x.shape[0]
+            if isinstance(x, (list, tuple)):
+                n = len(x)
+            else:
+                n = x.shape[0]
 
-        return full(n, e)
+            return full(n, e)
 
     def calculate_standard_error_fit(self):
         return self.std
