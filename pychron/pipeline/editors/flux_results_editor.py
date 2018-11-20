@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-from operator import itemgetter
+from operator import itemgetter, attrgetter
 
 from numpy import array, zeros, vstack, linspace, meshgrid, arctan2, sin, cos
 # ============= enthought library imports =======================
@@ -297,13 +297,12 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             else:
                 ans = list(vs)
 
-        self.monitor_positions = poss
+        self.monitor_positions = sorted(poss, key=attrgetter('hole_id'))
 
         self._analyses = ans
 
         if unk is not None:
-            self.unknown_positions = unk
-            # self.positions = mon + unk
+            self.unknown_positions = sorted(unk, key=attrgetter('hole_id'))
 
     def predict_values(self, refresh=False):
         self.debug('predict values {}'.format(refresh))
