@@ -69,9 +69,6 @@ sem={}
 
     @property
     def mean(self):
-        if self._mean is not None:
-            return self._mean
-
         ys = self.clean_ys
         if self._check_integrity(ys, ys):
             return ys.mean()
