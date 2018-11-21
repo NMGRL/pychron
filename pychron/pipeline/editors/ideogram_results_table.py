@@ -25,6 +25,7 @@ class IdeogramResultsAdapter(TabularAdapter):
     columns = [('Name', 'group_id'),
                ('Identifier', 'identifier'),
                ('Sample', 'sample'),
+               ('Age Span', 'age_span'),
                ('Weighted Mean Age', 'weighted_mean_age'),
                ('Weighted Mean Age Err.', 'weighted_mean_age_error'),
                ('N', 'nanalyses'),
@@ -33,11 +34,14 @@ class IdeogramResultsAdapter(TabularAdapter):
     weighted_mean_age_text = Property
     weighted_mean_age_error_text = Property
     mswd_text = Property
+    age_span_text = Property
 
     def get_text_color(self, obj, trait, row, column=0):
-        color = 'black'
         item = getattr(obj, trait)[row]
         return item.color
+
+    def _get_age_span_text(self):
+        return floatfmt(self.item.age_span, n=5)
 
     def _get_mswd_text(self):
         m, v, n = self.item.get_mswd_tuple()

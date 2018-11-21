@@ -44,6 +44,7 @@ class AnalysisGroup(IdeogramPlotable):
     attribute = Str('uage')
     analyses = List
     nanalyses = AGProperty()
+    age_span = AGProperty()
 
     weighted_age = AGProperty()
     arith_age = AGProperty()
@@ -204,6 +205,12 @@ class AnalysisGroup(IdeogramPlotable):
             m = calculate_mswd(vs, es)
 
         return m
+
+    @cached_property
+    def _get_age_span(self):
+        ans = self.clean_analyses()
+        ages = [a.age for a in ans]
+        return max(ages) - min(ages)
 
     @cached_property
     def _get_j_err(self):

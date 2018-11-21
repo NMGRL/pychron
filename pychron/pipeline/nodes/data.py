@@ -490,6 +490,7 @@ class ListenUnknownNode(BaseAutoUnknownNode):
         if updated:
 
             self.state.unknowns = unks
+            self.unknowns = unks
             self.engine.run(post_run=False, pipeline=self.pipeline, state=self.state, configure=False)
 
             self.engine.post_run_refresh(state=self.state)
