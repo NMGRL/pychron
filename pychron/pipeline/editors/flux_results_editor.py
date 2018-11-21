@@ -416,35 +416,78 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         return ['Pos: {}'.format(fm.hole_id),
                 'Identifier: {}'.format(fm.identifier)]
 
+    def _grid_update_graph_metadata(self, ans):
+        if not self.suppress_metadata_change:
+            def wrapper(obj, name, old, new):
+                self._filter_metadata_changes(obj, ans, self._recalculate_means)
+        return wrapper
+
     def _graph_grid(self, x, y, z, ze, r, reg, refresh):
         g = self.graph
         if not isinstance(g, Graph):
             g = Graph(container_dict={'bgcolor': self.plotter_options.bgcolor})
             self.graph = g
+
         ps = [pos.hole_id for pos in self.monitor_positions if pos.use]
-        plot = g.new_plot()
         data = zip(x, y, z, ze, ps)
-        labels= []
-        for i, (yi, row) in enumerate(groupby_key(data, key=itemgetter(1))):
-            xx, yy, ye, pis = zip(*[(ri[0], ri[2], ri[3], ri[4]) for ri in row])
-            scatter, _ = g.new_series(xx, yy,
-                                      yerror=ye,
-                                      type='scatter')
-            ebo = ErrorBarOverlay(component=scatter,
-                                  orientation='y')
-            scatter.underlays.append(ebo)
-            scatter.error_bars = ebo
-            add_inspector(scatter, self._grid_additional_info, id=yi)
+        if refresh:
+            plot = g.plots[0]
+            for i, (yi, row) in enumerate(groupby_key(data, key=itemgetter(1))):
+                xx, yy, ye, pis = zip(*[(ri[0], ri[2], ri[3], ri[4]) for ri in row])
+                smeans = plot.plots['plot0'][0] # means
+                smeans.yerror.set_data(ye)
+                smeans.error_bars.invalidate()
+                g.set_data(yy, plotid=0, series=0, axis=1)
+        else:
+            plot = g.new_plot()
+            labels = []
 
-            labels.append(('plot{}'.format(i),
-                           'Pos {}-{}'.format(min(pis), max(pis))))
+            ans = list(zip(*self._analyses))  # ans, ixs, iys, ies = self._analyses
+            plots = {}
+            for i, (yi, row) in enumerate(groupby_key(data, key=itemgetter(1))):
+                xx, yy, ye, pis = zip(*[(ri[0], ri[2], ri[3], ri[4]) for ri in row])
+                scatter, _ = g.new_series(xx, yy,
+                                          yerror=ye,
+                                          marker='diamond',
+                                          marker_size=4,
+                                          type='scatter')
+                ebo = ErrorBarOverlay(component=scatter,
+                                      orientation='y')
+                scatter.underlays.append(ebo)
+                scatter.error_bars = ebo
+                add_inspector(scatter, self._grid_additional_info, id=yi)
+                key = 'plot{}'.format(i)
+                labels.append((key,
+                               'Pos {}-{}'.format(min(pis), max(pis))))
+                plots[key] = scatter
 
-        legend = ExplicitLegend(plots=self.graph.plots[0].plots,
-                                labels=labels)
-        plot.overlays.append(legend)
+                ais = [a for a in ans if a[0].irradiation_position in pis]
+                aa, ixs, iys, ies = zip(*ais)
 
-        g.set_x_limits(pad='0.1')
-        g.set_y_limits(pad='0.1')
+                s, _p = g.new_series(ixs, iys, yerror=ies, type='scatter',
+                                     color=scatter.color,
+                                     marker='circle', marker_size=1.5)
+
+                ebo = ErrorBarOverlay(component=s,
+                                      orientation='y')
+                s.underlays.append(ebo)
+                s.error_bars = ebo
+
+                add_analysis_inspector(s, list(aa))
+                s.index.on_trait_change(self._grid_update_graph_metadata(aa), 'metadata_changed')
+                self.suppress_metadata_change = True
+                sel = [i for i, a in enumerate(aa) if a.is_omitted()]
+                s.index.metadata['selections'] = sel
+                self.suppress_metadata_change = False
+
+            legend = ExplicitLegend(plots=plots,
+                                    labels=labels,
+                                    inside=True,
+                                    align='ur')
+            plot.overlays.append(legend)
+
+            g.set_x_limits(pad='0.1')
+            g.set_y_limits(pad='0.1')
 
         self.min_j = min(z)
         self.max_j = max(z)

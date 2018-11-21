@@ -1133,18 +1133,18 @@ class DVCDatabase(DatabaseAdapter):
                                    exclude_uuids=None,
                                    exclude_invalid=True,
                                    verbose=True):
-
-        self.debug('------get analyses by date range parameters------')
-        self.debug('low={}'.format(lpost))
-        self.debug('high={}'.format(hpost))
-        self.debug('labnumber={}'.format(labnumber))
-        self.debug('analysis_types={}'.format(analysis_types))
-        self.debug('mass spectrometers={}'.format(mass_spectrometers))
-        self.debug('extract device={}'.format(extract_devices))
-        self.debug('project={}'.format(project))
-        self.debug('exclude={}'.format(exclude))
-        self.debug('exclude_uuids={}'.format(exclude_uuids))
-        self.debug('-------------------------------------------------')
+        if verbose:
+            self.debug('------get analyses by date range parameters------')
+            self.debug('low={}'.format(lpost))
+            self.debug('high={}'.format(hpost))
+            self.debug('labnumber={}'.format(labnumber))
+            self.debug('analysis_types={}'.format(analysis_types))
+            self.debug('mass spectrometers={}'.format(mass_spectrometers))
+            self.debug('extract device={}'.format(extract_devices))
+            self.debug('project={}'.format(project))
+            self.debug('exclude={}'.format(exclude))
+            self.debug('exclude_uuids={}'.format(exclude_uuids))
+            self.debug('-------------------------------------------------')
 
         with self.session_ctx() as sess:
             q = sess.query(AnalysisTbl)

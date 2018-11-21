@@ -282,7 +282,7 @@ class BaseAutoUnknownNode(UnknownNode):
     hours = Int(12)
     mass_spectrometer = Str
     available_spectrometers = List
-    analysis_types = List(ANALYSIS_TYPES)
+    analysis_types = List(['Unknown'])
     available_analysis_types = List(ANALYSIS_TYPES)
     engine = None
     single_shot = False
@@ -332,6 +332,7 @@ class BaseAutoUnknownNode(UnknownNode):
             self._post_run_hook(engine, state)
 
     def reset(self):
+        super(BaseAutoUnknownNode, self).reset()
         self._stop_listening()
 
     def _post_run_hook(self, engine, state):
@@ -358,6 +359,7 @@ class BaseAutoUnknownNode(UnknownNode):
         td = timedelta(hours=self.hours)
         high = datetime.now()
         updated = False
+
         if self.mode == 'Normal':
             low = self._low - td
         else:
@@ -365,17 +367,11 @@ class BaseAutoUnknownNode(UnknownNode):
 
         with self.dvc.session_ctx(use_parent_session=False):
             ats = [a.lower().replace(' ', '_') for a in self.analysis_types]
-
-            print('low={}'.format(low))
-            print('high={}'.format(high))
-            print('ats={}'.format(ats))
-            print('ms={}'.format(self.mass_spectrometer))
             unks = self.dvc.get_analyses_by_date_range(low, high,
                                                        analysis_types=ats,
-                                                       mass_spectrometers=self.mass_spectrometer, verbose=self.verbose)
+                                                       mass_spectrometers=self.mass_spectrometer,
+                                                       verbose=self.verbose)
             records = [ri for unk in unks for ri in unk.record_views]
-
-            print('retrived n records={}'.format(len(records)))
             if not self._cached_unknowns:
                 updated = True
                 ans = self.dvc.make_analyses(records)
@@ -405,6 +401,119 @@ class BaseAutoUnknownNode(UnknownNode):
 
         self._cached_unknowns = ans
         return ans, updated
+
+
+class ListenUnknownNode(BaseAutoUnknownNode):
+    name = 'Unknowns (Auto)'
+
+    exclude_uuids = List
+    period = Int(15)
+
+    post_analysis_delay = Float(5)
+
+    max_period = 10
+    _between_updates = None
+    pipeline = None
+    state = None
+    _low = None
+
+    def clear_data(self):
+        super(ListenUnknownNode, self).clear_data()
+        self.pipeline = None
+        self.state = None
+        self.skip_configure = False
+
+    def reset(self):
+        super(ListenUnknownNode, self).reset()
+        self.pipeline = None
+        self.state = None
+        self.skip_configure = False
+
+    def _start_listening(self):
+        self._alive = True
+        self._updated = False
+        self._iter()
+        self._status_loop()
+
+    def _status_loop(self):
+        self.active = not self.active
+        self.visited = not self.active
+        self.engine.refresh_all_needed = True
+        do_after(1000, self._status_loop)
+
+    def _post_run_hook(self, engine, state):
+        self.pipeline = engine.pipeline
+        engine.pipeline.active = True
+
+    def traits_view(self):
+        v = View(Item('mode', tooltip='Normal: get analyses between now and start of pipeline - hours\n'
+                                      'Window: get analyses between now and now - hours'),
+                 Item('hours'),
+                 Item('period', label='Update Period (s)',
+                      tooltip='Default time (s) to delay between "check for new analyses"'),
+                 Item('mass_spectrometer', label='Mass Spectrometer',
+                      editor=EnumEditor(name='available_spectrometers')),
+                 Item('analysis_types', style='custom',
+                      editor=CheckListEditor(name='available_analysis_types', cols=len(self.available_analysis_types))),
+                 Item('post_analysis_delay', label='Post Analysis Found Delay',
+                      tooltip='Time (min) to delay before next "check for new analyses"'),
+                 Item('verbose'),
+                 title='Configure',
+                 kind='livemodal',
+                 buttons=['OK', 'Cancel'])
+        return v
+
+    def run(self, state):
+        if not self._alive:
+            self._low = datetime.now()
+            unks, updated = self._load_analyses()
+            state.unknowns = unks
+            self.unknowns = unks
+            self.state = state
+            self.skip_configure = True
+
+    def _finish_load_hook(self):
+        if globalv.auto_pipeline_debug:
+            self.mass_spectrometer = 'jan'
+            self.period = 15
+            self.hours = 48
+
+    def _iter(self, last_update=None):
+        if not self._alive:
+            return
+
+        unks, updated = self._load_analyses()
+        if not self._alive:
+            return
+
+        st = None
+        if updated:
+
+            self.state.unknowns = unks
+            self.engine.run(post_run=False, pipeline=self.pipeline, state=self.state, configure=False)
+
+            self.engine.post_run_refresh(state=self.state)
+            self.engine.refresh_figure_editors()
+            self.engine.selected = self.pipeline.nodes[-1]
+
+            if not self._alive:
+                return
+
+            st = time.time()
+            if last_update:
+                if self._between_updates:
+                    self._between_updates = ((st - last_update) + self._between_updates) / 2.
+                else:
+                    self._between_updates = st - last_update
+
+                period = self._between_updates * 0.75
+
+            else:
+                period = 60 * self.post_analysis_delay
+        else:
+            period = self.period
+
+        do_after(int(period * 1000), self._iter, st)
 
 
 class CalendarUnknownNode(BaseAutoUnknownNode):
@@ -474,115 +583,4 @@ class CalendarUnknownNode(BaseAutoUnknownNode):
                  kind='livemodal',
                  buttons=['OK', 'Cancel'])
         return v
-
-
-class ListenUnknownNode(BaseAutoUnknownNode):
-    name = 'Unknowns (Auto)'
-
-    exclude_uuids = List
-    period = Int(15)
-
-    post_analysis_delay = Float(5)
-
-    max_period = 10
-    _between_updates = None
-    pipeline = None
-    state = None
-    _low = None
-
-    def clear_data(self):
-        super(ListenUnknownNode, self).clear_data()
-        self.pipeline = None
-        self.state = None
-
-    def reset(self):
-        super(ListenUnknownNode, self).reset()
-        self.pipeline = None
-        self.state = None
-
-    def _post_run_hook(self, engine, state):
-        self.pipeline = engine.pipeline
-        engine.pipeline.active = True
-
-    # def configure(self, pre_run=False, *args, **kw):
-    #     if pre_run:
-    #         info = self.edit_traits()
-    #         return info.result
-    #     return BaseNode.configure(self, pre_run=pre_run, *args, **kw)
-
-    def traits_view(self):
-        v = View(Item('mode', tooltip='Normal: get analyses between now and start of pipeline - hours\n'
-                                      'Window: get analyses between now and now - hours'),
-                 Item('hours'),
-                 Item('period', label='Update Period (s)',
-                      tooltip='Default time (s) to delay between "check for new analyses"'),
-                 Item('mass_spectrometer', label='Mass Spectrometer',
-                      editor=EnumEditor(name='available_spectrometers')),
-                 Item('analysis_types', style='custom',
-                      editor=CheckListEditor(name='available_analysis_types', cols=len(self.available_analysis_types))),
-                 Item('post_analysis_delay', label='Post Analysis Found Delay',
-                      tooltip='Time (min) to delay before next "check for new analyses"'),
-                 Item('verbose'),
-                 title='Configure',
-                 kind='livemodal',
-                 buttons=['OK', 'Cancel'])
-        return v
-
-    def run(self, state):
-        if not self._alive:
-            self._low = datetime.now()
-            unks, updated = self._load_analyses()
-            state.unknowns = unks
-            self.state = state
-
-    def _finish_load_hook(self):
-        if globalv.auto_pipeline_debug:
-            self.mass_spectrometer = 'jan'
-            self.period = 15
-            self.hours = 48
-
-    def _iter(self, acc=1.0, last_update=None):
-        if not self._alive:
-            return
-
-        unks, updated = self._load_analyses()
-        if not self._alive:
-            return
-
-        if updated:
-            # unks_ids = [id(ai) for ai in unks]
-            # if self._unks_ids != unks_ids:
-            #     self._unks_ids = unks_ids
-            # self.engine.rerun_with(unks, post_run=False)
-            self.state.unknowns = unks
-            self.engine.run(post_run=False, pipeline=self.pipeline, state=self.state, configure=False)
-
-            self.engine.post_run_refresh(state=self.state)
-            self.engine.refresh_figure_editors()
-            # self.unknowns = unks
-
-        if not self._alive:
-            return
-
-        st = None
-        if updated:
-            # if a new analysis was just found wait
-            # for at least `post_analysis_delay` mins before querying again
-            st = time.time()
-            if last_update:
-
-                if self._between_updates:
-                    self._between_updates = ((st - last_update) + self._between_updates) / 2.
-                else:
-                    self._between_updates = st - last_update
-
-                period = self._between_updates * 0.75
-
-            else:
-                period = 60 * self.post_analysis_delay
-        else:
-            period = self.period
-
-        do_after(int(period * 1000), self._iter, acc, st)
-
 # ============= EOF =============================================

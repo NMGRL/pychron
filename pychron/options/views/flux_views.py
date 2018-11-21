@@ -30,7 +30,7 @@ class FluxSubOptions(SubOptions):
                           Item('model_kind'),
                           Item('error_kind', label='Mean J Error'),
                           Item('predicted_j_error_type', label='Predicted J Error'),
-                          Item('use_weighted_fit'),
+                          Item('use_weighted_fit', visible_when='model_kind!="Matching"'),
 
                           VGroup(HGroup(Item('use_monte_carlo', label='Use'),
                                  Item('monte_carlo_ntrials', label='N. Trials',
@@ -40,6 +40,7 @@ class FluxSubOptions(SubOptions):
                                               'irradiation hole. '
                                               'This is to test "monte carloing" the irradiation geometry'),
                                  show_border=True,
+                                 visible_when='model_kind not in ("Matching", "Bracketing")',
                                  label='Monte Carlo'),
                           show_border=True,
                           label='Calculations')

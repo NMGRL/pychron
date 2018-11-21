@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 
 from apptools.preferences.preference_binding import bind_preference
-from traits.api import Any, Bool, Instance
+from traits.api import Any, Bool, Instance, Dict
 from traitsui.api import View
 
 from pychron.core.helpers.iterfuncs import groupby_key
@@ -48,10 +48,11 @@ class FigureNode(SortableNode):
     # editors = List
     auto_set_items = True
     use_plotting = True
+    editors = Dict
 
     def refresh(self):
-        if self.editor:
-            self.editor.refresh_needed = True
+        for e in self.editors.values():
+            e.refresh_needed = True
 
     def run(self, state):
         self.plotter_options = self.plotter_options_manager.selected_options
@@ -68,23 +69,17 @@ class FigureNode(SortableNode):
         if not state.unknowns and self.no_analyses_warning:
             raise NoAnalysesError
 
-        # self.unknowns = state.unknowns
-        # self.references = state.references
-
-        # oname = ''
         if use_plotting and self.use_plotting:
-            # editor = self.editor
+            for tab_id, unks in groupby_key(state.unknowns, 'tab_id'):
+                if tab_id in self.editors:
+                    editor = self.editors[tab_id]
 
-            for _, unks in groupby_key(state.unknowns, 'tab_id'):
-                # editors = self.editors
-                # if not editor:
-                    # key = lambda x: x.graph_id
-                    #
-                    # for _, ans in groupby(sorted(state.unknowns, key=key), key=key):
-                editor = self._editor_factory()
-                state.editors.append(editor)
-                # self.editor = editor
+                else:
+                    editor = self._editor_factory()
+                    state.editors.append(editor)
+                    self.editors[tab_id] = editor
 
+                self.editor = editor
                 if self.auto_set_items:
                     bind_preference(self, 'skip_meaning', 'pychron.pipeline.skip_meaning')
                     if self.name in self.skip_meaning.split(','):
@@ -93,15 +88,11 @@ class FigureNode(SortableNode):
                     editor.set_items(list(unks))
                     if hasattr(editor, 'component'):
                         editor.component.invalidate_and_redraw()
-            # else:
-            #     editor = self._editor_factory()
-            #     state.editors.append(editor)
 
-            self.editor = editor
-
-            for name, es in groupby_key(state.editors, 'name'):
-                for i, ei in enumerate(es):
-                    ei.name = '{} {:02n}'.format(ei.name, i + 1)
+        for name, es in groupby_key(state.editors, 'name'):
+            for i, ei in enumerate(es):
+                ei.name = ' '.join(ei.name.split(' ')[:-1])
+                ei.name = '{} {:02n}'.format(ei.name, i + 1)
 
     def configure(self, refresh=True, pre_run=False, **kw):
         if not pre_run:
@@ -116,8 +107,8 @@ class FigureNode(SortableNode):
                                                         kind='livemodal')
         if info.result:
             self.plotter_options = pom.selected_options
-            if self.editor:
-                self.editor.plotter_options = pom.selected_options
+            for e in self.editors.values():
+                e.plotter_options = pom.selected_options
 
             if refresh:
                 self.refresh()
