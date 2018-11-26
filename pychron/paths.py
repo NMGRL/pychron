@@ -130,7 +130,6 @@ class Paths(object):
     plotter_options_dir = None
     test_dir = None
     custom_queries_dir = None
-    template_dir = None
     log_dir = None
     peak_center_config_dir = None
     # ===========================================================================
@@ -218,9 +217,6 @@ class Paths(object):
     # ==============================================================================
     # processing
     # ==============================================================================
-    # pipeline_dir = None
-    # pipeline_template_dir = None
-
     user_pipeline_dir = None
     user_pipeline_template_dir = None
 
@@ -356,7 +352,6 @@ class Paths(object):
 
         # self.hidden_dir = join(root, '.hidden')
         self.preferences_dir = join(root, 'preferences')
-        self.template_dir = join(root, 'templates')
         self.queue_conditionals_dir = join(root, 'queue_conditionals')
         # ==============================================================================
         # hidden
@@ -444,8 +439,6 @@ class Paths(object):
         self.user_pipeline_dir = join(self.setup_dir, 'pipeline')
         self.user_pipeline_template_dir = join(self.user_pipeline_dir, 'templates')
 
-        # self.pipeline_dir = join(self.appdata_dir, 'pipeline')
-        # self.pipeline_template_dir = join(self.pipeline_dir, 'templates')
         self.flux_constants = join(self.setup_dir, 'flux_constants.yaml')
         # ==============================================================================
         # lovera exectuables
@@ -491,11 +484,6 @@ class Paths(object):
         self.furnace_firmware = join(self.setup_dir, 'furnace_firmware.yaml')
         self.furnace_sample_states = join(self.appdata_dir, 'furnace_sample_states.yaml')
         self.valid_pi_names = join(self.setup_dir, 'valid_pi_names.yaml')
-
-        # =======================================================================
-        # pipeline templates
-        # =======================================================================
-        # self._build_templates(self.pipeline_template_dir)
 
         self.af_demagnetization = join(paths.spectrometer_dir, 'af_demagnetization.yaml')
 

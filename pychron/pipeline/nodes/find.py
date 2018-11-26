@@ -260,7 +260,7 @@ class FindReferencesNode(FindNode):
         self.mass_spectrometer = list(ms)[0]
 
         ls = {ai.load_name for ai in state.unknowns}
-        self.analysis_loads = list(ls)
+        self.analysis_loads = [NULL_STR]+list(ls)
 
         self._load_analysis_types(state)
 

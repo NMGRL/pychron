@@ -140,29 +140,32 @@ class DVCPersister(BasePersister):
             v = getattr(per_spec.run_spec, e)
             obj[e] = v
 
-        ps = []
-        for i, pp in enumerate(per_spec.positions):
-            pos, x, y, z = None, None, None, None
-            if isinstance(pp, tuple):
-                if len(pp) == 2:
-                    x, y = pp
-                elif len(pp) == 3:
-                    x, y, z = pp
-            else:
-                pos = pp
-                try:
-                    ep = per_spec.extraction_positions[i]
-                    x = ep[0]
-                    y = ep[1]
-                    if len(ep) == 3:
-                        z = ep[2]
-                except IndexError:
-                    self.debug('no extraction position for {}'.format(pp))
-            pd = {'x': x, 'y': y, 'z': z, 'position': pos, 'is_degas': per_spec.run_spec.identifier == 'dg'}
-            ps.append(pd)
+        if not per_spec.positions:
+            ps = [dict()]
+        else:
+            ps = []
+            for i, pp in enumerate(per_spec.positions):
+                pos, x, y, z = None, None, None, None
+                if isinstance(pp, tuple):
+                    if len(pp) == 2:
+                        x, y = pp
+                    elif len(pp) == 3:
+                        x, y, z = pp
+                else:
+                    pos = pp
+                    try:
+                        ep = per_spec.extraction_positions[i]
+                        x = ep[0]
+                        y = ep[1]
+                        if len(ep) == 3:
+                            z = ep[2]
+                    except IndexError:
+                        self.debug('no extraction position for {}'.format(pp))
+                pd = {'x': x, 'y': y, 'z': z, 'position': pos, 'is_degas': per_spec.run_spec.identifier == 'dg'}
+                ps.append(pd)
+                obj['positions'] = ps
 
         self._positions = ps
-        obj['positions'] = ps
 
         hexsha = self.dvc.get_meta_head()
         obj['commit'] = str(hexsha)
@@ -347,7 +350,6 @@ class DVCPersister(BasePersister):
                 db.add_media(p, an)
 
         if self._positions:
-            db = self.dvc.db
             load_name = rs.load_name
             load_holder = rs.load_holder
 
@@ -362,7 +364,6 @@ class DVCPersister(BasePersister):
                 else:
                     self.warning('failed adding position {}, load={}'.format(position, load_name))
 
-                # an.measured_position = pos
         # all associations are handled by the ExperimentExecutor._retroactive_experiment_identifiers
         # *** _retroactive_experiment_identifiers is currently disabled ***
 

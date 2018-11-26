@@ -139,8 +139,7 @@ class NewMassSpectrometerView(HasTraits):
                  title='New Mass Spectrometer',
                  kind='livemodal')
         return v
-
-
+    
 def exclude_invalid_analyses(q):
     return q.filter(AnalysisChangeTbl.tag != 'invalid')
 
@@ -152,7 +151,7 @@ def extract_devices_query(analysis_types, extract_devices, q):
             if not isinstance(extract_devices, (tuple, list)):
                 extract_devices = (extract_devices,)
 
-            es = [ei for ei in extract_devices if ei not in (EXTRACT_DEVICE, NO_EXTRACT_DEVICE, NULL_STR)]
+            es = [ei.lower() for ei in extract_devices if ei not in (EXTRACT_DEVICE, NO_EXTRACT_DEVICE, NULL_STR)]
             if es:
                 q = in_func(q, AnalysisTbl.extract_device, es)
     return q
@@ -298,6 +297,12 @@ class DVCDatabase(DatabaseAdapter):
     def find_references_by_load(self, load, analysis_types, extract_devices=None, mass_spectrometers=None,
                                 exclude_invalid=True):
         with self.session_ctx() as sess:
+            self.debug('----------- find references by load ------------')
+            self.debug('load={}'.format(load))
+            self.debug('analysis_types={}'.format(analysis_types))
+            self.debug('extract devices={}'.format(extract_devices))
+            self.debug('mass_spectrometers={}'.format(mass_spectrometers))
+            self.debug('------------------------------------------------')
             q = sess.query(AnalysisTbl)
             q = q.join(AnalysisChangeTbl)
             q = q.join(MeasuredPositionTbl)
