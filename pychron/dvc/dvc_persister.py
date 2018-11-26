@@ -350,19 +350,21 @@ class DVCPersister(BasePersister):
                 db.add_media(p, an)
 
         if self._positions:
-            load_name = rs.load_name
-            load_holder = rs.load_holder
+            if rs.load_name and rs.load_name != NULL_STR:
+                load_name = rs.load_name
+                load_holder = rs.load_holder
 
-            db.add_load(load_name, load_holder, rs.username)
-            db.flush()
-            db.commit()
+                db.add_load(load_name, load_holder, rs.username)
+                db.flush()
+                db.commit()
 
-            for position in self._positions:
-                dbpos = db.add_measured_position(load=load_name, **position)
-                if dbpos:
-                    an.measured_positions.append(dbpos)
-                else:
-                    self.warning('failed adding position {}, load={}'.format(position, load_name))
+                for position in self._positions:
+                    self.debug('adding measured position {}'.format(position))
+                    dbpos = db.add_measured_position(load=load_name, **position)
+                    if dbpos:
+                        an.measured_positions.append(dbpos)
+                    else:
+                        self.warning('failed adding position {}, load={}'.format(position, load_name))
 
         # all associations are handled by the ExperimentExecutor._retroactive_experiment_identifiers
         # *** _retroactive_experiment_identifiers is currently disabled ***

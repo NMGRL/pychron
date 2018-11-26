@@ -1627,6 +1627,9 @@ class DVCDatabase(DatabaseAdapter):
             return [ni.identifier for ni in
                     self._query_all(q, verbose_query=True)]
 
+    def get_loads(self):
+        return self._retrieve_items(LoadTbl, order=LoadTbl.create_date.desc())
+
     def get_load_names(self, names=None, exclude_archived=True, **kw):
         with self.session_ctx():
             if 'order' not in kw:
