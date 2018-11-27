@@ -75,7 +75,9 @@ def authorization(username, password, oauth_token):
     if oauth_token:
         auth = oauth_token
     else:
-        auth = base64.encodebytes('{}:{}'.format(username, password).encode('utf-8')).replace('\n', '')
+        auth = '{}:{}'.format(username, password).encode('utf-8')
+        auth = base64.encodebytes(auth)
+        auth = auth.replace(b'\n', b'')
         auth = 'Basic {}'.format(auth)
 
     return {"Authorization": auth}
@@ -115,7 +117,7 @@ class GitHostService(Loggable):
     def manual_remote_exists(self, organization, name):
         repo = self.get_repo(organization, name)
         if repo:
-            return repo['name'].lower() == name.lower()
+            return repo.get('name', '').lower() == name.lower()
 
     def get_repo(self, organization, name):
         raise NotImplementedError
