@@ -460,11 +460,6 @@ class DVCDatabase(DatabaseAdapter):
                 a.loadName = load
             return self._add_item(a)
 
-    # def add_load_holder(self, name):
-    #     with self.session_ctx():
-    #         a = LoadHolderTbl(name=name)
-    #         return self._add_item(a)
-
     def add_load(self, name, holder, username):
         with self.session_ctx():
             if not self.get_loadtable(name):
