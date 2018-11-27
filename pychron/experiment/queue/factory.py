@@ -69,7 +69,6 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
     note = Str
 
     load_name = Str
-    load_names = Property
 
     select_existing_load_name_button = Button
 
@@ -141,19 +140,6 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
     def _set_email(self, v):
         self._email = v
 
-    # @cached_property
-    # def _get_load_names(self):
-    #     db = self.get_database()
-    #     if db is None or not db.connect():
-    #         return []
-    #
-    #     names = []
-    #     with db.session_ctx(use_parent_session=False):
-    #         ts = db.get_load_names()
-    #         if ts:
-    #             names = ts
-    #     return names
-
     @cached_property
     def _get_ok_make(self):
         ms = self.mass_spectrometer.strip()
@@ -167,10 +153,9 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
             return []
 
         trays = [NULL_STR]
-        with db.session_ctx(use_parent_session=False):
-            dbtrays = db.get_load_holders()
-            if dbtrays:
-                trays.extend(dbtrays)
+        dbtrays = db.get_load_holders()
+        if dbtrays:
+            trays.extend(dbtrays)
         return trays
 
     @cached_property

@@ -1447,7 +1447,6 @@ class DVC(Loggable):
 
     def _defaults(self):
         self.debug('writing defaults')
-        # self.db.create_all(Base.metadata)
         self.db.add_save_user()
         for tag, func in (('irradiation holders', self._add_default_irradiation_holders),
                           ('productions', self._add_default_irradiation_productions),

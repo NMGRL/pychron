@@ -439,14 +439,9 @@ class LoadTbl(Base, BaseMixin):
     archived = Column(Boolean, default=False)
     username = Column(String(140), ForeignKey('UserTbl.name'))
 
-    holderName = Column(String(45), ForeignKey('LoadHolderTbl.name'))
+    holderName = Column(String(45))
     loaded_positions = relationship('LoadPositionTbl', backref='load')
     measured_positions = relationship('MeasuredPositionTbl', backref='load')
-
-
-class LoadHolderTbl(Base, BaseMixin):
-    name = Column(String(45), primary_key=True)
-    loads = relationship('LoadTbl', backref='holder')
 
 
 class LoadPositionTbl(Base, IDMixin):

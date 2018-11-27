@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traits.api import Str, Property, cached_property, Instance, Event, Any
 
 from pychron.loggable import Loggable
@@ -27,7 +28,7 @@ class DVCAble(Loggable):
 
     def get_database(self):
         if self.dvc:
-            db = self.dvc.db
+            db = self.dvc
         else:
             db = self.iso_db_man.db
         return db

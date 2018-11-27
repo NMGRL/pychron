@@ -31,9 +31,9 @@ from pychron.database.core.database_adapter import DatabaseAdapter, binfunc
 from pychron.database.core.query import compile_query, in_func
 from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
     IrradiationTbl, LevelTbl, SampleTbl, \
-    MaterialTbl, IrradiationPositionTbl, UserTbl, ExtractDeviceTbl, LoadTbl, \
-    LoadHolderTbl, LoadPositionTbl, \
-    MeasuredPositionTbl, VersionTbl, RepositoryAssociationTbl, \
+    MaterialTbl, IrradiationPositionTbl, UserTbl, ExtractDeviceTbl, \
+    LoadTbl, LoadPositionTbl, MeasuredPositionTbl, \
+    VersionTbl, RepositoryAssociationTbl, \
     RepositoryTbl, AnalysisChangeTbl, \
     PrincipalInvestigatorTbl, SamplePrepWorkerTbl, SamplePrepSessionTbl, \
     SamplePrepStepTbl, SamplePrepImageTbl, RestrictedNameTbl, AnalysisGroupTbl, AnalysisGroupSetTbl, \
@@ -460,17 +460,16 @@ class DVCDatabase(DatabaseAdapter):
                 a.loadName = load
             return self._add_item(a)
 
-    def add_load_holder(self, name):
-        with self.session_ctx():
-            a = LoadHolderTbl(name=name)
-            return self._add_item(a)
+    # def add_load_holder(self, name):
+    #     with self.session_ctx():
+    #         a = LoadHolderTbl(name=name)
+    #         return self._add_item(a)
 
     def add_load(self, name, holder, username):
         with self.session_ctx():
             if not self.get_loadtable(name):
-                if not self.get_load_holder(holder):
-                    self.add_load_holder(holder)
-
+                # if not self.get_load_holder(holder):
+                #     self.add_load_holder(holder)
                 a = LoadTbl(name=name, holderName=holder, username=username)
                 return self._add_item(a)
 
@@ -1403,8 +1402,8 @@ class DVCDatabase(DatabaseAdapter):
             q = q.filter(LoadPositionTbl.position == pos)
             return self._query_one(q)
 
-    def get_load_holder(self, name):
-        return self._retrieve_item(LoadHolderTbl, name)
+    # def get_load_holder(self, name):
+    #     return self._retrieve_item(LoadHolderTbl, name)
 
     def get_loadtable(self, name=None):
         if name is not None:
@@ -1592,9 +1591,9 @@ class DVCDatabase(DatabaseAdapter):
     def get_analysis_types(self):
         return []
 
-    def get_load_holders(self):
-        with self.session_ctx():
-            return [ni.name for ni in self._retrieve_items(LoadHolderTbl)]
+    # def get_load_holders(self):
+    #     with self.session_ctx():
+    #         return [ni.name for ni in self._retrieve_items(LoadHolderTbl)]
 
     def get_measured_load_names(self):
         with self.session_ctx() as sess:
