@@ -22,6 +22,7 @@ from traitsui.api import View, UItem, Item, HGroup, VGroup, Label, EnumEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.options.options import AppearanceSubOptions, MainOptions
+from pychron.pychron_constants import APPEARANCE, MAIN
 
 
 class XYScatterAppearanceOptions(AppearanceSubOptions):
@@ -50,8 +51,7 @@ class XYScatterMainOptions(MainOptions):
         return v
 
 
-VIEWS = {}
-VIEWS['main'] = XYScatterMainOptions
-VIEWS['appearance'] = XYScatterAppearanceOptions
+VIEWS = {MAIN.lower(): XYScatterMainOptions,
+         APPEARANCE.lower(): XYScatterAppearanceOptions}
 
 # ============= EOF =============================================

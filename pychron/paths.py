@@ -244,7 +244,6 @@ class Paths(object):
     mftable_backup_dir = None
     system_conditionals = None
     experiment_defaults = None
-    system_health = None
 
     ideogram_defaults = None
     spectrum_defaults = None
@@ -467,10 +466,7 @@ class Paths(object):
         self.spectrum_defaults = join(self.appdata_dir, 'spectrum_defaults.yaml')
         self.inverse_isochron_defaults = join(self.appdata_dir, 'inverse_isochron_defaults.yaml')
         self.composites_defaults = join(self.appdata_dir, 'composite_defaults.yaml')
-        self.system_health = join(self.setup_dir, 'system_health.yaml')
-        # self.screen_formatting_options = join(self.formatting_dir, 'screen.yaml')
-        # self.presentation_formatting_options = join(self.formatting_dir, 'presentation.yaml')
-        # self.display_formatting_options = join(self.formatting_dir, 'display.yaml')
+
         self.plotter_options = join(self.plotter_options_dir, 'plotter_options.p')
         self.task_extensions_file = join(self.appdata_dir, 'task_extensions.yaml')
         self.simple_ui_file = join(self.appdata_dir, 'simple_ui.yaml')
@@ -552,18 +548,15 @@ class Paths(object):
             self._write_default_file(p, txt, o or force)
 
     def _write_default_files(self):
-        from pychron.file_defaults import DEFAULT_INITIALIZATION, DEFAULT_STARTUP_TESTS, SYSTEM_HEALTH
+        from pychron.file_defaults import DEFAULT_INITIALIZATION, DEFAULT_STARTUP_TESTS
 
         for p, d in ((path.join(self.setup_dir, 'initialization.xml'), DEFAULT_INITIALIZATION),
                      (self.startup_tests, DEFAULT_STARTUP_TESTS),
-                     (self.system_health, SYSTEM_HEALTH),
                      (self.simple_ui_file, SIMPLE_UI_DEFAULT),
                      (self.edit_ui_defaults, EDIT_UI_DEFAULT),
                      (self.task_extensions_file, TASK_EXTENSION_DEFAULT),
                      (self.identifiers_file, IDENTIFIERS_DEFAULT)):
-            overwrite = d in (SYSTEM_HEALTH, SIMPLE_UI_DEFAULT,)
-            # overwrite = d in (SYSTEM_HEALTH, SIMPLE_UI_DEFAULT,)
-            # print p
+            overwrite = d in (SIMPLE_UI_DEFAULT,)
             self._write_default_file(p, d, overwrite)
 
     def _write_default_file(self, p, default, overwrite=False):

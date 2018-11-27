@@ -15,13 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import List, Enum
+from traits.api import Enum
 
 from pychron.mdd.tasks.mdd_views import VIEWS
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.options.options import FigureOptions
-from pychron.pychron_constants import NULL_STR
+from pychron.pychron_constants import NULL_STR, MAIN, APPEARANCE
 
 PANELS = [NULL_STR, 'Arrhenius', 'LogR Ro', 'Spectrum', 'Cooling History']
 
@@ -37,12 +37,14 @@ def make_panel(p):
 
 
 class MDDFigureOptions(FigureOptions):
-    subview_names = List(['Main', 'Appearance'])
 
     panel_ul = Enum(*PANELS)
     panel_ur = Enum(*PANELS)
     panel_ll = Enum(*PANELS)
     panel_lr = Enum(*PANELS)
+
+    def initialize(self):
+        self.subview_names = [MAIN, APPEARANCE]
 
     def panels(self):
         ps = self.panel_ul, self.panel_ur, self.panel_ll, self.panel_lr

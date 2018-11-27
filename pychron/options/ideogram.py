@@ -24,7 +24,7 @@ from pychron.options.aux_plot import AuxPlot
 from pychron.options.group.ideogram_group_options import IdeogramGroupOptions
 from pychron.options.options import AgeOptions
 from pychron.options.views.ideogram_views import VIEWS
-from pychron.pychron_constants import NULL_STR, FONTS, SIZES, SIG_FIGS
+from pychron.pychron_constants import NULL_STR, FONTS, SIZES, SIG_FIGS, MAIN, APPEARANCE
 
 
 class IdeogramAuxPlot(AuxPlot):
@@ -37,8 +37,7 @@ class IdeogramAuxPlot(AuxPlot):
 
 
 class IdeogramOptions(AgeOptions):
-    subview_names = List(['Main', 'Ideogram', 'Appearance', 'Calculations', 'Display', 'Groups'],
-                         transient=True)
+
     aux_plot_klass = IdeogramAuxPlot
 
     edit_label_format_button = Button
@@ -97,6 +96,9 @@ class IdeogramOptions(AgeOptions):
     _use_centered_range = Bool
     _use_asymptotic_limits = Bool
     _suppress_xlimits_clear = Bool
+
+    def initialize(self):
+        self.subview_names = [MAIN, 'Ideogram', APPEARANCE, 'Calculations', 'Display', 'Groups']
 
     def to_dict(self):
         d = super(IdeogramOptions, self).to_dict()

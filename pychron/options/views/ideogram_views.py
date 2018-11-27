@@ -24,6 +24,7 @@ from pychron.core.pychron_traits import BorderVGroup
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.options import SubOptions, AppearanceSubOptions, GroupSubOptions, MainOptions, TitleSubOptions
 from pychron.processing.j_error_mixin import J_ERROR_GROUP
+from pychron.pychron_constants import MAIN, APPEARANCE
 
 
 class DisplaySubOptions(TitleSubOptions):
@@ -247,13 +248,12 @@ Additional examples
 
 # ===============================================================
 # ===============================================================
-VIEWS = {}
-VIEWS['main'] = IdeogramMainOptions
-VIEWS['ideogram'] = IdeogramSubOptions
-VIEWS['appearance'] = IdeogramAppearance
-VIEWS['calculations'] = CalculationSubOptions
-VIEWS['display'] = DisplaySubOptions
-VIEWS['groups'] = GroupSubOptions
+VIEWS = {MAIN.lower(): IdeogramMainOptions,
+         'ideogram': IdeogramSubOptions,
+         APPEARANCE.lower(): IdeogramAppearance,
+         'calculations': CalculationSubOptions,
+         'display': DisplaySubOptions,
+         'groups': GroupSubOptions}
 
 # ===============================================================
 # ===============================================================

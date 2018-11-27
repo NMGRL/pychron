@@ -102,6 +102,10 @@ class OptionsManager(Loggable):
         if self.selected_options:
             self.selected_options.set_analysis_types(atypes)
 
+    def set_reference_types(self, atypes):
+        if self.selected_options:
+            self.selected_options.set_reference_types(atypes)
+
     def _selected_options_changed(self, new):
         if new:
             if self._cached_names:

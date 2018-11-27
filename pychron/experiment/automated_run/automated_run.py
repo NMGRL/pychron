@@ -15,23 +15,19 @@
 # ===============================================================================
 
 # # ============= enthought library imports =======================
-from operator import itemgetter
-
-from traits.api import Any, Str, List, Property, \
-    Event, Instance, Bool, HasTraits, Float, Int, Long, Tuple, Dict
-
 
 import ast
 import os
 import re
 import time
-import yaml
 import weakref
-
-from itertools import groupby
 from pprint import pformat
 from threading import Thread, Event as TEvent
-from numpy import Inf, polyfit, linspace, polyval, array
+
+import yaml
+from numpy import Inf, polyfit, linspace, polyval
+from traits.api import Any, Str, List, Property, \
+    Event, Instance, Bool, HasTraits, Float, Int, Long, Tuple, Dict
 
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.filetools import get_path
@@ -125,7 +121,6 @@ class AutomatedRun(Loggable):
     labspy_client = Instance('pychron.labspy.client.LabspyClient')
 
     xls_persister = Instance('pychron.experiment.automated_run.persistence.ExcelPersister')
-    # system_health = Instance('pychron.experiment.health.series.SystemHealthSeries')
 
     collector = Property
 
@@ -1016,11 +1011,6 @@ class AutomatedRun(Loggable):
 
             if self.plot_panel:
                 self.plot_panel.analysis_view.refresh_needed = True
-
-            # save analysis. don't cancel immediately
-            # ret = None
-            # if self.system_health:
-            #     ret = self.system_health.add_analysis(self)
 
             if self.persister.secondary_database_fail:
                 self.executor_event = {'kind': 'cancel', 'cancel_run': True,

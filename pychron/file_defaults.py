@@ -191,7 +191,6 @@ TASK_EXTENSION_DEFAULT = """
 -
  plugin_id: pychron.experiment.plugin
  actions:
-  - pychron.experiment.reset_system_health, False
   - pychron.experiment.open_system_conditionals, True
   - pychron.experiment.open_queue_conditionals, True
   - pychron.experiment.open_experiment, True
@@ -301,9 +300,6 @@ columns:
   - Measurement
   - Conditionals
   - Comment
-'''
-
-SYSTEM_HEALTH = '''
 '''
 
 

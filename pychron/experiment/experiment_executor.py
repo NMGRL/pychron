@@ -2125,10 +2125,6 @@ Use Last "blank_{}"= {}
     def _scheduler_default(self):
         return ExperimentScheduler()
 
-    # def _system_health_default(self):
-    #     sh = SystemHealthSeries()
-    #     return sh
-
     def _datahub_default(self):
         dh = Datahub()
         return dh

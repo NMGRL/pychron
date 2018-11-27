@@ -124,6 +124,7 @@ class BaseArArFigure(SelectionFigure):
             if plot_dict:
                 kw.update(plot_dict)
 
+            print(i, po.height)
             if po.height:
                 kw['bounds'] = [50, po.height]
 

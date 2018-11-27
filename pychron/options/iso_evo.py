@@ -15,13 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import List, Float, Bool, Int, Range, Enum, cached_property
+from traits.api import Float, Bool, Int, Range, Enum, cached_property
 
 from pychron.core.fits.fit import IsoFilterFit
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.fit import FitOptions
 from pychron.options.views.iso_evo_views import VIEWS
-from pychron.pychron_constants import FIT_TYPES
+from pychron.pychron_constants import FIT_TYPES, MAIN
 
 
 class IsoFilterFitAuxPlot(AuxPlot, IsoFilterFit):
@@ -56,9 +56,11 @@ class IsoFilterFitAuxPlot(AuxPlot, IsoFilterFit):
 
 class IsotopeEvolutionOptions(FitOptions):
     aux_plot_klass = IsoFilterFitAuxPlot
-    subview_names = List(['Main', 'IsoEvo'])
 
     show_sniff = Bool(False)
+
+    def initialize(self):
+        self.subview_names = [MAIN, 'IsoEvo']
 
     def _get_subview(self, name):
         return VIEWS[name]

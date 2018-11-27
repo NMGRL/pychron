@@ -20,10 +20,9 @@ from __future__ import absolute_import
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traits.api import Color, Instance, DelegatesTo, List, Any, Property, Button, Event
 from traitsui.api import View, Item, UItem, VGroup, HGroup, spring, \
-    Group, Spring, VFold, Label, VSplit, TabularEditor, UReadonly, ListEditor, Readonly
+    Group, Spring, VFold, Label, VSplit, UReadonly, ListEditor, Readonly
 from traitsui.editors import TableEditor, EnumEditor
 from traitsui.table_column import ObjectColumn
-from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.core.pychron_traits import BorderHGroup, BorderVGroup
 from pychron.core.ui.combobox_editor import ComboboxEditor
@@ -522,34 +521,6 @@ class IsotopeEvolutionPane(TraitsDockPane):
                                      height=0.25))))
         return v
 
-
-# class SummaryPane(TraitsDockPane):
-#     id = 'pychron.experiment.summary'
-#     name = 'Summary'
-#     plot_panel = Instance('pychron.experiment.plot_panel.PlotPanel')
-#
-#     def traits_view(self):
-#         v = View(UItem('plot_panel', editor=InstanceEditor(view='summary_view'),
-#                        style='custom'))
-#         return v
-
-
-class AnalysisHealthAdapter(TabularAdapter):
-    columns = [('Isotope', 'name'),
-               ('Min.', 'health_min'),
-               ('Health', 'health'),
-               ('Max.', 'health_max')]
-
-
-class AnalysisHealthPane(TraitsDockPane):
-    id = 'pychron.experiment.analysis_health'
-    name = 'Health'
-
-    def traits_view(self):
-        v = View(UItem('analysis_type', style='readonly'),
-
-                 Item('isotopes', editor=TabularEditor(adapter=AnalysisHealthAdapter())))
-        return v
 
 
 class LoggerPane(TraitsDockPane):

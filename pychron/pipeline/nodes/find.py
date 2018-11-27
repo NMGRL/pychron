@@ -23,7 +23,6 @@ from traitsui.api import Item, EnumEditor, UItem, VGroup, HGroup
 from pychron.core.helpers.iterfuncs import partition, groupby_group_id
 from pychron.core.ui.check_list_editor import CheckListEditor
 from pychron.pipeline.editors.flux_results_editor import FluxPosition
-from pychron.pipeline.graphical_filter import GraphicalFilterModel, GraphicalFilterView
 from pychron.pipeline.nodes.data import DVCNode
 from pychron.pychron_constants import DEFAULT_MONITOR_NAME, NULL_STR, REFERENCE_ANALYSIS_TYPES
 
@@ -312,35 +311,38 @@ class FindReferencesNode(FindNode):
                 break
 
         if refs:
-            unknowns.extend(refs)
-            model = GraphicalFilterModel(analyses=unknowns,
-                                         dvc=self.dvc,
-                                         extract_device=self.extract_device,
-                                         mass_spectrometer=self.mass_spectrometer,
-                                         low_post=times[0],
-                                         high_post=times[-1],
-                                         threshold=self.threshold,
-                                         gid=gid)
-
-            model.setup()
-            model.analysis_types = self.analysis_types  # [self.analysis_type]
-
-            obj = GraphicalFilterView(model=model)
-            info = obj.edit_traits(kind='livemodal')
-            if info.result:
-                refs = model.get_filtered_selection()
-                refs = self.dvc.make_analyses(refs)
-
-                if obj.is_append:
-                    state.append_references = True
-                    state.references.extend(refs)
-                else:
-                    state.append_references = False
-                    state.references = list(refs)
-
-            else:
-                state.veto = self
-                return True
+            refs = self.dvc.make_analyses(refs)
+            state.references = list(refs)
+            return True
+            # unknowns.extend(refs)
+            # model = GraphicalFilterModel(analyses=unknowns,
+            #                              dvc=self.dvc,
+            #                              extract_device=self.extract_device,
+            #                              mass_spectrometer=self.mass_spectrometer,
+            #                              low_post=times[0],
+            #                              high_post=times[-1],
+            #                              threshold=self.threshold,
+            #                              gid=gid)
+            #
+            # model.setup()
+            # model.analysis_types = self.analysis_types  # [self.analysis_type]
+            #
+            # obj = GraphicalFilterView(model=model)
+            # info = obj.edit_traits(kind='livemodal')
+            # if info.result:
+            #     refs = model.get_filtered_selection()
+            #     refs = self.dvc.make_analyses(refs)
+            #
+            #     if obj.is_append:
+            #         state.append_references = True
+            #         state.references.extend(refs)
+            #     else:
+            #         state.append_references = False
+            #         state.references = list(refs)
+            #
+            # else:
+            #     state.veto = self
+            #     return True
 
     def traits_view(self):
         v = self._view_factory(HGroup(Item('load_name', editor=EnumEditor(name='display_loads')),

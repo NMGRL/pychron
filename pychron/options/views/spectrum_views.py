@@ -22,6 +22,7 @@ from traitsui.api import View, UItem, Item, HGroup, VGroup, Group, EnumEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.options import SubOptions, AppearanceSubOptions, GroupSubOptions, checkbox_column, object_column, \
     MainOptions, TitleSubOptions
+from pychron.pychron_constants import MAIN, APPEARANCE
 
 
 class SpectrumSubOptions(SubOptions):
@@ -186,12 +187,11 @@ class SpectrumMainOptions(MainOptions):
         return v
 
 
-VIEWS = {}
-VIEWS['main'] = SpectrumMainOptions
-VIEWS['spectrum'] = SpectrumSubOptions
-VIEWS['appearance'] = SpectrumAppearance
-VIEWS['plateau'] = CalculationSubOptions
-VIEWS['display'] = DisplaySubOptions
-VIEWS['groups'] = GroupSubOptions
+VIEWS = {MAIN.lower(): SpectrumMainOptions,
+         'spectrum': SpectrumSubOptions,
+         APPEARANCE.lower(): SpectrumAppearance,
+         'plateau': CalculationSubOptions,
+         'display': DisplaySubOptions,
+         'groups': GroupSubOptions}
 
 # ============= EOF =============================================

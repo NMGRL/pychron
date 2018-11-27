@@ -103,10 +103,10 @@ class FitReferencesNode(FitNode):
 
                 unks = [u for u in unks if u.group_id == gid]
                 editor.set_items(unks, compress=False)
-                if self.plotter_options.use_restricted_references:
-                    refas = self._get_reference_analysis_types()
-                    if refas:
-                        refs = [r for r in refs if r.analysis_type in refas]
+                # if self.plotter_options.use_restricted_references:
+                #     refas = self._get_reference_analysis_types()
+                #     if refas:
+                #         refs = [r for r in refs if r.analysis_type in refas]
 
                 editor.set_references(list(refs))
 
@@ -146,6 +146,10 @@ class FitBlanksNode(FitReferencesNode):
 
             atypes = list({a.analysis_type for a in self.unknowns})
             pom.set_analysis_types(atypes)
+
+        if self.references:
+            atypes = list({a.analysis_type for a in self.references})
+            pom.set_reference_types(atypes)
 
 
 ATTRS = ('numerator', 'denominator', 'standard_ratio', 'analysis_type')

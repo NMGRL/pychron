@@ -65,8 +65,6 @@ class ExperimentPreferences(BasePreferencesHelper):
 
     min_ms_pumptime = Int
 
-    use_system_health = Bool
-
     use_memory_check = Bool
     memory_threshold = Property(PositiveInteger,
                                 depends_on='_memory_threshold')
@@ -208,29 +206,6 @@ class ExperimentPreferencesPane(PreferencesPane):
                                     Item('air_color', label='Air'),
                                     Item('cocktail_color', label='Cocktail')),
                              label='Colors')
-
-        # system_health_grp = VGroup(Item('use_system_health'),
-        #                            label='System Health')
-        # analysis_grouping_grp = Group(Item('use_analysis_grouping',
-        #                                    label='Auto group analyses',
-        #                                    tooltip=''),
-        #                               Item('grouping_suffix',
-        #                                    label='Suffix',
-        #                                    tooltip='Append "Suffix" to the Project name. e.g. MinnaBluff-autogen '
-        #                                            'where Suffix=autogen'),
-        #                               Item('grouping_threshold',
-        #                                    label='Grouping Threshold (hrs)',
-        #                                    tooltip='Associate Reference analyses with the project of an analysis that '
-        #                                            'is within X hours of the current run',
-        #                                    enabled_when='use_analysis_grouping'),
-        #                               label='Analysis Grouping')
-
-        # memory_grp = Group(Item('use_memory_check', label='Check Memory',
-        #                         tooltip='Ensure enough memory is available during experiment execution'),
-        #                    Item('memory_threshold', label='Threshold',
-        #                         enabled_when='use_memory_check',
-        #                         tooltip='Do not continue experiment if available memory less than "Threshold"'),
-        #                    label='Memory')
 
         monitor_grp = Group(Item('use_automated_run_monitor',
                                  label='Use AutomatedRun Monitor',

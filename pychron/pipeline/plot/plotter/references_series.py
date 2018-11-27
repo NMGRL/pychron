@@ -153,10 +153,12 @@ class ReferencesSeries(BaseSeries):
             scatter._layout_needed = True
 
     def reference_data(self, po):
-        return unzip_data(self._get_reference_data(po))
+        ans, xs, ys = self._get_reference_data(po)
+        return ans, array(xs), array([nominal_value(ri) for ri in ys]), array([std_dev(ri) for ri in ys])
 
     def current_data(self, po):
-        return unzip_data(self._get_current_data(po))
+        data = self._get_current_data(po)
+        return array([nominal_value(ri) for ri in data]), array([std_dev(ri) for ri in data])
 
     def _get_current_data(self, po):
         return self._unpack_attr(po.name)
@@ -229,10 +231,10 @@ class ReferencesSeries(BaseSeries):
     def _plot_references(self, pid, po):
         graph = self.graph
         efit = po.fit.lower()
-        r_xs = self.rxs
+        # r_xs = self.rxs
         data = self.reference_data(po)
         if data:
-            r_ys, r_es = data
+            refs, r_xs, r_ys, r_es = data
 
             ymi, yma = self._calc_limits(r_ys, r_es)
 
@@ -253,7 +255,7 @@ class ReferencesSeries(BaseSeries):
                                                **kw)
 
                 def update_meta_func(obj, b, c, d):
-                    self.update_interpolation_regressor(po.name, reg, obj)
+                    self.update_interpolation_regressor(po.name, reg, obj, refs)
 
                 self._add_error_bars(scatter, r_es, 'y', self.options.nsigma, True)
 
@@ -263,7 +265,7 @@ class ReferencesSeries(BaseSeries):
                 _, scatter, l = graph.new_series(r_xs, r_ys,
                                                  yerror=ArrayDataSource(data=r_es),
                                                  fit=ffit,
-                                                 bind_id=1,
+                                                 bind_id=hash(tuple(refs)),
                                                  **kw)
                 if hasattr(l, 'regressor'):
                     reg = l.regressor
@@ -277,18 +279,18 @@ class ReferencesSeries(BaseSeries):
                                         update_meta_func=update_meta_func,
                                         add_selection=True,
                                         additional_info=af,
-                                        items=self.sorted_references)
+                                        items=refs)
             plot = graph.plots[pid]
             plot.isotope = po.name
             plot.fit = ffit
-            scatter.index.metadata['selections'] = [i for i, r in enumerate(self.sorted_references) if r.temp_selected]
+            scatter.index.metadata['selections'] = [i for i, r in enumerate(refs) if r.temp_selected]
             return reg, ymi, yma
 
     def _set_interpolated_values(self, iso, fit, ans, p_uys, p_ues):
         pass
 
-    def update_interpolation_regressor(self, isotope, reg, obj):
-        sel = self._filter_metadata_changes(obj, self.sorted_references)
+    def update_interpolation_regressor(self, isotope, reg, obj, references):
+        sel = self._filter_metadata_changes(obj, references)
         reg.user_excluded = sel
         key = 'Unknowns-predicted0'
         for plotobj in self.graph.plots:

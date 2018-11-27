@@ -52,7 +52,6 @@ class ExperimentEditorTask(EditorTask):
 
     loading_manager = Instance('pychron.loading.loading_manager.LoadingManager')
 
-    # analysis_health = Instance(AnalysisHealth)
     last_experiment_changed = Event
 
     # bgcolor = Color
@@ -207,7 +206,6 @@ class ExperimentEditorTask(EditorTask):
                  ControlsPane(model=ex, task=self),
                  ConsolePane(model=ex),
                  LoggerPane(),
-                 # AnalysisHealthPane(model=self.analysis_health),
                  ConnectionStatusPane(model=ex),
                  self.experiment_factory_pane,
                  self.isotope_evolution_pane,

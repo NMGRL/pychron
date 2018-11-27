@@ -16,13 +16,14 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
+from six.moves import range
 from traits.api import Str, Float, Property, List
 
 from pychron.options.fit import FitAuxPlot
-from pychron.options.views.icfactor_views import VIEWS
 from pychron.options.series import SeriesOptions
-from pychron.pychron_constants import FIT_TYPES_INTERPOLATE, NULL_STR
-from six.moves import range
+from pychron.options.views.icfactor_views import VIEWS
+from pychron.pychron_constants import FIT_TYPES_INTERPOLATE, NULL_STR, MAIN, APPEARANCE
 
 
 class ICFactorAuxPlot(FitAuxPlot):
@@ -53,7 +54,9 @@ class ICFactorAuxPlot(FitAuxPlot):
 
 class ICFactorOptions(SeriesOptions):
     aux_plot_klass = ICFactorAuxPlot
-    subview_names = List(['Main', 'ICFactor', 'Appearance'])
+
+    def initialize(self):
+        self.subview_names = [MAIN, 'ICFactor', APPEARANCE]
 
     def set_detectors(self, dets):
         dets = [NULL_STR, 'age'] + dets

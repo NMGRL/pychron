@@ -238,6 +238,7 @@ class MainOptions(SubOptions):
 class BaseOptions(HasTraits):
     fontname = Enum(*FONTS)
     _main_options_klass = MainOptions
+    subview_names = List(transient=True)
 
     def to_dict(self):
         keys = [trait for trait in self.traits() if

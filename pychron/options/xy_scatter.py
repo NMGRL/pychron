@@ -22,6 +22,7 @@ from traits.api import Str, List
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.options import AuxPlotFigureOptions
 from pychron.options.views.xy_scatter_views import VIEWS
+from pychron.pychron_constants import MAIN, APPEARANCE
 
 
 class XYScatterAuxPlot(AuxPlot):
@@ -75,8 +76,10 @@ NAMES = ['Ratio', 'TimeSeries', 'Scatter']
 
 
 class XYScatterOptions(AuxPlotFigureOptions):
-    subview_names = List(['Main', 'Appearance'])
     aux_plot_klass = XYScatterAuxPlot
+
+    def initialize(self):
+        self.subview_names = [MAIN, APPEARANCE]
 
     def set_names(self, isotope_keys):
         nn = isotope_keys + NAMES

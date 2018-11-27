@@ -24,7 +24,7 @@ from pychron.options.aux_plot import AuxPlot
 from pychron.options.group.spectrum_group_options import SpectrumGroupOptions
 from pychron.options.options import AgeOptions
 from pychron.options.views.spectrum_views import VIEWS
-from pychron.pychron_constants import NULL_STR, ERROR_TYPES, SIZES, FONTS, SIG_FIGS, WEIGHTINGS
+from pychron.pychron_constants import NULL_STR, ERROR_TYPES, SIZES, FONTS, SIG_FIGS, WEIGHTINGS, MAIN, APPEARANCE
 
 
 class SpectrumAuxPlot(AuxPlot):
@@ -37,8 +37,7 @@ class SpectrumAuxPlot(AuxPlot):
 
 
 class SpectrumOptions(AgeOptions):
-    subview_names = List(['Main', 'Spectrum', 'Appearance', 'Plateau', 'Display', 'Groups'],
-                         transient=True)
+
     aux_plot_klass = SpectrumAuxPlot
     edit_plateau_criteria = Button
 
@@ -91,6 +90,9 @@ class SpectrumOptions(AgeOptions):
     include_plateau_identifier = Bool
 
     group_options_klass = SpectrumGroupOptions
+
+    def initialize(self):
+        self.subview_names = [MAIN, 'Spectrum', APPEARANCE, 'Plateau', 'Display', 'Groups']
 
     def _get_subview(self, name):
         return VIEWS[name]
