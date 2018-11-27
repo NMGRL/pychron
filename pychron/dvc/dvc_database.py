@@ -139,7 +139,8 @@ class NewMassSpectrometerView(HasTraits):
                  title='New Mass Spectrometer',
                  kind='livemodal')
         return v
-    
+
+
 def exclude_invalid_analyses(q):
     return q.filter(AnalysisChangeTbl.tag != 'invalid')
 
@@ -652,7 +653,6 @@ class DVCDatabase(DatabaseAdapter):
         with self.session_ctx():
             dblevel = self.get_irradiation_level(irradiation, name)
             if dblevel is None:
-
                 irradiation = self.get_irradiation(irradiation)
                 # production = self.get_production(production_name)
                 # if not production:
