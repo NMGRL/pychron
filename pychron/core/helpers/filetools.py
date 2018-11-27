@@ -176,8 +176,18 @@ def replace_extension(p, ext='.txt'):
 
 
 def add_extension(p, ext='.txt'):
-    if not p.endswith(ext):
-        p = '{}{}'.format(p, ext)
+    if not isinstance(ext, (list, tuple)):
+        ext = (ext, )
+
+    for ei in ext:
+        if p.endswith(ei):
+            break
+        # if not p.endswith(ext):
+        #     p = '{}{}'.format(p, ext)
+
+    else:
+        p = '{}{}'.format(p, ext[0])
+
     return p
 
 
@@ -446,13 +456,9 @@ def get_path(root, name, extensions):
     """
     for ext in extensions:
         for f in os.listdir(root):
-            name = add_extension(name, ext)
-            if re.match(name, f):
+            ni = add_extension(name, ext)
+            if re.match(ni, f):
                 return os.path.join(root, f)
-
-                # p = os.path.join(root, add_extension(name, ext))
-                # if os.path.isfile(p):
-                #     return p
 
 # if __name__ == '__main__':
 #     name = 'b60a449a-0f15-4554-a517-e0b421aaca97.h5'
