@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 from traits.api import Button, Int, Bool, Float, Property, on_trait_change, List, Enum, Range, Color
 from traitsui.api import View, Item
 
@@ -24,7 +22,8 @@ from pychron.options.aux_plot import AuxPlot
 from pychron.options.group.spectrum_group_options import SpectrumGroupOptions
 from pychron.options.options import AgeOptions
 from pychron.options.views.spectrum_views import VIEWS
-from pychron.pychron_constants import NULL_STR, ERROR_TYPES, SIZES, FONTS, SIG_FIGS, WEIGHTINGS, MAIN, APPEARANCE
+from pychron.pychron_constants import NULL_STR, ERROR_TYPES, SIZES, FONTS, SIG_FIGS, WEIGHTINGS, MAIN, APPEARANCE, \
+    DISPLAY, GROUPS
 
 
 class SpectrumAuxPlot(AuxPlot):
@@ -92,7 +91,7 @@ class SpectrumOptions(AgeOptions):
     group_options_klass = SpectrumGroupOptions
 
     def initialize(self):
-        self.subview_names = [MAIN, 'Spectrum', APPEARANCE, 'Plateau', 'Display', 'Groups']
+        self.subview_names = [MAIN, 'Spectrum', APPEARANCE, 'Plateau', DISPLAY, GROUPS]
 
     def _get_subview(self, name):
         return VIEWS[name]

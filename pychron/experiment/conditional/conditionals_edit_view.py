@@ -14,8 +14,6 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 # ============= standard library imports ========================
 import os
 
@@ -216,7 +214,6 @@ def edit_conditionals(name, detectors=None, root=None, save_as=False,
     else:
         path = ''
 
-    print('asdfa', path, root, title)
     cev = ConditionalsEditView(detectors, root=root, title=title)
     cev.open(path, save_as)
     if kinds:

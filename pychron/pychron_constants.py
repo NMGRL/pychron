@@ -117,6 +117,9 @@ ALPHAS = [a for a in seeds] + ['{}{}'.format(a, b)
 
 MAIN = 'Main'
 APPEARANCE = 'Appearance'
+DISPLAY = 'Display'
+GROUPS = 'Groups'
+
 
 def alpha_to_int(s):
     return ALPHAS.index(s)

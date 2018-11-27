@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 from chaco.default_colormaps import color_map_name_dict
 from traits.api import Int, Bool, Float, Property, on_trait_change, Enum, List, Dict, Button, Str, Color
 
@@ -24,7 +22,7 @@ from pychron.options.aux_plot import AuxPlot
 from pychron.options.group.ideogram_group_options import IdeogramGroupOptions
 from pychron.options.options import AgeOptions
 from pychron.options.views.ideogram_views import VIEWS
-from pychron.pychron_constants import NULL_STR, FONTS, SIZES, SIG_FIGS, MAIN, APPEARANCE
+from pychron.pychron_constants import NULL_STR, FONTS, SIZES, SIG_FIGS, MAIN, APPEARANCE, DISPLAY, GROUPS
 
 
 class IdeogramAuxPlot(AuxPlot):
@@ -98,7 +96,7 @@ class IdeogramOptions(AgeOptions):
     _suppress_xlimits_clear = Bool
 
     def initialize(self):
-        self.subview_names = [MAIN, 'Ideogram', APPEARANCE, 'Calculations', 'Display', 'Groups']
+        self.subview_names = [MAIN, 'Ideogram', APPEARANCE, 'Calculations', DISPLAY, GROUPS]
 
     def to_dict(self):
         d = super(IdeogramOptions, self).to_dict()

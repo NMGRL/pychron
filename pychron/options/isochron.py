@@ -22,13 +22,13 @@ from traits.api import Str, Bool, Float, Property, Enum, Range
 from pychron.options.group.inverse_isochron_group_options import InverseIsochronGroupOptions
 from pychron.options.options import AgeOptions
 from pychron.options.views.isochron_views import INVERSE_ISOCHRON_VIEWS, ISOCHRON_VIEWS
-from pychron.pychron_constants import FIT_ERROR_TYPES, ELLIPSE_KINDS, FONTS, SIZES, MAIN, APPEARANCE
+from pychron.pychron_constants import FIT_ERROR_TYPES, ELLIPSE_KINDS, FONTS, SIZES, MAIN, APPEARANCE, GROUPS
 
 
 class IsochronOptions(AgeOptions):
 
     def initialize(self):
-        self.subview_names = [MAIN, APPEARANCE, 'Groups']
+        self.subview_names = [MAIN, APPEARANCE, GROUPS]
 
     def get_subview(self, name):
         name = name.lower()

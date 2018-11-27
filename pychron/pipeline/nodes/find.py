@@ -18,11 +18,13 @@
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
 from traits.api import Float, Str, List, Property, cached_property, Button, Bool
-from traitsui.api import Item, EnumEditor, UItem, VGroup, HGroup
+from traitsui.api import Item, EnumEditor, UItem, VGroup
 
 from pychron.core.helpers.iterfuncs import partition, groupby_group_id
+from pychron.core.pychron_traits import BorderHGroup, BorderVGroup
 from pychron.core.ui.check_list_editor import CheckListEditor
 from pychron.pipeline.editors.flux_results_editor import FluxPosition
+from pychron.pipeline.graphical_filter import GraphicalFilterModel, GraphicalFilterView
 from pychron.pipeline.nodes.data import DVCNode
 from pychron.pychron_constants import DEFAULT_MONITOR_NAME, NULL_STR, REFERENCE_ANALYSIS_TYPES
 
@@ -215,7 +217,8 @@ class FindReferencesNode(FindNode):
     mass_spectrometer = Str
     enable_mass_spectrometer = Bool
     mass_spectrometers = List
-    # analysis_type_name = None
+    use_graphical_filter = Bool
+
     name = 'Find References'
 
     def reset(self):
@@ -227,6 +230,7 @@ class FindReferencesNode(FindNode):
         self.analysis_types = nodedict.get('analysis_types', [])
         self.name = nodedict.get('name', 'Find References')
         self.limit_to_analysis_loads = nodedict.get('limit_to_analysis_loads', True)
+        self.use_graphical_filter = nodedict.get('use_graphical_filter', True)
 
     def finish_load(self):
         self.extract_devices = self.dvc.get_extraction_device_names()
@@ -239,9 +243,9 @@ class FindReferencesNode(FindNode):
         self.loads = names
 
     def _to_template(self, d):
-        d['threshold'] = self.threshold
-        d['analysis_types'] = self.analysis_types
-        d['limit_to_analysis_loads'] = self.limit_to_analysis_loads
+        d = dict()
+        for key in ('threshold', 'analysis_types', 'limit_to_analysis_loads', 'use_graphical_filter'):
+            d[key] = getattr(self, key)
 
     def _load_analysis_types(self, state):
         pass
@@ -259,7 +263,7 @@ class FindReferencesNode(FindNode):
         self.mass_spectrometer = list(ms)[0]
 
         ls = {ai.load_name for ai in state.unknowns}
-        self.analysis_loads = [NULL_STR]+list(ls)
+        self.analysis_loads = [NULL_STR] + list(ls)
 
         self._load_analysis_types(state)
 
@@ -311,61 +315,64 @@ class FindReferencesNode(FindNode):
                 break
 
         if refs:
-            refs = self.dvc.make_analyses(refs)
-            state.references = list(refs)
-            return True
-            # unknowns.extend(refs)
-            # model = GraphicalFilterModel(analyses=unknowns,
-            #                              dvc=self.dvc,
-            #                              extract_device=self.extract_device,
-            #                              mass_spectrometer=self.mass_spectrometer,
-            #                              low_post=times[0],
-            #                              high_post=times[-1],
-            #                              threshold=self.threshold,
-            #                              gid=gid)
-            #
-            # model.setup()
-            # model.analysis_types = self.analysis_types  # [self.analysis_type]
-            #
-            # obj = GraphicalFilterView(model=model)
-            # info = obj.edit_traits(kind='livemodal')
-            # if info.result:
-            #     refs = model.get_filtered_selection()
-            #     refs = self.dvc.make_analyses(refs)
-            #
-            #     if obj.is_append:
-            #         state.append_references = True
-            #         state.references.extend(refs)
-            #     else:
-            #         state.append_references = False
-            #         state.references = list(refs)
-            #
-            # else:
-            #     state.veto = self
-            #     return True
+            if self.use_graphical_filter:
+                unknowns.extend(refs)
+                model = GraphicalFilterModel(analyses=unknowns,
+                                             dvc=self.dvc,
+                                             extract_device=self.extract_device,
+                                             mass_spectrometer=self.mass_spectrometer,
+                                             low_post=times[0],
+                                             high_post=times[-1],
+                                             threshold=self.threshold,
+                                             gid=gid)
+
+                model.setup()
+                model.analysis_types = self.analysis_types  # [self.analysis_type]
+
+                obj = GraphicalFilterView(model=model)
+                info = obj.edit_traits(kind='livemodal')
+                if info.result:
+                    refs = model.get_filtered_selection()
+                else:
+                    refs = None
+                    state.veto = self
+
+            if refs:
+                refs = self.dvc.make_analyses(refs)
+                state.references = list(refs)
+                return True
 
     def traits_view(self):
-        v = self._view_factory(HGroup(Item('load_name', editor=EnumEditor(name='display_loads')),
-                                      Item('limit_to_analysis_loads',
-                                           tooltip='Limit Loads based on the selected analyses',
-                                           label='Limit Loads by Analyses')),
-                               Item('threshold',
-                                    tooltip='Maximum difference between references and unknowns in hours',
-                                    enabled_when='threshold_enabled',
-                                    label='Threshold (Hrs)'),
-                               VGroup(UItem('analysis_types',
-                                            style='custom',
-                                            editor=CheckListEditor(name='available_analysis_types', cols=3)),
-                                      show_border=True, label='Analysis Types'),
 
-                               Item('extract_device',
-                                    enabled_when='enable_extract_device',
-                                    editor=EnumEditor(name='extract_devices'),
-                                    label='Extract Device'),
-                               Item('mass_spectrometer',
-                                    label='Mass Spectrometer',
-                                    enabled_when='enable_mass_spectrometer',
-                                    editor=EnumEditor(name='mass_spectrometers')))
+        load_grp = BorderHGroup(UItem('load_name', editor=EnumEditor(name='display_loads')),
+                                Item('limit_to_analysis_loads',
+                                     tooltip='Limit Loads based on the selected analyses',
+                                     label='Limit Loads by Analyses'),
+                                label='Load')
+        inst_grp = BorderVGroup(Item('extract_device',
+                                     enabled_when='enable_extract_device',
+                                     editor=EnumEditor(name='extract_devices'),
+                                     label='Extract Device'),
+                                Item('mass_spectrometer',
+                                     label='Mass Spectrometer',
+                                     enabled_when='enable_mass_spectrometer',
+                                     editor=EnumEditor(name='mass_spectrometers')),
+                                label='Instruments')
+
+        filter_grp = BorderVGroup(Item('threshold',
+                                       tooltip='Maximum difference between references and unknowns in hours',
+                                       enabled_when='threshold_enabled',
+                                       label='Threshold (Hrs)'),
+                                  Item('use_graphical_filter', label='Graphical Selection'),
+                                  VGroup(UItem('analysis_types',
+                                               style='custom',
+                                               editor=CheckListEditor(name='available_analysis_types', cols=3)),
+                                         show_border=True, label='Analysis Types'),
+                                  label='Filtering')
+
+        v = self._view_factory(VGroup(load_grp,
+                               filter_grp,
+                               inst_grp))
 
         return v
 

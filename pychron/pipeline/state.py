@@ -37,7 +37,7 @@ class EngineState(HasTraits):
 
     tables = List
     editors = List
-    append_references = Bool
+
     has_flux_monitors = Bool
     saveable_keys = List
     saveable_fits = List

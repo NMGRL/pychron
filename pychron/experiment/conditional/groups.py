@@ -30,7 +30,7 @@ from pychron.experiment.conditional.regexes import CP_REGEX, STD_REGEX, ACTIVE_R
     MAX_REGEX, MIN_REGEX, AVG_REGEX, COMP_REGEX, ARGS_REGEX, BETWEEN_REGEX, SLOPE_REGEX
 from pychron.experiment.conditional.tabular_adapters import EActionConditionalsAdapter, EPRConditionalsAdapter, \
     EConditionalsAdapter, EModificationConditionalsAdapter, PRConditionalsAdapter, ConditionalsAdapter
-from pychron.pychron_constants import UNKNOWN, COCKTAIL, AIR, BLANK
+from pychron.pychron_constants import ANALYSIS_TYPES
 
 FUNCTIONS = ['', 'Max', 'Min', 'Slope', 'Average', 'Between']
 FUNC_DICT = {'slope': 'slope({})', 'max': 'max({})', 'min': 'min({})', 'average': 'average({})'}
@@ -303,12 +303,11 @@ class ConditionalGroup(HasTraits):
         return cnt_grp
 
     def _get_atype_grp(self):
-        aatypes = [UNKNOWN, AIR, COCKTAIL,
-                   BLANK,
-                   '{}_{}'.format(BLANK, UNKNOWN),
-                   '{}_{}'.format(BLANK, AIR),
-                   '{}_{}'.format(BLANK, COCKTAIL)]
-        grp = BorderVGroup(UItem('analysis_types', style='custom', editor=CheckListEditor(values=aatypes, cols=4)))
+
+        atypes = [(a.lower().replace(' ', '_'), a) for a in ANALYSIS_TYPES]
+
+        grp = BorderVGroup(UItem('analysis_types', style='custom', editor=CheckListEditor(values=atypes,
+                                                                                          cols=4)))
         return grp
 
     def _get_edit_group(self):

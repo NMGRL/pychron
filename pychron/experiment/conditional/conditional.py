@@ -153,7 +153,7 @@ class BaseConditional(Loggable):
 
         analysis_types = cd.get('analysis_types', [])
         if analysis_types:
-            analysis_types = [a.lower() for a in analysis_types]
+            analysis_types = [a.lower().replace(' ', '_') for a in analysis_types]
         else:
             analysis_types = []
 

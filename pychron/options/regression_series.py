@@ -18,7 +18,7 @@ from traits.api import List, Bool
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.options import AgeOptions
 from pychron.options.views.regression_series_views import VIEWS
-from pychron.pychron_constants import NULL_STR, MAIN, APPEARANCE
+from pychron.pychron_constants import NULL_STR, MAIN, APPEARANCE, DISPLAY, GROUPS
 
 
 class RegressionSeriesAuxPlot(AuxPlot):
@@ -30,7 +30,7 @@ class RegressionSeriesOptions(AgeOptions):
     show_statistics = Bool(False)
 
     def initialize(self):
-        self.subview_names = [MAIN, 'Regression Series', APPEARANCE, 'Display', 'Groups']
+        self.subview_names = [MAIN, 'Regression Series', APPEARANCE, DISPLAY, GROUPS]
 
     def set_names(self, names, clear_missing=True):
         for ai in self.aux_plots:

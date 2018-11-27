@@ -252,10 +252,7 @@ class ReferenceNode(DataNode):
         self.unknowns = state.unknowns
         refs = state.references
         if refs:
-            if state.append_references:
-                self.references.extend(refs)
-            else:
-                self.references = refs
+            self.references = refs
 
         if not self.references:
             if configure:
