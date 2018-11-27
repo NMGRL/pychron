@@ -26,7 +26,14 @@ from pychron.core.ui.check_list_editor import CheckListEditor
 from pychron.pipeline.editors.flux_results_editor import FluxPosition
 from pychron.pipeline.graphical_filter import GraphicalFilterModel, GraphicalFilterView
 from pychron.pipeline.nodes.data import DVCNode
-from pychron.pychron_constants import DEFAULT_MONITOR_NAME, NULL_STR, REFERENCE_ANALYSIS_TYPES
+from pychron.pychron_constants import DEFAULT_MONITOR_NAME, NULL_STR, REFERENCE_ANALYSIS_TYPES, BLANKS
+
+
+def compress_groups(ans):
+    if ans:
+        for i, (gid, analyses) in enumerate(groupby_group_id(ans)):
+            for ai in analyses:
+                ai.group_id = i
 
 
 class FindNode(DVCNode):
@@ -114,9 +121,6 @@ class FindRepositoryAnalysesNode(FindNode):
 
 class FindFluxMonitorsNode(BaseFindFluxNode):
     name = 'Find Flux Monitors'
-
-    # monitor_sample_name = Str('BW-2014-3')
-    # monitor_sample_name = Str('FC-2')
 
     use_browser = Bool(False)
 
@@ -219,8 +223,6 @@ class FindReferencesNode(FindNode):
     mass_spectrometers = List
     use_graphical_filter = Bool
 
-    name = 'Find References'
-
     def reset(self):
         self.user_choice = None
         super(FindReferencesNode, self).reset()
@@ -247,9 +249,6 @@ class FindReferencesNode(FindNode):
         for key in ('threshold', 'analysis_types', 'limit_to_analysis_loads', 'use_graphical_filter'):
             d[key] = getattr(self, key)
 
-    def _load_analysis_types(self, state):
-        pass
-
     def pre_run(self, state, configure=True):
         if not state.unknowns:
             return
@@ -265,8 +264,6 @@ class FindReferencesNode(FindNode):
         ls = {ai.load_name for ai in state.unknowns}
         self.analysis_loads = [NULL_STR] + list(ls)
 
-        self._load_analysis_types(state)
-
         return super(FindReferencesNode, self).pre_run(state, configure=configure)
 
     def run(self, state):
@@ -274,16 +271,8 @@ class FindReferencesNode(FindNode):
             if self._run_group(state, gid, list(ans)):
                 return
 
-        self._compress_groups(state.unknowns)
-        self._compress_groups(state.references)
-
-    def _compress_groups(self, ans):
-        if not ans:
-            return
-
-        for i, (gid, analyses) in enumerate(groupby_group_id(ans)):
-            for ai in analyses:
-                ai.group_id = i
+        compress_groups(state.unknowns)
+        compress_groups(state.references)
 
     def _run_group(self, state, gid, unknowns):
         atypes = [ai.lower().replace(' ', '_') for ai in self.analysis_types]
@@ -327,7 +316,7 @@ class FindReferencesNode(FindNode):
                                              gid=gid)
 
                 model.setup()
-                model.analysis_types = self.analysis_types  # [self.analysis_type]
+                model.analysis_types = self.analysis_types
 
                 obj = GraphicalFilterView(model=model)
                 info = obj.edit_traits(kind='livemodal')
@@ -366,18 +355,18 @@ class FindReferencesNode(FindNode):
                                   Item('use_graphical_filter', label='Graphical Selection'),
                                   VGroup(UItem('analysis_types',
                                                style='custom',
-                                               editor=CheckListEditor(name='available_analysis_types', cols=3)),
+                                               editor=CheckListEditor(name='available_analysis_types', cols=2)),
                                          show_border=True, label='Analysis Types'),
                                   label='Filtering')
 
         v = self._view_factory(VGroup(load_grp,
-                               filter_grp,
-                               inst_grp))
+                                      filter_grp,
+                                      inst_grp))
 
         return v
 
     def _available_analysis_types_default(self):
-        return list(REFERENCE_ANALYSIS_TYPES)
+        return [(b, b) for b in REFERENCE_ANALYSIS_TYPES]
 
     def _get_display_loads(self):
         if self.limit_to_analysis_loads:
@@ -390,14 +379,8 @@ class FindReferencesNode(FindNode):
 
 
 class FindBlanksNode(FindReferencesNode):
-    def _load_analysis_types(self, state):
-        ats = list({ai.analysis_type for ai in state.unknowns})
-        bats = []
-        for a in ats:
-            if not a.startswith('blank'):
-                ba = 'blank_{}'.format(a)
-                if ba in self.available_analysis_types:
-                    bats.append(ba)
-        self.analysis_types = bats
+    def _available_analysis_types_default(self):
+        return [(b, b) for b in BLANKS]
+
 
 # ============= EOF =============================================

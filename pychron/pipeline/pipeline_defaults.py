@@ -48,6 +48,7 @@ nodes:
     threshold: 10
     analysis_types: 
       - Air
+    name: Find Airs
   - klass: ReferenceNode
   - klass: FitICFactorNode
     fits:
@@ -87,6 +88,7 @@ nodes:
   - klass: UnknownNode
   - klass: FindBlanksNode
     threshold: 10
+    name: Find Blanks
   - klass: ReferenceNode
   - klass: FitBlanksNode
   - klass: ReviewNode

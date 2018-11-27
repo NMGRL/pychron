@@ -31,7 +31,6 @@ EL_PROTOCOL = 'pychron.extraction_line.extraction_line_manager.ExtractionLineMan
 DVC_PROTOCOL = 'pychron.dvc.dvc.DVC'
 FURNACE_PROTOCOL = 'pychron.furnace.furnace_manager.BaseFurnaceManager'
 
-
 TTF_FONTS = ['Courier New', 'Arial', 'Georgia', 'Impact', 'Verdana']
 FONTS = ['Helvetica'] + TTF_FONTS
 SIZES = [10, 6, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36]
@@ -216,8 +215,9 @@ AR_AR = 'Ar/Ar'
 QTEGRA_SOURCE_KEYS = ('extraction_lens', 'ysymmetry', 'zsymmetry', 'zfocus')
 QTEGRA_SOURCE_NAMES = ('ExtractionLens', 'Y-Symmetry', 'Z-Symmetry', 'Z-Focus')
 
-REFERENCE_ANALYSIS_TYPES = ['Air', 'Cocktail', 'Blank Unknown', 'Blank Air', 'Blank Cocktail', 'Blank']
-ANALYSIS_TYPES = ['Unknown'] + REFERENCE_ANALYSIS_TYPES
+BLANKS = ['Blank Unknown', 'Blank Air', 'Blank Cocktail', 'Blank']
+REFERENCE_ANALYSIS_TYPES = ['Air', 'Cocktail']
+ANALYSIS_TYPES = ['Unknown'] + REFERENCE_ANALYSIS_TYPES + BLANKS
 
 DEFAULT_MONITOR_NAME = 'FC-2'
 
@@ -236,6 +236,6 @@ INITIAL_STEPS = ('crush', 'sieve', 'wash')
 HIGH_GRADE_STEPS = ('frantz', 'heavy_liquid', 'gold_table', 'acid', 'pick')
 IMAGE_STEPS = ('mount', 'us_wand', 'eds', 'cl', 'bse', 'se')
 
-SAMPLE_PREP_STEPS = INITIAL_STEPS+HIGH_GRADE_STEPS+IMAGE_STEPS
+SAMPLE_PREP_STEPS = INITIAL_STEPS + HIGH_GRADE_STEPS + IMAGE_STEPS
 
 # ============= EOF =============================================
