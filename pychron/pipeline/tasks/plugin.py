@@ -43,7 +43,7 @@ class PipelinePlugin(BaseTaskPlugin):
     predefined_templates = ExtensionPoint(List, id='pychron.pipeline.predefined_templates')
 
     def _file_defaults_default(self):
-        files = [('flux_constants', 'FLUX_CONSTANTS_DEFAULT', True)]
+        files = [('flux_constants', 'FLUX_CONSTANTS_DEFAULT', False)]
         return files
 
     def _pipeline_factory(self):

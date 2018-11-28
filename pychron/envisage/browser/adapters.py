@@ -111,6 +111,7 @@ REVIEW_STATUS_ICONS = {'Default': icon('gray_ball'),
 class AnalysisAdapter(BrowserAdapter):
     all_columns = [('Review', 'review_status'),
                    ('Run ID', 'record_id'),
+                   ('UUID', 'uuid'),
                    ('Sample', 'sample'),
                    ('Project', 'project'),
                    ('Packet', 'packet'),

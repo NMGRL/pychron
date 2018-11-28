@@ -51,13 +51,6 @@ nodes:
     name: Find Airs
   - klass: ReferenceNode
   - klass: FitICFactorNode
-    fits:
-      - numerator: H1
-        denominator: CDD
-        standard_ratio: 295.5
-        analysis_type: Air
-        save_enabled: True
-        plot_enabled: True
   - klass: ReviewNode
   - klass: ICFactorPersistNode
 """
