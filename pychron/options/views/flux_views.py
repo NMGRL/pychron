@@ -23,7 +23,7 @@ from pychron.options.options import SubOptions, AppearanceSubOptions
 
 class FluxSubOptions(SubOptions):
     def traits_view(self):
-        calc_grp = VGroup(Item('selected_decay', label='Decay Const.'),
+        calc_grp = VGroup(Item('selected_decay', label='Flux Const.'),
                           Readonly('lambda_k', label=u'Total \u03BB K'),
                           Readonly('monitor_age'),
 
