@@ -399,11 +399,12 @@ REGRESSION_SERIES_SCREEN = make_screen(**regression_series_d)
 
 
 FLUX_CONSTANTS_DEFAULT = """
-"Min et al., 2000":
+# This is an example flux file. Add additional decay_constant and monitor_age pairs here
+"FC MIN":
   lambda_ec: [5.80e-11, 0]
   lambda_b: [4.884e-10, 0]
   monitor_age: 28.201
-"Steiger & Jager 1977":
+"FC SJ":
   lambda_ec: [5.81e-11, 0]
   lambda_b: [4.962e-10, 0]
   monitor_age: 28.02

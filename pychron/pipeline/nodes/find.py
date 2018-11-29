@@ -163,10 +163,14 @@ class FindFluxMonitorsNode(BaseFindFluxNode):
 
         pp = next((p for p in fluxes if p['identifier'] == identifier))
 
-        j, j_err = 0, 0
+        j, j_err, model_kind = 0, 0, ''
         if pp:
             j = pp.get('j', 0)
             j_err = pp.get('j_err', 0)
+
+            options = pp.get('options')
+            if options:
+                model_kind = pp.get('model_kind', '')
 
         x, y, r, idx = geom[hole_id - 1]
         fp = FluxPosition(identifier=identifier,
@@ -175,6 +179,7 @@ class FindFluxMonitorsNode(BaseFindFluxNode):
                           sample=sample, hole_id=hole_id,
                           saved_j=j or 0,
                           saved_jerr=j_err or 0,
+                          model_kind=model_kind,
                           x=x, y=y)
         return fp
 
@@ -381,6 +386,5 @@ class FindReferencesNode(FindNode):
 class FindBlanksNode(FindReferencesNode):
     def _available_analysis_types_default(self):
         return [(b, b) for b in BLANKS]
-
 
 # ============= EOF =============================================

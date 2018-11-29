@@ -142,6 +142,13 @@ def add_analysis_inspector(scatter, items, add_selection=True, value_format=None
     broadcaster.tools.append(point_inspector)
 
 
+def add_axes_tools(g, p):
+    g.add_limit_tool(p, 'x')
+    g.add_limit_tool(p, 'y')
+    g.add_axis_tool(p, p.x_axis)
+    g.add_axis_tool(p, p.y_axis)
+
+
 class FluxPosition(HasTraits):
     hole_id = Int
     identifier = Str
@@ -156,6 +163,8 @@ class FluxPosition(HasTraits):
     mean_j = Float
     mean_jerr = Float
     mean_j_mswd = Float
+
+    model_kind = Str
 
     n = Int
 
@@ -452,18 +461,19 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             for c in range(ncols):
                 idx = c + ncols * r
 
-                yy = z[idx:idx + 1] * scale
-                ye = ze[idx:idx + 1] * scale
-
                 if refresh:
-                    plot = g.plots[idx]
                     try:
-                        s1 = plot.plots['plot0'][0]
-                    except KeyError:
+                        yy = z[idx] * scale
+                        ye = ze[idx] * scale
+                    except IndexError:
                         continue
-                    s1.yerror.set_data(ye)
-                    s1.error_bars.invalidate()
-                    g.set_data(yy, plotid=idx, series=0, axis=1)
+                    if hasattr(g, 'rules'):
+                        l1, l2, l3 = g.rules[idx]
+                        l1.value = yy
+                        l2.value = yy + ye
+                        l3.value = yy - ye
+                        g.refresh()
+
                 else:
                     plot = g.new_plot(padding_left=65, padding_right=5, padding_top=30, padding_bottom=5)
                     try:
@@ -471,6 +481,9 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                     except IndexError:
                         continue
 
+                    add_axes_tools(g, plot)
+                    yy = z[idx] * scale
+                    ye = ze[idx] * scale
                     plot.title = 'Identifier={} Position={}'.format(ip.identifier, ip.hole_id)
 
                     plot.x_axis.visible = False
@@ -485,16 +498,13 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                     n = len(ais)
 
                     # plot mean value
-                    xx = [n // 2]
-                    scatter, _ = g.new_series(xx, yy,
-                                              yerror=ye,
-                                              marker='diamond',
-                                              marker_size=5,
-                                              type='scatter')
-                    ebo = ErrorBarOverlay(component=scatter,
-                                          orientation='y')
-                    scatter.underlays.append(ebo)
-                    scatter.error_bars = ebo
+                    l1 = g.add_horizontal_rule(yy, color='black', line_style='solid', plotid=idx)
+                    l2 = g.add_horizontal_rule(yy + ye, plotid=idx)
+                    l3 = g.add_horizontal_rule(yy - ye, plotid=idx)
+                    if hasattr(g, 'rules'):
+                        g.rules.append((l1, l2, l3))
+                    else:
+                        g.rules = [(l1, l2, l3)]
 
                     # plot individual analyses
                     fs = [a.model_j(monage, lk) * scale for a in ais]
@@ -556,10 +566,8 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                            # padding=[90, 5, 5, 40],
                            padding=po.paddings())
             p.bgcolor = po.plot_bgcolor
-            g.add_limit_tool(p, 'x')
-            g.add_limit_tool(p, 'y')
-            g.add_axis_tool(p, p.x_axis)
-            g.add_axis_tool(p, p.y_axis)
+
+            add_axes_tools(g, p)
 
             def label_fmt(xx):
                 return floatfmt(xx, n=2, s=4, use_scientific=True)
@@ -797,6 +805,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                     column(name='hole_id', label='Hole'),
                     column(name='identifier', label='Identifier'),
                     column(name='sample', label='Sample', width=115),
+                    column(name='model_kind', label='Model'),
                     column(name='saved_j', label='Saved J',
                            format_func=sciformat),
                     column(name='saved_jerr', label=PLUSMINUS_ONE_SIGMA,

@@ -343,6 +343,7 @@ class UnknownsAdapter(TabularAdapter, ConfigurableMixin):
                    ('Saved J {}'.format(PLUSMINUS_ONE_SIGMA), 'j_error'),
                    ('Model J', 'model_j'),
                    ('Model J {}'.format(PLUSMINUS_ONE_SIGMA), 'model_j_error'),
+                   ('Model J Kind', 'model_j_kind'),
                    ('Comment', 'comment'),
                    ('Tag', 'tag'),
                    ('GroupID', 'group_id'),

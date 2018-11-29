@@ -1356,6 +1356,10 @@ class DVC(Loggable):
                     a.j = fd['j']
                     a.position_jerr = fd.get('position_jerr', 0)
 
+                    j_options = fd.get('options')
+                    if j_options:
+                        a.model_j_kind = fd.get('model_kind')
+
                     lk = fd.get('lambda_k')
                     if lk:
                         a.arar_constants.lambda_k = lk

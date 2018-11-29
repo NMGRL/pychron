@@ -42,6 +42,8 @@ class ArArAge(IsotopeGroup):
     position_jerr = 0
     j = None
     modeled_j = None
+    model_j_kind = ''
+
     irradiation = None
     irradiation_level = None
     irradiation_position = None
