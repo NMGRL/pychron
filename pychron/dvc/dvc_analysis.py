@@ -311,6 +311,12 @@ class DVCAnalysis(Analysis):
 
             iso.set_fit(fi)
 
+    def get_meta(self):
+        return dvc_load(self.meta_path)
+
+    def dump_meta(self, meta):
+        dvc_dump(meta, self.meta_path)
+
     def dump_equilibration(self, keys, reviewed=False):
         path = self._analysis_path(modifier='.data')
 
@@ -598,4 +604,12 @@ class DVCAnalysis(Analysis):
     @property
     def ic_factors_path(self):
         return self._analysis_path(modifier='icfactors')
+
+    @property
+    def meta_path(self):
+        return self._analysis_path()
+
+    @property
+    def tag_path(self):
+        return self._analysis_path(modifier='tags')
 # ============= EOF ============================================

@@ -24,6 +24,7 @@ from pychron.dvc.dvc import DVC
 from pychron.mass_spec.mass_spec_recaller import MassSpecRecaller
 from pychron.paths import paths
 from pychron.pipeline.nodes.base import BaseNode
+from pychron.pychron_constants import MASS_SPEC_REDUCED
 
 
 class MassSpecReducedNode(BaseNode):
@@ -31,9 +32,7 @@ class MassSpecReducedNode(BaseNode):
     recaller = Instance(MassSpecRecaller)
     dvc = Instance(DVC)
 
-    # configurable = False
-
-    message = Str('<MASS SPEC TRANSFER>')
+    message = Str
     share_changes = Bool
 
     _paths = None
@@ -49,6 +48,7 @@ class MassSpecReducedNode(BaseNode):
         if self.recaller.connect():
 
             for repo, unks in groupby_repo(state.unknowns):
+                self.dvc.pull_repository(repo)
                 self._paths = []
 
                 # freeze flux
@@ -139,6 +139,18 @@ class MassSpecReducedNode(BaseNode):
             unk.dump_icfactors(detkeys, icfits)
 
             self._paths.append(unk.ic_factors_path)
+
+            meta = unk.get_meta()
+            meta['comment'] = ms_unk.comment
+            unk.dump_meta(meta)
+            self._paths.append(unk.meta_path)
+
+            # update the tag
+            unk.set_tag({'name': ms_unk.tag, 'note': ''})
+            path = self.dvc.update_tag(unk, add=False)
+            self._paths.append(path)
+
+            self.dvc.set_analysis_tag(unk, ms_unk.tag)
 
     def _save(self, repo):
         dvc = self.dvc

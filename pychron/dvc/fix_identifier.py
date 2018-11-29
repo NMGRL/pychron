@@ -48,15 +48,35 @@ def _fix_id(src_id, dest_id, identifier, root, repo):
             sp = analysis_path(src_id, repo, modifier=modifier, root=root)
             dp = analysis_path(dest_id, repo, modifier=modifier, root=root)
             print('{}>>{}'.format(sp,dp))
-            if os.path.isfile(sp):
+            if sp and os.path.isfile(sp):
                 # shutil.copy(sp, dp)
                 shutil.move(sp,dp)
 
 
+def swap_identifier(a, a_id, b, b_id, c_id, root, repo):
+    '''
+        a -> c
+        replace a with b
+        replace b with c
+    '''
+
+    _fix_id(a_id, c_id, a, root, repo)
+    _fix_id(b_id, a_id, a, root, repo)
+    _fix_id(c_id, b_id, b, root, repo)
+
+
 if __name__ == '__main__':
     root = '/Users/ross/PychronDev/data/.dvc/repositories/'
-    repo = 'Saifuddeen01097'
+    repo = 'FCTest'
 
+    a_id = '26389-03'
+    a = '26389'
+    b_id = '26381-03'
+    b = '26381'
+    c_id = '26389-03X'
+
+    swap_identifier(a,a_id, b, b_id, c_id, root, repo)
+    # repo = 'Saifuddeen01097'
     # fix_identifier('66340', '66431', '/Users/ross/PychronDev/data/.dvc/repositories/',
     #                'Saifuddeen01097',
     #                aliquots=[2],
@@ -66,8 +86,8 @@ if __name__ == '__main__':
     #                )
     # _fix_id('66340-02A', '66341-01A', '66341', root, repo)
     # _fix_id('66340-02B', '66341-01B', '66341', root, repo)
-    identifier = '66550'
-    source_identifier = '66560'
-    for step in 'ABCDEFGHIJL':
-        _fix_id('{}-01{}'.format(source_identifier, step), '{}-01{}'.format(identifier, step), identifier, root, repo)
+    # identifier = '66550'
+    # source_identifier = '66560'
+    # for step in 'ABCDEFGHIJL':
+    #     _fix_id('{}-01{}'.format(source_identifier, step), '{}-01{}'.format(identifier, step), identifier, root, repo)
 # ============= EOF =============================================

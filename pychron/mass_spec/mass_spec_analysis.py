@@ -29,8 +29,9 @@ from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.isotope import Isotope, Baseline
 from pychron.pychron_constants import IRRADIATION_KEYS
 
-
 # ============= local library imports  ==========================
+
+STATUS_MAP = {0: 'ok', 1: 'omit', 2: 'invalid'}
 
 
 def get_fn(blob):
@@ -94,16 +95,20 @@ class MassSpecAnalysis(Analysis):
                 except ZeroDivisionError:
                     self.kcl = 0
 
-        prefs = obj.changeable.preferences_set
+        changeable = obj.changeable
         fo, fi, fs = 0, 0, 0
-        if prefs:
-            fo = prefs.DelOutliersAfterFit == 'true'
-            fi = int(prefs.NFilterIter)
-            fs = int(prefs.OutlierSigmaFactor)
-            self.lambda_k = prefs.Lambda40Kepsilon + prefs.Lambda40KBeta
-            self.lambda_Ar37 = prefs.LambdaAr37
-            self.lambda_Ar39 = prefs.LambdaAr39
-            self.lambda_Cl36 = prefs.LambdaCl36
+        if changeable:
+            self.comment = changeable.Comment
+            self.tag = STATUS_MAP.get(changeable.StatusLevel)
+            prefs = changeable.preferences_set
+            if prefs:
+                fo = prefs.DelOutliersAfterFit == 'true'
+                fi = int(prefs.NFilterIter)
+                fs = int(prefs.OutlierSigmaFactor)
+                self.lambda_k = prefs.Lambda40Kepsilon + prefs.Lambda40KBeta
+                self.lambda_Ar37 = prefs.LambdaAr37
+                self.lambda_Ar39 = prefs.LambdaAr39
+                self.lambda_Cl36 = prefs.LambdaCl36
 
         for dbiso in obj.isotopes:
             r = dbiso.results[-1]
