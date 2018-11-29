@@ -228,14 +228,9 @@ FLUX = """
 required:
 nodes:
   - klass: FindFluxMonitorsNode
-#  irradiation: NM-274
-#  level: E
+    # irradiation: NM-299
+    # level: A
   - klass: FluxMonitorsNode
-#  - klass: GroupingNode
-#  key: Identifier
-#  - klass: IdeogramNode
-#  - klass: TableNode
-#  - klass: ReviewNode
   - klass: FitFluxNode
   - klass: ReviewNode
   - klass: FluxPersistNode

@@ -34,6 +34,8 @@ class FluxOptions(FigureOptions):
     monitor_age = Property(depends_on='selected_decay')
     model_kind = Enum('Plane', 'Bowl', 'Weighted Mean', 'Matching', 'Bracketing')
     predicted_j_error_type = Enum(*ERROR_TYPES)
+    flux_scalar = Float(1000)
+    
     use_weighted_fit = Bool(False)
     monte_carlo_ntrials = Int(10)
     use_monte_carlo = Bool(False)

@@ -32,7 +32,7 @@ from pychron.experiment.tasks.experiment_actions import NewExperimentQueueAction
     QueueConditionalsAction, ConfigureEditorTableAction, SystemConditionalsAction, \
     OpenExperimentHistoryAction, LastAnalysisRecoveryAction, OpenCurrentExperimentQueueAction, \
     SaveAsCurrentExperimentAction, SyncQueueAction, AcquireSpectrometerAction, ReleaseSpectrometerAction, \
-    RunHistoryAction, AnalysisRecoveryAction, RawDataResaveAction
+    RunHistoryAction
 from pychron.experiment.tasks.experiment_preferences import ExperimentPreferencesPane, ConsolePreferencesPane, \
     UserNotifierPreferencesPane, HumanErrorCheckerPreferencesPane
 from pychron.experiment.tasks.experiment_task import ExperimentEditorTask

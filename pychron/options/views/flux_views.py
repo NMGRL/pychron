@@ -64,7 +64,8 @@ class FluxAppearanceSubOptions(AppearanceSubOptions):
                          visible_when='plot_kind=="1D"',
                          label='Options',
                          show_border=True)
-        return self._make_view(VGroup(twodgrp, onedgrp))
+        scalegrp = VGroup(Item('flux_scalar', label='Scale', tooltip='Multiple flux by Scale. FOR DISPLAY ONLY'))
+        return self._make_view(VGroup(twodgrp, onedgrp, scalegrp))
 
 
 VIEWS = {'main': FluxSubOptions,

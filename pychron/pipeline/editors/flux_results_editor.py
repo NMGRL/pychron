@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
 from operator import itemgetter, attrgetter
 
 from numpy import array, zeros, vstack, linspace, meshgrid, arctan2, sin, cos
@@ -39,6 +38,7 @@ from pychron.graph.error_envelope_overlay import ErrorEnvelopeOverlay
 from pychron.graph.explicit_legend import ExplicitLegend
 from pychron.graph.graph import Graph
 from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
+from pychron.options.layout import FigureLayout
 from pychron.pipeline.editors.irradiation_tray_overlay import IrradiationTrayOverlay
 from pychron.pipeline.plot.plotter.arar_figure import SelectionFigure
 from pychron.processing.argon_calculations import calculate_flux
@@ -411,7 +411,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                 'Identifier: {}'.format(fm.identifier)]
 
     def _grid_additional_info(self, ind, y):
-        ps = [p for p in self.monitor_positions if p.y==y]
+        ps = [p for p in self.monitor_positions if p.y == y]
         fm = ps[ind]
         return ['Pos: {}'.format(fm.hole_id),
                 'Identifier: {}'.format(fm.identifier)]
@@ -419,78 +419,104 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
     def _grid_update_graph_metadata(self, ans):
         if not self.suppress_metadata_change:
             def wrapper(obj, name, old, new):
-                self._filter_metadata_changes(obj, ans, self._recalculate_means)
+                def mwrapper(sel):
+                    self._recalculate_means(sel, ans)
+
+                self._filter_metadata_changes(obj, ans, mwrapper)
         return wrapper
 
     def _graph_grid(self, x, y, z, ze, r, reg, refresh):
-        g = self.graph
-        if not isinstance(g, Graph):
-            g = Graph(container_dict={'bgcolor': self.plotter_options.bgcolor})
-            self.graph = g
-
-        ps = [pos.hole_id for pos in self.monitor_positions if pos.use]
-        data = zip(x, y, z, ze, ps)
-        if refresh:
-            plot = g.plots[0]
-            for i, (yi, row) in enumerate(groupby_key(data, key=itemgetter(1))):
-                xx, yy, ye, pis = zip(*[(ri[0], ri[2], ri[3], ri[4]) for ri in row])
-                smeans = plot.plots['plot0'][0] # means
-                smeans.yerror.set_data(ye)
-                smeans.error_bars.invalidate()
-                g.set_data(yy, plotid=0, series=0, axis=1)
-        else:
-            plot = g.new_plot()
-            labels = []
-
-            ans = list(zip(*self._analyses))  # ans, ixs, iys, ies = self._analyses
-            plots = {}
-            for i, (yi, row) in enumerate(groupby_key(data, key=itemgetter(1))):
-                xx, yy, ye, pis = zip(*[(ri[0], ri[2], ri[3], ri[4]) for ri in row])
-                scatter, _ = g.new_series(xx, yy,
-                                          yerror=ye,
-                                          marker='diamond',
-                                          marker_size=4,
-                                          type='scatter')
-                ebo = ErrorBarOverlay(component=scatter,
-                                      orientation='y')
-                scatter.underlays.append(ebo)
-                scatter.error_bars = ebo
-                add_inspector(scatter, self._grid_additional_info, id=yi)
-                key = 'plot{}'.format(i)
-                labels.append((key,
-                               'Pos {}-{}'.format(min(pis), max(pis))))
-                plots[key] = scatter
-
-                ais = [a for a in ans if a[0].irradiation_position in pis]
-                aa, ixs, iys, ies = zip(*ais)
-
-                s, _p = g.new_series(ixs, iys, yerror=ies, type='scatter',
-                                     color=scatter.color,
-                                     marker='circle', marker_size=1.5)
-
-                ebo = ErrorBarOverlay(component=s,
-                                      orientation='y')
-                s.underlays.append(ebo)
-                s.error_bars = ebo
-
-                add_analysis_inspector(s, list(aa))
-                s.index.on_trait_change(self._grid_update_graph_metadata(aa), 'metadata_changed')
-                self.suppress_metadata_change = True
-                sel = [i for i, a in enumerate(aa) if a.is_omitted()]
-                s.index.metadata['selections'] = sel
-                self.suppress_metadata_change = False
-
-            legend = ExplicitLegend(plots=plots,
-                                    labels=labels,
-                                    inside=True,
-                                    align='ur')
-            plot.overlays.append(legend)
-
-            g.set_x_limits(pad='0.1')
-            g.set_y_limits(pad='0.1')
-
         self.min_j = min(z)
         self.max_j = max(z)
+
+        g = self.graph
+        layout = FigureLayout(fixed='square')
+        nrows, ncols = layout.calculate(len(x))
+
+        if not isinstance(g, Graph):
+            g = Graph(container_dict={'bgcolor': 'gray',
+                                      'kind': 'g',
+                                      'shape': (nrows, ncols)})
+            self.graph = g
+
+        def get_ip(xi, yi):
+            return next(
+                (ip for ip in self.monitor_positions if ((ip.x - xi) ** 2 + (ip.y - yi) ** 2) ** 0.5 < 0.01), None)
+
+        opt = self.plotter_options
+        monage = opt.monitor_age * 1e6
+        lk = opt.lambda_k
+        ans = self._analyses[0]
+        scale = opt.flux_scalar
+        for r in range(nrows):
+            for c in range(ncols):
+                idx = c + ncols * r
+
+                yy = z[idx:idx + 1] * scale
+                ye = ze[idx:idx + 1] * scale
+
+                if refresh:
+                    plot = g.plots[idx]
+                    try:
+                        s1 = plot.plots['plot0'][0]
+                    except KeyError:
+                        continue
+                    s1.yerror.set_data(ye)
+                    s1.error_bars.invalidate()
+                    g.set_data(yy, plotid=idx, series=0, axis=1)
+                else:
+                    plot = g.new_plot(padding_left=65, padding_right=5, padding_top=30, padding_bottom=5)
+                    try:
+                        ip = get_ip(x[idx], y[idx])
+                    except IndexError:
+                        continue
+
+                    plot.title = 'Identifier={} Position={}'.format(ip.identifier, ip.hole_id)
+
+                    plot.x_axis.visible = False
+                    if c == 0 and r == nrows // 2:
+                        plot.y_axis.title = 'J x{}'.format(scale)
+
+                    if not ip.use:
+                        continue
+
+                    # get ip via x,y
+                    ais = [a for a in ans if a.irradiation_position == ip.hole_id]
+                    n = len(ais)
+
+                    # plot mean value
+                    xx = [n // 2]
+                    scatter, _ = g.new_series(xx, yy,
+                                              yerror=ye,
+                                              marker='diamond',
+                                              marker_size=5,
+                                              type='scatter')
+                    ebo = ErrorBarOverlay(component=scatter,
+                                          orientation='y')
+                    scatter.underlays.append(ebo)
+                    scatter.error_bars = ebo
+
+                    # plot individual analyses
+                    fs = [a.model_j(monage, lk) * scale for a in ais]
+                    fs = sorted(fs)
+                    iys = array([nominal_value(fi) for fi in fs])
+                    ies = array([std_dev(fi) for fi in fs])
+
+                    s, _p = g.new_series(linspace(0, n - 1, n), iys, yerror=ies, type='scatter',
+                                         marker='circle', marker_size=3)
+                    g.set_x_limits(0, n - 1, pad='0.1', plotid=idx)
+                    g.set_y_limits(min(iys - ies), max(iys + ies), pad='0.1', plotid=idx)
+
+                    ebo = ErrorBarOverlay(component=s, orientation='y')
+                    s.underlays.append(ebo)
+                    s.error_bars = ebo
+
+                    add_analysis_inspector(s, ais)
+                    s.index.on_trait_change(self._grid_update_graph_metadata(ais), 'metadata_changed')
+                    self.suppress_metadata_change = True
+                    sel = [i for i, a in enumerate(ais) if a.is_omitted()]
+                    s.index.metadata['selections'] = sel
+                    self.suppress_metadata_change = False
 
     def _graph_hole_vs_j(self, x, y, r, reg, refresh):
 
@@ -645,9 +671,12 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         if not self.suppress_metadata_change:
             self._filter_metadata_changes(obj, self.analyses, self._recalculate_means)
 
-    def _recalculate_means(self, sel):
+    def _recalculate_means(self, sel, ans=None):
+        if ans is None:
+            ans = self.analyses
+
         if sel:
-            idx = {self.analyses[si].identifier for si in sel}
+            idx = {ans[si].identifier for si in sel}
         else:
             idx = [None]
 
