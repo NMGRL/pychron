@@ -129,11 +129,8 @@ class PipelineTask(BaseBrowserTask):
 
     def create_dock_panes(self):
 
-        ap = AnalysesPane(model=self.engine)
-        self.engine.setup_unknowns_adapter(ap.unknowns_adapter)
-
         panes = [PipelinePane(model=self.engine),
-                 ap,
+                 AnalysesPane(model=self.engine),
                  RepositoryPane(model=self.engine),
                  EditorOptionsPane(model=self)]
         return panes

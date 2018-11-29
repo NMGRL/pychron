@@ -31,6 +31,7 @@ from pychron.core.helpers.color_generators import colornames
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.ui.enum_editor import myEnumEditor
 from pychron.core.ui.qt.tree_editor import PipelineEditor
+from pychron.core.ui.table_configurer import TableConfigurer
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.browser.view import PaneBrowserView
 from pychron.envisage.icon_button_editor import icon_button_editor
@@ -320,7 +321,28 @@ class PipelinePane(TraitsDockPane):
         return v
 
 
-class UnknownsAdapter(TabularAdapter, ConfigurableMixin):
+class BaseAnalysesAdapter(TabularAdapter, ConfigurableMixin):
+    font = 'arial 10'
+    rundate_text = Property
+    record_id_width = Int(80)
+    tag_width = Int(50)
+    sample_width = Int(80)
+
+    def _get_rundate_text(self):
+        r = self.item.rundate.strftime('%m-%d-%Y %H:%M')
+        return r
+
+    def get_bg_color(self, obj, trait, row, column=0):
+        if self.item.tag == 'invalid':
+            c = '#C9C5C5'
+        elif self.item.is_omitted():
+            c = '#FAC0C0'
+        else:
+            c = super(BaseAnalysesAdapter, self).get_bg_color(obj, trait, row, column)
+        return c
+
+
+class UnknownsAdapter(BaseAnalysesAdapter):
     columns = [('Run ID', 'record_id'),
                ('Sample', 'sample'),
                ('Age', 'age'),
@@ -348,11 +370,8 @@ class UnknownsAdapter(TabularAdapter, ConfigurableMixin):
                    ('Tag', 'tag'),
                    ('GroupID', 'group_id'),
                    ('GraphID', 'graph_id')]
-    record_id_width = Int(80)
-    sample_width = Int(80)
     age_width = Int(70)
     error_width = Int(60)
-    tag_width = Int(50)
     graph_id_width = Int(30)
 
     age_text = Property
@@ -361,12 +380,9 @@ class UnknownsAdapter(TabularAdapter, ConfigurableMixin):
     j_text = Property
     f_error_text = Property
     f_text = Property
-    rundate_text = Property
 
     model_j_error_text = Property
     model_j_text = Property
-
-    font = 'arial 10'
 
     def __init__(self, *args, **kw):
         super(UnknownsAdapter, self).__init__(*args, **kw)
@@ -385,19 +401,6 @@ class UnknownsAdapter(TabularAdapter, ConfigurableMixin):
                            Action(name='Save Analysis Group', action='save_analysis_group'),
                            Action(name='Configure', action='configure_unknowns'),
                            grp)
-
-    def get_bg_color(self, obj, trait, row, column=0):
-        if self.item.tag == 'invalid':
-            c = '#C9C5C5'
-        elif self.item.is_omitted():
-            c = '#FAC0C0'
-        else:
-            c = super(UnknownsAdapter, self).get_bg_color(obj, trait, row, column)
-        return c
-
-    def _get_rundate_text(self):
-        r = self.item.rundate.strftime('%m-%d-%Y %H:%M')
-        return r
 
     def _get_f_text(self):
         r = floatfmt(self.item.F, n=4)
@@ -449,12 +452,21 @@ class UnknownsAdapter(TabularAdapter, ConfigurableMixin):
         return color
 
 
-class ReferencesAdapter(TabularAdapter):
-    columns = [('Run ID', 'record_id'), ]
-    font = 'arial 10'
+class ReferencesAdapter(BaseAnalysesAdapter):
+    columns = [('Run ID', 'record_id'),
+               ('Comment', 'comment')]
+
+    all_columns = [('RunDate', 'rundate'),
+                   ('Run ID', 'record_id'),
+                   ('Sample', 'sample'),
+                   ('Project', 'project'),
+                   ('RepositoryID', 'repository_identifier'),
+                   ('Comment', 'comment'),
+                   ('Tag', 'tag')]
 
     def get_menu(self, object, trait, row, column):
-        return MenuManager(Action(name='Recall', action='recall_references'))
+        return MenuManager(Action(name='Recall', action='recall_references'),
+                           Action(name='Configure', action='configure_references'))
 
 
 class AnalysesPaneHandler(Handler):
@@ -499,15 +511,47 @@ class AnalysesPaneHandler(Handler):
         obj.recall_references()
 
     def configure_unknowns(self, info, obj):
-        obj = info.ui.context['object']
-        obj.configure_unknowns()
+        pane = info.ui.context['pane']
+        pane.configure_unknowns()
+
+    def configure_references(self, info, obj):
+        pane = info.ui.context['pane']
+        pane.configure_references()
+
+
+class UnknownsTableConfigurer(TableConfigurer):
+    id = 'unknowns_pane'
+
+
+class ReferencesTableConfigurer(TableConfigurer):
+    id = 'references_pane'
 
 
 class AnalysesPane(TraitsDockPane):
     name = 'Analyses'
     id = 'pychron.pipeline.analyses'
 
-    unknowns_adapter = Instance(UnknownsAdapter, ())
+    unknowns_adapter = Instance(UnknownsAdapter)
+    unknowns_table_configurer = Instance(UnknownsTableConfigurer, ())
+
+    references_adapter = Instance(ReferencesAdapter)
+    references_table_configurer = Instance(ReferencesTableConfigurer, ())
+
+    def configure_unknowns(self):
+        self.unknowns_table_configurer.edit_traits()
+
+    def configure_references(self):
+        self.references_table_configurer.edit_traits()
+
+    def _unknowns_adapter_default(self):
+        a = UnknownsAdapter()
+        self.unknowns_table_configurer.set_adapter(a)
+        return a
+
+    def _references_adapter_default(self):
+        a = ReferencesAdapter()
+        self.references_table_configurer.set_adapter(a)
+        return a
 
     def traits_view(self):
         v = View(VGroup(UItem('object.selected_node.unknowns',
@@ -523,7 +567,7 @@ class AnalysesPane(TraitsDockPane):
                                                    operations=['delete'])),
                         UItem('object.selected_node.references',
                               visible_when='object.selected_node.references',
-                              editor=TabularEditor(adapter=ReferencesAdapter(),
+                              editor=TabularEditor(adapter=self.references_adapter,
                                                    update='refresh_table_needed',
                                                    # drag_external=True,
                                                    multi_select=True,

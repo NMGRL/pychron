@@ -537,6 +537,11 @@ class DVCAnalysis(Analysis):
         return jd, path
 
     def _set_isotopes(self, jd):
+        time_zero_offset = jd.get('time_zero_offset', 0)
+        v = jd.get('admit_delay')
+        if v is not None:
+            time_zero_offset = -v
+
         isos = jd.get('isotopes')
         if not isos:
             return
@@ -548,10 +553,16 @@ class DVCAnalysis(Analysis):
         #             'Ar40AX': Isotope('Ar40', 'AX'),
         #             'Ar40L1': Isotope('Ar40', 'L1')}
 
+        def factory(name, detector):
+            i = Isotope(name, detector)
+            i.time_zero_offset = time_zero_offset
+            i.baseline.time_zero_offset = time_zero_offset
+            return i
+
         try:
-            isos = {k: Isotope(v['name'], v['detector']) for k, v in isos.items()}
+            isos = {k: factory(v['name'], v['detector']) for k, v in isos.items()}
         except KeyError:
-            isos = {k: Isotope(k, v['detector']) for k, v in isos.items()}
+            isos = {k: factory(k, v['detector']) for k, v in isos.items()}
 
         self.isotopes = isos
 
