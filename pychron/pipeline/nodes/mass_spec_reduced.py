@@ -47,7 +47,9 @@ class MassSpecReducedNode(BaseNode):
     def run(self, state):
         if self.recaller.connect():
 
+            self.dvc.create_session()
             for repo, unks in groupby_repo(state.unknowns):
+
                 self.dvc.pull_repository(repo)
                 self._paths = []
 
@@ -161,4 +163,5 @@ class MassSpecReducedNode(BaseNode):
             if self.share_changes:
                 dvc.push_repository(repo)
 
+        dvc.commit()
 # ============= EOF =============================================
