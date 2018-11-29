@@ -16,12 +16,14 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import os
 import struct
 import time
 from datetime import datetime
 
 from numpy import array
+from six.moves import zip
 from traits.api import Instance, Int, Str, Bool, provides
 from uncertainties import nominal_value, std_dev
 
@@ -33,7 +35,6 @@ from pychron.experiment.utilities.info_blob import encode_infoblob
 from pychron.loggable import Loggable
 from pychron.mass_spec.database.massspec_database_adapter import MassSpecDatabaseAdapter
 from pychron.pychron_constants import ALPHAS
-from six.moves import zip
 
 mkeys = ['l2 value', 'l1 value', 'ax value', 'h1 value', 'h2 value']
 
@@ -192,7 +193,7 @@ class MassSpecDatabaseImporter(Loggable):
         return self.db.add_irradiation_production(name, prdict, ifdict)
 
     def add_irradiation_chronology(self, irrad, doses):
-        for pwr, st, et in doses:
+        for pwr, dur, dt, st, et in doses:
             self.db.add_irradiation_chronology_segment(irrad, st, et)
 
     def add_analysis(self, spec, commit=True):

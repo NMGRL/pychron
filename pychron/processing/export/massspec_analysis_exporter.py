@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+
 from traits.has_traits import on_trait_change
 from traits.trait_types import Instance
 from uncertainties import nominal_value, std_dev
@@ -86,7 +87,7 @@ class MassSpecAnalysisExporter(Exporter):
                                                           spec.production_ratios,
                                                           spec.interference_corrections)
 
-        self.importer.add_irradiation_chronology(irrad, spec.chron_dosages)
+        self.importer.add_irradiation_chronology(irrad, spec.chron_segments)
 
         self.importer.add_irradiation(irrad, level, prodid)
         self.importer.add_irradiation_position(spec.irradpos,

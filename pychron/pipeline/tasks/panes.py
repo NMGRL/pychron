@@ -328,12 +328,21 @@ class UnknownsAdapter(TabularAdapter, ConfigurableMixin):
                ('Tag', 'tag'),
                ('GroupID', 'group_id')]
 
-    all_columns = [('Run ID', 'record_id'),
+    all_columns = [('RunDate', 'rundate'),
+                   ('Run ID', 'record_id'),
+                   ('Aliquot', 'aliquot'),
+                   ('Step', 'step'),
                    ('Sample', 'sample'),
+                   ('Project', 'project'),
+                   ('RepositoryID', 'repository_identifier'),
                    ('Age', 'age'),
                    ('Age {}'.format(PLUSMINUS_ONE_SIGMA), 'age_error'),
-                   ('J', 'j'),
-                   ('J {}'.format(PLUSMINUS_ONE_SIGMA), 'j_error'),
+                   ('F', 'f'),
+                   ('F {}'.format(PLUSMINUS_ONE_SIGMA), 'f_error'),
+                   ('Saved J', 'j'),
+                   ('Saved J {}'.format(PLUSMINUS_ONE_SIGMA), 'j_error'),
+                   ('Model J', 'model_j'),
+                   ('Model J {}'.format(PLUSMINUS_ONE_SIGMA), 'model_j_error'),
                    ('Comment', 'comment'),
                    ('Tag', 'tag'),
                    ('GroupID', 'group_id'),
@@ -349,6 +358,12 @@ class UnknownsAdapter(TabularAdapter, ConfigurableMixin):
     age_error_text = Property
     j_error_text = Property
     j_text = Property
+    f_error_text = Property
+    f_text = Property
+    rundate_text = Property
+
+    model_j_error_text = Property
+    model_j_text = Property
 
     font = 'arial 10'
 
@@ -379,12 +394,36 @@ class UnknownsAdapter(TabularAdapter, ConfigurableMixin):
             c = super(UnknownsAdapter, self).get_bg_color(obj, trait, row, column)
         return c
 
+    def _get_rundate_text(self):
+        r = self.item.rundate.strftime('%m-%d-%Y %H:%M')
+        return r
+
+    def _get_f_text(self):
+        r = floatfmt(self.item.F, n=4)
+        return r
+
+    def _get_f_error_text(self):
+        r = floatfmt(self.item.F_err, n=4)
+        return r
+
     def _get_j_text(self):
         r = floatfmt(nominal_value(self.item.j), n=8)
         return r
 
     def _get_j_error_text(self):
         r = floatfmt(std_dev(self.item.j), n=8)
+        return r
+
+    def _get_model_j_text(self):
+        r = ''
+        if self.item.modeled_j:
+            r = floatfmt(nominal_value(self.item.modeled_j), n=8)
+        return r
+
+    def _get_model_j_error_text(self):
+        r = ''
+        if self.item.modeled_j:
+            r = floatfmt(std_dev(self.item.modeled_j), n=8)
         return r
 
     def _get_age_text(self):

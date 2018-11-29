@@ -283,7 +283,7 @@ class DVCAnalysis(Analysis):
             return x.total_seconds() / (60. * 60 * 24)
 
         doses = chron.get_doses()
-        segments = [(pwr, convert_days(en - st), convert_days(analts - st))
+        segments = [(pwr, convert_days(en - st), convert_days(analts - st), st, en)
                     for pwr, st, en in doses
                     if st is not None and en is not None]
         d_o = 0
@@ -292,7 +292,7 @@ class DVCAnalysis(Analysis):
         self.irradiation_time = time.mktime(d_o.timetuple()) if d_o else 0
 
         self.chron_segments = segments
-        self.chron_dosages = doses
+        # self.chron_dosages = doses
         self.calculate_decay_factors()
 
     def set_fits(self, fitobjs):

@@ -66,7 +66,7 @@ class MassSpecExportSpec(Loggable):
     level = Str
     irradiation_position = CInt
     production_ratios = Dict
-    chron_dosages = List
+    chron_segments = List
     interference_corrections = Dict
     production_name = Str
     j = Any
@@ -137,7 +137,7 @@ class MassSpecExportSpec(Loggable):
         # else:
         #     self.debug('{} has no ic_factor attribute'.format(record, ))
 
-        for a in ('chron_dosages',
+        for a in ('chron_segments',
                   'production_ratios',
                   'interference_corrections',
                   'production_name', 'j'):

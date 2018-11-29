@@ -41,6 +41,7 @@ class ArArAge(IsotopeGroup):
     """
     position_jerr = 0
     j = None
+    modeled_j = None
     irradiation = None
     irradiation_level = None
     irradiation_position = None
@@ -50,9 +51,6 @@ class ArArAge(IsotopeGroup):
     monitor_reference = None
 
     chron_segments = None
-    chron_dosages = None
-    # interference_corrections = Dict
-    # production_ratios = Dict
 
     fixed_k3739 = None
 
@@ -159,36 +157,25 @@ class ArArAge(IsotopeGroup):
 
     @property
     def lambda_k(self):
-        l = self._lambda_k
-        if l is None:
-            l = self.arar_constants.lambda_k
-        return l
+        lk = self._lambda_k
+        if lk is None:
+            lk = self.arar_constants.lambda_k
+        return lk
 
     @lambda_k.setter
     def lambda_k(self, v):
         self._lambda_k = v
 
     def get_error_component(self, key):
-        # for var, error in self.uage.error_components().items():
-        #     print var.tag
         uage = self.uage_w_j_err
         ae = 0
         if uage:
-            # for var, err in uage.error_components().items():
-            #     if var.tag == key:
-            #         # print('var', key, var.tag, var)
-            #         break
-            # else:
-            #     print('tags', [var.tag for (var,error) in  uage.error_components().items()])
-            #     print('not found', key)
-
             v = next((error for (var, error) in uage.error_components().items()
                       if var.tag == key), 0)
 
             ae = uage.std_dev
-            # print(key, v)
         if ae:
-            return v ** 2 / ae ** 2 * 100
+            return ((v / ae) ** 2) * 100
         else:
             return 0
 
@@ -291,6 +278,7 @@ class ArArAge(IsotopeGroup):
 
     def model_j(self, monitor_age, lambda_k):
         j = calculate_flux(self.uF, monitor_age, lambda_k=lambda_k)
+        self.modeled_j = j
         return j
 
     def recalculate_age(self):
@@ -407,7 +395,7 @@ class ArArAge(IsotopeGroup):
 
             self.uF = f
             self.F = nominal_value(f)
-            self.F_err = std_dev(std_dev)
+            self.F_err = std_dev(f)
             self.F_err_wo_irrad = std_dev(f_wo_irrad)
             return f, f_wo_irrad, non_ar, computed, interference_corrected
 
@@ -478,13 +466,9 @@ class ArArAge(IsotopeGroup):
 
         j.std_dev = self.position_jerr
 
-        age = age_equation(j, f, include_decay_error=include_decay_error,
-                           # lambda_k=self.lambda_k,
-                           arar_constants=arc)
-        # age = ufloat((1, 0.1))
+        age = age_equation(j, f, include_decay_error=include_decay_error, arar_constants=arc)
+
         self.uage_w_j_err = age
-        # self.age = age.nominal_value
-        # self.age_err = age.std_dev
 
         if self.j is not None:
             j = copy(self.j)
@@ -492,60 +476,21 @@ class ArArAge(IsotopeGroup):
             j = ufloat(1e-4, 1e-7)
 
         j.std_dev = 0
-        age = age_equation(j, f, include_decay_error=include_decay_error,
-                           # lambda_k=self.lambda_k,
-                           arar_constants=arc)
+        age = age_equation(j, f, include_decay_error=include_decay_error, arar_constants=arc)
         self.uage = age
 
         self.age = nominal_value(age)
         self.age_err = std_dev(age)
         self.age_err_wo_j = std_dev(age)
 
-        # self.uage = ufloat(self.age, self.age_err)
         self.uage_wo_j_err = ufloat(self.age, self.age_err_wo_j)
 
-        # if self.j is not None:
-        # j = copy(self.j)
-        # else:
-        # j = ufloat(1e-4, 1e-7)
-        #
-        # age = age_equation(j, f_wo_irrad, include_decay_error=include_decay_error,
-        #                    arar_constants=arc)
-        #
-        # self.age_err_wo_irrad = age.std_dev
-        # j.std_dev = 0
-        # self.age_err_wo_j_irrad = age.std_dev
-        #
         for iso in self.itervalues():
             iso.age_error_component = self.get_error_component(iso.name)
-
-    # def _get_isotope_keys(self):
-    #     keys = self.isotopes.keys()
-    #     return sort_isotopes(keys)
-    #
-    # def _get_irradiation_label(self):
-    #     return '{}{} {}'.format(self.irradiation,
-    #                             self.irradiation_level,
-    #                             self.irradiation_pos)
-    #
-    # def _get_decay_days(self):
-    #     """
-    #         return number of days since irradiation
-    #     """
-    #     return (self.timestamp - self.irradiation_time) / (60 * 60 * 24)
-    #
-    # @cached_property
-    # def _get_moles_Ar40(self):
-    #     return self.sensitivity * self.get_isotope('Ar40').get_intensity()
 
     @property
     def detector_keys(self):
         return sort_detectors(set((d.detector for d in self.isotopes.values())))
-
-    # @property
-    # def isotope_keys(self):
-    #     keys = self.isotopes.keys()
-    #     return sort_isotopes(keys)
 
     @property
     def irradiation_label(self):
@@ -576,44 +521,4 @@ class ArArAge(IsotopeGroup):
     def moles_Ar40(self):
         return self.sensitivity * self.get_isotope('Ar40').get_intensity()
 
-        # def __getattr__(self, attr):
-        #     if '/' in attr:
-        #         # treat as ratio
-        #         n, d = attr.split('/')
-        #         try:
-        #             return self.get_value(n) / self.get_value(d)
-        #         except (ZeroDivisionError, TypeError):
-        #             return ufloat(0, 1e-20)
-        #     else:
-        #         raise AttributeError(attr)
-        # ===============================================================================
-        #
-        # ===============================================================================
-
-        # def _arar_constants_default(self):
-        #     """
-        #         use a global shared arar_constants
-        #     """
-        #
-        #     global arar_constants
-        #     #self.debug('$$$$$$$$$$$$$$$$ {}'.format(arar_constants))
-        #     #print 'asdf', arar_constants
-        #     if arar_constants is None:
-        #         arar_constants = ArArConstants()
-        #         #return ArArConstants()
-        #     return arar_constants
-
-        # def _arar_constants_default(self):
-        #     """
-        #         use a global shared arar_constants
-        #     """
-        #
-        #     global arar_constants
-        #     #self.debug('$$$$$$$$$$$$$$$$ {}'.format(arar_constants))
-        #     #print 'asdf', arar_constants
-        #     if arar_constants is None:
-        #         arar_constants = ArArConstants()
-        #         #return ArArConstants()
-        #     return arar_constants
-
-        # ============= EOF =============================================
+    # ============= EOF =============================================
