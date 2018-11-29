@@ -18,7 +18,7 @@
 import six
 from pyface.action.menu_manager import MenuManager
 from pyface.tasks.traits_dock_pane import TraitsDockPane
-from traits.api import Int, Property, Button
+from traits.api import Int, Property, Button, Instance
 from traits.has_traits import MetaHasTraits
 from traitsui.api import View, UItem, VGroup, InstanceEditor, HGroup, VSplit, Handler, TabularEditor, TreeEditor
 from traitsui.menu import Action
@@ -26,6 +26,7 @@ from traitsui.tabular_adapter import TabularAdapter
 from traitsui.tree_node import TreeNode
 from uncertainties import nominal_value, std_dev
 
+from pychron.core.configurable_tabular_adapter import ConfigurableMixin
 from pychron.core.helpers.color_generators import colornames
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.ui.enum_editor import myEnumEditor
@@ -319,16 +320,24 @@ class PipelinePane(TraitsDockPane):
         return v
 
 
-class UnknownsAdapter(TabularAdapter):
+class UnknownsAdapter(TabularAdapter, ConfigurableMixin):
     columns = [('Run ID', 'record_id'),
                ('Sample', 'sample'),
                ('Age', 'age'),
-               (PLUSMINUS_ONE_SIGMA, 'error'),
                ('Comment', 'comment'),
                ('Tag', 'tag'),
-               ('GroupID', 'group_id'),
-               ('GraphID', 'graph_id')]
+               ('GroupID', 'group_id')]
 
+    all_columns = [('Run ID', 'record_id'),
+                   ('Sample', 'sample'),
+                   ('Age', 'age'),
+                   ('Age {}'.format(PLUSMINUS_ONE_SIGMA), 'age_error'),
+                   ('J', 'j'),
+                   ('J {}'.format(PLUSMINUS_ONE_SIGMA), 'j_error'),
+                   ('Comment', 'comment'),
+                   ('Tag', 'tag'),
+                   ('GroupID', 'group_id'),
+                   ('GraphID', 'graph_id')]
     record_id_width = Int(80)
     sample_width = Int(80)
     age_width = Int(70)
@@ -337,7 +346,9 @@ class UnknownsAdapter(TabularAdapter):
     graph_id_width = Int(30)
 
     age_text = Property
-    error_text = Property
+    age_error_text = Property
+    j_error_text = Property
+    j_text = Property
 
     font = 'arial 10'
 
@@ -356,6 +367,7 @@ class UnknownsAdapter(TabularAdapter):
         return MenuManager(Action(name='Recall', action='recall_unknowns'),
                            Action(name='Graph Group Selected', action='unknowns_graph_group_by_selected'),
                            Action(name='Save Analysis Group', action='save_analysis_group'),
+                           Action(name='Configure', action='configure_unknowns'),
                            grp)
 
     def get_bg_color(self, obj, trait, row, column=0):
@@ -367,11 +379,19 @@ class UnknownsAdapter(TabularAdapter):
             c = super(UnknownsAdapter, self).get_bg_color(obj, trait, row, column)
         return c
 
+    def _get_j_text(self):
+        r = floatfmt(nominal_value(self.item.j), n=8)
+        return r
+
+    def _get_j_error_text(self):
+        r = floatfmt(std_dev(self.item.j), n=8)
+        return r
+
     def _get_age_text(self):
         r = floatfmt(nominal_value(self.item.uage), n=3)
         return r
 
-    def _get_error_text(self):
+    def _get_age_error_text(self):
         r = floatfmt(std_dev(self.item.uage), n=4)
         return r
 
@@ -438,15 +458,21 @@ class AnalysesPaneHandler(Handler):
         obj = info.ui.context['object']
         obj.recall_references()
 
+    def configure_unknowns(self, info, obj):
+        obj = info.ui.context['object']
+        obj.configure_unknowns()
+
 
 class AnalysesPane(TraitsDockPane):
     name = 'Analyses'
     id = 'pychron.pipeline.analyses'
 
+    unknowns_adapter = Instance(UnknownsAdapter, ())
+
     def traits_view(self):
         v = View(VGroup(UItem('object.selected_node.unknowns',
                               width=200,
-                              editor=TabularEditor(adapter=UnknownsAdapter(),
+                              editor=TabularEditor(adapter=self.unknowns_adapter,
                                                    update='refresh_table_needed',
                                                    multi_select=True,
                                                    column_clicked='object.selected_node.column_clicked',

@@ -25,6 +25,7 @@ from traits.api import HasTraits, Str, Instance, List, Event, on_trait_change, A
 from pychron.core.confirmation import remember_confirmation_dialog
 from pychron.core.helpers.filetools import glob_list_directory, add_extension
 from pychron.core.helpers.iterfuncs import groupby_key
+from pychron.core.ui.table_configurer import TableConfigurer
 from pychron.dvc.tasks.repo_task import RepoItem
 from pychron.globals import globalv
 from pychron.loggable import Loggable
@@ -195,6 +196,10 @@ class PipelineGroup(HasTraits):
         return [Pipeline()]
 
 
+class UnknownsTableConfigurer(TableConfigurer):
+    id = 'unknowns_pane'
+
+
 class PipelineEngine(Loggable):
     dvc = Instance('pychron.dvc.dvc.DVC')
     browser_model = Instance('pychron.envisage.browser.base_browser_model.BaseBrowserModel')
@@ -204,6 +209,8 @@ class PipelineEngine(Loggable):
     nodes = List
     node_factories = List
     predefined_templates = List
+
+    unknowns_table_configurer = Instance(UnknownsTableConfigurer, ())
 
     selected = Any
     selected_node = Instance(BaseNode, ())
@@ -321,6 +328,13 @@ class PipelineEngine(Loggable):
         max_gid = max([si.group_id for si in items]) + 1
 
         self._set_grouping(self.selected_unknowns, max_gid)
+
+    def configure_unknowns(self):
+        self.debug('configure unknowns')
+        self.unknowns_table_configurer.edit_traits()
+
+    def setup_unknowns_adapter(self, adp):
+        self.unknowns_table_configurer.set_adapter(adp)
 
     def recall_unknowns(self):
         self.debug('recall unks')
