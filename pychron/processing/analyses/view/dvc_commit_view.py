@@ -400,41 +400,50 @@ class HistoryView(DVCCommitView):
         self.repository_identifier = an.repository_identifier
 
         if not self.commits or force:
+            ps = [an.make_path(p) for p in HISTORY_PATHS]
+            greps = ['<{}>'.format(t) for t in HISTORY_TAGS]
 
+            args = [repo.active_branch.name, '--remove-empty', '--simplify-merges', '--pretty=%H|%cn|%ce|%ct|%s']
             if sys.platform == 'win32':
-                cs = []
-                for a, b in (('TAG', 'tag'),
-                             ('DEFINE EQUIL', 'intercepts'),
-                             ('ISOEVO', 'intercepts'),
-                             ('ISOEVO', 'baselines'),
-                             ('BLANKS', 'blanks'),
-                             ('ICFactor', 'icfactors'),
-                             ('IMPORT', ''),
-                             ('MANUAL', ''),
-                             ('COLLECTION', '')):
-                    path = an.make_path(b)
-                    if path:
-                        args = [repo, repo.active_branch.name, path, a]
-                        if a:
-                            args.append('--grep=^<{}>'.format(a))
-
-                        css = get_commits(*args)
-                        for ci in css:
-                            ci.path = path
-                        cs.extend(css)
-
-                self.commits = sorted(cs, key=lambda x: x.date, reverse=True)
+                # cs = []
+                # for a, b in (('TAG', 'tag'),
+                #              ('DEFINE EQUIL', 'intercepts'),
+                #              ('ISOEVO', 'intercepts'),
+                #              ('ISOEVO', 'baselines'),
+                #              ('BLANKS', 'blanks'),
+                #              ('ICFactor', 'icfactors'),
+                #              ('IMPORT', ''),
+                #              ('MANUAL', ''),
+                #              ('COLLECTION', '')):
+                #     path = an.make_path(b)
+                #     if path:
+                #         args = [repo, repo.active_branch.name, path, a]
+                #         if a:
+                #             args.append('--grep=^<{}>'.format(a))
+                #
+                #         css = get_commits(*args)
+                #         for ci in css:
+                #             ci.path = path
+                #         cs.extend(css)
+                #
+                # self.commits = sorted(cs, key=lambda x: x.date, reverse=True)
+                greps = ['--grep=^{}'.format(g) for g in greps]
+                args.extend(greps)
             else:
-                ps = [an.make_path(p) for p in HISTORY_PATHS]
-                greps = '\|'.join(['<{}>'.format(t) for t in HISTORY_TAGS])
-                txt = repo.git.log(repo.active_branch.name,
-                                   '--remove-empty',
-                                   '--simplify-merges',
-                                   '--grep=^{}'.format(greps),
-                                   '--pretty=%H|%cn|%ce|%ct|%s',
-                                   '--', *ps)
+                greps = '\|'.join(greps)
+                args.append('--grep=^{}'.format(greps))
+                # txt = repo.git.log(repo.active_branch.name,
+                #                    '--remove-empty',
+                #                    '--simplify-merges',
+                #                    '--grep=^{}'.format(greps),
+                #                    ,
+                #                    '--', *ps)
 
-                cs = [from_gitlog(l.strip()) for l in txt.split('\n')]
+            args.append('--')
+            args.extend(ps)
+
+            txt = repo.git.log(*args)
+            cs = [from_gitlog(l.strip()) for l in txt.split('\n')]
 
             self.commits = cs
 

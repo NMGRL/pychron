@@ -227,8 +227,9 @@ ELLIPSE_KIND_SCALE_FACTORS = dict(zip(ELLIPSE_KINDS, (1, 2, 2.4477)))
 DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 MASS_SPEC_REDUCED = 'MASS SPEC REDUCED'
-HISTORY_TAGS = ('TAG', 'ISOEVO', 'BLANKS', 'ICFactor', 'DEFINE EQUIL', MASS_SPEC_REDUCED)
-HISTORY_PATHS = ('tag', 'intercept', 'baselines', 'blanks', 'icfactors')
+HISTORY_TAGS = ('TAG', 'ISOEVO', 'BLANKS', 'ICFactor', 'DEFINE EQUIL', MASS_SPEC_REDUCED, 'COLLECTION', 'IMPORT',
+                'MANUAL')
+HISTORY_PATHS = ('tag', 'intercept', 'baselines', 'blanks', 'icfactors', '')
 DEFAULT_PIPELINE_ROOTS = ('Fit', 'Plot', 'Table', 'History', 'Share', 'Transfer', 'MDD', 'User')
 
 # SAMPLE PREP ===================================================
