@@ -19,6 +19,7 @@ from traits.api import Instance, Str, Bool
 from traitsui.api import View, UItem, Item, VGroup
 
 from pychron.core.helpers.iterfuncs import groupby_repo, groupby_key
+from pychron.core.progress import progress_loader
 from pychron.dvc import dvc_dump, dvc_load
 from pychron.dvc.dvc import DVC
 from pychron.mass_spec.mass_spec_recaller import MassSpecRecaller
@@ -108,7 +109,8 @@ class MassSpecReducedNode(BaseNode):
         self._paths.append(path)
 
     def _import_reduced(self, unks):
-        for unk in unks:
+        def func(unk, prog, i, n):
+            prog.change_message('Transfering {} {}/{}'.format(unk.record_id, i, n))
             ms_unk = self.recaller.find_analysis(unk.identifier, unk.aliquot, unk.step)
             keys = []
             fkeys = []
@@ -153,6 +155,8 @@ class MassSpecReducedNode(BaseNode):
             self._paths.append(path)
 
             self.dvc.set_analysis_tag(unk, ms_unk.tag)
+
+        progress_loader(unks, func)
 
     def _save(self, repo):
         dvc = self.dvc
