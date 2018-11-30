@@ -17,7 +17,6 @@
 # ============= enthought library imports =======================
 
 import os
-import sys
 
 from git import Repo
 from pyface.message_dialog import information
@@ -410,7 +409,7 @@ class HistoryView(DVCCommitView):
 
         args = [repo.active_branch.name, '--remove-empty', '--simplify-merges']
 
-        if not (self.show_all_commits or sys.platform == 'win32'):
+        if not self.show_all_commits:
             greps = '\|'.join(greps)
             args.append('--grep=^{}'.format(greps))
 
