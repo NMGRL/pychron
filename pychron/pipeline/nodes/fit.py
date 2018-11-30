@@ -436,6 +436,8 @@ class DefineEquilibrationNode(FitNode):
         fits = self._fits
         xi.load_raw_data(self._keys)
 
+        delay = xi.admit_delay
+
         isotopes = xi.isotopes
         ks = []
         eqs = []
@@ -451,7 +453,7 @@ class DefineEquilibrationNode(FitNode):
 
                 # ex = eval('x', {'x': xs})
 
-                ex = xs < fi.equilibration_time
+                ex = xs < fi.equilibration_time - delay
                 iex = invert(ex)
 
                 # split data based on trunc criteria

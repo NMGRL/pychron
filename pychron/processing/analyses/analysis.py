@@ -338,6 +338,7 @@ class Analysis(ArArAge, IdeogramPlotable):
     gains = Dict
     repository_identifier = ''
 
+    admit_delay = 0
     # processing
     is_plateau_step = False
     # temp_status = Int(0)

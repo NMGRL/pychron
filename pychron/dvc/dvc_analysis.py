@@ -544,10 +544,10 @@ class DVCAnalysis(Analysis):
 
     def _set_isotopes(self, jd):
         time_zero_offset = jd.get('time_zero_offset', 0)
-        v = jd.get('admit_delay')
-        if v is not None:
-            time_zero_offset = -v
 
+        self.admit_delay = jd.get('admit_delay', 0)
+        if self.admit_delay:
+            time_zero_offset = - self.admit_delay
         isos = jd.get('isotopes')
         if not isos:
             return
