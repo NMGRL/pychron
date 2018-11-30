@@ -154,7 +154,7 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
         g.set_x_limits(min_=xmi, max_=xma, pad='0.025,0.05')
         g.set_y_limits(min_=ymi, max_=yma, pad='0.05', plotid=i)
         g.set_x_title('Time (s)', plotid=i)
-        g.set_y_title('{} (fA)'.format(iso.name), plotid=i)
+        g.set_y_title('{} ({})'.format(iso.name, iso.units), plotid=i)
 
     g.refresh()
     g.window_title = '{} {}'.format(record_id, ','.join([i.name for i in reversed(isotopes)]))

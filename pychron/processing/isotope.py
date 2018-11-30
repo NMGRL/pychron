@@ -47,7 +47,7 @@ class BaseMeasurement(object):
     reverse_unpack = False
     use_manual_value = False
     use_manual_error = False
-
+    units = 'fA'
     _n = None
 
     @property
@@ -570,6 +570,18 @@ class Isotope(BaseIsotope):
         self.sniff = Sniff(name, detector)
         self.background = Background('{} bg'.format(name), detector)
         self.whiff = Whiff(name, detector)
+
+    def set_time_zero(self, time_zero_offset):
+        self.time_zero_offset = time_zero_offset
+        self.blank.time_zero_offset = time_zero_offset
+        self.sniff.time_zero_offset = time_zero_offset
+        self.baseline.time_zero_offset = time_zero_offset
+
+    def set_units(self, units):
+        self.units = units
+        self.blank.units = units
+        self.sniff.units = units
+        self.baseline.units = units
 
     def get_filtered_data(self):
         return self.regressor.calculate_filtered_data()

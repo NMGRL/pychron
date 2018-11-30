@@ -560,17 +560,16 @@ class DVCAnalysis(Analysis):
         #             'Ar40AX': Isotope('Ar40', 'AX'),
         #             'Ar40L1': Isotope('Ar40', 'L1')}
 
-        def factory(name, detector):
+        def factory(name, detector, v):
             i = Isotope(name, detector)
-            i.time_zero_offset = time_zero_offset
-            i.sniff.time_zero_offset = time_zero_offset
-            i.baseline.time_zero_offset = time_zero_offset
+            i.set_units(v.get('units', 'fA'))
+            i.set_time_zero(time_zero_offset)
             return i
 
         try:
-            isos = {k: factory(v['name'], v['detector']) for k, v in isos.items()}
+            isos = {k: factory(v['name'], v['detector'], v) for k, v in isos.items()}
         except KeyError:
-            isos = {k: factory(k, v['detector']) for k, v in isos.items()}
+            isos = {k: factory(k, v['detector'], v) for k, v in isos.items()}
 
         self.isotopes = isos
         masses = get_masses()
