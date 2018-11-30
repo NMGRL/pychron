@@ -116,7 +116,7 @@ class BaseMeasurement(object):
 
     def get_slope(self, n=-1):
         if self.xs.shape[0] and self.ys.shape[0] and self.xs.shape[0] == self.ys.shape[0]:
-            xs = self.xs
+            xs = self.offset_xs
             ys = self.ys
             if n != -1:
                 xs = xs[-n:]
@@ -166,7 +166,7 @@ class IsotopicMeasurement(BaseMeasurement):
 
     def get_linear_rsquared(self):
         from pychron.core.regression.ols_regressor import OLSRegressor
-        reg = OLSRegressor(fit='linear', xs=self.xs, ys=self.ys)
+        reg = OLSRegressor(fit='linear', xs=self.offset_xs, ys=self.ys)
         reg.calculate()
         return reg.rsquared
 
@@ -292,7 +292,7 @@ class IsotopicMeasurement(BaseMeasurement):
                     fitname = fit.auto_fit(self.n)
 
                 self.attr_set(fit=fitname,
-                              time_zero_offset=fit.time_zero_offset or 0,
+                              time_zero_offset=fit.time_zero_offset or self.time_zero_offset,
                               error_type=fit.error_type or 'SEM',
                               include_baseline_error=fit.include_baseline_error or False)
 
@@ -442,7 +442,7 @@ class IsotopicMeasurement(BaseMeasurement):
         return self.regressor.xs.shape[0] - self.regressor.clean_xs.shape[0]
 
     def _get_curvature_ys(self):
-        return self.regressor.predict(self.xs)
+        return self.regressor.predict(self.offset_xs)
 
     # def _error_type_changed(self):
     #     self.regressor.error_calc_type = self.error_type

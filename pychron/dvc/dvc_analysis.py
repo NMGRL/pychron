@@ -548,6 +548,7 @@ class DVCAnalysis(Analysis):
         self.admit_delay = jd.get('admit_delay', 0)
         if self.admit_delay:
             time_zero_offset = - self.admit_delay
+
         isos = jd.get('isotopes')
         if not isos:
             return
@@ -572,7 +573,6 @@ class DVCAnalysis(Analysis):
             isos = {k: factory(k, v['detector']) for k, v in isos.items()}
 
         self.isotopes = isos
-
         masses = get_masses()
         # set mass
         for k, v in isos.items():
