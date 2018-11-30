@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 
 import os
+import sys
 
 from git import Repo
 from pyface.message_dialog import information
@@ -399,17 +400,41 @@ class HistoryView(DVCCommitView):
         self.repository_identifier = an.repository_identifier
 
         if not self.commits or force:
-            ps = [an.make_path(p) for p in HISTORY_PATHS]
 
-            greps = '\|'.join(['<{}>'.format(t) for t in HISTORY_TAGS])
-            txt = repo.git.log(repo.active_branch.name,
-                               '--remove-empty',
-                               '--simplify-merges',
-                               '--grep=^{}'.format(greps),
-                               '--pretty=%H|%cn|%ce|%ct|%s',
-                               '--', *ps)
+            if sys.platform == 'win32':
+                cs = []
+                for a, b in (('TAG', 'tag'),
+                             ('DEFINE EQUIL', 'intercepts'),
+                             ('ISOEVO', 'intercepts'),
+                             ('ISOEVO', 'baselines'),
+                             ('BLANKS', 'blanks'),
+                             ('ICFactor', 'icfactors'),
+                             ('IMPORT', ''),
+                             ('MANUAL', ''),
+                             ('COLLECTION', '')):
+                    path = an.make_path(b)
+                    if path:
+                        args = [repo, repo.active_branch.name, path, a]
+                        if a:
+                            args.append('--grep=^<{}>'.format(a))
 
-            cs = [from_gitlog(l.strip()) for l in txt.split('\n')]
+                        css = get_commits(*args)
+                        for ci in css:
+                            ci.path = path
+                        cs.extend(css)
+
+                self.commits = sorted(cs, key=lambda x: x.date, reverse=True)
+            else:
+                ps = [an.make_path(p) for p in HISTORY_PATHS]
+                greps = '\|'.join(['<{}>'.format(t) for t in HISTORY_TAGS])
+                txt = repo.git.log(repo.active_branch.name,
+                                   '--remove-empty',
+                                   '--simplify-merges',
+                                   '--grep=^{}'.format(greps),
+                                   '--pretty=%H|%cn|%ce|%ct|%s',
+                                   '--', *ps)
+
+                cs = [from_gitlog(l.strip()) for l in txt.split('\n')]
 
             self.commits = cs
 

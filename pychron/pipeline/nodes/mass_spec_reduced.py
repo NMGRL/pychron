@@ -24,7 +24,6 @@ from pychron.dvc.dvc import DVC
 from pychron.mass_spec.mass_spec_recaller import MassSpecRecaller
 from pychron.paths import paths
 from pychron.pipeline.nodes.base import BaseNode
-from pychron.pychron_constants import MASS_SPEC_REDUCED
 
 
 class MassSpecReducedNode(BaseNode):
@@ -152,16 +151,17 @@ class MassSpecReducedNode(BaseNode):
             path = self.dvc.update_tag(unk, add=False)
             self._paths.append(path)
 
-            self.dvc.set_analysis_tag(unk, ms_unk.tag)
+            # self.dvc.set_analysis_tag(unk, ms_unk.tag)
 
     def _save(self, repo):
         dvc = self.dvc
 
         dvc.pull_repository(repo)
         if dvc.repository_add_paths(repo, self._paths):
-            dvc.repository_commit(repo, '<{}> {}'.format(MASS_SPEC_REDUCED, self.message))
-            if self.share_changes:
-                dvc.push_repository(repo)
+            pass
+            # dvc.repository_commit(repo, '<{}> {}'.format(MASS_SPEC_REDUCED, self.message))
+            # if self.share_changes:
+            #     dvc.push_repository(repo)
 
         dvc.commit()
 # ============= EOF =============================================
