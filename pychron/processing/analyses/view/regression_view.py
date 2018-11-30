@@ -43,7 +43,7 @@ class RegressionView(HasTraits):
             sniff = iso.sniff
             sg.new_plot(ytitle=iso.name, xtitle='Time (s)', title='Equilibration')
             if sniff.xs.shape[0]:
-                sg.new_series(sniff.xs, sniff.ys, marker='circle', type='scatter')
+                sg.new_series(sniff.offset_xs, sniff.ys, marker='circle', type='scatter')
             sg.set_y_limits(pad='0.1', plotid=i)
 
         bg = StackedRegressionGraph()
@@ -54,7 +54,7 @@ class RegressionView(HasTraits):
             baseline = iso.baseline
             bg.new_plot(ytitle=baseline.detector, xtitle='Time (s)', title='Baseline')
             if baseline.xs.shape[0]:
-                bg.new_series(baseline.xs, baseline.ys,
+                bg.new_series(baseline.offset_xs, baseline.ys,
                               color='red', type='scatter', fit=baseline.fit)
             bg.set_y_limits(pad='0.1', plotid=i)
 
@@ -65,7 +65,7 @@ class RegressionView(HasTraits):
         for i, iso in enumerate(isos):
             ig.new_plot(ytitle=iso.name, xtitle='Time (s)', title='Isotope')
             if iso.xs.shape[0]:
-                ig.new_series(iso.xs, iso.ys,
+                ig.new_series(iso.offset_xs, iso.ys,
                               color='blue', type='scatter', fit=iso.fit)
             ig.set_y_limits(pad='0.1', plotid=i)
 

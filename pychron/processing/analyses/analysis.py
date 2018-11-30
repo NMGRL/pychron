@@ -123,33 +123,33 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
         if show_equilibration:
             sniff = iso.sniff
             if sniff.xs.shape[0]:
-                g.new_series(sniff.xs, sniff.ys,
+                g.new_series(sniff.offset_xs, sniff.ys,
                              type='scatter',
                              fit=None,
                              color='red')
                 ymi, yma = min_max(ymi, yma, sniff.ys)
-                xmi, xma = min_max(xmi, xma, sniff.xs)
+                xmi, xma = min_max(xmi, xma, sniff.offset_xs)
 
         if show_evo:
             if iso.fit is None:
                 iso.fit = 'linear'
 
-            g.new_series(iso.xs, iso.ys,
+            g.new_series(iso.offset_xs, iso.ys,
                          fit=iso.fit,
                          truncate=iso.truncate,
                          filter_outliers_dict=iso.filter_outliers_dict,
                          color='black')
             ymi, yma = min_max(ymi, yma, iso.ys)
-            xmi, xma = min_max(xmi, xma, iso.xs)
+            xmi, xma = min_max(xmi, xma, iso.offset_xs)
 
         if show_baseline:
             baseline = iso.baseline
-            g.new_series(baseline.xs, baseline.ys,
+            g.new_series(baseline.offset_xs, baseline.ys,
                          type='scatter', fit=baseline.fit,
                          filter_outliers_dict=baseline.filter_outliers_dict,
                          color='blue')
             ymi, yma = min_max(ymi, yma, baseline.ys)
-            xmi, xma = min_max(xmi, xma, baseline.xs)
+            xmi, xma = min_max(xmi, xma, baseline.offset_xs)
 
         g.set_x_limits(min_=xmi, max_=xma, pad='0.025,0.05')
         g.set_y_limits(min_=ymi, max_=yma, pad='0.05', plotid=i)

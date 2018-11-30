@@ -562,6 +562,7 @@ class DVCAnalysis(Analysis):
         def factory(name, detector):
             i = Isotope(name, detector)
             i.time_zero_offset = time_zero_offset
+            i.sniff.time_zero_offset = time_zero_offset
             i.baseline.time_zero_offset = time_zero_offset
             return i
 
