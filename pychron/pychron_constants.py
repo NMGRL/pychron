@@ -229,7 +229,7 @@ DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
 MASS_SPEC_REDUCED = 'MASS SPEC REDUCED'
 HISTORY_TAGS = ('TAG', 'ISOEVO', 'BLANKS', 'ICFactor', 'DEFINE EQUIL', MASS_SPEC_REDUCED, 'COLLECTION', 'IMPORT',
                 'MANUAL')
-HISTORY_PATHS = ('tag', 'intercept', 'baselines', 'blanks', 'icfactors', '')
+HISTORY_PATHS = ('tag', 'intercept', 'baselines', 'blanks', 'icfactors', '.data', '')
 DEFAULT_PIPELINE_ROOTS = ('Fit', 'Plot', 'Table', 'History', 'Share', 'Transfer', 'MDD', 'User')
 
 # SAMPLE PREP ===================================================

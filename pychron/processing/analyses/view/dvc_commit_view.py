@@ -33,7 +33,7 @@ from pychron.dvc.tasks.panes import CommitAdapter
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.view_util import open_view
 from pychron.git_archive.repo_manager import isoformat_date
-from pychron.git_archive.utils import get_commits, get_diff, get_head_commit, from_gitlog
+from pychron.git_archive.utils import get_diff, get_head_commit, from_gitlog
 from pychron.paths import paths
 from pychron.pychron_constants import LIGHT_RED, PLUSMINUS_ONE_SIGMA, LIGHT_YELLOW, HISTORY_PATHS, \
     HISTORY_TAGS
@@ -285,6 +285,7 @@ class DVCCommitView(HasTraits):
     repository_identifier = Str
     repo = None
     uuid = Str
+    show_all_commits = Bool(True)
 
     def initialize(self, an):
         pass
@@ -308,14 +309,6 @@ class DVCCommitView(HasTraits):
 
     def _make_path(self, an):
         return an.make_path(self.modifier)
-
-    def _get_commits(self, path, tag=None):
-        repo = self.repo
-        args = [repo, repo.active_branch.name, path, tag]
-        if tag:
-            args.append('--grep=^<{}>'.format(tag))
-
-        return get_commits(*args)
 
     def _do_diff_fired(self):
         if self.selected_commits:
@@ -383,7 +376,9 @@ class DVCCommitView(HasTraits):
 
     def traits_view(self):
         v = View(VGroup(
-            icon_button_editor('do_diff', 'edit_diff', tooltip='Make Diff between two commits'),
+            HGroup(icon_button_editor('do_diff', 'edit_diff', tooltip='Make Diff between two commits'),
+                   Item('show_all_commits', label='Show All Commits')),
+
             UItem('commits', editor=myTabularEditor(adapter=HistoryCommitAdapter(),
                                                     multi_select=True,
                                                     editable=False,
@@ -393,58 +388,38 @@ class DVCCommitView(HasTraits):
 
 class HistoryView(DVCCommitView):
     name = 'History'
+    _paths = None
+
+    def _show_all_commits_changed(self):
+        self._load_commits()
 
     def initialize(self, an, force=False):
-        self.repo = repo = Repo(os.path.join(paths.repository_dataset_dir, an.repository_identifier))
+        self.repo = Repo(os.path.join(paths.repository_dataset_dir, an.repository_identifier))
         self.record_id = an.record_id
         self.repository_identifier = an.repository_identifier
 
+        ps = [an.make_path(p) for p in HISTORY_PATHS]
+        self._paths = ps
         if not self.commits or force:
-            ps = [an.make_path(p) for p in HISTORY_PATHS]
-            greps = ['<{}>'.format(t) for t in HISTORY_TAGS]
+            self._load_commits()
 
-            args = [repo.active_branch.name, '--remove-empty', '--simplify-merges', '--pretty=%H|%cn|%ce|%ct|%s']
-            if sys.platform == 'win32':
-                # cs = []
-                # for a, b in (('TAG', 'tag'),
-                #              ('DEFINE EQUIL', 'intercepts'),
-                #              ('ISOEVO', 'intercepts'),
-                #              ('ISOEVO', 'baselines'),
-                #              ('BLANKS', 'blanks'),
-                #              ('ICFactor', 'icfactors'),
-                #              ('IMPORT', ''),
-                #              ('MANUAL', ''),
-                #              ('COLLECTION', '')):
-                #     path = an.make_path(b)
-                #     if path:
-                #         args = [repo, repo.active_branch.name, path, a]
-                #         if a:
-                #             args.append('--grep=^<{}>'.format(a))
-                #
-                #         css = get_commits(*args)
-                #         for ci in css:
-                #             ci.path = path
-                #         cs.extend(css)
-                #
-                # self.commits = sorted(cs, key=lambda x: x.date, reverse=True)
-                greps = ['--grep=^{}'.format(g) for g in greps]
-                args.extend(greps)
-            else:
-                greps = '\|'.join(greps)
-                args.append('--grep=^{}'.format(greps))
-                # txt = repo.git.log(repo.active_branch.name,
-                #                    '--remove-empty',
-                #                    '--simplify-merges',
-                #                    '--grep=^{}'.format(greps),
-                #                    ,
-                #                    '--', *ps)
+    def _load_commits(self):
+        repo = self.repo
 
-            args.append('--')
-            args.extend(ps)
+        greps = ['<{}>'.format(t) for t in HISTORY_TAGS]
 
-            txt = repo.git.log(*args)
+        args = [repo.active_branch.name, '--remove-empty', '--simplify-merges']
+
+        if not (self.show_all_commits or sys.platform == 'win32'):
+            greps = '\|'.join(greps)
+            args.append('--grep=^{}'.format(greps))
+
+        args.append('--pretty=%H|%cn|%ce|%ct|%s')
+        args.append('--')
+        args.extend(self._paths)
+
+        txt = repo.git.log(*args)
+        if txt:
             cs = [from_gitlog(l.strip()) for l in txt.split('\n')]
-
-            self.commits = cs
-
+        self.commits = cs
 # ============= EOF =============================================
