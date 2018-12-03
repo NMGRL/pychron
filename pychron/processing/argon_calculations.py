@@ -240,6 +240,29 @@ def calculate_decay_factor(dc, segments):
             return 1.0
 
 
+def calculate_arar_decay_factors(dc37, dc39, segments):
+    if segments is None:
+        return 1.0, 1.0
+    else:
+        a = sum([pi * ti for pi, ti, _, _, _ in segments])
+
+        b = sum([pi * ((1 - math.exp(-dc37 * ti)) / (dc37 * math.exp(dc39 * dti)))
+                 for pi, ti, dti, _, _ in segments])
+
+        c = sum([pi * ((1 - math.exp(-dc39 * ti)) / (dc39 * math.exp(dc39 * dti)))
+                 for pi, ti, dti, _, _ in segments])
+        try:
+            df37 = a / b
+        except ZeroDivisionError:
+            return 1.0
+        try:
+            df39 = a / c
+        except ZeroDivisionError:
+            return 1.0
+
+        return df37, df39
+
+
 def abundance_sensitivity_correction(isos, abundance_sensitivity):
     s40, s39, s38, s37, s36 = isos
     # correct for abundance sensitivity

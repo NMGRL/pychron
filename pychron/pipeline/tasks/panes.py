@@ -554,19 +554,19 @@ class AnalysesPane(TraitsDockPane):
         return a
 
     def traits_view(self):
-        v = View(VGroup(UItem('object.selected_node.unknowns',
+        v = View(VGroup(UItem('object.selected.unknowns',
                               width=200,
                               editor=TabularEditor(adapter=self.unknowns_adapter,
                                                    update='refresh_table_needed',
                                                    multi_select=True,
-                                                   column_clicked='object.selected_node.column_clicked',
+                                                   column_clicked='object.selected.column_clicked',
                                                    # drag_external=True,
                                                    # drop_factory=self.model.drop_factory,
                                                    dclicked='dclicked_unknowns',
                                                    selected='selected_unknowns',
                                                    operations=['delete'])),
-                        UItem('object.selected_node.references',
-                              visible_when='object.selected_node.references',
+                        UItem('object.selected.references',
+                              visible_when='object.selected.references',
                               editor=TabularEditor(adapter=self.references_adapter,
                                                    update='refresh_table_needed',
                                                    # drag_external=True,

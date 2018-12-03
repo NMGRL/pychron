@@ -25,8 +25,9 @@ from sqlalchemy.orm import relationship
 
 from pychron.core.helpers.datetime_tools import make_timef
 from pychron.database.orms import stringcolumn, primary_key
-from pychron.database.records.isotope_record import DVCIsotopeRecordView
+# from pychron.database.records.isotope_record import DVCIsotopeRecordView
 from pychron.experiment.utilities.identifier import make_runid
+from pychron.pychron_constants import ALPHAS
 
 Base = declarative_base()
 
@@ -124,6 +125,16 @@ class AnalysisTbl(Base, IDMixin):
     delta_time = 0
 
     review_status = None
+    repository_identifier = ''
+    is_plateau_step = None
+
+    @property
+    def step(self):
+        if self.increment is not None and self.increment >= 0:
+            step = ALPHAS[self.increment]
+        else:
+            step = ''
+        return step
 
     @property
     def position(self):
@@ -139,10 +150,6 @@ class AnalysisTbl(Base, IDMixin):
     @property
     def extract_script_name(self):
         return self.extractionName
-
-    @property
-    def is_plateau_step(self):
-        return
 
     @property
     def timestampf(self):
@@ -213,19 +220,8 @@ class AnalysisTbl(Base, IDMixin):
         return self.timestamp
 
     @property
-    def repository_identifier(self):
-        if self.repository_associations and len(self.repository_associations) == 1:
-            return self.repository_associations[0].repository
-
-    @property
     def record_id(self):
         return make_runid(self.irradiation_position.identifier, self.aliquot, self.increment)
-
-    @property
-    def repository_identifier(self):
-        es = [e.repository for e in self.repository_associations]
-        if len(es) == 1:
-            return es[0]
 
     @property
     def load_name(self):
@@ -243,30 +239,34 @@ class AnalysisTbl(Base, IDMixin):
                 lh = load.holderName
         return lh
 
-    @property
-    def record_views(self):
-        repos = self.repository_associations
-        if len(repos) == 1:
-            return self._make_record_view(repos[0].repository),
-        else:
-            return [self._make_record_view(r.repository, use_suffix=True) for r in repos]
+    def bind(self):
+        if self.repository_associations and len(self.repository_associations) == 1:
+            self.repository_identifier = self.repository_associations[0].repository
 
-    def make_record_view(self, repository, use_suffix=False):
-        for repo in self.repository_associations:
-            if repo.repository == repository:
-                return self._make_record_view(repo.repository, use_suffix=use_suffix)
-        else:
-            return self._make_record_view(self.repository_associations[0].repository)
-
-    def _make_record_view(self, repo, use_suffix=False):
-        iv = DVCIsotopeRecordView(self)
-        # iv.repository_ids = es = [e.repository for e in self.repository_associations]
-        # if len(es) == 1:
-        #     iv.repository_identifier = es[0]
-        iv.repository_identifier = repo
-        iv.use_repository_suffix = use_suffix
-        iv.init()
-        return iv
+    # @property
+    # def record_views(self):
+    #     repos = self.repository_associations
+    #     if len(repos) == 1:
+    #         return self._make_record_view(repos[0].repository),
+    #     else:
+    #         return [self._make_record_view(r.repository, use_suffix=True) for r in repos]
+    #
+    # def make_record_view(self, repository, use_suffix=False):
+    #     for repo in self.repository_associations:
+    #         if repo.repository == repository:
+    #             return self._make_record_view(repo.repository, use_suffix=use_suffix)
+    #     else:
+    #         return self._make_record_view(self.repository_associations[0].repository)
+    #
+    # def _make_record_view(self, repo, use_suffix=False):
+    #     iv = DVCIsotopeRecordView(self)
+    #     # iv.repository_ids = es = [e.repository for e in self.repository_associations]
+    #     # if len(es) == 1:
+    #     #     iv.repository_identifier = es[0]
+    #     iv.repository_identifier = repo
+    #     iv.use_repository_suffix = use_suffix
+    #     iv.init()
+    #     return iv
 
 
 class AnalysisIntensitiesTbl(Base, IDMixin):

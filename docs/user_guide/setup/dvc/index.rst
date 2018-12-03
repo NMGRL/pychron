@@ -6,3 +6,4 @@ DVC Configuration
   meta_repo
   repositories
   database
+  arar_mapping

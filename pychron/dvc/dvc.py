@@ -25,7 +25,7 @@ from operator import itemgetter
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
 from git import Repo
-from traits.api import Instance, Str, Set, List, provides
+from traits.api import Instance, Str, Set, List, provides, Bool, Int
 from uncertainties import nominal_value, std_dev, ufloat
 
 from pychron import json
@@ -34,9 +34,10 @@ from pychron.core.helpers.iterfuncs import groupby_key, groupby_repo
 from pychron.core.i_datastore import IDatastore
 from pychron.core.progress import progress_loader, progress_iterator, open_progress
 from pychron.database.interpreted_age import InterpretedAge
-from pychron.dvc import dvc_dump, dvc_load, analysis_path, repository_path, AnalysisNotAnvailableError
+from pychron.dvc import dvc_dump, dvc_load, analysis_path, repository_path, AnalysisNotAnvailableError, PATH_MODIFIERS
+from pychron.dvc.cache import DVCCache
 from pychron.dvc.defaults import TRIGA, HOLDER_24_SPOKES, LASER221, LASER65
-from pychron.dvc.dvc_analysis import DVCAnalysis, PATH_MODIFIERS
+from pychron.dvc.dvc_analysis import DVCAnalysis
 from pychron.dvc.dvc_database import DVCDatabase
 from pychron.dvc.func import find_interpreted_age_path, GitSessionCTX, push_repositories
 from pychron.dvc.meta_repo import MetaRepo, get_frozen_flux, get_frozen_productions
@@ -166,6 +167,9 @@ class DVC(Loggable):
     favorites = List
 
     use_cocktail_irradiation = Str
+    use_cache = Bool
+    max_cache_size = Int
+    _cache = None
 
     def __init__(self, bind=True, *args, **kw):
         super(DVC, self).__init__(*args, **kw)
@@ -325,29 +329,6 @@ class DVC(Loggable):
             # commit src changes
             repo.commit('Transferred analyses to {}'.format(dest))
             dest.commit('Transferred analyses from {}'.format(src))
-
-    def _transfer_analysis_to(self, dest, src, rid):
-        p = analysis_path(rid, src)
-        np = analysis_path(rid, dest)
-
-        obj = dvc_load(p)
-        obj['repository_identifier'] = dest
-        dvc_dump(obj, p)
-
-        ops = [p]
-        nps = [np]
-
-        shutil.move(p, np)
-
-        for modifier in ('baselines', 'blanks', 'extraction',
-                         'intercepts', 'icfactors', 'peakcenter', '.data'):
-            p = analysis_path(rid, src, modifier=modifier)
-            np = analysis_path(rid, dest, modifier=modifier)
-            shutil.move(p, np)
-            ops.append(p)
-            nps.append(np)
-
-        return ops, nps
 
     def get_flux(self, irrad, level, pos):
         fd = self.meta_repo.get_flux(irrad, level, pos)
@@ -509,21 +490,29 @@ class DVC(Loggable):
         if fits and dets:
             self.info('Saving icfactors for {}'.format(ai))
             ai.dump_icfactors(dets, fits, refs, reviewed=True)
+            if self._cache:
+                self._cache.remove(ai.uiid)
 
     def save_blanks(self, ai, keys, refs):
         if keys:
             self.info('Saving blanks for {}'.format(ai))
             ai.dump_blanks(keys, refs, reviewed=True)
+            if self._cache:
+                self._cache.remove(ai.uiid)
 
     def save_defined_equilibration(self, ai, keys):
         if keys:
             self.info('Saving equilibration for {}'.format(ai))
+            if self._cache:
+                self._cache.remove(ai.uiid)
             return ai.dump_equilibration(keys, reviewed=True)
 
     def save_fits(self, ai, keys):
         if keys:
             self.info('Saving fits for {}'.format(ai))
             ai.dump_fits(keys, reviewed=True)
+            if self._cache:
+                self._cache.remove(ai.uiid)
 
     def save_flux(self, identifier, j, e):
         """
@@ -644,6 +633,21 @@ class DVC(Loggable):
         # load repositories
         st = time.time()
 
+        if self.use_cache:
+            cached_records = []
+            nrecords = []
+            cache = self._cache
+
+            # get items from the cache
+            for ri in records:
+                r = cache.get(ri.uuid)
+                if r is not None:
+                    cached_records.append(r)
+                else:
+                    nrecords.append(ri)
+
+            records = nrecords
+
         def func(xi, prog, i, n):
             if prog:
                 prog.change_message('Syncing repository= {}'.format(xi))
@@ -655,7 +659,6 @@ class DVC(Loggable):
         exps = {r.repository_identifier for r in records}
         progress_iterator(exps, func, threshold=1)
 
-        # for ei in exps:
         branches = {ei: get_repository_branch(repository_path(ei)) for ei in exps}
 
         fluxes = {}
@@ -663,8 +666,8 @@ class DVC(Loggable):
         chronos = {}
         sens = {}
         frozen_fluxes = {}
-        meta_repo = self.meta_repo
         frozen_productions = {}
+        meta_repo = self.meta_repo
         use_cocktail_irradiation = self.use_cocktail_irradiation
         if not quick:
             for exp in exps:
@@ -702,16 +705,14 @@ class DVC(Loggable):
                     fluxes['cocktail'] = cirr.get('flux')
 
             sens = meta_repo.get_sensitivities()
-        make_record = self._make_record
 
         def func(*args):
             try:
-                r = make_record(branches=branches, chronos=chronos, productions=productions,
-                                fluxes=fluxes, calculate_f_only=calculate_f_only, sens=sens,
-                                frozen_fluxes=frozen_fluxes, frozen_productions=frozen_productions,
-                                quick=quick,
-                                reload=reload, *args)
-                return r
+                return self._make_record(branches=branches, chronos=chronos, productions=productions,
+                                         fluxes=fluxes, calculate_f_only=calculate_f_only, sens=sens,
+                                         frozen_fluxes=frozen_fluxes, frozen_productions=frozen_productions,
+                                         quick=quick,
+                                         reload=reload, *args)
             except BaseException:
                 self.debug('make analysis exception')
                 self.debug_exception()
@@ -719,9 +720,14 @@ class DVC(Loggable):
         ret = progress_loader(records, func, threshold=1, step=25)
         et = time.time() - st
 
-        n = len(records)
+        n = len(ret)
+        if n:
+            self.debug('Make analysis time, total: {}, n: {}, average: {}'.format(et, n, et / float(n)))
 
-        self.debug('Make analysis time, total: {}, n: {}, average: {}'.format(et, n, et / float(n)))
+        if self.use_cache:
+            cache.clean()
+            ret = cached_records + ret
+
         return ret
 
     # repositories
@@ -929,6 +935,30 @@ class DVC(Loggable):
                                                   'include_j_error_in_mean',
                                                   'include_j_error_in_plateau',
                                                   'include_j_position_error')}
+
+        def analysis_factory(x):
+            d = dict(uuid=x.uuid,
+                     record_id=x.record_id,
+                     age=x.age,
+                     age_err=x.age_err,
+                     age_err_wo_j=x.age_err_wo_j,
+                     radiogenic_yield=nominal_value(x.rad40_percent),
+                     radiogenic_yield_err=std_dev(x.rad40_percent),
+                     kca=float(nominal_value(x.kca)),
+                     kca_err=float(std_dev(x.kca)),
+                     kcl=float(nominal_value(x.kcl)),
+                     kcl_err=float(std_dev(x.kcl)),
+                     tag=x.tag,
+                     plateau_step=ia.get_is_plateau_step(x),
+                     baseline_corrected_intercepts=x.baseline_corrected_intercepts_to_dict(),
+                     blanks=x.blanks_to_dict(),
+                     icfactors=x.icfactors_to_dict(),
+                     corrected_values=x.corrected_values_to_dict(),
+                     interference_corrected_values=x.interference_corrected_values_to_dict()
+                     )
+
+            return d
+
         d.update(age=float(nominal_value(a)),
                  age_err=float(std_dev(a)),
                  display_age_units=ia.age_units,
@@ -936,19 +966,7 @@ class DVC(Loggable):
                  mswd=float(mswd),
                  arar_constants=ia.arar_constants.to_dict(),
                  ages=ia.ages(),
-                 analyses=[dict(uuid=ai.uuid,
-                                record_id=ai.record_id,
-                                age=ai.age,
-                                age_err=ai.age_err,
-                                age_err_wo_j=ai.age_err_wo_j,
-                                radiogenic_yield=nominal_value(ai.rad40_percent),
-                                radiogenic_yield_err=std_dev(ai.rad40_percent),
-                                kca=float(nominal_value(ai.kca)),
-                                kca_err=float(std_dev(ai.kca)),
-                                kcl=float(nominal_value(ai.kcl)),
-                                kcl_err=float(std_dev(ai.kcl)),
-                                tag=ai.tag, plateau_step=ia.get_is_plateau_step(ai)) for ai in
-                           ia.analyses])
+                 analyses=[analysis_factory(xi) for xi in ia.analyses])
 
         d['macrochron'] = self._make_macrochron(ia)
 
@@ -1135,21 +1153,22 @@ class DVC(Loggable):
                 obj[attr] = [getattr(pr, attr), getattr(pr, '{}_err'.format(attr))]
             dvc_dump(obj, path)
 
-    def save_tag_subgroup_items(self, items):
-
-        for expid, ans in groupby_repo(items):
-            self.sync_repo(expid)
-            ps = []
-            for it in ans:
-                tag = Tag.from_analysis(it)
-                tag.dump()
-
-                ps.append(tag.path)
-
-            if self.repository_add_paths(expid, ps):
-                self._commit_tags(ans, expid, '<SUBGROUP>', refresh=False)
+    # def save_tag_subgroup_items(self, items):
+    #
+    #     for expid, ans in groupby_repo(items):
+    #         self.sync_repo(expid)
+    #         ps = []
+    #         for it in ans:
+    #             tag = Tag.from_analysis(it)
+    #             tag.dump()
+    #
+    #             ps.append(tag.path)
+    #
+    #         if self.repository_add_paths(expid, ps):
+    #             self._commit_tags(ans, expid, '<SUBGROUP>', refresh=False)
 
     def tag_items(self, tag, items, note=''):
+        self.debug('tag items with "{}"'.format(tag))
         with self.db.session_ctx() as sess:
             for expid, ans in groupby_repo(items):
                 self.sync_repo(expid)
@@ -1177,7 +1196,34 @@ class DVC(Loggable):
     def get_repository(self, repo):
         return self._get_repository(repo, as_current=False)
 
+    def clear_cache(self):
+        if self.use_cache:
+            self._cache.clear()
+
     # private
+    def _transfer_analysis_to(self, dest, src, rid):
+        p = analysis_path(rid, src)
+        np = analysis_path(rid, dest)
+
+        obj = dvc_load(p)
+        obj['repository_identifier'] = dest
+        dvc_dump(obj, p)
+
+        ops = [p]
+        nps = [np]
+
+        shutil.move(p, np)
+
+        for modifier in PATH_MODIFIERS:
+            if modifier:
+                p = analysis_path(rid, src, modifier=modifier)
+                np = analysis_path(rid, dest, modifier=modifier)
+                shutil.move(p, np)
+                ops.append(p)
+                nps.append(np)
+
+        return ops, nps
+
     def _commit_freeze(self, added, msg):
         for repo, ps in groupby_key(added, key=itemgetter(0)):
             rm = GitRepoManager()
@@ -1274,8 +1320,8 @@ class DVC(Loggable):
             # self.debug('use_repo_suffix={} record_id={}'.format(record.use_repository_suffix, record.record_id))
             rid = record.record_id
             uuid = record.uuid
-            if record.use_repository_suffix:
-                rid = '-'.join(rid.split('-')[:-1])
+            # if record.use_repository_suffix:
+            #     rid = '-'.join(rid.split('-')[:-1])
             try:
                 a = DVCAnalysis(uuid, rid, expid)
             except AnalysisNotAnvailableError:
@@ -1379,6 +1425,9 @@ class DVC(Loggable):
                         a.calculate_F()
                     else:
                         a.calculate_age()
+
+        if self._cache:
+            self._cache.update(record.uuid, a)
         return a
 
     def _get_repository(self, repository_identifier, as_current=True):
@@ -1409,6 +1458,26 @@ class DVC(Loggable):
 
         prefid = 'pychron.dvc'
         bind_preference(self, 'use_cocktail_irradiation', '{}.use_cocktail_irradiation'.format(prefid))
+        bind_preference(self, 'use_cache', '{}.use_cache'.format(prefid))
+        bind_preference(self, 'max_cache_size', '{}.max_cache_size'.format(prefid))
+
+        if self.use_cache:
+            self._use_cache_changed()
+
+    def _max_cache_size_changed(self, new):
+        if new:
+            if self._cache:
+                self._cache.max_size = self.max_cache_size
+            else:
+                self._use_cache_changed()
+        else:
+            self.use_cache = False
+
+    def _use_cache_changed(self):
+        if self.use_cache:
+            self._cache = DVCCache(max_size=self.max_cache_size)
+        else:
+            self._cache = None
 
     def _favorites_changed(self, items):
         try:

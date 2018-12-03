@@ -559,7 +559,7 @@ class PipelineTask(BaseBrowserTask):
         elif isinstance(new, NodeGroup):
             pass
         else:
-            self.engine.selected_node = new
+            # self.engine.selected_node = new
             if old:
                 old.on_trait_change(self._handle_tag, 'unknowns:tag_event,references:tag_event', remove=True)
                 old.on_trait_change(self._handle_invalid, 'unknowns:invalid_event,references:invalid_event',

@@ -17,21 +17,23 @@
 import hashlib
 import os
 import shutil
-import struct
 from datetime import datetime
 
+import yaml
 from apptools.preferences.preference_binding import bind_preference
 from git.exc import GitCommandError
 # ============= enthought library imports =======================
 from traits.api import Instance, Bool, Str
 from uncertainties import std_dev, nominal_value
+from yaml import YAMLError
 
 from pychron.core.helpers.binpack import encode_blob, pack
 from pychron.dvc import dvc_dump, analysis_path, repository_path
 from pychron.experiment.automated_run.persistence import BasePersister
 from pychron.git_archive.repo_manager import GitRepoManager
+from pychron.paths import paths
 from pychron.processing.analyses.analysis import EXTRACTION_ATTRS, META_ATTRS
-from pychron.pychron_constants import DVC_PROTOCOL, LINE_STR, NULL_STR
+from pychron.pychron_constants import DVC_PROTOCOL, LINE_STR, NULL_STR, ARGON_KEYS, ARAR_MAPPING
 
 
 def format_repository_identifier(project):
@@ -59,10 +61,12 @@ class DVCPersister(BasePersister):
     _positions = None
 
     save_log_enabled = Bool(False)
+    arar_mapping = None
 
     def __init__(self, *args, **kw):
         super(DVCPersister, self).__init__(*args, **kw)
         bind_preference(self, 'use_uuid_path_name', 'pychron.experiment.use_uuid_path_name')
+        self._load_arar_mapping()
 
     def per_spec_save(self, pr, repository_identifier=None, commit=False, commit_tag=None, push=True):
         self.per_spec = pr
@@ -116,13 +120,10 @@ class DVCPersister(BasePersister):
         sblob = per_spec.setpoint_blob  # time vs requested
 
         if rblob:
-            # rblob = base64.b64encode(rblob.encode('utf-8')).decode('utf-8')
             rblob = encode_blob(rblob)
         if oblob:
-            # oblob = base64.b64encode(oblob.encode('utf-8')).decode('utf-8')
             oblob = encode_blob(oblob)
         if sblob:
-            # sblob = base64.b64encode(sblob.encode('utf-8')).decode('utf-8')
             sblob = encode_blob(sblob)
 
         obj = {'measured_response': rblob,  # time vs
@@ -229,8 +230,8 @@ class DVCPersister(BasePersister):
                 try:
                     ar.smart_pull(accept_their=True)
 
-                    pms = (None, '.data', 'tags', 'peakcenter', 'extraction', 'monitor')
-                    paths = [spec_path, ] + [self._make_path(modifier=m) for m in pms]
+
+                    paths = [spec_path, ] + [self._make_path(modifier=m) for m in NPATH_MODIFIERS]
 
                     for p in paths:
                         if os.path.isfile(p):
@@ -302,6 +303,38 @@ class DVCPersister(BasePersister):
             self.dvc.push_repository(ar)
 
     # private
+    def _load_arar_mapping(self):
+        """
+        Isotope: IsotopeKey
+
+        example arar_mapping.yaml
+
+        {
+            Ar40: 'Ar40',
+            Ar39: 'Ar39',
+            Ar38: 'Ar38',
+            Ar37: 'Ar37',
+            Ar36: 'Ar36L1'
+        }
+
+        :return:
+        """
+        p = os.path.join(paths.setup_dir, 'arar_mapping.yaml')
+        if os.path.isfile(p):
+            self.debug('loading arar mapping from {}'.format(p))
+            with open(p, 'r') as rfile:
+                try:
+                    obj = yaml.load(rfile)
+                except YAMLError:
+                    pass
+                
+                for k in ARGON_KEYS:
+                    if k not in obj:
+                        self.warning('Invalid arar_mapping.yaml file. required keys={}'.format(ARGON_KEYS))
+                        return
+
+                self.arar_mapping = obj
+
     def _check_repository_identifier(self):
         repo_id = self.per_spec.run_spec.repository_identifier
         db = self.dvc.db
@@ -497,6 +530,13 @@ class DVCPersister(BasePersister):
             self.dvc.meta_repo.update_script(ms, name, blob)
             obj[si] = name
 
+        # save keys for the arar isotopes
+        akeys = self.arar_mapping
+        if akeys is None:
+            akeys = ARAR_MAPPING
+            
+        obj['arar_mapping'] = akeys
+
         # save experiment
         self.debug('---------------- Experiment Queue saving disabled')
         # self.dvc.update_experiment_queue(ms, self.per_spec.experiment_queue_name,
@@ -540,7 +580,7 @@ class DVCPersister(BasePersister):
             p = self._make_path(modifier='monitor')
             checks = []
             for ci in self.per_spec.monitor.checks:
-                data = b''.join([struct.pack('>ff', x, y) for x, y in ci.data])
+                data = encode_blob(pack('>ff', ci.data))
                 params = dict(name=ci.name,
                               parameter=ci.parameter, criterion=ci.criterion,
                               comparator=ci.comparator, tripped=ci.tripped,

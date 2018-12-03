@@ -20,12 +20,11 @@ from traitsui.api import View, UItem, Item, VGroup
 
 from pychron.core.helpers.iterfuncs import groupby_repo, groupby_key
 from pychron.core.progress import progress_loader
-from pychron.dvc import dvc_dump, dvc_load
+from pychron.dvc import dvc_dump, dvc_load, MASS_SPEC_REDUCED
 from pychron.dvc.dvc import DVC
 from pychron.mass_spec.mass_spec_recaller import MassSpecRecaller
 from pychron.paths import paths
 from pychron.pipeline.nodes.base import BaseNode
-from pychron.pychron_constants import MASS_SPEC_REDUCED
 
 
 class MassSpecReducedNode(BaseNode):
@@ -41,7 +40,7 @@ class MassSpecReducedNode(BaseNode):
     def traits_view(self):
         v = View(VGroup(VGroup(UItem('message', style='custom'), label='Message', show_border=True),
                         Item('share_changes', label='Share Changes')),
-
+                 title='Configure Mass Spec Reduced',
                  buttons=['OK', 'Cancel'])
         return v
 

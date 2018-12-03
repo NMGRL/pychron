@@ -73,12 +73,11 @@ class FigureNode(SortableNode):
             for tab_id, unks in groupby_key(state.unknowns, 'tab_id'):
                 if tab_id in self.editors:
                     editor = self.editors[tab_id]
-
                 else:
                     editor = self._editor_factory()
-                    state.editors.append(editor)
                     self.editors[tab_id] = editor
 
+                state.editors.append(editor)
                 self.editor = editor
                 if self.auto_set_items:
                     bind_preference(self, 'skip_meaning', 'pychron.pipeline.skip_meaning')
@@ -86,8 +85,9 @@ class FigureNode(SortableNode):
                         unks = [u for u in unks if u.tag.lower() != 'skip']
 
                     editor.set_items(list(unks))
-                    if hasattr(editor, 'component'):
-                        editor.component.invalidate_and_redraw()
+                    editor.refresh_needed = True
+                    # if hasattr(editor, 'component'):
+                    #     editor.component.invalidate_and_redraw()
 
         for name, es in groupby_key(state.editors, 'name'):
             for i, ei in enumerate(es):

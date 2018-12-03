@@ -123,7 +123,7 @@ class DataNode(DVCNode):
     analysis_kind = None
 
     def configure(self, pre_run=False, **kw):
-        print(self, pre_run, getattr(self, self.analysis_kind), self.index)
+        # print(self, pre_run, getattr(self, self.analysis_kind), self.index)
         if pre_run and getattr(self, self.analysis_kind) and self.index == 0:
             return True
 

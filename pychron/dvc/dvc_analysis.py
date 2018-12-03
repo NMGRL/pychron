@@ -33,10 +33,7 @@ from pychron.experiment.utilities.environmentals import set_environmentals
 from pychron.experiment.utilities.identifier import make_aliquot_step, make_step
 from pychron.processing.analyses.analysis import Analysis, EXTRACTION_ATTRS, META_ATTRS
 from pychron.processing.isotope import Isotope
-from pychron.pychron_constants import INTERFERENCE_KEYS, NULL_STR
-
-PATH_MODIFIERS = (None, '.data', 'blanks', 'intercepts', 'icfactors',
-                  'baselines', 'tags', 'peakcenter', 'extraction', 'monitor')
+from pychron.pychron_constants import INTERFERENCE_KEYS, NULL_STR, ARAR_MAPPING
 
 
 class Blank:
@@ -134,6 +131,7 @@ class DVCAnalysis(Analysis):
 
         if self.analysis_type.lower() == 'sample':
             self.analysis_type = 'unknown'
+        self.arar_mapping = jd.get('arar_mapping', ARAR_MAPPING)
 
     def load_extraction(self, jd):
         for attr in EXTRACTION_ATTRS:

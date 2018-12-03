@@ -500,11 +500,10 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                     prog.change_message('Loading')
                 elif i == n - 1:
                     prog.change_message('Finished')
-                    # if prog and i % 25 == 0:
-                else:
+                if prog and i % 25 == 0:
                     prog.change_message('Loading {}'.format(xi.record_id))
-
-            return xi.record_views
+            xi.bind()
+            return xi
 
         ret = progress_loader(ans, func, threshold=100, step=20)
         self.debug('make records {}'.format(time.time() - st))

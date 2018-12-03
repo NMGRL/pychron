@@ -146,13 +146,8 @@ AR37 = 'Ar37'
 AR36 = 'Ar36'
 
 ARGON_KEYS = (AR40, AR39, AR38, AR37, AR36)
-ISOTOPES = ARGON_KEYS
 
-
-def set_isotope_names(isos):
-    global ISOTOPES
-    ISOTOPES = isos
-
+ARAR_MAPPING = dict({k: v for k, v in zip(ARGON_KEYS, ARGON_KEYS)})
 
 IRRADIATION_KEYS = [('k4039', 'K_40_Over_39'),
                     ('k3839', 'K_38_Over_39'),
@@ -226,10 +221,6 @@ ELLIPSE_KIND_SCALE_FACTORS = dict(zip(ELLIPSE_KINDS, (1, 2, 2.4477)))
 
 DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
 
-MASS_SPEC_REDUCED = 'MASS SPEC REDUCED'
-HISTORY_TAGS = ('TAG', 'ISOEVO', 'BLANKS', 'ICFactor', 'DEFINE EQUIL', MASS_SPEC_REDUCED, 'COLLECTION', 'IMPORT',
-                'MANUAL')
-HISTORY_PATHS = ('tags', 'intercepts', 'baselines', 'blanks', 'icfactors', '.data', '')
 DEFAULT_PIPELINE_ROOTS = ('Fit', 'Plot', 'Table', 'History', 'Share', 'Transfer', 'MDD', 'User')
 
 # SAMPLE PREP ===================================================

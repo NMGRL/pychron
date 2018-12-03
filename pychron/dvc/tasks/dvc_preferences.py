@@ -16,8 +16,8 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import Str, Bool
-from traitsui.api import View, Item
+from traits.api import Str, Bool, Int
+from traitsui.api import View, Item, HGroup, VGroup
 
 from pychron.core.helpers.strtools import to_bool, to_csv_str
 from pychron.core.pychron_traits import BorderVGroup
@@ -81,6 +81,8 @@ class DVCConnectionPreferencesPane(ConnectionPreferencesPane):
 class DVCPreferences(BasePreferencesHelper):
     preferences_path = 'pychron.dvc'
     use_cocktail_irradiation = Bool
+    use_cache = Bool
+    max_cache_size = Int
 
 
 class DVCPreferencesPane(PreferencesPane):
@@ -88,10 +90,13 @@ class DVCPreferencesPane(PreferencesPane):
     category = 'DVC'
 
     def traits_view(self):
-        v = View(BorderVGroup(Item('use_cocktail_irradiation',
-                                   tooltip='Use the special cocktail.json for defining the '
-                                           'irradiation flux and chronology',
-                                   label='Use Cocktail Irradiation')))
+        v = View(VGroup(BorderVGroup(Item('use_cocktail_irradiation',
+                                          tooltip='Use the special cocktail.json for defining the '
+                                                  'irradiation flux and chronology',
+                                          label='Use Cocktail Irradiation')),
+                        BorderVGroup(HGroup(Item('use_cache', label='Enabled'),
+                                            Item('max_cache_size', label='Max Size')),
+                                     label='Cache')))
         return v
 
 

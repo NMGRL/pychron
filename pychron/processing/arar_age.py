@@ -29,10 +29,15 @@ from uncertainties import ufloat, std_dev, nominal_value
 from pychron.core.helpers.isotope_utils import sort_detectors
 from pychron.processing.arar_constants import ArArConstants
 from pychron.processing.argon_calculations import calculate_F, abundance_sensitivity_correction, age_equation, \
-    calculate_decay_factor, calculate_flux
+    calculate_flux, calculate_arar_decay_factors
 from pychron.processing.isotope import Blank
 from pychron.processing.isotope_group import IsotopeGroup
-from pychron.pychron_constants import ARGON_KEYS
+from pychron.pychron_constants import ARGON_KEYS, ARAR_MAPPING
+
+
+def value_error(uv):
+    return {'value': float(nominal_value(uv)),
+            'error': float(std_dev(uv))}
 
 
 class ArArAge(IsotopeGroup):
@@ -105,6 +110,8 @@ class ArArAge(IsotopeGroup):
     weight = 0  # in milligrams
     rundate = None
 
+    arar_mapping = ARAR_MAPPING
+
     def __init__(self, *args, **kw):
         super(ArArAge, self).__init__(*args, **kw)
         self.arar_constants = ArArConstants()
@@ -167,6 +174,24 @@ class ArArAge(IsotopeGroup):
     @lambda_k.setter
     def lambda_k(self, v):
         self._lambda_k = v
+
+    def baseline_corrected_intercepts_to_dict(self):
+        return {k: value_error(v.get_baseline_corrected_value()) for k, v in self.iter_isotopes()}
+
+    def blanks_to_dict(self):
+        return {k: value_error(v.blank.get_baseline_corrected_value()) for k, v in self.iter_isotopes()}
+
+    def icfactors_to_dict(self):
+        return {k: value_error(v.ic_factor) for k, v in self.iter_isotopes()}
+
+    def interference_corrected_values_to_dict(self):
+        return {k: value_error(v.get_interference_corrected_value()) for k, v in self.iter_isotopes()}
+
+    def ic_corrected_values_to_dict(self):
+        return {k: value_error(v.get_ic_corrected_value()) for k, v in self.iter_isotopes()}
+
+    def decay_corrected_values_to_dict(self):
+        return {k: value_error(v.get_decay_corrected_value()) for k, v in self.iter_isotopes()}
 
     def get_error_component(self, key):
         uage = self.uage_w_j_err
@@ -306,11 +331,9 @@ class ArArAge(IsotopeGroup):
         arc = self.arar_constants
         # only calculate decayfactors once
         if not self.ar39decayfactor:
-            a37df = calculate_decay_factor(nominal_value(arc.lambda_Ar37),
-                                           self.chron_segments)
-            a39df = calculate_decay_factor(nominal_value(arc.lambda_Ar39),
-                                           self.chron_segments)
-            # print a37df, a39df, self.chron_segments, self.chron_dosages
+            dc37 = nominal_value(arc.lambda_Ar37)
+            dc39 = nominal_value(arc.lambda_Ar39)
+            a37df, a39df = calculate_arar_decay_factors(dc37, dc39, self.chron_segments)
             self.ar37decayfactor = a37df
             self.ar39decayfactor = a39df
 
@@ -367,10 +390,8 @@ class ArArAge(IsotopeGroup):
 
     def _assemble_ar_ar_isotopes(self):
         isotopes = self.isotopes
-        for ik in ARGON_KEYS:
-            try:
-                isotopes[ik]
-            except KeyError:
+        for ik in self.arar_mapping.values():
+            if ik not in isotopes:
                 if not self._missing_isotope_warned:
                     self.warning('No isotope= "{}". Required for age calculation'.format(ik))
                 self._missing_isotope_warned = True
@@ -378,7 +399,7 @@ class ArArAge(IsotopeGroup):
         else:
             self._missing_isotope_warned = False
 
-        return [isotopes[ik].get_intensity() for ik in ARGON_KEYS]
+        return [isotopes[self.arar_mapping[k]].get_intensity() for k in ARGON_KEYS]
 
     def _calculate_F(self, iso_intensities=None, interferences=None):
 
@@ -432,15 +453,11 @@ class ArArAge(IsotopeGroup):
         self.Ar39_decay_corrected = iso_intensities[1]
         self.Ar37_decay_corrected = iso_intensities[3]
 
-        self.isotopes['Ar37'].decay_corrected = self.Ar37_decay_corrected
-        self.isotopes['Ar39'].decay_corrected = self.Ar39_decay_corrected
+        isotopes = self.isotopes
+        isotopes[self.arar_mapping['Ar37']].decay_corrected = self.Ar37_decay_corrected
+        isotopes[self.arar_mapping['Ar39']].decay_corrected = self.Ar39_decay_corrected
 
-        # self.debug('allow_negative ca correction {}'.format(arc.allow_negative_ca_correction))
-        self.corrected_intensities = dict(Ar40=iso_intensities[0],
-                                          Ar39=iso_intensities[1],
-                                          Ar38=iso_intensities[2],
-                                          Ar37=iso_intensities[3],
-                                          Ar36=iso_intensities[4])
+        self.corrected_intensities = {k: v for k, v in zip(ARGON_KEYS, iso_intensities)}
 
         f, f_wo_irrad, non_ar, computed, interference_corrected = self._calculate_F(iso_intensities,
                                                                                     interferences=interferences)
@@ -452,7 +469,6 @@ class ArArAge(IsotopeGroup):
         self.total40 = computed['a40']
         self.k39 = computed['k39']
 
-        isotopes = self.isotopes
         for k, v in interference_corrected.items():
             isotopes[k].interference_corrected_value = v
 

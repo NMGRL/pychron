@@ -226,6 +226,14 @@ class ShareChangesAction(Action):
 #
 #                 progress_iterator(analyses, func, threshold=1)
 
+class ClearCacheAction(Action):
+    name = 'Clear Cache'
+
+    def perform(self, event):
+        app = event.task.window.application
+        dvc = app.get_service(DVC_PROTOCOL)
+        dvc.clear_cache()
+
 
 class WorkOfflineAction(Action):
     name = 'Work Offline'

@@ -27,15 +27,14 @@ from traitsui.tabular_adapter import TabularAdapter
 from pychron import json
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.ui.tabular_editor import myTabularEditor
-from pychron.dvc import analysis_path
+from pychron.dvc import analysis_path, HISTORY_TAGS, HISTORY_PATHS
 from pychron.dvc.tasks.panes import CommitAdapter
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.view_util import open_view
 from pychron.git_archive.repo_manager import isoformat_date
 from pychron.git_archive.utils import get_diff, get_head_commit, from_gitlog
 from pychron.paths import paths
-from pychron.pychron_constants import LIGHT_RED, PLUSMINUS_ONE_SIGMA, LIGHT_YELLOW, HISTORY_PATHS, \
-    HISTORY_TAGS
+from pychron.pychron_constants import LIGHT_RED, PLUSMINUS_ONE_SIGMA, LIGHT_YELLOW
 
 TAGS = 'TAG', 'BLANK', 'ISOEVO', 'ICFactor'
 TAG_COLORS = {'TAG': '#f5f7c8', 'BLANKS': '#cac8f7',
@@ -267,12 +266,6 @@ class DiffView(BaseDiffView):
         return v
 
 
-# VIEWS = {'TAG': TagDiffView, 'BLANKS': BlanksDiffView,
-#          'ISOEVO': IsoEvoDiffView,
-#          'ICFactor': ICFactorDiffView,
-#          'COLLECTED': ImportDiffView}
-
-
 class DVCCommitView(HasTraits):
     commits = List
     commit_tag = Str
@@ -289,14 +282,6 @@ class DVCCommitView(HasTraits):
     def initialize(self, an):
         pass
 
-    # def initialize(self, an):
-    #     path = self._make_path(an)
-    #
-    #     self.commits = self._get_commits(path, self.commit_tag)
-    #     print 'asfd', len(self.commits)
-    #     # self.commits = getattr(an, self.commits_func)(self.commit_tag)
-    #     # self.commits = an.get_commits(tag='^<{}>'.format(self.commit_tag))
-
     def _selected_commits_changed(self, new):
         if new:
             if len(new) == 1:
@@ -311,38 +296,6 @@ class DVCCommitView(HasTraits):
 
     def _do_diff_fired(self):
         if self.selected_commits:
-            # n = len(self.selected_commits)
-            # lhs = self.selected_lhs
-            # if n == 1:
-            #     rhsid = 'HEAD'
-            #     obj = self.repo.head.commit
-            #     rhsdate = isoformat_date(obj.committed_date)
-            # if lhs.tag == 'IMPORT':
-            #     diffs = []
-            #     for a in ('blanks', 'icfactors', 'tags', 'intercepts'):
-            #         p = analysis_path(self.record_id, self.repository_identifier, modifier=a)
-            #         dd = get_diff(self.repo, lhs.hexsha, 'HEAD', p)
-            #         if dd:
-            #             diffs.append((a, dd))
-            #     if diffs:
-            #         v = ImportDiffView(self.record_id, lhsid, rhsid, lhsdate, rhsdate)
-            #         for a, (aa, bb) in diffs:
-            #             func = getattr(v, 'set_{}'.format(a))
-            #             func(json.load(aa.data_stream),
-            #                  json.load(bb.data_stream))
-            #         v.finish()
-            #         open_view(v)
-            #
-            #     return
-            # else:
-            #     d = get_diff(self.repo, lhs.hexsha, 'HEAD', lhs.path)
-            #
-            # elif n == 2:
-            #     lhs = self.selected_lhs
-            #     rhs = self.selected_rhs
-            # else:
-            #     warning(None, 'Can only diff max of 2')
-            #     return
 
             lhs = self.selected_lhs
             rhs = self.selected_rhs

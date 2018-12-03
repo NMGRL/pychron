@@ -189,6 +189,24 @@ class IdeogramPlotable(HasTraits):
         if make_arar_constants:
             self.arar_constants = ArArConstants()
 
+    def baseline_corrected_intercepts_to_dict(self):
+        pass
+
+    def blanks_to_dict(self):
+        pass
+
+    def icfactors_to_dict(self):
+        pass
+
+    def interference_corrected_values_to_dict(self):
+        pass
+
+    def ic_corrected_values_to_dict(self):
+        pass
+
+    def decay_corrected_values_to_dict(self):
+        pass
+
     def refresh_view(self):
         pass
 

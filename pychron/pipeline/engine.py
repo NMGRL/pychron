@@ -205,8 +205,8 @@ class PipelineEngine(Loggable):
     node_factories = List
     predefined_templates = List
 
-    selected = Any
-    selected_node = Instance(BaseNode, ())
+    selected = Instance(BaseNode, ())
+    # selected_node = Instance(BaseNode, ())
 
     dclicked = Event
     active_editor = Event
@@ -279,7 +279,7 @@ class PipelineEngine(Loggable):
 
         ans = self.selected_unknowns
         if not ans:
-            ans = self.selected_node.unknowns
+            ans = self.selected.unknowns
         projects = {a.project for a in ans}
         agv = AddAnalysisGroupView(projects={p: '{:05n}:{}'.format(i, p) for i, p in enumerate(projects)})
 
@@ -429,8 +429,8 @@ class PipelineEngine(Loggable):
             ni.clear_data()
 
     def remove_invalid(self):
-        unks = self.selected_node.unknowns
-        self.selected_node.unknowns = [unk for unk in unks if unk.tag.lower() != 'invalid']
+        unks = self.selected.unknowns
+        self.selected.unknowns = [unk for unk in unks if unk.tag.lower() != 'invalid']
         self.refresh_table_needed = True
 
     # ============================================================================================================
@@ -690,6 +690,8 @@ class PipelineEngine(Loggable):
         if state is None:
             state = EngineState()
             self.state = state
+        else:
+            self.debug('using existing state')
 
         ost = time.time()
 
@@ -715,7 +717,7 @@ class PipelineEngine(Loggable):
         for idx, node in enumerate(pipeline.iternodes(start_node)):
 
             if node.enabled:
-                node.editor = None
+                # node.editor = None
 
                 with ActiveCTX(node):
                     if not node.pre_run(state, configure=configure):
@@ -772,6 +774,9 @@ class PipelineEngine(Loggable):
 
         self.update_needed = True
         self.refresh_table_needed = True
+
+        # always select last node
+        self.selected = self.pipeline.nodes[-1]
 
         reponames = list({a.repository_identifier for items in (state.unknowns, state.references) for a in items})
 

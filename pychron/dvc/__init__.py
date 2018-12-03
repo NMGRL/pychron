@@ -28,6 +28,29 @@ from pychron.paths import paths
 
 __version__ = '2.0'
 
+MASS_SPEC_REDUCED = 'MASS SPEC REDUCED'
+HISTORY_TAGS = ('TAG', 'ISOEVO', 'BLANKS', 'ICFactor', 'DEFINE EQUIL', MASS_SPEC_REDUCED, 'COLLECTION', 'IMPORT',
+                'MANUAL')
+
+DATA = '.data'
+TAGS = 'tags'
+BASELINES = 'baselines'
+BLANKS = 'blanks'
+ICFACTORS = 'icfactors'
+INTERCEPTS = 'intercepts'
+
+HISTORY_PATHS = (None,
+                 DATA,
+                 BASELINES,
+                 BLANKS,
+                 ICFACTORS,
+                 INTERCEPTS,
+                 TAGS)
+
+static = ('peakcenter', 'extraction', 'monitor')
+PATH_MODIFIERS = HISTORY_PATHS + static
+NPATH_MODIFIERS = (None, DATA, TAGS) + static
+
 
 class AnalysisNotAnvailableError(BaseException):
     def __init__(self, root, runid):
