@@ -246,6 +246,9 @@ class AnalysisTbl(Base, IDMixin):
         self.load_name = self.get_load_name()
         self.load_holder = self.get_load_holder()
 
+        # force binding of irradiation_position
+        self.identifier
+
     # @property
     # def record_views(self):
     #     repos = self.repository_associations
