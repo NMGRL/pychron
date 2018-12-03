@@ -176,22 +176,22 @@ class ArArAge(IsotopeGroup):
         self._lambda_k = v
 
     def baseline_corrected_intercepts_to_dict(self):
-        return {k: value_error(v.get_baseline_corrected_value()) for k, v in self.iter_isotopes()}
+        return {k: value_error(v.get_baseline_corrected_value()) for k, v in self.iteritems()}
 
     def blanks_to_dict(self):
-        return {k: value_error(v.blank.get_baseline_corrected_value()) for k, v in self.iter_isotopes()}
+        return {k: value_error(v.blank.get_baseline_corrected_value()) for k, v in self.iteritems()}
 
     def icfactors_to_dict(self):
-        return {k: value_error(v.ic_factor) for k, v in self.iter_isotopes()}
+        return {k: value_error(v.ic_factor) for k, v in self.iteritems()}
 
     def interference_corrected_values_to_dict(self):
-        return {k: value_error(v.get_interference_corrected_value()) for k, v in self.iter_isotopes()}
+        return {k: value_error(v.get_interference_corrected_value()) for k, v in self.iteritems()}
 
     def ic_corrected_values_to_dict(self):
-        return {k: value_error(v.get_ic_corrected_value()) for k, v in self.iter_isotopes()}
+        return {k: value_error(v.get_ic_corrected_value()) for k, v in self.iteritems()}
 
     def decay_corrected_values_to_dict(self):
-        return {k: value_error(v.get_decay_corrected_value()) for k, v in self.iter_isotopes()}
+        return {k: value_error(v.get_decay_corrected_value()) for k, v in self.iteritems()}
 
     def get_error_component(self, key):
         uage = self.uage_w_j_err

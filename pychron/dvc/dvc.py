@@ -971,7 +971,7 @@ class DVC(Loggable):
                      baseline_corrected_intercepts=x.baseline_corrected_intercepts_to_dict(),
                      blanks=x.blanks_to_dict(),
                      icfactors=x.icfactors_to_dict(),
-                     corrected_values=x.corrected_values_to_dict(),
+                     ic_corrected_values=x.ic_corrected_values_to_dict(),
                      interference_corrected_values=x.interference_corrected_values_to_dict()
                      )
 
