@@ -93,8 +93,8 @@ class GitObjectAdapter(TabularAdapter):
         return self._truncate_message(self.item.message)
 
     def _truncate_message(self, m):
-        if len(m) > 50:
-            m = '{}...'.format(m[:50])
+        if len(m) > 200:
+            m = '{}...'.format(m[:200])
         return m
 
 

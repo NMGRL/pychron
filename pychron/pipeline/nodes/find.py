@@ -149,12 +149,7 @@ class FindFluxMonitorsNode(BaseFindFluxNode):
                 is_append, monitors = self.get_browser_analyses(irradiation=self.irradiation,
                                                                 level=self.level)
             else:
-                with dvc.session_ctx():
-                    ans = dvc.get_flux_monitor_analyses(self.irradiation, self.level, self.monitor_sample_name)
-                    for a in ans:
-                        a.bind()
-
-                    monitors = self.dvc.make_analyses(ans)
+                monitors = self.dvc.find_flux_monitors(self.irradiation, self.level, self.monitor_sample_name)
 
             state.unknowns = monitors
             state.flux_monitors = monitors

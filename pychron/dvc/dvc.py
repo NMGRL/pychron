@@ -576,6 +576,17 @@ class DVC(Loggable):
 
         return ias
 
+    def find_flux_monitors(self, irradiation, level, sample, make_records=True):
+        db = self.db
+        with db.session_ctx():
+            ans = db.get_flux_monitor_analyses(irradiation, level, sample)
+            for a in ans:
+                a.bind()
+
+            if make_records:
+                ans = self.make_analyses(ans)
+            return ans
+
     def find_references_by_load(self, load, atypes, make_records=True, **kw):
         records = self.db.find_references_by_load(load, atypes, **kw)
         if records:
