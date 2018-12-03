@@ -295,7 +295,7 @@ def apply_fixed_k3739(a39, pr, fixed_k3739):
     return ca37, ca39, k37, k39
 
 
-def interference_corrections(a40, a39, a38, a37, a36,
+def interference_corrections(a39, a37,
                              production_ratios,
                              arar_constants=None,
                              fixed_k3739=False):
@@ -379,8 +379,7 @@ def calculate_F(isotopes,
     a40, a39, a38, a37, a36 = isotopes
 
     def calc_f(pr):
-        k37, k38, k39, ca36, ca37, ca38, ca39 = interference_corrections(a40, a39, a38, a37, a36,
-                                                                         pr, arar_constants, fixed_k3739)
+        k37, k38, k39, ca36, ca37, ca38, ca39 = interference_corrections(a39, a37, pr, arar_constants, fixed_k3739)
         atm36, cl36, cl38 = calculate_atmospheric(a38, a36, k38, ca38, ca36,
                                                   decay_time,
                                                   pr,

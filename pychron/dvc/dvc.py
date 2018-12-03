@@ -617,7 +617,7 @@ class DVC(Loggable):
     def get_analysis(self, uuid):
         an = self.db.get_analysis_uuid(uuid)
         if an:
-            return self.make_analyses(an.record_views)
+            return self.make_analysis(an)
 
     def make_analysis(self, record, *args, **kw):
         a = self.make_analyses((record,), *args, **kw)

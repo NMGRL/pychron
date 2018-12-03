@@ -150,7 +150,6 @@ class FindFluxMonitorsNode(BaseFindFluxNode):
                                                                 level=self.level)
             else:
                 ans = dvc.get_flux_monitor_analyses(self.irradiation, self.level, self.monitor_sample_name)
-                ans = [aii for ai in ans for aii in ai.record_views]
                 monitors = self.dvc.make_analyses(ans)
 
             state.unknowns = monitors

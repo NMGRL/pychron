@@ -222,15 +222,13 @@ class UnknownNode(DataNode):
     def set_last_n_analyses(self, n):
         db = self.dvc.db
         ans = db.get_last_n_analyses(n)
-        records = [ri for ai in ans for ri in ai.record_views]
-        self.unknowns = self.dvc.make_analyses(records)
+        self.unknowns = self.dvc.make_analyses(ans)
 
     def set_last_n_hours_analyses(self, n):
         db = self.dvc.db
         ans = db.get_last_nhours_analyses(n)
         if ans:
-            records = [ri for ai in ans for ri in ai.record_views]
-            self.unknowns = self.dvc.make_analyses(records)
+            self.unknowns = self.dvc.make_analyses(ans)
 
     def pre_run(self, state, configure=True):
         # force Unknown node to always configure
@@ -364,11 +362,11 @@ class BaseAutoUnknownNode(UnknownNode):
 
         with self.dvc.session_ctx(use_parent_session=False):
             ats = [a.lower().replace(' ', '_') for a in self.analysis_types]
-            unks = self.dvc.get_analyses_by_date_range(low, high,
-                                                       analysis_types=ats,
-                                                       mass_spectrometers=self.mass_spectrometer,
-                                                       verbose=self.verbose)
-            records = [ri for unk in unks for ri in unk.record_views]
+            records = self.dvc.get_analyses_by_date_range(low, high,
+                                                          analysis_types=ats,
+                                                          mass_spectrometers=self.mass_spectrometer,
+                                                          verbose=self.verbose)
+
             if not self._cached_unknowns:
                 updated = True
                 ans = self.dvc.make_analyses(records)

@@ -321,7 +321,8 @@ class DVCDatabase(DatabaseAdapter):
                 q = exclude_invalid_analyses(q)
 
             records = self._query_all(q, verbose_query=True)
-            return [rii for ri in records for rii in ri.record_views]
+            return records
+            # return [rii for ri in records for rii in ri.record_views]
 
     def find_references(self, times, atypes, hours=10, exclude=None,
                         extract_devices=None,
@@ -349,7 +350,8 @@ class DVCDatabase(DatabaseAdapter):
                 refs.update(rs)
                 ex = [r.id for r in refs]
 
-            return [rii for ri in refs for rii in ri.record_views]
+            return refs
+            # return [rii for ri in refs for rii in ri.record_views]
 
     def get_blanks(self, ms=None, limit=100):
         with self.session_ctx() as sess:
