@@ -128,6 +128,9 @@ class AnalysisTbl(Base, IDMixin):
     repository_identifier = ''
     is_plateau_step = None
 
+    load_name = ''
+    load_holder = ''
+
     @property
     def step(self):
         if self.increment is not None and self.increment >= 0:
@@ -223,15 +226,13 @@ class AnalysisTbl(Base, IDMixin):
     def record_id(self):
         return make_runid(self.irradiation_position.identifier, self.aliquot, self.increment)
 
-    @property
-    def load_name(self):
+    def get_load_name(self):
         ln = ''
         if self.measured_positions:
             ln = self.measured_positions[0].loadName or ''
         return ln
 
-    @property
-    def load_holder(self):
+    def get_load_holder(self):
         lh = ''
         if self.measured_positions:
             load = self.measured_positions[0].load
@@ -242,6 +243,8 @@ class AnalysisTbl(Base, IDMixin):
     def bind(self):
         if self.repository_associations and len(self.repository_associations) == 1:
             self.repository_identifier = self.repository_associations[0].repository
+        self.load_name = self.get_load_name()
+        self.load_holder = self.get_load_holder()
 
     # @property
     # def record_views(self):

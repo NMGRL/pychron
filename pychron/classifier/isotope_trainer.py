@@ -15,6 +15,7 @@
 # ===============================================================================
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traits.api import Instance, Button, Str
 from traitsui.api import View, UItem, HGroup, VGroup
 from traitsui.handler import Handler
@@ -89,9 +90,8 @@ class IsotopeTrainer(Loggable):
         with dvc.session_ctx():
             ans = dvc.get_last_nhours_analyses(200, mass_spectrometers='jan')
             if ans:
-                records = [ri for ai in ans for ri in ai.record_views]
-
-                for ai in self.dvc.make_analyses(records):
+                # records = [ri for ai in ans for ri in ai.record_views]
+                for ai in self.dvc.make_analyses(ans):
                     broke = False
                     # dbai = dvc.get_analysis_uuid(uuid)
                     # ai = dvc.make_analyses((dbai,))[0]

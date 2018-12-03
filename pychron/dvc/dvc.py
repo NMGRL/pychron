@@ -579,6 +579,10 @@ class DVC(Loggable):
     def find_references_by_load(self, load, atypes, make_records=True, **kw):
         records = self.db.find_references_by_load(load, atypes, **kw)
         if records:
+
+            for r in records:
+                r.bind()
+
             if make_records:
                 records = self.make_analyses(records)
             return records
@@ -587,6 +591,9 @@ class DVC(Loggable):
         records = self.db.find_references(times, atypes, hours, exclude=exclude, **kw)
 
         if records:
+            for r in records:
+                r.bind()
+
             if make_records:
                 records = self.make_analyses(records)
             return records
