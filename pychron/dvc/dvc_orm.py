@@ -248,6 +248,7 @@ class AnalysisTbl(Base, IDMixin):
 
         # force binding of irradiation_position
         self.identifier
+        self.tag
 
     # @property
     # def record_views(self):
