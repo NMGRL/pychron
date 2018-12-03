@@ -32,6 +32,5 @@ class ICFactorPanel(ReferencesPanel):
     def _figure_factory(self, *args, **kw):
         f = super(ICFactorPanel, self)._figure_factory(*args, **kw)
         f.references_name = self.references_name
-        print('figure', self.references_name)
         return f
 # ============= EOF =============================================

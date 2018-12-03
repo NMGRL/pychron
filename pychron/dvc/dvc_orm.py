@@ -110,10 +110,10 @@ class AnalysisTbl(Base, IDMixin):
 
     weight = Column(Float)
     comment = stringcolumn(80)
-    repository_associations = relationship('RepositoryAssociationTbl', backref='analysis')
+    repository_associations = relationship('RepositoryAssociationTbl', backref='analysis', lazy='joined')
     group_sets = relationship('AnalysisGroupSetTbl', backref='analysis')
 
-    change = relationship('AnalysisChangeTbl', uselist=False, backref='analysis')
+    change = relationship('AnalysisChangeTbl', uselist=False, backref='analysis', lazy='joined')
     measured_positions = relationship('MeasuredPositionTbl', backref='analysis')
     media = relationship('MediaTbl', backref='analysis')
     results = relationship('AnalysisIntensitiesTbl', backref='analysis')
@@ -226,6 +226,11 @@ class AnalysisTbl(Base, IDMixin):
     def record_id(self):
         return make_runid(self.irradiation_position.identifier, self.aliquot, self.increment)
 
+    @property
+    def repository_identifier(self):
+        if self.repository_associations and len(self.repository_associations) == 1:
+            return self.repository_associations[0].repository
+
     def get_load_name(self):
         ln = ''
         if self.measured_positions:
@@ -241,39 +246,12 @@ class AnalysisTbl(Base, IDMixin):
         return lh
 
     def bind(self):
-        if self.repository_associations and len(self.repository_associations) == 1:
-            self.repository_identifier = self.repository_associations[0].repository
         self.load_name = self.get_load_name()
         self.load_holder = self.get_load_holder()
 
         # force binding of irradiation_position
-        self.identifier
-        self.tag
-
-    # @property
-    # def record_views(self):
-    #     repos = self.repository_associations
-    #     if len(repos) == 1:
-    #         return self._make_record_view(repos[0].repository),
-    #     else:
-    #         return [self._make_record_view(r.repository, use_suffix=True) for r in repos]
-    #
-    # def make_record_view(self, repository, use_suffix=False):
-    #     for repo in self.repository_associations:
-    #         if repo.repository == repository:
-    #             return self._make_record_view(repo.repository, use_suffix=use_suffix)
-    #     else:
-    #         return self._make_record_view(self.repository_associations[0].repository)
-    #
-    # def _make_record_view(self, repo, use_suffix=False):
-    #     iv = DVCIsotopeRecordView(self)
-    #     # iv.repository_ids = es = [e.repository for e in self.repository_associations]
-    #     # if len(es) == 1:
-    #     #     iv.repository_identifier = es[0]
-    #     iv.repository_identifier = repo
-    #     iv.use_repository_suffix = use_suffix
-    #     iv.init()
-    #     return iv
+        # self.identifier
+        # self.tag = self.change.tag
 
 
 class AnalysisIntensitiesTbl(Base, IDMixin):
@@ -354,7 +332,7 @@ class LevelTbl(Base, NameMixin):
     holder = stringcolumn(45)
     z = Column(Float)
 
-    positions = relationship('IrradiationPositionTbl', backref='level')
+    positions = relationship('IrradiationPositionTbl', backref='level', lazy='joined')
 
     note = Column(TEXT)
 
@@ -374,7 +352,7 @@ class LevelTbl(Base, NameMixin):
 
 
 class IrradiationTbl(Base, NameMixin):
-    levels = relationship('LevelTbl', backref='irradiation')
+    levels = relationship('LevelTbl', backref='irradiation', lazy='joined')
     create_date = Column(TIMESTAMP, default=func.now())
 
 
@@ -388,7 +366,7 @@ class IrradiationPositionTbl(Base, IDMixin):
     j = Column(Float)
     j_err = Column(Float)
     packet = stringcolumn(40)
-    analyses = relationship('AnalysisTbl', backref='irradiation_position')
+    analyses = relationship('AnalysisTbl', backref='irradiation_position', lazy='joined')
 
     @property
     def analysis_count(self):

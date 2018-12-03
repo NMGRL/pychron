@@ -29,7 +29,6 @@ class ICFactorModel(FigureModel):
 
     def _panel_factory(self, *args, **kw):
         p = super(ICFactorModel, self)._panel_factory(*args, **kw)
-        print('panel', self.references_name)
         p.references_name = self.references_name
         return p
 # ============= EOF =============================================

@@ -40,7 +40,6 @@ class IntercalibrationFactorEditor(InterpolationEditor):
                         analyses=self.items,
                         references=self.references)
 
-        print('model', self.references_name)
         return model
 
 # ============= EOF =============================================

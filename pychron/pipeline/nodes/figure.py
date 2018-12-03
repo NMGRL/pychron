@@ -50,6 +50,11 @@ class FigureNode(SortableNode):
     use_plotting = True
     editors = Dict
 
+    def reset(self):
+        super(FigureNode, self).reset()
+        self.editors = {}
+        self.editor = None
+        
     def refresh(self):
         for e in self.editors.values():
             e.refresh_needed = True
