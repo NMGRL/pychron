@@ -119,7 +119,13 @@ def analysis_path(analysis, *args, **kw):
     try:
         ret = _analysis_path(record_id, *args, **kw)
     except AnalysisNotAnvailableError:
-        ret = _analysis_path(uuid, *args, **kw)
+        try:
+            ret = _analysis_path(uuid, *args, **kw)
+        except AnalysisNotAnvailableError as e:
+            if kw.get('mode', 'r') == 'r':
+                ret = None
+            else:
+                raise e
 
     return ret
 
@@ -156,7 +162,7 @@ def _analysis_path(runid, repository, modifier=None, extension='.json', mode='r'
         d = os.path.join(root, modifier)
         if not os.path.isdir(d):
             if mode == 'r':
-                return
+                raise AnalysisNotAnvailableError(root, runid)
 
             os.mkdir(d)
 
@@ -167,8 +173,12 @@ def _analysis_path(runid, repository, modifier=None, extension='.json', mode='r'
         tail = fmt.format(tail, modifier[:4])
 
     name = add_extension(tail, extension)
+    path = os.path.join(root, name)
+    if mode == 'r':
+        if not os.path.isfile(path):
+            raise AnalysisNotAnvailableError(root, runid)
 
-    return os.path.join(root, name)
+    return path
 
 
 def repository_path(*args):

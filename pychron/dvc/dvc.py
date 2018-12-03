@@ -1290,7 +1290,9 @@ class DVC(Loggable):
 
     def _add_interpreted_age(self, ia, d):
         rid = ia.repository_identifier
-        p = analysis_path(ia.identifier, rid, modifier='ia', mode='w')
+
+        ia_path_name = ia.identifier.replace(':', '_')
+        p = analysis_path(ia_path_name, rid, modifier='ia', mode='w')
 
         i = 0
         while os.path.isfile(p):

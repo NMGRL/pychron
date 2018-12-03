@@ -15,16 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
-
 import hashlib
 import os
 import shutil
 import subprocess
+import sys
+import time
 from datetime import datetime
 
-import time
 from git import Repo
 from git.exc import GitCommandError
 from traits.api import Any, Str, List, Event
@@ -465,15 +463,18 @@ class GitRepoManager(Loggable):
         # Untracked files preffix in porcelain mode
         prefix = "?? "
         untracked_files = list()
+        iswindows = sys.platform == 'win32'
         for line in lines.split('\n'):
-            # print 'ffff', line
             if not line.startswith(prefix):
                 continue
             filename = line[len(prefix):].rstrip('\n')
             # Special characters are escaped
             if filename[0] == filename[-1] == '"':
                 filename = filename[1:-1].decode('string_escape')
-            # print 'ffasdfsdf', filename
+
+            if iswindows:
+                filename = filename.replace('/', '\\')
+
             untracked_files.append(os.path.join(self.path, filename))
         # finalize_process(proc)
         return untracked_files
