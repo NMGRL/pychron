@@ -68,7 +68,7 @@ def gitlog(repo, branch=None, args=None, path=None):
 
 def get_head_commit(repo):
     txt = gitlog(repo, args=('-n', '1', 'HEAD'))
-    return from_gitlog(txt.strip(), '', '')
+    return from_gitlog(txt.strip(), '')
 
 
 def get_commits(repo, branch, path, tag, *args):

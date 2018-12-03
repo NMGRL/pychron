@@ -21,7 +21,7 @@ import os
 from git import Repo
 from pyface.message_dialog import information
 from traits.api import HasTraits, Str, Int, Bool, List, Event, Either, Float, on_trait_change
-from traitsui.api import View, UItem, VGroup, TabularEditor, HGroup, Item
+from traitsui.api import View, UItem, VGroup, TabularEditor, HGroup, Item, TextEditor, VSplit
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron import json
@@ -278,18 +278,22 @@ class DVCCommitView(HasTraits):
     repo = None
     uuid = Str
     show_all_commits = Bool(True)
+    selected_message = Str
 
     def initialize(self, an):
         pass
 
     def _selected_commits_changed(self, new):
         if new:
+            self.selected_message = new[0].message
             if len(new) == 1:
                 self.selected_lhs = new[0]
                 self.selected_rhs = get_head_commit(self.repo)
             elif len(new) == 2:
                 a, b = new
                 self.selected_rhs = a if b == self.selected_lhs else b
+        else:
+            self.selected_message = ''
 
     def _make_path(self, an):
         return an.make_path(self.modifier)
@@ -331,10 +335,13 @@ class DVCCommitView(HasTraits):
             HGroup(icon_button_editor('do_diff', 'edit_diff', tooltip='Make Diff between two commits'),
                    Item('show_all_commits', label='Show All Commits')),
 
-            UItem('commits', editor=myTabularEditor(adapter=HistoryCommitAdapter(),
+            VSplit(UItem('commits', editor=myTabularEditor(adapter=HistoryCommitAdapter(),
                                                     multi_select=True,
                                                     editable=False,
-                                                    selected='selected_commits'))))
+                                                    selected='selected_commits'))),
+            UItem('selected_message', style='custom',
+                  height=-200,
+                  editor=TextEditor(read_only=True))))
         return v
 
 
