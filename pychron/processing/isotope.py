@@ -21,6 +21,7 @@
 import re
 import struct
 from binascii import hexlify
+from math import isnan, isinf
 
 import six
 from numpy import array, Inf, polyfit, gradient
@@ -329,6 +330,9 @@ class IsotopicMeasurement(BaseMeasurement):
 
         if not self.use_stored_value and not self.user_defined_value and self.xs.shape[0] > 1:
             v = self.regressor.predict(0)
+
+            if isnan(v) or isinf(v):
+                v = 0
             return v
         else:
             return self._value
@@ -342,6 +346,8 @@ class IsotopicMeasurement(BaseMeasurement):
 
         if not self.use_stored_value and not self.user_defined_error and self.xs.shape[0] > 1:
             v = self.regressor.predict_error(0)
+            if isnan(v) or isinf(v):
+                v = 0
             return v
         else:
             return self._error
