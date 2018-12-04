@@ -329,7 +329,10 @@ class BaseAnalysesAdapter(TabularAdapter, ConfigurableMixin):
     sample_width = Int(80)
 
     def _get_rundate_text(self):
-        r = self.item.rundate.strftime('%m-%d-%Y %H:%M')
+        try:
+            r = self.item.rundate.strftime('%m-%d-%Y %H:%M')
+        except AttributeError:
+            r = ''
         return r
 
     def get_bg_color(self, obj, trait, row, column=0):

@@ -46,6 +46,8 @@ class BaseNode(ColumnSorterMixin):
     index = -1
 
     skip_meaning = Str
+    use_state_unknowns = True
+    use_state_references = True
 
     def resume(self, state):
         pass

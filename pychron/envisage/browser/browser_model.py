@@ -142,18 +142,19 @@ class BrowserModel(BaseBrowserModel):
                 return
 
             db = self.db
-            ps1 = db.get_fuzzy_projects(new)
+            with db.session_ctx():
+                ps1 = db.get_fuzzy_projects(new)
 
-            ss, ps2 = db.get_fuzzy_labnumbers(new)
-            sams = self._load_sample_record_views(ss)
+                ss, ps2 = db.get_fuzzy_labnumbers(new)
+                sams = self._load_sample_record_views(ss)
 
-            ps = set(ps1 + ps2)
-            self.osamples = sams
-            self.samples = sams
+                ps = set(ps1 + ps2)
+                self.osamples = sams
+                self.samples = sams
 
-            ad = self._make_project_records(ps, include_recent=False)
-            self.projects = ad
-            self.oprojects = ad
+                ad = self._make_project_records(ps, include_recent=False)
+                self.projects = ad
+                self.oprojects = ad
 
     def _irradiation_enabled_changed(self, new):
         if not new:
