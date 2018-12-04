@@ -15,23 +15,22 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from itertools import groupby
-from operator import attrgetter
 
 from apptools.preferences.preference_binding import bind_preference
-from traits.api import Any, Bool, Instance, List
+from traits.api import Any, Bool, Instance, Dict
 from traitsui.api import View
 
-from pychron.core.progress import progress_loader, progress_iterator
+from pychron.core.helpers.iterfuncs import groupby_key
+from pychron.core.helpers.strtools import ratio
+from pychron.core.progress import progress_iterator
 from pychron.options.options_manager import IdeogramOptionsManager, OptionsController, SeriesOptionsManager, \
     SpectrumOptionsManager, InverseIsochronOptionsManager, VerticalFluxOptionsManager, XYScatterOptionsManager, \
     RadialOptionsManager, RegressionSeriesOptionsManager
 from pychron.options.views.views import view
-from pychron.pipeline.nodes.base import BaseNode, SortableNode
+from pychron.pipeline.nodes.base import SortableNode
 from pychron.pipeline.plot.plotter.series import RADIOGENIC_YIELD, PEAK_CENTER, \
-    ANALYSIS_TYPE, AGE, AR4036, UAR4036, AR4038, UAR4038, AR4039, UAR4039, LAB_TEMP, LAB_HUM, AR3739, AR3738, UAR4037, \
-    AR4037, AR3639, UAR3839, AR3839, UAR3639, UAR3739, UAR3738, UAR3638, AR3638, UAR3637, AR3637
-from pychron.pychron_constants import COCKTAIL, UNKNOWN, AR40, AR39, AR36, AR38, DETECTOR_IC, AR37
+    ANALYSIS_TYPE, AGE, LAB_TEMP, LAB_HUM
+from pychron.pychron_constants import COCKTAIL, UNKNOWN, DETECTOR_IC
 
 
 class NoAnalysesError(BaseException):
@@ -49,10 +48,16 @@ class FigureNode(SortableNode):
     # editors = List
     auto_set_items = True
     use_plotting = True
+    editors = Dict
 
+    def reset(self):
+        super(FigureNode, self).reset()
+        self.editors = {}
+        self.editor = None
+        
     def refresh(self):
-        if self.editor:
-            self.editor.refresh_needed = True
+        for e in self.editors.values():
+            e.refresh_needed = True
 
     def run(self, state):
         self.plotter_options = self.plotter_options_manager.selected_options
@@ -69,35 +74,30 @@ class FigureNode(SortableNode):
         if not state.unknowns and self.no_analyses_warning:
             raise NoAnalysesError
 
-        # self.unknowns = state.unknowns
-        # self.references = state.references
-
-        # oname = ''
         if use_plotting and self.use_plotting:
-            editor = self.editor
-            # editors = self.editors
-            if not editor:
-                # key = lambda x: x.graph_id
-                #
-                # for _, ans in groupby(sorted(state.unknowns, key=key), key=key):
-                editor = self._editor_factory()
+            for tab_id, unks in groupby_key(state.unknowns, 'tab_id'):
+                if tab_id in self.editors:
+                    editor = self.editors[tab_id]
+                else:
+                    editor = self._editor_factory()
+                    self.editors[tab_id] = editor
+
                 state.editors.append(editor)
                 self.editor = editor
+                if self.auto_set_items:
+                    bind_preference(self, 'skip_meaning', 'pychron.pipeline.skip_meaning')
+                    if self.name in self.skip_meaning.split(','):
+                        unks = [u for u in unks if u.tag.lower() != 'skip']
 
-            if self.auto_set_items:
-                unks = state.unknowns
-                bind_preference(self, 'skip_meaning', 'pychron.pipeline.skip_meaning')
-                if self.name in self.skip_meaning.split(','):
-                    unks = [u for u in unks if u.tag.lower() != 'skip']
+                    editor.set_items(list(unks))
+                    editor.refresh_needed = True
+                    # if hasattr(editor, 'component'):
+                    #     editor.component.invalidate_and_redraw()
 
-                editor.set_items(unks)
-                if hasattr(editor, 'component'):
-                    editor.component.invalidate_and_redraw()
-
-            key = attrgetter('name')
-            for name, es in groupby(sorted(state.editors, key=key), key=key):
-                for i, ei in enumerate(es):
-                    ei.name = '{} {:02n}'.format(ei.name, i + 1)
+        for name, es in groupby_key(state.editors, 'name'):
+            for i, ei in enumerate(es):
+                ei.name = ' '.join(ei.name.split(' ')[:-1])
+                ei.name = '{} {:02n}'.format(ei.name, i + 1)
 
     def configure(self, refresh=True, pre_run=False, **kw):
         if not pre_run:
@@ -112,8 +112,8 @@ class FigureNode(SortableNode):
                                                         kind='livemodal')
         if info.result:
             self.plotter_options = pom.selected_options
-            if self.editor:
-                self.editor.plotter_options = pom.selected_options
+            for e in self.editors.values():
+                e.plotter_options = pom.selected_options
 
             if refresh:
                 self.refresh()
@@ -200,13 +200,7 @@ class SeriesNode(FigureNode):
                 names.extend(['{}bs'.format(ki) for ki in iso_keys])
                 names.extend(['{}ic'.format(ki) for ki in iso_keys])
 
-                for iso in iso_keys:
-                    for jiso in iso_keys:
-                        if iso == jiso:
-                            continue
-
-                        if '{}/{}'.format(jiso, iso) not in names:
-                            names.append('{}/{}'.format(iso, jiso))
+                names.extend(ratio(iso_keys))
 
                 if unk.analysis_type in (UNKNOWN, COCKTAIL):
                     names.append(AGE)
@@ -234,7 +228,7 @@ class RegressionSeriesNode(SeriesNode):
     def run(self, state):
         po = self.plotter_options
 
-        keys = [fi.name for fi in list(reversed([pi for pi in po.get_loadable_aux_plots()]))]
+        keys = [fi.name for fi in list(reversed([pi for pi in po.get_plotable_aux_plots()]))]
 
         def load_raw(x, prog, i, n):
             x.load_raw_data(keys)

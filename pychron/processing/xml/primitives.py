@@ -16,12 +16,15 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from datetime import datetime
+
 from traits.api import HasTraits, Instance
 from traitsui.api import View, UItem
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from uncertainties import ufloat, nominal_value, std_dev
+
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.analyses.view.main_view import MainView
@@ -121,6 +124,7 @@ class XMLIsotope(XMLBaseValue):
 
 class XMLAnalysisRecord(object):
     selected_histories = None
+
     def __init__(self, elem, meas_elem):
         self.uuid = meas_elem.get('measurementNumber')
         self.labnumber = XMLLabnumber(elem)
@@ -227,6 +231,7 @@ class XMLAnalysis(Analysis):
         # self.Ar38/Ar39_decay_corrected=0
         # self.Ar37_decay_corrected/Ar39_decay_corrected=0
         # self.Ar36/Ar39_decay_corrected=0
+
     def calculate_age(self, force=False, **kw):
         pass
 
@@ -326,6 +331,3 @@ class XMLIrradiation(object):
         self.name = irrad.get('irradiationName')
 
 # ============= EOF =============================================
-
-
-

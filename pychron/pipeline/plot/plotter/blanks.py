@@ -19,13 +19,16 @@
 # ============= local library imports  ==========================
 # from pychron.pipeline.plot. import ReferencesSeries
 from __future__ import absolute_import
+
+from six.moves import zip
 from uncertainties import ufloat
 
 from pychron.pipeline.plot.plotter.references_series import ReferencesSeries
-from six.moves import zip
 
 
 class Blanks(ReferencesSeries):
+    references_name = 'Blanks'
+
     def _get_interpolated_value(self, po, analysis):
         v, e = 0, 0
         iso = self._get_isotope(po, analysis)
@@ -40,10 +43,19 @@ class Blanks(ReferencesSeries):
                 ui.set_temporary_blank(iso, v, e, fit)
 
     def _get_reference_data(self, po):
-        ys = [self._get_isotope(po, ai) for ai in self.sorted_references]
+        _, mx = self._get_min_max()
+        ans = self.sorted_references
+
+        atypes = po.analysis_types
+        if atypes:
+            ans = [ai for ai in ans if ai.analysis_type in atypes]
+
+        xs = self._get_xs([po], ans, tzero=mx)
+
+        ys = [self._get_isotope(po, ai) for ai in ans]
         ys = [yi.get_baseline_corrected_value() if yi else ufloat(0, 0) for yi in ys]
 
-        return ys
+        return ans, xs, ys
 
     def _get_current_data(self, po):
         isos = [self._get_isotope(po, ai) for ai in self.sorted_analyses]

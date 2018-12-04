@@ -14,22 +14,18 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
 import os
 import time
 
-from traits.api import Instance, Event, Bool, Any, Property, Str, Float, provides
+# ============= enthought library imports =======================
+from traits.api import Instance, Event, Bool, Any, Property, Float, provides
 
 from pychron.core.helpers.filetools import list_directory
-from pychron.core.helpers.strtools import to_bool
+from pychron.core.helpers.strtools import to_bool, csv_to_floats
 from pychron.hardware.meter_calibration import MeterCalibration
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.managers.manager import Manager
 from pychron.paths import paths
-from six.moves import map
-from six.moves import zip
 
 
 @provides(ILaserManager)
@@ -206,19 +202,23 @@ class BaseLaserManager(Manager):
     def _move_to_position(self, *args, **kw):
         pass
 
-    def _block(self, cmd='GetDriveMoving', cmpfunc=None, period=0.25, position_callback=None):
+    def _block(self, cmd='GetDriveMoving', cmpfunc=None, period=0.25, position_callback=None, nsuccess=2, timeout=50):
 
         ask = self._ask
 
         cnt = 0
-        tries = 0
-        maxtries = int(5 / float(period))  # timeout after 50 s
-        nsuccess = 2
         self._cancel_blocking = False
         if cmpfunc is None:
             cmpfunc = to_bool
 
-        while tries < maxtries and cnt < nsuccess:
+        st = time.time()
+        while 1:
+            if cnt > nsuccess:
+                break
+
+            if time.time() - st > timeout:
+                break
+
             if self._cancel_blocking:
                 break
 
@@ -246,7 +246,6 @@ class BaseLaserManager(Manager):
                             position_callback(*xyz)
             else:
                 cnt = 0
-                tries += 1
 
         state = cnt >= nsuccess
         if state:
@@ -255,7 +254,7 @@ class BaseLaserManager(Manager):
             if self._cancel_blocking:
                 self.info('Block failed. canceled by user')
             else:
-                self.warning('Block failed. timeout after {}s'.format(maxtries * period))
+                self.warning('Block failed. timeout after {}s'.format(timeout))
 
         return state
 
@@ -280,7 +279,7 @@ class BaseLaserManager(Manager):
         if config.has_section(section):
             cs = config.get(section, 'coefficients')
             try:
-                coeffs = list(map(float, cs.split(',')))
+                coeffs = csv_to_floats(cs)
             except ValueError:
                 self.warning_dialog('Invalid power calibration {}'.format(cs))
                 return

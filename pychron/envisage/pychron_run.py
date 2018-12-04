@@ -49,6 +49,8 @@ PACKAGE_DICT = dict(
     PipelinePlugin='pychron.pipeline.tasks.plugin',
 
     ClassifierPlugin='pychron.classifier.tasks.plugin',
+    MDDPlugin='pychron.mdd.tasks.plugin',
+    AutoPlugin='pychron.pipeline.tasks.auto_plugin',
 
     # data mappers
     USGSVSCDataPlugin='pychron.data_mapper.tasks.usgs_vsc.plugin',
@@ -182,7 +184,7 @@ def get_user_plugins():
     core_added = False
     for p in ps:
         # if laser plugin add CoreLaserPlugin
-        if p in ('FusionsCO2', 'FusionsDiode'):
+        if p in ('FusionsCO2', 'FusionsDiode', 'ChromiumCO2'):
             plugin = get_plugin('CoreLaserPlugin')
             if plugin and not core_added:
                 core_added = True

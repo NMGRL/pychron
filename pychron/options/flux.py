@@ -15,15 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import List, Str, Int, Enum, Property, Bool, Float
+from traits.api import Str, Int, Enum, Property, Bool, Float
 
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.options import FigureOptions
-from pychron.pychron_constants import FLUX_CONSTANTS, ERROR_TYPES
+from pychron.pychron_constants import FLUX_CONSTANTS, ERROR_TYPES, MAIN, APPEARANCE
 
 
 class FluxOptions(FigureOptions):
-    subview_names = List(['Main', 'Appearance'], transient=True)
     color_map_name = Str('jet')
     marker_size = Int(5)
     levels = Int(50, auto_set=False, enter_set=True)
@@ -33,16 +32,21 @@ class FluxOptions(FigureOptions):
     selected_decay = Enum(list(FLUX_CONSTANTS.keys()))
     lambda_k = Property(depends_on='selected_decay')
     monitor_age = Property(depends_on='selected_decay')
-    model_kind = Enum('Plane', 'Bowl')
+    model_kind = Enum('Plane', 'Bowl', 'Weighted Mean', 'Matching', 'Bracketing')
     predicted_j_error_type = Enum(*ERROR_TYPES)
+    flux_scalar = Float(1000)
+    
     use_weighted_fit = Bool(False)
     monte_carlo_ntrials = Int(10)
     use_monte_carlo = Bool(False)
     monitor_sample_name = Str
-    plot_kind = Enum('1D', '2D')
+    plot_kind = Enum('1D', '2D', 'Grid')
 
-    position_only = Bool(False)
+    # position_only = Bool(False)
     position_error = Float
+
+    def initialize(self):
+        self.subview_names = [MAIN, APPEARANCE]
 
     def _get_lambda_k(self):
         dc = FLUX_CONSTANTS[self.selected_decay]
@@ -62,7 +66,9 @@ class VerticalFluxAuxPlot(AuxPlot):
 
 
 class VerticalFluxOptions(FigureOptions):
-    subview_names = List(['Main', 'Appearance'], transient=True)
+
+    def initialize(self):
+        self.subview_names = [MAIN, APPEARANCE]
 
     def get_plotable_aux_plots(self):
         return [VerticalFluxAuxPlot()]

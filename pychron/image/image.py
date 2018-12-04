@@ -14,19 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-# =============enthought library imports=======================
-from __future__ import absolute_import
-from numpy import asarray, flipud, ndarray, fliplr
+from numpy import asarray, flipud, fliplr
 from skimage.color import rgb2gray, gray2rgb
 from skimage.transform import resize, rotate as trotate
+# =============enthought library imports=======================
 from traits.api import HasTraits, Any, List, Int, Bool, Float
-
-# from cv_wrapper import flip as cv_flip
-# from cv_wrapper import load_image, asMat, get_size, grayspace, resize, \
-#     save_image, draw_lines
-# from cv_wrapper import swap_rb as cv_swap_rb
-from pychron.globals import globalv
-from six.moves import map
 
 
 class Image(HasTraits):

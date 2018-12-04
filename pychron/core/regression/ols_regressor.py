@@ -14,25 +14,18 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-
-from __future__ import absolute_import
-from __future__ import print_function
-
 import logging
 
 from numpy import asarray, column_stack, matrix, sqrt, dot, linalg, zeros_like, hstack, ones_like
-from six.moves import range
 from statsmodels.api import OLS
 from traits.api import Int, Property
 
+# ============= local library imports  ==========================
 from pychron.core.helpers.fits import FITS
-from pychron.pychron_constants import MSEM
-from pychron.pychron_constants import SEM
+from pychron.core.regression.base_regressor import BaseRegressor
+from pychron.pychron_constants import MSEM, SEM
 
 logger = logging.getLogger('Regressor')
-
-# ============= local library imports  ==========================
-from .base_regressor import BaseRegressor
 
 
 class OLSRegressor(BaseRegressor):
@@ -178,7 +171,10 @@ class OLSRegressor(BaseRegressor):
             e = self.predict_error_matrix(x, error_calc)
 
         if return_single:
-            e = e[0]
+            try:
+                e = e[0]
+            except TypeError:
+                e = 0
         return e
 
     def predict_error_algebraic(self, x, error_calc='SEM'):
@@ -408,31 +404,3 @@ if __name__ == '__main__':
     print(r.predict_error([(0, 2)]))
     print(r.predict_error([(0.1, 1)]))
 # ============= EOF =============================================
-# def predict_error_al(self, x, error_calc='sem'):
-#        result = self._result
-#        cov_varM = result.cov_params()
-#        cov_varM = matrix(cov_varM)
-#        se = self.calculate_standard_error_fit()
-#
-#        def predict_yi_err(xi):
-#            '''
-#
-#                bx= x**0,x**1,x**n where n= degree of fit linear=2, parabolic=3 etc
-#
-#            '''
-#            bx = asarray([pow(xi, i) for i in range(self.degree + 1)])
-#            bx_covar = bx * cov_varM
-#            bx_covar = asarray(bx_covar)[0]
-#            var = sum(bx * bx_covar)
-# #            print var
-#            s = var ** 0.5
-#            if error_calc == 'sd':
-#                s = (se ** 2 + s ** 2) ** 2
-#
-#            return s
-#
-#        if isinstance(x, (float, int)):
-#            x = [x]
-#        x = asarray(x)
-#
-#        return [predict_yi_err(xi) for xi in x]

@@ -14,14 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
-
 import csv
 import os
 
-from six.moves import zip
+# ============= enthought library imports =======================
 from traits.api import Str, Instance, List, HasTraits, Bool, Button
 from traitsui.api import Item, UItem, VGroup, HGroup
 from traitsui.editors import DirectoryEditor, CheckListEditor, TableEditor
@@ -32,7 +28,7 @@ from uncertainties import ufloat, std_dev, nominal_value
 from pychron.core.confirmation import confirmation_dialog
 from pychron.core.helpers.filetools import add_extension, unique_path2, view_file
 from pychron.core.helpers.isotope_utils import sort_isotopes
-from pychron.core.progress import progress_iterator
+from pychron.core.progress import progress_iterator, progress_loader
 from pychron.core.ui.strings import SpacelessStr
 from pychron.paths import paths
 from pychron.pipeline.editors.set_ia_editor import SetInterpretedAgeEditor
@@ -100,12 +96,41 @@ class DVCPersistNode(PersistNode):
         for mi in mods:
             modpi = self.dvc.update_analyses(state.unknowns,
                                              mi, '<{}> {}'.format(self.commit_tag, msg))
-            modp.append(modpi)
+            modp.extend(modpi)
 
         if modp:
             state.modified = True
             for m in modp:
                 state.modified_projects = state.modified_projects.union(m)
+
+
+class DefineEquilibrationPersistNode(DVCPersistNode):
+    name = 'Save Equilibration'
+
+    def run(self, state):
+        if not state.saveable_keys:
+            return
+
+        def wrapper(x, prog, i, n):
+            return self._save_eq(x, prog, i, n, state.saveable_keys)
+
+        msg = ','.join('{}({})'.format(*a) for a in zip(state.saveable_keys, state.saveable_fits))
+        items = progress_loader(state.unknowns, wrapper, threshold=1, unpack=False)
+        modpis = self.dvc.update_analysis_paths(items, '<DEFINE EQUIL> {}'.format(msg))
+        modpps = self.dvc.update_analyses(state.unknowns, 'intercepts', '<ISOEVO> modified by DEFINE EQUIL')
+        modpis.extend(modpps)
+
+        if modpis:
+            state.modified = True
+            state.modified_projects = state.modified_projects.union(modpis)
+
+    def _save_eq(self, x, prog, i, n, keys):
+        if prog:
+            prog.change_message('Save Equilibration {} {}/{}'.format(x.record_id, i, n))
+
+        path = self.dvc.save_defined_equilibration(x, keys)
+        self.dvc.save_fits(x, keys)
+        return x, path
 
 
 class IsotopeEvolutionPersistNode(DVCPersistNode):
@@ -117,10 +142,10 @@ class IsotopeEvolutionPersistNode(DVCPersistNode):
         if not state.saveable_keys:
             return
 
-        wrapper = lambda x, prog, i, n: self._save_fit(x, prog, i, n, state.saveable_keys)
+        def wrapper(x, prog, i, n):
+            self._save_fit(x, prog, i, n, state.saveable_keys)
+
         progress_iterator(state.unknowns, wrapper, threshold=1)
-        # for ai in state.unknowns:
-        #     self.dvc.save_fits(ai, state.saveable_keys)
 
         msg = self.commit_message
         if not msg:
@@ -223,15 +248,18 @@ class FluxPersistNode(DVCPersistNode):
                        use_weighted_fit=po.use_weighted_fit,
                        monte_carlo_ntrials=po.monte_carlo_ntrials,
                        use_monte_carlo=po.use_monte_carlo,
-                       monitor_sample_name=po.monitor_sample_name)
+                       monitor_sample_name=po.monitor_sample_name,
+                       monitor_age=po.monitor_age,
+                       monitor_reference=po.selected_decay)
 
-        self.dvc.save_j(irp.irradiation, irp.level, irp.hole_id, irp.identifier,
-                        irp.j, irp.jerr,
-                        irp.mean_j, irp.mean_jerr,
-                        decay_constants,
-                        analyses=irp.analyses,
-                        options=options,
-                        add=False)
+        self.dvc.save_flux_position(irp, options, decay_constants, add=False)
+        # self.dvc.save_j(irp.irradiation, irp.level, irp.hole_id, irp.identifier,
+        #                 irp.j, irp.jerr,
+        #                 irp.mean_j, irp.mean_jerr,irp.
+        #                 decay_constants,
+        #                 analyses=irp.analyses,
+        #                 options=options,
+        #                 add=False)
 
         j = ufloat(irp.j, irp.jerr, tag='j')
         for i in state.unknowns:
@@ -247,6 +275,10 @@ class XLSXAnalysisTablePersistNode(BaseNode):
     # configurable = False
 
     options_klass = XLSXAnalysisTableWriterOptions
+
+    def _pre_run_hook(self, state):
+        ri = tuple({ai.repository_identifier for ai in state.unknowns})
+        self.options.root_name = ri[0]
 
     def _finish_configure(self):
         self.options.dump()

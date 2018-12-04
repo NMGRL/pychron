@@ -15,17 +15,18 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.label import Label
-from traits.api import Instance
+from traits.api import Instance, List
+from traitsui.api import View, VSplit
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.traitsui_shortcuts import listeditor
+from pychron.pipeline.editors.ideogram_results_table import IdeogramResultsTable
 from pychron.pipeline.plot.editors.interpreted_age_editor import InterpretedAgeEditor
-from pychron.processing.analyses.file_analysis import InterpretedAgeAnalysis
 from pychron.pipeline.plot.models.ideogram_model import IdeogramModel
+from pychron.processing.analyses.file_analysis import InterpretedAgeAnalysis
 
 
 class Caption(AbstractOverlay):
@@ -51,9 +52,25 @@ class Caption(AbstractOverlay):
 
 
 class IdeogramEditor(InterpretedAgeEditor):
-    # plotter_options_manager = Instance(IdeogramOptionsManager, ())
     figure_model_klass = IdeogramModel
     basename = 'ideo'
+    results_tables = List
+
+    def _get_component_hook(self):
+        rs = []
+        for p in self.figure_model.panels:
+            ags = []
+            for pp in p.figures:
+                ag = pp.analysis_group
+                group = pp.options.get_group(pp.group_id)
+                color = group.color
+                ag.color = color
+                ags.append(ag)
+
+            # ags = [pp.analysis_group for pp in p.figures]
+            r = IdeogramResultsTable(ags)
+            rs.append(r)
+        self.results_tables = rs
 
     def plot_interpreted_ages(self, iages):
         def construct(a):
@@ -66,7 +83,7 @@ class IdeogramEditor(InterpretedAgeEditor):
         self.disable_aux_plots()
 
         ans = [construct(ia) for ia in iages]
-        self.analyses = ans
+        self.items = ans
         self._update_analyses()
         self.dump_tool()
 
@@ -77,90 +94,15 @@ class IdeogramEditor(InterpretedAgeEditor):
                 ap.use = False
                 ap.enabled = False
 
-    # def get_component(self, ans, plotter_options):
-    # if plotter_options is None:
-    #         pom = IdeogramOptionsManager()
-    #         plotter_options = pom.plotter_options
-    #
-    #     from pychron.processing.plotters.ideogram.ideogram_model import IdeogramModel
-    #
-    #     model, component = self._make_component(IdeogramModel, ans, plotter_options)
-    #     return model, component
+    def traits_view(self):
+        tbl_grp = listeditor('results_tables', height=100, defined_when='plotter_options.show_results_table')
+        # tbl_grp = UItem('results_tables',
+        #                 editor=isteditor(style='custom'),
+        #                 height=200,
+        #                 defined_when='plotter_options.show_results_table')
 
-    # def get_component(self, ans, plotter_options):
-    # # meta = None
-    # # if self.figure_model:
-    #     #     meta = self.figure_model.dump_metadata()
-    #
-    #     if plotter_options is None:
-    #         pom = IdeogramOptionsManager()
-    #         plotter_options = pom.plotter_options
-    #
-    #     model = self.figure_model
-    #     container = self.figure_container
-    #     if not model:
-    #         from pychron.processing.plotters.ideogram.ideogram_model import IdeogramModel
-    #
-    #         model = IdeogramModel(plot_options=plotter_options,
-    #                               titles=self.titles)
-    #
-    #         self.figure_model = model
-    #
-    #     model.trait_set(plot_options=plotter_options,
-    #                     titles=self.titles,
-    #                     analyses=ans)
-    #
-    #     if not container:
-    #         container = FigureContainer(model=model)
-    #         self.figure_container = container
-    #
-    #     container.refresh()
-    #     component = container.component
-    #     # print self.figure_container
-    #     # print self.figure_model
-    #     # po = plotter_options
-    #     # m = po.mean_calculation_kind
-    #     # s = po.nsigma
-    #     # es = po.error_bar_nsigma
-    #     # ecm = po.error_calc_method
-    #     # captext = u'Mean: {} +/-{}\u03c3 Data: +/-{}\u03c3. ' \
-    #     #           u'Error Type:{}. Analyses omitted from calculation \n' \
-    #     #           u'indicated by open squares. Dashed line represents ' \
-    #     #           u'cumulative probability for all analyses'.format(m, s, es, ecm)
-    #     #
-    #     # self._add_caption(component, plotter_options, default_captext=captext)
-    #
-    #     # if meta:
-    #     #     model.load_metadata(meta)
-    #
-    #     return model, component
-
-                # def _get_items_from_file(self, parser):
-                #     # ans = []
-                #     def gen():
-                #         for d in parser.itervalues():
-                #             if d['age'] is not None:
-                #                 f = FileAnalysis(age=float(d['age']),
-                #                                  age_err=float(d['age_err']),
-                #                                  record_id=d['runid'],
-                #                                  sample=d.get('sample', ''),
-                #                                  aliquot=int(d.get('aliquot', 0)),
-                #                                  group_id=int(d.get('group', 0)))
-                #                 yield f
-                #
-                #     ans = list(gen())
-                #     # ans.append(f)
-                #
-                #     # ans = [construct(args)
-                #     #        for args in par.itervalues()]
-                #
-                #     po = self.plotter_options_manager.plotter_options
-                #     for ap in po.aux_plots:
-                #         if ap.name.lower() not in ('ideogram', 'analysis number', 'analysis number nonsorted'):
-                #             ap.use = False
-                #             ap.enabled = False
-                #         else:
-                #             ap.enabled = True
-                #     return ans
-
+        v = View(VSplit(self.get_component_view(),
+                        tbl_grp),
+                 resizable=True)
+        return v
 # ============= EOF =============================================

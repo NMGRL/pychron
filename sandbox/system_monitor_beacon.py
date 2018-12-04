@@ -2,10 +2,11 @@
  test script that periodically
  sends random messages using zmq.Publisher patterb
 """
-import random
-import time
-import sys
 import os
+import random
+import sys
+import time
+
 from traits.etsconfig.etsconfig import ETSConfig
 
 ETSConfig.toolkit = 'qt4'

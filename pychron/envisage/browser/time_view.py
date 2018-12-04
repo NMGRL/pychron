@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import os
 import pickle
 from datetime import datetime, timedelta
@@ -249,7 +250,7 @@ class TimeViewModel(HasTraits):
         def func(xi, prog, i, n):
             if prog:
                 prog.change_message('Loading {}'.format(xi.record_id))
-            return xi.record_views
+            return xi
 
         return progress_loader(ans, func, threshold=25)
 

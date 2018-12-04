@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from pyface.action.menu_manager import MenuManager
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
@@ -24,8 +25,10 @@ from traitsui.api import View, UItem, Item, HGroup, VGroup, TabularEditor, EnumE
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
+from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.resources import icon
+from pychron.pychron_constants import INITIAL_STEPS, IMAGE_STEPS, HIGH_GRADE_STEPS
 
 IMAGE_ICON = icon('image')
 
@@ -59,7 +62,14 @@ class PrepStepAdapter(TabularAdapter):
                ('Wash', 'wash'),
                ('Frantz', 'frantz'),
                ('Acid', 'acid'),
-               ('Heavy_liquid', 'heavy_liquid'),
+               ('Heavy Liquid', 'heavy_liquid'),
+               ('Mount', 'mount'),
+               ('Gold Table', 'gold_table'),
+               ('US Wand', 'us_wand'),
+               ('EDS', 'eds'),
+               ('CL', 'cl'),
+               ('BSE', 'bse'),
+               ('SE', 'se'),
                ('Pick', 'pick'),
                ('Image', 'nimages'),
                ('Comments', 'comment')]
@@ -113,35 +123,36 @@ class SamplePrepPane(TraitsTaskPane):
                                                                                editable=False)),
                       label='History')
 
-        ngrp = VGroup(HGroup(Item('object.prep_step.crush',
-                                  enabled_when='not object.prep_step.flag_crush'),
-                             UItem('object.prep_step.flag_crush')),
-                      HGroup(Item('object.prep_step.sieve',
-                                  enabled_when='not object.prep_step.flag_sieve'),
-                             UItem('object.prep_step.flag_sieve')),
-                      HGroup(Item('object.prep_step.wash',
-                                  enabled_when='not object.prep_step.flag_wash'),
-                             UItem('object.prep_step.flag_wash')),
-                      HGroup(Item('object.prep_step.frantz',
-                                  enabled_when='not object.prep_step.flag_frantz'),
-                             UItem('object.prep_step.flag_frantz')),
-                      HGroup(Item('object.prep_step.heavy_liquid',
-                                  enabled_when='not object.prep_step.flag_heavy_liquid'),
-                             UItem('object.prep_step.flag_heavy_liquid')),
-                      HGroup(Item('object.prep_step.acid',
-                                  enabled_when='not object.prep_step.flag_acid'),
-                             UItem('object.prep_step.flag_acid')),
-                      HGroup(Item('object.prep_step.pick',
-                                  enabled_when='not object.prep_step.flag_pick'),
-                             UItem('object.prep_step.flag_pick')),
-                      Item('object.prep_step.status'),
-                      HGroup(Item('object.prep_step.comment'),
-                             icon_button_editor('object.prep_step.edit_comment_button', 'cog')),
-                      label='New')
+        hs = []
+        for steps, label in ((INITIAL_STEPS, 'Initial'),
+                             (HIGH_GRADE_STEPS, 'High Grade'),
+                             (IMAGE_STEPS, 'Imaging')):
+            gs = []
+            for step in steps:
+                fstep = 'object.prep_step.flag_{}'.format(step)
+                g = HGroup(Item('object.prep_step.{}'.format(step),
+                                enabled_when='not {}'.format(fstep),
+                                editor=ComboboxEditor(name='object.prep_step.choices_{}'.format(step))),
+                           spring,
+                           UItem(fstep))
+                gs.append(g)
+            vg = VGroup(show_border=True, label=label, *gs)
+            hs.append(vg)
+        hg = HGroup(*hs)
+
+        sg = HGroup((Item('object.prep_step.status'),
+                     HGroup(Item('object.prep_step.comment'),
+                            icon_button_editor('object.prep_step.edit_comment_button', 'cog'))),
+                    show_border=True, label='Final')
+
+        ngrp = VGroup(hg, sg, label='New')
 
         agrp = VGroup(HGroup(icon_button_editor('add_step_button', 'add',
                                                 enabled_when='object.active_sample.name',
                                                 tooltip='Add a sample prep step'),
+                             icon_button_editor('clear_step_button', 'clear',
+                                                enabled_when='object.active_sample.name',
+                                                tooltip='Clear values entered in "New"'),
                              icon_button_editor('upload_image_button', 'image_add',
                                                 tooltip='Add image'),
                              icon_button_editor('view_camera_button', 'camera',
@@ -211,7 +222,7 @@ class SamplePrepFilterPane(TraitsDockPane):
                       label='Project',
                       show_border=True)
         sgrp = VGroup(icon_button_editor('add_selection_button', 'add',
-                                         enabled_when='selected',
+                                         enabled_when='selection_enabled',
                                          tooltip='Add selection to current Sample Prep Session'),
                       UItem('samples', editor=TabularEditor(adapter=SimpleSampleAdapter(),
                                                             multi_select=True,

@@ -39,13 +39,7 @@ nodes:
   - klass: UnknownNode
   - klass: YieldNode
 """
-GEOCHRON = """
-required:
- - pychron.geochron.geochron_service.GeochronService
-nodes:
- - klass: UnknownNode
- - klass: GeochronNode
-"""
+
 ICFACTOR = """
 required:
 nodes:
@@ -54,17 +48,21 @@ nodes:
     threshold: 10
     analysis_types: 
       - Air
+    name: Find Airs
   - klass: ReferenceNode
   - klass: FitICFactorNode
-    fits:
-      - numerator: H1
-        denominator: CDD
-        standard_ratio: 295.5
-        analysis_type: Air
-        save_enabled: True
-        plot_enabled: True
   - klass: ReviewNode
   - klass: ICFactorPersistNode
+"""
+
+DEFINE_EQUILIBRATION = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: DefineEquilibrationNode
+  - klass: ReviewNode
+  - klass: DefineEquilibrationPersistNode
+    use_editor: False
 """
 
 ISOEVO = """
@@ -83,6 +81,7 @@ nodes:
   - klass: UnknownNode
   - klass: FindBlanksNode
     threshold: 10
+    name: Find Blanks
   - klass: ReferenceNode
   - klass: FitBlanksNode
   - klass: ReviewNode
@@ -115,6 +114,7 @@ SPEC = """
 required:
 nodes:
   - klass: UnknownNode
+  - klass: GroupingNode
   - klass: SpectrumNode
 """
 
@@ -194,19 +194,6 @@ nodes:
   - klass: IdeogramNode
 """
 
-AUTO_IDEOGRAM = """
-required:
-nodes:
-  - klass: ListenUnknownNode
-  - klass: FilterNode
-    filters:
-     - age>0
-  - klass: GroupingNode
-    key: Identifier
-  - klass: IdeogramNode
-    no_analyses_warning: False
-"""
-
 HISTORY_IDEOGRAM = """
 required:
 nodes:
@@ -230,20 +217,6 @@ nodes:
   - klass: ReportNode
 """
 
-AUTO_REPORT = """
-required:
-nodes:
-  - klass: CalendarUnknownNode 
-  - klass: ReportNode
-  - klass: EmailNode
-"""
-AUTO_SERIES = """
-required:
-nodes:
-  - klass: ListenUnknownNode
-  - klass: SeriesNode
-"""
-
 SERIES = """
 required:
 nodes:
@@ -255,14 +228,9 @@ FLUX = """
 required:
 nodes:
   - klass: FindFluxMonitorsNode
-#  irradiation: NM-274
-#  level: E
+    # irradiation: NM-299
+    # level: A
   - klass: FluxMonitorsNode
-#  - klass: GroupingNode
-#  key: Identifier
-#  - klass: IdeogramNode
-#  - klass: TableNode
-#  - klass: ReviewNode
   - klass: FitFluxNode
   - klass: ReviewNode
   - klass: FluxPersistNode
@@ -275,11 +243,19 @@ nodes:
   - klass: CSVAnalysesExportNode
 """
 
-CORRECTION_FACTORS = """
+CA_CORRECTION_FACTORS = """
 required:
 nodes:
   - klass: UnknownNode
-  - klass: CorrectionFactorsNode
+  - klass: CaCorrectionFactorsNode
+
+"""
+
+K_CORRECTION_FACTORS = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: KCorrectionFactorsNode
 
 """
 
@@ -303,4 +279,12 @@ nodes:
   - klass: UnknownNode
   - klass: AuditNode
 """
+
+MASSSPEC_REDUCED = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: MassSpecReducedNode
+"""
+
 # ============= EOF =============================================

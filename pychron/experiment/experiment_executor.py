@@ -18,11 +18,11 @@
 from __future__ import absolute_import
 
 import os
+import time
 from datetime import datetime
-from itertools import groupby
+from operator import itemgetter
 from threading import Thread, Lock, currentThread
 
-import time
 import yaml
 from pyface.constant import CANCEL, YES, NO
 from pyface.timer.do_later import do_after
@@ -33,6 +33,7 @@ from traits.trait_errors import TraitError
 from pychron.consumer_mixin import consumable
 from pychron.core.codetools.memory_usage import mem_available
 from pychron.core.helpers.filetools import add_extension, get_path, unique_path2
+from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.helpers.logger_setup import add_root_handler, remove_root_handler
 from pychron.core.progress import open_progress
 from pychron.core.ui.gui import invoke_in_main_thread
@@ -706,6 +707,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         def finvert(func):
             def wrapper(x):
                 return not func(x)
+
             return wrapper
 
         if invert:
@@ -977,45 +979,34 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         msg = '{} {}'.format(n, msg)
         self._set_message(msg, c)
 
-        invoke_in_main_thread(self._show_shareables)
+    #     invoke_in_main_thread(self._show_shareables)
+    #
+    # def _show_shareables(self):
+    #     if self.use_dvc_persistence:
+    #         from pychron.dvc.share import PushExperimentsModel
+    #         from pychron.dvc.share import PushExperimentsView
+    #         # dvc = self.datahub.stores['dvc']
+    #         from pychron.git.hosts import IGitHost
+    #         gs = self.application.get_services(IGitHost)
+    #         org = self.application.preferences.get('pychron.dvc.organization')
+    #         for gi in gs:
+    #             pm = PushExperimentsModel(org,
+    #                                       gi.username,
+    #                                       gi.password,
+    #                                       gi.oauth_token)
+    #             if pm.shareables:
+    #                 self.info('shareable repositories: {}'.format(pm.names))
+    #                 if self.confirmation_dialog('You have shareable Repositories. Would you like to examine them?'):
+    #                     pv = PushExperimentsView(model=pm)
+    #                     open_view(pv)
 
-    def _show_shareables(self):
-        if self.use_dvc_persistence:
-            from pychron.dvc.share import PushExperimentsModel
-            from pychron.dvc.share import PushExperimentsView
-            # dvc = self.datahub.stores['dvc']
-            from pychron.git.hosts import IGitHost
-            gs = self.application.get_services(IGitHost)
-            org = self.application.preferences.get('pychron.dvc.organization')
-            for gi in gs:
-                pm = PushExperimentsModel(org,
-                                          gi.username,
-                                          gi.password,
-                                          gi.oauth_token)
-                if pm.shareables:
-                    if self.confirmation_dialog('You have shareable Experiments. Would you like to examine them?'):
-                        pv = PushExperimentsView(model=pm)
-                        open_view(pv)
-
-    def _show_conditionals(self, active_run=None, tripped=None, kind='livemodal'):
+    def _show_conditionals(self, active_run=None, tripped=None, kind='live'):
         try:
-            # if self._cv_info:
-            #     if self._cv_info.control:
-            #         self._cv_info.control.raise_()
-            #         return
 
             from pychron.experiment.conditional.conditionals_view import ConditionalsView
 
             v = ConditionalsView()
 
-            v.add_pre_run_terminations(self._load_system_conditionals('pre_run_terminations'))
-            v.add_pre_run_terminations(self._load_queue_conditionals('pre_run_terminations'))
-
-            v.add_system_conditionals(self._load_system_conditionals(None))
-            v.add_conditionals(self._load_queue_conditionals(None))
-
-            v.add_post_run_terminations(self._load_system_conditionals('post_run_terminations'))
-            v.add_post_run_terminations(self._load_queue_conditionals('post_run_terminations'))
             self.debug('Show conditionals active run: {}'.format(active_run))
             self.debug('Show conditionals measuring run: {}'.format(self.measuring_run))
             self.debug('active_run same as measuring_run: {}'.format(self.measuring_run == active_run))
@@ -1043,6 +1034,15 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                         id2 = 'RowIdx={}'.format(idx)
 
                     v.title = '{} ({}, {})'.format(v.title, runid, id2)
+                else:
+                    v.add_pre_run_terminations(self._load_system_conditionals('pre_run_terminations'))
+                    v.add_pre_run_terminations(self._load_queue_conditionals('pre_run_terminations'))
+
+                    v.add_system_conditionals(self._load_system_conditionals(None))
+                    v.add_conditionals(self._load_queue_conditionals(None))
+
+                    v.add_post_run_terminations(self._load_system_conditionals('post_run_terminations'))
+                    v.add_post_run_terminations(self._load_queue_conditionals('post_run_terminations'))
 
             if tripped:
                 v.select_conditional(tripped, tripped=True)
@@ -1050,29 +1050,13 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self._close_cv()
 
             self._cv_info = open_view(v, kind=kind)
+            self.debug('open view _cv_info={}'.format(self._cv_info))
 
         except BaseException:
             import traceback
 
             self.warning('******** Exception trying to open conditionals. Notify developer ********')
             self.debug(traceback.format_exc())
-
-    #
-    # def _add_system_health(self, run):
-    #     # save analysis. don't cancel immediately
-    #     ret = None
-    #     if self.system_health:
-    #         ret = self.system_health.add_analysis(self)
-    #
-    #     # cancel the experiment if failed to save to the secondary database
-    #     # cancel/terminate if system health returns a value
-    #
-    #     if ret == 'cancel':
-    #         self.cancel(cancel_run=True, msg=self.system_health.error_msg)
-    #     elif ret == 'terminate':
-    #         self.cancel('run', cancel_run=True, msg=self.system_health.error_msg)
-    #     else:
-    #         return True
 
     # ===============================================================================
     # execution steps
@@ -1148,8 +1132,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         else:
             ret = ai.is_alive()
 
-        # self.debug('^^^^^^^^ Clear measuring run')
-        # self.measuring_run = None
         self.measuring = False
         return ret
 
@@ -1161,7 +1143,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if not ai.do_post_measurement():
             self._failed_execution_step('Post Measurement Failed')
         else:
-            # self._retroactive_experiment_identifiers(ai.spec)
             return True
 
     def _failed_execution_step(self, msg):
@@ -1190,13 +1171,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if not self._set_run_aliquot(spec):
             return
 
-        # reuse run if not overlap
-        # run = self.current_run if not spec.overlap[0] else None
-
         run = None
 
         spec.load_name = exp.load_name
-        spec.load_holder = exp.load_holder
+        spec.load_holder = exp.tray
 
         arun = spec.make_run(run=run)
         arun.logger_name = 'AutomatedRun {}'.format(arun.runid)
@@ -1214,29 +1192,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         arun.integration_time = 1.04
 
         arun.labspy_client = self.application.get_service('pychron.labspy.client.LabspyClient')
-        # arun.experiment_executor = self
-
-        # arun.signal_color = self.signal_color
-        # arun.sniff_color = self.sniff_color
-        # arun.baseline_color = self.baseline_color
-        # arun.ms_pumptime_start = self.ms_pumptime_start
-        # arun.datahub = self.datahub
-        # arun.console_display = self.console_display
-        # arun.experiment_queue = self.experiment_queue
-
-        # arun.spectrometer_manager = self.spectrometer_manager
-        # arun.extraction_line_manager = self.extraction_line_manager
-        # arun.ion_optics_manager = self.ion_optics_manager
-        # # arun.runner = self.pyscript_runner
-        # arun.use_db_persistence = self.use_db_persistence
-        # arun.use_dvc_persistence = self.use_dvc_persistence
-        # arun.use_xls_persistence = self.use_xls_persistence
 
         for k in ('signal_color', 'sniff_color', 'baseline_color',
                   'ms_pumptime_start', 'datahub', 'console_display', 'experiment_queue',
                   'spectrometer_manager', 'extraction_line_manager', 'ion_optics_manager',
                   'use_db_persistence', 'use_dvc_persistence', 'use_xls_persistence'):
-
             setattr(arun, k, getattr(self, k))
 
         arun.previous_blanks = self._prev_blank_id, self._prev_blanks, self._prev_blank_runid
@@ -1352,9 +1312,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self._canceled = True
             self._err_message = 'Databases are in conflict. {}'.format(conflict)
             self.message(self._err_message)
-            # self.info('No response from user. Canceling run')
-            # do_later(self.information_dialog,
-            # 'Databases are in conflict. No response from user. Canceling experiment')
 
         if self._canceled:
             self.cancel()
@@ -1395,90 +1352,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.debug('set extraction state {} {}'.format(state, args))
         if state:
             self.experiment_status.set_state(state, *args)
-            # self._extraction_state_on(state, *args)
         else:
             self.experiment_status.end()
-
-    #
-    # def _extraction_state_on(self, state, flash, color, period):
-    #     """
-    #         flash: float (0.0 - 1.0) percent of period to be on. e.g if flash=0.75 and period=4,
-    #                 state displayed for 3 secs, then off for 1 sec
-    #         color: str
-    #         period: float
-    #     """
-    #     label = state.upper()
-    #     if flash:
-    #         if self._end_flag:
-    #             self._end_flag.set()
-    #
-    #             # wait until previous loop finished.
-    #             cf = self._complete_flag
-    #             while not cf.is_set():
-    #                 time.sleep(0.05)
-    #
-    #         else:
-    #             self._end_flag = Flag()
-    #             self._complete_flag = Flag()
-    #
-    #         def pattern_gen():
-    #             """
-    #                 infinite generator
-    #             """
-    #             pattern = ((flash * period, True), ((1 - flash) * period, False))
-    #             i = 0
-    #             while 1:
-    #                 try:
-    #                     yield pattern[i]
-    #                     i += 1
-    #                 except IndexError:
-    #                     yield pattern[0]
-    #                     i = 1
-    #
-    #         self._end_flag.clear()
-    #         self._complete_flag.clear()
-    #
-    #         invoke_in_main_thread(self._extraction_state_iter, pattern_gen(), label, color)
-    #     else:
-    #         invoke_in_main_thread(self.trait_set, extraction_state_label=label,
-    #                               extraction_state_color=color)
-    #
-    # def _extraction_state_off(self):
-    #     """
-    #         clear extraction state label
-    #     """
-    #     if self._end_flag:
-    #         self._end_flag.set()
-    #
-    #     invoke_in_main_thread(self.trait_set, extraction_state_label='')
-    #
-    # def _extraction_state_iter(self, gen, label, color):
-    #     """
-    #         iterator for extraction state label.
-    #         used to flash label
-    #     """
-    #
-    #     if self._end_flag.is_set():
-    #         self.debug('extract state complete1')
-    #         self._complete_flag.set()
-    #         self.trait_set(extraction_state_label='')
-    #     else:
-    #
-    #         t, state = gen.next()
-    #         if state:
-    #             self.debug('set state label={}, color={}'.format(label, color))
-    #             self.trait_set(extraction_state_label=label,
-    #                            extraction_state_color=color)
-    #         else:
-    #             self.debug('clear extraction_state_label')
-    #             self.trait_set(extraction_state_label='')
-    #
-    #         if not self._end_flag.is_set():
-    #             do_after(t * 1000, self._extraction_state_iter, gen, label, color)
-    #             # else:
-    #             #     self.debug('extract state complete2')
-    #             #     self._complete_flag.set()
-    #             #     self.trait_set(extraction_state_label='')
 
     def _add_backup(self, uuid_str):
         """
@@ -1552,11 +1427,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if nonfound:
             self.info('experiment canceled because could connect to managers {}'.format(nonfound))
             self._err_message = 'Could not connect to "{}"'.format(','.join(nonfound))
-            # if inform:
-            # self.warning_dialog('Could not connect')
-            # invoke_in_main_thread(self.warning_dialog,
-            #                       'Canceled! Could not connect to managers {}. '
-            #                       'Check that these instances are running.'.format(','.join(nonfound)))
+
             return
 
         return True
@@ -1701,7 +1572,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     def _check_preceding_blank(self, inform):
         mainstore = self.datahub.mainstore
-        with mainstore.session_ctx(use_parent_session=False):
+        with mainstore.session_ctx(use_parent_session=True):
             an = self._get_preceding_blank_or_background(inform=inform)
             if an is not True:
                 if an is None:
@@ -1772,68 +1643,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if not func(inform):
                 raise PreExecuteCheckException(msg, self._err_message)
 
-        # exp = self.experiment_queue
-
-        # if prog:
-        #     prog.change_message('Checking Experiment Identifiers')
-
-        # if not self._check_repository_identifiers():
-        #     raise PreExecuteCheckException('Checking Repositories')
-
         if prog:
             prog.change_message('Syncing repositories')
 
         e = self._sync_repositories(prog)
         if e:
             raise PreExecuteCheckException('Syncing Repository "{}"'.format(e))
-
-        # if self._check_dashboard(prog):
-        #     raise PreExecuteCheckException('Checking Dashboard')
-
-        # if self._check_memory(prog):
-        #     raise PreExecuteCheckException('Checking Memory')
-
-        # if not self._check_managers(inform=inform):
-        #     raise PreExecuteCheckException('Checking Managers')
-
-        # if self.use_automated_run_monitor:
-        #     self.monitor = self._monitor_factory()
-        #     if self.monitor:
-        #         if prog:
-        #             prog.change_message('Checking Automated Run Monitor')
-        #         self.monitor.set_additional_connections(self.connectables)
-        #         self.monitor.clear_errors()
-        #         if not self.monitor.check():
-        #             if inform:
-        #                 raise PreExecuteCheckException('Checking Automated Run Monitor')
-        #             return
-
-        # if prog:
-        #     prog.change_message('Get preceding blank')
-
-        # mainstore = self.datahub.mainstore
-        # with mainstore.session_ctx(use_parent_session=False):
-        #     an = self._get_preceding_blank_or_background(inform=inform)
-        #     if an is not True:
-        #         if an is None:
-        #             return
-        #         else:
-        #             self.info('using {} as the previous blank'.format(an.record_id))
-        #             try:
-        #                 # self._prev_blank_id = an.meas_analysis_id
-        #                 self._prev_blanks = an.get_baseline_corrected_signal_dict()
-        #                 self._prev_baselines = an.get_baseline_dict()
-        #             except TraitError:
-        #                 self.debug_exception()
-        #                 self.warning('failed loading previous blank')
-        #                 return
-        # if prog:
-        #     prog.change_message('Checking PyScript Runner')
-        # if not self.pyscript_runner.connect():
-        #     self.info('Failed connecting to pyscript_runner')
-        #     msg = 'Failed connecting to a pyscript_runner. Is the extraction line computer running?'
-        #     invoke_in_main_thread(self.warning_dialog, msg)
-        #     return
 
         if prog:
             prog.change_message('Pre execute check complete')
@@ -1940,17 +1755,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             for c in self._cached_runs:
                 db.add_repository_association(expid, c)
             self._cached_runs = []
-            # if is_special(spec.identifier):
-            #     self._cached_runs.append(spec)
-            #     if self._active_experiment_identifier:
-            #         spec.experiment_identifier = self._active_experiment_identifier
-            # else:
-            #     exp_id = spec.experiment_identifier
-            #     if self._cached_runs:
-            #         for c in self._cached_runs:
-            #             self.datahub.maintstore.add_experiment_association(c, exp_id)
-            #         self._cached_runs = []
-            #     self._active_experiment_identifier = exp_id
 
     def _check_repository_identifiers(self, inform):
         db = self.datahub.mainstore.db
@@ -1963,7 +1767,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
                 repositories = {}
                 eas = db.get_associated_repositories(identifiers)
-                for idn, exps in groupby(eas, key=lambda x: x[1]):
+                for idn, exps in groupby_key(eas, itemgetter(1)):
+                    # for idn, exps in groupby(eas, key=lambda x: x[1]):
                     repositories[idn] = [e[0] for e in exps]
 
                 conflicts = []
@@ -1978,8 +1783,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
                                 else:
 
-                                    self.debug('Experiment association conflict. '
-                                               'experimentID={} '
+                                    self.debug('Repository association conflict. '
+                                               'repository={} '
                                                'previous_associations={}'.format(ai.repository_identifier,
                                                                                  ','.join(es)))
                                     conflicts.append((ai, es))
@@ -1987,7 +1792,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                             pass
 
                 if conflicts:
-                    self.debug('Experiment association warning')
+                    self.debug('Repository association warning')
                     cr.add_conflicts(ei.name, conflicts)
 
             if cr.conflicts:
@@ -2319,10 +2124,6 @@ Use Last "blank_{}"= {}
 
     def _scheduler_default(self):
         return ExperimentScheduler()
-
-    # def _system_health_default(self):
-    #     sh = SystemHealthSeries()
-    #     return sh
 
     def _datahub_default(self):
         dh = Datahub()

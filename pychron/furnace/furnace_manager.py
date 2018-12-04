@@ -28,14 +28,13 @@ from pychron.canvas.canvas2D.dumper_canvas import DumperCanvas
 from pychron.canvas.canvas2D.video_canvas import VideoCanvas
 from pychron.core.helpers.filetools import pathtolist
 from pychron.core.progress import open_progress
-from pychron.core.ui.led_editor import LED
 from pychron.experiment import ExtractionException
 from pychron.extraction_line.switch_manager import SwitchManager
 from pychron.furnace.configure_dump import ConfigureDump
 from pychron.furnace.furnace_controller import FurnaceController
 from pychron.furnace.ifurnace_manager import IFurnaceManager
 from pychron.furnace.loader_logic import LoaderLogic
-from pychron.furnace.magnet_dumper import NMGRLMagnetDumper, NMGRLRotaryDumper, BaseDumper
+from pychron.furnace.magnet_dumper import NMGRLRotaryDumper, BaseDumper
 from pychron.furnace.stage_manager import NMGRLFurnaceStageManager, BaseFurnaceStageManager
 from pychron.graph.time_series_graph import TimeSeriesStreamStackedGraph
 from pychron.hardware.furnace.nmgrl.camera import NMGRLCamera
@@ -118,6 +117,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     _dumper_thread = None
     _magnets_thread = None
     _pid_str = None
+    _recorded_flow_state = None
 
     def activate(self):
         self.video_enabled = bool(self.camera.get_image_data())
@@ -293,11 +293,19 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
             self.stage_manager.feeder.start_jitter()
             self.dumper.energize()
 
-            time.sleep(0.05)
-            while 1:
-                if not self.dumper.is_moving():
+            time.sleep(2)
+            timeout = 60
+            st = time.time()
+            success = False
+            self.debug('starting dump progress poll')
+            while time.time()-st < timeout:
+                if not self.dumper.dump_in_progress():
+                    success = True
                     break
-                time.sleep(1)
+                time.sleep(3)
+
+            if not success:
+                self.debug('actuate magnets timeout, {}'.format(timeout))
 
             self.stage_manager.set_sample_dumped()
             self._dump_sample_states()
@@ -521,8 +529,12 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
             else:
                 self.water_flow_state = 1
 
-            with open(os.path.join(paths.data_dir, 'furnace_water.txt'), 'a') as wfile:
-                wfile.write('{},{}\n'.format(time.time(), state))
+            write_water_state = self._recorded_flow_state is None or self._recorded_flow_state != self.water_flow_state
+
+            if write_water_state:
+                with open(os.path.join(paths.data_dir, 'furnace_water.txt'), 'a') as wfile:
+                    wfile.write('{},{}\n'.format(time.time(), state))
+                    self._recorded_flow_state = self.water_flow_state
 
             response = d.get('response')
             output = d.get('output')
@@ -580,7 +592,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self._recording = True
         self.record_data_manager = dm = self._record_data_manager_factory()
         dm.new_frame(directory=paths.furnace_scans_dir)
-        dm.write_to_frame(('time', 'temperature'))
+        dm.write_to_frame(('time', 'temperature', 'output'))
         self._start_time = time.time()
 
     def _stop_recording(self):

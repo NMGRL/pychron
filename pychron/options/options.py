@@ -19,11 +19,9 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 import os
-from itertools import groupby
 
 import yaml
 from enable.markers import marker_names
-from six.moves import range
 from traits.api import HasTraits, Str, Int, Bool, Float, Property, Enum, List, Range, \
     Color, Button, Instance
 from traitsui.api import View, Item, HGroup, VGroup, EnumEditor, Spring, Group, \
@@ -34,10 +32,12 @@ from traitsui.table_column import ObjectColumn
 
 from pychron.core.helpers.color_generators import colornames
 from pychron.core.helpers.formatting import floatfmt
+from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.core.ui.table_editor import myTableEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.layout import FigureLayout
+from pychron.processing.j_error_mixin import JErrorMixin
 from pychron.pychron_constants import NULL_STR, ERROR_TYPES, FONTS, SIZES, ALPHAS
 
 
@@ -217,7 +217,7 @@ class MainOptions(SubOptions):
                              show_label=False,
                              editor=myTableEditor(columns=self._get_columns(),
                                                   sortable=False,
-                                                  deletable=True,
+                                                  # deletable=True,
                                                   clear_selection_on_dclicked=True,
                                                   orientation='vertical',
                                                   selected='selected',
@@ -238,6 +238,7 @@ class MainOptions(SubOptions):
 class BaseOptions(HasTraits):
     fontname = Enum(*FONTS)
     _main_options_klass = MainOptions
+    subview_names = List(transient=True)
 
     def to_dict(self):
         keys = [trait for trait in self.traits() if
@@ -255,7 +256,7 @@ class BaseOptions(HasTraits):
         return True
 
     def load_factory_defaults(self, path):
-        if not os.path.isfile(path):
+        if path and not os.path.isfile(path):
             yd = yaml.load(path)
         else:
             with open(path, 'r') as rfile:
@@ -353,6 +354,8 @@ class FigureOptions(BaseOptions):
     ytitle_fontsize = Enum(*SIZES)
     ytitle_fontname = Enum(*FONTS)
 
+    layout = Instance(FigureLayout, ())
+
     groups = List
     # group = Property
     # group_editor_klass = None
@@ -389,7 +392,7 @@ class FigureOptions(BaseOptions):
                         'Plagioclase': 'Plag',
                         'Sanidine': 'San'}
 
-        for gid, ais in groupby(analyses, key=lambda x: x.group_id):
+        for gid, ais in groupby_group_id(analyses):
             ref = next(ais)
             d = {}
             for ai in attrs:
@@ -498,8 +501,6 @@ class AuxPlotFigureOptions(FigureOptions):
     aux_plot_klass = AuxPlot
     selected = List
 
-    layout = Instance(FigureLayout, ())
-
     error_info_font = Property
     error_info_fontname = Enum(*FONTS)
     error_info_fontsize = Enum(*SIZES)
@@ -512,14 +513,11 @@ class AuxPlotFigureOptions(FigureOptions):
         except IndexError:
             self.aux_plots.append(plt)
 
-    def get_loadable_aux_plots(self):
-        return reversed([pi for pi in self.aux_plots
-                         if pi.name and pi.name != NULL_STR and (pi.save_enabled or pi.plot_enabled)])
+    # def get_loadable_aux_plots(self):
+    #     return reversed([pi for pi in self.aux_plots
+    #                      if pi.name and pi.name != NULL_STR and (pi.save_enabled or pi.plot_enabled)])
 
     def get_saveable_aux_plots(self):
-        # for a in self.aux_plots:
-        # print a.name, a.save_enabled
-
         return list(reversed([pi for pi in self.aux_plots
                               if pi.name and pi.name != NULL_STR and pi.save_enabled]))
 
@@ -534,10 +532,11 @@ class AuxPlotFigureOptions(FigureOptions):
         return [self.aux_plot_klass() for _ in range(12)]
 
 
-class AgeOptions(AuxPlotFigureOptions):
+class AgeOptions(AuxPlotFigureOptions, JErrorMixin):
     error_calc_method = Enum(*ERROR_TYPES)
-    include_j_error = Bool(False)
-    include_j_error_in_mean = Bool(True)
+    # include_j_error = Bool(False)
+    # include_j_error_in_mean = Bool(True)
+
     include_irradiation_error = Bool(True)
     include_decay_error = Bool(False)
 
@@ -567,12 +566,9 @@ class AgeOptions(AuxPlotFigureOptions):
             key = '{}({})'.format(sample, ident)
         return key
 
-    def _include_j_error_changed(self, new):
-        if new:
-            self.include_j_error_in_mean = False
-
     def _get_label_font(self):
         return '{} {}'.format(self.label_fontname, self.label_fontsize)
+
 
 
 # ============= EOF =============================================

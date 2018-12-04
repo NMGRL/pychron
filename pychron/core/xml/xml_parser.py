@@ -19,16 +19,8 @@
 # ============= standard library imports ========================
 # from xml.etree.ElementTree import ElementTree, Element, ParseError
 from __future__ import absolute_import
+
 import os
-
-from lxml import etree
-from lxml.etree import ElementTree, Element, ParseError, XML
-
-
-# ============= local library imports  ==========================
-
-
-
 # def extract_xml_text(txt):
 # """
 #         return an xml root object
@@ -43,7 +35,12 @@ from lxml.etree import ElementTree, Element, ParseError, XML
 #
 #     return ntxt
 import re
+
 import six
+from lxml import etree
+from lxml.etree import ElementTree, Element, ParseError, XML, XMLSyntaxError
+
+# ============= local library imports  ==========================
 
 # xml tokenizer pattern
 xml = re.compile("<([/?!]?\w+)|&(#?\w+);|([^<>&'\"=\s]+)|(\s+)|(.)")
@@ -112,8 +109,8 @@ def pprint_xml(txt):
         #     line.append('<{}'.format(t))
         #     continue
         else:
-            if c==4:
-                t=' '
+            if c == 4:
+                t = ' '
             line.append(t)
 
     if line:
@@ -146,16 +143,18 @@ class XMLParser(object):
     def _parse_file(self, p):
         txt = None
         if isinstance(p, (str, six.text_type)):
-            txt=''
+            txt = ''
             if os.path.isfile(p):
                 with open(p, 'rb') as rfile:
                     txt = rfile.read()
 
         if txt is None:
             txt = p.read()
-
-        self._root = XML(txt)
-        return True
+        try:
+            self._root = XML(txt)
+            return True
+        except XMLSyntaxError:
+            pass
 
     def load(self, rfile):
         return self._parse_file(rfile)
@@ -185,15 +184,13 @@ class XMLParser(object):
         if p and os.path.isdir(os.path.dirname(p)):
             # txt = self.tostring(pretty_print)
             # with open(p,'w') as fp:
-                # fp.write(pprint_xml(txt))
+            # fp.write(pprint_xml(txt))
 
             tree = self.get_tree()
             tree.write(p,
                        xml_declaration=True,
                        method='xml',
                        pretty_print=pretty_print)
-
-
 
     def tostring(self, pretty_print=True):
         tree = self.get_tree()
@@ -212,7 +209,6 @@ class XMLParser(object):
             group = self.get_root()
         return [v if element else v.text.strip()
                 for v in group.findall(name)]
-
 
         # class XMLParser2(object):
         # '''

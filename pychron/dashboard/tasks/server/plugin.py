@@ -42,7 +42,7 @@ class DashboardServerPlugin(BaseTaskPlugin):
         return f
 
     def start(self):
-        app= self.application
+        app = self.application
         elm = app.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
         labspy = app.get_service('pychron.labspy.client.LabspyClient')
 

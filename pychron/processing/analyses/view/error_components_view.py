@@ -15,27 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from enable.component_editor import ComponentEditor
-from traits.api import HasTraits, List, Str, Float, Bool, Instance
-from traitsui.api import View, UItem, VGroup, VSplit
+from traits.api import HasTraits, List, Str, Float
+from traitsui.api import View, UItem
 from traitsui.editors import TableEditor
 from traitsui.table_column import ObjectColumn
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.canvas.canvas2D.piechart_canvas import PieChartCanvas
 from pychron.core.helpers.formatting import floatfmt
 from pychron.processing.analyses.view.magnitude_editor import MagnitudeColumn
-from pychron.pychron_constants import INTERFERENCE_KEYS, ARGON_KEYS
+from pychron.pychron_constants import INTERFERENCE_KEYS
 
-
-# class ErrorComponentAdapter(TabularAdapter):
-#     columns=[('Component', 'name'), ('Value', 'value')]
-#     value_text = Property
-#
-#     def _get_value_text(self):
-#         return floatfmt(self.item.value, n=2)
 
 class ErrorComponent(HasTraits):
     name = Str
@@ -50,9 +40,6 @@ class ErrorComponentsView(HasTraits):
 
     error_components = List
 
-    # pie_canvas = Instance(PieChartCanvas, ())
-    # pie_enabled = Bool(False)
-
     def __init__(self, an, *args, **kw):
         super(ErrorComponentsView, self).__init__(*args, **kw)
         self._load(an)
@@ -60,7 +47,7 @@ class ErrorComponentsView(HasTraits):
     def _load(self, an):
 
         es = []
-        keys = [k for k in ARGON_KEYS if k in an.isotopes]
+        keys = [k for k in an.arar_mapping.values() if k in an.isotopes]
         for k in keys:
             iso = an.isotopes[k]
             es.append(ErrorComponent(name=k,

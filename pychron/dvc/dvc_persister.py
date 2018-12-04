@@ -17,21 +17,23 @@
 import hashlib
 import os
 import shutil
-import struct
 from datetime import datetime
 
+import yaml
+from apptools.preferences.preference_binding import bind_preference
 from git.exc import GitCommandError
 # ============= enthought library imports =======================
 from traits.api import Instance, Bool, Str
 from uncertainties import std_dev, nominal_value
+from yaml import YAMLError
 
 from pychron.core.helpers.binpack import encode_blob, pack
-from pychron.dvc import dvc_dump, analysis_path
+from pychron.dvc import dvc_dump, analysis_path, repository_path
 from pychron.experiment.automated_run.persistence import BasePersister
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths
 from pychron.processing.analyses.analysis import EXTRACTION_ATTRS, META_ATTRS
-from pychron.pychron_constants import DVC_PROTOCOL, LINE_STR, NULL_STR
+from pychron.pychron_constants import DVC_PROTOCOL, LINE_STR, NULL_STR, ARGON_KEYS, ARAR_MAPPING
 
 
 def format_repository_identifier(project):
@@ -52,12 +54,19 @@ class DVCPersister(BasePersister):
     active_repository = Instance(GitRepoManager)
     dvc = Instance(DVC_PROTOCOL)
     use_isotope_classifier = Bool(False)
+    use_uuid_path_name = Bool(False)
     # isotope_classifier = Instance(IsotopeClassifier, ())
     stage_files = Bool(True)
     default_principal_investigator = Str
     _positions = None
 
     save_log_enabled = Bool(False)
+    arar_mapping = None
+
+    def __init__(self, *args, **kw):
+        super(DVCPersister, self).__init__(*args, **kw)
+        bind_preference(self, 'use_uuid_path_name', 'pychron.experiment.use_uuid_path_name')
+        self._load_arar_mapping()
 
     def per_spec_save(self, pr, repository_identifier=None, commit=False, commit_tag=None, push=True):
         self.per_spec = pr
@@ -92,7 +101,7 @@ class DVCPersister(BasePersister):
         repository = format_repository_identifier(repository)
         self.active_repository = repo = GitRepoManager()
 
-        root = os.path.join(paths.repository_dataset_dir, repository)
+        root = repository_path(repository)
         repo.open_repo(root)
 
         remote = 'origin'
@@ -111,13 +120,10 @@ class DVCPersister(BasePersister):
         sblob = per_spec.setpoint_blob  # time vs requested
 
         if rblob:
-            # rblob = base64.b64encode(rblob.encode('utf-8')).decode('utf-8')
             rblob = encode_blob(rblob)
         if oblob:
-            # oblob = base64.b64encode(oblob.encode('utf-8')).decode('utf-8')
             oblob = encode_blob(oblob)
         if sblob:
-            # sblob = base64.b64encode(sblob.encode('utf-8')).decode('utf-8')
             sblob = encode_blob(sblob)
 
         obj = {'measured_response': rblob,  # time vs
@@ -135,29 +141,32 @@ class DVCPersister(BasePersister):
             v = getattr(per_spec.run_spec, e)
             obj[e] = v
 
-        ps = []
-        for i, pp in enumerate(per_spec.positions):
-            pos, x, y, z = None, None, None, None
-            if isinstance(pp, tuple):
-                if len(pp) == 2:
-                    x, y = pp
-                elif len(pp) == 3:
-                    x, y, z = pp
-            else:
-                pos = pp
-                try:
-                    ep = per_spec.extraction_positions[i]
-                    x = ep[0]
-                    y = ep[1]
-                    if len(ep) == 3:
-                        z = ep[2]
-                except IndexError:
-                    self.debug('no extraction position for {}'.format(pp))
-            pd = {'x': x, 'y': y, 'z': z, 'position': pos, 'is_degas': per_spec.run_spec.identifier == 'dg'}
-            ps.append(pd)
+        if not per_spec.positions:
+            ps = [dict()]
+        else:
+            ps = []
+            for i, pp in enumerate(per_spec.positions):
+                pos, x, y, z = None, None, None, None
+                if isinstance(pp, tuple):
+                    if len(pp) == 2:
+                        x, y = pp
+                    elif len(pp) == 3:
+                        x, y, z = pp
+                else:
+                    pos = pp
+                    try:
+                        ep = per_spec.extraction_positions[i]
+                        x = ep[0]
+                        y = ep[1]
+                        if len(ep) == 3:
+                            z = ep[2]
+                    except IndexError:
+                        self.debug('no extraction position for {}'.format(pp))
+                pd = {'x': x, 'y': y, 'z': z, 'position': pos, 'is_degas': per_spec.run_spec.identifier == 'dg'}
+                ps.append(pd)
+                obj['positions'] = ps
 
         self._positions = ps
-        obj['positions'] = ps
 
         hexsha = self.dvc.get_meta_head()
         obj['commit'] = str(hexsha)
@@ -221,8 +230,8 @@ class DVCPersister(BasePersister):
                 try:
                     ar.smart_pull(accept_their=True)
 
-                    pms = (None, '.data', 'tags', 'peakcenter', 'extraction', 'monitor')
-                    paths = [spec_path, ] + [self._make_path(modifier=m) for m in pms]
+
+                    paths = [spec_path, ] + [self._make_path(modifier=m) for m in NPATH_MODIFIERS]
 
                     for p in paths:
                         if os.path.isfile(p):
@@ -294,6 +303,38 @@ class DVCPersister(BasePersister):
             self.dvc.push_repository(ar)
 
     # private
+    def _load_arar_mapping(self):
+        """
+        Isotope: IsotopeKey
+
+        example arar_mapping.yaml
+
+        {
+            Ar40: 'Ar40',
+            Ar39: 'Ar39',
+            Ar38: 'Ar38',
+            Ar37: 'Ar37',
+            Ar36: 'Ar36L1'
+        }
+
+        :return:
+        """
+        p = os.path.join(paths.setup_dir, 'arar_mapping.yaml')
+        if os.path.isfile(p):
+            self.debug('loading arar mapping from {}'.format(p))
+            with open(p, 'r') as rfile:
+                try:
+                    obj = yaml.load(rfile)
+                except YAMLError:
+                    pass
+                
+                for k in ARGON_KEYS:
+                    if k not in obj:
+                        self.warning('Invalid arar_mapping.yaml file. required keys={}'.format(ARGON_KEYS))
+                        return
+
+                self.arar_mapping = obj
+
     def _check_repository_identifier(self):
         repo_id = self.per_spec.run_spec.repository_identifier
         db = self.dvc.db
@@ -306,12 +347,14 @@ class DVCPersister(BasePersister):
                 db.add_repository('NoRepo', self.default_principal_investigator)
 
     def _save_analysis_db(self, timestamp):
-        rs = self.per_spec.run_spec
+
+        ps = self.per_spec
+        rs = ps.run_spec
         d = {k: getattr(rs, k) for k in ('uuid', 'analysis_type', 'aliquot',
                                          'increment', 'mass_spectrometer', 'weight', 'comment',
                                          'cleanup', 'duration', 'extract_value', 'extract_units')}
 
-        ed = self.per_spec.run_spec.extract_device
+        ed = rs.extract_device
         if ed in (None, '', NULL_STR, LINE_STR, 'Extract Device'):
             d['extract_device'] = 'No Extract Device'
         else:
@@ -320,46 +363,46 @@ class DVCPersister(BasePersister):
         d['timestamp'] = timestamp
 
         # save script names
-        d['measurementName'] = self.per_spec.measurement_name
-        d['extractionName'] = self.per_spec.extraction_name
+        d['measurementName'] = ps.measurement_name
+        d['extractionName'] = ps.extraction_name
 
         db = self.dvc.db
         an = db.add_analysis(**d)
 
         # save results
-        for iso in self.per_spec.isotope_group.isotopes.values():
+        for iso in ps.isotope_group.isotopes.values():
             db.add_analysis_result(an, iso)
 
         # save media
-        if self.per_spec.snapshots:
-            for p in self.per_spec.snapshots:
+        if ps.snapshots:
+            for p in ps.snapshots:
                 db.add_media(p, an)
 
-        if self.per_spec.videos:
-            for p in self.per_spec.videos:
+        if ps.videos:
+            for p in ps.videos:
                 db.add_media(p, an)
 
         if self._positions:
-            db = self.dvc.db
-            load_name = rs.load_name
-            load_holder = rs.load_holder
+            if rs.load_name and rs.load_name != NULL_STR:
+                load_name = rs.load_name
+                load_holder = rs.load_holder
 
-            db.add_load(load_name, load_holder)
-            db.flush()
-            db.commit()
+                db.add_load(load_name, load_holder, rs.username)
+                db.flush()
+                db.commit()
 
-            for position in self._positions:
-                dbpos = db.add_measured_position(load=load_name, **position)
-                if dbpos:
-                    an.measured_positions.append(dbpos)
-                else:
-                    self.warning('failed adding position {}, load={}'.format(position, load_name))
+                for position in self._positions:
+                    self.debug('adding measured position {}'.format(position))
+                    dbpos = db.add_measured_position(load=load_name, **position)
+                    if dbpos:
+                        an.measured_positions.append(dbpos)
+                    else:
+                        self.warning('failed adding position {}, load={}'.format(position, load_name))
 
-                # an.measured_position = pos
         # all associations are handled by the ExperimentExecutor._retroactive_experiment_identifiers
         # *** _retroactive_experiment_identifiers is currently disabled ***
 
-        if self.per_spec.use_repository_association:
+        if ps.use_repository_association:
             db.add_repository_association(rs.repository_identifier, an)
 
         self.debug('get identifier "{}"'.format(rs.identifier))
@@ -367,7 +410,7 @@ class DVCPersister(BasePersister):
         self.debug('setting analysis irradiation position={}'.format(pos))
         an.irradiation_position = pos
 
-        t = self.per_spec.tag
+        t = ps.tag
 
         db.flush()
 
@@ -393,13 +436,12 @@ class DVCPersister(BasePersister):
 
         source = {'emission': per_spec.emission,
                   'trap': per_spec.trap}
-        keys = []
 
         clf = None
         if self.use_isotope_classifier:
             clf = self.application.get_service('pychron.classifier.isotope_classifier.IsotopeClassifier')
 
-        for iso in per_spec.isotope_group.values():
+        for key, iso in per_spec.isotope_group.items():
             sblob = encode_blob(iso.pack(endianness, as_hex=False))
             snblob = encode_blob(iso.sniff.pack(endianness, as_hex=False))
 
@@ -416,17 +458,6 @@ class DVCPersister(BasePersister):
                 klass, prob = clf.predict_isotope(iso)
                 isod.update(classification=klass,
                             classification_probability=prob)
-            key = iso.name
-            if key in keys:
-                if key in isos:
-                    nd = isos.pop(key)
-                    nkey = '{}{}'.format(nd['name'], nd['detector'])
-                    isos[nkey] = nd
-
-                    intercepts[nkey] = intercepts.pop(key)
-                    blanks[nkey] = blanks.pop(key)
-
-                key = '{}{}'.format(key, iso.detector)
 
             isos[key] = isod
 
@@ -459,8 +490,6 @@ class DVCPersister(BasePersister):
                                            'exclude': False}],
                            'value': float(iso.blank.value),
                            'error': float(iso.blank.error)}
-
-            keys.append(iso.name)
 
         obj = self._make_analysis_dict()
 
@@ -500,6 +529,13 @@ class DVCPersister(BasePersister):
             blob = getattr(per_spec, '{}_blob'.format(si))
             self.dvc.meta_repo.update_script(ms, name, blob)
             obj[si] = name
+
+        # save keys for the arar isotopes
+        akeys = self.arar_mapping
+        if akeys is None:
+            akeys = ARAR_MAPPING
+            
+        obj['arar_mapping'] = akeys
 
         # save experiment
         self.debug('---------------- Experiment Queue saving disabled')
@@ -544,7 +580,7 @@ class DVCPersister(BasePersister):
             p = self._make_path(modifier='monitor')
             checks = []
             for ci in self.per_spec.monitor.checks:
-                data = b''.join([struct.pack('>ff', x, y) for x, y in ci.data])
+                data = encode_blob(pack('>ff', ci.data))
                 params = dict(name=ci.name,
                               parameter=ci.parameter, criterion=ci.criterion,
                               comparator=ci.comparator, tripped=ci.tripped,
@@ -589,8 +625,15 @@ class DVCPersister(BasePersister):
 
     def _make_path(self, modifier=None, extension='.json'):
         runid = self.per_spec.run_spec.runid
+        uuid = self.per_spec.run_spec.uuid
         repository_identifier = self.per_spec.run_spec.repository_identifier
-        return analysis_path(runid, repository_identifier, modifier, extension, mode='w')
+
+        if self.use_uuid_path_name:
+            name = uuid, runid
+        else:
+            name = runid, runid
+
+        return analysis_path(name, repository_identifier, modifier, extension, mode='w')
 
     def _make_analysis_dict(self, keys=None):
         if keys is None:

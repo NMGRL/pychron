@@ -24,6 +24,11 @@ from pychron.core.ui.button_editor import ButtonEditor
 from pychron.envisage.resources import icon
 
 
+class MItem(Item):
+    def get_label(self, ui):
+        return ''
+
+
 def icon_button_editor(trait, name, label=None, editor_kw=None, **kw):
     if editor_kw is None:
         editor_kw = {}
@@ -34,6 +39,6 @@ def icon_button_editor(trait, name, label=None, editor_kw=None, **kw):
     kw['label'] = label or ''
     image = icon(name)
 
-    return Item(trait, style='custom', editor=ButtonEditor(image=image, **editor_kw), **kw)
+    return MItem(trait, style='custom', editor=ButtonEditor(image=image, **editor_kw), **kw)
 
 # ============= EOF =============================================

@@ -17,11 +17,10 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 
-from itertools import groupby
-
 from traits.api import HasTraits, Str, Int, Bool, Any, Button, Instance, List, Dict
 
 from pychron.core.fuzzyfinder import fuzzyfinder
+from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.progress import open_progress
 from pychron.dvc.dvc_persister import DVCPersister
 from pychron.entry.entry_views.repository_entry import RepositoryIdentifierEntry
@@ -273,7 +272,7 @@ class DVCAnalysisImporterModel(BaseDVCImporterModel):
         def key(s):
             return s.run_spec.irradiation
 
-        for irrad, iaspec in groupby(sorted(aspecs, key=key), key=key):
+        for irrad, iaspec in groupby_key(aspecs, key):
             if not dest.get_irradiation(irrad):
                 self.warning_dialog('No Irradiation "{}". Please import the irradiation'.format(irrad))
                 continue

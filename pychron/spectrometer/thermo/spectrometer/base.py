@@ -16,20 +16,19 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-import os
-import random
+
 import time
 
 from numpy import array, argmin
 from traits.api import Int, Property, List, \
-    Enum, Str, DelegatesTo, Bool, Float
+    Str, DelegatesTo, Bool, Float
 
+from pychron.core.helpers.strtools import csv_to_floats
 from pychron.core.progress import open_progress
 from pychron.core.ramper import StepRamper
 from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES, \
     QTEGRA_DEFAULT_INTEGRATION_TIME
-from pychron.spectrometer import get_spectrometer_config_path, \
-    set_spectrometer_config_name
+from pychron.spectrometer import get_spectrometer_config_path
 from pychron.spectrometer.base_spectrometer import BaseSpectrometer
 
 
@@ -172,6 +171,10 @@ class ThermoSpectrometer(BaseSpectrometer):
             self.set_parameter(name, it)
             self.trait_setq(integration_time=it)
 
+            # this is a hail mary to potential make qtegra happier post setting integration time
+            self.debug('sleeping 2 seconds after setting integration time')
+            time.sleep(2)
+
         return it
 
     def set_parameter(self, name, v):
@@ -208,12 +211,12 @@ class ThermoSpectrometer(BaseSpectrometer):
         return deflection
 
     def read_deflection_word(self, keys):
-        x = self.ask('GetDeflections {}'.format(','.join(keys)), verbose=False)
+        x = self.ask('GetDeflections {}'.format(','.join(keys)), verbose=False, quiet=True)
         x = self._parse_word(x)
         return x
 
     def read_parameter_word(self, keys):
-        x = self.ask('GetParameters {}'.format(','.join(keys)), verbose=False)
+        x = self.ask('GetParameters {}'.format(','.join(keys)), verbose=False, quiet=True)
         x = self._parse_word(x)
         return x
 
@@ -383,7 +386,7 @@ class ThermoSpectrometer(BaseSpectrometer):
     # ===============================================================================
     def _parse_word(self, word):
         try:
-            x = [float(v) for v in word.split(',')]
+            x = csv_to_floats(word)
         except (AttributeError, ValueError):
             x = []
         return x

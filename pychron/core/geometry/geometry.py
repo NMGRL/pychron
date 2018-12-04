@@ -16,13 +16,9 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from __future__ import absolute_import
-from __future__ import print_function
 import math
 
 from numpy import array, vstack, mean, average, hstack, zeros, gradient
-from six.moves import range
-from six.moves import zip
 
 
 # from pychron.core.geometry.centroid.calculate_centroid import calculate_centroid

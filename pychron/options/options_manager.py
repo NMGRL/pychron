@@ -20,13 +20,16 @@ import apptools.sweet_pickle as pickle
 from traits.api import Str, List, Button, Instance, Tuple, Property, cached_property
 from traitsui.api import Controller, View, Item
 
-from pychron.core.helpers.filetools import list_directory2
-from pychron.file_defaults import SPECTRUM_PRESENTATION, RADIAL_SCREEN, REGRESSION_SERIES_SCREEN
+from pychron.core.helpers.filetools import glob_list_directory
+from pychron.file_defaults import SPECTRUM_PRESENTATION, RADIAL_SCREEN, REGRESSION_SERIES_SCREEN, \
+    DEFINE_EQUILIBRATION_SCREEN
 from pychron.file_defaults import SPECTRUM_SCREEN, IDEOGRAM_SCREEN, IDEOGRAM_PRESENTATION, SERIES_SCREEN, BLANKS_SCREEN, \
     ICFACTOR_SCREEN, INVERSE_ISOCHRON_SCREEN, INVERSE_ISOCHRON_PRESENTATION, ISO_EVO_SCREEN, BLANKS_PRESENTATION
 from pychron.globals import globalv
 from pychron.loggable import Loggable
+from pychron.mdd.tasks.mdd_figure import MDDFigureOptions
 from pychron.options.blanks import BlanksOptions
+from pychron.options.define_equilibration import DefineEquilibrationOptions
 from pychron.options.flux import FluxOptions, VerticalFluxOptions
 from pychron.options.icfactor import ICFactorOptions
 from pychron.options.ideogram import IdeogramOptions
@@ -98,6 +101,10 @@ class OptionsManager(Loggable):
         self._cached_atypes = atypes
         if self.selected_options:
             self.selected_options.set_analysis_types(atypes)
+
+    def set_reference_types(self, atypes):
+        if self.selected_options:
+            self.selected_options.set_reference_types(atypes)
 
     def _selected_options_changed(self, new):
         if new:
@@ -219,9 +226,9 @@ class OptionsManager(Loggable):
         self._load_names()
 
     def _load_names(self):
-        self.names = [n for n in list_directory2(self.persistence_root,
-                                                 extension='.p',
-                                                 remove_extension=True) if n != 'selected']
+        self.names = [n for n in glob_list_directory(self.persistence_root,
+                                                     extension='.p',
+                                                     remove_extension=True) if n != 'selected']
 
     def _selected_subview_changed(self, new):
         if new:
@@ -292,6 +299,12 @@ class IsotopeEvolutionOptionsManager(FigureOptionsManager):
     id = 'iso_evo'
     options_klass = IsotopeEvolutionOptions
     _default_options_txt = ISO_EVO_SCREEN
+
+
+class DefineEquilibrationOptionsManager(FigureOptionsManager):
+    id = 'define_equilibration'
+    options_klass = DefineEquilibrationOptions
+    _default_options_txt = DEFINE_EQUILIBRATION_SCREEN
 
 
 class FluxOptionsManager(FigureOptionsManager):
@@ -367,6 +380,11 @@ class RadialOptionsManager(FigureOptionsManager):
     options_klass = RadialOptions
     _defaults = (('screen', RADIAL_SCREEN),)
     _default_options_txt = RADIAL_SCREEN
+
+
+class MDDFigureOptionsManager(FigureOptionsManager):
+    id = 'mdd'
+    options_klass = MDDFigureOptions
 
 
 class OptionsController(Controller):

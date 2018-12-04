@@ -61,6 +61,7 @@ arrows = os.path.join(icons, 'arrows')
 document = os.path.join(icons, 'document')
 table = os.path.join(icons, 'table')
 balls = os.path.join(icons, 'balls')
+octicons = os.path.join(icons, 'octicons')
 
 images = os.path.join(resources, 'images')
 splashes = os.path.join(resources, 'splashes')
@@ -69,7 +70,7 @@ abouts = os.path.join(resources, 'abouts')
 sounds = os.path.join(resources, 'sounds')
 
 image_search_path = [images]
-icon_search_path = [icons, dbicons, arrows, document, table, balls]
+icon_search_path = [icons, dbicons, arrows, document, table, balls, octicons]
 splash_search_path = [splashes]
 about_search_path = [abouts]
 sounds_search_path = [sounds]
@@ -129,7 +130,6 @@ class Paths(object):
     plotter_options_dir = None
     test_dir = None
     custom_queries_dir = None
-    template_dir = None
     log_dir = None
     peak_center_config_dir = None
     # ===========================================================================
@@ -175,7 +175,7 @@ class Paths(object):
     data_dir = None
     csv_data_dir = None
     report_dir = None
-    modeling_data_dir = None
+    mdd_data_dir = None
     argus_data_dir = None
     positioning_error_dir = None
     snapshot_dir = None
@@ -217,9 +217,6 @@ class Paths(object):
     # ==============================================================================
     # processing
     # ==============================================================================
-    # pipeline_dir = None
-    # pipeline_template_dir = None
-
     user_pipeline_dir = None
     user_pipeline_template_dir = None
 
@@ -247,7 +244,6 @@ class Paths(object):
     mftable_backup_dir = None
     system_conditionals = None
     experiment_defaults = None
-    system_health = None
 
     ideogram_defaults = None
     spectrum_defaults = None
@@ -355,7 +351,6 @@ class Paths(object):
 
         # self.hidden_dir = join(root, '.hidden')
         self.preferences_dir = join(root, 'preferences')
-        self.template_dir = join(root, 'templates')
         self.queue_conditionals_dir = join(root, 'queue_conditionals')
         # ==============================================================================
         # hidden
@@ -405,7 +400,7 @@ class Paths(object):
         self.report_dir = join(data_dir, 'reports')
         self.spectrometer_scans_dir = join(data_dir, 'spectrometer_scans')
         self.furnace_scans_dir = join(data_dir, 'furnace_scans')
-        self.modeling_data_dir = join(data_dir, 'modeling')
+        self.mdd_data_dir = join(data_dir, 'mdd')
         self.argus_data_dir = join(data_dir, 'argusVI')
         self.positioning_error_dir = join(data_dir, 'positioning_error')
         self.snapshot_dir = join(data_dir, 'snapshots')
@@ -443,13 +438,11 @@ class Paths(object):
         self.user_pipeline_dir = join(self.setup_dir, 'pipeline')
         self.user_pipeline_template_dir = join(self.user_pipeline_dir, 'templates')
 
-        # self.pipeline_dir = join(self.appdata_dir, 'pipeline')
-        # self.pipeline_template_dir = join(self.pipeline_dir, 'templates')
         self.flux_constants = join(self.setup_dir, 'flux_constants.yaml')
         # ==============================================================================
         # lovera exectuables
         # ==============================================================================
-        # self.clovera_root = join(pychron_src_root, 'pychron', 'modeling', 'lovera', 'bin')
+        self.clovera_root = join(root, 'lovera', 'bin')
         # =======================================================================
         # files
         # =======================================================================
@@ -473,10 +466,7 @@ class Paths(object):
         self.spectrum_defaults = join(self.appdata_dir, 'spectrum_defaults.yaml')
         self.inverse_isochron_defaults = join(self.appdata_dir, 'inverse_isochron_defaults.yaml')
         self.composites_defaults = join(self.appdata_dir, 'composite_defaults.yaml')
-        self.system_health = join(self.setup_dir, 'system_health.yaml')
-        # self.screen_formatting_options = join(self.formatting_dir, 'screen.yaml')
-        # self.presentation_formatting_options = join(self.formatting_dir, 'presentation.yaml')
-        # self.display_formatting_options = join(self.formatting_dir, 'display.yaml')
+
         self.plotter_options = join(self.plotter_options_dir, 'plotter_options.p')
         self.task_extensions_file = join(self.appdata_dir, 'task_extensions.yaml')
         self.simple_ui_file = join(self.appdata_dir, 'simple_ui.yaml')
@@ -490,11 +480,6 @@ class Paths(object):
         self.furnace_firmware = join(self.setup_dir, 'furnace_firmware.yaml')
         self.furnace_sample_states = join(self.appdata_dir, 'furnace_sample_states.yaml')
         self.valid_pi_names = join(self.setup_dir, 'valid_pi_names.yaml')
-
-        # =======================================================================
-        # pipeline templates
-        # =======================================================================
-        # self._build_templates(self.pipeline_template_dir)
 
         self.af_demagnetization = join(paths.spectrometer_dir, 'af_demagnetization.yaml')
 
@@ -563,18 +548,15 @@ class Paths(object):
             self._write_default_file(p, txt, o or force)
 
     def _write_default_files(self):
-        from pychron.file_defaults import DEFAULT_INITIALIZATION, DEFAULT_STARTUP_TESTS, SYSTEM_HEALTH
+        from pychron.file_defaults import DEFAULT_INITIALIZATION, DEFAULT_STARTUP_TESTS
 
         for p, d in ((path.join(self.setup_dir, 'initialization.xml'), DEFAULT_INITIALIZATION),
                      (self.startup_tests, DEFAULT_STARTUP_TESTS),
-                     (self.system_health, SYSTEM_HEALTH),
                      (self.simple_ui_file, SIMPLE_UI_DEFAULT),
                      (self.edit_ui_defaults, EDIT_UI_DEFAULT),
                      (self.task_extensions_file, TASK_EXTENSION_DEFAULT),
                      (self.identifiers_file, IDENTIFIERS_DEFAULT)):
-            overwrite = d in (SYSTEM_HEALTH, SIMPLE_UI_DEFAULT,)
-            # overwrite = d in (SYSTEM_HEALTH, SIMPLE_UI_DEFAULT,)
-            # print p
+            overwrite = d in (SIMPLE_UI_DEFAULT,)
             self._write_default_file(p, d, overwrite)
 
     def _write_default_file(self, p, default, overwrite=False):

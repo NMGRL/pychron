@@ -17,8 +17,6 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from __future__ import absolute_import
-
 from pychron.core.helpers.strtools import to_bool
 
 
@@ -31,8 +29,8 @@ class Globals(object):
     use_debug_logger = False
     # use_debug_logger = True
 
-    open_logger_on_launch = False
-
+    open_logger_on_launch = True
+    quit_on_last_window = False
     # force display flags
     show_warnings = True
     show_infos = True
@@ -85,8 +83,8 @@ class Globals(object):
     use_logger_display = True
     use_warning_display = True
     # recall_debug = False
-    # pipeline_debug = False
-
+    pipeline_debug = False
+    mdd_workspace_debug = False
     pipeline_template = None
     select_default_data = True
     run_pipeline = False
@@ -124,18 +122,21 @@ class Globals(object):
                            ('ignore_shareable', to_bool),
                            ('show_infos', to_bool),
                            ('show_warnings', to_bool),
+                           ('open_logger_on_launch', to_bool),
+                           ('quit_on_last_window', to_bool),
                            ('video_test', to_bool),
                            ('load_valve_states', to_bool),
                            ('load_soft_locks', to_bool),
                            ('load_manual_states', to_bool),
                            ('experiment_debug', to_bool),
                            ('experiment_savedb', to_bool),
-                           # ('run_pipeline', to_bool),
+                           ('run_pipeline', to_bool),
                            ('select_default_data', to_bool),
                            ('pipeline_template', str),
+                           ('mdd_workspace_debug', to_bool),
 
                            ('auto_pipeline_debug', to_bool),
-                           # ('pipeline_debug', to_bool),
+                           ('pipeline_debug', to_bool),
                            # ('recall_debug', to_bool),
                            # ('figure_debug', to_bool),
                            # ('browser_debug', to_bool),

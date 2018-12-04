@@ -15,29 +15,23 @@
 # ===============================================================================
 
 # # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
 
 import ast
 import os
 import re
+import time
 import weakref
-from itertools import groupby
 from pprint import pformat
 from threading import Thread, Event as TEvent
 
-import six
-import time
 import yaml
 from numpy import Inf, polyfit, linspace, polyval
-from six.moves import map
-from six.moves import range
-from six.moves import zip
 from traits.api import Any, Str, List, Property, \
     Event, Instance, Bool, HasTraits, Float, Int, Long, Tuple, Dict
 
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.filetools import get_path
+from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.helpers.strtools import to_bool
 from pychron.core.ui.preference_binding import set_preference
 from pychron.experiment import ExtractionException
@@ -127,7 +121,6 @@ class AutomatedRun(Loggable):
     labspy_client = Instance('pychron.labspy.client.LabspyClient')
 
     xls_persister = Instance('pychron.experiment.automated_run.persistence.ExcelPersister')
-    # system_health = Instance('pychron.experiment.health.series.SystemHealthSeries')
 
     collector = Property
 
@@ -278,10 +271,10 @@ class AutomatedRun(Loggable):
     def py_position_hv(self, pos, detector):
         self._set_hv_position(pos, detector)
 
-    def py_position_magnet(self, pos, detector, use_dac=False):
+    def py_position_magnet(self, pos, detector, use_dac=False, for_collection=True):
         if not self._alive:
             return
-        self._set_magnet_position(pos, detector, use_dac=use_dac)
+        self._set_magnet_position(pos, detector, use_dac=use_dac, for_collection=for_collection)
 
     def py_activate_detectors(self, dets, peak_center=False):
         if not self._alive:
@@ -306,7 +299,7 @@ class AutomatedRun(Loggable):
             fits = dict([f.split(':') for f in fits])
 
         g = self.plot_panel.isotope_graph
-        for k, iso in six.iteritems(isotopes):
+        for k, iso in isotopes.items():
             try:
                 fi = fits[k]
             except KeyError:
@@ -320,13 +313,11 @@ class AutomatedRun(Loggable):
             iso.set_fit_blocks(fi)
             self.debug('set "{}" to "{}"'.format(k, fi))
 
-            idx = self._get_plot_id_by_ytitle(g, iso, k)
+            idx = self._get_plot_id_by_ytitle(g, k, iso)
             if idx is not None:
                 g.set_regressor(iso.regressor, idx)
 
     def py_set_baseline_fits(self, fits):
-        isotopes = self.isotope_group.isotopes
-
         if not fits:
             fits = self._get_default_fits(is_baseline=True)
         elif len(fits) == 1:
@@ -357,7 +348,7 @@ class AutomatedRun(Loggable):
         if self.spectrometer_manager:
             self.spectrometer_manager.spectrometer.set_parameter(name, v)
 
-    def py_data_collection(self, obj, ncounts, starttime, starttime_offset, series=0, fit_series=0, group='signal'):
+    def py_data_collection(self, obj, ncounts, starttime, starttime_offset, series=0, fit_series=0, group='signal', integration_time=None):
         if not self._alive:
             return
 
@@ -371,6 +362,9 @@ class AutomatedRun(Loggable):
         self.multi_collector.fit_series_idx = fit_series
 
         check_conditionals = obj == self.measurement_script
+
+        if integration_time:
+            self.set_integration_time(integration_time)
 
         result = self._measure(group,
                                self.persister.get_data_writer(group),
@@ -416,7 +410,7 @@ class AutomatedRun(Loggable):
             return True
 
     def py_baselines(self, ncounts, starttime, starttime_offset, mass, detector,
-                     series=0, fit_series=0, settling_time=4, use_dac=False):
+                     series=0, fit_series=0, settling_time=4, integration_time=None, use_dac=False):
 
         if not self._alive:
             return
@@ -453,6 +447,9 @@ class AutomatedRun(Loggable):
         self.collector.for_peak_hop = self.plot_panel.is_peak_hop
         self.plot_panel.is_peak_hop = False
 
+        if integration_time:
+            self.set_integration_time(integration_time)
+
         result = self._measure(gn,
                                self.persister.get_data_writer(gn),
                                ncounts, starttime,
@@ -486,71 +483,72 @@ class AutomatedRun(Loggable):
         g.clear()
         self.measurement_script.reset_series()
 
-        # _, pb = self.get_previous_blanks()
-        # pbs = self.get_previous_baselines()
-        # correct_for_blank = (not self.spec.analysis_type.startswith('blank') and
-        #                      not self.spec.analysis_type.startswith('background'))
-
-        key = lambda x: x[0]
         hops = parse_hops(hopstr, ret='iso,det,is_baseline')
 
-        map_mass = self.spectrometer_manager.spectrometer.map_mass
-        hops = [(map_mass(hi[0]),) + tuple(hi) for hi in hops]
-
-        hops = sorted(hops, key=key, reverse=True)
-        for mass, dets in groupby(hops, key=key):
-            dets = list(dets)
-            iso = dets[0][1]
-            if dets[0][3]:
+        for iso, det, is_baseline in hops:
+            if is_baseline:
                 continue
 
-            # add_detector = len(dets) > 1
-            for _, _, di, _ in dets:
-                self._add_active_detector(di)
-                name = iso
-                diso = '{}{}'.format(iso, di)
+            name = iso
+            if name in a.isotopes:
+                ii = a.isotopes[name]
+                if ii.detector != det:
+                    name = '{}{}'.format(iso, det)
+                    ii = a.isotope_factory(name=iso, detector=det)
+            else:
+                ii = a.isotope_factory(name=name, detector=det)
 
-                # print(iso, diso)
-                # print(a.pairs())
-                if iso in a.isotopes:
-                    ii = a.isotopes[iso]
-                    ii.detector = di
-                    a.isotopes.pop(iso)
-                elif diso in a.isotopes:
-                    name = diso
-                    ii = a.isotopes[diso]
-                    ii.detector = di
-                    a.isotopes.pop(diso)
-                else:
-                    # print('new isotope', iso, di)
-                    ii = a.isotope_factory(name=iso, detector=di)
-                    # if correct_for_blank:
-                    #     if iso in pb:
-                    #         _, b = pb[iso]
-                    #         ii.set_blank(nominal_value(b), std_dev(b))
-                    # if iso in pbs:
-                    #     _, b = pbs[iso]
-                    #     ii.set_baseline(nominal_value(b), std_dev(b))
+            pid = self._get_plot_id_by_ytitle(g, name)
+            if pid is None:
+                plot = self.plot_panel.new_isotope_plot()
+                pid = g.plots.index(plot)
+            else:
+                plot = g.plots[pid]
 
-                # plot = g.get_plot_by_ytitle('{}{}'.format(iso, di)) or g.get_plot_by_ytitle(iso)
-                pid = self._get_plot_id_by_ytitle(g, ii, di)
-                if pid is None:
-                    plots = self.plot_panel.new_isotope_plot()
-                    plot = plots['isotope']
-                    pid = g.plots.index(plot)
+            plot.y_axis.title = name
 
-                    # this line causes and issue when trying to plot the sniff on the isotope graph
-                    # g.new_series(type='scatter', fit='linear', plotid=pid)
-
-                g.set_regressor(ii.regressor, pid)
-                # if add_detector:
-                #     name = '{}{}'.format(name, di)
-                a.isotopes[name] = ii
-                plot.y_axis.title = name
+            g.set_regressor(ii.regressor, pid)
+            a.isotopes[name] = ii
 
         self._load_previous()
-
         self.plot_panel.analysis_view.load(self)
+
+        # map_mass = self.spectrometer_manager.spectrometer.map_mass
+        # hops = [(map_mass(hi[0]),) + tuple(hi) for hi in hops]
+        #
+        # for mass, dets in groupby_key(hops, key=itemgetter(0), reverse=True):
+        #     dets = list(dets)
+        #     iso = dets[0][1]
+        #     if dets[0][3]:
+        #         continue
+        #
+        #     for _, _, di, _ in dets:
+        #         self._add_active_detector(di)
+        #         name = iso
+        #         if iso in a.isotopes:
+        #             ii = a.isotopes[iso]
+        #             if ii.detector != di:
+        #                 name = '{}{}'.format(iso, di)
+        #                 ii = a.isotope_factory(name=name, detector=di)
+        #         else:
+        #             ii = a.isotope_factory(name=iso, detector=di)
+        #
+        #         pid = self._get_plot_id_by_ytitle(g, ii, di)
+        #         if pid is None:
+        #             plots = self.plot_panel.new_isotope_plot()
+        #             plot = plots['isotope']
+        #             pid = g.plots.index(plot)
+        #
+        #             # this line causes and issue when trying to plot the sniff on the isotope graph
+        #             # g.new_series(type='scatter', fit='linear', plotid=pid)
+        #
+        #         g.set_regressor(ii.regressor, pid)
+        #         a.isotopes[name] = ii
+        #         plot.y_axis.title = name
+        #
+        # self._load_previous()
+        #
+        # self.plot_panel.analysis_view.load(self)
 
     def py_peak_hop(self, cycles, counts, hops, mftable, starttime, starttime_offset,
                     series=0, fit_series=0, group='signal'):
@@ -607,9 +605,6 @@ class AutomatedRun(Loggable):
             if self.isotope_group and check_intensity:
                 iso = self.isotope_group.get_isotope(isotope, detector)
                 if iso:
-                    # v = iso.get_intensity()
-                    # if v < self.peak_center_threshold1:
-                    #     self.debug('peak center: {}={}<{}'.format(isotope, v, self.peak_center_threshold1))
                     ys = iso.ys[-peak_center_threshold_window:]
                     ym = ys.mean()
                     self.debug('peak center: mean={} threshold={}'.format(ym, self.peak_center_threshold))
@@ -806,46 +801,18 @@ class AutomatedRun(Loggable):
         self.debug('tear down')
         if self.measurement_script:
             self.measurement_script.automated_run = None
-            # self.measurement_script.runner = None
-            # self.measurement_script._detectors = None
-            # self.measurement_script = None
 
         if self.extraction_script:
             self.extraction_script.automated_run = None
-            # self.extraction_script.runner = None
-            # self.extraction_script = None
-
-        # self.post_equilibration_script = None
-        # self.post_measurement_script = None
 
         if self.collector:
             self.collector.automated_run = None
-            # self.collector.data_generator = None
-            # self.collector.data_writer = None
-            # self.collector.measurement_script = None
-            # self.collector.console_display = None
 
         if self.plot_panel:
-            # self.plot_panel.info_func = None
             self.plot_panel.automated_run = None
-            # self.plot_panel.isotope_group = None
-
-        # if self.isotope_group:
-        #     self.isotope_group = None
-        #
-        # if self.persistence_spec:
-        #     self.persistence_spec.spec = None
-        #     self.persistence_spec.isotope_group = None
 
         self._persister_action('trait_set', persistence_spec=None, monitor=None)
 
-        # self.monitor = None
-        # self.spec = None
-        #
-        # self.extraction_line_manager = None
-        # self.spectrometer_manager = None
-        # self.ion_optics_manager = None
-        #
     def finish(self):
         self.debug('----------------- finish -----------------')
 
@@ -1045,11 +1012,6 @@ class AutomatedRun(Loggable):
             if self.plot_panel:
                 self.plot_panel.analysis_view.refresh_needed = True
 
-            # save analysis. don't cancel immediately
-            # ret = None
-            # if self.system_health:
-            #     ret = self.system_health.add_analysis(self)
-
             if self.persister.secondary_database_fail:
                 self.executor_event = {'kind': 'cancel', 'cancel_run': True,
                                        'msg': self.persister.secondary_database_fail}
@@ -1058,43 +1020,6 @@ class AutomatedRun(Loggable):
                 return True
         else:
             return True
-
-    # def get_previous_blanks(self):
-    #     blanks = None
-    #     pid = 0
-    #     if self.experiment_executor:
-    #         pid, blanks, runid = self.experiment_executor.get_prev_blanks()
-    #
-    #     if not blanks:
-    #         blanks = dict(Ar40=('', ufloat(0, 0)),
-    #                       Ar39=('', ufloat(0, 0)),
-    #                       Ar38=('', ufloat(0, 0)),
-    #                       Ar37=('', ufloat(0, 0)),
-    #                       Ar36=('', ufloat(0, 0)), )
-    #
-    #     return pid, blanks
-    #
-    # def set_previous_blanks(self, pb):
-    #     if self.experiment_executor:
-    #         self.experiment_executor._prev_blanks = pb
-    #
-    # def get_previous_baselines(self):
-    #     baselines = None
-    #     if self.experiment_executor:
-    #         baselines = self.experiment_executor.get_prev_baselines()
-    #
-    #     if not baselines:
-    #         baselines = dict(Ar40=('', ufloat(0, 0)),
-    #                          Ar39=('', ufloat(0, 0)),
-    #                          Ar38=('', ufloat(0, 0)),
-    #                          Ar37=('', ufloat(0, 0)),
-    #                          Ar36=('', ufloat(0, 0)), )
-    #
-    #     return baselines
-    #
-    # def set_previous_baselines(self, pb):
-    #     if self.experiment_executor:
-    #         self.experiment_executor._prev_baselines = pb
 
     # ===============================================================================
     # setup
@@ -1105,13 +1030,10 @@ class AutomatedRun(Loggable):
         # setup persister. mirror a few of AutomatedRunsAttributes
         script_name, script_blob = self._assemble_script_blob()
         eqn, eqb = '', ''
-        # auto_save_detector_ic = False
 
         queue = self.experiment_queue
 
         eqn = queue.name
-        # eqb = executor.experiment_blob()
-        # pb = executor.get_prev_blanks()
 
         auto_save_detector_ic = queue.auto_save_detector_ic
         self.debug('$$$$$$$$$$$$$$$ auto_save_detector_ic={}'.format(auto_save_detector_ic))
@@ -1158,10 +1080,6 @@ class AutomatedRun(Loggable):
                                     post_measurement_blob=pm_blob,
                                     post_equilibration_name=pe_name,
                                     post_equilibration_blob=pe_blob,
-
-                                    # previous_blank_id=pb[0],
-                                    # previous_blanks=pb[1],
-                                    # previous_blank_runid=pb[2],
 
                                     runscript_name=script_name,
                                     runscript_blob=script_blob,
@@ -1254,11 +1172,6 @@ class AutomatedRun(Loggable):
 
             self._persister_save_action('post_extraction_save')
 
-            # env = self._get_environmentals()
-            # if env:
-            #     set_environmentals(self.spec, env)
-
-            # self.persister.post_extraction_save(rblob, oblob, snapshots)
             self.heading('Extraction Finished')
             self.info_color = None
 
@@ -1316,7 +1229,6 @@ class AutomatedRun(Loggable):
 
         self.measuring = True
         self._persister_action('trait_set', save_enabled=True)
-        # self.persister.save_enabled = True
 
         if script.execute():
             # mem_log('post measurement execute')
@@ -1326,7 +1238,6 @@ class AutomatedRun(Loggable):
 
             self._measured = True
             return True
-            # return True
         else:
             if use_post_on_fail:
                 self.do_post_equilibration()
@@ -1414,7 +1325,7 @@ anaylsis_type={}
     def get_baseline_corrected_signals(self):
         if self.isotope_group:
             d = dict()
-            for k, iso in six.iteritems(self.isotope_group):
+            for k, iso in self.isotope_group.items():
                 d[k] = (iso.detector, iso.get_baseline_corrected_value())
             return d
 
@@ -1424,10 +1335,24 @@ anaylsis_type={}
     def refresh_scripts(self):
         self._refresh_scripts()
 
+    def update_detector_isotope_pairing(self, detectors, isotopes):
+        self.debug('update detector isotope pairing')
+        self.debug('detectors={}'.format(detectors))
+        self.debug('isotopes={}'.format(isotopes))
+
+        for di in self._active_detectors:
+            di.isotope = ''
+
+        for di, iso in zip(detectors, isotopes):
+            self.debug('updating pairing {} - {}'.format(di, iso))
+            det = self.get_detector(di)
+            det.isotope = iso
+
     # ===============================================================================
     # private
     # ===============================================================================
     def _get_environmentals(self):
+        self.info('getting environmentals')
         env = {}
         lclient = self.labspy_client
         if lclient:
@@ -1559,7 +1484,7 @@ anaylsis_type={}
                 fod = {'filter_outliers': False, 'iterations': 1, 'std_devs': 2}
             return fod
 
-        for i in self.isotope_group.itervalues():
+        for i in self.isotope_group.values():
             fod = _get_filter_outlier_dict(i, 'signal')
             self.debug('setting fod for {}= {}'.format(i.name, fod))
             i.set_filtering(fod)
@@ -1676,8 +1601,8 @@ anaylsis_type={}
         con = conditional_from_dict(cd, klass, level=level, location=location)
 
         if con:
-            self.info(
-                'adding {} attr="{}" test="{}" start="{}"'.format(name, con.attr, con.teststr, con.start_count))
+            self.info('adding {} attr="{}" '
+                      'test="{}" start="{}"'.format(name, con.attr, con.teststr, con.start_count))
             obj.append(con)
         else:
             self.warning('Failed adding {}, {}'.format(name, cd))
@@ -1857,7 +1782,7 @@ anaylsis_type={}
                 with open(p, 'r') as rfile:
                     yd = yaml.load(rfile)
                     failure = False
-                    for kind, items in six.iteritems(yd):
+                    for kind, items in yd.items():
                         try:
                             klass = klass_dict[kind]
                         except KeyError:
@@ -1931,7 +1856,7 @@ anaylsis_type={}
     def _convert_valve(self, valve):
         if valve and not isinstance(valve, (tuple, list)):
             if ',' in valve:
-                valve = list(map(str.strip, valve.split(',')))
+                valve = [v.strip() for v in valve.split(',')]
             else:
                 valve = (valve,)
         return valve
@@ -2073,7 +1998,7 @@ anaylsis_type={}
     def _update_detectors(self):
         for det in self._active_detectors:
             self.isotope_group.set_isotope_detector(det)
-        # print 'aaaa',self.isotope_group.keys()
+
         for det in self._active_detectors:
             self.isotope_group.set_isotope_detector(det, add=True)
 
@@ -2088,67 +2013,55 @@ anaylsis_type={}
     def _set_magnet_position(self, pos, detector,
                              use_dac=False, update_detectors=True,
                              update_labels=True, update_isotopes=True,
-                             remove_non_active=True):
+                             remove_non_active=True, for_collection=True):
         change = False
         ion = self.ion_optics_manager
         if ion is not None:
             change = ion.position(pos, detector, use_dac=use_dac, update_isotopes=update_isotopes)
 
-        if update_labels:
-            from pychron.core.ui.gui import invoke_in_main_thread
-            invoke_in_main_thread(self._update_labels)
+        if for_collection:
+            if update_labels:
+                self._update_labels()
+                # from pychron.core.ui.gui import invoke_in_main_thread
+                # invoke_in_main_thread(self._update_labels)
 
-        if update_detectors:
-            self._update_detectors()
+            if update_detectors:
+                self._update_detectors()
 
-        if remove_non_active:
-            for k in self.isotope_group.keys():
-                iso = self.isotope_group.isotopes[k]
-                det = next((di for di in self._active_detectors if di.isotope == iso.name), None)
-                if det is None:
-                    self.isotope_group.pop(k)
+            if remove_non_active:
+                for k in self.isotope_group.keys():
+                    iso = self.isotope_group.isotopes[k]
+                    det = next((di for di in self._active_detectors if di.isotope == iso.name), None)
+                    if det is None:
+                        self.isotope_group.pop(k)
 
-            def key(v):
-                return v[1].name
+                def key(v):
+                    return v[1].name
 
-            def key2(v):
-                return v[1].detector
+                def key2(v):
+                    return v[1].detector
 
-            for name, items in groupby(sorted(list(self.isotope_group.items()), key=key), key=key):
-                items = list(items)
-                if len(items) > 1:
-                    for det, items in groupby(sorted(items, key=key2), key=key2):
+                self.debug('per cleaned {}'.format(list(self.isotope_group.keys())))
+                # for name, items in groupby(sorted(list(self.isotope_group.items()), key=key), key=key):
+                for name, items in groupby_key(self.isotope_group.items(), key):
+                    items = list(items)
+                    if len(items) > 1:
+                        for det, items in groupby_key(items, key2):
 
-                        items = list(items)
-                        if len(items) > 1:
-                            for k, v in items:
-                                if v.name == k:
-                                    self.isotope_group.isotopes.pop(k)
+                            items = list(items)
+                            if len(items) > 1:
+                                for k, v in items:
+                                    if v.name == k:
+                                        self.isotope_group.isotopes.pop(k)
 
-            self.debug('cleaned isotoped group {}'.format(list(self.isotope_group.keys())))
+                self.debug('cleaned isotoped group {}'.format(list(self.isotope_group.keys())))
 
-        if self.plot_panel:
-            self.debug('load analysis view')
-            self.plot_panel.analysis_view.load(self)
-            self.plot_panel.analysis_view.refresh_needed = True
+            if self.plot_panel:
+                self.debug('load analysis view')
+                self.plot_panel.analysis_view.load(self)
+                self.plot_panel.analysis_view.refresh_needed = True
 
         return change
-
-    def update_detector_isotope_pairing(self, detectors, isotopes):
-        self.debug('update detector isotope pairing')
-        self.debug('detectors={}'.format(detectors))
-        self.debug('isotopes={}'.format(isotopes))
-
-        for di in self._active_detectors:
-            di.isotope = ''
-
-        for di, iso in zip(detectors, isotopes):
-            self.debug('updating pairing {} - {}'.format(di, iso))
-            det = self.get_detector(di)
-            det.isotope = iso
-
-            # self._update_labels()
-            # self._update_detectors()
 
     def _get_data_generator(self):
         def gen():
@@ -2379,17 +2292,17 @@ anaylsis_type={}
         min_ = mi
         tc = self.plot_panel.total_counts
         if tc > ma or ma == Inf:
-            max_ = tc * 1.1
+            max_ = tc * self._integration_seconds
 
         if starttime_offset > mi:
             min_ = -starttime_offset
 
-        graph.set_x_limits(min_=min_, max_=max_)
+        graph.set_x_limits(min_=min_, max_=max_*1.1)
 
         series = self.collector.series_idx
-        for k, iso in six.iteritems(self.isotope_group):
+        for k, iso in self.isotope_group.items():
 
-            idx = self._get_plot_id_by_ytitle(graph, iso.name, k)
+            idx = self._get_plot_id_by_ytitle(graph, k, iso)
 
             if idx is not None:
                 try:
@@ -2405,9 +2318,16 @@ anaylsis_type={}
                                      add_inspector=False,
                                      add_tools=False)
 
-    def _get_plot_id_by_ytitle(self, graph, iso, k):
-        idx = graph.get_plotid_by_ytitle(k)
-        if idx is None:
+    def _get_plot_id_by_ytitle(self, graph, pair, iso=None):
+        """
+        pair is string in form <Iso><Det>, iso is just <Iso>
+        :param graph:
+        :param pair:
+        :param secondary:
+        :return:
+        """
+        idx = graph.get_plotid_by_ytitle(pair)
+        if idx is None and iso:
             if not isinstance(iso, str):
                 iso = iso.name
             idx = graph.get_plotid_by_ytitle(iso)
@@ -2429,16 +2349,16 @@ anaylsis_type={}
         min_ = mi
         tc = self.plot_panel.total_counts
         if tc > ma or ma == Inf:
-            max_ = tc * 1.1
+            max_ = tc * self._integration_seconds
 
         if starttime_offset > mi:
             min_ = -starttime_offset
 
-        graph.set_x_limits(min_=min_, max_=max_)
+        graph.set_x_limits(min_=min_, max_=max_*1.1)
         regressing = grpname != 'sniff'
         series = self.collector.series_idx
-        for k, iso in self.isotope_group.iteritems():
-            idx = self._get_plot_id_by_ytitle(graph, iso.name, k)
+        for k, iso in self.isotope_group.items():
+            idx = self._get_plot_id_by_ytitle(graph, k, iso)
             if idx is not None:
                 try:
                     graph.series[idx][series]

@@ -17,19 +17,20 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
+
 import os
 import pickle
 
-from traits.api import Bool, Float, Property, Instance, Event, Button, Enum
 # ============= standard library imports ========================
 from numpy import Inf
+from traits.api import Bool, Float, Property, Instance, Event, Button, Enum
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.timer import Timer
 from pychron.graph.graph import Graph
 from pychron.managers.data_managers.csv_data_manager import CSVDataManager
 from pychron.managers.manager import Manager
 from pychron.paths import paths
-import six
 
 
 class StreamGraphManager(Manager):
@@ -95,7 +96,7 @@ class StreamGraphManager(Manager):
         if os.path.isfile(p):
             with open(p, 'rb') as f:
                 try:
-                    return pickle.load(f)
+                    return pickle.load(f, encoding='utf-8')
                 except (pickle.PickleError, EOFError):
                     self.warning('Failed unpickling scan settings file {}'.format(p))
                     return
@@ -105,7 +106,7 @@ class StreamGraphManager(Manager):
     # private
     def _get_graph_y_min_max(self, plotid=0):
         mi, ma = Inf, -Inf
-        for k, plot in six.iteritems(self.graph.plots[plotid].plots):
+        for k, plot in self.graph.plots[plotid].plots.items():
             plot = plot[0]
             if plot.visible:
                 ys = plot.value.get_data()

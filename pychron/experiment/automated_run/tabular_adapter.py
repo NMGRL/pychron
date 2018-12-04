@@ -15,20 +15,18 @@
 # ===============================================================================
 
 # ============= enthought library imports=======================
-from __future__ import absolute_import
 from pyface.action.menu_manager import MenuManager
-from traits.api import Property, Int, Dict
+from traits.api import Property, Int, Dict, Bool
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
 # ============= standard library imports ========================
 from pychron.core.configurable_tabular_adapter import ConfigurableMixin
-from pychron.core.helpers.strtools import to_bool
 from pychron.envisage.resources import icon
 from pychron.experiment.utilities.identifier import make_aliquot_step
 from pychron.pychron_constants import EXTRACTION_COLOR, MEASUREMENT_COLOR, SUCCESS_COLOR, \
     SKIP_COLOR, NOT_EXECUTABLE_COLOR, CANCELED_COLOR, TRUNCATED_COLOR, \
-    FAILED_COLOR, END_AFTER_COLOR
+    FAILED_COLOR, END_AFTER_COLOR, BLANK_UNKNOWN, DEGAS, UNKNOWN
 
 # ============= local library imports  ==========================
 COLORS = {'success': SUCCESS_COLOR,
@@ -51,6 +49,8 @@ jump = MenuManager(Action(name='Jump to Start', action='jump_to_start'),
 
 move = MenuManager(Action(name='Move to Start', action='move_to_start'),
                    Action(name='Move to End', action='move_to_end'),
+                   Action(name='Move Up', action='move_up'),
+                   Action(name='Move Down', action='move_down'),
                    Action(name='Move to ...', action='move_to_row'),
                    name='Move')
 
@@ -67,7 +67,11 @@ selects = MenuManager(Action(name='Select Unknowns', action='select_unknowns'),
                       Action(name='Select Same Attributes...', action='select_same_attr'),
                       name='Select')
 
-EDIT_MENU = MenuManager(move, copy, jump, blocks, selects,
+group_e = MenuManager(Action(name='AAA,BBB,CCC', action='group_extractions'),
+                      Action(name='ABC,ABC,ABC', action='group_extractions2'),
+                      name='Group Extractions')
+
+EDIT_MENU = MenuManager(move, copy, jump, blocks, selects,group_e,
                         Action(name='Unselect', action='unselect'),
                         Action(name='Toggle End After', action='toggle_end_after'),
                         Action(name='Toggle Skip', action='toggle_skip'))
@@ -159,6 +163,9 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     use_cdd_warming_text = Property
     colors = Dict(COLORS)
 
+    use_analysis_type_colors = Bool
+    analysis_type_colors = Dict
+
     AutomatedRunSpec_tooltip = Property
     AutomatedRunSpec_bg_color = Property
     AutomatedRunSpec_menu = Property
@@ -180,13 +187,21 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
         if not item.executable:
             color = NOT_EXECUTABLE_COLOR
         else:
+            color = None
             if item.skip:
                 color = SKIP_COLOR  # '#33CCFF'  # light blue
             elif item.state in self.colors:
                 color = self.colors[item.state]
             elif item.end_after:
                 color = END_AFTER_COLOR
-            else:
+            elif self.use_analysis_type_colors:
+
+                atype = item.analysis_type
+                if atype.startswith('blank'):
+                    atype = 'blank'
+                color = self.analysis_type_colors.get(atype)
+
+            if color is None:
                 if self.row % 2 == 0:
                     color = self.even_bg_color
                 else:
@@ -227,10 +242,14 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     def _get_position_text(self):
         at = self.item.analysis_type
         p = self.item.position
-        if at not in ('unknown', 'degas'):
-            p = ''
-            if at == 'blank_unknown' and ',' not in p:
+
+        if at == BLANK_UNKNOWN:
+            if ',' not in p:
                 p = ''
+
+        elif at not in (UNKNOWN, DEGAS):
+            p = ''
+
         return p
 
     # ============================================

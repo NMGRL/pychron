@@ -15,9 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 import logging
-from cStringIO import StringIO
+from io import StringIO
 
 import requests
 from PIL import Image

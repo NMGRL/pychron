@@ -31,7 +31,7 @@ class ColumnSorterMixin(HasTraits):
 
     sort_suppress = False
 
-    def _column_clicked_changed(self, event):
+    def _column_clicked_handled(self, event):
         if event:
             values = event.editor.value
             name, field = event.editor.adapter.columns[event.column]
@@ -43,6 +43,9 @@ class ColumnSorterMixin(HasTraits):
                 event.editor.value = vs
                 event.editor.refresh_editor()
             self.sort_suppress = False
+
+    def _column_clicked_changed(self, event):
+        self._column_clicked_handled(event)
 
     def _sort_columns(self, values, name='', field=None):
         # get the field to sort on

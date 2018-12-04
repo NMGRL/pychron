@@ -19,18 +19,18 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from __future__ import absolute_import
-from itertools import groupby
 
-from pychron.core.helpers.iterfuncs import partition
+from itertools import groupby
+from operator import attrgetter
+
+from pychron.core.helpers.iterfuncs import partition, groupby_key
 from pychron.experiment.utilities.identifier import is_special
 
 
 def renumber_aliquots(aruns):
-    key = lambda x: x.labnumber
-    akey = lambda x: x.user_defined_aliquot
+    akey = attrgetter('user_defined_aliquot')
 
-    aruns = sorted(aruns, key=key)
-    for ln, ans in groupby(aruns, key=key):
+    for ln, ans in groupby_key(aruns, 'labnumber'):
         if is_special(ln):
             continue
 

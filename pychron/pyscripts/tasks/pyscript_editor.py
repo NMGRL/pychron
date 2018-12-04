@@ -17,23 +17,23 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
+
+# ============= standard library imports ========================
+import os
+import time
 from datetime import datetime
+
 from pyface.file_dialog import FileDialog
 from pyface.tasks.api import Editor
 from traits.api import HasTraits, Property, Bool, Event, \
     Unicode, List, String, Int, on_trait_change, Instance
 
-# ============= standard library imports ========================
-import os
-import time
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.helpers.filetools import add_extension, remove_extension
 from pychron.pyscripts.context_editors.measurement_context_editor import MeasurementContextEditor
-# from pychron.pyscripts.tasks.gosub_popup_view import GosubPopupView
 from pychron.pyscripts.tasks.gosub_popup_view import GosubPopupWidget
 from pychron.pyscripts.tasks.widgets import myAdvancedCodeWidget
-from six.moves import map
 
 SCRIPT_PKGS = dict(Extraction='pychron.pyscripts.extraction_line_pyscript',
                    Measurement='pychron.pyscripts.measurement_pyscript')
@@ -60,7 +60,7 @@ class Commands(HasTraits):
 
         cmd = None
         words = scmd.split('_')
-        klass = ''.join(map(str.capitalize, words))
+        klass = ''.join([w.capitalize() for w in words])
 
         pkg = 'pychron.pyscripts.commands.api'
         cmd_name = '{}_command_editor'.format(scmd)

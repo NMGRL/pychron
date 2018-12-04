@@ -16,15 +16,15 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traits.api import Color, Instance, DelegatesTo, List, Any, Property, Button, Event
 from traitsui.api import View, Item, UItem, VGroup, HGroup, spring, \
-    Group, Spring, VFold, Label, InstanceEditor, \
-    VSplit, TabularEditor, UReadonly, ListEditor, Readonly
+    Group, Spring, VFold, Label, VSplit, UReadonly, ListEditor, Readonly
 from traitsui.editors import TableEditor, EnumEditor
 from traitsui.table_column import ObjectColumn
-from traitsui.tabular_adapter import TabularAdapter
 
+from pychron.core.pychron_traits import BorderHGroup, BorderVGroup
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.enum_editor import myEnumEditor
@@ -35,7 +35,7 @@ from pychron.experiment.utilities.identifier import SPECIAL_NAMES
 from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR, \
     NOT_EXECUTABLE_COLOR, SKIP_COLOR, SUCCESS_COLOR, CANCELED_COLOR, \
     TRUNCATED_COLOR, FAILED_COLOR, END_AFTER_COLOR, SPECIAL_IDENTIFIER
-import six
+
 
 # ===============================================================================
 # editing
@@ -58,8 +58,18 @@ def queue_factory_item(name, **kw):
     return Item(queue_factory_name(name), **kw)
 
 
+def queue_factory_uitem(name, **kw):
+    kw['show_label'] = False
+    return queue_factory_item(name, **kw)
+
+
 def run_factory_item(name, **kw):
     return Item(run_factory_name(name), **kw)
+
+
+def run_factory_uitem(name, **kw):
+    kw['show_label'] = False
+    return run_factory_item(name, **kw)
 
 
 class ExperimentFactoryPane(TraitsDockPane):
@@ -86,61 +96,65 @@ class ExperimentFactoryPane(TraitsDockPane):
                                           'table_row_delete',
                                           tooltip='Clear all runs added using "frequency"')
 
-        email_grp = VGroup(HGroup(queue_factory_item('use_email',
-                                                     label='Use Email',
-                                                     tooltip='Send email notifications'),
-                                  queue_factory_item('use_group_email',
-                                                     tooltip='Email a group of users',
-                                                     label='Email Group'),
-                                  icon_button_editor(queue_factory_name('edit_emails'), 'cog',
-                                                     tooltip='Edit user group')),
-                           Item(queue_factory_name('email')),
-                           show_border=True,
-                           label='Email')
+        email_grp = BorderVGroup(HGroup(queue_factory_item('use_email',
+                                                           label='Use Email',
+                                                           tooltip='Send email notifications'),
+                                        queue_factory_item('use_group_email',
+                                                           tooltip='Email a group of users',
+                                                           label='Email Group'),
+                                        icon_button_editor(queue_factory_name('edit_emails'), 'cog',
+                                                           tooltip='Edit user group')),
+                                 queue_factory_uitem('email', springy=True),
+                                 label='Email')
 
-        user_grp = HGroup(UItem(queue_factory_name('username'),
-                                show_label=False,
-                                editor=ComboboxEditor(name=queue_factory_name('usernames'))),
-                          icon_button_editor(queue_factory_name('edit_user'), 'database_edit'),
-                          show_border=True,
-                          label='User')
-        lgrp = HGroup(queue_factory_item('load_name',
-                                         width=150,
-                                         label='Load',
-                                         editor=ComboboxEditor(name=queue_factory_name('load_names'))),
-                      queue_factory_item('tray', editor=EnumEditor(name=queue_factory_name('trays'))),
-                      icon_button_editor('generate_queue_button', 'brick-go',
-                                         tooltip='Generate a experiment queue from the selected load',
-                                         enabled_when='load_name'),
-                      icon_button_editor('edit_queue_config_button', 'cog',
-                                         tooltip='Configure experiment queue generation'))
+        user_grp = BorderHGroup(UItem(queue_factory_name('username'),
+                                      editor=ComboboxEditor(name=queue_factory_name('usernames'))),
+                                icon_button_editor(queue_factory_name('edit_user'), 'database_edit'),
+                                label='User')
 
-        ms_ed_grp = VGroup(HGroup(queue_factory_item('mass_spectrometer',
-                                                     show_label=False,
-                                                     editor=myEnumEditor(
-                                                         name=queue_factory_name('mass_spectrometers'))),
-                                  queue_factory_item('extract_device',
-                                                     show_label=False,
-                                                     editor=myEnumEditor(name=queue_factory_name('extract_devices')))),
-                           lgrp,
+        load_select = BorderHGroup(queue_factory_uitem('load_name', width=150),
+                                   queue_factory_item('tray', editor=EnumEditor(name=queue_factory_name('trays'))),
+                                   icon_button_editor(queue_factory_name('select_existing_load_name_button'),
+                                                      'database_go',
+                                                      tooltip='Get Load from Database'),
+                                   label='Load')
 
-                           HGroup(queue_factory_item('queue_conditionals_name',
-                                                     label='Queue Conditionals',
-                                                     editor=myEnumEditor(
-                                                         name=queue_factory_name('available_conditionals')))),
-                           label='Spectrometer/Extract Device',
-                           show_border=True)
-        delay_grp = VGroup(queue_factory_item('delay_before_analyses', label='Delay Before Analyses (s)'),
-                           queue_factory_item('delay_between_analyses', label='Delay Between Analyses (s)'),
-                           queue_factory_item('delay_after_blank', label='Delay After Blank (s)'),
-                           queue_factory_item('delay_after_air', label='Delay After Air (s)'),
-                           show_border=True,
-                           label='Delays')
+        generate_queue = BorderHGroup(icon_button_editor('generate_queue_button', 'brick-go',
+                                                         tooltip='Generate a experiment queue from the selected load',
+                                                         enabled_when='load_name'),
+                                      icon_button_editor('edit_queue_config_button', 'cog',
+                                                         tooltip='Configure experiment queue generation'),
+                                      label='Generate Queue')
 
-        note_grp = VGroup(queue_factory_item('note', style='custom',
-                                             height=150, show_label=False),
-                          show_border=True, label='Note')
-        queue_grp = VGroup(user_grp, email_grp, ms_ed_grp, delay_grp,
+        lgrp = VGroup(load_select, generate_queue)
+
+        ms_ed_grp = BorderVGroup(HGroup(queue_factory_uitem('mass_spectrometer',
+                                                            editor=myEnumEditor(
+                                                                name=queue_factory_name('mass_spectrometers'))),
+                                        queue_factory_uitem('extract_device',
+                                                            editor=myEnumEditor(
+                                                                name=queue_factory_name('extract_devices')))),
+                                 lgrp,
+
+                                 label='Spectrometer/Extract Device')
+
+        name = queue_factory_name('available_conditionals')
+        queue_cond_grp = BorderHGroup(queue_factory_uitem('queue_conditionals_name',
+                                                          label='Queue Conditionals',
+                                                          editor=myEnumEditor(name=name)),
+                                      label='Queue Conditionals')
+
+        delay_grp = BorderVGroup(queue_factory_item('delay_before_analyses', label='Before Analyses (s)'),
+                                 queue_factory_item('delay_between_analyses', label='Between Analyses (s)'),
+                                 queue_factory_item('delay_after_blank', label='After Blank (s)'),
+                                 queue_factory_item('delay_after_air', label='After Air (s)'),
+                                 label='Delays')
+
+        note_grp = BorderVGroup(queue_factory_uitem('note', style='custom',
+                                                    height=150),
+                                label='Note')
+        queue_grp = VGroup(user_grp, email_grp, ms_ed_grp,
+                           queue_cond_grp, delay_grp,
                            note_grp,
                            label='Queue')
 
@@ -171,82 +185,78 @@ class ExperimentFactoryPane(TraitsDockPane):
         return v
 
     def _get_info_group(self):
-        a = HGroup(run_factory_item('selected_irradiation',
-                                    show_label=False,
-                                    editor=myEnumEditor(name=run_factory_name('irradiations'))),
-                   run_factory_item('selected_level',
-                                    show_label=False,
-                                    editor=myEnumEditor(name=run_factory_name('levels'))),
+        a = HGroup(run_factory_uitem('selected_irradiation',
+                                     editor=myEnumEditor(name=run_factory_name('irradiations'))),
+                   run_factory_uitem('selected_level',
+                                     editor=myEnumEditor(name=run_factory_name('levels'))),
                    defined_when='not object.run_factory.simple_identifier_manager')
 
         b = HGroup(run_factory_item('simple_identifier_manager.project_filter'),
-                   run_factory_item('simple_identifier_manager.selected_project',
-                                    show_label=False,
-                                    editor=myEnumEditor(name=run_factory_name('simple_identifier_manager.projects'))),
+                   run_factory_uitem('simple_identifier_manager.selected_project',
+                                     editor=myEnumEditor(name=run_factory_name('simple_identifier_manager.projects'))),
                    run_factory_item('simple_identifier_manager.selected_sample',
                                     label='Sample',
                                     editor=myEnumEditor(name=run_factory_name('simple_identifier_manager.samples'))),
                    defined_when='object.run_factory.simple_identifier_manager')
 
-        grp = Group(a, b,
-                    HGroup(run_factory_item('special_labnumber',
-                                            show_label=False,
-                                            editor=myEnumEditor(values=SPECIAL_NAMES)),
-                           run_factory_item('run_block', show_label=False,
-                                            editor=myEnumEditor(name=run_factory_name('run_blocks'))),
-                           icon_button_editor(run_factory_name('edit_run_blocks'), 'cog'),
-                           run_factory_item('frequency_model.frequency_int', width=50),
-                           icon_button_editor(run_factory_name('edit_frequency_button'), 'cog'),
-                           # run_factory_item('freq_before', label='Before'),
-                           # run_factory_item('freq_after', label='After'),
-                           spring),
+        grp = BorderVGroup(a, b,
+                           HGroup(run_factory_uitem('special_labnumber',
+                                                    editor=myEnumEditor(values=SPECIAL_NAMES)),
+                                  run_factory_uitem('run_block',
+                                                    editor=myEnumEditor(name=run_factory_name('run_blocks'))),
+                                  icon_button_editor(run_factory_name('edit_run_blocks'), 'cog'),
+                                  run_factory_item('frequency_model.frequency_int', width=50),
+                                  icon_button_editor(run_factory_name('edit_frequency_button'), 'cog'),
+                                  # run_factory_item('freq_before', label='Before'),
+                                  # run_factory_item('freq_after', label='After'),
+                                  spring),
 
-                    HGroup(run_factory_item('labnumber',
-                                            tooltip='Enter a Identifier, aka L#',
-                                            width=100,
-                                            label='Identifier',
-                                            enabled_when='object.run_factory.special_labnumber == "{}"'.format(
-                                                SPECIAL_IDENTIFIER),
-                                            editor=myEnumEditor(name=run_factory_name('labnumbers'))),
-                           run_factory_item('aliquot',
-                                            width=50),
-                           run_factory_item('delay_after',
-                                            label='Delay After (s)',
-                                            tooltip='Time (s) to delay after this analysis. This value supersedes '
-                                                    '"Delay Between Analyses" or "Delay After Blank"'),
-                           spring),
-                    HGroup(run_factory_item('repository_identifier',
-                                            label='Repository ID',
-                                            editor=myEnumEditor(name=run_factory_name('repository_identifiers'))),
-                           icon_button_editor(run_factory_name('add_repository_identifier'), 'add',
-                                              tooltip='Add a new repository'),
-                           icon_button_editor(run_factory_name('set_repository_identifier_button'), 'arrow_right',
-                                              tooltip='Set select runs repository_identifier to current value'),
-                           icon_button_editor(run_factory_name('clear_repository_identifier_button'), 'clear'),
-                           UItem(run_factory_name('use_project_based_repository_identifier'),
-                                 tooltip='Use repository identifier based on project name')),
-                    HGroup(run_factory_item('weight',
-                                            label='Weight (mg)',
-                                            tooltip='(Optional) Enter the weight of the sample in mg. '
-                                                    'Will be saved in Database with analysis'),
-                           run_factory_item('comment',
-                                            tooltip='(Optional) Enter a comment for this sample. '
-                                                    'Will be saved in Database with analysis'),
-                           run_factory_item('auto_fill_comment',
-                                            show_label=False,
-                                            tooltip='Auto fill "Comment" with IrradiationLevel:Hole, e.g A:9'),
-                           icon_button_editor(run_factory_name('edit_comment_template'), 'cog',
-                                              tooltip='Edit comment template')),
-                    HGroup(run_factory_item('flux'),
-                           Label(u'\u00b1'),
-                           run_factory_item('flux_error', show_label=False),
-                           icon_button_editor(run_factory_name('save_flux_button'),
-                                              'database_save',
-                                              tooltip='Save flux to database'),
-                           enabled_when=run_factory_name('labnumber')),
+                           HGroup(run_factory_item('labnumber',
+                                                   tooltip='Enter a Identifier, aka L#',
+                                                   width=100,
+                                                   label='Identifier',
+                                                   enabled_when='object.run_factory.special_labnumber == "{}"'.format(
+                                                       SPECIAL_IDENTIFIER),
+                                                   editor=myEnumEditor(name=run_factory_name('labnumbers'))),
+                                  run_factory_item('aliquot',
+                                                   width=50),
+                                  run_factory_item('delay_after',
+                                                   label='Delay After (s)',
+                                                   tooltip='Time (s) to delay after this analysis. This value supersedes '
+                                                           '"Delay Between Analyses" or "Delay After Blank"'),
+                                  spring),
+                           HGroup(run_factory_item('repository_identifier',
+                                                   label='Repository ID',
+                                                   editor=myEnumEditor(
+                                                       name=run_factory_name('repository_identifiers'))),
+                                  icon_button_editor(run_factory_name('add_repository_identifier'), 'add',
+                                                     tooltip='Add a new repository'),
+                                  icon_button_editor(run_factory_name('set_repository_identifier_button'),
+                                                     'arrow_right',
+                                                     tooltip='Set select runs repository_identifier to current value'),
+                                  icon_button_editor(run_factory_name('clear_repository_identifier_button'), 'clear'),
+                                  UItem(run_factory_name('use_project_based_repository_identifier'),
+                                        tooltip='Use repository identifier based on project name')),
+                           HGroup(run_factory_item('weight',
+                                                   label='Weight (mg)',
+                                                   tooltip='(Optional) Enter the weight of the sample in mg. '
+                                                           'Will be saved in Database with analysis'),
+                                  run_factory_item('comment',
+                                                   tooltip='(Optional) Enter a comment for this sample. '
+                                                           'Will be saved in Database with analysis'),
+                                  run_factory_uitem('auto_fill_comment',
+                                                    tooltip='Auto fill "Comment" with IrradiationLevel:Hole, e.g A:9'),
+                                  icon_button_editor(run_factory_name('edit_comment_template'), 'cog',
+                                                     tooltip='Edit comment template')),
+                           HGroup(run_factory_item('flux', format_str='%0.4E'),
+                                  Label(u'\u00b1'),
+                                  run_factory_uitem('flux_error', format_str='%0.4E'),
+                                  icon_button_editor(run_factory_name('save_flux_button'),
+                                                     'database_save',
+                                                     tooltip='Save flux to database'),
+                                  enabled_when=run_factory_name('labnumber')),
 
-                    show_border=True,
-                    label='Sample Info')
+                           label='Sample Info')
         return grp
 
     def _get_truncate_group(self):
@@ -254,55 +264,49 @@ class ExperimentFactoryPane(TraitsDockPane):
                             icon_button_editor(run_factory_name('clear_conditionals'),
                                                'delete',
                                                tooltip='Clear Conditionals from selected runs')),
-                     HGroup(run_factory_item('trunc_attr',
-                                             editor=myEnumEditor(name=run_factory_name('trunc_attrs')),
-                                             show_label=False),
-                            run_factory_item('trunc_comp', show_label=False),
-                            run_factory_item('trunc_crit', show_label=False),
-                            spacer(-10),
-                            run_factory_item('trunc_start', label='Start Count'),
-                            show_border=True,
-                            label='Simple'),
-                     HGroup(run_factory_item('conditionals_path',
-                                             editor=myEnumEditor(name=run_factory_name('conditionals')),
-                                             label='Path'),
+                     BorderHGroup(run_factory_uitem('trunc_attr',
+                                                    editor=myEnumEditor(name=run_factory_name('trunc_attrs'))),
+                                  run_factory_uitem('trunc_comp'),
+                                  run_factory_uitem('trunc_crit'),
+                                  spacer(-10),
+                                  run_factory_item('trunc_start', label='Start Count'),
+                                  label='Simple'),
+                     BorderHGroup(run_factory_item('conditionals_path',
+                                                   editor=myEnumEditor(name=run_factory_name('conditionals')),
+                                                   label='Path'),
 
-                            icon_button_editor(run_factory_name('edit_conditionals_button'), 'table_edit',
-                                               enabled_when=run_factory_name('conditionals_path'),
-                                               tooltip='Edit the selected conditionals file'),
-                            icon_button_editor(run_factory_name('new_conditionals_button'), 'table_add',
-                                               tooltip='Add a new conditionals file. Duplicated currently '
-                                                       'selected file if applicable'),
-                            icon_button_editor(run_factory_name('apply_conditionals_button'), 'arrow_left',
-                                               tooltip='Apply conditionals file to selected analyses'),
-                            show_border=True,
-                            label='File'),
+                                  icon_button_editor(run_factory_name('edit_conditionals_button'), 'table_edit',
+                                                     enabled_when=run_factory_name('conditionals_path'),
+                                                     tooltip='Edit the selected conditionals file'),
+                                  icon_button_editor(run_factory_name('new_conditionals_button'), 'table_add',
+                                                     tooltip='Add a new conditionals file. Duplicated currently '
+                                                             'selected file if applicable'),
+                                  icon_button_editor(run_factory_name('apply_conditionals_button'), 'arrow_left',
+                                                     tooltip='Apply conditionals file to selected analyses'),
+                                  label='File'),
                      enabled_when=queue_factory_name('ok_make'),
                      label='Run Conditionals')
         return grp
 
     def _get_script_group(self):
-        script_grp = VGroup(run_factory_item('extraction_script', style='custom', show_label=False),
-                            run_factory_item('measurement_script', style='custom', show_label=False),
-                            run_factory_item('post_equilibration_script', style='custom', show_label=False),
-                            run_factory_item('post_measurement_script', style='custom', show_label=False),
-                            run_factory_item('script_options', style='custom', show_label=False),
-                            HGroup(spring,
-                                   run_factory_item('default_fits_button',
-                                                    show_label=False,
-                                                    enabled_when=run_factory_name('default_fits_enabled'),
-                                                    label='Default Fits'),
-                                   run_factory_item('load_defaults_button',
-                                                    tooltip='load the default scripts for this analysis type',
-                                                    show_label=False,
-                                                    enabled_when=run_factory_name('labnumber'))),
-                            enabled_when=queue_factory_name('ok_make'),
-                            show_border=True,
-                            label='Scripts')
+        script_grp = BorderVGroup(run_factory_uitem('extraction_script', style='custom'),
+                                  run_factory_uitem('measurement_script', style='custom'),
+                                  run_factory_uitem('post_equilibration_script', style='custom'),
+                                  run_factory_uitem('post_measurement_script', style='custom'),
+                                  run_factory_uitem('script_options', style='custom'),
+                                  HGroup(spring,
+                                         run_factory_uitem('default_fits_button',
+                                                           enabled_when=run_factory_name('default_fits_enabled'),
+                                                           label='Default Fits'),
+                                         run_factory_uitem('load_defaults_button',
+                                                           tooltip='load the default scripts for this analysis type',
+                                                           enabled_when=run_factory_name('labnumber'))),
+                                  enabled_when=queue_factory_name('ok_make'),
+                                  label='Scripts')
         return script_grp
 
     def _get_extract_group(self):
-        return Group(run_factory_item('factory_view', style='custom', show_label=False))
+        return Group(run_factory_uitem('factory_view', style='custom'))
 
 
 # ===============================================================================
@@ -327,22 +331,20 @@ class StatsPane(TraitsDockPane):
     name = 'Stats'
 
     def traits_view(self):
-        gen_grp = VGroup(HGroup(Readonly('nruns', width=150, label='Total Runs'),
-                                UReadonly('total_time')),
-                         HGroup(Readonly('nruns_finished', width=150, label='Completed'),
-                                UReadonly('elapsed')),
-                         Readonly('remaining', label='Remaining'),
-                         Readonly('etf', label='Est. finish'),
-                         show_border=True, label='General')
-        cur_grp = VGroup(Readonly('current_run_duration', ),
-                         Readonly('run_elapsed'),
-                         show_border=True,
-                         label='Current')
-        sel_grp = VGroup(Readonly('start_at'),
-                         Readonly('end_at'),
-                         Readonly('run_duration'),
-
-                         label='Selection', show_border=True)
+        gen_grp = BorderVGroup(HGroup(Readonly('nruns', width=150, label='Total Runs'),
+                                      UReadonly('total_time')),
+                               HGroup(Readonly('nruns_finished', width=150, label='Completed'),
+                                      UReadonly('elapsed')),
+                               Readonly('remaining', label='Remaining'),
+                               Readonly('etf', label='Est. finish'),
+                               label='General')
+        cur_grp = BorderVGroup(Readonly('current_run_duration', ),
+                               Readonly('run_elapsed'),
+                               label='Current')
+        sel_grp = BorderVGroup(Readonly('start_at'),
+                               Readonly('end_at'),
+                               Readonly('run_duration'),
+                               label='Selection')
         v = View(VGroup(gen_grp, cur_grp, sel_grp))
         return v
 
@@ -451,7 +453,7 @@ class ExplanationPane(TraitsDockPane):
     end_after = Color(END_AFTER_COLOR)
 
     def set_colors(self, cd):
-        for k, v in six.iteritems(cd):
+        for k, v in cd.items():
             if hasattr(self, k):
                 setattr(self, k, v)
 
@@ -519,34 +521,6 @@ class IsotopeEvolutionPane(TraitsDockPane):
                                      height=0.25))))
         return v
 
-
-# class SummaryPane(TraitsDockPane):
-#     id = 'pychron.experiment.summary'
-#     name = 'Summary'
-#     plot_panel = Instance('pychron.experiment.plot_panel.PlotPanel')
-#
-#     def traits_view(self):
-#         v = View(UItem('plot_panel', editor=InstanceEditor(view='summary_view'),
-#                        style='custom'))
-#         return v
-
-
-class AnalysisHealthAdapter(TabularAdapter):
-    columns = [('Isotope', 'name'),
-               ('Min.', 'health_min'),
-               ('Health', 'health'),
-               ('Max.', 'health_max')]
-
-
-class AnalysisHealthPane(TraitsDockPane):
-    id = 'pychron.experiment.analysis_health'
-    name = 'Health'
-
-    def traits_view(self):
-        v = View(UItem('analysis_type', style='readonly'),
-
-                 Item('isotopes', editor=TabularEditor(adapter=AnalysisHealthAdapter())))
-        return v
 
 
 class LoggerPane(TraitsDockPane):

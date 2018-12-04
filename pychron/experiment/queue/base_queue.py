@@ -14,15 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-from __future__ import absolute_import
-
 import datetime
 import os
 
 # ============= standard library imports ========================
 import yaml
-from six.moves import map
-from six.moves import zip
 # ============= enthought library imports =======================
 from traits.api import Instance, Str, Property, Event, Bool, String, List, CInt
 
@@ -142,7 +138,7 @@ class BaseExperimentQueue(RunBlock):
             writeline('#' + '=' * 80)
 
         def tab(l, comment=False):
-            s = '\t'.join(map(str, l))
+            s = '\t'.join([str(li) for li in l])
             if comment:
                 s = '#{}'.format(s)
             writeline(s)
@@ -235,13 +231,14 @@ class BaseExperimentQueue(RunBlock):
             run = runspecs[0]
             rtype = run.analysis_type
             incrementable_types = ('unknown',)
-            if rtype.startswith('blank'):
-                incrementable_types = ('unknown', 'air', 'cocktail')
-            elif rtype.startswith('air') or rtype.startswith('cocktail'):
-                incrementable_types = ('unknown',)
+
+            if len(runspecs) == 1:
+                if rtype.startswith('blank'):
+                    t = '_'.join(rtype.split('_')[1:])
+                    incrementable_types = (t, )
 
         for idx in reversed(list(frequency_index_gen(runblock, freq, incrementable_types,
-                                                     freq_before, freq_after, sidx=sidx))):
+                                                freq_before, freq_after, sidx=sidx))):
             for ri in reversed(runspecs):
                 run = ri.clone_traits()
                 run.frequency_group = fcnt

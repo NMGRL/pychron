@@ -109,21 +109,6 @@ class BaseBrowserSampleView(PaneModelView):
                             label='Projects')
         return project_grp
 
-    # def _get_repositories_group(self):
-    #     exp_grp = Group(UItem('repositories',
-    #                           height=-150,
-    #                           editor=FilterTabularEditor(editable=False,
-    #                                                      use_fuzzy=True,
-    #                                                      enabled_cb='repository_enabled',
-    #                                                      refresh='refresh_needed',
-    #                                                      selected='selected_repositories',
-    #                                                      adapter=ProjectAdapter(),
-    #                                                      multi_select=True)),
-    #                     springy=False,
-    #                     visible_when='repository_visible',
-    #                     show_border=True,
-    #                     label='Repositories')
-    #     return exp_grp
     def _get_simple_analysis_type_group(self):
         grp = HGroup(UItem('use_analysis_type_filtering',
                            tooltip='Enable Analysis Type filter'),
@@ -174,7 +159,6 @@ class BaseBrowserSampleView(PaneModelView):
                           UItem('high_post', style='custom', enabled_when='use_high_post'),
                           UItem('use_named_date_range'),
                           UItem('named_date_range'),
-                          # icon_button_editor('date_configure_button', 'calendar'),
                           label='Date',
                           visible_when='date_visible',
                           show_border=True)
@@ -257,7 +241,6 @@ class BaseBrowserSampleView(PaneModelView):
                                                  tooltip='Clear Sample Table'))
 
         analysis_grp_table = UItem('analysis_groups',
-                                   # height=100,
                                    editor=myTabularEditor(adapter=AnalysisGroupsAdapter(),
                                                           multi_select=True,
                                                           editable=False,
@@ -272,8 +255,6 @@ class BaseBrowserSampleView(PaneModelView):
                                         multi_select=True,
                                         dclicked='dclicked_sample',
                                         column_clicked='column_clicked',
-                                        # update='update_sample_table',
-                                        # refresh='update_sample_table',
                                         stretch_last_section=False)),
                               show_border=True, label='Samples')
         grp = VGroup(top_level_filter_grp, Tabbed(sample_table, analysis_grp_table))
@@ -392,25 +373,20 @@ class BrowserInterpretedAgeView(BaseBrowserSampleView):
 
     def trait_context(self):
         ctx = super(BrowserInterpretedAgeView, self).trait_context()
-        ctx['interpreted_table'] = self.model.interpreted_age_table
+        ctx['table'] = self.model.table
         return ctx
 
     def _get_interpreted_age_group(self):
         grp = VGroup(
-            UItem('interpreted_table.interpreted_ages',
+            UItem('table.interpreted_ages',
                   editor=myTabularEditor(
                       auto_resize=True,
-                      adapter=self.model.interpreted_age_table.tabular_adapter,
+                      adapter=self.model.table.tabular_adapter,
                       operations=['move', 'delete'],
-                      # column_clicked=make_name('column_clicked'),
-                      # refresh='interpreted_table.refresh_needed',
-                      selected='interpreted_table.selected',
-                      # dclicked='interpreted_table.dclicked',
+                      selected='table.selected',
+                      dclicked='table.dclicked',
                       multi_select=True,
-                      # drag_external=True,
-                      # scroll_to_row='interpreted_table.scroll_to_row',
                       stretch_last_section=False)),
-            # HGroup(spring, Item(make_name('omit_invalid'))),
             show_border=True,
             label='Interpreted Ages')
 

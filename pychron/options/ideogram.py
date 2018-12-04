@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 from chaco.default_colormaps import color_map_name_dict
 from traits.api import Int, Bool, Float, Property, on_trait_change, Enum, List, Dict, Button, Str, Color
 
@@ -24,7 +22,7 @@ from pychron.options.aux_plot import AuxPlot
 from pychron.options.group.ideogram_group_options import IdeogramGroupOptions
 from pychron.options.options import AgeOptions
 from pychron.options.views.ideogram_views import VIEWS
-from pychron.pychron_constants import NULL_STR, FONTS, SIZES, SIG_FIGS
+from pychron.pychron_constants import NULL_STR, FONTS, SIZES, SIG_FIGS, MAIN, APPEARANCE, DISPLAY, GROUPS
 
 
 class IdeogramAuxPlot(AuxPlot):
@@ -32,12 +30,12 @@ class IdeogramAuxPlot(AuxPlot):
                   'Radiogenic 40Ar', 'K/Ca', 'K/Cl', 'Mol K39', 'Signal K39', 'Ideogram'],
                  transient=True)
     _plot_names = List(['', 'analysis_number_nonsorted', 'analysis_number', 'radiogenic_yield',
-                        'kca', 'kcl', 'moles_k39', 'signal_k39', 'relative_probability'])
+                        'kca', 'kcl', 'moles_k39', 'signal_k39', 'relative_probability'],
+                       transient=True)
 
 
 class IdeogramOptions(AgeOptions):
-    subview_names = List(['Main', 'Ideogram', 'Appearance', 'Calculations', 'Display', 'Groups'],
-                         transient=True)
+
     aux_plot_klass = IdeogramAuxPlot
 
     edit_label_format_button = Button
@@ -59,10 +57,13 @@ class IdeogramOptions(AgeOptions):
 
     display_mean_indicator = Bool(True)
     display_mean = Bool(True)
+    display_mean_mswd = Bool(True)
+    display_mean_n = Bool(True)
     display_percent_error = Bool(True)
     # display_identifier_on_mean = Bool(False)
     # display_sample_on_mean = Bool(False)
     label_all_peaks = Bool(True)
+    peak_label_sigfigs = Int
     peak_label_bgcolor = Color
     peak_label_border = Int
     peak_label_border_color = Color
@@ -86,12 +87,16 @@ class IdeogramOptions(AgeOptions):
     use_cmap_analysis_number = Bool(False)
     cmap_analysis_number = Enum(list(color_map_name_dict.keys()))
     use_latest_overlay = Bool(False)
+    show_results_table = Bool(False)
 
     group_options_klass = IdeogramGroupOptions
 
     _use_centered_range = Bool
     _use_asymptotic_limits = Bool
     _suppress_xlimits_clear = Bool
+
+    def initialize(self):
+        self.subview_names = [MAIN, 'Ideogram', APPEARANCE, 'Calculations', DISPLAY, GROUPS]
 
     def to_dict(self):
         d = super(IdeogramOptions, self).to_dict()

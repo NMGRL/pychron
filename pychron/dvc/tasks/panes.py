@@ -18,11 +18,12 @@
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Property
-from traitsui.api import View, UItem, VGroup, ListStrEditor, TabularEditor, EnumEditor, VSplit
+from traitsui.api import View, UItem, VGroup, TabularEditor, EnumEditor, VSplit
 from traitsui.tabular_adapter import TabularAdapter
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.datetime_tools import ISO_FORMAT_STR
 from pychron.git_archive.views import CommitAdapter, GitTagAdapter
 
 
@@ -43,11 +44,13 @@ class RepoCentralPane(TraitsTaskPane):
 
 
 class RepoAdapter(TabularAdapter):
-    columns = [('Name', 'name')]
-    name_text = Property
+    columns = [('Name', 'name'),
+               ('Branch', 'active_branch'),
+               ('Status (Ahead,Behind)', 'status')]
 
-    def _get_name_text(self):
-        return '{} ({})'.format(self.item.name, self.item.active_branch)
+    # name_text = Property
+    # def _get_name_text(self):
+    #     return '{} ({})'.format(self.item.name, self.item.active_branch)
 
     def get_bg_color(self, obj, trait, row, column=0):
         item = getattr(obj, trait)[row]
@@ -57,21 +60,44 @@ class RepoAdapter(TabularAdapter):
         return color
 
 
+class OriginAdapter(TabularAdapter):
+    columns = [('Name', 'name'),
+               ('Created', 'create_date'),
+               ('Last Commit', 'push_date')]
+    create_date_text = Property
+    push_date_text = Property
+
+    def _get_create_date_text(self):
+        return self.item.create_date.strftime(ISO_FORMAT_STR)
+
+    def _get_push_date_text(self):
+        return self.item.push_date.strftime(ISO_FORMAT_STR)
+
+
 class SelectionPane(TraitsDockPane):
     id = 'pychron.repo.selection'
     name = 'Repositories'
 
     def traits_view(self):
-        origin_grp = VGroup(UItem('repository_names',
-                                  editor=ListStrEditor(selected='selected_repository_name',
+        origin_grp = VGroup(UItem('filter_origin_value',
+                                  tooltip='Fuzzy filter list of repositories available at "Origin". '
+                                          'e.g. "foo" will match "foo", "foobar", "fobaro", "barfoo", etc'),
+                            UItem('repository_names',
+                                  editor=TabularEditor(selected='selected_repository',
+                                                       column_clicked='origin_column_clicked',
+                                                       adapter=OriginAdapter(),
                                                        editable=False)),
                             show_border=True, label='Origin')
 
-        local_grp = VGroup(UItem('filter_repository_value'),
+        local_grp = VGroup(UItem('filter_repository_value',
+                                 tooltip='Fuzzy filter list of repositories available at on this computer. '
+                                         'e.g. "foo" will match "foo", "foobar", "fobaro", "barfoo", etc'),
                            UItem('local_names',
                                  editor=TabularEditor(adapter=RepoAdapter(),
-                                                      selected='selected_local_repository_name',
-                                                      editable=False
+                                                      column_clicked='column_clicked',
+                                                      selected='selected_local_repositories',
+                                                      editable=False,
+                                                      multi_select=True,
                                                       )),
                            show_border=True, label='Local')
 

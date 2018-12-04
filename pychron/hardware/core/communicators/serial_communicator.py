@@ -23,14 +23,13 @@ import codecs
 import glob
 import os
 import sys
-import time
 
-import binascii
 import serial
+import time
+from six.moves import range
+
 # =============local library imports  ==========================
 from .communicator import Communicator, process_response, prep_str, remove_eol_func
-from six.moves import map
-from six.moves import range
 
 
 def get_ports():
@@ -479,6 +478,10 @@ class SerialCommunicator(Communicator):
                     if pos:
                         t = r[pos] == ti
                     else:
+
+                        if isinstance(ti, str):
+                            ti = ti.encode()
+
                         t = r.endswith(ti)
 
                     if t:

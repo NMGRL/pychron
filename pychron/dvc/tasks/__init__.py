@@ -23,6 +23,7 @@ import os
 
 from git import Repo
 
+from pychron.dvc import repository_path
 from pychron.paths import paths
 
 
@@ -33,7 +34,7 @@ def list_local_repos():
         elif i.startswith('~'):
             continue
 
-        d = os.path.join(paths.repository_dataset_dir, i)
+        d = repository_path(i)
         if os.path.isdir(d):
             gd = os.path.join(d, '.git')
             if os.path.isdir(gd):

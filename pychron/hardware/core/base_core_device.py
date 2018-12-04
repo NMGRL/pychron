@@ -18,28 +18,23 @@
 
 from __future__ import absolute_import
 from __future__ import print_function
-from traits.api import provides, HasTraits
 
+# from threading import Lock
+import inspect
 # from pyface.timer.api import Timer
 # =============standard library imports ========================
 import random
-# from threading import Lock
-import inspect
 import time
-# =============local library imports  ==========================
-# from traits.has_traits import provides
-from .i_core_device import ICoreDevice
-# from pychron.core.helpers.timer import Timer
-# from pychron.managers.data_managers.csv_data_manager import CSVDataManager
-# from pychron.core.helpers.datetime_tools import generate_datetimestamp
+
+from traits.api import provides
+
+from pychron.consumer_mixin import ConsumerMixin
 from pychron.globals import globalv
+from pychron.hardware.core.communicators.scheduler import CommunicationScheduler
 from pychron.hardware.core.exceptions import TimeoutError, CRCError
 from pychron.has_communicator import HasCommunicator
-from pychron.hardware.core.communicators.scheduler import CommunicationScheduler
-from pychron.consumer_mixin import ConsumerMixin
-import six
-from six.moves import map
-from six.moves import range
+# =============local library imports  ==========================
+from .i_core_device import ICoreDevice
 
 
 def crc_caller(func):
@@ -178,7 +173,9 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
                                             kwargs=kw)
             else:
                 r = comm.ask(cmd, **kw)
-            self._communicate_hook(cmd, r)
+
+            if hasattr(self, '_communicate_hook'):
+                self._communicate_hook(cmd, r)
             return r
         else:
             self.info('no communicator for this device {}'.format(self.name))
@@ -194,7 +191,8 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
         """
         """
         if self.communicator is not None:
-            cmd = ' '.join(list(map(str, args)) + list(map(str, six.iteritems(kw))))
+            cmd = ' '.join([str(a) for a in args] + [str(a) for a in kw.items()])
+
             self._communicate_hook(cmd, '-')
             return self.communicator.tell(*args, **kw)
 
@@ -297,25 +295,18 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
     # ===============================================================================
     # scanable interface
     # ===============================================================================
-    def _scan_hook(self, v):
-        for a in self.alarms:
-            if a.test_condition(v):
-                alarm_msg = a.get_message(v)
-                self.warning(alarm_msg)
-                manager = self.application.get_service('pychron.social.twitter_manager.TwitterManager')
-                if manager is not None:
-                    manager.post(alarm_msg)
-                break
+    # def _scan_hook(self, v):
+    #     for a in self.alarms:
+    #         if a.test_condition(v):
+    #             alarm_msg = a.get_message(v)
+    #             self.warning(alarm_msg)
+    #             manager = self.application.get_service('pychron.social.twitter_manager.TwitterManager')
+    #             if manager is not None:
+    #                 manager.post(alarm_msg)
+    #             break
 
     def _parse_response(self, v):
         return v
-
-    def _communicate_hook(self, cmd, r):
-        if isinstance(cmd, bytes):
-            cmd = ''.join(('[{}]'.format(str(b)) for b in cmd))
-
-        self.last_command = cmd
-        self.last_response = str(r) if r else ''
 
     def _load_hook(self, config):
         pass

@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 from __future__ import absolute_import
+
 from traits.api import HasTraits, List, Instance, Str, Int, on_trait_change, Any
 from traitsui.api import View, UItem, TabularEditor, Item, EnumEditor, HGroup, VGroup, InstanceEditor, Controller, \
     VSplit
@@ -59,7 +60,7 @@ class RunHistoryModel(HasTraits):
         if uuid in self._cache:
             av = self._cache[uuid]
         else:
-            a = self.dvc.make_analysis(new.record_views[0])
+            a = self.dvc.make_analysis(new)
             av = a.analysis_view
 
         self._cache[new.uuid] = av

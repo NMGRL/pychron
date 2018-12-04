@@ -25,8 +25,15 @@ from traits.api import BaseStr, Int, String
 from traitsui.group import VGroup, HGroup
 
 from pychron.core.filtering import validate_filter_predicate
+from pychron.regex import IPREGEX, PACKETREGEX
 
-IPREGEX = re.compile(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$')
+
+class PacketStr(BaseStr):
+    def validate(self, obj, name, value):
+        if PACKETREGEX.match(value):
+            return value
+        else:
+            self.error(obj, name, value)
 
 
 class HostStr(BaseStr):

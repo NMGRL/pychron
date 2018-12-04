@@ -126,11 +126,11 @@ class BaseValveProtocol(ServiceProtocol):
         if result is True:
             result = 'OK' if change else 'ok'
         elif result is None:
-            result = InvalidArgumentsErrorCode('Close', data, logger=self)
+            result = InvalidArgumentsErrorCode('Close', data)
         elif result == 'software lock enabled':
-            result = ValveSoftwareLockErrorCode(data, logger=self)
+            result = ValveSoftwareLockErrorCode(data)
         else:
-            result = ValveActuationErrorCode(data, 'close', logger=self)
+            result = ValveActuationErrorCode(data, 'close')
 
         return result
 

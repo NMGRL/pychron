@@ -26,19 +26,19 @@ from traitsui.editors import TextEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
-from pychron.pychron_constants import NULL_STR
-from pychron.core.helpers.strtools import to_bool
+
+from pychron.core.helpers.strtools import to_bool, to_csv_str
 from pychron.core.pychron_traits import HostStr
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_preferences_helper import FavoritesPreferencesHelper
+from pychron.pychron_constants import NULL_STR
 
 
 # IPREGEX = re.compile(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$')
 
 
 def show_databases(kind, host, user, password, schema_identifier='AnalysisTbl', exclude=None):
-    names = []
     records = []
     if kind == 'mysql':
         import pymysql
@@ -71,7 +71,7 @@ def show_databases(kind, host, user, password, schema_identifier='AnalysisTbl', 
             records = cur.fetchall()
         except pymssql.OperationalError:
             pass
-        
+
     names = [di[0] for di in records if di[0] not in exclude]
     return names
 
@@ -174,8 +174,12 @@ class ConnectionFavoriteItem(HasTraits):
                 self.names = names
 
     def to_string(self):
-        return ','.join([str(getattr(self, attr)) for attr in ('name', 'kind', 'username', 'host',
-                                                               'dbname', 'password', 'enabled', 'default', 'path')])
+        attrs = [getattr(self, attr) for attr in ('name', 'kind', 'username', 'host',
+                                                  'dbname', 'password', 'enabled', 'default', 'path')]
+        return to_csv_str(attrs)
+
+        # return ','.join([str(getattr(self, attr)) for attr in ('name', 'kind', 'username', 'host',
+        #                                                        'dbname', 'password', 'enabled', 'default', 'path')])
 
     def __repr__(self):
         return self.name
@@ -245,19 +249,7 @@ class ConnectionPreferencesPane(PreferencesPane):
     model_factory = ConnectionPreferences
     category = 'Database'
 
-    def traits_view(self):
-        # db_auth_grp = Group(
-        #     Item('host',
-        #          editor=TextEditor(enter_set=True, auto_set=False),
-        #          width=125, label='Host'),
-        #     Item('username', label='User',
-        #          editor=TextEditor(enter_set=True, auto_set=False)),
-        #     Item('password', label='Password',
-        #          editor=TextEditor(enter_set=True, auto_set=False, password=True)),
-        #     enabled_when='kind=="mysql"',
-        #     show_border=True,
-        #     label='Authentication')
-
+    def get_fav_group(self, edit_view=None):
         cols = [CheckboxColumn(name='enabled'),
                 CheckboxColumn(name='default'),
                 ObjectColumn(name='kind'),
@@ -272,11 +264,15 @@ class ConnectionPreferencesPane(PreferencesPane):
                              editor=EnumEditor(name='names')),
                 ObjectColumn(name='path', style='readonly')]
 
+        editor = TableEditor(columns=cols,
+                             selected='_selected',
+                             sortable=False)
+        if edit_view:
+            editor.edit_view = edit_view
+
         fav_grp = VGroup(UItem('_fav_items',
                                width=100,
-                               editor=TableEditor(columns=cols,
-                                                  selected='_selected',
-                                                  sortable=False)),
+                               editor=editor),
                          HGroup(
                              icon_button_editor('add_favorite', 'database_add',
                                                 tooltip='Add saved connection'),
@@ -286,8 +282,9 @@ class ConnectionPreferencesPane(PreferencesPane):
                                                 tooltip='Delete saved connection'),
                              icon_button_editor('test_connection_button', 'database_connect',
                                                 tooltip='Test connection'),
-                             icon_button_editor('load_names_button', '',
-                                                tooltip='Load avaliable database schemas on the selected server'),
+                             icon_button_editor('load_names_button', 'arrow_refresh',
+                                                enabled_when='load_names_enabled',
+                                                tooltip='Load available database schemas on the selected server'),
                              Spring(width=10, springy=False),
                              Label('Status:'),
                              CustomLabel('_connected_label',
@@ -296,20 +293,10 @@ class ConnectionPreferencesPane(PreferencesPane):
                                          color_name='_connected_color'),
                              spring,
                              show_labels=False))
+        return fav_grp
 
-        # db_grp = Group(HGroup(Item('kind', show_label=False),
-        #                       Item('name',
-        #                            label='Database Name',
-        #                            editor=EnumEditor(name='_names'),
-        #                            visible_when='kind=="mysql"')),
-        #                HGroup(fav_grp, db_auth_grp, visible_when='kind=="mysql"'),
-        #
-        #                VGroup(Item('path', label='Database File'),
-        #                       visible_when='kind=="sqlite"'),
-        #                show_border=True,
-        #                label='Pychron DB')
-
-        db_grp = HGroup(fav_grp)
-        return View(db_grp)
+    def traits_view(self):
+        fav_grp = self.get_fav_group()
+        return View(fav_grp)
 
 # ============= EOF =============================================

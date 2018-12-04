@@ -130,6 +130,7 @@ class RegressionContextMenuMixin(ContextMenuMixin):
                    ('parabolic', 'cm_parabolic'),
                    ('cubic', 'cm_cubic'),
                    ('quartic', 'cm_quartic'),
+                   ('exponential', 'cm_exponential'),
                    (u'average {}SD'.format(PLUSMINUS), 'cm_average_std'),
                    (u'average {}SEM'.format(PLUSMINUS), 'cm_average_sem')]
 

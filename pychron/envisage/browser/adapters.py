@@ -32,9 +32,6 @@ class BrowserAdapter(TabularAdapter, ConfigurableMixin):
 
     def get_tooltip(self, obj, trait, row, column):
         name = self.column_map[column]
-        # name='_'.join(name.split('_')[:-1])
-        item = getattr(obj, trait)[row]
-
         return '{}= {}'.format(name, getattr(self.item, name))
 
 
@@ -91,8 +88,8 @@ class LabnumberAdapter(BrowserAdapter):
                    ('Project', 'project'),
                    ('Irradiation', 'irradiation'),
                    ('Level', 'irradiation_and_level'),
-                   ('Irrad. Pos.', 'irradiation_pos')]
-    #     material_text = Property
+                   ('Irrad. Pos.', 'irradiation_pos'),
+                   ('Packet', 'packet')]
     odd_bg_color = 'lightgray'
 
     name_width = Int(125)
@@ -101,17 +98,9 @@ class LabnumberAdapter(BrowserAdapter):
 
     def get_menu(self, obj, trait, row, column):
         if obj.selected_samples:
-            # psenabled = obj.current_task_name in ('Ideogram', 'Spectrum')
-            # psenabled = isinstance(obj, FigureTask)
             return MenuManager(Action(name='Unselect', action='unselect_samples'),
                                Action(name='Chronological View', action='load_chrono_view'),
-                               Action(name='Configure', action='configure_sample_table'), )
-            # Action(name='Plot Selected (Grouped)',
-            #        enabled=psenabled,
-            #        action='plot_selected_grouped'),
-            # Action(name='Plot Selected',
-            #        enabled=psenabled,
-            #        action='plot_selected'))
+                               Action(name='Configure', action='configure_sample_table'))
 
 
 REVIEW_STATUS_ICONS = {'Default': icon('gray_ball'),
@@ -122,15 +111,14 @@ REVIEW_STATUS_ICONS = {'Default': icon('gray_ball'),
 class AnalysisAdapter(BrowserAdapter):
     all_columns = [('Review', 'review_status'),
                    ('Run ID', 'record_id'),
+                   ('UUID', 'uuid'),
                    ('Sample', 'sample'),
                    ('Project', 'project'),
+                   ('Packet', 'packet'),
+                   ('Irradiation', 'irradiation_info'),
                    ('Tag', 'tag'),
                    ('RunDate', 'rundate'),
                    ('Dt', 'delta_time'),
-                   # ('Iso Fits', 'iso_fit_status'),
-                   # ('Blank', 'blank_fit_status'),
-                   # ('IC', 'ic_fit_status'),
-                   # ('Flux', 'flux_fit_status'),
                    ('Spec.', 'mass_spectrometer'),
                    ('Meas.', 'meas_script_name'),
                    ('Ext.', 'extract_script_name'),
@@ -211,8 +199,6 @@ class AnalysisAdapter(BrowserAdapter):
 
         actions = [Action(name='Configure', action='configure_analysis_table'),
                    Action(name='Unselect', action='unselect_analyses'),
-                   # Action(name='Replace', action='replace_items', enabled=e),
-                   # Action(name='Append', action='append_items', enabled=e),
                    Action(name='Open', action='recall_items'),
                    Action(name='Review Status Details', action='review_status_details'),
                    Action(name='Load Review Status', action='load_review_status'),
@@ -223,10 +209,7 @@ class AnalysisAdapter(BrowserAdapter):
                    MenuManager(name='Grouping',
                                *group_actions),
                    MenuManager(name='Tag',
-                               *tag_actions)
-                   # Action(name='Open Copy', action='recall_copies'),
-                   # Action(name='Find References', action='find_refs')
-                   ]
+                               *tag_actions)]
 
         return MenuManager(*actions)
 
@@ -266,11 +249,6 @@ class InterpretedAgeAdapter(TabularAdapter):
                ('AgeErroKind', 'age_error_kind')]
 
     font = 'arial 10'
-    # name_width = Int(100)
-    # identifier_width = Int(100)
-    # age_width = Int(100)
-    # age_err_width = Int(100)
-    # age_kind_width = Int(100)
 
     age_text = Property
     age_err_text = Property

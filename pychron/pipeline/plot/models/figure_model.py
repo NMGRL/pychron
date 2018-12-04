@@ -16,13 +16,13 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from itertools import groupby
 
-from traits.api import HasTraits, List, Property, Any, Instance
 from six.moves import zip
+from traits.api import HasTraits, List, Property, Any, Instance
 
 # from pychron.pipeline.plot.layout import FigureLayout
 from pychron.core.codetools.inspection import caller
+from pychron.core.helpers.iterfuncs import groupby_key
 
 
 class FigureModel(HasTraits):
@@ -70,19 +70,21 @@ class FigureModel(HasTraits):
         self.panels = ps
         self.panel_gen = (gi for gi in self.panels)
 
+    def _panel_factory(self, *args, **kw):
+        p = self._panel_klass(*args, **kw)
+        return p
+
     def _make_panels(self):
         if self.analysis_groups:
-            gs = [self._panel_klass(analyses=ag, plot_options=self.plot_options, graph_id=gid) for gid, ag in
+            gs = [self._panel_factory(analyses=ag, plot_options=self.plot_options, graph_id=gid) for gid, ag in
                   enumerate(self.analysis_groups)]
         else:
-            key = lambda x: x.graph_id
-            ans = sorted(self.analyses, key=key)
-            gs = [self._panel_klass(analyses=list(ais),
+            gs = [self._panel_factory(analyses=list(ais),
                                     plot_options=self.plot_options,
                                     graph_id=gid)
-                  for gid, ais in groupby(ans, key=key)]
+                  for gid, ais in groupby_key(self.analyses, 'graph_id')]
             # if hasattr(self, 'references'):
-            gg = groupby(self.references, key=key)
+            gg = groupby_key(self.references, 'graph_id')
             for gi in gs:
                 try:
                     gid, ais = next(gg)

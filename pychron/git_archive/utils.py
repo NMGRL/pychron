@@ -16,10 +16,10 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-import os
-from datetime import datetime
 
+import os
 import re
+from datetime import datetime
 
 import six
 from git import Repo, Blob, Diff
@@ -28,29 +28,17 @@ from gitdb.util import hex_to_bin
 # ============= local library imports  ==========================
 from pychron.git_archive.git_objects import GitSha, GitTag
 
-TAG_RE = re.compile(r'^\<\w+\>')
+TAG_RE = re.compile(r'(?P<tag>^\<[\w ]+\>)')
 
 
-# class GitShaObject(HasTraits):
-# message = Str
-# date = Date
-# blob = Str
-# name = Str
-# hexsha = Str
-# author = Str
-# email = Str
-# active = Bool
-# tag = Str
-
-
-def from_gitlog(obj, path, tag=None):
+def from_gitlog(obj, tag=None):
     hexsha, author, email, ct, message = obj.split('|')
     date = datetime.fromtimestamp(float(ct))
 
     if tag is None:
-        tag = TAG_RE.match('message')
+        tag = TAG_RE.match(message)
         if tag:
-            tag = tag.group('tag')
+            tag = tag.group('tag')[1:-1]
         else:
             tag = 'NULL'
 
@@ -59,7 +47,6 @@ def from_gitlog(obj, path, tag=None):
                date=date,
                author=author,
                email=email,
-               path=path,
                tag=tag)
     return g
 
@@ -69,8 +56,7 @@ def gitlog(repo, branch=None, args=None, path=None):
     if branch:
         cmd.append(branch)
 
-    fmt = '%H|%cn|%ce|%ct|%s'
-    cmd.append('--pretty={}'.format(fmt))
+    cmd.append('--pretty=%H|%cn|%ce|%ct|%s')
 
     if args:
         cmd.extend(args)
@@ -82,14 +68,14 @@ def gitlog(repo, branch=None, args=None, path=None):
 
 def get_head_commit(repo):
     txt = gitlog(repo, args=('-n', '1', 'HEAD'))
-    return from_gitlog(txt.strip(), '', '')
+    return from_gitlog(txt.strip(), '')
 
 
 def get_commits(repo, branch, path, tag, *args):
     repo = get_repo(repo)
     txt = gitlog(repo, branch=branch, args=args, path=path)
 
-    return [from_gitlog(l.strip(), path, tag) for l in txt.split('\n')] if txt else []
+    return [from_gitlog(l.strip(), tag) for l in txt.split('\n')] if txt else []
 
 
 def get_tags(repo):
@@ -123,7 +109,6 @@ def ahead_behind(repo, fetch=True, remote='origin'):
             repo.git.fetch(remote)
 
         status = repo.git.status('-sb')
-
         ma = aregex.search(status)
         mb = bregex.search(status)
         if ma:

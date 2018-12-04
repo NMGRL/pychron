@@ -18,6 +18,7 @@
 
 # ============= standard library imports ========================
 from __future__ import absolute_import
+
 import os
 import pickle
 from datetime import datetime, timedelta
@@ -44,9 +45,9 @@ def get_pad(low, high):
     pe = None
     if os.path.isfile(p):
         try:
-            with open(p, 'r') as rfile:
+            with open(p, 'rb') as rfile:
                 pe = pickle.load(rfile)
-        except (pickle.PickleError, OSError, EOFError):
+        except (pickle.PickleError, OSError, EOFError, TypeError):
             pass
 
     if not pe:
@@ -61,7 +62,7 @@ def get_pad(low, high):
 
     info = pe.edit_traits()
     if info.result:
-        with open(p, 'w') as wfile:
+        with open(p, 'wb') as wfile:
             pickle.dump(pe, wfile)
         return pe
 

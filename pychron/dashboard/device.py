@@ -22,7 +22,11 @@ from traitsui.api import View, ListEditor, InstanceEditor, UItem, VGroup, HGroup
 import random
 import struct
 import time
+
 import yaml
+from traits.api import Str, Bool, List, Instance, Event
+from traitsui.api import View, ListEditor, InstanceEditor, UItem, VGroup, HGroup, VSplit
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import unique_path2
 from pychron.dashboard.conditional import DashboardConditional
@@ -214,7 +218,7 @@ class DashboardDevice(Loggable):
 
         if blob:
             step = 4 * fmt.count('f')
-            args = list(zip(*[struct.unpack(fmt, blob[i:i + step]) for i in range(0, len(blob), step)]))
+            args = zip(*[struct.unpack(fmt, blob[i:i + step]) for i in range(0, len(blob), step)])
             ns = []
             for blobv, lastv in zip(args, new_args):
                 blobv = list(blobv)

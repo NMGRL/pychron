@@ -14,10 +14,9 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-
 import math
 
+# ============= enthought library imports =======================
 from chaco.array_data_source import ArrayDataSource
 from chaco.tools.broadcaster import BroadcasterTool
 from chaco.tools.data_label_tool import DataLabelTool
@@ -43,11 +42,7 @@ from pychron.processing.analyses.analysis_group import AnalysisGroup
 from pychron.pychron_constants import PLUSMINUS
 
 
-# PLOT_MAPPING = {'analysis #': 'Analysis Number', 'Analysis #': 'Analysis Number Stacked',
-#                 '%40Ar*': 'Radiogenic 40Ar'}
-
 class SelectionFigure(HasTraits):
-    # _omit_key = None
     graph = Any
 
     def _set_selected(self, ans, sel):
@@ -63,31 +58,6 @@ class SelectionFigure(HasTraits):
         if func:
             func(sel)
 
-        # print 'fff', sel
-        # if sel:
-        #     obj.was_selected = True
-        #
-        #     prev = None
-        #     if hasattr(obj, 'prev_selection'):
-        #         prev = obj.prev_selection
-        #
-        #     if prev != sel:
-        #         self._set_selected(ans, sel)
-        #         if func:
-        #             func(sel)
-        #
-        #     obj.prev_selection = sel
-        #
-        # elif hasattr(obj, 'was_selected'):
-        #     if obj.was_selected:
-        #         self._set_selected(ans, sel)
-        #         if func:
-        #             func(sel)
-        #     obj.was_selected = False
-        #     obj.prev_selection = None
-        # else:
-        #     obj.prev_selection = None
-
         return sel
 
 
@@ -101,15 +71,12 @@ class BaseArArFigure(SelectionFigure):
     _analysis_group_klass = AnalysisGroup
 
     group_id = Int
-    # padding = Tuple((60, 10, 5, 40))
     ytitle = Str
     replot_needed = Event
     _reverse_sorted_analyses = False
 
     options = Any
 
-    # x_grid_visible = Bool(True)
-    # y_grid_visible = Bool(True)
     use_sparse_ticks = Bool(True)
 
     refresh_unknowns_table = Event
@@ -139,7 +106,6 @@ class BaseArArFigure(SelectionFigure):
             make plots
         """
 
-        self._plots = plots
         graph = self.graph
 
         vertical_resize = not all([p.height for p in plots])
@@ -625,11 +591,12 @@ class BaseArArFigure(SelectionFigure):
     def _build_label_text(self, x, we, n,
                           total_n=None,
                           mswd_args=None,
+                          display_n=True,
+                          display_mswd=True,
                           percent_error=False,
                           sig_figs=3):
 
-        display_n = True
-        display_mswd = n >= 2
+        display_mswd = n >= 2 and display_mswd
 
         if display_n:
             if total_n and n != total_n:
@@ -712,7 +679,8 @@ class BaseArArFigure(SelectionFigure):
     def _get_analysis_group(self):
         ag = self._analysis_group
         if ag is None:
-            ag = self._analysis_group_klass(analyses=self.sorted_analyses)
+            ag = self._analysis_group_klass(group_id=self.group_id,
+                                            analyses=self.sorted_analyses)
         return ag
 
     def _set_analysis_group(self, v):

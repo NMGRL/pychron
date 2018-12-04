@@ -18,14 +18,15 @@
 
 # =============enthought library imports=======================
 from __future__ import absolute_import
+
 from chaco.scatterplot import ScatterPlot
 from traits.api import Bool, on_trait_change, Event
 
-# =============standard library imports ========================
-
 # =============local library imports  ==========================
 from .graph import Graph
-import six
+
+
+# =============standard library imports ========================
 
 
 class StackedGraph(Graph):
@@ -137,9 +138,7 @@ class StackedGraph(Graph):
     def new_series(self, *args, **kw):
         s, _p = super(StackedGraph, self).new_series(*args, **kw)
         if self.bind_index:
-            if 'bind_id' not in kw:
-                kw['bind_id'] = None
-            bind_id = kw['bind_id']
+            bind_id = kw.get('bind_id')
             if isinstance(s, ScatterPlot):
                 s.bind_id = bind_id
                 self._bind_index(s, bind_id=bind_id)
@@ -179,7 +178,7 @@ class StackedGraph(Graph):
 
         obj.suppress_update = True
         for plot in self.plots:
-            for k, ps in six.iteritems(plot.plots):
+            for k, ps in plot.plots.items():
                 si = ps[0]
 
                 if si.index is not obj:
@@ -192,20 +191,8 @@ class StackedGraph(Graph):
 
     def _bind_index(self, scatter, bind_id=0, bind_selection=True, **kw):
         if bind_selection:
-            u = lambda obj, name, old, new: self._update_metadata(bind_id,
-                                                                  obj, name, old, new)
-            scatter.index.on_trait_change(u, 'metadata_changed')
-
-            # self.indices.append(scatter.index)
-            # print 'fff', len(self.indices)
-
-            # def clear(self):
-            #    print 'clear', self.indices
-            #    for idx in self.indices:
-            #        print 'removing', idx
-            #        #idx.on_trait_change('', 'metadata_changed', remove=True)
-            #    self.indices=[]
-            #
-            #    super(StackedGraph,self).clear()
+            def func(obj, name, old, new):
+                self._update_metadata(bind_id, obj, name, old, new)
+            scatter.index.on_trait_change(func, 'metadata_changed')
 
 # ============= EOF ====================================

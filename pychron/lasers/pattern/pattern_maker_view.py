@@ -16,16 +16,19 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
+import os
+
+import six.moves.cPickle as pickle
 from traits.api import Property, Enum, Str, on_trait_change, List
 from traitsui.api import View, Item, InstanceEditor, Handler, ListStrEditor, EnumEditor, VGroup, UItem, HGroup
+
 # ============= standard library imports ========================
-from pychron.core.helpers.filetools import add_extension, list_directory2
-import six.moves.cPickle as pickle
-import os
+from pychron.core.helpers.filetools import add_extension, glob_list_directory
 # ============= local library imports  ==========================
 from pychron.lasers.pattern.patternable import Patternable
-from pychron.saveable import Saveable, SaveableButtons
 from pychron.paths import paths
+from pychron.saveable import Saveable, SaveableButtons
 from pychron.stage.stage_manager import get_stage_map_names
 
 
@@ -128,7 +131,7 @@ class PatternMakerView(Saveable, Patternable):
             self.load_pattern(p)
 
     def _load_pattern_names(self):
-        self.patterns = list_directory2(paths.pattern_dir, extension='.lp', remove_extension=True)
+        self.patterns = glob_list_directory(paths.pattern_dir, extension='.lp', remove_extension=True)
 
     def _save_as_view(self):
         v = View(Item('tray_name', editor=EnumEditor(name='trays')),

@@ -34,28 +34,18 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
-
-import re
-
-from traits.api import Str, Bool, Property, on_trait_change, Button, List
+from traits.api import String, Bool, Property, on_trait_change, Button, List, Str
 
 from pychron.core.codetools.inspection import caller
+from pychron.core.ui.preference_binding import bind_preference
 from pychron.envisage.browser.base_browser_model import BaseBrowserModel
 from pychron.envisage.browser.record_views import ProjectRecordView
-
-# from pychron.processing.tasks.browser.time_view import TimeViewModel
-
-NCHARS = 60
-REG = re.compile(r'.' * NCHARS)
 
 
 class BrowserModel(BaseBrowserModel):
     filter_focus = Bool(True)
     use_focus_switching = Bool(True)
-    fuzzy_search_entry = Str(auto_set=False, enter_set=True)
-    # filter_label = Property(Str, depends_on='filter_focus')
+    fuzzy_search_entry = String(auto_set=False, enter_set=True)
 
     irradiation_visible = Property(depends_on='filter_focus')
     analysis_types_visible = Property(depends_on='filter_focus')
@@ -69,6 +59,7 @@ class BrowserModel(BaseBrowserModel):
     advanced_filter_button = Button
     toggle_focus = Button
     load_view_button = Button
+    refresh_selectors_button = Button
 
     datasource_url = Str
     irradiation_enabled = Bool
@@ -81,6 +72,13 @@ class BrowserModel(BaseBrowserModel):
     is_activated = False
 
     _top_level_filter = None
+
+    def __init__(self, *args, **kw):
+        super(BrowserModel, self).__init__(*args, **kw)
+
+        prefid = 'pychron.browser'
+        bind_preference(self, 'load_selection_enabled', '{}.load_selection_enabled'.format(prefid))
+        bind_preference(self, 'auto_load_database', '{}.auto_load_database'.format(prefid))
 
     def activated(self, force=False):
         self.reattach()
@@ -146,8 +144,6 @@ class BrowserModel(BaseBrowserModel):
             db = self.db
             ps1 = db.get_fuzzy_projects(new)
 
-            # pis = db.get_fuzzy_principal_investigators(new)
-            # print pis
             ss, ps2 = db.get_fuzzy_labnumbers(new)
             sams = self._load_sample_record_views(ss)
 
@@ -158,7 +154,6 @@ class BrowserModel(BaseBrowserModel):
             ad = self._make_project_records(ps, include_recent=False)
             self.projects = ad
             self.oprojects = ad
-            # print sams
 
     def _irradiation_enabled_changed(self, new):
         if not new:
@@ -244,6 +239,11 @@ class BrowserModel(BaseBrowserModel):
     def _selected_samples_changed(self, new):
         self._selected_samples_changed_hook(new)
         self.dump_browser()
+
+    def _refresh_selectors_button_fired(self):
+        self.debug('refresh selectors fired')
+        if self.sample_view_active:
+            self.load_selectors()
 
     # private
     def _selected_samples_changed_hook(self, new):

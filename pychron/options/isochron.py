@@ -15,17 +15,20 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str, Bool, Float, Property, List, Color, Enum, Range
+from traits.api import Str, Bool, Float, Property, Enum, Range
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.options.group.inverse_isochron_group_options import InverseIsochronGroupOptions
-from pychron.options.views.isochron_views import INVERSE_ISOCHRON_VIEWS, ISOCHRON_VIEWS
 from pychron.options.options import AgeOptions
-from pychron.pychron_constants import FIT_ERROR_TYPES, ELLIPSE_KINDS, FONTS, SIZES
+from pychron.options.views.isochron_views import INVERSE_ISOCHRON_VIEWS, ISOCHRON_VIEWS
+from pychron.pychron_constants import FIT_ERROR_TYPES, ELLIPSE_KINDS, FONTS, SIZES, MAIN, APPEARANCE, GROUPS
 
 
 class IsochronOptions(AgeOptions):
-    subview_names = List(['Main', 'Appearance', 'Groups'])
+
+    def initialize(self):
+        self.subview_names = [MAIN, APPEARANCE, GROUPS]
 
     def get_subview(self, name):
         name = name.lower()

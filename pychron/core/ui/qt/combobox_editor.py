@@ -16,6 +16,8 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
+import six
 from pyface.qt import QtGui, QtCore
 from pyface.qt.QtGui import QCompleter, QSizePolicy, QComboBox, QHBoxLayout, QPushButton, QWidget
 from traits.api import Str, Bool, Event, List
@@ -26,7 +28,6 @@ from traitsui.qt4.enum_editor import SimpleEditor
 
 from pychron.core.fuzzyfinder import fuzzyfinder
 from pychron.envisage.resources import icon
-import six
 
 
 class ComboBoxWidget(QWidget):
@@ -138,7 +139,6 @@ class _ComboboxEditor(SimpleEditor):
 
             self._no_enum_update += 1
             try:
-
                 self.value = value
                 self._set_background(OKColor)
                 if self.factory.addable:
@@ -149,11 +149,15 @@ class _ComboboxEditor(SimpleEditor):
 
                     if value and value not in vv:
                         names = fuzzyfinder(value, vv)
+
+                        self.control.clear()
+                        self.control.addItems(names)
+                        self.control.showPopup()
                     else:
                         names = self.names
+                        self.control.clear()
+                        self.control.addItems(names)
 
-                    self.control.clear()
-                    self.control.addItems(names)
                     try:
                         self.control.setEditText(self.str_value)
                     except:

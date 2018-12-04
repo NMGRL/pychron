@@ -17,11 +17,13 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 from __future__ import absolute_import
+
 from numpy import array
+from six.moves import zip
 # ============= local library imports  ==========================
 from uncertainties import std_dev, nominal_value
+
 from pychron.pipeline.plot.plotter.references_series import ReferencesSeries
-from six.moves import zip
 
 
 class ICFactor(ReferencesSeries):
@@ -63,6 +65,6 @@ class ICFactor(ReferencesSeries):
         else:
             rys = array([ri.get_value(po.name) for ri in self.sorted_references])
         rys = rys / po.standard_ratio
-        return rys
+        return self.sorted_references, self.rxs, rys
 
 # ============= EOF =============================================

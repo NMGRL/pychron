@@ -23,7 +23,6 @@ from traits.api import HasTraits, Str, Bool, Date
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
-
 class GitTag(HasTraits):
     message = Str
     date = Date
@@ -36,9 +35,9 @@ class GitTag(HasTraits):
         commit = obj.commit
 
         self.name = obj.name
-
-        self.message = tag.message
-        self.date = datetime.fromtimestamp(float(tag.tagged_date))
+        if tag:
+            self.message = tag.message
+            self.date = datetime.fromtimestamp(float(tag.tagged_date))
 
         self.hexsha = commit.hexsha
         self.commit_message = commit.message

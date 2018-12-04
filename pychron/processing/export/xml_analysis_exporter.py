@@ -16,18 +16,21 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import Instance
+
 # ============= standard library imports ========================
 import base64
-import struct
 import os
+import struct
+
+import six
+from six.moves import zip
+from traits.api import Instance
 # ============= local library imports  ==========================
 from uncertainties import nominal_value, std_dev
+
 from pychron.processing.export.destinations import XMLDestination
 from pychron.processing.export.export_spec import XMLExportSpec
 from pychron.processing.export.exporter import Exporter
-import six
-from six.moves import zip
 
 
 class XMLAnalysisExporter(Exporter):
@@ -106,7 +109,7 @@ class XMLAnalysisExporter(Exporter):
         xmlp.add('position', spec.irradiation_position, irrad)
 
         chron = xmlp.add('chronology', '', irrad)
-        for power, start, end in spec.chron_dosages:
+        for power, dur, dt, start, end in spec.chron_segments:
             dose = xmlp.add('dose', '', chron)
             xmlp.add('power', power, dose)
             xmlp.add('start', start, dose)

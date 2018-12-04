@@ -200,7 +200,8 @@ class MeasurementPyScript(ValvePyScript):
                                         self._time_zero,
                                         self._time_zero_offset,
                                         fit_series=self._fit_series_count,
-                                        series=self._series_count):
+                                        series=self._series_count,
+                                        integration_time=integration_time):
             self.cancel()
 
     @count_verbose_skip
@@ -249,7 +250,8 @@ class MeasurementPyScript(ValvePyScript):
                                         use_dac=use_dac,
                                         fit_series=self._fit_series_count,
                                         settling_time=settling_time,
-                                        series=series):
+                                        series=series,
+                                        integration_time=integration_time):
             self.cancel()
         self._baseline_series = series
         # self._series_count += 2
@@ -506,7 +508,7 @@ class MeasurementPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def position_magnet(self, pos, detector='AX', use_dac=False):
+    def position_magnet(self, pos, detector='AX', use_dac=False, for_collection=True):
         """
 
         :param pos: location to set magnetic field
@@ -523,7 +525,7 @@ class MeasurementPyScript(ValvePyScript):
             position_magnet('Ar40', detector='AX') #Ar40 will be converted to 39.962 use mole weight dict
 
         """
-        self._automated_run_call('py_position_magnet', pos, detector, use_dac=use_dac)
+        self._automated_run_call('py_position_magnet', pos, detector, use_dac=use_dac, for_collection=for_collection)
 
     @verbose_skip
     @command_register

@@ -1,6 +1,5 @@
-from __future__ import absolute_import
-from kiva.agg import GraphicsContextArray
 import six
+from kiva.agg import GraphicsContextArray
 
 
 def save(gc, filename, file_format=None, pil_options=None):

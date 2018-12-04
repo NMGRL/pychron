@@ -16,11 +16,13 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import binascii
 import math
 import os
 import time
 
+from six.moves import zip
 from traits.api import Instance, Bool, Interface, provides, Long, Str, Float
 from xlwt import Workbook, struct
 
@@ -34,8 +36,6 @@ from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.processing.export.export_spec import MassSpecExportSpec
 from pychron.pychron_constants import NULL_STR, DETECTOR_IC
-import six
-from six.moves import zip
 
 DEBUG = False
 
@@ -836,7 +836,7 @@ class AutomatedRunPersister(BasePersister):
 
         if self.per_spec.spec_dict:
             db.add_spectrometer_parameters(meas, self.per_spec.spec_dict)
-            for det, deflection in six.iteritems(self.per_spec.defl_dict):
+            for det, deflection in self.per_spec.defl_dict.items():
                 det = db.add_detector(det)
                 db.add_deflection(meas, det, deflection)
 
@@ -898,7 +898,7 @@ class AutomatedRunPersister(BasePersister):
                 'selected_{}'.format(name), history)
 
         func = getattr(db, 'add_{}'.format(name))
-        for isotope, v in six.iteritems(values):
+        for isotope, v in values.items():
             uv = v.nominal_value
             ue = float(v.std_dev)
             if preceding_id:

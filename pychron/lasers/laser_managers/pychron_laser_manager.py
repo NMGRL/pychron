@@ -17,24 +17,24 @@
 # ============= standard library imports ========================
 from __future__ import absolute_import
 from __future__ import print_function
-import six.moves.cPickle as pickle
+
 import os
 import time
 from threading import Thread
 
+import six
+import six.moves.cPickle as pickle
 # ============= enthought library imports =======================
 from traits.api import Str, String, on_trait_change, Float, \
     Property, Instance, Event, Enum, Int, Either, Range, cached_property
 
+from pychron import json
 # ============= local library imports  ==========================
-from pychron.core.helpers.strtools import to_bool
+from pychron.core.helpers.strtools import to_bool, csv_to_floats
 from pychron.envisage.view_util import open_view
 from pychron.globals import globalv
 from pychron.lasers.laser_managers.ethernet_laser_manager import EthernetLaserManager
 from pychron.paths import paths
-from pychron import json
-from six.moves import map
-import six
 
 
 class PychronLaserManager(EthernetLaserManager):
@@ -287,7 +287,7 @@ class PychronLaserManager(EthernetLaserManager):
         xyz = self._ask('GetPosition')
         if xyz:
             try:
-                x, y, z = list(map(float, xyz.split(',')))
+                x,y,z = csv_to_floats(xyz)
                 return x, y, z
             except Exception as e:
                 print('pychron laser manager get_position', e)
@@ -332,7 +332,7 @@ class PychronLaserManager(EthernetLaserManager):
 
         if block:
             time.sleep(0.5)
-            if not self._block('IsPatterning', period=1):
+            if not self._block('IsPatterning', period=1, timeout=100):
                 self._ask('AbortPattern')
 
     # ===============================================================================
@@ -391,7 +391,8 @@ class PychronLaserManager(EthernetLaserManager):
         self.info('sending {}'.format(cmd))
         self._ask(cmd)
         time.sleep(0.5)
-        r = self._block()
+        r = self._block(nsuccess=3, period=0.5)
+        time.sleep(0.5)
         if autocenter:
             r = self._block(cmd='GetAutoCorrecting', period=0.5)
 

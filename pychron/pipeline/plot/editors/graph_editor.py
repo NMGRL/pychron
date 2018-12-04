@@ -18,8 +18,6 @@
 from __future__ import absolute_import
 
 import os
-from itertools import groupby
-from operator import attrgetter
 
 from chaco.plot_label import PlotLabel
 from enable.component_editor import ComponentEditor as EnableComponentEditor
@@ -27,6 +25,7 @@ from traits.api import Property, Event, cached_property, Any
 from traitsui.api import View, UItem
 
 from pychron.core.codetools.inspection import caller
+from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.pipeline.plot.editors.base_editor import BaseEditor
 from pychron.pipeline.plot.figure_container import FigureContainer
 
@@ -97,11 +96,7 @@ class GraphEditor(BaseEditor):
     def _compress_groups(self):
         ans = self.items
         if ans:
-            key = attrgetter('group_id')
-            ans = sorted(ans, key=key)
-            groups = groupby(ans, key)
-
-            for i, (gid, analyses) in enumerate(groups):
+            for i, (gid, analyses) in enumerate(groupby_group_id(ans)):
                 for ai in analyses:
                     ai.group_id = i
 
@@ -117,10 +112,14 @@ class GraphEditor(BaseEditor):
             if model == omodel:
                 self.figure_container.model_changed()
 
+            self._get_component_hook()
             return self.figure_container.component
 
         else:
             return self._no_component_factory()
+
+    def _get_component_hook(self):
+        pass
 
     def _no_component_factory(self):
         container = self.figure_container

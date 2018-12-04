@@ -22,7 +22,6 @@ from collections import OrderedDict
 from datetime import datetime
 from hashlib import md5
 # ============= enthought library imports =======================
-from itertools import groupby
 from operator import attrgetter
 
 from traits.api import List, Any, Str, Enum, Bool, Event, Property, cached_property, Instance, DelegatesTo, \
@@ -30,6 +29,7 @@ from traits.api import List, Any, Str, Enum, Bool, Event, Property, cached_prope
 
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.fuzzyfinder import fuzzyfinder
+from pychron.core.helpers.iterfuncs import groupby_repo
 from pychron.core.select_same import SelectSameMixin
 from pychron.core.ui.table_configurer import AnalysisTableConfigurer
 from pychron.dvc.func import get_review_status
@@ -164,6 +164,11 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
         self.calculate_dts(self.analyses)
         self.scroll_to_row = len(self.analyses) - 1
 
+    def clear_non_frozen(self):
+        self.analyses = [a for a in self.analyses if a.frozen]
+        self.oanalyses = self.analyses
+        self.selected = []
+
     def clear(self):
         self.analyses = []
         self.oanalyses = []
@@ -242,8 +247,7 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
     def load_review_status(self):
         records = self.get_analysis_records()
         if records:
-            for repoid, rs in groupby(sorted(records, key=attrgetter('repository_identifier')),
-                                      key=attrgetter('repository_identifier')):
+            for repoid, rs in groupby_repo(records):
 
                 self.dvc.sync_repo(repoid)
                 for ri in rs:

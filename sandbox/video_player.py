@@ -13,15 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from PySide import QtCore
-from pyface.qt.QtGui import QWidget, QImage, QPixmap
 from pyface.qt import QtGui
+from pyface.qt.QtGui import QWidget, QImage, QPixmap
 from traits.has_traits import HasTraits
 from traits.trait_types import Str
-from traitsui.item import UItem
 from traitsui.basic_editor_factory import BasicEditorFactory
+from traitsui.item import UItem
 from traitsui.qt4.editor import Editor
 from traitsui.view import View
+
 from pychron.image.cv_wrapper import get_capture_device
 
 

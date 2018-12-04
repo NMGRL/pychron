@@ -14,24 +14,25 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-from __future__ import absolute_import
+# ============= standard library imports ========================
+import os
+
+import yaml
 from pyface.file_dialog import FileDialog
 from traits.api import HasTraits, List, Instance, Str
 from traitsui.api import View, UItem, \
     VGroup, Handler, ListEditor
 from traitsui.menu import Action
 
-# ============= standard library imports ========================
-import os
-import yaml
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import get_path, add_extension
 from pychron.envisage.view_util import open_view
+from pychron.experiment.conditional.conditional import ActionConditional, TruncationConditional, \
+    CancelationConditional, TerminationConditional, QueueModificationConditional
 from pychron.experiment.conditional.groups import ConditionalGroup, ModificationGroup, ActionGroup, TruncationGroup, \
     CancelationGroup, TerminationGroup, EPostRunGroup, EPreRunGroup
 from pychron.paths import paths
-from pychron.experiment.conditional.conditional import ActionConditional, TruncationConditional, \
-    CancelationConditional, TerminationConditional, QueueModificationConditional
+from pychron.pychron_constants import ARGON_KEYS
 
 
 class CEHandler(Handler):
@@ -103,11 +104,9 @@ class ConditionalsEditView(ConditionalsViewable):
     # pre_run_terminations_group = Any
 
     def __init__(self, detectors=None, *args, **kw):
-        attrs = ['', 'age', 'kca', 'kcl', 'cak', 'clk', 'rad40_percent',
-                 'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36']
+        attrs = ['', 'age', 'kca', 'kcl', 'cak', 'clk', 'rad40_percent'] + list(ARGON_KEYS)
 
-        ratio_matrix = ['Ar{}/Ar{}'.format(i, j) for i in ('40', '39', '38', '37', '36')
-                        for j in ('40', '39', '38', '37', '36') if i != j]
+        ratio_matrix = ['{}/{}'.format(i, j) for i in ARGON_KEYS for j in ARGON_KEYS if i != j]
         attrs.extend(ratio_matrix)
         if detectors:
             attrs.extend(detectors)
@@ -197,7 +196,7 @@ def get_file_path(root, action='open'):
                      default_directory=root)
     if dlg.open():
         if dlg.path:
-            return add_extension(dlg.path, '.yaml')
+            return add_extension(dlg.path, ext=('.yaml', '.yml'))
 
 
 def edit_conditionals(name, detectors=None, root=None, save_as=False,
@@ -225,6 +224,5 @@ def edit_conditionals(name, detectors=None, root=None, save_as=False,
     if info.result:
         cev.dump()
         return cev.name
-
 
 # ============= EOF =============================================

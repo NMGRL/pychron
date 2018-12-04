@@ -15,17 +15,19 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from __future__ import absolute_import
 import binascii
 import os
 import pickle
 import time
-from itertools import groupby
+from operator import itemgetter
 from pickle import PickleError
 
+from six.moves import range
+from six.moves import zip
 from traits.api import Any, Dict, List, Bool, Event, Str
 
 from pychron.core.helpers.filetools import add_extension
+from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.helpers.strtools import to_bool
 from pychron.extraction_line.explanation.explanable_item import ExplanableValve
 from pychron.extraction_line.pipettes.tracking import PipetteTracker
@@ -37,9 +39,6 @@ from pychron.hardware.valve import HardwareValve
 from pychron.managers.manager import Manager
 from pychron.paths import paths
 from .switch_parser import SwitchParser
-import six
-from six.moves import range
-from six.moves import zip
 
 
 def add_checksum(func):
@@ -184,15 +183,11 @@ class SwitchManager(Manager):
                     D,E owned by 150
                     F free
         """
-        # self.valves['C'].owner = '129.138.12.135'
-        # self.valves['X'].owner = '129.138.12.135'
 
         vs = [(v.name.split('-')[1], v.owner) for v in self.switches.values()]
-        key = lambda x: x[1]
-        vs = sorted(vs, key=key)
 
         owners = []
-        for owner, valves in groupby(vs, key=key):
+        for owner, valves in groupby_key(vs, itemgetter(1)):
             valves, _ = list(zip(*valves))
             v = ','.join(valves)
             if owner:
@@ -208,8 +203,7 @@ class SwitchManager(Manager):
 
     @add_checksum
     def get_software_locks(self):
-        return ','.join(['{}{}'.format(k, int(v.software_lock))
-                         for k, v in self.switches.items()])
+        return ','.join(['{}{}'.format(k, int(v.software_lock)) for k, v in self.switches.items()])
 
     @add_checksum
     def get_states(self, query=False, timeout=0.25):
@@ -243,7 +237,7 @@ class SwitchManager(Manager):
 
             keys.append(k)
 
-            states.append(int(v.state))
+            states.append('{}{}'.format(k, int(v.state if v.state is not None else 0)))
             if time.time() - st > timeout:
                 self.debug('get states timeout. timeout={}'.format(timeout))
                 break
@@ -414,6 +408,46 @@ class SwitchManager(Manager):
 
         return next((False for vi in v.interlocks if self.get_switch_by_name(vi).state), True)
 
+    def load_valve_states(self):
+        self.load_indicator_states()
+
+    def load_valve_lock_states(self, *args, **kw):
+        self._load_soft_lock_states()
+
+    def load_valve_owners(self):
+        pass
+
+    def load_hardware_states(self, force=False, indicator=True, verbose=False):
+        self.debug('load hardware states')
+        update = False
+        states = []
+        for k, v in self.switches.items():
+            if v.query_state or force:
+                ostate = v.state
+
+                if indicator:
+                    func = v.get_hardware_indicator_state
+                else:
+                    func = v.get_hardware_state
+
+                s = func(verbose=verbose)
+
+                if not isinstance(s, bool):
+                    s = None
+
+                states.append((k, s, False))
+                if ostate != s:
+                    update = update or ostate != s
+
+        if states:
+            self.refresh_state = states
+            if update:
+                self.refresh_canvas_needed = True
+
+    def load_indicator_states(self):
+        self.debug('load indicator states')
+        self.load_hardware_states()
+
     # private
     def _save_states(self):
         self._save_soft_lock_states()
@@ -520,50 +554,9 @@ class SwitchManager(Manager):
                 self.critical('switch_manager._parse_word exception. {}'.format(v))
         return d
 
-    def load_valve_states(self):
-        self.load_indicator_states()
-
-    def load_valve_lock_states(self, *args, **kw):
-        self._load_soft_lock_states()
-
-    def load_valve_owners(self):
-        pass
-
-    def load_hardware_states(self):
-        self.debug('load hardware states')
-        update = False
-        states = []
-        for k, v in six.iteritems(self.switches):
-            if v.query_state:
-                ostate = v.state
-                s = v.get_hardware_indicator_state(verbose=False)
-                states.append((k, s, False))
-                # self.refresh_state = (k, s, False)
-                if ostate != s:
-                    update = update or ostate != s
-
-        if states:
-            self.refresh_state = states
-            if update:
-                self.refresh_canvas_needed = True
-
-    def load_indicator_states(self):
-        self.debug('load indicator states')
-        self.load_hardware_states()
-
     def _load_states(self):
         self.debug('$$$$$$$$$$$$$$$$$$$$$ Load states')
-        update = False
-        for k, v in six.iteritems(self.switches):
-            ostate = v.state
-            s = v.get_hardware_state()
-            self.debug('hardware state {},{},{}'.format(k, v, s))
-            if v.state != s:
-                update = update or ostate != s
-            self.refresh_state = (k, s, False)
-
-        if update:
-            self.refresh_canvas_needed = True
+        self.load_hardware_states(force=True)
 
     def _load_manual_states(self):
         p = os.path.join(paths.hidden_dir, '{}_manual_states'.format(self.name))
@@ -576,7 +569,7 @@ class SwitchManager(Manager):
                 except PickleError:
                     return
 
-                for k, s in six.iteritems(self.switches):
+                for k, s in self.switches.items():
                     if k in ms:
                         s.state = ms[k]
 
@@ -602,14 +595,14 @@ class SwitchManager(Manager):
         p = os.path.join(paths.hidden_dir, '{}_manual_states'.format(self.name))
         self.info('saving manual states to {}'.format(p))
         with open(p, 'wb') as f:
-            obj = {k: v.state for k, v in six.iteritems(self.switches) if isinstance(v, ManualSwitch)}
+            obj = {k: v.state for k, v in self.switches.items() if isinstance(v, ManualSwitch)}
             pickle.dump(obj, f)
 
     def _save_soft_lock_states(self):
         p = os.path.join(paths.hidden_dir, '{}_soft_lock_state'.format(self.name))
         self.info('saving soft lock states to {}'.format(p))
         with open(p, 'wb') as f:
-            obj = {k: v.software_lock for k, v in six.iteritems(self.switches)}
+            obj = {k: v.software_lock for k, v in self.switches.items()}
             # obj = dict([(k, v.software_lock) for k, v in self.switches.iteritems()])
 
             pickle.dump(obj, f)

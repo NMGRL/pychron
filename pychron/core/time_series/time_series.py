@@ -13,10 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from __future__ import absolute_import
 from numpy import asarray, r_, ones, convolve, concatenate, mean
-from six.moves import range
-from six.moves import zip
 
 
 def smooth(x, window_len=11, window='hanning'):

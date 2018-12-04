@@ -15,20 +15,18 @@
 # ===============================================================================
 
 
-
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
-from __future__ import absolute_import
 import struct
-from six.moves import range
-from six.moves import zip
+
+
 # ============= local library imports  ==========================
 def build_time_series_blob(ts, vs):
-    '''
+    """
         @type vs: C{str}
         @param vs:
-    '''
+    """
     if isinstance(ts, float):
         ts = [ts]
         vs = [vs]
@@ -37,9 +35,10 @@ def build_time_series_blob(ts, vs):
         blob += struct.pack('>ff', float(vi), float(ti))
     return blob
 
+
 def parse_time_series_blob(blob):
-    '''
-    '''
+    """
+    """
     v = []
     t = []
     for i in range(0, len(blob), 8):

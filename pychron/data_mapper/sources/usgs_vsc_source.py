@@ -13,14 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from __future__ import absolute_import
-
 # ============= standard library imports ========================
 from datetime import datetime, timedelta
 
 from numpy import array
-from six.moves import range
-from six.moves import zip
 from traits.api import File
 
 from pychron.data_mapper.sources.file_source import FileSource, get_float, get_int, get_next, get_ufloat

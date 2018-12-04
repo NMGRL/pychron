@@ -61,17 +61,17 @@ class WiscArMetaParser(Loggable):
             next(wfile)
 
             # line 9 irradiation
-            line = next(wfile)
-            spec.run_spec.irradiation = line.split(':')[1].strip()
+            irrad = next(wfile)
+            ln = next(wfile)
+            level = next(wfile)
+            position = next(wfile)
+            if not spec.run_spec.labnumber:
+                # for airs and blanks labnumber and irradiation already set
+                spec.run_spec.irradiation = irrad.split(':')[1].strip()
 
-            line = next(wfile)
-            spec.run_spec.labnumber = line.split(':')[1].strip()
-
-            line = next(wfile)
-            spec.run_spec.irradiation_level = line.split(':')[1].strip()
-
-            line = next(wfile)
-            spec.run_spec.irradiation_position = int(line.split(':')[1].strip())
+                spec.run_spec.labnumber = ln.split(':')[1].strip()
+                spec.run_spec.irradiation_level = level.split(':')[1].strip()
+                spec.run_spec.irradiation_position = int(position.split(':')[1].strip())
 
             spec.j = 0
             spec.j_err = 0

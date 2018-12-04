@@ -87,18 +87,21 @@ class EditView(ModelView):
                                               editor=EnumEditor(name='production_names')),
                                         icon_button_editor('apply_selected_production', 'arrow_left',
                                                            tooltip='Apply selection'),
-                                        show_border=True,
-                                        label='Production'),
-
-                                 HGroup(UItem('selected_reactor_name',
-                                              editor=EnumEditor(name='reactor_names')),
-                                        icon_button_editor('apply_selected_reactor', 'arrow_left',
-                                                           tooltip='Apply selection'),
                                         icon_button_editor('update_reactor_default_button',
                                                            'arrow_up',
                                                            tooltip='Set current as the reactor default'),
-                                        label='Reactor',
-                                        show_border=True),
+                                        show_border=True,
+                                        label='Production'),
+
+                                 # HGroup(UItem('selected_reactor_name',
+                                 #              editor=EnumEditor(name='reactor_names')),
+                                 #        icon_button_editor('apply_selected_reactor', 'arrow_left',
+                                 #                           tooltip='Apply selection'),
+                                 #        icon_button_editor('update_reactor_default_button',
+                                 #                           'arrow_up',
+                                 #                           tooltip='Set current as the reactor default'),
+                                 #        label='Reactor',
+                                 #        show_border=True),
                                  UItem('selected_production', style='custom')),
                           label='Production Ratios')
 
@@ -159,9 +162,9 @@ class LevelEditor(Loggable):
 
     trays = List
 
-    reactors = Dict
-    reactor_names = List
-    selected_reactor_name = Str
+    # reactors = Dict
+    # reactor_names = List
+    # selected_reactor_name = Str
 
     canvas = Instance(IrradiationCanvas, ())
 
@@ -245,10 +248,10 @@ class LevelEditor(Loggable):
                     self._save_production()
                     prname = self.selected_production.name
 
-                    pr = db.get_production(prname)
-                    if not pr:
-                        pr = db.add_production(prname)
-                    level.production = pr
+                    # pr = db.get_production(prname)
+                    # if not pr:
+                    #     pr = db.add_production(prname)
+                    # level.production = pr
 
                     self.meta_repo.update_level_production(self.irradiation, self.name, prname, self.level_note)
 
@@ -309,7 +312,7 @@ class LevelEditor(Loggable):
         if irrad.levels:
             level = irrad.levels[-1]
 
-            self.z = level.z
+            self.z = level.z or 0
 
             if level.holder:
                 self.selected_tray = next((t for t in self.trays if t == level.holder), '')
@@ -381,20 +384,20 @@ class LevelEditor(Loggable):
         #         keys.append(head)
         self.productions = ps
         self.production_names = keys
-        self._load_reactors()
+        # self._load_reactors()
 
-    def _load_reactors(self):
-
-        p = os.path.join(paths.meta_root, 'reactors.json')
-        reactors = {}
-        if os.path.isfile(p):
-            with open(p, 'r') as rfile:
-                reactors = json.load(rfile)
-                for k, v in reactors.items():
-                    reactors[k] = IrradiationProduction(k, v)
-
-        self.reactors = reactors
-        self.reactor_names = list(reactors.keys())
+    # def _load_reactors(self):
+    #
+    #     p = os.path.join(paths.meta_root, 'reactors.json')
+    #     reactors = {}
+    #     if os.path.isfile(p):
+    #         with open(p, 'r') as rfile:
+    #             reactors = json.load(rfile)
+    #             for k, v in reactors.items():
+    #                 reactors[k] = IrradiationProduction(k, v)
+    #
+    #     self.reactors = reactors
+    #     self.reactor_names = list(reactors.keys())
 
     def _update_reactor(self):
         p = os.path.join(paths.meta_root, 'reactors.json')
@@ -455,7 +458,7 @@ class LevelEditor(Loggable):
     def _save_production(self, name=None):
         prod = self.selected_production
         self.debug('Saving production={}, dirty={}, keywordname={}'.format(prod.name, prod.dirty, name))
-        if prod.dirty or name: #or prod.name.startswith('Global'):
+        if prod.dirty or name:  # or prod.name.startswith('Global'):
             if name:
                 prname = name
             else:
@@ -467,8 +470,7 @@ class LevelEditor(Loggable):
             self.debug('saving production {}'.format(prname))
 
             self.meta_repo.add_production_to_irradiation(self.irradiation, prname,
-                                                         self.selected_production.get_params(),
-                                                         new=name is not None)
+                                                         self.selected_production.get_params())
             self.meta_repo.commit('Edited production {} for Irradiation {}'.format(prname, self.irradiation))
 
     def _add_production_button_fired(self):
@@ -501,9 +503,9 @@ class LevelEditor(Loggable):
         if new:
             self.selected_production = self.productions[new]
 
-    def _selected_reactor_name_changed(self, new):
-        if new:
-            self.selected_production = self.reactors[new]
+    # def _selected_reactor_name_changed(self, new):
+    #     if new:
+    #         self.selected_production = self.reactors[new]
 
     def _selected_tray_changed(self):
         holes = self.meta_repo.get_irradiation_holder_holes(self.selected_tray)

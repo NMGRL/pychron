@@ -1,9 +1,11 @@
+import os
 import time
 from threading import Thread
-import os
+
 import psutil
+
 from pychron.consumer_mixin import consumable
-import gc
+
 PID = os.getpid()
 
 def get_mem():

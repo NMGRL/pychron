@@ -13,8 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
-from __future__ import absolute_import
 from envisage.extension_point import ExtensionPoint
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
@@ -31,7 +29,7 @@ from pychron.experiment.tasks.experiment_actions import NewExperimentQueueAction
     OpenExperimentQueueAction, SignalCalculatorAction, \
     DeselectAction, \
     NewPatternAction, OpenPatternAction, ResetQueuesAction, OpenLastExperimentQueueAction, UndoAction, \
-    QueueConditionalsAction, ConfigureEditorTableAction, SystemConditionalsAction, ResetSystemHealthAction, \
+    QueueConditionalsAction, ConfigureEditorTableAction, SystemConditionalsAction, \
     OpenExperimentHistoryAction, LastAnalysisRecoveryAction, OpenCurrentExperimentQueueAction, \
     SaveAsCurrentExperimentAction, SyncQueueAction, AcquireSpectrometerAction, ReleaseSpectrometerAction, \
     RunHistoryAction
@@ -130,9 +128,7 @@ class ExperimentPlugin(BaseTaskPlugin):
 
     def _available_task_extensions_default(self):
         return [(self.id, '', 'Experiment',
-                 [SchemaAddition(id='pychron.experiment.reset_system_health', factory=ResetSystemHealthAction,
-                                 path='MenuBar/file.menu'),
-                  SchemaAddition(id='pychron.experiment.open_queue_conditionals', factory=QueueConditionalsAction,
+                 [SchemaAddition(id='pychron.experiment.open_queue_conditionals', factory=QueueConditionalsAction,
                                  path='MenuBar/Edit'),
                   SchemaAddition(id='pychron.experiment.open_system_conditionals', factory=SystemConditionalsAction,
                                  path='MenuBar/Edit'),

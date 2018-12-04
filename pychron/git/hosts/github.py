@@ -33,6 +33,14 @@ class GitHubService(GitHostService):
     def remote_url(self):
         return paths.github_url
 
+    def get_repo(self, organization, name):
+        cmd = '{}/repos/{}/{}'.format(paths.github_api_url, organization, name)
+        resp = self._get(cmd)
+        try:
+            return resp[0]
+        except IndexError:
+            pass
+
     def test_api(self):
         ret, err = True, ''
         try:
@@ -66,6 +74,7 @@ class GitHubService(GitHostService):
                 resp = self._post(cmd, name=name, **kw)
                 if resp:
                     self.debug('Create repo response {}'.format(resp.status_code))
+                    self._clear_cached_repo_names = True
                     return resp.status_code == 201
             except SSLError as e:
                 self.warning('SSL Error. {}'.format(e))

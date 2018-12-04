@@ -15,17 +15,15 @@
 # ===============================================================================
 
 # ============= standard library imports ========================
-from __future__ import absolute_import
 import glob
 import os
-from datetime import datetime
+
 from git import Repo
 from traits.api import Str, Bool, HasTraits
 
 from pychron import json
-from pychron.dvc import analysis_path
+from pychron.dvc import analysis_path, repository_path
 from pychron.git_archive.repo_manager import GitRepoManager
-from pychron.paths import paths
 
 
 def repository_has_staged(ps, remote='origin', branch='master'):
@@ -35,7 +33,7 @@ def repository_has_staged(ps, remote='origin', branch='master'):
     changed = []
     # repo = GitRepoManager()
     for p in ps:
-        pp = os.path.join(paths.repository_dataset_dir, p)
+        pp = repository_path(p)
         repo = Repo(pp)
 
         if repo.git.log('{}/{}..HEAD'.format(remote, branch), '--oneline'):
@@ -46,7 +44,7 @@ def repository_has_staged(ps, remote='origin', branch='master'):
 
 def push_repositories(ps, remote='origin', branch='master', quiet=True):
     for p in ps:
-        pp = os.path.join(paths.repository_dataset_dir, p)
+        pp = repository_path(p)
         # repo = Repo(pp)
         repo = GitRepoManager()
         repo.open_repo(pp)
@@ -86,13 +84,13 @@ class RSDItem(HasTraits):
 def get_review_status(record):
     ms = 0
     ritems = []
-    root = os.path.join(paths.repository_dataset_dir, record.repository_identifier)
+    root = repository_path(record.repository_identifier)
     if os.path.isdir(root):
         repo = Repo(root)
         for m, func in (('blanks', is_blank_reviewed),
                         ('intercepts', is_intercepts_reviewed),
                         ('icfactors', is_icfactors_reviewed)):
-            p = analysis_path(record.record_id, record.repository_identifier, modifier=m)
+            p = analysis_path(record, record.repository_identifier, modifier=m)
             if os.path.isfile(p):
                 with open(p, 'r') as rfile:
                     obj = json.load(rfile)
@@ -126,7 +124,7 @@ def find_interpreted_age_path(idn, repositories, prefixlen=3):
     #         ret.extend(ps)
 
     ret = [p for repo in repositories
-           for p in glob.glob(os.path.join(paths.repository_dataset_dir, repo, prefix, 'ia', suffix))]
+           for p in glob.glob(repository_path(repo, prefix, 'ia', suffix))]
     return ret
 
 

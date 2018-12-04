@@ -16,13 +16,13 @@
 
 # ============= enthought library imports =======================
 import os
-from itertools import groupby
 
 from traits.api import List, Any, Bool, Event, Instance
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.column_sorter_mixin import ColumnSorterMixin
+from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.envisage.browser.adapters import InterpretedAgeAdapter
 
 
@@ -55,7 +55,7 @@ class InterpretedAgeTable(ColumnSorterMixin):
                 return os.path.basename(os.path.dirname(os.path.dirname(os.path.dirname(s.path))))
 
             dvc = self.dvc
-            for repo, records in groupby(sorted(self.selected, key=key), key=key):
+            for repo, records in groupby_key(self.selected, key):
                 ps = []
                 ns = []
                 for r in records:

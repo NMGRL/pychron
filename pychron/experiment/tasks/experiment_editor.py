@@ -24,9 +24,9 @@ from pychron.core.ui.qt.tabular_editor import TabularEditorHandler
 from pychron.core.ui.table_configurer import ExperimentTableConfigurer
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
-from pychron.experiment.bulk_run_fixer import BulkRunFixer
 from pychron.experiment.automated_run.tabular_adapter import AutomatedRunSpecAdapter, UVAutomatedRunSpecAdapter, \
     ExecutedAutomatedRunSpecAdapter, ExecutedUVAutomatedRunSpecAdapter
+from pychron.experiment.bulk_run_fixer import BulkRunFixer
 from pychron.experiment.queue.experiment_queue import ExperimentQueue
 from pychron.experiment.utilities.repository_identifier import get_curtag, populate_repository_identifiers
 
@@ -48,6 +48,12 @@ class ExperimentEditorHandler(TabularEditorHandler):
 
     def repeat_block(self, info, obj):
         obj.repeat_block()
+
+    def group_extractions(self, info, obj):
+        obj.group_extractions()
+
+    def group_extractions2(self, info, obj):
+        obj.group_extractions2()
 
     def toggle_end_after(self, info, obj):
         obj.toggle_end_after()
@@ -115,10 +121,13 @@ class ExperimentEditor(BaseTraitsEditor):
     def refresh(self):
         self.queue.refresh_table_needed = True
 
-    def setup_tabular_adapters(self, c, ec, colors):
+    def setup_tabular_adapters(self, c, ec, colors, use_atype_colors, atype_colors):
         self.bgcolor = c
         self.tabular_adapter = self.tabular_adapter_klass()
         self.executed_tabular_adapter = self.executed_tabular_adapter_klass()
+
+        self.tabular_adapter.use_analysis_type_colors = use_atype_colors
+        self.tabular_adapter.analysis_type_colors = atype_colors
 
         self.executed_tabular_adapter.colors = colors
         self.tabular_adapter.odd_bg_color = c
@@ -268,8 +277,8 @@ class ExperimentEditor(BaseTraitsEditor):
         qi.executable = True
         qi.initialized = True
 
-        self.bulk_run_fixer.patterns = qi.patterns
-        self.bulk_run_fixer.fix(runs)
+        # self.bulk_run_fixer.patterns = qi.patterns
+        # self.bulk_run_fixer.fix(runs)
 
         hec = qi.human_error_checker
         info = hec.check_runs_non_fatal(runs)

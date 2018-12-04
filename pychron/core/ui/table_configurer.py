@@ -13,8 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
-from __future__ import absolute_import
 import os
 # ============= enthought library imports =======================
 import pickle
@@ -31,11 +29,9 @@ from traitsui.api import View, Item, UItem, CheckListEditor, VGroup, Handler, HG
 from traitsui.table_column import ObjectColumn
 from traitsui.tabular_adapter import TabularAdapter
 
+from pychron.core.pychron_traits import BorderVGroup
 from pychron.paths import paths
-from pychron.pychron_constants import ISOTOPES
-from six.moves import range
-
-SIZES = (6, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36)
+from pychron.pychron_constants import ARGON_KEYS, SIZES
 
 
 class TableConfigurerHandler(Handler):
@@ -150,7 +146,7 @@ class TableConfigurer(HasTraits):
                 self.font = font
 
             self._load_hook(state)
-            self.set_columns()
+            self.update()
 
     def _dump_state(self):
         p = os.path.join(paths.hidden_dir, self.id)
@@ -227,7 +223,9 @@ class TableConfigurer(HasTraits):
 
         # set all available columns
         self.available_columns = acols
-        self._set_font(adp.font)
+        if adp.font:
+            self._set_font(adp.font)
+
         self._load_state()
 
     def traits_view(self):
@@ -368,7 +366,7 @@ class IntermediateTableConfigurer(TableConfigurer):
 
 
 class Ratio(HasTraits):
-    isotopes = List(['']+list(ISOTOPES))
+    isotopes = List(['']+list(ARGON_KEYS))
     numerator = Str
     denominator = Str
 
@@ -397,8 +395,9 @@ class CocktailOptions(HasTraits):
     def traits_view(self):
         cols = [ObjectColumn(name='numerator', editor=EnumEditor(name='isotopes')),
                 ObjectColumn(name='denominator', editor=EnumEditor(name='isotopes'))]
-        v = View(UItem('ratios', editor=TableEditor(sortable=False,
-                                                    columns=cols)))
+        v = View(BorderVGroup(UItem('ratios',
+                                    editor=TableEditor(sortable=False, columns=cols)),
+                              label='Cocktail Options'))
         return v
 
 
@@ -539,21 +538,22 @@ class RecallTableConfigurer(TableConfigurer):
                            UItem('intermediate_table_configurer', style='custom', enabled_when='show_intermediate'),
                            label='Main')
 
-        experiment_view = VGroup(Item('experiment_fontsize', label='Size'),
-                                 show_border=True,
-                                 label='Experiment')
-        measurement_view = VGroup(Item('measurement_fontsize', label='Size'),
-                                  show_border=True,
-                                  label='Measurement')
-        extraction_view = VGroup(Item('extraction_fontsize', label='Size'),
-                                 show_border=True,
-                                 label='Extraction')
+        # experiment_view = VGroup(Item('experiment_fontsize', label='Size'),
+        #                          show_border=True,
+        #                          label='Experiment')
+        # measurement_view = VGroup(Item('measurement_fontsize', label='Size'),
+        #                           show_border=True,
+        #                           label='Measurement')
+        # extraction_view = VGroup(Item('extraction_fontsize', label='Size'),
+        #                          show_border=True,
+        #                          label='Extraction')
 
         v = View(Tabbed(main_view,
                         UItem('recall_options', editor=InstanceEditor(), style='custom'),
-                        VGroup(experiment_view,
-                               measurement_view,
-                               extraction_view, label='Scripts')),
+                        # VGroup(experiment_view,
+                        #        measurement_view,
+                        #        extraction_view, label='Scripts')
+                        ),
 
                  buttons=['OK', 'Cancel', 'Revert'],
                  kind='livemodal',

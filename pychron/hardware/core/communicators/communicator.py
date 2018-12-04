@@ -55,7 +55,6 @@ def remove_eol_func(re):
                 except binascii.Error:
                     re = ''.join(('[{}]'.format(str(b)) for b in re))
 
-
         return re.rstrip()
 
 
@@ -97,6 +96,8 @@ class Communicator(HeadlessConfigLoadable):
 
         if self.write_terminator == 'chr(10)':
             self.write_terminator = chr(10)
+        if self.write_terminator == 'chr(0)':
+            self.write_terminator = chr(0)
 
         return True
 

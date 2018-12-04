@@ -16,10 +16,11 @@
 
 from __future__ import absolute_import
 from __future__ import print_function
+
 import math
-import time
 from datetime import datetime
 
+import time
 from numpy import ediff1d, asarray
 from numpy import where
 
@@ -116,8 +117,18 @@ def bin_datetimes(ts, delta):
             yield low, high
             low = ti - delta
 
-        high = ti+delta
+        high = ti + delta
     yield low, high
+
+
+ISO8601 = '%Y-%m-%dT%H:%M:%SZ'
+
+
+def format_iso_datetime(v, as_str=True):
+    v = datetime.strptime(v, ISO8601)
+    if as_str:
+        v = v.strftime('%m-%d-%Y %H:%M')
+    return v
 
 
 if __name__ == '__main__':

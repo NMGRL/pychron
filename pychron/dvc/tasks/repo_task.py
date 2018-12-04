@@ -18,21 +18,24 @@
 import os
 import shutil
 
-from apptools.preferences.preference_binding import bind_preference
-from git import Repo, GitCommandError
 # ============= enthought library imports =======================
+from apptools.preferences.preference_binding import bind_preference
+from git import Repo, GitCommandError, InvalidGitRepositoryError
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem
-from traits.api import List, Str, Any, HasTraits, Bool, Instance, Int, Event
+from traits.api import List, Str, Any, HasTraits, Bool, Instance, Int, Event, Date, Property
 
 # ============= local library imports  ==========================
+from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.fuzzyfinder import fuzzyfinder
+from pychron.core.helpers.datetime_tools import format_iso_datetime
 from pychron.core.helpers.filetools import unique_dir
 from pychron.core.progress import progress_loader
+from pychron.dvc import repository_path
 from pychron.dvc.tasks import list_local_repos
 from pychron.dvc.tasks.actions import CloneAction, AddBranchAction, CheckoutBranchAction, PushAction, PullAction, \
     FindChangesAction, LoadOriginAction, DeleteLocalChangesAction, ArchiveRepositoryAction, SyncSampleInfoAction, \
-    SyncRepoAction, RepoStatusAction, BookmarkAction
+    SyncRepoAction, RepoStatusAction, BookmarkAction, RebaseAction
 from pychron.dvc.tasks.panes import RepoCentralPane, SelectionPane
 from pychron.envisage.tasks.base_task import BaseTask
 # from pychron.git_archive.history import from_gitlog
@@ -50,27 +53,36 @@ class RepoItem(HasTraits):
     status = Str
     refresh_needed = Event
     active_branch = Str
+    create_date = Date
+    push_date = Date
 
     def update(self, fetch=True):
         name = self.name
-        p = os.path.join(paths.repository_dataset_dir, name)
+        p = repository_path(name)
         try:
-            a, b = ahead_behind(p, fetch=fetch)
+            try:
+                a, b = ahead_behind(p, fetch=fetch)
+            except InvalidGitRepositoryError:
+                return True
 
             self.ahead = a
             self.behind = b
             self.status = '{},{}'.format(a, b)
             self.refresh_needed = True
+            return True
         except GitCommandError:
             pass
 
 
-class ExperimentRepoTask(BaseTask):
+class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
     name = 'Experiment Repositories'
 
     filter_repository_value = Str
-    selected_repository_name = Str
-    selected_local_repository_name = Instance(RepoItem)
+    filter_origin_value = Str
+    selected_repository = Instance(RepoItem)
+
+    selected_local_repositories = List
+    selected_local_repository_name = Property(depends_on='selected_local_repositories')#Instance(RepoItem)
 
     repository_names = List
 
@@ -82,6 +94,7 @@ class ExperimentRepoTask(BaseTask):
                           SyncRepoAction(),
                           PushAction(),
                           PullAction(),
+                          RebaseAction(),
                           FindChangesAction(),
                           DeleteLocalChangesAction(),
                           ArchiveRepositoryAction(),
@@ -97,7 +110,9 @@ class ExperimentRepoTask(BaseTask):
     branches = List
     dvc = Any
     o_local_repos = None
+    o_origin_repos = None
     check_for_changes = Bool(True)
+    origin_column_clicked = Any
 
     def activated(self):
         bind_preference(self, 'check_for_changes', 'pychron.dvc.repository.check_for_changes')
@@ -128,6 +143,7 @@ class ExperimentRepoTask(BaseTask):
 
     def refresh_local_names(self):
         self.local_names = [RepoItem(name=i, active_branch=branch) for i, branch in sorted(list_local_repos())]
+        self.o_local_repos = None
 
     def find_changes(self, remote='origin', branch='master'):
         self.debug('find changes')
@@ -137,21 +153,24 @@ class ExperimentRepoTask(BaseTask):
             if prog:
                 prog.change_message('Examining: {}({}/{})'.format(name, i, n))
             self.debug('examining {}'.format(name))
-            r = Repo(os.path.join(paths.repository_dataset_dir, name))
+            r = Repo(repository_path(name))
             try:
                 r.git.fetch()
                 line = r.git.log('{}/{}..HEAD'.format(remote, branch), '--oneline')
                 item.dirty = bool(line)
+                item.update(fetch=False)
             except GitCommandError as e:
                 self.warning('error examining {}. {}'.format(name, e))
 
-        if self.selected_local_repository_name:
-            names = (self.selected_local_repository_name,)
-        else:
+        names = self.selected_local_repositories
+        if not names:
             names = self.local_names
 
         progress_loader(names, func)
         self.local_names = sorted(self.local_names, key=lambda k: k.dirty, reverse=True)
+
+    def rebase(self):
+        self._repo.rebase()
 
     def pull(self):
         self._repo.smart_pull(quiet=False)
@@ -172,7 +191,12 @@ class ExperimentRepoTask(BaseTask):
         self.selected_local_repository_name.dirty = False
 
     def clone(self):
-        name = self.selected_repository_name
+        repo = self.selected_repository
+        if not repo:
+            self.warning_dialog('Please Select a repository to clone')
+            return
+
+        name = repo.name
         if name == 'meta':
             root = paths.dvc_dir
         else:
@@ -182,24 +206,59 @@ class ExperimentRepoTask(BaseTask):
         if not os.path.isdir(path):
             self.debug('cloning repository {}'.format(name))
             service = self.dvc.application.get_service(IGitHost)
-            service.clone_from(name, path, self.organization)
+            service.clone_from(name, path, self.dvc.organization)
             self.refresh_local_names()
+            msg = 'Repository "{}" successfully cloned'.format(name)
+        else:
+            msg = 'Repository "{}" already exists locally. Clone aborted '.format(name)
+
+        self.information_dialog(msg)
 
     def add_branch(self):
         self.info('add branch')
-        commit = self.selected_commit
 
-        if self._repo.create_branch(commit=commit.hexsha if commit else 'HEAD'):
+        refresh = False
+        commit = self.selected_commit
+        if commit:
+            if self._repo.create_branch(commit=commit.hexsha if commit else 'HEAD'):
+                refresh = True
+        else:
+            name = None
+            for r in self.selected_local_repositories:
+                repo = self._get_repo(r.name)
+                name = repo.create_branch(commit='HEAD', name=name, inform=False)
+                if name is not None:
+                    r.active_branch = repo.get_active_branch()
+                    refresh = True
+
+        if refresh:
+            rs = ','.join((r.name for r in self.selected_local_repositories))
+            self.information_dialog('Repositories "{}" now on branch "{}"'.format(rs, name))
             self._refresh_branches()
 
     def checkout_branch(self):
-        self.info('checkout branch {}'.format(self.branch))
-        self._repo.checkout_branch(self.branch)
-        self.selected_local_repository_name.active_branch = self.branch
+        branch = self.branch
+        self.info('checkout branch {}'.format(branch))
+
+        names = []
+        for r in self.selected_local_repositories:
+            r = self._get_repo(r.name)
+            try:
+                r.checkout_branch(branch, inform=False)
+                r.active_branch = branch
+                names.append(r.name)
+            except BaseException:
+                pass
+
+        self.information_dialog('{} now on branch "{}'.format(names, branch))
 
     def load_origin(self):
         self.debug('load origin')
-        self.repository_names = self.dvc.remote_repository_names()
+        self.repository_names = [RepoItem(name=r['name'],
+                                          push_date=format_iso_datetime(r['pushed_at'], as_str=False),
+                                          create_date=format_iso_datetime(r['created_at'], as_str=False))
+                                 for r in self.dvc.remote_repositories()]
+        self.o_origin_repos = None
 
     def delete_local_changes(self):
         self.info('delete local changes')
@@ -220,6 +279,7 @@ class ExperimentRepoTask(BaseTask):
             if self.confirmation_dialog('Are you sure you want to copy values from the '
                                         'database into the repository "{}"'.format(name)):
                 self.dvc.repository_db_sync(name)
+                self.information_dialog('Sync complete')
 
     def sync_repo(self):
         selected = self._has_selected_local()
@@ -273,6 +333,15 @@ class ExperimentRepoTask(BaseTask):
 
         self.selected_local_repository_name.active_branch = b
 
+    def _filter_origin_value_changed(self, new):
+        if new:
+            if self.o_origin_repos is None:
+                self.o_origin_repos = self.repository_names
+
+            self.repository_names = fuzzyfinder(new, self.o_origin_repos, attr='name')
+        elif self.o_origin_repos:
+            self.repository_names = self.o_origin_repos
+
     def _filter_repository_value_changed(self, new):
         if new:
             if self.o_local_repos is None:
@@ -289,13 +358,22 @@ class ExperimentRepoTask(BaseTask):
 
         return self.selected_local_repository_name
 
-    def _selected_local_repository_name_changed(self, new):
+    def _get_repo(self, name):
+        root = repository_path(name)
+        if os.path.isdir(root):
+            repo = GitRepoManager()
+            repo.open_repo(root)
+
+            return repo
+
+    def _get_selected_local_repository_name(self):
+        if self.selected_local_repositories:
+            return self.selected_local_repositories[0]
+
+    def _selected_local_repositories_changed(self, new):
         if new:
-            root = os.path.join(paths.repository_dataset_dir, new.name)
-            # print root, new, os.path.isdir(root)
-            if os.path.isdir(root):
-                repo = GitRepoManager()
-                repo.open_repo(root)
+            repo = self._get_repo(new[0].name)
+            if repo:
                 self._repo = repo
                 self._refresh_branches()
                 self._refresh_tags()
@@ -305,6 +383,9 @@ class ExperimentRepoTask(BaseTask):
             self.commits = get_commits(self._repo.active_repo, new, None, '')
         else:
             self.commits = []
+
+    def _origin_column_clicked_changed(self, event):
+        self._column_clicked_handled(event)
 
     def _default_layout_default(self):
         return TaskLayout(left=PaneItem('pychron.repo.selection'))

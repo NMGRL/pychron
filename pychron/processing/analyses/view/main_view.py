@@ -30,7 +30,7 @@ from pychron.processing.analyses.view.values import ExtractionValue, ComputedVal
 #     def show_isotope_evolution(self, uiinfo, obj):
 #         isos = obj.selected
 #         obj.show_iso_evo_needed = isos
-from pychron.pychron_constants import PLUSMINUS
+from pychron.pychron_constants import PLUSMINUS, COCKTAIL, BLANK_TYPES, UNKNOWN, AIR
 
 
 class MainView(HasTraits):
@@ -97,80 +97,76 @@ class MainView(HasTraits):
 
         a39 = ar.ar39decayfactor
         a37 = ar.ar37decayfactor
-        ms = [
-            # MeasurementValue(name='DR Version',
-            #                  value=an.data_reduction_tag),
-            MeasurementValue(name='Branch',
-                             value=an.branch),
-            MeasurementValue(name='DAQ Version',
-                             value=an.collection_version),
-            MeasurementValue(name='ExperimentID',
-                             value=an.repository_identifier),
-            # MeasurementValue(name='AnalysisID',
-            #                  value=self.analysis_ida),
-            MeasurementValue(name='Spectrometer',
-                             value=an.mass_spectrometer),
-            MeasurementValue(name='Run Date',
-                             value=an.rundate.strftime('%Y-%m-%d %H:%M:%S')),
-            MeasurementValue(name='Irradiation',
-                             value=self._get_irradiation(an)),
-            MeasurementValue(name='J',
-                             value=jf),
-            MeasurementValue(name='Lambda K',
-                             value=nominal_value(ar.arar_constants.lambda_k),
-                             units='1/a'),
-            MeasurementValue(name='Project',
-                             value=an.project),
-            MeasurementValue(name='Sample',
-                             value=an.sample),
-            MeasurementValue(name='Material',
-                             value=an.material),
-            MeasurementValue(name='Comment',
-                             value=an.comment),
-            MeasurementValue(name='Ar39Decay',
-                             value=floatfmt(a39)),
-            MeasurementValue(name='Ar37Decay',
-                             value=floatfmt(a37)),
-            MeasurementValue(name='Sens.',
-                             value=floatfmt(an.sensitivity, use_scientific=True),
-                             units=an.sensitivity_units)]
+        ms = [MeasurementValue(name='Branch',
+                               value=an.branch),
+              MeasurementValue(name='DAQ Version',
+                               value=an.collection_version),
+              MeasurementValue(name='UUID',
+                               value=an.uuid),
+              MeasurementValue(name='RepositoryID',
+                               value=an.repository_identifier),
+              MeasurementValue(name='Spectrometer',
+                               value=an.mass_spectrometer),
+              MeasurementValue(name='Run Date',
+                               value=an.rundate.strftime('%Y-%m-%d %H:%M:%S')),
+              MeasurementValue(name='Irradiation',
+                               value=self._get_irradiation(an)),
+              MeasurementValue(name='J',
+                               value=jf),
+              MeasurementValue(name='Lambda K',
+                               value=nominal_value(ar.arar_constants.lambda_k),
+                               units='1/a'),
+              MeasurementValue(name='Project',
+                               value=an.project),
+              MeasurementValue(name='Sample',
+                               value=an.sample),
+              MeasurementValue(name='Material',
+                               value=an.material),
+              MeasurementValue(name='Comment',
+                               value=an.comment),
+              MeasurementValue(name='Ar39Decay',
+                               value=floatfmt(a39)),
+              MeasurementValue(name='Ar37Decay',
+                               value=floatfmt(a37)),
+              MeasurementValue(name='Sens.',
+                               value=floatfmt(an.sensitivity, use_scientific=True),
+                               units=an.sensitivity_units)]
 
         self.measurement_values = ms
 
     def load_extraction(self, an):
 
-        ev = [
-            ExtractionValue(name='Extract Script',
-                            value=an.extraction_script_name),
-            ExtractionValue(name='Meas. Script',
-                            value=an.measurement_script_name),
-            ExtractionValue(name='Device',
-                            value=an.extract_device),
-            ExtractionValue(name='Load',
-                            value=an.load_name,
-                            units=an.load_holder),
-            ExtractionValue(name='Position',
-                            value=an.position, ),
-            ExtractionValue(name='XYZ',
-                            value=an.xyz_position),
-            ExtractionValue(name='Extract Value',
-                            value=an.extract_value,
-                            units=an.extract_units, ),
-            ExtractionValue(name='Duration',
-                            value=an.extract_duration,
-                            units='s'),
-            ExtractionValue(name='Cleanup',
-                            value=an.cleanup_duration,
-                            units='s'),
-            ExtractionValue(name='T_o',
-                            value=an.collection_time_zero_offset,
-                            units='s'),
-            ExtractionValue(name='Lab Temp.',
-                            value=an.lab_temperature,
-                            units='F'),
-            ExtractionValue(name='Lab Hum.',
-                            units='%',
-                            value=an.lab_humidity)]
+        ev = [ExtractionValue(name='Extract Script',
+                              value=an.extraction_script_name),
+              ExtractionValue(name='Meas. Script',
+                              value=an.measurement_script_name),
+              ExtractionValue(name='Device',
+                              value=an.extract_device),
+              ExtractionValue(name='Load',
+                              value=an.load_name,
+                              units=an.load_holder),
+              ExtractionValue(name='Position',
+                              value=an.position),
+              ExtractionValue(name='XYZ',
+                              value=an.xyz_position),
+              ExtractionValue(name='Extract Value',
+                              value=an.extract_value,
+                              units=an.extract_units, ),
+              ExtractionValue(name='Duration',
+                              value=an.extract_duration,
+                              units='s'),
+              ExtractionValue(name='Cleanup',
+                              value=an.cleanup_duration,
+                              units='s'),
+              ExtractionValue(name='T_o',
+                              value=an.collection_time_zero_offset,
+                              units='s'),
+              ExtractionValue(name='Lab Temp.',
+                              value=an.lab_temperature,
+                              units='F'),
+              ExtractionValue(name='Lab Hum.',
+                              units='%',
+                              value=an.lab_humidity)]
 
         if 'UV' in an.extract_device:
             extra = [ExtractionValue(name='Mask Pos.',
@@ -199,14 +195,14 @@ class MainView(HasTraits):
         self.extraction_values = ev
 
     def load_computed(self, an, new_list=True):
-        if self.analysis_type == 'unknown':
+        if self.analysis_type == UNKNOWN:
             self._load_unknown_computed(an, new_list)
             if self._corrected_enabled:
                 self._load_corrected_values(an, new_list)
 
-        elif self.analysis_type in ('air', 'blank_air', 'blank_unknown', 'blank_cocktail'):
+        elif self.analysis_type == AIR or self.analysis_type in BLANK_TYPES:
             self._load_air_computed(an, new_list)
-        elif self.analysis_type == 'cocktail':
+        elif self.analysis_type == COCKTAIL:
             self._load_cocktail_computed(an, new_list)
 
     # def _get_isotope(self, name):
@@ -331,7 +327,7 @@ class MainView(HasTraits):
                 self.summary_str = u'Ar40/Ar36={} {}{}({}%) IC={:0.5f}'.format(floatfmt(v),
                                                                                PLUSMINUS, floatfmt(e),
                                                                                format_percent_error(v, e),
-                                                                               nominal_value(noncorrected/ref))
+                                                                               nominal_value(noncorrected / ref))
         except:
             pass
 
@@ -341,41 +337,22 @@ class MainView(HasTraits):
             ratios = []
             refs = {'40Ar/38Ar': nominal_value(c.atm4038),
                     '40Ar/36Ar': nominal_value(c.atm4036)}
-            detmapping = {'40Ar': 'Ar40',
-                          '39Ar': 'Ar39',
-                          '38Ar': 'Ar38',
-                          '37Ar': 'Ar37',
-                          '36Ar': 'Ar36'}
 
             if self.recall_options:
-                for r in self.recall_options.cocktail_options.ratios:
-                    name = r.tagname
-                    if name:
-                        n = detmapping.get(r.numerator)
-                        d = detmapping.get(r.denominator)
-                        ref = refs.get(name, 1)
-                        ratios.append((name, name, ref))
+                names = [r.tagname for r in self.recall_options.cocktail_options.ratios]
+                ratios = [(name, name, refs.get(name, 1)) for name in names]
 
-            # print 'ratios a', ratios
-            # ratios = [('40Ar/38Ar', 'Ar40/Ar38', nominal_value(c.atm4038)),
-            #           ('40Ar/37Ar', 'Ar40/Ar37', 1),
-            #           ('40Ar/36Ar', 'Ar40/Ar36', nominal_value(c.atm4036)),
-            #           ('40Ar/39Ar', 'Ar40/Ar39', 1),
-            #           ('38Ar/39Ar', 'Ar38/Ar39', 1),
-            #           ('37Ar/39Ar', 'Ar37/Ar39', 1),
-            #           ]
-            # print 'asdf', ratios
             cv = self._make_ratios(ratios)
 
             an.calculate_age()
             cv.append(ComputedValue(name='F', tag='uf',
-                                    value=nominal_value(an.uF),
-                                    error=std_dev(an.uF)))
+                                    uvalue=an.uF))
 
-            cv.append(ComputedValue(name='Age',
-                                    tag='uage',
-                                    value=nominal_value(an.uage),
-                                    error=std_dev(an.uage)))
+            cv.append(ComputedValue(name='40Ar*', tag='rad40_percent',
+                                    uvalue=an.rad40_percent))
+
+            cv.append(ComputedValue(name='Age', tag='uage',
+                                    uvalue=an.uage))
 
             self.computed_values = cv
             self._update_ratios()

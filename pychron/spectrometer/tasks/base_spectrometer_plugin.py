@@ -16,14 +16,16 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import os
+
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema import SMenu, SGroup
 from pyface.tasks.action.schema_addition import SchemaAddition
 from traits.api import Any
 
-from pychron.core.helpers.filetools import list_directory2
+from pychron.core.helpers.filetools import glob_list_directory
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.envisage.tasks.list_actions import SpectrometerScriptAction, HopsAction
 from pychron.paths import paths
@@ -165,7 +167,7 @@ class BaseSpectrometerPlugin(BaseTaskPlugin):
 
         actions = []
 
-        for f in list_directory2(paths.hops_dir, extension='.yaml', remove_extension=True):
+        for f in glob_list_directory(paths.hops_dir, extension='.yaml', remove_extension=True):
             actions.append(SchemaAddition(id='procedure.{}'.format(f),
                                           factory=hop_action(f),
                                           path='MenuBar/procedures.menu/hops.group'))
@@ -195,7 +197,7 @@ class BaseSpectrometerPlugin(BaseTaskPlugin):
 
         actions = []
 
-        for f in list_directory2(paths.spectrometer_scripts_dir, extension='.py', remove_extension=True):
+        for f in glob_list_directory(paths.spectrometer_scripts_dir, extension='.py', remove_extension=True):
             actions.append(SchemaAddition(id='spectrometer_script.{}'.format(f),
                                           factory=script_action(f),
                                           path='MenuBar/procedures.menu/spectrometer_script.group'))

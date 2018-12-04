@@ -14,13 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-# =============enthought library imports=======================
-from __future__ import absolute_import
 import os
 import time
 
 from numpy import array, asarray
-from pyface.timer.do_later import do_later
+# =============enthought library imports=======================
 from traits.api import DelegatesTo, Instance, \
     Button, List, String, Event, Bool
 
@@ -29,6 +27,7 @@ from pychron.core.geometry.convex_hull import convex_hull
 from pychron.core.geometry.geometry import sort_clockwise
 from pychron.core.geometry.polygon_offset import polygon_offset
 from pychron.core.helpers.filetools import add_extension
+from pychron.core.helpers.strtools import csv_to_floats
 from pychron.core.ui.preference_binding import bind_preference, ColorPreferenceBinding
 from pychron.core.ui.thread import Thread
 from pychron.experiment.utilities.position_regex import POINT_REGEX, XY_REGEX, TRANSECT_REGEX
@@ -39,10 +38,6 @@ from pychron.managers.motion_controller_managers.motion_controller_manager \
     import MotionControllerManager
 from pychron.paths import paths
 from pychron.stage.stage_manager import BaseStageManager
-import six
-from six.moves import map
-from six.moves import range
-from six.moves import zip
 
 
 def distance_threshold(p1, p2, tol):
@@ -494,7 +489,7 @@ class StageManager(BaseStageManager):
 
         # set motors
         if motors is not None:
-            for k, v in six.itervalues(motors):
+            for k, v in motors.values():
                 '''
                     motor will not set if it has been locked using set_motor_lock or
                     remotely using SetMotorLock
@@ -716,7 +711,7 @@ class StageManager(BaseStageManager):
                 if end_callback:
                     end_callback()
 
-                for k, v in six.iteritems(setmotors):
+                for k, v in setmotors.items():
                     self.parent.set_motor(k, v, block=True)
 
                 if start_callback:
@@ -865,7 +860,7 @@ class StageManager(BaseStageManager):
 
     def _move_to_calibrated_position(self, pos):
         try:
-            args = list(map(float, pos.split(',')))
+            args = csv_to_floats(pos)
         except ValueError:
             self.warning('invalid calibrated position "{}". Could not convert to floats'.format(pos))
             return

@@ -13,18 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from pyface.constant import CANCEL, NO
-from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
-from pyface.timer.do_later import do_after
-from traits.api import Int, on_trait_change, Bool, Instance, Event, Color
-
 import os
 import shutil
 import time
+
 import xlrd
+from pyface.constant import CANCEL, NO
+from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
+from pyface.timer.do_later import do_after
+from traits.api import on_trait_change, Bool, Instance, Event
 
 from pychron.core.helpers.filetools import add_extension, backup
-from pychron.core.ui.preference_binding import color_bind_preference
+from pychron.core.helpers.strtools import to_bool
 from pychron.envisage.tasks.editor_task import EditorTask
 from pychron.envisage.tasks.pane_helpers import ConsolePane
 from pychron.envisage.tasks.wait_pane import WaitPane
@@ -40,7 +40,7 @@ from pychron.experiment.utilities.save_dialog import ExperimentSaveDialog
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.paths import paths
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
-from pychron.pychron_constants import SPECTROMETER_PROTOCOL, DVC_PROTOCOL
+from pychron.pychron_constants import SPECTROMETER_PROTOCOL, DVC_PROTOCOL, COCKTAIL, AIR, BLANK
 
 
 class ExperimentEditorTask(EditorTask):
@@ -52,11 +52,11 @@ class ExperimentEditorTask(EditorTask):
 
     loading_manager = Instance('pychron.loading.loading_manager.LoadingManager')
 
-    # analysis_health = Instance(AnalysisHealth)
     last_experiment_changed = Event
 
-    bgcolor = Color
-    even_bgcolor = Color
+    # bgcolor = Color
+    # even_bgcolor = Color
+    # use_analysis_type_color = Bool
 
     automated_runs_editable = Bool
 
@@ -166,8 +166,8 @@ class ExperimentEditorTask(EditorTask):
         self._preference_binder('pychron.experiment',
                                 ('automated_runs_editable',))
 
-        color_bind_preference(self, 'bgcolor', 'pychron.experiment.bg_color')
-        color_bind_preference(self, 'even_bgcolor', 'pychron.experiment.even_bg_color')
+        # color_bind_preference(self, 'bgcolor', 'pychron.experiment.bg_color')
+        # color_bind_preference(self, 'even_bgcolor', 'pychron.experiment.even_bg_color')
 
     # ===============================================================================
     # tasks protocol
@@ -206,7 +206,6 @@ class ExperimentEditorTask(EditorTask):
                  ControlsPane(model=ex, task=self),
                  ConsolePane(model=ex),
                  LoggerPane(),
-                 # AnalysisHealthPane(model=self.analysis_health),
                  ConnectionStatusPane(model=ex),
                  self.experiment_factory_pane,
                  self.isotope_evolution_pane,
@@ -237,8 +236,25 @@ class ExperimentEditorTask(EditorTask):
                        automated_runs_editable=self.automated_runs_editable,
                        **kw)
 
-        editor.setup_tabular_adapters(self.bgcolor, self.even_bgcolor, self._assemble_state_colors())
+        prefs = self.application.preferences
+        prefid = 'pychron.experiment'
+        bgcolor = prefs.get('{}.bg_color'.format(prefid))
+        even_bgcolor = prefs.get('{}.even_bg_color'.format(prefid))
+        use_analysis_type_colors = to_bool(prefs.get('{}.use_analysis_type_colors'.format(prefid)))
+
+        editor.setup_tabular_adapters(bgcolor, even_bgcolor,
+                                      self._assemble_state_colors(),
+                                      use_analysis_type_colors,
+                                      self._assemble_analysis_type_colors())
         return editor
+
+    def _assemble_analysis_type_colors(self):
+        colors = {}
+        for c in (BLANK, AIR, COCKTAIL):
+            v = self.application.preferences.get('pychron.experiment.{}_color'.format(c))
+            colors[c] = v or '#FFFFFF'
+
+        return colors
 
     def _assemble_state_colors(self):
         colors = {}

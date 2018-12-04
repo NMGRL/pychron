@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-from itertools import groupby
 from operator import attrgetter
 
 from numpy import array, array_split
 # ============= enthought library imports =======================
-from traits.api import Str
+from traits.api import Str, Enum
 from traitsui.api import View, UItem, EnumEditor, VGroup
 
 from pychron.core.helpers.datetime_tools import bin_timestamps
+from pychron.pipeline.grouping import group_analyses_by_key
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.subgrouping import apply_subgrouping, compress_groups
 from pychron.processing.analyses.preferred import get_preferred_grp, Preferred
@@ -30,41 +30,21 @@ from pychron.pychron_constants import SUBGROUPING_ATTRS, WEIGHTED_MEAN, \
     MSEM, SD, DEFAULT_INTEGRATED
 
 
-def group_analyses_by_key(items, key, attr='group_id', id_func=None, sorting_enabled=True):
-    if isinstance(key, str):
-        keyfunc = lambda x: getattr(x, key)
-    else:
-        keyfunc = key
-
-    ids = []
-    for it in items:
-        v = keyfunc(it)
-        if v not in ids:
-            ids.append(v)
-
-    if sorting_enabled:
-        items = sorted(items, key=keyfunc)
-
-    for k, analyses in groupby(items, key=keyfunc):
-        gid = ids.index(k)
-        if id_func:
-            gid = id_func(gid, analyses)
-        for it in analyses:
-            setattr(it, attr, gid)
-
-
 class GroupingNode(BaseNode):
     by_key = Str
-    keys = ('Aliquot', 'Identifier', 'Step', 'Comment', 'SubGroup', 'No Grouping')
+    keys = ('Aliquot', 'Comment', 'Identifier', 'Sample', 'Step', 'SubGroup', 'No Grouping')
     analysis_kind = 'unknowns'
     name = 'Grouping'
     title = 'Edit Grouping'
 
-    _attr = 'group_id'
+    attribute = Enum('Group', 'Graph', 'Tab')
+    # _attr = 'group_id'
     _id_func = None
 
-    sorting_enabled = True
+    _sorting_enabled = True
     _cached_items = None
+    _state = None
+    _parent_group = None
 
     def load(self, nodedict):
         self.by_key = nodedict.get('key', 'Identifier')
@@ -77,21 +57,47 @@ class GroupingNode(BaseNode):
             return attrgetter(self.by_key.lower())
 
     def run(self, state):
+        self._run(state)
+
+    def post_run(self, engine, state):
+        self._state = None
+
+    def _run(self, state):
         unks = getattr(state, self.analysis_kind)
-        self._run(unks)
+        self._state = state
 
-    def _run(self, unks):
+        # print('clearsd', self._attr)
+        for unk in unks:
+            self._clear_grouping(unk)
+
         if self.by_key != 'No Grouping':
-            for unk in unks:
-                setattr(unk, self._attr, 0)
+            key = self._generate_key()
+            items = group_analyses_by_key(unks, key=key, attr=self._attr, id_func=self._id_func,
+                                          sorting_enabled=self._sorting_enabled,
+                                          parent_group=self._parent_group)
 
-            self._cached_items = unks
-            group_analyses_by_key(unks, key=self._generate_key(), attr=self._attr, id_func=self._id_func,
-                                  sorting_enabled=self.sorting_enabled)
+            setattr(state, self.analysis_kind, items)
+            setattr(self, self.analysis_kind, items)
+
+    def _clear_grouping(self, unk):
+        setattr(unk, self._attr, 0)
+
+    @property
+    def _attr(self):
+        return '{}_id'.format(self.attribute.lower())
+
     def traits_view(self):
-        v = View(UItem('by_key',
-                       style='custom',
-                       editor=EnumEditor(name='keys')),
+        kgrp = VGroup(UItem('by_key',
+                            style='custom',
+                            editor=EnumEditor(name='keys')),
+                      show_border=True,
+                      label='Key')
+
+        agrp = VGroup(UItem('attribute',
+                            tooltip='Group=Display all groups on a single graph\n'
+                                    'Graph=Display groups on separate graphs\n'
+                                    'Tab=Display groups on separate tabs'), label='To Group', show_border=True)
+        v = View(VGroup(agrp, kgrp),
                  width=300,
                  title=self.title,
                  buttons=['OK', 'Cancel'],
@@ -110,31 +116,19 @@ class SubGroupingNode(GroupingNode, Preferred):
     keys = ('Aliquot', 'Identifier', 'Step', 'Comment', 'No Grouping')
     name = 'SubGroup'
     by_key = 'Aliquot'
-    _attr = 'subgroup'
+    attribute = 'subgroup'
 
-    # age_kind = Enum(*AGE_SUBGROUPINGS)
-    # kca_kind = Enum(*SUBGROUPINGS)
-    # kcl_kind = Enum(*SUBGROUPINGS)
-    # rad40_percent_kind = Enum(*SUBGROUPINGS)
-    # moles_k39_kind = Enum(*SUBGROUPINGS)
-    # signal_k39_kind = Enum(*SUBGROUPINGS)
-    #
-    # age_error_kind = Enum(*ERROR_TYPES)
-    # kca_error_kind = Enum(*ERROR_TYPES)
-    # kcl_error_kind = Enum(*ERROR_TYPES)
-    # rad40_percent_error_kind = Enum(*ERROR_TYPES)
-    # moles_k39_error_kind = Enum(*ERROR_TYPES)
-    # signal_k39_error_kind = Enum(*ERROR_TYPES)
+    # include_j_error_in_individual_analyses = Bool(False)
+    # include_j_error_in_mean = Bool(True)
 
-    sorting_enabled = False
-    # preferred_values = List
-
-    # def __init__(self, *args, **kw):
-    #     super(SubGroupingNode, self).__init__(*args, **kw)
-    #     self.preferred_values = make_preferred_values()
+    _sorting_enabled = False
+    _parent_group = 'group_id'
 
     def load(self, nodedict):
         self.by_key = nodedict.get('key', 'Aliquot')
+
+    def _clear_grouping(self, unk):
+        unk.subgroup = None
 
     def _id_func(self, gid, analyses):
         analyses = list(analyses)
@@ -159,16 +153,17 @@ class SubGroupingNode(GroupingNode, Preferred):
         apply_subgrouping(grouping, analyses, gid=gid)
 
     def _pre_run_hook(self, state):
-        unks = getattr(state, self.analysis_kind)
-        self._run(unks)
+        # unks = getattr(state, self.analysis_kind)
+        self._run(state)
 
     def _by_key_changed(self):
-        if self._cached_items:
-            self._run(self._cached_items)
+        if self._state:
+            self._run(self._state)
 
     def run(self, state):
+        self._run(state)
+
         ans = getattr(state, self.analysis_kind)
-        self._run(ans)
         compress_groups(ans)
 
     def traits_view(self):
@@ -178,28 +173,7 @@ class SubGroupingNode(GroupingNode, Preferred):
                                      editor=EnumEditor(name='keys')),
                                show_border=True, label='Grouping'),
 
-                        get_preferred_grp(label='Types', show_border=True),
-                        # VGroup(HGroup(Item('age_kind', label='Age'),
-                        #               spring,
-                        #               Item('age_error_kind', label='Error')),
-                        #        HGroup(Item('kca_kind', label='K/Ca'),
-                        #               spring,
-                        #               Item('kca_error_kind', label='Error')),
-                        #        HGroup(Item('kcl_kind', label='K/Cl'),
-                        #               spring,
-                        #               Item('kcl_error_kind', label='Error')),
-                        #        HGroup(Item('rad40_percent_kind', label='%40Ar*'),
-                        #               spring,
-                        #               Item('rad40_percent_error_kind', label='Error')),
-                        #        HGroup(Item('moles_k39_kind', label='mol 39K'),
-                        #               spring,
-                        #               Item('moles_k39_error_kind', label='Error')),
-                        #        HGroup(Item('signal_k39_kind', label='Signal 39K'),
-                        #               spring,
-                        #               Item('signal_k39_error_kind', label='Error')),
-                        #        label='Types',
-                        #        show_border=True
-                        ),
+                        get_preferred_grp(label='Types', show_border=True)),
                  width=500,
                  resizable=True,
                  title=self.title,

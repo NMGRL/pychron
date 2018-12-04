@@ -14,17 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
-
 import os
 import re
 from datetime import timedelta, datetime
 
 import six.moves.cPickle as pickle
-from six.moves import filter
-from six.moves import map
+# ============= enthought library imports =======================
 from traits.api import List, Str, Bool, Any, Enum, Button, \
     Int, Property, cached_property, DelegatesTo, Date, Instance, HasTraits, Event, Float
 from traits.trait_types import BaseStr
@@ -490,30 +485,8 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     def _make_project_records(self, ps, ms=None, include_recent=True, include_recent_first=True):
         if not ps:
             return []
-
-        db = self.db
-        if not ms:
-            ms = db.get_active_mass_spectrometer_names()
-
-        recents = []
-        # if include_recent:
-        #     recents = [ProjectRecordView('RECENT {}'.format(mi.upper())) for mi in ms]
-
         pss = sorted([ProjectRecordView(p) for p in ps], key=lambda x: x.name)
-
-        if include_recent:
-            # move references project to after Recent
-            p = next((p for p in pss if p.name.lower() == 'references'), None)
-            if p is not None:
-                rp = pss.pop(pss.index(p))
-                pss.insert(0, rp)
-        else:
-            pss = [p for p in pss if p.name.lower() != 'references']
-
-        if include_recent_first:
-            return recents + pss
-        else:
-            return pss + recents
+        return pss
 
     def _make_records(self, ans):
         n = len(ans)
@@ -527,11 +500,10 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                     prog.change_message('Loading')
                 elif i == n - 1:
                     prog.change_message('Finished')
-                    # if prog and i % 25 == 0:
-                else:
+                if prog and i % 25 == 0:
                     prog.change_message('Loading {}'.format(xi.record_id))
-
-            return xi.record_views
+            xi.bind()
+            return xi
 
         ret = progress_loader(ans, func, threshold=100, step=20)
         self.debug('make records {}'.format(time.time() - st))
@@ -747,7 +719,9 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         if comp == 'fuzzy':
             self.samples = fuzzyfinder(new, self.osamples, name)
         else:
-            self.samples = list(filter(filter_func(new, name, comp), self.osamples))
+            func = filter_func(new, name, comp)
+            self.samples = [s for s in self.osamples if func(s)]
+            # self.samples = list(filter(filter_func(new, name, comp), self.osamples))
 
     # property get/set
     def _set_low_post(self, v):
@@ -815,7 +789,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     def _get_analysis_include_types(self):
         if self.use_analysis_type_filtering:
             ats = self._analysis_include_types
-            return list(map(str.lower, ats))
+            return [a.lower() for a in ats]
 
     def _handle_source_change(self, new):
         self.activate_browser(force=True)

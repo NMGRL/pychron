@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Str, Int, \
     Bool, Password, Color, Property, Float, Enum
@@ -46,6 +47,7 @@ class ExperimentPreferences(BasePreferencesHelper):
     experiment_type = Enum('Ar/Ar', 'Generic', 'He', 'Kr', 'Ne', 'Xe')
     instrument_name = Str
 
+    use_uuid_path_name = Bool
     use_notifications = Bool
     notifications_port = Int
     use_autoplot = Bool
@@ -62,8 +64,6 @@ class ExperimentPreferences(BasePreferencesHelper):
     even_bg_color = Color
 
     min_ms_pumptime = Int
-
-    use_system_health = Bool
 
     use_memory_check = Bool
     memory_threshold = Property(PositiveInteger,
@@ -91,6 +91,11 @@ class ExperimentPreferences(BasePreferencesHelper):
     failed_color = Color
     end_after_color = Color
     invalid_color = Color
+
+    use_analysis_type_colors = Bool
+    blank_color = Color
+    air_color = Color
+    cocktail_color = Color
 
     use_peak_center_threshold = Bool
     # peak_center_threshold1 = Int(10)
@@ -196,30 +201,11 @@ class ExperimentPreferencesPane(PreferencesPane):
                                     Item('invalid_color', label='Invalid'),
                                     show_border=True,
                                     label='State Colors'),
+                             VGroup(Item('use_analysis_type_colors', label='Use Analysis Type Colors'),
+                                    Item('blank_color', label='Blank'),
+                                    Item('air_color', label='Air'),
+                                    Item('cocktail_color', label='Cocktail')),
                              label='Colors')
-
-        # system_health_grp = VGroup(Item('use_system_health'),
-        #                            label='System Health')
-        # analysis_grouping_grp = Group(Item('use_analysis_grouping',
-        #                                    label='Auto group analyses',
-        #                                    tooltip=''),
-        #                               Item('grouping_suffix',
-        #                                    label='Suffix',
-        #                                    tooltip='Append "Suffix" to the Project name. e.g. MinnaBluff-autogen '
-        #                                            'where Suffix=autogen'),
-        #                               Item('grouping_threshold',
-        #                                    label='Grouping Threshold (hrs)',
-        #                                    tooltip='Associate Reference analyses with the project of an analysis that '
-        #                                            'is within X hours of the current run',
-        #                                    enabled_when='use_analysis_grouping'),
-        #                               label='Analysis Grouping')
-
-        # memory_grp = Group(Item('use_memory_check', label='Check Memory',
-        #                         tooltip='Ensure enough memory is available during experiment execution'),
-        #                    Item('memory_threshold', label='Threshold',
-        #                         enabled_when='use_memory_check',
-        #                         tooltip='Do not continue experiment if available memory less than "Threshold"'),
-        #                    label='Memory')
 
         monitor_grp = Group(Item('use_automated_run_monitor',
                                  label='Use AutomatedRun Monitor',
@@ -234,6 +220,7 @@ class ExperimentPreferencesPane(PreferencesPane):
 
         persist_grp = Group(Item('use_xls_persistence', label='Save analyses to Excel workbook'),
                             Item('use_db_persistence', label='Save analyses to Database'),
+                            Item('use_uuid_path_name', label='Use UUID Path Names'),
                             label='Persist', show_border=True)
 
         pc_grp = Group(Item('use_peak_center_threshold', label='Use Peak Center Threshold',

@@ -16,13 +16,15 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import os
 import time
-from six.moves.queue import Queue
 from threading import Thread
 
 import yaml
 from pyface.timer.do_later import do_later
+from six.moves import zip
+from six.moves.queue import Queue
 from traits.api import Instance, Any, DelegatesTo, List, Property, \
     Bool, Button, String, cached_property, \
     Str, TraitError
@@ -40,8 +42,6 @@ from pychron.spectrometer.jobs.dac_scanner import DACScanner
 from pychron.spectrometer.jobs.mass_scanner import MassScanner
 from pychron.spectrometer.jobs.rise_rate import RiseRate
 from pychron.spectrometer.readout_view import ReadoutView
-import six
-from six.moves import zip
 
 
 class ScanManager(StreamGraphManager):
@@ -52,6 +52,7 @@ class ScanManager(StreamGraphManager):
     readout_view = Instance(ReadoutView)
 
     integration_time = DelegatesTo('spectrometer')
+    integration_times = DelegatesTo('spectrometer')
     spectrometer_configurations = DelegatesTo('spectrometer')
     spectrometer_configuration = DelegatesTo('spectrometer')
     set_spectrometer_configuration = Button
@@ -484,7 +485,7 @@ class ScanManager(StreamGraphManager):
             # self.scanner.detector = self.detector
             nominal_width = 1
             emphasize_width = 2
-            for name, plot in six.iteritems(self.graph.plots[0].plots):
+            for name, plot in self.graph.plots[0].plots.items():
                 plot = plot[0]
                 plot.line_width = emphasize_width if name == self.detector.name else nominal_width
 
@@ -558,12 +559,18 @@ class ScanManager(StreamGraphManager):
 
         plot = g.new_plot(padding=[70, 5, 5, bottom_pad],
                           data_limit=n,
-                          xtitle='Time',
-                          ytitle='Signal',
+                          # xtitle='Time',
+                          # ytitle='Signal',
                           scale=self.graph_scale,
                           bgcolor='lightgoldenrodyellow',
                           zoom=False)
+        plot.x_axis.title = 'Time'
+        plot.y_axis.title = 'Signal'
 
+        plot.x_axis.title_font = 'Arial 14'
+        plot.x_axis.tick_label_font = 'Arial 12'
+        plot.y_axis.title_font = 'Arial 14'
+        plot.y_axis.tick_label_font = 'Arial 12'
         plot.x_grid.visible = False
 
         for i, det in enumerate(self.detectors):

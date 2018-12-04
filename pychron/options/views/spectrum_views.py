@@ -22,17 +22,13 @@ from traitsui.api import View, UItem, Item, HGroup, VGroup, Group, EnumEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.options import SubOptions, AppearanceSubOptions, GroupSubOptions, checkbox_column, object_column, \
     MainOptions, TitleSubOptions
+from pychron.pychron_constants import MAIN, APPEARANCE
 
 
 class SpectrumSubOptions(SubOptions):
     def traits_view(self):
-        weighted_grp = HGroup(Item('weighted_age_error_kind'))
-        # integrated_grp = HGroup(Item('integrated_age_error_kind'))
-        v = View(
-            # integrated_grp,
-            weighted_grp
-        )
-        return v
+        integrated_grp = VGroup(Item('integrated_age_weighting', label='Integrated Age Weighting'))
+        return self._make_view(integrated_grp)
 
 
 class SpectrumAppearance(AppearanceSubOptions):
@@ -155,7 +151,9 @@ class CalculationSubOptions(SubOptions):
                                        label='N. Sigma')),
                            show_border=True,
                            label='Error Envelope')
-        return self._make_view(VGroup(plat_grp, error_grp))
+        integrated_grp = VGroup(Item('integrated_age_weighting', label='Integrated Age Weighting'))
+
+        return self._make_view(VGroup(plat_grp, error_grp, integrated_grp))
 
 
 class SpectrumMainOptions(MainOptions):
@@ -189,12 +187,11 @@ class SpectrumMainOptions(MainOptions):
         return v
 
 
-VIEWS = {}
-VIEWS['main'] = SpectrumMainOptions
-VIEWS['spectrum'] = SpectrumSubOptions
-VIEWS['appearance'] = SpectrumAppearance
-VIEWS['plateau'] = CalculationSubOptions
-VIEWS['display'] = DisplaySubOptions
-VIEWS['groups'] = GroupSubOptions
+VIEWS = {MAIN.lower(): SpectrumMainOptions,
+         'spectrum': SpectrumSubOptions,
+         APPEARANCE.lower(): SpectrumAppearance,
+         'plateau': CalculationSubOptions,
+         'display': DisplaySubOptions,
+         'groups': GroupSubOptions}
 
 # ============= EOF =============================================

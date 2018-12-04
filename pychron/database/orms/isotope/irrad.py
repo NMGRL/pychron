@@ -18,6 +18,7 @@
 # ============= standard library imports ========================
 
 from __future__ import absolute_import
+
 from datetime import datetime
 
 from sqlalchemy import Column, Integer, BLOB, Float, DateTime, func
@@ -129,16 +130,16 @@ class irrad_ChronologyTable(Base, BaseMixin):
         return total_seconds / 3600.
 
     def get_doses(self, todatetime=True):
-        doses = self.chronology.split('$')
+        doses = self.chronology.split(b'$')
         # doses = [di.strip().split('%') for di in doses]
         dd = []
         for di in doses:
             pwr = 1.0
-            if '|' in di:
-                pwr, di = di.split('|')
+            if b'|' in di:
+                pwr, di = di.split(b'|')
                 pwr = float(pwr)
             try:
-                s, e = di.strip().split('%')
+                s, e = di.strip().split(b'%')
                 dd.append((pwr, s, e))
             except ValueError:
                 pass
@@ -150,7 +151,7 @@ class irrad_ChronologyTable(Base, BaseMixin):
             #         pwr,x = x.split('|')
             #
             #     return pwr, datetime.strptime(x, '%Y-%m-%d %H:%M:%S')
-            convert = lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S')
+            convert = lambda x: datetime.strptime(x.decode('utf-8'), '%Y-%m-%d %H:%M:%S')
             dd = [(p, convert(s), convert(e)) for p, s, e in dd]
 
         return dd

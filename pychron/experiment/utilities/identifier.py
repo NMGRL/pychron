@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from __future__ import absolute_import
+
 import os
 import re
 
@@ -26,11 +26,9 @@ import yaml
 from pychron.file_defaults import IDENTIFIERS_DEFAULT
 from pychron.paths import paths
 from pychron.pychron_constants import LINE_STR, ALPHAS, SPECIAL_IDENTIFIER
-import six
-from six.moves import map
 
 IDENTIFIER_REGEX = re.compile(r'(?P<identifier>\d+)-(?P<aliquot>\d+)(?P<step>\w*)')
-SPECIAL_IDENTIFIER_REGEX = re.compile(r'(?P<identifier>\w{1,2}-[\d\w]+-\w{1})-(?P<aliquot>\d+)')
+SPECIAL_IDENTIFIER_REGEX = re.compile(r'(?P<identifier>\w{1,2}-[\d\w]+-\w)-(?P<aliquot>\d+)')
 
 ANALYSIS_MAPPING_UNDERSCORE_KEY = dict()  # blank_air: ba
 ANALYSIS_MAPPING = dict()  # ba: 'Blank Air'
@@ -39,7 +37,7 @@ ANALYSIS_MAPPING_INTS = dict()  # blank_air: 0
 SPECIAL_MAPPING = dict()  # blank_air: ba
 SPECIAL_NAMES = [SPECIAL_IDENTIFIER, LINE_STR]  # 'Blank Air'
 SPECIAL_KEYS = []  # ba
-# AGE_TESTABLE = []
+
 try:
     p = os.path.join(paths.hidden_dir, 'identifiers.yaml')
     with open(p, 'r') as rfile:
@@ -59,69 +57,11 @@ for i, idn_d in enumerate(yd):
 
     if not idn_d['extractable']:
         NON_EXTRACTABLE[key] = value
-        # if idn_d['ageable']:
-        # AGE_TESTABLE.append(value.lower())
+
     if idn_d['special']:
         SPECIAL_MAPPING[underscore_name] = key
         SPECIAL_NAMES.append(value)
         SPECIAL_KEYS.append(key)
-
-
-# ANALYSIS_MAPPING = dict(ba='Blank Air', bc='Blank Cocktail', bu='Blank Unknown',
-# bg='Background', u='Unknown', c='Cocktail', a='Air',
-# pa='Pause', ic='Detector IC')
-#
-# ANALYSIS_MAPPING_INTS = dict(unknown=0, background=1,
-# air=2, cocktail=3,
-# blank_air=4,
-#                              blank_cocktail=5,
-#                              blank_unknown=6,
-#                              detector_ic=7)
-#
-#
-# # "labnumbers" where extract group is disabled
-# NON_EXTRACTABLE = dict(ba='Blank Air', bc='Blank Cocktail', bu='Blank Unknown',
-#                        bg='Background', c='Cocktail', a='Air', ic='Detector IC', be='Blank ExtractionLine')
-#
-# AGE_TESTABLE = ('unknown','cocktail')
-# SPECIAL_NAMES = ['Special Labnumber', LINE_STR, 'Air', 'Cocktail', 'Blank Unknown',
-#                  'Blank Air', 'Blank Cocktail', 'Background', 'Pause', 'Degas', 'Detector IC']
-#
-# SPECIAL_MAPPING = dict(background='bg',
-#                        blank_air='ba',
-#                        blank_cocktail='bc',
-#                        blank_unknown='bu',
-#                        pause='pa',
-#                        degas='dg',
-#                        detector_ic='ic',
-#                        air='a',
-#                        cocktail='c',
-#                        unknown='u')
-#
-# p = os.path.join(paths.setup_dir, 'identifiers.yaml')
-# differed = []
-# if os.path.isfile(p):
-#     with open(p, 'r') as rfile:
-#         yd = yaml.load(rfile)
-#         for i, (k, v) in enumerate(yd.items()):
-#             ANALYSIS_MAPPING[k] = v
-#
-#             #if : assume '01:Value' where 01 is used for preserving order
-#             if ':' in v:
-#                 a, v = v.split(':')
-#                 c = int(a)
-#                 differed.append((c, v))
-#                 ANALYSIS_MAPPING_INTS[v.lower()] = 7 + c
-#             else:
-#                 SPECIAL_NAMES.append(v)
-#                 ANALYSIS_MAPPING_INTS[v.lower()] = 7 + i
-#             SPECIAL_MAPPING[v.lower()] = k
-#
-# if differed:
-#     ds = sorted(differed, key=lambda x: x[0])
-#     SPECIAL_NAMES.extend([di[1] for di in ds])
-#
-# SPECIAL_KEYS = map(str.lower, SPECIAL_MAPPING.values())
 
 
 def convert_identifier_to_int(ln):
@@ -175,12 +115,6 @@ def convert_identifier(identifier):
         except ValueError:
             return identifier
 
-            #        identifier=identifier.split('-')[0]
-
-            #    if identifier in ANALYSIS_MAPPING:
-            #        sname = ANALYSIS_MAPPING[identifier]
-            #        identifier = next((k for k, v in SPECIAL_IDS.iteritems() if v == sname), identifier)
-
     return identifier
 
 
@@ -189,30 +123,11 @@ def get_analysis_type(idn):
         idn: str like 'a-...' or '43513'
     """
     idn = idn.lower()
-    for atype, tag in six.iteritems(SPECIAL_MAPPING):
+    for atype, tag in SPECIAL_MAPPING.items():
         if idn.startswith(tag):
             return atype
     else:
         return 'unknown'
-
-        # if idn.startswith('bg'):
-        #     return 'background'
-        # elif idn.startswith('ba'):
-        #     return 'blank_air'
-        # elif idn.startswith('bc'):
-        #     return 'blank_cocktail'
-        # elif idn.startswith('b'):
-        #     return 'blank_unknown'
-        # elif idn.startswith('a'):
-        #     return 'air'
-        # elif idn.startswith('c'):
-        #     return 'cocktail'
-        # elif idn.startswith('dg'):
-        #     return 'degas'
-        # elif idn.startswith('pa'):
-        #     return 'pause'
-        # else:
-        #     return 'unknown'
 
 
 def make_runid(ln, a, s=''):
@@ -330,43 +245,6 @@ def is_special(ln):
     return special
 
 
-#        return make_special_identifier(ln, ed, ms, aliquot=a)
-# ===============================================================================
-# deprecated
-# ===============================================================================
-# SPECIAL_IDS = {1: 'Blank Air', 2: 'Blank Cocktail', 3: 'Blank Unknown',
-#                4: 'Background', 5: 'Air', 6: 'Cocktail'
-# }
-# # @deprecated
-# def convert_labnumber(ln):
-#     """
-#         ln is a str  but only special labnumbers cannot be converted to int
-#         convert number to name
-#
-#     """
-#     try:
-#         ln = int(ln)
-#
-#         if ln in SPECIAL_IDS:
-#             ln = SPECIAL_IDS[ln]
-#     except ValueError:
-#         pass
-#
-#     return ln
-#
-#
-# # @deprecated
-# def convert_shortname(ln):
-#     """
-#         convert number to shortname (a for air, bg for background...)
-#     """
-#     name = convert_labnumber(ln)
-#     if name is not None:
-#         ln = next((k for k, v in ANALYSIS_MAPPING.iteritems()
-#                    if v == name), ln)
-#     return ln
-
-
 def convert_extract_device(name):
     """
         change Fusions UV to FusionsUV, etc
@@ -385,11 +263,10 @@ def pretty_extract_device(ident):
     if ident:
         args = ident.split('_')
         if args[-1] in ('uv, co2'):
-            n = ' '.join(map(str.capitalize, args[:-1]))
+            n = ' '.join([a.capitalize() for a in args[:-1]])
             n = '{} {}'.format(n, args[-1].upper())
         else:
-            n = ' '.join(map(str.capitalize, args))
-            # n=ident.replace(' ', '_')
+            n = ' '.join([a.capitalize() for a in args])
     return n
 
 # ============= EOF =============================================

@@ -18,17 +18,20 @@
 
 # ============= standard library imports ========================
 from __future__ import absolute_import
-from io import StringIO, BytesIO
-import struct
 
+import struct
+from io import BytesIO
+
+from six.moves import range
 from uncertainties import ufloat
-# ============= local library imports  ==========================
 
 from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.isotope import Isotope, Baseline
 from pychron.pychron_constants import IRRADIATION_KEYS
-import six
-from six.moves import range
+
+# ============= local library imports  ==========================
+
+STATUS_MAP = {0: 'ok', 1: 'omit', 2: 'invalid'}
 
 
 def get_fn(blob):
@@ -92,21 +95,24 @@ class MassSpecAnalysis(Analysis):
                 except ZeroDivisionError:
                     self.kcl = 0
 
-        prefs = obj.changeable.preferences_set
+        changeable = obj.changeable
         fo, fi, fs = 0, 0, 0
-        if prefs:
-            fo = prefs.DelOutliersAfterFit == 'true'
-            fi = int(prefs.NFilterIter)
-            fs = int(prefs.OutlierSigmaFactor)
-            self.lambda_k = prefs.Lambda40Kepsilon + prefs.Lambda40KBeta
-            self.lambda_Ar37 = prefs.LambdaAr37
-            self.lambda_Ar39 = prefs.LambdaAr39
-            self.lambda_Cl36 = prefs.LambdaCl36
+        if changeable:
+            self.comment = changeable.Comment
+            self.tag = STATUS_MAP.get(changeable.StatusLevel)
+            prefs = changeable.preferences_set
+            if prefs:
+                fo = prefs.DelOutliersAfterFit == 'true'
+                fi = int(prefs.NFilterIter)
+                fs = int(prefs.OutlierSigmaFactor)
+                self.lambda_k = prefs.Lambda40Kepsilon + prefs.Lambda40KBeta
+                self.lambda_Ar37 = prefs.LambdaAr37
+                self.lambda_Ar39 = prefs.LambdaAr39
+                self.lambda_Cl36 = prefs.LambdaCl36
 
         for dbiso in obj.isotopes:
             r = dbiso.results[-1]
             uv, ee = self._intercept_value(r)
-
             key = dbiso.Label
             n = dbiso.NumCnts
             det = dbiso.detector
@@ -130,11 +136,17 @@ class MassSpecAnalysis(Analysis):
             iso.fit = r.fit.Label.lower() if r.fit else ''
 
             iso.baseline = Baseline(key, det.detector_type.Label)
+
             iso.baseline.fit = 'average'
             iso.baseline.set_filter_outliers_dict(filter_outliers=fo, iterations=fi, std_devs=fs)
 
             iso.baseline.n = dbiso.baseline.NumCnts
 
+            # uv = iso.baseline_corrected + iso.baseline.uvalue
+            # print('asdf',key, uv, iso.baseline_corrected, iso.baseline.uvalue)
+            # iso.value = nominal_value(uv)
+            # iso.error = std_dev(uv)
+            # iso.set_uvalue()
             blank = self._blank(r)
             if blank:
                 iso.blank.set_uvalue(blank)
@@ -206,11 +218,14 @@ class MassSpecAnalysis(Analysis):
         # fn = len(pdpblob.strip().split('\n'))
 
         v, e = self._extract_average_baseline(infoblob)
-        for iso in six.itervalues(self.isotopes):
+        for iso in self.isotopes.values():
             if iso.detector == key:
                 iso.baseline.set_uvalue((v, e))
                 if fn is not None:
                     iso.baseline.fn = iso.baseline.n - fn
+
+                v = iso.baseline_corrected+iso.baseline.uvalue
+                iso.set_uvalue(v)
 
     # private
     def _extract_average_baseline(self, blob):

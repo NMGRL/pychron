@@ -15,27 +15,22 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-import os
-
 from pyface.action.menu_manager import MenuManager
 from pyface.tasks.traits_dock_pane import TraitsDockPane
-from traits.api import List, Instance, Str, Property, Any, String, Button, Int
+from traits.api import List, Instance, Str, Property, Any, String, Button
 from traitsui.api import View, Item, UItem, InstanceEditor, ButtonEditor, VGroup, TabularEditor, \
     HGroup, spring, VSplit, Label
 from traitsui.handler import Handler
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
+# ============= standard library imports ========================
+import os
+# ============= local library imports  ==========================
+from pychron.git_archive.views import CommitAdapter
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
-
-
-# from pychron.pyscripts.commands.core import ICommand
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-from pychron.git_archive.views import CommitAdapter
 
 
 class mCommitAdapter(CommitAdapter):
@@ -78,15 +73,7 @@ class ControlPane(TraitsDockPane):
     id = 'pychron.pyscript.control'
 
     def traits_view(self):
-        v = View(
-            VGroup(
-                UItem('execute',
-                      editor=ButtonEditor(label_value='execute_label')),
-                VGroup(
-                    UItem('use_trace'),
-                    UItem('trace_delay', label='Delay (ms)'),
-                    show_border=True,
-                    label='Trace')))
+        v = View(VGroup(UItem('execute',editor=ButtonEditor(label_value='execute_label'))))
         return v
 
 
@@ -95,16 +82,7 @@ class DescriptionPane(TraitsDockPane):
     id = 'pychron.pyscript.description'
 
     def traits_view(self):
-        v = View(
-            UItem('description',
-                  style='readonly')
-
-            # 'object.selected_command_object',
-            #                 show_label=False,
-            #                 style='custom',
-            #                 height=0.25,
-            #                 editor=InstanceEditor(view='help_view')
-        )
+        v = View(UItem('description', style='readonly'))
         return v
 
 
@@ -117,16 +95,6 @@ class ExamplePane(TraitsDockPane):
             UItem('example',
                   style='readonly'))
         return v
-
-
-# class EditorPane(TraitsDockPane):
-# name = 'Editor'
-# id = 'pychron.pyscript.editor'
-#     editor = Instance('pychron.pyscripts.parameter_editor.ParameterEditor')
-#
-#     def traits_view(self):
-#         v = View(UItem('editor', style='custom'))
-#         return v
 
 
 class ContextEditorPane(TraitsDockPane):

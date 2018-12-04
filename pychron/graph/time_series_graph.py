@@ -32,13 +32,12 @@ from .stacked_graph import StackedGraph
 from .stream_graph import StreamGraph, StreamStackedGraph
 from .graph import Graph
 
-
 HMSScales = [TimeScale(microseconds=100), TimeScale(milliseconds=10)] + \
-           [TimeScale(seconds=dt) for dt in (1, 5, 15, 30)] + \
-           [TimeScale(minutes=dt) for dt in (5, 15, 30)] + \
-           [TimeScale(hours=dt) for dt in (6, 12, 24)] + \
-           [TimeScale(days=dt) for dt in (1, 2, 7)
-]
+            [TimeScale(seconds=dt) for dt in (1, 5, 15, 30)] + \
+            [TimeScale(minutes=dt) for dt in (5, 15, 30)] + \
+            [TimeScale(hours=dt) for dt in (6, 12, 24)] + \
+            [TimeScale(days=dt) for dt in (1, 2, 7)
+             ]
 
 
 class TimeSeriesGraph(Graph):
@@ -52,28 +51,28 @@ class TimeSeriesGraph(Graph):
         return autocorrelation(y, **kw)
 
     def downsample(self, x, y, d, plotid=0, series=0):
-#        x = self.get_data(plotid, series)
-#        y = self.get_data(plotid, series, axis=1)
+        #        x = self.get_data(plotid, series)
+        #        y = self.get_data(plotid, series, axis=1)
 
         self.set_data(downsample_1d(array(x), d), plotid, series)
         self.set_data(downsample_1d(array(y), d), plotid, series, axis=1)
         self.redraw()
 
-#    def _convert_index(self, ind):
-#        '''
-#            ind is in secs since first epoch
-#            convert to a timestamp
-#            return a str
-#        '''
-#        return convert_timestamp(ind)
+    #    def _convert_index(self, ind):
+    #        '''
+    #            ind is in secs since first epoch
+    #            convert to a timestamp
+    #            return a str
+    #        '''
+    #        return convert_timestamp(ind)
 
-    def set_x_title(self, t, plotid=0):
-        '''
-        '''
-        axis = self._get_x_axis(plotid)
-        axis.title = t
-        # print axis.title, axis, t
-        super(TimeSeriesGraph, self).set_x_title(t, plotid=plotid)
+    # def set_x_title(self, t, plotid=0):
+    #     '''
+    #     '''
+    #     axis = self._get_x_axis(plotid)
+    #     axis.title = t
+    #     # print axis.title, axis, t
+    #     super(TimeSeriesGraph, self).set_x_title(t, plotid=plotid)
 
     def set_axis_label_color(self, *args, **kw):
         '''
@@ -88,17 +87,19 @@ class TimeSeriesGraph(Graph):
         if args[0] == 'x':
             kw['axis'] = self._get_x_axis(kw['plotid'])
         super(TimeSeriesGraph, self).set_axis_tick_color(*args, **kw)
-#        StackedGraph.set_axis_tick_color(self, *args, **kw)
+
+    #        StackedGraph.set_axis_tick_color(self, *args, **kw)
 
     def _get_x_axis(self, plotid):
         plot = self.plots[plotid]
         # print plot.index_axis.title
         return plot.index_axis
-#        for underlay in plot.underlays:
-#            if underlay.orientation == 'bottom':
-#                #print t,underlay,underlay.title
-#
-#                return underlay
+
+    #        for underlay in plot.underlays:
+    #            if underlay.orientation == 'bottom':
+    #                #print t,underlay,underlay.title
+    #
+    #                return underlay
 
     def new_plot(self, *args, **kw):
         '''
@@ -110,7 +111,7 @@ class TimeSeriesGraph(Graph):
 
     def new_series(self, x=None, y=None, plotid=0, normalize=False,
                    time_series=True, timescale=False, downsample=None,
-                   use_smooth=False, scale=None, ** kw):
+                   use_smooth=False, scale=None, **kw):
         '''
         '''
         if not time_series:
@@ -152,13 +153,13 @@ class TimeSeriesGraph(Graph):
         if 'type' in rd:
             if rd['type'] == 'line_scatter':
                 plot.plot(names, type='scatter', marker_size=2,
-                                   marker='circle')
+                          marker='circle')
                 rd['type'] = 'line'
 
         plota = plot.plot(names, **rd)[0]
 
-#        plota.unified_draw = True
-#        plota.use_downsampling = True
+        #        plota.unified_draw = True
+        #        plota.use_downsampling = True
         # if the plot is not visible dont remove the underlays
         if plota.visible:
             self._set_bottom_axis(plota, plot, plotid, timescale=timescale)
@@ -166,34 +167,38 @@ class TimeSeriesGraph(Graph):
         return plota, plot
 
     def _remove_bottom(self, plot):
-        title = ''
+        title, title_font, tick_font = '', '', ''
         for i, underlay in enumerate(plot.underlays):
             try:
                 if underlay.orientation == 'bottom':
                     title = underlay.title
+                    title_font = underlay.title_font
+                    tick_font = underlay.tick_label_font
                     plot.underlays.pop(i)
             except AttributeError:
                 pass
 
-        return title
+        return title, title_font, tick_font
+
     def _set_bottom_axis(self, plota, plot, plotid, timescale=False):
         # this is a hack to hide the default plotaxis
         # since a basexyplot's axis cannot be a ScalesPlotAxis (must be instance of PlotAxis)
         # we cant remove the default axis and set the x_axis to the scaled axis
         # also we cant remove the default axis because then we cant change the axis title
-        title = self._remove_bottom(plot)
+        title, title_font, tick_font = self._remove_bottom(plot)
         bottom = self.plotcontainer.stack_order == 'bottom_to_top'
         if bottom:
             if plotid == 0 or timescale:
                 axis = ScalesPlotAxis(plota, orientation="bottom",
                                       title=title,
+                                      title_font = title_font,
+                                      tick_label_font = tick_font,
                                       tick_generator=ScalesTickGenerator(scale=CalendarScaleSystem(
-                                                                                                   # *HMSScales
-                                                                                                   )
-                                                                           # scale = TimeScale()
-                                                                           )
-                                        )
-
+                                          # *HMSScales
+                                      )
+                                          # scale = TimeScale()
+                                      )
+                                      )
 
                 plot.underlays.append(axis)
         else:
@@ -202,18 +207,17 @@ class TimeSeriesGraph(Graph):
 
             if (plotid == 0 and len(self.plots) == 1) or plotid == len(self.plots) - 1:
                 axis = ScalesPlotAxis(plota, orientation="bottom",
-                                  title=title,
-                                  tick_generator=ScalesTickGenerator(scale=CalendarScaleSystem(
-                                                                                               # *HMSScales
-                                                                                               )
-                                                                       # scale = TimeScale()
-                                                                       )
-                                    )
-
+                                      title=title,
+                                      title_font=title_font,
+                                      tick_label_font=tick_font,
+                                      tick_generator=ScalesTickGenerator(scale=CalendarScaleSystem(
+                                          # *HMSScales
+                                      )
+                                          # scale = TimeScale()
+                                      )
+                                      )
 
                 plot.underlays.append(axis)
-
-
 
 
 class TimeSeriesStackedGraph(TimeSeriesGraph, StackedGraph):
@@ -232,6 +236,7 @@ class TimeSeriesStreamStackedGraph(TimeSeriesGraph, StreamStackedGraph):
     '''
     '''
     pass
+
 # ============= EOF ============================================
 # def create_dates(numpoints, units = "days"):
 #    '''

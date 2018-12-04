@@ -17,18 +17,13 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
-from __future__ import absolute_import
-from math import pi
-
-from numpy import linspace, zeros, ones, exp
-from six.moves import zip
+from numpy import linspace, zeros, exp, pi, full
 
 
 # ============= local library imports  ==========================
 
-
 def cumulative_probability(ages, errors, xmi, xma, n=100):
-    bins = linspace(xmi, xma, n)
+    x = linspace(xmi, xma, n)
     probs = zeros(n)
 
     for ai, ei in zip(ages, errors):
@@ -38,16 +33,15 @@ def cumulative_probability(ages, errors, xmi, xma, n=100):
         # calculate probability curve for ai+/-ei
         # p=1/(2*pi*sigma2) *exp (-(x-u)**2)/(2*sigma2)
         # see http://en.wikipedia.org/wiki/Normal_distribution
-        ds = (ones(n) * ai - bins) ** 2
-        es = ones(n) * ei
-        es2 = 2 * es * es
+        ds = (x-full(n, ai)) ** 2
+        es2 = full(n, 2 * ei * ei)
         gs = (es2 * pi) ** -0.5 * exp(-ds / es2)
 
         # cumulate probabilities
         # numpy element_wise addition
         probs += gs
 
-    return bins, probs
+    return x, probs
 
 
 def kernel_density(self, ages, errors, xmi, xma, n=100):

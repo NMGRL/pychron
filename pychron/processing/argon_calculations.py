@@ -230,14 +230,37 @@ def calculate_decay_factor(dc, segments):
     if segments is None:
         return 1.0
     else:
-        a = sum([pi * ti for pi, ti, _ in segments])
+        a = sum([pi * ti for pi, ti, _, _, _ in segments])
 
         b = sum([pi * ((1 - math.exp(-dc * ti)) / (dc * math.exp(dc * dti)))
-                 for pi, ti, dti in segments])
+                 for pi, ti, dti, _, _ in segments])
         try:
             return a / b
         except ZeroDivisionError:
             return 1.0
+
+
+def calculate_arar_decay_factors(dc37, dc39, segments):
+    if segments is None:
+        return 1.0, 1.0
+    else:
+        a = sum([pi * ti for pi, ti, _, _, _ in segments])
+
+        b = sum([pi * ((1 - math.exp(-dc37 * ti)) / (dc37 * math.exp(dc39 * dti)))
+                 for pi, ti, dti, _, _ in segments])
+
+        c = sum([pi * ((1 - math.exp(-dc39 * ti)) / (dc39 * math.exp(dc39 * dti)))
+                 for pi, ti, dti, _, _ in segments])
+        try:
+            df37 = a / b
+        except ZeroDivisionError:
+            return 1.0
+        try:
+            df39 = a / c
+        except ZeroDivisionError:
+            return 1.0
+
+        return df37, df39
 
 
 def abundance_sensitivity_correction(isos, abundance_sensitivity):
@@ -272,7 +295,7 @@ def apply_fixed_k3739(a39, pr, fixed_k3739):
     return ca37, ca39, k37, k39
 
 
-def interference_corrections(a40, a39, a38, a37, a36,
+def interference_corrections(a39, a37,
                              production_ratios,
                              arar_constants=None,
                              fixed_k3739=False):
@@ -356,8 +379,7 @@ def calculate_F(isotopes,
     a40, a39, a38, a37, a36 = isotopes
 
     def calc_f(pr):
-        k37, k38, k39, ca36, ca37, ca38, ca39 = interference_corrections(a40, a39, a38, a37, a36,
-                                                                         pr, arar_constants, fixed_k3739)
+        k37, k38, k39, ca36, ca37, ca38, ca39 = interference_corrections(a39, a37, pr, arar_constants, fixed_k3739)
         atm36, cl36, cl38 = calculate_atmospheric(a38, a36, k38, ca38, ca36,
                                                   decay_time,
                                                   pr,

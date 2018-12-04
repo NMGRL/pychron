@@ -22,15 +22,12 @@
 """
     https://gist.github.com/sixtenbe/1178136
 """
-from __future__ import absolute_import
-from numpy import Inf, isscalar, array, argmax, polyfit, asarray, argsort, vstack
-from six.moves import range
-from six.moves import zip
+from numpy import Inf, isscalar, array, argmax, polyfit, asarray, argsort, vstack, arange
 
 
 def _datacheck_peakdetect(x_axis, y_axis):
     if x_axis is None:
-        x_axis = list(range(len(y_axis)))
+        x_axis = arange(len(y_axis))
 
     if len(y_axis) != len(x_axis):
         raise ValueError
@@ -179,10 +176,8 @@ def calculate_peak_center(x, y, test_peak_flat=True, min_peak_height=1.0, percen
     if ma < min_peak_height:
         raise PeakCenterError('No peak greater than {}. max = {}'.format(min_peak_height, ma))
 
-    if max_i == 0:
-        max_i = len(x)/2
-    elif max_i == len(x)-1:
-        max_i = len(x)/2
+    if max_i == 0 or max_i == len(x)-1:
+        max_i = len(x)//2
 
     mx = x[max_i]
     my = ma

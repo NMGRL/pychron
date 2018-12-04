@@ -84,6 +84,7 @@ class FigureEditor(GraphEditor):
                         # titles=self.titles,
                         analyses=self.items,
                         references=self.references)
+
         return model
 
     # def _component_factory(self):

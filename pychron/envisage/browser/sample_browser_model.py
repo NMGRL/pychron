@@ -14,13 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
-
-import re
 from datetime import datetime, timedelta
+from operator import attrgetter
 
+# ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Button, Instance, Str
 
@@ -31,14 +28,10 @@ from pychron.envisage.browser.find_references_config import FindReferencesConfig
 from pychron.envisage.browser.time_view import TimeViewModel
 from pychron.envisage.browser.util import get_pad
 
-NCHARS = 60
-REG = re.compile(r'.' * NCHARS)
-
 
 class SampleBrowserModel(BrowserModel):
     graphical_filter_button = Button
     find_references_button = Button
-    refresh_selectors_button = Button
 
     load_recent_button = Button
     toggle_view = Button
@@ -54,19 +47,18 @@ class SampleBrowserModel(BrowserModel):
         prefid = 'pychron.browser'
         bind_preference(self.search_criteria, 'reference_hours_padding',
                         '{}.reference_hours_padding'.format(prefid))
-        bind_preference(self, 'load_selection_enabled', '{}.load_selection_enabled'.format(prefid))
-        bind_preference(self, 'auto_load_database', '{}.auto_load_database'.format(prefid))
 
         bind_preference(self, 'monitor_sample_name', 'pychron.entry.monitor_name')
 
     def reattach(self):
+
         self.debug('reattach')
 
-        oans = self.analysis_table.oanalyses
-        uuids = [ai.uuid for ai in oans]
+        ans = sorted(self.analysis_table.oanalyses, key=attrgetter('uuid'))
+        uuids = [ai.uuid for ai in ans]
         nans = self.db.get_analyses_uuid(uuids)
 
-        for ni, ai in zip(nans, oans):
+        for ni, ai in zip(nans, ans):
             ai.dbrecord = ni
 
         if self.selected_projects:
@@ -245,14 +237,13 @@ class SampleBrowserModel(BrowserModel):
             ans = self.analysis_table.get_analysis_set(new)
             ans = self.db.get_analyses_uuid([a[0] for a in ans])
             xx = self._make_records(ans)
+
+            # for a in (xx[0], xx[-1]):
+            #     print('ab', a.record_id, a.timestampf)
+
             self.analysis_table.set_analyses(xx)
         except StopIteration:
             pass
-
-    def _refresh_selectors_button_fired(self):
-        self.debug('refresh selectors fired')
-        if self.sample_view_active:
-            self.load_selectors()
 
     def _find_references_button_fired(self):
         self.debug('find references button fired')
@@ -304,6 +295,9 @@ class SampleBrowserModel(BrowserModel):
     # private
     def _load_recent(self):
         from pychron.envisage.browser.recent_view import RecentView
+        if not self.available_mass_spectrometers:
+            self._load_mass_spectrometers()
+
         v = RecentView(mass_spectrometers=self.available_mass_spectrometers)
         v.load()
         info = v.edit_traits()
@@ -316,18 +310,19 @@ class SampleBrowserModel(BrowserModel):
                                         high_post=now,
                                         low_post=lp,
                                         filter_non_run=self.filter_non_run_samples)
-            sams = self._load_sample_record_views(ls)
+            if ls:
+                sams = self._load_sample_record_views(ls)
 
-            self.samples = sams
-            self.osamples = sams
+                self.samples = sams
+                self.osamples = sams
 
-            xx = self._get_analysis_series(lp, now, v.mass_spectrometer, analysis_types=v.analysis_types)
-            self.analysis_table.set_analyses(xx)
+                xx = self._get_analysis_series(lp, now, v.mass_spectrometer, analysis_types=v.analysis_types)
+                self.analysis_table.set_analyses(xx)
 
     def _find_references_hook(self):
         ans = self.analysis_table.analyses
-        ms = list({a.mass_spectrometer for a in ans})
-        es = list({a.extract_device for a in ans})
+        ms = list({a.mass_spectrometer for a in ans if a.mass_spectrometer})
+        es = list({a.extract_device for a in ans if a.extract_device})
         irs = list({'{},{}'.format(a.irradiation, a.irradiation_level.upper()) for a in ans})
 
         samples = []
@@ -406,7 +401,8 @@ class SampleBrowserModel(BrowserModel):
     def _selected_projects_change_hook(self, names):
 
         self.selected_samples = []
-        self.analysis_table.analyses = []
+
+        self.analysis_table.clear_non_frozen()
 
         if not self._top_level_filter:
             self._top_level_filter = 'project'

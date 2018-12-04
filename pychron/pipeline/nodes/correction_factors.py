@@ -13,19 +13,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from __future__ import absolute_import
-from pychron.pipeline.editors.correction_factors_editor import CorrectionFactorsEditor
+from pychron.pipeline.editors.correction_factors_editor import CaCorrectionFactorsEditor, KCorrectionFactorsEditor
 from pychron.pipeline.nodes.base import BaseNode
 
 
-class CorrectionFactorsNode(BaseNode):
-    name = 'Correction Factors'
-    auto_configure = False
+class BaseCorrectionFactorsNode(BaseNode):
+    configurable = False
+    editor_klass = None
 
     def run(self, state):
-        editor = CorrectionFactorsEditor()
+        editor = self.editor_klass()
         self.unknowns = state.unknowns
         editor.analyses = state.unknowns
         editor.initialize()
         state.editors.append(editor)
+
+
+class KCorrectionFactorsNode(BaseCorrectionFactorsNode):
+    name = 'K Correction Factor'
+    editor_klass = KCorrectionFactorsEditor
+
+
+class CaCorrectionFactorsNode(BaseCorrectionFactorsNode):
+    name = 'Ca Correction Factors'
+    editor_klass = CaCorrectionFactorsEditor
+
 # ============= EOF =============================================

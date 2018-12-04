@@ -15,11 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
 import re
-from six.moves import map
-from six.moves import range
+
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -35,7 +32,7 @@ def increment_list(ps, start=0):
         return [ps[0] + 1]
     else:
         s, e, o = ps[0], ps[-1], ps[1] - ps[0]
-        #i=1 if s<e else -1
+        # i=1 if s<e else -1
         if start:
             n = start
         else:
@@ -45,8 +42,8 @@ def increment_list(ps, start=0):
 
 
 def slice_func(pos):
-    s, e = list(map(int, pos.split('-')))
-    return pos_gen(s, e)
+    s, e = pos.split('-')
+    return pos_gen(int(s), int(e))
 
 
 def islice_func(pos, start=0):
@@ -56,8 +53,9 @@ def islice_func(pos, start=0):
 
 
 def sslice_func(pos):
-    s, e, inc = list(map(int, pos.split(':')))
-    return pos_gen(s, e, inc)
+    s, e, inc = pos.split(':')
+
+    return pos_gen(int(s), int(e), int(inc))
 
 
 def isslice_func(pos):
@@ -68,8 +66,8 @@ def isslice_func(pos):
 
 
 def pslice_func(pos):
-    s, e = list(map(int, pos.split(':')))
-    return pos_gen(s, e)
+    s, e = pos.split(':')
+    return pos_gen(int(s), int(e))
 
 
 def ipslice_func(pos):
@@ -109,11 +107,11 @@ def icslice_func(pos):
 
 
 SLICE_REGEX = (re.compile(r'[\d]+-{1}[\d]+$'),
-               slice_func, islice_func, 'Slice')  #1-4
+               slice_func, islice_func, 'Slice')  # 1-4
 SSLICE_REGEX = (re.compile(r'\d+:{1}\d+:{1}\d+$'),
-                sslice_func, isslice_func, 'SSlice')  #1:4:2
+                sslice_func, isslice_func, 'SSlice')  # 1:4:2
 PSLICE_REGEX = (re.compile(r'\d+:{1}\d+$'),
-                pslice_func, ipslice_func, 'PSlice')  #1:4
+                pslice_func, ipslice_func, 'PSlice')  # 1:4
 
 # 1-4;6;9;11-15
 # 1-4;6;9
@@ -137,12 +135,14 @@ CSLICE_REGEX = (re.compile(r'((\d+-\d+)|\d+)(;+\d+)+((-\d+)|(;+\d+))*'),
     5  $         end of string
 '''
 
+
 def transect_func(pos):
     return [pos]
 
+
 def transect_ifunc(pos):
-    t,p=pos.split('-')
-    return '{}-{}'.format(t, int(p)+1)
+    t, p = pos.split('-')
+    return '{}-{}'.format(t, int(p) + 1)
 
 
 TRANSECT_REGEX = (re.compile('[tT]+[\d\W]+-+[\d\W]+$'), transect_func, transect_ifunc, 'Transect')
@@ -171,12 +171,14 @@ POSITION_REGEX = (re.compile('[pPlLrRdD\d]?[\d]$|[\d]$'), None, None, 'Position'
 
 def xy_func(p):
     return p.split(';')
-    #cant get non match with trailing ; to work so manual trim if present
+    # cant get non match with trailing ; to work so manual trim if present
     # return [p for p in map(str.strip,p.split(';')) if p]
+
 
 # XY_REGEX = (re.compile('[-,\d+].*\d*,[-,\d+].*\d*'), None, None)
 # XY_REGEX = (re.compile('([-\d+]+.\d+(,[-\d+]+.\d+){1,3})(;([-\d+]+.\d+(,[-\d+]+.\d+){1,3}))*$'), xy_func, None, 'XY')
-XY_REGEX = (re.compile(r'([-\d+]+(\.\d)+(,[-\d+]+(\.\d)+){1,2})(;([-\d+]+(\.\d)+(,[-\d+]+(\.\d+)){1,2}))*$'), xy_func, None, 'XY')
+XY_REGEX = (
+re.compile(r'([-\d+]+(\.\d)+(,[-\d+]+(\.\d)+){1,2})(;([-\d+]+(\.\d)+(,[-\d+]+(\.\d+)){1,2}))*$'), xy_func, None, 'XY')
 
 '''
     e.g d1

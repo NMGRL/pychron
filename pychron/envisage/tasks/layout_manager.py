@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import os
 import shelve
 
@@ -26,7 +27,6 @@ from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.loggable import Loggable
 from pychron.paths import paths
-import six
 
 
 # ============= standard library imports ========================
@@ -55,7 +55,7 @@ class LayoutManager(Loggable):
         super(LayoutManager, self).__init__(*args, **kw)
         d = self._open_shelve()
         if d:
-            for k, v in six.iteritems(d):
+            for k, v in d.items():
                 layout = UserLayout(name=k, layouts=v)
                 self.layouts.append(layout)
 

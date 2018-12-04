@@ -64,7 +64,7 @@ def apply_subgrouping(sg, selected, items=None, gid=None):
 
 def compress_groups(items):
     def key(x):
-        return x.subgroup['name'] if x.subgroup else ''
+        return x.subgroup['name'] if hasattr(x, 'subgroup') and x.subgroup else ''
 
     cnt = 0
     for kind, ans in groupby(items, key=key):
@@ -95,7 +95,7 @@ def make_interpreted_age_group(ans, gid):
     return ag
 
 
-def make_interpreted_age_groups(ans):
+def make_interpreted_age_groups(ans, group_id=0):
     groups = []
     analyses = []
     for i, (subgroup, items) in enumerate(groupby(ans, key=subgrouping_key)):
@@ -108,11 +108,12 @@ def make_interpreted_age_groups(ans):
             ag = InterpretedAgeGroup(analyses=items,
                                      group=sg)
             ag.set_preferred_kinds(sg)
-
             kind = ag.get_preferred_kind('age')
-            ag.label_name = '{:02n}{}'.format(ag.aliquot, kind[:2])
-            ag.record_id = '{:02n}{}'.format(ag.aliquot, kind[:2])
+            n = '{:02n}-{:02n}:{}'.format(group_id, ag.aliquot, kind[:2])
+            ag.label_name = n
+            ag.record_id = n
             ag.subgroup_id = i
+            ag.group_id = group_id
             groups.append(ag)
         else:
             analyses.extend(items)

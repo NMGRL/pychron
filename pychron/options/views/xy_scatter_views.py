@@ -16,10 +16,13 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traitsui.api import View, UItem, Item, HGroup, VGroup, Label, EnumEditor
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.options.options import AppearanceSubOptions, MainOptions
+from pychron.pychron_constants import APPEARANCE, MAIN
 
 
 class XYScatterAppearanceOptions(AppearanceSubOptions):
@@ -28,24 +31,27 @@ class XYScatterAppearanceOptions(AppearanceSubOptions):
 
 class XYScatterMainOptions(MainOptions):
     def _get_edit_view(self):
-        x = HGroup(Item('x_n',
-                        editor=EnumEditor(name='available_names'),
-                        label='X'),
-                   Label('/'),
-                   UItem('x_d',
-                         editor=EnumEditor(name='available_names')))
-        y = HGroup(Item('y_n',
-                        editor=EnumEditor(name='available_names'),
-                        label='Y'),
-                   Label('/'),
-                   UItem('y_d',
-                         editor=EnumEditor(name='available_names')))
-        v = View(VGroup(Item('name', editor=EnumEditor(name='names')), x, y))
+        xr = HGroup(Item('x_n',
+                         editor=EnumEditor(name='available_names'),
+                         label='X'),
+                    Label('/'),
+                    UItem('x_d',
+                          editor=EnumEditor(name='available_names')))
+        yr = HGroup(Item('y_n',
+                         editor=EnumEditor(name='available_names'),
+                         label='Y'),
+                    Label('/'),
+                    UItem('y_d',
+                          editor=EnumEditor(name='available_names')))
+        xs = HGroup(Item('x_key', editor=EnumEditor(name='available_names')))
+        ys = HGroup(Item('y_key', editor=EnumEditor(name='available_names')))
+        sg = VGroup(xs, ys, visible_when='name=="Scatter"')
+        rg = VGroup(xr, yr, visible_when='name=="Ratio"')
+        v = View(VGroup(Item('name', editor=EnumEditor(name='names')), rg, sg))
         return v
 
 
-VIEWS = {}
-VIEWS['main'] = XYScatterMainOptions
-VIEWS['appearance'] = XYScatterAppearanceOptions
+VIEWS = {MAIN.lower(): XYScatterMainOptions,
+         APPEARANCE.lower(): XYScatterAppearanceOptions}
 
 # ============= EOF =============================================

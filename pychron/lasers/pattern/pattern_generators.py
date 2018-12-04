@@ -17,16 +17,13 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
-from __future__ import absolute_import
 import math
 import random
 
-from numpy import linspace, cos, sin, hstack
+from numpy import linspace, cos, sin, hstack, radians
+
 # ============= local library imports  ==========================
 from pychron.core.geometry.affine import AffineTransform
-from six.moves import map
-from six.moves import range
-from six.moves import zip
 
 
 def raster_rubberband_pattern(cx, cy, offset, l, dx, rotation, single_pass):
@@ -132,12 +129,14 @@ def polygon_pattern(cx, cy, radius, nsides, rotation=0):
 
 
 def arc_pattern(cx, cy, degrees, radius):
-    '''
+    """
          only used for drawing
-    '''
+    """
 
-    x = radius * cos(list(map(math.radians, linspace(0, degrees, degrees / 10.0)))) + cx
-    y = radius * sin(list(map(math.radians, linspace(0, degrees, degrees / 10.0)))) + cy
+    rs = radians(linspace(0, degrees, degrees/10.0))
+
+    x = radius * cos(rs) + cx
+    y = radius * sin(rs) + cy
 
     xs = hstack(([cx], x))
     xs = hstack((xs, [cx]))

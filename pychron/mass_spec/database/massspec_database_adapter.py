@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from __future__ import absolute_import
 import binascii
 import math
 
@@ -37,7 +36,6 @@ from pychron.mass_spec.database.massspec_orm import IsotopeResultsTable, \
     AnalysisPositionTable, LoginSessionTable, RunScriptTable, \
     IrradiationChronologyTable, IrradiationLevelTable, IrradiationProductionTable, ProjectTable, MaterialTable, PDPTable
 from pychron.pychron_constants import INTERFERENCE_KEYS
-import six
 
 
 class MissingAliquotPychronException(BaseException):
@@ -75,12 +73,6 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         bind_preference(self, 'password', '{}.password'.format(prefid))
         bind_preference(self, 'name', '{}.name'.format(prefid))
 
-    # @property
-    # def selector_klass(self):
-    # # lazy load selector klass.
-    #     from pychron.database.selectors.massspec_selector import MassSpecSelector
-    #
-    #     return MassSpecSelector
     def get_irradiation_import_spec(self, name):
         from pychron.data_mapper.import_spec import ImportSpec, Irradiation, Level, \
             Sample, Project, Position, Production
@@ -324,6 +316,11 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         return self._retrieve_item(AnalysesTable, value,
                                    key=key, **kw)
 
+    def get_flux(self, labnumber):
+        with self.session_ctx():
+            obj = self.get_irradiation_position(labnumber)
+            return obj.J, obj.JEr
+
     def get_irradiation_position(self, value):
         return self._retrieve_item(IrradiationPositionTable, value,
                                    key='IrradPosition', )
@@ -463,7 +460,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
     def add_irradiation_production(self, name, pr, ifc):
         kw = {}
-        for k, v in six.iteritems(ifc):
+        for k, v in ifc.items():
             if k == 'cl3638':
                 k = 'P36Cl38Cl'
             else:
@@ -476,7 +473,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         kw['ClOverKMultiplierEr'] = 0
         kw['CaOverKMultiplier'] = pr['Ca_K']
         kw['CaOverKMultiplierEr'] = 0
-        v = binascii.crc32(''.join([str(v) for v in six.itervalues(kw)]))
+        v = binascii.crc32(''.join([str(v) for v in kw.values()]))
         q = self.session.query(IrradiationProductionTable)
         q = q.filter(IrradiationProductionTable.ProductionRatiosID == v)
         if not self._query_one(q):

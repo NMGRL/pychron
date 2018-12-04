@@ -17,11 +17,9 @@
 from traits.api import HasTraits, List, Any, Str
 from traitsui.api import View, UItem, TabularEditor, EnumEditor, VGroup
 
-from itertools import groupby
-from operator import attrgetter
-
-from pychron.git_archive.views import CommitAdapter
+from pychron.core.helpers.iterfuncs import groupby_repo
 from pychron.git_archive.utils import get_commits
+from pychron.git_archive.views import CommitAdapter
 from pychron.pipeline.nodes.data import BaseDVCNode
 
 
@@ -62,8 +60,7 @@ class DVCHistoryNode(BaseDVCNode):
         unks = state.unknowns
 
         state.selected_commits = {}
-        key = attrgetter('repository_identifier')
-        for repo, unks in groupby(sorted(unks, key=key), key=key):
+        for repo, unks in groupby_repo(unks):
             # cs = get_commits(repo, , None, '')()
             cv = CommitSelector()
             repo = self.dvc.get_repository(repo)
@@ -83,8 +80,7 @@ class DVCHistoryNode(BaseDVCNode):
     def run(self, state):
         unks = state.unknowns
 
-        key = attrgetter('repository_identifier')
-        for repo, ans in groupby(sorted(unks, key=key), key=key):
+        for repo, ans in groupby_repo(unks):
             repo = self.dvc.get_repository(repo)
             abranch = repo.get_current_branch()
             branchname = 'history'

@@ -15,14 +15,12 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-
-from __future__ import absolute_import
-from __future__ import print_function
 import os
 import sys
 from datetime import datetime, timedelta
 from threading import Lock
 
+import six
 from sqlalchemy import create_engine, distinct, MetaData
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, StatementError, \
     DBAPIError, OperationalError
@@ -31,13 +29,9 @@ from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 from traits.api import Password, Bool, Str, on_trait_change, Any, Property, cached_property
 
 from pychron import version
-from pychron.core.codetools.inspection import caller
 from pychron.database.core.base_orm import AlembicVersionTable
 from pychron.database.core.query import compile_query
 from pychron.loggable import Loggable
-import six
-from six.moves import range
-from six.moves import zip
 
 ATTR_KEYS = ['kind', 'username', 'host', 'name', 'password']
 
@@ -476,7 +470,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
                 driver = self._import_mysql_driver()
                 if driver is None:
                     return
-            elif kind=='mssql':
+            elif kind == 'mssql':
                 driver = self._import_mssql_driver()
                 if driver is None:
                     return
@@ -484,26 +478,40 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
                 driver = 'pg8000'
 
             if password:
-                url = '{}+{}://{}:{}@{}/{}'.format(kind, driver, user, password, host, name)
-            else:
-                url = '{}+{}://{}@{}/{}'.format(kind, driver, user, host, name)
+                user = '{}:{}'.format(user, password)
 
-            if kind=='mysql':
-                url='{}?connect_timeout=5'.format(url)
-            #elif kind == 'mssql':
-            #    url='{}?timeout=5'.format(url)
+            prefix = '{}+{}://{}@'.format(kind, driver, user)
+
+            if driver == 'pyodbc':
+                url = '{}{}'.format(prefix, name)
+            else:
+                url = '{}{}/{}'.format(prefix, host, name)
+                if kind == 'mysql':
+                    url = '{}?connect_timeout=5'.format(url)
+
         else:
             url = 'sqlite:///{}'.format(self.path)
-        print('fffasdfasdf', url)
+
         return url
 
     def _import_mssql_driver(self):
+        driver = None
         try:
-            import pymssql
-            return 'pymssql'
+            import pyodbc
+            driver = 'pyodbc'
+
         except ImportError:
-            pass
+            try:
+                import pymssql
+                driver = 'pymssql'
+            except ImportError:
+                pass
+
+        self.info('using mssql driver="{}"'.format(driver))
+        return driver
+
     def _import_mysql_driver(self):
+
         try:
             '''
                 pymysql
@@ -521,7 +529,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
                 self.warning_dialog('A mysql driver was not found. Install PyMySQL or MySQL-python')
                 return
 
-        self.info('using {}'.format(driver))
+        self.info('using mysql driver="{}"'.format(driver))
         return driver
 
     def _test_db_connection(self, version_warn):
@@ -551,6 +559,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
             self._test_connection_enabled = False
 
         except Exception as e:
+            self.debug_exception()
             self.warning('connection failed to {} exception={}'.format(self.public_url, e))
             connected = False
 
@@ -729,13 +738,10 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
         try:
             return f()
         except SQLAlchemyError as e:
+            if self.verbose:
+                self.debug('_query exception {}'.format(e))
             if reraise:
                 raise e
-                # if self.verbose:
-                #     self.debug('_query exception {}'.format(e))
-                # import traceback
-                # traceback.print_exc()
-                # self.sess.rollback()
 
     def _append_filters(self, f, kw):
 

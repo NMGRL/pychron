@@ -58,6 +58,10 @@ from pychron.core.helpers.strtools import to_bool
 # '''
 
 IDENTIFIERS_DEFAULT = """
+- name: Blank
+  shortname: b
+  extractable: False
+  special: True
 - name: Blank Air
   shortname: ba
   extractable: False
@@ -187,7 +191,6 @@ TASK_EXTENSION_DEFAULT = """
 -
  plugin_id: pychron.experiment.plugin
  actions:
-  - pychron.experiment.reset_system_health, False
   - pychron.experiment.open_system_conditionals, True
   - pychron.experiment.open_queue_conditionals, True
   - pychron.experiment.open_experiment, True
@@ -299,9 +302,6 @@ columns:
   - Comment
 '''
 
-SYSTEM_HEALTH = '''
-'''
-
 
 def make_screen(**kw):
     obj = {'padding_left': 100,
@@ -340,6 +340,7 @@ def make_presentation(**kw):
     return yaml.dump(obj, default_flow_style=False)
 
 
+DEFINE_EQUILIBRATION_SCREEN = make_screen()
 ISO_EVO_SCREEN = make_screen()
 SERIES_SCREEN = make_screen()
 BLANKS_SCREEN = make_screen()
@@ -398,11 +399,12 @@ REGRESSION_SERIES_SCREEN = make_screen(**regression_series_d)
 
 
 FLUX_CONSTANTS_DEFAULT = """
-"Min et al., 2000":
+# This is an example flux file. Add additional decay_constant and monitor_age pairs here
+"FC MIN":
   lambda_ec: [5.80e-11, 0]
   lambda_b: [4.884e-10, 0]
   monitor_age: 28.201
-"Steiger & Jager 1977":
+"FC SJ":
   lambda_ec: [5.81e-11, 0]
   lambda_b: [4.962e-10, 0]
   monitor_age: 28.02

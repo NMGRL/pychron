@@ -17,11 +17,12 @@
 # ============= enthought library imports =======================
 import os
 import pickle
+
 # from apptools import sweet_pickle as pickle
 from traits.api import HasTraits, Str, Bool, Float, Either, List, Enum, Int, Any, Button
 from traitsui.api import View, Item, HGroup, EnumEditor, UItem, VGroup, InstanceEditor
 
-from pychron.core.helpers.filetools import add_extension, list_directory2
+from pychron.core.helpers.filetools import add_extension, glob_list_directory
 from pychron.core.ui.check_list_editor import CheckListEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.paths import paths
@@ -209,12 +210,12 @@ class ItemConfigurer(Saveable):
         self.dump()
 
     def load(self, **kw):
-        names = list_directory2(self.root, remove_extension=True, extension='.p')
+        names = glob_list_directory(self.root, remove_extension=True, extension='.p')
         if 'Default' not in names:
             item = self.item_klass()
             item.name = 'Default'
             self.dump_item(item)
-            names = list_directory2(self.root, remove_extension=True, extension='.p')
+            names = glob_list_directory(self.root, remove_extension=True, extension='.p')
 
         name = 'Default'
         p = os.path.join(paths.hidden_dir, add_extension('config', '.p'))
@@ -231,21 +232,27 @@ class ItemConfigurer(Saveable):
     def dump_item(self, item):
         name = item.name
         p = os.path.join(self.root, add_extension(name, '.p'))
+        print('dump itme')
         with open(p, 'wb') as wfile:
             pickle.dump(item, wfile)
+            print('sdfasdf')
 
     def get(self, name):
         p = os.path.join(self.root, add_extension(name, '.p'))
         if os.path.isfile(p):
-            with open(p, 'rb') as rfile:
-                obj = pickle.load(rfile)
+            try:
+                with open(p, 'rb') as rfile:
+                    obj = pickle.load(rfile, encoding='latin1')
+            except BaseException as e:
+                obj = self.item_klass()
+
         else:
             obj = self.item_klass()
 
         return obj
 
     def _load_names(self):
-        names = list_directory2(self.root, remove_extension=True, extension='.p')
+        names = glob_list_directory(self.root, remove_extension=True, extension='.p')
         self.names = names
 
     def _active_name_changed(self, name):

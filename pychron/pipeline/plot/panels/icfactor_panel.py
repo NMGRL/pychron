@@ -15,18 +15,22 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import Str
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from __future__ import absolute_import
 from pychron.pipeline.plot.panels.references_panel import ReferencesPanel
 from pychron.pipeline.plot.plotter.icfactor import ICFactor
 from pychron.processing.analysis_graph import AnalysisStackedRegressionGraph
-# from pychron.pipeline.plot import ReferencesPanel
-# from pychron.pipeline.plot import ICFactor
 
 
 class ICFactorPanel(ReferencesPanel):
     _figure_klass = ICFactor
     _graph_klass = AnalysisStackedRegressionGraph
+    references_name = Str
 
+    def _figure_factory(self, *args, **kw):
+        f = super(ICFactorPanel, self)._figure_factory(*args, **kw)
+        f.references_name = self.references_name
+        return f
 # ============= EOF =============================================

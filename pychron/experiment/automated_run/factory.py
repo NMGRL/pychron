@@ -14,14 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
 
 import os
 import pickle
 
-import six
 import yaml
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import String, Str, Property, Any, Float, Instance, Int, List, \
@@ -53,7 +49,8 @@ from pychron.experiment.utilities.position_regex import SLICE_REGEX, PSLICE_REGE
 from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceLoggable
-from pychron.pychron_constants import NULL_STR, SCRIPT_KEYS, SCRIPT_NAMES, LINE_STR, DVC_PROTOCOL, SPECIAL_IDENTIFIER
+from pychron.pychron_constants import NULL_STR, SCRIPT_KEYS, SCRIPT_NAMES, LINE_STR, DVC_PROTOCOL, SPECIAL_IDENTIFIER, \
+    BLANK_UNKNOWN, BLANK_EXTRACTIONLINE, UNKNOWN, PAUSE, DEGAS
 
 
 class AutomatedRunFactory(DVCAble, PersistenceLoggable):
@@ -86,8 +83,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     set_position = True
 
     delay_after = Float
-    labnumber = String(enter_set=True, auto_set=False)
-    update_labnumber = Event
+    labnumber = Str
 
     aliquot = EKlass(Int)
     special_labnumber = Str(SPECIAL_IDENTIFIER)
@@ -127,9 +123,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     weight = Float
     comment = String(auto_set=False, enter_set=True)
     auto_fill_comment = Bool
-    comment_template = Str
-    comment_templates = List
     edit_comment_template = Button
+    _comment_templater = None
 
     position = Property(depends_on='_position')
     _position = EKlass(String)
@@ -278,7 +273,6 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
     def set_identifiers(self, v):
         self._identifiers = v
-        self.update_labnumber = True
 
     def setup_files(self):
         self.load_templates()
@@ -394,8 +388,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
         if auto_increment_id:
             v = increment_value(self.labnumber)
-            # invoke_in_main_thread(self.trait_set, _labnumber=v)
-            invoke_in_main_thread(self.trait_set, labnumber=v)
+            self.debug('auto increment labnumber: prev={}, new={}'.format(self.labnumber, v))
+            self.labnumber = v
 
         if auto_increment_position:
             pos = self.position
@@ -483,11 +477,11 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         if excludes is None:
             excludes = []
 
-        if arv.analysis_type in ('blank_unknown', 'pause', 'blank_extractionline'):
+        if arv.analysis_type in (BLANK_UNKNOWN, PAUSE, BLANK_EXTRACTIONLINE):
             excludes.extend(('extract_value', 'extract_units', 'pattern', 'beam_diameter'))
-            if arv.analysis_type == 'pause':
+            if arv.analysis_type == PAUSE:
                 excludes.extend(('cleanup', 'position'))
-        elif arv.analysis_type not in ('unknown', 'degas'):
+        elif arv.analysis_type not in (UNKNOWN, DEGAS):
             excludes.extend(('position', 'extract_value', 'extract_units', 'pattern',
                              'cleanup', 'duration', 'beam_diameter'))
 
@@ -556,6 +550,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             excludes.append('labnumber')
         if not set_position:
             excludes.append('position')
+        if self.auto_fill_comment:
+            excludes.append('comment')
 
         for attr in ('labnumber',
                      'extract_value', 'extract_units', 'cleanup', 'duration',
@@ -844,7 +840,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             defaults = yaml.load(rfile)
 
         # convert keys to lowercase
-        defaults = dict([(k.lower(), v) for k, v in six.iteritems(defaults)])
+        defaults = dict([(k.lower(), v) for k, v in defaults.items()])
         return defaults
 
     def _load_labnumber_meta(self, labnumber):
@@ -857,13 +853,12 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         if labnumber in self._meta_cache:
             self.debug('using cached meta values for {}'.format(labnumber))
             d = self._meta_cache[labnumber]
-            for attr in ('sample', 'comment', 'repository_identifier'):
+            for attr in ('sample', 'comment', 'repository_identifier', 'display_irradiation'):
                 setattr(self, attr, d[attr])
 
             self.selected_irradiation = d['irradiation']
             self.selected_level = d['irradiation_level']
             self.irrad_hole = d['irradiation_position']
-            self.display_irradiation = d['display_irradiation']
 
             if self.use_project_based_repository_identifier:
                 ipp = self.irradiation_project_prefix
@@ -917,7 +912,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                                 self.debug('setting repository to {}'.format(repo))
 
                                 self.repository_identifier = repo
-                                if not db.get_repository(repo):
+                                if not self.dvc.check_remote_repository_exists(repo):
                                     self.repository_identifier = ''
                                     if self.confirmation_dialog('Repository Identifier "{}" does not exist. Would you '
                                                                 'like to add it?'.format(repo)):
@@ -1165,14 +1160,9 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
         identifier = self.labnumber
 
-        print(attr, identifier, self.suppress_meta, self.irrad_hole)
         if not (self.suppress_meta or '-##-' in identifier):
             if identifier and self.irrad_hole:
-
-                print(identifier, self.selected_irradiation, self.selected_level, self.irrad_hole)
-
                 j = self.dvc.get_flux(self.selected_irradiation, self.selected_level, int(self.irrad_hole)) or 0
-                print(j)
                 if attr == 'err':
                     j = std_dev(j)
                 else:
@@ -1196,10 +1186,13 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         self._end_after = v
 
     def _set_auto_comment(self, temp=None):
-        if not temp:
-            from pychron.experiment.utilities.comment_template import CommentTemplater
+        if temp is None:
+            temp = self._comment_templater
 
+        if temp is None:
+            from pychron.experiment.utilities.comment_template import CommentTemplater
             temp = CommentTemplater()
+            self._comment_templater = temp
 
         c = temp.render(self)
         self.debug('Comment template rendered = {}'.format(c))
@@ -1287,7 +1280,9 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         from pychron.experiment.utilities.comment_template import CommentTemplater
         from pychron.experiment.utilities.template_view import CommentTemplateView
 
-        ct = CommentTemplater()
+        if self._comment_templater is None:
+            ct = CommentTemplater()
+            self._comment_templater = ct
 
         ctv = CommentTemplateView(model=ct)
         info = ctv.edit_traits()

@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from enable.markers import marker_names
 from traits.api import Bool, Enum, on_trait_change, Float, Int, Range
 from traitsui.api import EnumEditor, Item, HGroup, UItem, View, VGroup, Tabbed
 
@@ -26,19 +25,6 @@ from pychron.pychron_constants import FIT_TYPES, FIT_ERROR_TYPES
 
 class IsoEvoSubOptions(SubOptions):
     pass
-    # def traits_view(self):
-    #     return self._make_view(Item('global_goodness_threshold', label='Intercept Goodness',
-    #                                 tooltip='If % error is greater than "Goodness Threshold" '
-    #                                         'mark regression as "Bad"'),
-    #                            Item('global_slope_goodness', label='Slope Goodness',
-    #                                 tooltip='If slope of regression is positive and the isotope '
-    #                                         'intensity is greater than "Slope Goodness Intensity" '
-    #                                         'then mark regression as "Bad"'),
-    #                            Item('global_outlier_goodness', label='Outlier Goodness',
-    #                                 tooltip='If more than "Outlier Goodness" points are identified as outliers'
-    #                                         'then mark regression as "Bad"'),
-    #                            HGroup(Item('global_curvature_goodness'),
-    #                                   Item('global_curvature_goodness_at')))
 
 
 class IsoEvoAppearanceOptions(AppearanceSubOptions):
@@ -59,18 +45,13 @@ class IsoEvoMainOptions(MainOptions):
     curvature_goodness = Float
     curvature_goodness_at = Float
     rsquared_goodness = Range(0.0, 1.0, 0.95)
+    signal_to_blank_goodness = Float
+    global_goodness_visible = Bool
 
     def _get_edit_view(self):
         main = VGroup(HGroup(Item('name', editor=EnumEditor(name='names')),
-                             Item('scale', editor=EnumEditor(values=['linear', 'log']))),
-                      Item('height'),
-                      HGroup(UItem('marker', editor=EnumEditor(values=marker_names)),
-                             Item('marker_size', label='Size'),
-                             show_border=True, label='Marker'),
-                      HGroup(Item('ymin', label='Min'),
-                             Item('ymax', label='Max'),
-                             show_border=True,
-                             label='Y Limits'),
+                             Item('fit', editor=EnumEditor(values=FIT_TYPES)),
+                             UItem('error_type', editor=EnumEditor(values=FIT_ERROR_TYPES))),
                       label='Fits')
 
         goodness = VGroup(Item('goodness_threshold', label='Intercept',
@@ -87,6 +68,8 @@ class IsoEvoMainOptions(MainOptions):
                           HGroup(Item('curvature_goodness', label='Curvature'),
                                  Item('curvature_goodness_at', label='Curvature At')),
                           HGroup(Item('rsquared_goodness', label='R-Squared Adj')),
+                          HGroup(Item('signal_to_blank_goodness',
+                                      tooltip='If Blank/Signal*100 greater than threshold mark regression as "Bad"')),
                           label='Goodness')
 
         auto = VGroup(VGroup(Item('n_threshold', label='Threshold'),
@@ -117,15 +100,20 @@ class IsoEvoMainOptions(MainOptions):
                                        'then mark regression as "Bad"'),
                           HGroup(Item('controller.curvature_goodness'),
                                  Item('controller.curvature_goodness_at')),
-                          HGroup(Item('controller.rsquared_goodness')))
+                          HGroup(Item('controller.rsquared_goodness',
+                                      tooltip='If R-squared is less than threshold mark regression as "Bad"')),
+                          HGroup(Item('controller.signal_to_blank_goodness',
+                                 tooltip='If Blank/Signal*100 greater than threshold mark regression as "Bad"')))
 
         agrp = self._get_analysis_group()
-        return VGroup(agrp, BorderVGroup(g, gg, label='Global'))
+        return VGroup(agrp,
+                      Item('controller.global_goodness_visible', label='Global Edit Visible'),
+                      BorderVGroup(g, gg, label='Global', visible_when='controller.global_goodness_visible'))
 
     @on_trait_change('plot_enabled, save_enabled, fit, error_type, filter_outliers,'
                      'goodness_threshold, slope_goodness, slope_goodness_intensity,'
                      'outlier_goodness, curvature_goodness, curvature_goodness_at,'
-                     'rsquared_goodness')
+                     'rsquared_goodness, signal_to_blank_goodness')
     def _handle_global(self, name, new):
         self._toggle_attr(name, new)
 

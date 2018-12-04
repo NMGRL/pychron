@@ -15,23 +15,20 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
+
 from pickle import dumps
 
+import six
 from pyface.qt import QtCore, QtGui
-from pyface.qt.QtGui import QColor, QHeaderView, QApplication
+from pyface.qt.QtGui import QHeaderView, QApplication
 from traits.api import Bool, Str, List, Any, Instance, Property, Int, HasTraits, Color, Either, Callable
-from traits.trait_base import SequenceTypes
 from traitsui.api import View, Item, TabularEditor, Handler
 from traitsui.mimedata import PyMimeData
 from traitsui.qt4.tabular_editor import TabularEditor as qtTabularEditor, \
     _TableView as TableView, HeaderEventFilter, _ItemDelegate
-from traitsui.qt4.tabular_model import TabularModel, alignment_map, tabular_mime_type
+from traitsui.qt4.tabular_model import TabularModel, tabular_mime_type
 
 from pychron.core.helpers.ctx_managers import no_update
-import six
-from six.moves import range
 
 
 class myTabularEditor(TabularEditor):
@@ -126,6 +123,12 @@ class TabularEditorHandler(UnselectTabularEditorHandler):
 
     def copy_to_end(self, info, obj):
         obj.copy_selected_last()
+
+    def move_down(self, info, obj):
+        obj.move(1)
+
+    def move_up(self, info, obj):
+        obj.move(-1)
 
 
 class ItemDelegate(_ItemDelegate):
@@ -336,7 +339,11 @@ class _TableView(TableView):
     def _paste(self):
         clipboard = QApplication.clipboard()
         md = clipboard.mimeData()
-        items = md.instance()
+        try:
+            items = md.instance()
+        except AttributeError:
+            return
+        
         if items is not None:
             editor = self._editor
             model = editor.model
@@ -388,7 +395,7 @@ class _TableView(TableView):
         # Note that setting 'EditKeyPressed' as an edit trigger does not work on
         # most platforms, which is why we do this here.
         if (event.key() in (QtCore.Qt.Key_Enter, QtCore.Qt.Key_Return) and
-                self.state() != QtGui.QAbstractItemView.EditingState and
+                    self.state() != QtGui.QAbstractItemView.EditingState and
                 factory.editable and 'edit' in factory.operations):
             if factory.multi_select:
                 rows = editor.multi_selected_rows
@@ -401,7 +408,7 @@ class _TableView(TableView):
                 self.edit(editor.model.index(row, 0))
 
         elif (event.key() in (QtCore.Qt.Key_Backspace, QtCore.Qt.Key_Delete) and
-              factory.editable and 'delete' in factory.operations):
+                  factory.editable and 'delete' in factory.operations):
             event.accept()
             '''
                 sets _no_update and update_needed on the editor.object e.g
@@ -419,7 +426,7 @@ class _TableView(TableView):
                     editor.model.removeRow(editor.selected_row)
 
         elif (event.key() == QtCore.Qt.Key_Insert and
-              factory.editable and 'insert' in factory.operations):
+                  factory.editable and 'insert' in factory.operations):
             event.accept()
 
             if factory.multi_select:
@@ -468,7 +475,7 @@ class _TabularModel(TabularModel):
                 # if empty list, target is after end of list
                 row = 0
             if all(adapter.get_can_drop(object, name, row, item)
-                                    for item in data):
+                   for item in data):
                 for item in reversed(data):
                     self.dropItem(item, row)
                 return True
@@ -652,10 +659,10 @@ class _TabularEditor(qtTabularEditor):
                 row = self.value.index(row)
             self.scroll_to_row = row
 
-    # def _scroll_to_row_changed(self, row):
-    #     row = min(row, self.model.rowCount(None)) - 1
-    #     super(_TabularEditor, self)._scroll_to_row_changed(0)
-    #     super(_TabularEditor, self)._scroll_to_row_changed(row)
+            # def _scroll_to_row_changed(self, row):
+            #     row = min(row, self.model.rowCount(None)) - 1
+            #     super(_TabularEditor, self)._scroll_to_row_changed(0)
+            #     super(_TabularEditor, self)._scroll_to_row_changed(row)
 
 # ============= EOF =============================================
 # def _paste(self):

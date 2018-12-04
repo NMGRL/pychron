@@ -18,9 +18,8 @@
 from __future__ import absolute_import
 
 import uuid
-from itertools import groupby
-from operator import attrgetter
 
+from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.options.isochron import InverseIsochronOptions
 from pychron.options.spectrum import SpectrumOptions
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
@@ -43,7 +42,8 @@ class InterpretedAgeEditor(FigureEditor):
         else:
             ek = po.error_calc_method
             pk = 'Weighted Mean'
-            additional['include_j_error_in_individual_analyses'] = po.include_j_error
+            # additional['include_j_error_in_individual_analyses'] = po.include_j_error_in_individual_analyses
+            additional['include_j_position_error'] = po.include_j_position_error
             additional['include_j_error_in_mean'] = po.include_j_error_in_mean
 
         def func(aa):
@@ -55,8 +55,7 @@ class InterpretedAgeEditor(FigureEditor):
             p.set_preferred_age(pk, ek)
             return p
 
-        key = attrgetter('group_id')
-        ias = [func(list(ans)) for gid, ans in groupby(sorted(self.analyses, key=key), key=key)]
+        ias = [func(list(ans)) for gid, ans in groupby_group_id(self.analyses)]
         return ias
 
 # ============= EOF =============================================

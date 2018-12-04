@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import os
 
 from envisage.extension_point import ExtensionPoint
@@ -25,7 +26,7 @@ from pyface.tasks.action.schema import SMenu, SGroup
 from pyface.tasks.action.schema_addition import SchemaAddition
 from traits.api import List, Dict
 
-from pychron.core.helpers.filetools import list_directory2
+from pychron.core.helpers.filetools import glob_list_directory
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.envisage.tasks.list_actions import ProcedureAction
 from pychron.extraction_line.extraction_line_manager import ExtractionLineManager
@@ -99,7 +100,7 @@ class ExtractionLinePlugin(BaseTaskPlugin):
         if self.application.get_plugin('pychron.pyscript.plugin'):
 
             actions = []
-            for f in list_directory2(paths.procedures_dir, extension='.py', remove_extension=True):
+            for f in glob_list_directory(paths.procedures_dir, extension='.py', remove_extension=True):
                 actions.append(SchemaAddition(id='procedure.{}'.format(f),
                                               factory=procedure_action(f, self.application),
                                               path='MenuBar/procedures.menu/extraction_line.group'))
