@@ -472,7 +472,7 @@ class ArArAge(IsotopeGroup):
         if j is None:
             j = ufloat(1e-4, 1e-7)
         j.tag = 'Position'
-        j.std_dev = self.position_jerr
+        j.std_dev = self.position_jerr or 0
         age = age_equation(j, f, include_decay_error=include_decay_error, arar_constants=arc)
         self.uage_w_position_err = age
 
