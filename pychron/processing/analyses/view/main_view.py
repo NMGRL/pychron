@@ -113,6 +113,8 @@ class MainView(HasTraits):
                                value=self._get_irradiation(an)),
               MeasurementValue(name='J',
                                value=jf),
+              MeasurementValue(name='Position Error',
+                               value=floatfmt(an.position_jerr, use_scientific=True)),
               MeasurementValue(name='Lambda K',
                                value=nominal_value(ar.arar_constants.lambda_k),
                                units='1/a'),

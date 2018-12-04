@@ -25,6 +25,7 @@ from pprint import pformat
 from pychron import json
 from pychron.core.helpers.filetools import subdirize, add_extension
 from pychron.paths import paths
+from pychron.wisc_ar_constants import WISCAR_ID_RE
 
 __version__ = '2.0'
 
@@ -131,7 +132,6 @@ def analysis_path(analysis, *args, **kw):
 
 
 UUID_RE = re.compile(r'^[0-9a-f]{8}\-[0-9a-f]{4}\-4[0-9a-f]{3}\-[89ab][0-9a-f]{3}\-[0-9a-f]{12}$', re.IGNORECASE)
-WISCARID_RE = re.compile(r'^[A-Z]{3}[0-9]{4}$', re.IGNORECASE)
 
 
 def _analysis_path(runid, repository, modifier=None, extension='.json', mode='r', root=None):
@@ -142,7 +142,7 @@ def _analysis_path(runid, repository, modifier=None, extension='.json', mode='r'
 
     if UUID_RE.match(runid):
         sublen = 5
-    elif WISCARID_RE.match(runid):
+    elif WISCAR_ID_RE.match(runid):
         sublen = 3
     else:
         sublen = 3

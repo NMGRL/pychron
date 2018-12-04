@@ -171,7 +171,7 @@ class AnalysisGroup(IdeogramPlotable):
 
     @property
     def age_attr(self):
-        return 'uage_w_j_err' if self.include_j_position_error else 'uage'
+        return 'uage_w_position_err' if self.include_j_position_error else 'uage'
 
     def _get_age_units(self):
         if self._age_units:
@@ -192,7 +192,7 @@ class AnalysisGroup(IdeogramPlotable):
         if attr.startswith('uage'):
             attr = 'uage'
             if self.include_j_position_error:
-                attr = 'uage_w_j_err'
+                attr = 'uage_w_position_err'
 
         return self._calculate_mswd(attr)
 

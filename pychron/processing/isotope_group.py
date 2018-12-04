@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 import logging
 import os
 
@@ -30,6 +28,7 @@ from uncertainties import ufloat
 from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.paths import paths
 from pychron.processing.isotope import Isotope, Baseline
+from pychron.wisc_ar_constants import WISCAR_DET_RE
 
 logger = logging.getLogger('ISO')
 
@@ -327,8 +326,17 @@ class IsotopeGroup(HasTraits):
                 return ufloat(default, 0, tag=iso)
 
     def get_isotopes(self, det):
+        m = WISCAR_DET_RE.match(det)
+        if m:
+            det = m.group('detector')
+
         for iso in self.itervalues():
-            if iso.detector == det:
+
+            idet = iso.detector
+            m = WISCAR_DET_RE.match(idet)
+            if m:
+                idet = m.group('detector')
+            if idet == det:
                 yield iso
 
     def get_isotope_title(self, name, detector):

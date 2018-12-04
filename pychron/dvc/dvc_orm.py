@@ -250,7 +250,7 @@ class AnalysisTbl(Base, IDMixin):
         self.load_holder = self.get_load_holder()
 
         # force binding of irradiation_position
-        self.identifier
+        # self.irradiation_position
 
 
 class AnalysisIntensitiesTbl(Base, IDMixin):

@@ -135,7 +135,7 @@ class Ideogram(BaseArArFigure):
         index_attr = opt.index_attr
         if index_attr:
             if index_attr == 'uage' and opt.include_j_position_error:
-                index_attr = 'uage_w_j_err'
+                index_attr = 'uage_w_position_err'
 
         else:
             warning(None, 'X Value not set. Defaulting to Age')
@@ -176,7 +176,7 @@ class Ideogram(BaseArArFigure):
         t = index_attr
         if index_attr == 'uF':
             t = 'Ar40*/Ar39k'
-        elif index_attr in ('uage', 'uage_w_j_err'):
+        elif index_attr in ('uage', 'uage_w_position_err'):
             ref = self.analyses[0]
             age_units = ref.arar_constants.age_units
             t = 'Age ({})'.format(age_units)
@@ -265,7 +265,7 @@ class Ideogram(BaseArArFigure):
 
             index_attr = opt.index_attr
             if index_attr == 'uage' and opt.include_j_position_error:
-                index_attr = 'uage_w_j_err'
+                index_attr = 'uage_w_position_err'
 
             xs = [nominal_value(x) for x in self._get_xs(key=index_attr, nonsorted=True)]
         else:
@@ -345,7 +345,7 @@ class Ideogram(BaseArArFigure):
             name = 'Age'
             ia = 'uage'
             if self.options.include_j_position_error:
-                ia = 'uage_w_j_err'
+                ia = 'uage_w_position_err'
         else:
             name = ia
 
@@ -640,21 +640,12 @@ class Ideogram(BaseArArFigure):
 
                     text = self._make_mean_label(wm, we * opt.nsigma, n, total_n, mswd_args,
                                                  display_n=opt.display_mean_n)
-                    # mswd_args = mswd, valid_mswd, n
-                    # text = self._make_mean_label(wm, we * self.options.nsigma, n, total_n, mswd_args)
                     ov.label.text = text
 
         lp.overlays = [o for o in lp.overlays if not isinstance(o, PeakLabel)]
 
         self._add_peak_labels(lp)
 
-        # update the data label position
-        # for ov in sp.overlays:
-        # if isinstance(ov, DataLabel):
-        # _, y = ov.data_point
-        # ov.data_point = wm, y
-        # n = len(fxs)
-        # ov.label_text = self._build_label_text(wm, we, mswd, valid_mswd, n)
         try:
             mi, ma = min(ys), max(ys)
 
@@ -663,7 +654,6 @@ class Ideogram(BaseArArFigure):
                 xs, ys = self._calculate_probability_curve(self.xs, self.xes)
                 dp.value.set_data(ys)
                 dp.index.set_data(xs)
-                # oys = dp.value.get_data()
                 mi, ma = min(mi, min(ys)), max(mi, max(ys))
             else:
                 dp.visible = False
@@ -672,7 +662,7 @@ class Ideogram(BaseArArFigure):
         except ValueError:
             pass
 
-        graph.redraw()
+        # graph.redraw()
 
     # ===============================================================================
     # utils
