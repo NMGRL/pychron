@@ -966,26 +966,24 @@ class DVC(Loggable):
                     d['lithology'] = sample.lithology
 
         def analysis_factory(x):
-            d = dict(uuid=x.uuid,
-                     record_id=x.record_id,
-                     age=x.age,
-                     age_err=x.age_err,
-                     age_err_wo_j=x.age_err_wo_j,
-                     radiogenic_yield=nominal_value(x.rad40_percent),
-                     radiogenic_yield_err=std_dev(x.rad40_percent),
-                     kca=float(nominal_value(x.kca)),
-                     kca_err=float(std_dev(x.kca)),
-                     kcl=float(nominal_value(x.kcl)),
-                     kcl_err=float(std_dev(x.kcl)),
-                     tag=x.tag,
-                     plateau_step=ia.get_is_plateau_step(x),
-                     baseline_corrected_intercepts=x.baseline_corrected_intercepts_to_dict(),
-                     blanks=x.blanks_to_dict(),
-                     icfactors=x.icfactors_to_dict(),
-                     ic_corrected_values=x.ic_corrected_values_to_dict(),
-                     interference_corrected_values=x.interference_corrected_values_to_dict())
-
-            return d
+            return dict(uuid=x.uuid,
+                        record_id=x.record_id,
+                        age=x.age,
+                        age_err=x.age_err,
+                        age_err_wo_j=x.age_err_wo_j,
+                        radiogenic_yield=nominal_value(x.rad40_percent),
+                        radiogenic_yield_err=std_dev(x.rad40_percent),
+                        kca=float(nominal_value(x.kca)),
+                        kca_err=float(std_dev(x.kca)),
+                        kcl=float(nominal_value(x.kcl)),
+                        kcl_err=float(std_dev(x.kcl)),
+                        tag=x.tag,
+                        plateau_step=ia.get_is_plateau_step(x),
+                        baseline_corrected_intercepts=x.baseline_corrected_intercepts_to_dict(),
+                        blanks=x.blanks_to_dict(),
+                        icfactors=x.icfactors_to_dict(),
+                        ic_corrected_values=x.ic_corrected_values_to_dict(),
+                        interference_corrected_values=x.interference_corrected_values_to_dict())
 
         d.update(age=float(nominal_value(a)),
                  age_err=float(std_dev(a)),
