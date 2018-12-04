@@ -947,12 +947,23 @@ class DVC(Loggable):
 
         if isnan(mswd):
             mswd = 0
+
         d = {attr: getattr(ia, attr) for attr in ('sample', 'material', 'project', 'identifier', 'nanalyses',
                                                   'irradiation',
                                                   'name', 'uuid',
                                                   'include_j_error_in_mean',
                                                   'include_j_error_in_plateau',
                                                   'include_j_position_error')}
+
+        db = self.db
+        with db.session_ctx():
+            dbid = db.get_identifier(ia.identifier)
+            if dbid:
+                sample = dbid.sample
+                if sample:
+                    d['latitude'] = sample.latitude
+                    d['longitude'] = sample.longitude
+                    d['lithology'] = sample.lithology
 
         def analysis_factory(x):
             d = dict(uuid=x.uuid,
@@ -972,8 +983,7 @@ class DVC(Loggable):
                      blanks=x.blanks_to_dict(),
                      icfactors=x.icfactors_to_dict(),
                      ic_corrected_values=x.ic_corrected_values_to_dict(),
-                     interference_corrected_values=x.interference_corrected_values_to_dict()
-                     )
+                     interference_corrected_values=x.interference_corrected_values_to_dict())
 
             return d
 
