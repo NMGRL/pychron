@@ -148,7 +148,7 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
         for i in items:
             ai = next((a for a in self.oanalyses if a.uuid == i.uuid), None)
             if ai:
-                ai.tag = tag
+                ai.set_tag(tag)
 
         self._analysis_filter_changed(self.analysis_filter)
         self.selected = []

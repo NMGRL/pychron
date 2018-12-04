@@ -130,6 +130,7 @@ class AnalysisTbl(Base, IDMixin):
 
     load_name = ''
     load_holder = ''
+    _temporary_tag = None
 
     @property
     def step(self):
@@ -212,7 +213,14 @@ class AnalysisTbl(Base, IDMixin):
 
     @property
     def tag(self):
-        return self.change.tag
+        if self._temporary_tag:
+            tag = self._temporary_tag
+        else:
+            tag = self.change.tag
+        return tag
+
+    def set_tag(self, t):
+        self._temporary_tag = t
 
     @property
     def analysis_timestamp(self):
