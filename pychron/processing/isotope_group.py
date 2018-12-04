@@ -137,12 +137,16 @@ class IsotopeGroup(HasTraits):
                 return
         return iso.ys[-1]
 
+    def map_isotope_key(self, k):
+        return k
+
     def get_ratio(self, r, non_ic_corr=False):
         if '/' in r:
             n, d = r.split('/')
         else:
             n, d = r.split('_')
-
+        n = self.map_isotope_key(n)
+        d = self.map_isotope_key(d)
         isos = self.isotopes
 
         if non_ic_corr:

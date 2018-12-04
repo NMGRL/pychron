@@ -225,7 +225,13 @@ class ArArAge(IsotopeGroup):
             except ZeroDivisionError:
                 pass
 
+    def map_isotope_key(self, k):
+        return self.arar_mapping.get(k,k)
+
     def get_value(self, attr):
+
+        attr = self.map_isotope_key(attr)
+
         r = ufloat(0, 0, tag=attr)
         if attr.endswith('bs'):
             iso = attr[:-2]
@@ -237,7 +243,9 @@ class ArArAge(IsotopeGroup):
             attr = attr[1:]
             r = self.get_ratio(attr, non_ic_corr=True)
         elif attr == 'icf_40_36':
-            r = self.get_corrected_ratio('Ar40', 'Ar36')
+            a40 = self.map_isotope_key('Ar40')
+            a36 = self.map_isotope_key('Ar36')
+            r = self.get_corrected_ratio(a40, a36)
         elif attr.endswith('ic'):
             # ex. attr='Ar40ic'
             isok = attr[:-2]
