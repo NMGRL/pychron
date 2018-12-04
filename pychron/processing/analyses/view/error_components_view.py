@@ -67,13 +67,13 @@ class ErrorComponentsView(HasTraits):
 
         es = get_comp(an.uage_w_j_err)
 
-        for k in INTERFERENCE_KEYS + ('J',):
+        for k in INTERFERENCE_KEYS + ('J', 'trapped_4036'):
             es.append(ErrorComponent(name=k, value=an.get_error_component(k, uage=an.uage_w_j_err)))
 
         self.error_components = es
 
         es = get_comp(an.uage_w_position_err)
-        for k in INTERFERENCE_KEYS + ('Position',):
+        for k in INTERFERENCE_KEYS + ('Position', 'trapped_4036'):
             es.append(ErrorComponent(name=k, value=an.get_error_component(k, uage=an.uage_w_position_err)))
         self.error_components2 = es
 

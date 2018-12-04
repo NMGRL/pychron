@@ -565,6 +565,16 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     total_ar39 = AGProperty()
     total_k2o = AGProperty()
 
+    def set_isochron_trapped(self, state):
+        v = None
+        if state:
+            self.calculate_isochron_age()
+            v = 1/self.isochron_4036
+
+        for a in self.analyses:
+            a.arar_constants.trapped_atm4036 = v
+            a.recalculate_age(force=True)
+
     @property
     def integrated_enabled(self):
         """

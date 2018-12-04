@@ -666,6 +666,8 @@ class BaseArArFigure(SelectionFigure):
 
                 break
 
+    def _analysis_group_hook(self, ag):
+        pass
     # ===============================================================================
     # property get/set
     # ===============================================================================
@@ -681,6 +683,8 @@ class BaseArArFigure(SelectionFigure):
         if ag is None:
             ag = self._analysis_group_klass(group_id=self.group_id,
                                             analyses=self.sorted_analyses)
+            self._analysis_group_hook(ag)
+
         return ag
 
     def _set_analysis_group(self, v):

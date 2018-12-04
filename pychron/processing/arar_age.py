@@ -310,9 +310,8 @@ class ArArAge(IsotopeGroup):
         self.modeled_j = j
         return j
 
-    def recalculate_age(self):
-        print('recacl age', self)
-        if not self.uF:
+    def recalculate_age(self, force=False):
+        if not self.uF or force:
             self._calculate_F()
 
         self._set_age_values(self.uF)

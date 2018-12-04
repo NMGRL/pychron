@@ -20,6 +20,7 @@
 from __future__ import absolute_import
 
 import math
+from copy import copy
 
 from numpy import asarray, average, array
 from six.moves import range
@@ -386,8 +387,9 @@ def calculate_F(isotopes,
                                                   arar_constants)
 
         # calculate radiogenic
-        # dont include error in 40/36
-        atm40 = atm36 * nominal_value(arar_constants.atm4036)
+        trapped_4036 = copy(arar_constants.atm4036)
+        trapped_4036.tag = 'trapped_4036'
+        atm40 = atm36 * trapped_4036
 
         k4039 = pr.get('K4039', 0)
         k40 = k39 * k4039
