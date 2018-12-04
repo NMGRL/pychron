@@ -437,12 +437,12 @@ class MetaRepo(GitRepoManager):
         return self.get_flux_from_positions(position, positions)
 
     def get_flux_from_positions(self, position, positions):
-        j, je, lambda_k = 0, 0, None
+        j, je, pe, lambda_k = 0, 0, 0, None
         monitor_name, monitor_material, monitor_age = DEFAULT_MONITOR_NAME, 'sanidine', ufloat(28.201, 0)
         if positions:
             pos = next((p for p in positions if p['position'] == position), None)
             if pos:
-                j, je = pos.get('j', 0), pos.get('j_err', 0)
+                j, je, pe = pos.get('j', 0), pos.get('j_err', 0), pos.get('position_jerr', 0)
                 dc = pos.get('decay_constants')
                 if dc:
                     # this was a temporary fix and likely can be removed
@@ -459,7 +459,9 @@ class MetaRepo(GitRepoManager):
                     monitor_age = ufloat(sa, se, tag='monitor_age')
                     monitor_material = mon.get('material', 'sanidine')
 
-        fd = {'j': ufloat(j, je, tag='J'), 'lambda_k': lambda_k,
+        fd = {'j': ufloat(j, je, tag='J'),
+              'position_jerr': pe,
+              'lambda_k': lambda_k,
               'monitor_name': monitor_name,
               'monitor_material': monitor_material,
               'monitor_age': monitor_age}

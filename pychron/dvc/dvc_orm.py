@@ -250,8 +250,7 @@ class AnalysisTbl(Base, IDMixin):
         self.load_holder = self.get_load_holder()
 
         # force binding of irradiation_position
-        # self.identifier
-        # self.tag = self.change.tag
+        self.identifier
 
 
 class AnalysisIntensitiesTbl(Base, IDMixin):
@@ -366,7 +365,7 @@ class IrradiationPositionTbl(Base, IDMixin):
     j = Column(Float)
     j_err = Column(Float)
     packet = stringcolumn(40)
-    analyses = relationship('AnalysisTbl', backref='irradiation_position', lazy='joined')
+    analyses = relationship('AnalysisTbl', backref='irradiation_position')
 
     @property
     def analysis_count(self):
