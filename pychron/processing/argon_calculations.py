@@ -247,7 +247,7 @@ def calculate_arar_decay_factors(dc37, dc39, segments):
     else:
         a = sum([pi * ti for pi, ti, _, _, _ in segments])
 
-        b = sum([pi * ((1 - math.exp(-dc37 * ti)) / (dc37 * math.exp(dc39 * dti)))
+        b = sum([pi * ((1 - math.exp(-dc37 * ti)) / (dc37 * math.exp(dc37 * dti)))
                  for pi, ti, dti, _, _ in segments])
 
         c = sum([pi * ((1 - math.exp(-dc39 * ti)) / (dc39 * math.exp(dc39 * dti)))
