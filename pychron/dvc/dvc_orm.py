@@ -117,6 +117,7 @@ class AnalysisTbl(Base, IDMixin):
     measured_positions = relationship('MeasuredPositionTbl', backref='analysis')
     media = relationship('MediaTbl', backref='analysis')
     results = relationship('AnalysisIntensitiesTbl', backref='analysis')
+    irradiation_position = relationship('IrradiationPositionTbl', backref='analysis', lazy='joined')
 
     _record_view = None
     group_id = 0
@@ -373,7 +374,7 @@ class IrradiationPositionTbl(Base, IDMixin):
     j = Column(Float)
     j_err = Column(Float)
     packet = stringcolumn(40)
-    analyses = relationship('AnalysisTbl', backref='irradiation_position')
+    # analyses = relationship('AnalysisTbl', backref='irradiation_position')
 
     @property
     def analysis_count(self):

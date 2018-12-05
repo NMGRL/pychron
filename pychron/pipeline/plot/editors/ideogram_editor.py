@@ -18,7 +18,7 @@
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.label import Label
 from traits.api import Instance, List
-from traitsui.api import View, VSplit
+from traitsui.api import View, VSplit, VGroup
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -95,13 +95,11 @@ class IdeogramEditor(InterpretedAgeEditor):
                 ap.enabled = False
 
     def traits_view(self):
-        tbl_grp = listeditor('results_tables', height=100, defined_when='plotter_options.show_results_table')
-        # tbl_grp = UItem('results_tables',
-        #                 editor=isteditor(style='custom'),
-        #                 height=200,
-        #                 defined_when='plotter_options.show_results_table')
-
-        v = View(VSplit(self.get_component_view(),
+        tbl_grp = VGroup(listeditor('results_tables',
+                                    height=100,
+                                    visible_when='plotter_options.show_results_table'),
+                         scrollable=True)
+        v = View(VSplit(VGroup(self.get_component_view()),
                         tbl_grp),
                  resizable=True)
         return v

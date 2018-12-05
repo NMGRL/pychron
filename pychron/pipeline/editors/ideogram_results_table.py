@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.api import HasTraits, List, Property
+from traits.api import HasTraits, List, Property, Int
 from traitsui.api import View, UItem, TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
 from uncertainties import std_dev, nominal_value
@@ -30,6 +30,14 @@ class IdeogramResultsAdapter(TabularAdapter):
                ('Weighted Mean Age Err.', 'weighted_mean_age_error'),
                ('N', 'nanalyses'),
                ('MSWD', 'mswd')]
+
+    group_id_width = Int(50)
+    identifier_width = Int(50)
+    sample_width = Int(100)
+    age_span_width = Int(150)
+    weighted_mean_age_width = Int(150)
+    weighted_mean_age_error_width = Int(150)
+    n_width = Int(50)
 
     weighted_mean_age_text = Property
     weighted_mean_age_error_text = Property
@@ -58,10 +66,6 @@ class IdeogramResultsAdapter(TabularAdapter):
 
 class IdeogramResultsTable(HasTraits):
     analysis_groups = List
-
-    # # def __init__(self, analyses, *args, **kw):
-    #     super(IdeogramResultsTable, self).__init__(*args, **kw)
-    #     self.analysis_groups = [AnalysisGroup(group_id=gid, analyses=list(ans)) for gid, ans in groupby_group_id(analyses)]
 
     def __init__(self, analysis_groups, *args, **kw):
         super(IdeogramResultsTable, self).__init__(*args, **kw)

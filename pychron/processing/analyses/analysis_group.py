@@ -209,7 +209,7 @@ class AnalysisGroup(IdeogramPlotable):
     @cached_property
     def _get_age_span(self):
         ans = self.clean_analyses()
-        ages = [a.age for a in ans]
+        ages = [nominal_value(a.age) for a in ans]
         return max(ages) - min(ages)
 
     @cached_property
@@ -739,10 +739,19 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
     comments = Str
     preferred_age = Property
 
+    # modeled_j = ''
+    # modeled_j_err = ''
+    # F = ''
+    # F_err = ''
+    # rundate = ''
+
     def __init__(self, *args, **kw):
         super(InterpretedAgeGroup, self).__init__(*args, **kw)
         super(Preferred, self).__init__()
         self.has_subgroups(self.analyses)
+
+    def __getattr__(self, item):
+        return ''
 
     def set_preferred_age(self, pk, ek):
         pv = self._get_pv('age')
@@ -788,6 +797,10 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
 
     @property
     def uage_w_j_err(self):
+        return self.age
+
+    @property
+    def uage_w_position_err(self):
         return self.age
 
     @property
