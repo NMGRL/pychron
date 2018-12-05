@@ -327,7 +327,7 @@ class SampleTbl(Base, NameMixin):
     create_date = deferred(Column(DateTime, default=func.now()))
     update_date = deferred(Column(DateTime, onupdate=func.now(), default=func.now()))
 
-    positions = relationship('IrradiationPositionTbl', backref='sample')
+    positions = relationship('IrradiationPositionTbl', backref='sample', lazy='joined')
 
 
 # class ProductionTbl(Base, NameMixin):

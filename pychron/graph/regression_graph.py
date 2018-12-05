@@ -127,6 +127,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                    add_tools=True,
                    add_inspector=True,
                    add_point_inspector=True,
+                   add_selection=True,
                    convert_index=None,
                    plotid=None, *args,
                    **kw):
@@ -175,12 +176,12 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
         if add_tools:
             self.add_tools(plot, scatter, line,
-                           convert_index, add_inspector, add_point_inspector)
+                           convert_index, add_inspector, add_point_inspector, add_selection)
 
         return plot, scatter, line
 
     def add_tools(self, plot, scatter, line=None,
-                  convert_index=None, add_inspector=True, add_point_inspector=True):
+                  convert_index=None, add_inspector=True, add_point_inspector=True, add_selection=True):
 
         if add_inspector:
             # add a regression inspector tool to the line
@@ -199,12 +200,12 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
             scatter.overlays.append(pinspector_overlay)
             scatter.tools.append(point_inspector)
+        if add_selection:
+            rect_tool = RectSelectionTool(scatter)
+            rect_overlay = RectSelectionOverlay(tool=rect_tool)
 
-        rect_tool = RectSelectionTool(scatter)
-        rect_overlay = RectSelectionOverlay(tool=rect_tool)
-
-        scatter.overlays.append(rect_overlay)
-        scatter.tools.append(rect_tool)
+            scatter.overlays.append(rect_overlay)
+            scatter.tools.append(rect_tool)
 
     def add_statistics(self, plotid=0):
         plot = self.plots[plotid]
