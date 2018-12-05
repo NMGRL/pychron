@@ -361,7 +361,7 @@ class Spectrum(BaseArArFigure):
     # utils
     # ===============================================================================
     def _analysis_group_hook(self, ag):
-        ag.set_isochron_trapped(self.options.use_isochron_trapped)
+        ag.set_isochron_trapped(self.options.use_isochron_trapped, self.options.include_isochron_trapped_error)
 
     def _get_age_errors(self, ans):
         ages, errors = list(zip(*[(ai.uage.nominal_value,
