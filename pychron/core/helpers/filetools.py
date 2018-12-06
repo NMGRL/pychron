@@ -155,9 +155,11 @@ def list_directory(p, extension=None, filtername=None, remove_extension=False):
     if os.path.isdir(p):
         ds = os.listdir(p)
         if extension is not None:
+            extension = extension.lower()
+
             def test(path):
                 for ext in extension.split(','):
-                    if path.endswith(ext):
+                    if path.lower().endswith(ext):
                         return True
 
             ds = [pi for pi in ds if test(pi)]
@@ -177,7 +179,7 @@ def replace_extension(p, ext='.txt'):
 
 def add_extension(p, ext='.txt'):
     if not isinstance(ext, (list, tuple)):
-        ext = (ext, )
+        ext = (ext,)
 
     for ei in ext:
         if p.endswith(ei):

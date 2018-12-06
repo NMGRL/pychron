@@ -340,8 +340,10 @@ class LoadingManager(DVCIrradiationable):
                 self.loads = ls
 
             ts = self.dvc.get_load_holders()
+            self.debug('Found load holders={}'.format(ts))
             if ts:
                 ts = self._check_load_holders(ts)
+                self.debug('Valid load holders={}'.format(ts))
                 self.trays = ts
 
             us = db.get_usernames()
