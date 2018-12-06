@@ -601,11 +601,6 @@ class LoadingManager(DVCIrradiationable):
         if nln:
             self.info('adding load {} {} to database'.format(nln, self.tray))
 
-            dbtray = db.get_load_holder(self.tray)
-            if dbtray is None:
-                db.add_load_holder(self.tray)
-                db.flush()
-
             db.add_load(nln, holder=self.tray, username=self.username)
             db.flush()
 
