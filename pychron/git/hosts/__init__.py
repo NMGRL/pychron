@@ -93,12 +93,16 @@ class GitHostService(Loggable):
     remote_url = Str
     _cached_repo_names = Dict
     _clear_cached_repo_names = False
+    _session = None
 
     def bind_preferences(self):
         bind_preference(self, 'username', '{}.username'.format(self.preference_path))
         bind_preference(self, 'password', '{}.password'.format(self.preference_path))
         bind_preference(self, 'oauth_token', '{}.oauth_token'.format(self.preference_path))
         bind_preference(self, 'default_remote_name', '{}.default_remote_name'.format(self.preference_path))
+
+    def up_to_date(self, organization, name, sha, branch='master'):
+        pass
 
     def remote_exists(self, organization, name):
         try:
@@ -147,7 +151,8 @@ class GitHostService(Loggable):
 
     # private
     def _get(self, cmd, verbose=False):
-        with requests.Session() as s:
+
+        def func(s):
             s.headers.update(self._get_authorization())
             if globalv.cert_file:
                 s.verify = globalv.cert_file
@@ -177,6 +182,20 @@ class GitHostService(Loggable):
                 return result
 
             return _rget(cmd)
+
+        if self._session:
+            return func(self._session)
+        else:
+            with requests.Session() as s:
+                return func(s)
+
+    def new_session(self):
+        self._session = requests.Session()
+        self._session.headers.update(self._get_authorization())
+
+    def close_session(self):
+        self._session.close()
+        self._session = None
 
     def _post(self, cmd, **payload):
         headers = self._get_authorization()
