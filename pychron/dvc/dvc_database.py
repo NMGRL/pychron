@@ -1479,7 +1479,8 @@ class DVCDatabase(DatabaseAdapter):
 
     def get_material(self, name, grainsize=None):
         if not isinstance(name, str) and not isinstance(name, six.text_type):
-            return name
+            if grainsize is None or name.grainsize == grainsize:
+                return name
 
         with self.session_ctx() as sess:
             q = sess.query(MaterialTbl)

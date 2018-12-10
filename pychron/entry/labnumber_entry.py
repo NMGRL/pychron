@@ -562,7 +562,7 @@ class LabnumberEntry(DVCIrradiationable):
                 sam = db.add_sample(sam,
                                     proj.name,
                                     ir.principal_investigator,
-                                    mat, grainsize=ir.grainsize)
+                                    mat, grainsize=grainsize)
                 # sam.igsn = ir.igsn
                 dbpos.sample = sam
 
