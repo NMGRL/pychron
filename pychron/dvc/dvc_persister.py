@@ -351,8 +351,9 @@ class DVCPersister(BasePersister):
         ps = self.per_spec
         rs = ps.run_spec
         d = {k: getattr(rs, k) for k in ('uuid', 'analysis_type', 'aliquot',
-                                         'increment', 'mass_spectrometer', 'weight', 'comment',
+                                         'increment', 'mass_spectrometer', 'weight',
                                          'cleanup', 'duration', 'extract_value', 'extract_units')}
+        d['comment'] = rs.comment[:200] if rs.comment else ''
 
         ed = rs.extract_device
         if ed in (None, '', NULL_STR, LINE_STR, 'Extract Device'):

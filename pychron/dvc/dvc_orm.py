@@ -109,7 +109,7 @@ class AnalysisTbl(Base, IDMixin):
     duration = Column(Float)
 
     weight = Column(Float)
-    comment = stringcolumn(80)
+    comment = stringcolumn(200)
     repository_associations = relationship('RepositoryAssociationTbl', backref='analysis', lazy='joined')
     group_sets = relationship('AnalysisGroupSetTbl', backref='analysis')
 
