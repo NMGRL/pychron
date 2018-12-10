@@ -44,6 +44,7 @@ class LoadingPDFOptions(BasePDFOptions):
 
     show_colors = dumpable(Bool)
     show_identifiers = dumpable(Bool)
+    show_samples = dumpable(Bool)
     show_weights = dumpable(Bool)
     show_hole_numbers = dumpable(Bool)
     view_pdf = dumpable(Bool)
@@ -70,6 +71,7 @@ class LoadingPDFOptions(BasePDFOptions):
                             label='layout')
         grp = VGroup(Item('view_pdf'),
                      Item('show_identifiers'),
+                     Item('show_samples'),
                      Item('show_weights'),
                      Item('show_hole_numbers'),
                      Item('show_colors'),

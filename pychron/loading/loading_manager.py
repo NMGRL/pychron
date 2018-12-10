@@ -188,6 +188,7 @@ class LoadingManager(DVCIrradiationable):
     retain_note = Bool(False)
     retain_nxtals = Bool(False)
 
+    show_samples = Bool(False)
     show_identifiers = Bool(False)
     show_weights = Bool(False)
     show_hole_numbers = Bool(False)
@@ -270,8 +271,9 @@ class LoadingManager(DVCIrradiationable):
                 if item:
                     item.fill = True
                     item.add_identifier_label(ln, visible=self.show_identifiers)
+                    item.add_sample_label(sample, visible=self.show_samples)
 
-                    oy = -10 if not self.show_identifiers else -20
+                    oy = -10 if not (self.show_identifiers or self.show_samples) else -20
                     wt = '' if pi.weight is None else str(pi.weight)
                     item.add_weight_label(wt, oy=oy, visible=self.show_weights)
 
@@ -320,6 +322,7 @@ class LoadingManager(DVCIrradiationable):
                     item.fill = True
                     item.identifier = pi.identifier
                     item.add_identifier_label(item.identifier)
+                    item.add_sample_label(item.sample)
 
             for pi in lt.measured_positions:
                 item = c.scene.get_item(str(pi.position))
@@ -439,8 +442,9 @@ class LoadingManager(DVCIrradiationable):
             osl = self.show_identifiers
             osw = self.show_weights
             oshn = self.show_hole_numbers
+            oss = self.show_samples
 
-            for attr in ('identifiers', 'weights', 'hole_numbers'):
+            for attr in ('identifiers', 'weights', 'hole_numbers', 'samples'):
                 attr = 'show_{}'.format(attr)
                 setattr(self, attr, getattr(options, attr))
 
@@ -456,6 +460,7 @@ class LoadingManager(DVCIrradiationable):
             self.show_identifiers = osl
             self.show_weights = osw
             self.show_hole_numbers = oshn
+            self.show_samples = oss
 
         else:
             self.information_dialog('Please select a load')
@@ -529,8 +534,10 @@ class LoadingManager(DVCIrradiationable):
         item.add_identifier_label(self.identifier,
                                   visible=self.show_identifiers,
                                   oy=-10)
-
-        oy = -10 if not self.show_identifiers else -20
+        item.add_sample_label(self.sample,
+                              visible=self.show_samples,
+                              oy=-10)
+        oy = -10 if not (self.show_identifiers or self.show_samples) else -20
         item.add_weight_label(str(self.weight), visible=self.show_weights, oy=oy)
         item.add_nxtals_label(str(self.nxtals), visible=self.show_nxtals, oy=oy)
         item.weight = self.weight
@@ -780,6 +787,17 @@ class LoadingManager(DVCIrradiationable):
             self.tray = ''
             self.load_load_by_name(self.load_name)
             self.display_load_name = self.load_name
+
+    def _show_samples_changed(self, new):
+        if self.canvas:
+            for lp in self.positions:
+                item = self.canvas.scene.get_item(str(lp.position))
+                item.sample_label.visible = new
+                item.weight_label.oy = -20 if new else -10
+                item.nxtals_label.oy = -20 if new else -10
+                item.sample_label.request_layout()
+
+            self.canvas.request_redraw()
 
     def _show_identifiers_changed(self, new):
         if self.canvas:

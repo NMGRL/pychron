@@ -233,6 +233,7 @@ class LoadControlPane(TraitsDockPane):
                                 UItem('cmap_name', enabled_when='use_cmap')),
                          Item('show_hole_numbers'),
                          Item('show_identifiers'),
+                         Item('show_samples'),
                          Item('show_weights'),
                          Item('show_nxtals'),
                          # Item('show_spans'),
