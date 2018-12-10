@@ -544,12 +544,9 @@ class LoadingManager(DVCIrradiationable):
 
         # remove from position list
         pid = int(canvas_hole.name)
-        for p in self.positions:
-            if pid in p.positions:
-                p.positions.remove(pid)
-                if not p.positions:
-                    self.positions.remove(p)
-                break
+        p = next((p for p in self.positions if p.position == pid), None)
+        if p is not None:
+            self.positions.remove(p)
 
         # clear fill
         canvas_hole.fill = False
