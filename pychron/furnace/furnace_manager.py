@@ -755,7 +755,7 @@ class LDEOFurnaceManager(BaseFurnaceManager):
     water_flow_state = Int
 
     video_enabled = Bool
-    video_canvas = Instance(VideoCanvas)
+    # video_canvas = Instance(VideoCanvas)
     # camera = Instance(LDEOCamera)
 
     funnel_down_enabled = Bool(True)
