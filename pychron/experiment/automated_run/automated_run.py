@@ -218,7 +218,10 @@ class AutomatedRun(Loggable):
                            ('failed_intensity_count_threshold', int)):
             set_preference(preferences, self, attr, 'pychron.experiment.{}'.format(attr), cast)
 
-        self.persister.set_preferences(preferences)
+        for p in (self.persister, self.xls_persister, self.dvc_persister):
+            if p is not None:
+                p.set_preferences(preferences)
+
         self.multi_collector.console_set_preferences(preferences, 'pychron.experiment')
         self.peak_hop_collector.console_set_preferences(preferences, 'pychron.experiment')
 
@@ -347,6 +350,10 @@ class AutomatedRun(Loggable):
         self.info('setting spectrometer parameter {} {}'.format(name, v))
         if self.spectrometer_manager:
             self.spectrometer_manager.spectrometer.set_parameter(name, v)
+
+    def py_raw_spectrometer_command(self, cmd):
+        if self.spectrometer_manager:
+            self.spectrometer_manager.spectrometer.ask(cmd)
 
     def py_data_collection(self, obj, ncounts, starttime, starttime_offset, series=0, fit_series=0, group='signal', integration_time=None):
         if not self._alive:
@@ -1070,6 +1077,7 @@ class AutomatedRun(Loggable):
                                     auto_save_detector_ic=auto_save_detector_ic,
                                     extraction_positions=ext_pos,
                                     sensitivity_multiplier=sens,
+                                    experiment_type=self.experiment_type,
                                     experiment_queue_name=eqn,
                                     experiment_queue_blob=eqb,
                                     extraction_name=ext_name,
@@ -2201,9 +2209,7 @@ anaylsis_type={}
 
         m = self.collector
 
-        m.trait_set(# automated_run=self,
-                    # console_display=self.experiment_executor.console_display,
-                    measurement_script=script,
+        m.trait_set(measurement_script=script,
                     detectors=self._active_detectors,
                     collection_kind=grpname,
                     series_idx=series,
@@ -2466,22 +2472,28 @@ anaylsis_type={}
         return s
 
     def _measurement_script_factory(self):
-        from pychron.pyscripts.measurement_pyscript import MeasurementPyScript
+        from pychron.pyscripts.measurement_pyscript import MeasurementPyScript, ThermoMeasurementPyScript, \
+            NGXMeasurementPyScript
 
         sname = self.script_info.measurement_script_name
         root = paths.measurement_dir
         sname = self._make_script_name(sname)
 
-        ms = MeasurementPyScript(root=root,
-                                 name=sname,
-                                 automated_run=self,
-                                 runner=self.runner)
+        from pychron.spectrometer.thermo.manager.base import ThermoSpectrometerManager
+        from pychron.spectrometer.isotopx.manager.ngx import NGXSpectrometerManager
+
+        klass = MeasurementPyScript
+        if isinstance(self.spectrometer_manager, ThermoSpectrometerManager):
+            klass = ThermoMeasurementPyScript
+        elif isinstance(self.spectrometer_manager, NGXSpectrometerManager):
+            klass = NGXMeasurementPyScript
+
+        ms = klass(root=root, name=sname, automated_run=self, runner=self.runner)
         return ms
 
     def _extraction_script_factory(self, klass=None):
         root = paths.extraction_dir
-        ext = self._ext_factory(root, self.script_info.extraction_script_name,
-                                klass=klass)
+        ext = self._ext_factory(root, self.script_info.extraction_script_name, klass=klass)
         if ext is not None:
             ext.automated_run = self
         return ext
@@ -2502,10 +2514,7 @@ anaylsis_type={}
 
                 klass = ExtractionPyScript
 
-            obj = klass(
-                root=root,
-                name=file_name,
-                runner=self.runner)
+            obj = klass(root=root, name=file_name, runner=self.runner)
 
             return obj
 

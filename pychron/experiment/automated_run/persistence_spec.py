@@ -34,6 +34,7 @@ class PersistenceSpec(HasTraits):
     baseline_fods = Dict
 
     save_as_peak_hop = Bool(False)
+    experiment_type = Str
     experiment_id = Int
     sensitivity_multiplier = Float
     experiment_queue_name = Str
