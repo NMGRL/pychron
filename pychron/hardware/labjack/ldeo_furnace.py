@@ -1,3 +1,18 @@
+# ===============================================================================
+# Copyright 2018 Stephen Cox
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ===============================================================================
 import struct
 import time
 
@@ -6,43 +21,51 @@ from pychron.hardware.core.core_device import CoreDevice
 try:
     import LabJackPython
     import u3
-except:
+except ImportError:
     print('Error loading LabJackPython driver')
 
 
 class LamontFurnaceControl(CoreDevice):
+    _device = None
+    scl_pin = None
+    sda_pin = None
 
-    def __init__(self):
-        self.TC1Pin = 0  # 0 for AIN0, 2 for AIN2, etc
-        self.TC2Pin = 1
-        self.dacPin = 2  # 0 for FIO4/5, 2 for FIO6/7 for steppers
-        self.loadDevice()
+    a_slope = None
+    a_offset = None
+    b_slope = None
+    b_offset = None
 
-    def toDouble(self, buffer):
-        right, left = struct.unpack("<Ii", struct.pack("B" * 8, *buffer[0:8]))
+    def __init__(self, *args, **kw):
+        super(LamontFurnaceControl, self).__init__(*args, **kw)
+        self.tc1_pin = 0  # 0 for AIN0, 2 for AIN2, etc
+        self.tc2_pin = 1
+        self.dac_pin = 2  # 0 for FIO4/5, 2 for FIO6/7 for steppers
+        self._load_device()
+
+    def to_double(self, buf):
+        right, left = struct.unpack("<Ii", struct.pack("B" * 8, *buf[0:8]))
         return float(left) + float(right) / (2 ** 32)
 
-    def loadDevice(self):
-
-        self.device = u3.U3()
-        self.sclPin = self.dacPin + 4
-        self.sdaPin = self.sclPin + 1
-        self.device.configIO(FIOAnalog=15, TimerCounterPinOffset=8)
-        print('device SN is ', self.device.serialNumber)
-        data = self.device.i2c(0x50, [64], NumI2CBytesToReceive=36, SDAPinNum=self.sdaPin, SCLPinNum=self.sclPin)
+    def _load_device(self):
+        self._device = u3.U3()
+        self.scl_pin = self.dac_pin + 4
+        self.sda_pin = self.scl_pin + 1
+        self._device.configIO(FIOAnalog=15, TimerCounterPinOffset=8)
+        print('device SN is ', self._device.serialNumber)
+        data = self._device.i2c(0x50, [64], NumI2CBytesToReceive=36, SDAPinNum=self.sda_pin, SCLPinNum=self.scl_pin)
         response = data['I2CBytes']
         print(response[0:8])
-        self.aSlope = self.toDouble(response[0:8])
-        self.aOffset = self.toDouble(response[8:16])
-        self.bSlope = self.toDouble(response[16:24])
-        self.bOffset = self.toDouble(response[24:32])
+        self.a_slope = self.to_double(response[0:8])
+        self.a_offset = self.to_double(response[8:16])
+        self.b_slope = self.to_double(response[16:24])
+        self.b_offset = self.to_double(response[24:32])
 
-    def readAIN(self, pin):
-        voltageAIN = self.device.getAIN(pin)
-        return voltageAIN
+    def read_analog_in(self, pin):
+        v = self._device.getAIN(pin)
+        return v
 
     def readTC(self, number):
-        temp = self.readAIN(number-1)/.00004 # replace with actual TC table obviously
+        temp = self.read_analog_in(number - 1) / .00004  # replace with actual TC table obviously
         return temp
 
     def extract(self, value, units=None, furnace=1):
@@ -52,96 +75,87 @@ class LamontFurnaceControl(CoreDevice):
 
         self.info('set furnace output to {} {}'.format(value, units))
         if units == 'percent':
-            ovalue = value
-            value = value/10
+            value = value / 10
             if value < 0:
                 self.warning('Consider changing you calibration curve. '
-                             '{} percent converted to {}volts. Voltage must be positive'.format(ovalue, value))
+                             '{} percent converted to {}volts. Voltage must be positive'.format(value * 10, value))
                 value = 0
 
-        if units == 'volts':
-            nvalue = value*10
-            value = value
+        elif units == 'volts':
             if value > 10:
                 self.warning('Did you mean to use percent units? '
-                             '{} volts will set furnace to {}% output power.'.format(value, nvalue))
+                             '{} volts will set furnace to {}% output power.'.format(value, value * 10))
                 value = 0
 
-        if units == 'temperature':
+        elif units == 'temperature':
             minvalue = 100
-            value = value
             if value < minvalue:
                 self.warning('Did you mean to use power control? '
-                             '{} degrees is too low for the furnace.  Set to at least {} degrees.'.format(value, minvalue))
+                             '{} degrees is too low for the furnace.  Set to at least {} degrees.'.format(value,
+                                                                                                          minvalue))
                 value = 0
             self.warning('Temperature control not implemented')
-            value = 0
             # Some PID control will be added later
 
         if furnace == 1:
-            voltageA = value
-            self.device.i2c(0x12, [48, int(((voltageA * self.aSlope) + self.aOffset) / 256),
-                                   int(((voltageA * self.aSlope) + self.aOffset) % 256)],
-                            SDAPinNum=self.sdaPin, SCLPinNum=self.sclPin)
+            self._device.i2c(0x12, self._map_voltage(48, value, self.a_slope, self.a_offset),
+                             SDAPinNum=self.sda_pin, SCLPinNum=self.scl_pin)
         elif furnace == 2:
-            voltageB = value
-            self.device.i2c(0x12, [49, int(((voltageB * self.bSlope) + self.bOffset) / 256),
-                                   int(((voltageB * self.bSlope) + self.bOffset) % 256)],
-                            SDAPinNum=self.sdaPin, SCLPinNum=self.sclPin)
+            self._device.i2c(0x12, self._map_voltage(49, value, self.b_slope, self.b_offset),
+                             SDAPinNum=self.sda_pin, SCLPinNum=self.scl_pin)
         else:
             self.warning('Invalid furnace number. Only outputs 1 and 2 available.')
 
+    def _map_voltage(self, tag, value, slope, offset):
+        a = int((value * slope + offset) / 256)
+        b = int((value * slope + offset) % 256)
+        return [tag, a, b]
+
     def drop_ball(self, position):
-        position_dict = {
-            1: [1, 5],
-            2: [1, 50],
-            3: [1, 80],
-            4: [1, 110],
-            5: [1, 140],
-            6: [1, 170],
-            7: [1, 200],
-            8: [1, 230],
-            9: [1, 260],
-            10: [1, 290],
-            11: [1, 320],
-            12: [1, 350]
-        }
-        stepper_number = position_dict[position][0]
-        runtime = position_dict[position][1]
+        positions = [[1, 5],
+                     [1, 50],
+                     [1, 80],
+                     [1, 110],
+                     [1, 140],
+                     [1, 170],
+                     [1, 200],
+                     [1, 230],
+                     [1, 260],
+                     [1, 290],
+                     [1, 320],
+                     [1, 350]]
+
+        stepper_number, runtime = positions[position - 1]
         if stepper_number == 1:
-            self.run_stepper_1(runtime, 'forward')
+            self._run_stepper(runtime, 'forward', 5, 4)
             time.sleep(5)
-            self.run_stepper_1(runtime + 3, 'backward')
+            self._run_stepper(runtime + 3, 'backward', 5, 4)
         elif stepper_number == 2:
-            self.run_stepper_2(runtime, 'forward')
+            self._run_stepper(runtime, 'forward', 4, 5)
             time.sleep(5)
-            self.run_stepper_2(runtime + 3, 'backward')
+            self._run_stepper(runtime + 3, 'backward', 4, 5)
 
-    def run_stepper_1(self, runtime, direction):
-        timestop = time.time() + runtime
+    def _run_stepper(self, runtime, direction, a_id, b_id):
+        dev = self._device
         if direction == 'forward':
-            self.device.getFeedback(u3.BitStateWrite(5, 0))
+            dev.getFeedback(u3.BitStateWrite(a_id, 0))
         else:
-            self.device.getFeedback(u3.BitStateWrite(5, 1))
-        while time.time() < timestop:
-            self.device.getFeedback(u3.BitStateWrite(4, 1))
-            time.sleep(.03)
-            self.device.getFeedback(u3.BitStateWrite(4, 0))
-            time.sleep(.03)
+            dev.getFeedback(u3.BitStateWrite(a_id, 1))
 
-    def run_stepper_2(self, runtime, direction):
-        timestop = time.time() + runtime
-        if direction == 'forward':
-            self.device.getFeedback(u3.BitStateWrite(4, 0))
-        else:
-            self.device.getFeedback(u3.BitStateWrite(4, 1))
-        while time.time() < timestop:
-            self.device.getFeedback(u3.BitStateWrite(5, 1))
-            time.sleep(.03)
-            self.device.getFeedback(u3.BitStateWrite(5, 0))
-            time.sleep(.03)
+        delay = 0.3
 
-testDev = LamontFurnaceControl()
-testDev.drop_ball(1)
-testDev.extract(3.1, units='volts', furnace=1)
-print(testDev.readTC(1))
+        st = time.time()
+        while time.time() - st < runtime:
+            dev.getFeedback(u3.BitStateWrite(b_id, 1))
+            time.sleep(delay)
+            dev.getFeedback(u3.BitStateWrite(b_id, 0))
+            time.sleep(delay)
+
+
+if __name__ == '__main__':
+    testDev = LamontFurnaceControl()
+    testDev.drop_ball(1)
+    testDev.extract(3.1, units='volts', furnace=1)
+    print(testDev.readTC(1))
+
+# ============= EOF =============================================
