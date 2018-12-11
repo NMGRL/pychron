@@ -16,12 +16,14 @@
 
 from __future__ import absolute_import
 from __future__ import print_function
+
 import os
 import re
+
 import yaml
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Bool, Property, Event, cached_property, \
-    Button, String, Instance, List, Float, BaseFloat, on_trait_change
+    Button, String, Instance, List, Float, on_trait_change
 from traitsui.api import View, UItem, Item, VGroup, HGroup
 
 from pychron.core.pychron_traits import EmailStr
@@ -235,7 +237,7 @@ class SampleEntry(DVCAble):
     refresh_table = Event
 
     db_samples = List
-    sample_filter = Str(enter_set=True, auto_set=False)
+    sample_filter = String(enter_set=True, auto_set=False)
     sample_filter_attr = Str('name')
     sample_filter_attrs = List(('name', 'project', 'material', 'principal_investigator')+SAMPLE_ATTRS)
     selected_db_samples = List
@@ -317,6 +319,9 @@ class SampleEntry(DVCAble):
             if self._save():
                 msg = 'Samples added to database'
         else:
+            # refresh samples in display table
+            self._handle_sample_filter()
+
             msg = 'Changes saved to database'
 
         if msg:
@@ -373,7 +378,8 @@ class SampleEntry(DVCAble):
             return obj
 
     def _save(self):
-        if not any((getattr(self, attr) for attr in ('_principal_investigators','_materials', '_projects', '_samples'))):
+        if not any((getattr(self, attr) for attr in ('_principal_investigators', '_materials', '_projects',
+                                                     '_samples'))):
             return
 
         self.debug('saving sample info')
