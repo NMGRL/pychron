@@ -22,28 +22,28 @@ from pychron.options.options import FigureOptions
 from pychron.pychron_constants import FLUX_CONSTANTS, ERROR_TYPES, MAIN, APPEARANCE
 
 
-class FluxOptions(FigureOptions):
+class BaseFluxOptions(FigureOptions):
     color_map_name = Str('jet')
     marker_size = Int(5)
     levels = Int(50, auto_set=False, enter_set=True)
+    plot_kind = Enum('1D', '2D', 'Grid')
+    use_weighted_fit = Bool(False)
+    monte_carlo_ntrials = Int(10)
+    use_monte_carlo = Bool(False)
+    position_error = Float
+    predicted_j_error_type = Enum(*ERROR_TYPES)
 
+
+class FluxOptions(BaseFluxOptions):
     error_kind = Enum(*ERROR_TYPES)
 
     selected_decay = Enum(list(FLUX_CONSTANTS.keys()))
     lambda_k = Property(depends_on='selected_decay')
     monitor_age = Property(depends_on='selected_decay')
     model_kind = Enum('Plane', 'Bowl', 'Weighted Mean', 'Matching', 'Bracketing')
-    predicted_j_error_type = Enum(*ERROR_TYPES)
     flux_scalar = Float(1000)
-    
-    use_weighted_fit = Bool(False)
-    monte_carlo_ntrials = Int(10)
-    use_monte_carlo = Bool(False)
-    monitor_sample_name = Str
-    plot_kind = Enum('1D', '2D', 'Grid')
 
-    # position_only = Bool(False)
-    position_error = Float
+    monitor_sample_name = Str
 
     def initialize(self):
         self.subview_names = [MAIN, APPEARANCE]
@@ -58,6 +58,17 @@ class FluxOptions(FigureOptions):
 
     def _get_subview(self, name):
         from pychron.options.views.flux_views import VIEWS
+        return VIEWS[name]
+
+
+class FluxVisualizationOptions(BaseFluxOptions):
+    model_kind = Enum('Plane', 'Bowl')
+
+    def initialize(self):
+        self.subview_names = [MAIN, APPEARANCE]
+
+    def _get_subview(self, name):
+        from pychron.options.views.flux_visualization_views import VIEWS
         return VIEWS[name]
 
 

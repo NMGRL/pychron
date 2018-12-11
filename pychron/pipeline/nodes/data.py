@@ -264,7 +264,7 @@ class ReferenceNode(DataNode):
 
 class FluxMonitorsNode(DataNode):
     name = 'Flux Monitors'
-    analysis_kind = 'flux_monitors'
+    analysis_kind = 'unknowns'
     auto_configure = False
 
     def run(self, state):

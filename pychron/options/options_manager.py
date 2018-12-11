@@ -30,7 +30,7 @@ from pychron.loggable import Loggable
 from pychron.mdd.tasks.mdd_figure import MDDFigureOptions
 from pychron.options.blanks import BlanksOptions
 from pychron.options.define_equilibration import DefineEquilibrationOptions
-from pychron.options.flux import FluxOptions, VerticalFluxOptions
+from pychron.options.flux import FluxOptions, VerticalFluxOptions, FluxVisualizationOptions
 from pychron.options.icfactor import ICFactorOptions
 from pychron.options.ideogram import IdeogramOptions
 from pychron.options.iso_evo import IsotopeEvolutionOptions
@@ -315,6 +315,11 @@ class FluxOptionsManager(FigureOptionsManager):
 class VerticalFluxOptionsManager(FigureOptionsManager):
     id = 'vertical_flux'
     options_klass = VerticalFluxOptions
+
+
+class FluxVisualizationOptionsManager(FigureOptionsManager):
+    id = 'flux_visualization'
+    options_klass = FluxVisualizationOptions
 
 
 class XYScatterOptionsManager(FigureOptionsManager):
