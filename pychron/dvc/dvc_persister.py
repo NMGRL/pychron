@@ -28,7 +28,7 @@ from uncertainties import std_dev, nominal_value
 from yaml import YAMLError
 
 from pychron.core.helpers.binpack import encode_blob, pack
-from pychron.dvc import dvc_dump, analysis_path, repository_path
+from pychron.dvc import dvc_dump, analysis_path, repository_path, NPATH_MODIFIERS
 from pychron.experiment.automated_run.persistence import BasePersister
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths
@@ -229,7 +229,6 @@ class DVCPersister(BasePersister):
             if commit:
                 try:
                     ar.smart_pull(accept_their=True)
-
 
                     paths = [spec_path, ] + [self._make_path(modifier=m) for m in NPATH_MODIFIERS]
 

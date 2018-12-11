@@ -255,11 +255,11 @@ def calculate_arar_decay_factors(dc37, dc39, segments):
         try:
             df37 = a / b
         except ZeroDivisionError:
-            return 1.0
+            df37 = 1.0
         try:
             df39 = a / c
         except ZeroDivisionError:
-            return 1.0
+            df39 = 1.0
 
         return df37, df39
 

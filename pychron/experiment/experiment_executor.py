@@ -2041,7 +2041,7 @@ Use Last "blank_{}"= {}
             if info.result:
                 dbr = selector.selected
         if dbr:
-            dbr = mainstore.make_analysis(dbr.make_record_view(repository))
+            dbr = mainstore.make_analysis(dbr)
 
         return dbr, selected
 
