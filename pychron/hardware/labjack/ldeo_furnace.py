@@ -52,7 +52,7 @@ class LamontFurnaceControl(CoreDevice):
         self.sda_pin = self.scl_pin + 1
         self._device.configIO(FIOAnalog=15, TimerCounterPinOffset=8)
         print('device SN is ', self._device.serialNumber)
-        data = self._device.i2c(0x50, [64], NumI2CBytesToReceive=36, SDAPinNum=self.sda_pin, SCLPinNum=self.scl_pin)
+        data = self._i2c(0x50, [64], NumI2CBytesToReceive=36)
         response = data['I2CBytes']
         print(response[0:8])
         self.a_slope = self.to_double(response[0:8])
@@ -98,17 +98,22 @@ class LamontFurnaceControl(CoreDevice):
             # Some PID control will be added later
 
         if furnace == 1:
-            self._device.i2c(0x12, self._map_voltage(48, value, self.a_slope, self.a_offset),
-                             SDAPinNum=self.sda_pin, SCLPinNum=self.scl_pin)
+            v = self._map_voltage(48, value, self.a_slope, self.a_offset)
+            self._i2c(0x12, v)
         elif furnace == 2:
-            self._device.i2c(0x12, self._map_voltage(49, value, self.b_slope, self.b_offset),
-                             SDAPinNum=self.sda_pin, SCLPinNum=self.scl_pin)
+            v = self._map_voltage(49, value, self.b_slope, self.b_offset)
+            self._i2c(0x12, v)
+
         else:
             self.warning('Invalid furnace number. Only outputs 1 and 2 available.')
 
+    def _i2c(self, address, value, **kw):
+        return self._device(address, value, SDAPinNum=self.sda_pin, SCLPinNum=self.scl_pin, **kw)
+
     def _map_voltage(self, tag, value, slope, offset):
-        a = int((value * slope + offset) / 256)
-        b = int((value * slope + offset) % 256)
+        m = value * slope + offset
+        a = int(m / 256)
+        b = int(m % 256)
         return [tag, a, b]
 
     def drop_ball(self, position):
@@ -127,13 +132,13 @@ class LamontFurnaceControl(CoreDevice):
 
         stepper_number, runtime = positions[position - 1]
         if stepper_number == 1:
-            self._run_stepper(runtime, 'forward', 5, 4)
-            time.sleep(5)
-            self._run_stepper(runtime + 3, 'backward', 5, 4)
+            a, b = 5, 4
         elif stepper_number == 2:
-            self._run_stepper(runtime, 'forward', 4, 5)
-            time.sleep(5)
-            self._run_stepper(runtime + 3, 'backward', 4, 5)
+            a, b = 4, 5
+
+        self._run_stepper(runtime, 'forward', a, b)
+        time.sleep(5)
+        self._run_stepper(runtime + 3, 'backward', a, b)
 
     def _run_stepper(self, runtime, direction, a_id, b_id):
         dev = self._device
