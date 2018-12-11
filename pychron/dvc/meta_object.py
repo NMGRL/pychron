@@ -97,7 +97,7 @@ class Chronology(MetaObject):
     def get_chron_segments(self, analts):
         convert_days = lambda x: x.total_seconds() / (60. * 60 * 24)
 
-        return [(p, convert_days(en - st), convert_days(analts - st)) for p, st, en in self._doses]
+        return [(p, convert_days(en - st), convert_days(analts - st), st, en) for p, st, en in self._doses]
 
     @property
     def total_duration_seconds(self):
