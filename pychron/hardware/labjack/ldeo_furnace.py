@@ -108,7 +108,7 @@ class LamontFurnaceControl(CoreDevice):
             self.warning('Invalid furnace number. Only outputs 1 and 2 available.')
 
     def _i2c(self, address, value, **kw):
-        return self._device(address, value, SDAPinNum=self.sda_pin, SCLPinNum=self.scl_pin, **kw)
+        return self._device.i2c(address, value, SDAPinNum=self.sda_pin, SCLPinNum=self.scl_pin, **kw)
 
     def _map_voltage(self, tag, value, slope, offset):
         m = value * slope + offset
