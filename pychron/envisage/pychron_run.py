@@ -76,6 +76,8 @@ PACKAGE_DICT = dict(
     CoreLaserPlugin='pychron.lasers.tasks.plugins.laser_plugin',
     NMGRLFurnacePlugin='pychron.furnace.tasks.furnace_plugin',
     NMGRLFurnaceControlPlugin='pychron.furnace.tasks.furnace_control_plugin',
+    LDEOFurnacePlugin='pychron.furnace.tasks.furnace_plugin',
+    LDEOFurnaceControlPlugin='pychron.furnace.tasks.ldeo_furnace_control_plugin',
 
     # spectrometers
     ArgusSpectrometerPlugin='pychron.spectrometer.tasks.thermo.argus',

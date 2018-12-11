@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2015 Jake Ross
+# Copyright 2016 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,37 +16,29 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from pyface.tasks.task_layout import TaskLayout, PaneItem
+from traits.api import List
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.envisage.tasks.base_task import BaseManagerTask
-from pychron.furnace.tasks.panes import FurnacePane, ControlPane
+from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
+from pychron.furnace.tasks.preferences import LDEOFurnaceControlPreferencesPane
 
 
-class FurnaceTask(BaseManagerTask):
-    id = 'pychron.furnace.task'
-    name = 'Furnace'
+class LDEOFurnaceControlPlugin(BaseTaskPlugin):
+    canvases = List(contributes_to='pychron.extraction_line.plugin_canvases')
 
-    def activated(self):
-        self.manager.activate()
+    # def __init__(self, *args, **kw):
+    #     super(LDEOFurnaceControlPlugin, self).__init__(*args, **kw)
+    #
+    def _canvases_default(self):
+        c = {'display_name': 'Furnace',
+             'valve_path': self.application.preferences.get('pychron.ldeofurnace.control.valve_path'),
+             'canvas_path': self.application.preferences.get('pychron.ldeofurnace.control.canvas_path'),
+             'config_path': self.application.preferences.get('pychron.ldeofurnace.control.canvas_config_path')}
 
-    def prepare_destroy(self):
-        self.manager.prepare_destroy()
+        return [c, ]
 
-    def create_dock_panes(self):
-        return [ControlPane(model=self.manager)]
-
-    def create_central_pane(self):
-        return FurnacePane(model=self.manager)
-
-    def _default_layout_default(self):
-        return TaskLayout(left=PaneItem('pychron.nmgrlfurnace.controls'))
-
-class LDEOFurnaceTask(FurnaceTask):
-    id = 'pychron.furnace.task'
-    name = 'LDEO Furnace'
-
-    def _default_layout_default(self):
-        return TaskLayout(left=PaneItem('pychron.ldeofurnace.controls'))
+    def _preferences_panes_default(self):
+        return [LDEOFurnaceControlPreferencesPane, ]
 
 # ============= EOF =============================================

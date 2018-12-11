@@ -68,4 +68,45 @@ class NMGRLFurnaceControlPreferencesPane(PreferencesPane):
         v = View(p_grp)
         return v
 
+class LDEOFurnacePreferences(BasePreferencesHelper):
+    preferences_path = 'pychron.ldeofurnace'
+
+
+class LDEOFurnacePreferencesPane(PreferencesPane):
+    category = 'LDEO Furnace'
+    model_factory = LDEOFurnacePreferences
+
+    def traits_view(self):
+        v = View()
+        return v
+
+
+class LDEOFurnaceControlPreferences(BasePreferencesHelper):
+    preferences_path = 'pychron.ldeofurnace.control'
+
+    canvas_path = Str
+    canvas_config_path = Str
+    valves_path = Str
+
+
+class LDEOFurnaceControlPreferencesPane(PreferencesPane):
+    category = 'LDEO Furnace'
+    model_factory = LDEOFurnaceControlPreferences
+
+    def traits_view(self):
+        p_grp = VGroup(Item('canvas_path',
+                            label='Canvas Path',
+                            editor=FileEditor(root_path=os.path.join(paths.canvas2D_dir, 'canvas.xml'))),
+                       Item('canvas_config_path',
+                            label='Config Path',
+                            editor=FileEditor()),
+                       Item('valves_path',
+                            label='Valves Path',
+                            editor=FileEditor(root_path=os.path.join(paths.extraction_line_dir,
+                                                                                    'valves.xml'))),
+                       show_border=True,
+                       label='Paths')
+        v = View(p_grp)
+        return v
+
 # ============= EOF =============================================
