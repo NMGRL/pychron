@@ -256,7 +256,7 @@ class AutomatedRunConditional(BaseConditional):
         return {'teststr': self.teststr, 'start_count': self.start_count,
                 'frequency': self.frequency, 'ntrips': self.ntrips,
                 'level': self.level,
-                'analysis_types': self.analysis_types, 'location': self.location}
+                'analysis_types': list(self.analysis_types), 'location': self.location}
 
     def result_dict(self):
         hash_id = self._hash_id()
