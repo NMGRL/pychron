@@ -42,9 +42,15 @@ class FurnaceTask(BaseManagerTask):
     def _default_layout_default(self):
         return TaskLayout(left=PaneItem('pychron.nmgrlfurnace.controls'))
 
-class LDEOFurnaceTask(FurnaceTask):
-    id = 'pychron.furnace.task'
+class LDEOFurnaceTask(BaseManagerTask):
+    id = 'pychron.ldeo.furnace.task'
     name = 'LDEO Furnace'
+
+    def activated(self):
+        self.manager.activate()
+
+    def prepare_destroy(self):
+        self.manager.prepare_destroy()
 
     def create_dock_panes(self):
         return [LDEOControlPane(model=self.manager)]
