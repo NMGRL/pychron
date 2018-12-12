@@ -247,7 +247,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
             if block:
                 return self._dump_sample(progress)
             else:
-                self._dumper_thread = Thread(name='DumpSample', target=self._dump_sample, args=(progress, ))
+                self._dumper_thread = Thread(name='DumpSample', target=self._dump_sample, args=(progress,))
                 self._dumper_thread.setDaemon(True)
                 self._dumper_thread.start()
         else:
@@ -299,7 +299,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
             st = time.time()
             success = False
             self.debug('starting dump progress poll')
-            while time.time()-st < timeout:
+            while time.time() - st < timeout:
                 if not self.dumper.dump_in_progress():
                     success = True
                     break
@@ -739,8 +739,12 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
 @provides(IFurnaceManager)
 class LDEOFurnaceManager(BaseFurnaceManager):
+    controller = Instance(LamontFurnaceControl)
 
-    controller = LamontFurnaceControl()
+    def _controller_default(self):
+        c = LamontFurnaceControl(name='controller',
+                                 configuration_dir_name='furnace')
+        return c
 
     def activate(self):
 
@@ -801,7 +805,7 @@ class LDEOFurnaceManager(BaseFurnaceManager):
 
     def read_output_percent(self, force=False, verbose=False):
         pv = self.get_process_value()
-        return pv*10
+        return pv * 10
 
     def read_temperature(self, force=False, verbose=False):
         v = self.controller.readTC(1)
@@ -865,9 +869,9 @@ class LDEOFurnaceManager(BaseFurnaceManager):
             if temp1 is not None:
                 self.temperature_readback = temp1
             if output1 is not None:
-                self.output_percent_readback = output1*10  # this is a voltage on a 0-10 scale
+                self.output_percent_readback = output1 * 10  # this is a voltage on a 0-10 scale
 
-            self._update_scan_graph(output1, temp1, 0) # not writing setpoint at moment since not implemented
+            self._update_scan_graph(output1, temp1, 0)  # not writing setpoint at moment since not implemented
 
     def _stop_update(self):
         self.debug('stop update')
