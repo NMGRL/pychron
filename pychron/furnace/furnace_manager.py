@@ -872,7 +872,7 @@ class LDEOFurnaceManager(BaseFurnaceManager):
             self.dumper_canvas.update_switch_state(*ni)
 
     def _update_scan(self):
-        d = self.controller.get_summary(verbose=self.verbose_scan)
+        d = self.controller.get_summary()
         if d:
 
             output1 = d.get('OP1')
