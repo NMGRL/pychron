@@ -328,9 +328,6 @@ class LDEOControlPane(TraitsDockPane):
         dump_grp = HGroup(UItem('pane.dump_sample_button',
                                 enabled_when='dump_sample_enabled',
                                 tooltip='Execute the complete sample loading procedure'),
-                          UItem('pane.fire_magnets_button',
-                                enabled_when='not magnets_firing',
-                                tooltip='Execute the magnet sequence'),
                           UItem('pane.clear_sample_states_button'),
                           icon_button_editor('pane.configure_dump_button', 'cog', tooltip='Configure Dumping'),
                           show_border=True, label='Dump')
@@ -342,9 +339,9 @@ class LDEOControlPane(TraitsDockPane):
             UItem('dumper_canvas', editor=ComponentEditor()))
         d_grp = HGroup(d1, d2, label='Dumper', show_border=True)
 
-        v_grp = VGroup(UItem('video_canvas', editor=VideoComponentEditor()),
-                       visible_when='video_enabled',
-                       label='Camera')
+        # v_grp = VGroup(UItem('video_canvas', editor=VideoComponentEditor()),
+        #                visible_when='video_enabled',
+        #                label='Camera')
 
         g_grp = VGroup(Item('graph_scan_width', label='Scan Width (mins)'),
                        HGroup(Item('graph_scale', label='Scale'),
@@ -366,7 +363,7 @@ class LDEOControlPane(TraitsDockPane):
                               label='Record Scan'),
                        label='Graph')
         v = View(VGroup(c_grp,
-                        HGroup(Tabbed(d_grp, v_grp, g_grp))))
+                        HGroup(Tabbed(d_grp, g_grp))))
         return v
 
 
