@@ -334,8 +334,8 @@ class LDEOControlPane(TraitsDockPane):
                           UItem('pane.clear_sample_states_button'),
                           icon_button_editor('pane.configure_dump_button', 'cog', tooltip='Configure Dumping'),
                           show_border=True, label='Dump')
-        status_grp = HGroup(CustomLabel('status_txt', size=14))
-        d1 = VGroup(status_grp,
+        # status_grp = HGroup(CustomLabel('status_txt', size=14))
+        d1 = VGroup(
                     arm_grp, dump_grp)
         d2 = VGroup(
             # UItem('pane.refresh_states_button'),
