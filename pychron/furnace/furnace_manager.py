@@ -745,6 +745,8 @@ class LDEOFurnaceManager(BaseFurnaceManager):
     canvas = Instance(MapCanvas)
     dumper_canvas = Instance(DumperCanvas)
 
+    settings_name = 'furnace_settings'
+
     def _controller_default(self):
         c = LamontFurnaceControl(name='controller',
                                  configuration_dir_name='furnace')
