@@ -42,7 +42,6 @@ class LamontFurnaceControl(CoreDevice):
         self.tc2_pin = 1
         self.dac_pin = 2  # 0 for FIO4/5, 2 for FIO6/7 for steppers
         self.furnace = 1  # defaults to furnace output 1
-        self._load_device()
 
     def to_double(self, buf):
         right, left = struct.unpack("<Ii", struct.pack("B" * 8, *buf[0:8]))
@@ -51,8 +50,15 @@ class LamontFurnaceControl(CoreDevice):
     def return_sn(self):
         return self._device.serialNumber
 
-    def _load_device(self):
-        self._device = u3.U3()
+    def open(self):
+        try:
+            self._device = u3.U3()
+        except BaseException:
+            self.warning('failed to create U3 device')
+            return
+        return True
+
+    def initialize(self, *args, **kw):
         self.scl_pin = self.dac_pin + 4
         self.sda_pin = self.scl_pin + 1
         self._device.configIO(FIOAnalog=15, TimerCounterPinOffset=8)
@@ -64,6 +70,8 @@ class LamontFurnaceControl(CoreDevice):
         self.a_offset = self.to_double(response[8:16])
         self.b_slope = self.to_double(response[16:24])
         self.b_offset = self.to_double(response[24:32])
+
+        return True
 
     def read_analog_in(self, pin):
         v = self._device.getAIN(pin)
