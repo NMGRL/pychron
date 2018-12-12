@@ -179,4 +179,10 @@ class LDEOFurnacePlugin(BaseFurnacePlugin):
     def _preferences_panes_default(self):
         return [LDEOFurnacePreferencesPane]
 
+    def _tasks_default(self):
+        return [TaskFactory(name='Furnace',
+                            task_group='hardware',
+                            factory=self._task_factory,
+                            protocol=LDEOFurnaceTask)]
+
 # ============= EOF =============================================
