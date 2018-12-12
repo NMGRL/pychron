@@ -259,16 +259,16 @@ class LDEOControlPane(TraitsDockPane):
     clear_sample_states_button = Button('Clear Dumped Samples')
 
     def _motor_stop_button_fired(self):
-        self.model.furnace_manager.stop_motors()
+        self.model.stop_motors()
 
     def _set_home_button_fired(self):
-        self.model.furnace_manager.set_home()
+        self.model.furnace_maset_home()
 
     def _disable_button_fired(self):
-        self.model.furnace_manager.stop_motors()  # just refers to motor stop function for now
+        self.model.stop_motors()  # just refers to motor stop function for now
 
     def _dump_sample_button_fired(self, dump_sample_number):
-        self.model.furnace_manager.dump_sample(dump_sample_number)
+        self.model.dump_sample(dump_sample_number)
 
     # def _jitter_button_fired(self):
     #     if not self.jittering:
@@ -297,7 +297,7 @@ class LDEOControlPane(TraitsDockPane):
     def trait_context(self):
         return {'object': self.model,
                 'pane': self,
-                'manager': self.model.furnace_manager}
+                'manager': self.model}
 
     def traits_view(self):
 
@@ -396,7 +396,7 @@ class LDEOFurnacePane(TraitsTaskPane):
         canvas_grp = VGroup(
             # HGroup(UItem('stage_manager.stage_map_name', editor=EnumEditor(name='stage_manager.stage_map_names')),
             #        spring),
-            UItem('furnace_manager.canvas', style='custom', editor=ComponentEditor()))
+            UItem('canvas', style='custom', editor=ComponentEditor()))
 
         v = View(VGroup(UItem('graph', style='custom'), canvas_grp))
         return v
