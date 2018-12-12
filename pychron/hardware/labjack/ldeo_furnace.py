@@ -50,10 +50,10 @@ class LamontFurnaceControl(CoreDevice):
     def return_sn(self):
         return self._device.serialNumber
 
-    def load(self):
+    def load(self, *args, **kw):
         return True
 
-    def open(self):
+    def open(self, *args, **kw):
         try:
             self._device = u3.U3()
         except BaseException:
