@@ -77,10 +77,13 @@ class LamontFurnaceControl(CoreDevice):
         sn = self.return_sn()
         if 256 <= sn <= 2147483647:
             self.info('Labjack loaded')
+            ret = True
+
         else:
             self.warning('Invalid Labjack serial number: check Labjack connection')
+            ret = False
 
-        return True
+        return ret
 
     def read_analog_in(self, pin):
         v = self._device.getAIN(pin)
