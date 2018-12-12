@@ -246,7 +246,7 @@ class LDEOControlPane(TraitsDockPane):
     configure_jitter_button = Button
     configure_dump_button = Button
 
-    refresh_states_button = Button('Refresh')
+    # refresh_states_button = Button('Refresh')
 
     set_home_button = Button('Set Home')
     toggle_advanced_view_button = Button
