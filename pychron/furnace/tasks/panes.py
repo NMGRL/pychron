@@ -317,7 +317,7 @@ class LDEOControlPane(TraitsDockPane):
 
         arm_grp = VGroup(HGroup(icon_button_editor('pane.toggle_advanced_view_button', 'cog')),
                             VGroup(Item('pane.set_home_button'),
-                                   HGroup(icon_button_editor('pane.feeder_stop_button', 'cancel')),
+                                   HGroup(icon_button_editor('pane.motor_stop_button', 'cancel')),
                                    visible_when='pane._advanced_view_state'),
                             show_border=True, label='Position')
 
