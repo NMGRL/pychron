@@ -743,6 +743,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 class LDEOFurnaceManager(BaseFurnaceManager):
     controller = Instance(LamontFurnaceControl)
     canvas = Instance(MapCanvas)
+    dumper_canvas = Instance(DumperCanvas)
 
     def _controller_default(self):
         c = LamontFurnaceControl(name='controller',
