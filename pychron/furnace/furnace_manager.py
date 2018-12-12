@@ -24,6 +24,7 @@ import yaml
 from pyface.timer.do_later import do_later
 from traits.api import TraitError, Instance, Float, provides, Bool, Str, Property, Int
 
+from pychron.canvas.canvas2D.map_canvas import MapCanvas
 from pychron.canvas.canvas2D.furnace_canvas import FurnaceCanvas
 from pychron.canvas.canvas2D.dumper_canvas import DumperCanvas
 from pychron.canvas.canvas2D.video_canvas import VideoCanvas
