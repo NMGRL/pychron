@@ -769,7 +769,7 @@ class LDEOFurnaceManager(BaseFurnaceManager):
         self.load_settings()
         self.start_update()
 
-        self.loader_logic.manager = self
+        # self.loader_logic.manager = self
 
     def start_update(self):
         self.info('Start update')
@@ -782,7 +782,7 @@ class LDEOFurnaceManager(BaseFurnaceManager):
     def prepare_destroy(self):
         self.debug('prepare destroy')
         self._stop_update()
-        self.loader_logic.manager = None
+        # self.loader_logic.manager = None
         if self.timer:
             self.timer.stop()
 
