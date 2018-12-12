@@ -20,7 +20,7 @@ from threading import Thread
 from enable.component_editor import ComponentEditor
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
-from traits.api import Button, Bool, Str
+from traits.api import Button, Bool, Str, Int
 from traitsui.api import View, Item, UItem, VGroup, HGroup, EnumEditor, spring, \
     ButtonEditor, Tabbed
 
@@ -238,86 +238,46 @@ class LDEOControlPane(TraitsDockPane):
     name = 'Controls'
     id = 'pychron.ldeofurnace.controls'
 
-    dump_sample_button = Button('Load')
-    fire_magnets_button = Button('Dump')
-    jitter_button = Button
-    jitter_label = Str('Start')
-    jittering = Bool
+    dump_sample_number = Int(1)
+    dump_sample_button = Button('Dump')
+    # jitter_button = Button
+    # jitter_label = Str('Start')
+    # jittering = Bool
     configure_jitter_button = Button
     configure_dump_button = Button
 
     refresh_states_button = Button('Refresh')
 
-    funnel_up_button = Button
-    funnel_down_button = Button
-    force_funnel_up_button = Button
-    funnel_set_home_button = Button('Set Home')
-
-    feeder_set_home_button = Button('Set Home')
+    set_home_button = Button('Set Home')
     toggle_advanced_view_button = Button
     _advanced_view_state = Bool(False)
 
     disable_button = Button
 
-    feeder_slew_positive = Button
-    feeder_slew_negative = Button
-    feeder_stop_button = Button
+    motor_stop_button = Button
 
     clear_sample_states_button = Button('Clear Dumped Samples')
 
-    def _feeder_slew_positive_fired(self):
-        self.model.stage_manager.feeder_slew(1)
+    def _motor_stop_button_fired(self):
+        self.model.furnace_manager.stop_motors()
 
-    def _feeder_slew_negative_fired(self):
-        self.model.stage_manager.feeder_slew(-1)
-
-    def _feeder_stop_button_fired(self):
-        self.model.stage_manager.feeder_stop()
-
-    def _feeder_set_home_button_fired(self):
-        self.model.stage_manager.feeder.set_home()
+    def _set_home_button_fired(self):
+        self.model.furnace_manager.set_home()
 
     def _disable_button_fired(self):
-        self.model.setpoint = 0
+        self.model.furnace_manager.stop_motors()  # just refers to motor stop function for now
 
-    def _funnel_set_home_button_fired(self):
-        self.model.funnel.set_home()
+    def _dump_sample_button_fired(self, dump_sample_number):
+        self.model.furnace_manager.dump_sample(dump_sample_number)
 
-    def _force_funnel_up_fired(self):
-        def func():
-            self.model.raise_funnel(force=True)
-
-        t = Thread(target=func)
-        t.start()
-
-    def _funnel_up_button_fired(self):
-        def func():
-            self.model.raise_funnel()
-
-        t = Thread(target=func)
-        t.start()
-
-    def _funnel_down_button_fired(self):
-        def func():
-            self.model.lower_funnel()
-
-        t = Thread(target=func)
-        t.start()
-
-    def _dump_sample_button_fired(self):
-        self.model.dump_sample()
-
-    def _fire_magnets_button_fired(self):
-        self.model.fire_magnets()
-
-    def _jitter_button_fired(self):
-        if not self.jittering:
-            self.model.start_jitter_feeder()
-            self.jitter_label = 'Stop'
-        else:
-            self.model.stop_jitter_feeder()
-            self.jitter_label = 'Start'
-        self.jittering = not self.jittering
+    # def _jitter_button_fired(self):
+    #     if not self.jittering:
+    #         self.model.start_jitter_feeder()
+    #         self.jitter_label = 'Stop'
+    #     else:
+    #         self.model.stop_jitter_feeder()
+    #         self.jitter_label = 'Start'
+    #     self.jittering = not self.jittering
 
     def _configure_dump_button_fired(self):
         self.model.configure_dump()
@@ -337,24 +297,10 @@ class LDEOControlPane(TraitsDockPane):
     def trait_context(self):
         return {'object': self.model,
                 'pane': self,
-                'tray_manager': self.model.stage_manager.tray_calibration_manager,
-                'stage_manager': self.model.stage_manager}
+                'manager': self.model.furnace_manager}
 
     def traits_view(self):
-        # cali_grp = VGroup(UItem('tray_manager.calibrate',
-        #                         enabled_when='stage_manager.stage_map_name',
-        #                         editor=ButtonEditor(label_value='tray_manager.calibration_step')),
-        #                   HGroup(Readonly('tray_manager.x', format_str='%0.3f'),
-        #                          Readonly('tray_manager.y', format_str='%0.3f')),
-        #                   Readonly('tray_manager.rotation', format_str='%0.3f'),
-        #                   Readonly('tray_manager.scale', format_str='%0.4f'),
-        #                   Readonly('tray_manager.error', format_str='%0.2f'),
-        #                   UItem('tray_manager.calibrator', style='custom', editor=InstanceEditor()),
-        #                   CustomLabel('tray_manager.calibration_help',
-        #                               color='green',
-        #                               height=75, width=300),
-        #
-        #                   show_border=True, label='Calibration')
+
         c_grp = VGroup(HGroup(Item('setpoint'),
                               UItem('water_flow_state', editor=LEDEditor(label='H2O Flow')),
                               spring, icon_button_editor('pane.disable_button', 'cancel')),
@@ -368,27 +314,15 @@ class LDEOControlPane(TraitsDockPane):
                                           enabled_when='_recording'),
                        label='Controller', show_border=True)
 
-        feeder_grp = VGroup(HGroup(Item('stage_manager.calibrated_position_entry', label='Hole'),
-                                   icon_button_editor('pane.toggle_advanced_view_button', 'cog')),
-                            VGroup(Item('stage_manager.feeder.position', label='Position (units)'),
-                                   Item('stage_manager.feeder.velocity'),
-                                   Item('pane.feeder_set_home_button'),
-                                   HGroup(icon_button_editor('pane.feeder_slew_positive', 'arrow_left'),
-                                          icon_button_editor('pane.feeder_slew_negative', 'arrow_right'),
-                                          icon_button_editor('pane.feeder_stop_button', 'cancel')),
+        arm_grp = VGroup(HGroup(icon_button_editor('pane.toggle_advanced_view_button', 'cog')),
+                            VGroup(Item('pane.set_home_button'),
+                                   HGroup(icon_button_editor('pane.feeder_stop_button', 'cancel')),
                                    visible_when='pane._advanced_view_state'),
                             show_border=True, label='Position')
 
-        funnel_grp = VGroup(HGroup(icon_button_editor('pane.funnel_up_button', 'arrow_up',
-                                                      enabled_when='funnel_up_enabled', tooltip='Raise Funnel'),
-                                   UItem('pane.force_funnel_up_button', tooltip='Force funnel to raise'),
-                                   icon_button_editor('pane.funnel_down_button', 'arrow_down', tooltip='Lower Funnel',
-                                                      enabled_when='funnel_down_enabled')),
-                            UItem('pane.funnel_set_home_button'),
-                            show_border=True, label='Funnel')
-        jitter_grp = HGroup(UItem('pane.jitter_button', editor=ButtonEditor(label_value='pane.jitter_label')),
-                            icon_button_editor('pane.configure_jitter_button', 'cog', tooltip='Configure Jitter'),
-                            show_border=True, label='Jitter')
+        # jitter_grp = HGroup(UItem('pane.jitter_button', editor=ButtonEditor(label_value='pane.jitter_label')),
+        #                     icon_button_editor('pane.configure_jitter_button', 'cog', tooltip='Configure Jitter'),
+        #                     show_border=True, label='Jitter')
 
         dump_grp = HGroup(UItem('pane.dump_sample_button',
                                 enabled_when='dump_sample_enabled',
@@ -401,7 +335,7 @@ class LDEOControlPane(TraitsDockPane):
                           show_border=True, label='Dump')
         status_grp = HGroup(CustomLabel('status_txt', size=14))
         d1 = VGroup(status_grp,
-                    feeder_grp, funnel_grp, jitter_grp, dump_grp)
+                    arm_grp, dump_grp)
         d2 = VGroup(
             # UItem('pane.refresh_states_button'),
             UItem('dumper_canvas', editor=ComponentEditor()))
@@ -429,8 +363,6 @@ class LDEOControlPane(TraitsDockPane):
                                                  enabled_when='_recording'),
                               show_border=True,
                               label='Record Scan'),
-                       HGroup(icon_button_editor('snapshot_button', 'camera'),
-                              show_border=True, label='Snapshot', ),
                        label='Graph')
         v = View(VGroup(c_grp,
                         HGroup(Tabbed(d_grp, v_grp, g_grp))))

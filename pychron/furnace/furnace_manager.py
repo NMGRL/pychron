@@ -794,6 +794,9 @@ class LDEOFurnaceManager(BaseFurnaceManager):
         self.debug('drop sample {}'.format(pos))
         self.controller.drop_ball(pos)
 
+    def stop_motors(self):
+        pass  # need to wire up enable line
+
     def get_active_pid_parameters(self):
         pass  # not implemented
 
