@@ -24,6 +24,7 @@ import yaml
 from pyface.timer.do_later import do_later
 from traits.api import TraitError, Instance, Float, provides, Bool, Str, Property, Int
 
+from pychron.canvas.canvas2D.furnace_canvas import FurnaceCanvas
 from pychron.canvas.canvas2D.dumper_canvas import DumperCanvas
 from pychron.canvas.canvas2D.video_canvas import VideoCanvas
 from pychron.core.helpers.filetools import pathtolist
@@ -744,6 +745,10 @@ class LDEOFurnaceManager(BaseFurnaceManager):
     def _controller_default(self):
         c = LamontFurnaceControl(name='controller',
                                  configuration_dir_name='furnace')
+        return c
+
+    def _canvas_factory(self):
+        c = FurnaceCanvas()
         return c
 
     def activate(self):
