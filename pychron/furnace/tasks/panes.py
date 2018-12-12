@@ -390,7 +390,7 @@ class LDEOFurnacePane(TraitsTaskPane):
     def trait_context(self):
         return {'object': self.model,
                 'pane': self,
-                'manager': self.model.furnace_manager}
+                'manager': self.model}
 
     def traits_view(self):
         canvas_grp = VGroup(
