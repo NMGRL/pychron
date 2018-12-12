@@ -22,7 +22,7 @@ from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.furnace.ifurnace_manager import IFurnaceManager
 from pychron.furnace.tasks.preferences import NMGRLFurnacePreferencesPane
 from pychron.furnace.tasks.preferences import LDEOFurnacePreferencesPane
-from pychron.furnace.tasks.task import FurnaceTask
+from pychron.furnace.tasks.task import FurnaceTask, LDEOFurnaceTask
 
 
 class BaseFurnacePlugin(BaseTaskPlugin):
@@ -132,6 +132,10 @@ class LDEOFurnacePlugin(BaseFurnacePlugin):
     panes = List(contributes_to='pychron.experiment.dock_pane_factories')
     activations = List(contributes_to='pychron.experiment.activations')
     deactivations = List(contributes_to='pychron.experiment.deactivations')
+
+    def _task_factory(self):
+        return FurnaceTask(manager=self._get_manager(),
+                           application=self.application)
 
     def _help_tips_default(self):
         return ['LDEOFurnace hardware was designed by Stephen Cox. Firmware and software was designed by Jake '
