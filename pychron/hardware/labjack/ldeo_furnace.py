@@ -71,6 +71,12 @@ class LamontFurnaceControl(CoreDevice):
         self.b_slope = self.to_double(response[16:24])
         self.b_offset = self.to_double(response[24:32])
 
+        sn = self.controller.return_sn()
+        if 256 <= sn <= 2147483647:
+            self.info('Labjack loaded')
+        else:
+            self.warning('Invalid Labjack serial number: check Labjack connection')
+
         return True
 
     def read_analog_in(self, pin):

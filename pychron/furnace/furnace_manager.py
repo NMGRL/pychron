@@ -758,11 +758,11 @@ class LDEOFurnaceManager(BaseFurnaceManager):
 
     def activate(self):
 
-        sn = self.controller.return_sn()
-        if 256 <= sn <= 2147483647:
-            self.info('Labjack loaded')
-        else:
-            self.warning('Invalid Labjack serial number: check Labjack connection')
+        # sn = self.controller.return_sn()
+        # if 256 <= sn <= 2147483647:
+        #     self.info('Labjack loaded')
+        # else:
+        #     self.warning('Invalid Labjack serial number: check Labjack connection')
 
         # self.refresh_states()
         self._load_sample_states()
