@@ -197,23 +197,6 @@ class NMGRLFurnaceStageManager(BaseFurnaceStageManager):
 class LDEOFurnaceStageManager(BaseFurnaceStageManager):
     feeder = Instance(Feeder)
 
-    slew_period = 1
-
-    def feeder_slew(self, scalar):
-        do_after(self.slew_period * 1000, self._slew_inprogress)
-        self.feeder.slew(scalar)
-
-    def feeder_stop(self):
-        self.feeder.stop()
-
-    def _slew_inprogress(self):
-        self._update_axes()
-        if self.feeder.is_slewing() and not self.feeder.is_stalled():
-            do_after(self.slew_period * 1000, self._slew_inprogress)
-
-    def refresh(self, warn=False):
-        self._update_axes(warn=warn)
-
     def jitter(self, *args, **kw):
         self.feeder.jitter(*args, **kw)
 

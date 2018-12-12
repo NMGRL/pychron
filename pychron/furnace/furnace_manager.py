@@ -35,10 +35,11 @@ from pychron.furnace.furnace_controller import FurnaceController
 from pychron.furnace.ifurnace_manager import IFurnaceManager
 from pychron.furnace.loader_logic import LoaderLogic
 from pychron.furnace.magnet_dumper import NMGRLRotaryDumper, BaseDumper
-from pychron.furnace.stage_manager import NMGRLFurnaceStageManager, LDEOFurnaceStageManager, BaseFurnaceStageManager
+from pychron.furnace.stage_manager import NMGRLFurnaceStageManager, BaseFurnaceStageManager
 from pychron.graph.time_series_graph import TimeSeriesStreamStackedGraph
 from pychron.hardware.furnace.nmgrl.camera import NMGRLCamera
 from pychron.hardware.linear_axis import LinearAxis
+from pychron.hardware.labjack.ldeo_furnace import LamontFurnaceControl
 from pychron.managers.stream_graph_manager import StreamGraphManager
 from pychron.paths import paths
 from pychron.response_recorder import ResponseRecorder
@@ -738,49 +739,21 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
 @provides(IFurnaceManager)
 class LDEOFurnaceManager(BaseFurnaceManager):
-    funnel = Instance(Funnel)
-    loader_logic = Instance(LoaderLogic)
-    dumper = Instance(BaseDumper)
 
-    temperature_readback_min = Float(0)
-    temperature_readback_max = Float(1600.0)
-
-    dumper_canvas = Instance(DumperCanvas)
-
-    magnets_firing = Bool
-
-    mode = 'normal'
-
-    # water_flow_led = Instance(LED, ())
-    water_flow_state = Int
-
-    video_enabled = Bool
-    # video_canvas = Instance(VideoCanvas)
-    # camera = Instance(LDEOCamera)
-
-    funnel_down_enabled = Bool(True)
-    funnel_up_enabled = Bool(False)
-    settings_name = 'furnace_settings'
-    status_txt = Str
-
-    dump_sample_enabled = Property(depends_on='dump_funnel_safety_override, funnel_up_enabled')
-    dump_funnel_safety_override = Bool
-
-    _alive = False
-    _dumper_thread = None
-    _magnets_thread = None
-    _pid_str = None
-    _recorded_flow_state = None
+    controller = LamontFurnaceControl()
 
     def activate(self):
-        self.video_enabled = bool(self.camera.get_image_data())
+
+        sn = self.controller.return_sn()
+        if 256 <= sn <= 2147483647:
+            self.info('Labjack loaded')
+        else:
+            self.warning('Invalid Labjack serial number: check Labjack connection')
 
         self.refresh_states()
         self._load_sample_states()
         self.load_settings()
         self.start_update()
-
-        self.stage_manager.refresh(warn=True)
 
         self.loader_logic.manager = self
 
@@ -792,44 +765,6 @@ class LDEOFurnaceManager(BaseFurnaceManager):
         self.info('Stop update')
         self._stop_update()
 
-    def test_furnace_cam(self):
-        self.info('testing furnace cam')
-        ret, err = False, ''
-        if self.camera:
-            ret = self.camera.get_image_data() is not None
-        return ret, err
-
-    def test_furnace_api(self):
-        self.info('testing furnace api')
-        ret, err = False, ''
-        if self.controller:
-            ret = self.controller.test_connection()
-        return ret, err
-
-    def test_connection(self):
-        self.info('testing connection')
-        return self.test_furnace_api()
-
-    def clear_sample_states(self):
-        self._clear_sample_states()
-
-    def refresh_states(self):
-        self.switch_manager.load_indicator_states()
-
-        if self.funnel_down():
-            self.dumper_canvas.set_item_state('Funnel', True)
-            self.funnel_down_enabled = False
-            self.funnel_up_enabled = True
-        elif self.funnel_up():
-            self.dumper_canvas.set_item_state('Funnel', False)
-            self.funnel_down_enabled = True
-            self.funnel_up_enabled = False
-        else:
-            self.funnel_up_enabled = True
-            self.funnel_down_enabled = True
-
-        self.dumper_canvas.invalidate_and_redraw()
-
     def prepare_destroy(self):
         self.debug('prepare destroy')
         self._stop_update()
@@ -837,280 +772,44 @@ class LDEOFurnaceManager(BaseFurnaceManager):
         if self.timer:
             self.timer.stop()
 
-    def get_response_blob(self):
-        self.debug('get response blob')
-        blob = self.response_recorder.get_response_blob()
-        return blob
-
-    def get_output_blob(self):
-        self.debug('get output blob')
-        blob = self.response_recorder.get_output_blob()
-        return blob
-
-    def get_achieved_output(self):
-        self.debug('get achieved output')
-        return self.response_recorder.max_response
-
-    def set_response_recorder_period(self, p):
-        self.debug('set response recorder period={}'.format(p))
-        self.response_recorder.period = p
-
-    def enable(self):
-        self.debug('enable')
-        if not self.controller.get_water_flow_state(verbose=False):
-            raise ExtractionException()
-        else:
-            return True
-
     def get_process_value(self):
-        return self.controller.get_process_value()
+        pv = self.controller.get_process_value()
+        return pv
 
     def extract(self, v, **kw):
-        self.debug('extract')
-        # self.response_recorder.start()
-        self.debug('set setpoint to {}'.format(v))
-        self.setpoint = v
-
-    def disable(self):
-        self.debug('disable')
-        # self.response_recorder.stop()
-        self.setpoint = 0
-
-    disable_device = disable
-
-    def check_reached_setpoint(self, v, n, tol, std):
-        return self.response_recorder.check_reached_setpoint(v, n, tol, std)
-
-    def start_response_recorder(self):
-        self.response_recorder.start()
-
-    def stop_response_recorder(self):
-        self.response_recorder.stop()
+        self.controller.extract(self, v, units='volts', furnace=1)
 
     def move_to_position(self, pos, *args, **kw):
         self.debug('move to position {}'.format(pos))
-        self.stage_manager.goto_position(pos)
-
-    def dump_sample(self, block=False):
-        self.debug('dump sample')
-        if self._dumper_thread is None:
-            progress = open_progress(n=100)
-
-            if block:
-                return self._dump_sample(progress)
-            else:
-                self._dumper_thread = Thread(name='DumpSample', target=self._dump_sample, args=(progress, ))
-                self._dumper_thread.setDaemon(True)
-                self._dumper_thread.start()
+        if pos > 0:
+            self.controller.goto_ball(pos)
         else:
-            self.warning_dialog('dump already in progress')
+            self.controller.returnfrom_ball(pos)
 
-    def fire_magnets(self):
-        self.debug('fire magnets')
-        if self._magnets_thread is None:
-            self.magnets_firing = True
-            self._magnets_thread = Thread(name='Magnets', target=self.actuate_magnets, kwargs={'check_logic': False})
-            self._magnets_thread.setDaemon(True)
-            self._magnets_thread.start()
-
-    def start_jitter_feeder(self):
-        self.debug('jitter feeder')
-        self.stage_manager.feeder.start_jitter(turns=0.5, p1=0.1, p2=0.25)
-
-    def stop_jitter_feeder(self):
-        self.debug('stop jitter')
-        self.stage_manager.feeder.stop_jitter()
-
-    def configure_jitter_feeder(self):
-        self.debug('configure jitter')
-        self.stage_manager.feeder.configure()
-
-    def configure_dump(self):
-        self.debug('configure dump')
-        v = ConfigureDump(model=self)
-        v.edit_traits()
-
-    def is_dump_complete(self):
-        ret = self._dumper_thread is None
-        return ret
-
-    def actuate_magnets(self, check_logic=True):
-        self.debug('actuate magnets check_logic={}'.format(check_logic))
-        check = True
-        if check_logic and not self.dump_funnel_safety_override:
-            check = self.loader_logic.check('AM')
-
-        if check:
-            self.status_txt = 'Actuating Magnets'
-
-            self.stage_manager.feeder.start_jitter()
-            self.dumper.energize()
-
-            time.sleep(2)
-            timeout = 60
-            st = time.time()
-            success = False
-            self.debug('starting dump progress poll')
-            while time.time()-st < timeout:
-                if not self.dumper.dump_in_progress():
-                    success = True
-                    break
-                time.sleep(3)
-
-            if not success:
-                self.debug('actuate magnets timeout, {}'.format(timeout))
-
-            self.stage_manager.set_sample_dumped()
-            self._dump_sample_states()
-
-            self.dumper.denergize()
-            # time.sleep(5)
-
-            self.stage_manager.feeder.stop_jitter()
-            self.status_txt = ''
-        else:
-            cm = self.loader_logic.get_check_message()
-            self.warning_dialog('Actuating magnets not enabled\n\n{}'.format(cm))
-
-        self._magnets_thread = None
-        self.magnets_firing = False
-
-    def lower_funnel(self):
-        self.debug('lower funnel')
-        if self.loader_logic.check('FD'):
-            self.status_txt = 'Lowering Funnel'
-            self.funnel_down_enabled = False
-            self.funnel.lower()
-            self.funnel_up_enabled = True
-            self.dumper_canvas.set_item_state('Funnel', True)
-            self.status_txt = ''
-            return True
-        else:
-            cm = self.loader_logic.get_check_message()
-            self.warning_dialog('Lowering funnel not enabled\n\n{}'.format(cm))
-
-    def raise_funnel(self, force=False):
-        self.debug('raise funnel. force={}'.format(force))
-        if self.loader_logic.check('FU') or force:
-            self.status_txt = 'Raising Funnel'
-            self.funnel_up_enabled = False
-            self.funnel.raise_()
-            self.funnel_down_enabled = True
-            self.dumper_canvas.set_item_state('Funnel', False)
-            self.status_txt = ''
-            return True
-        else:
-            cm = self.loader_logic.get_check_message()
-            self.warning_dialog('Raising funnel not enabled\n\n{}'.format(cm))
+    def dump_sample(self, pos):
+        self.debug('drop sample {}'.format(pos))
+        self.controller.drop_ball(pos)
 
     def get_active_pid_parameters(self):
-        result = self._pid_str or ''
-        self.debug('active pid ={}'.format(result))
-        return result
+        pass  # not implemented
 
     def set_pid_parameters(self, v):
-        self.debug('setting pid parameters for {}'.format(v))
-        from pychron.hardware.eurotherm.base import get_pid_parameters
-        params = get_pid_parameters(v)
-        if params:
-            _, param_str = params
-            self._pid_str = param_str
-            self.controller.set_pid(param_str)
+        pass  # not implemented
 
-    def set_setpoint(self, v):
-        self.debug('set setpoint={}'.format(v))
-        self.set_pid_parameters(v)
-        self.graph.record(v)
-        self.graph.record(v)
-        if self.controller:
-            self.controller.set_setpoint(v)
-            d = self.graph.get_data(axis=1)
-
-            if not self.graph_y_auto:
-                self.graph.set_y_limits(min_=min(d.min(), v) * 0.9, max_=max(d.max(), v) * 1.1)
-
-            self.graph.redraw()
+    def set_setpoint(self, v):  # use 'extract' instead unless units are being parsed at a higher level
+        self.controller.set_furnace_setpoint(v, furnace=1)
 
     def read_output_percent(self, force=False, verbose=False):
-        v = 0
-        if self.controller:
-            # force = update and not self.controller.is_scanning()
-            v = self.controller.read_output_percent(force=force, verbose=verbose)
-
-        try:
-            self.output_percent_readback = v
-            return v
-        except TraitError:
-            pass
+        pv = self.get_process_value()
+        return pv*10
 
     def read_temperature(self, force=False, verbose=False):
-        v = 0
-        if self.controller:
-            # force = update and not self.controller.is_scanning()
-            v = self.controller.read_temperature(force=force, verbose=verbose)
-
-        try:
-            self.temperature_readback = v
-            return v
-        except TraitError:
-            pass
-
-    # canvas
-    def set_software_lock(self, name, lock):
-        if self.switch_manager is not None:
-            if lock:
-                self.switch_manager.lock(name)
-            else:
-                self.switch_manager.unlock(name)
-
-    def open_valve(self, name, **kw):
-        if not self._open_logic(name):
-            self.debug('logic failed')
-            do_later(self.warning_dialog, 'Open Valve Failed. Prevented by safety logic')
-            return False, False
-
-        if self.switch_manager:
-            return self.switch_manager.open_switch(name, **kw)
-
-    def close_valve(self, name, **kw):
-        if not self._close_logic(name):
-            self.debug('logic failed')
-            do_later(self.warning_dialog, 'Close Valve Failed. Prevented by safety logic')
-            return False, False
-
-        if self.switch_manager:
-            return self.switch_manager.close_switch(name, **kw)
-
-    def set_selected_explanation_item(self, item):
-        pass
-
-    # logic
-    def get_switch_state(self, name):
-        if self.switch_manager:
-            return self.switch_manager.get_indicator_state(name)
-
-    def get_flag_state(self, flag):
-        self.debug('get_flag_state {}'.format(flag))
-
-        if flag in ('no_motion', 'no_dump', 'funnel_up', 'funnel_down'):
-            return getattr(self, flag)()
-        return False
-
-    def funnel_up(self):
-        return self.funnel.in_up_position()
-
-    def funnel_down(self):
-        return self.funnel.in_down_position()
-
-    def no_motion(self):
-        v = not self.stage_manager.in_motion()
-        self.debug('no motion {}'.format(v))
+        v = self.controller.readTC(1)
         return v
 
-    def no_dump(self):
-        v = not self.dumper.dump_in_progress()
-        self.debug('no dump {}'.format(v))
-        return v
+    # handlers
+    def _setpoint_changed(self, new):
+        self.set_setpoint(new)
 
     # private
     def _clear_sample_states(self):
@@ -1155,48 +854,20 @@ class LDEOFurnaceManager(BaseFurnaceManager):
         for ni in new:
             self.dumper_canvas.update_switch_state(*ni)
 
-    def _open_logic(self, name):
-        """
-        check the logic rules to see if its ok to open "name"
-
-        return True if ok
-        """
-        return self.loader_logic.open(name)
-
-    def _close_logic(self, name):
-        """
-        check the logic rules to see if its ok to close "name"
-
-        return True if ok
-
-        """
-        return self.loader_logic.close(name)
-
     def _update_scan(self):
         d = self.controller.get_summary(verbose=self.verbose_scan)
         if d:
-            state = d.get('h2o_state')
-            if state in (0, 1):
-                # self.water_flow_led.state = 2 if state else 0
-                self.water_flow_state = 2 if state else 0
-            else:
-                self.water_flow_state = 1
 
-            write_water_state = self._recorded_flow_state is None or self._recorded_flow_state != self.water_flow_state
+            output1 = d.get('OP1')
+            # output2 = d.get('OP2')  # not recorded right now
+            temp1 = d.get('TC1')
+            # temp2 = d.get('TC2')  # not recorded right now
+            if temp1 is not None:
+                self.temperature_readback = temp1
+            if output1 is not None:
+                self.output_percent_readback = output1*10  # this is a voltage on a 0-10 scale
 
-            if write_water_state:
-                with open(os.path.join(paths.data_dir, 'furnace_water.txt'), 'a') as wfile:
-                    wfile.write('{},{}\n'.format(time.time(), state))
-                    self._recorded_flow_state = self.water_flow_state
-
-            response = d.get('response')
-            output = d.get('output')
-            if response is not None:
-                self.temperature_readback = response
-            if output is not None:
-                self.output_percent_readback = output
-
-            self._update_scan_graph(response, output, d['setpoint'])
+            self._update_scan_graph(output1, temp1, 0) # not writing setpoint at moment since not implemented
 
     def _stop_update(self):
         self.debug('stop update')
@@ -1272,121 +943,5 @@ class LDEOFurnaceManager(BaseFurnaceManager):
         g.set_y_limits(min_=-2, max_=102, plotid=1)
 
         return g
-
-    def _dump_sample(self, progress):
-        """
-        1. open gate valve
-        2. open shutters
-        3. lower funnel
-        4. actuate magnets
-        5. raise funnel
-        6. close shutters
-        7. close gate valve
-        :return:
-        """
-
-        ret = True
-        self.debug('dump sample started')
-        lines = self._load_dump_script()
-        progress.max = len(lines)
-        for i, line in enumerate(lines):
-
-            self.debug(line)
-            if not self._execute_script_line(line, progress):
-                self.debug('FAILED: {}'.format(line))
-                ret = False
-                break
-
-        if not ret:
-            self.warning_dialog('Sample dump failed at line {}: {}'.format(i, line))
-        else:
-            self.information_dialog('Dump Successful')
-
-        progress.close()
-        self._dumper_thread = None
-        return ret
-
-    def _load_dump_script(self):
-        p = os.path.join(paths.device_dir, 'furnace', 'dump_sequence.txt')
-        return pathtolist(p)
-
-    def _execute_script_line(self, line, progress):
-        if ' ' in line:
-            cmd, args = line.split(' ')
-        else:
-            cmd, args = line, None
-
-        progress.change_message('Dump Sequence: Command={}, Parameters={}'.format(cmd, args))
-        time.sleep(0.5)
-
-        success = True
-        if cmd == 'sleep':
-            time.sleep(float(args))
-        elif cmd == 'open':
-            success, change = self.open_valve(args)
-            if success:
-                self.dumper_canvas.set_item_state(args, True)
-        elif cmd == 'close':
-            success, change = self.close_valve(args)
-            if success:
-                self.dumper_canvas.set_item_state(args, False)
-        elif cmd == 'lower_funnel':
-            if self.lower_funnel():
-                self.dumper_canvas.set_item_state(args, True)
-        elif cmd == 'raise_funnel':
-            if self.raise_funnel():
-                self.dumper_canvas.set_item_state(args, False)
-        elif cmd == 'actuate_magnets':
-            self.actuate_magnets()
-
-        self.dumper_canvas.request_redraw()
-        return success
-
-    def _get_dump_sample_enabled(self):
-        return self.funnel_up_enabled or self.dump_funnel_safety_override
-
-    # handlers
-    def _setpoint_changed(self, new):
-        self.set_setpoint(new)
-
-    def _stage_manager_default(self):
-        sm = LDEOFurnaceStageManager(stage_manager_id='ldeo.furnace.stage_map')
-        return sm
-
-    def _dumper_canvas_default(self):
-        dc = DumperCanvas(manager=self)
-
-        pathname = os.path.join(paths.canvas2D_dir, 'dumper.xml')
-        configpath = os.path.join(paths.canvas2D_dir, 'dumper_config.xml')
-        valvepath = os.path.join(paths.extraction_line_dir, 'valves.xml')
-        dc.load_canvas_file(pathname, configpath, valvepath, dc)
-        return dc
-
-    def _camera_default(self):
-        c = LDEOCamera(name='camera', configuration_dir_name='furnace')
-        return c
-
-    def _video_canvas_default(self):
-        vc = VideoCanvas(video=self.camera, show_axes=False, show_grids=False)
-        vc.border_visible = False
-        vc.padding = 5
-        vc.fps = 10
-        return vc
-
-    def _funnel_default(self):
-        f = Funnel(name='funnel', configuration_dir_name='furnace')
-        return f
-
-    def _loader_logic_default(self):
-        l = LoaderLogic(manager=self)
-        l.load_config()
-
-        return l
-
-    def _dumper_default(self):
-        # m = LDEOMagnetDumper(name='magnets', configuration_dir_name='furnace')
-        m = LDEORotaryDumper(name='dumper', configuration_dir_name='furnace')
-        return m
-
 
 # ============= EOF =============================================

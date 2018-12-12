@@ -15,6 +15,7 @@
 # ===============================================================================
 import struct
 import time
+import json
 
 from pychron.hardware.core.core_device import CoreDevice
 
@@ -40,11 +41,15 @@ class LamontFurnaceControl(CoreDevice):
         self.tc1_pin = 0  # 0 for AIN0, 2 for AIN2, etc
         self.tc2_pin = 1
         self.dac_pin = 2  # 0 for FIO4/5, 2 for FIO6/7 for steppers
+        self.furnace = 1  # defaults to furnace output 1
         self._load_device()
 
     def to_double(self, buf):
         right, left = struct.unpack("<Ii", struct.pack("B" * 8, *buf[0:8]))
         return float(left) + float(right) / (2 ** 32)
+
+    def return_sn(self):
+        return self._device.serialNumber
 
     def _load_device(self):
         self._device = u3.U3()
@@ -69,6 +74,9 @@ class LamontFurnaceControl(CoreDevice):
         return temp
 
     def extract(self, value, units=None, furnace=1):
+
+        self.furnace = furnace
+
         print(units)
         if not units == 'volts' or units == 'temperature':
             units = 'percent'
@@ -97,13 +105,18 @@ class LamontFurnaceControl(CoreDevice):
             self.warning('Temperature control not implemented')
             # Some PID control will be added later
 
-        if furnace == 1:
+        self.set_furnace(value)
+
+    def set_furnace_setpoint(self, value, furnace=1):
+        # this function can be called separately from extract if another script is performing the units logic
+        self.furnace = furnace
+
+        if self.furnace == 1:
             v = self._map_voltage(48, value, self.a_slope, self.a_offset)
             self._i2c(0x12, v)
-        elif furnace == 2:
+        elif self.furnace == 2:
             v = self._map_voltage(49, value, self.b_slope, self.b_offset)
             self._i2c(0x12, v)
-
         else:
             self.warning('Invalid furnace number. Only outputs 1 and 2 available.')
 
@@ -116,7 +129,18 @@ class LamontFurnaceControl(CoreDevice):
         b = int(m % 256)
         return [tag, a, b]
 
+    # def _unmap_voltage(self, tag, a, b, slope, offset):
+    #     m = a*256 + b
+    #     value = (m - offset)/slope
+    #     return [tag, value]
+
     def drop_ball(self, position):
+
+        self.goto_ball(position)
+        time.sleep(5)
+        self.returnfrom_ball(position)
+
+    def goto_ball(self, position):
         positions = [[1, 5],
                      [1, 50],
                      [1, 80],
@@ -137,8 +161,46 @@ class LamontFurnaceControl(CoreDevice):
             a, b = 4, 5
 
         self._run_stepper(runtime, 'forward', a, b)
-        time.sleep(5)
+
+    def returnfrom_ball(self, position):
+        positions = [[1, 5],
+                     [1, 50],
+                     [1, 80],
+                     [1, 110],
+                     [1, 140],
+                     [1, 170],
+                     [1, 200],
+                     [1, 230],
+                     [1, 260],
+                     [1, 290],
+                     [1, 320],
+                     [1, 350]]
+
+        stepper_number, runtime = positions[position - 1]
+
+        if position == 0:  # position command zero returns all the way
+            runtime = max(positions, key=lambda x: x[1])[1]
+
+        if stepper_number == 1:
+            a, b = 5, 4
+        elif stepper_number == 2:
+            a, b = 4, 5
+
         self._run_stepper(runtime + 3, 'backward', a, b)
+
+    def get_process_value(self):
+        # note it is not possible to read the current setting for the LJTick-DAC, so we must measure voltage
+        if self.furnace == 1:
+            pv = self.read_analog_in(2)  # assumes LJTick-DAC first channel is wired to AIN 2
+        elif self.furnace == 2:
+            pv = self.read_analog_in(3)  # assumes LJTick-DAC first channel is wired to AIN 3
+        else:
+            self.warning('Invalid furnace number. Only outputs 1 and 2 available.')
+        return pv
+
+    def get_summary(self):
+        summary = {"time": time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()), "OP1": self.read_analog_in(2), "TC1": self.readTC(1), "OP2": self.read_analog_in(3), "TC2": self.readTC(2)}
+        return summary
 
     def _run_stepper(self, runtime, direction, a_id, b_id):
         dev = self._device
