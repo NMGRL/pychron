@@ -301,9 +301,10 @@ class LDEOControlPane(TraitsDockPane):
 
     def traits_view(self):
 
-        c_grp = VGroup(HGroup(Item('setpoint'),
-                              UItem('water_flow_state', editor=LEDEditor(label='H2O Flow')),
-                              spring, icon_button_editor('pane.disable_button', 'cancel')),
+        c_grp = VGroup(
+                       # HGroup(Item('setpoint'),
+                       #        UItem('water_flow_state', editor=LEDEditor(label='H2O Flow')),
+                       #        spring, icon_button_editor('pane.disable_button', 'cancel')),
                        VGroup(UItem('temperature_readback', editor=LCDEditor())),
                        icon_button_editor('start_record_button', 'media-record',
                                           tooltip='Start recording',
