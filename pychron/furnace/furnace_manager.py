@@ -762,7 +762,7 @@ class LDEOFurnaceManager(BaseFurnaceManager):
         else:
             self.warning('Invalid Labjack serial number: check Labjack connection')
 
-        self.refresh_states()
+        # self.refresh_states()
         self._load_sample_states()
         self.load_settings()
         self.start_update()
