@@ -134,7 +134,7 @@ class LDEOFurnacePlugin(BaseFurnacePlugin):
     deactivations = List(contributes_to='pychron.experiment.deactivations')
 
     def _task_factory(self):
-        return FurnaceTask(manager=self._get_manager(),
+        return LDEOFurnaceTask(manager=self._get_manager(),
                            application=self.application)
 
     def _help_tips_default(self):
