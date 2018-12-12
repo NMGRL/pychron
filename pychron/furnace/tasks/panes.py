@@ -386,6 +386,22 @@ class FurnacePane(TraitsTaskPane):
         return v
 
 
+class LDEOFurnacePane(TraitsTaskPane):
+    def trait_context(self):
+        return {'object': self.model,
+                'pane': self,
+                'manager': self.model.furnace_manager}
+
+    def traits_view(self):
+        canvas_grp = VGroup(
+            # HGroup(UItem('stage_manager.stage_map_name', editor=EnumEditor(name='stage_manager.stage_map_names')),
+            #        spring),
+            UItem('furnace_manager.canvas', style='custom', editor=ComponentEditor()))
+
+        v = View(VGroup(UItem('graph', style='custom'), canvas_grp))
+        return v
+
+
 class ExperimentFurnacePane(TraitsDockPane):
     name = 'Furnace'
     id = 'pychron.experiment.furnace'

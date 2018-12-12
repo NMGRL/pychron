@@ -20,7 +20,7 @@ from pyface.tasks.task_layout import TaskLayout, PaneItem
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task import BaseManagerTask
-from pychron.furnace.tasks.panes import FurnacePane, ControlPane, LDEOControlPane
+from pychron.furnace.tasks.panes import FurnacePane, LDEOFurnacePane, ControlPane, LDEOControlPane
 
 
 class FurnaceTask(BaseManagerTask):
@@ -48,6 +48,9 @@ class LDEOFurnaceTask(FurnaceTask):
 
     def create_dock_panes(self):
         return [LDEOControlPane(model=self.manager)]
+
+    def create_central_pane(self):
+        return LDEOFurnacePane(model=self.manager)
 
     def _default_layout_default(self):
         return TaskLayout(left=PaneItem('pychron.ldeofurnace.controls'))
