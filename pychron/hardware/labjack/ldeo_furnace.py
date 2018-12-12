@@ -50,6 +50,9 @@ class LamontFurnaceControl(CoreDevice):
     def return_sn(self):
         return self._device.serialNumber
 
+    def load(self):
+        return True
+
     def open(self):
         try:
             self._device = u3.U3()
