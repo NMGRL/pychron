@@ -116,7 +116,10 @@ class ControlPane(TraitsDockPane):
         #                     icon_button_editor('pane.configure_jitter_button', 'cog', tooltip='Configure Jitter'),
         #                     show_border=True, label='Jitter')
 
-        dump_grp = HGroup(UItem('pane.dump_sample_button',
+        dump_grp = HGroup(UItem('pane.dump_sample_number',
+                                enabled_when='dump_sample_enabled',
+                                tooltip='Sample number to dump'),
+                          UItem('pane.dump_sample_button',
                                 enabled_when='dump_sample_enabled',
                                 tooltip='Execute the complete sample loading procedure'),
                           UItem('pane.clear_sample_states_button'),
