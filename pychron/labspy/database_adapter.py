@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from datetime import datetime, timedelta
 
 from apptools.preferences.preference_binding import bind_preference
@@ -174,10 +175,11 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
 
             ps = self._query_all(q, verbose_query=True)
             self.debug('get latest {}, ps={}'.format(tag, len(ps)))
+            min_date = datetime.now() - timedelta(hours=24)
             for p in ps:
                 q = sess.query(Measurement)
                 q = q.filter(Measurement.process_info_id == p.id)
-                q = q.filter(Measurement.pub_date > datetime.now() - timedelta(hours=24))
+                q = q.filter(Measurement.pub_date > min_date)
                 q = q.order_by(Measurement.pub_date.desc())
 
                 record = self._query_first(q, verbose_query=True)
