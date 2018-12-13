@@ -15,7 +15,8 @@
 # ===============================================================================
 import struct
 import time
-import json
+from threading import Thread
+
 
 from pychron.hardware.core.core_device import CoreDevice
 
