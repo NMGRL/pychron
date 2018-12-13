@@ -74,10 +74,10 @@ PACKAGE_DICT = dict(
     FusionsUVPlugin='pychron.lasers.tasks.plugins.uv',
     LoadingPlugin='pychron.loading.tasks.loading_plugin',
     CoreLaserPlugin='pychron.lasers.tasks.plugins.laser_plugin',
-    NMGRLFurnacePlugin='pychron.furnace.tasks.furnace_plugin',
-    NMGRLFurnaceControlPlugin='pychron.furnace.tasks.furnace_control_plugin',
-    LDEOFurnacePlugin='pychron.furnace.tasks.furnace_plugin',
-    LDEOFurnaceControlPlugin='pychron.furnace.tasks.ldeo_furnace_control_plugin',
+    NMGRLFurnacePlugin='pychron.furnace.tasks.nmgrl.furnace_plugin',
+    NMGRLFurnaceControlPlugin='pychron.furnace.tasks.nmgrl.furnace_control_plugin',
+    LDEOFurnacePlugin='pychron.furnace.tasks.ldeo.furnace_plugin',
+    LDEOFurnaceControlPlugin='pychron.furnace.tasks.ldeo.furnace_control_plugin',
 
     # spectrometers
     ArgusSpectrometerPlugin='pychron.spectrometer.tasks.thermo.argus',

@@ -15,13 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from traits.api import List
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-from pychron.furnace.tasks.preferences import LDEOFurnaceControlPreferencesPane
+from pychron.furnace.tasks.ldeo.preferences import LDEOFurnaceControlPreferencesPane
 
 
 class LDEOFurnaceControlPlugin(BaseTaskPlugin):

@@ -15,15 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 import json
 
-from traits.api import Str, Int
+from traits.api import Int
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.hardware.core.abstract_device import AbstractDevice
 from pychron.hardware.core.core_device import CoreDevice
-from pychron.hardware.core.data_helper import make_bitarray
 
 
 class BaseDumper(CoreDevice):
