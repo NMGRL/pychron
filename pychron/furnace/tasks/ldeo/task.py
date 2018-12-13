@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2016 Jake Ross
+# Copyright 2015 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,22 +15,24 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
-from traits.api import Interface
-
-
+from pyface.tasks.task_layout import TaskLayout, PaneItem
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.furnace.tasks.ldeo.panes import FurnacePane, ControlPane
+from pychron.furnace.tasks.task import BaseFurnaceTask
 
 
-class IFurnaceController(Interface):
-    def read_setpoint(self):
-        pass
+class LDEOFurnaceTask(BaseFurnaceTask):
+    id = 'pychron.ldeo.furnace.task'
+    name = 'LDEO Furnace'
 
-    def set_setpoint(self, v):
-        pass
+    def create_dock_panes(self):
+        return [ControlPane(model=self.manager)]
+
+    def create_central_pane(self):
+        return FurnacePane(model=self.manager)
+
+    def _default_layout_default(self):
+        return TaskLayout(left=PaneItem('pychron.ldeofurnace.controls'))
+
 # ============= EOF =============================================
-
-
-

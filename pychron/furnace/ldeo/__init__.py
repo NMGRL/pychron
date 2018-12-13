@@ -13,13 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from pychron.envisage.tasks.base_task import BaseManagerTask
 
 
-class BaseFurnaceTask(BaseManagerTask):
-    def activated(self):
-        self.manager.activate()
-
-    def prepare_destroy(self):
-        self.manager.prepare_destroy()
 # ============= EOF =============================================

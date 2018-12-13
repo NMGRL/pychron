@@ -2,7 +2,7 @@ import time
 import os
 from traits.api import Instance, Float
 
-from pychron.furnace.furnace_controller import FurnaceController
+from pychron.furnace.nmgrl.furnace_controller import NMGRLFurnaceController
 from pychron.graph.time_series_graph import TimeSeriesStreamStackedGraph
 from pychron.managers.stream_graph_manager import StreamGraphManager
 from pychron.paths import paths
@@ -10,7 +10,7 @@ from traitsui.api import View, UItem, Item, HGroup, VGroup
 
 
 class SimpleFurnace(StreamGraphManager):
-    controller = Instance(FurnaceController)
+    controller = Instance(NMGRLFurnaceController)
     setpoint = Float(auto_set=False, enter_set=True)
     recording_period = Float(10)  # in minutes
     temperature_readback = Float
@@ -44,8 +44,8 @@ class SimpleFurnace(StreamGraphManager):
             self.graph.redraw()
 
     def _controller_default(self):
-        c = FurnaceController(name='controller',
-                              configuration_dir_name='furnace')
+        c = NMGRLFurnaceController(name='controller',
+                                   configuration_dir_name='furnace')
         return c
 
     def _update_scan(self):

@@ -14,7 +14,6 @@
 # limitations under the License.
 # ===============================================================================
 
-from __future__ import absolute_import
 import os
 import shutil
 import time
@@ -29,54 +28,16 @@ from pychron.canvas.canvas2D.video_canvas import VideoCanvas
 from pychron.core.helpers.filetools import pathtolist
 from pychron.core.progress import open_progress
 from pychron.experiment import ExtractionException
-from pychron.extraction_line.switch_manager import SwitchManager
+from pychron.furnace.base_furnace_manager import BaseFurnaceManager
 from pychron.furnace.configure_dump import ConfigureDump
-from pychron.furnace.furnace_controller import FurnaceController
 from pychron.furnace.ifurnace_manager import IFurnaceManager
-from pychron.furnace.loader_logic import LoaderLogic
-from pychron.furnace.magnet_dumper import NMGRLRotaryDumper, BaseDumper
-from pychron.furnace.stage_manager import NMGRLFurnaceStageManager, BaseFurnaceStageManager
+from pychron.furnace.nmgrl.loader_logic import LoaderLogic
+from pychron.furnace.nmgrl.magnet_dumper import NMGRLRotaryDumper, BaseDumper
+from pychron.furnace.nmgrl.stage_manager import NMGRLFurnaceStageManager
 from pychron.graph.time_series_graph import TimeSeriesStreamStackedGraph
 from pychron.hardware.furnace.nmgrl.camera import NMGRLCamera
 from pychron.hardware.linear_axis import LinearAxis
-from pychron.managers.stream_graph_manager import StreamGraphManager
 from pychron.paths import paths
-from pychron.response_recorder import ResponseRecorder
-
-
-class BaseFurnaceManager(StreamGraphManager):
-    controller = Instance(FurnaceController)
-    setpoint = Float(auto_set=False, enter_set=True)
-    temperature_readback = Float
-    output_percent_readback = Float
-    stage_manager = Instance(BaseFurnaceStageManager)
-    switch_manager = Instance(SwitchManager)
-    response_recorder = Instance(ResponseRecorder)
-
-    use_network = False
-    verbose_scan = Bool(False)
-
-    def check_heating(self):
-        pass
-
-    def _controller_default(self):
-        c = FurnaceController(name='controller',
-                              configuration_dir_name='furnace')
-        return c
-
-    def _switch_manager_default(self):
-        sm = SwitchManager(configuration_dir_name='furnace',
-                           setup_name='furnace_valves')
-        sm.on_trait_change(self._handle_state, 'refresh_state')
-        return sm
-
-    def _response_recorder_default(self):
-        r = ResponseRecorder(response_device=self.controller,
-                             output_device=self.controller)
-        return r
-
-    def _handle_state(self, new):
-        pass
 
 
 class Funnel(LinearAxis):
@@ -246,7 +207,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
             if block:
                 return self._dump_sample(progress)
             else:
-                self._dumper_thread = Thread(name='DumpSample', target=self._dump_sample, args=(progress, ))
+                self._dumper_thread = Thread(name='DumpSample', target=self._dump_sample, args=(progress,))
                 self._dumper_thread.setDaemon(True)
                 self._dumper_thread.start()
         else:
@@ -298,7 +259,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
             st = time.time()
             success = False
             self.debug('starting dump progress poll')
-            while time.time()-st < timeout:
+            while time.time() - st < timeout:
                 if not self.dumper.dump_in_progress():
                     success = True
                     break
@@ -734,5 +695,6 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         # m = NMGRLMagnetDumper(name='magnets', configuration_dir_name='furnace')
         m = NMGRLRotaryDumper(name='dumper', configuration_dir_name='furnace')
         return m
+
 
 # ============= EOF =============================================

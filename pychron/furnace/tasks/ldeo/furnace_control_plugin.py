@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2015 Jake Ross
+# Copyright 2016 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,18 +15,29 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
+from traits.api import List
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.iextraction_device import IExtractionDevice
+from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
+from pychron.furnace.tasks.ldeo.preferences import LDEOFurnaceControlPreferencesPane
 
 
-class IFurnaceManager(IExtractionDevice):
-    def set_setpoint(self, v):
-        pass
+class LDEOFurnaceControlPlugin(BaseTaskPlugin):
+    canvases = List(contributes_to='pychron.extraction_line.plugin_canvases')
 
-    def read_setpoint(self, force=False):
-        pass
+    # def __init__(self, *args, **kw):
+    #     super(LDEOFurnaceControlPlugin, self).__init__(*args, **kw)
+    #
+    def _canvases_default(self):
+        c = {'display_name': 'Furnace',
+             'valve_path': self.application.preferences.get('pychron.ldeofurnace.control.valve_path'),
+             'canvas_path': self.application.preferences.get('pychron.ldeofurnace.control.canvas_path'),
+             'config_path': self.application.preferences.get('pychron.ldeofurnace.control.canvas_config_path')}
+
+        return [c, ]
+
+    def _preferences_panes_default(self):
+        return [LDEOFurnaceControlPreferencesPane, ]
 
 # ============= EOF =============================================

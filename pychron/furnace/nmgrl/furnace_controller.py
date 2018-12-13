@@ -24,7 +24,7 @@ from pychron.hardware.core.abstract_device import AbstractDevice
 
 
 @provides(IFurnaceController)
-class FurnaceController(AbstractDevice):
+class NMGRLFurnaceController(AbstractDevice):
     def read_output_percent(self, **kw):
         if self._cdevice:
             return self._cdevice.read_output_percent(**kw)

@@ -13,13 +13,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from pychron.envisage.tasks.base_task import BaseManagerTask
+from pychron.paths import paths
+from pychron.stage.maps.furnace_map import FurnaceStageMap
+from pychron.stage.stage_manager import BaseStageManager
 
 
-class BaseFurnaceTask(BaseManagerTask):
-    def activated(self):
-        self.manager.activate()
+class BaseFurnaceStageManager(BaseStageManager):
+    stage_map_klass = FurnaceStageMap
 
-    def prepare_destroy(self):
-        self.manager.prepare_destroy()
+    def __init__(self, *args, **kw):
+        super(BaseFurnaceStageManager, self).__init__(*args, **kw)
+        self.tray_calibration_manager.style = 'Linear'
+
+    def get_sample_states(self):
+        return [h.id for h in self.stage_map.sample_holes if h.analyzed]
+
+    def _root_default(self):
+        return paths.furnace_map_dir
 # ============= EOF =============================================
