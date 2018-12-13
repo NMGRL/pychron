@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits, Instance, Bool, Str, Any
 from traitsui.api import View, Item, VGroup, Controller, Readonly
 # ============= standard library imports ========================
@@ -82,12 +83,11 @@ class JTransferer(Loggable):
         self._transfer(self._backward_transfer_func, *args)
 
     def _transfer(self, func, config, irrad, level, positions):
-        with self.massspecdb.session_ctx(), self.pychrondb.session_ctx():
-            for pp in positions:
-                self.debug('Transferring position {}. labnumber={} current_j={}'.format(pp.hole,
-                                                                                        pp.identifier,
-                                                                                        pp.j))
-                func(config, irrad, level, pp)
+        for pp in positions:
+            self.debug('Transferring position {}. labnumber={} current_j={}'.format(pp.hole,
+                                                                                    pp.identifier,
+                                                                                    pp.j))
+            func(config, irrad, level, pp)
 
     def _forward_transfer_func(self, config, irrad, level, position):
         """

@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from envisage.ui.tasks.preferences_category import PreferencesCategory
 from envisage.ui.tasks.preferences_dialog import PreferencesDialog as PD, PreferencesTab
 from pyface.tasks.topological_sort import before_after_sort

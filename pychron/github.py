@@ -14,15 +14,18 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
+from __future__ import print_function
+
 import base64
-import json
 
 import requests
-from datetime import datetime
 
 # ============= local library imports  ==========================
+from pychron import json
+from pychron.core.helpers.datetime_tools import format_iso_datetime
+
 GITHUB_API_URL = 'https://api.github.com'
 
 
@@ -30,25 +33,33 @@ def make_request(r):
     return '{}{}'.format(GITHUB_API_URL, r)
 
 
-def get_list(cmd, attr='name'):
+def get_list(cmd, attr='name', headers=None):
+    if headers is None:
+        headers = {}
+
     cmd = make_request(cmd)
 
     with requests.Session() as s:
         def _rget(ci):
-            r = s.get(ci)
-            d = json.loads(r.text)
-            result = [di[attr] for di in d]
+            r = s.get(ci, headers=headers)
+            result = json.loads(r.text)
+            if attr:
+                result = [di[attr] for di in result]
+
             try:
                 dd = _rget(r.links['next']['url'])
             except KeyError:
                 return result
 
-            result.extend([di[attr] for di in dd])
+            if attr:
+                dd = [di[attr] for di in dd]
+
+            result.extend(dd)
             return result
 
     return _rget(cmd)
 
-    return [item[attr] for item in json.loads(doc.text)]
+    # return [item[attr] for item in json.loads(doc.text)]
 
 
 def get_branches(name):
@@ -61,9 +72,9 @@ def get_tags(name):
     return get_list(cmd)
 
 
-def get_organization_repositiories(name):
+def get_organization_repositiories(name, attr='name'):
     cmd = '/orgs/{}/repos'.format(name)
-    return get_list(cmd)
+    return get_list(cmd, attr=attr)
 
 
 def create_organization_repository(org, name, usr, pwd, **kw):
@@ -74,21 +85,27 @@ def create_organization_repository(org, name, usr, pwd, **kw):
     auth = base64.encodestring('{}:{}'.format(usr, pwd)).replace('\n', '')
     headers = {"Authorization": "Basic {}".format(auth)}
     r = requests.post(cmd, data=json.dumps(payload), headers=headers)
-    print cmd, payload, usr, pwd
-    print r
+    print(cmd, payload, usr, pwd)
+    print(r)
     return r
 
 
 class GithubObject(object):
-    def __init__(self, usr='', pwd=''):
+    def __init__(self, usr='', pwd='', oauth_token=None):
         self._pwd = pwd
         self._usr = usr
+        self._oauth_token = oauth_token
 
     def _make_headers(self, auth=True):
         headers = {}
         if auth:
-            auth = base64.encodestring('{}:{}'.format(self._usr, self._pwd)).replace('\n', '')
-            headers['Authorization'] = 'Basic {}'.format(auth)
+            if self._oauth_token:
+                auth = 'token {}'.format(self._oauth_token)
+            else:
+                auth = base64.encodestring('{}:{}'.format(self._usr, self._pwd)).replace('\n', '')
+                auth = 'Basic {}'.format(auth)
+            headers['Authorization'] = auth
+        print(headers)
         return headers
 
     def _process_post(self, po):
@@ -110,7 +127,7 @@ class Organization(GithubObject):
 
     @property
     def repo_names(self):
-        return [repo['name'] for repo in self.get_repos()]
+        return sorted([repo['name'] for repo in self.get_repos()])
 
     @property
     def info(self):
@@ -122,9 +139,14 @@ class Organization(GithubObject):
         return [self._repo_factory(ri, attributes) for ri in self.get_repos()]
 
     def get_repos(self):
-        cmd = make_request('{}/repos'.format(self.base_cmd))
-        doc = requests.get(cmd)
-        return json.loads(doc.text)
+
+        cmd = '/orgs/{}/repos'.format(self._name)
+        r = get_list(cmd, attr=None, headers=self._make_headers())
+
+        # r = get_organization_repositiories(self._name, attr=None)
+        if not isinstance(r, list):
+            r = []
+        return r
 
     def has_repo(self, name):
         return name in self.repo_names
@@ -144,8 +166,7 @@ class Organization(GithubObject):
         for ai in attributes:
             v = ri[ai]
             if ai in date_attrs:
-                date = datetime.strptime(v, '%Y-%m-%dT%H:%M:%SZ')
-                v = date.strftime('%m-%d-%Y %H:%M')
+                v = format_iso_datetime(ai)
             setattr(repo, ai, v)
         return repo
 
@@ -156,7 +177,7 @@ if __name__ == '__main__':
         pwd = rfile.readline().strip()
     # print get_organization_repositiories('NMGRL')
     org = Organization('NMGRLData', usr, pwd)
-    print org.repo_names, len(org.repo_names)
+    print(org.repo_names, len(org.repo_names))
     # print org.create_repo('test2', auto_init=True)
     # print org.repos, len(org.repos)
 # ============= EOF =============================================

@@ -22,16 +22,15 @@
 """
     https://gist.github.com/sixtenbe/1178136
 """
-from numpy import Inf, isscalar, array, argmax, polyfit, asarray, argsort, vstack
+from numpy import Inf, isscalar, array, argmax, polyfit, asarray, argsort, vstack, arange
 
 
 def _datacheck_peakdetect(x_axis, y_axis):
     if x_axis is None:
-        x_axis = range(len(y_axis))
+        x_axis = arange(len(y_axis))
 
     if len(y_axis) != len(x_axis):
-        raise (ValueError,
-               'Input vectors y_axis and x_axis must have same length')
+        raise ValueError
 
     # needs to be a numpy array
     y_axis = array(y_axis)
@@ -83,9 +82,9 @@ def find_peaks(y_axis, x_axis=None, lookahead=300, delta=0):
 
     # perform some checks
     if lookahead < 1:
-        raise ValueError, "Lookahead must be '1' or above in value"
+        raise ValueError("Lookahead must be '1' or above in value")
     if not (isscalar(delta) and delta >= 0):
-        raise ValueError, "delta must be a positive number"
+        raise ValueError("delta must be a positive number")
 
     # maxima and minima candidates are temporarily stored in
     # mx and mn respectively
@@ -177,14 +176,14 @@ def calculate_peak_center(x, y, test_peak_flat=True, min_peak_height=1.0, percen
     if ma < min_peak_height:
         raise PeakCenterError('No peak greater than {}. max = {}'.format(min_peak_height, ma))
 
-    if max_i == 0:
-        max_i = len(x)/2
+    if max_i == 0 or max_i == len(x)-1:
+        max_i = len(x)//2
 
     mx = x[max_i]
     my = ma
 
     # look backward for point that is peak_percent% of max
-    for i in xrange(max_i, 0, -1):
+    for i in range(max_i, 0, -1):
         # this prevent looping around to the end of the list
         if i < 1:
             raise PeakCenterError('PeakCenterError: could not find a low pos', low_pos_error=True)
@@ -200,7 +199,7 @@ def calculate_peak_center(x, y, test_peak_flat=True, min_peak_height=1.0, percen
     ly = y[i] - (y[i] - y[i - 1]) / 2.
 
     # look forward for point that is 80% of max
-    for i in xrange(max_i, x.shape[0], 1):
+    for i in range(max_i, x.shape[0], 1):
         try:
             if y[i] < (ma * (1 - percent / 100.)):
                 break
@@ -211,7 +210,7 @@ def calculate_peak_center(x, y, test_peak_flat=True, min_peak_height=1.0, percen
         hx = x[i + 1] - xstep
         hy = y[i] - (y[i] - y[i + 1]) / 2.
     except IndexError:
-        raise PeakCenterError('peak not well centered')
+        raise PeakCenterError('peak not well centered, len(x)={}, len(y)={}, i={}'.format(len(x), len(y), i))
 
     if (hx - lx) < 0:
         raise PeakCenterError('unable to find peak bounds high_pos < low_pos. {} < {}'.format(hx, lx))
@@ -224,7 +223,7 @@ def calculate_peak_center(x, y, test_peak_flat=True, min_peak_height=1.0, percen
         # check to see if were on a plateau
         yppts = y[ccx - 2:ccx + 2]
 
-        slope, _ = polyfit(range(len(yppts)), yppts, 1)
+        slope, _ = polyfit(list(range(len(yppts))), yppts, 1)
         std = yppts.std()
 
         if std > 5 and abs(slope) < 1:
@@ -243,9 +242,15 @@ def fast_find_peaks(ys, xs, **kw):
         return [], []
 
     ys, xs = asarray(ys), asarray(xs)
-    indexes = indexes(ys, **kw)
-    peaks_x = interpolate(xs, ys, ind=indexes)
-    return peaks_x, ys[indexes]
+    idx = indexes(ys, **kw)
+    peaks_x = interpolate(xs, ys, ind=idx)
+    try:
+
+        return peaks_x, ys[idx]
+    except IndexError:
+        from pyface.message_dialog import warning
+        warning(None, 'There was an issue finding the peaks')
+        return [], []
 
 
 def interpolate(x, y, ind=None, width=10, func=None):

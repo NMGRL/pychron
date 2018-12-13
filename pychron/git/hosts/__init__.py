@@ -13,18 +13,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
-# ============= enthought library imports =======================
 import base64
+import subprocess
 
-from apptools.preferences.preference_binding import bind_preference
-from traits.api import Str, Interface, Password, provides
-# ============= standard library imports ========================
-import json
 import requests
-# ============= local library imports  ==========================
+# ============= enthought library imports =======================
+from apptools.preferences.preference_binding import bind_preference
+from traits.api import Str, Interface, Password, provides, Dict
+
+from pychron import json
 from pychron.git_archive.repo_manager import GitRepoManager
+from pychron.globals import globalv
 from pychron.loggable import Loggable
+from pychron.regex import GITREFREGEX
 
 
 class IGitHost(Interface):
@@ -58,6 +59,9 @@ class IGitHost(Interface):
     def get_info(self, organization):
         pass
 
+    def remote_exists(self, name):
+        pass
+
 
 class CredentialException(BaseException):
     def __init__(self, d):
@@ -67,11 +71,13 @@ class CredentialException(BaseException):
         return 'Invalid user/password combination. {}'.format(self._auth)
 
 
-def authentication(username, password, oauth_token):
+def authorization(username, password, oauth_token):
     if oauth_token:
         auth = oauth_token
     else:
-        auth = base64.encodestring('{}:{}'.format(username, password)).replace('\n', '')
+        auth = '{}:{}'.format(username, password).encode('utf-8')
+        auth = base64.encodebytes(auth)
+        auth = auth.replace(b'\n', b'')
         auth = 'Basic {}'.format(auth)
 
     return {"Authorization": auth}
@@ -85,12 +91,40 @@ class GitHostService(Loggable):
     oauth_token = Str
     default_remote_name = Str
     remote_url = Str
+    _cached_repo_names = Dict
+    _clear_cached_repo_names = False
+    _session = None
 
     def bind_preferences(self):
         bind_preference(self, 'username', '{}.username'.format(self.preference_path))
         bind_preference(self, 'password', '{}.password'.format(self.preference_path))
         bind_preference(self, 'oauth_token', '{}.oauth_token'.format(self.preference_path))
         bind_preference(self, 'default_remote_name', '{}.default_remote_name'.format(self.preference_path))
+
+    def up_to_date(self, organization, name, sha, branch='master'):
+        pass
+
+    def remote_exists(self, organization, name):
+        try:
+            cmd = ['git', 'ls-remote', '{}/{}/{}'.format(self.remote_url, organization, name)]
+            self.debug('remote exists cmd={}'.format(' '.join(cmd)))
+            out = subprocess.check_output(cmd)
+            self.debug('remote exists: out={}'.format(out))
+            if out:
+                ret = GITREFREGEX.match(out.decode())
+            else:
+                ret = self.manual_remote_exists(organization, name)
+        except subprocess.CalledProcessError:
+            ret = self.manual_remote_exists(organization, name)
+        return ret
+
+    def manual_remote_exists(self, organization, name):
+        repo = self.get_repo(organization, name)
+        if repo:
+            return repo.get('name', '').lower() == name.lower()
+
+    def get_repo(self, organization, name):
+        raise NotImplementedError
 
     def test_api(self):
         raise NotImplementedError
@@ -99,7 +133,8 @@ class GitHostService(Loggable):
         raise NotImplementedError
 
     def get_repository_names(self, organization):
-        return [repo['name'] for repo in self.get_repos(organization)]
+        repos = self.get_repos(organization)
+        return [repo['name'] for repo in repos]
 
     def test_connection(self, organization):
         return bool(self.get_info(organization))
@@ -116,8 +151,11 @@ class GitHostService(Loggable):
 
     # private
     def _get(self, cmd, verbose=False):
-        with requests.Session() as s:
+
+        def func(s):
             s.headers.update(self._get_authorization())
+            if globalv.cert_file:
+                s.verify = globalv.cert_file
 
             def _rget(ci):
                 r = s.get(ci)
@@ -145,14 +183,36 @@ class GitHostService(Loggable):
 
             return _rget(cmd)
 
+        if self._session:
+            return func(self._session)
+        else:
+            with requests.Session() as s:
+                return func(s)
+
+    def new_session(self):
+        self._session = requests.Session()
+        self._session.headers.update(self._get_authorization())
+
+    def close_session(self):
+        self._session.close()
+        self._session = None
+
     def _post(self, cmd, **payload):
         headers = self._get_authorization()
-        r = requests.post(cmd, data=json.dumps(payload), headers=headers)
+        kw = {}
+        if globalv.cert_file:
+            kw['verify'] = globalv.cert_file
+
+        r = requests.post(cmd, data=json.dumps(payload), headers=headers, **kw)
         return r
 
     def _put(self, cmd, **payload):
         headers = self._get_authorization()
-        r = requests.put(cmd, data=json.dumps(payload), headers=headers)
+        kw={}
+        if globalv.cert_file:
+            kw['verify'] = globalv.cert_file
+
+        r = requests.put(cmd, data=json.dumps(payload), headers=headers, **kw)
         return r
 
     def _get_oauth_token(self):
@@ -162,7 +222,7 @@ class GitHostService(Loggable):
         token = None
         if self.oauth_token:
             token = self._get_oauth_token()
-        return authentication(self.username, self.password, token)
+        return authorization(self.username, self.password, token)
         # if self.oauth_token:
         #     auth = self._get_oauth_token()
         # else:

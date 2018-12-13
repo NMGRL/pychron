@@ -14,19 +14,20 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from traits.api import Instance, Str, Property, Event, Bool, String, List, CInt
+import datetime
+import os
+
 # ============= standard library imports ========================
 import yaml
-import os
-import datetime
+# ============= enthought library imports =======================
+from traits.api import Instance, Str, Property, Event, Bool, String, List, CInt
+
+from pychron.core.helpers.ctx_managers import no_update
 # ============= local library imports  ==========================
 from pychron.experiment.queue.run_block import RunBlock
+from pychron.experiment.stats import ExperimentStats
 from pychron.experiment.utilities.frequency_generator import frequency_index_gen
 from pychron.pychron_constants import NULL_STR, LINE_STR
-from pychron.experiment.stats import ExperimentStats
-from pychron.paths import paths
-from pychron.core.helpers.ctx_managers import no_update
 
 
 def extract_meta(line_gen):
@@ -40,19 +41,22 @@ def extract_meta(line_gen):
     return yaml.load(metastr), metastr
 
 
-__METASTR__ = '''
-username: {}
-use_email: {}
-email: {}
-use_group_email: {}
-date: {}
-queue_conditionals_name: {}
-mass_spectrometer: {}
-delay_before_analyses: {}
-delay_between_analyses: {}
-extract_device: {}
-tray: {}
-load: {}
+METASTR = '''
+username: {username:}
+use_email: {use_email:}
+email: {email:}
+use_group_email: {use_group_email:}
+date: {date:}
+queue_conditionals_name: {queue_conditionals:}
+mass_spectrometer: {mass_spectrometer:}
+delay_before_analyses: {delay_before_analyses:}
+delay_between_analyses: {delay_between_analyses:}
+delay_after_blank: {delay_after_blank:}
+delay_after_air: {delay_after_air:}
+extract_device: {extract_device:}
+tray: {tray:}
+load: {load:}
+note: {note:}
 '''
 
 
@@ -60,16 +64,20 @@ class BaseExperimentQueue(RunBlock):
     selected = List
 
     automated_runs = List
-    cleaned_automated_runs = Property(depends_on='automated_runs[]')
+    cleaned_automated_runs = Property  # (depends_on='automated_runs[]')
 
     username = String
     email = String
     use_group_email = Bool
     use_email = Bool
 
+    note = Str
     tray = Str
+
     delay_before_analyses = CInt(5)
     delay_between_analyses = CInt(30)
+    delay_after_blank = CInt(15)
+    delay_after_air = CInt(10)
 
     queue_conditionals_name = Str
 
@@ -91,16 +99,24 @@ class BaseExperimentQueue(RunBlock):
     _no_update = False
     _frequency_group_counter = 0
 
+    @property
+    def no_update(self):
+        return self._no_update
+
     # ===============================================================================
     # persistence
     # ===============================================================================
     def load(self, txt):
         self.initialized = False
-        self.stats.delay_between_analyses = self.delay_between_analyses
-        self.stats.delay_before_analyses = self.delay_before_analyses
 
         line_gen = self._get_line_generator(txt)
         self._extract_meta(line_gen)
+
+        self.stats.delay_between_analyses = self.delay_between_analyses
+        self.stats.delay_before_analyses = self.delay_before_analyses
+        self.stats.delay_after_blank = self.delay_after_blank
+        self.stats.delay_after_air = self.delay_after_air
+
         aruns = self._load_runs(line_gen)
         if aruns is not None:
             # set frequency_added_counter
@@ -122,7 +138,7 @@ class BaseExperimentQueue(RunBlock):
             writeline('#' + '=' * 80)
 
         def tab(l, comment=False):
-            s = '\t'.join(map(str, l))
+            s = '\t'.join([str(li) for li in l])
             if comment:
                 s = '#{}'.format(s)
             writeline(s)
@@ -183,6 +199,12 @@ class BaseExperimentQueue(RunBlock):
 
             return runs
 
+    def remove(self, run):
+        try:
+            self.automated_runs.remove(run)
+        except ValueError:
+            self.debug('failed to remove {}. not in automated_runs list'.format(run))
+
     def _add_frequency_runs(self, runspecs, freq,
                             freq_before, freq_after,
                             is_run_block, is_repeat_block):
@@ -209,13 +231,14 @@ class BaseExperimentQueue(RunBlock):
             run = runspecs[0]
             rtype = run.analysis_type
             incrementable_types = ('unknown',)
-            if rtype.startswith('blank'):
-                incrementable_types = ('unknown', 'air', 'cocktail')
-            elif rtype.startswith('air') or rtype.startswith('cocktail'):
-                incrementable_types = ('unknown',)
+
+            if len(runspecs) == 1:
+                if rtype.startswith('blank'):
+                    t = '_'.join(rtype.split('_')[1:])
+                    incrementable_types = (t, )
 
         for idx in reversed(list(frequency_index_gen(runblock, freq, incrementable_types,
-                                                     freq_before, freq_after, sidx=sidx))):
+                                                freq_before, freq_after, sidx=sidx))):
             for ri in reversed(runspecs):
                 run = ri.clone_traits()
                 run.frequency_group = fcnt
@@ -255,20 +278,20 @@ class BaseExperimentQueue(RunBlock):
         return meta
 
     def _load_meta(self, meta):
-        # load sample map
-        self._load_map(meta)
-
         # default = lambda x: str(x) if x else ' '
         default_int = lambda x: x if x is not None else 1
         key_default = lambda k: lambda x: str(x) if x else k
         bool_default = lambda x: bool(x) if x else False
         default = key_default('')
 
+        self._set_meta_param('note', meta, default)
         self._set_meta_param('tray', meta, default)
         self._set_meta_param('extract_device', meta, key_default('Extract Device'))
         self._set_meta_param('mass_spectrometer', meta, key_default('Spectrometer'))
         self._set_meta_param('delay_between_analyses', meta, default_int)
         self._set_meta_param('delay_before_analyses', meta, default_int)
+        self._set_meta_param('delay_after_blank', meta, default_int)
+        self._set_meta_param('delay_after_air', meta, default_int)
         self._set_meta_param('username', meta, default)
         self._set_meta_param('use_email', meta, bool_default)
         self._set_meta_param('email', meta, default)
@@ -276,27 +299,31 @@ class BaseExperimentQueue(RunBlock):
         self._set_meta_param('load_name', meta, default, metaname='load')
         self._set_meta_param('queue_conditionals_name', meta, default)
         self._set_meta_param('repository_identifier', meta, default)
+
+        # # load sample map
+        # self._load_map()
+
         self._load_meta_hook(meta)
 
     def _load_meta_hook(self, meta):
         pass
 
-    def _load_map(self, meta):
-        from pychron.stage.maps.laser_stage_map import LaserStageMap
-        from pychron.experiment.map_view import MapView
-
-        def create_map(name):
-            if name:
-                if not name.endswith('.txt'):
-                    name = '{}.txt'.format(name)
-                name = os.path.join(paths.map_dir, name)
-
-                if os.path.isfile(name):
-                    sm = LaserStageMap(file_path=name)
-                    mv = MapView(stage_map=sm)
-                    return mv
-
-        self._set_meta_param('sample_map', meta, create_map, metaname='tray')
+    # def _load_map(self):
+    #     name = self.tray
+    #
+    #     if name:
+    #         name = str(name)
+    #         if not name.endswith('.txt'):
+    #             name = '{}.txt'.format(name)
+    #
+    #         name = os.path.join(paths.map_dir, name)
+    #         if os.path.isfile(name):
+    #             from pychron.stage.maps.laser_stage_map import LaserStageMap
+    #             from pychron.experiment.map_view import MapView
+    #
+    #             sm = LaserStageMap(file_path=name)
+    #             mv = MapView(stage_map=sm)
+    #             self.map_view = mv
 
     def _set_meta_param(self, attr, meta, func, metaname=None):
         if metaname is None:
@@ -332,7 +359,8 @@ class BaseExperimentQueue(RunBlock):
                ('dis_btw_pos', 'disable_between_positons'),
                'weight', 'comment',
                'autocenter', 'frequency_group',
-               'repository_identifier']
+               'repository_identifier',
+               'delay_after']
 
         if self.extract_device == 'Fusions UV':
             # header.extend(('reprate', 'mask', 'attenuator', 'image'))
@@ -340,7 +368,7 @@ class BaseExperimentQueue(RunBlock):
             seq.extend(('reprate', 'mask', 'attenuator', 'image'))
 
         seq = [(v, v) if not isinstance(v, tuple) else v for v in seq]
-        header, attrs = zip(*seq)
+        header, attrs = list(zip(*seq))
         return header, attrs
 
     def _meta_dumper(self, wfile):
@@ -348,19 +376,22 @@ class BaseExperimentQueue(RunBlock):
         if ms in ('Spectrometer', LINE_STR):
             ms = ''
 
-        s = __METASTR__.format(
-            self.username,
-            self.use_email,
-            self.email,
-            self.use_group_email,
-            datetime.datetime.today(),
-            self.queue_conditionals_name,
-            ms,
-            self.delay_before_analyses,
-            self.delay_between_analyses,
-            self.extract_device,
-            self.tray or '',
-            self.load_name or '')
+        s = METASTR.format(
+            username=self.username,
+            use_email=self.use_email,
+            email=self.email,
+            use_group_email=self.use_group_email,
+            date=datetime.datetime.today(),
+            queue_conditionals=self.queue_conditionals_name,
+            mass_spectrometer=ms,
+            delay_before_analyses=self.delay_before_analyses,
+            delay_between_analyses=self.delay_between_analyses,
+            delay_after_blank=self.delay_after_blank,
+            delay_after_air=self.delay_after_air,
+            extract_device=self.extract_device,
+            tray=self.tray or '',
+            load=self.load_name or '',
+            note=self.note)
 
         if wfile:
             wfile.write(s)
@@ -393,5 +424,9 @@ class BaseExperimentQueue(RunBlock):
             return os.path.splitext(os.path.basename(self.path))[0]
         else:
             return ''
+
+    @property
+    def load_holder(self):
+        return self.tray
 
 # ============= EOF =============================================

@@ -14,12 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
+# ============= standard library imports ========================
+from operator import attrgetter
+
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Any
 
 
-# ============= standard library imports ========================
 # ============= local library imports  ==========================
+
 
 class ColumnSorterMixin(HasTraits):
     _sort_field = None
@@ -28,14 +31,21 @@ class ColumnSorterMixin(HasTraits):
 
     sort_suppress = False
 
-    def _column_clicked_changed(self, event):
-        values = event.editor.value
-        name, field = event.editor.adapter.columns[event.column]
+    def _column_clicked_handled(self, event):
+        if event:
+            values = event.editor.value
+            name, field = event.editor.adapter.columns[event.column]
 
-        self._reverse_sort = not self._reverse_sort
-        self.sort_suppress = True
-        self._sort_columns(values, name, field)
-        self.sort_suppress = False
+            self._reverse_sort = not self._reverse_sort
+            self.sort_suppress = True
+            vs = self._sort_columns(values, name, field)
+            if vs is not None:
+                event.editor.value = vs
+                event.editor.refresh_editor()
+            self.sort_suppress = False
+
+    def _column_clicked_changed(self, event):
+        self._column_clicked_handled(event)
 
     def _sort_columns(self, values, name='', field=None):
         # get the field to sort on
@@ -48,10 +58,18 @@ class ColumnSorterMixin(HasTraits):
         if hasattr(self, skey):
             key = getattr(self, skey)
         else:
-            key = lambda x: getattr(x, field)
+            key = attrgetter(field)
 
-        values.sort(key=key,
-                    reverse=self._reverse_sort)
-        self._sort_field = field
+        # values.sort(key=key,
+        #             reverse=self._reverse_sort)
+        try:
+            vs = sorted(values, key=key, reverse=self._reverse_sort)
+            self._sort_field = field
+            self._sorted_hook(vs)
+            return vs
+        except AttributeError:
+            pass
 
+    def _sorted_hook(self, vs):
+        pass
 # ============= EOF =============================================

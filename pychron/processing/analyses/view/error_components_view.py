@@ -15,37 +15,32 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from enable.component_editor import ComponentEditor
-from traits.api import HasTraits, List, Str, Float, Bool
-from traitsui.api import View, UItem, VGroup, VSplit
+from traits.api import HasTraits, List, Str, Float
+from traitsui.api import View, UItem, HGroup
 from traitsui.editors import TableEditor
 from traitsui.table_column import ObjectColumn
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
+from pychron.core.pychron_traits import BorderVGroup
 from pychron.processing.analyses.view.magnitude_editor import MagnitudeColumn
 from pychron.pychron_constants import INTERFERENCE_KEYS
 
 
-# class ErrorComponentAdapter(TabularAdapter):
-#     columns=[('Component', 'name'), ('Value', 'value')]
-#     value_text = Property
-#
-#     def _get_value_text(self):
-#         return floatfmt(self.item.value, n=2)
-
 class ErrorComponent(HasTraits):
     name = Str
     value = Float
+
+    def get_percent_value(self):
+        return self.value / 100
 
 
 class ErrorComponentsView(HasTraits):
     name = 'Error Components'
 
     error_components = List
-    # pie_canvas = Instance(PieChartCanvas, ())
-    pie_enabled = Bool(False)
+    error_components2 = List
 
     def __init__(self, an, *args, **kw):
         super(ErrorComponentsView, self).__init__(*args, **kw)
@@ -53,59 +48,49 @@ class ErrorComponentsView(HasTraits):
 
     def _load(self, an):
 
-        es = []
-        for k in an.isotope_keys:
-            iso = an.isotopes[k]
-            es.append(ErrorComponent(name=k,
-                                     value=iso.age_error_component))
-        for k in an.isotope_keys:
-            d = '{} D'.format(k)
-            es.append(ErrorComponent(name=d,
-                                     value=an.get_error_component(d)))
-        for k in an.isotope_keys:
-            d = '{} bk'.format(k)
-            es.append(ErrorComponent(name=d,
-                                     value=an.get_error_component(d)))
+        keys = [k for k in an.arar_mapping.values() if k in an.isotopes]
 
-        for k in INTERFERENCE_KEYS + ('J',):
-            v = an.get_error_component(k)
-            es.append(ErrorComponent(name=k, value=v))
+        def get_comp(age):
+            es = []
+            for k in keys:
+                iso = an.isotopes[k]
+                es.append(ErrorComponent(name=k,
+                                         value=an.get_error_component(iso.name, uage=age)))
 
-        # for var, error in an.uage.error_components().items():
-        #     print var.tag
-        # print sum([e.value for e in es])
+                d = '{} IC'.format(k)
+                es.append(ErrorComponent(name=d,
+                                         value=an.get_error_component(d, uage=age)))
+                d = '{} bk'.format(k)
+                es.append(ErrorComponent(name=d,
+                                         value=an.get_error_component(d, uage=age)))
+            return es
+
+        es = get_comp(an.uage_w_j_err)
+
+        for k in INTERFERENCE_KEYS + ('J', 'trapped_4036'):
+            es.append(ErrorComponent(name=k, value=an.get_error_component(k, uage=an.uage_w_j_err)))
 
         self.error_components = es
-        # self.pie_canvas.load_scene(es)
+
+        es = get_comp(an.uage_w_position_err)
+        for k in INTERFERENCE_KEYS + ('Position', 'trapped_4036'):
+            es.append(ErrorComponent(name=k, value=an.get_error_component(k, uage=an.uage_w_position_err)))
+        self.error_components2 = es
 
     def traits_view(self):
         cols = [ObjectColumn(name='name', label='Component'),
                 MagnitudeColumn(name='value',
-                                label='',
-                                width=200),
+                                label=''),
                 ObjectColumn(name='value', label='Value',
-                             format_func=lambda x: floatfmt(x, n=2))]
+                             width=100,
+                             format_func=lambda x: floatfmt(x, n=5))]
         editor = TableEditor(columns=cols,
                              sortable=False,
                              editable=False)
 
-        v = View(VGroup(
-            # Item('pie_enabled', label='Show Pie Chart',
-            #      visible_when='pie_enabled'),
-            # HGroup(Item('pie_enabled', label='Show Pie Chart')),
-            VGroup(
-                UItem('error_components', editor=editor),
-                visible_when='not pie_enabled'),
-            VSplit(
-                UItem('error_components', editor=editor),
-                UItem('pie_canvas', editor=ComponentEditor()),
-                visible_when='pie_enabled')))
+        e1 = BorderVGroup(UItem('error_components', editor=editor), label='With J Err.')
+        e2 = BorderVGroup(UItem('error_components2', editor=editor), label='With Position Err.')
+        v = View(HGroup(e1, e2))
         return v
-        # def traits_view(self):
-        #     v = View(UItem('error_components',
-        #                    editor=TabularEditor(adapter=ErrorComponentAdapter(),
-        #                                         editable=False)))
-        #     return v
 
 # ============= EOF =============================================
-

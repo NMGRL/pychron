@@ -15,7 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits, cached_property, Property, Tuple, Any, Float
+
+
 # ============= standard library imports ========================
 # from numpy import array
 # ============= local library imports  ==========================
@@ -25,16 +28,17 @@ from traits.api import HasTraits, cached_property, Property, Tuple, Any, Float
 # from pychron.core.geometry.convex_hull import convex_hull_area
 # from pychron.core.geometry.centroid.calculate_centroid import calculate_centroid
 
-class Target(HasTraits):
-    poly_points = Any
-    bounding_rect = Any
-#    threshold = None
-    area = Float
-    convex_hull_area = Float
-    origin = Tuple
-    convexity = Property
-    centroid = Tuple
-    min_enclose_area = Float
+class Target:
+    poly_points = None
+    bounding_rect = None
+    #    threshold = None
+    area = 0
+    convex_hull_area = 0
+    origin = None
+    centroid = None
+    min_enclose_area = 0
+    pactual = 0
+    pconvex_hull = 0
 
     @property
     def dev_centroid(self):
@@ -45,25 +49,32 @@ class Target(HasTraits):
     def aspect_ratio(self):
         return self.bounding_rect.width / float(self.bounding_rect.height)
 
-    @cached_property
-    def _get_convexity(self):
+    @property
+    def convexity(self):
+        # return True
         return self.area / self.min_enclose_area
-#        return self.
-#        r = timethis(convex_hull_area, args=(self.poly_points,))
 
-#        return self.area / convex_hull_area()
-#        return self.area / convex_hull_area(self.poly_points)
+    @property
+    def perimeter_convexity(self):
+        return self.pconvex_hull / self.pactual
 
-#    @cached_property
-#    def _get_centroid(self):
-# #        pts = array([(pt.x, pt.y) for pt in self.poly_points], dtype=float)
-# #        v = timethis(calculate_centroid, args=(self.poly_points,))
-#        return calculate_centroid(self.poly_points)
-# #        print v
-#        return v
+        #        return self.
+        #        r = timethis(convex_hull_area, args=(self.poly_points,))
 
-    #    @property
-#    def dev_br(self):
+        #        return self.area / convex_hull_area()
+        #        return self.area / convex_hull_area(self.poly_points)
+
+        #    @cached_property
+        #    def _get_centroid(self):
+        # #        pts = array([(pt.x, pt.y) for pt in self.poly_points], dtype=float)
+        # #        v = timethis(calculate_centroid, args=(self.poly_points,))
+        #        return calculate_centroid(self.poly_points)
+        # #        print v
+        #        return v
+
+        #    @property
+
+# def dev_br(self):
 #        return ((self.origin[0] - self.bounding_rect[0]),
 #                (self.origin[1] - self.bounding_rect[1]))
 #    @property

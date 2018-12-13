@@ -15,15 +15,18 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from PySide import QtGui, QtCore
-from PySide.QtGui import QCompleter, QSizePolicy, QComboBox, QHBoxLayout, QPushButton, QWidget
-from traits.api import Str, Bool, Event
+from __future__ import absolute_import
+
+import six
+from pyface.qt import QtGui, QtCore
+from pyface.qt.QtGui import QCompleter, QSizePolicy, QComboBox, QHBoxLayout, QPushButton, QWidget
+from traits.api import Str, Bool, Event, List
 from traits.trait_errors import TraitError
 from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.constants import OKColor, ErrorColor
 from traitsui.qt4.enum_editor import SimpleEditor
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
+from pychron.core.fuzzyfinder import fuzzyfinder
 from pychron.envisage.resources import icon
 
 
@@ -61,6 +64,7 @@ class ComboBoxWidget(QWidget):
 class _ComboboxEditor(SimpleEditor):
     # _no_enum_update = 0
     refresh = Event
+    _onames = List
 
     def init(self, parent):
         super(_ComboboxEditor, self).init(parent)
@@ -68,6 +72,9 @@ class _ComboboxEditor(SimpleEditor):
         self.control = control = self.create_combo_box()
         if self.factory.addable:
             control = control.combo
+
+        if self.factory.use_filter:
+            self._onames = self.names
 
         control.addItems(self.names)
 
@@ -119,14 +126,14 @@ class _ComboboxEditor(SimpleEditor):
         """ Handles the user typing text into the combo box text entry field.
         """
         if self._no_enum_update == 0:
-            value = unicode(text)
+            value = six.text_type(text)
             if self.factory.use_strict_values:
                 try:
                     value = self.mapping[value]
                 except:
                     try:
                         value = self.factory.evaluate(value)
-                    except Exception, excp:
+                    except Exception as excp:
                         self.error(excp)
                         return
 
@@ -136,7 +143,27 @@ class _ComboboxEditor(SimpleEditor):
                 self._set_background(OKColor)
                 if self.factory.addable:
                     self.control.button.setEnabled(True)
-            except TraitError, excp:
+
+                if self.factory.use_filter:
+                    vv = self._value()
+
+                    if value and value not in vv:
+                        names = fuzzyfinder(value, vv)
+
+                        self.control.clear()
+                        self.control.addItems(names)
+                        self.control.showPopup()
+                    else:
+                        names = self.names
+                        self.control.clear()
+                        self.control.addItems(names)
+
+                    try:
+                        self.control.setEditText(self.str_value)
+                    except:
+                        self.control.setEditText('')
+
+            except TraitError as excp:
                 if self.factory.addable:
                     self.control.button.setEnabled(False)
                 self._set_background(ErrorColor)
@@ -154,7 +181,7 @@ class _ComboboxEditor(SimpleEditor):
                     index = self.names.index(self.inverse_mapping[self.value])
 
                     self.control.setCurrentIndex(index)
-                except BaseException, e:
+                except BaseException as e:
                     self.control.setEditText(str(self.value))
             else:
                 try:
@@ -172,8 +199,6 @@ class ComboboxEditor(BasicEditorFactory):
     use_strict_values = Bool(False)
     addable = Bool(False)
     refresh = Str
+    use_filter = Bool(True)
 
 # ============= EOF =============================================
-
-
-

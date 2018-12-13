@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Event, Any, Instance, Int, on_trait_change
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -25,7 +26,6 @@ from pychron.canvas.canvas2D.video_underlay import VideoUnderlay
 class VideoCanvas(SceneCanvas):
     use_backbuffer = True
     video = Any
-    camera = None
     padding = 0
     closed_event = Event
     fps = Int(24)
@@ -50,8 +50,8 @@ class VideoCanvas(SceneCanvas):
             o = getattr(self, key)
             o.trait_set(**d)
 
-        if self.camera:
-            self.fps = self.camera.fps
+        if self.video:
+            self.fps = self.video.fps
 
     def close_video(self):
         self.closed_event = True

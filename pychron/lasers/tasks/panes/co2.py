@@ -15,8 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pychron.lasers.tasks.laser_panes import BaseLaserPane, ClientPane, \
-    StageControlPane, ControlPane, AxesPane
+    StageControlPane, ControlPane, AxesPane, SupplementalPane
+
+from traitsui.api import View, Item, VGroup, HGroup, UItem, InstanceEditor
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -39,5 +44,17 @@ class FusionsCO2ControlPane(ControlPane):
 
 class FusionsCO2AxesPane(AxesPane):
     id = 'pychron.fusions.co2.axes'
+
+
+class FusionsCO2SupplementalPane(SupplementalPane):
+    id = 'pychron.fusions.co2.supplemental'
+    name = 'CO2'
+
+    def traits_view(self):
+        grp = VGroup(Item('fiber_light', style='custom', show_label=False),
+                     show_border=True,
+                     label='FiberLight')
+        v = View(VGroup(grp))
+        return v
 
 # ============= EOF =============================================

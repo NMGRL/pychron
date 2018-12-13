@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface.qt import QtGui
 from traits.api import Any, Int, Float, Str, Bool, Either, Callable
 

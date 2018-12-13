@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits, Float, String, List, Property, Str
 from traitsui.api import View, HGroup, Item
 # ============= standard library imports ========================

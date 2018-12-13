@@ -16,19 +16,20 @@
 
 # ============= enthought library imports =======================
 
+from __future__ import absolute_import
+
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema import SMenu
 from pyface.tasks.action.schema_addition import SchemaAddition
 from pyface.tasks.action.task_action import TaskAction
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.pyscripts.tasks.pyscript_actions import OpenPyScriptAction, \
     NewPyScriptAction, OpenHopsEditorAction, NewHopsEditorAction
 from pychron.pyscripts.tasks.pyscript_preferences import PyScriptPreferencesPane
-from pychron.pyscripts.tasks.visual_el_programmer.actions import OpenVisualELScriptAction, NewVisualELScriptAction
+from pychron.pyscripts.tasks.visual_el_programmer.actions import OpenVisualELScriptAction, NewVisualELScriptAction, \
+    SwitchRenamerAction
 
 
 class PyScriptPlugin(BaseTaskPlugin):
@@ -72,7 +73,10 @@ class PyScriptPlugin(BaseTaskPlugin):
                                    factory=NewVisualELScriptAction),
                     SchemaAddition(id='open_visual',
                                    path='MenuBar/file.menu/Open',
-                                   factory=OpenVisualELScriptAction)])]
+                                   factory=OpenVisualELScriptAction),
+                SchemaAddition(id='switch_renamer',
+                               path='MenuBar/tools.menu',
+                               factory=SwitchRenamerAction)])]
         return exts
 
     def _tasks_default(self):
@@ -89,12 +93,12 @@ class PyScriptPlugin(BaseTaskPlugin):
     def _visual_task_factory(self):
         from pychron.pyscripts.tasks.visual_el_programmer.visual_el_programmer_task import VisualElProgrammerTask
 
-        return VisualElProgrammerTask()
+        return VisualElProgrammerTask(application=self.application)
 
     def _task_factory(self):
         from pychron.pyscripts.tasks.pyscript_task import PyScriptTask
 
-        return PyScriptTask()
+        return PyScriptTask(application=self.application)
 
     def _preferences_panes_default(self):
         return [PyScriptPreferencesPane]

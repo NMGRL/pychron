@@ -21,6 +21,7 @@
 # ============= standard library imports ========================
 
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.envisage.core.core_plugin import CorePlugin
 
 from pychron.canvas.designer.canvas_manager import CanvasManager

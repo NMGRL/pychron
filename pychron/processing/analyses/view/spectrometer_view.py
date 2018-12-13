@@ -15,26 +15,28 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
 from traits.api import HasTraits, Str, Int, Any, Property, List
-from traitsui.api import View, UItem, VGroup, TabularEditor, Group
+from traitsui.api import View, UItem, VGroup, TabularEditor, Group, HGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
+
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.helpers.isotope_utils import sort_detectors
-from pychron.pychron_constants import QTEGRA_SOURCE_NAMES, QTEGRA_SOURCE_KEYS, NULL_STR
 
 
 class DictTabularAdapter(TabularAdapter):
     columns = [('', 'key'), ('Value', 'value')]
-    key_width = Int(200)
+    key_width = Int(100)
     value_text = Property
 
     def _get_value_text(self):
         try:
-            return floatfmt(self.item.value)
-        except:
-            return 'Not Recorded'
+            return floatfmt(float(self.item.value))
+        except (ValueError, TypeError):
+            return 'NaN'
 
 
 class DValue(HasTraits):
@@ -47,9 +49,9 @@ class DValue(HasTraits):
 
 
 class SpectrometerView(HasTraits):
-    # model = Any
     name = 'Spectrometer'
     source_parameters = List
+    filament_parameters = List
     deflections = List
     gains = List
 
@@ -58,19 +60,31 @@ class SpectrometerView(HasTraits):
 
         # source
         sp = an.source_parameters
-        sd = [DValue(n, sp.get(k, NULL_STR)) for n, k in zip(QTEGRA_SOURCE_NAMES,
-                                                             QTEGRA_SOURCE_KEYS)]
+        sd = [DValue(k, v) for k, v in sp.items()]
         self.source_parameters = sd
+
+        # filament
+        sp = an.filament_parameters
+        sd = [DValue(k.capitalize(), v) for k, v in sp.items()]
+
+        t = sp.get('trap')
+        e = sp.get('emission')
+        et = 0
+        if t and e:
+            et = e / t
+        sd.append(DValue('E/T', et))
+
+        self.filament_parameters = sd
 
         # deflections
         defls = an.deflections
-        names = sort_detectors(defls.keys())
-        ds = [DValue(ni, defls.get(ni, NULL_STR)) for ni in names]
+        names = sort_detectors(list(defls.keys()))
+        ds = [DValue(ni, defls[ni]) for ni in names]
         self.deflections = ds
 
         # gains
         gains = an.gains
-        gs = [DValue(ni, gains.get(ni, NULL_STR)) for ni in names]
+        gs = [DValue(ni, gains.get(ni, 0)) for ni in names]
         self.gains = gs
 
     def traits_view(self):
@@ -79,6 +93,12 @@ class SpectrometerView(HasTraits):
                                               editable=False)),
                    show_border=True,
                    label='Source')
+
+        g4 = Group(UItem('filament_parameters',
+                         editor=TabularEditor(adapter=DictTabularAdapter(),
+                                              editable=False)),
+                   show_border=True,
+                   label='Filament')
 
         g2 = Group(UItem('deflections',
                          editor=TabularEditor(adapter=DictTabularAdapter(),
@@ -91,7 +111,7 @@ class SpectrometerView(HasTraits):
                                               editable=False)),
                    show_border=True,
                    label='Gains')
-        v = View(VGroup(g1, g2, g3))
+        v = View(HGroup(VGroup(g1, g4), VGroup(g2, g3)))
         return v
 
 # ============= EOF =============================================

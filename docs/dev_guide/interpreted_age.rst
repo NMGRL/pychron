@@ -1,0 +1,55 @@
+Interpreted Ages
+=====================
+
+JSON format
+-------------
+
+.. code-block:: json
+
+    'sample': str,
+    'material': str,
+    'project': str,
+    'latitude': float,
+    'longitude': float,
+    'lithology': str,
+    'identifier': str,
+    'nanalyses': int,
+    'irradiation': str,
+    'name': str,
+    'uuid': str,
+    'include_j_error_in_mean': bool,
+    'include_j_error_in_plateau': bool,
+    'include_j_position_error': bool,
+    'age': float,
+    'age_err': float,
+    'display_age_units': str,
+    'preferred_kinds': dict,
+    'mswd': float,
+    'arar_constants': dict,
+    'ages': list,
+    'analyses': [ {  'uuid': str,
+                     'record_id': str,
+                     'age': float,
+                     'age_err': float,
+                     'age_err_wo_j': float,
+                     'radiogenic_yield': float,
+                     'radiogenic_yield_err': float,
+                     'kca': float,
+                     'kca_err': float,
+                     'kcl': float,
+                     'kcl_err': float,
+                     'tag': str,
+                     'plateau_step': bool,
+                     'baseline_corrected_intercepts': dict,
+                     'blanks': dict,
+                     'icfactors': dict,
+                     'ic_corrected_values': dict,
+                     'interference_corrected_values': dict},
+                  ]
+    'macrochron': {'material': str,
+                     'lithology': str,
+                     'lithology_group': str,
+                     'lithology_class': str,
+                     'lithology_type': str,
+                     'reference': str,
+                     'rlocation': str}

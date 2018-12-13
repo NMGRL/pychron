@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from pychron.processing.ratio import Ratio
 
 __author__ = 'ross'

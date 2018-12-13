@@ -16,10 +16,10 @@
 
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Str, List, Instance
-from traitsui.api import View, UItem, Item, EnumEditor, TableEditor
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+from traitsui.api import View, UItem, Item, TableEditor
 from traitsui.table_column import ObjectColumn
+
+from pychron.core.ui.enum_editor import myEnumEditor
 
 
 class Conflict(HasTraits):
@@ -54,11 +54,17 @@ class ConflictResolver(HasTraits):
         cols = [ObjectColumn(name='queue_name', editable=False),
                 ObjectColumn(name='identifier', editable=False),
                 ObjectColumn(name='position', editable=False),
-                ObjectColumn(name='repository_identifier', editor=EnumEditor(name='available_ids')),
-                ObjectColumn(name='repository_ids', editable=False)]
+                ObjectColumn(name='repository_identifier',
+                             label='Assigned Repository',
+                             tooltip='Repository assigned to this analysis in the Experiment Queue',
+                             editor=myEnumEditor(name='available_ids')),
+                ObjectColumn(name='repository_ids',
+                             label='Existing Repositories',
+                             tooltip='Set of repositories that already contain this L#',
+                             editable=False)]
 
         v = View(UItem('conflicts', editor=TableEditor(columns=cols)),
-                 title='Resolve Experiment Conflicts',
+                 title='Resolve Repository Conflicts',
                  resizable=True,
                  buttons=['OK', 'Cancel'])
         return v
@@ -80,19 +86,18 @@ if __name__ == '__main__':
         runs = [AutomatedRunSpec(identifier='63290', repository_identifier='Cather_McIntoshd')]
         cr = ConflictResolver()
         experiments = {}
-        with db.session_ctx():
-            cr.available_ids = db.get_repository_identifiers()
-            eas = db.get_associated_repositories(identifiers)
-            for idn, exps in groupby(eas, key=lambda x: x[1]):
-                experiments[idn] = [e[0] for e in exps]
-            conflicts = []
-            for ai in runs:
-                identifier = ai.identifier
-                es = experiments[identifier]
-                if ai.repository_identifier not in es:
-                    conflicts.append((ai, es))
-            if conflicts:
-                cr.add_conflicts('Foo', conflicts)
+        cr.available_ids = db.get_repository_identifiers()
+        eas = db.get_associated_repositories(identifiers)
+        for idn, exps in groupby(eas, key=lambda x: x[1]):
+            experiments[idn] = [e[0] for e in exps]
+        conflicts = []
+        for ai in runs:
+            identifier = ai.identifier
+            es = experiments[identifier]
+            if ai.repository_identifier not in es:
+                conflicts.append((ai, es))
+        if conflicts:
+            cr.add_conflicts('Foo', conflicts)
 
         if cr.conflicts:
 

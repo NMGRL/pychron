@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from traits.api import HasTraits, Int, List
-from traitsui.api import View, UItem, Item, VGroup, Controller
-# ============= standard library imports ========================
 import os
-# ============= local library imports  ==========================
-from traitsui.editors.check_list_editor import CheckListEditor
+
+# ============= enthought library imports =======================
+from traits.api import HasTraits, Int, List, Str, Bool
+from traitsui.api import View, UItem, Item, VGroup, Controller, EnumEditor, CheckListEditor
+
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceMixin
+from pychron.pychron_constants import DEFAULT_MONITOR_NAME
 
 
 def formatter(x):
@@ -32,7 +32,15 @@ def formatter(x):
 class FindReferencesConfigModel(HasTraits, PersistenceMixin):
     analysis_types = List
     threshold = Int
-
+    mass_spectrometers = List
+    available_mass_spectrometers = List
+    extract_devices = List
+    available_extract_devices = List
+    available_irradiations = List
+    irradiations = List
+    monitor_sample = Str(DEFAULT_MONITOR_NAME)
+    monitor_samples = List
+    replace = Bool(False)
     pattributes = ('analysis_types', 'threshold')
 
     @property
@@ -41,7 +49,7 @@ class FindReferencesConfigModel(HasTraits, PersistenceMixin):
 
     @property
     def formatted_analysis_types(self):
-        return map(formatter, self.analysis_types)
+        return [formatter(a) for a in self.analysis_types]
 
 
 class FindReferencesConfigView(Controller):
@@ -53,12 +61,31 @@ class FindReferencesConfigView(Controller):
             self.model.dump()
 
     def traits_view(self):
-        v = View(VGroup(UItem('analysis_types',
-                              style='custom',
-                              editor=CheckListEditor(values=['Blank Unknown', 'Blank Air',
-                                                             'Blank Cocktail',
-                                                             'Air', 'Cocktail'])),
+        v = View(VGroup(VGroup(UItem('analysis_types',
+                                     style='custom',
+                                     editor=CheckListEditor(values=['Blank Unknown', 'Blank Air',
+                                                                    'Blank Cocktail', 'Blank',
+                                                                    'Air', 'Cocktail'])),
+                               show_border=True,
+                               label='Analysis Types'),
+                        VGroup(UItem('mass_spectrometers', style='custom',
+                                     editor=CheckListEditor(name='available_mass_spectrometers')),
+                               show_border=True,
+                               label='Mass Spectrometers'),
+                        VGroup(UItem('extract_devices', style='custom',
+                                     editor=CheckListEditor(name='available_extract_devices')),
+                               show_border=True,
+                               label='Extract Devices'),
+                        VGroup(UItem('irradiations', style='custom',
+                                     editor=CheckListEditor(name='available_irradiations')),
+                               Item('monitor_sample',
+                                    editor=EnumEditor(name='monitor_samples')),
+                               show_border=True,
+                               label='Monitors'),
+                        Item('replace', label='Replace analyses used to find the references with the references'),
                         Item('threshold', label='Threshold (hrs)')),
+
+                 title='Configure Find References',
                  buttons=['OK', 'Cancel'],
                  kind='livemodal')
 

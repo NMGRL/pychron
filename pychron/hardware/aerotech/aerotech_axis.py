@@ -15,11 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Int, Enum, CFloat
 from traitsui.api import View, Item, Group
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.hardware.axis import Axis
+from six.moves import zip
 
 
 class AerotechAxis(Axis):
@@ -106,7 +108,7 @@ class AerotechAxis(Axis):
                 except Exception:
                     self.warning('{} not set invalid value {}'.format(name, rp))
 
-        names, codes = zip(*attrs)
+        names, codes = list(zip(*attrs))
         return names, codes, param_table
 
     def _build_query(self, code):

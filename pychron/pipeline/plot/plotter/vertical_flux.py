@@ -16,12 +16,13 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-import json
+from __future__ import absolute_import
 import os
 # ============= local library imports  ==========================
 from pychron.graph.ticks import IntTickGenerator
 from pychron.paths import paths
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
+from pychron import json
 
 
 class VerticalFlux(BaseArArFigure):

@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import Str
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.pipeline.plot.models.figure_model import FigureModel
@@ -23,5 +25,10 @@ from pychron.pipeline.plot.panels.icfactor_panel import ICFactorPanel
 
 class ICFactorModel(FigureModel):
     _panel_klass = ICFactorPanel
+    references_name = Str
 
+    def _panel_factory(self, *args, **kw):
+        p = super(ICFactorModel, self)._panel_factory(*args, **kw)
+        p.references_name = self.references_name
+        return p
 # ============= EOF =============================================

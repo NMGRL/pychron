@@ -15,11 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Str, List, Enum
 from traitsui.api import Item, VGroup, CheckListEditor
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from pychron.entry.entry_views.entry import BaseEntry
 from pychron.hardware.core.data_helper import make_bitarray
 
@@ -62,7 +61,7 @@ class UserEntry(BaseEntry):
                 self.user = name
                 self._add_item(db)
 
-            return self.user
+        return self.user
 
     def _add_item(self, db):
         name = self.user
@@ -91,12 +90,13 @@ class UserEntry(BaseEntry):
                 self._add_item(self.db)
 
     def _add_user_db(self, db, name):
-        if not db.get_user(name):
-            c = make_categories(self.categories, self.available_categories)
-            db.add_user(name, email=self.email,
-                        category=c,
-                        affiliation=self.affiliation)
-            return True
+        with db.session_ctx():
+            if not db.get_user(name):
+                c = make_categories(self.categories, self.available_categories)
+                db.add_user(name, email=self.email,
+                            category=c,
+                            affiliation=self.affiliation)
+                return True
 
     def traits_view(self):
         g = VGroup(Item('user', style=self.user_style),

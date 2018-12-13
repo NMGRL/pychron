@@ -13,9 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
 from numpy import polyfit, linspace, polyval
 
 from pychron.core.ui import set_qt
+import six
+from six.moves import range
+from six.moves import zip
 
 
 set_qt()
@@ -46,7 +50,7 @@ class DeadTimeModel(HasTraits):
         """
         xs = []
         ys = []
-        for r in self._cp.itervalues():
+        for r in six.itervalues(self._cp):
             xs.append(int(r['NShots']))
             ys.append(float(r['Ar40']) / float(r['Ar36']))
 
@@ -58,7 +62,7 @@ class DeadTimeModel(HasTraits):
     def get_mean_raw(self, tau=None):
         vs = []
         corrfunc = self._deadtime_correct
-        for r in self._cp.itervalues():
+        for r in six.itervalues(self._cp):
             n = int(r['NShots'])
             nv = ufloat(float(r['Ar40']), float(r['Ar40err'])) * 6240
             dv = ufloat(float(r['Ar36']), float(r['Ar36err'])) * 6240
@@ -75,7 +79,7 @@ class DeadTimeModel(HasTraits):
         mes = []
         for n, gi in groupby(vs, key=key):
             mxs.append(n)
-            ys, es = zip(*[(nominal_value(xi[1]), std_dev(xi[1])) for xi in gi])
+            ys, es = list(zip(*[(nominal_value(xi[1]), std_dev(xi[1])) for xi in gi]))
 
             wm, werr = calculate_weighted_mean(ys, es)
             mys.append(wm)
@@ -84,7 +88,7 @@ class DeadTimeModel(HasTraits):
         return mxs, mys, mes
 
     def get_deadtime_vs_mswd(self):
-        taus = range(1, 20, 1)
+        taus = list(range(1, 20, 1))
         ms = []
         for tau in taus:
             ns, ys, es = self.get_mean_raw(tau)

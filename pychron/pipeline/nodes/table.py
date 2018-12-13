@@ -14,22 +14,76 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-
-from traits.api import HasTraits, Bool, List, Str, Enum
-from traitsui.api import View, UItem, TableEditor, VGroup, Item
-from traitsui.extras.checkbox_column import CheckboxColumn
-from traitsui.table_column import ObjectColumn
-# ============= standard library imports ========================
 import os
-# ============= local library imports  ==========================
 
+from apptools.preferences.preference_binding import bind_preference
+from traits.api import HasTraits, List, Enum, Bool, Str
+from traitsui.api import View, UItem, Item, TableEditor, ObjectColumn, VGroup
+from traitsui.extras.checkbox_column import CheckboxColumn
+
+from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceMixin
-from pychron.pipeline.editors.fusion.fusion_table_editor import FusionTableEditor
 from pychron.pipeline.editors.interpreted_age_table_editor import InterpretedAgeTableEditor
-from pychron.pipeline.nodes.base import BaseNode
-from pychron.pychron_constants import PLUSMINUS_NSIGMA
+from pychron.pipeline.nodes.data import BaseDVCNode
+from pychron.pipeline.nodes.group_age import GroupAgeNode
+from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
+from pychron.pychron_constants import PLUSMINUS_NSIGMA, AIR, BLANK_TYPES, UNKNOWN
+
+
+# ============= enthought library imports =======================
+
+
+class TableNode(BaseDVCNode):
+    pass
+
+
+class AnalysisTableNode(GroupAgeNode):
+    def set_groups(self, state):
+        bind_preference(self, 'skip_meaning', 'pychron.pipeline.skip_meaning')
+
+        def factory(ans, tag='Human Table'):
+            if self.skip_meaning:
+                if tag in self.skip_meaning:
+                    ans = (ai for ai in ans if ai.tag.lower() != 'skip')
+
+            g = InterpretedAgeGroup(analyses=list(ans))
+            return g
+
+        unknowns = list(a for a in state.unknowns if a.analysis_type == UNKNOWN)
+        blanks = (a for a in state.unknowns if a.analysis_type in BLANK_TYPES)
+        airs = (a for a in state.unknowns if a.analysis_type == AIR)
+
+        # unk_group = [factory(analyses) for _, analyses in groupby(sorted(unknowns, key=key), key=key)]
+        blank_group = [factory(analyses) for _, analyses in groupby_group_id(blanks)]
+        air_group = [factory(analyses) for _, analyses in groupby_group_id(airs)]
+        munk_group = [factory(analyses, 'Machine Table') for _, analyses in groupby_group_id(unknowns)]
+
+        groups = {
+            # 'unknowns': unk_group,
+            'blanks': blank_group,
+            'airs': air_group,
+            'machine_unknowns': munk_group}
+
+        state.run_groups = groups
+
+
+class XLSXAnalysisTableNode(AnalysisTableNode):
+    name = 'Analysis Table'
+    # options_klass = XLSXTableWriterOptions
+
+    # def _finish_configure(self):
+    #     self.options.dump()
+    # auto_configure = False
+    # configurable = False
+
+    # def run(self, state):
+    #     unknowns = list(a for a in state.unknowns if a.analysis_type == 'unknown')
+    #
+    #     editor = ArArTableEditor(dvc=self.dvc)
+    #     editor.items = unknowns
+    #     state.editors.append(editor)
+    #     self.set_groups(state)
 
 
 class TableOptions(HasTraits, PersistenceMixin):
@@ -75,7 +129,9 @@ class InterpretedAgeTableOptions(TableOptions):
         return [int(c.sigfigs) for c in self.columns if c.sigfigs]
 
     def _columns_default(self):
-        cs = (('Sample', 'sample', ''),
+        cs = (('Status', 'status', ''),
+              ('Name', 'name', ''),
+              ('Sample', 'sample', ''),
               ('Identifier', 'identifier', ''),
               ('Material', 'material', ''),
               ('Irradiation', 'irradiation', ''),
@@ -85,8 +141,7 @@ class InterpretedAgeTableOptions(TableOptions):
               ('K/Ca Error', 'kca_err', 3),
               ('N', 'nanalyses', ''),
               ('Age', 'display_age', 3),
-              ('Age Error', 'display_age_err', 3),
-              )
+              ('Age Error', 'display_age_err', 3))
 
         cols = [TableColumn(name=attr, key=key, sigfigs=str(sigfigs)) for attr, key, sigfigs in cs]
         return cols
@@ -109,56 +164,57 @@ class InterpretedAgeTableOptions(TableOptions):
         return v
 
 
-# ==================================================
-
-
-class TableNode(BaseNode):
-    pass
-    # options = Instance(TableOptions)
-
-    # def configure(self, pre_run=False, **kw):
-    #     if not pre_run:
-    #         self._manual_configured = True
-    #
-    #     return self._configure(self.options)
-
-    # def _options_default(self):
-    #     return self.options_klass()
-
-
-class AnalysisTableNode(TableNode):
-    name = 'Analysis Table'
-    options_klass = AnalysisTableOptions
-
-    auto_configure = False
-
-    def run(self, state):
-        if state.unknowns:
-            self._make_unknowns_table(state)
-
-        if self.options.references_enabled and state.references:
-            self._make_references_table(state.references)
-
-    def _make_unknowns_table(self, state):
-        items = state.unknowns
-
-        editor_klass = FusionTableEditor
-        editor = editor_klass()
-
-        # editor.make_records(items)
-        editor.items = items
-
-        state.editors.append(editor)
-
-    def _make_references_table(self, items):
-        pass
-
-
+#
+# # ==================================================
+#
+#
+# class TableNode(BaseNode):
+#     pass
+#     # options = Instance(TableOptions)
+#
+#     # def configure(self, pre_run=False, **kw):
+#     #     if not pre_run:
+#     #         self._manual_configured = True
+#     #
+#     #     return self._configure(self.options)
+#
+#     # def _options_default(self):
+#     #     return self.options_klass()
+#
+#
+# class AnalysisTableNode(TableNode):
+#     name = 'Analysis Table'
+#     options_klass = AnalysisTableOptions
+#
+#     auto_configure = False
+#
+#     def run(self, state):
+#         if state.unknowns:
+#             self._make_unknowns_table(state)
+#
+#         # if self.options.references_enabled and state.references:
+#         #     self._make_references_table(state.references)
+#
+#     def _make_unknowns_table(self, state):
+#         items = state.unknowns
+#
+#         editor_klass = FusionTableEditor
+#         editor = editor_klass()
+#
+#         # editor.make_records(items)
+#         editor.items = items
+#
+#         state.editors.append(editor)
+#
+#     # def _make_references_table(self, items):
+#     #     pass
+#
+#
 class InterpretedAgeTableNode(TableNode):
     name = 'Interpreted Age Table'
     options_klass = InterpretedAgeTableOptions
 
-    def finish_configure(self):
+    def _finish_configure(self):
         if self.options:
             self.options.dump()
 

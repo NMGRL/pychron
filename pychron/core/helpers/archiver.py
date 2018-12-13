@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Range, Bool, Str, HasTraits
 # ============= standard library imports ========================
 import os
@@ -46,15 +47,18 @@ class Archiver(HasTraits):
     def info(self, msg, *args, **kw):
         logger.info(msg)
 
-    def clean(self):
-        self._clean()
+    def clean(self, exclude=None):
+        self._clean(exclude)
 
-    def _clean(self):
+    def _clean(self, exclude):
         """
             1. find all files older than archive_days+archive_hours
                 - move to archive
             2. remove archive directories older than archive_months
         """
+        if exclude is None:
+            exclude = []
+
         root = self.root
         if not root:
             return
@@ -65,6 +69,9 @@ class Archiver(HasTraits):
         cnt = 0
         for p in self._get_files(root):
             rp = os.path.join(root, p)
+            if p in exclude or rp in exclude:
+                continue
+
             result = os.stat(rp)
             mt = result.st_mtime
             creation_date = datetime.fromtimestamp(mt)
@@ -131,7 +138,7 @@ class Archiver(HasTraits):
         self.info('Archiving {:15s} to ./archive/{}/{}'.format(p, year, mname))
         try:
             shutil.move(src, dst)
-        except Exception, e:
+        except Exception as e:
             self.warning('Archiving failed')
             self.warning(e)
 

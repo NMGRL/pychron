@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Instance
 from traitsui.api import View, Item, UItem, VGroup, HGroup
 from traitsui.editors import TabularEditor
@@ -84,13 +85,19 @@ class DataReductionTagView(Controller):
 
 class AnalysisTagView(Controller):
     model = Instance(AnalysisTagModel)
+
     def traits_view(self):
-        v = View(Item('tag'),
-                 UItem('items', editor=TabularEditor(adapter=ItemAdapter(),
-                                                     multi_select=True,
-                                                     operations=['delete'])),
-                 HGroup(Item('use_filter', label='Remove "Invalid" analyses from figure'),
-                        defined_when='items'),
+        note_grp = VGroup(UItem('note', style='custom'),
+                          show_border=True, label='Note')
+
+        v = View(VGroup(Item('tag'),
+                        note_grp,
+                        UItem('items', editor=TabularEditor(adapter=ItemAdapter(),
+                                                            multi_select=True,
+                                                            selected='selected',
+                                                            operations=['delete'])),
+                        HGroup(Item('use_filter', label='Remove "Invalid" analyses from figure'),
+                               defined_when='items')),
                  resizable=True,
                  width=500,
                  height=400,
@@ -99,41 +106,6 @@ class AnalysisTagView(Controller):
                  title='Tags')
 
         return v
-
-        # def traits_view(self):
-        #     cols = [ObjectColumn(name='name', editable=False),
-        #             # ObjectColumn(name='user', editable=False),
-        #             CheckboxColumn(name='omit_ideo'),
-        #             CheckboxColumn(name='omit_spec'),
-        #             CheckboxColumn(name='omit_iso'),
-        #             CheckboxColumn(name='omit_series')]
-        #
-        #     editor = TableEditor(columns=cols,
-        #                          selected='selected',
-        #                          sortable=False, )
-        #
-        #     v = View(UItem('tags',
-        #                    editor=editor),
-        #              HGroup(
-        #                  icon_button_editor('add_tag_button', 'add', tooltip='Add a tag'),
-        #                  icon_button_editor('delete_tag_button', 'delete', tooltip='Delete selected tags'),
-        #                  icon_button_editor('save_button', 'database_save',
-        #                                     tooltip='Save changes from the "Tag" table to the database')),
-        #              UItem('items', editor=TabularEditor(adapter=ItemAdapter(),
-        #                                                  multi_select=True,
-        #                                                  operations=['delete']),
-        #                    defined_when='items'),
-        #              HGroup(Item('use_filter', label='Remove "Invalid" analyses from figure'),
-        #                     defined_when='items'),
-        #
-        #              resizable=True,
-        #              width=500,
-        #              height=400,
-        #              buttons=['OK', 'Cancel'],
-        #              kind='livemodal',
-        #              title='Tags')
-        #
-        #     return v
 
 
 if __name__ == '__main__':

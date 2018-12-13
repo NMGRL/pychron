@@ -15,8 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from PySide.QtCore import Qt
-from PySide.QtGui import QFont, QFontMetrics
+from __future__ import absolute_import
+from pyface.qt.QtCore import Qt
+from pyface.qt.QtGui import QFont, QFontMetrics
 from traits.api import Event, Callable, Bool
 from traitsui.editors.table_editor import TableEditor
 from traitsui.qt4.table_editor import TableView
@@ -72,5 +73,7 @@ class myTableEditor(TableEditor):
         if self.on_command_key:
             self.on_command_key(new)
 
+    def _get_custom_editor_class(self):
+        return self.simple_editor_class
 
 # ============= EOF =============================================

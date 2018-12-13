@@ -15,9 +15,11 @@
 # ===============================================================================
 
 
-
 # ============= enthought library imports =======================
-from traits.api import Range, Event, Bool, on_trait_change, Property, Float
+from __future__ import absolute_import
+from threading import Timer
+
+from traits.api import Range, Event, Bool, on_trait_change, Property, Float, Int
 from traitsui.api import View, Item, ButtonEditor, HGroup, Group
 
 # ============= standard library imports ========================
@@ -34,8 +36,10 @@ class FiberLight(AbstractDevice):
     power = Event
     power_label = Property(depends_on='state')
     state = Bool
-    auto_onoff = Bool(False)
+    # auto_onoff = Bool(False)
     name = 'fiber_light'
+    timeout = Int(3000)
+    _timer = None
 
     def load_additional_args(self, config):
         """
@@ -52,8 +56,8 @@ class FiberLight(AbstractDevice):
             return True
 
     def initialize(self, *args, **kw):
-        if self._cdevice:
-            self._cdevice.setup_consumer(self._write_intensity)
+        # if self._cdevice:
+        #     self._cdevice.setup_consumer(self._write_intensity)
 
         return True
 
@@ -80,6 +84,16 @@ class FiberLight(AbstractDevice):
         self.state = True
         if self._cdevice is not None:
             self._cdevice.power_on()
+            if self.timeout:
+                if self.timer:
+                    self.timer.cancel()
+
+                def autooff():
+                    self.debug('auto power off timeout={}'.format(self.timeout))
+                    self.power_off()
+
+                self.timer = Timer(self.timeout, autooff)
+                self.timer.start()
 
     def power_off(self, *args):
         """
@@ -96,7 +110,9 @@ class FiberLight(AbstractDevice):
         """
         self._intensity = int(v)
         if self._cdevice is not None:
-            self._cdevice.add_consumable(self._intensity)
+            self._write_intensity(self._intensity)
+
+            # self._cdevice.add_consumable(self._intensity)
 
     @on_trait_change('power')
     def power_fired(self):
@@ -110,11 +126,7 @@ class FiberLight(AbstractDevice):
     def _get_power_label(self):
         """
         """
-        if self.state:
-            s = 'ON'
-        else:
-            s = 'OFF'
-        return s
+        return 'OFF' if self.state else 'ON'
 
     def get_control_group(self):
         return Group(HGroup(Item('power', editor=ButtonEditor(label_value='power_label'),
@@ -122,7 +134,8 @@ class FiberLight(AbstractDevice):
                             Item('intensity', format_str='%0.2f',
                                  show_label=False,
                                  enabled_when='state')),
-                     Item('auto_onoff'))
+                     # Item('auto_onoff'),
+                     Item('timeout'))
 
     def traits_view(self):
         return View(self.get_control_group())

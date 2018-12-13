@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from itertools import groupby
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-# from pychron.database.interpreted_age import InterpretedAge
+from __future__ import absolute_import
+
+import uuid
+
+from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.options.isochron import InverseIsochronOptions
 from pychron.options.spectrum import SpectrumOptions
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
@@ -27,10 +28,6 @@ from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
 
 class InterpretedAgeEditor(FigureEditor):
     def get_interpreted_ages(self):
-        key = lambda x: x.group_id
-        unks = sorted(self.analyses, key=key)
-        # ok = 'omit_{}'.format(self.basename)
-
         po = self.plotter_options
         additional = {}
         if isinstance(po, SpectrumOptions):
@@ -45,18 +42,20 @@ class InterpretedAgeEditor(FigureEditor):
         else:
             ek = po.error_calc_method
             pk = 'Weighted Mean'
-            additional['include_j_error_in_individual_analyses'] = po.include_j_error
+            # additional['include_j_error_in_individual_analyses'] = po.include_j_error_in_individual_analyses
+            additional['include_j_position_error'] = po.include_j_position_error
             additional['include_j_error_in_mean'] = po.include_j_error_in_mean
 
         def func(aa):
-            return InterpretedAgeGroup(analyses=filter(lambda x: not x.is_omitted(), aa),
-                                       all_analyses=aa,
-                                       preferred_age_kind=pk,
-                                       preferred_age_error_kind=ek,
-                                       use=True,
-                                       **additional)
+            p = InterpretedAgeGroup(analyses=aa,
+                                    use=True,
+                                    uuid=str(uuid.uuid4()),
+                                    **additional)
+            p.set_preferred_kinds()
+            p.set_preferred_age(pk, ek)
+            return p
 
-        ias = [func(list(ans)) for gid, ans in groupby(unks, key=key)]
+        ias = [func(list(ans)) for gid, ans in groupby_group_id(self.analyses)]
         return ias
 
 # ============= EOF =============================================

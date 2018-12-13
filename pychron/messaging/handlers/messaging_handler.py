@@ -16,9 +16,11 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
+from __future__ import print_function
 import socket
 # ============= local library imports  ==========================
-from SocketServer import BaseRequestHandler
+from six.moves.socketserver import BaseRequestHandler
 
 
 class MessagingHandler(BaseRequestHandler):
@@ -81,7 +83,7 @@ class MessagingHandler(BaseRequestHandler):
         gen = self._response_blocks(response)
         while totalsent < mlen:
             try:
-                msg = gen.next()
+                msg = next(gen)
             except StopIteration:
                 break
 
@@ -89,7 +91,7 @@ class MessagingHandler(BaseRequestHandler):
                 totalsent += send(msg)
                 # totalsent += sock.sendto(msg, self.client_address)
                 #print 'totalsent={} total={}'.format(totalsent, mlen)
-            except socket.error, e:
-                print 'exception', e
+            except socket.error as e:
+                print('exception', e)
                 continue
 # ============= EOF ====================================

@@ -15,13 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
+from six.moves import range
 from traits.api import Str, Float, Property, List
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 from pychron.options.fit import FitAuxPlot
-from pychron.options.icfactor_views import VIEWS
 from pychron.options.series import SeriesOptions
-from pychron.pychron_constants import FIT_TYPES_INTERPOLATE
+from pychron.options.views.icfactor_views import VIEWS
+from pychron.pychron_constants import FIT_TYPES_INTERPOLATE, NULL_STR, MAIN, APPEARANCE
 
 
 class ICFactorAuxPlot(FitAuxPlot):
@@ -37,10 +39,14 @@ class ICFactorAuxPlot(FitAuxPlot):
     def _analysis_types_default(self):
         from pychron.experiment.utilities.identifier import ANALYSIS_MAPPING
 
-        return ANALYSIS_MAPPING.values()
+        return list(ANALYSIS_MAPPING.values())
 
     def _get_name(self):
-        return '{}/{}'.format(self.numerator, self.denominator)
+        if self.denominator and self.denominator != NULL_STR:
+            ret = '{}/{}'.format(self.numerator, self.denominator)
+        else:
+            ret = self.numerator
+        return ret
 
     def _get_fit_types(self):
         return FIT_TYPES_INTERPOLATE
@@ -48,7 +54,13 @@ class ICFactorAuxPlot(FitAuxPlot):
 
 class ICFactorOptions(SeriesOptions):
     aux_plot_klass = ICFactorAuxPlot
-    subview_names = List(['Main', 'ICFactor', 'Appearance'])
+
+    def initialize(self):
+        self.subview_names = [MAIN, 'ICFactor', APPEARANCE]
+
+    def set_detectors(self, dets):
+        dets = [NULL_STR, 'age'] + dets
+        super(ICFactorOptions, self).set_detectors(dets)
 
     def get_subview(self, name):
         name = name.lower()
@@ -60,14 +72,21 @@ class ICFactorOptions(SeriesOptions):
         return VIEWS[name]
 
     def set_aux_plots(self, ps):
-        pp = []
-        for pd in ps:
-            pp.append(self.aux_plot_klass(**pd))
+        # for p in self.aux_plots:
+        #     r = []
+        #     for pd in ps:
+        #         if p.numerator == pd.get('numerator') and p.denominator == pd.get('denominator'):
+        #             r.append(pd)
+        #     for ri in r:
+        #         ps.remove(ri)
+        #
+        pp = [self.aux_plot_klass(**pd) for pd in ps]
 
         n = 5 - len(pp)
         if n:
-            pp.extend((self.aux_plot_klass() for i in xrange(n)))
+            pp.extend((self.aux_plot_klass() for i in range(n)))
 
         self.aux_plots = pp
+        self.selected = []
 
 # ============= EOF =============================================

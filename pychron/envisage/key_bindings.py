@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
+
 from pyface.message_dialog import information
 from traits.trait_types import List
 
@@ -25,7 +27,6 @@ from traits.api import HasTraits, Str
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 import yaml
-from pychron.globals import globalv
 from pychron.paths import paths
 # from pychron.core.ui.keybinding_editor import KeyBindingEditor
 
@@ -36,7 +37,8 @@ from pychron.paths import paths
 
 
 def key_bindings_path():
-    return os.path.join(paths.hidden_dir, 'key_bindings.{}'.format(globalv.username))
+    return os.path.join(paths.appdata_dir, 'key_bindings')
+    # return os.path.join(paths.hidden_dir, 'key_bindings.{}'.format(globalv.username))
 
 
 def load_key_map():
@@ -68,13 +70,13 @@ def dump_key_bindings(obj):
 
 
 def keybinding_exists(key):
-    for k, (b, d) in user_key_map.iteritems():
+    for k, (b, d) in user_key_map.items():
         if b == key:
             return d
 
 
 def clear_keybinding(desc):
-    for k, (b, d) in user_key_map.iteritems():
+    for k, (b, d) in user_key_map.items():
         if d == desc:
             user_key_map[k] = ('', d)
             dump_key_bindings(user_key_map)

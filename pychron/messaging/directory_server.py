@@ -15,15 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from traits.api import String, Str, Int
 # from traitsui.api import View, Item, TableEditor
 # ============= standard library imports ========================
-from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+from six.moves.BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from cStringIO import StringIO
 import cgi
 # import string, cgi, time
 import os  # os. path
-import urllib
+import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 import posixpath
 import sys
 import shutil
@@ -131,7 +133,7 @@ class DirectoryHandler(BaseHTTPRequestHandler):
             return None
         ll.sort(key=lambda a: a.lower())
         f = StringIO()
-        displaypath = cgi.escape(urllib.unquote(self.path))
+        displaypath = cgi.escape(six.moves.urllib.parse.unquote(self.path))
         f.write('<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">')
         f.write("<html>\n<title>Directory listing for %s</title>\n" % displaypath)
         f.write("<body>\n<h2>Directory listing for %s</h2>\n" % displaypath)
@@ -147,7 +149,7 @@ class DirectoryHandler(BaseHTTPRequestHandler):
                 displayname = name + "@"
                 # Note: a link to a directory displays with @ and links with /
             f.write('<li><a href="%s">%s</a>\n'
-                    % (urllib.quote(linkname), cgi.escape(displayname)))
+                    % (six.moves.urllib.parse.quote(linkname), cgi.escape(displayname)))
         f.write("</ul>\n<hr>\n</body>\n</html>\n")
         length = f.tell()
         f.seek(0)
@@ -169,9 +171,9 @@ class DirectoryHandler(BaseHTTPRequestHandler):
         # abandon query parameters
         path = path.split('?', 1)[0]
         path = path.split('#', 1)[0]
-        path = posixpath.normpath(urllib.unquote(path))
+        path = posixpath.normpath(six.moves.urllib.parse.unquote(path))
         words = path.split('/')
-        words = filter(None, words)
+        words = [_f for _f in words if _f]
 
         path = self.server.root
 #        path = os.getcwd()
@@ -247,11 +249,11 @@ def serve():
 #        server = HTTPServer(('', 8080), MyHandler)
         server = DirectoryServer(host='localhost', port=8080)
         server.root = '/Users/ross/Sandbox/raster'
-        print 'started httpserver...'
+        print('started httpserver...')
         server.start()
 
     except KeyboardInterrupt:
-        print '^C received, shutting down server'
+        print('^C received, shutting down server')
         server.socket.close()
 
 def main():

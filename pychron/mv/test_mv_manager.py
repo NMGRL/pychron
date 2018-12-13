@@ -16,6 +16,8 @@
 
 # ============= enthought library imports =======================
 
+from __future__ import absolute_import
+from __future__ import print_function
 from traits.api import Button, HasTraits
 from traitsui.api import View, UItem
 
@@ -34,7 +36,7 @@ class TestAutocenter(HasTraits):
     test1_button = Button('Test1')
 
     def _test1(self):
-        print 'test1'
+        print('test1')
         a = CO2AutocenterManager(video=Video())
         a.calculate_new_center(0, 0, 0, 0, dim=1.0)
 

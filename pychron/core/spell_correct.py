@@ -18,12 +18,12 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-'''
+"""
 Adapted from
 http://norvig.com/spell-correct.html
-'''
-
-alphabet = 'abcdefghijklmnopqrstuvwxyz'
+"""
+import string
+alphabet = string.ascii_lowercase
 
 
 def edits1(word):

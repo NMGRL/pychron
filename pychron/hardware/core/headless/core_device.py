@@ -17,6 +17,7 @@
 # =============enthought library imports=======================
 # =============standard library imports ========================
 # =============local library imports  ==========================
+from __future__ import absolute_import
 from pychron.hardware.core.base_core_device import BaseCoreDevice
 from pychron.headless_config_loadable import HeadlessConfigLoadable
 

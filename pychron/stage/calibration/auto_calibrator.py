@@ -14,14 +14,16 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-
-from traits.api import Instance, HasTraits, Str, Bool, Float
-# ============= standard library imports ========================
+import os
 import time
 from threading import Thread
+
 from numpy import array, hstack, average
-# ============= local library imports  ==========================
+# ============= enthought library imports =======================
+from traits.api import Instance, HasTraits, Str, Bool, Float
+
+from pychron.core.helpers.filetools import pathtolist
+from pychron.core.helpers.strtools import csv_to_floats
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.view_util import open_view
 from pychron.lasers.stage_managers.stage_visualizer import StageVisualizer
@@ -46,11 +48,7 @@ class SemiAutoCalibrator(TrayCalibrator):
         3. traverse holes finding autocenter position
     """
 
-    _alive = False
     stage_map = Instance('pychron.stage.maps.base_stage_map.BaseStageMap')
-
-    def isAlive(self):
-        return self._alive
 
     def handle(self, step, x, y, canvas):
         ret = None
@@ -64,7 +62,7 @@ class SemiAutoCalibrator(TrayCalibrator):
             # check stage map has at least one calibration hole.
             # if not issue warning and ask for manual locate right
             if self._check_auto_calibration():
-                self.calibration_step = 'Auto Calibration'
+                self.calibration_step = 'Auto Calibrate'
             else:
                 name = self.stage_map.name
                 msg = 'Auto Rotation calibration not available.\n ' \
@@ -81,24 +79,24 @@ class SemiAutoCalibrator(TrayCalibrator):
             ret = dict(calibration_step='Traverse',
                        clear_corrections=False,
                        rotation=canvas.calibration_item.rotation)
-        elif step == 'Auto Calibration':
+        elif step == 'Auto Calibrate':
             self._alive = True
             t = Thread(target=self._auto_calibrate,
                        args=(canvas.calibration_item,))
             t.start()
-            self.calibration_step = 'Cancel'
+            self.calibration_enabled = False
+            # self.calibration_step = 'Cancel'
         elif step == 'Traverse':
             if self.confirmation_dialog('Start Autocentering Traverse'):
                 self._alive = True
                 t = Thread(target=self._traverse,
                            args=(canvas.calibration_item,))
                 t.start()
-                self.calibration_step = 'Cancel'
+                self.calibration_enabled = False
+                # self.calibration_step = 'Cancel'
             else:
                 self.calibration_step = 'Calibrate'
-        elif step == 'Cancel':
-            self._alive = False
-            self.calibration_step = 'Calibrate'
+                self.calibration_enabled = True
 
         return ret
 
@@ -108,14 +106,29 @@ class SemiAutoCalibrator(TrayCalibrator):
         rrot = lrot = None
         # locate right
         if self._alive:
-            hole = smap.get_calibration_hole('east')
-            if hole is not None:
-                self.debug('Locate east {}'.format(hole.id))
-                npt, corrected = self._autocenter(hole)
-                if corrected:
-                    rrot = calibration.calculate_rotation(*npt)
-                    calibration.set_right(*npt)
-                    self.debug('Calculated rotation= {}'.format(rrot))
+            east = smap.get_calibration_hole('east')
+            if east is not None:
+                center = smap.get_calibration_hole('center')
+                if center is not None:
+                    self.debug('walk out to locate east')
+                    for hid in range(int(center.id) + 1, int(east.id), 2):
+                        if not self._alive:
+                            break
+                        hole = smap.get_hole(hid)
+                        npt, corrected = self._autocenter(hole)
+                        if corrected:
+                            rrot = calibration.calculate_rotation(*npt)
+                            calibration.set_right(*npt)
+                            self.debug('Calculated rotation= {}'.format(rrot))
+                        self.stage_manager.close_open_images()
+
+                if self._alive:
+                    self.debug('Locate east {}'.format(east.id))
+                    npt, corrected = self._autocenter(east)
+                    if corrected:
+                        rrot = calibration.calculate_rotation(*npt)
+                        calibration.set_right(*npt)
+                        self.debug('Calculated rotation= {}'.format(rrot))
                 self.stage_manager.close_open_images()
 
         # locate left
@@ -152,6 +165,15 @@ class SemiAutoCalibrator(TrayCalibrator):
             # traverse holes
             self._traverse(calibration)
 
+            # move back to center hole
+            center = self.stage_map.get_calibration_hole('center')
+            if center:
+                x, y = center.corrected_position if center.has_correction else center.nominal_position
+                self.stage_manager.linear_move(x, y, block=True, force=True, use_calibration=False)
+            else:
+                self.warning('No calibration hole defined for "center" in Stage Map file {}'.format(
+                    self.stage_map.file_path))
+
     def _traverse(self, calibration):
         """
             visit each hole in holes
@@ -173,7 +195,8 @@ class SemiAutoCalibrator(TrayCalibrator):
         guess = None
         weights = [1, 2, 3, 4, 5, 6]
         # holes = [smap.get_hole(1), smap.get_hole(3), smap.get_hole(5)]
-
+        success = True
+        non_corrected = 0
         for hi in holes:
             sm.close_open_images()
 
@@ -194,8 +217,19 @@ class SemiAutoCalibrator(TrayCalibrator):
 
             npt, corrected = self._autocenter(hi, guess=guess)
             if not corrected:
+                non_corrected += 1
                 self.info('Failed to autocenter {}'.format(hi.id))
                 npt = nominal_x, nominal_y
+
+            if non_corrected > 5:
+                invoke_in_main_thread(self.warning_dialog,
+                                      '6 consecutive holes failed to autocenter. Autocalibration Canceled')
+                success = False
+                break
+            else:
+                non_corrected = -1
+
+            non_corrected += 1
 
             dx = nominal_x - npt[0]
             dy = nominal_y - npt[1]
@@ -208,22 +242,24 @@ class SemiAutoCalibrator(TrayCalibrator):
             results.append(res)
             points.append((npt, corrected))
 
-        smap.generate_row_interpolated_corrections()
-
         sm.close_open_images()
 
-        # display the results
-        sv = StageVisualizer()
-        sv.results = results
-        sv.set_stage_map(self.stage_map, points, calibration)
-        sv.save()
+        if success:
+            smap.generate_row_interpolated_corrections()
+            # display the results
+            sv = StageVisualizer()
+            sv.results = results
+            sv.set_stage_map(self.stage_map, points, calibration)
+            sv.save()
 
-        invoke_in_main_thread(open_view, sv)
+            invoke_in_main_thread(open_view, sv)
 
         # reset calibration manager
         self.calibration_step = 'Calibrate'
+        self.calibration_enabled = True
 
     def _autocenter(self, hi, guess=None):
+        self.debug('autocentering hole={}, guess={}'.format(hi.id, guess))
         sm = self.stage_manager
         kw = {'block': True, 'force': True}
         if guess is None:
@@ -253,12 +289,63 @@ class SemiAutoCalibrator(TrayCalibrator):
         return l is not None or r is not None
 
 
-class AutoCalibrator(TrayCalibrator):
+class AutoCalibrator(SemiAutoCalibrator):
     """
         1a. move to center position automatically
          b. autocenter
         2a. move to right position automatically
          b. autocenter
     """
+
+    _warned = False
+
+    def handle(self, step, x, y, canvas):
+
+        center_guess = self._get_center_guess()
+        center_hole = self.stage_map.get_calibration_hole('center')
+        if not self._check_auto_calibration():
+            if not self._warned:
+                self.warning_dialog('Auto calibration not available. Stage map not properly configured')
+                self._warned = True
+            return super(AutoCalibrator, self).handle(step, x, y, canvas)
+
+        if center_guess is None or center_hole is None:
+            if not self._warned:
+                self.warning_dialog('Center hole/Center guess not configured. Center hole={}, Guess={}'.format(
+                    center_hole, center_guess))
+                self._warned = True
+            return super(AutoCalibrator, self).handle(step, x, y, canvas)
+        else:
+            ret = None
+            if step == 'Calibrate':
+                self.stage_map.clear_correction_file()
+                canvas.new_calibration_item()
+                self.calibration_enabled = False
+
+                self._alive = True
+                t = Thread(target=self._auto_calibrate,
+                           args=(canvas.calibration_item, center_hole, center_guess))
+                t.start()
+            return ret
+
+    def _auto_calibrate(self, calibration, center_hole, center_guess):
+        npos, corrected = self._autocenter(center_hole, center_guess)
+        if not corrected:
+            invoke_in_main_thread(self.warning_dialog, 'Failed to located center hole. Try SemiAutoCalibration')
+            self._warned = False
+            self.calibration_step = 'Calibrate'
+            self.calibration_enabled = True
+        else:
+            super(AutoCalibrator, self)._auto_calibrate(calibration)
+
+    def _get_center_guess(self):
+        path = self.stage_map.center_guess_path
+
+        if os.path.isfile(path):
+            try:
+                guess = pathtolist(path)
+                return csv_to_floats(guess[0])
+            except BaseException as e:
+                self.debug('Failed parsing center guess file {}. error={}'.format(path, e))
 
 # ============= EOF =============================================

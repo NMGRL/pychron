@@ -15,16 +15,19 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance
-# ============= standard library imports ========================
+from __future__ import absolute_import
+from __future__ import print_function
+
 import json
 import os
 import time
-from itertools import groupby
 from datetime import timedelta
-# ============= local library imports  ==========================
+from itertools import groupby
+
 from numpy import array_split
-from pychron.canvas.utils import make_geom
+from six.moves import filter
+from traits.api import Instance
+
 from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.database.records.isotope_record import IsotopeRecordView
@@ -65,17 +68,13 @@ class IsoDBTransfer(Loggable):
 
     def init(self):
         conn = dict(host=os.environ.get('ARGONSERVER_HOST'),
-                    username=os.environ.get('ARGONSERVER_DB_USER'),
+                    username='jross',#os.environ.get('ARGONSERVER_DB_USER'),
                     password=os.environ.get('ARGONSERVER_DB_PWD'),
                     kind='mysql')
 
-        self.dvc = DVC(bind=False,
-                       organization='NMGRLData',
-                       meta_repo_name='MetaData')
-        paths.meta_root = os.path.join(paths.dvc_dir, self.dvc.meta_repo_name)
-
-        use_local = True
+        use_local = False
         if use_local:
+            meta_name = 'MetaDataDev'
             dest_conn = dict(host='localhost',
                              username=os.environ.get('LOCALHOST_DB_USER'),
                              password=os.environ.get('LOCALHOST_DB_PWD'),
@@ -83,9 +82,14 @@ class IsoDBTransfer(Loggable):
                              # echo=True,
                              name='pychrondvc_dev')
         else:
+            meta_name = 'NMGRLMetaData'
             dest_conn = conn.copy()
             dest_conn['name'] = 'pychrondvc'
 
+        self.dvc = DVC(bind=False,
+                       organization='NMGRLData',
+                       meta_repo_name=meta_name)
+        paths.meta_root = os.path.join(paths.dvc_dir, self.dvc.meta_repo_name)
         self.dvc.db.trait_set(**dest_conn)
         if not self.dvc.initialize():
             self.warning_dialog('Failed to initialize DVC')
@@ -96,7 +100,7 @@ class IsoDBTransfer(Loggable):
 
         proc = IsotopeDatabaseManager(bind=False, connect=False)
 
-        use_local_src = True
+        use_local_src = False
         if use_local_src:
             conn = dict(host='localhost',
                         username=os.environ.get('LOCALHOST_DB_USER'),
@@ -156,7 +160,7 @@ class IsoDBTransfer(Loggable):
         self.debug('bulk import irradiation {}'.format(irradname))
         oruns = []
         ts, idxs = self._get_irradiation_timestamps(irradname, tol_hrs=tol_hrs)
-        print ts
+        print(ts)
         repository_identifier = 'Irradiation-{}'.format(irradname)
 
         # add project
@@ -200,11 +204,11 @@ class IsoDBTransfer(Loggable):
                     # runs = filter(lambda x: x.labnumber.irradiation_position is None or
                     #                         x.labnumber.irradiation_position.level.irradiation.name == irradname, ans)
 
-                    runs = filter(filterfunc, ans)
+                    runs = list(filter(filterfunc, ans))
                     if dry:
                         for ai in runs:
                             oruns.append(ai.record_id)
-                            print ms, ai.record_id
+                            print(ms, ai.record_id)
                     else:
                         self.debug('================= Do Export i: {} low: {} high: {}'.format(i, low, high))
                         self.debug('N runs: {}'.format(len(runs)))
@@ -214,7 +218,7 @@ class IsoDBTransfer(Loggable):
 
         return oruns
 
-    def bulk_import_project(self, project, principal_investigator, dry=True):
+    def bulk_import_project(self, project, principal_investigator, source_name=None, dry=True):
         src = self.processor.db
         tol_hrs = 6
         self.debug('bulk import project={}, pi={}'.format(project, principal_investigator))
@@ -237,9 +241,12 @@ class IsoDBTransfer(Loggable):
         #             d = ed.name == 'Fusions CO2'
         #
         #     return (a or b) and d
-        #
-        for ms in ('jan', 'obama'):
-            ts, idxs = self._get_project_timestamps(project, ms, tol_hrs=tol_hrs)
+
+        if source_name is None:
+            source_name = project
+
+        for ms in ('jan', 'obama', 'felix'):
+            ts, idxs = self._get_project_timestamps(source_name, ms, tol_hrs=tol_hrs)
             for i, ais in enumerate(array_split(ts, idxs + 1)):
                 if not ais.shape[0]:
                     self.debug('skipping {}'.format(i))
@@ -248,17 +255,19 @@ class IsoDBTransfer(Loggable):
                 low = get_datetime(ais[0]) - timedelta(hours=tol_hrs / 2.)
                 high = get_datetime(ais[-1]) + timedelta(hours=tol_hrs / 2.)
 
-                print '========{}, {}, {}'.format(ms, low, high)
+                print('========{}, {}, {}'.format(ms, low, high))
                 with src.session_ctx():
                     runs = src.get_analyses_date_range(low, high,
-                                                       projects=('REFERENCES', project),
+                                                       # labnumber=(63630, 63632, 63634, 63636, 63638, 63646, 63648),
+                                                       projects=('REFERENCES', ),
+                                                       # projects=('REFERENCES', source_name),
                                                        mass_spectrometers=(ms,))
 
                     if dry:
                         for ai in runs:
                             oruns.append(ai.record_id)
-                            print ai.measurement.mass_spectrometer.name, ai.record_id, ai.labnumber.sample.name, \
-                                ai.analysis_timestamp
+                            print(ai.measurement.mass_spectrometer.name, ai.record_id, ai.labnumber.sample.name, \
+                                ai.analysis_timestamp)
                     else:
                         self.debug('================= Do Export i: {} low: {} high: {}'.format(i, low, high))
                         self.debug('N runs: {}'.format(len(runs)))
@@ -282,7 +291,7 @@ class IsoDBTransfer(Loggable):
                     low = get_datetime(ais[0]) - timedelta(hours=tol_hrs / 2.)
                     high = get_datetime(ais[-1]) + timedelta(hours=tol_hrs / 2.)
 
-                    print '========{}, {}, {}'.format(ms, low, high)
+                    print('========{}, {}, {}'.format(ms, low, high))
                     with src.session_ctx():
                         runs = src.get_analyses_date_range(low, high,
                                                            projects=('REFERENCES',),
@@ -298,7 +307,7 @@ class IsoDBTransfer(Loggable):
                 oruns = pdict[o]
                 for ai in pruns:
                     if ai in oruns:
-                        print p, o, ai
+                        print(p, o, ai)
 
     def import_date_range(self, low, high, spectrometer, repository_identifier, creator):
         src = self.processor.db
@@ -336,7 +345,7 @@ class IsoDBTransfer(Loggable):
                             if self._transfer_analysis(a, repository_identifier, monitor_mapping=monitor_mapping):
                                 j += 1
                                 self.debug('{}/{} transfer time {:0.3f}'.format(j, total, time.time() - st))
-                        except BaseException, e:
+                        except BaseException as e:
                             import traceback
                             traceback.print_exc()
                             self.warning('failed transfering {}. {}'.format(a, e))
@@ -382,32 +391,37 @@ class IsoDBTransfer(Loggable):
         return repo
 
     def _transfer_meta(self, dest, dban, monitor_mapping):
+
+        pi = 'Mcintosh,W'
+
         self.debug('transfer meta {}'.format(monitor_mapping))
 
         dblab = dban.labnumber
-        if monitor_mapping is None:
-            dbsam = dblab.sample
-            project = dbsam.project.name
-            project_name = project.replace('/', '_').replace('\\', '_')
-            sample_name = dbsam.name
-            material_name = dbsam.material.name
-        else:
-            sample_name, material, project = monitor_mapping
+        dbsam = dblab.sample
+        material_name = dbsam.material.name
+        project = dbsam.project.name
+        project_name = project.replace('/', '_').replace('\\', '_')
+        sample_name = dbsam.name
+        # if monitor_mapping is None:
+        #     sample_name, material, project = monitor_mapping
+        #
+        # if material_name == 'bi':
+        #     material_name = 'Biotite'
 
-        sam = dest.get_sample(sample_name, project_name, material_name)
+        sam = dest.get_sample(sample_name, project_name, pi, material_name)
         if not sam:
             if not dest.get_material(material_name):
                 self.debug('add material {}'.format(material_name))
                 dest.add_material(material_name)
                 dest.flush()
 
-            if not dest.get_project(project_name):
+            if not dest.get_project(project_name, pi):
                 self.debug('add project {}'.format(project_name))
-                dest.add_project(project_name)
+                dest.add_project(project_name, pi)
                 dest.flush()
 
             self.debug('add sample {}'.format(sample_name))
-            sam = dest.add_sample(sample_name, project_name, material_name)
+            sam = dest.add_sample(sample_name, project_name, pi, material_name)
             dest.flush()
 
         dbirradpos = dblab.irradiation_position
@@ -421,36 +435,36 @@ class IsoDBTransfer(Loggable):
             prod = None
             prodname = 'NoIrradiation'
 
-            geom = make_geom([(0, 0, 0.0175),
-                              (1, 0, 0.0175),
-                              (2, 0, 0.0175),
-                              (3, 0, 0.0175),
-                              (4, 0, 0.0175),
-
-                              (0, 1, 0.0175),
-                              (1, 1, 0.0175),
-                              (2, 1, 0.0175),
-                              (3, 1, 0.0175),
-                              (4, 1, 0.0175),
-
-                              (0, 2, 0.0175),
-                              (1, 2, 0.0175),
-                              (2, 2, 0.0175),
-                              (3, 2, 0.0175),
-                              (4, 2, 0.0175),
-
-                              (0, 3, 0.0175),
-                              (1, 3, 0.0175),
-                              (2, 3, 0.0175),
-                              (3, 3, 0.0175),
-                              (4, 3, 0.0175),
-
-                              (0, 4, 0.0175),
-                              (1, 4, 0.0175),
-                              (2, 4, 0.0175),
-                              (3, 4, 0.0175),
-                              (4, 4, 0.0175)
-                              ])
+            # geom = make_geom([(0, 0, 0.0175),
+            #                   (1, 0, 0.0175),
+            #                   (2, 0, 0.0175),
+            #                   (3, 0, 0.0175),
+            #                   (4, 0, 0.0175),
+            #
+            #                   (0, 1, 0.0175),
+            #                   (1, 1, 0.0175),
+            #                   (2, 1, 0.0175),
+            #                   (3, 1, 0.0175),
+            #                   (4, 1, 0.0175),
+            #
+            #                   (0, 2, 0.0175),
+            #                   (1, 2, 0.0175),
+            #                   (2, 2, 0.0175),
+            #                   (3, 2, 0.0175),
+            #                   (4, 2, 0.0175),
+            #
+            #                   (0, 3, 0.0175),
+            #                   (1, 3, 0.0175),
+            #                   (2, 3, 0.0175),
+            #                   (3, 3, 0.0175),
+            #                   (4, 3, 0.0175),
+            #
+            #                   (0, 4, 0.0175),
+            #                   (1, 4, 0.0175),
+            #                   (2, 4, 0.0175),
+            #                   (3, 4, 0.0175),
+            #                   (4, 4, 0.0175)
+            #                   ])
         else:
             dblevel = dbirradpos.level
             dbirrad = dblevel.irradiation
@@ -460,7 +474,7 @@ class IsoDBTransfer(Loggable):
             levelname = dblevel.name
 
             holder = dblevel.holder.name if dblevel.holder else ''
-            geom = dblevel.holder.geometry if dblevel.holder else ''
+            # geom = dblevel.holder.geometry if dblevel.holder else ''
             prodname = dblevel.production.name if dblevel.production else ''
             prodname = prodname.replace(' ', '_')
             pos = dbirradpos.position
@@ -492,7 +506,7 @@ class IsoDBTransfer(Loggable):
             dest.add_irradiation_level(levelname, irradname, holder, prodname)
             dest.flush()
 
-            meta_repo.add_irradiation_holder(holder, geom, add=False)
+            # meta_repo.add_irradiation_holder(holder, geom, add=False)
             meta_repo.add_level(irradname, levelname, add=False)
             meta_repo.update_level_production(irradname, levelname, prodname)
 
@@ -509,7 +523,7 @@ class IsoDBTransfer(Loggable):
                 yd = json.load(rfile)
 
             dd = dest.add_irradiation_position(irradname, levelname, pos)
-            dd.identifier = dblab.identifier
+            dd.identifier = idn = dblab.identifier
             dd.sample = sam
             dest.flush()
             try:
@@ -518,7 +532,10 @@ class IsoDBTransfer(Loggable):
             except AttributeError:
                 j, e = 0, 0
 
-            yd.append({'j': j, 'j_err': e, 'position': pos, 'decay_constants': {}})
+            ps = yd['positions']
+            ps.append({'j': j, 'j_err': e, 'position': pos, 'analyses': [],
+                       'identifier': idn,  'decay_constants': {}})
+            yd['positions'] = ps
             dvc_dump(yd, p)
 
         dest.commit()
@@ -567,11 +584,12 @@ class IsoDBTransfer(Loggable):
         iv.uuid = dban.uuid
 
         self.debug('make analysis idn:{}, aliquot:{} step:{}'.format(idn, aliquot, step))
-        try:
-            an = proc.make_analysis(iv, unpack=True, use_cache=False, use_progress=False)
-        except:
-            self.warning('Failed to make {}'.format(make_runid(idn, aliquot, step)))
-            return
+        # try:
+        an = proc.make_analysis(iv, unpack=True, use_cache=False, use_progress=False)
+        # except BaseException as e:
+        #     self.warning('Failed to make {}'.format(make_runid(idn, aliquot, step)))
+        #     self.warning('exception: {}'.format(e))
+        #     return
 
         self._transfer_meta(dest, dban, monitor_mapping)
         # return
@@ -637,7 +655,7 @@ class IsoDBTransfer(Loggable):
                               mass_spectrometer=ms,
                               uuid=dban.uuid,
                               _step=inc,
-                              comment=dban.comment or '',
+                              comment=dban.comment.decode('utf-8') or '',
                               aliquot=int(aliquot),
                               extract_device=ed,
                               duration=extraction.extract_duration,
@@ -670,7 +688,7 @@ class IsoDBTransfer(Loggable):
 
         ps = PersistenceSpec(run_spec=rs,
                              tag=an.tag.name,
-                             arar_age=an,
+                             isotope_group=an,
                              timestamp=dban.analysis_timestamp,
                              defl_dict=deflections,
                              gains=gains,
@@ -679,7 +697,7 @@ class IsoDBTransfer(Loggable):
                              positions=[p.position for p in extraction.positions])
 
         self.debug('transfer analysis with persister')
-        self.persister.per_spec_save(ps, commit=False, msg_prefix='Database Transfer')
+        self.persister.per_spec_save(ps, commit=False, commit_tag='Database Transfer')
         return True
 
     def _get_irradpos(self, dest, irradname, levelname, identifier):
@@ -699,12 +717,17 @@ class IsoDBTransfer(Loggable):
 if __name__ == '__main__':
     from pychron.core.helpers.logger_setup import logging_setup
 
-    paths.build('_dev')
+    paths.build('~/PychronDev')
     logging_setup('de', root=os.path.join(os.path.expanduser('~'), 'Desktop', 'logs'))
 
     e = IsoDBTransfer()
     e.quiet = True
     e.init()
+
+    # e.bulk_import_project('Streck2015', 'Mcintosh,W', source_name='Streck', dry=False)
+    #
+    # e.bulk_import_project('FootPrint', 'Mcintosh,W', dry=False)
+    # commit_initial_import('FootPrint', paths.repository_dataset_dir)
 
     # runs, expid, creator = load_path()
     # runs, expid, creator = load_import_request()
@@ -713,7 +736,7 @@ if __name__ == '__main__':
     #     project = 'Irradiation-{}'.format(i)
     #     create_repo_for_existing_local(project, paths.repository_dataset_dir)
     #     commit_initial_import(project, paths.repository_dataset_dir)
-    e.bulk_import_irradiation('NM-281', 'NMGRL', dry=False)
+    e.bulk_import_irradiation('NM-276', 'NMGRL', dry=False)
 
     # e.bulk_import_project('Cascades', 'Templeton', dry=False)
     # fix_a_steps(e.dvc.db, 'Toba', paths.repository_dataset_dir)

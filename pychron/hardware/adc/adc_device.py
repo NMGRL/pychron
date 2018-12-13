@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 # =============enthought library imports=======================
+from __future__ import absolute_import
 from traits.api import Str, HasTraits
 # =============standard library imports ========================
 # =============local library imports  ==========================

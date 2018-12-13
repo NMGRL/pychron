@@ -22,27 +22,46 @@ This file defines the text for various default files.
 
 Values are used in pychron.paths when building directory structure
 """
+from __future__ import absolute_import
+
 import yaml
 
 from pychron.core.helpers.strtools import to_bool
 
-PIPELINE_TEMPLATES = '''- Iso Evo
-- Icfactor
-- Blanks
-- Flux
-- Ideogram
-- Spectrum
-- Inverse Isochron
-- Series
-- Analysis Table
-- Interpreted Age Table
-- Auto Ideogram
-- Diff
-- Vertical Flux
-- Xy Scatter
-'''
+# PIPELINE_TEMPLATES = '''- Isotope Evolutions
+# - Blanks
+# - IC Factor
+# - Flux
+# - Ideogram
+# - Spectrum
+# - Inverse Isochron
+# - Series
+# - Regression Series
+# - Radial
+# - Analysis Table
+# - Interpreted Age Table
+# - Interpreted Age Ideogram
+# - Auto Ideogram
+# - Auto Series
+# - Auto Report
+# - Report
+# - Diff
+# - Vertical Flux
+# - Xy Scatter
+# - Geochron
+# - Yield
+# - CSV Analyses Export
+# - CSV Ideogram
+# - Correction Factors
+# - Monitor Chain
+# - Analysis Metadata
+# '''
 
 IDENTIFIERS_DEFAULT = """
+- name: Blank
+  shortname: b
+  extractable: False
+  special: True
 - name: Blank Air
   shortname: ba
   extractable: False
@@ -172,12 +191,12 @@ TASK_EXTENSION_DEFAULT = """
 -
  plugin_id: pychron.experiment.plugin
  actions:
-  - pychron.experiment.reset_system_health, False
   - pychron.experiment.open_system_conditionals, True
   - pychron.experiment.open_queue_conditionals, True
   - pychron.experiment.open_experiment, True
   - pychron.experiment.open_last_experiment, True
   - pychron.experiment.launch_history, True
+  - pychron.experiment.run_history_view, True
   - pychron.experiment.test_notify, False
   - pychron.experiment.new_experiment, True
   - pychron.experiment.signal_calculator, False
@@ -224,14 +243,13 @@ DEFAULT_INITIALIZATION = '''<root>
     <plugins>
         <general>
             <plugin enabled="false">Processing</plugin>
-            <plugin enabled="false">MediaServer</plugin>
+            <plugin enabled="false">MediaStorage</plugin>
             <plugin enabled="false">PyScript</plugin>
             <plugin enabled="false">Video</plugin>
             <plugin enabled="false">Database</plugin>
             <plugin enabled="false">Entry</plugin>
             <plugin enabled="false">ArArConstants</plugin>
             <plugin enabled="false">Loading</plugin>
-            <plugin enabled="false">Workspace</plugin>
             <plugin enabled="false">LabBook</plugin>
             <plugin enabled="false">DashboardServer</plugin>
             <plugin enabled="false">DashboardClient</plugin>
@@ -284,9 +302,6 @@ columns:
   - Comment
 '''
 
-SYSTEM_HEALTH = '''
-'''
-
 
 def make_screen(**kw):
     obj = {'padding_left': 100,
@@ -325,6 +340,7 @@ def make_presentation(**kw):
     return yaml.dump(obj, default_flow_style=False)
 
 
+DEFINE_EQUILIBRATION_SCREEN = make_screen()
 ISO_EVO_SCREEN = make_screen()
 SERIES_SCREEN = make_screen()
 BLANKS_SCREEN = make_screen()
@@ -375,215 +391,38 @@ spec_d = dict(plateau_line_width=1,
 SPECTRUM_PRESENTATION = make_presentation(**spec_d)
 SPECTRUM_SCREEN = make_screen(**spec_d)
 
-# ===============================================================
-# Pipeline Templates
-# ===============================================================
-ICFACTOR = """
-- klass: UnknownNode
-- klass: FindReferencesNode
-  threshold: 10
-  analysis_type: Air
-- klass: ReferenceNode
-- klass: FitICFactorNode
-  fits:
-    - numerator: H1
-      denominator: CDD
-      standard_ratio: 295.5
-      analysis_type: Air
-- klass: ReviewNode
-- klass: ICFactorPersistNode
+radial_d = dict()
+RADIAL_SCREEN = make_screen(**radial_d)
+
+regression_series_d = dict()
+REGRESSION_SERIES_SCREEN = make_screen(**regression_series_d)
+
+
+FLUX_CONSTANTS_DEFAULT = """
+# This is an example flux file. Add additional decay_constant and monitor_age pairs here
+"FC MIN":
+  lambda_ec: [5.80e-11, 0]
+  lambda_b: [4.884e-10, 0]
+  monitor_age: 28.201
+"FC SJ":
+  lambda_ec: [5.81e-11, 0]
+  lambda_b: [4.962e-10, 0]
+  monitor_age: 28.02
 """
 
-ISOEVO = """
-- klass: UnknownNode
-- klass: FitIsotopeEvolutionNode
-- klass: ReviewNode
-- klass: IsotopeEvolutionPersistNode
-  use_editor: False
-"""
-
-BLANKS = """
-- klass: UnknownNode
-- klass: FindReferencesNode
-  threshold: 10
-  analysis_type: Blank Unknown
-- klass: ReferenceNode
-- klass: FitBlanksNode
-- klass: ReviewNode
-- klass: BlanksPersistNode
-"""
-
-CSV_IDEO = """- klass: CSVNode
-- klass: IdeogramNode
-"""
-
-IDEO = """- klass: UnknownNode
-- klass: IdeogramNode
-"""
-
-INVERSE_ISOCHRON = """- klass: UnknownNode
-- klass: InverseIsochronNode
-"""
-
-SPEC = """- klass: UnknownNode
-- klass: SpectrumNode
-"""
-
-VERTICAL_FLUX = """- klass: FindVerticalFluxNode
-- klass: VerticalFluxNode
-"""
-
-XY_SCATTER = """- klass: UnknownNode
-- klass: XYScatterNode
-"""
-
-ANALYSIS_TABLE = """- klass: UnknownNode
-- klass: GroupingNode
-- klass: AnalysisTableNode
-- klass: ReviewNode
-- klass: XLSTablePersistNode
-"""
-
-INTERPRETED_AGE_TABLE = """- klass: InterpretedAgeNode
-- klass: InterpretedAgeTableNode
-- klass: ReviewNode
-- klass: InterpretedAgeTablePersistNode
-"""
-
-AUTO_IDEOGRAM = """- klass: ListenUnknownNode
-- klass: GroupingNode
-  key: Identifier
-- klass: IdeogramNode
-  no_analyses_warning: False
-"""
-
-SERIES = """- klass: UnknownNode
-- klass: SeriesNode
-"""
-
-FLUX = """
-- klass: FindFluxMonitorsNode
-#  irradiation: NM-274
-#  level: E
-- klass: FluxMonitorsNode
-#- klass: GroupingNode
-#  key: Identifier
-#- klass: IdeogramNode
-#- klass: TableNode
-#- klass: ReviewNode
-- klass: FitFluxNode
-- klass: ReviewNode
-- klass: FluxPersistNode
-"""
-# SYSTEM_HEALTH = '''
-# values:
-#  - Ar40/Ar36
-#  - uAr40/Ar36
-#  - ysymmetry
-#  - extraction_lens
-#  - ysymmetry
-#  - zsymmetry
-#  - zfocus
-#  - H2_deflection
-#  - H1_deflection
-#  - AX_deflection
-#  - L1_deflection
-#  - L2_deflection
-#  - CDD_deflection
-# general:
-#  limit: 100
-# conditionals:
-#  -
-#   attribute: Ar40/Ar36
-#   function: std
-#   comparison: x>1
-#   action: cancel
-#   min_n: 10
-#   bin_hours: 6
-#   analysis_types:
-#    - air
-#  -
-#   attribute: ysymmetry
-#   function: value
-#   action: cancel
-#   analysis_types:
-#    - air
-#
-# '''
-#
-# # SCREEN_FORMATTING_DEFAULTS = '''
-# # x_tick_in: 2
-# # x_tick_out: 5
-# # x_title_font: Helvetica 12
-# # x_tick_label_font: Helvetica 10
-# #
-# # y_tick_in: 2
-# # y_tick_out: 5
-# # y_title_font: Helvetica 12
-# # y_tick_label_font: Helvetica 10
-# #
-# # bgcolor: white
-# # plot_bgcolor: white
-# #
-# # label_font: Helvetica 10
-# # '''
-# #
-# # PRESENTATION_FORMATTING_DEFAULTS = '''
-# # x_tick_in: 2
-# # x_tick_out: 5
-# # x_title_font: Helvetica 22
-# # x_tick_label_font: Helvetica 14
-# #
-# # y_tick_in: 2
-# # y_tick_out: 5
-# # y_title_font: Helvetica 22
-# # y_tick_label_font: Helvetica 14
-# #
-# # bgcolor: 239,238,185
-# # plot_bgcolor: 208,243,241
-# #
-# # label_font: Helvetica 14
-# # '''
-# #
-# # DISPLAY_FORMATTING_DEFAULTS = '''
-# # x_tick_in: 2
-# # x_tick_out: 5
-# # x_title_font: Helvetica 22
-# # x_tick_label_font: Helvetica 14
-# #
-# # y_tick_in: 2
-# # y_tick_out: 5
-# # y_title_font: Helvetica 22
-# # y_tick_label_font: Helvetica 14
-# #
-# # bgcolor: 239,238,185
-# # plot_bgcolor: 208,243,241
-# #
-# # label_font: Helvetica 14
-# # '''
+REACTORS_DEFAULT = '''{
+    "Triga": {
+            "K4039": [0.007614,0.000105],
+            "K3839": [0.013,0.0],
+            "K3739": [0.0,0.0],
+            "Ca3937": [0.00066,1e-05],
+            "Ca3837": [4e-05,2e-06],
+            "Ca3637": [0.000264,1e-06],
+            "Cl3638": [250.0,0.0],
+            "Ca_K": [1.96,0.0],
+            "Cl_K": [0.227,0.0]
+            }
+}
+'''
 # ============= EOF =============================================
-# IDEOGRAM_DEFAULTS = '''
-# padding_left: 100
-# padding_right: 100
-# padding_top: 100
-# padding_bottom: 100
-#
-# probability_curve_kind: cumulative
-# mean_calculation_kind: 'weighted mean'
-#
-# mean_indicator_fontsize: 12
-# mean_sig_figs: 2
-#
-# index_attr: uage
-#
-# xtick_in: 1
-# xtick_out: 5
-# ytick_in: 1
-# ytick_out: 5
-# use_xgrid: False
-# use_ygrid: False
-#
-# bgcolor: 239,238,185
-# plot_bgcolor: 208,243,241
-#
-# '''
+

@@ -14,23 +14,23 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-from traits.api import List, Any, Event, Callable, Dict
-# ============= standard library imports ========================
-from numpy import linspace
-# ============= local library imports  ==========================
-from pychron.graph.graph import Graph
-from pychron.graph.tools.rect_selection_tool import RectSelectionTool, \
-    RectSelectionOverlay
-from pychron.core.helpers.fits import convert_fit
 
+from chaco.lineplot import LinePlot
+from chaco.text_box_overlay import TextBoxOverlay
+from numpy import linspace
+from traits.api import List, Any, Event, Callable, Dict
+
+from pychron.core.helpers.fits import convert_fit
+from pychron.core.regression.base_regressor import BaseRegressor
 from pychron.graph.context_menu_mixin import RegressionContextMenuMixin
-from pychron.graph.tools.regression_inspector import RegressionInspectorTool, \
-    RegressionInspectorOverlay
+from pychron.graph.error_envelope_overlay import ErrorEnvelopeOverlay
+from pychron.graph.graph import Graph
 from pychron.graph.tools.point_inspector import PointInspector, \
     PointInspectorOverlay
-
-from pychron.core.regression.base_regressor import BaseRegressor
-from pychron.graph.error_envelope_overlay import ErrorEnvelopeOverlay
+from pychron.graph.tools.rect_selection_tool import RectSelectionTool, \
+    RectSelectionOverlay
+from pychron.graph.tools.regression_inspector import RegressionInspectorTool, \
+    RegressionInspectorOverlay, make_statistics
 
 
 class NoRegressionCTX(object):
@@ -53,7 +53,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
     indices = List
     filters = List
     selected_component = Any
-    # regressors = List
     regression_results = Event
     suppress_regression = False
 
@@ -70,23 +69,47 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
     # context menu handlers
     # ===============================================================================
     def cm_linear(self):
-        self.set_fit('linear')
+        self.set_fit('linear', plotid=self.selected_plotid)
         self._update_graph()
 
     def cm_parabolic(self):
-        self.set_fit('parabolic')
+        self.set_fit('parabolic', plotid=self.selected_plotid)
         self._update_graph()
 
     def cm_cubic(self):
-        self.set_fit('cubic')
+        self.set_fit('cubic', plotid=self.selected_plotid)
+        self._update_graph()
+
+    def cm_quartic(self):
+        self.set_fit('quartic', plotid=self.selected_plotid)
+        self._update_graph()
+
+    def cm_exponential(self):
+        self.set_fit('exponential', plotid=self.selected_plotid)
         self._update_graph()
 
     def cm_average_std(self):
-        self.set_fit('average_std')
+        self.set_fit('average_std', plotid=self.selected_plotid)
         self._update_graph()
 
     def cm_average_sem(self):
-        self.set_fit('average_sem')
+        self.set_fit('average_sem', plotid=self.selected_plotid)
+        self._update_graph()
+
+    def cm_sd(self):
+        self.set_error_calc_type('sd', plotid=self.selected_plotid)
+        self._update_graph()
+
+    def cm_sem(self):
+        self.set_error_calc_type('sem', plotid=self.selected_plotid)
+        self._update_graph()
+
+    def cm_ci(self):
+        self.set_error_calc_type('ci', plotid=self.selected_plotid)
+        self._update_graph()
+
+    def cm_mc(self):
+        self.set_error_calc_type('mc', plotid=self.selected_plotid)
         self._update_graph()
 
     # ===============================================================================
@@ -103,6 +126,8 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                    marker_size=2,
                    add_tools=True,
                    add_inspector=True,
+                   add_point_inspector=True,
+                   add_selection=True,
                    convert_index=None,
                    plotid=None, *args,
                    **kw):
@@ -118,7 +143,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                                                            plotid=plotid,
                                                            *args, **kw)
             if add_tools:
-                self.add_tools(p, s, None, convert_index, add_inspector)
+                self.add_tools(p, s, None, convert_index, add_inspector, add_point_inspector)
             return s, p
 
         scatter, si = self._new_scatter(kw, marker, marker_size,
@@ -140,12 +165,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         if use_error_envelope:
             self._add_error_envelope_overlay(line)
 
-            # # test
-            # o = ErrorEnvelopeOverlay(component=line, line_color=(0,1,0))
-            # line.underlays.append(o)
-            # line.error_envelope2 = o
-
-        # print x, y
         if x is not None and y is not None:
             if not self.suppress_regression:
                 self._regress(plot, scatter, line)
@@ -155,16 +174,14 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         except:
             pass
 
-        # self._bind_index(scatter, **kw)
-
         if add_tools:
             self.add_tools(plot, scatter, line,
-                           convert_index, add_inspector)
+                           convert_index, add_inspector, add_point_inspector, add_selection)
 
         return plot, scatter, line
 
     def add_tools(self, plot, scatter, line=None,
-                  convert_index=None, add_inspector=True):
+                  convert_index=None, add_inspector=True, add_point_inspector=True, add_selection=True):
 
         if add_inspector:
             # add a regression inspector tool to the line
@@ -175,6 +192,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                 line.tools.append(tool)
                 line.overlays.append(overlay)
 
+        if add_point_inspector:
             point_inspector = PointInspector(scatter,
                                              convert_index=convert_index or self.convert_index_func)
             pinspector_overlay = PointInspectorOverlay(component=scatter,
@@ -182,13 +200,23 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
             scatter.overlays.append(pinspector_overlay)
             scatter.tools.append(point_inspector)
+        if add_selection:
+            rect_tool = RectSelectionTool(scatter)
+            rect_overlay = RectSelectionOverlay(tool=rect_tool)
 
-        rect_tool = RectSelectionTool(scatter)
-        rect_overlay = RectSelectionOverlay(tool=rect_tool)
+            scatter.overlays.append(rect_overlay)
+            scatter.tools.append(rect_tool)
 
-        scatter.overlays.append(rect_overlay)
-        scatter.tools.append(rect_tool)
-        # broadcaster.tools.append(rect_tool)
+    def add_statistics(self, plotid=0):
+        plot = self.plots[plotid]
+        for k, v in plot.plots.items():
+            if k.startswith('fit'):
+                pp = v[0]
+                text = '\n'.join(make_statistics(pp.regressor))
+                label = TextBoxOverlay(text=text,
+                                       border_color='black')
+                pp.overlays.append(label)
+                break
 
     def set_filter_outliers(self, fi, plotid=0, series=0):
         plot = self.plots[plotid]
@@ -201,30 +229,38 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         scatter = plot.plots['data{}'.format(series)][0]
         return scatter.filter_outliers_dict['filter_outliers']
 
+    def set_error_calc_type(self, fi, plotid=0, series=0, redraw=True):
+        fi = fi.lower()
+        plot = self.plots[plotid]
+        key = 'data{}'.format(series)
+
+        if key in plot.plots:
+            scatter = plot.plots[key][0]
+            f = scatter.fit
+            if '_' in f:
+                f = f.split('_')[0]
+            scatter.fit = '{}_{}'.format(f, fi)
+
     def set_fit(self, fi, plotid=0, series=0, redraw=True):
 
         fi = fi.lower()
         plot = self.plots[plotid]
-        # for idx in range(series, -1, -1):
         key = 'data{}'.format(series)
-        # print 'set fit', fi, plotid, key, plot.plots.keys()
         if key in plot.plots:
             scatter = plot.plots[key][0]
             # print key
             if scatter.fit != fi:
-                lkey = 'line{}'.format(series)
-                if plot.plots.has_key(lkey):
+                lkey = 'fit{}'.format(series)
+                if lkey in plot.plots:
                     line = plot.plots[lkey][0]
                     line.regressor = None
 
-                # print 'fit for {}={}'.format(key, fi)
+                print('fit for {}={}, {}'.format(key, fi, scatter))
+                scatter.ofit = scatter.fit
                 scatter.fit = fi
-                scatter.index.metadata['selections'] = []
-                scatter.index.metadata['filtered'] = None
 
-                if redraw:
-                    self.redraw()
-                # break
+        else:
+            print('invalid key', fi, plotid, key, plot.plots.keys())
 
     def get_fit(self, plotid=0, series=0):
         try:
@@ -234,8 +270,17 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         except IndexError:
             pass
 
+    _outside_regressor = False
+
+    def set_regressor(self, reg, plotid=0):
+        self._outside_regressor = True
+        plot = self.plots[plotid]
+        for pp in plot.plots.values():
+            for ppp in pp:
+                if isinstance(ppp, LinePlot):
+                    ppp.regressor = reg
+
     def clear(self):
-        # self.regressors = []
         self.selected_component = None
 
         for p in self.plots:
@@ -266,13 +311,14 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
         self._update_graph()
 
+    # private
     def _update_graph(self, *args, **kw):
         regs = []
         for i, plot in enumerate(self.plots):
             ps = plot.plots
-            ks = ps.keys()
+            ks = list(ps.keys())
             try:
-                scatters, idxes = zip(*[(ps[k][0], k[4:]) for k in ks if k.startswith('data')])
+                scatters, idxes = list(zip(*[(ps[k][0], k[4:]) for k in ks if k.startswith('data')]))
 
                 fls = [ps['fit{}'.format(idx)][0] for idx in idxes]
                 for si, fl in zip(scatters, fls):
@@ -280,7 +326,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                         r = self._plot_regression(plot, si, fl)
                         regs.append((plot, r))
 
-            except ValueError, e:
+            except ValueError as e:
                 # add a float instead of regressor to regs
                 try:
                     si = ps[ks[0]][0]
@@ -306,18 +352,19 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
     def _regress(self, plot, scatter, line):
         fit, err = convert_fit(scatter.fit)
         if fit is None:
+            print('fit is none, {}'.format(scatter.fit))
             return
 
         r = None
         if line and hasattr(line, 'regressor'):
             r = line.regressor
 
-        if fit in [1, 2, 3]:
+        if fit in [1, 2, 3, 4]:
             r = self._poly_regress(scatter, r, fit)
-
+        elif fit == 'exponential':
+            r = self._exponential_regress(scatter, r, fit)
         elif isinstance(fit, tuple):
             r = self._least_square_regress(scatter, r, fit)
-
         elif isinstance(fit, BaseRegressor):
             r = self._custom_regress(scatter, r, fit)
         else:
@@ -325,7 +372,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
         if r:
             r.error_calc_type = err
-
             if line:
                 plow = plot.index_range._low_value
                 phigh = plot.index_range._high_value
@@ -347,21 +393,12 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                 try:
                     line.index.set_data(fx)
                     line.value.set_data(fy)
-                except BaseException:
+                except BaseException as e:
+                    print('Regerssion Exception, {}'.format(e))
                     return
 
                 if hasattr(line, 'error_envelope'):
-                    # ly, uy, x = r.calculate_error_envelope2(fx, fy)
-                    # print 'fff', ly
-                    # print 'x',x
-                    # print 'ly',ly
-                    # line.error_envelope2.xs = x
-                    # line.error_envelope2.lower = ly
-                    # line.error_envelope2.upper = uy
-                    # line.error_envelope2.invalidate()
                     ci = r.calculate_error_envelope(fx, fy)
-                    # ci = r.calculate_ci(fx, fy)
-                    #                 print ci
                     if ci is not None:
                         ly, uy = ci
                     else:
@@ -404,7 +441,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
     def _poly_regress(self, scatter, r, fit):
         from pychron.core.regression.ols_regressor import PolynomialRegressor
         from pychron.core.regression.wls_regressor import WeightedPolynomialRegressor
-
         if hasattr(scatter, 'yerror'):
             if r is None or not isinstance(r, WeightedPolynomialRegressor):
                 r = WeightedPolynomialRegressor()
@@ -415,13 +451,28 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         self._set_regressor(scatter, r)
         r.trait_set(degree=fit)
         r.set_truncate(scatter.truncate)
-
         if r.ys.shape[0] < fit + 1:
             return
 
         r.calculate()
 
         self._set_excluded(scatter, r)
+        return r
+
+    def _exponential_regress(self, scatter, r, fit):
+
+        from pychron.core.regression.least_squares_regressor import ExponentialRegressor, FitError
+        if r is None or not isinstance(r, ExponentialRegressor):
+            r = ExponentialRegressor()
+
+        self._set_regressor(scatter, r)
+        try:
+            r.calculate()
+            self._set_excluded(scatter, r)
+        except FitError:
+            f, e = convert_fit(scatter.ofit)
+            r = self._poly_regress(scatter, r, f)
+
         return r
 
     def _least_square_regress(self, scatter, r, fit):
@@ -510,133 +561,14 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         line.underlays.append(o)
         line.error_envelope = o
 
-
-
-        # def _bind_index(self, *args, **kw):
-        #     pass
-
-        # ============= EOF =============================================
-        # @classmethod
-        #     def _apply_block_filter(cls, xs, ys):
-        #         '''
-        #             filter data using stats
-        #
-        #             1. group points into blocks
-        #             2. find mean of block
-        #             3. find outliers
-        #             4. exclude outliers
-        #         '''
-        #
-        #         try:
-        #             import numpy as np
-        #
-        #             sf = StatsFilterParameters()
-        #             blocksize = sf.blocksize
-        #             tolerance_factor = sf.tolerance_factor
-        #
-        #             # group into blocks
-        #             n = ys.shape[0]
-        #             r = n / blocksize
-        #             c = blocksize
-        #
-        #             dev = n - (r * c)
-        #             #            remainder_block = None
-        #             if dev:
-        #                 ys = ys[:-dev]
-        #                 #                remainder_block = ys[-dev:]
-        #             #            remainder_
-        #
-        #             blocks = ys.reshape(r, c)
-        #
-        #             # calculate stats
-        #             block_avgs = average(blocks, axis=1)
-        #             block_stds = np.std(blocks, axis=1)
-        #             devs = (blocks - block_avgs.reshape(r, 1)) ** 2
-        #             #        devs = abs(blocks - block_avgs.reshape(r, 1))
-        #
-        #             # find outliers
-        #             tol = block_stds.reshape(r, 1) * tolerance_factor
-        #             exc_r, exc_c = np.where(devs > tol)
-        #             #            inc_r, inc_c = np.where(devs <= tol)
-        #             #            ny = blocks[inc_r, inc_c]
-        #             #            nx = xs[inc_c + inc_r * blocksize]
-        #             exc_xs = list(exc_c + exc_r * blocksize)
-        #
-        #             #        if remainder_block:
-        #             #        #do filter on remainder block
-        #             #            avg = average(remainder_block)
-        #             #            stds = np.std(remainder_block)
-        #             #            tol = stds * tolerance_factor
-        #             #            devs = (remainder_block - avg) ** 2
-        #             #            exc_i, _ = np.where(devs > tol)
-        #             #            inc_i, _ = np.where(devs < tol)
-        #             #            exc_i = exc_i + n - 1
-        #             #            nnx = xs[inc_i + n - 1]
-        #             #            nny = ys[inc_i + n - 1]
-        #             #
-        #             #            nx = hstack((nx, nnx))
-        #             #            ny = hstack((ny, nny))
-        #             #            exc_xs += exc_i
-        # #        print 'exception', exc_xs
-        #             #        return nx, ny, exc_xs
-        #         except:
-        #             exc_xs = []
-        #
-        #         return exc_xs
-        # def _apply_outlier_filter(self, reg, ox, oy, index, fod):
-        #     try:
-        #         if fod['filter_outliers']:
-        #         #                 t_fx, t_fy = ox[:], oy[:]
-        #             t_fx, t_fy = ox, oy
-        #             niterations = fod['filter_outlier_iterations']
-        #             n = fod['filter_outlier_std_devs']
-        #             for _ in range(niterations):
-        #                 excludes = list(reg.calculate_outliers(nsigma=n))
-        #                 oxcl = excludes[:]
-        #                 sels = index.metadata['selections']
-        #
-        #                 excludes = sorted(list(set(sels + excludes)))
-        #                 index.metadata['filtered'] = oxcl
-        #                 index.metadata['selections'] = excludes
-        #
-        #                 t_fx = delete(t_fx, excludes, 0)
-        #                 t_fy = delete(t_fy, excludes, 0)
-        #                 reg.trait_set(xs=t_fx, ys=t_fy)
-        #
-        #     except (KeyError, TypeError), e:
-        #         print 'apply outlier filter', e
-        #         index.metadata['selections'] = []
-        #         index.metadata['filtered'] = None
-        #
-        #     # return reg
-        #
-        # def _apply_truncation(self, reg, index, filt):
-        #     """
-        #        filt: str   x>10 remove all points greater than 10
-        #        xs: index array
-        #     """
-        #     m = re.match(r'[A-Za-z]+', filt)
-        #     if m:
-        #         k = m.group(0)
-        #         xs,ys=reg.xs, reg.ys
-        #         exclude=eval(filt, {k:xs})
-        #         excludes=list(exclude.nonzero()[0])
-        #
-        #         sels = index.metadata['selections']
-        #         index.metadata['filtered'] = sels
-        #         excludes=list(set(excludes+sels))
-        #         index.metadata['selections'] = excludes
-        #
-        #         t_fx = delete(xs, excludes, 0)
-        #         t_fy = delete(ys, excludes, 0)
-        #         reg.trait_set(xs=t_fx, ys=t_fy)
-
-        # def set_filter(self, fi, plotid=0, series=0):
-        #     plot = self.plots[plotid]
-        #     scatter = plot.plots['data{}'.format(series)][0]
-        #     scatter.filter = fi
-        #     self.redraw()
-        # def get_filter(self, plotid=0, series=0):
-        #     plot = self.plots[plotid]
-        #     scatter = plot.plots['data{}'.format(series)][0]
-        #     return scatter.filter
+    def _regression_results_changed(self):
+        for plot in self.plots:
+            for k, v in plot.plots.items():
+                if k.startswith('fit'):
+                    pp = v[0]
+                    o = next((oo for oo in pp.overlays if isinstance(oo, TextBoxOverlay)), None)
+                    if o:
+                        o.text = '\n'.join(make_statistics(pp.regressor))
+                        o.request_redraw()
+                    break
+# ============= EOF =============================================

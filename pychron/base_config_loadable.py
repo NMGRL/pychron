@@ -18,6 +18,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.config_mixin import ConfigMixin
 
 
@@ -27,11 +28,11 @@ class BaseConfigLoadable(ConfigMixin):
 
     def update_configuration(self, **kw):
         config = self.get_configuration()
-        for section, options in kw.iteritems():
+        for section, options in kw.items():
             if not config.has_section(section):
                 config.add_section(section)
 
-            for option, value in options.iteritems():
+            for option, value in options.items():
                 config.set(section, option, value)
         self.write_configuration(config)
 

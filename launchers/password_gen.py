@@ -15,13 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import argparse
 import getpass
+from six.moves import input
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
 version_id = '_experiment'
-from helpers import build_version
+from .helpers import build_version
 '''
     set_path=True inserts the pychron source directory into the PYTHONPATH
     necessary if you are launching from commandline or eclipse(?). 
@@ -47,7 +50,7 @@ if __name__ == '__main__':
             pwd1 = getpass.getpass('Password: ')
             pwd2 = getpass.getpass('Re-enter Password: ')
             if pwd1 != pwd2:
-                if raw_input('Passwords did not match. Try again. [y/n]? ') == 'y':
+                if input('Passwords did not match. Try again. [y/n]? ') == 'y':
                     continue
                 else:
                     cancel = True
@@ -58,8 +61,8 @@ if __name__ == '__main__':
 
     if pwd:
         hpass, salt = Credentials.generate_hashed_password(pwd)
-        print 'Hex password: {}'.format(hpass)
-        print 'Hex salt: {}'.format(salt)
+        print('Hex password: {}'.format(hpass))
+        print('Hex salt: {}'.format(salt))
 
 
 #    args = sys.argv[1:]

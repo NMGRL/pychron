@@ -14,21 +14,23 @@
 # limitations under the License.
 # ===============================================================================
 
+import hashlib
+import uuid
+from datetime import datetime
+
 # ============= enthought library imports =======================
 from traits.api import Str, Int, Bool, Float, Property, \
     Enum, on_trait_change, CStr, Long, HasTraits, Instance
-# ============= standard library imports ========================
-import hashlib
-from datetime import datetime
-import uuid
-# ============= local library imports  ==========================
+
 from pychron.core.helpers.filetools import remove_extension
 from pychron.core.helpers.logger_setup import new_logger
+from pychron.core.helpers.strtools import csv_to_ints, to_csv_str
 from pychron.experiment.automated_run.result import AutomatedRunResult, AirResult, UnknownResult, BlankResult
 from pychron.experiment.utilities.identifier import get_analysis_type, make_rid, make_runid, is_special, \
     convert_extract_device
 from pychron.experiment.utilities.position_regex import XY_REGEX
-from pychron.pychron_constants import SCRIPT_KEYS, SCRIPT_NAMES, ALPHAS
+from pychron.experiment.utilities.repository_identifier import make_references_repository_identifier
+from pychron.pychron_constants import SCRIPT_KEYS, SCRIPT_NAMES, ALPHAS, DETECTOR_IC
 
 logger = new_logger('AutomatedRunSpec')
 
@@ -48,6 +50,7 @@ class AutomatedRunSpec(HasTraits):
     skip = Bool(False)
     end_after = Bool(False)
     collection_version = Str
+    delay_after = Float
     # ===========================================================================
     # queue globals
     # ===========================================================================
@@ -55,7 +58,10 @@ class AutomatedRunSpec(HasTraits):
     extract_device = Str
     username = Str
     tray = Str
+    load_name = Str
+    load_holder = Str
     queue_conditionals_name = Str
+    sensitivity_units = Str
     # ===========================================================================
     # run id
     # ===========================================================================
@@ -109,6 +115,11 @@ class AutomatedRunSpec(HasTraits):
     executable = Property(depends_on='identifier_error, _executable')
     _executable = Bool(True)
 
+    lab_temperature = 0
+    lab_humidity = 0
+    sensitivity = 0
+    sensitivity_units = 'mol/fA'
+
     # ===========================================================================
     # info
     # ===========================================================================
@@ -119,19 +130,38 @@ class AutomatedRunSpec(HasTraits):
     # display only
     # ===========================================================================
     project = Str
+    principal_investigator = Str
     sample = Str
     irradiation = Str
     irradiation_level = Str
     irradiation_position = Int
     material = Str
     data_reduction_tag = Str
+    result_str = ''
 
     branch = 'master'
+
+    uage = None
+    v39 = None
 
     _estimated_duration = 0
     _changed = False
 
     _step_heat = False
+    _runid = None
+
+    @property
+    def acquisition_software(self):
+        from pychron.experiment import __version__ as eversion
+        from pychron.dvc import __version__ as dversion
+        from pychron import __version__
+        return 'Pychron{}(Exp{},DVC{})'.format(__version__, eversion, dversion)
+
+    @property
+    def data_reduction_software(self):
+        from pychron import __version__
+        from pychron.dvc import __version__ as dversion
+        return 'Pychron{}(DVC{})'.format(__version__, dversion)
 
     def new_result(self, arun):
         klass = AutomatedRunResult
@@ -144,13 +174,14 @@ class AutomatedRunSpec(HasTraits):
 
         result = klass()
         result.runid = self.runid
+        result.analysis_timestamp = datetime.now()
         result.isotope_group = arun.isotope_group
         result.tripped_conditional = arun.tripped_conditional
 
         self.result = result
 
     def is_detector_ic(self):
-        return self.analysis_type == 'detector_ic'
+        return self.analysis_type == DETECTOR_IC
 
     def is_step_heat(self):
         return bool(self.user_defined_aliquot) and not self.is_special()
@@ -161,6 +192,9 @@ class AutomatedRunSpec(HasTraits):
     def is_truncated(self):
         return self.state == 'truncated'
 
+    def is_default_repository(self, ms, curtag):
+        return make_references_repository_identifier(self.analysis_type, ms, curtag) == self.repository_identifier
+
     def to_string(self):
         attrs = ['labnumber', 'aliquot', 'step',
                  'extract_value', 'extract_units', 'ramp_duration',
@@ -168,7 +202,7 @@ class AutomatedRunSpec(HasTraits):
                  'mass_spectrometer', 'extract_device',
                  'extraction_script', 'measurement_script',
                  'post_equilibration_script', 'post_measurement_script']
-        return ','.join(map(str, self.to_string_attrs(attrs)))
+        return to_csv_str(self.to_string_attrs(attrs))
 
     def test_scripts(self, script_context=None, warned=None, duration=True):
         if script_context is None:
@@ -296,12 +330,25 @@ class AutomatedRunSpec(HasTraits):
 
         return run
 
+    def get_delay_after(self, du, db, da):
+        d = self.delay_after
+        if not d:
+            d = du
+            if self.analysis_type == 'air':
+                d = da
+            elif self.analysis_type.startswith('blank'):
+                d = db
+
+                # d = db if self.analysis_type.startswith('blank') else du
+
+        return d
+
     def load(self, script_info, params):
-        for k, v in script_info.iteritems():
+        for k, v in script_info.items():
             k = k if k == 'script_options' else '{}_script'.format(k)
             setattr(self, k, v)
 
-        for k, v in params.iteritems():
+        for k, v in params.items():
             # print 'load', hasattr(self, k), k, v
             if hasattr(self, k):
                 setattr(self, k, v)
@@ -330,7 +377,7 @@ class AutomatedRunSpec(HasTraits):
             else:
                 try:
                     v = getattr(self, attrname)
-                except AttributeError, e:
+                except AttributeError as e:
                     v = ''
 
             return v
@@ -373,7 +420,6 @@ class AutomatedRunSpec(HasTraits):
                   'conditionals',
                   'syn_extraction',
                   'collection_time_zero_offset',
-                  'repository_identifier',
                   'weight',
                   'comment',
                   'project',
@@ -382,14 +428,19 @@ class AutomatedRunSpec(HasTraits):
                   'irradiation_level',
                   'irradiation_position',
                   'material',
-                  'data_reduction_tag']
+                  'data_reduction_tag',
+                  'delay_after']
 
         if self.is_step_heat():
             traits.append('aliquot')
 
+        if not self.is_special():
+            traits.append('repository_identifier')
+
         if verbose:
             for t in traits:
-                print '{} ==> {}'.format(t, getattr(self, t))
+                print('{} ==> {}'.format(t, getattr(self, t)))
+
         return self.clone_traits(traits)
 
     # ===============================================================================
@@ -454,7 +505,7 @@ post_equilibration_script, extraction_script, script_options, position, duration
             args = v
         else:
             try:
-                args = map(int, v.split(','))
+                args = csv_to_ints(v)
             except ValueError:
                 logger.debug('Invalid overlap string "{}". Should be of the form "10,60" or "10" '.format(v))
                 return
@@ -466,7 +517,14 @@ post_equilibration_script, extraction_script, script_options, position, duration
 
     @property
     def runid(self):
-        return make_runid(self.labnumber, self.aliquot, self.step)
+        if self._runid:
+            return self._runid
+        else:
+            return make_runid(self.labnumber, self.aliquot, self.step)
+
+    @runid.setter
+    def runid(self, v):
+        self._runid = v
 
     @property
     def rundate(self):
@@ -503,6 +561,10 @@ post_equilibration_script, extraction_script, script_options, position, duration
     @property
     def sensitivity(self):
         return 0
+
+    @property
+    def sensitivity_units(self):
+        return 'mV/mol'
 
     @property
     def extract_duration(self):
@@ -557,8 +619,8 @@ post_equilibration_script, extraction_script, script_options, position, duration
 
         md5 = hashlib.md5()
         for k, v in sorted(ctx.items()):
-            md5.update(str(k))
-            md5.update(str(v))
+            md5.update(str(k).encode('utf-8'))
+            md5.update(str(v).encode('utf-8'))
         return md5
 
 # ============= EOF =============================================

@@ -15,15 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 
 from pyface.image_resource import ImageResource
 
-
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import add_extension
-from pychron.paths import paths
+from pychron.paths import paths, icon_search_path, splashes
 
 
 def image(name):
@@ -32,40 +31,43 @@ def image(name):
         if si and os.path.isfile(os.path.join(si, name)):
             break
     else:
-        print 'no image for "{}"'.format(name)
+        print('no image for "{}"'.format(name))
 
     return ImageResource(name=name, search_path=paths.image_search_path)
 
 
 def icon(name):
     name = add_extension(name, '.png')
-    if paths.icon_search_path:
-        for si in paths.icon_search_path:
+    if icon_search_path:
+        for si in icon_search_path:
             if si and os.path.isfile(os.path.join(si, name)):
                 break
         else:
-            print 'no icon for "{}"'.format(name)
+            print('no icon for "{}"'.format(name))
 
-    return ImageResource(name=name, search_path=paths.icon_search_path)
+    # if name=='.png':
+    #     raise RuntimeError
+    return ImageResource(name=name, search_path=icon_search_path)
 
 
 def splash_icon(appname):
     name = 'splash.png'
-    ps = paths.icon_search_path[:]
-    for si in paths.icon_search_path:
+    ps = icon_search_path
+    for si in icon_search_path:
         if si and os.path.isfile(os.path.join(si, name)):
+            print('found splash', os.path.isfile(os.path.join(si, name)))
             break
     else:
         if appname:
             name = 'splash_{}.png'.format(appname)
-            ps.append(paths.splashes)
+            ps.append(splashes)
 
     return ImageResource(name=name, search_path=ps)
 
 
 class Icon(ImageResource):
     def _search_path_default(self):
-        return paths.icon_search_path
+        return icon_search_path
 
 # ============= EOF =============================================
 

@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 
 from traits.api import HasTraits, Instance
@@ -27,6 +29,7 @@ from pychron.canvas.canvas2D.scene.canvas_parser import CanvasParser
 from pychron.canvas.canvas2D.scene.extraction_line_scene import ExtractionLineScene
 from pychron.canvas.canvas2D.scene.primitives.valves import Valve
 from pychron.paths import paths
+import six
 
 
 class Designer(HasTraits):
@@ -88,9 +91,7 @@ class Designer(HasTraits):
     def _set_element_color(self, elem):
         def func(obj, color):
             if color is not None:
-                c = ','.join(map(lambda x: str(x),
-                                 obj.default_color.toTuple()
-                                 ))
+                c = ','.join([str(x) for x in obj.default_color.toTuple()])
                 color.text = c
 
         self._set_element_attr(func, elem, 'color')
@@ -104,12 +105,12 @@ class Designer(HasTraits):
     def _construct_xml(self):
         tags = {Valve: 'valve'}
         cp = CanvasParser()
-        for elem in self.scene.iteritems():
+        for elem in six.iteritems(self.scene):
             if type(elem) in tags:
                 tag = tags[type(elem)]
-                print 'adsfafd', tag, elem
+                print('adsfafd', tag, elem)
             elif hasattr(elem, 'type_tag'):
-                print 'fffff', elem.type_tag, elem
+                print('fffff', elem.type_tag, elem)
 
     def open_xml(self, p):
         # cp=CanvasParser(p)

@@ -18,7 +18,8 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from factory import toolkit_factory
+from __future__ import absolute_import
+from .factory import toolkit_factory
 
 myTableEditor = toolkit_factory('table_editor', 'myTableEditor')
 # ============= EOF =============================================

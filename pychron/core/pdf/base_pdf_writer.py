@@ -15,23 +15,23 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance
-# ============= standard library imports ========================
-from reportlab.platypus.doctemplate import BaseDocTemplate, PageTemplate
-from reportlab.lib.units import inch
-from reportlab.platypus.paragraph import Paragraph
-from reportlab.lib.styles import getSampleStyleSheet
-# ============= local library imports  ==========================
-from pychron.loggable import Loggable
-from reportlab.platypus.frames import Frame
-from reportlab.platypus.flowables import Spacer, PageBreak
-from pychron.core.pdf.items import Anchor
-from reportlab.lib.pagesizes import landscape, letter
-from pychron.core.helpers.formatting import floatfmt
+from __future__ import absolute_import
 
-from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import landscape, letter
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.units import inch
 from reportlab.lib.units import mm
+from reportlab.pdfgen import canvas
+from reportlab.platypus.doctemplate import BaseDocTemplate, PageTemplate
+from reportlab.platypus.flowables import Spacer, PageBreak
+from reportlab.platypus.frames import Frame
+from reportlab.platypus.paragraph import Paragraph
+from traits.api import Instance
+
+from pychron.core.helpers.formatting import floatfmt
+from pychron.core.pdf.items import Anchor
 from pychron.core.pdf.options import BasePDFOptions
+from pychron.loggable import Loggable
 
 
 class NumberedCanvas(canvas.Canvas):
@@ -112,7 +112,7 @@ class BasePDFWriter(Loggable):
         for ti in templates:
             doc.addPageTemplates(ti)
 
-        if self.options.show_page_numbers:
+        if self.options.show_page_numbers and self.options.page_number_format:
             NumberedCanvas.page_number_format = self.options.page_number_format
 
             doc.build(flowables, canvasmaker=NumberedCanvas)
@@ -132,7 +132,7 @@ class BasePDFWriter(Loggable):
             klass = Paragraph
 
         style = getSampleStyleSheet()[s]
-        for k, v in skw.iteritems():
+        for k, v in skw.items():
             setattr(style, k, v)
 
         p = klass(t, style)

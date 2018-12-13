@@ -61,7 +61,7 @@ class StratCanvas(SceneCanvas):
         self.index_range.low_setting = io = low - pad
         self.index_range.high_setting = high + pad
 
-        for i in self.scene.iteritems():
+        for i in self.scene.items():
             i.index_origin = io
 
 # ============= EOF =============================================

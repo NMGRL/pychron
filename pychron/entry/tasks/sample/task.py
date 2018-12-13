@@ -16,25 +16,26 @@
 
 # ============= enthought library imports =======================
 
+from __future__ import absolute_import
+import os
+
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem
 
-# ============= standard library imports ========================
-import os
-# ============= local library imports  ==========================
-from pychron.entry.tasks.sample.sample_entry import SampleEntry
-from pychron.entry.tasks.sample.actions import DumpAction, LoadAction, RecoverAction
-from pychron.entry.tasks.sample.actions import SaveAction
+from pychron.entry.tasks.sample.actions import DumpAction, LoadAction, RecoverAction, SaveAction, ClearAction
 from pychron.entry.tasks.sample.panes import SampleEntryPane, SampleEditorPane
+from pychron.entry.tasks.sample.sample_entry import SampleEntry
 from pychron.envisage.tasks.base_task import BaseManagerTask
 from pychron.paths import paths
+from pychron.pychron_constants import DVC_PROTOCOL
 
 
 class SampleEntryTask(BaseManagerTask):
     name = 'Sample'
     id = 'pychron.entry.sample.task'
     tool_bars = [SToolBar(SaveAction()),
-                 SToolBar(DumpAction(), LoadAction(), RecoverAction())]
+                 SToolBar(DumpAction(), LoadAction(), RecoverAction()),
+                 SToolBar(ClearAction())]
 
     def activated(self):
         self.manager.activated()
@@ -49,11 +50,14 @@ class SampleEntryTask(BaseManagerTask):
         return [SampleEditorPane(model=self.manager)]
 
     # toolbar handlers
+    def clear(self):
+        self.manager.clear()
+
     def save(self):
         self.manager.save()
 
     def load(self):
-        p = self.open_directory_dialog(default_directory=paths.sample_dir)
+        p = self.open_file_dialog(default_directory=paths.sample_dir)
         if p:
             self.manager.load(p)
 
@@ -63,14 +67,14 @@ class SampleEntryTask(BaseManagerTask):
             self.manager.load(p)
 
     def dump(self):
-        # p = self.save_file_dialog(default_directory=paths.sample_dir)
-        p = '/Users/ross/Sandbox/sample_entry.yaml'
+        p = self.save_file_dialog(default_directory=paths.sample_dir)
+        # p = '/Users/ross/Sandbox/sample_entry.yaml'
         if p:
             self.manager.dump(p)
 
     # defaults
     def _manager_default(self):
-        dvc = self.application.get_service('pychron.dvc.dvc.DVC')
+        dvc = self.application.get_service(DVC_PROTOCOL)
         dvc.connect()
         return SampleEntry(application=self.application, dvc=dvc)
 

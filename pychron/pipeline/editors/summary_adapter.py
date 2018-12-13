@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Property, Int, Str
 from traitsui.tabular_adapter import TabularAdapter
 
@@ -22,6 +23,7 @@ from pychron.core.helpers.formatting import floatfmt
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
+from six.moves import zip
 
 
 class SummaryTabularAdapter(TabularAdapter):

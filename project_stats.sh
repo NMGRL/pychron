@@ -1,3 +1,3 @@
 #!/bin/bash
 
-cloc --include-lang=Python --exclude-dir=sandbox,docs,dist,zobs .
+cloc --include-lang=Python --exclude-dir=sandbox,docs,dist,zobs,test .

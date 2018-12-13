@@ -18,26 +18,33 @@
 from traits.api import HasTraits, Str, Property, Instance
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.helpers.formatting import uformat_percent_error
+from uncertainties import nominal_value, std_dev
+
+from pychron.core.helpers.formatting import uformat_percent_error, floatfmt, errorfmt
 from pychron.experiment.conditional.conditional import AutomatedRunConditional
 from pychron.processing.isotope_group import IsotopeGroup
 
 
 class AutomatedRunResult(HasTraits):
     runid = Str
-
+    analysis_timestamp = None
     isotope_group = Instance(IsotopeGroup)
     summary = Property
     tripped_conditional = Instance(AutomatedRunConditional)
 
     def _get_summary(self):
+        at = self.analysis_timestamp
+        if at is not None:
+            at = at.strftime('%H:%M:%S %m-%d-%Y')
 
         summary = self._make_header('Summary')
-        return '''RUNID= {}
+        return '''RUNID= {} 
+RUN TIME= {}
 {}
 {}
 {}
 {}'''.format(self.runid,
+             at,
              self._intensities(),
              self._tripped_conditional(),
              summary,
@@ -56,10 +63,11 @@ class AutomatedRunResult(HasTraits):
                     'Blank (fA)', '%Err'
 
             colwidths = 6, 8, 25, 8, 25, 8, 25, 8, 25, 8
-            cols = map('{{:<{}s}}'.format, colwidths)
+            # cols = list(map('{{:<{}s}}'.format, colwidths))
+            cols = ['{{:<{}s}}'.format(ci) for ci in colwidths]
             colstr = ''.join(cols)
 
-            divider = ''.join(map(lambda x: '{} '.format('-' * (x - 1)), colwidths))
+            divider = ''.join(['{} '.format('-' * (x - 1)) for x in colwidths])
             table_header = colstr.format(*names)
             lines = [self._make_header('Isotopes'), table_header, divider]
             for k in self.isotope_group.isotope_keys:
@@ -74,9 +82,16 @@ class AutomatedRunResult(HasTraits):
         return self._make_lines(lines)
 
     def _air_ratio(self):
+        a4038 = self.isotope_group.get_ratio('Ar40/Ar38', non_ic_corr=True)
+        a4036 = self.isotope_group.get_ratio('Ar40/Ar36', non_ic_corr=True)
+        # e4038 = uformat_percent_error(a4038, include_percent_sign=True)
+        # e4036 = uformat_percent_error(a4036, include_percent_sign=True)
+
         lines = [self._make_header('Ratios'),
-                 'Ar40/Ar36= {:0.5f}'.format(self.isotope_group.get_ratio('Ar40/Ar36', non_ic_corr=True)),
-                 'Ar40/Ar38= {:0.5f}'.format(self.isotope_group.get_ratio('Ar40/Ar38', non_ic_corr=True))]
+                 'Ar40/Ar36= {} {}'.format(floatfmt(nominal_value(a4036)), errorfmt(nominal_value(a4036),
+                                                                                    std_dev(a4036))),
+                 'Ar40/Ar38= {} {}'.format(floatfmt(nominal_value(a4038)), errorfmt(nominal_value(a4038),
+                                                                                    std_dev(a4038)))]
 
         return self._make_lines(lines)
 

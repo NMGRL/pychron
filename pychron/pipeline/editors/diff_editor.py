@@ -15,20 +15,22 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
+import os
+
+import yaml
 from traits.api import Property, Instance, List, Either, Int, Float, HasTraits, \
     Str, Bool, Button
 from traitsui.api import View, Item, UItem, VGroup, HGroup, spring
 from traitsui.editors.check_list_editor import CheckListEditor
 from traitsui.tabular_adapter import TabularAdapter
-# ============= standard library imports ========================
-import os
-import yaml
 from uncertainties import nominal_value, std_dev
-# ============= local library imports  ==========================
+
+from pychron.core.helpers.formatting import floatfmt
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
-from pychron.core.helpers.formatting import floatfmt
 from pychron.mass_spec.mass_spec_recaller import MassSpecRecaller
 from pychron.paths import paths
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
@@ -144,7 +146,7 @@ class ValueTabularAdapter(TabularAdapter):
         v = self.item.rvalue
         return self._get_value_text(v)
 
-    def _get_value_text(self, v, n=6):
+    def _get_value_text(self, v, n=8):
         if isinstance(v, float):
             v = floatfmt(v, n=n, s=5, use_scientific=True)
         return v
@@ -174,9 +176,16 @@ class Value(HasTraits):
             return 'NaN'
 
     def _get_diff(self):
-        return self.lvalue - self.rvalue
+        diff = self.lvalue - self.rvalue
+        return diff
 
     def _get_enabled(self):
+        if not self.lvalue and not self.rvalue:
+            return False
+
+        if self.lvalue <= 1e-20 and self.rvalue <= 1e-20:
+            return False
+
         t = True
         d = self.percent_diff
         if d != 'NaN':
@@ -214,6 +223,7 @@ class DiffEditor(BaseTraitsEditor):
 
     record_id = ''
     is_blank = False
+    is_air = False
     diff_tags = List
     edit_configuration_button = Button
     select_all_button = Button('Select All')
@@ -222,6 +232,7 @@ class DiffEditor(BaseTraitsEditor):
     def setup(self, left):
         self.record_id = left.record_id
         self.is_blank = self.record_id.startswith('b')
+        self.is_air = self.record_id.startswith('a')
 
         right = self._find_right(left)
         self.adapter = ValueTabularAdapter()
@@ -260,7 +271,7 @@ class DiffEditor(BaseTraitsEditor):
         vs = []
         pfunc = lambda x: lambda n: u'{} {}'.format(x, n)
 
-        if not self.is_blank:
+        if not self.is_blank and not self.is_air:
             vs.append(Value(name='J',
                             lvalue=nominal_value(left.j or 0),
                             rvalue=nominal_value(right.j or 0)))
@@ -292,14 +303,14 @@ class DiffEditor(BaseTraitsEditor):
 
             vs.append(Value(name='Ca37/K39', lvalue=nominal_value(ca / k),
                             rvalue=nominal_value(right.r3739)))
-            vs.append(Value(name='Ca/K', lvalue=nominal_value(left.kca) ** -1,
-                            rvalue=nominal_value(right.kca) ** -1))
+            vs.append(Value(name='K/Ca', lvalue=nominal_value(left.kca),
+                            rvalue=nominal_value(right.kca)))
 
             cl = left.get_non_ar_isotope('cl38')
             vs.append(Value(name='Cl38/K39', lvalue=nominal_value(cl / k),
                             rvalue=nominal_value(right.Cl3839)))
-            vs.append(Value(name='Cl/K', lvalue=nominal_value(left.kcl) ** -1,
-                            rvalue=nominal_value(right.kcl) ** -1))
+            vs.append(Value(name='K/Cl', lvalue=nominal_value(left.kcl),
+                            rvalue=nominal_value(right.kcl)))
 
             constants = left.arar_constants
             vv = [Value(name=n, lvalue=nominal_value(getattr(constants, k)),
@@ -347,11 +358,11 @@ class DiffEditor(BaseTraitsEditor):
             vs.append(Value(name=func('fN'), lvalue=iso.fn, rvalue=riso.fn))
 
             vs.append(StrValue(name=func('Fit'), lvalue=iso.fit.lower(), rvalue=riso.fit.lower()))
-            vs.append(StrValue(name=func('Filter'), lvalue=filter_str(iso), rvalue=filter_str(iso)))
-            vs.append(Value(name=func('Filter Iter'), lvalue=iso.filter_outliers_dict.get('iterations'),
-                            rvalue=riso.filter_outliers_dict.get('iterations')))
-            vs.append(Value(name=func('Filter SD'), lvalue=iso.filter_outliers_dict.get('std_devs'),
-                            rvalue=riso.filter_outliers_dict.get('std_devs')))
+            vs.append(StrValue(name=func('Filter'), lvalue=filter_str(iso), rvalue=filter_str(riso)))
+            vs.append(Value(name=func('Filter Iter'), lvalue=iso.filter_outliers_dict.get('iterations', 0),
+                            rvalue=riso.filter_outliers_dict.get('iterations', 0)))
+            vs.append(Value(name=func('Filter SD'), lvalue=iso.filter_outliers_dict.get('std_devs', 0),
+                            rvalue=riso.filter_outliers_dict.get('std_devs', 0)))
             vs.append(Value(name=func('IC'), lvalue=nominal_value(iso.ic_factor),
                             rvalue=nominal_value(riso.ic_factor)))
             vs.append(Value(name=func(u'IC {}'.format(PLUSMINUS_ONE_SIGMA)), lvalue=std_dev(iso.ic_factor),
@@ -385,12 +396,12 @@ class DiffEditor(BaseTraitsEditor):
                                 rvalue=riso.blank.error))
 
             rpr = right.production_ratios
-            for k, v in left.production_ratios.iteritems():
+            for k, v in left.production_ratios.items():
                 vs.append(Value(name=k, lvalue=nominal_value(v),
                                 rvalue=nominal_value(rpr.get(k, 0))))
 
             rifc = right.interference_corrections
-            for k, v in left.interference_corrections.iteritems():
+            for k, v in left.interference_corrections.items():
                 vs.append(Value(name=k, lvalue=nominal_value(v),
                                 rvalue=nominal_value(rifc.get(k.lower(), 0))))
 

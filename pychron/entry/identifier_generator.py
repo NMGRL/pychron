@@ -17,8 +17,6 @@
 # ============= enthought library imports =======================
 from traits.api import Any, Str, List, Bool, Int, CInt, Instance
 from traitsui.api import View
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from traitsui.item import Item
 
 from pychron.core.progress import open_progress
@@ -35,9 +33,11 @@ def get_maxs(lns):
             x = 0
         return x
 
-    lns = map(func, lns)
+    lns = [func(li) for li in lns]
+    return [max(gi) for gi in group_runs(lns)]
 
-    return map(max, group_runs(lns))
+    # lns = list(map(func, lns))
+    # return list(map(max, group_runs(lns)))
 
 
 def group_runs(li, tolerance=1000):
@@ -83,9 +83,12 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
         unklns = self.db.get_last_identifiers(excludes=(self.monitor_name,))
 
         if monlns:
-            self.mon_maxs = get_maxs(monlns)
+            self.mon_maxs = list(map(str, get_maxs(monlns)))
         if unklns:
-            self.unk_maxs = get_maxs(unklns)
+            self.unk_maxs = list(map(str, get_maxs(unklns)))
+
+        self.mon_start = self.mon_maxs[0] if self.mon_maxs else 0
+        self.unk_start = self.unk_maxs[0] if self.unk_maxs else 0
 
         info = self.edit_traits(view=View(Item('offset'), Item('level_offset'),
                                           Item('mon_start', label='Starting Monitor L#',
@@ -108,9 +111,7 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
         self.generate_identifiers()
 
     def generate_identifiers(self, *args, **kw):
-        db = self.db
-        with db.session_ctx(commit=True):
-            self._generate_labnumbers(*args)
+        self._generate_labnumbers(*args)
 
         if not self.is_preview:
             self.dvc.meta_commit('Generate identifiers')
@@ -130,7 +131,6 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
 
         irradiation = self.irradiation
 
-        print offset, level_offset
         mongen, unkgen, n = self._position_generator(offset, level_offset)
 
         if n:
@@ -144,9 +144,7 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
                         self._set_position_identifier(pos, ident)
                     else:
                         pos.identifier = ident
-                        self.dvc.set_identifier(pos.level.irradiation.name,
-                                                pos.level.name,
-                                                pos.position, ident)
+                        self.dvc.set_identifier(irradiation, le, po, ident)
 
                     # self._add_default_flux(pos)
                     msg = 'setting irrad. pos. {} {}-{} labnumber={}'.format(irradiation, le, po, ident)
@@ -243,11 +241,11 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
                 if self.is_preview:
                     r = self._get_position_is_monitor(x)
                 else:
-                    if not r:
-                        try:
-                            r = x.sample.name == self.monitor_name
-                        except AttributeError, e:
-                            pass
+                    # print('dsaf', x.sample.name, self.monitor_name, x.sample.name == self.monitor_name)
+                    try:
+                        r = x.sample.name == self.monitor_name
+                    except AttributeError as e:
+                        pass
 
                 if invert:
                     r = not r
@@ -262,7 +260,7 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
             else:
                 try:
                     r = x.sample.name  # == self.monitor_name
-                except AttributeError, e:
+                except AttributeError as e:
                     pass
 
             return r
@@ -270,7 +268,7 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
         test = monkey(not is_monitor)
         for level in levels:
             i = 0
-            for position in level.positions:
+            for position in sorted(level.positions, key=lambda x: x.position):
                 if not has_sample(position):
                     continue
 
@@ -395,7 +393,7 @@ if __name__ == '__main__':
            63188,
            63187,
            63186]
-    print get_maxs(lns)
+    print(get_maxs(lns))
 
 
 # ============= EOF =============================================

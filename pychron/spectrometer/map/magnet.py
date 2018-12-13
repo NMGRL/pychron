@@ -19,7 +19,8 @@ from traits.api import Any
 # ============= standard library imports ========================
 import time
 # ============= local library imports  ==========================
-from pychron.spectrometer.base_magnet import BaseMagnet, get_float
+from pychron.hardware import get_float
+from pychron.spectrometer.base_magnet import BaseMagnet
 
 
 class MapMagnet(BaseMagnet):

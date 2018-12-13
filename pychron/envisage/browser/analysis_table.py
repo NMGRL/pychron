@@ -14,28 +14,34 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from traits.api import List, Any, Str, Enum, Bool, Event, Property, cached_property, Instance, DelegatesTo, \
-    CStr, Int, Button
-# ============= standard library imports ========================
+from __future__ import absolute_import
+
 import json
 import os
 from collections import OrderedDict
 from datetime import datetime
 from hashlib import md5
-# ============= local library imports  ==========================
+# ============= enthought library imports =======================
+from operator import attrgetter
+
+from traits.api import List, Any, Str, Enum, Bool, Event, Property, cached_property, Instance, DelegatesTo, \
+    CStr, Int, Button
+
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.fuzzyfinder import fuzzyfinder
-from pychron.envisage.browser.adapters import AnalysisAdapter
+from pychron.core.helpers.iterfuncs import groupby_repo
+from pychron.core.select_same import SelectSameMixin
 from pychron.core.ui.table_configurer import AnalysisTableConfigurer
+from pychron.dvc.func import get_review_status
+from pychron.envisage.browser.adapters import AnalysisAdapter
 from pychron.paths import paths
 
 
 def sort_items(ans):
-    return sorted(ans, key=lambda x: x.timestampf)
+    return sorted(ans, key=attrgetter('timestampf'))
 
 
-class AnalysisTable(ColumnSorterMixin):
+class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
     analyses = List
     oanalyses = List
     selected = Any
@@ -68,30 +74,56 @@ class AnalysisTable(ColumnSorterMixin):
     max_history = Int
     suppress_load_analysis_set = False
 
+    default_attr = 'identifier'
+    dvc = Instance('pychron.dvc.dvc.DVC')
+
     def __init__(self, *args, **kw):
         super(AnalysisTable, self).__init__(*args, **kw)
 
         self._analysis_sets = OrderedDict()
 
+    def _sorted_hook(self, vs):
+        self.oanalyses = vs
+
     def load(self):
         p = paths.hidden_path('analysis_sets')
         if os.path.isfile(p):
             with open(p, 'r') as rfile:
-                jd = json.load(rfile, object_pairs_hook=OrderedDict)
+                try:
+                    jd = json.load(rfile, object_pairs_hook=OrderedDict)
+                except ValueError as e:
+                    print('load sanlaysis set exception', e)
+                    return
+
                 self._analysis_sets = jd
                 self.analysis_set_names = list(reversed([ji[0] for ji in jd.values()]))
 
+        p = paths.hidden_path('selected_analysis_set')
+        if os.path.isfile(p):
+            with open(p, 'r') as rfile:
+                self.analysis_set = rfile.read().strip()
+
     def dump(self):
         p = paths.hidden_path('analysis_sets')
-        with open(p, 'w') as wfile:
-            json.dump(self._analysis_sets, wfile)
+        if self._analysis_sets:
+            with open(p, 'w') as wfile:
+                json.dump(self._analysis_sets, wfile)
 
-    def add_analysis_set(self):
+        p = paths.hidden_path('selected_analysis_set')
+        if self.analysis_set:
+            with open(p, 'w') as wfile:
+                wfile.write(self.analysis_set)
+
+    def get_selected_analyses(self):
         if self.analyses:
             ans = self.selected
             if not ans:
                 ans = self.analyses
+            return ans
 
+    def add_analysis_set(self):
+        ans = self.get_selected_analyses()
+        if ans:
             aset = [(a.uuid, a.record_id) for a in ans]
             if aset:
                 if len(aset) > 1:
@@ -99,7 +131,7 @@ class AnalysisTable(ColumnSorterMixin):
                 else:
                     name = aset[0][1]
 
-            h = md5(''.join(sorted((ai[0] for ai in aset)))).hexdigest()
+            h = md5(''.join(sorted((ai[0] for ai in aset))).encode('utf-8')).hexdigest()
             if h not in self._analysis_sets:
                 name = '{} ({})'.format(name, datetime.now().strftime('%m/%d/%y'))
                 self._analysis_sets[h] = (name, aset)
@@ -110,16 +142,17 @@ class AnalysisTable(ColumnSorterMixin):
             return name
 
     def get_analysis_set(self, name):
-        return next((a[1] for a in self._analysis_sets.itervalues() if a[0] == name))
+        return next((a[1] for a in self._analysis_sets.values() if a[0] == name))
 
     def set_tags(self, tag, items):
         for i in items:
             ai = next((a for a in self.oanalyses if a.uuid == i.uuid), None)
             if ai:
-                ai.tag = tag
+                ai.set_tag(tag)
 
         self._analysis_filter_changed(self.analysis_filter)
-
+        self.selected = []
+        
     def remove_invalid(self):
         self.oanalyses = [ai for ai in self.oanalyses if ai.tag != 'invalid']
         self._analysis_filter_changed(self.analysis_filter)
@@ -129,6 +162,17 @@ class AnalysisTable(ColumnSorterMixin):
         items.extend(ans)
         self.oanalyses = self.analyses = sort_items(items)
         self.calculate_dts(self.analyses)
+        self.scroll_to_row = len(self.analyses) - 1
+
+    def clear_non_frozen(self):
+        self.analyses = [a for a in self.analyses if a.frozen]
+        self.oanalyses = self.analyses
+        self.selected = []
+
+    def clear(self):
+        self.analyses = []
+        self.oanalyses = []
+        self.selected = []
 
     def set_analyses(self, ans, tc=None, page=None, reset_page=False, selected_identifiers=None):
         if selected_identifiers:
@@ -138,15 +182,25 @@ class AnalysisTable(ColumnSorterMixin):
         else:
             aa = ans
 
-        self.oanalyses = self.analyses = sort_items(aa)
+        new_items = sort_items(aa)
+        items = [ai for ai in self.analyses if ai.frozen]
+
+        new_items = [ai for ai in new_items if ai not in items]
+        items.extend(new_items)
+
+        self.selected = []
+        self.oanalyses = self.analyses = items
 
         self.calculate_dts(self.analyses)
+        self.scroll_to_row = len(self.analyses) - 1
 
     def calculate_dts(self, ans):
         if ans and len(ans) > 1:
             self._python_dt(ans)
 
     def _python_dt(self, ans):
+        ans = sorted(ans, key=attrgetter('timestampf'))
+
         ref = ans[0]
         prev = ref.timestampf
         ref.delta_time = 0
@@ -159,11 +213,60 @@ class AnalysisTable(ColumnSorterMixin):
     def configure_table(self):
         self.table_configurer.edit_traits(kind='livemodal')
 
+    def group_selected(self):
+        max_gid = max([si.group_id for si in self.analyses]) + 1
+        for s in self.get_selected_analyses():
+            s.group_id = max_gid
+
+        self.clear_selection()
+
+    def clear_grouping(self):
+        for s in self.get_selected_analyses():
+            s.group_id = 0
+
+        self.clear_selection()
+
+    def clear_selection(self):
+        self.selected = []
+        self.refresh_needed = True
+
     def review_status_details(self):
         from pychron.envisage.browser.review_status_details import ReviewStatusDetailsView, ReviewStatusDetailsModel
-        m = ReviewStatusDetailsModel(self.selected[0])
+        record = self.selected[0]
+        self.dvc.sync_repo(record.repository_identifier)
+        m = ReviewStatusDetailsModel(record)
+
         rsd = ReviewStatusDetailsView(model=m)
         rsd.edit_traits()
+
+    def toggle_freeze(self):
+        for ai in self.get_selected_analyses():
+            ai.frozen = not ai.frozen
+        self.refresh_needed = True
+
+    def load_review_status(self):
+        records = self.get_analysis_records()
+        if records:
+            for repoid, rs in groupby_repo(records):
+
+                self.dvc.sync_repo(repoid)
+                for ri in rs:
+                    get_review_status(ri)
+            self.refresh_needed = True
+
+    def get_analysis_records(self):
+        records = self.selected
+        if not records:
+            records = self.analyses
+
+        return records
+
+    # selectsame
+    def _get_records(self):
+        return self.analyses
+
+    def _get_selection_attrs(self):
+        return ['identifier', 'aliquot', 'step', 'comment', 'tag']
 
     # handlers
     def _add_analysis_set_button_fired(self):
@@ -184,7 +287,10 @@ class AnalysisTable(ColumnSorterMixin):
 
         if new.removed:
             for ai in new.removed:
-                self.oanalyses.remove(ai)
+                try:
+                    self.oanalyses.remove(ai)
+                except ValueError:
+                    pass
 
     def _analysis_filter_changed(self, new):
         if new:
@@ -215,8 +321,7 @@ class AnalysisTable(ColumnSorterMixin):
 
     def _tabular_adapter_default(self):
         adapter = AnalysisAdapter()
-        self.table_configurer.adapter = adapter
-        self.table_configurer.load()
+        self.table_configurer.set_adapter(adapter)
         return adapter
 
 # ============= EOF =============================================

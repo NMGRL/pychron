@@ -15,14 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Array, Any, Instance, Float
-
-# ============= standard library imports ========================
-import struct
+from __future__ import absolute_import
 import time
 from threading import Thread
+
+import struct
 from numpy import array, vstack
-# ============= local library imports  ==========================
+from traits.api import Array, Any, Instance, Float
+
+from pychron.core.helpers.binpack import pack
 from pychron.core.helpers.formatting import floatfmt
 from pychron.loggable import Loggable
 from pychron.managers.data_managers.csv_data_manager import CSVDataManager
@@ -106,7 +107,7 @@ class ResponseRecorder(Loggable):
                 else:
                     datum = (t, out, sp, r)
 
-                datum = map(lambda x: floatfmt(x, n=3), datum)
+                datum = [floatfmt(x, n=3) for x in datum]
 
                 dm.write_to_frame(datum)
 
@@ -147,15 +148,18 @@ class ResponseRecorder(Loggable):
 
     def get_response_blob(self):
         if len(self.response_data):
-            return ''.join([struct.pack('<ff', x, y) for x, y in self.response_data])
+            # return ''.join([struct.pack('<ff', x, y) for x, y in self.response_data])
+            return pack('<ff', self.response_data)
 
     def get_output_blob(self):
         if len(self.output_data):
-            return ''.join([struct.pack('<ff', x, y) for x, y in self.output_data])
+            return pack('<ff', self.output_data)
+            # return ''.join([struct.pack('<ff', x, y) for x, y in self.output_data])
 
     def get_setpoint_blob(self):
         if len(self.setpoint_data):
-            return ''.join([struct.pack('<ff', x, y) for x, y in self.setpoint_data])
+            return pack('<ff', self.setpoint_data)
+            # return ''.join([struct.pack('<ff', x, y) for x, y in self.setpoint_data])
 
     @property
     def max_response(self):

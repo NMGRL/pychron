@@ -14,18 +14,19 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from traits.api import Float, Property, Int
-from traitsui.api import View, Item, HGroup, \
-    spring
 # ============= standard library imports ========================
 import os
+
 from numpy import loadtxt, polyfit, polyval, poly1d
 from scipy import optimize
+# ============= enthought library imports =======================
+from traits.api import Float, Property, Int
+from traitsui.api import View, Item, HGroup, spring
+
 # ============= local library imports  ==========================
-from pychron.spectrometer.base_detector import BaseDetector
-from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
 from pychron.paths import paths
+from pychron.spectrometer.base_detector import BaseDetector
+from pychron.spectrometer.spectrometer_device import SpectrometerDevice
 
 
 class ThermoDetector(BaseDetector, SpectrometerDevice):
@@ -37,6 +38,7 @@ class ThermoDetector(BaseDetector, SpectrometerDevice):
 
     deflection_correction_sign = Int(1)
     _deflection_correction_factors = None
+    deflection_name = None
 
     def load(self):
         self.read_deflection()
@@ -55,8 +57,8 @@ class ThermoDetector(BaseDetector, SpectrometerDevice):
                 self.warning('no deflection data for {}'.format(self.name))
 
     def read_deflection(self):
-        if self.use_deflection:
-            r = self.ask('GetDeflection {}'.format(self.name))
+        if self.use_deflection or self.kind in ('IonCounter',):
+            r = self.ask('GetDeflection {}'.format(self.deflection_name))
             try:
                 if r is None:
                     self.warning('Failed reading {} deflection. Error=No response. '
@@ -65,7 +67,7 @@ class ThermoDetector(BaseDetector, SpectrometerDevice):
                 else:
                     self._deflection = float(r)
 
-            except (ValueError, TypeError), e:
+            except (ValueError, TypeError) as e:
                 self.warning('Failed reading {} deflection. Error={}. '
                              'Using previous value {}'.format(self.name, e,
                                                               self._deflection))
@@ -105,7 +107,7 @@ class ThermoDetector(BaseDetector, SpectrometerDevice):
                 self.spectrometer.update_config(Deflections=[(self.name, v)])
 
             self._deflection = v
-            self.ask('SetDeflection {},{}'.format(self.name, v))
+            self.ask('SetDeflection {},{}'.format(self.deflection_name, v))
 
     def _get_deflection(self):
         return self._deflection

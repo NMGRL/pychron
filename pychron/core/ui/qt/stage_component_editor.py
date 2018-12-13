@@ -16,7 +16,8 @@
 
 
 # ============= enthought library imports =======================
-from PySide.QtCore import Qt
+from __future__ import absolute_import
+from pyface.qt.QtCore import Qt
 from enable.component_editor import ComponentEditor, _ComponentEditor
 from enable.window import Window as EWindow
 from traits.api import Event, Str

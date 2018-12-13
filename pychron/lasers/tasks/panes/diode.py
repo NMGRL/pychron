@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traitsui.api import View, Item, VGroup, InstanceEditor
 
 from pychron.lasers.tasks.laser_panes import ClientPane, BaseLaserPane, \

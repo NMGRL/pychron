@@ -15,8 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from PySide.QtCore import QTimer
-from PySide.QtGui import QLabel, QImage, QPixmap, QSizePolicy
+from __future__ import absolute_import
+from __future__ import print_function
+from pyface.qt.QtCore import QTimer
+from pyface.qt.QtGui import QLabel, QImage, QPixmap, QSizePolicy
 from traits.api import Int, Instance
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -30,34 +32,39 @@ class _CameraEditor(Editor):
 
     def init(self, parent):
         self.control = self._create_control(parent)
+        self._setup_loop()
 
     def update_editor(self):
         self._setup_loop()
 
     def dispose(self):
-        self.timer.stop()
+        if self.timer:
+            self.timer.stop()
 
     def _setup_loop(self):
+        # if self.value is not None:
         self.timer = QTimer(self.control)
         self.timer.timeout.connect(self._update)
+        print('fps', self.factory.fps)
         if self.factory.fps:
             self.timer.setInterval(1000 / self.factory.fps)
         self.timer.start()
 
     def _update(self):
-        # w, h = self.control.width(), self.control.height()
-        # img = self.value.get_image_data(size=(w, h))
-        img = self.value.get_image_data()
-        if img is not None:
-            s = img.shape
-            if s:
-                im = QImage(img, s[1], s[0], QImage.Format_RGB32)
-                # im = QImage(img, s[1], s[0], QImage.Format_RGB16)
-                if self.swap:
-                    im = QImage.rgbSwapped(im)
+        if self.value:
+            # w, h = self.control.width(), self.control.height()
+            # img = self.value.get_image_data(size=(w, h))
+            img = self.value.get_image_data()
+            if img is not None:
+                s = img.shape
+                if s:
+                    im = QImage(img, s[1], s[0], QImage.Format_RGB32)
+                    # im = QImage(img, s[1], s[0], QImage.Format_RGB16)
+                    if self.swap:
+                        im = QImage.rgbSwapped(im)
 
-                pix = QPixmap.fromImage(im)
-                self.control.setPixmap(pix)
+                    pix = QPixmap.fromImage(im)
+                    self.control.setPixmap(pix)
 
     def _create_control(self, parent):
         label = QLabel()
@@ -74,6 +81,3 @@ class  CameraEditor(BasicEditorFactory):
     fps = Int(24)
 
 # ============= EOF =============================================
-
-
-

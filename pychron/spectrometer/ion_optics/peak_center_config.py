@@ -15,19 +15,25 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from apptools import sweet_pickle as pickle
-from traits.api import HasTraits, Str, Bool, Float, List, Enum, Int, Any, Button
-from traitsui.api import View, Item, HGroup, Handler, EnumEditor, UItem, VGroup, InstanceEditor, CheckListEditor
-# ============= standard library imports ========================
 import os
-# ============= local library imports  ==========================
-from pychron.core.helpers.filetools import add_extension, list_directory2
+import pickle
+
+# from apptools import sweet_pickle as pickle
+from traits.api import HasTraits, Str, Bool, Float, Either, List, Enum, Int, Any, Button
+from traitsui.api import View, Item, HGroup, EnumEditor, UItem, VGroup, InstanceEditor
+
+from pychron.core.helpers.filetools import add_extension, glob_list_directory
+from pychron.core.ui.check_list_editor import CheckListEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.paths import paths
-from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES
+from pychron.saveable import SaveButton, Saveable, SaveableHandler
 
 
-class PeakCenterConfigHandler(Handler):
+class PeakCenterConfigHandler(SaveableHandler):
+    def save(self, info):
+        info.object.save()
+        self.close(info, True)
+
     def closed(self, info, isok):
         if isok:
             info.object.dump()
@@ -48,8 +54,13 @@ class PeakCenterConfig(HasTraits):
     isotopes = List(transient=True)
     dac = Float
     use_current_dac = Bool(True)
-    integration_time = Enum(QTEGRA_INTEGRATION_TIMES)
+    # integration_time = Enum(QTEGRA_INTEGRATION_TIMES)
+    integration_time = Either(Float, Int)
+    integration_times = List(transient=True)
+
     directions = Enum('Increase', 'Decrease', 'Oscillate')
+
+    dataspace = Enum('dac', 'mass', 'av')
 
     window = Float(0.015)
     step_width = Float(0.0005)
@@ -65,9 +76,13 @@ class PeakCenterConfig(HasTraits):
     use_dac_offset = Bool
     dac_offset = Float
     calculate_all_peaks = Bool
+    use_mftable_dac = Bool
 
-    def _integration_time_default(self):
-        return QTEGRA_INTEGRATION_TIMES[4]  # 1.048576
+    update_others = Bool(True)
+
+    use_extend = Bool(False)
+    # def _integration_time_default(self):
+    #     return QTEGRA_INTEGRATION_TIMES[4]  # 1.048576
 
     def _n_peaks_changed(self, new):
 
@@ -80,20 +95,28 @@ class PeakCenterConfig(HasTraits):
         if new:
             self.available_detectors = [d for d in self.detectors if d != new]
 
-    def traits_view(self):
-        degrp = VGroup(UItem('additional_detectors', style='custom',
-                             editor=CheckListEditor(name='available_detectors',
-                                                    cols=max(1, len(self.available_detectors)))),
-                       show_border=True, label='Additional Detectors')
+    def mftable_view(self):
+        m_grp = self._get_measure_grp()
+        pp_grp = self._get_post_process_grp(include_update_others=False)
 
-        m_grp = VGroup(HGroup(Item('use_current_dac',
-                                   label='Use Current DAC'),
-                              Item('dac', enabled_when='not use_current_dac')),
-                       Item('integration_time'),
-                       Item('directions'),
-                       Item('window', label='Peak Width (V)'),
-                       Item('step_width', label='Step Width (V)'),
-                       show_border=True, label='Measure')
+        v = View(VGroup(m_grp,
+                        pp_grp))
+        return v
+
+    def traits_view(self):
+        degrp = self._get_additional_detectors_grp()
+
+        m_grp = self._get_measure_grp()
+        pp_grp = self._get_post_process_grp()
+
+        v = View(VGroup(HGroup(Item('detector', editor=EnumEditor(name='detectors')),
+                               Item('isotope', editor=EnumEditor(name='isotopes'))),
+                        degrp,
+                        m_grp,
+                        pp_grp))
+        return v
+
+    def _get_post_process_grp(self, include_update_others=True):
         pp_grp = VGroup(Item('min_peak_height', label='Min Peak Height (fA)'),
                         Item('percent', label='% Peak Height'),
                         HGroup(Item('use_interpolation', label='Use Interpolation'),
@@ -107,19 +130,61 @@ class PeakCenterConfig(HasTraits):
                         Item('calculate_all_peaks'),
                         show_border=True, label='Post Process')
 
-        v = View(VGroup(HGroup(Item('detector', editor=EnumEditor(name='detectors')),
-                               Item('isotope', editor=EnumEditor(name='isotopes'))),
-                        degrp,
-                        m_grp,
-                        pp_grp))
-        return v
+        if include_update_others:
+            itm = Item('update_others', label='Update All Detectors',
+                       tooltip='Update all the detectors in the '
+                               'mftable not only the reference '
+                               'detector')
+            pp_grp.content.append(itm)
+        return pp_grp
+
+    def _get_measure_grp(self):
+        dac_grp = VGroup(HGroup(Item('use_current_dac',
+                                     label='Use Current DAC'),
+                                Item('use_mftable_dac',
+                                     label='Use DAC from MFTable')),
+                         Item('dac', enabled_when='not use_current_dac and not use_mftable_dac'),
+                         visible_when='dataspace=="dac"')
+
+        dataspace_grp = HGroup(Item('dataspace'), label='Dataspace', show_border=True)
+
+        m_grp = VGroup(dataspace_grp,
+                       dac_grp,
+                       Item('integration_time', editor=EnumEditor(name='integration_times')),
+                       Item('directions'),
+
+                       Item('window', visible_when='dataspace=="av"', label='Peak Width (V)'),
+                       Item('step_width', visible_when='dataspace=="av"', label='Step Width (V)'),
+
+                       Item('window', visible_when='dataspace=="dac"', label='Peak Width (V)'),
+                       Item('step_width', visible_when='dataspace=="dac"', label='Step Width (V)'),
+
+                       Item('window', visible_when='dataspace=="mass"', label='Peak Width (amu)'),
+                       Item('step_width', visible_when='dataspace=="mass"', label='Step Width (amu)'),
+                       Item('use_extend'),
+
+                       show_border=True, label='Measure')
+        return m_grp
+
+    def _get_additional_detectors_grp(self):
+        degrp = VGroup(UItem('additional_detectors',
+                             style='custom',
+                             editor=CheckListEditor(name='available_detectors',
+                                                    capitalize=False,
+                                                    cols=max(1, len(self.available_detectors)))),
+                       show_border=True, label='Additional Detectors')
+        return degrp
+
+    @property
+    def use_accel_voltage(self):
+        return self.dataspace == 'av'
 
     @property
     def active_detectors(self):
         return [self.detector] + self.additional_detectors
 
 
-class ItemConfigurer(HasTraits):
+class ItemConfigurer(Saveable):
     active_item = Any
 
     active_name = Str
@@ -129,22 +194,28 @@ class ItemConfigurer(HasTraits):
 
     new_name = Str
     add_button = Button
+    root = Str
+    save_enabled = True
+    view_name = Str
 
     def dump(self):
         p = os.path.join(paths.hidden_dir, add_extension('config', '.p'))
-        with open(p, 'wfile') as wfile:
+        with open(p, 'wb') as wfile:
             obj = {'name': self.active_name}
             pickle.dump(obj, wfile)
 
         self.dump_item(self.active_item)
 
+    def save(self):
+        self.dump()
+
     def load(self, **kw):
-        names = list_directory2(paths.peak_center_config_dir, remove_extension=True, extension='.p')
+        names = glob_list_directory(self.root, remove_extension=True, extension='.p')
         if 'Default' not in names:
             item = self.item_klass()
             item.name = 'Default'
             self.dump_item(item)
-            names = list_directory2(paths.peak_center_config_dir, remove_extension=True, extension='.p')
+            names = glob_list_directory(self.root, remove_extension=True, extension='.p')
 
         name = 'Default'
         p = os.path.join(paths.hidden_dir, add_extension('config', '.p'))
@@ -160,22 +231,28 @@ class ItemConfigurer(HasTraits):
 
     def dump_item(self, item):
         name = item.name
-        p = os.path.join(paths.peak_center_config_dir, add_extension(name, '.p'))
+        p = os.path.join(self.root, add_extension(name, '.p'))
+        print('dump itme')
         with open(p, 'wb') as wfile:
             pickle.dump(item, wfile)
+            print('sdfasdf')
 
     def get(self, name):
-        p = os.path.join(paths.peak_center_config_dir, add_extension(name, '.p'))
+        p = os.path.join(self.root, add_extension(name, '.p'))
         if os.path.isfile(p):
-            with open(p, 'rb') as rfile:
-                obj = pickle.load(rfile)
+            try:
+                with open(p, 'rb') as rfile:
+                    obj = pickle.load(rfile, encoding='latin1')
+            except BaseException as e:
+                obj = self.item_klass()
+
         else:
             obj = self.item_klass()
 
         return obj
 
     def _load_names(self):
-        names = list_directory2(paths.peak_center_config_dir, remove_extension=True, extension='.p')
+        names = glob_list_directory(self.root, remove_extension=True, extension='.p')
         self.names = names
 
     def _active_name_changed(self, name):
@@ -201,9 +278,10 @@ class ItemConfigurer(HasTraits):
                                      editor=EnumEditor(name='names')),
                                icon_button_editor('add_button', 'add')),
                         UItem('_'),
-                        UItem('active_item', style='custom', editor=InstanceEditor()),
+                        UItem('active_item', style='custom',
+                              editor=InstanceEditor(view=self.view_name)),
                         UItem('_')),
-                 buttons=['OK', 'Cancel'],
+                 buttons=['OK', 'Cancel', SaveButton],
                  kind='livemodal',
                  title=self.title,
                  width=400,
@@ -217,13 +295,18 @@ class PeakCenterConfigurer(ItemConfigurer):
 
     detectors = List
     isotopes = List
+    integration_times = List
     available_detectors = List
+    display_detector_choice = True
+
+    def _root_default(self):
+        return paths.peak_center_config_dir
 
     def load(self, **kw):
         kw['detectors'] = self.detectors
         kw['isotopes'] = self.isotopes
         kw['available_detectors'] = self.detectors
-
+        kw['integration_times'] = self.integration_times
         super(PeakCenterConfigurer, self).load(**kw)
 
         det = self.active_item.detector
@@ -234,7 +317,8 @@ class PeakCenterConfigurer(ItemConfigurer):
         item = super(PeakCenterConfigurer, self).get(*args, **kw)
         item.trait_set(detectors=self.detectors,
                        isotopes=self.isotopes,
-                       available_detectors=self.detectors)
+                       available_detectors=self.detectors,
+                       integration_times=self.integration_times)
 
         det = item.detector
         item.detector = ''

@@ -16,12 +16,14 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
 import math
 from unittest import TestCase
-from ConfigParser import ConfigParser
+from six.moves.configparser import ConfigParser
 # ============= local library imports  ==========================
 from pychron.processing.argon_calculations import calculate_arar_age
 from pychron.processing import constants
+from six.moves import map
 
 class AgeCalcTest(TestCase):
     def setUp(self):
@@ -30,19 +32,16 @@ class AgeCalcTest(TestCase):
         p = '/Users/ross/Sandbox/pychron_validation_data.cfg'
         config.read(p)
 
-        signals = map(lambda x: map(float, x.split(',')),
-                      [config.get('Signals-{}'.format(rid), k)
-                        for k in ['ar40', 'ar39', 'ar38', 'ar37', 'ar36']])
+        signals = [list(map(float, x.split(','))) for x in [config.get('Signals-{}'.format(rid), k)
+                        for k in ['ar40', 'ar39', 'ar38', 'ar37', 'ar36']]]
 
-        blanks = map(lambda x: map(float, x.split(',')),
-                      [config.get('Blanks-{}'.format(rid), k)
-                        for k in ['ar40', 'ar39', 'ar38', 'ar37', 'ar36']])
+        blanks = [list(map(float, x.split(','))) for x in [config.get('Blanks-{}'.format(rid), k)
+                        for k in ['ar40', 'ar39', 'ar38', 'ar37', 'ar36']]]
 
-        irradinfo = map(lambda x: map(float, x.split(',')),
-                       [config.get('irrad-{}'.format(rid), k) for k in ['k4039', 'k3839', 'ca3937', 'ca3837', 'ca3637', 'cl3638']])
+        irradinfo = [list(map(float, x.split(','))) for x in [config.get('irrad-{}'.format(rid), k) for k in ['k4039', 'k3839', 'ca3937', 'ca3837', 'ca3637', 'cl3638']]]
 
         j = config.get('irrad-{}'.format(rid), 'j')
-        j = map(lambda x: float(x), j.split(','))
+        j = [float(x) for x in j.split(',')]
         baselines = [(0, 0), (0, 0), (0, 0), (0, 0), (0, 0)]
         backgrounds = [(0, 0), (0, 0), (0, 0), (0, 0), (0, 0)]
 

@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
 from chaco.api import AbstractOverlay
 from enable.colors import ColorTrait
 from enable.enable_traits import LineStyle
@@ -64,6 +65,7 @@ class GuideOverlayMoveTool(DragTool):
 
     def drag_cancel(self, event):
         self.drag_end(event)
+
 
 class GuideOverlay(AbstractOverlay):
     """

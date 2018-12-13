@@ -22,6 +22,7 @@
 
 # ============= local library imports  ==========================
 # from canvas.canvas3D.elements.components import Valve, Shaft
+from __future__ import print_function
 class Section(object):
     '''
         G{classtree}
@@ -96,7 +97,7 @@ class Section(object):
 
 
 
-        print action, valve.name, state, prec, self.cur_precedence, self.cur_state
+        print(action, valve.name, state, prec, self.cur_precedence, self.cur_state)
         if action:
             # if the state change was to open the valve
             if prec is not None:
@@ -150,7 +151,7 @@ class Section(object):
                         avalve = valves[vk]
 
             if avalve is not None:
-                print avalve.name
+                print(avalve.name)
                 if gas_type is not None and state == 'measuring':
                     state = '_'.join((state, gas_type))
                 self.set_state(avalve, state, sg)

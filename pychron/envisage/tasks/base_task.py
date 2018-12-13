@@ -15,6 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
+import os
+
 from envisage.ui.tasks.action.task_window_launch_group import TaskWindowLaunchAction
 from pyface.action.api import ActionItem, Group
 from pyface.confirmation_dialog import ConfirmationDialog
@@ -25,20 +29,17 @@ from pyface.tasks.action.schema import SMenu, SMenuBar, SGroup
 from pyface.tasks.task import Task
 from pyface.tasks.task_layout import TaskLayout
 from pyface.timer.do_later import do_later, do_after
-from traits.api import Any, on_trait_change, List, Unicode, DelegatesTo, Instance
-# ============= standard library imports ========================
-import os
-from itertools import groupby
-# ============= local library imports  ==========================
+from traits.api import Any, on_trait_change, List, Unicode, Instance
+
 from pychron.core.helpers.filetools import add_extension, view_file
+from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.preference_mixin import PreferenceMixin
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import GenericSaveAction, GenericSaveAsAction, \
     GenericFindAction, RaiseAction, RaiseUIAction, ResetLayoutAction, \
     MinimizeAction, PositionAction, IssueAction, CloseAction, CloseOthersAction, AboutAction, OpenAdditionalWindow, \
-    NoteAction, RestartAction, DocumentationAction, CopyPreferencesAction, SwitchUserAction, KeyBindingsAction, \
-    ChangeLogAction, StartupTestsAction
+    NoteAction, RestartAction, DocumentationAction, CopyPreferencesAction, ChangeLogAction, StartupTestsAction
 from pychron.loggable import Loggable
 from pychron.paths import paths
 
@@ -131,7 +132,7 @@ class TaskGroup(Group):
 
 
 class BaseTask(Task, Loggable, PreferenceMixin):
-    application = DelegatesTo('window')
+    # application = DelegatesTo('window')
 
     _full_window = False
 
@@ -139,10 +140,8 @@ class BaseTask(Task, Loggable, PreferenceMixin):
         if self.window:
             for task in self.window.tasks:
                 if task.id == tid:
-                    print 'found task'
                     break
             else:
-                print 'add task'
                 task = self.application.create_task(tid)
                 self.window.add_task(task)
 
@@ -238,8 +237,10 @@ class BaseTask(Task, Loggable, PreferenceMixin):
             DocumentationAction(),
             ChangeLogAction(),
             RestartAction(),
-            KeyBindingsAction(),
-            SwitchUserAction(),
+
+            # KeyBindingsAction(),
+            # SwitchUserAction(),
+
             StartupTestsAction(),
             # DemoAction(),
             id='help.menu',
@@ -278,9 +279,7 @@ class BaseTask(Task, Loggable, PreferenceMixin):
 
         application = self.window.application
         groups = []
-        for _, factories in groupby(sorted(application.task_factories,
-                                           key=groupfunc),
-                                    key=groupfunc):
+        for _, factories in groupby_key(application.task_factories,groupfunc):
             items = []
             for factory in factories:
                 for win in application.windows:
@@ -325,6 +324,13 @@ class BaseTask(Task, Loggable, PreferenceMixin):
         self._opened_hook()
 
     def _opened_hook(self):
+        pass
+
+    @on_trait_change('window:closed')
+    def _on_closed(self, event):
+        self._closed_hook()
+
+    def _closed_hook(self):
         pass
 
     @on_trait_change('window:closing')

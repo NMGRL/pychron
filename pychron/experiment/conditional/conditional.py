@@ -15,16 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+
 import os
+import pprint
 
-from traits.api import Str, Either, Int, Callable, Bool, Float, Enum
-
+import yaml
+from traits.api import Str, Either, Int, Callable, Bool, Float, Enum, List
 # ============= standard library imports ========================
 from traits.trait_types import BaseStr
 from uncertainties import nominal_value, std_dev
-import pprint
+
 # ============= local library imports  ==========================
-import yaml
 from pychron.experiment.conditional.regexes import MAPPER_KEY_REGEX, \
     STD_REGEX, INTERPOLATE_REGEX, EXTRACTION_STR_ABS_REGEX, EXTRACTION_STR_PERCENT_REGEX
 from pychron.experiment.conditional.utilities import tokenize, get_teststr_attr_func, extract_attr
@@ -150,15 +151,19 @@ class BaseConditional(Loggable):
 
         ntrips = cd.get('ntrips', 1)
 
-        analysis_types = cd.get('analysis_types')
+        analysis_types = cd.get('analysis_types', [])
         if analysis_types:
-            analysis_types = [a.lower() for a in analysis_types]
+            analysis_types = [a.lower().replace(' ', '_') for a in analysis_types]
+        else:
+            analysis_types = []
+
         attr = extract_attr(teststr)
 
         self.trait_set(start_count=start, frequency=freq,
                        attr=attr,
                        window=win, mapper=mapper,
-                       ntrips=ntrips, analysis_types=analysis_types,
+                       ntrips=ntrips,
+                       analysis_types=analysis_types,
                        **kw)
         self._from_dict_hook(cd)
 
@@ -203,7 +208,7 @@ class AutomatedRunConditional(BaseConditional):
     # used to specify a window (in counts) of data to average, etc.
     window = Int
     mapper = Str
-    analysis_types = None
+    analysis_types = List
 
     _mapper_key = ''
 
@@ -215,6 +220,7 @@ class AutomatedRunConditional(BaseConditional):
     _teststr = None
     _ctx = None
     value_context = None
+
     # def __init__(self, attr, teststr,
     # start_count=0,
     # frequency=1,
@@ -244,13 +250,13 @@ class AutomatedRunConditional(BaseConditional):
     def _hash_id(self, d=None):
         if d is None:
             d = self._attr_dict()
-        return hash(frozenset(d.items()))
+        return hash(frozenset(list(d.items())))
 
     def _attr_dict(self):
         return {'teststr': self.teststr, 'start_count': self.start_count,
                 'frequency': self.frequency, 'ntrips': self.ntrips,
                 'level': self.level,
-                'analysis_types': self.analysis_types, 'location': self.location}
+                'analysis_types': tuple(self.analysis_types), 'location': self.location}
 
     def result_dict(self):
         hash_id = self._hash_id()
@@ -258,7 +264,13 @@ class AutomatedRunConditional(BaseConditional):
 
     def _should_check(self, run, data, cnt):
         if self.analysis_types:
-            if run.analysis_type.lower() not in self.analysis_types:
+            # check if checking should be done on this run based on analysis_type
+            atype = run.analysis_type.lower()
+            if 'blank' in self.analysis_types:
+                if atype.startswith('blank'):
+                    return
+
+            if atype not in self.analysis_types:
                 return
 
         if self.active:
@@ -268,15 +280,12 @@ class AutomatedRunConditional(BaseConditional):
 
                 ocnt = cnt - self.start_count
 
-                # "a" flag not necessary cnt>scnt == cnt-scnt>0
-                # a = cnt > self.start_count
                 b = ocnt > 0
                 c = ocnt % self.frequency == 0
                 cnt_flag = b and c
-                # print ocnt, self.frequency, b, c
                 return cnt_flag
 
-    def _check(self, run, data):
+    def _check(self, run, data, verbose=False):
         """
         make a teststr and context from the run and data
         evaluate the teststr with the context
@@ -288,37 +297,43 @@ class AutomatedRunConditional(BaseConditional):
         self.value_context = vc = pprint.pformat(ctx, width=1)
 
         self.debug('testing {}'.format(teststr))
+        if verbose:
+            self.debug('attribute context {}'.format(pprint.pformat(self._attr_dict(), width=1)))
         msg = 'evaluate ot="{}" t="{}", ctx="{}"'.format(self.teststr, teststr, vc)
         self.debug(msg)
-        if eval(teststr, ctx):
-            self.trips += 1
-            self.debug('condition {} is true trips={}/{}'.format(teststr, self.trips,
-                                                                 self.ntrips))
-            if self.trips >= self.ntrips:
-                self.tripped = True
-                self.message = 'condition {} is True'.format(teststr)
+        if teststr and ctx:
+            if eval(teststr, ctx):
+                self.trips += 1
+                self.debug('condition {} is true trips={}/{}'.format(teststr, self.trips,
+                                                                     self.ntrips))
+                if self.trips >= self.ntrips:
+                    self.tripped = True
+                    self.message = 'condition {} is True'.format(teststr)
+                    self.trips = 0
+                    return True
+            else:
                 self.trips = 0
-                return True
-        else:
-            self.trips = 0
 
     def _make_context(self, obj, data):
         teststr = self.teststr
-
         ctx = {}
         tt = []
         for ti, oper in tokenize(teststr):
             ts, attr, func = get_teststr_attr_func(ti)
+
+            attr = attr.replace('(', '_').replace(')', '_')
+            ts = ts.replace('(', '_').replace(')', '_')
+
             v = func(obj, data, self.window)
+            if v is not None:
+                vv = std_dev(v) if STD_REGEX.match(teststr) else nominal_value(v)
+                vv = self._map_value(vv)
+                ctx[attr] = vv
 
-            vv = std_dev(v) if STD_REGEX.match(teststr) else nominal_value(v)
-            vv = self._map_value(vv)
-            ctx[attr] = vv
-
-            ts = self._interpolate_teststr(ts, obj, data)
-            tt.append(ts)
-            if oper:
-                tt.append(oper)
+                ts = self._interpolate_teststr(ts, obj, data)
+                tt.append(ts)
+                if oper:
+                    tt.append(oper)
 
         return ' '.join(tt), ctx
 
@@ -454,7 +469,7 @@ class QueueModificationConditional(AutomatedRunConditional):
         if n is None:
             n = self.nskip
 
-        for i in xrange(n):
+        for i in range(n):
             r = runs[i]
             r.skip = True
 
@@ -504,7 +519,7 @@ class QueueModificationConditional(AutomatedRunConditional):
                 break
 
             try:
-                nstep = steps_gen.next()
+                nstep = next(steps_gen)
                 if use_percent:
                     r.extract_value *= (1 + nstep / 100.)
                 else:

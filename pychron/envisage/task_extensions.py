@@ -14,6 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from pyface.action.menu_manager import MenuManager
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
@@ -74,8 +76,8 @@ class ViewModel(HasTraits):
             try:
                 with open(p, 'r') as rfile:
                     enables = yaml.load(rfile)
-            except BaseException, e:
-                print 'ViewModel.set states', e
+            except BaseException as e:
+                print('ViewModel.set states', e)
         elif modename == 'advanced':
             enables = None
         else:
@@ -128,7 +130,7 @@ class ViewModel(HasTraits):
         h = hashlib.md5()
         for te in self.task_extensions:
             for a in te.additions:
-                h.update('{}{}'.format(a.model.id, a.enabled))
+                h.update('{}{}'.format(a.model.id, a.enabled).encode('utf-8'))
         return h.hexdigest()
 
 
@@ -207,15 +209,15 @@ class EditExtensionsView(HasTraits):
                 try:
                     d = yaml.load(rfile)
                     self.trait_set(**d)
-                except BaseException, e:
-                    print 'exception', e
+                except BaseException as e:
+                    print('exception', e)
 
     def dump(self):
         self.view_model.dump()
         self._dump()
 
     def add_additions(self, tid, task_id, name, a):
-        print tid, task_id
+        print(tid, task_id)
         adds = []
         for ai in a:
             d = ''
@@ -273,7 +275,7 @@ class EditExtensionsView(HasTraits):
         self.update()
 
     def _selected_changed(self, new):
-        print new
+        print(new)
         try:
             self.description = new.description
         except AttributeError:

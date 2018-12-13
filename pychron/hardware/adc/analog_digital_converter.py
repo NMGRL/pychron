@@ -19,7 +19,8 @@
 # =============standard library imports ========================
 # import time
 # =============local library imports  ==========================
-from pychron.core import Q_
+# from pychron.core import Q_
+from __future__ import absolute_import
 from pychron.hardware.core.core_device import CoreDevice
 
 
@@ -66,8 +67,8 @@ class M1000(AnalogDigitalConverter):
 
             res = self.ask(cmd, **kw)
             res = self._parse_response_(res)
-            if res is not None:
-                res = Q_(res, self.units)
+            # if res is not None:
+            #     res = Q_(res, self.units)
 
         return res
 

@@ -19,10 +19,7 @@
 # ============= local library imports  ==========================
 
 
-# ============= EOF =============================================
-
-
-
+from __future__ import absolute_import
 def confirmation_dialog(msg, return_retval=False,
                         cancel=False, title='',
                         timeout=None, size=None,
@@ -75,3 +72,4 @@ def remember_confirmation_dialog(msg,
     from pyface.api import YES, OK
 
     return retval in (YES, OK), dlg.remember
+# ============= EOF =============================================

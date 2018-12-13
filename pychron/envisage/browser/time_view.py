@@ -15,6 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
+import os
+import pickle
+from datetime import datetime, timedelta
+
 from pyface.action.menu_manager import MenuManager
 from traits.api import HasTraits, Str, Int, Any, on_trait_change, List, Event, Button, Date
 from traitsui.api import View, UItem, Item, HGroup, VGroup, EnumEditor, spring
@@ -23,15 +29,11 @@ from traitsui.handler import Controller, Handler
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
-# ============= standard library imports ========================
-from datetime import datetime, timedelta
-import os
-import pickle
-# ============= local library imports  ==========================
 from pychron.core.progress import progress_loader
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.paths import paths
+from pychron.pychron_constants import NULL_STR
 
 
 class TimeViewAdapter(TabularAdapter):
@@ -127,7 +129,7 @@ class TimeViewModel(HasTraits):
     analysis_type = Str
     extract_device = Str
     available_mass_spectrometers = List
-    available_analysis_types = List
+    available_analysis_types = List([NULL_STR, 'Unknown', 'Blank', 'Air', 'Cocktail'])
     available_extract_devices = List
 
     highdays = Int(0, enter_set=True, auto_set=False)
@@ -141,6 +143,12 @@ class TimeViewModel(HasTraits):
     context_menu_enabled = True
     append_replace_enabled = True
     _active_column = None
+
+    def get_analysis_records(self):
+        if self.selected:
+            return self.selected
+        else:
+            return self.analyses
 
     @on_trait_change('mass_spectrometer, analysis_type, extract_device, lowdate, highdate, limit')
     def _handle_filter(self):
@@ -162,8 +170,9 @@ class TimeViewModel(HasTraits):
                 self._active_column = event.column
                 name, field = event.editor.adapter.columns[event.column]
 
-                sattr = getattr(self.selected[0], field)
-                self.analyses = [ai for ai in self.analyses if getattr(ai, field) == sattr]
+                sattrs = {getattr(s, field) for s in self.selected}
+                self.analyses = [ai for ai in self.analyses if getattr(ai, field) in sattrs]
+
             self.refresh_table_needed = True
 
     def _highdays_changed(self):
@@ -174,7 +183,7 @@ class TimeViewModel(HasTraits):
 
     def dump_filter(self):
         p = os.path.join(paths.hidden_dir, 'time_view.p')
-        with open(p, 'w') as wfile:
+        with open(p, 'wb') as wfile:
             obj = {k: getattr(self, k) for k in
                    ('mass_spectrometer', 'analysis_type', 'extract_device',
                     'lowdays', 'highdays', 'limit')}
@@ -183,7 +192,7 @@ class TimeViewModel(HasTraits):
     def load_filter(self):
         p = os.path.join(paths.hidden_dir, 'time_view.p')
         if os.path.isfile(p):
-            with open(p, 'r') as rfile:
+            with open(p, 'rb') as rfile:
                 obj = pickle.load(rfile)
                 self._suppress_load_analyses = True
                 self.trait_set(**obj)
@@ -208,34 +217,40 @@ class TimeViewModel(HasTraits):
 
     def _load_available(self):
         db = self.db
-        with db.session_ctx():
-            for attr in ('mass_spectrometer', 'analysis_type', 'extract_device'):
-                func = getattr(db, 'get_{}s'.format(attr))
-                ms = func()
-                ms.sort()
-                setattr(self, 'available_{}s'.format(attr), [''] + [mi.name for mi in ms])
+        for attr in ('mass_spectrometer', 'extract_device'):
+            func = getattr(db, 'get_{}s'.format(attr))
+            ms = func()
+            ms.sort()
+            setattr(self, 'available_{}s'.format(attr), [NULL_STR] + [mi.name for mi in ms])
 
     def _load_analyses(self, mass_spectrometer=None, analysis_type=None, extract_device=None):
         if self._suppress_load_analyses:
             return
 
         db = self.db
-        with db.session_ctx():
-            ma = self.highdate
-            mi = self.lowdate
-            ans = db.get_analyses_by_date_range(mi, ma,
-                                                mass_spectrometers=mass_spectrometer,
-                                                analysis_type=analysis_type,
-                                                extract_device=extract_device,
-                                                limit=self.limit, order='desc')
-            self.oanalyses = self._make_records(ans)
-            self.analyses = self.oanalyses[:]
+        ma = self.highdate
+        mi = self.lowdate
+
+        if analysis_type == NULL_STR:
+            analysis_type = None
+        if mass_spectrometer == NULL_STR:
+            mass_spectrometer = None
+        if extract_device == NULL_STR:
+            extract_device = None
+
+        ans = db.get_analyses_by_date_range(mi, ma,
+                                            mass_spectrometers=mass_spectrometer,
+                                            analysis_types=analysis_type,
+                                            extract_devices=extract_device,
+                                            limit=self.limit, order='desc')
+        self.oanalyses = self._make_records(ans)
+        self.analyses = self.oanalyses[:]
 
     def _make_records(self, ans):
         def func(xi, prog, i, n):
             if prog:
                 prog.change_message('Loading {}'.format(xi.record_id))
-            return xi.record_views
+            return xi
 
         return progress_loader(ans, func, threshold=25)
 

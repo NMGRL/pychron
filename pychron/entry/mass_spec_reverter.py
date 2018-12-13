@@ -13,7 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
 from pychron.core.ui import set_qt
+from six.moves import range
+from six.moves import zip
 
 set_qt()
 
@@ -93,20 +96,18 @@ class MassSpecReverter(Loggable):
     def _reimport_rid(self, rid):
         self.debug('========= Reimport {} ========='.format(rid))
 
-        db = self.source.db
         dest = self.destination
-        with db.session_ctx():
-            src_an = self._get_analysis_from_source(rid)
-            if src_an is None:
-                self.warning('could not find {}'.format(rid))
-            else:
-                with dest.session_ctx():
-                    dest_an = dest.get_analysis_rid(rid)
-                    for iso in dest_an.isotopes:
-                        pb, pbnc = self._generate_blobs(src_an, iso.Label)
-                        pt = iso.peak_time_series[0]
-                        pt.PeakTimeBlob = pb
-                        pt.PeakNeverBslnCorBlob = pbnc
+        src_an = self._get_analysis_from_source(rid)
+        if src_an is None:
+            self.warning('could not find {}'.format(rid))
+        else:
+            dest_an = dest.get_analysis_rid(rid)
+            for iso in dest_an.isotopes:
+                pb, pbnc = self._generate_blobs(src_an, iso.Label)
+                pt = iso.peak_time_series[0]
+                pt.PeakTimeBlob = pb
+                pt.PeakNeverBslnCorBlob = pbnc
+            dest.commit()
 
     def _generate_blobs(self, src, isok):
         dbiso = next((i for i in src.isotopes if i.molecular_weight.name == isok and i.kind == 'signal'), None)
@@ -124,8 +125,8 @@ class MassSpecReverter(Loggable):
 
     def _unpack_data(self, blob):
         endianness = '>'
-        sx, sy = zip(*[struct.unpack('{}ff'.format(endianness),
-                                     blob[i:i + 8]) for i in xrange(0, len(blob), 8)])
+        sx, sy = list(zip(*[struct.unpack('{}ff'.format(endianness),
+                                     blob[i:i + 8]) for i in range(0, len(blob), 8)]))
         return array(sx), array(sy)
 
     def _get_analysis_from_source(self, rid):
@@ -178,30 +179,30 @@ class MassSpecReverter(Loggable):
         dest = self.destination
         # with db.session_ctx():
         self.debug('========= Revert {} ========='.format(rid))
-        with dest.session_ctx() as sess:
-            dest_an = dest.get_analysis_rid(rid)
-            for iso in dest_an.isotopes:
-                isol = iso.Label
-                self.debug('{} reverting isotope id = {}'.format(isol, iso.IsotopeID))
+        dest_an = dest.get_analysis_rid(rid)
+        for iso in dest_an.isotopes:
+            isol = iso.Label
+            self.debug('{} reverting isotope id = {}'.format(isol, iso.IsotopeID))
 
-                # fix IsotopeTable.NumCnts
-                n = len(iso.peak_time_series[0].PeakTimeBlob) / 8
-                self.debug('{} fixing NumCnts. current={} new={}'.format(isol, iso.NumCnts, n))
-                iso.NumCnts = n
+            # fix IsotopeTable.NumCnts
+            n = len(iso.peak_time_series[0].PeakTimeBlob) / 8
+            self.debug('{} fixing NumCnts. current={} new={}'.format(isol, iso.NumCnts, n))
+            iso.NumCnts = n
 
-                nf = len(iso.peak_time_series)
-                if nf > 1:
-                    self.debug('{} deleting {} refits'.format(isol, nf - 1))
-                    # delete peak time blobs
-                    for i, pt in enumerate(iso.peak_time_series[1:]):
-                        self.debug('{} A {:02d} deleting pt series {}'.format(isol, i + 1, pt.Counter))
-                        sess.delete(pt)
+            nf = len(iso.peak_time_series)
+            if nf > 1:
+                self.debug('{} deleting {} refits'.format(isol, nf - 1))
+                # delete peak time blobs
+                for i, pt in enumerate(iso.peak_time_series[1:]):
+                    self.debug('{} A {:02d} deleting pt series {}'.format(isol, i + 1, pt.Counter))
+                    dest.delete(pt)
 
-                    # delete isotope results
-                    for i, ir in enumerate(iso.results[1:]):
-                        self.debug('{} B {:02d} deleting results {}'.format(isol, i + 1, ir.Counter))
-                        sess.delete(ir)
+                # delete isotope results
+                for i, ir in enumerate(iso.results[1:]):
+                    self.debug('{} B {:02d} deleting results {}'.format(isol, i + 1, ir.Counter))
+                    dest.delete(ir)
 
+        dest.commit()
 
 if __name__ == '__main__':
     m = MassSpecReverter(path='/Users/ross/Sandbox/crow_revert.txt')

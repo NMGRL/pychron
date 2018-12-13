@@ -14,21 +14,20 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
+import os
+
 from traits.api import Instance, Unicode, Property, DelegatesTo, Color, Bool
 from traitsui.api import View, UItem
 
-# ============= standard library imports ========================
-import os
-# ============= local library imports  ==========================
+from pychron.core.helpers.filetools import add_extension
 from pychron.core.ui.qt.tabular_editor import TabularEditorHandler
 from pychron.core.ui.table_configurer import ExperimentTableConfigurer
 from pychron.core.ui.tabular_editor import myTabularEditor
+from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.experiment.automated_run.tabular_adapter import AutomatedRunSpecAdapter, UVAutomatedRunSpecAdapter, \
     ExecutedAutomatedRunSpecAdapter, ExecutedUVAutomatedRunSpecAdapter
+from pychron.experiment.bulk_run_fixer import BulkRunFixer
 from pychron.experiment.queue.experiment_queue import ExperimentQueue
-from pychron.envisage.tasks.base_editor import BaseTraitsEditor
-from pychron.core.helpers.filetools import add_extension
 from pychron.experiment.utilities.repository_identifier import get_curtag, populate_repository_identifiers
 
 
@@ -49,6 +48,12 @@ class ExperimentEditorHandler(TabularEditorHandler):
 
     def repeat_block(self, info, obj):
         obj.repeat_block()
+
+    def group_extractions(self, info, obj):
+        obj.group_extractions()
+
+    def group_extractions2(self, info, obj):
+        obj.group_extractions2()
 
     def toggle_end_after(self, info, obj):
         obj.toggle_end_after()
@@ -107,6 +112,8 @@ class ExperimentEditor(BaseTraitsEditor):
     automated_runs_editable = Bool
     table_configurer = Instance(ExperimentTableConfigurer)
 
+    bulk_run_fixer = Instance(BulkRunFixer, ())
+
     def show_table_configurer(self):
         t = self.table_configurer
         t.edit_traits()
@@ -114,10 +121,13 @@ class ExperimentEditor(BaseTraitsEditor):
     def refresh(self):
         self.queue.refresh_table_needed = True
 
-    def setup_tabular_adapters(self, c, ec, colors):
+    def setup_tabular_adapters(self, c, ec, colors, use_atype_colors, atype_colors):
         self.bgcolor = c
         self.tabular_adapter = self.tabular_adapter_klass()
         self.executed_tabular_adapter = self.executed_tabular_adapter_klass()
+
+        self.tabular_adapter.use_analysis_type_colors = use_atype_colors
+        self.tabular_adapter.analysis_type_colors = atype_colors
 
         self.executed_tabular_adapter.colors = colors
         self.tabular_adapter.odd_bg_color = c
@@ -125,13 +135,13 @@ class ExperimentEditor(BaseTraitsEditor):
         self.tabular_adapter.even_bg_color = ec
         self.executed_tabular_adapter.even_bg_color = ec
 
-        v = ExperimentTableConfigurer(adapter=self.tabular_adapter,
-                                      children=[self.executed_tabular_adapter],
+        v = ExperimentTableConfigurer(children=[self.executed_tabular_adapter],
                                       auto_set=True,
                                       refresh_func=self.refresh,
                                       id='experiment.table')
 
         self.table_configurer = v
+        v.set_adapter(self.tabular_adapter)
 
     def new_queue(self, txt=None, **kw):
         queue = self.queue_factory(**kw)
@@ -144,15 +154,11 @@ class ExperimentEditor(BaseTraitsEditor):
             self.queue = queue
 
     def queue_factory(self, **kw):
-        print 'application', self.application
         return ExperimentQueue(application=self.application, **kw)
 
-    def save(self, path, queues=None):
-        if queues is None:
-            queues = [self.queue]
-
-        if self._validate_experiment_queues(queues):
-            path = self._dump_experiment_queues(path, queues)
+    def save(self, path):
+        if self._validate_experiment_queue():
+            path = self._dump_experiment_queue(path)
             if path:
                 self.path = path
                 self.dirty = False
@@ -169,10 +175,11 @@ class ExperimentEditor(BaseTraitsEditor):
         arun_grp = UItem('automated_runs',
                          editor=myTabularEditor(adapter=self.tabular_adapter,
                                                 operations=operations,
-                                                bgcolor=self.bgcolor,
                                                 editable=True,
                                                 mime_type='pychron.automated_run_spec',
-                                                # show_row_titles=True,
+                                                show_row_titles=True,
+                                                bgcolor=self.bgcolor,
+
                                                 dclicked='dclicked',
                                                 selected='selected',
                                                 paste_function='paste_function',
@@ -181,32 +188,29 @@ class ExperimentEditor(BaseTraitsEditor):
                                                 scroll_to_row='automated_runs_scroll_to_row',
                                                 # copy_cache='linked_copy_cache',
                                                 stretch_last_section=False,
-                                                multi_select=True),
-                         height=200)
+                                                multi_select=True))
 
-        executed_grp = UItem('executed_runs',
+        executed_grp = UItem('display_executed_runs',
                              editor=myTabularEditor(adapter=self.executed_tabular_adapter,
                                                     bgcolor=self.bgcolor,
                                                     editable=False,
-                                                    auto_update=True,
+                                                    # auto_update=True,
                                                     selectable=True,
                                                     pastable=False,
                                                     mime_type='pychron.automated_run_spec',
                                                     # link_copyable=False,
                                                     paste_function='executed_paste_function',
                                                     # copy_cache='linked_copy_cache',
+                                                    update='refresh_table_needed',
+                                                    refresh='refresh_table_needed',
                                                     selected='executed_selected',
                                                     multi_select=True,
                                                     stretch_last_section=False,
                                                     scroll_to_row='executed_runs_scroll_to_row'),
-                             height=500,
+                             height=-300,
                              visible_when='executed')
 
-        v = View(
-            executed_grp,
-            arun_grp,
-            handler=ExperimentEditorHandler(),
-            resizable=True)
+        v = View(executed_grp, arun_grp, handler=ExperimentEditorHandler())
         return v
 
     def trait_context(self):
@@ -234,48 +238,70 @@ class ExperimentEditor(BaseTraitsEditor):
         self.queue.path = self.path
 
     def _set_queue_dirty(self, obj, name, old, new):
-        if not self.queue._no_update and self.queue.initialized:
+        if not self.queue.no_update and self.queue.initialized:
             self.dirty = True
 
-    def _validate_experiment_queues(self, eqs):
+    def _validate_experiment_queue(self):
         # check runs
-        curtag = get_curtag()
-        for qi in eqs:
-            runs = qi.cleaned_automated_runs
-            no_repo = []
-            for i, ai in enumerate(runs):
-                if not ai.repository_identifier:
-                    self.warning('No repository identifier for i={}, {}'.format(i + 1, ai.runid))
-                    no_repo.append(ai)
+        qi = self.queue
 
-            if no_repo:
-                if not self.confirmation_dialog('Missing repository identifiers. Automatically populate?'):
-                    break
+        curtag = get_curtag()
+        runs = qi.cleaned_automated_runs
+        no_repo = []
+        overriden_special = []
+        for i, ai in enumerate(runs):
+            if not ai.repository_identifier:
+                self.warning('No repository identifier for i={}, {}'.format(i + 1, ai.runid))
+                no_repo.append(ai)
+            elif ai.is_special() \
+                    and ai.repository_identifier \
+                    and not ai.is_default_repository(qi.mass_spectrometer, curtag):
+                overriden_special.append(ai)
+
+        if no_repo:
+            if self.confirmation_dialog('Missing repository identifiers. Automatically populate?'):
+                populate_repository_identifiers(runs, qi.mass_spectrometer, curtag, debug=self.debug)
+                self.refresh()
+
+        if overriden_special:
+            if not self.confirmation_dialog('You have reference analyses with non-standard repositories. '
+                                            'Are you sure you want to do this? If you are confused or are '
+                                            'unsure then the answer is "NO"'):
+                for ai in runs:
+                    if ai.is_special():
+                        ai.repository_identifier = ''
 
                 populate_repository_identifiers(runs, qi.mass_spectrometer, curtag, debug=self.debug)
+                self.refresh()
 
-            hec = qi.human_error_checker
+        qi.executable = True
+        qi.initialized = True
 
-            qi.executable = True
-            qi.initialized = True
+        # self.bulk_run_fixer.patterns = qi.patterns
+        # self.bulk_run_fixer.fix(runs)
 
-            err = hec.check_runs(runs, test_all=True,
-                                 test_scripts=True)
-            if err:
-                qi.executable = False
-                qi.initialized = False
-                hec.report_errors(err)
-                # self.information_dialog(err)
-                break
+        hec = qi.human_error_checker
+        info = hec.check_runs_non_fatal(runs)
+        if info:
+            if not self.confirmation_dialog('There is a nonfatal issue.\n\n{}\n\n Are you sure you want to '
+                                            'continue?'.format(info)):
+                return
 
-            err = hec.check_queue(qi)
-            if err:
-                break
+        err = hec.check_runs(runs, test_all=True, test_scripts=True)
+        if err:
+            qi.executable = False
+            qi.initialized = False
+            hec.report_errors(err)
+            # self.information_dialog(err)
+            return
 
+        err = hec.check_queue(qi)
+        if err:
+            return
         else:
             return True
 
-    def _dump_experiment_queues(self, p, queues):
+    def _dump_experiment_queue(self, p):
 
         if not p:
             return
@@ -283,14 +309,9 @@ class ExperimentEditor(BaseTraitsEditor):
         p = add_extension(p)
 
         self.info('saving experiment to {}'.format(p))
-        with open(p, 'wb') as wfile:
-            n = len(queues)
-            for i, exp in enumerate(queues):
-                exp.path = p
-                exp.dump(wfile)
-                if i < (n - 1):
-                    wfile.write('\n')
-                    wfile.write('*' * 80)
+        with open(p, 'w') as wfile:
+            self.queue.path = p
+            self.queue.dump(wfile)
 
         return p
 

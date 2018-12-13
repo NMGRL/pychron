@@ -15,12 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Instance, Button, Bool, Str, List, provides, Property
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.external_pipette.protocol import IPipetteManager
-from pychron.hardware.apis_controller import ApisController
+#from pychron.hardware.apis_controller import ApisController
 from pychron.managers.manager import Manager
 
 
@@ -38,7 +39,7 @@ class InvalidPipetteError(BaseException):
 
 @provides(IPipetteManager)
 class SimpleApisManager(Manager):
-    controller = Instance(ApisController)
+    controller = Instance('pychron.hardware.apis_controller.ApisController')
 
     test_command = Str
     test_command_response = Str
@@ -67,9 +68,9 @@ class SimpleApisManager(Manager):
         blanks = self.controller.get_available_blanks()
         airs = self.controller.get_available_airs()
         if blanks:
-            self.available_blanks = blanks.split('[13]')
+            self.available_blanks = blanks.split('\r')
         if airs:
-            self.available_pipettes = airs.split('[13]')
+            self.available_pipettes = airs.split('\r')
 
         #setup linking
             # v = self.controller.isolation_valve
@@ -124,7 +125,7 @@ class SimpleApisManager(Manager):
             raise NotImplementedError
 
         name = str(name)
-        if not name in av:
+        if name not in av:
             raise InvalidPipetteError(name, av)
 
         func = getattr(self.controller, func)
@@ -184,6 +185,7 @@ class SimpleApisManager(Manager):
         return cmd
 
     def _controller_default(self):
+        from pychron.hardware.apis_controller import ApisController
         v = ApisController(name='apis_controller')
         return v
 

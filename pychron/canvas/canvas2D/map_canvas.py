@@ -15,14 +15,16 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from traits.api import Instance, Bool, Enum, Float, Color
-# =============standard library imports ========================
+from __future__ import absolute_import
+
 import math
-# =============local library imports  ==========================
-from pychron.stage.maps.base_stage_map import BaseStageMap
+
+from traits.api import Instance, Bool, Enum, Float, Color
+
+from pychron.canvas.canvas2D.scene.primitives.calibration import CalibrationObject
 from pychron.canvas.canvas2D.scene.scene_canvas import SceneCanvas
-from pychron.canvas.canvas2D.scene.primitives.primitives import CalibrationObject
 from pychron.core.geometry.affine import AffineTransform
+from pychron.stage.maps.base_stage_map import BaseStageMap
 
 
 class MapCanvas(SceneCanvas):
@@ -129,14 +131,11 @@ class MapCanvas(SceneCanvas):
         super(MapCanvas, self)._draw_underlay(gc, *args, **kw)
 
     def _convert_color(self, color):
-        rgb = lambda x: 0 <= x <= 1.
-
         if not isinstance(color, (list, tuple)):
-            color = color.toTuple()
+            color = color.red(), color.green(), color.blue(), color.alpha()
 
-        if not all(map(rgb, color)):
-            f = lambda x: x / 255.
-            color = map(f, color)
+        if not all([0 <= c <=1 for c in color]):
+            color = [x/255 for x in  color]
         return color
 
     def _draw_map(self, gc, *args, **kw):

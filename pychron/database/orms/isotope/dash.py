@@ -17,12 +17,12 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
+from __future__ import absolute_import
 from sqlalchemy import Column, DateTime, BLOB, String
 from sqlalchemy.orm import relationship
 
-# ============= local library imports  ==========================
 from pychron.database.core.base_orm import BaseMixin, NameMixin
-from util import Base, foreignkey
+from .util import Base, foreignkey
 
 
 class dash_TimeTable(Base, BaseMixin):
@@ -38,4 +38,3 @@ class dash_DeviceTable(Base, NameMixin):
     scan_meta = Column(BLOB)
 
 # ============= EOF =============================================
-

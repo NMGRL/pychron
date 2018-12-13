@@ -15,19 +15,21 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface.timer.do_later import do_after
 from traits.api import HasTraits, Str, List, Any, Event, Button, Int, Bool, Float
 from traitsui.api import View, Item, HGroup, spring
 from traitsui.handler import Handler
 
 # ============= standard library imports ========================
-import ConfigParser
+import six.moves.configparser
 import os
 import yaml
 # ============= local library imports  ==========================
 from pychron.core.helpers.traitsui_shortcuts import listeditor
 from pychron.loggable import Loggable
 from pychron.paths import paths
+from six.moves import zip
 
 DEFAULT_CONFIG = '''-
   - name: HighVoltage
@@ -152,7 +154,7 @@ class ReadoutView(Loggable):
             self._load_yaml(ypath)
 
     def _load_cfg(self, path):
-        config = ConfigParser.ConfigParser()
+        config = six.moves.configparser.ConfigParser()
         config.read(path)
         for section in config.sections():
             rd = Readout(name=section,
@@ -163,22 +165,23 @@ class ReadoutView(Loggable):
         with open(path, 'r') as rfile:
             try:
                 yt = yaml.load(rfile)
-                yl, yd = yt
+                if yt:
+                    yl, yd = yt
 
-                for rd in yl:
-                    rr = Readout(spectrometer=self.spectrometer,
-                                 name=rd['name'],
-                                 min_value=rd.get('min', 0),
-                                 max_value=rd.get('max', 1),
-                                 compare=rd.get('compare', True))
-                    self.readouts.append(rr)
+                    for rd in yl:
+                        rr = Readout(spectrometer=self.spectrometer,
+                                     name=rd['name'],
+                                     min_value=rd.get('min', 0),
+                                     max_value=rd.get('max', 1),
+                                     compare=rd.get('compare', True))
+                        self.readouts.append(rr)
 
-                for rd in yd:
-                    if rd.get('enabled', False):
-                        rr = DeflectionReadout(spectrometer=self.spectrometer,
-                                               name=rd['name'],
-                                               compare=rd.get('compare', True))
-                        self.deflections.append(rr)
+                    for rd in yd:
+                        if rd.get('enabled', False):
+                            rr = DeflectionReadout(spectrometer=self.spectrometer,
+                                                   name=rd['name'],
+                                                   compare=rd.get('compare', True))
+                            self.deflections.append(rr)
 
             except yaml.YAMLError:
                 return
@@ -210,13 +213,14 @@ class ReadoutView(Loggable):
     def _refresh(self):
         if self.use_word_query:
             keys = [r.name for r in self.readouts]
-            ds = self.spectrometer.get_parameter_word(keys)
-            for d, r in zip(ds, self.readouts):
-                r.set_value(d)
+            if keys:
+                ds = self.spectrometer.get_parameter_word(keys)
+                for d, r in zip(ds, self.readouts):
+                    r.set_value(d)
 
             keys = [r.name for r in self.deflections if r.use_deflection]
             if keys:
-                ds = self.spectrometer.get_deflection_word(keys)
+                ds = self.spectrometer.read_deflection_word(keys)
                 for d, r in zip(ds, self.deflections):
                     r.set_value(d)
 
@@ -248,10 +252,10 @@ class ReadoutView(Loggable):
 
             ns = ''
             if ne:
-                ns = '\n'.join(map(lambda n: '{:<16s}\t{:0.3f}\t{:0.3f}'.format(*n), ne))
+                ns = '\n'.join(['{:<16s}\t{:0.3f}\t{:0.3f}'.format(*n) for n in ne])
 
             if nd:
-                nnn = '\n'.join(map(lambda n: '{:<16s}\t\t{:0.0f}\t{:0.0f}'.format(*n), nd))
+                nnn = '\n'.join(['{:<16s}\t\t{:0.0f}\t{:0.0f}'.format(*n) for n in nd])
                 ns = '{}\n{}'.format(ns, nnn)
 
             if ns:

@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.graph.regression_graph import RegressionGraph
 from pychron.graph.stacked_regression_graph import StackedRegressionGraph
 from pychron.graph.time_series_graph import TimeSeriesGraph

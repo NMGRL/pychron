@@ -15,27 +15,28 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
+import os
+
 from envisage.extension_point import ExtensionPoint
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
-from pyface.tasks.action.schema import SMenu
+from pyface.tasks.action.schema import SMenu, SGroup
 from pyface.tasks.action.schema_addition import SchemaAddition
 from traits.api import List, Dict
-# ============= standard library imports ========================
-import os
-# ============= local library imports  ==========================
-from pychron.core.helpers.filetools import list_directory2
+
+from pychron.core.helpers.filetools import glob_list_directory
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.envisage.tasks.list_actions import ProcedureAction
 from pychron.extraction_line.extraction_line_manager import ExtractionLineManager
 from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
 from pychron.extraction_line.pyscript_runner import PyScriptRunner
-from pychron.extraction_line.tasks.extraction_line_task import ExtractionLineTask
-from pychron.extraction_line.tasks.extraction_line_actions import RefreshCanvasAction
+from pychron.extraction_line.tasks.extraction_line_actions import RefreshCanvasAction, StopWatchAction
 from pychron.extraction_line.tasks.extraction_line_preferences import ExtractionLinePreferencesPane, \
     ConsolePreferencesPane
+from pychron.extraction_line.tasks.extraction_line_task import ExtractionLineTask
 from pychron.paths import paths
-
 
 
 def procedure_action(name, application):
@@ -61,6 +62,9 @@ class ExtractionLinePlugin(BaseTaskPlugin):
     #                                    ('canvas_config_path', os.path.join(paths.canvas2D_dir, 'canvas_config.xml')),
     #                                    ('valves_path', os.path.join(paths.extraction_line_dir, 'valves.xml'))),
     #                                    'pychron.extraction_line')
+
+    def test_cryo_communication(self):
+        return self._test('test_cryo_communication')
 
     def test_gauge_communication(self):
         return self._test('test_gauge_communication')
@@ -88,15 +92,18 @@ class ExtractionLinePlugin(BaseTaskPlugin):
     def _task_extensions_default(self):
         ex = [TaskExtension(actions=[SchemaAddition(id='refresh_canvas',
                                                     factory=RefreshCanvasAction,
+                                                    path='MenuBar/tools.menu'),
+                                     SchemaAddition(id='stopwatch',
+                                                    factory=StopWatchAction,
                                                     path='MenuBar/tools.menu')])]
 
         if self.application.get_plugin('pychron.pyscript.plugin'):
 
             actions = []
-            for f in list_directory2(paths.procedures_dir, extension='.py', remove_extension=True):
+            for f in glob_list_directory(paths.procedures_dir, extension='.py', remove_extension=True):
                 actions.append(SchemaAddition(id='procedure.{}'.format(f),
                                               factory=procedure_action(f, self.application),
-                                              path='MenuBar/procedures.menu'))
+                                              path='MenuBar/procedures.menu/extraction_line.group'))
 
             if actions:
                 actions.insert(0, SchemaAddition(id='procedures.menu',
@@ -105,6 +112,10 @@ class ExtractionLinePlugin(BaseTaskPlugin):
                                                  factory=lambda: SMenu(name='Procedures', id='procedures.menu'),
                                                  path='MenuBar'))
 
+                actions.insert(1, SchemaAddition(id='extraction_line.group',
+                                                 factory=lambda: SGroup(name='ExtractionLine',
+                                                                        id='extraction_line.group'),
+                                                 path='MenuBar/procedures.menu'))
                 ex.append(TaskExtension(actions=actions))
             else:
                 self.warning('no procedure scripts located in "{}"'.format(paths.procedures_dir))
@@ -141,7 +152,7 @@ class ExtractionLinePlugin(BaseTaskPlugin):
 
     def _task_factory(self):
         elm = self.application.get_service(ExtractionLineManager)
-        t = ExtractionLineTask(manager=elm)
+        t = ExtractionLineTask(manager=elm, application=self.application)
         return t
 
     def _preferences_panes_default(self):

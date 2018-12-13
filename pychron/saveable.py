@@ -15,11 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Bool
 from traitsui.menu import Action
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.viewable import Viewable, ViewableHandler
+
 
 class SaveableHandler(ViewableHandler):
     def save(self, info):
@@ -30,6 +32,7 @@ class SaveableHandler(ViewableHandler):
 
     def apply(self, info):
         info.object.apply()
+
 
 class Saveable(Viewable):
     handler_klass = SaveableHandler

@@ -15,31 +15,34 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from matplotlib.cm import cmap_d
-from traits.api import Int, Bool, Float, Property, on_trait_change, Enum, List, Dict, Button
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+from chaco.default_colormaps import color_map_name_dict
+from traits.api import Int, Bool, Float, Property, on_trait_change, Enum, List, Dict, Button, Str, Color
+
 from pychron.options.aux_plot import AuxPlot
-# from pychron.options.group.ideogram_group_options import IdeogramGroupEditor, IdeogramGroupOptions
 from pychron.options.group.ideogram_group_options import IdeogramGroupOptions
-from pychron.options.ideogram_views import VIEWS
 from pychron.options.options import AgeOptions
-from pychron.pychron_constants import NULL_STR, FONTS, SIZES
+from pychron.options.views.ideogram_views import VIEWS
+from pychron.pychron_constants import NULL_STR, FONTS, SIZES, SIG_FIGS, MAIN, APPEARANCE, DISPLAY, GROUPS
 
 
 class IdeogramAuxPlot(AuxPlot):
     names = List([NULL_STR, 'Analysis Number Nonsorted', 'Analysis Number',
-                  'Radiogenic 40Ar', 'K/Ca', 'K/Cl', 'Mol K39', 'Ideogram'])
+                  'Radiogenic 40Ar', 'K/Ca', 'K/Cl', 'Mol K39', 'Signal K39', 'Ideogram'],
+                 transient=True)
     _plot_names = List(['', 'analysis_number_nonsorted', 'analysis_number', 'radiogenic_yield',
-                        'kca', 'kcl', 'moles_k39', 'relative_probability'])
+                        'kca', 'kcl', 'moles_k39', 'signal_k39', 'relative_probability'],
+                       transient=True)
 
 
 class IdeogramOptions(AgeOptions):
-    subview_names = List(['Main', 'Ideogram', 'Appearance', 'Calculations', 'Display', 'Groups'],
-                         transient=True)
+
     aux_plot_klass = IdeogramAuxPlot
 
     edit_label_format_button = Button
+    edit_mean_format_button = Button
+
+    mean_label_format = Str
+    mean_label_display = Str
     # edit_label_format = Button
     # refresh_asymptotic_button = Button
     index_attrs = Dict(transient=True)
@@ -54,9 +57,18 @@ class IdeogramOptions(AgeOptions):
 
     display_mean_indicator = Bool(True)
     display_mean = Bool(True)
+    display_mean_mswd = Bool(True)
+    display_mean_n = Bool(True)
     display_percent_error = Bool(True)
-    aux_plot_name = 'Ideogram'
+    # display_identifier_on_mean = Bool(False)
+    # display_sample_on_mean = Bool(False)
     label_all_peaks = Bool(True)
+    peak_label_sigfigs = Int
+    peak_label_bgcolor = Color
+    peak_label_border = Int
+    peak_label_border_color = Color
+    peak_label_bgcolor_enabled = Bool(False)
+    aux_plot_name = 'Ideogram'
 
     use_asymptotic_limits = Bool
     # asymptotic_width = Float)
@@ -70,17 +82,21 @@ class IdeogramOptions(AgeOptions):
     mean_indicator_font = Property
     mean_indicator_fontname = Enum(*FONTS)
     mean_indicator_fontsize = Enum(*SIZES)
-    mean_sig_figs = Int
+    mean_sig_figs = Enum(*SIG_FIGS)
 
     use_cmap_analysis_number = Bool(False)
-    cmap_analysis_number = Enum(*[m for m in cmap_d if not m.endswith("_r")])
+    cmap_analysis_number = Enum(list(color_map_name_dict.keys()))
     use_latest_overlay = Bool(False)
+    show_results_table = Bool(False)
 
     group_options_klass = IdeogramGroupOptions
 
     _use_centered_range = Bool
     _use_asymptotic_limits = Bool
     _suppress_xlimits_clear = Bool
+
+    def initialize(self):
+        self.subview_names = [MAIN, 'Ideogram', APPEARANCE, 'Calculations', DISPLAY, GROUPS]
 
     def to_dict(self):
         d = super(IdeogramOptions, self).to_dict()
@@ -100,23 +116,31 @@ class IdeogramOptions(AgeOptions):
     def to_dict_test(self, k):
         return k not in ('_suppress_xlimits_clear', 'aux_plots', 'groups', 'index_attrs')
 
-    def get_plot_dict(self, group_id):
-        # return {}
+    def get_plot_dict(self, group_id, subgroup_id):
 
         n = len(self.groups)
         gid = group_id % n
         fg = self.groups[gid]
-        d = {'color': fg.line_color,
-             'edge_color': fg.line_color,
+
+        line_color = fg.line_color
+        color = fg.color
+        # if subgroup_id:
+        #     rgb = color.red(), color.blue(), color.green()
+        #     rgb = [c*0.9*subgroup_id for c in rgb]
+        #     color.setRgb(*rgb)
+
+        d = {'color': color,
+             'edge_color': line_color,
              'edge_width': fg.line_width,
              'line_width': fg.line_width,
-             'line_color': fg.line_color}
+             'line_color': line_color}
 
         if fg.use_fill:
-            color = fg.color
+            color = fg.color.toRgb()
             color.setAlphaF(fg.alpha * 0.01)
-            d['fill_color'] = fg.color
+            d['fill_color'] = color
             d['type'] = 'filled_line'
+
         return d
 
     # private
@@ -152,8 +176,8 @@ class IdeogramOptions(AgeOptions):
 
     @on_trait_change('use_asymptotic_limits, asymptotic+, use_centered_range, centered_range, use_static_limits')
     def _handle_asymptotic(self, name, new):
-        if name.startswith('use') and not new:
-            return
+        # if name.startswith('use') and not new:
+        #     return
 
         if not self._suppress_xlimits_clear:
             for ap in self.aux_plots:
@@ -172,7 +196,17 @@ class IdeogramOptions(AgeOptions):
         if info.result:
             self.analysis_label_format = lm.formatter
             self.analysis_label_display = lm.label
-            self.refresh_plot_needed = True
+            # self.refresh_plot_needed = True
+
+    def _edit_mean_format_button_fired(self):
+        from pychron.processing.label_maker import MeanLabelTemplater, MeanLabelTemplateView
+
+        lm = MeanLabelTemplater(label=self.mean_label_display)
+        lv = MeanLabelTemplateView(model=lm)
+        info = lv.edit_traits()
+        if info.result:
+            self.mean_label_format = lm.formatter
+            self.mean_label_display = lm.label
 
     def _get_mean_indicator_font(self):
         return '{} {}'.format(self.mean_indicator_fontname,

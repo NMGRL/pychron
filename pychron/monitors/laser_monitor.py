@@ -15,12 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Float, Int
 
 # ============= standard library imports ========================
 import time
 # ============= local library imports  ==========================
-from monitor import Monitor
+from .monitor import Monitor
 
 
 class LaserMonitor(Monitor):
@@ -64,6 +65,8 @@ class LaserMonitor(Monitor):
         manager = self.manager
         if verbose:
             self.info('Check lasing duration')
+        if not self.start_time:
+            self.reset_start_time()
 
         # max duration in mins convert to secs for comparison
         if time.time() - self.start_time > self.max_duration * 60.0:

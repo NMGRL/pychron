@@ -15,12 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Property
-# from traitsui.api import View, Item, TextEditor
-from pychron.envisage.tasks.base_task import BaseHardwareTask
+from __future__ import absolute_import
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
+from traits.api import Property
+
+from pychron.envisage.tasks.base_task import BaseHardwareTask
 from pychron.envisage.view_util import open_view
 from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
+
+
 # from pychron.lasers.tasks.panes.co2 import FusionsCO2Pane, FusionsCO2StagePane, \
 # FusionsCO2ControlPane
 # from pychron.lasers.tasks.laser_panes import PulsePane, OpticsPane, \
@@ -47,6 +50,8 @@ class BaseLaserTask(BaseHardwareTask):
     def prepare_destroy(self):
         self.manager.shutdown()
 
+    def show_laser_script_executor(self):
+        pass
 
 class FusionsTask(BaseLaserTask):
     def _default_layout_default(self):
@@ -61,6 +66,11 @@ class FusionsTask(BaseLaserTask):
     # ===============================================================================
     # action handlers
     # ===============================================================================
+    def show_laser_script_executor(self):
+        if self.manager:
+            ex = self.manager.laser_script_executor
+            open_view(ex)
+
     def show_motion_configure(self):
         if self.manager:
             self.manager.show_motion_controller_manager()
@@ -117,6 +127,19 @@ class ChromiumCO2Task(FusionsTask):
         return []
 
 
+class ChromiumDiodeTask(FusionsTask):
+    id = 'pychron.chromium.diode'
+    name = 'Chromium Diode'
+
+    def create_central_pane(self):
+        from pychron.lasers.tasks.panes.chromium import ChromiumDiodeClientPane
+
+        return ChromiumDiodeClientPane(model=self.manager)
+
+    def create_dock_panes(self):
+        return []
+
+
 class FusionsCO2Task(FusionsTask):
     id = 'pychron.fusions.co2'
     name = 'Fusions CO2'
@@ -136,6 +159,7 @@ class FusionsCO2Task(FusionsTask):
         if self.manager.mode == 'client':
             return []
         else:
+            from pychron.lasers.tasks.panes.co2 import FusionsCO2SupplementalPane
             from pychron.lasers.tasks.panes.co2 import FusionsCO2StagePane
             from pychron.lasers.tasks.panes.co2 import FusionsCO2ControlPane
             from pychron.lasers.tasks.laser_panes import PulsePane
@@ -146,6 +170,7 @@ class FusionsCO2Task(FusionsTask):
                     FusionsCO2ControlPane(model=self.manager),
                     PulsePane(model=self.manager),
                     OpticsPane(model=self.manager),
+                    FusionsCO2SupplementalPane(model=self.manager),
                     AuxilaryGraphPane(model=self.manager)]
 
 

@@ -15,7 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from sqlalchemy import Column, Integer, DateTime, String, Float, BLOB
+from __future__ import absolute_import
+from sqlalchemy import Column, Integer, DateTime, String, Float, TEXT
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql.expression import func
 
@@ -39,7 +40,7 @@ class LabTable(Base, BaseMixin):
     duration = Column(Float)
 
     weight = Column(Float)
-    comment = Column(BLOB)
+    comment = Column(TEXT)
 
     collection_path = Column(String(200))
     repository_path = Column(String(200))

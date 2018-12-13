@@ -16,20 +16,17 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
 from sqlalchemy import Column, Integer, String, \
     ForeignKey, BLOB, Float, Boolean, DateTime, CHAR
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import Table
-
-# ============= local library imports  ==========================
+from sqlalchemy.sql.expression import func
 
 from pychron.database.core.base_orm import BaseMixin, NameMixin
-# from pychron.database.core.base_orm import PathMixin, ResultsMixin, ScriptTable
-from sqlalchemy.sql.expression import func
 from pychron.database.orms.isotope.util import foreignkey, stringcolumn
-
-from util import Base
+from .util import Base
 
 
 class gen_LoadHolderTable(Base):

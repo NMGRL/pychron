@@ -15,22 +15,61 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+
+import re
 import time
 
 from chaco.array_data_source import ArrayDataSource
-from chaco.scales.time_scale import CalendarScaleSystem
-from chaco.scales_tick_generator import ScalesTickGenerator
+from numpy import array, Inf, arange
 from traits.api import Array
+from uncertainties import nominal_value, std_dev
 
-
-# ============= standard library imports ========================
-from numpy import array, Inf
-# ============= local library imports  ==========================
 from pychron.experiment.utilities.identifier import ANALYSIS_MAPPING_INTS
+from pychron.pipeline.plot.flow_label import FlowPlotLabel
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 from pychron.pipeline.plot.plotter.ticks import TICKS
+from pychron.pychron_constants import PLUSMINUS, SIGMA
 
 N = 500
+
+PEAK_CENTER = 'Peak Center'
+ANALYSIS_TYPE = 'Analysis Type'
+RADIOGENIC_YIELD = 'RadiogenicYield'
+LAB_TEMP = 'Lab Temperature'
+LAB_HUM = 'Lab Humidity'
+LAB_AIRPRESSUE = 'Lab Air Pressure'
+AGE = 'Age'
+
+ATTR_MAPPING = {PEAK_CENTER: 'peak_center',
+                AGE: 'uage',
+                RADIOGENIC_YIELD: 'rad40_percent',
+                LAB_TEMP: 'lab_temperature',
+                LAB_HUM: 'lab_humidity',
+                LAB_AIRPRESSUE: 'lab_airpressure'}
+
+AR4039 = 'Ar40/Ar39'
+UAR4039 = 'uAr40/Ar39'
+AR3839 = 'Ar38/Ar39'
+UAR3839 = 'uAr38/Ar39'
+AR3739 = 'Ar37/Ar39'
+UAR3739 = 'uAr37/Ar39'
+AR3639 = 'Ar36/Ar39'
+UAR3639 = 'uAr36/Ar39'
+
+AR4038 = 'Ar40/Ar38'
+UAR4038 = 'uAr40/Ar38'
+AR3738 = 'Ar37/Ar38'
+UAR3738 = 'uAr37/Ar38'
+AR3638 = 'Ar36/Ar38'
+UAR3638 = 'uAr36/Ar38'
+
+AR4037 = 'Ar40/Ar37'
+UAR4037 = 'uAr40/Ar37'
+AR3637 = 'Ar36/Ar37'
+UAR3637 = 'uAr36/Ar37'
+
+AR4036 = 'Ar40/Ar36'
+UAR4036 = 'uAr40/Ar36'
 
 
 class BaseSeries(BaseArArFigure):
@@ -53,19 +92,22 @@ class BaseSeries(BaseArArFigure):
 
     def _get_xs(self, plots, ans, tzero=None):
 
-        xs = array([ai.timestamp for ai in ans])
-        px = plots[0]
-        if tzero is None:
-            if px.normalize == 'now':
-                tzero = time.time()
-            else:
-                tzero = xs[-1]
+        if self.options.use_time_axis:
+            xs = array([ai.timestamp for ai in ans])
+            px = plots[0]
+            if tzero is None:
+                if px.normalize == 'now':
+                    tzero = time.time()
+                else:
+                    tzero = xs[-1]
 
-        xs -= tzero
-        if not px.use_time_axis:
-            xs /= 3600.
+            xs -= tzero
+            if not px.use_time_axis:
+                xs /= 3600.
+            else:
+                self.graph.convert_index_func = lambda x: '{:0.2f} hrs'.format(x / 3600.)
         else:
-            self.graph.convert_index_func = lambda x: '{:0.2f} hrs'.format(x / 3600.)
+            xs = arange(len(ans))
 
         return xs
 
@@ -73,30 +115,47 @@ class BaseSeries(BaseArArFigure):
         self.graph.refresh()
 
 
-class Series(BaseSeries):
-    _omit_key = 'omit_series'
+RATIO_RE = re.compile(r'(?P<ni>[A-Za-z]+)(?P<nd>\d+)\/(?P<di>[A-Za-z]+)(?P<dd>\d+)(?P<rem>[\S\s]*)')
+ISOTOPE_RE = re.compile(r'(?P<ni>[A-Za-z]+)(?P<nd>\d+)(?P<rem>[\S\s]*)')
 
-    def _has_attr(self, name):
-        a = name in ('AnalysisType', 'Peak Center')
-        if not a:
-            if self.sorted_analyses:
-                ai = self.sorted_analyses[0]
-                a = bool(ai.get_value(name))
-        return a
+
+class Series(BaseSeries):
+    # _omit_key = 'omit_series'
+
+    # def _has_attr(self, name):
+    #     a = name in (ANALYSIS_TYPE, PEAK_CENTER, AGE, RADIOGENIC_YIELD)
+    #     if not a:
+    #         if self.sorted_analyses:
+    #             ai = self.sorted_analyses[0]
+    #             a = bool(ai.get_value(name))
+    #     return a
 
     def build(self, plots):
 
         graph = self.graph
-        plots = (pp for pp in plots if self._has_attr(pp.name))
+        # plots = (pp for pp in plots if self._has_attr(pp.name))
+
         for i, po in enumerate(plots):
+            ytitle = po.name
+            if po.use_dev:
+                ytitle = '{} Dev'.format(ytitle)
+            elif po.use_percent_dev:
+                ytitle = '{} Dev %'.format(ytitle)
 
-            p = graph.new_plot(
-                # padding=self.padding,
-                ytitle=po.name,
-                xtitle='Time (hrs)')
-            # self._add_limit_tool(p, 'y')
+            kw = {'padding': self.options.paddings(),
+                  'ytitle': ytitle}
 
-            if po.name == 'AnalysisType':
+            if self.options.use_time_axis:
+                kw['xtitle'] = 'Time (hrs)'
+            else:
+                kw['xtitle'] = 'N'
+
+            p = graph.new_plot(**kw)
+
+            if i == 0:
+                self._add_info(p)
+
+            if po.name == ANALYSIS_TYPE:
                 from pychron.pipeline.plot.plotter.ticks import tick_formatter, StaticTickGenerator
 
                 p.y_axis.tick_label_formatter = tick_formatter
@@ -105,15 +164,37 @@ class Series(BaseSeries):
                 graph.set_y_limits(-0.5, len(TICKS) - 0.5, plotid=i)
                 # graph.set_y_limits(min_=-1, max_=7, plotid=i)
 
-            # p.value_scale = po.scale
-            # p.padding_left = 75
             p.value_range.tight_bounds = False
-            self._setup_plot(i, p, po)
+            self._setup_plot(i, p, po, ytitle)
+
+    def _setup_plot(self, pid, pp, po, ytitle):
+
+        match = RATIO_RE.match(ytitle)
+        if match:
+            ytitle = '<sup>{}</sup>{}/<sup>{}</sup>{}'.format(match.group('nd'),
+                                                              match.group('ni'),
+                                                              match.group('dd'),
+                                                              match.group('di'))
+            if match.group('rem'):
+                ytitle = '{}{}'.format(ytitle, match.group('rem'))
+        else:
+            match = ISOTOPE_RE.match(ytitle)
+            if match:
+                ytitle = '<sup>{}</sup>{}'.format(match.group('nd'), match.group('ni'))
+                if match.group('rem'):
+                    ytitle = '{}{}'.format(ytitle, match.group('rem'))
+
+        super(Series, self)._setup_plot(pid, pp, po)
+        if '<sup>' in ytitle or '<sub>' in ytitle:
+            self._set_ml_title(ytitle, pid, 'y')
+        else:
+            self.graph.set_y_title(ytitle, plotid=pid)
 
     def plot(self, plots, legend=None):
         """
             plot data on plots
         """
+        # plots = (pp for pp in plots if self._has_attr(pp.name))
 
         omits = self._get_omitted_by_tag(self.sorted_analyses)
         for o in omits:
@@ -132,7 +213,7 @@ class Series(BaseSeries):
     def _plot_series(self, po, pid, omits):
         graph = self.graph
         try:
-            if po.name == 'AnalysisType':
+            if po.name == ANALYSIS_TYPE:
                 from pychron.pipeline.plot.plotter.ticks import analysis_type_formatter
 
                 ys = list(self._unpack_attr(po.name))
@@ -146,18 +227,28 @@ class Series(BaseSeries):
             else:
                 set_ylimits = True
                 value_format = None
-                ys = array([ai.nominal_value for ai in self._unpack_attr(po.name)])
-                yerr = array([ai.std_dev for ai in self._unpack_attr(po.name)])
+                ys = array([nominal_value(ai) for ai in self._unpack_attr(po.name)])
+                yerr = array([std_dev(ai) for ai in self._unpack_attr(po.name)])
+
+                if po.use_dev or po.use_percent_dev:
+                    graph.add_horizontal_rule(0, plotid=pid, color='black', line_style='solid')
+                    m = ys.mean()
+                    ys = ys - m
+                    if po.use_percent_dev:
+                        ys = ys / m * 100
+                        yerr = yerr / m * 100
+
                 kw = dict(y=ys, yerror=yerr, type='scatter',
                           fit='{}_{}'.format(po.fit, po.error_type),
                           filter_outliers_dict=po.filter_outliers_dict)
 
-            # print ys
             n = [ai.record_id for ai in self.sorted_analyses]
             args = graph.new_series(x=self.xs,
                                     display_index=ArrayDataSource(data=n),
                                     plotid=pid,
-                                    add_inspector=False,
+                                    add_tools=True,
+                                    add_inspector=True,
+                                    add_point_inspector=False,
                                     marker=po.marker,
                                     marker_size=po.marker_size,
                                     **kw)
@@ -165,6 +256,9 @@ class Series(BaseSeries):
                 scatter, p = args
             else:
                 p, scatter, l = args
+
+                if self.options.show_statistics:
+                    graph.add_statistics(plotid=pid)
 
             sel = scatter.index.metadata.get('selections', [])
             sel += omits
@@ -175,89 +269,60 @@ class Series(BaseSeries):
                         'Rel. Time: {:0.4f}'.format(x))
 
             self._add_scatter_inspector(scatter,
+                                        add_selection=False,
                                         additional_info=af,
                                         value_format=value_format)
 
-            if po.use_time_axis:
-                p.x_axis.tick_generator = ScalesTickGenerator(scale=CalendarScaleSystem())
+            # if po.use_time_axis:
+            #     p.x_axis.tick_generator = ScalesTickGenerator(scale=CalendarScaleSystem())
 
-            # p.value_scale = po.scale
-            end_caps = True
             if po.y_error and yerr is not None:
-                self._add_error_bars(scatter, yerr, 'y', 2, end_caps, visible=True)
+                s = self.options.error_bar_nsigma
+                ec = self.options.end_caps
+                self._add_error_bars(scatter, yerr, 'y', s, ec, visible=True)
 
             if set_ylimits:
                 mi, mx = min(ys - 2 * yerr), max(ys + 2 * yerr)
                 graph.set_y_limits(min_=mi, max_=mx, pad='0.1', plotid=pid)
 
-        except (KeyError, ZeroDivisionError, AttributeError), e:
+        except (KeyError, ZeroDivisionError, AttributeError) as e:
             import traceback
 
             traceback.print_exc()
-            print 'Series', e
-
-    def _unpack_attr(self, attr):
-        # if attr.endswith('bs'):
-        #     # f=lambda x: x.baseline.uvalue
-        #     return (ai.get_baseline(attr).uvalue for ai in self.sorted_analyses)
-        if attr == 'AnalysisType':
-            # amap={'unknown':1, 'blank_unknown':2, 'blank_air':3, 'blank_cocktail':4}
-            f = lambda x: ANALYSIS_MAPPING_INTS[x] if x in ANALYSIS_MAPPING_INTS else -1
-            return (f(ai.analysis_type) for ai in self.sorted_analyses)
-        elif attr == 'Peak Center':
-            return (ai.peak_center for ai in self.sorted_analyses)
-        else:
-            return super(Series, self)._unpack_attr(attr)
-
-            # def update_graph_metadata(self, obj, name, old, new):
-            #     sorted_ans = self.sorted_analyses
-            #     if obj:
-            #         hover = obj.metadata.get('hover')
-            #         if hover:
-            #             hoverid = hover[0]
-            #             try:
-            #                 self.selected_analysis = sorted_ans[hoverid]
-            #
-            #             except IndexError, e:
-            #                 print 'asaaaaa', e
-            #                 return
-            #         else:
-            #             self.selected_analysis = None
-            #
-            #         sel = self._filter_metadata_changes(obj, lambda x: x, sorted_ans)
-            #         print 'ssss', sel
-            # self._set_renderer_selection()
-            # self._set_selected(sorted_ans, sel)
-            # set the temp_status for all the analyses
-            # for i, a in enumerate(sorted_ans):
-            #    a.temp_status = 1 if i in sel else 0
-            # else:
-            # sel = [i for i, a in enumerate(sorted_ans)
-            #            if a.temp_status]
-            # sel = self._get_omitted(sorted_ans, omit='omit_ideo')
-            # print 'update graph meta'
-            # self._rebuild_ideo(sel)
-            # self.
+            print('Series', e)
 
     def update_graph_metadata(self, obj, name, old, new):
-        # print obj, name, old,new
         sorted_ans = self.sorted_analyses
         if obj:
-            self._filter_metadata_changes(obj, sorted_ans)
-# ===============================================================================
-# plotters
-# ===============================================================================
+            sel = self._filter_metadata_changes(obj, sorted_ans)
+            for p in self.graph.plots:
+                p.default_index.metadata['selections'] = sel
 
-# ===============================================================================
-# overlays
-# ===============================================================================
+    # private
+    def _add_info(self, plot):
+        if self.group_id == 0:
+            if self.options.show_info:
+                ts = [u'Data {}{}{}'.format(PLUSMINUS, self.options.error_bar_nsigma, SIGMA)]
 
-# ===============================================================================
-# utils
-# ===============================================================================
+                if ts:
+                    pl = FlowPlotLabel(text='\n'.join(ts),
+                                       overlay_position='inside top',
+                                       hjustify='left',
+                                       font=self.options.error_info_font,
+                                       component=plot)
+                    plot.overlays.append(pl)
 
-# ===============================================================================
-# labels
-# ===============================================================================
+    def _unpack_attr(self, attr):
+        if attr == ANALYSIS_TYPE:
+            def f(x):
+                x = x.analysis_type
+                return ANALYSIS_MAPPING_INTS[x] if x in ANALYSIS_MAPPING_INTS else -1
+
+            return (f(ai) for ai in self.sorted_analyses)
+
+        elif attr in ATTR_MAPPING:
+            attr = ATTR_MAPPING[attr]
+
+        return super(Series, self)._unpack_attr(attr)
 
 # ============= EOF =============================================

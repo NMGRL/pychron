@@ -14,12 +14,3 @@
 # limitations under the License.
 # ===============================================================================
 
-
-manager_package = 'pychron.managers'
-remote_package = '{}.remote'.format(manager_package)
-manager_package_dict = {
-
-                       'RemoteMultrunsReportManager':'{}.multruns_report_manager'.format(remote_package)
-
-                       }
-

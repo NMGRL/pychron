@@ -17,6 +17,7 @@
 
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
 from traits.api import Instance, Float, Button, Int, Property, Event, Bool
 from traitsui.api import View, Item, HGroup
 
@@ -26,7 +27,7 @@ from threading import Thread
 from pychron.core.ui.stage_component_editor import VideoComponentEditor
 from pychron.image.video import Video
 from pychron.image.image import Image
-from manager import Manager
+from .manager import Manager
 from pychron.canvas.canvas2D.video_canvas import VideoCanvas
 from pychron.core.helpers.filetools import unique_path
 from pychron.paths import paths

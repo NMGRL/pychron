@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.git.hosts import IGitHost
 
@@ -29,7 +30,6 @@ class BaseGitPlugin(BaseTaskPlugin):
         usr = p.get('pychron.github.username')
         pwd = p.get('pychron.github.password')
         tok = p.get('pychron.github.oauth_token')
-        self.debug('user={}, pwd={}, token={}'.format(usr, pwd, tok))
         if not tok and not (usr and pwd):
             self.information_dialog('Please set user name and password or token in {} preferences'.format(self.name))
 

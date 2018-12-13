@@ -21,6 +21,7 @@ Vue Metrix Vue-TEC controller
 see http://www.vuemetrix.com/support/tech/tec_commands.html
 '''
 # =============enthought library imports=======================
+from __future__ import absolute_import
 from traits.api import Float
 from traitsui.api import VGroup, Item
 # =============standard library imports ========================
@@ -182,7 +183,7 @@ class VueDiodeControlModule(CoreDevice):
             elif type_ == 'float':
                 try:
                     r = float(res)
-                except ValueError, e:
+                except ValueError as e:
                     self.warning(e)
         else:
             if type_ == 'float':

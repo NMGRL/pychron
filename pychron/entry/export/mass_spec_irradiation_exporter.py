@@ -15,17 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+import binascii
 import struct
 
 from traits.api import Instance
-
-# ============= standard library imports ========================
-import binascii
-# ============= local library imports  ==========================
 from uncertainties import std_dev, nominal_value
 
-from pychron.mass_spec.database.massspec_database_adapter import MassSpecDatabaseAdapter, PR_KEYS
 from pychron.entry.export.base_irradiation_exporter import BaseIrradiationExporter
+from pychron.mass_spec.database.massspec_database_adapter import MassSpecDatabaseAdapter, PR_KEYS
+from six.moves import zip
 
 SRC_PR_KEYS = ('Ca3637', 'Ca3637_err',
                'Ca3937', 'Ca3937_err',
@@ -45,7 +44,7 @@ def generate_production_ratios_id(vs):
     :param vs:
     :return:
     """
-    txt = ''.join([struct.pack('>f', vi) for vi in vs])
+    txt = b''.join([struct.pack('>f', vi) for vi in vs])
     return binascii.crc32(txt)
 
 
@@ -84,10 +83,8 @@ class MassSpecIrradiationExporter(BaseIrradiationExporter):
         return self.destination.connect()
 
     def export_chronology(self, irradname):
-        with self.destination.session_ctx():
-            with self.source.session_ctx():
-                dbirrad = self.source.get_irradiation(irradname)
-                self._export_chronology(dbirrad)
+        dbirrad = self.source.get_irradiation(irradname)
+        self._export_chronology(dbirrad)
 
     def _export(self, dbirrad):
         # check if irradiation already exists
@@ -103,6 +100,7 @@ class MassSpecIrradiationExporter(BaseIrradiationExporter):
 
             for level in dbirrad.levels:
                 self._export_level(irradname, level)
+            dest.commit()
 
     def _export_chronology(self, src_irr):
         self.info('Exporting chronology for "{}"'.format(src_irr.name))
@@ -190,7 +188,8 @@ class MassSpecIrradiationExporter(BaseIrradiationExporter):
                     pname = pos.sample.project.name
                     proj = dest.get_project(pname)
                     if not proj:
-                        proj = dest.add_project(pname, PrincipalInvestigator=pos.sample.project.principal_investigator)
+                        proj = dest.add_project(pname,
+                                                PrincipalInvestigator=pos.sample.project.principal_investigator.name)
                 except AttributeError:
                     proj = None
 

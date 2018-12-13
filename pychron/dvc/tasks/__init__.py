@@ -17,8 +17,30 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
+
+import os
+
+from git import Repo
+
+from pychron.dvc import repository_path
+from pychron.paths import paths
 
 
+def list_local_repos():
+    for i in os.listdir(paths.repository_dataset_dir):
+        if i.startswith('.'):
+            continue
+        elif i.startswith('~'):
+            continue
+
+        d = repository_path(i)
+        if os.path.isdir(d):
+            gd = os.path.join(d, '.git')
+            if os.path.isdir(gd):
+                r = Repo(d)
+
+                yield i, r.active_branch.name
 # ============= EOF =============================================
 
 

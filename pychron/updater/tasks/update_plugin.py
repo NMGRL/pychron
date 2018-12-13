@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from git.exc import InvalidGitRepositoryError
 from pyface.tasks.action.schema_addition import SchemaAddition
 
@@ -34,13 +35,13 @@ def gen_commits(log):
         while 1:
             try:
                 if not commit:
-                    commit = lines.next()
+                    commit = next(lines)
 
-                author = lines.next()
-                date = lines.next()
+                author = next(lines)
+                date = next(lines)
                 message = []
                 while 1:
-                    line = lines.next()
+                    line = next(lines)
 
                     if line.startswith('commit '):
                         commit = line
@@ -71,11 +72,11 @@ class UpdatePlugin(BaseTaskPlugin):
         super(UpdatePlugin, self).start()
 
         updater = self.application.get_service('pychron.updater.updater.Updater')
-        if updater.check_on_startup:
-            updater.check_for_updates()
         try:
+            if updater.check_on_startup:
+                updater.check_for_updates()
             globalv.active_branch = updater.active_branch
-        except InvalidGitRepositoryError:
+        except (InvalidGitRepositoryError, AttributeError):
             pass
 
     # BaseTaskPlugin interface

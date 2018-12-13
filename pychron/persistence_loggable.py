@@ -15,11 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
-# ============= standard library imports ========================
 import pickle
-# ============= local library imports  ==========================
-from pychron.globals import globalv
+
 from pychron.loggable import Loggable
 
 
@@ -51,6 +51,10 @@ def dump_persistence_values(obj, p, attrs):
     dump_persistence_dict(p, d)
 
 
+def dumpable(klass, *args, **kw):
+    return klass(dump=True, *args, **kw)
+
+
 class PersistenceMixin(object):
     pattributes = None
 
@@ -62,8 +66,8 @@ class PersistenceMixin(object):
                 attrs += dattrs
             else:
                 attrs = dattrs
-        except AttributeError, e:
-            print 'ddddd', e
+        except AttributeError as e:
+            print('ddddd', e)
             pass
 
         return attrs
@@ -71,7 +75,8 @@ class PersistenceMixin(object):
     def get_persistence_path(self):
         try:
             return self._make_persistence_path(self.persistence_path)
-        except (AttributeError, NotImplementedError):
+        except (AttributeError, NotImplementedError) as e:
+            print(e)
             self.warning('persistence path not implemented')
 
     def load(self, verbose=False):
@@ -87,7 +92,7 @@ class PersistenceMixin(object):
         if p and os.path.isfile(p):
             self.debug('loading {}'.format(p))
             d = None
-            with open(p, 'r') as rfile:
+            with open(p, 'rb') as rfile:
                 try:
                     d = pickle.load(rfile)
                 except (pickle.PickleError, EOFError, BaseException):
@@ -122,11 +127,12 @@ class PersistenceMixin(object):
                     d[a] = v
             else:
                 d = {a: getattr(self, a) for a in attrs}
-            with open(p, 'w') as wfile:
+            with open(p, 'wb') as wfile:
                 pickle.dump(d, wfile)
 
     def _make_persistence_path(self, p):
-        return '{}.{}'.format(p, globalv.username)
+        return p
+        # return '{}.{}'.format(p, globalv.username)
 
     def warning(self, *args, **kw):
         pass

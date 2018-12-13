@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
 from pychron.pyscripts.pyscript import verbose_skip, makeRegistry
@@ -28,7 +30,7 @@ class UVExtractionPyScript(ExtractionPyScript):
 
     def get_command_register(self):
         cm = super(UVExtractionPyScript, self).get_command_register()
-        return command_register.commands.items() + cm
+        return list(command_register.commands.items()) + cm
 
     def set_default_context(self):
         super(UVExtractionPyScript, self).set_default_context()
@@ -46,9 +48,9 @@ class UVExtractionPyScript(ExtractionPyScript):
         if value=='':
             value=self.reprate
 
-        self._manager_action([('set_reprate', (value,), {})],
-                             protocol=ILaserManager,
-                             name=self.extract_device)
+        self._manager_actions([('set_reprate', (value,), {})],
+                              protocol=ILaserManager,
+                              name=self.extract_device)
 
 
     @verbose_skip
@@ -60,9 +62,9 @@ class UVExtractionPyScript(ExtractionPyScript):
         if value == '':
             value = self.extract_value
 
-        self._manager_action([('drill_point', (value, name,), {})],
-                             protocol=ILaserManager,
-                             name=self.extract_device)
+        self._manager_actions([('drill_point', (value, name,), {})],
+                              protocol=ILaserManager,
+                              name=self.extract_device)
 
     @verbose_skip
     @command_register
@@ -73,9 +75,9 @@ class UVExtractionPyScript(ExtractionPyScript):
         if value == '':
             value = self.extract_value
 
-        self._manager_action([('trace_path', (value, name, kind), {})],
-                             protocol=ILaserManager,
-                             name=self.extract_device)
+        self._manager_actions([('trace_path', (value, name, kind), {})],
+                              protocol=ILaserManager,
+                              name=self.extract_device)
 
     @verbose_skip
     @command_register

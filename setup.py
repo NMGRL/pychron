@@ -14,7 +14,7 @@ from setuptools import setup
 os.environ['TRAVIS_CI'] = 'True'
 
 setup(name='pychron',
-      version='2.5',
+      version='16.7',
       setup_requires=['nose>=1.0'],
       py_modules=['pychron.pychron_constants',
                   'pychron.paths',
@@ -31,7 +31,6 @@ setup(name='pychron',
                   'pychron.experiment.utilities.frequency_generator',
                   'pychron.experiment.utilities.aliquot_numbering',
                   'pychron.experiment.duration_tracker',
-                  'pychron.entry.loaders.analysis_loader',
                   'pychron.core.geometry.affine'
                   ],
       package_data={'pychron.pyscripts.tests': ['data/*.yaml', 'data/*.py'],

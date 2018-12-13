@@ -1,0 +1,32 @@
+Sample: H-15-27A
+Latitude: 20.75212
+Longitude: -156.21819
+Elevation: 7339�
+PI: Singer, B
+
+ 
+
+Irradiation info: UW133
+Labnumber: 100002
+Irradiation level: A
+Irradiation Position: 2
+Date:     10/7/2016 19:50
+Duration (hours):              3
+39/37(ca)             %1s        38/37(ca)             %1s        36/37(ca)             %1s        40/39(k)               %1s               38/39(k)               %1s        36/38(cl)              %1s
+
+0.000695             1.29       0.0000196           4.08       0.000265             0.83       0.00054               25.92               0.0121                  0.19       263                       0.76
+
+                              1s           2s                         
+
+
+40/36Atmosphere:           298.56  
+38/36Atmosphere:           0.1885  
+K/Ca                     0.43      
+40K decay           5.463E-10
+39Ar decay         0.000007056
+37Ar decay         0.019747783
+36Cl decay          6.30527E-09
+Standard              AC
+Standard age     1186400
+
+J                             0.00081100         0.0000024 (2s)

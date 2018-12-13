@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Float
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -29,7 +30,10 @@ class MassScanner(BaseScanner):
 
     # private
     def _setup_graph(self, graph, plot):
-        graph.new_series()
+        for d in self.spectrometer.detectors:
+            s, p = graph.new_series(yname='{}y{}'.format(d.name, self.plotid))
+            s.visible = d.active
+
         graph.set_x_title('Mass (AMU)')
         graph.set_y_title('Intensity')
 
@@ -41,7 +45,7 @@ class MassScanner(BaseScanner):
         return self.start_mass, self.stop_mass
 
     def _calculate_steps(self, l, h):
-        self.debug('scan limits: start_mass={}, stop_mass={}'.format(l, h))
+        self.debug('scan limits: start_value={}, stop_value={}'.format(l, h))
         step_size = self.step
 
         if l > h:

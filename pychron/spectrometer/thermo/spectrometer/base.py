@@ -15,28 +15,21 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance, Int, Property, List, \
-    Any, Enum, Str, DelegatesTo, Bool, TraitError, cached_property
-# ============= standard library imports ========================
-from numpy import array, argmin
-import random
-import os
+from __future__ import absolute_import
+
 import time
-# ============= local library imports  ==========================
-from pychron.core.helpers.filetools import list_directory2
+
+from numpy import array, argmin
+from traits.api import Int, Property, List, \
+    Str, DelegatesTo, Bool, Float
+
+from pychron.core.helpers.strtools import csv_to_floats
 from pychron.core.progress import open_progress
-from pychron.globals import globalv
-from pychron.paths import paths
-from pychron.spectrometer import get_spectrometer_config_path, \
-    get_spectrometer_config_name, set_spectrometer_config_name
 from pychron.core.ramper import StepRamper
 from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES, \
-    DEFAULT_INTEGRATION_TIME, NULL_STR
-from pychron.spectrometer.base_detector import BaseDetector
-from pychron.spectrometer.thermo.detector.base import ThermoDetector
-from pychron.spectrometer.thermo.magnet.base import ThermoMagnet
-from pychron.spectrometer.thermo.source.base import ThermoSource
-from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
+    QTEGRA_DEFAULT_INTEGRATION_TIME
+from pychron.spectrometer import get_spectrometer_config_path
+from pychron.spectrometer.base_spectrometer import BaseSpectrometer
 
 
 def normalize_integration_time(it):
@@ -58,33 +51,15 @@ def calculate_radius(m_e, hv, mfield):
     return r
 
 
-class ThermoSpectrometer(SpectrometerDevice):
-    magnet = Instance(ThermoMagnet)
-    source = Instance(ThermoSource)
-    magnet_klass = Any
-    source_klass = Any
-    detector_klass = Any
-
-    detectors = List(ThermoDetector)
-
-    microcontroller = Any
-    integration_time = Enum(QTEGRA_INTEGRATION_TIMES)
-
-    reference_detector = Str('H1')
-
+class ThermoSpectrometer(BaseSpectrometer):
+    integration_time = Float
+    integration_times = List(QTEGRA_INTEGRATION_TIMES)
     magnet_dac = DelegatesTo('magnet', prefix='dac')
 
     magnet_dacmin = DelegatesTo('magnet', prefix='dacmin')
     magnet_dacmax = DelegatesTo('magnet', prefix='dacmin')
 
     current_hv = DelegatesTo('source')
-
-    molecular_weight = Str('Ar40')
-    molecular_weights = None
-    isotopes = Property
-
-    spectrometer_configuration = Str
-    spectrometer_configurations = List
 
     sub_cup_configurations = List
     sub_cup_configuration = Property(depends_on='_sub_cup_configuration')
@@ -99,16 +74,25 @@ class ThermoSpectrometer(SpectrometerDevice):
     dc_npeak_centers = Int(3)
 
     send_config_on_startup = Bool
-    use_deflection_correction = Bool(True)
+
     max_deflection = Int(500)
 
-    _connection_status = False
-    _config = None
     _debug_values = None
-    _saved_integration = None
 
-    def reload_mftable(self):
-        self.magnet.reload_mftable()
+    _test_connect_command = 'GetIntegrationTime'
+
+    def make_deflection_dict(self):
+        names = self.detector_names
+        values = self.read_deflection_word(names)
+        return dict(list(zip(names, values)))
+
+    def make_configuration_dict(self):
+        keys = list(self.get_command_map().values())
+        values = self.get_parameter_word(keys)
+        return dict(list(zip(keys, values)))
+
+    def make_gains_dict(self):
+        return {di.name: di.get_gain() for di in self.detectors}
 
     def get_detector_active(self, dname):
         """
@@ -148,28 +132,6 @@ class ThermoSpectrometer(SpectrometerDevice):
                     ret = False
         return ret, err
 
-    def test_connection(self, force=True):
-        """
-            if not in simulation mode send a GetIntegrationTime to the spectrometer
-            if in simulation mode and the globalv.communication_simulation is disabled
-            then return False
-
-        :return: bool
-        """
-        self.info('testing connnection')
-        ret, err = False, ''
-        if not self.simulation:
-            if force:
-                ret = self.ask('GetIntegrationTime', verbose=True) is not None
-            else:
-                ret = self._connection_status
-        elif globalv.communication_simulation:
-            ret = True
-
-        self._connection_status = ret
-        self.microcontroller.set_simulation(not ret)
-        return ret, err
-
     def set_gains(self, history=None):
         """
 
@@ -192,35 +154,8 @@ class ThermoSpectrometer(SpectrometerDevice):
         for di in self.detectors:
             di.get_gain()
 
-    def get_integration_time(self, current=True):
-        """
-        return current or cached integration time, i.e time between intensity measurements
-
-        :param current: bool, if True retrieve value from qtegra
-        :return: float
-        """
-        if current:
-            resp = self.ask('GetIntegrationTime')
-            if resp:
-                try:
-                    self.integration_time = float(resp)
-                    self.info(
-                        'Integration Time {}'.format(self.integration_time))
-
-                except (TypeError, ValueError, TraitError):
-                    self.warning(
-                        'Invalid integration time. resp={}'.format(resp))
-                    self.integration_time = DEFAULT_INTEGRATION_TIME
-
-        return self.integration_time
-
-    def save_integration(self):
-        self._saved_integration = self.integration_time
-
-    def restore_integration(self):
-        if self._saved_integration:
-            self.set_integration_time(self._saved_integration)
-            self._saved_integration = None
+    def read_integration_time(self):
+        return self.ask('GetIntegrationTime')
 
     def set_integration_time(self, it, force=False):
         """
@@ -236,13 +171,11 @@ class ThermoSpectrometer(SpectrometerDevice):
             self.set_parameter(name, it)
             self.trait_setq(integration_time=it)
 
-        return it
+            # this is a hail mary to potential make qtegra happier post setting integration time
+            self.debug('sleeping 2 seconds after setting integration time')
+            time.sleep(2)
 
-    def send_configuration(self, **kw):
-        """
-            send the configuration values to the device
-        """
-        self._send_configuration(**kw)
+        return it
 
     def set_parameter(self, name, v):
         cmd = '{} {}'.format(name, v)
@@ -251,14 +184,12 @@ class ThermoSpectrometer(SpectrometerDevice):
     def get_parameter(self, cmd):
         return self.ask(cmd)
 
-    def set_microcontroller(self, m):
-        self.debug('set microcontroller {}'.format(m))
-        self.magnet.microcontroller = m
-        self.source.microcontroller = m
-        self.microcontroller = m
-        for d in self.detectors:
-            d.microcontroller = m
-            d.load()
+    def set_deflection(self, name, value):
+        det = self.get_detector(name)
+        if det:
+            det.deflection = value
+        else:
+            self.warning('Could not find detector "{}". Deflection Not Possible'.format(name))
 
     def get_deflection(self, name, current=False):
         """
@@ -274,86 +205,46 @@ class ThermoSpectrometer(SpectrometerDevice):
             if current:
                 det.read_deflection()
             deflection = det.deflection
+        else:
+            self.warning('Failed getting deflection for detector ="{}"'.format(name))
 
         return deflection
 
-    def get_detector(self, name):
-        """
-        get Detector object by name
-
-        :param name: str
-        :return: Detector
-        """
-        if isinstance(name, BaseDetector):
-            return name
-        else:
-            return next((det for det in self.detectors if det.name == name), None)
-
-    def update_isotopes(self, isotope, detector):
-        """
-        update the isotope name for each detector
-
-        called by AutomatedRun._define_detectors
-
-        :param isotope: str
-        :param detector: str or Detector
-        :return:
-        """
-        if isotope != NULL_STR:
-            det = self.get_detector(detector)
-            if not det:
-                self.debug('cannot update detector "{}"'.format(detector))
-            else:
-                det.isotope = isotope
-                # index = self.detectors.index(det)
-                # index = self.detectors[det].index
-                index = det.index
-                nmass = int(isotope[2:])
-                for di in self.detectors:
-                    mass = nmass - (di.index - index)
-                    di.isotope = 'Ar{}'.format(mass)
-
-    def get_deflection_word(self, keys):
-        if self.simulation:
-            x = [random.random() for i in keys]
-        else:
-            x = self.ask('GetDeflections {}'.format(','.join(keys)),
-                         verbose=False)
-            x = self._parse_word(x)
+    def read_deflection_word(self, keys):
+        x = self.ask('GetDeflections {}'.format(','.join(keys)), verbose=False, quiet=True)
+        x = self._parse_word(x)
         return x
 
-    def get_parameter_word(self, keys):
-        if self.simulation:
-            if self._debug_values:
-                x = self._debug_values
-            else:
-                x = [random.random() for i in keys]
-        else:
-            x = self.ask('GetParameters {}'.format(','.join(keys)),
-                         verbose=False)
-            x = self._parse_word(x)
-
+    def read_parameter_word(self, keys):
+        x = self.ask('GetParameters {}'.format(','.join(keys)), verbose=False, quiet=True)
+        x = self._parse_word(x)
         return x
 
     def get_configuration_value(self, key):
-        for d in self._get_cached_config():
-            try:
-                return d[key]
-            except KeyError:
+        values = self._get_cached_config()
+        if values is not None:
+            for d in values:
                 try:
-                    return d[key.lower()]
+                    return d[key]
                 except KeyError:
-                    pass
+                    try:
+                        return d[key.lower()]
+                    except KeyError:
+                        pass
+            else:
+                return 0
         else:
             return 0
 
     def set_debug_configuration_values(self):
         if self.simulation:
-            d, _, _ = self._get_cached_config()
-            keys = ('ElectronEnergy', 'YSymmetry', 'ZSymmetry',
-                    'ZFocus', 'IonRepeller', 'ExtractionLens')
-            ds = [0] + [d[k.lower()] for k in keys]
-            self._debug_values = ds
+
+            ret = self._get_cached_config()
+            if ret is not None:
+                d = ret[0]
+                keys = ('ElectronEnergy', 'YSymmetry', 'ZSymmetry', 'ZFocus', 'IonRepeller', 'ExtractionLens')
+                ds = [0] + [d[k.lower()] for k in keys]
+                self._debug_values = ds
 
     # ===============================================================================
     # load
@@ -387,34 +278,18 @@ class ThermoSpectrometer(SpectrometerDevice):
 
         :return:
         """
-        self.load_detectors()
+        config = super(ThermoSpectrometer, self).load()
 
-        # load local configurations
-        self.spectrometer_configurations = list_directory2(
-            paths.spectrometer_config_dir,
-            remove_extension=True,
-            extension='.cfg')
-
-        name = get_spectrometer_config_name()
-        sc, _ = os.path.splitext(name)
-        self.spectrometer_configuration = sc
-
-        p = get_spectrometer_config_path(name)
-        config = self.get_configuration_writer(p)
         pd = 'Protection'
-
         if config.has_section(pd):
 
-            self.magnet.use_beam_blank = self.config_get(config, pd,
-                                                         'use_beam_blank',
+            self.magnet.use_beam_blank = self.config_get(config, pd, 'use_beam_blank',
                                                          cast='boolean',
                                                          default=False)
-            self.magnet.use_detector_protection = self.config_get(config, pd,
-                                                                  'use_detector_protection',
+            self.magnet.use_detector_protection = self.config_get(config, pd, 'use_detector_protection',
                                                                   cast='boolean',
                                                                   default=False)
-            self.magnet.beam_blank_threshold = self.config_get(config, pd,
-                                                               'beam_blank_threshold',
+            self.magnet.beam_blank_threshold = self.config_get(config, pd, 'beam_blank_threshold',
                                                                cast='float',
                                                                default=0.1)
 
@@ -426,9 +301,7 @@ class ThermoSpectrometer(SpectrometerDevice):
                 ds = ds.split(',')
                 self.magnet.protected_detectors = ds
                 for di in ds:
-                    self.info(
-                        'Making protection available for detector "{}"'.format(
-                            di))
+                    self.info('Making protection available for detector "{}"'.format(di))
 
         if config.has_section('Deflections'):
             if config.has_option('Deflections', 'max'):
@@ -436,121 +309,39 @@ class ThermoSpectrometer(SpectrometerDevice):
                 if v:
                     self.max_deflection = v
 
-        self.magnet.load()
-
         self.debug('Detectors {}'.format(self.detectors))
         for d in self.detectors:
             d.load_deflection_coefficients()
 
-    def finish_loading(self):
-        """
-        finish loading magnet
-        send configuration if self.send_config_on_startup set in Preferences
-        :return:
-        """
-        if self.microcontroller:
-            self.name = self.microcontroller.name
-
-        self.magnet.finish_loading()
-
-        self.test_connection()
-        # if self.send_config_on_startup:
-        # write configuration to spectrometer
-        # self._send_configuration()
-
     def start(self):
-        self.debug(
-            '********** Spectrometer start. send configuration: {}'.format(
-                self.send_config_on_startup))
+        self.debug('********** Spectrometer start. send configuration: {}'.format(self.send_config_on_startup))
         if self.send_config_on_startup:
             self.send_configuration(use_ramp=True)
 
-    def load_detectors(self):
-        """
-        load setupfiles/spectrometer/detectors.cfg
-        populates self.detectors
-        :return:
-        """
-        config = self.get_configuration(
-            path=os.path.join(paths.spectrometer_dir, 'detectors.cfg'))
-
-        for i, name in enumerate(config.sections()):
-            # relative_position = self.config_get(config, name, 'relative_position', cast='float')
-
-            color = self.config_get(config, name, 'color', default='black')
-            default_state = self.config_get(config, name, 'default_state',
-                                            default=True, cast='boolean')
-            isotope = self.config_get(config, name, 'isotope')
-            kind = self.config_get(config, name, 'kind', default='Faraday',
-                                   optional=True)
-            pt = self.config_get(config, name, 'protection_threshold',
-                                 default=None, optional=True, cast='float')
-
-            index = self.config_get(config, name, 'index', cast='int')
-            if index is None:
-                index = i
-
-            use_deflection = self.config_get(config, name, 'use_deflection', cast='boolean', optional=True)
-            if use_deflection is None:
-                use_deflection = True
-
-            deflection_correction_sign = 1
-            if use_deflection:
-                deflection_correction_sign = self.config_get(config, name, 'deflection_correction_sign', cast='int')
-
-            self._add_detector(name=name,
-                               index=index,
-                               use_deflection=use_deflection,
-                               protection_threshold=pt,
-                               deflection_correction_sign=deflection_correction_sign,
-                               color=color,
-                               active=default_state,
-                               isotope=isotope,
-                               kind=kind)
+    def settle(self):
+        time.sleep(self.integration_time*2)
 
     # ===============================================================================
     # signals
     # ===============================================================================
-    def get_intensities(self, tagged=True):
-        """
-        issue a GetData command to Qtegra.
-
-        keys, list of strings
-        signals, list of floats::
-
-            keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
-            signals = [10,100,1,0.1,1,0.001]
-
-        :param tagged:
-        :return: keys, signals
-        """
+    def read_intensities(self, tagged=True, *args, **kw):
         keys = []
         signals = []
-        if self.microcontroller and not self.microcontroller.simulation:
-            # if self.microcontroller.simulation and globalv.communication_simulation:
-            # keys, signals = self._get_simulation_data()
-            # else:
-            datastr = self.ask('GetData', verbose=False, quiet=True)
-            if datastr:
-                if 'ERROR' not in datastr:
-                    data = datastr.split(',')
-                    if tagged:
-                        keys = data[::2]
-                        signals = data[1::2]
-                    else:
-                        keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
-                        signals = data
 
-                signals = map(float, signals)
+        datastr = self.ask('GetData', verbose=False, quiet=True, use_error_mode=False)
+        if datastr:
+            if 'ERROR' not in datastr:
+                data = datastr.split(',')
+                if tagged:
+                    keys = data[::2]
+                    signals = data[1::2]
+                else:
+                    keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
+                    signals = data
 
-        if not keys and globalv.communication_simulation:
-            keys, signals = self._get_simulation_data()
+            signals = [float(s) for s in signals]
 
-        for k, v in zip(keys, signals):
-            det = self.get_detector(k)
-            det.set_intensity(v)
-
-        return keys, array(signals)
+        return keys, signals
 
     def get_intensity(self, dkeys):
         """
@@ -571,91 +362,6 @@ class ThermoSpectrometer(SpectrometerDevice):
                 return func(dkeys)
                 # return signals[keys.index(dkeys)] if dkeys in keys else 0
 
-    def get_hv_correction(self, dac, uncorrect=False, current=False):
-        """
-        ion optics correction::
-
-            r=M*v_o/(q*B_o)
-            r=M*v_c/(q*B_c)
-
-            E=m*v^2/2
-            v=(2*E/m)^0.5
-
-            v_o/B_o = v_c/B_c
-            B_c = B_o*v_c/v_o
-
-            B_c = B_o*(E_c/E_o)^0.5
-
-            B_o = B_c*(E_o/E_c)^0.5
-
-            E_o = nominal hv
-            E_c = current hv
-            B_o = nominal dac
-            B_c = corrected dac
-
-        """
-        source = self.source
-        cur = source.current_hv
-        if current:
-            cur = source.read_hv()
-
-        if cur is None:
-            cor = 1
-        else:
-            try:
-                # cor = source.nominal_hv / cur
-                if uncorrect:
-                    cor = source.nominal_hv / cur
-                else:
-                    cor = cur / source.nominal_hv
-
-                cor **= 0.5
-
-            except ZeroDivisionError:
-                cor = 1
-
-        dac *= cor
-        return dac
-
-    def correct_dac(self, det, dac, current=True):
-        """
-            correct for deflection
-            correct for hv
-        """
-        # correct for deflection
-        if self.use_deflection_correction:
-            dev = det.get_deflection_correction(current=current)
-            dac += dev
-
-        # correct for hv
-        # dac *= self.get_hv_correction(current=current)
-        dac = self.get_hv_correction(dac, current=current)
-        return dac
-
-    def uncorrect_dac(self, det, dac, current=True):
-        """
-                inverse of correct_dac
-        """
-
-        ndac = self.get_hv_correction(dac, uncorrect=True, current=current)
-        if self.use_deflection_correction:
-            ndac -= det.get_deflection_correction(current=current)
-        return ndac
-
-    # ===============================================================================
-    # private
-    # ===============================================================================
-    def _spectrometer_configuration_changed(self, new):
-        if new:
-            set_spectrometer_config_name(new)
-
-    def _parse_word(self, word):
-        try:
-            x = [float(v) for v in word.split(',')]
-        except (AttributeError, ValueError):
-            x = []
-        return x
-
     def clear_cached_config(self):
         self._config = None
 
@@ -664,6 +370,9 @@ class ThermoSpectrometer(SpectrometerDevice):
         p = get_spectrometer_config_path()
         config = self.get_configuration_writer(p)
         for k, v in kw.items():
+            if not config.has_section(k):
+                config.add_section(k)
+
             for option, value in v:
                 config.set(k, option, value)
 
@@ -672,108 +381,70 @@ class ThermoSpectrometer(SpectrometerDevice):
 
         self.clear_cached_config()
 
-    def _get_cached_config(self):
-        if self._config is None:
-            p = get_spectrometer_config_path()
-            if not os.path.isfile(p):
-                self.warning('Spectrometer configuration file {} not found'.format(p))
-                return
-
-            self.debug('caching configuration from {}'.format(p))
-            config = self.get_configuration_writer(p)
-            d = {}
-            defl = {}
-            trap = {}
-            for section in config.sections():
-                if section in ['Default', 'Protection', 'General', 'Trap',
-                               'Magnet']:
-                    continue
-
-                for attr in config.options(section):
-                    v = config.getfloat(section, attr)
-                    if v is not None:
-                        if section == 'Deflections':
-                            defl[attr.upper()] = v
-                        else:
-                            d[attr] = v
-
-            section = 'Trap'
-            if config.has_section(section):
-                for attr in (
-                        'current', 'ramp_step', 'ramp_period',
-                        'ramp_tolerance'):
-                    if config.has_option(section, attr):
-                        trap[attr] = config.getfloat(section, attr)
-
-            section = 'Magnet'
-            magnet = {}
-            if config.has_section(section):
-                for attr in ('mftable',):
-                    if config.has_option(section, attr):
-                        magnet[attr] = config.get(section, attr)
-
-            if 'hv' in d:
-                self.source.nominal_hv = d['hv']
-
-            self._config = (d, defl, trap, magnet)
-
-        return self._config
-
-    def _add_detector(self, **kw):
-        d = self.detector_klass(spectrometer=self, **kw)
-        self.detectors.append(d)
+    # ===============================================================================
+    # private
+    # ===============================================================================
+    def _parse_word(self, word):
+        try:
+            x = csv_to_floats(word)
+        except (AttributeError, ValueError):
+            x = []
+        return x
 
     def _get_simulation_data(self):
-
-        signals = [1, 100, 3, 0.01, 0.01, 0.01]  # + random(6)
-        keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
+        signals = [1, 100, 3, 0.01, 0.01, 0.01, 38, 38.5]  # + random(6)
+        keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD', 'L2(CDD)', 'AX(CDD)']
         return keys, signals
 
     def _send_configuration(self, use_ramp=True):
         self.debug('======== Sending configuration ========')
-        command_map = dict(ionrepeller='IonRepeller',
-                           electronenergy='ElectronEnergy',
-                           ysymmetry='YSymmetry',
-                           zsymmetry='ZSymmetry',
-                           zfocus='ZFocus',
-                           extractionlens='ExtractionLens',
-                           ioncountervoltage='IonCounterVoltage',
-                           hv='HV')
+        command_map = self.get_command_map()
 
         if self.microcontroller:
-            specparams, defl, trap, magnet = self._get_cached_config()
-            for k, v in defl.items():
-                cmd = 'SetDeflection'
-                v = '{},{}'.format(k, v)
-                self.set_parameter(cmd, v)
-
-            for k, v in specparams.items():
-                try:
-                    cmd = 'Set{}'.format(command_map[k])
+            ret = self._get_cached_config()
+            if ret is not None:
+                specparams, defl, trap, magnet = ret
+                for k, v in defl.items():
+                    cmd = 'SetDeflection'
+                    v = '{},{}'.format(k, v)
                     self.set_parameter(cmd, v)
-                except KeyError:
-                    self.debug(
-                        '$$$$$$$$$$ Not setting {}. Not in command_map'.format(
-                            k))
 
-            # set the trap current
-            v = trap.get('current')
-            self.debug('send trap current {}'.format(v))
-            if v is not None:
-                step = trap.get('ramp_step', 1)
-                period = trap.get('ramp_period', 1)
-                tol = trap.get('ramp_tolerance', 10)
-                if not self._ramp_trap_current(v, step, period, use_ramp, tol):
-                    self.set_parameter('SetParameter',
-                                       'Trap Current Set,{}'.format(v))
+                for k, v in specparams.items():
+                    try:
+                        cmd = 'Set{}'.format(command_map[k])
+                        self.set_parameter(cmd, v)
+                    except KeyError:
+                        self.debug(
+                            '$$$$$$$$$$ Not setting {}. Not in command_map'.format(
+                                k))
 
-            # set the mftable
-            mftable_name = magnet.get('mftable')
-            if mftable_name:
-                self.magnet.mftable.path = mftable_name
-                self.magnet.mftable.load_mftable(load_items=True)
-            self.debug('======== Configuration Finished ========')
-            self.source.sync_parameters()
+                # set trap voltage
+                v = trap.get('voltage')
+                self.debug('send trap voltage {}'.format(v))
+                if v is not None:
+                    self.source.trap_voltage = v
+
+                # set the trap current
+                v = trap.get('current')
+                self.debug('send trap current {}'.format(v))
+                if v is not None:
+                    step = trap.get('ramp_step', 1)
+                    period = trap.get('ramp_period', 1)
+                    tol = trap.get('ramp_tolerance', 10)
+                    if not self._ramp_trap_current(v, step, period, use_ramp, tol):
+                        self.source.trap_current = v
+                        # self.set_parameter('SetParameter',
+                        #                    'Trap Current Set,{}'.format(v))
+                # set the mftable
+                mftable_name = magnet.get('mftable')
+                if mftable_name:
+                    self.debug('updating mftable name {}'.format(mftable_name))
+
+                    self.magnet.field_table.path = mftable_name
+                    self.magnet.field_table.load_table(load_items=True)
+
+                self.debug('======== Configuration Finished ========')
+                self.source.sync_parameters()
 
     def _ramp_trap_current(self, v, step, period, use_ramp=False, tol=10):
         if use_ramp:
@@ -784,14 +455,12 @@ class ThermoSpectrometer(SpectrometerDevice):
 
             if v - current >= tol:
                 if self.confirmation_dialog('Would you like to ramp up the '
-                                            'Trap current from {} to {}'.format(
-                    current, v)):
+                                            'Trap current from {} to {}'.format(current, v)):
                     prog = open_progress(1)
 
                     def func(x):
-                        cmd = 'SetParameter Trap Current Set,{:0.5f}'.format(x)
-                        prog.change_message(cmd)
-                        self.ask(cmd)
+                        prog.change_message('Set Trap Current {}'.format(x))
+                        self.source.trap_current = x
                         if not prog.accepted and not prog.canceled:
                             return True
 
@@ -806,38 +475,19 @@ class ThermoSpectrometer(SpectrometerDevice):
     # ===============================================================================
     # defaults
     # ===============================================================================
-    def _magnet_default(self):
-        return self.magnet_klass(spectrometer=self)
-
-    def _source_default(self):
-        return self.source_klass(spectrometer=self)
-
     def _integration_time_default(self):
-        return DEFAULT_INTEGRATION_TIME
+        self.default_integration_time = QTEGRA_DEFAULT_INTEGRATION_TIME
+        return QTEGRA_DEFAULT_INTEGRATION_TIME
 
     # ===============================================================================
     # property get/set
     # ===============================================================================
-    # def _get_detectors(self):
-    # ds = []
-    #     for di in DETECTOR_ORDER:
-    #         ds.append(self._detectors[di])
-    #     return ds
-
     def _get_sub_cup_configuration(self):
         return self._sub_cup_configuration
 
     def _set_sub_cup_configuration(self, v):
         self._sub_cup_configuration = v
         self.ask('SetSubCupConfiguration {}'.format(v))
-
-    @cached_property
-    def _get_isotopes(self):
-        return sorted(self.molecular_weights.keys(), key=lambda x: int(x[2:]))
-
-    @property
-    def detector_names(self):
-        return [di.name for di in self.detectors]
 
 # if __name__ == '__main__':
 # s = Spectrometer()

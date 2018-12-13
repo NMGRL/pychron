@@ -15,49 +15,32 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Bool, Str, Enum, File, Int, Directory, \
-    Color, Range, Float
-from traitsui.api import View, Item, VGroup, HGroup, Group
-# from apptools.preferences.api import PreferencesHelper
+from __future__ import absolute_import
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
+from traits.api import Bool, Str, Enum, File, Directory, \
+    Color, Range, Float, Int
+from traitsui.api import View, Item, VGroup, HGroup, Group, UItem
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-# def qt_color_convert(value):
-#    value = value.split('(')[1]
-#    value = value[:-1]
-#    value = map(float, value.split(','))
-#    value = map(lambda x: x * 255, value)
-#    return value
-# #            PySide.QtGui.QColor.fromRgbF(1.000000, 0.128695, 0.235080, 1.000000)
+from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
+from pychron.pychron_constants import SIZES
 
 
 class LaserPreferences(BasePreferencesHelper):
     pass
 
 
-#    def _get_value(self, name, value):
-#        print name , value
-#        if name == 'crosshairs_color':
-#            value = value.split('(')[1]
-#            value = value[:-1]
-#            value = map(float, value.split(','))
-#            value = map(lambda x: x * 255, value)
-#  #            PySide.QtGui.QColor.fromRgbF(1.000000, 0.128695, 0.235080, 1.000000)
-#        else:
-#            value = super(LaserPreferences, self)._get_value(name, value)
-#        return value
-
 class FusionsLaserPreferences(LaserPreferences):
     use_video = Bool(False)
-    video_output_mode = Enum('MPEG', 'Raw')
-    ffmpeg_path = File
+    # video_output_mode = Enum('MPEG', 'Raw')
+    # ffmpeg_path = File
+    # video_identifier = Str
 
-    video_identifier = Str
-    use_video_server = Bool(False)
-    video_server_port = Int(1084)
-    video_server_quality = Range(1, 75, 75)
+    use_media_storage = Bool
+    keep_local_copy = Bool
+    auto_upload = Bool
+    # use_video_server = Bool(False)
+    # video_server_port = Int(1084)
+    # video_server_quality = Range(1, 75, 75)
 
     show_grids = Bool(True)
     show_laser_position = Bool(True)
@@ -66,17 +49,31 @@ class FusionsLaserPreferences(LaserPreferences):
 
     crosshairs_kind = Enum('BeamRadius', 'UserRadius', 'MaskRadius')
     crosshairs_color = Color('maroon')
-    crosshairs_radius = Range(0.0, 4.0, 1.0)
+    crosshairs_radius = Range(0.0, 10.0, 1.0)
 
     desired_position_color = Color('green')
     calibration_style = Enum('Tray', 'Free')
     scaling = Range(1.0, 2.0, 1)
 
     use_autocenter = Bool(False)
+    autocenter_blur = Int
+    autocenter_stretch_intensity = Bool(False)
+    autocenter_use_adaptive_threshold = Bool(False)
+    autocenter_blocksize = Int
+    autocenter_blocksize_step = Int
+    autocenter_search_step = Int
+    autocenter_search_n = Int
+    autocenter_search_width = Int
+
     render_with_markup = Bool(False)
     crosshairs_offsetx = Float(0)
     crosshairs_offsety = Float(0)
     crosshairs_offset_color = Color('blue')
+    crosshairs_line_width = Float(1.0)
+
+    show_hole_label = Bool
+    hole_label_color = Color
+    hole_label_size = Enum(*SIZES)
 
     show_patterning = Bool(True)
     video_directory = Directory
@@ -85,25 +82,21 @@ class FusionsLaserPreferences(LaserPreferences):
     video_archive_hours = Range(0, 23, 0)
     video_archive_days = Range(0, 31, 7)
 
-    # recording_zoom = Range(0, 100.0, 0.0)
-
     record_patterning = Bool(False)
     record_brightness = Bool(True)
-    # record_lasing_video = Bool(False)
-    #     record_lasing_power = Bool(False)
 
     use_calibrated_power = Bool(True)
     show_bounds_rect = Bool(True)
 
-    def _get_value(self, name, value):
-        if 'color' in name:
-            value = value.split('(')[1]
-            value = value[:-1]
-            value = map(float, value.split(','))
-            value = ','.join(map(lambda x: str(int(x * 255)), value))
-        else:
-            value = super(LaserPreferences, self)._get_value(name, value)
-        return value
+    # def _get_value(self, name, value):
+    #     if 'color' in name:
+    #         value = value.split('(')[1]
+    #         value = value[:-1]
+    #         value = map(float, value.split(','))
+    #         value = ','.join(map(lambda x: str(int(x * 255)), value))
+    #     else:
+    #         value = super(LaserPreferences, self)._get_value(name, value)
+    #     return value
 
 
 class FusionsDiodePreferences(FusionsLaserPreferences):
@@ -134,87 +127,90 @@ class FusionsLaserPreferencesPane(PreferencesPane):
         archivergrp = Group(Item('use_video_archiver'),
                             Item('video_archive_days',
                                  label='Archive after N. days',
-                                 enabled_when='use_video_archiver',
-                                 ),
+                                 enabled_when='use_video_archiver'),
                             Item('video_archive_hours',
                                  label='Archive after N. hours',
-                                 enabled_when='use_video_archiver',
-                                 ),
+                                 enabled_when='use_video_archiver'),
                             Item('video_archive_months',
                                  label='Delete after N. months',
-                                 enabled_when='use_video_archiver',
-                                 ),
+                                 enabled_when='use_video_archiver'),
                             show_border=True,
-                            label='Archiver'
-                            )
-        recgrp = Group(
-            # Item('record_lasing_video', label='Record Lasing'),
-            #                        Item('record_brightness',
-            #                             label='Record Brightness Measure',
-            #                             ),
-            Item('video_directory', label='Save to',
-                 enabled_when='record_lasing_video_video'),
-            #                        Item('recording_zoom', enabled_when='record_lasing_video'),
-            show_border=True,
-            label='Record'
-        )
-        vservergrp = VGroup(Item('use_video_server', label='Use Server'),
-                            Item('video_server_port', label='Port',
-                                 enabled_when='use_video_server'),
-                            Item('video_server_quality', label='Quality',
-                                 enabled_when='use_video_server'),
-                            show_border=True,
-                            label='Server'
-                            )
+                            label='Archiver')
+
+        recgrp = Group(Item('video_directory', label='Save to',
+                            enabled_when='record_lasing_video_video'),
+                       show_border=True,
+                       label='Record')
+
+        media_storage_grp = VGroup(Item('use_media_storage'),
+                                   Item('keep_local_copy'),
+                                   Item('auto_upload'))
+
+        autocenter_grp = VGroup(Item('use_autocenter', label='Auto Center Enabled'),
+                                VGroup(
+                                    VGroup(Item('autocenter_blur', label='Blur'),
+                                           Item('autocenter_stretch_intensity', label='Stretch Intensity'),
+                                           show_border=True,
+                                           label='Preprocess'),
+                                    VGroup(Item('autocenter_search_step', label='Step'),
+                                           Item('autocenter_search_n', label='N'),
+                                           Item('autocenter_search_width', label='Width'),
+
+                                           Item('autocenter_use_adaptive_threshold', label='Use Adaptive Threshold'),
+                                           Item('autocenter_blocksize', label='Block Size',
+                                                enabled_when='autocenter_use_adaptive_threshold'),
+                                           Item('autocenter_blocksize_step', label='Block Size Step',
+                                                enabled_when='autocenter_use_adaptive_threshold'),
+                                           show_border=True,
+                                           label='Search'),
+
+                                    show_border=True),
+                                enabled_when='use_video',
+                                label='Autocenter')
+
         videogrp = VGroup(Item('use_video'),
                           VGroup(
-                              Item('video_identifier', label='ID',
-                                   enabled_when='use_video'),
-                              Item('video_output_mode', label='Output Mode'),
-                              Item('ffmpeg_path', label='FFmpeg Location'),
-                              Item('use_autocenter', label='Auto Center'),
+                              # Item('video_identifier', label='ID',
+                              #      enabled_when='use_video'),
+                              # Item('video_output_mode', label='Output Mode'),
+                              # Item('ffmpeg_path', label='FFmpeg Location'),
                               Item('render_with_markup', label='Render Snapshot with markup'),
                               recgrp,
                               archivergrp,
-                              vservergrp,
-                              enabled_when='use_video'
-                          ),
-
+                              media_storage_grp,
+                              enabled_when='use_video'),
                           label='Video')
-        canvasgrp = VGroup(
-            Item('show_bounds_rect'),
-            Item('show_map'),
-            Item('show_grids'),
-            Item('show_laser_position'),
-            Item('show_desired_position'),
-            Item('desired_position_color', show_label=False,
-                 enabled_when='show_desired_position'),
-            Item('crosshairs_kind', label='Crosshairs',
-                 enabled_when='show_laser_position'),
-            Item('crosshairs_radius',
-                 visible_when='crosshairs_kind=="UserRadius"'
-                 ),
-            Item('crosshairs_color', enabled_when='show_laser_position'),
-            HGroup(
-                Item('crosshairs_offsetx', label='Offset'),
-                Item('crosshairs_offsety', show_label=False),
-            ),
-            Item('crosshairs_offset_color', show_label=False,
-                 ),
-            Item('calibration_style'),
-            Item('scaling'),
-            label='Canvas',
-        )
+
+        canvasgrp = VGroup(Item('show_bounds_rect', label='Display Bounds Rectangle'),
+                           Item('show_map', label='Display Map'),
+                           Item('show_grids', label='Display Grids'),
+                           Item('show_laser_position', label='Display Current Position'),
+                           Item('show_desired_position', label='Display Desired Position'),
+                           Item('show_hole_label', label='Display Hole Label'),
+
+                           Item('hole_label_color'),
+                           Item('hole_label_size'),
+
+                           UItem('desired_position_color', enabled_when='show_desired_position'),
+                           Item('crosshairs_kind', label='Crosshairs',
+                                enabled_when='show_laser_position'),
+                           Item('crosshairs_radius',
+                                visible_when='crosshairs_kind=="UserRadius"'),
+                           Item('crosshairs_color', enabled_when='show_laser_position'),
+                           Item('crosshairs_line_width', enabled_when='show_laser_position'),
+                           HGroup(
+                               Item('crosshairs_offsetx', label='Offset'),
+                               UItem('crosshairs_offsety')),
+                           UItem('crosshairs_offset_color'),
+                           Item('scaling'),
+                           label='Canvas')
 
         patgrp = Group(Item('record_patterning'),
                        Item('show_patterning'), label='Pattern')
-        powergrp = Group(
-            #                         Item('record_lasing_power'),
-            Item('use_calibrated_power'),
-            label='Power')
-        return [canvasgrp, videogrp,
-                patgrp, powergrp
-                ]
+        powergrp = Group(Item('use_calibrated_power'),
+                         label='Power')
+        return [canvasgrp, videogrp, autocenter_grp,
+                patgrp, powergrp]
 
 
 class FusionsDiodePreferencesPane(FusionsLaserPreferencesPane):

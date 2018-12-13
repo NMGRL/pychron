@@ -15,16 +15,16 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from sqlalchemy.exc import InvalidRequestError
-from traits.api import provides
-# =============standard library imports ========================
 import binascii
 import math
 
+from sqlalchemy.exc import InvalidRequestError
 from sqlalchemy.sql.expression import func, distinct
+from traits.api import provides
 from uncertainties import std_dev, nominal_value
 
-# =============local library imports  ==========================
+from pychron.database.core.database_adapter import DatabaseAdapter
+from pychron.database.core.functions import delete_one
 from pychron.entry.iimport_source import IImportSource
 from pychron.mass_spec.database.massspec_orm import IsotopeResultsTable, \
     AnalysesChangeableItemsTable, BaselinesTable, DetectorTable, \
@@ -35,8 +35,6 @@ from pychron.mass_spec.database.massspec_orm import IsotopeResultsTable, \
     BaselinesChangeableItemsTable, SampleLoadingTable, MachineTable, \
     AnalysisPositionTable, LoginSessionTable, RunScriptTable, \
     IrradiationChronologyTable, IrradiationLevelTable, IrradiationProductionTable, ProjectTable, MaterialTable, PDPTable
-from pychron.database.core.database_adapter import DatabaseAdapter
-from pychron.database.core.functions import delete_one
 from pychron.pychron_constants import INTERFERENCE_KEYS
 
 
@@ -75,14 +73,8 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         bind_preference(self, 'password', '{}.password'.format(prefid))
         bind_preference(self, 'name', '{}.name'.format(prefid))
 
-    # @property
-    # def selector_klass(self):
-    # # lazy load selector klass.
-    #     from pychron.database.selectors.massspec_selector import MassSpecSelector
-    #
-    #     return MassSpecSelector
-    def get_import_spec(self, name):
-        from pychron.entry.import_spec import ImportSpec, Irradiation, Level, \
+    def get_irradiation_import_spec(self, name):
+        from pychron.data_mapper.import_spec import ImportSpec, Irradiation, Level, \
             Sample, Project, Position, Production
         spec = ImportSpec()
 
@@ -91,58 +83,57 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
         spec.irradiation = i
 
-        with self.session_ctx():
-            chrons = self.get_chronology_by_irradname(name)
-            i.doses = [(1.0, ci.StartTime, ci.EndTime) for ci in chrons]
+        chrons = self.get_chronology_by_irradname(name)
+        i.doses = [(1.0, ci.StartTime, ci.EndTime) for ci in chrons]
 
-            levels = self.get_irradiation_levels(name)
-            nlevels = []
-            for dbl in levels:
-                level = Level()
-                level.name = dbl.Level
+        levels = self.get_irradiation_levels(name)
+        nlevels = []
+        for dbl in levels:
+            level = Level()
+            level.name = dbl.Level
 
-                prod = Production()
-                dbprod = dbl.production
-                prod.name = dbprod.Label.replace(' ', '_')
+            prod = Production()
+            dbprod = dbl.production
+            prod.name = dbprod.Label.replace(' ', '_')
 
-                for attr in INTERFERENCE_KEYS:
-                    try:
-                        setattr(prod, attr, (getattr(dbprod, attr),
-                                             getattr(dbprod, '{}Er'.format(attr))))
-                    except AttributeError:
-                        pass
+            for attr in INTERFERENCE_KEYS:
+                try:
+                    setattr(prod, attr, (getattr(dbprod, attr),
+                                         getattr(dbprod, '{}Er'.format(attr))))
+                except AttributeError:
+                    pass
 
-                prod.Ca_K = (dbprod.CaOverKMultiplier, dbprod.CaOverKMultiplierEr)
-                prod.Cl_K = (dbprod.ClOverKMultiplier, dbprod.ClOverKMultiplierEr)
-                prod.Cl3638 = (dbprod.P36Cl38Cl, dbprod.P36Cl38ClEr)
+            prod.Ca_K = (dbprod.CaOverKMultiplier, dbprod.CaOverKMultiplierEr)
+            prod.Cl_K = (dbprod.ClOverKMultiplier, dbprod.ClOverKMultiplierEr)
+            prod.Cl3638 = (dbprod.P36Cl38Cl, dbprod.P36Cl38ClEr)
 
-                level.production = prod
-                level.holder = dbl.SampleHolder
+            level.production = prod
+            level.holder = dbl.SampleHolder
 
-                pos = []
-                for ip in self.get_irradiation_positions(name, level.name):
-                    dbsam = ip.sample
-                    s = Sample()
-                    s.name = dbsam.Sample
-                    s.material = ip.Material
+            pos = []
+            for ip in self.get_irradiation_positions(name, level.name):
+                dbsam = ip.sample
+                s = Sample()
+                s.name = dbsam.Sample
+                s.material = ip.Material
 
-                    pp = Project()
-                    pp.name = ip.sample.project.Project
-                    pp.principal_investigator = ip.sample.project.PrincipalInvestigator
-                    s.project = pp
+                pp = Project()
+                pp.name = ip.sample.project.Project
+                pp.principal_investigator = ip.sample.project.PrincipalInvestigator
+                s.project = pp
 
-                    p = Position()
-                    p.sample = s
-                    p.position = ip.HoleNumber
-                    p.identifier = ip.IrradPosition
-                    p.j = ip.J
-                    p.j_err = ip.JEr
-                    p.note = ip.Note
-                    p.weight = ip.Weight
+                p = Position()
+                p.sample = s
+                p.position = ip.HoleNumber
+                p.identifier = ip.IrradPosition
+                p.j = ip.J
+                p.j_err = ip.JEr
+                p.note = ip.Note
+                p.weight = ip.Weight
 
-                    pos.append(p)
-                level.positions = pos
-                nlevels.append(level)
+                pos.append(p)
+            level.positions = pos
+            nlevels.append(level)
 
             i.levels = nlevels
         return spec
@@ -151,36 +142,33 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
     # getters
     # ===============================================================================
     def get_latest_preferences(self, isoid, key):
-        with self.session_ctx() as sess:
-            q = sess.query(PreferencesTable)
-            q = q.join(AnalysesChangeableItemsTable)
-            q = q.join(DataReductionSessionTable)
-            try:
-                q = q.join(IsotopeTable)
-            except InvalidRequestError:
-                self.debug('no preferences for isotope={}'.format(key))
-                return
+        q = self.session.query(PreferencesTable)
+        q = q.join(AnalysesChangeableItemsTable)
+        q = q.join(DataReductionSessionTable)
+        try:
+            q = q.join(IsotopeTable)
+        except InvalidRequestError:
+            self.debug('no preferences for isotope={}'.format(key))
+            return
 
-            q = q.filter(IsotopeTable.IsotopeID == isoid)
+        q = q.filter(IsotopeTable.IsotopeID == isoid)
 
-            q = q.order_by(DataReductionSessionTable.SessionDate.desc())
-            q = q.limit(1)
+        q = q.order_by(DataReductionSessionTable.SessionDate.desc())
+        q = q.limit(1)
 
-            return self._query_first(q, verbose_query=True)
+        return self._query_first(q, verbose_query=True)
 
     def get_pdp(self, isoid):
-        with self.session_ctx() as sess:
-            q = sess.query(PDPTable)
-            q = q.filter(PDPTable.IsotopeID == isoid)
-            q = q.order_by(PDPTable.LastSaved.desc())
-            return self._query_first(q)
+        q = self.session.query(PDPTable)
+        q = q.filter(PDPTable.IsotopeID == isoid)
+        q = q.order_by(PDPTable.LastSaved.desc())
+        return self._query_first(q)
 
     def get_baseline_changeable_item(self, bslnid):
-        with self.session_ctx() as sess:
-            q = sess.query(BaselinesChangeableItemsTable)
-            q = q.filter(BaselinesChangeableItemsTable.BslnID == bslnid)
-            q = q.order_by(BaselinesChangeableItemsTable.LastSaved.desc())
-            return self._query_first(q, verbose_query=False)
+        q = self.session.query(BaselinesChangeableItemsTable)
+        q = q.filter(BaselinesChangeableItemsTable.BslnID == bslnid)
+        q = q.order_by(BaselinesChangeableItemsTable.LastSaved.desc())
+        return self._query_first(q, verbose_query=False)
 
     def get_material(self, name):
         return self._retrieve_item(MaterialTable, name, 'Material')
@@ -189,70 +177,62 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         return self._retrieve_item(ProjectTable, name, 'Project')
 
     def get_irradiation_positions(self, name, level):
-        with self.session_ctx() as sess:
-            q = sess.query(IrradiationPositionTable)
-            q = q.filter(IrradiationPositionTable.IrradiationLevel == '{}{}'.format(name, level))
-            return q.all()
+        q = self.session.query(IrradiationPositionTable)
+        q = q.filter(IrradiationPositionTable.IrradiationLevel == '{}{}'.format(name, level))
+        return q.all()
 
     def get_production_ratio_by_id(self, idn):
         return self._retrieve_item(IrradiationProductionTable, idn, 'ProductionRatiosID')
 
     def get_production_ratio_by_level(self, irrad, name):
-        with self.session_ctx() as sess:
-            q = sess.query(IrradiationLevelTable)
-            q = q.filter(IrradiationLevelTable.IrradBaseID == irrad)
-            q = q.filter(IrradiationLevelTable.Level == name)
-            return q.one().production
+        q = self.session.query(IrradiationLevelTable)
+        q = q.filter(IrradiationLevelTable.IrradBaseID == irrad)
+        q = q.filter(IrradiationLevelTable.Level == name)
+        return q.one().production
 
     def get_production_ratio_by_irradname(self, name):
-        with self.session_ctx() as sess:
-            q = sess.query(IrradiationLevelTable)
-            q = q.filter(IrradiationLevelTable.IrradBaseID == name)
-            irrad = q.all()
-            if irrad:
-                return irrad[-1].production
+        q = self.session.query(IrradiationLevelTable)
+        q = q.filter(IrradiationLevelTable.IrradBaseID == name)
+        irrad = q.all()
+        if irrad:
+            return irrad[-1].production
 
     def get_irradiation_level_names(self, *args, **kw):
         names = []
-        with self.session_ctx():
-            levels = self.get_irradiation_levels(*args, **kw)
-            if levels:
-                names = [li.Level for li in levels]
+        levels = self.get_irradiation_levels(*args, **kw)
+        if levels:
+            names = [li.Level for li in levels]
         return names
 
     def get_irradiation_levels(self, name, levels=None):
-        with self.session_ctx() as sess:
-            q = sess.query(IrradiationLevelTable)
-            q = q.filter(IrradiationLevelTable.IrradBaseID == name)
-            if levels:
-                if not hasattr(levels, '__iter__'):
-                    levels = (levels,)
+        q = self.session.query(IrradiationLevelTable)
+        q = q.filter(IrradiationLevelTable.IrradBaseID == name)
+        if levels:
+            if not hasattr(levels, '__iter__'):
+                levels = (levels,)
 
-                q = q.filter(IrradiationLevelTable.Level.in_(levels))
+            q = q.filter(IrradiationLevelTable.Level.in_(levels))
 
-            return self._query_all(q)
+        return self._query_all(q)
 
     def get_chronology_by_irradname(self, name):
-        with self.session_ctx() as sess:
-            q = sess.query(IrradiationChronologyTable)
-            q = q.filter(IrradiationChronologyTable.IrradBaseID == name)
-            q = q.order_by(IrradiationChronologyTable.EndTime.asc())
-            return q.all()
+        q = self.session.query(IrradiationChronologyTable)
+        q = q.filter(IrradiationChronologyTable.IrradBaseID == name)
+        q = q.order_by(IrradiationChronologyTable.EndTime.asc())
+        return q.all()
 
     def get_irradiation_exists(self, name):
-        with self.session_ctx() as sess:
-            q = sess.query(IrradiationLevelTable.IrradBaseID)
-            q = q.filter(IrradiationLevelTable.IrradBaseID == name)
-            r = self._query_one(q)
-            return r is not None
+        q = self.session.query(IrradiationLevelTable.IrradBaseID)
+        q = q.filter(IrradiationLevelTable.IrradBaseID == name)
+        r = self._query_one(q)
+        return r is not None
 
     def get_irradiation_names(self):
-        with self.session_ctx() as sess:
-            q = sess.query(distinct(IrradiationLevelTable.IrradBaseID))
-            vs = q.all()
-            if vs:
-                vs = sorted([vi[0] for vi in vs], reverse=True)
-            return vs
+        q = self.session.query(distinct(IrradiationLevelTable.IrradBaseID))
+        vs = q.all()
+        if vs:
+            vs = sorted([vi[0] for vi in vs], reverse=True)
+        return vs
 
     def get_analyses(self, **kw):
         return self._get_items(AnalysesTable, globals(), **kw)
@@ -271,49 +251,48 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         """
             return the analysis with the greatest aliquot with this labnumber
         """
-        with self.session_ctx() as sess:
-            if aliquot is not None:
-                # sql = 'SELECT `AnalysesTable`.`Aliquot`, `AnalysesTable`.`Increment` ' \
-                #       'FROM `AnalysesTable` ' \
-                #       'WHERE `AnalysesTable`.`RID` LIKE "{}-{:02n}%" ' \
-                #       'ORDER BY `AnalysesTable`.`AnalysisID` DESC LIMIT 1'.format(labnumber, aliquot)
-                sql = 'SELECT AnalysesTable.Aliquot_pychron, AnalysesTable.Increment ' \
-                      'FROM AnalysesTable ' \
-                      'WHERE AnalysesTable.RID LIKE "{}-{:02d}%" ' \
-                      'ORDER BY AnalysesTable.AnalysisID DESC LIMIT 1'.format(labnumber, aliquot)
-                v = sess.execute(sql)
-                if v is not None:
-                    r = v.fetchone()
-                    if r:
-                        a, s = r
-                        try:
-                            a = int(a)
-                            return a, s
-                        except ValueError:
-                            raise MissingAliquotPychronException()
-            else:
-                # !!!!!
-                # this is an issue. mass spec stores the aliquot as an varchar instead of an integer
-                # sorts lexicographically instead of numerically
-                # so '100'<'001'
-                # http://stackoverflow.com/questions/4686849/sorting-varchar-field-numerically-in-mysql
-                # use option 2. this is a low use query and performance is not and issue
-                # switch to option 3. if performance increase is desired
-                # !!!!!
-                # q = q.order_by(cast(AnalysesTable.Aliquot, INTEGER).desc())
+        if aliquot is not None:
+            # sql = 'SELECT `AnalysesTable`.`Aliquot`, `AnalysesTable`.`Increment` ' \
+            #       'FROM `AnalysesTable` ' \
+            #       'WHERE `AnalysesTable`.`RID` LIKE "{}-{:02n}%" ' \
+            #       'ORDER BY `AnalysesTable`.`AnalysisID` DESC LIMIT 1'.format(labnumber, aliquot)
+            sql = 'SELECT AnalysesTable.Aliquot_pychron, AnalysesTable.Increment ' \
+                  'FROM AnalysesTable ' \
+                  'WHERE AnalysesTable.RID LIKE "{}-{:02d}%" ' \
+                  'ORDER BY AnalysesTable.AnalysisID DESC LIMIT 1'.format(labnumber, aliquot)
+            v = self.session.execute(sql)
+            if v is not None:
+                r = v.fetchone()
+                if r:
+                    a, s = r
+                    try:
+                        a = int(a)
+                        return a, s
+                    except ValueError:
+                        raise MissingAliquotPychronException()
+        else:
+            # !!!!!
+            # this is an issue. mass spec stores the aliquot as an varchar instead of an integer
+            # sorts lexicographically instead of numerically
+            # so '100'<'001'
+            # http://stackoverflow.com/questions/4686849/sorting-varchar-field-numerically-in-mysql
+            # use option 2. this is a low use query and performance is not and issue
+            # switch to option 3. if performance increase is desired
+            # !!!!!
+            # q = q.order_by(cast(AnalysesTable.Aliquot, INTEGER).desc())
 
-                sql = 'SELECT AnalysesTable.Aliquot_pychron, AnalysesTable.Increment ' \
-                      'FROM AnalysesTable ' \
-                      'WHERE AnalysesTable.RID LIKE "{}%" ' \
-                      'ORDER BY AnalysesTable.Aliquot_pychron DESC LIMIT 1'.format(labnumber)
+            sql = 'SELECT AnalysesTable.Aliquot_pychron, AnalysesTable.Increment ' \
+                  'FROM AnalysesTable ' \
+                  'WHERE AnalysesTable.RID LIKE "{}%" ' \
+                  'ORDER BY AnalysesTable.Aliquot_pychron DESC LIMIT 1'.format(labnumber)
 
-                v = sess.execute(sql)
-                if v is not None:
-                    r = v.fetchone()
-                    if r:
-                        a, s = r
-                        a = a or 0
-                        return int(a), s
+            v = self.session.execute(sql)
+            if v is not None:
+                r = v.fetchone()
+                if r:
+                    a, s = r
+                    a = a or 0
+                    return int(a), s
 
     def get_analysis_rid(self, rid):
         return self._retrieve_item(AnalysesTable, rid, key='RID')
@@ -336,6 +315,11 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
         return self._retrieve_item(AnalysesTable, value,
                                    key=key, **kw)
+
+    def get_flux(self, labnumber):
+        with self.session_ctx():
+            obj = self.get_irradiation_position(labnumber)
+            return obj.J, obj.JEr
 
     def get_irradiation_position(self, value):
         return self._retrieve_item(IrradiationPositionTable, value,
@@ -392,19 +376,17 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         return self._retrieve_item(RunScriptTable, value, key='RunScriptID', )
 
     def get_irradiation_level(self, irrad, name):
-        with self.session_ctx() as sess:
-            q = sess.query(IrradiationLevelTable)
-            q = q.filter(IrradiationLevelTable.Level == name)
-            q = q.filter(IrradiationLevelTable.IrradBaseID == irrad)
-            return self._query_one(q)
+        q = self.session.query(IrradiationLevelTable)
+        q = q.filter(IrradiationLevelTable.Level == name)
+        q = q.filter(IrradiationLevelTable.IrradBaseID == irrad)
+        return self._query_one(q)
 
     def get_database_version(self, **kw):
         ver = 0
-        with self.session_ctx() as sess:
-            q = sess.query(DatabaseVersionTable)
-            item = self._query_one(q, **kw)
-            if item:
-                ver = item.Version
+        q = self.session.query(DatabaseVersionTable)
+        item = self._query_one(q, **kw)
+        if item:
+            ver = item.Version
 
         self.debug('MassSpec Database Version: {}'.format(ver))
         return ver
@@ -413,19 +395,19 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
     # adders
     # ===============================================================================
     def add_project(self, name, **kw):
-        with self.session_ctx():
-            obj = ProjectTable(Project=name, **kw)
-            return self._add_item(obj)
+
+        obj = ProjectTable(Project=name, **kw)
+        return self._add_item(obj)
 
     def add_material(self, name):
-        with self.session_ctx():
-            obj = MaterialTable(Material=name)
-            return self._add_item(obj)
+
+        obj = MaterialTable(Material=name)
+        return self._add_item(obj)
 
     def add_sample(self, name):
-        with self.session_ctx():
-            obj = SampleTable(Sample=name, ProjectID=1)
-            return self._add_item(obj)
+
+        obj = SampleTable(Sample=name, ProjectID=1)
+        return self._add_item(obj)
 
     def add_production_ratios(self, prdict):
         """
@@ -464,22 +446,21 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         :param jerr:
         :return:
         """
-        with self.session_ctx() as sess:
-            q = sess.query(IrradiationPositionTable)
-            q = q.filter(IrradiationPositionTable.IrradPosition == identifier)
-            if not self._query_one(q):
-                i = IrradiationPositionTable(IrradPosition=identifier,
-                                             IrradiationLevel=irrad_level,
-                                             HoleNumber=hole,
-                                             Note=note,
-                                             Material=material,
-                                             SampleID=sample,
-                                             J=j, JEr=jerr)
-                return self._add_item(i)
+        q = self.session.query(IrradiationPositionTable)
+        q = q.filter(IrradiationPositionTable.IrradPosition == identifier)
+        if not self._query_one(q):
+            i = IrradiationPositionTable(IrradPosition=identifier,
+                                         IrradiationLevel=irrad_level,
+                                         HoleNumber=hole,
+                                         Note=note,
+                                         Material=material,
+                                         SampleID=sample,
+                                         J=j, JEr=jerr)
+            return self._add_item(i)
 
     def add_irradiation_production(self, name, pr, ifc):
         kw = {}
-        for k, v in ifc.iteritems():
+        for k, v in ifc.items():
             if k == 'cl3638':
                 k = 'P36Cl38Cl'
             else:
@@ -492,26 +473,24 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         kw['ClOverKMultiplierEr'] = 0
         kw['CaOverKMultiplier'] = pr['Ca_K']
         kw['CaOverKMultiplierEr'] = 0
-        v = binascii.crc32(''.join([str(v) for v in kw.itervalues()]))
-        with self.session_ctx() as sess:
-            q = sess.query(IrradiationProductionTable)
-            q = q.filter(IrradiationProductionTable.ProductionRatiosID == v)
-            if not self._query_one(q):
-                i = IrradiationProductionTable(Label=name,
-                                               ProductionRatiosID=v,
-                                               **kw)
-                self._add_item(i)
+        v = binascii.crc32(''.join([str(v) for v in kw.values()]))
+        q = self.session.query(IrradiationProductionTable)
+        q = q.filter(IrradiationProductionTable.ProductionRatiosID == v)
+        if not self._query_one(q):
+            i = IrradiationProductionTable(Label=name,
+                                           ProductionRatiosID=v,
+                                           **kw)
+            self._add_item(i)
         return v
 
     def add_irradiation_chronology_segment(self, irrad, s, e):
-        with self.session_ctx() as sess:
-            q = sess.query(IrradiationChronologyTable)
-            q = q.filter(IrradiationChronologyTable.IrradBaseID == irrad)
-            q = q.filter(IrradiationChronologyTable.StartTime == s)
-            q = q.filter(IrradiationChronologyTable.EndTime == e)
-            if not self._query_one(q):
-                i = IrradiationChronologyTable(IrradBaseID=irrad, StartTime=s, EndTime=e)
-                self._add_item(i)
+        q = self.session.query(IrradiationChronologyTable)
+        q = q.filter(IrradiationChronologyTable.IrradBaseID == irrad)
+        q = q.filter(IrradiationChronologyTable.StartTime == s)
+        q = q.filter(IrradiationChronologyTable.EndTime == e)
+        if not self._query_one(q):
+            i = IrradiationChronologyTable(IrradBaseID=irrad, StartTime=s, EndTime=e)
+            self._add_item(i)
 
     def add_sample_loading(self, ms, tray):
 
@@ -716,9 +695,9 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         self._add_item(drs, )
         return drs
 
-    def add_changeable_items(self, rid, drs_id):
+    def add_changeable_items(self, analysis, drs_id):
         item = AnalysesChangeableItemsTable()
-        analysis = self.get_analysis(rid, )
+        # analysis = self.get_analysis(rid, )
         if analysis is not None:
             # get the lastest preferencesetid
             #            sess = self.get_session()
@@ -737,7 +716,9 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
             item.DataReductionSessionID = drs_id
             #            drs.changeable_items.append(item)
-            self._add_item(item, )
+            self._add_item(item)
+        else:
+            self.warning('Cannot save AnalysesChangeableItemsTable. Analysis is None')
 
         return item
 
@@ -747,7 +728,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
             uses a crc-32 of text as the RunScriptID
         """
-        crc = binascii.crc32(text)
+        crc = binascii.crc32(text.encode('utf-8'))
         rs = self.get_runscript(crc)
         if rs is None:
             rs = RunScriptTable(RunScriptID=crc, Label=label, TheText=text)

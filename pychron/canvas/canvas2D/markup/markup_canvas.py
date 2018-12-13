@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from traits.api import Enum, Any
 # =============standard library imports ========================
 from numpy import abs
@@ -22,7 +24,6 @@ import collections
 # =============local library imports  ==========================
 from pychron.canvas.canvas2D.base_data_canvas import BaseDataCanvas
 from pychron.canvas.canvas2D.scene.primitives.primitives import PointIndicator
-# from pychron.canvas.canvas2D.markup.markup_items import PointIndicator
 
 
 class MarkupContainer(collections.MutableMapping):
@@ -54,7 +55,7 @@ class MarkupContainer(collections.MutableMapping):
 
     def __getitem__(self, k):
         for l in self.layers:
-            item = next((v for key, v in l.iteritems() if key == k), None)
+            item = next((v for key, v in l.items() if key == k), None)
             if item is not None:
                 return item
 
@@ -117,7 +118,7 @@ class MarkupCanvas(BaseDataCanvas):
 
     def get_item(self, base, key):
         key = '{}{}'.format(base, key)
-        return next((v for k, v in self.markupcontainer.iteritems() if k == key), None)
+        return next((v for k, v in self.markupcontainer.items() if k == key), None)
 
     def _draw_hook(self, gc, *args, **kw):
         """
@@ -142,7 +143,7 @@ class MarkupCanvas(BaseDataCanvas):
                 if test(i):
                     continue
 
-                for obj in l.itervalues():
+                for obj in l.values():
                     #                    print obj
                     try:
                         obj.render(gc)
@@ -161,7 +162,7 @@ class MarkupCanvas(BaseDataCanvas):
         """
         """
         if items is None:
-            items = self.markupcontainer.itervalues()
+            items = self.markupcontainer.values()
 
         return next((item for item in items if hasattr(item, 'is_in') and item.is_in(event)), None)
 
@@ -189,7 +190,7 @@ class MarkupCanvas(BaseDataCanvas):
         self.invalidate_and_redraw()
 
     def OnFoo(self, event):
-        print 'asdfasd', event
+        print('asdfasd', event)
 
     def select_mouse_move(self, event):
         self.normal_mouse_move(event)
@@ -646,7 +647,7 @@ class InteractionMarkupCanvas(MarkupCanvas):
 
         md = self.markupcontainer
         key = None
-        for k, v in md.iteritems():
+        for k, v in md.items():
             if 'line' in k:
                 if isinstance(v[0], list):
                     # this is a multi segment line

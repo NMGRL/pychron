@@ -15,14 +15,18 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
 import os
 
+import six
+import yaml
+from six.moves import zip
 from traits.api import Instance
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from uncertainties import nominal_value, std_dev
-import yaml
+
 from pychron.processing.export.destinations import YamlDestination
 from pychron.processing.export.exporter import Exporter
 
@@ -109,12 +113,13 @@ class YAMLAnalysisExporter(Exporter):
 
         ifc = ai.interference_corrections
         nifc = dict()
-        for k, v in ifc.iteritems():
+        for k, v in six.iteritems(ifc):
             nifc[k] = nominal_value(v)
             nifc['{}_err'.format(k)] = float(std_dev(v))
 
         d['interference_corrections'] = nifc
-        d['chron_segments'] = [dict(zip(('power', 'duration', 'dt'), ci)) for ci in ai.chron_segments]
+        d['chron_segments'] = [dict(zip(('power', 'duration', 'dt', 'start', 'end'), ci))
+                               for ci in ai.chron_segments]
         d['irradiation_time'] = ai.irradiation_time
 
         d['j'] = float(ai.j.nominal_value)
@@ -138,7 +143,7 @@ class YAMLAnalysisExporter(Exporter):
                     'filter_outliers': dict(iso.filter_outliers_dict),
                     'data': iso.pack()}
 
-        d['isotopes'] = [func(ii) for ii in ai.isotopes.itervalues()]
+        d['isotopes'] = [func(ii) for ii in six.itervalues(ai.isotopes)]
 
 
 # ============= EOF =============================================

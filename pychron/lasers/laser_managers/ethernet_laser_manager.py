@@ -1,9 +1,11 @@
+from __future__ import absolute_import
 from traits.api import Float, Property, Bool, Button, String, Enum
 
 from pychron.core.ui.thread import Thread
 from pychron.globals import globalv
 from pychron.hardware.pychron_device import EthernetDeviceMixin
 from pychron.lasers.laser_managers.base_lase_manager import BaseLaserManager
+from six.moves import zip
 
 
 class EthernetLaserManager(BaseLaserManager, EthernetDeviceMixin):
@@ -20,15 +22,17 @@ class EthernetLaserManager(BaseLaserManager, EthernetDeviceMixin):
     use_autocenter = Bool(False)
 
     output_power = Float(enter_set=True, auto_set=False)
-    fire_laser_button = Button('Fire')
+    fire_laser_button = Button
+    fire_label = Property(depends_on='_firing')
     units = Enum('watts', 'percent')
 
     _patterning = False
-    _firing = False
+    _firing = Bool(False)
 
     stage_stop_button = Button('Stage Stop')
     move_enabled_button = Button('Enable Move')
-    _move_enabled = False
+    move_enabled_label = Property(depends_on='_move_enabled')
+    _move_enabled = Bool(False)
 
     def open(self, *args, **kw):
         return EthernetDeviceMixin.open(self)
@@ -42,7 +46,7 @@ class EthernetLaserManager(BaseLaserManager, EthernetDeviceMixin):
     def update_position(self):
         pos = super(EthernetLaserManager, self).update_position()
         if pos:
-            self.trait_set(**dict(zip(('_x', '_y', '_z'), pos)))
+            self.trait_set(**dict(list(zip(('_x', '_y', '_z'), pos))))
             return True
 
     # private
@@ -74,6 +78,12 @@ class EthernetLaserManager(BaseLaserManager, EthernetDeviceMixin):
         else:
             if self.enable_laser():
                 self.enabled = True
+
+    def _get_move_enabled_label(self):
+        return 'Enable Axis Moves' if not self._move_enabled else 'Disable Axis Moves'
+
+    def _get_fire_label(self):
+        return 'Fire' if not self._firing else 'Stop'
 
     def _move_enabled_button_fired(self):
         self._move_enabled = not self._move_enabled

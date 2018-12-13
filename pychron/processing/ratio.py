@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
+from __future__ import absolute_import
 from uncertainties import ufloat
 # ============= local library imports  ==========================
 
@@ -36,7 +37,10 @@ class RatioElement(object):
     def __mul__(self, other):
         return self.value * other
 
-    def __div__(self, other):
+    def __truediv__(self, other):
+        if isinstance(other, RatioElement):
+            other = other.value
+
         return self.value / other
 
     # def __radd__(self, other):
@@ -66,6 +70,7 @@ class Ratio(object):
             return self.nom / self.den
         except ZeroDivisionError:
             return
+
 
 # ============= EOF =============================================
 

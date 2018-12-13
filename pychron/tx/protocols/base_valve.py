@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.tx.errors import InvalidValveErrorCode, InvalidArgumentsErrorCode, ValveSoftwareLockErrorCode, \
     ValveActuationErrorCode
 from pychron.tx.protocols.service import ServiceProtocol
@@ -25,8 +26,8 @@ from pychron.tx.protocols.service import ServiceProtocol
 class BaseValveProtocol(ServiceProtocol):
     manager_protocol = None
 
-    def __init__(self, application, addr):
-        ServiceProtocol.__init__(self)
+    def __init__(self, application, addr, logger):
+        ServiceProtocol.__init__(self, logger=logger)
 
         self._application = application
         man = None
@@ -49,6 +50,7 @@ class BaseValveProtocol(ServiceProtocol):
     def _register_base_services(self):
         services = (('Open', '_open'),
                     ('Close', '_close'),
+                    ('GetIndicatorState', '_get_indicator_state'),
                     ('GetValveState', '_get_valve_state'),
                     ('GetStateChecksum', '_get_state_checksum'),
                     ('GetValveStates', '_get_valve_states'),
@@ -58,6 +60,14 @@ class BaseValveProtocol(ServiceProtocol):
         self._register_services(services)
 
     # command handlers
+    def _get_indicator_state(self, data):
+        if isinstance(data, dict):
+            data = data['value']
+        result = self._manager.get_indicator_state(data)
+        if result is None:
+            result = InvalidValveErrorCode(data)
+        return result
+
     def _get_valve_state(self, data):
         if isinstance(data, dict):
             data = data['value']
@@ -116,11 +126,11 @@ class BaseValveProtocol(ServiceProtocol):
         if result is True:
             result = 'OK' if change else 'ok'
         elif result is None:
-            result = InvalidArgumentsErrorCode('Close', data, logger=self)
+            result = InvalidArgumentsErrorCode('Close', data)
         elif result == 'software lock enabled':
-            result = ValveSoftwareLockErrorCode(data, logger=self)
+            result = ValveSoftwareLockErrorCode(data)
         else:
-            result = ValveActuationErrorCode(data, 'close', logger=self)
+            result = ValveActuationErrorCode(data, 'close')
 
         return result
 

@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
+from __future__ import absolute_import
 import json
 # ============= local library imports  ==========================
 from pychron.hardware.furnace.nmgrl.nmgrl_furnace_drive import NMGRLFurnaceDrive

@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Str, Button, HasTraits, List, Long
 from traitsui.api import View, UItem
 

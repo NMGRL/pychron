@@ -15,11 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits, Str, Int, Bool, Property, List
 from traitsui.api import View, UItem, Controller, TabularEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
+
 from pychron.dvc.func import get_review_status
 from pychron.envisage.resources import icon
 
@@ -40,12 +42,6 @@ class RSDAdapter(TabularAdapter):
             return GREENBALL
 
 
-class RSDItem(HasTraits):
-    process = Str
-    status = Bool
-    date = Str
-
-
 class ReviewStatusDetailsModel(HasTraits):
     items = List
     record_id = Str
@@ -56,24 +52,33 @@ class ReviewStatusDetailsModel(HasTraits):
         if not record.review_status:
             get_review_status(record)
 
-        self.items = [self._make_item(record, m) for m in ('intercepts', 'blanks', 'icfactors')]
+        # self.items = [item for m in ('intercepts', 'blanks', 'icfactors')
+        #                    for item in self._make_item(record, m)]
+        self.items = record.review_items
         self.record_id = record.record_id
 
-    def _make_item(self, record, tag):
+    # def _make_item(self, record, tag):
+    #     items = []
+    #     for i in record.review_items:
+    #
+    #         # try:
+    #         #     # status, date = getattr(record, '{}_review_status'.format(tag))
+    #         # except AttributeError:
+    #         #     status, date = False, ''
+    #         #
+    #         item = RSDItem(process=tag.capitalize(),
+    #                        status=status,
+    #                        date=date)
+    #         items.append(item)
+    #
+    #     return items
 
-        try:
-            status, date = getattr(record, '{}_review_status'.format(tag))
-        except AttributeError:
-            status, date = False, ''
-
-        return RSDItem(process=tag.capitalize(),
-                       status=status,
-                       date=date)
 
 
 class ReviewStatusDetailsView(Controller):
     def traits_view(self):
-        v = View(UItem('items', editor=TabularEditor(adapter=RSDAdapter())),
+        v = View(UItem('items', editor=TabularEditor(editable=False,
+                                                     adapter=RSDAdapter())),
                  title='Review Status Details ({})'.format(self.model.record_id),
                  kind='livemodal',
                  buttons=['OK'],

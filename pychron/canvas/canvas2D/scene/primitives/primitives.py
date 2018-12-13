@@ -15,28 +15,22 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
 import time
 
+from PIL import Image as PImage
 from chaco.data_range_1d import DataRange1D
 from chaco.default_colormaps import color_map_name_dict
 from kiva.agg.agg import GraphicsContextArray
-from traits.api import HasTraits, Float, Any, Dict, Bool, Str, Property, List, \
+from numpy import array
+from traits.api import Float, Any, Bool, Str, Property, List, \
     Int, \
     Color, String, Either
 from traitsui.api import VGroup, Item, Group
 
-# ============= standard library imports ========================
-import Image as PImage
-import math
-from numpy import array
-# ============= local library imports  ==========================
 from pychron.canvas.canvas2D.scene.primitives.base import QPrimitive, Primitive
-
-
-def calc_rotation(x1, y1, x2, y2):
-    rise = y2 - y1
-    run = x2 - x1
-    return math.degrees(math.atan2(rise, run))
+from pychron.canvas.canvas2D.scene.primitives.calibration import calc_rotation
 
 
 class Point(QPrimitive):
@@ -323,32 +317,48 @@ class Span(Line):
 class LoadIndicator(Circle):
     degas_indicator = False
     measured_indicator = False
-    degas_color = Color('orange')
+    monitor_indicator = False
+    degas_color= Color('orange')
     measured_color = Color('purple')
     default_color = 'black'
     fill_color = Color('lightblue')
-    labnumber_label = None
+    identifier_label = None
+    sample_label = None
     weight_label = None
+    nxtals_label = None
     weight = None
     sample = ''
     irradiation = ''
     note = ''
 
     def clear_text(self):
-        if self.labnumber_label:
-            self.primitives.remove(self.labnumber_label)
-            self.labnumber_label = None
-
+        if self.identifier_label:
+            self.primitives.remove(self.identifier_label)
+            self.identifier_label = None
+        if self.sample_label:
+            self.primitives.remove(self.sample_label)
+            self.sample_label = None
         if self.weight_label:
             self.primitives.remove(self.weight_label)
             self.weight_label = None
 
-    def add_labnumber_label(self, *args, **kw):
-        if self.labnumber_label:
-            self.primitives.remove(self.labnumber_label)
+        if self.nxtals_label:
+            self.primitives.remove(self.nxtals_label)
+            self.nxtals_label = None
+
+    def add_identifier_label(self, *args, **kw):
+        if self.identifier_label:
+            self.primitives.remove(self.identifier_label)
 
         lb = self.add_text(*args, **kw)
-        self.labnumber_label = lb
+        self.identifier_label = lb
+
+    def add_sample_label(self, *args, **kw):
+        if self.sample_label:
+            self.primitives.remove(self.sample_label)
+
+        lb = self.add_text(*args, **kw)
+        self.sample_label = lb
 
     def add_weight_label(self, *args, **kw):
         if self.weight_label:
@@ -356,6 +366,13 @@ class LoadIndicator(Circle):
 
         lb = self.add_text(*args, **kw)
         self.weight_label = lb
+
+    def add_nxtals_label(self, *args, **kw):
+        if self.nxtals_label:
+            self.primitives.remove(self.nxtals_label)
+
+        lb = self.add_text(*args, **kw)
+        self.nxtals_label = lb
 
     def add_text(self, t, ox=0, oy=0, **kw):
         # x, y = self.get_xy()
@@ -372,7 +389,9 @@ class LoadIndicator(Circle):
 
     def _render(self, gc):
         c = (0, 0, 0)
-        if self.fill and self.fill_color and sum(self.fill_color.toTuple()[:3]) < 1.5:
+        color = self.fill_color
+        fc = sum((color.red(), color.green(), color.blue()))
+        if self.fill and self.fill_color and fc < 1.5:
             c = (255, 255, 255)
 
         self.text_color = c
@@ -397,76 +416,32 @@ class LoadIndicator(Circle):
         nr = r * 0.25
 
         super(LoadIndicator, self)._render(gc)
+        if self.monitor_indicator:
+            with gc:
+                gc.set_line_width(1)
+                gc.move_to(x, y - r)
+                gc.line_to(x, y + r)
+                gc.stroke_path()
+
+                gc.move_to(x - r, y)
+                gc.line_to(x + r, y)
+                gc.stroke_path()
+
         if self.degas_indicator:
-            gc.set_fill_color(self._convert_color(self.degas_color))
-            gc.arc(x, y + 2 * nr, nr, 0, 360)
-            gc.fill_path()
+            with gc:
+                gc.set_fill_color(self._convert_color(self.degas_color))
+                gc.arc(x, y + 2 * nr, nr, 0, 360)
+                gc.fill_path()
 
         if self.measured_indicator:
-            gc.set_fill_color(self._convert_color(self.measured_color))
-            gc.arc(x, y - 2 * nr, nr, 0, 360)
-            gc.fill_path()
+            with gc:
+                gc.set_fill_color(self._convert_color(self.measured_color))
+                gc.arc(x, y - 2 * nr, nr, 0, 360)
+                gc.fill_path()
 
         for pm in self.primitives:
             pm.x, pm.y = self.x, self.y
             pm.render(gc)
-
-
-class CalibrationObject(HasTraits):
-    tweak_dict = Dict
-    cx = Float
-    cy = Float
-    rx = Float
-    ry = Float
-
-    rotation = Property(depends_on='rx,ry,_rotation')
-    _rotation = Float
-    center = Property(depends_on='cx,cy')
-    scale = Float(1)
-
-    def _set_rotation(self, rot):
-        self._rotation = rot
-
-    def _get_rotation(self):
-        # if not (self.rx and self.rx):
-        #     return self._rotation
-        rot = self._rotation
-        if not rot:
-            rot = self.calculate_rotation(self.rx, self.ry)
-        return rot
-
-    def _get_center(self):
-        return self.cx, self.cy
-
-    def set_right(self, x, y):
-        self.rx = x
-        self.ry = y
-        self._rotation = 0
-
-    def set_center(self, x, y):
-        self.cx = x
-        self.cy = y
-
-    def calculate_rotation(self, x, y, sense='east'):
-        def rotation(a, b):
-            return calc_rotation(self.cx, self.cy, a, b)
-
-        if sense == 'west':
-            if y > self.cy:
-                rot = calc_rotation(self.cx, self.cy, y, x)
-            else:
-                rot = calc_rotation(self.cx, self.cy, -x, -y)
-        elif sense == 'north':
-            if x > self.cx:
-                rot = rotation(x, -y)
-            else:
-                rot = rotation(y, -x)
-        elif sense == 'south':
-            rot = rotation(-y, x)
-        else:
-            rot = rotation(x, y)
-
-        return rot
 
 
 class Label(QPrimitive):

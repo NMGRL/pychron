@@ -16,6 +16,7 @@
 
 #========== standard library imports ==========
 
+from __future__ import absolute_import
 import time
 #========== local library imports =============
 from pychron.hardware.actuators.gp_actuator import GPActuator

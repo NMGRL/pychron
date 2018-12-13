@@ -19,6 +19,7 @@
 # ============= standard library imports ========================
 
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.hardware.core.core_device import CoreDevice
 
 
@@ -35,6 +36,9 @@ class GPActuator(CoreDevice):
     
     def get_lock_state(self, *args, **kw):
         pass
+
+    def get_indicator_state(self, obj, *args, **kw):
+        return self.get_channel_state(obj, **kw)
 
     def get_channel_state(self, *args, **kw):
         """

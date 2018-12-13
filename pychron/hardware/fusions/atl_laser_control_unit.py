@@ -17,15 +17,19 @@
 
 
 # ============= enthought library imports =======================
-from traits.api import Float, Int, Str, Bool, Property, Array
-# ============= standard library imports ========================
-from numpy import array, hstack
+from __future__ import absolute_import
+from __future__ import print_function
 import time
 from threading import Lock
-# ============= local library imports  ==========================
-from pychron.hardware.core.core_device import CoreDevice
+
+from numpy import array, hstack
+from traits.api import Float, Int, Str, Bool, Property, Array
+
 from pychron.hardware.core.checksum_helper import computeBCC
+from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.core.data_helper import make_bitarray
+from six.moves import map
+from six.moves import range
 
 STX = chr(2)
 ETX = chr(3)
@@ -212,7 +216,7 @@ class ATLLaserControlUnit(CoreDevice):
         resp = self._send_query(1001, 1, verbose=verbose)
         v = -1
         if resp is not None:# and len(resp) == 4:
-            print resp, len(resp)
+            print(resp, len(resp))
             v = int(resp, 16)
 
         #    high = resp[4:]
@@ -227,7 +231,7 @@ class ATLLaserControlUnit(CoreDevice):
         if verbose:
             self.debug('get nburst')
 
-        v = None
+        v = 0
         resp = self._send_query(22, 2, verbose=verbose)
         if resp is not None and len(resp) == 8:
             high = resp[4:]
@@ -259,7 +263,7 @@ class ATLLaserControlUnit(CoreDevice):
                 ps = self.get_process_status()
 
             nps = ps[:16 - 4] + str(int(mode)) + ps[-4:]
-            print mode, nps
+            print(mode, nps)
 
             cmd = self._build_command(1000, int(nps, 2))
             self._send_command(cmd)
@@ -287,7 +291,6 @@ class ATLLaserControlUnit(CoreDevice):
         self._send_command(cmd)
 
     def laser_stop(self):
-    #        self.stop_update_timer()
         self.debug('stop laser')
         cmd = self._build_command(11, 1)
         self._send_command(cmd)
@@ -340,7 +343,7 @@ class ATLLaserControlUnit(CoreDevice):
 
     def waiting_for_gas_request(self, verbose=False):
         rq = self.get_gas_wait_request(verbose=verbose)
-        print rq
+        print(rq)
         if rq is not None:
             return rq[0] == 1
 
@@ -415,7 +418,7 @@ class ATLLaserControlUnit(CoreDevice):
             values = (values,)
             #            values = ('{:04X}'.format(values),)
 
-        values = map('{:04X}'.format, values)
+        values = list(map('{:04X}'.format, values))
 
         cmd = start_addr + ''.join(values)
         cmd += ETX

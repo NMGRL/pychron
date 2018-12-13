@@ -20,15 +20,17 @@ import os
 import re
 import shutil
 import subprocess
-
+import sys
 from datetime import datetime
 
+import yaml
 
-def subdirize(root, name, n=1, l=2, mode='r'):
-    for i in xrange(n):
 
-        n, name = name[:l], name[l:]
-        path = os.path.join(root, n)
+def subdirize(root, name, n=1, sublen=2, mode='r'):
+    for i in range(n):
+
+        d, name = name[:sublen], name[sublen:]
+        path = os.path.join(root, d)
         if not os.path.isdir(path):
             if mode == 'r':
                 return
@@ -49,6 +51,9 @@ def backup(p, backupdir, **kw):
     :return:
     """
     bp, _ = os.path.splitext(os.path.basename(p))
+    if not os.path.isdir(backupdir):
+        os.mkdir(backupdir)
+
     pp = unique_date_path(backupdir, bp, **kw)
     shutil.copyfile(p, pp)
     return bp, pp
@@ -69,19 +74,23 @@ def created_datetime(path, strformat='%m-%d-%Y %H:%M:%S'):
 
 
 def view_file(p, application='Preview', logger=None):
-    app_path = '/Applications/{}.app'.format(application)
-    if not os.path.exists(app_path):
-        app_path = '/Applications/Preview.app'
+    if sys.platform == 'darwin':
+        if application == 'Excel':
+            application = 'Microsoft Office 2011/Microsoft Excel'
 
-    try:
-        subprocess.call(['open', '-a', app_path, p])
-    except OSError:
-        if logger:
-            logger.debug('failed opening {} using {}'.format(p, app_path))
-        subprocess.call(['open', p])
+        app_path = '/Applications/{}.app'.format(application)
+        if not os.path.exists(app_path):
+            app_path = '/Applications/Preview.app'
+
+        try:
+            subprocess.call(['open', '-a', app_path, p])
+        except OSError:
+            if logger:
+                logger.debug('failed opening {} using {}'.format(p, app_path))
+            subprocess.call(['open', p])
 
 
-def ilist_directory2(root, extension=None, filtername=None, remove_extension=False):
+def ilist_directory(root, extension=None, filtername=None, remove_extension=False):
     """
         uses glob
         root: directory to list
@@ -121,8 +130,12 @@ def list_subdirectories(root):
     return [di for di in os.listdir(root) if os.path.isdir(os.path.join(root, di)) and not di.startswith('.')]
 
 
-def list_directory2(root, extension=None, filtername=None, remove_extension=False):
-    return list(ilist_directory2(root, extension, filtername, remove_extension))
+def glob_list_directory(root, extension=None, filtername=None, remove_extension=False):
+    if os.path.isdir(root):
+        ret = list(ilist_directory(root, extension, filtername, remove_extension))
+    else:
+        ret = []
+    return ret
 
 
 def ilist_gits(root):
@@ -138,23 +151,19 @@ def list_gits(root):
 
 def list_directory(p, extension=None, filtername=None, remove_extension=False):
     ds = []
-    # if extension:
-
-    # return any([path.endswith(ext) for ext in extension.split(',')])
-    # else:
-    #    def test(path):
-    #        return True
 
     if os.path.isdir(p):
         ds = os.listdir(p)
         if extension is not None:
+            extension = extension.lower()
+
             def test(path):
                 for ext in extension.split(','):
-                    if path.endswith(ext):
+                    if path.lower().endswith(ext):
                         return True
 
-            ds = [pi for pi in ds
-                  if test(pi)]
+            ds = [pi for pi in ds if test(pi)]
+
         if filtername:
             ds = [pi for pi in ds if pi.startswith(filtername)]
 
@@ -169,9 +178,18 @@ def replace_extension(p, ext='.txt'):
 
 
 def add_extension(p, ext='.txt'):
-    if not p.endswith(ext):
-        # p += ext
-        p = '{}{}'.format(p, ext)
+    if not isinstance(ext, (list, tuple)):
+        ext = (ext,)
+
+    for ei in ext:
+        if p.endswith(ei):
+            break
+        # if not p.endswith(ext):
+        #     p = '{}{}'.format(p, ext)
+
+    else:
+        p = '{}{}'.format(p, ext[0])
+
     return p
 
 
@@ -180,14 +198,15 @@ def remove_extension(p):
     return h
 
 
-def unique_dir(root, base):
+def unique_dir(root, base, make=True):
     p = os.path.join(root, '{}001'.format(base))
     i = 2
     while os.path.exists(p):
         p = os.path.join(root, '{}{:03d}'.format(base, i))
         i += 1
 
-    os.mkdir(p)
+    if make:
+        os.mkdir(p)
 
     return p
 
@@ -257,7 +276,7 @@ def unique_path(root, base, extension='.txt'):
 
     """
     if extension:
-        if '.' not in extension:
+        if not extension.startswith('.'):
             extension = '.{}'.format(extension)
     else:
         extension = ''
@@ -271,6 +290,32 @@ def unique_path(root, base, extension='.txt'):
         cnt += 1
 
     return p, cnt
+
+
+def unique_path_from_manifest(root, base, extension='.txt'):
+    if not extension.startswith('.'):
+        extension = '.{}'.format(extension)
+    p = None
+    mp = os.path.join(root, 'manifest.yaml')
+    yd = {}
+    if os.path.isfile(mp):
+        with open(mp, 'r') as rfile:
+            yd = yaml.load(rfile)
+
+        v = yd.get(base, None)
+        if v:
+            cnt = v + 1
+            p = os.path.join(root, '{}-{:03d}{}'.format(base, cnt, extension))
+            yd[base] = cnt
+
+    if not p:
+        p, cnt = unique_path2(root, base, extension=extension)
+        yd[base] = cnt
+
+    with open(mp, 'w') as wfile:
+        yaml.dump(yd, wfile)
+
+    return p
 
 
 def parse_xy(p, delimiter=','):
@@ -305,48 +350,48 @@ def parse_file(p, delimiter=None, cast=None):
             if delimiter:
                 if cast is None:
                     cast = str
-                r = [map(cast, ri.split(delimiter)) for ri in r]
+                r = [[cast(rii) for rii in ri.split(delimiter)] for ri in r]
 
             return r
 
 
-def parse_setupfile(p):
-    """
-    """
-
-    rfile = parse_file(p)
-    if rfile:
-        return [line.split(',') for line in file]
-
-
-def parse_canvasfile(p, kw):
-    '''
-    
-    '''
-    # kw=['origin','valvexy','valvewh','opencolor','closecolor']
-
-    if os.path.exists(p) and os.path.isfile(p):
-        with open(p, 'r') as rfile:
-            indices = {}
-            i = 0
-            f = filetolist(rfile)
-            count = 1
-            for i in range(len(f)):
-                if f[i][:1] == '!':
-                    for k in kw:
-                        if f[i][1:] == k:
-                            i += 1
-                            if k in indices:
-                                k = k + str(count)
-                                count += 1
-
-                            indices[k] = f[i].split(',')
-
-                            i += 1
-                            break
-
-            return indices
-
+# def parse_setupfile(p):
+#     """
+#     """
+#
+#     rfile = parse_file(p)
+#     if rfile:
+#         return [line.split(',') for line in file]
+#
+#
+# def parse_canvasfile(p, kw):
+#     """
+#
+#     """
+#     # kw=['origin','valvexy','valvewh','opencolor','closecolor']
+#
+#     if os.path.exists(p) and os.path.isfile(p):
+#         with open(p, 'r') as rfile:
+#             indices = {}
+#             i = 0
+#             f = filetolist(rfile)
+#             count = 1
+#             for i in range(len(f)):
+#                 if f[i][:1] == '!':
+#                     for k in kw:
+#                         if f[i][1:] == k:
+#                             i += 1
+#                             if k in indices:
+#                                 k = k + str(count)
+#                                 count += 1
+#
+#                             indices[k] = f[i].split(',')
+#
+#                             i += 1
+#                             break
+#
+#             return indices
+#
 
 def pathtolist(p, **kw):
     """
@@ -413,13 +458,9 @@ def get_path(root, name, extensions):
     """
     for ext in extensions:
         for f in os.listdir(root):
-            name = add_extension(name, ext)
-            if re.match(name, f):
+            ni = add_extension(name, ext)
+            if re.match(ni, f):
                 return os.path.join(root, f)
-
-                # p = os.path.join(root, add_extension(name, ext))
-                # if os.path.isfile(p):
-                #     return p
 
 # if __name__ == '__main__':
 #     name = 'b60a449a-0f15-4554-a517-e0b421aaca97.h5'

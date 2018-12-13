@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from uncertainties import ufloat
 
 from pychron.experiment.conditional.regexes import COMP_REGEX, ARGS_REGEX, DEFLECTION_REGEX, BASELINECOR_REGEX, \
@@ -33,9 +34,9 @@ def get_teststr_attr_func(token):
             (DEVICE_REGEX, 'obj.get_device_value(attr)', wrapper, device_teststr),
             (PRESSURE_REGEX, 'obj.get_pressure(attr)', wrapper, pressure_teststr),
             (DEFLECTION_REGEX, 'obj.get_deflection(attr, current=True)'),
-            (ACTIVE_REGEX, 'not attr in data[0]'),
+            (ACTIVE_REGEX, 'attr not in data[0] if data is not None else False'),
             (CP_REGEX, 'aa.get_current_intensity(attr)'),
-            (BASELINECOR_REGEX, 'aa.get_baseline_corrected_value(attr)'),
+            (BASELINECOR_REGEX, 'aa.get_baseline_corrected_value(attr, default=None)'),
             (BASELINE_REGEX, 'aa.get_baseline_value(attr)'),
             (SLOPE_REGEX, 'aa.get_slope(attr, window or -1)'),
             (AVG_REGEX, 'aa.get_values(attr, window or -1).mean()'),
@@ -78,10 +79,13 @@ def get_teststr_attr_func(token):
 
 # wrappers
 def wrapper(fstr, token, ai):
-    return lambda obj, data, window: eval(fstr, {'attr': ai,
-                                                 'aa': obj.isotope_group,
-                                                 'obj': obj,
-                                                 'data': data, 'window': window})
+    def func(obj, data, window):
+        return eval(fstr, {'attr': ai,
+                           'aa': obj.isotope_group,
+                           'obj': obj,
+                           'data': data, 'window': window})
+
+    return func
 
 
 def between_wrapper(fstr, token, ai):
@@ -225,13 +229,16 @@ def remove_comp(s):
         if s.startswith('not '):
             s = s[4:]
         return s
-    except IndexError, e:
+    except IndexError as e:
         return s
 
 
 def extract_attr(key):
     """
     """
+    if key.startswith('L2(CDD)'):
+        return 'L2(CDD)'
+
     try:
         aa = ARGS_REGEX.search(key).group(0)[1:-1].split(',')
         key = aa[0]

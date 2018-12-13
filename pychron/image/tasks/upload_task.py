@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import shutil
 
@@ -66,10 +68,10 @@ class ImageUploadTask(BaseManagerTask, BaseBrowserModel):
     def associate_sample(self):
         self.debug('associate sample')
         sample = self.selected_samples[0].name
-        print type(self.selected_samples[0])
+        print(type(self.selected_samples[0]))
         for si in self.selected_items:
             si.sample = sample
-            print si.name, si.sample
+            print(si.name, si.sample)
 
     # task interface
     def activated(self):

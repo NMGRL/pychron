@@ -15,15 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traits.api import Str
 from traitsui.api import View, Item, VGroup, HGroup, EnumEditor, spring, \
     Label, Spring, ListEditor, Group, InstanceEditor, UItem, TableEditor
-
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn, TableColumn
+
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.pane_helpers import spacer
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
@@ -201,16 +200,17 @@ class ControlsPane(TraitsDockPane):
     floatable = False
 
     def traits_view(self):
-        magnet_grp = VGroup(
-            HGroup(
-                UItem('_detector',
-                      editor=EnumEditor(name='detector_names')),
-                UItem('isotope',
-                      editor=EnumEditor(name='isotopes'))),
-            UItem('magnet', style='custom'),
+        magnet_pos_grp = HGroup(
+            UItem('_detector',
+                  editor=EnumEditor(name='detector_names')),
+            UItem('isotope',
+                  editor=EnumEditor(name='isotopes')),
+            icon_button_editor('set_magnet_position_button', 'arrow_left',
+                               tooltip='Apply Detector/Isotope magnet position'))
 
-            # UItem('scanner', style='custom'),
-            label='Magnet')
+        magnet_grp = VGroup(magnet_pos_grp,
+                            UItem('magnet', style='custom', editor=InstanceEditor()),
+                            label='Magnet')
         detector_grp = VGroup(
             HGroup(
                 spring,
@@ -219,10 +219,11 @@ class ControlsPane(TraitsDockPane):
             Item('detectors',
                  show_label=False,
                  editor=ListEditor(style='custom', mutable=False, editor=InstanceEditor())),
+            show_border=True,
             label='Detectors')
 
         rise_grp = UItem('rise_rate', style='custom')
-        source_grp = UItem('source', style='custom')
+        source_grp = UItem('source', style='custom', editor=InstanceEditor())
 
         # cols = [ObjectColumn(name='text', label='Text',
         # width=0.40, ),
@@ -245,43 +246,13 @@ class ControlsPane(TraitsDockPane):
             HGroup(icon_button_editor('clear_button', 'clear',
                                       tooltip='Clear and reset graph'),
                    spring),
-            # HGroup(
-            # icon_button_editor('start_record_button','media-record',
-            #                        tooltip='Start recording',
-            #                        enabled_when='not _recording'),
-            #     icon_button_editor('stop_record_button',
-            #                        'media-playback-stop',
-            #                        tooltip='Stop recording',
-            #                        enabled_when='_recording'),
-            #     icon_button_editor('add_marker_button', 'flag',
-            #                        enabled_when='_recording'),
-            #     show_border=True,
-            #     label='Record Scan'),
-            # HGroup(
-            #     icon_button_editor('snapshot_button', 'camera'),
-            #     show_border=True, label='Snapshot', ),
-            # VGroup(HGroup(icon_button_editor('clear_all_markers_button', 'delete',
-            #                                  tooltip='Remove all markers'),
-            #               icon_button_editor('object.graph.add_visual_marker_button', 'add'),
-            #               Item('object.graph.marker_text', label='Text'),
-            #               Item('object.graph.marker_tool.label_with_intensity',
-            #                    tooltip='Label marker with isotopic intensity',
-            #                    label='Intensity')),
-            #
-            #        UItem('object.graph.markers', editor=TableEditor(columns=cols,
-            #                                                         selection_mode='rows',
-            #                                                         sortable=False,
-            #                                                         deletable=True)),
-            #        show_border=True, label='Markers'),
+            show_border=True,
             label='Graph')
 
-        control_grp = Group(
-            graph_cntrl_grp,
-            detector_grp,
-            rise_grp,
-            magnet_grp,
-            source_grp,
-            layout='tabbed')
+        control_grp = Group(magnet_grp,
+                            rise_grp,
+                            source_grp,
+                            layout='tabbed')
 
         v = View(
             VGroup(
@@ -293,9 +264,11 @@ class ControlsPane(TraitsDockPane):
                                           tooltip='set selected spectrometer configuration'),
                        spacer(10),
                        Item('integration_time',
+                            editor=EnumEditor(name='integration_times'),
                             label='Integration Time(s)')),
+                HGroup(graph_cntrl_grp, detector_grp),
+
                 control_grp))
         return v
-
 
 # ============= EOF =============================================

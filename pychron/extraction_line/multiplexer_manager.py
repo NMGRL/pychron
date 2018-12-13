@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Instance, Str, Button
 from traitsui.api import Item, HGroup, spring
 # ============= standard library imports ========================

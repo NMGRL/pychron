@@ -15,31 +15,27 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 
-from traits.api import Instance, Bool, Float, Str, \
-    Interface, provides, Long
-# ============= standard library imports ========================
 import binascii
-import os
-import struct
-import time
 import math
-# ============= local library imports  ==========================
-# from pychron.core.codetools.file_log import file_log
-# from pychron.core.codetools.memory_usage import mem_log
-from xlwt import Workbook
+import os
+import time
+
+from six.moves import zip
+from traits.api import Instance, Bool, Interface, provides, Long, Str, Float
+from xlwt import Workbook, struct
+
 from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.core.helpers.filetools import subdirize
 from pychron.core.helpers.strtools import to_bool
 from pychron.core.ui.preference_binding import set_preference
 from pychron.database.adapters.local_lab_adapter import LocalLabAdapter
 from pychron.experiment.automated_run.hop_util import parse_hops
-
 from pychron.loggable import Loggable
-# from pychron.managers.data_managers.h5_data_manager import H5DataManager
 from pychron.paths import paths
 from pychron.processing.export.export_spec import MassSpecExportSpec
-from pychron.pychron_constants import NULL_STR
+from pychron.pychron_constants import NULL_STR, DETECTOR_IC
 
 DEBUG = False
 
@@ -65,6 +61,9 @@ class IPersister(Interface):
 class BasePersister(Loggable):
     per_spec = Instance('pychron.experiment.automated_run.persistence_spec.PersistenceSpec', ())
     save_enabled = Bool(False)
+
+    def set_preferences(self, preferences):
+        pass
 
     def post_extraction_save(self):
         pass
@@ -152,7 +151,7 @@ class ExcelPersister(BasePersister):
         wb.save(path)
 
     def _save_isotopes(self, sh):
-        for i, (k, iso) in enumerate(self.per_spec.isotope_group.isotopes.items()):
+        for i, (k, iso) in enumerate(self.per_spec.isotope_group.items()):
 
             sh.write(0, i, '{} time'.format(k))
             sh.write(0, i + 1, '{} intensity'.format(k))
@@ -221,7 +220,7 @@ class AutomatedRunPersister(BasePersister):
     data_manager = Instance('pychron.managers.data_managers.h5_data_manager.H5DataManager', ())
 
     secondary_database_fail = False
-    use_massspec_database = True
+    use_massspec_database = Bool(False)
     use_analysis_grouping = Bool(False)
     grouping_threshold = Float
     grouping_suffix = Str
@@ -250,6 +249,7 @@ class AutomatedRunPersister(BasePersister):
                            ('grouping_suffix', str)):
             set_preference(preferences, self, attr, 'pychron.experiment.{}'.format(attr), cast)
 
+        set_preference(preferences, self, 'use_massspec_database', 'pychron.massspec.database.enabled', to_bool)
     # ===============================================================================
     # data writing
     # ===============================================================================
@@ -315,7 +315,7 @@ class AutomatedRunPersister(BasePersister):
                         nrow['value'] = signals[keys.index(k)]
                         nrow.append()
                         t.flush()
-                except AttributeError, e:
+                except AttributeError as e:
                     self.debug('error: {} group:{} det:{} iso:{}'.format(e, grpname, k, det.isotope))
 
         return write_data
@@ -558,7 +558,7 @@ class AutomatedRunPersister(BasePersister):
         if self.per_spec.auto_save_detector_ic:
             try:
                 self._save_detector_ic_csv()
-            except BaseException, e:
+            except BaseException as e:
                 self.debug('Failed auto saving detector ic. {}'.format(e))
 
         # don't save detector_ic runs to mass spec
@@ -586,7 +586,7 @@ class AutomatedRunPersister(BasePersister):
         from pychron.experiment.utilities.detector_ic import make_items, save_csv
         from pychron.experiment.utilities.identifier import get_analysis_type
 
-        if get_analysis_type(self.per_spec.run_spec.identifier) == 'detector_ic':
+        if get_analysis_type(self.per_spec.run_spec.identifier) == DETECTOR_IC:
             items = make_items(self.per_spec.isotope_group.isotopes)
 
             save_csv(self.per_spec.run_spec.record_id, items)
@@ -669,7 +669,7 @@ class AutomatedRunPersister(BasePersister):
         dbhist = db.add_fit_history(analysis,
                                     user=self.per_spec.run_spec.username)
 
-        for iso in self.per_spec.isotope_group.isotopes.itervalues():
+        for iso in self.per_spec.isotope_group.itervalues():
             detname = iso.detector
             dbdet = db.get_detector(detname)
             if dbdet is None:
@@ -839,7 +839,7 @@ class AutomatedRunPersister(BasePersister):
 
         if self.per_spec.spec_dict:
             db.add_spectrometer_parameters(meas, self.per_spec.spec_dict)
-            for det, deflection in self.per_spec.defl_dict.iteritems():
+            for det, deflection in self.per_spec.defl_dict.items():
                 det = db.add_detector(det)
                 db.add_deflection(meas, det, deflection)
 
@@ -901,7 +901,7 @@ class AutomatedRunPersister(BasePersister):
                 'selected_{}'.format(name), history)
 
         func = getattr(db, 'add_{}'.format(name))
-        for isotope, v in values.iteritems():
+        for isotope, v in values.items():
             uv = v.nominal_value
             ue = float(v.std_dev)
             if preceding_id:
@@ -962,6 +962,7 @@ class AutomatedRunPersister(BasePersister):
                                  mass_spectrometer=self.per_spec.run_spec.mass_spectrometer.capitalize(),
                                  # blanks=blanks,
                                  # data_path=p,
+                                 power_achieved=self.per_spec.power_achieved,
                                  isotopes=self.per_spec.isotope_group.isotopes,
                                  # signal_intercepts=si,
                                  # signal_intercepts=self._processed_signals_dict,

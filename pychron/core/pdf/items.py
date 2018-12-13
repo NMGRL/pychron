@@ -14,11 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
+import six
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus.paragraph import Paragraph
 # ============= enthought library imports =======================
 from traits.api import HasTraits, List, Int, Str, Any, Either, Callable
-# ============= standard library imports ========================
-from reportlab.platypus.paragraph import Paragraph
-from reportlab.lib.styles import getSampleStyleSheet
+
 # ============= local library imports  ==========================
 
 STYLES = getSampleStyleSheet()
@@ -61,7 +62,7 @@ class Row(HasTraits):
 class BaseItem(HasTraits):
     value = Any
     fmt = Either(Str, Callable)
-    fontsize = Int(8)
+    fontsize = Int(10)
     fontname = Str#'Helvetica'
     italic = False
 
@@ -76,7 +77,7 @@ class BaseItem(HasTraits):
             fmt = self.fmt
             if fmt is None:
                 fmt = u'{}'
-            if isinstance(fmt, (str, unicode)):
+            if isinstance(fmt, (str, six.text_type)):
                 v = fmt.format(v)
             else:
                 v = fmt(v)
@@ -88,12 +89,15 @@ class BaseItem(HasTraits):
     def _set_font(self, v, size, name):
         if isinstance(v, Paragraph):
             for frag in v.frags:
-                if frag.super or frag.sub:
+
+                if (hasattr(frag, 'super') and frag.super) or (hasattr(frag, 'sub') and frag.sub):
                     frag.fontSize = size - 2
                 else:
                     frag.fontSize = size
         elif name:
             v = self._new_paragraph(u'<font size="{}" name="{}">{}</font>'.format(size, name, v))
+        else:
+            v = self._new_paragraph(u'<font size="{}">{}</font>'.format(size, v))
 
         return v
 

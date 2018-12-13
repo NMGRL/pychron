@@ -15,8 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
 from chaco.abstract_overlay import AbstractOverlay
 from traits.api import List, on_trait_change
+
 # from enable.abstract_overlay import AbstractOverlay
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -73,8 +76,8 @@ class HoleOverlay(AbstractOverlay):
         cx, cy = comp.map_screen([(0, 0)])[0]
         rs = comp.map_screen([(d / 2., 0) for _, d in holes])
 
-        rs = map(lambda a: (a[0] - cx), rs)
-        pts = zip(pts, rs)
+        rs = [(a[0] - cx) for a in rs]
+        pts = list(zip(pts, rs))
         self._cached_pts = pts
 
     @on_trait_change('component.+')

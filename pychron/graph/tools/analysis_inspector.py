@@ -15,14 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import List, Callable
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-from pychron.graph.tools.point_inspector import PointInspector
+from __future__ import absolute_import
 
+from chaco.array_data_source import ArrayDataSource
+from traits.api import List, Callable
 from traitsui.menu import Action, Menu as MenuManager
 
-from pychron.pipeline.plot.inspector_item import AnalysisInspectorItem
+from pychron.graph.tools.point_inspector import PointInspector
+# from pychron.pipeline.plot.inspector_item import AnalysisInspectorItem
 from pychron.pychron_constants import PLUSMINUS
 
 
@@ -33,7 +33,7 @@ class AnalysisPointInspector(PointInspector):
     _selected_indices = List
     index_tag = None
     single_point = False
-    inspector_item_klass = AnalysisInspectorItem
+    # inspector_item_klass = AnalysisInspectorItem
 
     def contextual_menu_contents(self):
         """
@@ -42,7 +42,9 @@ class AnalysisPointInspector(PointInspector):
                           on_perform=self._recall_analysis),
                    Action(name='Set tag',
                           on_perform=self._set_tag),
-                   Action(name='Set INVALID',
+                   Action(name='Set Omit',
+                          on_perform=self._set_omit),
+                   Action(name='Set Invalid',
                           on_perform=self._set_invalid))
         # menu = MenuManager(name='recall', *actions)
         # contents = [menu, ]
@@ -64,6 +66,11 @@ class AnalysisPointInspector(PointInspector):
         ai = self.analyses[0]
         ans = [self.analyses[i] for i in self._selected_indices]
         ai.trigger_tag(ans)
+
+    def _set_omit(self):
+        ai = self.analyses[0]
+        ans = [self.analyses[i] for i in self._selected_indices]
+        ai.trigger_omit(ans)
 
     def _set_invalid(self):
         ai = self.analyses[0]
@@ -112,7 +119,11 @@ class AnalysisPointInspector(PointInspector):
 
                     if hasattr(component, 'yerror'):
                         try:
-                            ye = component.yerror.get_data()[ind]
+                            yerror = component.yerror
+                            if isinstance(yerror, ArrayDataSource):
+                                yerror = yerror.get_data()
+
+                            ye = yerror[ind]
                             pe = self.percent_error(y, ye)
                             if self.value_format:
                                 ye = self.value_format(ye)
@@ -120,8 +131,8 @@ class AnalysisPointInspector(PointInspector):
                                 y = self.value_format(y)
 
                             y = u'{} {}{} {}'.format(y, PLUSMINUS, ye, pe)
-                        except IndexError:
-                            pass
+                        except IndexError as e:
+                            print('asdf', e)
 
                     else:
                         if self.value_format:

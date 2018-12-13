@@ -16,12 +16,17 @@
 
 # ============= enthought library imports =======================
 # from traitsui.editors import ButtonEditor
+from __future__ import absolute_import
 from traitsui.item import Item
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.ui.button_editor import ButtonEditor
 from pychron.envisage.resources import icon
+
+
+class MItem(Item):
+    def get_label(self, ui):
+        return ''
 
 
 def icon_button_editor(trait, name, label=None, editor_kw=None, **kw):
@@ -34,11 +39,6 @@ def icon_button_editor(trait, name, label=None, editor_kw=None, **kw):
     kw['label'] = label or ''
     image = icon(name)
 
-    return Item(trait,
-                style='custom',
-                editor=ButtonEditor(image=image,
-                                    # style='toolbar',
-                                    **editor_kw),
-                **kw)
+    return MItem(trait, style='custom', editor=ButtonEditor(image=image, **editor_kw), **kw)
 
 # ============= EOF =============================================

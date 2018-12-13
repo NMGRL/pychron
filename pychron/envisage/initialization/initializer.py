@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 
+from __future__ import absolute_import
 from traits.api import Any, List
 
 # ============= standard library imports ========================
@@ -52,9 +53,7 @@ class Initializer(Loggable):
 
         ok = True
         self.info('Running Initializer')
-        nsteps = 1
-        for idict in self.init_list:
-            nsteps += self._get_nsteps(idict['plugin_name'])
+        nsteps = sum([self._get_nsteps(idict['plugin_name']) for idict in self.init_list])+1
 
         pd = self._setup_progress(nsteps)
         try:
@@ -67,13 +66,11 @@ class Initializer(Loggable):
             self.info('Initialization {}'.format(msg))
 
             pd.close()
-        except BaseException, e:
+        except BaseException as e:
             import traceback
             traceback.print_exc()
             self.debug('Initializer Exception: {}'.format(e))
             raise e
-
-            # sys.exit(0)
 
         return ok
 
@@ -104,19 +101,10 @@ class Initializer(Loggable):
             self.info('Manager loading {}'.format(name))
             manager.application = self.application
             manager.load()
-
         else:
             return False
 
         managers = []
-        # devices = []
-        # # flags = []
-        # # timed_flags = []
-        # # valve_flags_attrs = []
-
-        # print name, plugin_name
-        # mp, name = self._get_plugin(name, plugin_name)
-        # print mp, name
         if plugin_name:
             mp = self._get_plugin(plugin_name)
         else:
@@ -128,22 +116,6 @@ class Initializer(Loggable):
                     return False
 
             managers = parser.get_managers(mp)
-            # # devices = parser.get_devices(mp)
-            # # flags = parser.get_flags(mp)
-            # # timed_flags = parser.get_timed_flags(mp)
-            # # valve_flags = parser.get_valve_flags(mp, element=True)
-            #
-            # if valve_flags:
-            # for vf in valve_flags:
-            # vs = vf.find('valves')
-            #         if vs:
-            #             vs = vs.split(',')
-            #     valve_flags_attrs.append((vf.text.strip(), vs))
-
-            # set rpc server
-            # mode, _, port = parser.get_rpc_params(mp)
-            # if port and mode != 'client':
-            # manager.load_rpc_server(port)
 
         if managers:
             self.info('loading managers - {}'.format(', '.join(managers)))
@@ -215,7 +187,7 @@ class Initializer(Loggable):
 
         for device in devices:
 
-            if device == '':
+            if not device:
                 continue
 
             pdev = self.parser.get_device(name, device, plugin_name, element=True)
@@ -225,7 +197,6 @@ class Initializer(Loggable):
                 dev_class = dev_class.text.strip()
 
             try:
-
                 dev = getattr(manager, device)
                 if dev is None:
                     dev = manager.create_device(device,
@@ -244,10 +215,13 @@ class Initializer(Loggable):
                 continue
 
             self.info('loading {}'.format(dev.name))
+
+            dev.application = self.application
             if dev.load():
                 # register the device
                 if self.application is not None:
                     # display with the HardwareManager
+                    self.info('Regisiter device name={}, {}'.format(dev.name, dev))
                     self.application.register_service(ICoreDevice, dev,
                                                       {'display': True})
 
@@ -289,7 +263,7 @@ class Initializer(Loggable):
                 man = getattr(manager, mi)
                 if man is None:
                     man = manager.create_manager(mi)
-            except AttributeError, e:
+            except AttributeError as e:
                 self.warning(e)
                 try:
                     man = manager.create_manager(mi)
@@ -358,16 +332,11 @@ Do you want to quit to enable {} in the Initialization File?'''.format(name, nam
 
     def _get_manager(self, name, plugin_name):
         parser = self.parser
-        # name = name.replace('_manager', '')
         man = parser.get_manager(name, plugin_name)
-
-        # if mp is None:
-        # mp = parser.get_root().find('plugins/{}'.format(name))
         return man
 
     def _get_plugin(self, name):
         parser = self.parser
-        # name = name.replace('_manager', '')
         mp = parser.get_plugin(name)
         return mp
 
@@ -383,6 +352,8 @@ Do you want to quit to enable {} in the Initialization File?'''.format(name, nam
             ns += (len(parser.get_timed_flags(mp)) + 1)
 
         return ns
+
+# ========================= EOF ===================================
 
 #
 # class Initializer2(Loggable):
@@ -710,10 +681,6 @@ Do you want to quit to enable {} in the Initialization File?'''.format(name, nam
 #             ns += (len(parser.get_timed_flags(mp)) + 1)
 #
 #         return ns
-
-
-# ========================= EOF ===================================
-
 # def _get_option_list(self, config, section, option):
 # '''
 #

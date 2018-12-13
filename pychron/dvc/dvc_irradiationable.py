@@ -15,9 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
 from traits.api import Str, Property, cached_property, Instance, Event, Any
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 from pychron.loggable import Loggable
 
 
@@ -27,11 +28,10 @@ class DVCAble(Loggable):
 
     def get_database(self):
         if self.dvc:
-            db = self.dvc.db
+            db = self.dvc
         else:
             db = self.iso_db_man.db
         return db
-    9
 
 
 class DVCIrradiationable(DVCAble):
@@ -62,27 +62,27 @@ class DVCIrradiationable(DVCAble):
 
     @cached_property
     def _get_irradiations(self):
+        irrad_names = []
         db = self.get_database()
         if db.connect():
             with db.session_ctx():
                 irs = db.get_irradiations()
-                names = [i.name for i in irs]
-                if names:
-                    self.irradiation = names[0]
-                return names
+                if irs:
+                    irrad_names = [i.name for i in irs]
+                    if irrad_names:
+                        self.irradiation = irrad_names[0]
+        return irrad_names
 
     @cached_property
     def _get_levels(self):
+        levels = []
         db = self.get_database()
         if db.connect():
             with db.session_ctx():
                 irrad = db.get_irradiation(self.irradiation)
                 if irrad:
-                    names = sorted([li.name for li in irrad.levels])
-                    if names:
-                        self.level = names[0]
-                    return names
-                else:
-                    return []
-
+                    levels = sorted([li.name for li in irrad.levels])
+                    if levels:
+                        self.level = levels[0]
+        return levels
 # ============= EOF =============================================

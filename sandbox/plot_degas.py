@@ -22,9 +22,9 @@ import os
 from traits.api import Button
 from traitsui.api import View, Item
 
-from pychron.paths import paths
 from pychron.graph.time_series_graph import TimeSeriesStackedGraph
 from pychron.managers.manager import Manager
+from pychron.paths import paths
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================

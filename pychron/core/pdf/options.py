@@ -15,50 +15,130 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Bool, Enum, \
-    Button, Float, Int, Color
-from traitsui.api import View, Item, UItem, HGroup, Group, VGroup
-# ============= standard library imports ========================
-import os
-# ============= local library imports  ==========================
+
+from __future__ import absolute_import
+
+from reportlab.lib.pagesizes import A4, letter, landscape, A2, A0
+from reportlab.lib.units import inch, cm
+from traits.api import Str, Bool, Enum, Button, Float, Color
+from traitsui.api import View, Item, UItem, HGroup, Group, VGroup, spring, Spring
+
+from pychron.core.pdf.pdf_graphics_context import UNITS_MAP
+from pychron.core.persistence_options import BasePersistenceOptions
 from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.paths import paths
-from pychron.persistence_loggable import PersistenceMixin
+from pychron.persistence_loggable import dumpable
+from pychron.pychron_constants import SIG_FIGS
+
+PAGE_MAP = {'A4': A4, 'letter': letter, 'A2': A2, 'A0': A0}
+UNITS_MAP = {'inch': inch, 'cm': cm}
+COLUMN_MAP = {'1': 1, '2': 0.5, '3': 0.33, '2/3': 0.66}
+
+mgrp = VGroup(HGroup(Spring(springy=False, width=100),
+                     Item('top_margin', label='Top'),
+                     spring, ),
+              HGroup(Item('left_margin', label='Left'),
+                     Item('right_margin', label='Right')),
+              HGroup(Spring(springy=False, width=100), Item('bottom_margin', label='Bottom'),
+                     spring),
+              label='Margins', show_border=True)
+cgrp = VGroup()
+
+sgrp = VGroup(Item('page_type'),
+              Item('fit_to_page'),
+              HGroup(Item('use_column_width', enabled_when='not fit_to_page'),
+                     Item('columns', enabled_when='use_column_width')),
+              HGroup(Item('fixed_width', label='W', enabled_when='not use_column_width and not fit_to_page or '
+                                                                 'page_type=="custom"'),
+                     Item('fixed_height', label='H', enabled_when='not fit_to_page or page_type=="custom"'),
+                     Item('units', enabled_when='not fit_to_page or page_type=="custom"')),
+
+              label='Size', show_border=True)
+
+PDFLayoutGroup = VGroup(Item('orientation'),
+                        mgrp,
+                        sgrp,
+                        cgrp,
+                        label='Layout')
+
+PDFLayoutView = View(PDFLayoutGroup,
+                     buttons=['OK', 'Cancel'],
+                     title='PDF Save Options',
+                     resizable=True)
 
 
-def dumpable(klass, *args, **kw):
-    return klass(dump=True, *args, **kw)
-
-
-class BasePDFOptions(HasTraits, PersistenceMixin):
+class BasePDFOptions(BasePersistenceOptions):
     orientation = dumpable(Enum('landscape', 'portrait'))
     left_margin = dumpable(Float(1.5))
     right_margin = dumpable(Float(1))
     top_margin = dumpable(Float(1))
     bottom_margin = dumpable(Float(1))
     show_page_numbers = dumpable(Bool(False))
-    # use_alternating_background = dumpable(Bool)
-    # alternating_background = dumpable(Color)
 
-    # persistence_path = Property
     _persistence_name = 'base_pdf_options'
 
-    def __init__(self, *args, **kw):
-        self.persistence_path = os.path.join(paths.hidden_dir, self._persistence_name)
+    page_number_format = None
+    fixed_width = dumpable(Float)
+    fixed_height = dumpable(Float)
+
+    page_type = dumpable(Enum('letter', 'A4', 'A2', 'A0', 'custom'))
+    units = dumpable(Enum('inch', 'cm'))
+    use_column_width = dumpable(Bool(True))
+    columns = dumpable(Enum('1', '2', '3', '2/3'))
+    fit_to_page = dumpable(Bool)
+
+    @property
+    def bounds(self):
+        units = UNITS_MAP[self.units]
+        if self.page_type == 'custom':
+            page = [self.fixed_width * units, self.fixed_height * units]
+        else:
+            page = PAGE_MAP[self.page_type]
+
+        if self.fit_to_page:
+            if self.orientation == 'landscape':
+                b = [page[1], page[0]]
+            else:
+                b = [page[0], page[1]]
+
+            b[0] -= (self.left_margin + self.right_margin) * units
+            b[1] -= (self.top_margin + self.bottom_margin) * units
+
+        elif self.use_column_width:
+            if self.orientation == 'landscape':
+                page = landscape(page)
+                width_margins = self.bottom_margin + self.top_margin
+            else:
+                width_margins = self.left_margin + self.right_margin
+            fw = page[0]
+            w = fw - width_margins * units
+            # print 'cw', w, fw, width_margins, width_margins * units, COLUMN_MAP[self.columns]
+            nw = w * COLUMN_MAP[self.columns]
+            b = [nw, nw]
+        else:
+            b = [self.fixed_width * units, self.fixed_height * units]
+
+        return b
+
+    @property
+    def page_size(self):
+        if self.page_type == 'custom':
+            units = UNITS_MAP[self.units]
+            ps = self.fixed_width * units, self.fixed_height * units
+        else:
+            orientation = 'landscape_' if self.orientation == 'landscape' else ''
+            ps = '{}{}'.format(orientation, self.page_type)
+        return ps
+
+    @property
+    def dest_box(self):
+        units = UNITS_MAP[self.units]
+        w, h = self.bounds
+        w /= units
+        h /= units
+        return self.left_margin, self.bottom_margin, w, h
 
     def _get_layout_group(self):
-        margin_grp = VGroup(Item('left_margin', label='Left (in.)'),
-                           Item('right_margin', label='Right (in.)'),
-                           Item('top_margin', label='Top (in.)'),
-                           Item('bottom_margin', label='Bottom (in.)'),
-                            show_border=True, label='Margins')
-
-        layout_grp = Group(Item('orientation'),
-                           margin_grp,
-                           Item('show_page_numbers', label='Page Numbers'),
-                           show_border=True,
-                           label='layout')
-        return layout_grp
+        return PDFLayoutGroup
 
 
 class PDFTableOptions(BasePDFOptions):
@@ -68,7 +148,6 @@ class PDFTableOptions(BasePDFOptions):
     use_alternating_background = Bool
     alternating_background = Color
 
-    # show_page_numbers = Bool
     default_row_height = Float(0.22)
     default_header_height = Float(0.22)
     options_button = Button
@@ -77,8 +156,8 @@ class PDFTableOptions(BasePDFOptions):
     link_sigmas = Bool(True)
 
     age_units = Enum('Ma', 'ka', 'Ga', 'a')
-    kca_sig_figs = Int
-    age_sig_figs = Int
+    kca_sig_figs = Enum(*SIG_FIGS)
+    age_sig_figs = Enum(*SIG_FIGS)
 
     _persistence_name = 'table_pdf_options'
 
@@ -154,4 +233,5 @@ class PDFTableOptions(BasePDFOptions):
             title='PDF Options',
             buttons=['OK', 'Cancel', 'Revert'])
         return v
-        # ============= EOF =============================================
+
+# ============= EOF =============================================

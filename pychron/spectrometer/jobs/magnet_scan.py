@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface.timer.do_later import do_after
 from traits.api import Any, Float, DelegatesTo, List, Bool, Property
 from traitsui.api import View, Item, EnumEditor, Group, HGroup, spring, ButtonEditor
@@ -26,7 +27,7 @@ import random
 import time
 from threading import Event
 # ============= local library imports  ==========================
-from spectrometer_task import SpectrometerTask
+from .spectrometer_task import SpectrometerTask
 from pychron.core.ui.gui import invoke_in_main_thread
 
 
@@ -82,7 +83,7 @@ class MagnetScan(SpectrometerTask):
         evt = Event()
         intensities = []
 
-        invoke_in_main_thread(self._iter_dac, gen.next(),
+        invoke_in_main_thread(self._iter_dac, next(gen),
                               gen, evt, intensities)
 
         while not evt.isSet():
@@ -105,7 +106,7 @@ class MagnetScan(SpectrometerTask):
         intensities.append(d)
 
         try:
-            di = gen.next()
+            di = next(gen)
         except StopIteration:
             di = None
 
@@ -282,9 +283,9 @@ class MagnetScan(SpectrometerTask):
         v = View(
             Group(
                 Item('reference_detector', editor=EnumEditor(name='detectors')),
-                Item('start_mass', label='Start Mass', tooltip='Start scan at this mass'),
-                Item('stop_mass', label='Stop Mass', tooltip='Stop scan when magnet reaches this mass'),
-                Item('step_mass', label='Step Mass', tooltip='Step from Start to Stop by this amount'),
+                Item('start_value', label='Start Mass', tooltip='Start scan at this mass'),
+                Item('stop_value', label='Stop Mass', tooltip='Stop scan when magnet reaches this mass'),
+                Item('step_value', label='Step Mass', tooltip='Step from Start to Stop by this amount'),
                 Item('integration_time', label='Integration (s)'),
                 HGroup(spring, Item('execute_button', editor=ButtonEditor(label_value='execute_label'),
                                     show_label=False)),

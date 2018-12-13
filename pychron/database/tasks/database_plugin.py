@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from envisage.ui.tasks.task_factory import TaskFactory
 
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager

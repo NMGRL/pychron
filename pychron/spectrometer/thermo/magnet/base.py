@@ -15,16 +15,18 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import List, Float, Bool
-# ============= standard library imports ========================
+from __future__ import absolute_import
 import time
-# ============= local library imports  ==========================
+
+from traits.api import List, Float, Bool
+
 from pychron.core.helpers.strtools import to_bool
-from pychron.spectrometer.base_magnet import BaseMagnet, get_float
-from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
+from pychron.hardware import get_float
+from pychron.spectrometer.base_magnet import BaseMagnet
+from six.moves import range
 
 
-class ThermoMagnet(BaseMagnet, SpectrometerDevice):
+class ThermoMagnet(BaseMagnet):
     """
     Magnet interface to Qtegra.
 
@@ -41,7 +43,13 @@ class ThermoMagnet(BaseMagnet, SpectrometerDevice):
     # ===============================================================================
     # ##positioning
     # ===============================================================================
-    def set_dac(self, v, verbose=True, settling_time=None, use_dac_changed=True):
+    def set_dac(self, v, verbose=True, settling_time=None, use_dac_changed=True,
+                use_af_demag=True):
+
+        # if not self._wait_lock(2):
+        #     self.debug('Unabled to obtain set_dac lock. Another thread is moving the magnet')
+        #     return
+
         self.debug('setting magnet DAC')
         self.debug('current  : {:0.6f}'.format(self._dac))
         self.debug('requested: {:0.6f}'.format(v))
@@ -60,53 +68,65 @@ class ThermoMagnet(BaseMagnet, SpectrometerDevice):
                 self.debug('Checking detector "{}". Protection Threshold: {} (V)'.format(pd, det.protection_threshold))
                 if det.protection_threshold and dv > det.protection_threshold:
                     self.ask('ProtectDetector {},On'.format(pd), verbose=verbose)
-                    self.ask('GetDeflection {}'.format(pd), verbose=verbose)
+                    resp = self.ask('GetDeflection {}'.format(pd), verbose=verbose)
                     unprotect.append(pd)
+                    self.debug('Protected = {}'.format(resp))
 
         if self.use_beam_blank:
             if dv > self.beam_blank_threshold:
                 self.ask('BlankBeam True', verbose=verbose)
                 unblank = True
 
+        if self.use_af_demagnetization and use_af_demag:
+            if dv > self.af_demag_threshold or use_af_demag == 'force':
+                self.debug('Do AF Demag. UseAFDemag={}, delta_volts={}, threshold={}'.format(use_af_demag,
+                                                                                             dv,
+                                                                                             self.af_demag_threshold))
+                self.ask('BlankBeam True', verbose=verbose)
+                self._do_af_demagnetization(v, lambda dd: self.ask('SetMagnetDAC {}'.format(dd)))
+        else:
+            self.debug('AF Demag not enabled. self.use_af_demag={}, use_af_demag={}'.format(self.use_af_demagnetization,
+                                                                                            use_af_demag))
         self.ask('SetMagnetDAC {}'.format(v), verbose=verbose)
-        st = time.time()
-
-        if unprotect or unblank:
-            for i in xrange(50):
-                if not to_bool(self.ask('GetMagnetMoving', verbose=verbose)):
-                    break
-                time.sleep(0.25)
-
-            st = time.time()
-            if unprotect:
-                for d in unprotect:
-                    self.ask('ProtectDetector {},Off'.format(d), verbose=verbose)
-                    self.ask('GetDeflection {}'.format(d), verbose=verbose)
-
-            if unblank:
-                self.ask('BlankBeam False', verbose=verbose)
 
         change = dv > 1e-7
         if change:
-            self._dac = v
-            if use_dac_changed:
-                self.dac_changed = True
+            if settling_time is None:
+                settling_time = self.settling_time
 
-            et = time.time() - st
-            if not self.simulation:
-                if settling_time is None:
-                    settling_time = self.settling_time
+            self.debug('Magnet settling time: {:0.3f} {:0.3f}'.format(settling_time, self.settling_time))
+            if settling_time > 0:
+                time.sleep(settling_time)
+                self.debug('Magnet settling complete')
 
-                st = settling_time - et
-                self.debug('Magnet settling time: {:0.3f}, actual time: {:0.3f}'.format(settling_time, st))
-                if st > 0:
-                    time.sleep(st)
+            if unprotect or unblank:
+                self.debug('Wait for magnet to stop moving')
+                for i in range(50):
+                    if not to_bool(self.ask('GetMagnetMoving', verbose=verbose)):
+                        break
+                    time.sleep(0.25)
+                self.debug('Magnet move complete')
+
+                if unprotect:
+                    self.debug('Unprotect detectors')
+                    for d in unprotect:
+                        self.ask('ProtectDetector {},Off'.format(d), verbose=verbose)
+                        self.ask('GetDeflection {}'.format(d), verbose=verbose)
+
+                if unblank:
+                    self.debug('Unblank beam')
+                    self.ask('BlankBeam False', verbose=verbose)
+
+        self._dac = v
+        self.debug('set_dac. change={}'.format(change))
+        # self._wait_release()
+        if use_dac_changed and change:
+            self.dac_changed = True
 
         return change
 
-    @get_float
+    @get_float(default=0)
     def read_dac(self):
         return self.ask('GetMagnetDAC')
-
 
 # ============= EOF =============================================

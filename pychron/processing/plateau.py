@@ -15,15 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from numpy import argmax, array
 from traits.api import HasTraits, List, Array
 
-# ============= standard library imports ========================
-from numpy import argmax, array
-# ============= local library imports  ==========================
-# from pychron.core.helpers.logger_setup import logging_setup, new_logger
-# logging_setup('plateau', use_archiver=False)
-# log = new_logger('foo')
 from pychron.core.stats.core import validate_mswd, calculate_mswd
+from six.moves import range
 
 
 def memoize(function):
@@ -38,18 +35,27 @@ def memoize(function):
     return closure
 
 
+class Log():
+    def debug(self, txt):
+        pass
+        # print 'debug --- {}'.format(txt)
+
+log = Log()
+
+
 class Plateau(HasTraits):
     ages = Array
     errors = Array
     signals = Array
-    exclude = List
+    excludes = List
 
     nsteps = 3
     overlap_sigma = 2
     gas_fraction = 50
 
     use_overlap = True  # fleck criterion
-    use_mswd = False  #mahon criterion
+    use_mswd = False  # mahon criterion
+    total_signal = None
 
     def find_plateaus(self, method=''):
         """
@@ -63,9 +69,8 @@ class Plateau(HasTraits):
             self.use_overlap = True
 
         n = len(self.ages)
-        exclude = self.exclude
-        ss = [s for i, s in enumerate(self.signals)
-              if not i in exclude]
+        excludes = self.excludes
+        ss = [s for i, s in enumerate(self.signals) if i not in excludes]
 
         self.total_signal = float(sum(ss))
         # log.info(self.total_signal)
@@ -75,9 +80,9 @@ class Plateau(HasTraits):
 
         overlap_func = memoize(self._overlap)
         for i in range(n):
-            if i in exclude:
+            if i in excludes:
                 continue
-            idx = self._find_plateaus(n, i, exclude, overlap_func)
+            idx = self._find_plateaus(n, i, excludes, overlap_func)
             if idx:
                 # log.debug('found {} {}'.format(*idx))
                 idxs.append(idx)
@@ -88,18 +93,18 @@ class Plateau(HasTraits):
 
         return idxs
 
-    def _find_plateaus(self, n, start, exclude, overlap_func):
+    def _find_plateaus(self, n, start, excludes, overlap_func):
         potential_end = None
         for i in range(start, n, 1):
-            if i in exclude:
+            if i in excludes:
                 continue
 
             if not self.check_nsteps(start, i):
-                # log.debug('{} {} nsteps failed'.format(start, i))
+                log.debug('{} {} nsteps failed'.format(start, i))
                 continue
 
             if self.use_overlap and not self.check_overlap(start, i, overlap_func):
-                # log.debug('{} {} overlap failed'.format(start, i))
+                log.debug('{} {} overlap failed'.format(start, i))
                 # potential_end=None
                 break
 
@@ -107,7 +112,7 @@ class Plateau(HasTraits):
                 continue
 
             if not self.check_percent_released(start, i):
-                # log.debug('{} {} percent failed'.format(start, i))
+                log.debug('{} {} percent failed'.format(start, i))
                 continue
 
             potential_end = i
@@ -116,10 +121,10 @@ class Plateau(HasTraits):
             return start, potential_end
 
     def check_percent_released(self, start, end):
-        ss = sum([(s if not i in self.exclude else 0)
+        ss = sum([(s if not i in self.excludes else 0)
                   for i, s in enumerate(self.signals)][start:end + 1])
 
-        # log.debug('percent {} {} {}'.format(start, end, ss / self.total_signal))
+        log.debug('percent {} {} {}'.format(start, end, ss / self.total_signal))
 
         return ss / self.total_signal >= self.gas_fraction/100.
 
@@ -138,8 +143,14 @@ class Plateau(HasTraits):
             for j in range(start + c, end + 1, 1):
                 if i == j:
                     continue
-                if not overlap_func(i, j, overlap_sigma):
-                    return
+
+                try:
+                    if not overlap_func(i, j, overlap_sigma):
+                        return
+                except BaseException as e:
+                    import traceback
+                    log.debug('Overlap exception: {}'.format(e, traceback.format_exc()))
+                    continue
         else:
             return True
 
@@ -158,7 +169,7 @@ class Plateau(HasTraits):
         return a1 - e1 < a2 + e2 and a1 + e1 > a2 - e2
 
     def check_nsteps(self, start, end):
-        return end - start >= self.nsteps
+        return (end - start) + 1 >= self.nsteps
 
 # ============= EOF =============================================
 

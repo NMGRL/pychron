@@ -15,16 +15,18 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Property, String, Float, Any, Int, List, Instance, Bool
-# ============= standard library imports ========================
-from datetime import datetime, timedelta
+from __future__ import absolute_import
+
 import time
-# ============= local library imports  ==========================
+from datetime import datetime, timedelta
+
+from traits.api import Property, String, Float, Any, Int, List, Instance, Bool
+
 from pychron.core.helpers.timer import Timer
 from pychron.core.ui.pie_clock import PieClockModel
 from pychron.experiment.duration_tracker import AutomatedRunDurationTracker
 from pychron.loggable import Loggable
-from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR
+from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR, NULL_STR
 
 
 class ExperimentStats(Loggable):
@@ -50,6 +52,8 @@ class ExperimentStats(Loggable):
 
     delay_between_analyses = Float
     delay_before_analyses = Float
+    delay_after_blank = Float
+    delay_after_air = Float
     # _start_time = None
     _post = None
 
@@ -66,14 +70,17 @@ class ExperimentStats(Loggable):
         self._total_time = dur
         return self._total_time
 
-    def format_duration(self, dur, post=None):
+    def format_duration(self, dur, post=None, fmt='%H:%M:%S %a %m/%d'):
         if post is None:
             post = self._post
             if not post:
                 post = datetime.now()
 
         dt = post + timedelta(seconds=int(dur))
-        return dt.strftime('%H:%M:%S %a %m/%d')
+        if fmt == 'iso':
+            return dt.isoformat()
+        else:
+            return dt.strftime(fmt)
 
     def start_timer(self):
         st = time.time()
@@ -150,12 +157,13 @@ class ExperimentStats(Loggable):
 
             def convert_hexcolor_to_int(c):
                 c = c[1:]
-                func = lambda i: int(c[i:i + 2], 16)
-                return map(func, (0, 2, 4))
+                # func = lambda i: int(c[i:i + 2], 16)
+                # return list(map(func, (0, 2, 4)))
+                return [int(c[i:i + 2], 16) for i in (0, 2, 4)]
 
-            ec, mc = map(convert_hexcolor_to_int,
-                         (EXTRACTION_COLOR, MEASUREMENT_COLOR))
-
+            # ec, mc = list(map(convert_hexcolor_to_int,
+            #                   (EXTRACTION_COLOR, MEASUREMENT_COLOR)))
+            ec, mc = convert_hexcolor_to_int(EXTRACTION_COLOR), convert_hexcolor_to_int(MEASUREMENT_COLOR)
             self.clock.set_slices([extraction_slice, measurement_slice],
                                   [ec, mc])
             self.clock.start()
@@ -169,21 +177,28 @@ class ExperimentStats(Loggable):
             warned = []
             ni = len(runs)
 
+            btw = 0
             run_dur = 0
+            d = 0
             for a in runs:
                 sh = a.script_hash
 
                 if sh in self.duration_tracker:
-                    t = a.make_truncated_script_hash()
-                    if a.has_conditionals() and t in self.duration_tracker:
-                        run_dur += self.duration_tracker.probability_model(sh, t)
-                    else:
-                        run_dur += self.duration_tracker[sh]
+                    # t = a.make_truncated_script_hash()
+                    # if a.has_conditionals() and t in self.duration_tracker:
+                    #     run_dur += self.duration_tracker.probability_model(sh, t)
+                    # else:
+                    #     run_dur += self.duration_tracker[sh]
+                    run_dur += self.duration_tracker[sh]
                 else:
                     run_dur += a.get_estimated_duration(script_ctx, warned, True)
+                d = a.get_delay_after(self.delay_between_analyses, self.delay_after_blank, self.delay_after_air)
+                btw += d
 
-            btw = self.delay_between_analyses * (ni - 1)
-            dur = run_dur + btw + self.delay_before_analyses
+            # subtract the last delay_after because experiment doesn't delay after last analysis
+            btw -= d
+
+            dur = run_dur + self.delay_before_analyses + btw
             self.debug('nruns={} before={}, run_dur={}, btw={}'.format(ni, self.delay_before_analyses,
                                                                        run_dur, btw))
 
@@ -200,7 +215,10 @@ class ExperimentStats(Loggable):
         return str(dur)
 
     def _get_remaining(self):
-        dur = timedelta(seconds=round(self._total_time - self._elapsed))
+        if not self._total_time:
+            dur = NULL_STR
+        else:
+            dur = timedelta(seconds=round(self._total_time - self._elapsed))
         return str(dur)
 
 
@@ -209,36 +227,26 @@ class StatsGroup(ExperimentStats):
 
     # @caller
     def reset(self):
-        # print 'resetwas'
-        ExperimentStats.reset(self)
+        # self.debug('resetting experiment stats. nruns={}, '
+        #            'nqueues={}'.format(self.nruns, len(self.experiment_queues)))
         self.calculate(force=True)
+        super(StatsGroup, self).reset()
 
     def calculate(self, force=False):
         """
             calculate the total duration
             calculate the estimated time of finish
         """
-        # runs = [ai
-        # for ei in self.experiment_queues
-        #            for ai in ei.cleaned_automated_runs]
-        #
-        # ni = len(runs)
-        # self.nruns = ni
-        # for ei in self.experiment_queues:
-        #     dur=ei.stats.calculate_duration(ei.cleaned_automated_runs)
-        #     if
+
         if force or not self._total_time:
+            self.nruns = sum([len(ei.cleaned_automated_runs) for ei in self.experiment_queues])
+
             self.debug('calculating experiment stats')
             tt = sum([ei.stats.calculate_duration(ei.cleaned_automated_runs)
                       for ei in self.experiment_queues])
 
             self.debug('total_time={}'.format(tt))
             self._total_time = tt
-            # offset = 0
-            # if self._start_time:
-            #     offset = time.time() - self._start_time
-
-            # self.etf = self.format_duration(tt - offset)
             self.etf = self.format_duration(tt)
 
     def recalculate_etf(self):
@@ -262,7 +270,6 @@ class StatsGroup(ExperimentStats):
 
                 st += ei.stats.calculate_duration(
                     ei.executed_runs + ei.cleaned_automated_runs[:si]) + ei.delay_between_analyses
-                # et += ei.stats.calculate_duration(ei.executed_runs+ei.cleaned_automated_runs[:si + 1])
 
                 rd = self.get_run_duration(sel)
                 et = st + rd
@@ -275,9 +282,12 @@ class StatsGroup(ExperimentStats):
                 et += ei.stats.calculate_duration()
 
         if at_times:
-            # self.time_at = self.format_duration(tt)
             self.end_at = self.format_duration(et)
             if st:
                 self.start_at = self.format_duration(st)
+
+    @property
+    def etf_iso(self):
+        return self.format_duration(self._total_time, fmt='iso')
 
 # ============= EOF =============================================

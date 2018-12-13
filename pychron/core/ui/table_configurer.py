@@ -13,23 +13,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
+import os
 # ============= enthought library imports =======================
 import pickle
+# import apptools.sweet_pickle as pickle
+# ============= standard library imports ========================
+from datetime import datetime
 
 from traits.api import HasTraits, List, Bool, Int, Instance, Enum, \
     Str, Callable, Button, Property
 from traits.trait_errors import TraitError
-from traitsui.api import View, Item, UItem, CheckListEditor, VGroup, Handler, HGroup, Tabbed
-# import apptools.sweet_pickle as pickle
-# ============= standard library imports ========================
-from datetime import datetime
-import os
+from traitsui.api import View, Item, UItem, CheckListEditor, VGroup, Handler, HGroup, Tabbed, InstanceEditor, \
+    TableEditor, EnumEditor
 # ============= local library imports  ==========================
+from traitsui.table_column import ObjectColumn
 from traitsui.tabular_adapter import TabularAdapter
-from pychron.paths import paths
 
-SIZES = (6, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36)
+from pychron.core.pychron_traits import BorderVGroup
+from pychron.paths import paths
+from pychron.pychron_constants import ARGON_KEYS, SIZES
 
 
 class TableConfigurerHandler(Handler):
@@ -109,6 +111,7 @@ class TableConfigurer(HasTraits):
             for ci in self.children:
                 ci.columns = cols
 
+            cols = [ci for ci in cols if ci in self.adapter.all_columns]
             self.adapter.columns = cols
 
     def _set_font(self, f):
@@ -144,7 +147,7 @@ class TableConfigurer(HasTraits):
                 self.font = font
 
             self._load_hook(state)
-            self.set_columns()
+            self.update()
 
     def _dump_state(self):
         p = os.path.join(paths.hidden_dir, self.id)
@@ -207,21 +210,24 @@ class TableConfigurer(HasTraits):
         self.columns = self.available_columns
         self.set_columns()
 
-    def _adapter_changed(self, adp):
-        if adp:
-            acols = [c for c, _ in adp.all_columns]
+    def set_adapter(self, adp):
+        self.adapter = adp
+    # def _adapter_changed(self, adp):
+    #     if adp:
+        acols = [c for c, _ in adp.all_columns]
 
-            # set currently visible columns
-            t = [c for c, _ in adp.columns]
+        # set currently visible columns
+        t = [c for c, _ in adp.columns]
 
-            cols = [c for c in acols if c in t]
-            self.trait_setq(columns=cols)
+        cols = [c for c in acols if c in t]
+        self.trait_set(columns=cols)
 
-            # set all available columns
-            self.available_columns = acols
-
+        # set all available columns
+        self.available_columns = acols
+        if adp.font:
             self._set_font(adp.font)
-            self._load_state()
+
+        self._load_state()
 
     def traits_view(self):
         v = View(VGroup(HGroup(UItem('show_all', tooltip='Show all columns'),
@@ -360,6 +366,58 @@ class IntermediateTableConfigurer(TableConfigurer):
     id = 'recall.intermediate'
 
 
+class Ratio(HasTraits):
+    isotopes = List(['']+list(ARGON_KEYS))
+    numerator = Str
+    denominator = Str
+
+    @property
+    def tagname(self):
+        if self.numerator and self.denominator:
+            return '{}/{}'.format(self.numerator, self.denominator)
+
+    def get_dump(self):
+        return {'numerator': self.numerator, 'denominator': self.denominator}
+
+
+class CocktailOptions(HasTraits):
+    ratios = List
+
+    def get_dump(self):
+        return {'ratios': [r.get_dump() for r in self.ratios]}
+
+    def set_ratios(self, ratios):
+
+        self.ratios = [Ratio(numerator=r['numerator'], denominator=r['denominator']) for r in ratios]
+
+    def _ratios_default(self):
+        return [Ratio() for i in range(10)]
+
+    def traits_view(self):
+        cols = [ObjectColumn(name='numerator', editor=EnumEditor(name='isotopes')),
+                ObjectColumn(name='denominator', editor=EnumEditor(name='isotopes'))]
+        v = View(BorderVGroup(UItem('ratios',
+                                    editor=TableEditor(sortable=False, columns=cols)),
+                              label='Cocktail Options'))
+        return v
+
+
+class RecallOptions(HasTraits):
+    cocktail_options = Instance(CocktailOptions, ())
+
+    def set_cocktail(self, co):
+        cc = CocktailOptions()
+        cc.set_ratios(co.get('ratios'))
+        self.cocktail_options = cc
+
+    def get_dump(self):
+        return {'cocktail_options': self.cocktail_options.get_dump()}
+
+    def traits_view(self):
+        v = View(UItem('cocktail_options', style='custom'))
+        return v
+
+
 class RecallTableConfigurer(TableConfigurer):
     isotope_table_configurer = Instance(IsotopeTableConfigurer, ())
     intermediate_table_configurer = Instance(IntermediateTableConfigurer, ())
@@ -375,6 +433,8 @@ class RecallTableConfigurer(TableConfigurer):
     main_names = ('measurement', 'extraction', 'computed')
     bind_fontsizes = Bool(False)
     global_fontsize = Enum(*SIZES)
+
+    recall_options = Instance(RecallOptions, ())
 
     # def closed(self):
     # super(RecallTableConfigurer, self).closed()
@@ -394,6 +454,7 @@ class RecallTableConfigurer(TableConfigurer):
         for attr in ('global_fontsize', 'bind_fontsizes'):
             obj[attr] = getattr(self, attr)
 
+        obj['recall_options'] = self.recall_options.get_dump()
         return obj
 
     def _load_hook(self, obj):
@@ -414,6 +475,12 @@ class RecallTableConfigurer(TableConfigurer):
                 setattr(self, attr, obj[attr])
             except KeyError:
                 pass
+
+        recall_options = obj.get('recall_options')
+        if recall_options:
+            r = RecallOptions()
+            r.set_cocktail(recall_options.get('cocktail_options'))
+            self.recall_options = r
 
     def dump(self):
         super(RecallTableConfigurer, self).dump()
@@ -472,19 +539,22 @@ class RecallTableConfigurer(TableConfigurer):
                            UItem('intermediate_table_configurer', style='custom', enabled_when='show_intermediate'),
                            label='Main')
 
-        experiment_view = VGroup(Item('experiment_fontsize', label='Size'),
-                                 show_border=True,
-                                 label='Experiment')
-        measurement_view = VGroup(Item('measurement_fontsize', label='Size'),
-                                  show_border=True,
-                                  label='Measurement')
-        extraction_view = VGroup(Item('extraction_fontsize', label='Size'),
-                                 show_border=True,
-                                 label='Extraction')
+        # experiment_view = VGroup(Item('experiment_fontsize', label='Size'),
+        #                          show_border=True,
+        #                          label='Experiment')
+        # measurement_view = VGroup(Item('measurement_fontsize', label='Size'),
+        #                           show_border=True,
+        #                           label='Measurement')
+        # extraction_view = VGroup(Item('extraction_fontsize', label='Size'),
+        #                          show_border=True,
+        #                          label='Extraction')
+
         v = View(Tabbed(main_view,
-                        VGroup(experiment_view,
-                               measurement_view,
-                               extraction_view, label='Scripts')),
+                        UItem('recall_options', editor=InstanceEditor(), style='custom'),
+                        # VGroup(experiment_view,
+                        #        measurement_view,
+                        #        extraction_view, label='Scripts')
+                        ),
 
                  buttons=['OK', 'Cancel', 'Revert'],
                  kind='livemodal',

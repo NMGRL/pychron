@@ -16,22 +16,22 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-import io
-import json
-import os
+from __future__ import absolute_import
+from __future__ import print_function
 import re
 import traceback
+import json
+
 from twisted.internet import defer
 from twisted.internet.protocol import Protocol
-from twisted.logger import Logger, jsonFileLogObserver
-# ============= local library imports  ==========================
-from pychron.paths import paths
+from twisted.protocols.basic import LineReceiver
+
 from pychron.tx.errors import InvalidArgumentsErrorCode
 from pychron.tx.exceptions import ServiceNameError, ResponseError
 
 
 def default_err(failure):
-    print failure.getTraceback()
+    print(failure.getTraceback())
     failure.trap(BaseException)
     return failure
 
@@ -51,20 +51,29 @@ def nargs_err(failure):
     return InvalidArgumentsErrorCode('Foo', str(failure.value))
 
 
-path = os.path.join(paths.log_dir, 'pps.log.json')
-obs = jsonFileLogObserver(io.open(path, 'w'))
-logger = Logger(observer=obs)
 # logger = Logger()
 
 regex = re.compile(r'^(?P<command>\w+) {0,1}(?P<args>.*)')
 
 
-class ServiceProtocol(Protocol):
-    def __init__(self, *args, **kw):
+class MockLogger(object):
+    def __getattr__(self, item):
+        def mockfunc(*args, **kw):
+            pass
+
+        return mockfunc
+
+
+class ServiceProtocol(LineReceiver):
+    def __init__(self, logger=None, *args, **kw):
         # super(ServiceProtocol, self).__init__(*args, **kw)
         self._services = {}
         self._cmd_delim = ' '
         self._arg_delim = ','
+
+        if logger is None:
+            logger = MockLogger()
+
         self.debug = logger.debug
         self.warning = logger.warn
         self.info = logger.info
@@ -73,6 +82,7 @@ class ServiceProtocol(Protocol):
 
     def dataReceived(self, data):
         self.debug('Received n={n}: {data!r}', n=len(data), data=data)
+        data = data.decode('utf-8')
         data = data.strip()
         args = self._get_service(data)
         if args:
@@ -120,7 +130,7 @@ class ServiceProtocol(Protocol):
     def _send_response(self, resp):
         resp = str(resp)
         self.debug('Response {data!r}', data=resp)
-        self.transport.write(resp)
+        self.transport.write(resp.encode('utf-8'))
         self.transport.loseConnection()
 
     def _get_service(self, data):
@@ -135,7 +145,7 @@ class ServiceProtocol(Protocol):
         try:
             service = self._services[name]
             return service, jd
-        except KeyError, e:
+        except KeyError as e:
             traceback.print_exc()
             raise ServiceNameError(name, data)
 

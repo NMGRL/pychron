@@ -15,11 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+
+
+import os
+
 from pyface.confirmation_dialog import confirm
+from pyface.constant import YES
+from pyface.message_dialog import information
 from pyface.tasks.action.task_action import TaskAction
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from traitsui.menu import Action
+
 from pychron.envisage.resources import icon
 
 
@@ -37,27 +42,27 @@ class RunAction(TaskAction):
     name = 'Run'
     method = 'run'
     image = icon('start')
-    visible_name = 'run_enabled'
+    visible_name = 'engine.run_enabled'
     accelerator = 'Ctrl+R'
 
 
 class ResumeAction(TaskAction):
     name = 'Resume'
     method = 'resume'
-    image = icon('resume')
-    visible_name = 'resume_enabled'
+    image = icon('edit-redo-3')
+    visible_name = 'engine.resume_enabled'
 
 
 class RunFromAction(TaskAction):
     name = 'Run From'
     method = 'run_from'
+    image = icon('start')
 
 
 class ResetAction(TaskAction):
     name = 'Reset'
     method = 'reset'
-    image = icon('resume')
-    # enabled_name = 'resume_enabled'
+    image = icon('arrow_refresh')
 
 
 class ClearAction(TaskAction):
@@ -86,9 +91,17 @@ class ConfigureAnalysesTableAction(TaskAction):
     image = icon('cog')
 
 
+class ConfigureSampleTableAction(TaskAction):
+    name = 'Configure Sample Table'
+    dname = 'Configure Sample Table'
+    method = 'configure_sample_table'
+    image = icon('cog')
+
+
 class LoadReviewStatusAction(TaskAction):
     name = 'Review Status'
     method = 'load_review_status'
+    image = icon('check_boxes')
 
 
 class EditAnalysisAction(TaskAction):
@@ -119,11 +132,27 @@ class PipelineAction(Action):
 
 
 class BrowserAction(Action):
+    _task_id = 'pychron.browser.task'
+
     def perform(self, event):
-        app = event.task.window.application
-        task = app.get_task('pychron.browser.task')
+        task = self._get_task(event)
         if hasattr(task, self.action):
             getattr(task, self.action)()
+
+    def _get_task(self, event):
+        app = event.task.window.application
+        task = app.get_task(self._task_id)
+        return task
+
+
+class RecallAction(PipelineAction):
+    name = 'Recall...'
+    action = 'pipeline_recall'
+
+
+class InterpretedAgeRecallAction(PipelineAction):
+    name = 'Interpreted Age Recall...'
+    action = 'pipeline_interpreted_age_recall'
 
 
 class TimeViewBrowserAction(BrowserAction):
@@ -171,6 +200,30 @@ class FreezeFlux(PipelineAction):
     action = 'freeze_flux'
 
 
+class AnalysisTableAction(PipelineAction):
+    name = 'Analysis Table'
+    dname = 'Analysis Table'
+    action = 'set_analysis_table_template'
+
+
+class PipelineRecallAction(TaskAction):
+    name = 'Recall'
+    method = 'pipeline_recall'
+
+
+class ClearAnalysisSetsAction(Action):
+    name = 'Clear Analysis Sets'
+
+    def perform(self, event):
+        from pychron.paths import paths
+        p = paths.hidden_path('analysis_sets')
+        if os.path.isfile(p):
+            if confirm(None, 'Are you sure you want to clear the Analysis Sets?') == YES:
+                os.remove(p)
+        else:
+            information(None, 'No Analysis Sets to remove')
+
+
 # ============= Plotting Actions =============================================
 class ResetFactoryDefaultsAction(Action):
     name = 'Reset Factory Defaults'
@@ -190,6 +243,24 @@ class IdeogramAction(PlotAction):
     action = 'set_ideogram_template'
     image = icon('histogram')
     accelerator = 'Ctrl+i'
+
+
+class SubgroupIdeogramAction(PlotAction):
+    name = 'SubGroup Ideogram'
+    action = 'set_subgroup_ideogram_template'
+    image = icon('histogram')
+
+
+class HybridIdeogramAction(PlotAction):
+    name = 'Hybrid Ideogram'
+    action = 'set_hybrid_ideogram_template'
+    image = icon('histogram')
+
+
+class HistoryIdeogramAction(PlotAction):
+    name = 'History Ideogram'
+    action = 'set_history_ideogram_template'
+    image = icon('histogram')
 
 
 class SpectrumAction(PlotAction):
@@ -222,30 +293,50 @@ class VerticalFluxAction(PipelineAction):
     action = 'set_vertical_flux_template'
 
 
+class ExtractionAction(Action):
+    name = 'Extraction Results...'
+
+    def perform(self, event):
+        app = event.task.window.application
+        windows = app.windows
+        for tid in ('pychron.browser.task', 'pychron.pipeline.task'):
+            for win in windows:
+                task = win.active_task
+                if task and task.id == tid:
+                    getattr(task, 'show_extraction_graph')()
+                    break
+
+
+class MassSpecReducedAction(PipelineAction):
+    name = 'Mass Spec Reduced Transfer'
+    dname = 'Mass Spec Reduced Transfer'
+    action = 'mass_spec_reduced_transfer'
+
+
 # ============= Quick Series ====================================
-class LastNAnalysesSeriesAction(PipelineAction):
-    name = 'Last N...'
-    action = 'set_last_n_analyses_template'
-
-
-class LastNHoursSeriesAction(PipelineAction):
-    name = 'Last N Hours...'
-    action = 'set_last_n_hours_template'
-
-
-class LastDaySeriesAction(PipelineAction):
-    name = 'Last Day'
-    action = 'set_last_day_template'
-
-
-class LastWeekSeriesAction(PipelineAction):
-    name = 'Last Week'
-    action = 'set_last_week_template'
-
-
-class LastMonthSeriesAction(PipelineAction):
-    name = 'Last Month'
-    action = 'set_last_month_template'
+# class LastNAnalysesSeriesAction(PipelineAction):
+#     name = 'Last N...'
+#     action = 'set_last_n_analyses_template'
+#
+#
+# class LastNHoursSeriesAction(PipelineAction):
+#     name = 'Last N Hours...'
+#     action = 'set_last_n_hours_template'
+#
+#
+# class LastDaySeriesAction(PipelineAction):
+#     name = 'Last Day'
+#     action = 'set_last_day_template'
+#
+#
+# class LastWeekSeriesAction(PipelineAction):
+#     name = 'Last Week'
+#     action = 'set_last_week_template'
+#
+#
+# class LastMonthSeriesAction(PipelineAction):
+#     name = 'Last Month'
+#     action = 'set_last_month_template'
 
 
 # ============= tag =============================================

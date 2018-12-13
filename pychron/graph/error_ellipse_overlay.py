@@ -15,25 +15,25 @@
 # ===============================================================================
 
 
-
 # ============= enthought library imports =======================
 from chaco.api import AbstractOverlay
-from traits.api import Bool
+from traits.api import Bool, Enum
 # ============= standard library imports ========================
 from numpy import linspace, hstack, sqrt, corrcoef, column_stack, array, delete
 from numpy.linalg import eig
 import math
+from six.moves import zip
 
 # ============= local library imports  ==========================
 
 # http://www.earth-time.org/projects/upb/public_docs/ErrorEllipses.pdf
 # 5) To create a 95% confidence ellipse from the 1s error ellipse, we must enlarge it by a factor of 2.4477.
+from traits.traits import Color
 
-# SCALE_FACTOR = 2.4477
-SCALE_FACTOR = 1
+from pychron.pychron_constants import ELLIPSE_KINDS, ELLIPSE_KIND_SCALE_FACTORS
 
 
-def error_ellipse(sx, sy, pxy, aspectratio=1):
+def error_ellipse(sx, sy, pxy, kind, aspectratio=1):
     """
         return  a, b axes and rotation
 
@@ -45,17 +45,16 @@ def error_ellipse(sx, sy, pxy, aspectratio=1):
               [covar, sy * sy]]
     w, v = eig(covmat)
 
-    #print v
     mi_w, ma_w = min(w), max(w)
-    #print sx, sy, sx>sy
+    a = mi_w ** 0.5
+    b = ma_w ** 0.5
     if sx > sy:
-        a = ma_w ** 0.5
-        b = mi_w ** 0.5
-    else:
-        a = mi_w ** 0.5
-        b = ma_w ** 0.5
-
-    a, b = a * SCALE_FACTOR, b * SCALE_FACTOR
+        b, a = a, b
+    # else:
+    #     a = mi_w ** 0.5
+    #     b = ma_w ** 0.5
+    sf = ELLIPSE_KIND_SCALE_FACTORS.get(kind, 1)
+    a, b = a * sf, b * sf
     #        print aspectratio, dx, dy, width, height
     rotation = 0.5 * math.atan(1 / aspectratio * (2 * covar) / (sx ** 2 - sy ** 2))
 
@@ -64,12 +63,12 @@ def error_ellipse(sx, sy, pxy, aspectratio=1):
 
 class ErrorEllipseOverlay(AbstractOverlay):
     fill = Bool(True)
+    kind = Enum(ELLIPSE_KINDS)
 
     def overlay(self, component, gc, view_bounds=None, mode='normal'):
         """
 
         """
-        #        gc.save_state()
         gc.clip_to_rect(component.x, component.y, component.width, component.height)
 
         x = component.index.get_data()
@@ -79,11 +78,7 @@ class ErrorEllipseOverlay(AbstractOverlay):
 
         sel = component.index.metadata['selections']
 
-        x = delete(x, sel)
-        y = delete(y, sel)
-        xer = delete(xer, sel)
-        yer = delete(yer, sel)
-        pxy = array(self.reg._calculate_correlation_coefficients())
+        pxy = array(self.reg.calculate_correlation_coefficients(clean=False))
 
         dx = abs(component.index_mapper.range.low -
                  component.index_mapper.range.high)
@@ -94,30 +89,24 @@ class ErrorEllipseOverlay(AbstractOverlay):
         width = component.width
 
         aspectratio = (dy / height) / (dx / width)
-        # aspectratio=(height/width)
-        # aspectratio=(dy/dx)
-        # aspectratio=self.component.aspect_ratio
-        aspectratio = 1
-        try:
-            for cx, cy, sx, sy, pxyi in zip(x, y, xer, yer, pxy):
-                a, b, rot = error_ellipse(sx, sy, pxyi, aspectratio=aspectratio)
-                #print a,b,rot
-                #a, b, rot = self.calculate_ellipse(component, cx, cy, ox, oy, pxy)
-                #gc.save_state()
-                with gc:
-                    self._draw_ellipse(gc, component, cx, cy, a, b, rot)
-                    #gc.restore_state()
-        except Exception, e:
-            print 'exception', e
 
-    def _draw_ellipse(self, gc, component, cx, cy, a, b, rot):
-        #a *= self.nsigma
-        #b *= self.nsigma
+        try:
+            for i, (cx, cy, sx, sy, pxyi) in enumerate(zip(x, y, xer, yer, pxy)):
+                state = i not in sel
+                a, b, rot = error_ellipse(sx, sy, pxyi, self.kind, aspectratio=aspectratio)
+                with gc:
+                    self._draw_ellipse(gc, component, cx, cy, a, b, rot, state)
+
+        except Exception as e:
+            print('exception', e)
+
+    def _draw_ellipse(self, gc, component, cx, cy, a, b, rot, state):
+        if not state:
+            gc.set_line_dash((5, 5))
+
         scx, scy = component.map_screen([(cx, cy)])[0]
         ox, oy = component.map_screen([(0, 0)])[0]
 
-        #        gc.translate_ctm(-scx, -scy)
-        # gc.rotate_ctm(45)
         x1 = linspace(-a, a, 200)
         y1 = b * sqrt((1 - (x1 / a) ** 2))
 
@@ -131,14 +120,12 @@ class ErrorEllipseOverlay(AbstractOverlay):
         gc.translate_ctm(scx, scy)
 
         gc.rotate_ctm(rot)
-        # gc.rotate_ctm(rot-math.pi/2.0)
         gc.translate_ctm(-ox, -oy)
-        #gc.translate_ctm(-scx, -scy)
-
-        #gc.translate_ctm(scx - ox, scy - oy)
 
         gc.begin_path()
         gc.lines(pts)
+
+        gc.set_stroke_color(self.border_color_)
         if self.fill:
             gc.set_fill_color((0, 0, 0, 0.5))
             gc.fill_path()
@@ -175,7 +162,6 @@ if __name__ == '__main__':
     width = 1
     aspectratio = (dy / height) / (dx / width)
     rotation = math.degrees(0.5 * math.atan(1 / aspectratio * (2 * covar) / (ox ** 2 - oy ** 2)))
-
 
 #
 # #        gc.begin_path()

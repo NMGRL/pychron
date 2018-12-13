@@ -15,11 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import List, Int, Instance
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
+from pychron.core.helpers.color_generators import colornames
 from pychron.experiment.automated_run.data_collector import DataCollector
 from pychron.experiment.automated_run.hop_util import generate_hops
+from six.moves import zip
 
 
 class PeakHopCollector(DataCollector):
@@ -30,81 +32,101 @@ class PeakHopCollector(DataCollector):
     hops = List
     settling_time = 0
     ncycles = Int
-    parent = Instance('pychron.experiment.automated_run.automated_run.AutomatedRun')
-    _was_deflected = False
     hop_generator = None
+
+    _was_deflected = False
+    _detectors = None
 
     def set_hops(self, hops):
         self.hops = hops
         self.debug('make new hop generatior')
         self.hop_generator = generate_hops(self.hops)
 
-    def _iter_hook(self, i):
-        if i % 50 == 0:
-            self.info('collecting point {}'.format(i))
-
+    def _pre_trigger_hook(self):
         args = self._do_hop()
 
         if args:
             is_baseline, dets, isos = args
-            if not is_baseline:
-                try:
-                    data = self._get_data(dets)
-                except (AttributeError, TypeError, ValueError), e:
-                    self.debug('failed getting data {}'.format(e))
-                    return
-
-                if not data:
-                    return
-
-                x = self._get_time()
-                self._save_data(x, *data)
-                self._plot_data(i, x, *data)
-
+            self._detectors = dets
             return True
+
+    def _iter_hook(self, i):
+        return self._iteration(i, detectors=self._detectors)
+
+        # args = self._do_hop()
+        #
+        # if args:
+        #     is_baseline, dets, isos = args
+        #     if not is_baseline:
+        #         return self._iteration(i, detectors=dets)
 
     def _do_hop(self):
         """
             is it time for a magnet move
         """
-        from pychron.core.ui.gui import invoke_in_main_thread
+        # from pychron.core.ui.gui import invoke_in_main_thread
 
-        cycle, is_baselines, dets, isos, defls, settle, count, pdets = self.hop_generator.next()
+        hop = next(self.hop_generator)
+        hop_idx = hop['idx']
+        cycle = hop['cycle']
+        is_baseline = hop['is_baseline']
+        dets = hop['detectors']
+        isos = hop['isotopes']
+        defls = hop['deflections']
+        settle = hop['settle']
+        count = hop['count']
+        pdets = hop['protect_detectors']
+        active_dets = hop['active_detectors']
 
-        detector = dets[0]
-        isotope = isos[0]
-        is_baseline = is_baselines[0]
+        current_color = colornames[hop_idx]
+
+        use_dac = False
+        positioning = hop['positioning']
+        if positioning:
+            if 'dac' in positioning:
+                use_dac = True
+                isotope = positioning['dac']
+                detector = ''
+            else:
+                detector = positioning['detector']
+                isotope = positioning['isotope']
+        else:
+            detector = active_dets[0]
+            isotope = isos[0]
 
         if count == 0:
             self.debug('$$$$$$$$$$$$$$$$$ SETTING is_baseline {}'.format(is_baseline))
 
+        arun = self.automated_run
         if is_baseline:
-            self.parent.is_peak_hop = False
+            arun.is_peak_hop = False
             # remember original settings. return to these values after baseline finished
             ocounts = self.measurement_script.ncounts
-            self.parent.measurement_script.increment_series_count(2, 1)
+            arun.measurement_script.increment_series_count(2, 1)
             ocycles = self.plot_panel.ncycles
             pocounts = self.plot_panel.ncounts
 
             self.debug('START BASELINE MEASUREMENT {} {}'.format(isotope, detector))
-            self.parent.measurement_script.baselines(count, mass=isotope, detector=detector)
+            arun.measurement_script.baselines(count, mass=isotope, detector=detector)
             self.debug('BASELINE MEASUREMENT COMPLETE')
 
-            self.parent.measurement_script.increment_series_count(-2, -1)
+            arun.measurement_script.increment_series_count(-2, -1)
 
-            change = self.parent.set_magnet_position(isotope, detector,
-                                                     update_detectors=False, update_labels=False,
-                                                     update_isotopes=True,
-                                                     remove_non_active=False)
+            change = arun.set_magnet_position(isotope, detector,
+                                              use_dac=use_dac,
+                                              update_detectors=False, update_labels=False,
+                                              update_isotopes=True,
+                                              remove_non_active=False)
             if change:
                 msg = 'delaying {} for detectors to settle after peak hop'.format(settle)
-                self.parent.wait(settle, msg)
+                arun.wait(settle, msg)
                 self.debug(msg)
+
             self.plot_panel._ncounts = pocounts
             self.measurement_script.ncounts = ocounts
             self.plot_panel.ncycles = ocycles
-            self.parent.plot_panel.is_peak_hop = True
-            self.parent.is_peak_hop = True
+            arun.plot_panel.is_peak_hop = True
+            arun.is_peak_hop = True
         else:
             # self.debug('c={} pc={} nc={}'.format(cycle, self.plot_panel.ncycles, self.ncycles))
             if self.plot_panel.ncycles != self.ncycles:
@@ -117,52 +139,76 @@ class PeakHopCollector(DataCollector):
                 return
 
             if count == 0:
-                self._protect_detectors(pdets)
-
-                change = self.parent.set_magnet_position(isotope, detector,
-                                                         update_detectors=False, update_labels=False,
-                                                         update_isotopes=not is_baseline,
-                                                         remove_non_active=False)
-
-                self._protect_detectors(pdets, False)
-
+                zd = list(zip(dets, defls))
+                self.debug('Peak hop Detectors={}'.format(dets))
+                self.debug('Peak hop Deflections={}'.format(defls))
+                self.debug('Peak hop DeflectionsPairs={}'.format(zd))
                 # set deflections
                 # only set deflections deflections were changed or need changing
                 deflect = len([d for d in defls if d is not None])
                 if deflect or self._was_deflected:
                     self._was_deflected = False
-                    for det, defl in zip(dets, defls):
+                    for det, defl in zd:
                         # use the measurement script to set the deflections
                         # this way defaults from the config can be used
-                        if defl is None:
-                            defl = ''
-                        else:
+                        if defl is not None:
                             self._was_deflected = True
+                            arun.set_deflection(det, defl)
 
-                        self.measurement_script.set_deflection(det, defl)
+                self._protect_detectors(pdets)
+                self.debug('----------------------- HOP {} {}'.format(isotope, detector))
+                change = arun.set_magnet_position(isotope, detector,
+                                                  update_detectors=False,
+                                                  update_labels=False,
+                                                  update_isotopes=False,
+                                                  # update_isotopes=not is_baseline,
+                                                  remove_non_active=False)
 
+                self._protect_detectors(pdets, False)
+
+                arun.update_detector_isotope_pairing(active_dets, isos)
                 if change:
+                    g = self.plot_panel.isotope_graph
+                    if hop_idx:
+                        for d in active_dets:
+                            det = arun.get_detector(d)
+
+                            plot = g.get_plot_by_ytitle('{}{}'.format(det.isotope, det.name))
+                            if not plot:
+                                plot = g.get_plot_by_ytitle(det.isotope)
+
+                            if plot:
+                                scatter = plot.plots['data{}'.format(self.fit_series_idx)][0]
+                                scatter.color = current_color
+                                scatter.outline_color = current_color
+                            else:
+                                self.debug('could not locate det={} iso={}'.format(d, det.isotope))
+
                     try:
-                        self.automated_run.plot_panel.counts += int(settle)
+                        arun.plot_panel.counts += int(settle)
                     except AttributeError:
                         pass
 
                     msg = 'delaying {} for detectors to settle after peak hop'.format(settle)
-                    self.parent.wait(settle, msg)
+                    arun.wait(settle, msg)
                     self.debug(msg)
 
-            d = self.parent.get_detector(detector)
             # self.debug('cycle {} count {} {}'.format(cycle, count, id(self)))
             if self.plot_panel.is_baseline:
                 isotope = '{}bs'.format(isotope)
 
-            invoke_in_main_thread(self.plot_panel.trait_set,
-                                  current_cycle='{} cycle={} count={}'.format(isotope, cycle + 1, count + 1),
-                                  current_color=d.color)
-        return is_baseline, dets, isos
+            dac = arun.get_current_dac()
+            # invoke_in_main_thread(self.plot_panel.trait_set,
+            #                       current_cycle='{}({:0.6f}) - {} cyc={} cnt={}'.format(isotope, dac, detector,
+            #                                                                             cycle + 1, count + 1),
+            #                       current_color=current_color)
+            self.plot_panel.trait_set(current_cycle='{}({:0.6f}) - {} cyc={} cnt={}'.format(isotope, dac, detector,
+                                                                                            cycle + 1, count + 1),
+                                      current_color=current_color)
+        return is_baseline, active_dets, isos
 
     def _protect_detectors(self, pdets, protect=True):
         for pd in pdets:
-            self.parent.protect_detector(pd, protect)
+            self.automated_run.protect_detector(pd, protect)
 
 # ============= EOF =============================================

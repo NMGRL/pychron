@@ -14,27 +14,30 @@
 # limitations under the License.
 # ===============================================================================
 
-# =============enthought library imports=======================
-from PySide.QtGui import QLabel, QImage, QPixmap, QScrollArea
+# =============standard library imports ========================
+from __future__ import absolute_import
+from PIL import Image as PILImage
 from pyface.image_resource import ImageResource
+# =============enthought library imports=======================
+from pyface.qt.QtGui import QLabel, QImage, QPixmap, QScrollArea
 from qimage2ndarray import array2qimage
 from traits.api import Any, Bool, Event, Str
 from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
 from traitsui.ui_traits import convert_bitmap as traitsui_convert_bitmap
 
-# =============standard library imports ========================
-from Image import Image
-
 # =============local library imports  ==========================
 from pychron.core.ui.gui import invoke_in_main_thread
 
 
-def convert_bitmap(image, width=None, height=None):
+def convert_bitmap(image, width=0, height=0):
     if isinstance(image, ImageResource):
         pix = traitsui_convert_bitmap(image)
-    elif isinstance(image, Image):
-        data = image.tostring('raw', 'RGBA')
+    elif isinstance(image, (PILImage.Image,)):
+        try:
+            data = image.tostring('raw', 'RGBA')
+        except NotImplementedError:
+            data = image.tobytes('raw', 'RGBA')
         im = QImage(data, image.size[0], image.size[1], QImage.Format_ARGB32)
         pix = QPixmap.fromImage(QImage.rgbSwapped(im))
     else:
@@ -43,6 +46,7 @@ def convert_bitmap(image, width=None, height=None):
             pix = QPixmap.fromImage(array2qimage(image))
         else:
             pix = QPixmap()
+
     if pix:
         if width > 0 and height > 0:
             pix = pix.scaled(width, height)
@@ -64,6 +68,7 @@ class _ImageEditor(Editor):
     refresh = Event
 
     def init(self, parent):
+
         image = self.factory.image
         if image is None:
             image = self.value
@@ -71,6 +76,11 @@ class _ImageEditor(Editor):
         image_ctrl = myQLabel()
 
         if image is not None:
+            from pychron.image.standalone_image import FrameImage
+
+            if isinstance(image, FrameImage):
+                image = image.source_frame
+
             image_ctrl.setPixmap(convert_bitmap(image))
         self.image_ctrl = image_ctrl
         self.image_ctrl.setScaledContents(True)
@@ -109,6 +119,11 @@ class _ImageEditor(Editor):
 
     def set_pixmap(self, image, w):
         if image is not None:
+            from pychron.image.standalone_image import FrameImage
+
+            if isinstance(image, FrameImage):
+                image = image.source_frame
+
             im = convert_bitmap(image, w)
             if im:
                 self.image_ctrl.setPixmap(im)

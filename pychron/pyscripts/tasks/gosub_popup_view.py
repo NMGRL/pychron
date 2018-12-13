@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from PySide.QtCore import Qt
-from PySide.QtGui import QPlainTextEdit
-from PySide.QtGui import QVBoxLayout
-from PySide.QtGui import QWidget, QLabel
+from __future__ import absolute_import
+from pyface.qt.QtCore import Qt
+from pyface.qt.QtGui import QPlainTextEdit
+from pyface.qt.QtGui import QVBoxLayout
+from pyface.qt.QtGui import QWidget, QLabel
 
 
 # ============= standard library imports ========================

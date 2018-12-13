@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from chaco.axis_view import float_or_auto
 from enable.base_tool import BaseTool
 from traits.api import on_trait_change, HasTraits, Font
@@ -24,42 +25,46 @@ from traitsui.api import View, Item, HGroup, VGroup, Group, TextEditor, Handler
 # ============= local library imports  ==========================
 from traitsui.editors import FontEditor
 
-AxisView = View(VGroup(
-        Group(
-                Item("object.mapper.range.high", label="Upper", editor=TextEditor(enter_set=True, auto_set=False))),
-        Item("object.mapper.range.low", label="Lower", editor=TextEditor(enter_set=True, auto_set=False)),
-        Group(
-                Item("title", label="Title", editor=TextEditor()),
-                Item("wrapper.title_font", label="Font", editor=FontEditor()),
-                Item("title_color", label="Color", style="custom"),
-                Item("tick_interval", label="Interval", editor=TextEditor(evaluate=float_or_auto)),
-                show_border=True,
-                label="Main"),
-        Group(
-                Item("tick_color", label="Color", style="custom"),
-                # editor=EnableRGBAColorEditor()),
-                Item("tick_weight", label="Thickness"),
-                # Item("tick_label_font", label="Font"),
-                Item("tick_label_color", label="Label color", style="custom"),
-                # editor=EnableRGBAColorEditor()),
-                HGroup(
-                        Item("tick_in", label="Tick in"),
-                        Item("tick_out", label="Tick out"),
-                ),
-                Item("tick_visible", label="Visible"),
-                show_border=True,
-                label="Ticks"),
-        Group(
-                Item("axis_line_color", label="Color", style="custom"),
-                # editor=EnableRGBAColorEditor()),
-                Item("axis_line_weight", label="Thickness"),
-                Item("axis_line_visible", label="Visible"),
-                show_border=True,
-                label="Line")),
-        title='Edit Axis',
-        x=50,
-        y=50,
-        buttons=['OK', ])
+limit_grp = VGroup(Item("object.mapper.range.high", label="Upper",
+                        springy=True,
+                        editor=TextEditor(enter_set=True, auto_set=False)),
+                   Item("object.mapper.range.low", label="Lower",
+                        springy=True,
+                        editor=TextEditor(enter_set=True, auto_set=False)),
+                   show_border=True,
+                   label='Limits')
+
+title_grp = VGroup(Item("title", label="Title", editor=TextEditor()),
+                   Item("wrapper.title_font", label="Font",
+                        editor=FontEditor()
+                        ),
+                   Item("title_color", label="Color"),
+                   Item("tick_interval", label="Interval", editor=TextEditor(evaluate=float_or_auto)),
+                   show_border=True,
+                   label="Title")
+tick_grp = VGroup(Item("tick_color", label="Color"),
+                  # editor=EnableRGBAColorEditor()),
+                  Item("tick_weight", label="Thickness"),
+                  # Item("tick_label_font", label="Font"),
+                  Item("tick_label_color", label="Label color"),
+                  # editor=EnableRGBAColorEditor()),
+                  HGroup(Item("tick_in", label="Tick in"),
+                         Item("tick_out", label="Tick out")),
+                  Item("tick_visible", label="Visible"),
+                  show_border=True,
+                  label="Ticks")
+line_grp = VGroup(Item("axis_line_color", label="Color"),
+                  # editor=EnableRGBAColorEditor()),
+                  Item("axis_line_weight", label="Thickness"),
+                  Item("axis_line_visible", label="Visible"),
+                  show_border=True,
+                  label="Line")
+
+AxisView = View(VGroup(limit_grp, title_grp, tick_grp, line_grp),
+                title='Edit Axis',
+                x=50,
+                y=50,
+                buttons=['OK', ])
 
 
 class AxisViewHandler(Handler):

@@ -15,15 +15,24 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traitsui.api import  Item, ListEditor, InstanceEditor
+from traitsui.api import Item, ListEditor, InstanceEditor, View
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+
+
 def instance_item(name, **kw):
     return Item(name, style='custom', show_label=False, **kw)
+
 
 def listeditor(name, **kw):
     return Item(name,
                 show_label=False,
                 editor=ListEditor(mutable=False, style='custom', editor=InstanceEditor()),
-                    **kw)
+                **kw)
+
+
+def okcancel_view(*args, **kw):
+    return View(buttons=['OK', 'Cancel'], *args, **kw)
 # ============= EOF =============================================

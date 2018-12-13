@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from pychron.core.ui import set_toolkit
 from pychron.processing.argon_calculations import isochron_regressor
 

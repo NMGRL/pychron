@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Str
 
@@ -26,6 +27,7 @@ from pychron.git.hosts import GitHostService
 class GitLabService(GitHostService):
     host = Str
     preference_path = 'pychron.gitlab'
+    name = 'GitLab'
 
     @property
     def remote_url(self):

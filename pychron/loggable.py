@@ -16,6 +16,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits, Any, String
 
 # ============= standard library imports ========================
@@ -192,9 +193,9 @@ class Loggable(HasTraits):
             self.logger = new_logger(name)
             __gloggers__[name] = self.logger
 
-        c = color_name_gen.next()
+        c = next(color_name_gen)
         if c in ['gray', 'silver', 'greenyellow']:
-            c = color_name_gen.next()
+            c = next(color_name_gen)
         self.logcolor = c
 
     def _log_(self, func, msg):

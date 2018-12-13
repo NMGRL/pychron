@@ -15,15 +15,19 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+import os
+# ============= standard library imports ========================
+import smtplib
+from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+import time
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import HasTraits, Str, Enum, Bool, Int
 from traitsui.api import View
 
-# ============= standard library imports ========================
-import smtplib
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
 
@@ -50,10 +54,11 @@ class Emailer(Loggable):
     server_port = Int
 
     sender = Str('pychron@gmail.com')
-    _server = None
 
     def __init__(self, *args, **kw):
         super(Emailer, self).__init__(*args, **kw)
+
+        self._server = None
 
         bind_preference(self, 'server_username', 'pychron.email.server_username')
         bind_preference(self, 'server_password', 'pychron.email.server_password')
@@ -75,93 +80,107 @@ class Emailer(Loggable):
             if test:
                 server.quit()
                 return True
-        except (smtplib.SMTPServerDisconnected, BaseException), e:
+        except (smtplib.SMTPServerDisconnected, BaseException) as e:
+            self.debug('SMTPServer connection host={}, user={}, port={}'.format(self.server_host, self.server_username, self.server_port))
             if warn:
                 self.warning('SMTPServer not properly configured')
             server = None
 
         return server
 
-    def send(self, addrs, sub, msg):
+    def send(self, addrs, sub, msg, paths=None):
         self.debug('Send email. addrs: {}'.format(addrs, sub))
-        self.debug('========= Message ========')
-        for m in msg.split('\n'):
-            self.debug(m)
-        self.debug('==========================')
+        # self.debug('========= Message ========')
+        # for m in msg.split('\n'):
+        #     self.debug(m)
+        # self.debug('==========================')
 
-        server = self.connect()
+        for i in range(10):
+            server = self.connect()
+            if server is not None:
+                break
+            self.debug('doing email connection retry {}'.format(i))
+            time.sleep(1)
+
         if server:
-            if isinstance(addrs, (str, unicode)):
+            if not isinstance(addrs, (list, tuple)):
                 addrs = [addrs]
 
-            msg = self._message_factory(addrs, sub, msg)
+            msg = self._message_factory(addrs, sub, msg, paths)
             try:
                 server.sendmail(self.sender, addrs, msg.as_string())
                 server.quit()
                 return True
-            except BaseException, e:
+            except BaseException as e:
                 self.warning('Failed sending mail. {}'.format(e))
         else:
             self.warning('Failed connecting to server')
 
-    def _message_factory(self, addrs, sub, txt):
+    def _message_factory(self, addrs, sub, txt, paths):
         msg = MIMEMultipart()
         msg['From'] = self.sender  # 'nmgrl@gmail.com'
         msg['To'] = ','.join(addrs)
         msg['Subject'] = sub
-
         msg.attach(MIMEText(txt))
+
+        if paths:
+            for p in paths:
+                name = os.path.basename(p)
+                with open(p, 'rb') as rfile:
+                    part = MIMEBase('application', "octet-stream")
+                    part.set_payload(rfile.read())
+                    part['Content-Disposition'] = 'attachment; filename="{}"'.format(name)
+                    msg.attach(part)
         return msg
 
-        # def broadcast(self, text, level=0, subject=None):
-        #
-        # recipients = self.get_emails(level)
-        #     self.debug('broadcasting to recipients {}. level={}'.format(recipients, level))
-        #     if recipients:
-        #         r = ','.join(recipients)
-        #
-        #         msg = self._message_factory(text, r, subject)
-        #         server = self.connect()
-        #         if server:
-        #             self.info('Broadcasting message to {}'.format(r))
-        #             server.sendmail(self.sender, recipients, msg.as_string())
-        #             server.close()
-        #         else:
-        #             self.debug('SMTP server not available')
-        #
-        # def get_emails(self, level):
-        #     return [u.email for u in self.users
-        #             if u.email_enabled and u.level <= level]
-        #
-        # def _message_factory(self, text, recipients, subject='!Pychron Alert!'):
-        #     from email.mime.multipart import MIMEMultipart
-        #     from email.mime.text import MIMEText
-        #
-        #     msg = MIMEMultipart()
-        #     msg['From'] = self.sender  # 'nmgrl@gmail.com'
-        #     msg['To'] = recipients
-        #     msg['Subject'] = subject
-        #
-        #     msg.attach(MIMEText(text))
-        #     return msg
-        #
-        # def _users_default(self):
-        #     path = os.path.join(paths.setup_dir, 'users.cfg')
-        #     config = self.configparser_factory()
-        #     config.read(path)
-        #     users = []
-        #     for user in config.sections():
-        #         self.info('loading user {}'.format(user))
-        #         kw = dict(name=user)
-        #         for opt, func in [('email', None), ('level', 'int'), ('enabled', 'boolean')]:
-        #             if func is None:
-        #                 func = config.get
-        #             else:
-        #                 func = getattr(config, 'get{}'.format(func))
-        #
-        #             kw[opt] = func(user, opt)
-        #         users.append(User(**kw))
-        #
-        #     return users
-
-        # ============= EOF =============================================
+# ============= EOF =============================================
+# def broadcast(self, text, level=0, subject=None):
+#
+# recipients = self.get_emails(level)
+#     self.debug('broadcasting to recipients {}. level={}'.format(recipients, level))
+#     if recipients:
+#         r = ','.join(recipients)
+#
+#         msg = self._message_factory(text, r, subject)
+#         server = self.connect()
+#         if server:
+#             self.info('Broadcasting message to {}'.format(r))
+#             server.sendmail(self.sender, recipients, msg.as_string())
+#             server.close()
+#         else:
+#             self.debug('SMTP server not available')
+#
+# def get_emails(self, level):
+#     return [u.email for u in self.users
+#             if u.email_enabled and u.level <= level]
+#
+# def _message_factory(self, text, recipients, subject='!Pychron Alert!'):
+#     from email.mime.multipart import MIMEMultipart
+#     from email.mime.text import MIMEText
+#
+#     msg = MIMEMultipart()
+#     msg['From'] = self.sender  # 'nmgrl@gmail.com'
+#     msg['To'] = recipients
+#     msg['Subject'] = subject
+#
+#     msg.attach(MIMEText(text))
+#     return msg
+#
+# def _users_default(self):
+#     path = os.path.join(paths.setup_dir, 'users.cfg')
+#     config = self.configparser_factory()
+#     config.read(path)
+#     users = []
+#     for user in config.sections():
+#         self.info('loading user {}'.format(user))
+#         kw = dict(name=user)
+#         for opt, func in [('email', None), ('level', 'int'), ('enabled', 'boolean')]:
+#             if func is None:
+#                 func = config.get
+#             else:
+#                 func = getattr(config, 'get{}'.format(func))
+#
+#             kw[opt] = func(user, opt)
+#         users.append(User(**kw))
+#
+#     return users

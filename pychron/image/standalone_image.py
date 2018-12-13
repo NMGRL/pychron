@@ -15,23 +15,61 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Array, Event, Range, Bool
 from traitsui.api import UItem, Item, VGroup
 # ============= standard library imports ========================
-import Image
 from numpy import asarray, array, ndarray
+from PIL import Image
 # ============= local library imports  ==========================
 from pychron.viewable import Viewable
 from pychron.core.ui.image_editor import ImageEditor
 
 
-class StandAloneImage(Viewable):
+class FrameImage(Viewable):
     source_frame = Array
-    refresh = Event
+    refresh_needed = Event
     alpha = Range(0.0, 1.0)
     overlays = None
-    alpha_enabled = Bool(False)
+    alpha_enabled = Bool(True)
 
+    def load(self, frame, swap_rb=False):
+        self.source_frame = array(frame)
+        self.refresh_needed = True
+
+    def set_frame(self, frame):
+        if not isinstance(frame, ndarray):
+            frame = asarray(frame)
+
+        self.overlays = None
+        self.source_frame = frame
+        self.refresh_needed = True
+
+    def overlay(self, frame, alpha):
+        im0 = Image.fromarray(self.source_frame)
+        im1 = Image.fromarray(frame)
+
+        self.overlays = (im0, im1)
+
+        o = self.alpha
+        self.alpha = alpha
+        if alpha == o:
+            self._alpha_changed()
+
+    def _overlay(self, im0, im1, alpha):
+        try:
+            arr = Image.blend(im1, im0, alpha)
+            self.source_frame = asarray(arr)
+            self.refresh_needed = True
+        except ValueError:
+            pass
+
+    def _alpha_changed(self):
+        if self.overlays:
+            im0, im1 = self.overlays
+            self._overlay(im0, im1, self.alpha)
+
+class StandAloneImage(FrameImage):
     def traits_view(self):
         img = UItem('source_frame', editor=ImageEditor(refresh='refresh'))
         if self.alpha_enabled:
@@ -40,32 +78,5 @@ class StandAloneImage(Viewable):
             vv = img
         v = self.view_factory(VGroup(vv))
         return v
-
-    def load(self, frame, swap_rb=False):
-        self.source_frame = array(frame)
-
-    def set_frame(self, frame):
-        if not isinstance(frame, ndarray):
-            frame = asarray(frame)
-
-        self.overlays = None
-        self.source_frame = frame
-
-    def overlay(self, frame, alpha):
-        im0 = Image.fromarray(self.source_frame)
-        im1 = Image.fromarray(frame)
-
-        self.overlays = (im0, im1)
-        self.alpha = alpha
-        self.refresh = True
-
-    def _overlay(self, im0, im1, alpha):
-        arr = Image.blend(im1, im0, alpha)
-        self.source_frame = asarray(arr)
-
-    def _alpha_changed(self):
-        if self.overlays:
-            im0, im1 = self.overlays
-            self._overlay(im0, im1, self.alpha)
 
 # ============= EOF =============================================

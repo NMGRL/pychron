@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
+
 from pychron.core.ui import set_qt
 
 set_qt()
@@ -50,7 +52,7 @@ class OptionsEditor(HasTraits):
 
                 opts = []
                 bopts = []
-                for k, v in d.iteritems():
+                for k, v in d.items():
                     opt = Option(name=k, value=v)
                     if isinstance(v, bool):
                         bopts.append(opt)

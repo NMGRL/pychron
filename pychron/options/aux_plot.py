@@ -15,8 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
 from traits.api import HasTraits, Str, Int, Bool, \
     Float, Property, on_trait_change, Dict, Tuple, Enum, List, Any
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.pychron_traits import FilterPredicate
@@ -24,7 +27,7 @@ from pychron.pychron_constants import NULL_STR
 
 
 class AuxPlot(HasTraits):
-    names = List
+    names = List(transient=True)
     _plot_names = List
 
     save_enabled = Bool
@@ -32,12 +35,14 @@ class AuxPlot(HasTraits):
     name = Str(NULL_STR)
     plot_name = Property(Str, depends_on='name')
     scale = Enum('linear', 'log')
+    scalar = Float(1.0)
     height = Int(100, enter_set=True, auto_set=False)
     x_error = Bool(False)
     y_error = Bool(False)
     ytitle_visible = Bool(True)
     ytick_visible = Bool(True)
     show_labels = Bool(False)
+    y_axis_right = Bool(False)
 
     filter_str = FilterPredicate
     sigma_filter_n = Int
@@ -81,8 +86,16 @@ class AuxPlot(HasTraits):
     #     self.ymax = new[1]
     #     self._suppress = False
 
+    @on_trait_change('xmin, xmax')
+    def _handle_xmin_max(self):
+        if self._suppress:
+            return
+
+        self._has_xlimits = True
+        self.xlimits = (self.xmin, self.xmax)
+
     @on_trait_change('ymin, ymax')
-    def _handle_ymin_max(self, name, new):
+    def _handle_ymin_max(self):
         if self._suppress:
             return
 
@@ -107,9 +120,9 @@ class AuxPlot(HasTraits):
         self.xlimits = (0, 0)
 
     def _name_changed(self):
-        # if self.initialized:
-        if self.name and self.name != NULL_STR:
-            self.plot_enabled = True
+        if self.initialized:
+            if self.name and self.name != NULL_STR:
+                self.plot_enabled = True
 
     def _get_plot_name(self):
 

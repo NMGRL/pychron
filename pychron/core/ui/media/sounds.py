@@ -15,9 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import os
 
-from PySide.QtGui import QSound
+from pyface.qt.QtGui import QSound
 
 
 # ============= standard library imports ========================

@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 
+from __future__ import absolute_import
 from traits.api import HasTraits, Button, Bool
 from traitsui.api import View, UItem, HGroup, VGroup
 # ============= standard library imports ========================
@@ -25,6 +26,7 @@ import time
 
 # ============= local library imports  ==========================
 from pychron.paths import paths
+from six.moves import range
 
 
 class ZoomCalibrationManager(HasTraits):
@@ -41,7 +43,7 @@ class ZoomCalibrationManager(HasTraits):
         self._alive = True
         p = os.path.join(paths.data_dir, 'zoom_calibration.txt')
         with open(p, 'w') as wfile:
-            for steps in (xrange(5, 105, 5), xrange(100, 0, -5)):
+            for steps in (range(5, 105, 5), range(100, 0, -5)):
                 if not self._alive:
                     break
                 for zoom in steps:

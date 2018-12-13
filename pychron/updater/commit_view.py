@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Str, Int, Property, List
 from traitsui.api import View, VGroup, UItem, HGroup, Group, Tabbed
 # ============= standard library imports ========================
@@ -36,6 +37,7 @@ class UpdateGitHistory(BaseGitHistory):
 
     def set_tags(self, tags):
         gfactory = self.git_sha_object_factory
+
         def factory(t):
             obj = gfactory(t.commit)
             obj.name = t.name
@@ -62,11 +64,12 @@ class CommitAdapter(TabularAdapter):
 
 
 class TagAdapter(CommitAdapter):
-    columns = [('Tag','name'),
+    columns = [('Tag', 'name'),
                ('Message', 'message'),
                ('Date', 'date'),
                ('SHA', 'hexsha')]
     name_width = Int(100)
+
 
 class BaseCommitsView(Controller):
     model = BaseGitHistory
@@ -126,6 +129,3 @@ class CommitView(BaseCommitsView):
         #     return v
 
 # ============= EOF =============================================
-
-
-

@@ -15,15 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
 from traits.api import Instance, List, on_trait_change, Bool, Event
-# ============= standard library imports ========================
-from itertools import groupby
-# ============= local library imports  ==========================
+
 from pychron.dvc.dvc_irradiationable import DVCIrradiationable
-from pychron.experiment.queue.experiment_queue import ExperimentQueue
-from pychron.experiment.factory import ExperimentFactory
-from pychron.experiment.stats import StatsGroup
 from pychron.experiment.experiment_executor import ExperimentExecutor
+from pychron.experiment.factory import ExperimentFactory
+from pychron.experiment.queue.experiment_queue import ExperimentQueue
 
 
 class Experimentor(DVCIrradiationable):
@@ -31,7 +30,7 @@ class Experimentor(DVCIrradiationable):
     experiment_queue = Instance(ExperimentQueue)
     executor = Instance(ExperimentExecutor)
     experiment_queues = List
-    stats = Instance(StatsGroup, ())
+    # stats = Instance(StatsGroup, ())
 
     mode = None
     # unique_executor_db = False
@@ -49,10 +48,18 @@ class Experimentor(DVCIrradiationable):
     # ===========================================================================
     # task events
     # ===========================================================================
-    execute_event = Event
 
     activate_editor_event = Event
     save_event = Event
+
+    def prepare_destory(self):
+        if self.executor:
+            if self.executor.datahub:
+                self.executor.datahub.prepare_destroy()
+        if self.experiment_factory:
+            if self.experiment_factory.run_factory:
+                if self.experiment_factory.run_factory.datahub:
+                    self.experiment_factory.run_factory.datahub.prepare_destroy()
 
     def load(self):
         self.experiment_factory.queue_factory.db_refresh_needed = True
@@ -71,7 +78,7 @@ class Experimentor(DVCIrradiationable):
             qs = self.experiment_queues
 
         if self.executor.is_alive():
-            qs = (self.executor.experiment_queue, )
+            qs = (self.executor.experiment_queue,)
 
         self.executor.executable = all([ei.is_executable() for ei in qs])
         self.debug('setting executable {}'.format(self.executor.executable))
@@ -85,14 +92,6 @@ class Experimentor(DVCIrradiationable):
     # ===============================================================================
     # info update
     # ===============================================================================
-    def _get_all_runs(self, queues=None):
-        if queues is None:
-            queues = self.experiment_queues
-
-        return [ai for ei in queues
-                for ai in ei.executed_runs + ei.automated_runs
-                if ai.executable and not ai.skip]
-
     def _get_all_automated_runs(self, qs=None):
         if qs is None:
             qs = self.experiment_queues
@@ -112,20 +111,10 @@ class Experimentor(DVCIrradiationable):
             return
 
         self.debug('executor executable {}'.format(self.executor.executable))
-        self.debug('stats calculated')
+        self.debug('updating stats, ')
+        self.executor.stats.calculate()
 
-        ans = self._get_all_runs(queues)
-        self.stats.nruns = len(ans)
-
-        self.debug('get all runs n={}'.format(len(ans)))
-
-        self.debug('updating stats')
-        self.stats.calculate()
         self.refresh_executable(queues)
-
-        # for qi in self.experiment_queues:
-            # aruns = self._get_all_automated_runs([qi])
-            # renumber_aliquots(aruns)
 
         self._set_analysis_metadata()
 
@@ -133,27 +122,11 @@ class Experimentor(DVCIrradiationable):
         for qi in queues:
             qi.refresh_table_needed = True
 
-    def _group_analyses(self, ans, exclude=None):
-        """
-            sort, group and filter by labnumber
-        """
-        if exclude is None:
-            exclude = tuple()
-        key = lambda x: x.labnumber
-
-        return ((ln, group) for ln, group in groupby(sorted(ans, key=key), key)
-                if ln not in exclude)
-
-    def _get_analysis_info(self, li):
-        db = self.get_database()
-        return db.get_analysis_info(li)
-
     def _set_analysis_metadata(self):
         cache = dict()
 
         db = self.get_database()
         aruns = self._get_all_automated_runs()
-
         with db.session_ctx():
             for ai in aruns:
                 if ai.skip:
@@ -165,14 +138,16 @@ class Experimentor(DVCIrradiationable):
 
                 # is run in cache
                 if ln not in cache:
-                    info = self._get_analysis_info(ln)
+                    info = db.get_analysis_info(ln)
                     self.debug('Info for {}={}'.format(ln, info))
                     if not info:
                         cache[ln] = dict(identifier_error=True)
                     else:
-                        project, sample, material, irrad, level, pos = info
+                        project, pi, sample, material, irrad, level, pos = info
 
-                        cache[ln] = dict(project=project or '', sample=sample or '',
+                        cache[ln] = dict(project=project or '',
+                                         principal_investigator=pi or '',
+                                         sample=sample or '',
                                          material=material or '',
                                          irradiation=irrad or '',
                                          irradiation_level=level or '',
@@ -187,13 +162,7 @@ class Experimentor(DVCIrradiationable):
         names = ','.join([e.name for e in queues])
         self.debug('queues: n={}, names={}'.format(len(queues), names))
 
-        ans = self._get_all_runs(queues)
-        self.stats.nruns = len(ans)
-
-        self.executor.trait_set(
-            experiment_queues=queues,
-            experiment_queue=queues[0],
-            stats=self.stats)
+        self.executor.trait_set(experiment_queues=queues, experiment_queue=queues[0])
 
         return self.executor.execute()
 
@@ -205,9 +174,46 @@ class Experimentor(DVCIrradiationable):
         elif inform:
             self.warning_dialog('No Database available')
 
-    def get_analysis(self, **kw):
+    def sync_queue(self, queue):
+        ms = queue.mass_spectrometer
+        ed = queue.extract_device
         db = self.get_database()
-        return db.get_analysis_by_attr(**kw)
+        with db.session_ctx():
+            next_pos = None
+            for i, ai in enumerate(queue.automated_runs):
+
+                if ai.skip or ai.is_special():
+                    continue
+
+                kw = {'identifier': ai.identifier, 'position': ai.position,
+                      'mass_spectrometer': ms.lower(),
+                      'extract_device': ed}
+                if ai.is_step_heat():
+                    kw['aliquot'] = ai.aliquot
+                    kw['extract_value'] = ai.extract_value
+
+                self.debug('checking {}/{}. attr={}'.format(i, ai.runid, kw))
+
+                aa = db.get_analysis_by_attr(**kw)
+                if aa is None:
+                    self.debug('----- not found')
+                    if next_pos == ai:
+                        i -= 1
+                        break
+                    elif not self.confirmation_dialog('Found analyses up to {}. '
+                                                      'position={}, extract={}. '
+                                                      'Continue searching?'.format(ai.runid, ai.extract_value,
+                                                                                   ai.position)):
+                        break
+                    next_pos = queue.automated_runs[i + 1]
+
+            if i:
+                if i == len(queue.automated_runs) - 1:
+                    self.information_dialog('All Analyses from this experiment have been run')
+                else:
+                    queue.automated_runs = queue.automated_runs[i:]
+            else:
+                self.information_dialog('No Analyses from this experiment have been run')
 
     # ===============================================================================
     # handlers
@@ -221,21 +227,10 @@ class Experimentor(DVCIrradiationable):
     def _activate_editor(self, eq):
         self.activate_editor_event = id(eq)
 
-    @on_trait_change('executor:start_button')
-    def _execute(self):
-        """
-            trigger the experiment task to assemble current queues.
-            the queues are then passed back to execute_queues()
-        """
-        self.info('Start Executor')
-        if not self.executor.is_alive():
-            self.debug('execute_event fired')
-            self.execute_event = True
-
     @on_trait_change('experiment_queues[]')
     def _update_queues(self):
         qs = self.experiment_queues
-        self.stats.experiment_queues = qs
+        self.executor.stats.experiment_queues = qs
 
     @on_trait_change('experiment_factory:run_factory:changed')
     def _queue_dirty(self):
@@ -283,8 +278,8 @@ class Experimentor(DVCIrradiationable):
             # if self.executor.is_alive():
             a = new[-1]
             if not a.skip:
-                self.stats.calculate_at(a, at_times=self.executor.is_alive())
-                    # self.stats.calculate()
+                self.executor.stats.calculate_at(a, at_times=self.executor.is_alive())
+                # self.stats.calculate()
 
     @on_trait_change('experiment_factory:queue_factory:delay_between_analyses')
     def handle_delay_between_analyses(self, new):
@@ -302,11 +297,9 @@ class Experimentor(DVCIrradiationable):
         rf.suppress_update = False
 
     def _executor_factory(self):
-        e = ExperimentExecutor(
-            mode=self.mode,
-            application=self.application)
+        e = ExperimentExecutor(mode=self.mode,
+                               application=self.application)
         e.bind_preferences()
-
         return e
 
     # ===============================================================================

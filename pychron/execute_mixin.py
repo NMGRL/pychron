@@ -15,9 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from threading import Thread
 
 from traits.api import HasTraits, Event, Property, Bool
+
 
 # from pychron.core.ui.thread import Thread
 
@@ -45,6 +47,7 @@ class ExecuteMixin(HasTraits):
 
     def _cancel_execute(self):
         pass
+
     def _start_execute(self):
         return True
 

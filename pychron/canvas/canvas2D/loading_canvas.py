@@ -34,11 +34,12 @@
 from enable.abstract_overlay import AbstractOverlay
 from kiva import Font
 from traits.api import Any
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.canvas.canvas2D.scene.loading_scene import LoadingScene
 from pychron.canvas.canvas2D.scene.primitives.primitives import LoadIndicator
 from pychron.canvas.canvas2D.scene.scene_canvas import SceneCanvas
-from pychron.canvas.canvas2D.scene.loading_scene import LoadingScene
 
 
 def group_position(pos, func=None):
@@ -69,8 +70,8 @@ class LoadingOverlay(AbstractOverlay):
             with gc:
                 gc.set_font(self.font)
                 lines = self.info_str.split('\n')
-                lws, lhs = zip(*[gc.get_full_text_extent(mi)[:2]
-                                 for mi in lines])
+                lws, lhs = list(zip(*[gc.get_full_text_extent(mi)[:2]
+                                 for mi in lines]))
                 rect_width = max(lws) + 4
                 rect_height = (max(lhs) + 2) * len(lhs)
 
@@ -140,11 +141,17 @@ class LoadingCanvas(SceneCanvas):
         return [item for item in self.scene.get_items(LoadIndicator) if
                 item.state]
 
-    def edit_left_down(self, event):
-        if self.editable:
-            self.selected = self.hittest(event)
-            self.selected.state = not self.selected.state
-            self.request_redraw()
+    # def edit_left_down(self, event):
+    #     if self.editable:
+    #         sel = self.hittest(event)
+    #         if sel:
+    #             sel.state = not sel.state
+    #
+    #         self.selected = sel
+    #
+    #         # self.selected = self.hittest(event)
+    #         # self.selected.state = not self.selected.state
+    #         self.request_redraw()
 
     def normal_left_down(self, event):
         sel = self.hittest(event)
@@ -188,26 +195,26 @@ class LoadingCanvas(SceneCanvas):
                                                 klass=LoadIndicator)
         self.request_redraw()
 
-    def info_left_down(self, event):
-        self.edit_left_down(event)
-
-    def info_mouse_move(self, event):
-        self.popup.x, self.popup.y = event.x, event.y
-        self.current_item = self.hittest(event)
-        if self.current_item:
-
-            event.window.set_pointer(self.pointer)
-            self.popup.set_item(self.current_item)
-            self.popup.visible = True
-        else:
-            self.popup.visible = False
-            self._set_normal_pointer(event)
-
-        self.request_redraw()
-
-    def info_mouse_leave(self, event):
-        self.popup.visible = False
-        self.request_redraw()
+    # def info_left_down(self, event):
+    #     self.edit_left_down(event)
+    #
+    # def info_mouse_move(self, event):
+    #     self.popup.x, self.popup.y = event.x, event.y
+    #     self.current_item = self.hittest(event)
+    #     if self.current_item:
+    #
+    #         event.window.set_pointer(self.pointer)
+    #         self.popup.set_item(self.current_item)
+    #         self.popup.visible = True
+    #     else:
+    #         self.popup.visible = False
+    #         self._set_normal_pointer(event)
+    #
+    #     self.request_redraw()
+    #
+    # def info_mouse_leave(self, event):
+    #     self.popup.visible = False
+    #     self.request_redraw()
 
     def _set_normal_pointer(self, event):
         event.window.set_pointer(self.normal_pointer)

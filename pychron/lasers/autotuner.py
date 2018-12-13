@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pychron.lasers.scanner import Scanner
 # ============= standard library imports ========================
 import time

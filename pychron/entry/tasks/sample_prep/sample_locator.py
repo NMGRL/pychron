@@ -15,11 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits, Str, Any, Property, cached_property
 from traitsui.api import View, UItem, Item, HGroup, VGroup, EnumEditor, TabularEditor
-
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.core.ui.combobox_editor import ComboboxEditor
@@ -49,26 +47,21 @@ class SampleLocator(HasTraits):
     @cached_property
     def _get_sessions(self):
         if self.sample:
-            with self.dvc.session_ctx() as sess:
-                ss = self.dvc.get_sample_prep_sessions(self.sample)
-                sess.expunge_all()
-                return ss
+            return self.dvc.get_sample_prep_sessions(self.sample)
         else:
             return []
 
     @cached_property
     def _get_projects(self):
         if self.principal_investigator:
-            with self.dvc.session_ctx():
-                return [p.name for p in self.dvc.get_projects(self.principal_investigator)]
+            return [p.name for p in self.dvc.get_projects((self.principal_investigator,))]
         else:
             return []
 
     @cached_property
     def _get_samples(self):
         if self.project:
-            with self.dvc.session_ctx():
-                return [si.name for si in self.dvc.get_samples(project=self.project)]
+            return [si.name for si in self.dvc.get_samples(projects=self.project)]
         else:
             return []
 

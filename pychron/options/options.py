@@ -15,23 +15,29 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from itertools import groupby
+from __future__ import absolute_import
+from __future__ import print_function
 
+import os
+
+import yaml
 from enable.markers import marker_names
 from traits.api import HasTraits, Str, Int, Bool, Float, Property, Enum, List, Range, \
-    Color, Button
+    Color, Button, Instance
 from traitsui.api import View, Item, HGroup, VGroup, EnumEditor, Spring, Group, \
-    spring, UItem, ListEditor, InstanceEditor
+    spring, UItem, ListEditor, InstanceEditor, CheckListEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.handler import Controller
 from traitsui.table_column import ObjectColumn
-# ============= standard library imports ========================
-import os
-import yaml
-# ============= local library imports  ==========================
+
 from pychron.core.helpers.color_generators import colornames
+from pychron.core.helpers.formatting import floatfmt
+from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.core.ui.table_editor import myTableEditor
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.aux_plot import AuxPlot
+from pychron.options.layout import FigureLayout
+from pychron.processing.j_error_mixin import JErrorMixin
 from pychron.pychron_constants import NULL_STR, ERROR_TYPES, FONTS, SIZES, ALPHAS
 
 
@@ -56,6 +62,23 @@ class SubOptions(Controller):
         return View(*args, **kw)
 
 
+class TitleSubOptions(SubOptions):
+    def traits_view(self):
+        v = self._make_view(self._get_title_group())
+        return v
+
+    def _get_title_group(self):
+        title_grp = HGroup(Item('auto_generate_title',
+                                tooltip='Auto generate a title based on the analysis list'),
+                           Item('title', springy=False,
+                                enabled_when='not auto_generate_title',
+                                tooltip='User specified plot title'),
+                           icon_button_editor('edit_title_format_button', 'cog',
+                                              enabled_when='auto_generate_title'),
+                           label='Title', show_border=True)
+        return title_grp
+
+
 class GroupSubOptions(SubOptions):
     def traits_view(self):
         g = UItem('groups',
@@ -71,6 +94,18 @@ class GroupSubOptions(SubOptions):
 
 
 class AppearanceSubOptions(SubOptions):
+    def _get_layout_group(self):
+        # rc_grp = VGroup(HGroup(Item('object.layout.rows',
+        #                             enabled_when='object.layout.row_enabled'),
+        #                        Item('object.layout.columns',
+        #                             enabled_when='object.layout.column_enabled'
+        #                             ),
+        #                        Item('object.layout.fixed')),
+        #                 label='Layout', show_border=True)
+        # return rc_grp
+        return VGroup(UItem('layout', style='custom'))
+
+
     def _get_xfont_group(self):
         v = VGroup(self._create_axis_group('x', 'title'),
                    self._create_axis_group('x', 'tick'),
@@ -124,6 +159,7 @@ class AppearanceSubOptions(SubOptions):
                       label='Fonts', show_border=True)
 
         g = VGroup(self._get_bg_group(),
+                   self._get_layout_group(),
                    self._get_padding_group(),
                    self._get_grid_group())
 
@@ -144,6 +180,9 @@ class MainOptions(SubOptions):
                 checkbox_column(name='y_error', label='Y Err.'),
                 checkbox_column(name='ytick_visible', label='Y Tick'),
                 checkbox_column(name='ytitle_visible', label='Y Title'),
+                checkbox_column(name='y_axis_right', label='Y Right'),
+                object_column(name='scalar', label='Multiplier',
+                              format_func=lambda x: floatfmt(x, n=2, s=2, use_scientific=True)),
                 checkbox_column(name='has_filter', label='Filter', editable=False)
                 # object_column(name='filter_str', label='Filter')
                 ]
@@ -164,6 +203,10 @@ class MainOptions(SubOptions):
                         show_border=True))
         return v
 
+    def _get_analysis_group(self):
+        return HGroup(UItem('analysis_types', style='custom', editor=CheckListEditor(name='available_types')),
+                      show_border=True, label='Analysis Types')
+
     def _get_global_group(self):
         return
 
@@ -174,7 +217,7 @@ class MainOptions(SubOptions):
                              show_label=False,
                              editor=myTableEditor(columns=self._get_columns(),
                                                   sortable=False,
-                                                  deletable=False,
+                                                  # deletable=True,
                                                   clear_selection_on_dclicked=True,
                                                   orientation='vertical',
                                                   selected='selected',
@@ -195,6 +238,7 @@ class MainOptions(SubOptions):
 class BaseOptions(HasTraits):
     fontname = Enum(*FONTS)
     _main_options_klass = MainOptions
+    subview_names = List(transient=True)
 
     def to_dict(self):
         keys = [trait for trait in self.traits() if
@@ -205,20 +249,21 @@ class BaseOptions(HasTraits):
     def formatted_attr(self, key):
         obj = getattr(self, key)
         if 'color' in key:
-            obj = obj.toTuple()
+            obj = obj.red(), obj.green(), obj.blue(), obj.alpha()
         return obj
 
     def to_dict_test(self, k):
         return True
 
     def load_factory_defaults(self, path):
-        if not os.path.isfile(path):
-            yd = yaml.load(path)
-        else:
-            with open(path, 'r') as rfile:
-                yd = yaml.load(rfile)
+        if path:
+            if not os.path.isfile(path):
+                yd = yaml.load(path)
+            else:
+                with open(path, 'r') as rfile:
+                    yd = yaml.load(rfile)
 
-        self._load_factory_defaults(yd)
+            self._load_factory_defaults(yd)
 
     def initialize(self):
         pass
@@ -229,8 +274,11 @@ class BaseOptions(HasTraits):
     def set_detectors(self, dets):
         pass
 
+    def set_analysis_types(self, atypes):
+        pass
+
     def _fontname_changed(self):
-        print 'setting font name', self.fontname
+        print('setting font name', self.fontname)
         self._set_fonts(self.fontname)
         for attr in self.traits():
             if attr.endswith('_fontname'):
@@ -307,6 +355,8 @@ class FigureOptions(BaseOptions):
     ytitle_fontsize = Enum(*SIZES)
     ytitle_fontname = Enum(*FONTS)
 
+    layout = Instance(FigureLayout, ())
+
     groups = List
     # group = Property
     # group_editor_klass = None
@@ -343,14 +393,18 @@ class FigureOptions(BaseOptions):
                         'Plagioclase': 'Plag',
                         'Sanidine': 'San'}
 
-        for gid, ais in groupby(analyses, key=lambda x: x.group_id):
-            ref = ais.next()
+        for gid, ais in groupby_group_id(analyses):
+            ref = next(ais)
             d = {}
             for ai in attrs:
                 if ai == 'alphacounter':
                     v = ALPHAS[n]
                 elif ai == 'numericcounter':
                     v = n
+                elif ai == '<space>':
+                    v = ' '
+                elif ai == 'runid':
+                    v = ref.record_id
                 else:
                     v = getattr(ref, ai)
                     if ai == 'material':
@@ -448,14 +502,23 @@ class AuxPlotFigureOptions(FigureOptions):
     aux_plot_klass = AuxPlot
     selected = List
 
-    def get_loadable_aux_plots(self):
-        return reversed([pi for pi in self.aux_plots
-                         if pi.name and pi.name != NULL_STR and (pi.save_enabled or pi.plot_enabled)])
+    error_info_font = Property
+    error_info_fontname = Enum(*FONTS)
+    error_info_fontsize = Enum(*SIZES)
+
+    def add_aux_plot(self, name, i=0, **kw):
+        plt = self.aux_plot_klass(name=name, **kw)
+        plt.plot_enabled = True
+        try:
+            self.aux_plots[i] = plt
+        except IndexError:
+            self.aux_plots.append(plt)
+
+    # def get_loadable_aux_plots(self):
+    #     return reversed([pi for pi in self.aux_plots
+    #                      if pi.name and pi.name != NULL_STR and (pi.save_enabled or pi.plot_enabled)])
 
     def get_saveable_aux_plots(self):
-        # for a in self.aux_plots:
-        # print a.name, a.save_enabled
-
         return list(reversed([pi for pi in self.aux_plots
                               if pi.name and pi.name != NULL_STR and pi.save_enabled]))
 
@@ -463,14 +526,18 @@ class AuxPlotFigureOptions(FigureOptions):
         return list(reversed([pi for pi in self.aux_plots
                               if pi.name and pi.name != NULL_STR and pi.plot_enabled]))
 
+    def _get_error_info_font(self):
+        return '{} {}'.format(self.error_info_fontname, self.error_info_fontsize)
+
     def _aux_plots_default(self):
         return [self.aux_plot_klass() for _ in range(12)]
 
 
-class AgeOptions(AuxPlotFigureOptions):
+class AgeOptions(AuxPlotFigureOptions, JErrorMixin):
     error_calc_method = Enum(*ERROR_TYPES)
-    include_j_error = Bool(False)
-    include_j_error_in_mean = Bool(True)
+    # include_j_error = Bool(False)
+    # include_j_error_in_mean = Bool(True)
+
     include_irradiation_error = Bool(True)
     include_decay_error = Bool(False)
 
@@ -484,10 +551,6 @@ class AgeOptions(AuxPlotFigureOptions):
 
     analysis_label_format = Str
     analysis_label_display = Str
-
-    error_info_font = Property
-    error_info_fontname = Enum(*FONTS)
-    error_info_fontsize = Enum(*SIZES)
 
     label_font = Property
     label_fontname = Enum(*FONTS)
@@ -504,15 +567,9 @@ class AgeOptions(AuxPlotFigureOptions):
             key = '{}({})'.format(sample, ident)
         return key
 
-    def _include_j_error_changed(self, new):
-        if new:
-            self.include_j_error_in_mean = False
-
     def _get_label_font(self):
         return '{} {}'.format(self.label_fontname, self.label_fontsize)
 
-    def _get_error_info_font(self):
-        return '{} {}'.format(self.error_info_fontname,
-                              self.error_info_fontsize)
+
 
 # ============= EOF =============================================

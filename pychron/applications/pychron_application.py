@@ -15,22 +15,20 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from apptools.preferences.preference_binding import bind_preference
+from __future__ import absolute_import
+import os
+import sys
 from datetime import datetime
+
+from apptools.preferences.preference_binding import bind_preference
 from pyface.api import SplashScreen
 from pyface.image_resource import ImageResource
-from traits.api import List, Str, Bool
+from traits.api import List, Str
 
-
-# ============= standard library imports ========================
-import os
-# ============= local library imports  ==========================
-from pychron.envisage.resources import splash_icon
-from pychron.globals import globalv
-
-from pychron.paths import paths
 from pychron.applications.about_dialog import myAboutDialog
+from pychron.envisage.resources import splash_icon
 from pychron.envisage.tasks.base_tasks_application import BaseTasksApplication
+from pychron.paths import about_search_path
 
 
 def get_resource_root():
@@ -43,7 +41,7 @@ def get_resource_root():
     return path
 
 
-paths.set_search_paths(get_resource_root())
+# paths.set_search_paths(get_resource_root())
 
 
 def revision_str(rev):
@@ -59,58 +57,45 @@ def revision_str(rev):
 
 class PychronApplication(BaseTasksApplication):
     about_additions = List
-    username = Str
-    use_login = Bool
-    multi_user = Bool
     shortname = ''
+    environment = Str
 
-    def __init__(self, username=None, *args, **kw):
-        if username:
-            self.id = '{}.{}'.format(self.id, username)
-            self.name = '{} - {}'.format(self.name, username)
-            self.username = username
-            globalv.username = username
-
+    def __init__(self, *args, **kw):
         super(PychronApplication, self).__init__(*args, **kw)
 
-        bind_preference(self, 'use_login', 'pychron.general.use_login')
-        bind_preference(self, 'multi_user', 'pychron.general.multi_user')
+        bind_preference(self, 'environment', 'pychron.general.environment')
+
+    def _initialize_application_home(self):
+        """
+        override from envisage.application.Application because ETSConfig.application_home is already set
+        :return:
+        """
+        pass
+
+    def _environment_changed(self, old, new):
+        if new:
+            from pychron.environment.util import set_environment
+            set_environment(self.name.lower(), new)
+            if old:
+                if self.confirmation_dialog('Restart for changes to take effect. Restart now?'):
+                    os.execl(sys.executable, *([sys.executable] + sys.argv))
 
     def exit(self, **kw):
         self.report_logger_stats()
         super(PychronApplication, self).exit(**kw)
 
     def stop(self):
+        # from pychron.envisage.user_login import set_last_login
+        # self.debug('set last login. username={}'.format(globalv.username))
+        # set_last_login(globalv.username)
 
-        # from pychron.globals import globalv
-        # if globalv.multi_user:
-        # self.dump_user_file()
-        from pychron.envisage.user_login import set_last_login
-
-        # print 'set last login', self.username, self.use_login, self.multi_user
-        self.debug('set last login. username={} use_login={} multi_user={}'.format(self.username,
-                                                                                   self.use_login, self.multi_user))
-        set_last_login(self.username, self.use_login, self.multi_user)
-
-        if self.multi_user:
-            self.dump_user_file()
-
-        super(BaseTasksApplication, self).stop()
         import threading
         self.debug('------------------- Alive Threads -------------------')
         for t in threading.enumerate():
             self.debug(str(t))
         self.debug('-----------------------------------------------------')
 
-    def dump_user_file(self):
-        self.debug('dumping user file')
-        from pychron.envisage.user_login import dump_user_file
-
-        man = self.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
-        if man:
-            names = man.db.get_usernames()
-            if names:
-                dump_user_file(names=names, last_login_name=self.username)
+        return super(BaseTasksApplication, self).stop()
 
     def set_changes(self, changelist):
         self.about_dialog.changes = changelist
@@ -125,7 +110,7 @@ class PychronApplication(BaseTasksApplication):
     def _about_dialog_default(self):
         about_dialog = myAboutDialog(
             image=ImageResource(name='about.png',
-                                search_path=paths.about_search_path))
+                                search_path=about_search_path))
 
         about_dialog.version_info = self.get_version_info()
         about_dialog.additions = self.about_additions
@@ -143,5 +128,4 @@ class PychronApplication(BaseTasksApplication):
     def get_service_by_name(self, protocol, name):
         return self.get_service(protocol, 'name=="{}"'.format(name))
 
-# ============= views ===================================
 # ============= EOF ====================================

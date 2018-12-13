@@ -17,12 +17,15 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.spectrometer.thermo.source.base import ThermoSource
 
 
 class HelixSource(ThermoSource):
     nominal_hv = 9900
 
+    def read_z_symmetry(self):
+        return self._read_value('GetExtractionSymmetry', '_z_symmetry')
 # ============= EOF =============================================
 
 

@@ -14,17 +14,16 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
+# ============= standard library imports ========================
 from numpy import std, mean, where, delete
+# ============= enthought library imports =======================
 from traits.api import CStr, Str, CInt, Float, \
     TraitError, Property, Any, Either, Dict, Bool, List
 from uncertainties import ufloat
 
-from pychron.loggable import Loggable
-
-
-# ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.strtools import csv_to_ints
+from pychron.loggable import Loggable
 
 
 class MassSpecExportSpec(Loggable):
@@ -67,7 +66,7 @@ class MassSpecExportSpec(Loggable):
     level = Str
     irradiation_position = CInt
     production_ratios = Dict
-    chron_dosages = List
+    chron_segments = List
     interference_corrections = Dict
     production_name = Str
     j = Any
@@ -88,7 +87,7 @@ class MassSpecExportSpec(Loggable):
                  ('extract_device', 'extract_device'), ('tray', 'tray'),
                  ('position', 'position'),
                  ('power_requested', 'extract_value'),
-                 ('power_achieved', 'extract_value'),
+                 # ('power_achieved', 'extract_value'),
                  ('extract_value', 'extract_value'),
                  ('duration', 'duration'),
                  ('duration_at_request', 'duration'),
@@ -124,7 +123,7 @@ class MassSpecExportSpec(Loggable):
                     v = getattr(record, run_attr)
                     self.debug('setting {} to {}'.format(exp_attr, v))
                     setattr(self, exp_attr, v)
-                except TraitError, e:
+                except TraitError as e:
                     self.debug(e)
 
         # if hasattr(record, 'cdd_ic_factor'):
@@ -138,7 +137,7 @@ class MassSpecExportSpec(Loggable):
         # else:
         #     self.debug('{} has no ic_factor attribute'.format(record, ))
 
-        for a in ('chron_dosages',
+        for a in ('chron_segments',
                   'production_ratios',
                   'interference_corrections',
                   'production_name', 'j'):
@@ -156,7 +155,7 @@ class MassSpecExportSpec(Loggable):
             return ''
 
     def iter_isotopes(self):
-        return ((iso.name, iso.detector) for iso in self.isotopes.itervalues())
+        return ((iso.name, iso.detector) for iso in self.isotopes.values())
         # def _iter():
         # dm = self.data_manager
         # hfile = dm._frame
@@ -185,7 +184,7 @@ class MassSpecExportSpec(Loggable):
         try:
             b = self.isotopes[iso].blank.get_baseline_corrected_value()
         except KeyError:
-            self.debug('no blank for {} {}'.format(iso, self.isotopes.keys()))
+            self.debug('no blank for {} {}'.format(iso, list(self.isotopes.keys())))
             b = ufloat(0, 0)
 
         return b
@@ -194,9 +193,9 @@ class MassSpecExportSpec(Loggable):
         try:
             ps = self.isotopes[iso].uvalue
             # ps = self.signal_intercepts['{}signal'.format(iso)]
-        except KeyError, e:
+        except KeyError as e:
             self.debug('no key {} {}'.format(iso,
-                                             self.isotopes.keys()))
+                                             list(self.isotopes.keys())))
             ps = ufloat(0, 0)
 
         return ps
@@ -339,7 +338,7 @@ class MassSpecExportSpec(Loggable):
     def _set_position(self, pos):
         if pos:
             if ',' in pos:
-                self._position = list(map(int, pos.split(',')))
+                self._position = csv_to_ints(pos)
             else:
                 self._position = pos
 

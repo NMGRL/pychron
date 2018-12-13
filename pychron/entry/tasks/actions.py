@@ -17,8 +17,10 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import PAction as Action, PTaskAction as TaskAction
+from pychron.pychron_constants import DVC_PROTOCOL
 
 
 class AddMolecularWeightAction(Action):
@@ -81,6 +83,11 @@ class ClearSelectionAction(TaskAction):
     method = 'clear_selection'
 
 
+class RecoverAction(TaskAction):
+    name = 'Recover'
+    method = 'recover'
+
+
 class SavePDFAction(TaskAction):
     name = 'Save PDF'
     dname = 'Save PDF'
@@ -119,7 +126,44 @@ class PreviewGenerateIdentifiersAction(TaskAction):
 class ImportIrradiationAction(TaskAction):
     name = 'Import Irradiation...'
     dname = 'Import Irradiation'
-    method = 'import_irradiation'
+    # method = 'import_irradiation'
+
+    def perform(self, event):
+        app = event.task.window.application
+
+        mdb = 'pychron.mass_spec.database.massspec_database_adapter.MassSpecDatabaseAdapter'
+        mssource = app.get_service(mdb)
+        mssource.bind_preferences()
+
+        from pychron.data_mapper import do_import_irradiation
+        dvc = app.get_service('pychron.dvc.dvc.DVC')
+        plugin = app.get_plugin('pychron.entry.plugin')
+
+        sources = {obj: name for name, obj in plugin.data_sources}
+        sources['Mass Spec'] = mssource
+        do_import_irradiation(dvc=dvc, sources=sources, default_source='Mass Spec')
+
+
+class ImportAnalysesAction(Action):
+    name = 'Import Analyses...'
+    dname = 'Import Analyses'
+
+    # method = 'import_analyses'
+
+    def perform(self, event):
+        app = event.task.window.application
+        dvc = app.get_service('pychron.dvc.dvc.DVC')
+
+        from pychron.data_mapper import do_import_analyses
+
+        # sources = {}
+        # usgsvsc = app.get_service('pychron.data_mapper.sources.usgs_vsc_source.ViewUSGSVSCSource')
+        # sources[usgsvsc] = 'USGS VSC'
+
+        plugin = app.get_plugin('pychron.entry.plugin')
+        sources = {obj: name for name, obj in plugin.data_sources}
+
+        do_import_analyses(dvc, sources)
 
 
 class GenerateTrayAction(TaskAction):
@@ -204,7 +248,7 @@ class GenerateIrradiationTableAction(TaskAction):
         # a.make()
 
         from pychron.entry.irradiation_xls_writer import IrradiationXLSTableWriter
-        dvc = self.task.window.application.get_service('pychron.dvc.dvc.DVC')
+        dvc = self.task.window.application.get_service(DVC_PROTOCOL)
         if dvc is not None:
             if dvc.db.connect():
                 names = dvc.get_irradiation_names()
@@ -221,7 +265,7 @@ class ImportIrradiationHolderAction(Action):
     dname = 'Import Irradiation Holder'
 
     def perform(self, event):
-        from pychron.entry.loaders.irradiation_holder_loader import IrradiationHolderLoader
+        from pychron.entry.irradiation_holder_loader import IrradiationHolderLoader
         from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 
         man = IsotopeDatabaseManager()
@@ -242,4 +286,23 @@ class GetIGSNAction(TaskAction):
     dname = 'Get IGSNs'
     method = 'get_igsns'
 
+
+class GenerateStatusReportAction(TaskAction):
+    name = 'Status Report...'
+    dname = 'Status Report...'
+    method = 'generate_status_report'
+
+
+class SyncMetaDataAction(TaskAction):
+    name = 'Sync Repo/DB Metadata'
+    method = 'sync_metadata'
+
+    # def perform(self, event):
+    #     app = event.task.window.application
+    #     app.information_dialog('Sync Repo disabled')
+    #     return
+    #
+    #     dvc = app.get_service('pychron.dvc.dvc.DVC')
+    #     if dvc:
+    #         dvc.repository_db_sync('IR986', dry_run=False)
 # ============= EOF =============================================

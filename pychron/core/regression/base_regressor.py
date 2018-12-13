@@ -14,20 +14,19 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
+import logging
+import math
+import re
 
+from numpy import where, delete, polyfit
+# ============= enthought library imports =======================
 from traits.api import Array, List, Event, Property, Any, \
     Dict, Str, Bool, cached_property, HasTraits
-# ============= standard library imports ========================
-import re
-import math
-from numpy import where, delete
-# ============= local library imports  ==========================
-from tinv import tinv
-from pychron.core.stats.core import calculate_mswd, validate_mswd
-from pychron.pychron_constants import ALPHAS, PLUSMINUS
 
-import logging
+from pychron.core.regression.tinv import tinv
+from pychron.core.stats.core import calculate_mswd, validate_mswd
+from pychron.core.stats.monte_carlo import RegressionEstimator
+from pychron.pychron_constants import ALPHAS, PLUSMINUS
 
 logger = logging.getLogger('BaseRegressor')
 
@@ -61,7 +60,7 @@ class BaseRegressor(HasTraits):
     filter_ys = Array
     # _filtering = Bool(False)
 
-    error_calc_type = 'SD'
+    error_calc_type = 'CI'
 
     mswd = Property(depends_on='dirty, xs, ys')
     valid_mswd = Bool
@@ -76,7 +75,47 @@ class BaseRegressor(HasTraits):
     clean_yserr = Property(depends_on='dirty, xs, ys')
 
     degrees_of_freedom = Property
-    integrity_warning=False
+    integrity_warning = False
+
+    @property
+    def min(self):
+        return self.clean_ys.min()
+
+    @property
+    def max(self):
+        return self.clean_ys.max()
+
+    @property
+    def mean(self):
+        return self.clean_ys.mean()
+
+    @property
+    def std(self):
+        return self.clean_ys.std()
+
+    @property
+    def sem(self):
+        return self.std / self.n ** 0.5
+
+    @property
+    def rsquared(self):
+        return self._get_rsquared()
+
+    def _get_rsquared(self):
+        return 0
+
+    @property
+    def rsquared_adj(self):
+        return self._get_rsquared_adj()
+
+    def _get_rsquared_adj(self):
+        return 0
+
+    def get_xsquared_coefficient(self):
+        x = self.clean_xs
+        y = self.clean_ys
+        a, b, c = polyfit(x, y, 2)
+        return b
 
     def calculate_filtered_data(self):
         fod = self.filter_outliers_dict
@@ -87,17 +126,20 @@ class BaseRegressor(HasTraits):
             for _ in range(fod.get('iterations', 1)):
                 self.calculate(filtering=True)
 
+                self.dirty = True
                 outliers = self.calculate_outliers(nsigma=fod.get('std_devs', 2))
-                self.outlier_excluded = list(set(self.outlier_excluded + list(outliers)))
 
-        self.dirty = True
+                self.outlier_excluded = list(set(self.outlier_excluded + list(outliers)))
+                self.dirty = True
+
+        # self.dirty = True
         return self.clean_xs, self.clean_ys
 
     def get_excluded(self):
         return list(set(self.user_excluded + self.outlier_excluded + self.truncate_excluded))
 
     def set_truncate(self, trunc):
-        self.truncate = trunc
+        self.truncate = trunc or ''
         if self.truncate:
             m = re.match(r'[A-Za-z]+', self.truncate)
             if m:
@@ -105,6 +147,7 @@ class BaseRegressor(HasTraits):
                 exclude = eval(self.truncate, {k: self.xs})
                 excludes = list(exclude.nonzero()[0])
                 self.truncate_excluded = excludes
+                self.dirty = True
 
     def calculate(self, *args, **kw):
         pass
@@ -137,12 +180,14 @@ class BaseRegressor(HasTraits):
         return r
 
     def calculate_outliers(self, nsigma=2):
-        res = self.calculate_residuals()
-        cd = abs(res)
         s = self.calculate_standard_error_fit()
-        return where(cd > (s * nsigma))[0]
 
-    def calculate_standard_error_fit(self):
+        # calculate residuals for every point not just cleaned arrays
+        residuals = abs(self.ys - self.predict(self.xs))
+
+        return where(residuals >= (s * nsigma))[0]
+
+    def calculate_standard_error_fit(self, residuals=None):
         """
             mass spec calculates error in fit as
             see LeastSquares.CalcResidualsAndFitError
@@ -152,44 +197,47 @@ class BaseRegressor(HasTraits):
             NP = number of points
             q= number of fit params... parabolic =3
         """
-        res = self.calculate_residuals()
-        ss_res = (res ** 2).sum()
+        if residuals is None:
+            residuals = self.calculate_residuals()
 
-        n = res.shape[0]
-        q = len(self.coefficients)
-        s = (ss_res / (n - q)) ** 0.5
+        s = 0
+        if residuals is not None:
+            ss_res = (residuals ** 2).sum()
+
+            n = residuals.shape[0]
+            q = len(self.coefficients)
+            s = (ss_res / (n - q)) ** 0.5
+
         return s
 
     def calculate_residuals(self):
         if self._result:
             return self._result.resid
         else:
-            return self.clean_ys - self.predict(self.clean_xs)
+            xs, ys = self.clean_xs, self.clean_ys
+            if self._check_integrity(xs, ys):
+                return ys - self.predict(xs)
 
-    def calculate_error_envelope(self, rx, rmodel=None):
+    def calculate_error_envelope(self, rx, rmodel=None, error_calc=None):
         if rmodel is None:
             rmodel = self.predict(rx)
-        if self.error_calc_type == 'CI':
-            func = self.calculate_ci
-        elif self.error_calc_type == 'SD':
-            func = self.calculate_sd_error_envelope
-        else:
-            func = self.calculate_sem_error_envelope
-        return func(rx, rmodel)
 
-    def calculate_sd_error_envelope(self, rx, rmodel):
-        es = self.predict_error(rx, error_calc='SD')
-        return rmodel - es, rmodel + es
+        if error_calc is None:
+            error_calc = self.error_calc_type
 
-    def calculate_sem_error_envelope(self, rx, rmodel):
-        es = self.predict_error(rx, error_calc='SEM')
-        return rmodel - es, rmodel + es
+        es = self.predict_error(rx, error_calc=error_calc)
+        if es is None:
+            es = 0
 
-    def calculate_ci(self, rx, rmodel):
-        cors = self.calculate_ci_error(rx)
-        if rmodel is not None and cors is not None:
-            if rmodel.shape[0] and cors.shape[0]:
-                return rmodel - cors, rmodel + cors
+        return rmodel-es, rmodel+es
+
+    def calculate_mc_error(self, rx):
+        if isinstance(rx, (float, int)):
+            rx = [rx]
+
+        estimator = RegressionEstimator(10000, self)
+        _,es = estimator.estimate(rx)
+        return es
 
     def calculate_ci_error(self, rx):
         cors = self._calculate_ci(rx)
@@ -250,9 +298,13 @@ class BaseRegressor(HasTraits):
 
         fit = self.fit
         eq = '+'.join(ps)
-        s = '{}    y={}+{}'.format(fit, eq, constant)
+        s = '{}({})    y={}+{}'.format(fit, self.error_calc_type or 'CI', eq, constant)
         return s
 
+    def get_exog(self, x):
+        return x
+
+    # private
     def _calculate_ci(self, rx):
         if isinstance(rx, (float, int)):
             rx = [rx]
@@ -280,9 +332,7 @@ class BaseRegressor(HasTraits):
             d = n ** -1 + (rx - xm) ** 2 / ssx
             cors = ti * syx * d ** 0.5
 
-            # print rx, cors[0]
-
-            return cors
+            return cors / 2.
 
     def _delete_filtered_hook(self, outliers):
         pass
@@ -297,10 +347,12 @@ class BaseRegressor(HasTraits):
 
     @cached_property
     def _get_clean_xs(self):
+        # logger.debug('CLEAN XS={}'.format(self.xs.shape))
         return self._clean_array(self.xs)
 
     @cached_property
     def _get_clean_ys(self):
+        # logger.debug('CLEAN YS={}'.format(self.ys.shape))
         return self._clean_array(self.ys)
 
     @cached_property
@@ -316,7 +368,7 @@ class BaseRegressor(HasTraits):
         return delete(v, list(exc), 0)
 
     def _clean_array(self, v):
-        exc = set(self.user_excluded) ^ set(self.truncate_excluded) ^ set(self.outlier_excluded)
+        exc = self.get_excluded()
         return delete(v, list(exc), 0)
 
     def _check_integrity(self, x, y, verbose=False):

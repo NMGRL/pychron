@@ -14,45 +14,47 @@
 # limitations under the License.
 # ===============================================================================
 
+import os
+import time
+
+from numpy import array, asarray
 # =============enthought library imports=======================
 from traits.api import DelegatesTo, Instance, \
     Button, List, String, Event, Bool
-# from apptools.preferences.preference_binding import bind_preference
-# =============standard library imports =======================
-import os
-# from threading import Thread
-import time
-from numpy import array, asarray
-# =============local library imports  ==========================
-from pychron.core.helpers.filetools import add_extension
-from pychron.experiment.utilities.position_regex import POINT_REGEX, XY_REGEX, TRANSECT_REGEX
-from pychron.canvas.canvas2D.laser_tray_canvas import LaserTrayCanvas
-# from pychron.core.helpers.color_generators import colors8i as colors
 
+from pychron.canvas.canvas2D.laser_tray_canvas import LaserTrayCanvas
+from pychron.core.geometry.convex_hull import convex_hull
+from pychron.core.geometry.geometry import sort_clockwise
+from pychron.core.geometry.polygon_offset import polygon_offset
+from pychron.core.helpers.filetools import add_extension
+from pychron.core.helpers.strtools import csv_to_floats
+from pychron.core.ui.preference_binding import bind_preference, ColorPreferenceBinding
+from pychron.core.ui.thread import Thread
+from pychron.experiment.utilities.position_regex import POINT_REGEX, XY_REGEX, TRANSECT_REGEX
 from pychron.hardware.motion_controller import MotionController, \
     TargetPositionError, ZeroDisplacementException
-from pychron.paths import paths
-# from pychron.lasers.stage_managers.stage_visualizer import StageVisualizer
 from pychron.lasers.points.points_programmer import PointsProgrammer
-# from pychron.core.geometry.scan_line import make_scan_lines
-from pychron.core.geometry.geometry import sort_clockwise
-from pychron.core.geometry.convex_hull import convex_hull
-from pychron.core.geometry.polygon_offset import polygon_offset
-from pychron.core.ui.thread import Thread
-from pychron.core.ui.preference_binding import bind_preference, ColorPreferenceBinding
-
 from pychron.managers.motion_controller_managers.motion_controller_manager \
     import MotionControllerManager
-# from tray_calibration_manager import TrayCalibrationManager
-# from stage_component_editor import LaserComponentEditor
-# from pychron.canvas.canvas2D.markup.markup_items import CalibrationItem
-# from pattern.pattern_manager import PatternManager
+from pychron.paths import paths
 from pychron.stage.stage_manager import BaseStageManager
+
+
+def distance_threshold(p1, p2, tol):
+    if p2 is None:
+        return True
+
+    x1, y1 = p1
+    x2, y2 = p2
+    return ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5 > tol
 
 
 class StageManager(BaseStageManager):
     """
     """
+
+    autocenter_button = Button
+
     stage_controller_klass = String('Newport')
 
     stage_controller = Instance(MotionController)
@@ -83,11 +85,13 @@ class StageManager(BaseStageManager):
     back_button = Button
     stop_button = Button('Stop')
 
-    linear_move_history = List
-
     use_autocenter = Bool
+    keep_images_open = Bool(False)
 
     _default_z = 0
+    _cached_position = None
+    _cached_current_hole = None
+    _homing = False
 
     def __init__(self, *args, **kw):
         """
@@ -95,6 +99,12 @@ class StageManager(BaseStageManager):
         """
         super(StageManager, self).__init__(*args, **kw)
         self.stage_controller = self._stage_controller_factory()
+
+    def measure_grain_polygon(self):
+        pass
+
+    def stop_measure_grain_polygon(self):
+        pass
 
     def shutdown(self):
         self._save_stage_map()
@@ -104,20 +114,31 @@ class StageManager(BaseStageManager):
         dev.parent = self
         return dev
 
-    def goto_position(self, v):
+    def goto_position(self, v, **kw):
         if XY_REGEX[0].match(v):
             self._move_to_calibrated_position(v)
         elif POINT_REGEX.match(v) or TRANSECT_REGEX[0].match(v):
             self.move_to_point(v)
 
         else:
-            self.move_to_hole(v, user_entry=True)
+            self.move_to_hole(v, user_entry=True, **kw)
 
     def get_current_position(self):
         if self.stage_controller:
             x = self.stage_controller.x
             y = self.stage_controller.y
             return x, y
+
+    def get_current_hole(self):
+        pos = self.get_current_position()
+        if self.stage_map:
+            if distance_threshold(pos, self._cached_position, self.stage_map.g_dimension / 4):
+                h = self.get_calibrated_hole(*pos, tol=self.stage_map.g_dimension / 2.)
+                if h is not None:
+                    self._cached_current_hole = h
+                    self._cached_position = pos
+
+        return self._cached_current_hole
 
     def is_auto_correcting(self):
         return False
@@ -133,16 +154,20 @@ class StageManager(BaseStageManager):
         #        bind_preference(self.canvas, 'render_map', '{}.render_map'.format(pref_id))
         #
         bind_preference(self.canvas, 'crosshairs_kind', '{}.crosshairs_kind'.format(pref_id))
+        bind_preference(self.canvas, 'crosshairs_line_width', '{}.crosshairs_line_width'.format(pref_id))
         bind_preference(self.canvas, 'crosshairs_color',
                         '{}.crosshairs_color'.format(pref_id),
                         factory=ColorPreferenceBinding)
         bind_preference(self.canvas, 'crosshairs_radius', '{}.crosshairs_radius'.format(pref_id))
         bind_preference(self.canvas, 'crosshairs_offsetx', '{}.crosshairs_offsetx'.format(pref_id))
         bind_preference(self.canvas, 'crosshairs_offsety', '{}.crosshairs_offsety'.format(pref_id))
-        #
+
+        bind_preference(self.canvas, 'show_hole_label', '{}.show_hole_label'.format(pref_id))
+        bind_preference(self.canvas, 'hole_label_color', '{}.hole_label_color'.format(pref_id))
+        bind_preference(self.canvas, 'hole_label_size', '{}.hole_label_size'.format(pref_id))
+        self.canvas.handle_hole_label_size(self.canvas.hole_label_size)
+
         bind_preference(self.canvas, 'scaling', '{}.scaling'.format(pref_id))
-        #
-        #        bind_preference(self.tray_calibration_manager, 'style', '{}.calibration_style'.format(pref_id))
         bind_preference(self.canvas, 'show_bounds_rect',
                         '{}.show_bounds_rect'.format(pref_id))
 
@@ -150,7 +175,6 @@ class StageManager(BaseStageManager):
 
     def load(self):
         super(StageManager, self).load()
-
         config = self.get_configuration()
         if config:
             self._default_z = self.config_get(config, 'Defaults', 'z', default=13, cast='float')
@@ -190,8 +214,7 @@ class StageManager(BaseStageManager):
     def single_axis_move(self, *args, **kw):
         return self.stage_controller.single_axis_move(*args, **kw)
 
-    def linear_move(self, x, y, use_calibration=True,
-                    check_moving=False, abort_if_moving=False, **kw):
+    def linear_move(self, x, y, use_calibration=True, check_moving=False, abort_if_moving=False, **kw):
 
         if check_moving:
             if self.moving():
@@ -203,8 +226,6 @@ class StageManager(BaseStageManager):
                     self.stop()
                     self.debug('Motion stopped. moving to {},{}'.format(x, y))
 
-        cpos = self.get_uncalibrated_xy()
-        self.linear_move_history.append((cpos, {}))
         pos = (x, y)
         if use_calibration:
             pos = self.get_calibrated_position(pos)
@@ -214,7 +235,7 @@ class StageManager(BaseStageManager):
         self.stage_controller.linear_move(*pos, **kw)
 
     def move_to_hole(self, hole, **kw):
-        if self.stage_map.check_valid_hole(hole):
+        if self.stage_map.check_valid_hole(hole, **kw):
             self._move(self._move_to_hole, hole, name='move_to_hole', **kw)
 
     def move_to_point(self, pt):
@@ -311,28 +332,21 @@ class StageManager(BaseStageManager):
         return pos
 
     def get_calibrated_xy(self):
-        pos = (self.stage_controller._x_position, self.stage_controller._y_position)
+        pos = (self.stage_controller.x, self.stage_controller.y)
         if self.stage_controller.xy_swapped():
             pos = pos[1], pos[0]
 
         pos = self.canvas.map_offset_position(pos)
         return self.get_calibrated_position(pos)
 
-    def get_calibrated_hole(self, x, y):
+    def get_calibrated_hole(self, x, y, tol):
         ca = self.canvas.calibration_item
         if ca is not None:
             smap = self.stage_map
 
-            rot = ca.rotation
-            cpos = ca.center
-
-            def _filter(hole, x, y, tol=0.1):
-                cx, cy = smap.map_to_calibration((hole.x, hole.y), cpos, rot)
-                return abs(cx - x) < tol and abs(cy - y) < tol
-
-            return next((si for si in smap.sample_holes
-                         if _filter(si, x, y)
-                         ), None)
+            xx, yy = smap.map_to_uncalibration((x, y), ca.center, ca.rotation)
+            return next((hole for hole in smap.sample_holes
+                         if abs(hole.x - xx) < tol and abs(hole.y - yy) < tol), None)
 
     def get_hole_xy(self, key):
         pos = self.stage_map.get_hole_pos(key)
@@ -351,7 +365,11 @@ class StageManager(BaseStageManager):
     def _home(self):
         """
         """
-        #        define_home = True
+        if self._homing:
+            return
+
+        self._homing = True
+
         if self.home_option == 'Home All':
 
             msg = 'homing all motors'
@@ -384,8 +402,7 @@ class StageManager(BaseStageManager):
 
             time.sleep(1)
             self.info('setting z to nominal position. {} mm '.format(self._default_z))
-            self.stage_controller.single_axis_move('z', self._default_z,
-                                                   block=True)
+            self.stage_controller.single_axis_move('z', self._default_z, block=True)
             self.stage_controller._z_position = self._default_z
 
         if self.home_option in ['XY', 'Home All']:
@@ -396,8 +413,12 @@ class StageManager(BaseStageManager):
             self.stage_controller._y_position = -25
 
             self.info('moving to center')
-            self.stage_controller.linear_move(0, 0, block=True,
-                                              sign_correct=False)
+            try:
+                self.stage_controller.linear_move(0, 0, block=True, sign_correct=False)
+            except TargetPositionError as e:
+                self.warning_dialog('Move Failed. {}'.format(e))
+
+        self._homing = False
 
     def _get_hole_by_position(self, x, y):
         if self.stage_map:
@@ -468,7 +489,7 @@ class StageManager(BaseStageManager):
 
         # set motors
         if motors is not None:
-            for k, v in motors.itervalues():
+            for k, v in motors.values():
                 '''
                     motor will not set if it has been locked using set_motor_lock or
                     remotely using SetMotorLock
@@ -690,7 +711,7 @@ class StageManager(BaseStageManager):
                 if end_callback:
                     end_callback()
 
-                for k, v in setmotors.iteritems():
+                for k, v in setmotors.items():
                     self.parent.set_motor(k, v, block=True)
 
                 if start_callback:
@@ -736,41 +757,48 @@ class StageManager(BaseStageManager):
         self.info('Move complete')
         self.update_axes()
 
-    def _move_to_hole(self, key, correct_position=True, user_entry=False):
+    def _move_to_hole(self, key, correct_position=True, user_entry=False, autocenter_only=False):
         self.info('Move to hole {} type={}'.format(key, str(type(key))))
-        self.temp_hole = key
-        self.temp_position = self.stage_map.get_hole_pos(key)
-        pos = self.stage_map.get_corrected_hole_pos(key)
-        self.info('position {}'.format(pos))
+
         autocentered_position = False
-        if pos is not None:
-
-            if abs(pos[0]) < 1e-6:
-                pos = self.stage_map.get_hole_pos(key)
-                # map the position to calibrated space
-                pos = self.get_calibrated_position(pos, key=key)
-            else:
-                # check if this is an interpolated position
-                # if so probably want to do an autocentering routine
-                hole = self.stage_map.get_hole(key)
-                if hole.interpolated:
-                    self.info('using an interpolated value')
+        if not autocenter_only:
+            self.temp_hole = key
+            self.temp_position = self.stage_map.get_hole_pos(key)
+            pos = self.stage_map.get_corrected_hole_pos(key)
+            self.info('position {}'.format(pos))
+            if pos is not None:
+                if abs(pos[0]) < 1e-6:
+                    pos = self.stage_map.get_hole_pos(key)
+                    # map the position to calibrated space
+                    pos = self.get_calibrated_position(pos, key=key)
                 else:
-                    self.info('using previously calculated corrected position')
-                    autocentered_position = True
-            try:
-                self.stage_controller.linear_move(block=True, raise_zero_displacement=True, *pos)
-            except TargetPositionError, e:
-                self.warning('Move to {} failed'.format(pos))
-                self.parent.emergency_shutoff(str(e))
-                return
-            except ZeroDisplacementException:
-                correct_position = False
-
+                    # check if this is an interpolated position
+                    # if so probably want to do an autocentering routine
+                    hole = self.stage_map.get_hole(key)
+                    if hole.interpolated:
+                        self.info('using an interpolated value')
+                    else:
+                        self.info('using previously calculated corrected position')
+                        autocentered_position = True
+                try:
+                    self.stage_controller.linear_move(block=True, source='move_to_hole {}'.format(pos),
+                                                      raise_zero_displacement=True, *pos)
+                except TargetPositionError as e:
+                    self.warning('(001) Move to {} failed'.format(pos))
+                    self.parent.emergency_shutoff(str(e))
+                    return
+                except ZeroDisplacementException:
+                    correct_position = False
+        try:
             self._move_to_hole_hook(key, correct_position,
-                                    autocentered_position)
-            self.finish_move_to_hole(user_entry)
-            self.info('Move complete')
+                                autocentered_position)
+        except TargetPositionError as e:
+            self.warning('(002) Move failed. {}'.format(e))
+            self.parent.emergency_shutoff(str(e))
+            return
+
+        self.finish_move_to_hole(user_entry)
+        self.info('Move complete')
 
     def _move_to_hole_hook(self, *args):
         pass
@@ -832,7 +860,7 @@ class StageManager(BaseStageManager):
 
     def _move_to_calibrated_position(self, pos):
         try:
-            args = map(float, pos.split(','))
+            args = csv_to_floats(pos)
         except ValueError:
             self.warning('invalid calibrated position "{}". Could not convert to floats'.format(pos))
             return
@@ -906,17 +934,6 @@ class StageManager(BaseStageManager):
     def _stop_button_fired(self):
         self._stop()
 
-    def _back_button_fired(self):
-        pos, kw = self.linear_move_history.pop(-1)
-        t = Thread(target=self.stage_controller.linear_move, args=pos, kwargs=kw)
-        t.start()
-        self.move_thread = t
-
-        # def __stage_map_changed(self):
-        # self.canvas.set_map(self._stage_map)
-        # self.tray_calibration_manager.load_calibration(stage_map=self.stage_map)
-        # self.canvas.request_redraw()
-
     def _ejoystick_fired(self):
         self.joystick = not self.joystick
         if self.joystick:
@@ -934,12 +951,11 @@ class StageManager(BaseStageManager):
     def _home_fired(self):
         """
         """
-        t = Thread(
-            name='stage.home',
-            target=self._home)
+        t = Thread(name='stage.home', target=self._home)
         t.start()
         # need to store a reference to thread so it is not garbage collected
         self.move_thread = t
+        # do_later(self._home)
 
     def _test_fired(self):
         #        self.do_pattern('testpattern')
@@ -1000,6 +1016,7 @@ class StageManager(BaseStageManager):
         pp.on_trait_change(self.move_polygon, 'polygon')
         pp.on_trait_change(self.move_polyline, 'line')
         return pp
+
 
 # ===============================================================================
 # mass spec hacks

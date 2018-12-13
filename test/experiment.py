@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import unittest
 import os
 
@@ -22,6 +24,7 @@ from pychron.experiment.experimentor import Experimentor
 from test.database import isotope_manager_factory
 from pychron.experiment.tasks.experiment_editor import ExperimentEditor
 from pychron.experiment.tasks.experiment_task import ExperimentEditorTask
+from six.moves import zip
 # from pychron.database.records.isotope_record import IsotopeRecord
 
 
@@ -70,7 +73,7 @@ class ExperimentTest2(BaseExperimentTest):
         aqs = (1, 46, 46, 47, 46, 46, 2)
         aqs = (1, 46, 46, 45, 46, 46, 2)
         for i, (aq, an) in enumerate(zip(aqs, queue.automated_runs)):
-            print i, an.labnumber, an.aliquot, aq, 'aaa'
+            print(i, an.labnumber, an.aliquot, aq, 'aaa')
             self.assertEqual(an.aliquot, aq)
 
     def testSteps(self):
@@ -81,7 +84,7 @@ class ExperimentTest2(BaseExperimentTest):
         sts = ('', 'A', 'B', 'E', 'C', 'D')
         for i, (st, an) in enumerate(zip(sts, queue.automated_runs)):
         #             if st in ('E', 'F'):
-            print i, an.labnumber, an.step, st, an.aliquot
+            print(i, an.labnumber, an.step, st, an.aliquot)
             self.assertEqual(an.step, st)
 
 
@@ -114,7 +117,7 @@ class ExperimentTest(BaseExperimentTest):
                '', '', '', 'C', 'D')
         for i, (st, an) in enumerate(zip(sts, queue.automated_runs)):
         #             if st in ('E', 'F'):
-            print i, an.labnumber, an.step, st, an.aliquot
+            print(i, an.labnumber, an.step, st, an.aliquot)
             self.assertEqual(an.step, st)
 
     @unittest.skip('foo')
@@ -168,7 +171,7 @@ class HumanErrorCheckerTest(BaseExperimentTest):
 
     def testNoLabnumber(self):
         err = self._get_errors()
-        self.assertTrue('-01' in err.keys())
+        self.assertTrue('-01' in list(err.keys()))
         self.assertEqual(err['-01'], 'no labnumber')
 
     def testNoDuration(self):

@@ -16,15 +16,15 @@
 
 
 # =============enthought library imports=======================
-from traits.api import Float, Property, TraitError
-# import apptools.sweet_pickle as pickle
-# =============standard library imports ========================
+from __future__ import absolute_import
+import six.moves.cPickle as pickle
 import os
-import cPickle as pickle
-# =============local library imports  ==========================
-from fusions_logic_board import FusionsLogicBoard
-from pychron.paths import paths
+
+from traits.api import Float, Property, TraitError
+
+from .fusions_logic_board import FusionsLogicBoard
 from pychron.hardware.meter_calibration import MeterCalibration
+from pychron.paths import paths
 
 
 class FusionsCO2LogicBoard(FusionsLogicBoard):
@@ -98,6 +98,15 @@ class FusionsCO2LogicBoard(FusionsLogicBoard):
             return
 
         return r
+
+    def get_output(self):
+        pass
+
+    def get_response(self, **kw):
+        return self.internal_meter_response
+
+    def get_setpoint(self):
+        return self._request_power
 
     def _disable_laser(self):
         """

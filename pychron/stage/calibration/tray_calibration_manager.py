@@ -15,18 +15,19 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Float, Event, String, Any, Enum, Button, List, Instance
-# ============= standard library imports ========================
-import shutil
-import cPickle as pickle
+from __future__ import absolute_import
+import six.moves.cPickle as pickle
 import os
-# ============= local library imports  ==========================
+import shutil
+
+from traits.api import Float, Event, String, Any, Enum, Button, List, Instance
+
 from pychron.loggable import Loggable
-from pychron.stage.calibration.auto_calibrator import SemiAutoCalibrator
-from pychron.stage.calibration.free_calibrator import FreeCalibrator
+from pychron.paths import paths
+from pychron.stage.calibration.auto_calibrator import SemiAutoCalibrator, AutoCalibrator
 from pychron.stage.calibration.calibrator import TrayCalibrator, \
     LinearCalibrator, BaseCalibrator
-from pychron.paths import paths
+from pychron.stage.calibration.free_calibrator import FreeCalibrator
 from pychron.stage.calibration.hole_calibrator import HoleCalibrator
 
 TRAY_HELP = '''1. Locate center hole
@@ -46,7 +47,8 @@ HELP_DICT = {
 STYLE_DICT = {'Free': FreeCalibrator,
               'Hole': HoleCalibrator,
               'Linear': LinearCalibrator,
-              'SemiAuto': SemiAutoCalibrator}
+              'SemiAuto': SemiAutoCalibrator,
+              'Auto': AutoCalibrator}
 
 
 def get_hole_calibration(name, hole):
@@ -75,9 +77,11 @@ class TrayCalibrationManager(Loggable):
     calibrator = Instance(BaseCalibrator)
     # calibrator = Property(depends_on='style')
 
-    add_holes_button = Button
-    reset_holes_button = Button
+    cancel_button = Button('Cancel')
+    add_holes_button = Button('Add Holes')
+    reset_holes_button = Button('Reset Holes')
     holes_list = List
+    set_center_button = Button('Set Center Guess')
 
     def isCalibrating(self):
         return self.calibration_step != 'Calibrate'
@@ -135,6 +139,14 @@ class TrayCalibrationManager(Loggable):
     # ===============================================================================
     # handlers
     # ===============================================================================
+    def _cancel_button_fired(self):
+        if self.calibrator:
+            self.calibrator.cancel()
+
+    def _set_center_button_fired(self):
+        x, y = self.parent.get_current_position()
+        self.parent.stage_map.set_center_guess(x, y)
+
     def _reset_holes_button_fired(self):
         name = self.parent.stage_map_name
         root = os.path.join(paths.hidden_dir, '{}_calibrations'.format(name))
@@ -174,7 +186,7 @@ class TrayCalibrationManager(Loggable):
         x, y = self.parent.get_current_position()
         self.rotation = 0
         if self.calibrator is None:
-            self.style = ''
+            # self.style = ''
             self.style = 'Tray'
 
         kw = self.calibrator.handle(self.calibration_step,

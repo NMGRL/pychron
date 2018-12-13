@@ -15,12 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
+from six.moves import zip
 from traits.api import HasTraits, List, Property, Any, Instance
-# ============= standard library imports ========================
-from itertools import groupby
-# ============= local library imports  ==========================
-# from pychron.pipeline.plot import FigureLayout
-from pychron.pipeline.plot.layout import FigureLayout
+
+# from pychron.pipeline.plot.layout import FigureLayout
+from pychron.core.codetools.inspection import caller
+from pychron.core.helpers.iterfuncs import groupby_key
 
 
 class FigureModel(HasTraits):
@@ -32,7 +34,7 @@ class FigureModel(HasTraits):
     _panel_klass = Instance('pychron.pipeline.plotters.figure_panel.FigurePanel')
     titles = List
 
-    layout = Instance(FigureLayout, ())
+    # layout = Instance(FigureLayout, ())
     analysis_groups = List
 
     def refresh(self, force=False):
@@ -62,29 +64,30 @@ class FigureModel(HasTraits):
     # def _analyses_items_changed(self):
     #     self.refresh_panels()
 
+    @caller
     def refresh_panels(self):
         ps = self._make_panels()
         self.panels = ps
         self.panel_gen = (gi for gi in self.panels)
 
+    def _panel_factory(self, *args, **kw):
+        p = self._panel_klass(*args, **kw)
+        return p
+
     def _make_panels(self):
         if self.analysis_groups:
-            gs = [self._panel_klass(analyses=ag, plot_options=self.plot_options, graph_id=gid) for gid, ag in
+            gs = [self._panel_factory(analyses=ag, plot_options=self.plot_options, graph_id=gid) for gid, ag in
                   enumerate(self.analysis_groups)]
-
         else:
-            key = lambda x: x.graph_id
-            ans = sorted(self.analyses, key=key)
-            gs = [self._panel_klass(analyses=list(ais),
+            gs = [self._panel_factory(analyses=list(ais),
                                     plot_options=self.plot_options,
                                     graph_id=gid)
-                  for gid, ais in groupby(ans, key=key)]
-
+                  for gid, ais in groupby_key(self.analyses, 'graph_id')]
             # if hasattr(self, 'references'):
-            gg = groupby(self.references, key=key)
+            gg = groupby_key(self.references, 'graph_id')
             for gi in gs:
                 try:
-                    gid, ais = gg.next()
+                    gid, ais = next(gg)
                     gi.references = list(ais)
                 except StopIteration:
                     break
@@ -105,6 +108,6 @@ class FigureModel(HasTraits):
         return len(self.panels)
 
     def next_panel(self):
-        return self.panel_gen.next()
+        return next(self.panel_gen)
 
         # ============= EOF =============================================

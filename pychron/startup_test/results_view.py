@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import time
 from threading import Thread
 
@@ -151,6 +152,7 @@ class ResultsView(Controller):
                  title='Test Results',
 
                  buttons=buttons,
+                 height=500,
                  width=650,
                  kind='livemodal',
                  resizable=True)

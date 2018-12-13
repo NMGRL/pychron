@@ -14,69 +14,97 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-import sys
+
+from __future__ import absolute_import
+
+import logging
 
 from envisage.core_plugin import CorePlugin
 from pyface.message_dialog import warning
 
-# ============= standard library imports ========================
-import logging
-# ============= local library imports  ==========================
 from pychron.displays.gdisplays import gTraceDisplay
+from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.envisage.key_bindings import update_key_bindings
 from pychron.envisage.tasks.base_plugin import BasePlugin
 from pychron.envisage.tasks.tasks_plugin import PychronTasksPlugin, myTasksPlugin
 from pychron.logger.tasks.logger_plugin import LoggerPlugin
-from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.user.tasks.plugin import UsersPlugin
 
 logger = logging.getLogger()
 
 PACKAGE_DICT = dict(
-    # CanvasDesignerPlugin='pychron.canvas.tasks.canvas_plugin',
     ArArConstantsPlugin='pychron.constants.tasks.arar_constants_plugin',
     DashboardServerPlugin='pychron.dashboard.tasks.server.plugin',
     DashboardClientPlugin='pychron.dashboard.tasks.client.plugin',
     DatabasePlugin='pychron.database.tasks.database_plugin',
+    LabspyClientPlugin='pychron.labspy.tasks.plugin',
+    # PsychoDramaPlugin='pychron.psychodrama.tasks.plugin',
+    UpdatePlugin='pychron.updater.tasks.update_plugin',
+
+    # data reduction
+    MassSpecPlugin='pychron.mass_spec.tasks.plugin',
+    DVCPlugin='pychron.dvc.tasks.dvc_plugin',
+    GitLabPlugin='pychron.git.tasks.gitlab_plugin',
+    GitHubPlugin='pychron.git.tasks.github_plugin',
+    PipelinePlugin='pychron.pipeline.tasks.plugin',
+
+    ClassifierPlugin='pychron.classifier.tasks.plugin',
+    MDDPlugin='pychron.mdd.tasks.plugin',
+    AutoPlugin='pychron.pipeline.tasks.auto_plugin',
+
+    # data mappers
+    USGSVSCDataPlugin='pychron.data_mapper.tasks.usgs_vsc.plugin',
+    WiscArDataPlugin='pychron.data_mapper.tasks.wiscar.plugin',
+
+    # experiment
     EntryPlugin='pychron.entry.tasks.entry_plugin',
     ExperimentPlugin='pychron.experiment.tasks.experiment_plugin',
+    PyScriptPlugin='pychron.pyscripts.tasks.pyscript_plugin',
+    SimpleIdentifierPlugin='pychron.entry.tasks.simple_identifier.plugin',
+
+    # hardware
+    ClientExtractionLinePlugin='pychron.extraction_line.tasks.client_extraction_line_plugin',
     ExternalPipettePlugin='pychron.external_pipette.tasks.external_pipette_plugin',
     ExtractionLinePlugin='pychron.extraction_line.tasks.extraction_line_plugin',
-    ClientExtractionLinePlugin='pychron.extraction_line.tasks.client_extraction_line_plugin',
-    # GeoPlugin='pychron.geo.tasks.geo_plugin',
-    VideoPlugin='pychron.image.tasks.video_plugin',
     ChromiumCO2Plugin='pychron.lasers.tasks.plugins.chromium_co2',
+    ChromiumDiodePlugin='pychron.lasers.tasks.plugins.chromium_diode',
     ChromiumUVPlugin='pychron.lasers.tasks.plugins.chromium_uv',
     FusionsDiodePlugin='pychron.lasers.tasks.plugins.diode',
     FusionsCO2Plugin='pychron.lasers.tasks.plugins.co2',
     FusionsUVPlugin='pychron.lasers.tasks.plugins.uv',
-        LoadingPlugin='pychron.loading.tasks.loading_plugin',
+    LoadingPlugin='pychron.loading.tasks.loading_plugin',
     CoreLaserPlugin='pychron.lasers.tasks.plugins.laser_plugin',
-    # MediaServerPlugin='pychron.media_server.tasks.media_server_plugin',
-    # ProcessingPlugin='pychron.processing.tasks.processing_plugin',
-    PipelinePlugin='pychron.pipeline.tasks.plugin',
-    PyScriptPlugin='pychron.pyscripts.tasks.pyscript_plugin',
+    NMGRLFurnacePlugin='pychron.furnace.tasks.nmgrl.furnace_plugin',
+    NMGRLFurnaceControlPlugin='pychron.furnace.tasks.nmgrl.furnace_control_plugin',
+    LDEOFurnacePlugin='pychron.furnace.tasks.ldeo.furnace_plugin',
+    LDEOFurnaceControlPlugin='pychron.furnace.tasks.ldeo.furnace_control_plugin',
 
     # spectrometers
     ArgusSpectrometerPlugin='pychron.spectrometer.tasks.thermo.argus',
     HelixSpectrometerPlugin='pychron.spectrometer.tasks.thermo.helix',
     MapSpectrometerPlugin='pychron.spectrometer.tasks.map_spectrometer_plugin',
-
-    EmailPlugin='pychron.social.email.tasks.plugin',
-    MassSpecPlugin='pychron.mass_spec.tasks.plugin',
-    # SystemMonitorPlugin='pychron.system_monitor.tasks.system_monitor_plugin',
-    DVCPlugin='pychron.dvc.tasks.dvc_plugin',
-    GitLabPlugin='pychron.git.tasks.gitlab_plugin',
-    GitHubPlugin='pychron.git.tasks.github_plugin',
-    # WorkspacePlugin='pychron.workspace.tasks.workspace_plugin',
-    LabBookPlugin='pychron.labbook.tasks.labbook_plugin',
-    LabspyClientPlugin='pychron.labspy.tasks.plugin',
-    UpdatePlugin='pychron.updater.tasks.update_plugin',
+    NGXSpectrometerPlugin='pychron.spectrometer.tasks.isotopx.ngx',
+    # resources
+    MediaStoragePlugin='pychron.media_storage.tasks.plugin',
     ImagePlugin='pychron.image.tasks.image_plugin',
-    NMGRLFurnacePlugin='pychron.furnace.tasks.furnace_plugin',
-    NMGRLFurnaceControlPlugin='pychron.furnace.tasks.furnace_control_plugin',
-    IGSNPlugin='pychron.repo.tasks.igsn_plugin',
-    PsychoDramaPlugin='pychron.psychodrama.tasks.plugin'
+    VideoPlugin='pychron.image.tasks.video_plugin',
+
+    # outside database/repositories
+    IGSNPlugin='pychron.igsn.tasks.igsn_plugin',
+    GeochronPlugin='pychron.geochron.tasks.geochron_plugin',
+
+    # social
+    EmailPlugin='pychron.social.email.tasks.plugin',
+    GoogleCalendarPlugin='pychron.social.google_calendar.tasks.plugin',
+    TwitterPlugin='pychron.social.twitter.plugin'
+    # WorkspacePlugin='pychron.workspace.tasks.workspace_plugin',
+
+    # LabBookPlugin='pychron.labbook.tasks.labbook_plugin',
+    # SystemMonitorPlugin='pychron.system_monitor.tasks.system_monitor_plugin',
+    # CanvasDesignerPlugin='pychron.canvas.tasks.canvas_plugin',
+    # MediaServerPlugin='pychron.media_server.tasks.media_server_plugin',
+    # ProcessingPlugin='pychron.processing.tasks.processing_plugin',
+
 )
 
 
@@ -107,10 +135,10 @@ def get_hardware_plugins():
 
 def get_klass(package, name):
     try:
-        m = __import__(package, globals(), locals(), [name], -1)
+        m = __import__(package, globals(), locals(), [name])
         klass = getattr(m, name)
 
-    except ImportError, e:
+    except ImportError as e:
         import traceback
 
         traceback.print_exc()
@@ -125,8 +153,6 @@ def get_plugin(pname):
     if not pname.endswith('Plugin'):
         pname = '{}Plugin'.format(pname)
 
-    # print PACKAGE_DICT.keys()
-    # print pname,pname in PACKAGE_DICT.keys()
     if pname in PACKAGE_DICT:
         package = PACKAGE_DICT[pname]
         klass = get_klass(package, pname)
@@ -153,8 +179,6 @@ def get_plugin(pname):
 def get_user_plugins():
     """
     """
-    # append plugins dir to the sys path
-    #    sys.path.append(plugins_dir)
 
     plugins = []
     ps = InitializationParser().get_plugins()
@@ -162,7 +186,7 @@ def get_user_plugins():
     core_added = False
     for p in ps:
         # if laser plugin add CoreLaserPlugin
-        if p in ('FusionsCO2', 'FusionsDiode'):
+        if p in ('FusionsCO2', 'FusionsDiode', 'ChromiumCO2'):
             plugin = get_plugin('CoreLaserPlugin')
             if plugin and not core_added:
                 core_added = True
@@ -175,28 +199,23 @@ def get_user_plugins():
     return plugins
 
 
-def app_factory(klass, user):
+def app_factory(klass):
     """
         assemble the plugins
         return a Pychron TaskApplication
     """
     pychron_plugin = PychronTasksPlugin()
 
-    plugins = [
-        CorePlugin(),
-        myTasksPlugin(),
-        pychron_plugin,
-        # FoobotPlugin(),
-        LoggerPlugin(),
-        UsersPlugin()]
-
-    # if UpdatePlugin is not None:
-    #     plugins.append(UpdatePlugin())
+    plugins = [CorePlugin(),
+               myTasksPlugin(),
+               pychron_plugin,
+               LoggerPlugin(),
+               UsersPlugin()]
 
     plugins += get_hardware_plugins()
     plugins += get_user_plugins()
 
-    app = klass(username=user, plugins=plugins)
+    app = klass(plugins=plugins)
 
     # set key bindings
     update_key_bindings(pychron_plugin.actions)
@@ -204,7 +223,7 @@ def app_factory(klass, user):
     return app
 
 
-def launch(klass, user):
+def launch(klass):
     """
     """
     # login protection
@@ -219,7 +238,7 @@ def launch(klass, user):
     #         logger.critical('Login failed')
     #         return
 
-    app = app_factory(klass, user)
+    app = app_factory(klass)
 
     try:
 
@@ -240,7 +259,7 @@ def launch(klass, user):
         gTraceDisplay.add_text(tb)
         gTraceDisplay.edit_traits(kind='livemodal')
 
-    finally:
-        sys.exit(0)
+        # finally:
+        #     sys.exit(0)
 
 # ============= EOF ====================================

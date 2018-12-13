@@ -20,6 +20,7 @@
 
 
 # ============= EOF =============================================
+from __future__ import absolute_import
 from pychron.core.helpers.strtools import to_bool
 
 
@@ -45,8 +46,7 @@ def _itrim_bool(func, invert=False):
     def wrapper(*args, **kw):
         r = func(*args, **kw)
         if r:
-            r = r.strip()
-            r = to_bool(r)
+            r = to_bool(r.strip())
             if invert:
                 r = not r
         return r

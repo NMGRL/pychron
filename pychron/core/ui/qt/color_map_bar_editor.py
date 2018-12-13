@@ -15,13 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from matplotlib.cm import get_cmap
+from __future__ import absolute_import
+from chaco.data_range_1d import DataRange1D
+from chaco.default_colormaps import color_map_dict, color_map_name_dict
+from pyface.qt.QtGui import QPainter, QColor, QFrame
 from traits.api import Float, Int, Str
 from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
+from numpy import array
 
-# ============= standard library imports ========================
-from PySide.QtGui import QPainter, QColor, QFrame
 # ============= local library imports  ==========================
 # from matplotlib.cm import get_cmap
 
@@ -62,20 +64,24 @@ class Bar(QFrame):
         else:
             nv = min(1, max(0, (v - self.low) / (self.high - self.low)))
 
-        vs = self.cmap(nv)[:3]
-        self.value = map(lambda x: x * 255, vs)
+        vs = self.cmap.map_screen(array([nv,]))[0][:3]
+        self.value = [x * 255 for x in vs]
         self.update()
 
 
 class _BarGaugeEditor(Editor):
     def init(self, parent):
         self.control = Bar()
-        self.control.low = self.factory.low
-        self.control.high = self.factory.high
+        self.control.low = low = self.factory.low
+        self.control.high = high = self.factory.high
         self.control.color_scalar = self.factory.color_scalar
         self.control.bar_width = self.factory.width
         self.control.scale = self.factory.scale
-        self.control.cmap = get_cmap(self.factory.colormap)
+
+        # if self.factory.scale == 'power':
+        #     high = N = 1 / float(self.color_scalar)
+        #     A = 1 / self.high ** N
+        self.control.cmap = color_map_name_dict[self.factory.colormap](DataRange1D(low_setting=0, high_setting=1))
 
     def update_editor(self):
         if self.control:

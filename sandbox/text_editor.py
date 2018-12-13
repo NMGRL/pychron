@@ -2,13 +2,13 @@
  test script that periodically
  sends random messages using zmq.Publisher patterb
 """
-import sys
 import os
+import sys
+
 from traits.has_traits import HasTraits
 from traits.trait_types import Str
 from traitsui.item import UItem
 from traitsui.view import View
-
 
 d = os.path.dirname(os.getcwd())
 sys.path.append(d)

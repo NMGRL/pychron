@@ -14,40 +14,18 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-import os
-from cStringIO import StringIO
-
-from traits.api import provides
 # ============= standard library imports ========================
+from __future__ import absolute_import
 import ctypes
+import os
+from io import StringIO
+from PIL import Image
 from numpy import zeros, uint8, uint32
-import Image as pil
+# ============= enthought library imports =======================
+from traits.api import provides
 # ============= local library imports  ==========================
 from pychron.image.i_camera import ICamera
-
-lib = ctypes.cdll.LoadLibrary('libtoupcam.dylib')
-
-TOUPCAM_EVENT_EXPOSURE = 1  # exposure time changed
-TOUPCAM_EVENT_TEMPTINT = 2  # white balance changed
-TOUPCAM_EVENT_CHROME = 3  # reversed, do not use it
-TOUPCAM_EVENT_IMAGE = 4  # live image arrived, use Toupcam_PullImage to get this image
-TOUPCAM_EVENT_STILLIMAGE = 5  # snap (still) frame arrived, use Toupcam_PullStillImage to get this frame
-TOUPCAM_EVENT_ERROR = 80  # something error happens
-TOUPCAM_EVENT_DISCONNECTED = 81  # camera disconnected
-
-
-class HToupCam(ctypes.Structure):
-    _fields_ = [('unused', ctypes.c_int)]
-
-
-def success(r):
-    """
-        return true if r==0
-    :param r:
-    :return:
-    """
-    return r == 0
+from pychron.image.toupcam import lib, success, HToupCam, TOUPCAM_EVENT_STILLIMAGE, TOUPCAM_EVENT_IMAGE
 
 
 @provides(ICamera)
@@ -66,9 +44,12 @@ class ToupCamCamera(object):
         self.bits = bits
 
     # icamera interface
-    def save(self, p):
-        self._save_path = p
-        lib.Toupcam_Snap(self.cam, self.resolution)
+    def save(self, p, extension='JPEG', *args, **kw):
+        # self._save_path = p
+        # lib.Toupcam_Snap(self.cam, self.resolution)
+        image = self.get_pil_image()
+
+        image.save(p, extension, *args, **kw)
 
     def _do_save(self, im):
 
@@ -80,8 +61,16 @@ class ToupCamCamera(object):
         # image = self.get_jpeg_data(im, 10)
         image = self.get_pil_image(im)
         # image.save(self._save_path, 'JPEG', quality=90)
-        image.save(self._save_path, 'TIFF')
+        image.save(self._save_path)
         # view_file(self._save_path)
+
+    def save_jpeg(self, p, quality=100):
+        im = self.get_pil_image()
+        im.save(p, 'JPEG', quality=quality)
+
+    def save_tiff(self, p):
+        im = self.get_pil_image()
+        im.save(p, 'TIFF')
 
     def get_jpeg_data(self, data=None, quality=75):
 
@@ -96,13 +85,13 @@ class ToupCamCamera(object):
     def get_pil_image(self, data=None):
         # im = self._data
         if data is None:
-            data= self._data
+            data = self._data
 
-        raw = data.view(uint8).reshape(data.shape+(-1,))
-        bgr = raw[...,:3]
-        image = pil.fromarray(bgr, 'RGB')
-        b,g,r = image.split()
-        return pil.merge('RGB', (r,g,b))
+        raw = data.view(uint8).reshape(data.shape + (-1,))
+        bgr = raw[..., :3]
+        image = Image.fromarray(bgr, 'RGB')
+        b, g, r = image.split()
+        return Image.merge('RGB', (r, g, b))
 
     def get_image_data(self, *args, **kw):
         d = self._data
@@ -121,7 +110,7 @@ class ToupCamCamera(object):
         h, w = args[1].value, args[0].value
 
         shape = (h, w)
-        if self.bits==8:
+        if self.bits == 8:
             dtype = uint8
         else:
             dtype = uint32
@@ -134,16 +123,10 @@ class ToupCamCamera(object):
             if nEvent == TOUPCAM_EVENT_IMAGE:
                 w, h = ctypes.c_uint(), ctypes.c_uint()
                 bits = ctypes.c_int(self.bits)
-                # if self._cnt == 4:
-                # for i,row in enumerate(self._data):
-                #         print i, row[10]
-                #
-                # self._cnt+=1
 
                 lib.Toupcam_PullImage(self.cam, ctypes.c_void_p(self._data.ctypes.data), bits,
                                       ctypes.byref(w),
                                       ctypes.byref(h))
-
 
             elif nEvent == TOUPCAM_EVENT_STILLIMAGE:
                 w, h = self.get_size()
@@ -176,6 +159,7 @@ class ToupCamCamera(object):
         if self._lib_func('get_{}'.format(func), ctypes.byref(v)):
             return v.value
 
+    # setters
     def set_gamma(self, v):
         self._lib_func('put_Gamma', ctypes.c_int(v))
 
@@ -191,6 +175,10 @@ class ToupCamCamera(object):
     def set_hue(self, v):
         self._lib_func('put_Hue', ctypes.c_int(v))
 
+    def set_exposure_time(self, v):
+        self._lib_func('put_ExpoTime', ctypes.c_ulong(v))
+
+    # getters
     def get_gamma(self):
         return self._lib_get_func('Gamma')
 
@@ -205,6 +193,9 @@ class ToupCamCamera(object):
 
     def get_hue(self):
         return self._lib_get_func('Hue')
+
+    def get_exposure_time(self):
+        return self._lib_get_func('ExpoTime')
 
     def do_awb(self, callback=None):
         """
@@ -281,7 +272,13 @@ class ToupCamCamera(object):
         lib.Toupcam_put_eSize(self.cam, ctypes.c_ulong(nres))
 
 
+if __name__ == '__main__':
+    import time
+
+    cam = ToupCamCamera()
+    cam.open()
+    time.sleep(1)
+
+    cam.save('foo.jpg')
+
 # ============= EOF =============================================
-
-
-

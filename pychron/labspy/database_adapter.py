@@ -15,11 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
+from datetime import datetime, timedelta
+
 from apptools.preferences.preference_binding import bind_preference
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from sqlalchemy import and_
+from sqlalchemy import or_
 from sqlalchemy.exc import SQLAlchemyError
+
 from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.labspy.orm import Measurement, ProcessInfo, Version, \
     Device, Experiment, Analysis, Connections  # , Version, Status, Experiment, Analysis, AnalysisType
@@ -57,13 +63,14 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
     def set_connection(self, ts, appname, username, devname, com, addr, status):
         try:
             conn = self.get_connection(appname, devname)
-        except SQLAlchemyError, e:
+        except SQLAlchemyError as e:
             self.warning('Error getting connection {}.{} exception: {}'.format(appname, devname, e))
             return
 
+        add = False
         if conn is None:
             conn = Connections()
-            self._add_item(conn)
+            add = True
 
         conn.appname = appname
         conn.username = username
@@ -73,11 +80,13 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
         conn.status = bool(status)
         conn.timestamp = ts
 
+        if add:
+            self._add_item(conn)
+
     def get_connection(self, appname, devname):
-        with self.session_ctx() as sess:
-            q = sess.query(Connections)
-            q = q.filter(and_(Connections.appname == appname, Connections.devname == devname))
-            return self._query_first(q, reraise=True)
+        q = self.session.query(Connections)
+        q = q.filter(and_(Connections.appname == appname, Connections.devname == devname))
+        return self._query_first(q, reraise=True)
 
     def update_experiment(self, hashid, **kw):
         exp = self.get_experiment(hashid)
@@ -131,21 +140,67 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
     #         return self._query_one(q)
 
     def get_migrate_version(self, **kw):
-        with self.session_ctx() as sess:
-            q = sess.query(Version)
-            q = q.limit(1)
-            mv = q.one()
-            return mv
+        q = self.session.query(Version)
+        q = q.limit(1)
+        mv = q.one()
+        return mv
 
     def get_device(self, name):
         return self._retrieve_item(Device, name, key='name')
 
     def get_process_info(self, dev, name):
-        with self.session_ctx() as sess:
+        q = self.session.query(ProcessInfo)
+        q = q.join(Device)
+        q = q.filter(Device.name == dev)
+        q = q.filter(ProcessInfo.name == name)
+        return self._query_one(q)
+
+    def get_latest_lab_temperatures(self):
+        return self._get_latest(('Temp',))
+
+    def get_latest_lab_humiditys(self):
+        return self._get_latest(('Hum',))
+
+    def get_latest_lab_pneumatics(self):
+        return self._get_latest('Pressure')
+
+    def _get_latest(self, tag):
+        values = []
+        with self.session_ctx(use_parent_session=False) as sess:
             q = sess.query(ProcessInfo)
-            q = q.join(Device)
-            q = q.filter(Device.name == dev)
-            q = q.filter(ProcessInfo.name == name)
-            return self._query_one(q)
+            if not isinstance(tag, tuple):
+                tag = (tag, )
+
+            q = q.filter(or_(*[ProcessInfo.name.like('%{}%'.format(t)) for t in tag]))
+
+            ps = self._query_all(q, verbose_query=True)
+            self.debug('get latest {}, ps={}'.format(tag, len(ps)))
+            min_date = datetime.now() - timedelta(hours=24)
+            for p in ps:
+                q = sess.query(Measurement)
+                q = q.filter(Measurement.process_info_id == p.id)
+                q = q.filter(Measurement.pub_date > min_date)
+                q = q.order_by(Measurement.pub_date.desc())
+
+                record = self._query_first(q, verbose_query=True)
+                if record:
+                    values.append({'name': p.name,
+                                   'title': p.graph_title,
+                                   'pub_date': record.pub_date.isoformat(),
+                                   'value': record.value,
+                                   'device': p.device.name})
+
+        return values
+
+    def get_measurements(self, device, name, low=None, high=None):
+        q = self.session.query(Measurement)
+        q = q.join(ProcessInfo, Device)
+        q = q.filter(Device.name == device)
+        q = q.filter(ProcessInfo.name == name)
+
+        if low:
+            q = q.filter(Measurement.pub_date >= low)
+
+        return self._query_all(q)
 
 # ============= EOF =============================================

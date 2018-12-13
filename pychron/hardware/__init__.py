@@ -13,10 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from pint import UnitRegistry
-
-ureg = UnitRegistry()
-Q_ = ureg.Quantity
+# from pint import UnitRegistry
+#
+# ureg = UnitRegistry()
+# Q_ = ureg.Quantity
 
 HW_PACKAGE_MAP = {
     'CommandProcessor': 'pychron.messaging.command_processor',
@@ -24,6 +24,7 @@ HW_PACKAGE_MAP = {
 
     'DPi32TemperatureMonitor': 'pychron.hardware.temperature_monitor',
     'SwitchController': 'pychron.hardware.actuators.switch_controller',
+    'DummyController': 'pychron.hardware.actuators.dummy_controller',
     'AnalogPowerMeter': 'pychron.hardware.analog_power_meter',
     'ADC': 'pychron.hardware.adc.adc_device',
     'AgilentADC': 'pychron.hardware.adc.analog_digital_converter',
@@ -32,8 +33,10 @@ HW_PACKAGE_MAP = {
     'MicroIonController': 'pychron.hardware.gauges.granville_phillips.micro_ion_controller',
     'PychronMicroIonController': 'pychron.hardware.gauges.granville_phillips.pychron_micro_ion_controller',
     'QtegraMicroIonController': 'pychron.hardware.gauges.granville_phillips.pychron_micro_ion_controller',
+    'MKSController': 'pychron.hardware.gauges.mks.controller',
+    'PfeifferMaxiGaugeController': 'pychron.hardware.gauges.pfeiffer.maxi_gauge_controller',
     'ArgusController': 'pychron.hardware.thermo_spectrometer_controller',
-    'HelixController':'pychron.hardware.thermo_spectrometer_controller',
+    'HelixController': 'pychron.hardware.thermo_spectrometer_controller',
     'FerrupsUPS': 'pychron.hardware.FerrupsUPS',
     'QtegraDevice': 'pychron.hardware.qtegra_device',
     'PidController': 'pychron.hardware.pid_controller',
@@ -51,9 +54,26 @@ HW_PACKAGE_MAP = {
 
     'TempHumMicroServer': 'pychron.hardware.environmental_probe',
     'AirTransducer': 'pychron.hardware.transducer',
-    'NMGRLMagnetDumper': 'pychron.furnace.magnet_dumper'
+    'NMGRLMagnetDumper': 'pychron.furnace.magnet_dumper',
+    'LamontFurnaceControl': 'pychron.hardware.labjack.ldeo_furnace',
+
+    'Model335TemperatureController': 'pychron.hardware.lakeshore.model335'
     # 'ControlModule': 'pychron.hardware.fusions.vue_diode_control_module'
 }
+
+
+def get_int(default=None):
+    def dec(func):
+        def wrapper(*args, **kw):
+            t = func(*args, **kw)
+            try:
+                return int(t)
+            except (TypeError, ValueError):
+                return default
+
+        return wrapper
+
+    return dec
 
 
 def get_float(default=None):

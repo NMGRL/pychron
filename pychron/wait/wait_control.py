@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Str, Color, Button, Float, Bool
 # ============= standard library imports ========================
 from threading import Event
@@ -40,7 +41,8 @@ class WaitControl(Loggable):
     end_evt = None
 
     continue_button = Button('Continue')
-
+    pause_button = Button('Pause')
+    _paused = Bool
     _continued = Bool
     _canceled = Bool
     _no_update = False
@@ -64,11 +66,17 @@ class WaitControl(Loggable):
     def join(self, evt=None):
         if evt is None:
             evt = self.end_evt
-        time.sleep(0.25)
+
+        # time.sleep(0.25)
+
+        evt.wait(0.25)
+
         # while not self.end_evt.is_set():
-        while not evt.is_set():
-            # time.sleep(0.005)
-            evt.wait(0.005)
+        while not evt.wait(timeout=0.1):
+            pass
+        # while not evt.is_set():
+        #     # time.sleep(0.005)
+        #     evt.wait(0.005)
 
         self.debug('Join finished')
 
@@ -115,12 +123,14 @@ class WaitControl(Loggable):
         with no_update(self, fire_update_needed=False):
             self.high = self.duration
             self.current_time = self.duration
+            self._paused = False
 
     # ===============================================================================
     # private
     # ===============================================================================
 
     def _continue(self):
+        self._paused = False
         self._continued = True
         self._end()
         self.current_time = 0
@@ -134,6 +144,9 @@ class WaitControl(Loggable):
             self.end_evt.set()
 
     def _update_time(self):
+        if self._paused:
+            return
+
         ct = self.current_time
         if self.timer and self.timer.isActive():
             self.current_time -= 1
@@ -153,6 +166,9 @@ class WaitControl(Loggable):
     # ===============================================================================
     # handlers
     # ===============================================================================
+    def _pause_button_fired(self):
+        self._paused = not self._paused
+
     def _continue_button_fired(self):
         self._continue()
 

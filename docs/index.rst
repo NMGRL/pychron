@@ -7,7 +7,7 @@ Welcome to Pychron's documentation!
 
 .. image:: images/pychronlabslogo_v5.png
   :width: 33%
-  :scale: 70%
+  :scale: 35%
 
 .. image:: images/NMT_logo.png
   :width: 33%
@@ -23,6 +23,7 @@ Welcome to Pychron's documentation!
   course/index
   tutorials/index
   api/index
+  massspec_pychron
 
 Indices and tables
 ==================

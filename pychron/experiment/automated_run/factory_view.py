@@ -15,11 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits, Instance
-from traitsui.api import View, Item, VGroup, Spring, HGroup, ButtonEditor, EnumEditor
+from traitsui.api import View, Item, VGroup, Spring, HGroup, ButtonEditor
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+from pychron.core.ui.enum_editor import myEnumEditor
 
 POSITION_TOOLTIP = '''Set the position for this analysis or group of analyses.
 Examples:
@@ -58,7 +58,7 @@ class FactoryView(HasTraits):
                         enabled_when='extractable'),
                    Item('extract_units',
                         show_label=False,
-                        editor=EnumEditor(name='extract_units_names')),
+                        editor=myEnumEditor(name='extract_units_names')),
                    Item('ramp_duration', label='Ramp Dur. (s)'), ),
             HGroup(
                 Item('use_cdd_warming', label='CDD Warm',
@@ -86,7 +86,7 @@ class FactoryView(HasTraits):
             Item('pattern',
                  show_label=False,
                  tooltip=PATTERN_TOOLTIP,
-                 editor=EnumEditor(name='patterns')),
+                 editor=myEnumEditor(name='patterns')),
             Item('edit_pattern',
                  show_label=False,
                  editor=ButtonEditor(label_value='edit_pattern_label')))
@@ -96,7 +96,7 @@ class FactoryView(HasTraits):
         grp = HGroup(
             Item('template',
                  label='Step Heat Template',
-                 editor=EnumEditor(name='templates'),
+                 editor=myEnumEditor(name='templates'),
                  show_label=False, ),
             Item('edit_template',
                  show_label=False,

@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from pyface.tasks.action.schema import SToolBar
 from traits.api import Property, Bool, Event, on_trait_change
 # from traitsui.api import View, Item, TextEditor
@@ -171,7 +173,7 @@ class LaserCalibrationTask(BaseLaserTask):
 
     @on_trait_change('active_editor:completed')
     def _update_completed(self, new):
-        print 'asdf', new
+        print('asdf', new)
         if new:
             self.executing = False
             self.active_editor.was_executed = True

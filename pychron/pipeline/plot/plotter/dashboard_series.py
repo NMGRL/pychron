@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from chaco.scales.time_scale import CalendarScaleSystem
 from chaco.scales_tick_generator import ScalesTickGenerator
 from numpy import Inf
@@ -35,7 +37,7 @@ class DashboardSeries(BaseArArFigure):
         graph = self.graph
         for po in plots:
             if po.use:
-                p = graph.new_plot(padding=self.padding,
+                p = graph.new_plot(padding=self.options.paddings(),
                                    ytitle=po.name,
                                    xtitle='Time')
 
@@ -89,8 +91,8 @@ class DashboardSeries(BaseArArFigure):
             if po.use_time_axis:
                 p.x_axis.tick_generator = ScalesTickGenerator(scale=CalendarScaleSystem())
 
-        except (KeyError, ZeroDivisionError), e:
-            print 'Series', e
+        except (KeyError, ZeroDivisionError) as e:
+            print('Series', e)
 
 # ===============================================================================
 # plotters

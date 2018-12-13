@@ -15,7 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from envisage.ui.tasks.task_factory import TaskFactory
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
@@ -34,7 +36,7 @@ class UsersPlugin(BaseTaskPlugin):
                             )]
 
     def _users_task_factory(self):
-        t = UsersTask()
+        t = UsersTask(application=self.application)
         return t
 
 # ============= EOF =============================================

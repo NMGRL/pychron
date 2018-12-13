@@ -15,17 +15,28 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import List
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+from __future__ import absolute_import
+
+from traits.api import Bool, Enum
+
 from pychron.options.fit import FitAuxPlot, FitOptions
-from pychron.options.series_views import VIEWS
-from pychron.pychron_constants import FIT_TYPES
+from pychron.options.views.series_views import VIEWS
+from pychron.pychron_constants import MAIN, APPEARANCE
 
 
 class SeriesFitAuxPlot(FitAuxPlot):
-    def _get_fit_types(self):
-        return FIT_TYPES
+    use_dev = Bool
+    use_percent_dev = Bool
+
+    def _use_dev_changed(self, new):
+        if new:
+            if self.use_percent_dev:
+                self.use_percent_dev = False
+
+    def _use_percent_dev_changed(self, new):
+        if new:
+            if self.use_dev:
+                self.use_dev = False
 
     @property
     def filter_outliers_dict(self):
@@ -34,32 +45,16 @@ class SeriesFitAuxPlot(FitAuxPlot):
 
 class SeriesOptions(FitOptions):
     aux_plot_klass = SeriesFitAuxPlot
-    subview_names = List(['Main', 'Series', 'Appearance'])
+    error_bar_nsigma = Enum(1, 2, 3)
+    end_caps = Bool(False)
+    show_info = Bool(True)
+    show_statistics = Bool(False)
+
+    # use_restricted_references = Bool
+    def initialize(self):
+        self.subview_names = [MAIN, 'Series', APPEARANCE]
 
     def _get_subview(self, name):
         return VIEWS[name]
-
-        # def _aux_plots_default(self):
-        #     def f(kii):
-        #         ff = self.aux_plot_klass(name=kii)
-        #         ff.trait_set(plot_enabled=False,
-        #                      save_enabled=False, fit='')
-        #
-        #         return ff
-        #
-        #     keys = list(ARGON_KEYS)
-        #     keys.extend(['{}bs'.format(ki) for ki in ARGON_KEYS])
-        #     keys.extend(['{}ic'.format(ki) for ki in ARGON_KEYS])
-        #     if 'Ar40' in keys:
-        #         if 'Ar39' in keys:
-        #             keys.append('Ar40/Ar39')
-        #             keys.append('uAr40/Ar39')
-        #         if 'Ar36' in keys:
-        #             keys.append('Ar40/Ar36')
-        #             keys.append('uAr40/Ar36')
-        #
-        #     keys.append('Peak Center')
-        #     keys.append('AnalysisType')
-        #     return [f(k) for k in keys]
 
 # ============= EOF =============================================

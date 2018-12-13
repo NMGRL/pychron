@@ -21,7 +21,8 @@
 # =============standard library imports ========================
 
 # =============local library imports  ==========================
-from fusions_logic_board import FusionsLogicBoard
+from __future__ import absolute_import
+from .fusions_logic_board import FusionsLogicBoard
 
 class FusionsDiodeLogicBoard(FusionsLogicBoard):
     '''

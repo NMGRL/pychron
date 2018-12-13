@@ -15,25 +15,27 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance, List, Bool, Event, \
-    Property, Float, Tuple, File, Int
-from traitsui.api import View, Item, UItem, ButtonEditor
+from __future__ import absolute_import
+from __future__ import print_function
+import os
 # ============= standard library imports ========================
 import time
-import os
+
 import yaml
+from traits.api import Instance, List, Bool, Event, Property, Float, Tuple, File, Int
+from traitsui.api import View, Item, UItem, ButtonEditor, Controller
+
+from pychron.core.helpers.timer import Timer
+from pychron.core.ui.thread import Thread
 # ============= local library imports  ==========================
 from pychron.envisage.view_util import open_view
-from pychron.managers.data_managers.csv_data_manager import CSVDataManager
 from pychron.graph.stream_graph import StreamStackedGraph
-from pychron.core.helpers.timer import Timer
-from pychron.loggable import Loggable
-from pychron.application_controller import ApplicationController
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
-from pychron.core.ui.thread import Thread
+from pychron.loggable import Loggable
+from pychron.managers.data_managers.csv_data_manager import CSVDataManager
 
 
-class ScannerController(ApplicationController):
+class ScannerController(Controller):
     execute_button = Event
     execute_label = Property(depends_on='model._scanning')
 
@@ -107,7 +109,7 @@ class Scanner(Loggable):
 
     def new_function(self, function, name=None):
         if name is None:
-            name = function.func_name
+            name = function.__name__
 
         # g = self.graph
         #        func = self.functions
@@ -227,7 +229,7 @@ class Scanner(Loggable):
         start_delay = ydict['start_delay']
         end_delay = ydict['end_delay']
         setpoints = ydict['setpoints']
-        print setpoints
+        print(setpoints)
         self.set_static_value('Setpoint', 0)
         time.sleep(start_delay)
         for args in setpoints:
@@ -290,8 +292,8 @@ class Scanner(Loggable):
 
                 # do_after no longer necessary with Qt
                 record(v, plotid=i, x=x, do_after=None)
-            except Exception, e:
-                print 'exception', e
+            except Exception as e:
+                print('exception', e)
 
         sv = []
         for _, v in self.static_values:
@@ -367,7 +369,7 @@ if __name__ == '__main__':
             return random.random() * scale
 
         f = random_gen
-        f.func_name = 'RScale{}'.format(scale)
+        f.__name__ = 'RScale{}'.format(scale)
         return random_gen
 
     def generator():

@@ -15,24 +15,27 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Float, Range, Property
 from traitsui.api import View, Item, RangeEditor
-# ============= standard library imports ========================
 
 # ============= local library imports  ==========================
-from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
+from pychron.spectrometer.base_source import BaseSource
 
 
-class ThermoSource(SpectrometerDevice):
-    nominal_hv = Float(4500)
-    current_hv = Float(4500)
+# ============= standard library imports ========================
 
+
+class ThermoSource(BaseSource):
+    trap_voltage = Property(depends_on='_trap_voltage')
+    _trap_voltage = Float
     trap_current = Property(depends_on='_trap_current')
     _trap_current = Float
 
     z_symmetry = Property(depends_on='_z_symmetry')
     y_symmetry = Property(depends_on='_y_symmetry')
     extraction_lens = Property(Range(0, 100.0), depends_on='_extraction_lens')
+    emission = Float
 
     _y_symmetry = Float  # Range(0.0, 100.)
     _z_symmetry = Float  # Range(0.0, 100.)
@@ -47,6 +50,9 @@ class ThermoSource(SpectrometerDevice):
     def set_hv(self, v):
         return self._set_value('SetHV', v)
 
+    def read_emission(self):
+        return self._read_value('GetParameter Source Current Readback', 'emission')
+
     def read_trap_current(self):
         return self._read_value('GetParameter Trap Current Readback', '_trap_current')
 
@@ -55,6 +61,9 @@ class ThermoSource(SpectrometerDevice):
 
     def read_z_symmetry(self):
         return self._read_value('GetZSymmetry', '_z_symmetry')
+
+    def read_trap_voltage(self):
+        return self._read_value('GetParameter Trap Voltage Readback', '_trap_voltage')
 
     def read_hv(self):
         return self._read_value('GetHighVoltage', 'current_hv')
@@ -84,6 +93,7 @@ class ThermoSource(SpectrometerDevice):
         v = View(Item('nominal_hv', format_str='%0.4f'),
                  Item('current_hv', format_str='%0.4f', style='readonly'),
                  Item('trap_current'),
+                 Item('trap_voltage'),
                  Item('y_symmetry', editor=RangeEditor(low_name='y_symmetry_low',
                                                        high_name='y_symmetry_high',
                                                        mode='slider')),
@@ -96,6 +106,9 @@ class ThermoSource(SpectrometerDevice):
     # ===============================================================================
     # property get/set
     # ===============================================================================
+    def _get_trap_voltage(self):
+        return self._trap_voltage
+
     def _get_trap_current(self):
         return self._trap_current
 
@@ -107,6 +120,10 @@ class ThermoSource(SpectrometerDevice):
 
     def _get_extraction_lens(self):
         return self._extraction_lens
+
+    def _set_trap_voltage(self, v):
+        if self._set_value('SetParameter', 'Trap Voltage Set,{}'.format(v)):
+            self._trap_current = v
 
     def _set_trap_current(self, v):
         if self._set_value('SetParameter', 'Trap Current Set,{}'.format(v)):

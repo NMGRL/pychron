@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import os
 import pickle
 
@@ -217,13 +218,13 @@ class BaseLinearDrive(ConsumerMixin):
 
     def _dump_homing_persistence(self, hd):
         p = self.homing_path
-        with open(p, 'w') as wfile:
+        with open(p, 'wb') as wfile:
             pickle.dump(hd, wfile)
 
     def _get_homing_persistence(self):
         p = self.homing_path
         if os.path.isfile(p):
-            with open(p, 'r') as rfile:
+            with open(p, 'rb') as rfile:
                 return pickle.load(rfile)
 
     def _get_homing_required(self):

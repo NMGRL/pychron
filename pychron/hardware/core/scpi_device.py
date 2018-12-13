@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.hardware.core.core_device import CoreDevice
 
 
@@ -26,9 +27,12 @@ class SCPIDevice(CoreDevice):
             initialize instrument
         """
         self.tell('*RST')
+        self.configure_instrument()
         self.tell('*CLS')
 
-        self.configure_instrument()
+    def identify_instrument(self):
+        v = self.ask('*IDN?')
+        self.info('Instrument ID {}'.format(v))
 
     def configure_instrument(self):
         """
@@ -42,22 +46,20 @@ class SCPIDevice(CoreDevice):
 
         """
         self.debug('triggering measurement')
-        self.ask('TRIGGER')
+        self.tell('INIT')
 
     def get_measurement(self):
         """
             return a value read from the device
         """
         if self.simulation:
-            v= 0
+            self.debug('simulation')
+            v = 0
         else:
-            self.trigger()
             v = self.ask('FETCH?')
 
         v = self._parse_response(v)
         self.debug('get_measurment. value = {}'.format(v))
         return v
+
 # ============= EOF =============================================
-
-
-

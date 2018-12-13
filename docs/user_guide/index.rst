@@ -5,10 +5,10 @@ Pychron User Guide
   :maxdepth: 2
 
   setup/index
-  configuration/index
   preferences/index
   operation/index
-  processing/index
+  pipeline/index
   entry/index
   dashboard/index
+  data_mapper/index
   glossary

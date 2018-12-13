@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from pychron.core.ui import set_toolkit
 
 set_toolkit('qt4')
@@ -6,7 +7,7 @@ set_toolkit('qt4')
 #paths.build('_unittest')
 #build_directories(paths)
 #logging_setup('export_spec')
-from pychron.experiment.automated_run.factory import generate_positions, increment_position
+from pychron.experiment.automated_run.factory_util import increment_position, generate_positions
 
 import unittest
 

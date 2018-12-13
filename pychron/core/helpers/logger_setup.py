@@ -16,14 +16,14 @@
 
 # =============enthought library imports=======================
 # =============standard library imports ========================
+from __future__ import absolute_import
 import logging
 import os
 import shutil
 from logging.handlers import RotatingFileHandler
 
-# =============local library imports  =========================
-from pychron.paths import paths
 from pychron.core.helpers.filetools import list_directory, unique_path2
+from pychron.paths import paths
 
 NAME_WIDTH = 40
 gFORMAT = '%(name)-{}s: %(asctime)s %(levelname)-9s (%(threadName)-10s) %(message)s'.format(NAME_WIDTH)
@@ -43,7 +43,7 @@ def get_log_text(n):
     root = logging.getLogger()
     for h in root.handlers:
         if isinstance(h, RotatingFileHandler):
-            with open(h.baseFilename) as rfile:
+            with open(h.baseFilename, 'rb') as rfile:
                 return tail(rfile, n)
 
 
@@ -61,7 +61,7 @@ def tail(f, lines=20):
     blocks = []  # blocks of size BLOCK_SIZE, in reverse order starting
     # from the end of the file
     while lines_to_go > 0 and block_end_byte > 0:
-        if (block_end_byte - BLOCK_SIZE > 0):
+        if block_end_byte - BLOCK_SIZE > 0:
             # read the last block we haven't yet read
             f.seek(block_number * BLOCK_SIZE, 2)
             blocks.append(f.read(BLOCK_SIZE))
@@ -70,12 +70,12 @@ def tail(f, lines=20):
             f.seek(0, 0)
             # only read what was not read
             blocks.append(f.read(block_end_byte))
-        lines_found = blocks[-1].count('\n')
+        lines_found = blocks[-1].count(b'\n')
         lines_to_go -= lines_found
         block_end_byte -= BLOCK_SIZE
         block_number -= 1
-    all_read_text = ''.join(reversed(blocks))
-    return '\n'.join(all_read_text.splitlines()[-total_lines_wanted:])
+    all_read_text = b''.join(reversed(blocks))
+    return b'\n'.join(all_read_text.splitlines()[-total_lines_wanted:]).decode('utf-8')
 
 
 # def anomaly_setup(name):
@@ -97,7 +97,6 @@ def logging_setup(name, use_archiver=True, root=None, use_file=True, **kw):
     # import warnings
     #     warnings.simplefilter('default')
     bdir = paths.log_dir if root is None else root
-
 
     # make sure we have a log directory
     # if not os.path.isdir(bdir):
@@ -138,13 +137,35 @@ def logging_setup(name, use_archiver=True, root=None, use_file=True, **kw):
     handlers = [shandler]
     if use_file:
         rhandler = RotatingFileHandler(
-                logpath, maxBytes=1e7, backupCount=5)
+            logpath, maxBytes=1e7, backupCount=50)
         handlers.append(rhandler)
 
+    fmt = logging.Formatter(gFORMAT)
     for hi in handlers:
         hi.setLevel(gLEVEL)
-        hi.setFormatter(logging.Formatter(gFORMAT))
+        hi.setFormatter(fmt)
         root.addHandler(hi)
+
+
+def add_root_handler(path, level=None, strformat=None, **kw):
+    if level is None:
+        level = gLEVEL
+    if format is None:
+        strformat = gFORMAT
+
+    root = logging.getLogger()
+    handler = logging.FileHandler(path, **kw)
+    handler.setLevel(level)
+    handler.setFormatter(logging.Formatter(strformat))
+    root.addHandler(handler)
+
+    return handler
+
+
+def remove_root_handler(handler):
+    root = logging.getLogger()
+    root.removeHandler(handler)
+
 
 
 def new_logger(name):
@@ -169,7 +190,7 @@ def wrap(items, width=40, indent=90, delimiter=','):
 
     while 1:
         try:
-            c = gcols.next()
+            c = next(gcols)
             t += 1 + len(c)
             if t < width:
                 r.append(c)

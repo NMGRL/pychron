@@ -30,17 +30,18 @@ try:
         addWeighted, \
         circle, moments, minAreaRect, minEnclosingCircle, convexHull
 
-    from cv import ConvertImage, fromarray, LoadImage, Flip, \
-        Resize, CreateImage, CvtColor, Scalar, CreateMat, Copy, GetSubRect, \
-        PolyLine, Split, \
-        Merge, Laplace, ConvertScaleAbs, GetSize
-    from cv import CV_CVTIMG_SWAP_RB, CV_8UC1, CV_BGR2GRAY, CV_GRAY2BGR, \
-        CV_8UC3, CV_RGB, CV_16UC1, CV_32FC3, CV_CHAIN_APPROX_NONE, \
-        CV_RETR_EXTERNAL, \
-        CV_AA, CV_16UC3, CV_16SC1
-except ImportError, e:
-    print 'exception', e
-    print 'OpenCV required'
+    from cv2 import RETR_EXTERNAL, CHAIN_APPROX_NONE, LINE_AA
+    # from cv2 import ConvertImage, fromarray, LoadImage, Flip, \
+    #     Resize, CreateImage, CvtColor, Scalar, CreateMat, Copy, GetSubRect, \
+    #     PolyLine, Split, \
+    #     Merge, Laplace, ConvertScaleAbs, GetSize
+    # from cv2 import CV_CVTIMG_SWAP_RB, CV_8UC1, CV_BGR2GRAY, CV_GRAY2BGR, \
+    #     CV_8UC3, CV_RGB, CV_16UC1, CV_32FC3, CV_CHAIN_APPROX_NONE, \
+    #     CV_RETR_EXTERNAL, \
+    #     CV_AA, CV_16UC3, CV_16SC1
+except ImportError as e:
+    print('exception', e)
+    print('OpenCV required')
 
 # ============= local library imports  ==========================
 from pychron.core.geometry.centroid import calculate_centroid
@@ -78,37 +79,32 @@ def colorspace(src, cs=None):
     return gray2rgb(src)
 
 
+#
 def grayspace(src):
-    if isinstance(src, ndarray):
-        from skimage.color.colorconv import rgb2gray
-        dst = rgb2gray(src)
-    else:
-        if src.channels > 1:
-            dst = CreateMat(src.height, src.width, CV_8UC1)
-            CvtColor(src, dst, CV_BGR2GRAY)
-        else:
-            dst = src
-
+    from skimage.color.colorconv import rgb2gray
+    dst = rgb2gray(src)
     return dst
 
 
-def resize(src, w, h, dst=None):
-    if isinstance(dst, tuple):
-        dst = CreateMat(*dst)
+#
+#
+# def resize(src, w, h, dst=None):
+#     if isinstance(dst, tuple):
+#         dst = CreateMat(*dst)
+#
+#     if isinstance(src, ndarray):
+#         src = asMat(src)
+#
+#     if dst is None:
+#         dst = CreateMat(int(h), int(w), src.type)
+#
+#     Resize(src, dst)
+#     return dst
 
-    if isinstance(src, ndarray):
-        src = asMat(src)
-
-    if dst is None:
-        dst = CreateMat(int(h), int(w), src.type)
-
-    Resize(src, dst)
-    return dst
-
-
-def flip(src, mode):
-    Flip(src, src, mode)
-    return src
+#
+# def flip(src, mode):
+#     Flip(src, src, mode)
+#     return src
 
 
 def get_size(src):
@@ -119,27 +115,29 @@ def get_size(src):
         return w, h
 
 
-def swap_rb(src):
-    try:
-        ConvertImage(src, src, CV_CVTIMG_SWAP_RB)
-    except TypeError:
-        src = fromarray(src)
-        ConvertImage(src, src, CV_CVTIMG_SWAP_RB)
-    return src
+#
+#
+# def swap_rb(src):
+#     try:
+#         ConvertImage(src, src, CV_CVTIMG_SWAP_RB)
+#     except TypeError:
+#         src = fromarray(src)
+#         ConvertImage(src, src, CV_CVTIMG_SWAP_RB)
+#     return src
+#
+#
+# _cv_swap_rb = swap_rb
 
 
-_cv_swap_rb = swap_rb
-
-
-def asMat(arr):
-    return fromarray(arr)
-
-
-def load_image(p, swap_rb=False):
-    img = imread(p)
-    if swap_rb:
-        img = _cv_swap_rb(img)
-    return img
+# def asMat(arr):
+#     return fromarray(arr)
+#
+#
+# def load_image(p, swap_rb=False):
+#     img = imread(p)
+#     if swap_rb:
+#         img = _cv_swap_rb(img)
+#     return img
 
 
 def get_capture_device():
@@ -170,7 +168,7 @@ _new_point = namedtuple('Point', 'x y')
 
 
 def new_point(x, y, tt=False):
-    x, y = map(int, (x, y))
+    x, y = int(x), int(y)
     if tt:
         return x, y
     else:
@@ -178,20 +176,20 @@ def new_point(x, y, tt=False):
 
 
 def convert_color(color):
-    if isinstance(color, tuple):
-        color = CV_RGB(*color)
-    else:
-        color = Scalar(color)
+    # if isinstance(color, tuple):
+    #     color = RGB(*color)
+    # else:
+    #     color = Scalar(color)
     return color
 
 
 def draw_circle(src, center, radius, color=(255.0, 0, 0), thickness=1):
     if isinstance(center, tuple):
         center = new_point(*center)
-    circle(src, center, radius,
+    circle(src, center, int(radius),
            convert_color(color),
            thickness=thickness,
-           lineType=CV_AA)
+           lineType=LINE_AA)
 
 
 def draw_lines(src, lines, color=(255, 0, 0), thickness=3):
@@ -238,7 +236,7 @@ def get_centroid(pts):
 # segmentation
 # ===============================================================================
 def contour(src):
-    return findContours(src.copy(), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE)
+    return findContours(src, RETR_EXTERNAL, CHAIN_APPROX_NONE)
 
 
 def get_polygons(src,
@@ -252,10 +250,12 @@ def get_polygons(src,
     areas = []
     centroids = []
     min_enclose = []
+    pactuals = []
+    pconvex_hulls = []
 
     for cont in contours:
-        m = arcLength(cont, True)
-        result = approxPolyDP(cont, m * perimeter_smooth_factor, True)
+        pactual = arcLength(cont, True)
+        result = approxPolyDP(cont, pactual * perimeter_smooth_factor, True)
 
         area = abs(contourArea(result))
         M = moments(cont)
@@ -276,10 +276,15 @@ def get_polygons(src,
         a, _, b = cont.shape
         polygons.append(cont.reshape(a, b))
         ca = minEnclosingCircle(result)
+
+        pconvex_hull = arcLength(convexHull(result), True)
+
         min_enclose.append(ca[1] ** 2 * 3.1415)
         areas.append(area)
         centroids.append(cent)
+        pactuals.append(pactual)
+        pconvex_hulls.append(pconvex_hull)
 
-    return polygons, areas, min_enclose, centroids
+    return list(zip(polygons, areas, min_enclose, centroids, pactuals, pconvex_hulls))
 
 # ============= EOF =============================================

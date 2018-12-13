@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, func, Boolean
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import relationship
@@ -51,6 +52,7 @@ class ProcessInfo(Base, StatusMixin):
     units = stringcolumn()
     device_id = Column(Integer, ForeignKey('status_device.id'))
     measurements = relationship('Measurement', backref='process')
+    graph_title = stringcolumn()
 
 
 class Measurement(Base, StatusMixin):

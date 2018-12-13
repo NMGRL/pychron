@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.database.core.database_adapter import SQLiteDatabaseAdapter
 from pychron.labbook.labels.orm import LabelTable, PathTable
 
@@ -25,28 +26,26 @@ class LabelAdapter(SQLiteDatabaseAdapter):
     kind = 'sqlite'
 
     def _build_database(self, sess, meta):
-        from orm import Base
+        from .orm import Base
 
         Base.metadata.create_all(sess.bind)
 
-    #adders
+    # adders
     def add_label(self, text, color):
-        with self.session_ctx():
-            obj = LabelTable(text=text, color=color)
-            self._add_item(obj)
+        obj = LabelTable(text=text, color=color)
+        self._add_item(obj)
 
     def add_label_association(self, path, label):
-        with self.session_ctx():
-            path = self.get_path(path)
-            label = self.get_label(label)
-            path.labels.append(label)
+        path = self.get_path(path)
+        label = self.get_label(label)
+        path.labels.append(label)
+        self.commit()
 
     def add_path(self, p):
-        with self.session_ctx():
-            obj = PathTable(relpath=p)
-            return self._add_item(obj)
+        obj = PathTable(relpath=p)
+        return self._add_item(obj)
 
-    #getters
+    # getters
     def get_labels(self):
         return self._retrieve_items(LabelTable)
 

@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Instance, Enum, Any, List
 
 # ============= standard library imports ========================
@@ -83,7 +84,7 @@ class ExportManager(Loggable):
 
         except KeyError:
             self.warning_dialog('invalid kind {}. available={}'.format(self.kind,
-                                                                       ','.join(EX_KLASS_DICT.keys())))
+                                                                       ','.join(list(EX_KLASS_DICT.keys()))))
             # if self.kind == 'MassSpec':
             #     self.exporter = MassSpecExporter()
             # elif

@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import random
 
 import gevent
@@ -27,7 +29,7 @@ from gevent.server import StreamServer
 def handle(socket, address):
     data = socket.recv(4096)
     cmd = data.split(' ')[0]
-    print socket
+    print(socket)
     if cmd == 'GetData':
         gevent.sleep(1)
         socket.sendall('Foo')

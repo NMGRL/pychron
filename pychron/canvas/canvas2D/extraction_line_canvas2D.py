@@ -15,22 +15,22 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+import os
+
 from pyface.action.menu_manager import MenuManager
 from pyface.qt.QtGui import QToolTip
 from traits.api import Any, Str, on_trait_change, Bool
 from traitsui.menu import Action
 
-# ============= standard library imports ========================`
-import os
-# ============= local library imports  ==========================
 from pychron.canvas.canvas2D.overlays.extraction_line_overlay import ExtractionLineInfoTool, ExtractionLineInfoOverlay
+from pychron.canvas.canvas2D.scene.extraction_line_scene import ExtractionLineScene
 from pychron.canvas.canvas2D.scene.primitives.connections import Elbow
 from pychron.canvas.canvas2D.scene.primitives.lasers import Laser
 from pychron.canvas.canvas2D.scene.primitives.primitives import BorderLine
-from pychron.canvas.scene_viewer import SceneCanvas
-from pychron.canvas.canvas2D.scene.extraction_line_scene import ExtractionLineScene
 from pychron.canvas.canvas2D.scene.primitives.valves import RoughValve, \
     BaseValve, Switch, ManualSwitch
+from pychron.canvas.scene_viewer import SceneCanvas
 from pychron.globals import globalv
 
 W = 2
@@ -83,6 +83,10 @@ class ExtractionLineCanvas2D(SceneCanvas):
         self.tools.append(tool)
         self.overlays.append(overlay)
 
+    # @caller
+    # def invalidate_and_redraw(self):
+    #     super(ExtractionLineCanvas2D, self).invalidate_and_redraw()
+
     def toggle_item_identify(self, name):
         v = self._get_switch_by_name(name)
         if v is not None:
@@ -97,25 +101,21 @@ class ExtractionLineCanvas2D(SceneCanvas):
         switch = self._get_switch_by_name(name)
         if switch is not None:
             switch.state = nstate
-        self.draw_valid = False
-
-        if refresh:
-            self.invalidate_and_redraw()
+            if refresh:
+                self.invalidate_and_redraw()
 
     def update_switch_owned_state(self, name, owned):
         switch = self._get_switch_by_name(name)
         if switch is not None:
             switch.owned = owned
-        self.draw_valid = False
-        self.invalidate_and_redraw()
+
+            self.invalidate_and_redraw()
 
     def update_switch_lock_state(self, name, lockstate):
         switch = self._get_switch_by_name(name)
         if switch is not None:
             switch.soft_lock = lockstate
-            # self.request_redraw()
-        self.draw_valid = False
-        self.invalidate_and_redraw()
+            self.invalidate_and_redraw()
 
     def load_canvas_file(self, canvas_path=None, canvas_config_path=None, valves_path=None):
         if canvas_path is None:
@@ -125,7 +125,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
         if valves_path is None:
             valves_path = self.manager.application.preferences.get('pychron.extraction_line.valves_path')
 
-        if os.path.isfile(canvas_path):
+        if canvas_path and os.path.isfile(canvas_path):
             self.scene.load(canvas_path, canvas_config_path, valves_path, self)
             self.invalidate_and_redraw()
 
@@ -137,7 +137,6 @@ class ExtractionLineCanvas2D(SceneCanvas):
         pass
 
     def normal_mouse_move(self, event):
-
         item = self._over_item(event)
         if item is not None:
             self.event_state = 'select'
@@ -164,8 +163,9 @@ class ExtractionLineCanvas2D(SceneCanvas):
         try:
             tt = self.active_item.get_tooltip_text()
             ctrl.setToolTip(tt)
-        except AttributeError:
-            pass
+
+        except AttributeError as e:
+            print('select mouse move {}'.format(e))
         self.normal_mouse_move(event)
 
     def select_right_down(self, event):
@@ -274,7 +274,8 @@ class ExtractionLineCanvas2D(SceneCanvas):
                 self.invalidate_and_redraw()
 
     def iter_valves(self):
-        return (i for i in self.scene.valves.itervalues())
+        return self.scene.valves.values()
+        # return (i for i in six.itervalues(self.scene.valves))
 
     # private
     def _select_hook(self, item):
@@ -289,7 +290,13 @@ class ExtractionLineCanvas2D(SceneCanvas):
         self.request_redraw()
 
     def _get_switch_by_name(self, name):
-        return next((i for i in self.iter_valves() if i.name == name), None)
+        if self.scene and self.scene.valves:
+            s = next((i for i in self.iter_valves() if i.name == name), None)
+            if s is None:
+                names = [i.name for i in self.iter_valves()]
+                print('No switch with name "{}". Names={}'.format(name, names))
+
+            return s
 
     def _get_object_by_name(self, name):
         return self.scene.get_item(name)

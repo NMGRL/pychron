@@ -14,9 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
+from six.moves import range
 from traits.api import List, Property, \
     Str, Dict
 from traitsui.api import UItem, HGroup, Item, EnumEditor
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.templater.base_templater import BaseTemplater
@@ -24,7 +28,8 @@ from pychron.core.templater.templater_view import BaseTemplateView
 
 
 class TitleTemplater(BaseTemplater):
-    attributes = List(['Project', 'Sample', 'Identifier', 'Aliquot', 'Material',
+    attributes = List(['Project', 'Sample', 'Identifier', 'Aliquot', 'Step', 'Material',
+                       'RunID',
                        'AlphaCounter',
                        'NumericCounter', '<SPACE>'])
 
@@ -32,6 +37,7 @@ class TitleTemplater(BaseTemplater):
                          'identifier': '',
                          'project': '',
                          'aliquot': '02n',
+                         'step': '',
                          'material': '',
                          'numericcounter': '',
                          'alphacounter': ''}
@@ -40,16 +46,20 @@ class TitleTemplater(BaseTemplater):
                        'identifier': '20001',
                        'project': 'J-Curve',
                        'aliquot': 1,
+                       'step': 'A',
+                       'runid': '20001-01A',
                        'material': 'GMC',
                        'numericcounter': 1,
                        'alphacounter': 'A'}
 
     base_predefined_labels = List(['Sample ( Identifier )',
                                    'Sample ( Identifier - Aliquot )',
-                              'Sample ( Identifier - Aliquot , Material )',
-                              'AlphaCounter . <SPACE> Sample ( Identifier - Aliquot , Material )',
-                              'Sample',
-                              'Project <SPACE> Sample ( Identifier )'])
+                                   'Sample ( Identifier - Aliquot Step)',
+                                   'RunID',
+                                   'Sample ( Identifier - Aliquot , Material )',
+                                   'AlphaCounter . <SPACE> Sample ( Identifier - Aliquot , Material )',
+                                   'Sample',
+                                   'Project <SPACE> Sample ( Identifier )'])
 
     delimiter = Str
     delimiters = Dict({',': 'Comma',
@@ -94,16 +104,34 @@ class TitleTemplater(BaseTemplater):
 
 
 class LabelTemplater(BaseTemplater):
-    attributes = List(['Sample', 'Aliquot', 'Step', '<SPACE>'])
+    attributes = List(['Sample', 'Aliquot', 'Step', 'Label_name', 'Name', '<SPACE>'])
     attribute_formats = {'step': '',
                          'aliquot': '02n',
-                         'sample': ''}
+                         'sample': '',
+                         'label_name': ''}
 
-    example_context = {'step': 'A', 'aliquot': 1, 'sample': 'NM-001'}
+    example_context = {'step': 'A', 'aliquot': 1, 'sample': 'NM-001', 'name': 'Foo', 'label_name': 'Bar'}
     base_predefined_labels = List(['Sample - Aliquot Step',
                                    'Sample',
-                              'Aliquot Step'])
+                                   'Aliquot Step'])
     persistence_name = 'label_maker'
+
+
+class MeanLabelTemplater(BaseTemplater):
+    attributes = List(['Sample', 'Identifier', 'Material', '<SPACE>'])
+    attribute_formats = {'identifier': '',
+                         'sample': '',
+                         'material': ''}
+
+    example_context = {'material': 'GMC', 'identifier': '50102', 'sample': 'NM-001'}
+    base_predefined_labels = List(['Sample',
+                                   'Identifier Sample',
+                                   'Identifier( Sample )'])
+    persistence_name = 'mean_label_maker'
+
+
+class MeanLabelTemplateView(BaseTemplateView):
+    view_title = 'Mean Label Maker'
 
 
 class LabelTemplateView(BaseTemplateView):
@@ -112,6 +140,7 @@ class LabelTemplateView(BaseTemplateView):
 
 class TitleTemplateView(BaseTemplateView):
     view_title = 'Title Maker'
+
     def _get_additional_groups(self):
         return (HGroup(UItem('multi_group_example', style='readonly'),
                        show_border=True, label='Multi Group Example'),
@@ -125,10 +154,8 @@ class TitleTemplateView(BaseTemplateView):
                              editor=EnumEditor(name='trailing_texts'))),
                 HGroup(Item('delimiter', editor=EnumEditor(name='delimiters'))))
 
-
 # if __name__ == '__main__':
 #     # lm = TitleMaker()
 #     lm = LabelTemplater()
 #     lm.configure_traits()
 # ============= EOF =============================================
-

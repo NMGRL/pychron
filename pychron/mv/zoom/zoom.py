@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import math
 import os
 
@@ -141,7 +143,7 @@ def calculate_spacings():
         ('/Users/ross/Sandbox/zoom_cal/snapshot-017.jpg', 100, 99.969),
 
     ]
-    print 'Path        |Z   |Mode |Cnt |Avg   |STD'
+    print('Path        |Z   |Mode |Cnt |Avg   |STD')
     zns = [0]
     zas = [0]
     px = [23]
@@ -153,8 +155,8 @@ def calculate_spacings():
         a = '{:0.3f}'.format(a)
         s = '{:0.3f}'.format(s)
 
-        print '{}|{:<4s}|{:<5s}|{:<4s}|{:<6s}|{}'.format(bp, str(zn),
-                                                         str(m), str(c), a, s)
+        print('{}|{:<4s}|{:<5s}|{:<4s}|{:<6s}|{}'.format(bp, str(zn),
+                                                         str(m), str(c), a, s))
         zns.append(zn)
         zas.append(za)
 
@@ -180,7 +182,7 @@ if __name__ == '__main__':
     xs = linspace(0, 100)
     # plt.plot(xs, polyval(polyfit(zns, px, 4), xs))
     coeffs = polyfit(zas, px, 4)
-    print coeffs
+    print(coeffs)
     plt.plot(xs, polyval(coeffs, xs))
     plt.xlabel('Z')
     plt.ylabel('pxpermm')

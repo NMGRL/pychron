@@ -15,35 +15,38 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, List, Bool, Any, Property, cached_property, Set, Str, Dict
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-from pychron.core.helpers.isotope_utils import sort_isotopes
+from __future__ import absolute_import
+
+from traits.api import HasTraits, List, Bool, Any, Set, Str, Dict
 
 
 def get_detector_set(ans):
-    return {iso.detector for ai in ans for iso in ai.isotopes.itervalues()}
+    return {iso.detector for ai in ans for iso in ai.itervalues()}
+
+
+def get_isotope_set(ans):
+    return {k for ai in ans for k in ai.isotope_keys}
 
 
 class EngineState(HasTraits):
     unknowns = List
     references = List
-    flux_monitors = List
+
     unknown_positions = List
+    monitor_positions = List
+
     decay_constants = Dict
 
+    tables = List
     editors = List
-    has_references = Bool
-    has_flux_monitors = Bool
+
     saveable_keys = List
     saveable_fits = List
     saveable_irradiation_positions = List
-    # user_review = Bool
     veto = Any
     canceled = Bool
-    udetectors = Property(depends_on='unknowns[]')
-    rdetectors = Property(depends_on='references[]')
-    union_detectors = Property(depends_on='udetectors, rdetectors')
+    run_groups = Dict
+
     iso_evo_results = List
 
     modified_projects = Set
@@ -54,17 +57,9 @@ class EngineState(HasTraits):
     level = Str
     irradiation = Str
 
-    @cached_property
-    def _get_udetectors(self):
-        return get_detector_set(self.unknowns)
+    report_path = None
 
-    @cached_property
-    def _get_rdetectors(self):
-        return get_detector_set(self.references)
+    mdd_workspace = None
 
-    @cached_property
-    def _get_union_detectors(self):
-        x = set(self.udetectors).union(self.rdetectors)
-        return sort_isotopes(x)
 
 # ============= EOF =============================================

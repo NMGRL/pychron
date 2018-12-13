@@ -18,6 +18,8 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+from __future__ import absolute_import
+
 from pychron.core.ui.progress_dialog import myProgressDialog
 
 
@@ -29,7 +31,7 @@ def open_progress(n, close_at_end=True, busy=False, **kw):
     if busy:
         mi, ma = 0, 0
     else:
-        mi, ma = 0, n - 1
+        mi, ma = 0, int(max(1, n - 1))
 
     pd = myProgressDialog(min=mi, max=ma,
                           close_at_end=close_at_end,
@@ -41,7 +43,7 @@ def open_progress(n, close_at_end=True, busy=False, **kw):
 
 def progress_loader(xs, func, threshold=50, progress=None,
                     use_progress=True,
-                    reraise_cancel=False, n=None, busy=False, step=1):
+                    reraise_cancel=False, n=None, busy=False, step=1, unpack=True):
     """
         xs: list or tuple
         func: callable with signature func(xi, prog, i, n)
@@ -60,25 +62,28 @@ def progress_loader(xs, func, threshold=50, progress=None,
     if n is None:
         n = len(xs)
 
-    n /= step
+    if not progress and use_progress and n >= threshold:
+        progress = open_progress(n / step, busy=busy)
 
-    if not progress and use_progress:
-        progress = open_progress(n, busy=busy)
+    # n /= step
 
     def gen():
-        if use_progress and (n > threshold or progress):
-
+        # if use_progress and (n > threshold or progress):
+        if progress:
             for i, x in enumerate(xs):
                 if progress.canceled:
                     raise CancelLoadingError
                 elif progress.accepted:
                     break
 
-                prog = None if i % step else progress
+                if i == 0 or i == n - 1:
+                    prog = progress
+                else:
+                    prog = None if i % step else progress
 
                 r = func(x, prog, i, n)
                 if r:
-                    if hasattr(r, '__iter__'):
+                    if hasattr(r, '__iter__') and unpack:
                         for ri in r:
                             yield ri
                     else:
@@ -87,7 +92,7 @@ def progress_loader(xs, func, threshold=50, progress=None,
             for x in xs:
                 r = func(x, None, 0, 0)
                 if r:
-                    if hasattr(r, '__iter__'):
+                    if hasattr(r, '__iter__') and unpack:
                         for ri in r:
                             yield ri
                     else:

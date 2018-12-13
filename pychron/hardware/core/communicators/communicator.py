@@ -16,9 +16,14 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
+
+import codecs
 import time
 from threading import Lock, RLock
 # ============= local library imports  ==========================
+import binascii
+
 from pychron.headless_config_loadable import HeadlessConfigLoadable
 
 
@@ -41,7 +46,16 @@ def remove_eol_func(re):
     """
 
     if re is not None:
-        return str(re).rstrip()
+        if isinstance(re, bytes):
+            try:
+                re = re.decode('utf-8')
+            except UnicodeDecodeError:
+                try:
+                    re = codecs.decode(re, 'hex')
+                except binascii.Error:
+                    re = ''.join(('[{}]'.format(str(b)) for b in re))
+
+        return re.rstrip()
 
 
 def process_response(re, replace=None, remove_eol=True):
@@ -52,7 +66,7 @@ def process_response(re, replace=None, remove_eol=True):
 
     if isinstance(replace, tuple):
         re = re.replace(replace[0], replace[1])
-    re = prep_str(re)
+    # re = prep_str(re)
     return re
 
 
@@ -75,7 +89,16 @@ class Communicator(HeadlessConfigLoadable):
         self._lock = RLock()
 
     def load(self, config, path):
-        self.set_attribute(config, 'verbose', 'Communications', 'verbose', default=False, optional=True)
+        self.set_attribute(config, 'verbose', 'Communications', 'verbose', default=False, optional=True, cast='boolean')
+        self.set_attribute(config, 'write_terminator', 'Communications', 'write_terminator',
+                           default=chr(13),
+                           optional=True)
+
+        if self.write_terminator == 'chr(10)':
+            self.write_terminator = chr(10)
+        if self.write_terminator == 'chr(0)':
+            self.write_terminator = chr(0)
+
         return True
 
     def close(self):

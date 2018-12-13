@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits, Instance, DelegatesTo, Button, List, Any, \
     Float
 from traitsui.api import View, Item, VGroup, HGroup, Group, spring, \
@@ -104,12 +105,12 @@ class CompositeCalibrationManager(Manager):
         s = self.selector.selected
         if s is not None:
             for si in s:
-                trs = si.traits().keys().remove('graph')
+                trs = list(si.traits().keys()).remove('graph')
                 self.selected_calibrations.append(si.clone_traits(traits=trs))
 
     def _replace_fired(self):
         s = self.selector.selected
-        trs = s.traits().keys().remove('graph')
+        trs = list(s.traits().keys()).remove('graph')
         self.selected_calibrations = s.clone_traits(traits=trs)
 
     def _save_fired(self):

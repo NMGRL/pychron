@@ -18,11 +18,13 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.experiment.easy_parser import EasyParser
 
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.entry.tasks.importer import ImporterModel
 from pychron.experiment.importer.import_mapper import MinnaBluffMapper
+from six.moves import map
 
 
 class EasyImporter(IsotopeDatabaseManager):
@@ -81,7 +83,7 @@ class EasyImporter(IsotopeDatabaseManager):
         return im.db.connect()
 
     def _make_import_selection(self, meta):
-        s = [(irrad['name'], map(str.strip, irrad['levels'].split(',')))
+        s = [(irrad['name'], list(map(str.strip, irrad['levels'].split(','))))
              for irrad in meta['irradiations']]
         return s
 

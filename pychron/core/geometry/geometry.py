@@ -18,7 +18,7 @@
 # ============= standard library imports ========================
 import math
 
-from numpy import array, vstack, mean, average, hstack
+from numpy import array, vstack, mean, average, hstack, zeros, gradient
 
 
 # from pychron.core.geometry.centroid.calculate_centroid import calculate_centroid
@@ -40,7 +40,7 @@ def sort_clockwise(pts, xy, reverse=False):
 
     angles = [(math.atan2(y - cy, x - cx), pi) for pi, x, y in zip(pts, xs, ys)]
     angles = sorted(angles, key=lambda x: x[0], reverse=reverse)
-    _, pts = zip(*angles)
+    _, pts = list(zip(*angles))
 
     return list(pts)
 
@@ -108,7 +108,7 @@ def calculate_reference_frame_center(r1, r2, R1, R2):
     # calculate delta rotation for r1 in R2
     a1 = calc_angle(R1, R2)
     a2 = calc_angle(r1, r2)
-    print a1, a2
+    print(a1, a2)
     rot = 0
     #     rot = a1 - a2
 
@@ -120,8 +120,8 @@ def calculate_reference_frame_center(r1, r2, R1, R2):
     RL = calc_length(R1, R2)
     rperR = abs(RL / rL)
 
-    print 'rrrr', rL, RL
-    print r1, r2, R1, R2
+    print('rrrr', rL, RL)
+    print(r1, r2, R1, R2)
     # calculate center
     cx = R1[0] - r1Rx * rperR
     cy = R1[1] - r1Ry * rperR
@@ -172,6 +172,37 @@ def find_arc_center(p1, p2, r):
     from scipy.optimize import fsolve
     cx, cy = fsolve(arc_cost_func, [0, 0], args=(p1, p2, r))
     return cx, cy
+
+
+def approximage_polygon_center2(pts, r, weight=True):
+    """
+    weight by angle between p0-p1.
+
+
+    :param pts:
+    :param r:
+    :param weight:
+    :return:
+    """
+
+    n = len(pts)
+    cs = zeros(n ** 2)
+
+    for i, p0 in enumerate(pts):
+        for j, p1 in enumerate(pts):
+            cx, cy = find_arc_center(p0, p1, r)
+
+            x0, y0 = p0[0] - cx, p0[1] - cy
+            x1, y1 = p1[0] - cx, p1[1] - cy
+
+            wi = abs(math.atan2(y1 - y0, x1 - x0) / math.pi)
+
+            cs[i * n + j] = (cx, cy, wi)
+
+    xs, ys, wi = cs.T
+    weights = wi if weight else None
+
+    return average(xs, weights=weights), average(ys, weights=weights)
 
 
 def approximate_polygon_center(pts, r, weight=True):
@@ -276,4 +307,33 @@ def approximate_polygon_center2(pts, r=None):
 
     return xf, yf, r
 
+
+def curvature(ys):
+    d = gradient(ys)
+    dd = gradient(d)
+    c = dd / (1 + d ** 2) ** 1.5
+    cs = abs(c)
+    return cs
+
+
+def curvature_at(ys, x):
+    cs = curvature(ys)
+    return cs[int(x)]
+
+
+if __name__ == '__main__':
+    from numpy import linspace
+    import matplotlib.pyplot as plt
+
+    xs = linspace(0, 10, 100)
+    ys = 1 * xs ** 2
+    ys2 = 3 * xs ** 2
+
+    plt.subplot(2, 1, 1)
+    plt.plot(xs, curvature(ys))
+    plt.plot(xs, curvature(ys2))
+    plt.subplot(2, 1, 2)
+    plt.plot(xs, ys)
+    plt.plot(xs, ys2)
+    plt.show()
 # ============= EOF =============================================

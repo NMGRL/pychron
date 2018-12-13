@@ -15,13 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Callable
-# ============= standard library imports ========================
+from __future__ import absolute_import
 from numpy import where, vstack
-# ============= local library imports  ==========================
+from traits.api import Callable
+
 from pychron.core.helpers.formatting import floatfmt
 from pychron.graph.tools.info_inspector import InfoInspector, InfoOverlay
 from pychron.pychron_constants import PLUSMINUS
+from six.moves import zip
 
 
 class PointInspector(InfoInspector):
@@ -29,8 +30,10 @@ class PointInspector(InfoInspector):
     additional_info = Callable
 
     single_point = True
+    id = None
 
-    def get_selected_index(self, threshold=5):
+    def get_selected_index(self):
+        threshold = self.hittest_threshold
         if self.single_point:
             idx = self.component.map_index(self.current_position, threshold=threshold)
             if idx is not None:
@@ -44,7 +47,7 @@ class PointInspector(InfoInspector):
 
             cx, cy = self.current_position
             distances = ((spts[:, 0] - cx) ** 2 + (spts[:, 1] - cy) ** 2) ** 0.5
-            return where(distances <= threshold * 2)[0]
+            return where(distances <= threshold)[0]
 
     def percent_error(self, s, e):
         v = '(Inf%)'
@@ -89,7 +92,10 @@ class PointInspector(InfoInspector):
                         lines.append('{}'.format(x))
 
                     if self.additional_info is not None:
-                        ad = self.additional_info(i)
+                        try:
+                            ad = self.additional_info(i, self.id)
+                        except BaseException:
+                            ad = self.additional_info(i)
                         if isinstance(ad, (list, tuple)):
                             lines.extend(ad)
                         else:

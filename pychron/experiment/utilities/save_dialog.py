@@ -15,24 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Bool, BaseStr, Directory, Int
-from traitsui.api import View, HGroup, VGroup, Item
-# ============= standard library imports ========================
-import re
+from __future__ import absolute_import
 import os
-# ============= local library imports  ==========================
+
+from traits.api import HasTraits, Bool, Directory, Int, Str
+from traitsui.api import View, HGroup, VGroup, Item, UItem
+
 from pychron.core.helpers.filetools import add_extension
-from pychron.entry.entry_views.entry import SpacelessStr
-
-pascalcase_regex = re.compile(r'^[A-Z0-9]{1}\w*$')
-
-
-class PascalCase(BaseStr):
-    def validate(self, obj, name, value):
-        if not value or not pascalcase_regex.match(value):
-            self.error(obj, name, value)
-        else:
-            return value
+from pychron.core.ui.strings import PascalCase, SpacelessStr
 
 
 class BaseSaveDialog(HasTraits):
@@ -74,16 +64,22 @@ class ExperimentSaveDialog(BaseSaveDialog):
     name = PascalCase()
     use_current_exp = Bool
 
+    help_str = Str('<b>Name must be in PascalCase. NoSpaces and only AlphaNumeric characters</b>')
+
     def _use_current_exp_changed(self, new):
         if new:
             self.name = 'CurrentExperiment'
 
     def traits_view(self):
         ngrp = HGroup(Item('name',
-                           tooltip='Name must be in PascalCase. NoSpaces, use only AlphaNumeric'),
+                           tooltip='Name must be in PascalCase. NoSpaces, use only AlphaNumeric. '
+                                   'This is "PascalCase". This is not "pascalcase"'),
+
                       Item('use_current_exp'))
         dgrp = HGroup(Item('root', label='Directory'))
-        v = View(VGroup(ngrp, dgrp),
+        hgrp = UItem('help_str', style='readonly')
+
+        v = View(VGroup(ngrp, hgrp, dgrp),
                  kind='livemodal',
                  width=400,
                  title='Save Experiment',

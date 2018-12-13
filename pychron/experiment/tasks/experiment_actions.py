@@ -15,29 +15,21 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+
 from pyface.message_dialog import warning, information
 from pyface.tasks.task_window_layout import TaskWindowLayout
 
-# ============= standard library imports ========================
-import os
-# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import get_path
-from pychron.envisage.tasks.actions import PAction as Action, PTaskAction as TaskAction
 from pychron.envisage.resources import icon
+from pychron.envisage.tasks.actions import PAction as Action, PTaskAction as TaskAction
 from pychron.envisage.view_util import open_view
+from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
+from pychron.globals import globalv
 from pychron.paths import paths
 
 EXP_ID = 'pychron.experiment.task'
 
-
-class ResetSystemHealthAction(Action):
-    name = 'Reset System Health'
-    dname = 'Reset System Health'
-
-    def perform(self, event):
-        from pychron.experiment.health.series import reset_system_health_series
-
-        reset_system_health_series()
 
 
 class ExperimentAction(Action):
@@ -105,13 +97,6 @@ class NewPatternAction(BasePatternAction):
     method = 'new_pattern'
 
 
-class SendTestNotificationAction(TaskAction):
-    name = 'Send Test Notification'
-    dname = 'Send Test Notification'
-    method = 'send_test_notification'
-    # accelerator = 'Ctrl+Shift+N'
-
-
 class DeselectAction(TaskAction):
     name = 'Deselect'
     dname = 'Deselect'
@@ -146,7 +131,7 @@ class QueueConditionalsAction(Action):
             if spec:
                 dnames = spec.spectrometer.detector_names
 
-            edit_conditionals(None, detectors=dnames, app=task.application)
+            edit_conditionals(None, detectors=dnames)
 
 
 class SystemConditionalsAction(Action):
@@ -165,7 +150,7 @@ class SystemConditionalsAction(Action):
 
         p = get_path(paths.spectrometer_dir, '.*conditionals', ('.yaml', '.yml'))
         if p:
-            edit_conditionals(p, detectors=dnames, app=task.application)
+            edit_conditionals(p, detectors=dnames)
         else:
             warning(None, 'No system conditionals file at {}'.format(p))
 
@@ -201,6 +186,16 @@ class NewExperimentQueueAction(ExperimentAction):
             task = win.active_task
             if task.new():
                 win.open()
+
+
+class RunHistoryAction(Action):
+    name = 'Run History'
+    dname = 'Run History'
+
+    def perform(self, event):
+        app = event.task.window.application
+        v = app.get_service('pychron.experiment.run_history_view.RunHistoryView')
+        open_view(v)
 
 
 class OpenExperimentHistoryAction(Action):
@@ -291,6 +286,7 @@ class SaveAsCurrentExperimentAction(TaskAction):
 # ===============================================================================
 # Utilities
 # ===============================================================================
+
 class SignalCalculatorAction(ExperimentAction):
     name = 'Signal Calculator'
     dname = 'Signal Calculator'
@@ -320,5 +316,30 @@ class LastAnalysisRecoveryAction(Action):
         from pychron.experiment.analysis_recovery import AnalysisRecoverer
         a = AnalysisRecoverer()
         a.recover_last_analysis()
+
+
+class RunnerAction(TaskAction):
+    def _get_runner(self, event):
+        app = event.task.application
+        runner = app.get_service(IPyScriptRunner)
+        if not runner:
+            warning(None, 'No runner available')
+
+        return runner
+
+
+class AcquireSpectrometerAction(RunnerAction):
+    def perform(self, event):
+        runner = self._get_runner()
+        if runner:
+            if not runner.acquire(globalv.own_spectrometer):
+                warning(None, 'Failed to acquire {}'.format(globalv.spectrometer))
+
+
+class ReleaseSpectrometerAction(RunnerAction):
+    def perform(self, event):
+        runner = self._get_runner()
+        if runner:
+            runner.release(globalv.own_spectrometer)
 
 # ============= EOF ====================================

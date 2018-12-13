@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
+from __future__ import absolute_import
 import math
 from functools import partial
 
@@ -43,7 +44,7 @@ def format_percent_error(v, e, n=2, include_percent_sign=False):
 def calc_percent_error(v, e, scale=100):
     try:
         return abs(e / v * scale)
-    except ZeroDivisionError:
+    except (ZeroDivisionError, TypeError):
         return 'NaN'
 
 

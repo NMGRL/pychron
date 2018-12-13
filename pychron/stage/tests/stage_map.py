@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import math
 import os
 import unittest
@@ -10,7 +11,8 @@ class StageMapTestCase(unittest.TestCase):
     def setUp(self):
         p = 'pychron/stage/tests/data/221-hole.txt'
         if not os.path.isfile(p):
-            p = './data/221-hole.txt'
+            base = os.path.dirname(os.path.abspath(__file__))
+            p = os.path.join(base, 'data', '221-hole.txt')
 
         self.sm = LaserStageMap(file_path=p)
 
@@ -141,6 +143,7 @@ class StageMapTestCase(unittest.TestCase):
         holes = list(self.sm.mid_holes())
         hs = [hi.id for hi in holes[:6]]
         self.assertListEqual(['3', '10', '20', '32', '46', '61'], hs)
+
 
 class TransformTestCase(unittest.TestCase):
     def test_itransform_point_ntran_nrot(self):

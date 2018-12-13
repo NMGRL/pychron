@@ -15,22 +15,25 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
+import csv
+import os
+
 from traits.api import HasTraits, Float, Enum, List, Int, \
     File, Property, Button, on_trait_change, Any, Event, cached_property
 from traits.trait_errors import TraitError
-from traitsui.api import View, UItem, HGroup, Item, spring, EnumEditor, VGroup
+from traitsui.api import View, UItem, HGroup, Item, spring, VGroup
 from traitsui.tabular_adapter import TabularAdapter
 
-# ============= standard library imports ========================
-import csv
-import os
-# ============= local library imports  ==========================
+from pychron.core.helpers.strtools import to_csv_str
+from pychron.core.ui.enum_editor import myEnumEditor
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.experiment.utilities.save_dialog import IncrementalHeatTemplateSaveDialog
 from pychron.paths import paths
-from pychron.viewable import Viewable
 from pychron.pychron_constants import alphas
+from pychron.viewable import Viewable
 
 
 # paths.build('_experiment')
@@ -112,7 +115,7 @@ class BaseIncrementalHeatStep(HasTraits):
         return d
 
     def to_string(self):
-        return ','.join(map(str, self.make_row()))
+        return to_csv_str(self.make_row())
 
     @property
     def is_valid(self):
@@ -171,7 +174,7 @@ class BaseIncrementalHeatTemplate(Viewable):
         self.steps = []
         with open(path, 'r') as rfile:
             reader = csv.reader(rfile)
-            header = reader.next()
+            header = next(reader)
             cnt = 1
             for row in reader:
                 if row:
@@ -341,7 +344,7 @@ class BaseIncrementalHeatTemplate(Viewable):
         #                    show_toolbar=True,
         #                    selection_mode='rows', sortable=False)
 
-        v = View(VGroup(HGroup(UItem('name', editor=EnumEditor(name='names')),
+        v = View(VGroup(HGroup(UItem('name', editor=myEnumEditor(name='names')),
                                icon_button_editor('add_row', 'table_add'), spring,
                                Item('gduration', label='Duration'),
                                Item('gcleanup', label='Cleanup'),

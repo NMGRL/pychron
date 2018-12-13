@@ -17,15 +17,14 @@
 # ============= enthought library imports =======================
 # from traits.api import HasTraits
 # from traitsui.api import View, Item
+from __future__ import absolute_import
+
 from pyface.action.action import Action
 from pyface.tasks.action.task_action import TaskAction
 
 from pychron.envisage.view_util import open_view
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.lasers.laser_managers.pychron_laser_manager import PychronLaserManager
-
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
 
 
@@ -58,22 +57,22 @@ class LocalLaserAction(BaseLaserAction):
         self.manager = manager
 
 
-class ExecutePatternAction(LocalLaserAction):
-    name = 'Execute Pattern'
+# class ExecutePatternAction(LocalLaserAction):
+#     name = 'Execute Pattern'
+#
+#     def perform(self, event):
+#         manager = self._get_manager(event)
+#         if manager is not None:
+#             manager.execute_pattern()
+#
 
-    def perform(self, event):
-        manager = self._get_manager(event)
-        if manager is not None:
-            manager.execute_pattern()
-
-
-class ExecuteAndLasePatternAction(LocalLaserAction):
-    name = 'Execute Pattern and Lase'
-
-    def perform(self, event):
-        manager = self._get_manager(event)
-        if manager is not None:
-            manager.execute_pattern(lase=True)
+# class ExecuteAndLasePatternAction(LocalLaserAction):
+#     name = 'Execute Pattern and Lase'
+#
+#     def perform(self, event):
+#         manager = self._get_manager(event)
+#         if manager is not None:
+#             manager.execute_pattern(lase=True)
 
 
 class OpenScannerAction(LocalLaserAction):
@@ -222,4 +221,8 @@ class PIDTuningAction(LaserCalibrationAction):
         task = self._get_task(event)
         task.new_pid_tuner()
 
+
+class LaserScriptExecuteAction(TaskAction):
+    method = 'show_laser_script_executor'
+    name = 'Laser Script...'
 # ============= EOF =============================================

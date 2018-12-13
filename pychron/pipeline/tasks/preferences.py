@@ -15,16 +15,32 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import Str, List
+from traitsui.api import View, Item, UItem, VGroup
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traitsui.api import View
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from traitsui.editors import CheckListEditor
+
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
 class PipelinePreferences(BasePreferencesHelper):
     preferences_path = 'pychron.pipeline'
+    skip_meaning = Str
+    _skip_meaning = List
+    _initialized = False
+
+    def _initialize(self, *args, **kw):
+        super(PipelinePreferences, self)._initialize(*args, **kw)
+
+        self._skip_meaning = sorted(self.skip_meaning.split(','))
+        self._initialized = True
+
+    def __skip_meaning_changed(self, new):
+        if self._initialized:
+            self.skip_meaning = ','.join(sorted(new))
 
 
 class PipelinePreferencesPane(PreferencesPane):
@@ -32,7 +48,15 @@ class PipelinePreferencesPane(PreferencesPane):
     category = 'Pipeline'
 
     def traits_view(self):
-        v = View()
+        v = View(VGroup(UItem('_skip_meaning',
+                              tooltip='Select how the "Skip" tag is used. '
+                                      'If X is selected all analyses tagged as "Skip" are excluded when making X',
+                              style='custom',
+                              editor=CheckListEditor(cols=5,
+                                                     values=['Human Table', 'Machine Table', 'Ideogram',
+                                                             'Spectrum', 'Series', 'Isochron'])),
+                        label='Skip Tag Associations',
+                        show_border=True))
         return v
 
 # ============= EOF =============================================

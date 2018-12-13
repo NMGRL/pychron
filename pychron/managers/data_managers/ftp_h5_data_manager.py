@@ -17,8 +17,9 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.managers.data_managers.h5_data_manager import H5DataManager
-from pychron.repo.repository import SFTPRepository
+from zobs.repo.repository import SFTPRepository
 
 
 class FTPH5DataManager(H5DataManager):

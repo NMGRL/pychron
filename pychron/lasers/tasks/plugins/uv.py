@@ -15,11 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from envisage.ui.tasks.task_extension import TaskExtension
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-from pychron.lasers.tasks.plugins.laser_plugin import FusionsPlugin
+
 from pychron.lasers.tasks.laser_preferences import FusionsUVPreferencesPane
+from pychron.lasers.tasks.plugins.laser_plugin import FusionsPlugin
 
 
 class FusionsUVPlugin(FusionsPlugin):
@@ -41,7 +41,7 @@ class FusionsUVPlugin(FusionsPlugin):
 
     def _task_factory(self):
         from pychron.lasers.tasks.laser_task import FusionsUVTask
-        t = FusionsUVTask(manager=self._get_manager())
+        t = FusionsUVTask(manager=self._get_manager(), application=self.application)
         return t
 
 # ============= EOF =============================================

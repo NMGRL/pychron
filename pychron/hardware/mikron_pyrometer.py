@@ -17,13 +17,14 @@
 
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
 from traits.api import Float, Property, Button, Bool, Str, String
 from traitsui.api import Item, spring, Group, HGroup, \
     RangeEditor, ButtonEditor, UItem, EnumEditor
 # =============standard library imports ========================
 
 # =============local library imports  ==========================
-from core.core_device import CoreDevice
+from .core.core_device import CoreDevice
 # from pychron.core import Q_
 from pychron.core.ui.color_map_bar_editor import BarGaugeEditor
 

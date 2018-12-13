@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from difflib import ndiff
 
 from PySide import QtGui, QtCore
-from PySide.QtGui import QPlainTextEdit, QColor, QTextCursor, QFont, QTextEdit, QTextFormat, QPen
+from pyface.qt.QtGui import QPlainTextEdit, QColor, QTextCursor, QFont, QTextEdit, QTextFormat, QPen
 from pyface.ui.qt4.code_editor.gutters import LineNumberWidget
 
 
@@ -70,7 +71,7 @@ class DiffGutter(LineNumberWidget):
                                      self.fontMetrics().height(),
                                      QtCore.Qt.AlignRight, '...')
 
-            block = block.next()
+            block = next(block)
             top = bottom
             bottom = top + int(cw.blockBoundingRect(block).height())
             blocknum += 1

@@ -1,4 +1,6 @@
+from __future__ import absolute_import
 from pychron.processing.dataset.tests.mixin import IntensityMixin
+import six
 
 
 class BaselineMeta(type):
@@ -22,9 +24,7 @@ class BaselineMeta(type):
         return type.__new__(mcs, name, bases, d)
 
 
-class BaselineCorrectedTest(IntensityMixin):
-    __metaclass__ = BaselineMeta
-
+class BaselineCorrectedTest(six.with_metaclass(BaselineMeta, IntensityMixin)):
     def _baseline_corrected(self, k):
         an = self.analysis
         v = an.get_baseline_corrected_value(k)

@@ -15,11 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits, List, Str, Instance, Any
 from traitsui.api import View, UItem, VGroup, TabularEditor, HSplit, Item
 # ============= standard library imports ========================
-import StringIO
-import Image
+from io import StringIO
+from PIL import Image
 from numpy import array
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
@@ -51,7 +52,7 @@ class SnapshotView(HasTraits):
             self.selected_remote_path = new.remote_path
             if new.image:
                 try:
-                    buf = StringIO.StringIO(new.image)
+                    buf = StringIO(new.image)
                     buf.seek(0)
                     img = Image.open(buf)
                     self.selected_image = img.convert('RGBA')
@@ -60,7 +61,6 @@ class SnapshotView(HasTraits):
 
             else:
                 self.selected_image = array([])
-
 
     def __init__(self, snapshots, *args, **kw):
         self.snapshots = snapshots
@@ -72,13 +72,10 @@ class SnapshotView(HasTraits):
                                                                 selected='selected'),
                               width=200),
                         VGroup(Item('selected_path', label='Local', style='readonly'),
-                               Item('selected_remote_path',label='Remote', style='readonly'),
+                               Item('selected_remote_path', label='Remote', style='readonly'),
                                VGroup(UItem('selected_image',
-                                     width=500,
-                                     editor=ImageEditor())))))
+                                            width=500,
+                                            editor=ImageEditor())))))
         return v
 
 # ============= EOF =============================================
-
-
-

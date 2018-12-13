@@ -14,9 +14,37 @@
 # limitations under the License.
 # ===============================================================================
 
-__version__ = '0.1'
+__version__ = '1.0'
 
 
 class ExtractionException(BaseException):
     def __init__(self, m):
         self._msg = m
+
+
+class CheckException(BaseException):
+    tag = None
+
+    def __init__(self, msg):
+        self._msg = msg
+
+    def __str__(self):
+        return '{}: {} Failed'.format(self.tag, self._msg)
+
+
+class PreExtractionCheckException(CheckException):
+    tag = 'PreExtraction'
+
+
+class PreExecuteCheckException(CheckException):
+    tag = 'PreExecute'
+
+    def __init__(self, msg, error=None):
+        self._error = error
+        super(PreExecuteCheckException, self).__init__(msg)
+
+    def __str__(self):
+        r = super(PreExecuteCheckException, self).__str__()
+        if r:
+            r = '{} {}'.format(r, self._error)
+        return r

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import cProfile as profiler
 import gc
 import pstats
@@ -36,7 +37,7 @@ def profile2(fn):
 
 def profile(fn):
     def wrapper(*args, **kw):
-        p = "{}_profile.txt".format(fn.func_name())
+        p = "{}_profile.txt".format(fn.__name__())
         _elapsed, stat_loader, result = _profile(p, fn, *args, **kw)
         stats = stat_loader()
         stats.sort_stats('cumulative')

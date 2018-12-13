@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
 import weakref
 
 from traits.api import HasTraits, Any, Event, List, Bool, Property, Int

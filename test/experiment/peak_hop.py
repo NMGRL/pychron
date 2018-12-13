@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import time
 
 from uncertainties import ufloat
@@ -59,7 +60,7 @@ class PeakHopTestCase(unittest.TestCase):
         s = ArgusSpectrometerManager()
         ion = IonOpticsManager(spectrometer=s.spectrometer)
 
-        s.load(db_mol_weights=False)
+        s.load()
         a.spectrometer_manager = s
         a.ion_optics_manager = ion
         a.isotope_group = ArArAge()

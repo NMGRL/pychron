@@ -15,7 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import cPickle as pickle
+from __future__ import absolute_import
+import six.moves.cPickle as pickle
 
 from traits.api import Str, Int
 
@@ -63,7 +64,7 @@ class PipetteTracker(Loggable):
     def load(self):
         p = self._get_path_id()
         if os.path.isfile(p):
-            with open(p, 'r') as rfile:
+            with open(p, 'rb') as rfile:
                 try:
                     params = pickle.load(rfile)
                     self._load(params)
@@ -72,7 +73,7 @@ class PipetteTracker(Loggable):
 
     def dump(self):
         p = self._get_path_id()
-        with open(p, 'w') as wfile:
+        with open(p, 'wb') as wfile:
             pickle.dump(self._dump(), wfile)
             self.debug('saved current shot count {}'.format(self.counts))
 

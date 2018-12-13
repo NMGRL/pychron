@@ -15,27 +15,28 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, List, Event, Instance, Any, Property, cached_property, Dict
-from traitsui.api import View, UItem, VGroup, HGroup
+from __future__ import absolute_import
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+from traits.api import HasTraits, Str, List, Event, Instance, Any, Property, cached_property, Unicode
+from traitsui.api import View, UItem, VGroup, HGroup
 from uncertainties import std_dev, nominal_value, ufloat
+
 from pychron.core.helpers.formatting import floatfmt, format_percent_error
+from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.processing.analyses.view.adapters import ComputedValueTabularAdapter, \
     DetectorRatioTabularAdapter, ExtractionTabularAdapter, MeasurementTabularAdapter
 from pychron.processing.analyses.view.values import ExtractionValue, ComputedValue, MeasurementValue, DetectorRatio
-from pychron.core.ui.tabular_editor import myTabularEditor
-
-
 # class MainViewHandler(Handler):
 #     def show_isotope_evolution(self, uiinfo, obj):
 #         isos = obj.selected
 #         obj.show_iso_evo_needed = isos
+from pychron.pychron_constants import PLUSMINUS, COCKTAIL, BLANK_TYPES, UNKNOWN, AIR
 
 
 class MainView(HasTraits):
     name = 'Main'
+
+    summary_str = Unicode
 
     analysis_id = Str
     analysis_type = Str
@@ -56,11 +57,16 @@ class MainView(HasTraits):
 
     selected = Any
     show_iso_evo_needed = Event
+    recall_options = None
 
     def __init__(self, analysis=None, *args, **kw):
         super(MainView, self).__init__(*args, **kw)
         if analysis:
             self._load(analysis)
+
+    def set_options(self, an, options):
+        self.recall_options = options
+        self.load(an, True)
 
     def load(self, an, refresh=False):
         self._load(an)
@@ -68,7 +74,6 @@ class MainView(HasTraits):
             self.refresh_needed = True
 
     def _load(self, an):
-        # self.isotopes = an.isotopes
         self.isotopes = [an.isotopes[k] for k in an.isotope_keys]
         self.load_computed(an)
         self.load_extraction(an)
@@ -92,69 +97,78 @@ class MainView(HasTraits):
 
         a39 = ar.ar39decayfactor
         a37 = ar.ar37decayfactor
-        ms = [
-            # MeasurementValue(name='DR Version',
-            #                  value=an.data_reduction_tag),
-            MeasurementValue(name='Branch',
-                             value=an.branch),
-            MeasurementValue(name='DAQ Version',
-                             value=an.collection_version),
-            MeasurementValue(name='ExperimentID',
-                             value=an.repository_identifier),
-            # MeasurementValue(name='AnalysisID',
-            #                  value=self.analysis_ida),
-            MeasurementValue(name='Spectrometer',
-                             value=an.mass_spectrometer),
-            MeasurementValue(name='Run Date',
-                             value=an.rundate.strftime('%Y-%m-%d %H:%M:%S')),
-            MeasurementValue(name='Irradiation',
-                             value=self._get_irradiation(an)),
-            MeasurementValue(name='J',
-                             value=jf),
-            MeasurementValue(name='Lambda K',
-                             value=nominal_value(ar.arar_constants.lambda_k)),
-            MeasurementValue(name='Project',
-                             value=an.project),
-            MeasurementValue(name='Sample',
-                             value=an.sample),
-            MeasurementValue(name='Material',
-                             value=an.material),
-            MeasurementValue(name='Comment',
-                             value=an.comment),
-            MeasurementValue(name='Ar39Decay',
-                             value=floatfmt(a39)),
-            MeasurementValue(name='Ar37Decay',
-                             value=floatfmt(a37)),
-            MeasurementValue(name='Sens.',
-                             value=floatfmt(an.sensitivity))]
+        ms = [MeasurementValue(name='Branch',
+                               value=an.branch),
+              MeasurementValue(name='DAQ Version',
+                               value=an.collection_version),
+              MeasurementValue(name='UUID',
+                               value=an.uuid),
+              MeasurementValue(name='RepositoryID',
+                               value=an.repository_identifier),
+              MeasurementValue(name='Spectrometer',
+                               value=an.mass_spectrometer),
+              MeasurementValue(name='Run Date',
+                               value=an.rundate.strftime('%Y-%m-%d %H:%M:%S')),
+              MeasurementValue(name='Irradiation',
+                               value=self._get_irradiation(an)),
+              MeasurementValue(name='J',
+                               value=jf),
+              MeasurementValue(name='Position Error',
+                               value=floatfmt(an.position_jerr, use_scientific=True)),
+              MeasurementValue(name='Lambda K',
+                               value=nominal_value(ar.arar_constants.lambda_k),
+                               units='1/a'),
+              MeasurementValue(name='Project',
+                               value=an.project),
+              MeasurementValue(name='Sample',
+                               value=an.sample),
+              MeasurementValue(name='Material',
+                               value=an.material),
+              MeasurementValue(name='Comment',
+                               value=an.comment),
+              MeasurementValue(name='Ar39Decay',
+                               value=floatfmt(a39)),
+              MeasurementValue(name='Ar37Decay',
+                               value=floatfmt(a37)),
+              MeasurementValue(name='Sens.',
+                               value=floatfmt(an.sensitivity, use_scientific=True),
+                               units=an.sensitivity_units)]
 
         self.measurement_values = ms
 
     def load_extraction(self, an):
 
-        ev = [
-            ExtractionValue(name='Extract Script',
-                            value=an.extraction_script_name),
-            ExtractionValue(name='Meas. Script',
-                            value=an.measurement_script_name),
-            ExtractionValue(name='Device',
-                            value=an.extract_device),
-            ExtractionValue(name='Position',
-                            value=an.position, ),
-            ExtractionValue(name='XYZ',
-                            value=an.xyz_position),
-            ExtractionValue(name='Extract Value',
-                            value=an.extract_value,
-                            units=an.extract_units, ),
-            ExtractionValue(name='Duration',
-                            value=an.extract_duration,
-                            units='s'),
-            ExtractionValue(name='Cleanup',
-                            value=an.cleanup_duration,
-                            units='s'),
-            ExtractionValue(name='T_o',
-                            value=an.collection_time_zero_offset,
-                            units='s')]
+        ev = [ExtractionValue(name='Extract Script',
+                              value=an.extraction_script_name),
+              ExtractionValue(name='Meas. Script',
+                              value=an.measurement_script_name),
+              ExtractionValue(name='Device',
+                              value=an.extract_device),
+              ExtractionValue(name='Load',
+                              value=an.load_name,
+                              units=an.load_holder),
+              ExtractionValue(name='Position',
+                              value=an.position),
+              ExtractionValue(name='XYZ',
+                              value=an.xyz_position),
+              ExtractionValue(name='Extract Value',
+                              value=an.extract_value,
+                              units=an.extract_units, ),
+              ExtractionValue(name='Duration',
+                              value=an.extract_duration,
+                              units='s'),
+              ExtractionValue(name='Cleanup',
+                              value=an.cleanup_duration,
+                              units='s'),
+              ExtractionValue(name='T_o',
+                              value=an.collection_time_zero_offset,
+                              units='s'),
+              ExtractionValue(name='Lab Temp.',
+                              value=an.lab_temperature,
+                              units='F'),
+              ExtractionValue(name='Lab Hum.',
+                              units='%',
+                              value=an.lab_humidity)]
 
         if 'UV' in an.extract_device:
             extra = [ExtractionValue(name='Mask Pos.',
@@ -183,14 +197,14 @@ class MainView(HasTraits):
         self.extraction_values = ev
 
     def load_computed(self, an, new_list=True):
-        if self.analysis_type == 'unknown':
+        if self.analysis_type == UNKNOWN:
             self._load_unknown_computed(an, new_list)
             if self._corrected_enabled:
                 self._load_corrected_values(an, new_list)
 
-        elif self.analysis_type in ('air', 'blank_air', 'blank_unknown', 'blank_cocktail'):
+        elif self.analysis_type == AIR or self.analysis_type in BLANK_TYPES:
             self._load_air_computed(an, new_list)
-        elif self.analysis_type == 'cocktail':
+        elif self.analysis_type == COCKTAIL:
             self._load_cocktail_computed(an, new_list)
 
     # def _get_isotope(self, name):
@@ -199,15 +213,26 @@ class MainView(HasTraits):
     def _make_ratios(self, ratios):
         cv = []
         for name, nd, ref in ratios:
-            dr = DetectorRatio(name=name,
-                               value='',
-                               error='',
-                               noncorrected_value=0,
-                               noncorrected_error=0,
-                               ic_factor='',
-                               ref_ratio=ref,
-                               detectors=nd)
-            cv.append(dr)
+            n, d = nd.split('/')
+            ns = [i for i in self.isotopes if i.name == n]
+            ds = [i for i in self.isotopes if i.name == d]
+
+            add_det_names = len(ns) > 1 or len(ds) > 1
+            for ni in ns:
+                for di in ds:
+                    if add_det_names:
+                        nd = '{}_{}/{}_{}'.format(ni.name, ni.detector, di.name, di.detector)
+                        name = '{}({})/{}({})'.format(ni.name, ni.detector, di.name, di.detector)
+
+                    dr = DetectorRatio(name=name,
+                                       value='',
+                                       error='',
+                                       noncorrected_value=0,
+                                       noncorrected_error=0,
+                                       ic_factor='',
+                                       ref_ratio=ref,
+                                       detectors=nd)
+                    cv.append(dr)
 
         return cv
 
@@ -228,7 +253,7 @@ class MainView(HasTraits):
             except ZeroDivisionError:
                 pass
 
-        return ufloat(0, 1e-20)
+        return ufloat(0, 0)
 
     def _get_corrected_ratio(self, niso, diso):
         """
@@ -247,20 +272,34 @@ class MainView(HasTraits):
                         diso.ic_factor / niso.ic_factor)
             except (ZeroDivisionError, TypeError):
                 pass
-        return ufloat(0, 1e-20), 1
+        return ufloat(0, 0), 1
+
+    def _get_ratio(self, tag):
+        def get_iso(kk):
+            if '_' in kk:
+                iso, det = kk.split('_')
+
+                def test(i):
+                    return i.name == iso and i.detector == det
+            else:
+                def test(i):
+                    return i.name == kk
+
+            return next((v for v in self.isotopes if test(v)), None)
+
+        n, d = tag.split('/')
+
+        niso, diso = get_iso(n), get_iso(d)
+        return niso, diso
 
     def _update_ratios(self):
-        def get_iso(kk):
-            return next((v for v in self.isotopes if v.name == kk), None)
 
         for ci in self.computed_values:
             if not isinstance(ci, DetectorRatio):
                 continue
 
             nd = ci.detectors
-            n, d = nd.split('/')
-
-            niso, diso = get_iso(n), get_iso(d)
+            niso, diso = self._get_ratio(nd)
             if niso and diso:
                 noncorrected = self._get_non_corrected_ratio(niso, diso)
                 corrected, ic = self._get_corrected_ratio(niso, diso)
@@ -281,14 +320,44 @@ class MainView(HasTraits):
 
         self._update_ratios()
 
+        try:
+            niso, diso = self._get_ratio('Ar40/Ar36')
+            if niso and diso:
+                noncorrected = self._get_non_corrected_ratio(niso, diso)
+                v, e = nominal_value(noncorrected), std_dev(noncorrected)
+                ref = 295.5
+                self.summary_str = u'Ar40/Ar36={} {}{}({}%) IC={:0.5f}'.format(floatfmt(v),
+                                                                               PLUSMINUS, floatfmt(e),
+                                                                               format_percent_error(v, e),
+                                                                               nominal_value(noncorrected / ref))
+        except:
+            pass
+
     def _load_cocktail_computed(self, an, new_list):
         if new_list:
             c = an.arar_constants
-            ratios = [('40Ar/36Ar', 'Ar40/Ar36', nominal_value(c.atm4036)),
-                      ('40Ar/38Ar', 'Ar40/Ar38', nominal_value(c.atm4038)),
-                      ('40Ar/39Ar', 'Ar40/Ar39', 1)]
+            ratios = []
+            refs = {'40Ar/38Ar': nominal_value(c.atm4038),
+                    '40Ar/36Ar': nominal_value(c.atm4036)}
+
+            if self.recall_options:
+                names = [r.tagname for r in self.recall_options.cocktail_options.ratios]
+                ratios = [(name, name, refs.get(name, 1)) for name in names]
+
             cv = self._make_ratios(ratios)
+
+            an.calculate_age()
+            cv.append(ComputedValue(name='F', tag='uf',
+                                    uvalue=an.uF))
+
+            cv.append(ComputedValue(name='40Ar*', tag='rad40_percent',
+                                    uvalue=an.rad40_percent))
+
+            cv.append(ComputedValue(name='Age', tag='uage',
+                                    uvalue=an.uage))
+
             self.computed_values = cv
+            self._update_ratios()
         else:
             self._update_ratios()
 
@@ -296,6 +365,9 @@ class MainView(HasTraits):
         attrs = (('40/39', 'Ar40/Ar39_decay_corrected'),
                  ('40/37', 'Ar40/Ar37_decay_corrected'),
                  ('40/36', 'Ar40/Ar36'),
+                 ('40/38', 'Ar40/Ar38'),
+                 ('(40/36)non_ic', 'uAr40_Ar36'),
+                 ('(40/38)non_ic', 'uAr40_Ar38'),
                  ('38/39', 'Ar38/Ar39_decay_corrected'),
                  ('37/39', 'Ar37_decay_corrected/Ar39_decay_corrected'),
                  ('36/39', 'Ar36/Ar39_decay_corrected'))
@@ -317,7 +389,7 @@ class MainView(HasTraits):
 
                 return ComputedValue(name=n,
                                      tag=a,
-                                     value=nominal_value(value) or 0,
+                                     value=nominal_value(value or 0),
                                      display_value=display_value,
                                      error=e or 0)
 
@@ -333,7 +405,7 @@ class MainView(HasTraits):
                 ci.error = std_dev(v)
 
     def _load_unknown_computed(self, an, new_list):
-        attrs = (('Age', 'uage'),
+        attrs = (('Age', 'uage_w_j_err'),
                  # ('Age', 'age', None, None, 'age_err'),
                  ('w/o J', 'wo_j', '', 'uage', 'age_err_wo_j'),
                  ('K/Ca', 'kca'),
@@ -369,6 +441,14 @@ class MainView(HasTraits):
 
             self.computed_values = cv
         else:
+            age = an.uage
+            nage, sage = nominal_value(age), std_dev(age)
+            try:
+                self.summary_str = u'Age={} {}{}({}%)'.format(floatfmt(nage), PLUSMINUS,
+                                                              floatfmt(sage), format_percent_error(nage, sage))
+            except:
+                pass
+
             for ci in self.computed_values:
                 attr = ci.tag
                 if attr == 'wo_j':

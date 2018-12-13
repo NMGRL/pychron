@@ -16,25 +16,21 @@
 
 # =============enthought library imports=======================
 
+from __future__ import absolute_import
+from threading import Timer
+
 from traits.api import Instance, Button, Bool, Float
 from traitsui.api import VGroup, Item, InstanceEditor
 
-# =============standard library imports ========================
-from threading import Timer
-# =============local library imports  ==========================
-
+from .fusions_laser_manager import FusionsLaserManager
 from pychron.hardware.fusions.fusions_diode_logic_board import FusionsDiodeLogicBoard
-# from pychron.hardware.fusions.vue_diode_control_module import VueDiodeControlModule
 from pychron.hardware.mikron_pyrometer import MikronGA140Pyrometer
-from pychron.hardware.watlow_ezzone import WatlowEZZone
-from pychron.hardware.temperature_monitor import DPi32TemperatureMonitor
 from pychron.hardware.pyrometer_temperature_monitor import PyrometerTemperatureMonitor
-
+from pychron.hardware.temperature_monitor import DPi32TemperatureMonitor
+from pychron.hardware.watlow_ezzone import WatlowEZZone
 from pychron.lasers.laser_managers.vue_metrix_manager import VueMetrixManager
-from pychron.response_recorder import ResponseRecorder
 from pychron.monitors.fusions_diode_laser_monitor import FusionsDiodeLaserMonitor
-
-from fusions_laser_manager import FusionsLaserManager
+from pychron.response_recorder import ResponseRecorder
 
 
 class FusionsDiodeManager(FusionsLaserManager):
@@ -49,7 +45,6 @@ class FusionsDiodeManager(FusionsLaserManager):
     pyrometer = Instance(MikronGA140Pyrometer)
     temperature_controller = Instance(WatlowEZZone)
     temperature_monitor = Instance(DPi32TemperatureMonitor)
-    response_recorder = Instance(ResponseRecorder)
 
     control_module_manager = Instance(VueMetrixManager)
 
@@ -126,23 +121,6 @@ class FusionsDiodeManager(FusionsLaserManager):
         return self._set_laser_power_hook(temp, mode='closed', set_pid=set_pid)
         # use_calibration=self.use_calibrated_temperature)
 
-    def get_response_blob(self):
-        return self.response_recorder.get_response_blob() if self.response_recorder else ''
-
-    def get_output_blob(self):
-        return self.response_recorder.get_output_blob() if self.response_recorder else ''
-
-    def set_response_recorder_period(self, p):
-        if self.response_recorder:
-            self.response_recorder.period = p
-
-    def start_response_recorder(self):
-        if self.response_recorder:
-            self.response_recorder.start()
-
-    def stop_response_recorder(self):
-        if self.response_recorder:
-            self.response_recorder.stop()
     # ===============================================================================
     # private
     # ===============================================================================
@@ -160,8 +138,6 @@ class FusionsDiodeManager(FusionsLaserManager):
 
     def _enable_hook(self, clear_setpoint=True):
         if super(FusionsDiodeManager, self)._enable_hook():  # logic board sucessfully enabled
-            if self.fiber_light.auto_onoff and self.fiber_light.state:
-                self.fiber_light.power_off()
 
             if clear_setpoint:
                 # disable the temperature_controller unit a value is set
@@ -173,12 +149,6 @@ class FusionsDiodeManager(FusionsLaserManager):
             return self.control_module_manager.enable()
 
     def _disable_hook(self):
-        if self.fiber_light.auto_onoff and not self.fiber_light.state:
-            if self._recording_power_state:
-                t = Timer(7, self.fiber_light.power_on)
-                t.start()
-            else:
-                self.fiber_light.power_on()
 
         self.response_recorder.stop()
         self.temperature_controller.disable()

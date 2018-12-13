@@ -15,12 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import List, Property, Str
-from traits.trait_types import BaseStr
 from traitsui.api import View, VGroup, UItem
 from traitsui.menu import Action
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 from pychron.dvc.dvc_irradiationable import DVCAble
 
 
@@ -30,14 +29,6 @@ class OKButton(Action):
 
 
 STYLESHEET = 'QLabel {font-size: 14px; color: red}'
-
-
-class SpacelessStr(BaseStr):
-    def validate(self, object, name, value):
-        if isinstance(value, basestring) and ' ' not in value:
-            return value
-
-        self.error(object, name, value)
 
 
 class BaseEntry(DVCAble):
@@ -63,12 +54,11 @@ class BaseEntry(DVCAble):
             info = self.edit_traits()
             if info.result:
                 db = self.get_database()
-                with db.session_ctx():
-                    ret = self._add_item()
-                    if ret is None:
-                        return False
-                    elif ret:
-                        return True
+                ret = self._add_item()
+                if ret is None:
+                    return False
+                elif ret:
+                    return True
             else:
                 return False
 
@@ -79,7 +69,7 @@ class BaseEntry(DVCAble):
         for a, v in (('buttons', ['OK', 'Cancel']),
                      ('resizable', True),
                      ('kind', 'livemodal')):
-            if not kw.has_key(a):
+            if a not in kw:
                 kw[a] = v
 
         v = View(*args, **kw)

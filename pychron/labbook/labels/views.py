@@ -13,7 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
+from __future__ import print_function
 from pychron.core.ui import set_qt
+from six.moves import map
 
 set_qt()
 # ============= enthought library imports =======================
@@ -30,7 +33,8 @@ class NewLabelView(HasTraits):
     @property
     def color_str(self):
         f = lambda x: '{:X}'.format(x).zfill(2)
-        args = map(f, self.color.toTuple())
+        color = self.color
+        args = list(map(f, (color.red(), color.green(), color.blue(), color.alpha())))
         return ''.join(args)
 
     def traits_view(self):
@@ -47,7 +51,7 @@ class NewLabelView(HasTraits):
 if __name__ == '__main__':
     nv = NewLabelView()
     nv.configure_traits()
-    print nv.color_str
+    print(nv.color_str)
 # ============= EOF =============================================
 
 

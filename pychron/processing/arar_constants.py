@@ -15,10 +15,12 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
+
 from traits.api import HasTraits, Property, Float, Enum, Str, Bool, Any
 from uncertainties import ufloat, nominal_value, std_dev
 
-from pychron.pychron_constants import AGE_SCALARS
+from pychron.pychron_constants import AGE_SCALARS, AGE_MA_SCALARS
 
 
 # =============local library imports  ==========================
@@ -86,6 +88,7 @@ class ArArConstants(HasTraits):
 
     age_units = Str('Ma')
     age_scalar = Property(depends_on='age_units')
+    ma_age_scalar = Property(depends_on='age_units')
     abundance_sensitivity = Float
 
     # ic_factors = Either(List, Str)
@@ -98,9 +101,9 @@ class ArArConstants(HasTraits):
     lambda_Ar37_citation = Str  #'Min (2008)'
 
     allow_negative_ca_correction = Bool(True)
+    trapped_atm4036 = None
 
     def __init__(self, *args, **kw):
-        #print 'init arar constants'
         try:
             from pychron.core.ui.preference_binding import bind_preference
             bind_preference(self, 'lambda_b_v', 'pychron.arar.constants.lambda_b')
@@ -114,15 +117,14 @@ class ArArConstants(HasTraits):
             bind_preference(self, 'lambda_Ar39_v', 'pychron.arar.constants.lambda_Ar39')
             bind_preference(self, 'lambda_Ar39_e', 'pychron.arar.constants.lambda_Ar39_error')
 
-            bind_preference(self, 'atm4036_v', 'pychron.arar.constants.Ar40_Ar36_atm')
-            bind_preference(self, 'atm_4036_e', 'pychron.arar.constants.Ar40_Ar36_atm_error')
-            bind_preference(self, 'atm4038_v', 'pychron.arar.constants.Ar40_Ar38_atm')
-            bind_preference(self, 'atm_4038_e', 'pychron.arar.constants.Ar40_Ar38_atm_error')
+            bind_preference(self, 'atm4036_v', 'pychron.arar.constants.ar40_ar36_atm')
+            bind_preference(self, 'atm4036_e', 'pychron.arar.constants.ar40_ar36_atm_error')
+            bind_preference(self, 'atm4038_v', 'pychron.arar.constants.ar40_ar38_atm')
+            bind_preference(self, 'atm4038_e', 'pychron.arar.constants.ar40_ar38_atm_error')
 
-            bind_preference(self, 'k3739_mode', 'pychron.arar.constants.Ar37_Ar39_mode')
-            bind_preference(self, 'k3739_v', 'pychron.arar.constants.Ar37_Ar39')
-            bind_preference(self, 'k3739_e', 'pychron.arar.constants.Ar37_Ar39_error')
-
+            bind_preference(self, 'k3739_mode', 'pychron.arar.constants.ar37_ar39_mode')
+            bind_preference(self, 'k3739_v', 'pychron.arar.constants.ar37_ar39')
+            bind_preference(self, 'k3739_e', 'pychron.arar.constants.ar37_ar39_error')
             bind_preference(self, 'age_units', 'pychron.arar.constants.age_units')
             bind_preference(self, 'abundance_sensitivity', 'pychron.arar.constants.abundance_sensitivity')
 
@@ -130,8 +132,8 @@ class ArArConstants(HasTraits):
             #                 factory=ICFactorPreferenceBinding)
 
             prefid = 'pychron.arar.constants'
-            bind_preference(self, 'atm4036_citation', '{}.Ar40_Ar36_atm_citation'.format(prefid))
-            bind_preference(self, 'atm4038_citation', '{}.Ar40_Ar38_atm_citation'.format(prefid))
+            bind_preference(self, 'atm4036_citation', '{}.ar40_ar36_atm_citation'.format(prefid))
+            bind_preference(self, 'atm4038_citation', '{}.ar40_ar38_atm_citation'.format(prefid))
             bind_preference(self, 'lambda_b_citation', '{}.lambda_b_citation'.format(prefid))
             bind_preference(self, 'lambda_e_citation', '{}.lambda_e_citation'.format(prefid))
             bind_preference(self, 'lambda_Cl36_citation', '{}.lambda_Cl36_citation'.format(prefid))
@@ -140,7 +142,7 @@ class ArArConstants(HasTraits):
 
             bind_preference(self, 'allow_negative_ca_correction', '{}.allow_negative_ca_correction'.format(prefid))
 
-        except (AttributeError, ImportError):
+        except (AttributeError, ImportError) as e:
             pass
 
         super(ArArConstants, self).__init__(*args, **kw)
@@ -156,6 +158,14 @@ class ArArConstants(HasTraits):
         d['abundance_sensitivity'] = self.abundance_sensitivity
         return d
 
+    @property
+    def atm3836_v(self):
+        return nominal_value(self.atm3836)
+
+    @property
+    def atm3836_e(self):
+        return std_dev(self.atm3836)
+
     def _get_fixed_k3739(self):
         return self._get_ufloat('k3739')
 
@@ -165,9 +175,12 @@ class ArArConstants(HasTraits):
     def _get_ufloat(self, attr):
         v = getattr(self, '{}_v'.format(attr))
         e = getattr(self, '{}_e'.format(attr))
-        return ufloat(v, e)
+        return ufloat(v, e, tag=attr)
 
     def _get_atm4036(self):
+        if self.trapped_atm4036 is not None:
+            return self.trapped_atm4036
+
         return self._get_ufloat('atm4036')
 
     def _get_atm4038(self):
@@ -203,4 +216,8 @@ class ArArConstants(HasTraits):
             return AGE_SCALARS[self.age_units]
         except KeyError:
             return 1
-
+    def _get_ma_age_scalar(self):
+        try:
+            return AGE_MA_SCALARS[self.age_units]
+        except KeyError:
+            return 1

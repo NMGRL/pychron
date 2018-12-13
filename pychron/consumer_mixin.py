@@ -15,11 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from traits.has_traits import HasTraits
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 import time
-from Queue import Queue, Empty
+from queue import Queue, Empty
 from threading import Thread
 
 
@@ -105,7 +107,7 @@ class ConsumerMixin(HasTraits):
             def get_func():
                 try:
                     if self._consumer_queue is None:
-                        print self
+                        print(self)
                     return self._consumer_queue.get(timeout=1)
                 except Empty:
                     return
@@ -121,7 +123,7 @@ class ConsumerMixin(HasTraits):
                 if time.time() - st > timeout:
                     self._should_consume = False
                     self._consumer_queue = None
-                    print 'consumer time out'
+                    print('consumer time out')
                     break
 
             try:
@@ -150,7 +152,7 @@ class ConsumerMixin(HasTraits):
                             invoke_in_main_thread(func, *args, **kw)
                         else:
                             func(*args)
-            except Exception, e:
+            except Exception as e:
                 import traceback
 
                 traceback.print_exc()

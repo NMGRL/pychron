@@ -18,23 +18,23 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
-
-# ============= EOF =============================================
-
-
 def camel_case(name, delimiters=None):
     if delimiters is None:
         delimiters = ('_', '/', ' ')
-    name = name.title()
+
+    name = '{}{}'.format(name[0].upper(), name[1:])
     for d in delimiters:
-        name = name.replace(d, '')
+        if d in name:
+            name = ''.join(a.title() for a in name.split(d))
+
     return name
 
 
 def to_list(a, delimiter=',', mapping=None):
     l = a.split(delimiter)
     if mapping:
-        l = map(mapping, l)
+        l = [mapping[li] for li in l]
+
     return l
 
 
@@ -54,13 +54,56 @@ def to_bool(a):
     elif isinstance(a, (int, float)):
         return bool(a)
 
-    tks = ['true', 't', 'yes', 'y', '1', 'ok']
-    fks = ['false', 'f', 'no', 'n', '0']
+    tks = ['true', 't', 'yes', 'y', '1', 'ok', 'open']
+    fks = ['false', 'f', 'no', 'n', '0', 'closed']
 
-    if a is not None:
-        a = str(a).strip().lower()
+    # if a is not None:
+    #     a = str(a).strip().lower()
 
+    a = str(a).strip().lower()
     if a in tks:
         return True
     elif a in fks:
         return False
+    else:
+        return False
+
+
+def csv_to_floats(*args, **kw):
+    return csv_to_cast(float, *args, **kw)
+
+
+def csv_to_ints(*args, **kw):
+    return csv_to_cast(int, *args, **kw)
+
+
+def csv_to_cast(cast, a, delimiter=','):
+    return [cast(ai) for ai in a.split(delimiter)]
+
+
+def to_csv_str(iterable, delimiter=','):
+    return delimiter.join([str(v) for v in iterable])
+
+
+def ratio(xs, ys=None):
+    def r(a, b):
+        return '{}/{}'.format(a, b)
+
+    if ys is None:
+        ys = xs
+
+    ret = []
+    for iso in xs:
+        for jiso in ys:
+            if iso == jiso:
+                continue
+            if r(jiso, iso) not in ret:
+                ret.append(r(iso, jiso))
+
+    return ret
+
+
+if __name__ == '__main__':
+    for ret in ratio('abc'):
+        print(ret)
+# ============= EOF =============================================

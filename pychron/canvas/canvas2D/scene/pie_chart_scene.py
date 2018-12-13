@@ -15,22 +15,22 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import math
 
+from chaco.default_colormaps import jet
 from enable.base import str_to_font
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from pychron.canvas.canvas2D.scene.primitives.primitives import QPrimitive
 from pychron.canvas.canvas2D.scene.scene import Scene
-from matplotlib.cm import get_cmap
+from six.moves import zip
 
 
 class PieChart(QPrimitive):
     def __init__(self, error_components, *args, **kw):
         super(PieChart, self).__init__(0, 0, *args, **kw)
         self.error_components = error_components
-        self.cmap = get_cmap('jet')
+        self.cmap = jet
 
     def render(self, gc):
         names = [ei.name for ei in self.error_components]

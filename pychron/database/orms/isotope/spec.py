@@ -16,16 +16,14 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
 from sqlalchemy import Column, Integer, BLOB, Float, DateTime
 from sqlalchemy.orm import relationship
-# ============= local library imports  ==========================
+from sqlalchemy.sql.expression import func
 
 from pychron.database.core.base_orm import BaseMixin
-# from pychron.database.core.base_orm import PathMixin, ResultsMixin, ScriptTable
-from sqlalchemy.sql.expression import func
 from pychron.database.orms.isotope.util import foreignkey
-
-from util import Base
+from .util import Base
 
 
 class spec_MassCalHistoryTable(Base, BaseMixin):

@@ -18,7 +18,8 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from PySide.QtCore import QThread
+from __future__ import absolute_import
+from pyface.qt.QtCore import QThread
 class Thread(QThread):
     _target = None
     _args = None
@@ -46,8 +47,11 @@ class Thread(QThread):
             self.wait()
 
 
-
 def currentThreadName():
     return QThread.currentThread().objectName()
+
+
+def sleep(v):
+    QThread.msleep(int(v*1000))
 
 # ============= EOF =============================================

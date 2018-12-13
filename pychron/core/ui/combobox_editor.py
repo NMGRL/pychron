@@ -17,8 +17,10 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.core.ui.factory import toolkit_factory
-ComboboxEditor= toolkit_factory('combobox_editor','ComboboxEditor')
+
+ComboboxEditor = toolkit_factory('combobox_editor', 'ComboboxEditor')
 
 # ============= EOF =============================================
 

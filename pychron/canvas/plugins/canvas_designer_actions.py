@@ -17,6 +17,7 @@
 
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface.action.api import Action
 
 # ============= standard library imports ========================

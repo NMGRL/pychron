@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Str, Int, Float
 # ============= standard library imports ========================
 import time
@@ -22,6 +23,7 @@ import json
 # ============= local library imports  ==========================
 from pychron.core.communication_helper import trim_bool
 from pychron.hardware.core.core_device import CoreDevice
+from six.moves import range
 
 
 class NMGRLFurnaceDrive(CoreDevice):
@@ -84,8 +86,13 @@ class NMGRLFurnaceDrive(CoreDevice):
     def get_position(self, units='steps'):
         pos = self.ask(self._build_command('GetPosition', units=units))
         if pos:
-            pos = float(pos)
-            pos *= self.drive_sign
+            if pos != 'No Response':
+                try:
+                    pos = float(pos)
+                    pos *= self.drive_sign
+                except ValueError:
+                    pos = None
+
             return pos
 
     def start_jitter(self, turns=None, p1=None, p2=None, **kw):

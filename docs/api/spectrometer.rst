@@ -1,7 +1,10 @@
 Spectrometer Package
 ====================
 
-.. autoclass:: pychron.spectrometer.mftable.MagnetFieldTable
+.. autoclass:: pychron.spectrometer.field_table.FieldTable
+   :members:
+
+.. autoclass:: pychron.spectrometer.fieldmixin.FieldMixin
    :members:
 
 .. autoclass:: pychron.spectrometer.base_magnet.BaseMagnet
@@ -34,6 +37,27 @@ Spectrometers
 
 .. autoclass:: pychron.spectrometer.thermo.magnet.helix.HelixMagnet
    :members:
+
+
+Isotopx
+----------
+The Isotopx package (pychron.spectrometer.isotopx) contains abstractions for interfacing a Isotopx mass 
+spectrometer via IsotopxRCS
+
+Spectrometers
+~~~~~~~~~~~~~
+.. autoclass:: pychron.spectrometer.isotopx.spectrometer.base.IsotopxSpectrometer
+   :members:
+
+.. autoclass:: pychron.spectrometer.isotopx.spectrometer.ngx.NGXSpectrometer
+   :members:
+
+.. autoclass:: pychron.spectrometer.isotopx.magnet.base.IsotopxMagnet
+   :members:
+
+.. autoclass:: pychron.spectrometer.isotopx.magnet.ngx.NGXMagnet
+   :members:
+
 
 MAP
 --------------

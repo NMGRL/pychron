@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import os
 import time
 
@@ -162,7 +163,7 @@ class SampleChanger(Loggable):
 
     def _get_valves(self, rules, key):
         v = []
-        if rules.has_key(key):
+        if key in rules:
             valves = rules[key]
             if valves:
                 v = valves.split(',')
@@ -174,7 +175,7 @@ class SampleChanger(Loggable):
 
         c = [NULL_STR, ]
         if rules:
-            c.extend(rules.keys())
+            c.extend(list(rules.keys()))
 
         return c
 

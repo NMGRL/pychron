@@ -15,18 +15,42 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-
+from __future__ import absolute_import
+from traits.api import List, Instance
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
+from pychron.experiment.events import ExperimentEventAddition, START_QUEUE, END_QUEUE
 from pychron.social.email.emailer import Emailer
+from pychron.social.email.experiment_notifier import ExperimentNotifier
 from pychron.social.email.tasks.preferences import EmailPreferencesPane
 
 
 class EmailPlugin(BaseTaskPlugin):
-    id = 'pychron.email.plugin'
+    id = 'pychron.social.email.plugin'
     name = 'Email'
     test_email_server_description = 'Test connection to the SMTP Email Server'
+    events = List(contributes_to='pychron.experiment.events')
+    experiment_notifier = Instance(ExperimentNotifier)
+
+    def test_email_server(self):
+        e = self._email_factory()
+        return e.test_email_server()
+
+    # private
+    # def _start_queue(self, ctx):
+    #     if ctx.get('use_email'):
+    #         subject = 'Experiment "{}" Started'.format(ctx.get('name'))
+    #         self.info('Notifying user={} email={}'.format(ctx.get('username'), ctx.get('email')))
+    #         self.experiment_notifier.notify(ctx, subject)
+    #
+    # def _end_queue(self, ctx):
+    #     if ctx.get('use_email'):
+    #         tag = 'Stopped' if ctx.get('err_message') else 'Finished'
+    #         subject = 'Experiment "{}" {}'.format(ctx.get('name'), tag)
+    #         self.info('Notifying user={} email={}'.format(ctx.get('username'), ctx.get('email')))
+    #         self.experiment_notifier.notify(ctx, subject)
+
     def _email_factory(self):
         return Emailer()
 
@@ -38,8 +62,17 @@ class EmailPlugin(BaseTaskPlugin):
                                         protocol='pychron.social.email.emailer.Emailer')
         return [so]
 
-    def test_email_server(self):
-        e = self._email_factory()
-        return e.test_email_server()
+    def _experiment_notifier_default(self):
+        exp = ExperimentNotifier(emailer=Emailer())
+        return exp
 
-        # ============= EOF =============================================
+    def _events_default(self):
+        evts = [ExperimentEventAddition(id='pychron.experiment_notifier.start_queue',
+                                        action=self.experiment_notifier.start_queue,
+                                        level=START_QUEUE),
+                ExperimentEventAddition(id='pychron.experiment_notifier.end_queue',
+                                        action=self.experiment_notifier.end_queue,
+                                        level=END_QUEUE)]
+        return evts
+
+ # ============= EOF =============================================

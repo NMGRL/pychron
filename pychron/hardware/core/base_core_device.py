@@ -16,25 +16,25 @@
 
 # =============enthought library imports=======================
 
-from traits.api import provides, HasTraits
+from __future__ import absolute_import
+from __future__ import print_function
 
+# from threading import Lock
+import inspect
 # from pyface.timer.api import Timer
 # =============standard library imports ========================
 import random
-# from threading import Lock
-import inspect
 import time
-# =============local library imports  ==========================
-# from traits.has_traits import provides
-from i_core_device import ICoreDevice
-# from pychron.core.helpers.timer import Timer
-# from pychron.managers.data_managers.csv_data_manager import CSVDataManager
-# from pychron.core.helpers.datetime_tools import generate_datetimestamp
+
+from traits.api import provides
+
+from pychron.consumer_mixin import ConsumerMixin
 from pychron.globals import globalv
+from pychron.hardware.core.communicators.scheduler import CommunicationScheduler
 from pychron.hardware.core.exceptions import TimeoutError, CRCError
 from pychron.has_communicator import HasCommunicator
-from pychron.hardware.core.communicators.scheduler import CommunicationScheduler
-from pychron.consumer_mixin import ConsumerMixin
+# =============local library imports  ==========================
+from .i_core_device import ICoreDevice
 
 
 def crc_caller(func):
@@ -43,7 +43,7 @@ def crc_caller(func):
             return func(*args, **kw)
         except CRCError:
             stack = inspect.stack()
-            print '{} called by {}'.format(func.func_name, stack[1][3])
+            print('{} called by {}'.format(func.__name__, stack[1][3]))
 
     return d
 
@@ -157,14 +157,15 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
             elif timeout:
                 et = time.time() - st
                 if et > timeout:
-                    self.warning('blocking poll of "{}" timed out after {}s'.format(func.func_name, timeout))
-                    raise TimeoutError(func.func_name, timeout)
+                    self.warning('blocking poll of "{}" timed out after {}s'.format(func.__name__, timeout))
+                    raise TimeoutError(func.__name__, timeout)
             time.sleep(period)
 
     @crc_caller
     def ask(self, cmd, **kw):
         """
         """
+
         comm = self.communicator
         if comm is not None:
             if comm.scheduler:
@@ -172,7 +173,9 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
                                             kwargs=kw)
             else:
                 r = comm.ask(cmd, **kw)
-            self._communicate_hook(cmd, r)
+
+            if hasattr(self, '_communicate_hook'):
+                self._communicate_hook(cmd, r)
             return r
         else:
             self.info('no communicator for this device {}'.format(self.name))
@@ -188,7 +191,8 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
         """
         """
         if self.communicator is not None:
-            cmd = ' '.join(map(str, args) + map(str, kw.iteritems()))
+            cmd = ' '.join([str(a) for a in args] + [str(a) for a in kw.items()])
+
             self._communicate_hook(cmd, '-')
             return self.communicator.tell(*args, **kw)
 
@@ -199,7 +203,7 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
         if self.communicator is not None:
             return self.communicator.read(*args, **kw)
 
-    #        if self.simulation:
+    # if self.simulation:
     #            return 'simulation'
 
     #            gdict = globals()
@@ -245,6 +249,7 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
             self.communicator.scheduler = s
 
     def repeat_command(self, cmd, ntries=2, check_val=None, check_type=None,
+                       break_val=None,
                        verbose=True, **kw):
 
         if isinstance(cmd, tuple):
@@ -260,6 +265,10 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
                                                                      resp,
                                                                      len(str(resp)) if resp is not None else None)
                 self.debug(m)
+
+            if break_val and resp == break_val:
+                return
+
             if check_val is not None:
                 if self.simulation:
                     resp = check_val
@@ -286,23 +295,20 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
     # ===============================================================================
     # scanable interface
     # ===============================================================================
-    def _scan_hook(self, v):
-        for a in self.alarms:
-            if a.test_condition(v):
-                alarm_msg = a.get_message(v)
-                self.warning(alarm_msg)
-                manager = self.application.get_service('pychron.social.twitter_manager.TwitterManager')
-                if manager is not None:
-                    manager.post(alarm_msg)
-                break
+    # def _scan_hook(self, v):
+    #     for a in self.alarms:
+    #         if a.test_condition(v):
+    #             alarm_msg = a.get_message(v)
+    #             self.warning(alarm_msg)
+    #             manager = self.application.get_service('pychron.social.twitter_manager.TwitterManager')
+    #             if manager is not None:
+    #                 manager.post(alarm_msg)
+    #             break
 
     def _parse_response(self, v):
         return v
 
-    def _communicate_hook(self, cmd, r):
-        self.last_command = cmd
-        self.last_response = r if r else ''
-
     def _load_hook(self, config):
         pass
+
 # ========================= EOF ============================================

@@ -15,27 +15,35 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import Directory, Bool, String, Float, Int
+from traits.api import Directory, Bool, String, Float, Int, Str, Property
+from traits.traits import Color
 from traitsui.api import View, Item, VGroup
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.envisage.tasks.base_preferences_helper import GitRepoPreferencesHelper, remote_status_item, \
     BasePreferencesHelper
+from pychron.envisage.user_login import get_usernames
 
 
 class GeneralPreferences(GitRepoPreferencesHelper):
     preferences_path = 'pychron.general'
-    root_dir = Directory
-    use_login = Bool
-    multi_user = Bool
+    # root_dir = Directory
+    # use_login = Bool
+    # multi_user = Bool
+    username = Str
+    _usernames = Property
+    environment = Directory
     confirm_quit = Bool
     show_random_tip = Bool
     # use_advanced_ui = Bool
 
     organization = String(enter_set=True, auto_set=False)
     default_principal_investigator = String
+
+    def _get__usernames(self):
+        return get_usernames()
 
     def _organization_changed(self, new):
         if not self.remote and new:
@@ -47,13 +55,20 @@ class GeneralPreferencesPane(PreferencesPane):
     category = 'General'
 
     def traits_view(self):
-        root_grp = VGroup(Item('root_dir', label='Pychron Directory'),
-                          show_border=True, label='Root')
-        login_grp = VGroup(Item('use_login', label='Use Login'),
-                           Item('multi_user', label='Multi User'),
-                           label='Login', show_border=True)
+        # root_grp = VGroup(Item('root_dir', label='Pychron Directory'),
+        #                   show_border=True, label='Root')
+        user_grp = VGroup(Item('username',
+                               editor=ComboboxEditor(name='_usernames'),
+                               label='Name'),
+                          show_border=True, label='User')
+        env_grp = VGroup(Item('environment', label='Directory'),
+                         show_border=True, label='Environment')
 
-        o_grp = VGroup(Item('organization', label='Name'),
+        # login_grp = VGroup(Item('use_login', label='Use Login'),
+        #                    Item('multi_user', label='Multi User'),
+        #                    label='Login', show_border=True)
+
+        o_grp = VGroup(Item('organization', resizable=True, label='Name'),
                        remote_status_item('Laboratory Repo'),
                        show_border=True,
                        label='Organization')
@@ -62,11 +77,13 @@ class GeneralPreferencesPane(PreferencesPane):
                              tooltip='Ask user for confirmation when quitting application'),
                         Item('show_random_tip', label='Random Tip',
                              tooltip='Display a Random Tip whe the application starts'),
-                        Item('default_principal_investigator', label='Default PI'),
+                        Item('default_principal_investigator', resizable=True, label='Default PI'),
                         # Item('use_advanced_ui', label='Advanced UI',
                         #      tooltip='Display the advanced UI'),
-                        root_grp,
-                        login_grp,
+                        # root_grp,
+                        # login_grp,
+                        user_grp,
+                        env_grp,
                         o_grp,
                         label='General',
                         show_border=True))
@@ -75,9 +92,15 @@ class GeneralPreferencesPane(PreferencesPane):
 
 class BrowserPreferences(BasePreferencesHelper):
     preferences_path = 'pychron.browser'
-    recent_hours = Float
     reference_hours_padding = Float
+    auto_load_database = Bool
+    load_selection_enabled = Bool
+
     max_history = Int
+    unknown_color = Color
+    blank_color = Color
+    air_color = Color
+    use_analysis_colors = Bool
 
 
 class BrowserPreferencesPane(PreferencesPane):
@@ -85,15 +108,21 @@ class BrowserPreferencesPane(PreferencesPane):
     category = 'Browser'
 
     def traits_view(self):
-        v = View(Item('recent_hours',
-                      label='RECENT (hrs)',
-                      tooltip='Number of hours to use for RECENT_... filtering'),
-                 Item('reference_hours_padding',
+        acgrp = VGroup(Item('use_analysis_colors', label='Use Analysis Colors',
+                            tooltip='Color analyses based on type in the Browser window'),
+                       VGroup(Item('unknown_color'),
+                              Item('blank_color'),
+                              Item('air_color'), enabled_when='use_analysis_colors'),
+                       show_border=True, label='Analysis Colors')
+        load_grp = VGroup(Item('auto_load_database'),
+                          Item('load_selection_enabled'),
+                          show_border=True, label='Browser Loading')
+        v = View(Item('reference_hours_padding',
                       label='References Padding (hrs)',
                       tooltip='Padding in hours when finding associated references'),
                  Item('max_history', label='Max. Analysis Sets',
-                      tooltip='Maximum number of analysis sets to maintain')
-                 )
+                      tooltip='Maximum number of analysis sets to maintain'),
+                 acgrp, load_grp)
         return v
 
 # ============= EOF =============================================

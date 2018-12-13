@@ -38,52 +38,54 @@ def multi_peak_generator(values):
         yield m + random.random() / 5.0
 
 
-def pseudo_peak(center, start, stop, step, magnitude=500, peak_width=0.008):
+def pseudo_peak(center, start, stop, step, magnitude=500, peak_width=0.004, channels=1):
     x = linspace(start, stop, step)
     gaussian = lambda x: magnitude * exp(-((center - x) / peak_width) ** 2)
 
     for i, d in enumerate(gaussian(x)):
         if abs(center - x[i]) < peak_width:
             #            d = magnitude
+            # for j in xrange(channels):
             d = magnitude + magnitude / 50.0 * random.random()
-        yield d
+
+        yield [d * (j + 1) for j in range(channels)]
+
+
+class AccelVoltageSweep(BaseSweep):
+    def _step(self, v):
+        self.spectrometer.source.nominal_hv = v
 
 
 class MagnetSweep(BaseSweep):
-    start_mass = Float(36)
-    stop_mass = Float(40)
-    step_mass = Float(1)
+    _peak_generator = None
 
-    # _peak_generator = None
-    def _make_pseudo(self, values):
-        self._peak_generator = pseudo_peak(values[len(values) / 2] + 0.001, values[0], values[-1], len(values))
+    def _make_pseudo(self, values, channels):
+        self._peak_generator = pseudo_peak(values[len(values) / 2] + 0.001,
+                                           values[0], values[-1], len(values),
+                                           channels)
+
+    def _step_intensity(self):
+        if self._peak_generator:
+            resp = next(self._peak_generator)
+        else:
+            resp = super(MagnetSweep, self)._step_intensity()
+        return resp
 
     def _step(self, v):
         self.spectrometer.magnet.set_dac(v, verbose=self.verbose,
-                                         settling_time=self.integration_time*2, use_dac_changed=False)
-
-    def _execute(self):
-        sm = self.start_mass
-        em = self.stop_mass
-        stm = self.step_mass
-
-        self.verbose = True
-        if abs(sm - em) > stm:
-            self._do_sweep(sm, em, stm)
-            self._alive = False
-            self._post_execute()
-
-        self.verbose = False
+                                         settling_time=0,
+                                         # settling_time=self.integration_time * 2,
+                                         use_dac_changed=False)
+        self.spectrometer.trigger_acq()
+        self.spectrometer.settle()
 
     def _do_sweep(self, sm, em, stm, directions=None, map_mass=True):
         if map_mass:
             spec = self.spectrometer
             mag = spec.magnet
             detname = self.reference_detector.name
-            ds = spec.correct_dac(self.reference_detector,
-                                  mag.map_mass_to_dac(sm, detname))
-            de = spec.correct_dac(self.reference_detector,
-                                  mag.map_mass_to_dac(em, detname))
+            ds = spec.correct_dac(self.reference_detector, mag.map_mass_to_dac(sm, detname))
+            de = spec.correct_dac(self.reference_detector, mag.map_mass_to_dac(em, detname))
 
             massdev = abs(sm - em)
             dacdev = abs(ds - de)
@@ -107,9 +109,9 @@ class MagnetSweep(BaseSweep):
         v = View(
             Group(
                 Item('reference_detector', editor=EnumEditor(name='detectors')),
-                Item('start_mass', label='Start Mass', tooltip='Start scan at this mass'),
-                Item('stop_mass', label='Stop Mass', tooltip='Stop scan when magnet reaches this mass'),
-                Item('step_mass', label='Step Mass', tooltip='Step from Start to Stop by this amount'),
+                Item('start_value', label='Start Mass', tooltip='Start scan at this mass'),
+                Item('stop_value', label='Stop Mass', tooltip='Stop scan when magnet reaches this mass'),
+                Item('step_value', label='Step Mass', tooltip='Step from Start to Stop by this amount'),
                 Item('integration_time', label='Integration (s)'),
                 HGroup(spring, Item('execute_button', editor=ButtonEditor(label_value='execute_label'),
                                     show_label=False)),

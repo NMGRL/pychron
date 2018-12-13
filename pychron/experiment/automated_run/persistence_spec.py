@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+
 from traits.api import HasTraits, Str, Int, Bool, Any, Float, \
     Dict, Instance, List, Date, Time, Long
 
@@ -33,15 +34,24 @@ class PersistenceSpec(HasTraits):
     baseline_fods = Dict
 
     save_as_peak_hop = Bool(False)
+    experiment_type = Str
     experiment_id = Int
     sensitivity_multiplier = Float
     experiment_queue_name = Str
     experiment_queue_blob = Str
+    instrument_name = Str
+    laboratory = Str
 
     extraction_name = Str
     extraction_blob = Str
     measurement_name = Str
     measurement_blob = Str
+
+    post_measurement_name = Str
+    post_measurement_blob = Str
+    post_equilibration_name = Str
+    post_equilibration_blob = Str
+
     positions = List  # list of position names
     extraction_positions = List  # list of x,y or x,y,z tuples
 
@@ -52,7 +62,8 @@ class PersistenceSpec(HasTraits):
     spec_dict = Dict
     defl_dict = Dict
     gains = Dict
-
+    trap = Float
+    emission = Float
     active_detectors = List
 
     previous_blank_runid = Str
@@ -61,7 +72,8 @@ class PersistenceSpec(HasTraits):
 
     rundate = Date
     runtime = Time
-    load_name = Str
+    # load_name = Str
+    # load_holder = Str
 
     cdd_ic_factor = Any
 
@@ -76,8 +88,22 @@ class PersistenceSpec(HasTraits):
     response_blob = Str
     output_blob = Str
     setpoint_blob = Str
-    snapshots = None
+    snapshots = List
+    videos = List
 
-    conditionals = None
+    conditionals = List
     tripped_conditional = None
+
+    grain_polygon_blob = List
+
+    power_achieved = Float
+    lab_temperatures = List
+    lab_humiditys = List
+    lab_pneumatics = List
+
+    lithographic_unit = Str
+    lat_long = Str
+    rock_type = Str
+    reference = Str
+
 # ============= EOF =============================================

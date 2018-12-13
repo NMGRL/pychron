@@ -15,11 +15,13 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
+from __future__ import print_function
 from traits.api import Color, Float, Any, Bool, Range, on_trait_change, \
-    Enum, List, File
+    Enum, List, File, Int
 # from traitsui.api import View, Item, VGroup, HGroup, ColorEditor
 from chaco.api import AbstractOverlay
-from kiva import constants
+from kiva import constants, Font
 from kiva.agg.agg import GraphicsContextArray
 # =============standard library imports ========================
 from numpy import array
@@ -83,7 +85,7 @@ class ImageOverlay(AbstractOverlay):
             kiva_depth = "rgba32"
         else:
             raise RuntimeError(
-                    "Unknown colormap depth value: %i".format(data.value_depth))
+                "Unknown colormap depth value: %i".format(data.value_depth))
 
         self._cached_image = GraphicsContextArray(data, pix_format=kiva_depth)
         self._image_cache_valid = True
@@ -121,9 +123,15 @@ class LaserTrayCanvas(StageCanvas):
     crosshairs_kind = Enum('BeamRadius', 'UserRadius', 'MaskRadius')
     crosshairs_offset_color = Color('blue')
 
-    crosshairs_radius = Range(0.0, 4.0, 1.0)
+    crosshairs_radius = Range(0.0, 10.0, 1.0)
     crosshairs_offsetx = Float
     crosshairs_offsety = Float
+
+
+    show_hole_label = Bool(True)
+    hole_label_color = Color
+    hole_label_size = Int
+    hole_label_font = Font('Consolas')
 
     show_bounds_rect = Bool(True)
     transects = List
@@ -144,6 +152,16 @@ class LaserTrayCanvas(StageCanvas):
         self._add_bounds_rect()
         self._add_crosshairs()
         self.border_visible = False
+
+    def get_crosshairs_radius(self, screen=False):
+        if self.crosshairs_kind == 'UserRadius':
+            radius = self.crosshairs_radius
+        else:
+            radius = self.beam_radius
+
+        if screen:
+            radius = self.get_wh(radius, 0)[0]
+        return radius
 
     def add_image_underlay(self, p, alpha=1.0):
         im = ImageOverlay(path=p, alpha=alpha)
@@ -166,7 +184,7 @@ class LaserTrayCanvas(StageCanvas):
     def point_exists(self, x, y, z, tol=1e-5):
         pt = next((pts for pts in self.get_points()
                    if abs(pts.x - x) < tol and abs(pts.y - y) < tol and abs(
-                pts.z - z) < tol), None)
+            pts.z - z) < tol), None)
 
         return True if pt else False
 
@@ -331,8 +349,8 @@ class LaserTrayCanvas(StageCanvas):
                     if between(p.xaxes_min, x, p.xaxes_max) and \
                             between(p.yaxes_min, y, p.yaxes_max):
                         return x, y
-                except AttributeError, e:
-                    print e
+                except AttributeError as e:
+                    print(e)
 
     def map_offset_position(self, pos):
         """
@@ -355,6 +373,9 @@ class LaserTrayCanvas(StageCanvas):
     def get_offset_stage_screen_position(self):
         sx, sy = self.get_stage_screen_position()
         return sx, sy
+
+    def get_current_hole(self):
+        return self.stage_manager.get_current_hole()
 
     def adjust_limits(self, mapper, val, delta=None):
         """
@@ -401,6 +422,7 @@ class LaserTrayCanvas(StageCanvas):
 
         if pos:
             self.stage_manager.linear_move(*pos,
+                                           source='laser_canvas',
                                            start_timer=True,
                                            check_moving=True,
                                            use_calibration=False)
@@ -441,11 +463,11 @@ class LaserTrayCanvas(StageCanvas):
         if self.show_bounds_rect:
             self.overlays.append(BoundsOverlay(component=self))
 
-    def _add_crosshairs(self):
-        ch = CrosshairsOverlay(component=self,
-                               constrain='')
-        self.crosshairs_overlay = ch
-        self.overlays.append(ch)
+    # def _add_crosshairs(self):
+    #     ch = CrosshairsOverlay(component=self,
+    #                            constrain='')
+    #     self.crosshairs_overlay = ch
+    #     self.overlays.append(ch)
 
     # ===============================================================================
     # handlers
@@ -465,6 +487,10 @@ class LaserTrayCanvas(StageCanvas):
             self.overlays.remove(bo)
 
         self.request_redraw()
+
+    @on_trait_change('hole_label_size')
+    def handle_hole_label_size(self, new):
+        self.hole_label_font = Font('Consolas', size=new)
 
     # ===============================================================================
     # property get/set

@@ -16,7 +16,9 @@
 
 # ============= enthought library imports =======================
 
+from __future__ import absolute_import
 from traits.etsconfig.etsconfig import ETSConfig
+from six.moves import range
 ETSConfig.toolkit = 'qt4'
 
 from traits.api import HasTraits, Instance, Float, on_trait_change, Int, Str, \
@@ -161,10 +163,10 @@ class EquilibrationInspector(HasTraits):
 
         if self.vary_time_zero:
             posts = (15,)
-            xs = range(0, 15)
+            xs = list(range(0, 15))
             index = xs
         else:
-            posts = range(5, 30)
+            posts = list(range(5, 30))
             xs = (0,)
             index = posts
 

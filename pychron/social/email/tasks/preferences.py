@@ -15,9 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Str, Password, Int, Button, on_trait_change, Color
-from traitsui.api import View, Item, Group, HGroup
+from traitsui.api import View, Item, Group, HGroup, VGroup
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -63,14 +64,15 @@ class EmailPreferencesPane(PreferencesPane):
     category = 'Social'
 
     def traits_view(self):
-        grp = Group(Item('server_host', label='Host'),
-                    Item('server_username', label='User'),
-                    Item('server_password', label='Password'),
-                    Item('server_port', label='Port'),
-                    HGroup(icon_button_editor('_test_connection_button', 'server-connect'),
-                           CustomLabel('_status', color_name='_status_color')),
-                    show_border=True,
-                    label='Email')
+        grp = VGroup(Item('server_host', label='Host'),
+                     Item('server_username', label='User'),
+                     Item('server_password', label='Password', resizable=True),
+                     Item('server_port', label='Port'),
+                     HGroup(icon_button_editor('_test_connection_button', 'server-connect'),
+                            CustomLabel('_status', color_name='_status_color')),
+                     show_border=True,
+                     springy=True,
+                     label='Email')
         v = View(grp)
         return v
 

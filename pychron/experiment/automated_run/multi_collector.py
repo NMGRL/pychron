@@ -18,6 +18,7 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.experiment.automated_run.data_collector import DataCollector
 
 
@@ -30,25 +31,5 @@ class MultiCollector(DataCollector):
 
     """
 
-    def _iter_hook(self, i):
-        if i % 25 == 0:
-            self.info('collecting point {}'.format(i))
-
-        # get the data
-        try:
-            data = self._get_data()
-        except (AttributeError, TypeError, ValueError), e:
-            self.debug('failed getting data {}'.format(e))
-            return
-
-        if not data:
-            return
-
-        x = self._get_time()
-        # save the data
-        self._save_data(x, *data)
-        # plot the data
-        self.plot_data(i, x, *data)
-
-        return True
+    pass
 # ============= EOF =============================================

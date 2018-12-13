@@ -17,13 +17,14 @@
 
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Bool, Property
 # from traitsui.api import View, Item, Group, HGroup, VGroup
 
 # ============= standard library imports ========================
 import time
 # ============= local library imports  ==========================
-from base_mks_gauge import BaseMKSGauge
+from .base_mks_gauge import BaseMKSGauge
 
 class IonGauge(BaseMKSGauge):
     '''

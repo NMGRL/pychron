@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from sqlalchemy import Integer, Column, String, ForeignKey, Table
 from sqlalchemy.ext.declarative import declarative_base
 # ============= standard library imports ========================

@@ -18,6 +18,7 @@
 # from traits.api import HasTraits
 # from traitsui.api import View, Item, TableEditor
 # ============= standard library imports ========================
+from __future__ import absolute_import
 import math
 
 import numpy as np
@@ -26,6 +27,9 @@ import numpy as np
 from pychron.core.geometry.geometry import sort_clockwise
 from pychron.core.geometry.convex_hull import convex_hull
 from pychron.core.geometry.polygon_offset import polygon_offset
+from six.moves import map
+from six.moves import range
+from six.moves import zip
 
 # from pylab import plot, show, text
 
@@ -87,7 +91,7 @@ def get_yminmax(points):
     ys = poly[:, 1]
     ymin = np.min(ys)
     ymax = np.max(ys)
-    return map(int, (ymin, ymax))
+    return list(map(int, (ymin, ymax)))
 
 def make_scan_lines(points, step=1):
     '''
@@ -134,7 +138,7 @@ def make_scan_lines(points, step=1):
                 xint[int(ei)] = exmin + m * (si - eymin)
 
     xs = [sorted([ii for ii in xi if ii is not None]) for xi in xintersections]
-    return zip(scanlines, xs)
+    return list(zip(scanlines, xs))
 
 def make_raster_polygon(points, step=1,
                         zigzag=False):
@@ -368,7 +372,7 @@ if __name__ == '__main__':
                ytitle='Num. Scan Lines'
                )
 
-    ts, ls = zip(*lens)
+    ts, ls = list(zip(*lens))
     g.new_series(ts, ls)
 
     g.configure_traits()

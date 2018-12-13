@@ -15,7 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-
+from __future__ import absolute_import
+from traits.api import Event
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.graph.graph import Graph
@@ -24,36 +25,19 @@ from pychron.graph.stacked_regression_graph import StackedRegressionGraph
 
 
 class AnalysisGraph(Graph):
-    pass
-    # tag = Event
-    # save_db_figure = Event
-    # invalid = Event
+    rescale_event = Event
 
-    # def get_contextual_menu_save_actions(self):
-    #     s = super(AnalysisGraph, self).get_contextual_menu_save_actions()
-    #     s.extend([('Database', '_save_to_database', {})])
-    #     return s
-    #
-    # def get_child_context_menu_actions(self):
-    #     return [self.action_factory('Set tag', '_set_tag'),
-    #             self.action_factory('Set INVALID', '_set_invalid')]
-    #
-    # def _save_to_database(self):
-    #     print 'save to database'
-    #     self.save_db_figure = True
-    #
+    def get_rescale_actions(self):
+        return [('Valid Analyses', 'rescale_to_valid', {})]
 
-    def _set_tag(self):
-        """
-        open the tag dialog
-        :return:
-        """
-        print 'set tag'
-        self.tag = True
+    def rescale_to_valid(self):
+        self.rescale_event = 'valid'
 
-    def _set_invalid(self):
-        print 'set invalid'
-        self.invalid = True
+    def rescale_x_axis(self):
+        self.rescale_event = 'x'
+
+    def rescale_y_axis(self):
+        self.rescale_event = 'y'
 
 
 class AnalysisStackedGraph(AnalysisGraph, StackedGraph):

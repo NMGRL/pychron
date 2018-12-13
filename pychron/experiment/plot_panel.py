@@ -15,22 +15,29 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance, Property, List, on_trait_change, Bool, \
-    Str, CInt, Tuple, Color, HasTraits, Any, Int
-from traitsui.api import View, UItem, VGroup, HGroup, spring, ListEditor
-# ============= standard library imports ========================
-from threading import Event
+from __future__ import absolute_import
 import time
-# ============= local library imports  ==========================
-from pychron.graph.graph import Graph
-from pychron.core.ui.text_table import MultiTextTableAdapter
+from threading import Event
+
+from traits.api import Instance, Property, List, on_trait_change, Bool, \
+    Str, CInt, Tuple, Color, HasTraits, Any, Int, Button
+from traitsui.api import View, UItem, VGroup, HGroup, spring, ListEditor
+from uncertainties import std_dev, nominal_value
+
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.gui import invoke_in_main_thread
+from pychron.core.ui.text_table import MultiTextTableAdapter
+from pychron.graph.graph import Graph
 from pychron.graph.stacked_graph import StackedGraph
 from pychron.graph.stacked_regression_graph import StackedRegressionGraph
+from pychron.loggable import Loggable
+from pychron.options.ideogram import IdeogramOptions
+from pychron.options.spectrum import SpectrumOptions
+from pychron.pipeline.plot.plotter.ideogram import Ideogram
+from pychron.pipeline.plot.plotter.spectrum import Spectrum
+from pychron.processing.arar_age import ArArAge
 from pychron.processing.isotope_group import IsotopeGroup
 from pychron.pychron_constants import PLUSMINUS, AR_AR
-from pychron.loggable import Loggable
 
 HEIGHT = 250
 ERROR_WIDTH = 10
@@ -90,13 +97,14 @@ class PlotPanel(Loggable):
     graph_container = Instance(GraphContainer)
     # analysis_view = Instance(ArArAutomatedRunAnalysisView, ())
     analysis_view = Instance('pychron.processing.analyses.view.automated_run_view.AutomatedRunAnalysisView')
-
     isotope_group = Instance(IsotopeGroup)
 
     sniff_graph = Instance(Graph)
     isotope_graph = Instance(Graph)
+    baseline_graph = Instance(Graph)
     peak_center_graph = Instance(Graph)
     selected_graph = Any
+    figure = Any
 
     graphs = Tuple
 
@@ -127,6 +135,7 @@ class PlotPanel(Loggable):
     hops = List
 
     info_func = None
+    integration_time = 1.05
 
     def set_peak_center_graph(self, graph):
         graph.page_name = 'Peak Center'
@@ -141,6 +150,12 @@ class PlotPanel(Loggable):
     def show_graph(self, g):
         invoke_in_main_thread(self.trait_set, selected_graph=g)
 
+    def show_sniff_graph(self):
+        self.show_graph(self.sniff_graph)
+
+    def show_baseline_graph(self):
+        self.show_graph(self.baseline_graph)
+
     def show_isotope_graph(self):
         self.show_graph(self.isotope_graph)
 
@@ -152,26 +167,52 @@ class PlotPanel(Loggable):
 
     def reset(self):
         self.debug('clearing graphs')
-        self.isotope_graph.clear()
-        self.peak_center_graph.clear()
-        self.sniff_graph.clear()
+        # self.isotope_graph.clear()
+        # self.peak_center_graph.clear()
+        # self.sniff_graph.clear()
+        for g in self.graphs:
+            g.clear()
 
     def create(self, dets):
         """
             dets: list of Detector instances
         """
-
+        self.debug('create graphs')
         self.detectors = dets
 
         evt = Event()
-        invoke_in_main_thread(self._create, evt)
-
+        # invoke_in_main_thread(self._create, evt)
+        self._create(evt)
         # wait here until _create finishes
-        while not evt.is_set():
-            time.sleep(0.05)
+        # while not evt.wait(0.05):
+        #     pass
 
-    def new_plot(self, **kw):
-        return self._new_plot(**kw)
+        evt.wait(0.1)
+        # while not evt.is_set():
+        #     time.sleep(0.05)
+
+    def update(self):
+        if self.is_baseline:
+            self.baseline_graph.refresh()
+        else:
+            self.isotope_graph.refresh()
+
+        if self.figure and isinstance(self.isotope_group, ArArAge):
+            age = self.isotope_group.uage
+            k39 = self.isotope_group.get_computed_value('k39')
+            v, e = nominal_value(age), std_dev(age)
+
+            self.debug('update figure age={} +/- {}. k39={}'.format(v, e, nominal_value(k39)))
+
+            a = self.figure.analyses[-1]
+            a.uage = age
+            a.k39 = k39
+
+            self.figure.replot()
+
+    def new_isotope_plot(self, **kw):
+        plots = self._new_plot(isotope_only=True, **kw)
+        return plots['isotope']
 
     def set_analysis_view(self, experiment_type, **kw):
         if experiment_type == AR_AR:
@@ -183,24 +224,66 @@ class PlotPanel(Loggable):
         self.analysis_view = klass(**kw)
 
     def add_isotope_graph(self, name):
+        self.debug('add isotope graph name={}'.format(name))
         g = self._graph_factory()
         g.page_name = name
         self.graphs.append(g)
         self.isotope_graph = g
         self.selected_graph = g
 
+    def add_figure_graph(self, spec, analyses):
+        self.debug('add figure graph. runid={}, nanalyses={}'.format(spec.runid, len(analyses)))
+        ans = [ai for ai in analyses if ai.labnumber == spec.labnumber]
+        if spec.is_step_heat():
+            f = Spectrum
+            opt = SpectrumOptions()
+
+            opt.add_aux_plot('Age Spectrum')
+            f.options = opt
+
+            name = 'Spec.'
+            ans = [ai for ai in ans if ai.aliquot == spec.aliquot]
+
+        else:
+            name = 'Ideo.'
+            f = Ideogram()
+            opt = IdeogramOptions()
+            opt.add_aux_plot('Ideogram')
+
+        ans.append(spec)
+
+        f.analyses = ans
+
+        plots = opt.get_plotable_aux_plots()
+        f.build(plots)
+        f.plot(plots)
+
+        self.figure = f
+        g = f.graph
+        g.page_name = name
+        self.graphs.append(g)
+        self.selected_graph = g
+
     # private
-    def _new_plot(self, **kw):
-        for g in (self.sniff_graph, self.isotope_graph):
-            plot = g.new_plot(xtitle='time (s)', padding_left=70,
-                              padding_right=10,
-                              **kw)
+    def _new_plot(self, isotope_only=False, **kw):
+        # self.isotope_graph.clear()
+        # self.sniff_graph.clear()
+        # self.baseline_graph.clear()
+        plots = {}
+        for k, g, e in (('sniff', self.sniff_graph, not isotope_only),
+                        ('isotope', self.isotope_graph, True),
+                        ('baseline', self.baseline_graph, not isotope_only)):
+            if e:
+                plot = g.new_plot(xtitle='time (s)', padding_left=70,
+                                  padding_right=10,
+                                  **kw)
 
-            plot.y_axis.title_spacing = 50
-            g.add_axis_tool(plot, plot.x_axis)
-            g.add_axis_tool(plot, plot.y_axis)
+                plot.y_axis.title_spacing = 50
+                g.add_axis_tool(plot, plot.x_axis)
+                g.add_axis_tool(plot, plot.y_axis)
+                plots[k] = plot
 
-        return plot
+        return plots
 
     def _create(self, evt):
         self.reset()
@@ -208,12 +291,20 @@ class PlotPanel(Loggable):
         g = self.isotope_graph
         self.selected_graph = g
 
-        for _ in self.detectors:
-            self._new_plot()
+        self.isotope_graph.clear()
+        self.sniff_graph.clear()
+        self.baseline_graph.clear()
+        self.debug('creating plots for detectors {}'.format(self.detectors))
+        for det in self.detectors:
+            self._new_plot(ytitle=det.name)
+
         evt.set()
 
     def _get_ncounts(self):
         return self._ncounts
+
+    def set_ncounts(self, v):
+        self._ncounts = v
 
     def _set_ncounts(self, v):
 
@@ -223,8 +314,9 @@ class PlotPanel(Loggable):
         self._ncounts = v
 
         xmi, xma = self.isotope_graph.get_x_limits()
-        xm = max(xma, xma + (v - o) * 1.05)
+        xm = max(xma, xma + (v - o) * self.integration_time)
         self.isotope_graph.set_x_limits(max_=xm)
+        self.baseline_graph.set_x_limits(max_=xm)
 
     def _get_ncycles(self):
         return self._ncycles
@@ -235,8 +327,9 @@ class PlotPanel(Loggable):
 
         if self.hops:
             # update ncounts
-            integration_time = 1.1
-            counts = sum([ci * integration_time + s for _h, ci, s in self.hops]) * v
+            integration_time = self.integration_time
+            counts = sum([h['counts'] * integration_time + h['settle'] for h in self.hops]) * v
+            # counts = sum([ci * integration_time + s for _h, ci, s in self.hops]) * v
             self._ncounts = counts
 
     def _get_display_counts(self):
@@ -265,7 +358,7 @@ class PlotPanel(Loggable):
     def _plot_title_changed(self, new):
         self.graph_container.label = new
 
-    @on_trait_change('isotope_graph:regression_results')
+    @on_trait_change('isotope_graph:regression_results, baseline_graph:regression_results')
     def _update_display(self, obj, name, old, new):
         if new:
             self.analysis_view.load_computed(self.isotope_group, new_list=False)
@@ -294,10 +387,15 @@ class PlotPanel(Loggable):
         g.page_name = 'Equil.'
         return g
 
+    def _baseline_graph_default(self):
+        g = self._graph_factory()
+        g.page_name = 'Baselines'
+        return g
+
     def _graph_container_default(self):
         return GraphContainer(model=self)
 
     def _graphs_default(self):
-        return [self.isotope_graph, self.sniff_graph, self.peak_center_graph]
+        return [self.sniff_graph, self.isotope_graph, self.baseline_graph, self.peak_center_graph]
 
 # ============= EOF =============================================

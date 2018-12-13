@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.timer.do_later import do_after
 from traits.api import Instance, on_trait_change
@@ -22,6 +23,7 @@ from traits.api import Instance, on_trait_change
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.dashboard.server import DashboardServer
+from pychron.dashboard.tasks.server.preferences import DashboardServerPreferencesPane
 from pychron.dashboard.tasks.server.task import DashboardServerTask
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 
@@ -40,13 +42,17 @@ class DashboardServerPlugin(BaseTaskPlugin):
         return f
 
     def start(self):
-        app= self.application
+        app = self.application
         elm = app.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
         labspy = app.get_service('pychron.labspy.client.LabspyClient')
 
         self.dashboard_server = DashboardServer(application=app,
                                                 labspy_client=labspy,
                                                 extraction_line_manager=elm)
+        self.dashboard_server.bind_preferences()
+
+    def _preferences_panes_default(self):
+        return [DashboardServerPreferencesPane]
 
     def stop(self):
         self.dashboard_server.deactivate()

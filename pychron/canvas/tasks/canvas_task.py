@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 
 from pyface.tasks.action.schema import SToolBar
@@ -52,7 +54,7 @@ class CanvasDesignerTask(BaseTask):
         return Designer()
 
     def open(self):
-        print 'asfsfdsf open'
+        print('asfsfdsf open')
         p = os.path.join(paths.canvas2D_dir,
                          'canvas.xml'
         )

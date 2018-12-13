@@ -15,20 +15,38 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Event, Str, List, Instance, String
+from __future__ import absolute_import
+from __future__ import print_function
+
 # ============= standard library imports ========================
 import os
 import pickle
+
+from traits.api import Event, Str, List, Instance, String
+
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.map_canvas import MapCanvas
-from pychron.core.helpers.filetools import list_directory2, add_extension
+from pychron.core.helpers.filetools import glob_list_directory, add_extension
 from pychron.core.ui.stage_component_editor import LaserComponentEditor
 from pychron.core.ui.thread import Thread
 from pychron.managers.manager import Manager
 from pychron.paths import paths
+from pychron.stage.calibration.tray_calibration_manager import TrayCalibrationManager, get_hole_calibration
 from pychron.stage.maps.base_stage_map import BaseStageMap
 from pychron.stage.maps.laser_stage_map import LaserStageMap
-from pychron.stage.calibration.tray_calibration_manager import TrayCalibrationManager, get_hole_calibration
+
+
+def get_stage_map_names(root=None):
+    if root is None:
+        root = paths.map_dir
+
+    sms = glob_list_directory(root, '.txt', remove_extension=True)
+    print(root, sms)
+    sms = [si for si in sms if not si.endswith('.center')]
+    us = glob_list_directory(paths.user_points_dir, '.yaml', remove_extension=True)
+    if us:
+        sms.extend(us)
+    return sms
 
 
 class BaseStageManager(Manager):
@@ -41,25 +59,22 @@ class BaseStageManager(Manager):
     stage_map = Instance(BaseStageMap)
     canvas = Instance(MapCanvas)
 
-    root = Str(paths.map_dir)
+    # root = Str(paths.map_dir)
     calibrated_position_entry = String(enter_set=True, auto_set=False)
 
     move_thread = None
     temp_position = None
     temp_hole = None
-
+    root = Str
     # use_modified = Bool(True)  # set true to use modified affine calculation
+    def motor_event_hook(self, name, value, *args, **kw):
+        pass
 
     def goto_position(self, pos):
         raise NotImplementedError
 
     def refresh_stage_map_names(self):
-        sms = list_directory2(self.root, '.txt', remove_extension=True)
-
-        us = list_directory2(paths.user_points_dir, '.yaml', remove_extension=True)
-        if us:
-            sms.extend(us)
-
+        sms = get_stage_map_names(root=self.root)
         self.stage_map_names = sms
 
     def load(self):
@@ -142,7 +157,7 @@ class BaseStageManager(Manager):
             self._stop()
 
         if name is None:
-            name = func.func_name
+            name = func.__name__
 
         self.move_thread = Thread(name='stage.{}'.format(name),
                                   target=func, args=(pos,) + args, kwargs=kw)
@@ -162,7 +177,8 @@ class BaseStageManager(Manager):
     def _stage_map_name_changed(self, new):
         if new:
             self.debug('setting stage map to {}'.format(new))
-            path = os.path.join(self.root, add_extension(new, '.txt'))
+            root = self.root
+            path = os.path.join(root, add_extension(new, '.txt'))
             sm = self.stage_map_klass(file_path=path)
 
             self.tray_calibration_manager.load_calibration(stage_map=new)
@@ -175,6 +191,9 @@ class BaseStageManager(Manager):
             self._stage_map_changed_hook()
 
     # defaults
+    def _root_default(self):
+        return paths.map_dir
+
     def _tray_calibration_manager_default(self):
         t = TrayCalibrationManager(parent=self,
                                    canvas=self.canvas)
@@ -195,8 +214,10 @@ class BaseStageManager(Manager):
             self.info('loading previous stage map from {}'.format(p))
             with open(p, 'rb') as f:
                 try:
-                    return pickle.load(f)
-                except pickle.PickleError:
+                    sm = pickle.load(f)
+                    if not sm.endswith('.center'):
+                        return sm
+                except (pickle.PickleError, ValueError):
                     pass
                     # def traits_view(self):
                     # self.initialize_stage()

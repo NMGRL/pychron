@@ -15,16 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import requests
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Str, Password, Button, Color
 from traitsui.api import View, Item, VGroup, HGroup
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper, test_connection_item
-from pychron.git.hosts import authentication
+from pychron.git.hosts import authorization
+from pychron.globals import globalv
 
 
 class GitHostPreferences(BasePreferencesHelper):
@@ -41,15 +42,17 @@ class GitHostPreferences(BasePreferencesHelper):
         self._remote_status_color = 'red'
         self._remote_status = 'Invalid'
         try:
-            header = authentication(self.username, self.password, self._token)
+            header = authorization(self.username, self.password, self._token)
 
             resp = requests.get(self._url,
-                                headers=header)
+                                headers=header,
+                                verify=globalv.cert_file)
+
             if resp.status_code == 200:
                 self._remote_status = 'Valid'
                 self._remote_status_color = 'green'
-        except BaseException, e:
-            print 'exception', e, self._url
+        except BaseException as e:
+            print('exception', e, self._url)
 
 
 class GitHubPreferences(GitHostPreferences):
@@ -71,7 +74,7 @@ class GitLabPreferences(GitHostPreferences):
 
     @property
     def _url(self):
-        return 'http://{}'.format(self.host)
+        return 'https://{}'.format(self.host)
 
     @property
     def _token(self):
@@ -84,7 +87,8 @@ class GitHostPreferencesPane(PreferencesPane):
         g = VGroup(VGroup(Item('username'),
                           Item('password'),
                           show_border=True, label='Basic'),
-                   VGroup(Item('oauth_token', label='Token'),
+                   VGroup(Item('oauth_token',
+                               resizable= True, label='Token'),
                           show_border=True, label='OAuth'),
                    HGroup(test_connection_item(),
                           CustomLabel('_remote_status',

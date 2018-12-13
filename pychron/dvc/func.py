@@ -14,59 +14,95 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-
 # ============= standard library imports ========================
 import glob
-import json
 import os
 
-from datetime import datetime
-# ============= local library imports  ==========================
+from git import Repo
+from traits.api import Str, Bool, HasTraits
 
-from pychron.dvc.dvc_analysis import analysis_path
+from pychron import json
+from pychron.dvc import analysis_path, repository_path
 from pychron.git_archive.repo_manager import GitRepoManager
-from pychron.paths import paths
 
 
-def repository_has_staged(ps):
+def repository_has_staged(ps, remote='origin', branch='master'):
     if not hasattr(ps, '__iter__'):
         ps = (ps,)
 
     changed = []
-    repo = GitRepoManager()
+    # repo = GitRepoManager()
     for p in ps:
-        pp = os.path.join(paths.repository_dataset_dir, p)
-        repo.open_repo(pp)
-        if repo.has_unpushed_commits():
+        pp = repository_path(p)
+        repo = Repo(pp)
+
+        if repo.git.log('{}/{}..HEAD'.format(remote, branch), '--oneline'):
             changed.append(p)
 
     return changed
 
 
-def push_repositories(ps, remote=None):
-    repo = GitRepoManager()
+def push_repositories(ps, remote='origin', branch='master', quiet=True):
     for p in ps:
-        pp = os.path.join(paths.repository_dataset_dir, p)
+        pp = repository_path(p)
+        # repo = Repo(pp)
+        repo = GitRepoManager()
         repo.open_repo(pp)
-        repo.push(remote=remote)
+
+        if repo.smart_pull(remote=remote, branch=branch, quiet=quiet):
+            repo.push(remote=remote, branch=branch)
+
+
+def reviewed(items):
+    return any((i for i in items if i.status))
+
+
+def is_blank_reviewed(obj, date):
+    return make_rsd_items(obj, date, 'Bk')
+
+
+def is_icfactors_reviewed(obj, date):
+    return make_rsd_items(obj, date, 'IC')
+
+
+def is_intercepts_reviewed(obj, date):
+    return make_rsd_items(obj, date, 'Iso Evo')
+
+
+def make_rsd_items(obj, date, tag):
+    items = [RSDItem(process='{} {}'.format(k, tag), date=date, status=iso.get('reviewed', False)) for k,iso in
+             obj.items()]
+    return items
+
+
+class RSDItem(HasTraits):
+    process = Str
+    status = Bool
+    date = Str
 
 
 def get_review_status(record):
     ms = 0
-    for m in ('blanks', 'intercepts', 'icfactors'):
-        p = analysis_path(record.record_id, record.repository_identifier, modifier=m)
-        date = ''
-        with open(p, 'r') as rfile:
-            obj = json.load(rfile)
-            reviewed = obj.get('reviewed', False)
-            if reviewed:
-                dt = datetime.fromtimestamp(os.path.getmtime(p))
-                date = dt.strftime('%m/%d/%Y')
-                ms += 1
+    ritems = []
+    root = repository_path(record.repository_identifier)
+    if os.path.isdir(root):
+        repo = Repo(root)
+        for m, func in (('blanks', is_blank_reviewed),
+                        ('intercepts', is_intercepts_reviewed),
+                        ('icfactors', is_icfactors_reviewed)):
+            p = analysis_path(record, record.repository_identifier, modifier=m)
+            if os.path.isfile(p):
+                with open(p, 'r') as rfile:
+                    obj = json.load(rfile)
+                    date = repo.git.log('-1', '--format=%cd', p)
+                    items = func(obj, date)
+                    if items:
+                        if reviewed(items):
+                            ms += 1
+                        ritems.extend(items)
 
-        setattr(record, '{}_review_status'.format(m), (reviewed, date))
-
+        # setattr(record, '{}_review_status'.format(m), (reviewed, date))
+    record.review_items = ritems
     ret = 'Intermediate'  # intermediate
     if not ms:
         ret = 'Default'  # default
@@ -78,13 +114,18 @@ def get_review_status(record):
 
 def find_interpreted_age_path(idn, repositories, prefixlen=3):
     prefix = idn[:prefixlen]
-    suffix = '{}.ia.json'.format(idn[prefixlen:])
+    suffix = '{}*.ia.json'.format(idn[prefixlen:])
+    # ret = []
+    # for e in repositories:
+    #     pathname = os.path.join(paths.repository_dataset_dir,
+    #                             e, prefix, 'ia', suffix)
+    #     ps = glob.glob(pathname)
+    #     if ps:
+    #         ret.extend(ps)
 
-    for e in repositories:
-        pathname = '{}/{}/{}/ia/{}'.format(paths.repository_dataset_dir, e, prefix, suffix)
-        ps = glob.glob(pathname)
-        if ps:
-            return ps[0]
+    ret = [p for repo in repositories
+           for p in glob.glob(repository_path(repo, prefix, 'ia', suffix))]
+    return ret
 
 
 class GitSessionCTX(object):

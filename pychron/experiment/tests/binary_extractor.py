@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from pychron.entry.loaders.mass_spec_binary_extractor import MassSpecBinaryExtractor
 
 __author__ = 'ross'

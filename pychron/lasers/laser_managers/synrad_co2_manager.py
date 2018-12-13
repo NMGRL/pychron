@@ -15,8 +15,8 @@
 # ===============================================================================
 
 
-
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Property, Instance, DelegatesTo
 # from traitsui.api import View, Item, Group, HGroup, VGroup
 from traitsui.api import VGroup, Item, HGroup
@@ -28,6 +28,7 @@ from pychron.hardware.agilent_dac import AgilentDAC
 from pychron.led.led_editor import LEDEditor
 from pychron.hardware.actuators.agilent_gp_actuator import AgilentGPActuator
 from pychron.lasers.laser_managers.laser_manager import LaserManager
+
 
 class SynradCO2Manager(LaserManager):
     name = 'SynradCO2'
@@ -57,8 +58,8 @@ class SynradCO2Manager(LaserManager):
         return True
 
     def enable_laser(self):
-        '''
-        '''
+        """
+        """
 
         is_ok = True
 
@@ -66,58 +67,52 @@ class SynradCO2Manager(LaserManager):
 
         super(SynradCO2Manager, self).enable_laser(is_ok=is_ok)
 
-
         return is_ok
 
     def _control_dac_default(self):
         return AgilentDAC(name='control_dac',
-                          configuration_dir_name='synrad',
-                          )
+                          configuration_dir_name='synrad')
+
     def _control_switch_default(self):
         a = AgilentGPActuator(name='control_switch',
-                          configuration_dir_name='synrad',
-                          )
-
+                              configuration_dir_name='synrad')
 
         return a
 
-
-    def __control__group__(self):
-        '''
-        '''
-        l = 'CO2'
-        vg = VGroup(show_border=True, label='%s Laser' % l)
-
-        vg.content.append(HGroup(
-                                 Item('enabled_led', show_label=False, style='custom', editor=LEDEditor()),
-                                 self._button_group_factory(self.get_control_buttons(), orientation='h'))
-                                 )
-
-        ps = self.get_power_slider()
-        if ps:
-            vg.content.append(ps)
-
-        # vg.content.append(Item('light_intensity', enabled_when = 'fiber_light.state'))
-
-        citems = self.get_control_items()
-        if citems:
-            vg.content.append(citems)
-
-        ac = self.get_additional_controls()
-        if ac:
-            vg.content.append(ac)
-
-        return vg
+    # def __control__group__(self):
+    #     """
+    #     """
+    #     l = 'CO2'
+    #     vg = VGroup(show_border=True, label='%s Laser' % l)
+    #
+    #     vg.content.append(HGroup(
+    #         Item('object.enabled_led.state', show_label=False, style='custom', editor=LEDEditor()),
+    #         self._button_group_factory(self.get_control_buttons(), orientation='h')))
+    #
+    #     ps = self.get_power_slider()
+    #     if ps:
+    #         vg.content.append(ps)
+    #
+    #     # vg.content.append(Item('light_intensity', enabled_when = 'fiber_light.state'))
+    #
+    #     citems = self.get_control_items()
+    #     if citems:
+    #         vg.content.append(citems)
+    #
+    #     ac = self.get_additional_controls()
+    #     if ac:
+    #         vg.content.append(ac)
+    #
+    #     return vg
 
     def _stage_manager_default(self):
-        '''
-        '''
+        """
+        """
 
         args = dict(name='synradstage',
-                            configuration_dir_name='synrad',
-                             parent=self)
+                    configuration_dir_name='synrad',
+                    parent=self)
         stm = self._stage_manager_factory(args)
 
         return stm
-# ============= views ===================================
 # ============= EOF ====================================

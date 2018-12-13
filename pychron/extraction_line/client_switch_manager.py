@@ -16,10 +16,12 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
 from socket import gethostbyname, gethostname
-# ============= local library imports  ==========================
+
 from pychron.extraction_line.switch_manager import SwitchManager
 from pychron.globals import globalv
+import six
 
 
 class ClientSwitchManager(SwitchManager):
@@ -27,45 +29,47 @@ class ClientSwitchManager(SwitchManager):
         if self.actuators:
             actuator = self.actuators[0]
             word = actuator.get_state_checksum(vkeys)
-            self.debug('Get Checksum: {}'.format(word))
+            # self.debug('Get Checksum: {}'.format(word))
             try:
                 return int(word)
-            except BaseException:
-                self.warning('invalid checksum "{}"'.format(word))
+            except (ValueError, TypeError) as e:
+                self.warning('invalid checksum "{}". error={}'.format(word, e))
 
     def load_valve_states(self, refresh=True, force_network_change=False):
         # self.debug('Load valve states')
         word = self.get_state_word()
-        changed = False
+        # changed = False
+        states = []
         if word:
-            for k, v in self.switches.iteritems():
+            for k, v in six.iteritems(self.switches):
                 try:
                     s = word[k]
                     if s != v.state or force_network_change:
-                        changed = True
+                        # changed = True
                         v.set_state(s)
-                        self.refresh_state = (k, s)
+                        # self.refresh_state = (k, s)
                         self.set_child_state(k, s)
+                        states.append((k, s))
 
                 except KeyError:
                     pass
 
         elif force_network_change:
-            changed = True
-            for k, v in self.switches.iteritems():
-                self.refresh_state = (k, v.state)
+            # changed = True
+            for k, v in six.iteritems(self.switches):
+                states.append(k, v.state)
+                # self.refresh_state = (k, v.state)
                 # elm.update_valve_state(k, v.state)
 
-        if refresh and changed:
+        if refresh and states:
+            self.refresh_state = states
             self.refresh_canvas_needed = True
             # elm.refresh_canvas()
 
     def load_valve_lock_states(self, refresh=True, force=False):
-        # elm = self.extraction_line_manager
         word = self.get_lock_word()
-        # if globalv.valve_debug:
-        #     self.debug('valve lock word={}'.format(word))
-        self.debug('valve lock word={}'.format(word))
+        if globalv.valve_debug:
+            self.debug('valve lock word={}'.format(word))
 
         changed = False
         if word is not None:
@@ -196,41 +200,41 @@ class ClientSwitchManager(SwitchManager):
         else:
             self.warning('State checksums do not match. Local:{} Remote:{}'.format(local, remote))
 
-            if remote is None:
-                return
-
-            if self.actuators:
-
-                state_word = self.get_state_word()
-                lock_word = self.get_lock_word()
-                act = self.actuators[0]
-                # report valves stats
-                self.debug('========================= Valve Stats =========================')
-                tmpl = '{:<8s}{:<8s}{:<8s}{:<8s}{:<10s}{:<10s}{:<10s}'
-                self.debug(tmpl.format('Key', 'State', 'Lock', 'Failure', 'StateWord', 'LockWord', 'FailureWord'))
-                for vi in vkeys:
-                    v = valves[vi]
-                    rvstate = act.get_channel_state(v)
-                    if rvstate is not None:
-                        rvstate = int(rvstate)
-
-                    s1, s2, s3 = int(v.state), rvstate, int(state_word.get(vi, -1))
-                    state = '{}{}'.format(s1, s2)
-                    statew = '{}{}'.format(s1, s3)
-
-                    rvlock = act.get_lock_state(v)
-                    if rvlock is not None:
-                        rvlock = int(rvlock)
-
-                    l1, l2, l3 = int(v.software_lock), rvlock, int(lock_word.get(vi, -1))
-                    lock = '{}{}'.format(l1, l2)
-                    lockw = '{}{}'.format(l1, l3)
-
-                    fail = 'X' if s1 != s2 or l1 != l2 else ''
-                    failw = 'X' if s1 != s3 or l1 != l3 else ''
-
-                    self.debug(tmpl.format(vi, state, lock, fail, statew, lockw, failw))
-                self.debug('===============================================================')
+            # if remote is None:
+            #     return
+            #
+            # if self.actuators:
+            #
+            #     state_word = self.get_state_word()
+            #     lock_word = self.get_lock_word()
+            #     act = self.actuators[0]
+            #     # report valves stats
+            #     self.debug('========================= Valve Stats =========================')
+            #     tmpl = '{:<8s}{:<8s}{:<8s}{:<8s}{:<10s}{:<10s}{:<10s}'
+            #     self.debug(tmpl.format('Key', 'State', 'Lock', 'Failure', 'StateWord', 'LockWord', 'FailureWord'))
+            #     for vi in vkeys:
+            #         v = valves[vi]
+            #         rvstate = act.get_channel_state(v)
+            #         if rvstate is not None:
+            #             rvstate = int(rvstate)
+            #
+            #         s1, s2, s3 = int(v.state), rvstate, int(state_word.get(vi, -1))
+            #         state = '{}{}'.format(s1, s2)
+            #         statew = '{}{}'.format(s1, s3)
+            #
+            #         rvlock = act.get_lock_state(v)
+            #         if rvlock is not None:
+            #             rvlock = int(rvlock)
+            #
+            #         l1, l2, l3 = int(v.software_lock), rvlock, int(lock_word.get(vi, -1))
+            #         lock = '{}{}'.format(l1, l2)
+            #         lockw = '{}{}'.format(l1, l3)
+            #
+            #         fail = 'X' if s1 != s2 or l1 != l2 else ''
+            #         failw = 'X' if s1 != s3 or l1 != l3 else ''
+            #
+            #         self.debug(tmpl.format(vi, state, lock, fail, statew, lockw, failw))
+            #     self.debug('===============================================================')
 
 # ============= EOF =============================================
 

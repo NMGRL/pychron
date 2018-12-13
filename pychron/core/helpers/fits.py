@@ -18,7 +18,8 @@
 # ============= standard library imports ========================
 
 # ============= local library imports  ==========================
-FITS = ['linear', 'parabolic', 'cubic']
+import six
+FITS = ['linear', 'parabolic', 'cubic', 'quartic']
 
 
 def fit_to_degree(f):
@@ -26,7 +27,7 @@ def fit_to_degree(f):
 
 
 def natural_name_fit(f):
-    if isinstance(f, (str, unicode)):
+    if isinstance(f, (str, six.text_type)):
         return f
     elif isinstance(f, int):
         return FITS[max(0, f - 1)]
@@ -37,7 +38,7 @@ def convert_fit(f):
     if isinstance(f, tuple):
         f, err = f
 
-    if isinstance(f, (str, unicode)):
+    if isinstance(f, (str, six.text_type)):
         f = f.lower()
 
         if '_' in f:
@@ -58,7 +59,7 @@ def convert_fit(f):
         #     f = 'weighted mean'
         #     if not err:
         #         err = 'SEM' if 'sem' in f else 'SD'
-        elif f in ('average', 'weighted mean'):
+        elif f in ('average', 'weighted mean', 'exponential'):
             if not err:
                 err = 'SEM' if 'sem' in f else 'SD'
         else:

@@ -15,10 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.trait_types import Bool, Instance, Event, Int
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from traits.traits import Color
+# ============= standard library imports ========================
+from datetime import datetime
+# ============= local library imports  ==========================
 from pychron.loggable import Loggable
 from pychron.pychron_constants import LIGHT_YELLOW
 
@@ -26,7 +28,7 @@ from pychron.pychron_constants import LIGHT_YELLOW
 class Consoleable(Loggable):
     use_message_colormapping = Bool
     console_display = Instance('pychron.displays.display.DisplayController')
-    console_updated = Event
+    # console_updated = Event
     console_bgcolor = LIGHT_YELLOW
     console_fontsize = Int(11)
     console_default_color = Color('black')
@@ -55,7 +57,7 @@ class Consoleable(Loggable):
         if self.console_display:
             self.console_display.add_text(msg, color=color)
 
-        self.console_updated = '{}|{}'.format(color, msg)
+        # self.console_updated = '{}|{}'.format(color, msg)
 
     def heading(self, msg, decorate_chr='*', *args, **kw):
         d = decorate_chr * 7
@@ -67,12 +69,15 @@ class Consoleable(Loggable):
             color = self.console_default_color
 
         if self.console_display:
+            t = datetime.now().strftime('%H:%M:%S')
+            msg = '{} -- {}'.format(t, msg)
+
             self.console_display.add_text(msg, color=color)
 
         if log:
             super(Consoleable, self).info(msg, *args, **kw)
 
-        self.console_updated = '{}|{}'.format(color, msg)
+        # self.console_updated = '{}|{}'.format(color, msg)
 
     def info_marker(self, char='=', color=None):
         if color is None:

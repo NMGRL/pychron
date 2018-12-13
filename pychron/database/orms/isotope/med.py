@@ -17,15 +17,14 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # from sqlalchemy.ext.declarative import declarative_base, declared_attr
+from __future__ import absolute_import
 from sqlalchemy import Column, BLOB, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import func
 
-# ============= local library imports  ==========================
-from pychron.database.orms.isotope.util import foreignkey, stringcolumn
 from pychron.database.core.base_orm import BaseMixin, NameMixin
-
-from util import Base
+from pychron.database.orms.isotope.util import foreignkey, stringcolumn
+from .util import Base
 
 
 class med_ImageTable(Base, NameMixin):
@@ -47,4 +46,5 @@ class med_SampleImageTable(Base, NameMixin):
     image = Column(BLOB)
     sample_id = foreignkey('gen_SampleTable')
     note = Column(BLOB)
+
 # ============= EOF =============================================

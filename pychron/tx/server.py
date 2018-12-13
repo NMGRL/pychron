@@ -16,10 +16,17 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
+import io
+import os
+
 from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ServerEndpoint
-from twisted.internet.error import ReactorNotRunning
-# ============= local library imports  ==========================
+from twisted.internet.error import ReactorNotRunning, CannotListenError
+from twisted.logger import Logger
+from twisted.logger import jsonFileLogObserver
+
+from pychron.paths import paths
 
 
 class TxServer:
@@ -27,6 +34,10 @@ class TxServer:
     _has_endpoints = False
 
     def bootstrap(self):
+        path = os.path.join(paths.log_dir, 'pps.log.json')
+        obs = jsonFileLogObserver(io.open(path, 'w'))
+        logger = Logger(observer=obs)
+
         if self._has_endpoints:
             self.start()
 
@@ -34,7 +45,10 @@ class TxServer:
         self._has_endpoints = True
 
         endpoint = TCP4ServerEndpoint(reactor, port)
-        endpoint.listen(factory)
+        try:
+            endpoint.listen(factory)
+        except CannotListenError as e:
+            return e
 
     def start(self):
         from threading import Thread

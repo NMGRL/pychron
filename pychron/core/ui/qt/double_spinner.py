@@ -15,9 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Float, Str
 # ============= standard library imports ========================
-from PySide.QtGui import QDoubleSpinBox
+from pyface.qt.QtGui import QDoubleSpinBox
 from PySide import QtCore
 from traitsui.qt4.range_editor import SimpleSpinEditor
 from traitsui.basic_editor_factory import BasicEditorFactory

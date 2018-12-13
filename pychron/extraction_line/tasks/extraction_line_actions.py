@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface.action.api import Action
 from pyface.tasks.action.task_action import TaskAction
 
@@ -90,6 +91,15 @@ class RefreshCanvasAction(ExtractionLineAction):
         #        manager.window = self.window
         manager.reload_canvas()
 
+
+class StopWatchAction(Action):
+    name = 'Stop Watch'
+    description = 'Simple stopwatch with call outs at desired intervals'
+
+    def perform(self, event):
+        from pychron.extraction_line.stop_watch import StopWatch
+        sw = StopWatch()
+        open_view(sw)
 
 # class OpenViewControllerAction(ExtractionLineAction):
 #    description = 'Open User views'

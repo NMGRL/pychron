@@ -1,5 +1,12 @@
 CHANGELOG
-============
+=========
+2.6
+---
+### Features ###
+* added Display Hole to Laser Canvas
+
+### Bug Fixes ###
+
 2.5
 ---
 ### Features ###

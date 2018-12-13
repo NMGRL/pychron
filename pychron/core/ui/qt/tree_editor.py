@@ -15,19 +15,20 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import collections
-
-from PySide import QtGui, QtCore
-from PySide.QtCore import Qt
-from PySide.QtGui import QIcon, QTreeWidgetItemIterator, QColor
+from pyface.qt import QtGui, QtCore
+from pyface.qt.QtCore import Qt
+from pyface.qt.QtGui import QIcon, QTreeWidgetItemIterator, QColor
 from traits.api import Str, Bool, Event
 from traitsui.api import TreeEditor as _TreeEditor
-
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-
-
 from traitsui.qt4.tree_editor import SimpleEditor as _SimpleEditor
+
+import collections
+import platform
+
+
+LABEL_FONT_SIZE = 14
+if platform.system() == 'Windows':
+    LABEL_FONT_SIZE = 8
 
 
 class SimpleEditor(_SimpleEditor):
@@ -44,6 +45,32 @@ class SimpleEditor(_SimpleEditor):
         self.sync_value(self.factory.collapse_all, 'collapse_all', 'from')
         self.sync_value(self.factory.expand_all, 'expand_all', 'from')
         self.sync_value(self.factory.update, 'update', 'from')
+
+    def _refresh_changed( self ):
+        nids = self._tree.selectedItems()
+        obj, node = self._node_for(self.selected)
+        bg = node.get_background(obj)
+        b = self._get_brush(bg)
+        for ni in nids:
+            ni.setBackground(0, b)
+
+        super(SimpleEditor, self)._refresh_changed()
+
+    def _label_updated(self, obj, name, label):
+        """  Handles the label of an object being changed.
+        """
+        # Prevent the itemChanged() signal from being emitted.
+        blk = self._tree.blockSignals(True)
+
+        nids = {}
+        for name2, nid in self._map[id(obj)]:
+            if id(nid) not in nids:
+                nids[id(nid)] = None
+                node = self._get_node_data(nid)[1]
+                self._set_label(nid, node.get_label(obj), 0)
+                self._update_icon(nid)
+
+        self._tree.blockSignals(blk)
 
     def _collapse_all_fired(self):
         ctrl = self.control
@@ -130,81 +157,91 @@ class PipelineDelegate(QtGui.QStyledItemDelegate):
     def __init__(self, tree, show_icons, *args, **kwargs):
         self._tree = tree
         self._show_icons = show_icons
-        self.size_map = collections.defaultdict(lambda: QtCore.QSize(1, 21))
-        QtGui.QStyledItemDelegate.__init__(self, *args, **kwargs)
+        # self._size_map = {}
+        self._size_map = collections.defaultdict(lambda: QtCore.QSize(1, 21))
+        super(PipelineDelegate, self).__init__(*args, **kwargs)
 
     def sizeHint(self, option, index):
         """ returns area taken by the text. """
-        try:
-            return self.size_map[self._tree.itemFromIndex(index)]
-        except KeyboardInterrupt:
-            pass
+        # return self._size_map[self._tree.itemFromIndex(index)]
+        return QtCore.QSize(1, 20)
 
     def paint(self, painter, option, index):
+        hint = painter.renderHints()
+        painter.setRenderHints(hint | QtGui.QPainter.Antialiasing)
+
+        painter.setBrush(QColor(100, 100, 100, 100))
+        painter.setPen(QColor(100, 100, 100, 100))
+        # rect = option.rect
+        # top = rect.top()
+        # if index.row() > 0:
+        #     top += 6*index.row()
+
+        painter.drawRoundedRect(option.rect, 5, 5)
+
+        item = self._tree.itemFromIndex(index)
         try:
-            QtGui.QStyledItemDelegate.paint(self, painter, option, index)
+            expanded, node, obj = item._py_data
+        except AttributeError as e:
+            print('asfasfas', e, item, index)
+            return
 
-            # print idx.row(), option
-            # painter.begin()
-            # painter.draw(0,0,'Fasdfe'
-            # painter.setPen(QColor('white'))
-            hint = painter.renderHints()
-            painter.setRenderHints(hint | QtGui.QPainter.Antialiasing)
+        text = node.get_label(obj)
 
-            painter.setBrush(QColor(100, 100, 100, 100))
-            painter.setPen(QColor(100, 100, 100, 100))
-            rect = option.rect
-            painter.drawRoundedRect(rect, 5, 5)
+        if self._show_icons:
+            iconwidth = 24  # FIXME: get width from actual
+        else:
+            iconwidth = 0
 
-            item = self._tree.itemFromIndex(index)
-            # print index, self.editor._tree.model().rowCount()
-            # draw_line = index.row() != self._tree.model().rowCount() - 1
+        status_color = node.get_status_color(obj)
 
-            # expanded, node, object = self.editor._get_node_data(item)
-            expanded, node, object = item._py_data
-            text = node.get_label(object)
+        c = status_color.darker()
+        painter.setPen(c)
+        pen = painter.pen()
+        pen.setWidth(2)
+        painter.setPen(pen)
 
-            if self._show_icons:
-                iconwidth = 24  # FIXME: get width from actual
-            else:
-                iconwidth = 0
+        # if draw_line:
+        #     x = rect.left() + 6 + r2
+        #     y = rect.bottom() - rect.height() / 2.  # status_color.setAlpha(150)
+        #     painter.drawLine(x, y, x, y + rect.height())
 
-            offset = 20
-            r = 13  # rect.height() - 10
-            # r2 = r / 2.
-            status_color = node.get_status_color(object)
+        painter.setBrush(status_color)
 
-            painter.setPen(status_color.darker())
-            pen = painter.pen()
-            pen.setWidth(2)
-            painter.setPen(pen)
+        r = 15
+        x = option.rect.left() + 5
+        y = option.rect.top() + (option.rect.height() - r) / 2
 
-            # if draw_line:
-            #     x = rect.left() + 6 + r2
-            #     y = rect.bottom() - rect.height() / 2.  # status_color.setAlpha(150)
-            #     painter.drawLine(x, y, x, y + rect.height())
+        painter.drawEllipse(x, y, r, r)
+        # painter.drawEllipse(rect.left() + 3, top+3.5, r, r)
 
-            painter.setBrush(status_color)
-            painter.drawEllipse(rect.left() + 5, rect.bottom() - r - 4, r, r)
+        # draw text
+        painter.setPen(Qt.black)
+        font = painter.font()
+        font.setPointSize(LABEL_FONT_SIZE)
+        painter.setFont(font)
 
-            # draw text
-            painter.setPen(Qt.black)
-            rect = painter.drawText(rect.left() + iconwidth + offset,
-                                    rect.top() + rect.height() / 3.,
-                                    rect.width() - iconwidth,
-                                    rect.height(),
-                                    QtCore.Qt.TextWordWrap, text)
-            if self.size_map[item] != rect.size():
-                size = rect.size()
-                size.setHeight(size.height() + 10)
-                self.size_map[item] = size
-                self.sizeHintChanged.emit(index)
-        except KeyboardInterrupt:
-            pass
+        painter.drawText(option.rect.left() + iconwidth,
+                         # option.rect.top(),
+                         option.rect.top() + option.rect.height() / 3,
+                         option.rect.width() - iconwidth,
+                         option.rect.height(),
+                         QtCore.Qt.TextWordWrap, text)
+        # Need to set the appropriate sizeHint of the item.
+        # if self._size_map[item] != rect.size():
+        #     self._size_map[item] = rect.size()
+        #     do_later(self.sizeHintChanged.emit, index)
 
 
 class _PipelineEditor(SimpleEditor):
-    def _create_item(self, nid, node, object, index=None):
+    def init(self, parent):
+        super(_PipelineEditor, self).init(parent)
+        if self._tree:
+            item = PipelineDelegate(self._tree, self.factory.show_icons)
+            self._tree.setItemDelegate(item)
+
+
+    def _create_item(self, nid, node, obj, index=None):
         """ Create  a new TreeWidgetItem as per word_wrap policy.
 
         Index is the index of the new node in the parent:
@@ -215,17 +252,16 @@ class _PipelineEditor(SimpleEditor):
             cnid = QtGui.QTreeWidgetItem()
             nid.insertChild(index, cnid)
 
-        item = PipelineDelegate(self._tree, self.factory.show_icons)
-        self._tree.setItemDelegate(item)
-
         # cnid.setIcon(0, self._get_icon(node, object))
-        cnid.setToolTip(0, node.get_tooltip(object))
-        self._set_column_labels(cnid, node.get_column_labels(object))
+        cnid.setToolTip(0, node.get_tooltip(obj))
+        self._set_column_labels(cnid, node.get_column_labels(obj))
 
-        color = node.get_background(object)
-        if color: cnid.setBackground(0, self._get_brush(color))
-        color = node.get_foreground(object)
-        if color: cnid.setForeground(0, self._get_brush(color))
+        color = node.get_background(obj)
+        if color:
+            cnid.setBackground(0, self._get_brush(color))
+        color = node.get_foreground(obj)
+        if color:
+            cnid.setForeground(0, self._get_brush(color))
 
         return cnid
 
