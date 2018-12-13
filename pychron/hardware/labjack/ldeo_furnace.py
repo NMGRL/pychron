@@ -175,6 +175,10 @@ class LamontFurnaceControl(CoreDevice):
                      [1, 350]]
 
         stepper_number, runtime = positions[position - 1]
+
+        if position == 0:  # position command zero does nothing
+            runtime = 0
+
         if stepper_number == 1:
             a, b = 5, 4
         elif stepper_number == 2:
