@@ -29,7 +29,7 @@ class ControlPane(TraitsDockPane):
     name = 'Controls'
     id = 'pychron.ldeofurnace.controls'
 
-    dump_sample_number = Int(1)
+    dump_sample_number = Int
     dump_sample_button = Button('Dump')
     # jitter_button = Button
     # jitter_label = Str('Start')
@@ -58,8 +58,8 @@ class ControlPane(TraitsDockPane):
     def _disable_button_fired(self):
         self.model.stop_motors()  # just refers to motor stop function for now
 
-    def _dump_sample_button_fired(self, dump_sample_number):
-        self.model.dump_sample(dump_sample_number)
+    def _dump_sample_button_fired(self):
+        self.model.dump_sample(self.dump_sample_number)
 
     # def _jitter_button_fired(self):
     #     if not self.jittering:
@@ -117,6 +117,7 @@ class ControlPane(TraitsDockPane):
         #                     show_border=True, label='Jitter')
 
         dump_grp = HGroup(UItem('pane.dump_sample_number',
+                                width=50,
                                 enabled_when='dump_sample_enabled',
                                 tooltip='Sample number to dump'),
                           UItem('pane.dump_sample_button',

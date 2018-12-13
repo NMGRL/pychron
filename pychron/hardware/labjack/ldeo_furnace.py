@@ -64,6 +64,8 @@ class LamontFurnaceControl(CoreDevice):
     def initialize(self, *args, **kw):
         self.scl_pin = self.dac_pin + 4
         self.sda_pin = self.scl_pin + 1
+        self._device.getFeedback(u3.BitStateWrite(4, 0))  # write both sleep lines low to prevent stepper from moving on load
+        self._device.getFeedback(u3.BitStateWrite(5, 0))  # write both sleep lines low to prevent stepper from moving on load
         self._device.configIO(FIOAnalog=15, NumberOfTimersEnabled=2, TimerCounterPinOffset=8)
         self._device.configTimerClock(TimerClockBase=3, TimerClockDivisor=50)  # 3 = 1 Mhz; 50 ==> 1/50 = 20 kHz
         self._device.getFeedback(u3.Timer0Config(TimerMode=7, Value=100))  # FreqOut mode; Value 20 gives (20 kHz)/(2*100) = 100 Hz
@@ -165,11 +167,11 @@ class LamontFurnaceControl(CoreDevice):
 
     def goto_ball(self, position):
         positions = [[1, 5],
-                     [1, 50],
-                     [1, 80],
-                     [1, 110],
-                     [1, 140],
-                     [1, 170],
+                     [1, 10],
+                     [1, 15],
+                     [1, 20],
+                     [1, 25],
+                     [1, 30],
                      [1, 200],
                      [1, 230],
                      [1, 260],
@@ -191,11 +193,11 @@ class LamontFurnaceControl(CoreDevice):
 
     def returnfrom_ball(self, position):
         positions = [[1, 5],
-                     [1, 50],
-                     [1, 80],
-                     [1, 110],
-                     [1, 140],
-                     [1, 170],
+                     [1, 10],
+                     [1, 15],
+                     [1, 20],
+                     [1, 25],
+                     [1, 30],
                      [1, 200],
                      [1, 230],
                      [1, 260],
@@ -236,14 +238,13 @@ class LamontFurnaceControl(CoreDevice):
         else:
             dev.getFeedback(u3.BitStateWrite(a_id, 1))
 
-        delay = 0.3
-
         st = time.time()
         while time.time() - st < runtime:
             dev.getFeedback(u3.BitStateWrite(b_id, 1))
-            time.sleep(delay)
-            dev.getFeedback(u3.BitStateWrite(b_id, 0))
-            time.sleep(delay)
+            time.sleep(1)
+
+        dev.getFeedback(u3.BitStateWrite(b_id, 0))
+
 
 
 if __name__ == '__main__':
