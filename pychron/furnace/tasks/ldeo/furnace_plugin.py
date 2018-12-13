@@ -24,7 +24,7 @@ class LDEOFurnacePlugin(BaseFurnacePlugin):
     name = 'LDEOFurnace'
     id = 'pychron.furnace.ldeo.plugin'
 
-    klass = ('pychron.furnace.furnace_manager', 'LDEOFurnaceManager')
+    klass = ('pychron.furnace.ldeo.furnace_manager', 'LDEOFurnaceManager')
     task_klass = LDEOFurnaceTask
 
     def _help_tips_default(self):
