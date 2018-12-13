@@ -326,7 +326,7 @@ class DVCPersister(BasePersister):
                     obj = yaml.load(rfile)
                 except YAMLError:
                     pass
-                
+
                 for k in ARGON_KEYS:
                     if k not in obj:
                         self.warning('Invalid arar_mapping.yaml file. required keys={}'.format(ARGON_KEYS))
@@ -365,6 +365,8 @@ class DVCPersister(BasePersister):
         # save script names
         d['measurementName'] = ps.measurement_name
         d['extractionName'] = ps.extraction_name
+
+        d['experiment_type'] = self.per_spec.experiment_type
 
         db = self.dvc.db
         an = db.add_analysis(**d)
@@ -534,7 +536,7 @@ class DVCPersister(BasePersister):
         akeys = self.arar_mapping
         if akeys is None:
             akeys = ARAR_MAPPING
-            
+
         obj['arar_mapping'] = akeys
 
         # save experiment

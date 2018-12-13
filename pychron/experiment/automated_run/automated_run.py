@@ -218,7 +218,10 @@ class AutomatedRun(Loggable):
                            ('failed_intensity_count_threshold', int)):
             set_preference(preferences, self, attr, 'pychron.experiment.{}'.format(attr), cast)
 
-        self.persister.set_preferences(preferences)
+        for p in (self.persister, self.xls_persister, self.dvc_persister):
+            if p is not None:
+                p.set_preferences(preferences)
+
         self.multi_collector.console_set_preferences(preferences, 'pychron.experiment')
         self.peak_hop_collector.console_set_preferences(preferences, 'pychron.experiment')
 
@@ -347,6 +350,10 @@ class AutomatedRun(Loggable):
         self.info('setting spectrometer parameter {} {}'.format(name, v))
         if self.spectrometer_manager:
             self.spectrometer_manager.spectrometer.set_parameter(name, v)
+
+    def py_raw_spectrometer_command(self, cmd):
+        if self.spectrometer_manager:
+            self.spectrometer_manager.spectrometer.ask(cmd)
 
     def py_data_collection(self, obj, ncounts, starttime, starttime_offset, series=0, fit_series=0, group='signal', integration_time=None):
         if not self._alive:
@@ -1070,6 +1077,7 @@ class AutomatedRun(Loggable):
                                     auto_save_detector_ic=auto_save_detector_ic,
                                     extraction_positions=ext_pos,
                                     sensitivity_multiplier=sens,
+                                    experiment_type=self.experiment_type,
                                     experiment_queue_name=eqn,
                                     experiment_queue_blob=eqb,
                                     extraction_name=ext_name,
@@ -1355,25 +1363,31 @@ anaylsis_type={}
         self.info('getting environmentals')
         env = {}
         lclient = self.labspy_client
+
+        tst = time.time()
         if lclient:
             if lclient.connect():
                 for tag in ('lab_temperatures', 'lab_humiditys', 'lab_pneumatics'):
+                    st = time.time()
                     try:
                         env[tag] = getattr(lclient, 'get_latest_{}'.format(tag))()
+                        self.debug('Get latest {}. elapsed: {}'.format(tag, time.time()-st))
                     except BaseException as e:
                         self.debug('Get Labspy Environmentals: {}'.format(e))
                         self.debug_exception()
             else:
                 self.debug('failed to connect to labspy client. Could not retrieve environmentals')
-            self.debug('Enviromentals: {}'.format(pformat(env)))
+            self.debug('Environmentals: {}'.format(pformat(env)))
         else:
-            self.debug('LabspyClient not enabled. Could not retrieve enironmentals')
+            self.debug('LabspyClient not enabled. Could not retrieve environmentals')
+
+        self.info('getting environmentals finished: total duration: {}'.format(time.time()-tst))
         return env
 
     def _start(self):
 
         # for testing only
-        self._get_environmentals()
+        # self._get_environmentals()
 
         if self.isotope_group is None:
             # load arar_age object for age calculation
@@ -1411,15 +1425,21 @@ anaylsis_type={}
             self._add_conditionals()
         except BaseException as e:
             self.warning('Failed adding conditionals {}'.format(e))
-            raise e
-
             return
 
-        # add queue conditionals
-        self._add_queue_conditionals()
+        try:
+            # add queue conditionals
+            self._add_queue_conditionals()
+        except BaseException as e:
+            self.warning('Failed adding queue conditionals. err={}'.format(e))
+            return
 
-        # add default conditionals
-        self._add_default_conditionals()
+        try:
+            # add default conditionals
+            self._add_system_conditionals()
+        except BaseException as e:
+            self.warning('Failed adding system conditionals. err={}'.format(e))
+            return
 
         self.info('Start automated run {}'.format(self.runid))
         self.measuring = False
@@ -1433,14 +1453,11 @@ anaylsis_type={}
             self.plot_panel.is_baseline = False
             self.plot_panel.set_analysis_view(self.experiment_type)
 
-            # self.plot_panel.experiment_type = self.experiment_type
-
         self.multi_collector.canceled = False
         self.multi_collector.is_baseline = False
         self.multi_collector.for_peak_hop = False
 
         self._equilibration_done = False
-        # self._refresh_scripts()
 
         # setup the scripts
         ip = self.spec.script_options
@@ -1552,7 +1569,7 @@ anaylsis_type={}
             ret = False
         return ret
 
-    def _add_default_conditionals(self):
+    def _add_system_conditionals(self):
         self.debug('add default conditionals')
         p = get_path(paths.spectrometer_dir, '.*conditionals', ('.yaml', '.yml'))
         if p is not None:
@@ -1719,14 +1736,12 @@ anaylsis_type={}
         if create:
             p.create(self._active_detectors)
         else:
-            # p.clear_displays()
             p.isotope_graph.clear_plots()
 
         p.show_isotope_graph()
 
         self.debug('clear isotope group')
 
-        # for iso in self.arar_age.isotopes:
         self.isotope_group.clear_isotopes()
         self.isotope_group.clear_error_components()
         self.isotope_group.clear_blanks()
@@ -1736,14 +1751,9 @@ anaylsis_type={}
                 and not self.spec.analysis_type.startswith('background')):
             cb = True
 
-        # g = p.isotope_graph
         for d in self._active_detectors:
             self.debug('setting isotope det={}, iso={}'.format(d.name, d.isotope))
             self.isotope_group.set_isotope(d.isotope, d.name, (0, 0), correct_for_blank=cb)
-
-            # for idx in self._get_plot_id_by_ytitle(g, d.isotope, '{}{}'.format(d.isotope, d.name)):
-            #     plot = g.plots[idx]
-            #     plot.set_regressor(iso.regressor)
 
         self._load_previous()
 
@@ -2157,7 +2167,6 @@ anaylsis_type={}
         if p:
             p._ncounts = ncounts
             p.is_baseline = False
-            # p.isotope_graph.set_x_limits(min_=0, max_=1, plotid=0)
             self.plot_panel.show_sniff_graph()
 
         gn = 'sniff'
@@ -2201,9 +2210,7 @@ anaylsis_type={}
 
         m = self.collector
 
-        m.trait_set(# automated_run=self,
-                    # console_display=self.experiment_executor.console_display,
-                    measurement_script=script,
+        m.trait_set(measurement_script=script,
                     detectors=self._active_detectors,
                     collection_kind=grpname,
                     series_idx=series,
@@ -2221,13 +2228,6 @@ anaylsis_type={}
             self.plot_panel.integration_time = period
             self.plot_panel.set_ncounts(ncounts)
             self.plot_panel.total_counts += ncounts
-
-            # from pychron.core.ui.gui import invoke_in_main_thread
-            # invoke_in_main_thread(self._setup_isotope_graph, starttime_offset, color, grpname)
-            # if grpname == 'sniff':
-            #     invoke_in_main_thread(self._setup_sniff_graph, starttime_offset, color)
-            # elif grpname == 'baseline':
-            #     invoke_in_main_thread(self._setup_baseline_graph, starttime_offset, color)
 
             if grpname == 'sniff':
                 self._setup_isotope_graph(starttime_offset, color, grpname)
@@ -2451,48 +2451,47 @@ anaylsis_type={}
         self.debug('loading script "{}"'.format(fname))
         func = getattr(self, '_{}_script_factory'.format(name))
         s = func()
-        # valid = True
         if s and os.path.isfile(s.filename):
             if s.bootstrap():
                 s.set_default_context()
         else:
-            # valid = False
             fname = s.filename if s else fname
             e = 'Not a file'
             warn(fname, e)
 
-        # if valid:
-        #     SCRIPTS[fname] = s
         return s
 
     def _measurement_script_factory(self):
         from pychron.pyscripts.measurement_pyscript import MeasurementPyScript
 
         sname = self.script_info.measurement_script_name
-        root = paths.measurement_dir
         sname = self._make_script_name(sname)
 
-        ms = MeasurementPyScript(root=root,
-                                 name=sname,
-                                 automated_run=self,
-                                 runner=self.runner)
+        from pychron.spectrometer.thermo.manager.base import ThermoSpectrometerManager
+        from pychron.spectrometer.isotopx.manager.ngx import NGXSpectrometerManager
+
+        klass = MeasurementPyScript
+        if isinstance(self.spectrometer_manager, ThermoSpectrometerManager):
+            from pychron.pyscripts.measurement_pyscript import ThermoMeasurementPyScript
+            klass = ThermoMeasurementPyScript
+        elif isinstance(self.spectrometer_manager, NGXSpectrometerManager):
+            from pychron.pyscripts.measurement_pyscript import NGXMeasurementPyScript
+            klass = NGXMeasurementPyScript
+
+        ms = klass(root=paths.measurement_dir, name=sname, automated_run=self, runner=self.runner)
         return ms
 
     def _extraction_script_factory(self, klass=None):
-        root = paths.extraction_dir
-        ext = self._ext_factory(root, self.script_info.extraction_script_name,
-                                klass=klass)
+        ext = self._ext_factory(paths.extraction_dir, self.script_info.extraction_script_name, klass=klass)
         if ext is not None:
             ext.automated_run = self
         return ext
 
     def _post_measurement_script_factory(self):
-        root = paths.post_measurement_dir
-        return self._ext_factory(root, self.script_info.post_measurement_script_name)
+        return self._ext_factory(paths.post_measurement_dir, self.script_info.post_measurement_script_name)
 
     def _post_equilibration_script_factory(self):
-        root = paths.post_equilibration_dir
-        return self._ext_factory(root, self.script_info.post_equilibration_script_name)
+        return self._ext_factory(paths.post_equilibration_dir, self.script_info.post_equilibration_script_name)
 
     def _ext_factory(self, root, file_name, klass=None):
         file_name = self._make_script_name(file_name)
@@ -2502,10 +2501,7 @@ anaylsis_type={}
 
                 klass = ExtractionPyScript
 
-            obj = klass(
-                root=root,
-                name=file_name,
-                runner=self.runner)
+            obj = klass(root=root, name=file_name, runner=self.runner)
 
             return obj
 

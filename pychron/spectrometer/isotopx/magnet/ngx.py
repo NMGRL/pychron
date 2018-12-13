@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 from __future__ import absolute_import
+
 from pychron.hardware import get_float
 from pychron.spectrometer.isotopx.magnet.base import IsotopxMagnet
 
@@ -23,7 +24,7 @@ class NGXMagnet(IsotopxMagnet):
         return self.read_mass()
 
     def set_dac(self, v, *args, **kw):
-        self.set_mass(v)
+        return self.set_mass(v)
 
     @get_float()
     def read_mass(self):
@@ -38,9 +39,15 @@ class NGXMagnet(IsotopxMagnet):
         :return:
         """
         if delay is None:
-            delay = int(self.settling_time*1000)
+            delay = int(self.settling_time * 1000)
 
         deflect = ',deflect' if deflect else ''
         self.ask('SetMass {},{}{}'.format(v, delay, deflect))
+
+        dv = abs(self._dac - v)
+        self._dac = v
+        change = dv > 1e-7
+
+        return change
 
 # ============= EOF =============================================

@@ -31,14 +31,15 @@ def get_isotope_set(ans):
 class EngineState(HasTraits):
     unknowns = List
     references = List
-    flux_monitors = List
+
     unknown_positions = List
+    monitor_positions = List
+
     decay_constants = Dict
 
     tables = List
     editors = List
 
-    has_flux_monitors = Bool
     saveable_keys = List
     saveable_fits = List
     saveable_irradiation_positions = List

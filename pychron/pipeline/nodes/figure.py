@@ -25,8 +25,9 @@ from pychron.core.helpers.strtools import ratio
 from pychron.core.progress import progress_iterator
 from pychron.options.options_manager import IdeogramOptionsManager, OptionsController, SeriesOptionsManager, \
     SpectrumOptionsManager, InverseIsochronOptionsManager, VerticalFluxOptionsManager, XYScatterOptionsManager, \
-    RadialOptionsManager, RegressionSeriesOptionsManager
+    RadialOptionsManager, RegressionSeriesOptionsManager, FluxVisualizationOptionsManager
 from pychron.options.views.views import view
+from pychron.pipeline.editors.flux_visualization_editor import FluxVisualizationEditor
 from pychron.pipeline.nodes.base import SortableNode
 from pychron.pipeline.plot.plotter.series import RADIOGENIC_YIELD, PEAK_CENTER, \
     ANALYSIS_TYPE, AGE, LAB_TEMP, LAB_HUM
@@ -54,7 +55,7 @@ class FigureNode(SortableNode):
         super(FigureNode, self).reset()
         self.editors = {}
         self.editor = None
-        
+
     def refresh(self):
         for e in self.editors.values():
             e.refresh_needed = True
@@ -163,6 +164,40 @@ class VerticalFluxNode(FigureNode):
         editor = super(VerticalFluxNode, self).run(state)
         editor.irradiation = state.irradiation
         editor.levels = state.levels
+
+
+class FluxVisualizationNode(FigureNode):
+    name = 'Flux Visualization'
+    editor_klass = FluxVisualizationEditor
+    plotter_options_manager_klass = FluxVisualizationOptionsManager
+    no_analyses_warning = False
+
+    def _options_view_default(self):
+        return view('Flux Options')
+
+    def run(self, state):
+        self.editor = editor = self._editor_factory()
+        state.editors.append(editor)
+        if not editor:
+            state.canceled = True
+            return
+
+        self.name = 'Flux Visualization {}'.format(state.irradiation, state.level)
+        geom = state.geometry
+
+        ps = state.monitor_positions
+
+        if ps:
+            po = self.plotter_options
+
+            editor.plotter_options = po
+            editor.geometry = geom
+            editor.irradiation = state.irradiation
+            editor.level = state.level
+            editor.holder = state.holder
+
+            editor.set_positions(ps)
+            editor.name = 'Flux Visualization: {}{}'.format(state.irradiation, state.level)
 
 
 class IdeogramNode(FigureNode):

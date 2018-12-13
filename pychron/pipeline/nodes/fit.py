@@ -493,7 +493,7 @@ class FitFluxNode(FitNode):
 
         self.name = 'Fit Flux {}'.format(state.irradiation, state.level)
         geom = state.geometry
-        monitors = state.flux_monitors
+        monitors = state.unknowns
 
         if monitors:
             po = self.plotter_options

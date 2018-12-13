@@ -63,7 +63,7 @@ META_ATTRS = ('analysis_type', 'uuid', 'identifier', 'aliquot', 'increment',
               'username', 'queue_conditionals_name',
               'repository_identifier',
               'acquisition_software',
-              'data_reduction_software', 'instrument_name', 'laboratory', 'experiment_queue_name')
+              'data_reduction_software', 'instrument_name', 'laboratory', 'experiment_queue_name', 'experiment_type')
 
 
 def min_max(a, b, vs):
@@ -392,21 +392,21 @@ class Analysis(ArArAge, IdeogramPlotable):
     monitor_age = None
     monitor_material = None
 
-    _experiment_type = None
+    _extraction_type = None
 
     @property
-    def experiment_type(self):
-        if self._experiment_type:
-            return self._experiment_type
+    def extraction_type(self):
+        if self._extraction_type:
+            return self._extraction_type
 
         if self.step:
             return 'Incremental Heating'
         else:
             return 'Laser Fusion'
 
-    @experiment_type.setter
-    def experiment_type(self, v):
-        self._experiment_type = v
+    @extraction_type.setter
+    def extraction_type(self, v):
+        self._extraction_type = v
 
     def get_baseline_corrected_signal_dict(self):
         get = lambda iso: iso.get_baseline_corrected_value()

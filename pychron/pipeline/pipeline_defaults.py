@@ -118,6 +118,15 @@ nodes:
   - klass: SpectrumNode
 """
 
+FLUX_VISUALIZATION = """
+required:
+nodes:
+  - klass: FindFluxMonitorMeansNode
+    # level: K
+    # irradiation: NM-300
+  - klass: FluxVisualizationNode
+"""
+
 VERTICAL_FLUX = """
 required:
 nodes:

@@ -127,6 +127,8 @@ class ExtractionView(HasTraits):
 
             if x[1:]:
                 g.new_plot()
+                g.set_x_title('Time')
+                g.set_y_title('Temp C')
                 g.new_series(x[1:], y[1:])
                 g.set_x_limits()
                 ret = True
@@ -135,6 +137,8 @@ class ExtractionView(HasTraits):
             x, y = unpack(request_data, fmt='<ff', decode=True)
             if x[1:]:
                 self.graph.new_plot()
+                g.set_x_title('Time')
+                g.set_y_title('% Power')
                 g.new_series(x[1:], y[1:])
                 g.set_x_limits()
                 ret = True

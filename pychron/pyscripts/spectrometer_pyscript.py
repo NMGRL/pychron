@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 from __future__ import absolute_import
+
 import yaml
 
 from pychron.paths import paths
@@ -33,7 +34,7 @@ class SpectrometerPyScript(PyScript):
         if calc_time:
             return
 
-        self._manager_action([('spy_position_magnet', (isotope, detector), {})])
+        self._manager_actions([('spy_position_magnet', (isotope, detector), {})])
 
     @count_verbose_skip
     @command_register
@@ -43,7 +44,7 @@ class SpectrometerPyScript(PyScript):
             self._estimated_duration += n * 2
             return
 
-        return self._manager_action([('spy_peak_center', (config_name,), {})])[0]
+        return self._manager_actions([('spy_peak_center', (config_name,), {})])[0]
 
     @count_verbose_skip
     @command_register
