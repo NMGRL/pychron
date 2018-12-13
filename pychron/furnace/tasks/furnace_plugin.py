@@ -21,7 +21,7 @@ from traits.api import List
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.furnace.ifurnace_manager import IFurnaceManager
 from pychron.furnace.tasks.preferences import NMGRLFurnacePreferencesPane
-from pychron.furnace.tasks.preferences import LDEOFurnacePreferencesPane
+from pychron.furnace.tasks.preferences import LDEOFurnacePreferencesPane, LDEOFurnaceControlPreferencesPane
 from pychron.furnace.tasks.task import FurnaceTask, LDEOFurnaceTask
 
 
@@ -177,7 +177,7 @@ class LDEOFurnacePlugin(BaseFurnacePlugin):
         return man.test_furnace_cam()
 
     def _preferences_panes_default(self):
-        return [LDEOFurnacePreferencesPane]
+        return [LDEOFurnacePreferencesPane, LDEOFurnaceControlPreferencesPane]
 
     def _tasks_default(self):
         return [TaskFactory(name='Furnace',
