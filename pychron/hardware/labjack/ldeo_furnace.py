@@ -131,7 +131,7 @@ class LamontFurnaceControl(CoreDevice):
             self.warning('Temperature control not implemented')
             # Some PID control will be added later
 
-        self.set_furnace(value)
+        self.set_furnace_setpoint(value)
 
     def set_furnace_setpoint(self, value, furnace=1):
         # this function can be called separately from extract if another script is performing the units logic

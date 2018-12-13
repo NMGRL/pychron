@@ -17,7 +17,7 @@
 from enable.component_editor import ComponentEditor
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
-from traits.api import Button, Bool, Int
+from traits.api import Button, Bool, Int, Float
 from traitsui.api import View, Item, UItem, VGroup, HGroup, spring, \
     Tabbed
 
@@ -29,13 +29,15 @@ class ControlPane(TraitsDockPane):
     name = 'Controls'
     id = 'pychron.ldeofurnace.controls'
 
+    extract_value = Float
+    extract_button = Button('Extract')
+
     dump_sample_number = Int
     dump_sample_button = Button('Dump')
     # jitter_button = Button
     # jitter_label = Str('Start')
     # jittering = Bool
-    configure_jitter_button = Button
-    configure_dump_button = Button
+    # configure_jitter_button = Button
 
     # refresh_states_button = Button('Refresh')
 
@@ -61,6 +63,9 @@ class ControlPane(TraitsDockPane):
     def _dump_sample_button_fired(self):
         self.model.dump_sample(self.dump_sample_number)
 
+    def _extract_button_fired(self):
+        self.model.extract(self.extract_value, 'percent', 1)
+
     # def _jitter_button_fired(self):
     #     if not self.jittering:
     #         self.model.start_jitter_feeder()
@@ -69,12 +74,9 @@ class ControlPane(TraitsDockPane):
     #         self.model.stop_jitter_feeder()
     #         self.jitter_label = 'Start'
     #     self.jittering = not self.jittering
-
-    def _configure_dump_button_fired(self):
-        self.model.configure_dump()
-
-    def _configure_jitter_button_fired(self):
-        self.model.configure_jitter_feeder()
+    #
+    # def _configure_jitter_button_fired(self):
+    #     self.model.configure_jitter_feeder()
 
     def _toggle_advanced_view_button_fired(self):
         self._advanced_view_state = not self._advanced_view_state
@@ -96,7 +98,7 @@ class ControlPane(TraitsDockPane):
                        # HGroup(Item('setpoint'),
                        #        UItem('water_flow_state', editor=LEDEditor(label='H2O Flow')),
                        #        spring, icon_button_editor('pane.disable_button', 'cancel')),
-                       VGroup(UItem('temperature_readback', editor=LCDEditor())),
+                       VGroup(UItem('output_percent_readback', editor=LCDEditor())),
                        icon_button_editor('start_record_button', 'media-record',
                                           tooltip='Start recording',
                                           enabled_when='not _recording'),
@@ -106,11 +108,14 @@ class ControlPane(TraitsDockPane):
                                           enabled_when='_recording'),
                        label='Controller', show_border=True)
 
-        arm_grp = VGroup(HGroup(icon_button_editor('pane.toggle_advanced_view_button', 'cog')),
-                            VGroup(Item('pane.set_home_button'),
-                                   HGroup(icon_button_editor('pane.motor_stop_button', 'cancel')),
-                                   visible_when='pane._advanced_view_state'),
-                            show_border=True, label='Position')
+        power_grp = HGroup(UItem('pane.extract_value',
+                                width=50,
+                                enabled_when='furnace_enabled',
+                                tooltip='Power setting for furnace (0-100%)'),
+                          UItem('pane.extract_button',
+                                enabled_when='furnace_enabled',
+                                tooltip='Send the value to the furnace'),
+                          show_border=True, label='Furnace Power')
 
         # jitter_grp = HGroup(UItem('pane.jitter_button', editor=ButtonEditor(label_value='pane.jitter_label')),
         #                     icon_button_editor('pane.configure_jitter_button', 'cog', tooltip='Configure Jitter'),
@@ -124,11 +129,10 @@ class ControlPane(TraitsDockPane):
                                 enabled_when='dump_sample_enabled',
                                 tooltip='Execute the complete sample loading procedure'),
                           UItem('pane.clear_sample_states_button'),
-                          icon_button_editor('pane.configure_dump_button', 'cog', tooltip='Configure Dumping'),
                           show_border=True, label='Dump')
         # status_grp = HGroup(CustomLabel('status_txt', size=14))
         d1 = VGroup(
-                    arm_grp, dump_grp)
+                    power_grp, dump_grp)
         d2 = VGroup(
             # UItem('pane.refresh_states_button'),
             UItem('dumper_canvas', editor=ComponentEditor()))
