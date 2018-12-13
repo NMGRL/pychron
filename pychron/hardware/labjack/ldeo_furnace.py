@@ -232,19 +232,22 @@ class LamontFurnaceControl(CoreDevice):
         return summary
 
     def _run_stepper(self, runtime, direction, a_id, b_id):
-        dev = self._device
-        if direction == 'forward':
-            dev.getFeedback(u3.BitStateWrite(a_id, 0))
-        else:
-            dev.getFeedback(u3.BitStateWrite(a_id, 1))
+        def func():
+            dev = self._device
+            if direction == 'forward':
+                dev.getFeedback(u3.BitStateWrite(a_id, 0))
+            else:
+                dev.getFeedback(u3.BitStateWrite(a_id, 1))
 
-        st = time.time()
-        while time.time() - st < runtime:
+            # st = time.time()
             dev.getFeedback(u3.BitStateWrite(b_id, 1))
-            time.sleep(1)
+            time.sleep(runtime)
+            # while time.time() - st < runtime:
+            #     time.sleep(1)
 
-        dev.getFeedback(u3.BitStateWrite(b_id, 0))
-
+            dev.getFeedback(u3.BitStateWrite(b_id, 0))
+        t = Thread(target=func)
+        t.start()
 
 
 if __name__ == '__main__':
