@@ -171,7 +171,7 @@ class AnalysisGroup(IdeogramPlotable):
 
     @property
     def age_attr(self):
-        return 'uage_w_j_err' if self.include_j_position_error else 'uage'
+        return 'uage_w_position_err' if self.include_j_position_error else 'uage'
 
     def _get_age_units(self):
         if self._age_units:
@@ -192,7 +192,7 @@ class AnalysisGroup(IdeogramPlotable):
         if attr.startswith('uage'):
             attr = 'uage'
             if self.include_j_position_error:
-                attr = 'uage_w_j_err'
+                attr = 'uage_w_position_err'
 
         return self._calculate_mswd(attr)
 
@@ -209,7 +209,7 @@ class AnalysisGroup(IdeogramPlotable):
     @cached_property
     def _get_age_span(self):
         ans = self.clean_analyses()
-        ages = [a.age for a in ans]
+        ages = [nominal_value(a.age) for a in ans]
         return max(ages) - min(ages)
 
     @cached_property
@@ -565,6 +565,18 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     total_ar39 = AGProperty()
     total_k2o = AGProperty()
 
+    def set_isochron_trapped(self, state, include_error=None):
+        v = None
+        if state:
+            self.calculate_isochron_age()
+            v = 1/self.isochron_4036
+            if not include_error:
+                v = nominal_value(v)
+
+        for a in self.analyses:
+            a.arar_constants.trapped_atm4036 = v
+            a.recalculate_age(force=True)
+
     @property
     def integrated_enabled(self):
         """
@@ -727,10 +739,19 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
     comments = Str
     preferred_age = Property
 
+    # modeled_j = ''
+    # modeled_j_err = ''
+    # F = ''
+    # F_err = ''
+    # rundate = ''
+
     def __init__(self, *args, **kw):
         super(InterpretedAgeGroup, self).__init__(*args, **kw)
         super(Preferred, self).__init__()
         self.has_subgroups(self.analyses)
+
+    def __getattr__(self, item):
+        return ''
 
     def set_preferred_age(self, pk, ek):
         pv = self._get_pv('age')
@@ -776,6 +797,10 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
 
     @property
     def uage_w_j_err(self):
+        return self.age
+
+    @property
+    def uage_w_position_err(self):
         return self.age
 
     @property

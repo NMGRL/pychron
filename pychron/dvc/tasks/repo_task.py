@@ -20,7 +20,7 @@ import shutil
 
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
-from git import Repo, GitCommandError, InvalidGitRepositoryError
+from git import GitCommandError, InvalidGitRepositoryError
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem
 from traits.api import List, Str, Any, HasTraits, Bool, Instance, Int, Event, Date, Property
@@ -30,7 +30,6 @@ from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.fuzzyfinder import fuzzyfinder
 from pychron.core.helpers.datetime_tools import format_iso_datetime
 from pychron.core.helpers.filetools import unique_dir
-from pychron.core.progress import progress_loader
 from pychron.dvc import repository_path
 from pychron.dvc.tasks import list_local_repos
 from pychron.dvc.tasks.actions import CloneAction, AddBranchAction, CheckoutBranchAction, PushAction, PullAction, \
@@ -148,25 +147,29 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
     def find_changes(self, remote='origin', branch='master'):
         self.debug('find changes')
 
-        def func(item, prog, i, n):
-            name = item.name
-            if prog:
-                prog.change_message('Examining: {}({}/{})'.format(name, i, n))
-            self.debug('examining {}'.format(name))
-            r = Repo(repository_path(name))
-            try:
-                r.git.fetch()
-                line = r.git.log('{}/{}..HEAD'.format(remote, branch), '--oneline')
-                item.dirty = bool(line)
-                item.update(fetch=False)
-            except GitCommandError as e:
-                self.warning('error examining {}. {}'.format(name, e))
+        # def func(item, prog, i, n):
+
+        # def func(item, prog, i, n):
+        #     name = item.name
+        #     if prog:
+        #         prog.change_message('Examining: {}({}/{})'.format(name, i, n))
+        #     self.debug('examining {}'.format(name))
+        #     r = Repo(repository_path(name))
+        #     try:
+        #         r.git.fetch()
+        #         line = r.git.log('{}/{}..HEAD'.format(remote, branch), '--oneline')
+        #         item.dirty = bool(line)
+        #         item.update(fetch=False)
+        #     except GitCommandError as e:
+        #         self.warning('error examining {}. {}'.format(name, e))
 
         names = self.selected_local_repositories
         if not names:
             names = self.local_names
 
-        progress_loader(names, func)
+        self.dvc.find_changes(names, remote, branch)
+
+        # progress_loader(names, func)
         self.local_names = sorted(self.local_names, key=lambda k: k.dirty, reverse=True)
 
     def rebase(self):
@@ -380,7 +383,7 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
 
     def _branch_changed(self, new):
         if new:
-            self.commits = get_commits(self._repo.active_repo, new, None, '')
+            self.commits = get_commits(self._repo.active_repo, new, None, '', limit=50)
         else:
             self.commits = []
 

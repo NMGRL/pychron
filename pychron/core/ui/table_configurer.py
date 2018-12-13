@@ -111,6 +111,7 @@ class TableConfigurer(HasTraits):
             for ci in self.children:
                 ci.columns = cols
 
+            cols = [ci for ci in cols if ci in self.adapter.all_columns]
             self.adapter.columns = cols
 
     def _set_font(self, f):

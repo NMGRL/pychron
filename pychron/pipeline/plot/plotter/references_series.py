@@ -239,8 +239,10 @@ class ReferencesSeries(BaseSeries):
             ymi, yma = self._calc_limits(r_ys, r_es)
 
             reg = None
-            kw = dict(add_tools=True, add_inspector=True,
+            kw = dict(add_tools=True,
+                      add_inspector=True,
                       add_point_inspector=False,
+                      add_selection=False,
                       # color='red',
                       plotid=pid,
                       selection_marker=po.marker,

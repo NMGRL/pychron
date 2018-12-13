@@ -357,14 +357,12 @@ class LabspyClient(Loggable):
 
 
 # ================= testing =========================
-
-if __name__ == '__main__':
+def main1():
     from random import random
 
     # from pychron.paths import paths
 
     paths.build('_dev')
-
 
     # def add_runs(c, e):
     # class Spec():
@@ -427,7 +425,6 @@ if __name__ == '__main__':
 
             time.sleep(1)
 
-
     logging_setup('labspyclient', use_archiver=False)
     # c = LabspyClient(bind=False, host='129.138.12.138', port=27017)
     # c = MeteorLabspyClient(bind=False, host='localhost', port=3001)
@@ -452,4 +449,24 @@ if __name__ == '__main__':
     # experiments/runs
     # exp = add_experiment(clt)
     # add_runs(clt, exp)
+
+def main2():
+    clt = LabspyClient(bind=False)
+    clt.db.host = '129.138.12.160'
+    clt.db.username = os.environ.get('DB_USER')
+    clt.db.password = os.environ.get('DB_PWD')
+    clt.db.name = 'labspy'
+    clt.test_connection()
+
+    for tag in ('lab_temperatures', 'lab_humiditys', 'lab_pneumatics'):
+        st = time.time()
+        try:
+            print(getattr(clt, 'get_latest_{}'.format(tag))())
+            print('Get latest {}. elapsed: {}'.format(tag, time.time() - st))
+        except BaseException as e:
+            pass
+
+
+if __name__ == '__main__':
+    main2()
 # ============= EOF =============================================

@@ -121,7 +121,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     _end_after = Bool(False)
 
     weight = Float
-    comment = String(auto_set=False, enter_set=True)
+    comment = String(auto_set=False, enter_set=True, maxlen=200)
     auto_fill_comment = Bool
     edit_comment_template = Button
     _comment_templater = None

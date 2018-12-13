@@ -51,12 +51,15 @@ def from_gitlog(obj, tag=None):
     return g
 
 
-def gitlog(repo, branch=None, args=None, path=None):
+def gitlog(repo, branch=None, args=None, path=None, limit=None):
     cmd = []
     if branch:
         cmd.append(branch)
 
     cmd.append('--pretty=%H|%cn|%ce|%ct|%s')
+
+    if limit:
+        cmd.append('-{}'.format(limit))
 
     if args:
         cmd.extend(args)
@@ -71,9 +74,9 @@ def get_head_commit(repo):
     return from_gitlog(txt.strip(), '')
 
 
-def get_commits(repo, branch, path, tag, *args):
+def get_commits(repo, branch, path, tag, *args, limit=None):
     repo = get_repo(repo)
-    txt = gitlog(repo, branch=branch, args=args, path=path)
+    txt = gitlog(repo, branch=branch, args=args, path=path, limit=limit)
 
     return [from_gitlog(l.strip(), tag) for l in txt.split('\n')] if txt else []
 

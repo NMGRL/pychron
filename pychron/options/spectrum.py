@@ -87,6 +87,8 @@ class SpectrumOptions(AgeOptions):
 
     include_plateau_sample = Bool
     include_plateau_identifier = Bool
+    use_isochron_trapped = Bool
+    include_isochron_trapped_error = Bool
 
     group_options_klass = SpectrumGroupOptions
 

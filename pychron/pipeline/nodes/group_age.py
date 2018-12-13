@@ -49,6 +49,5 @@ class GroupAgeNode(BaseDVCNode):
         # nans = self.editor.fgroups
         # state.unknowns = nans
         state.run_groups['unknowns'] = self.editor.groups
-
         state.unknowns = self.editor.unknowns
 # ============= EOF =============================================

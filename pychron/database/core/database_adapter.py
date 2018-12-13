@@ -393,6 +393,14 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
             except:
                 self.session.rollback()
 
+    def expire(self, i):
+        if self.session:
+            self.session.expire(i)
+
+    def expire_all(self):
+        if self.session:
+            self.session.expire_all()
+
     def commit(self):
         """
         commit the session

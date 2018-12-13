@@ -15,6 +15,7 @@
 # ===============================================================================
 
 from __future__ import absolute_import
+
 from threading import Thread
 
 from enable.component_editor import ComponentEditor
@@ -27,7 +28,6 @@ from traitsui.api import View, Item, UItem, VGroup, HGroup, EnumEditor, spring, 
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.lcd_editor import LCDEditor
 from pychron.core.ui.led_editor import LEDEditor
-from pychron.core.ui.stage_component_editor import VideoComponentEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 
 
@@ -204,9 +204,9 @@ class ControlPane(TraitsDockPane):
             UItem('dumper_canvas', editor=ComponentEditor()))
         d_grp = HGroup(d1, d2, label='Dumper', show_border=True)
 
-        v_grp = VGroup(UItem('video_canvas', editor=VideoComponentEditor()),
-                       visible_when='video_enabled',
-                       label='Camera')
+        # v_grp = VGroup(UItem('video_canvas', editor=VideoComponentEditor()),
+        #               visible_when='video_enabled',
+        #               label='Camera')
 
         g_grp = VGroup(Item('graph_scan_width', label='Scan Width (mins)'),
                        HGroup(Item('graph_scale', label='Scale'),
@@ -230,7 +230,7 @@ class ControlPane(TraitsDockPane):
                               show_border=True, label='Snapshot', ),
                        label='Graph')
         v = View(VGroup(c_grp,
-                        HGroup(Tabbed(d_grp, v_grp, g_grp))))
+                        HGroup(Tabbed(d_grp, g_grp)))) # HGroup(Tabbed(d_grp, v_grp, g_grp))))
         return v
 
 

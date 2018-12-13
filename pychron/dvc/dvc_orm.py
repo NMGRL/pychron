@@ -109,7 +109,7 @@ class AnalysisTbl(Base, IDMixin):
     duration = Column(Float)
 
     weight = Column(Float)
-    comment = stringcolumn(80)
+    comment = stringcolumn(200)
     repository_associations = relationship('RepositoryAssociationTbl', backref='analysis', lazy='joined')
     group_sets = relationship('AnalysisGroupSetTbl', backref='analysis')
 
@@ -117,6 +117,7 @@ class AnalysisTbl(Base, IDMixin):
     measured_positions = relationship('MeasuredPositionTbl', backref='analysis')
     media = relationship('MediaTbl', backref='analysis')
     results = relationship('AnalysisIntensitiesTbl', backref='analysis')
+    irradiation_position = relationship('IrradiationPositionTbl', backref='analysis', lazy='joined')
 
     _record_view = None
     group_id = 0
@@ -130,6 +131,7 @@ class AnalysisTbl(Base, IDMixin):
 
     load_name = ''
     load_holder = ''
+    _temporary_tag = None
 
     @property
     def step(self):
@@ -212,7 +214,14 @@ class AnalysisTbl(Base, IDMixin):
 
     @property
     def tag(self):
-        return self.change.tag
+        if self._temporary_tag:
+            tag = self._temporary_tag
+        else:
+            tag = self.change.tag
+        return tag
+
+    def set_tag(self, t):
+        self._temporary_tag = t
 
     @property
     def analysis_timestamp(self):
@@ -250,8 +259,7 @@ class AnalysisTbl(Base, IDMixin):
         self.load_holder = self.get_load_holder()
 
         # force binding of irradiation_position
-        # self.identifier
-        # self.tag = self.change.tag
+        # self.irradiation_position
 
 
 class AnalysisIntensitiesTbl(Base, IDMixin):
@@ -319,7 +327,7 @@ class SampleTbl(Base, NameMixin):
     create_date = deferred(Column(DateTime, default=func.now()))
     update_date = deferred(Column(DateTime, onupdate=func.now(), default=func.now()))
 
-    positions = relationship('IrradiationPositionTbl', backref='sample')
+    positions = relationship('IrradiationPositionTbl', backref='sample', lazy='joined')
 
 
 # class ProductionTbl(Base, NameMixin):
@@ -366,7 +374,7 @@ class IrradiationPositionTbl(Base, IDMixin):
     j = Column(Float)
     j_err = Column(Float)
     packet = stringcolumn(40)
-    analyses = relationship('AnalysisTbl', backref='irradiation_position', lazy='joined')
+    # analyses = relationship('AnalysisTbl', backref='irradiation_position')
 
     @property
     def analysis_count(self):

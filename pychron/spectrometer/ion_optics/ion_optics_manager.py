@@ -17,15 +17,15 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
-import six.moves.cPickle as pickle
+
 import os
 
+import six.moves.cPickle as pickle
 from traits.api import Range, Instance, Bool, \
     Button, Any
 
 from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.core.ui.thread import Thread
-from pychron.envisage.view_util import open_view
 from pychron.graph.graph import Graph
 from pychron.managers.manager import Manager
 from pychron.paths import paths
@@ -90,6 +90,12 @@ class IonOpticsManager(Manager):
     def get_position(self, *args, **kw):
         kw['update_isotopes'] = False
         return self._get_position(*args, **kw)
+
+    def av_position(self, pos, detector, *args, **kw):
+        av = self._get_av_position(pos, detector)
+        self.spectrometer.source.set_hv(av)
+        self.info('positioning {} ({}) on {}'.format(pos, av, detector))
+        return av
 
     def position(self, pos, detector, use_af_demag=False, *args, **kw):
         dac = self._get_position(pos, detector, *args, **kw)
@@ -420,6 +426,26 @@ class IonOpticsManager(Manager):
         self.trait_set(alive=False)
 
         self.spectrometer.restore_integration()
+
+    def _get_av_position(self, pos, detector, update_isotopes=True):
+        self.debug('AV POSITION {} {}'.format(pos, detector))
+        spec = self.spectrometer
+        if not isinstance(detector, str):
+            detector = detector.name
+
+        if isinstance(pos, str):
+            try:
+                pos = float(pos)
+            except ValueError:
+                # pos is isotope
+                if update_isotopes:
+                    # if the pos is an isotope then update the detectors
+                    spec.update_isotopes(pos, detector)
+                pos = self.get_mass(pos)
+
+        # pos is mass i.e 39.962
+        av = spec.source.map_mass_to_hv(pos, detector)
+        return av
 
     def _get_position(self, pos, detector, use_dac=False, update_isotopes=True):
         """

@@ -19,6 +19,7 @@ from __future__ import absolute_import
 
 from traitsui.api import View, UItem, Item, HGroup, VGroup, Group, EnumEditor
 
+from pychron.core.pychron_traits import BorderVGroup
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.options import SubOptions, AppearanceSubOptions, GroupSubOptions, checkbox_column, object_column, \
     MainOptions, TitleSubOptions
@@ -28,7 +29,11 @@ from pychron.pychron_constants import MAIN, APPEARANCE
 class SpectrumSubOptions(SubOptions):
     def traits_view(self):
         integrated_grp = VGroup(Item('integrated_age_weighting', label='Integrated Age Weighting'))
-        return self._make_view(integrated_grp)
+        iso_grp = BorderVGroup(HGroup(Item('use_isochron_trapped', label='Use Isochron'),
+                                      Item('include_isochron_trapped_error'), label='Include Uncertainty'),
+                               label='Trapped Ar40/Ar36')
+
+        return self._make_view(VGroup(integrated_grp, iso_grp))
 
 
 class SpectrumAppearance(AppearanceSubOptions):

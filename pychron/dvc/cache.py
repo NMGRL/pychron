@@ -54,11 +54,11 @@ class DVCCache(object):
                 Remove the entry that has the oldest accessed date
         """
         oldest_entry = None
-        for key in self.cache:
+        for key in self._cache:
             if oldest_entry is None:
                 oldest_entry = key
-            elif self.cache[key]['date_accessed'] < self.cache[oldest_entry]['date_accessed']:
+            elif self._cache[key]['date_accessed'] < self._cache[oldest_entry]['date_accessed']:
                 oldest_entry = key
 
-        self.cache.pop(oldest_entry)
+        self._cache.pop(oldest_entry)
 # ============= EOF =============================================

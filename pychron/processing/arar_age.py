@@ -78,9 +78,8 @@ class ArArAge(IsotopeGroup):
     F_err_wo_irrad = None
 
     uage = None
-    # uage_wo_j_err =None
     uage_w_j_err = None
-    uage_wo_j_err = None
+    uage_w_position_err = None
 
     age = 0
     age_err = 0
@@ -91,15 +90,11 @@ class ArArAge(IsotopeGroup):
     ar39decayfactor = 0
     ar37decayfactor = 0
 
-    # arar_constants =None
-
     Ar39_decay_corrected = None
     Ar37_decay_corrected = None
 
     sensitivity = 1e-17  # fA/torr
     sensitivity_units = 'mol/fA'
-
-    # temporary_ic_factors =None
 
     _missing_isotope_warned = False
     _kca_warning = False
@@ -193,8 +188,10 @@ class ArArAge(IsotopeGroup):
     def decay_corrected_values_to_dict(self):
         return {k: value_error(v.get_decay_corrected_value()) for k, v in self.iteritems()}
 
-    def get_error_component(self, key):
-        uage = self.uage_w_j_err
+    def get_error_component(self, key, uage=None):
+        if uage is None:
+            uage = self.uage_w_j_err
+
         ae = 0
         if uage:
             v = next((error for (var, error) in uage.error_components().items()
@@ -206,37 +203,17 @@ class ArArAge(IsotopeGroup):
         else:
             return 0
 
-    def set_sensitivity(self, sens):
-        # for si in sens:
-        #     si['create_date'] = datetime.strptime(si['create_date'], DATE_FORMAT)
+    def get_non_ar_isotope(self, key):
+        return self.non_ar_isotopes.get(key, ufloat(0, 0))
 
-        for si in sorted(sens, key=itemgetter('create_date'), reverse=True):
-            if si['create_date'] < self.rundate:
-                self.sensitivity = si['sensitivity']
-                self.sensitivity_units = si['units']
-                break
+    def get_computed_value(self, key):
+        return self.computed.get(key, ufloat(0, 0))
 
-    def set_temporary_uic_factor(self, k, uv):
-        self.temporary_ic_factors[k] = uv
-
-    def set_temporary_ic_factor(self, k, v, e, tag=None):
-        self.temporary_ic_factors[k] = uv = ufloat(v, e, tag=tag)
-        return uv
-
-    def set_temporary_blank(self, k, v, e, f, verbose=False):
-        if verbose:
-            self.debug('temp blank {}({:0.4f}+/-{:0.4f}) fit={}'.format(k, v, e, f))
-
-        if k in self.isotopes:
-            iso = self.isotopes[k]
-            tb = iso.temporary_blank
-            if tb is None:
-                iso.temporary_blank = tb = Blank(iso.name, iso.detector)
-
-            tb.value, tb.error, tb.fit = v, e, f
-
-    def set_j(self, s, e):
-        self.j = ufloat(s, std_dev=e, tag='J')
+    def get_interference_corrected_value(self, iso):
+        if iso in self.isotopes:
+            return self.isotopes[iso].get_interference_corrected_value()
+        else:
+            return ufloat(0, 0, tag=iso)
 
     def get_corrected_ratio(self, n, d):
         isos = self.isotopes
@@ -248,19 +225,27 @@ class ArArAge(IsotopeGroup):
             except ZeroDivisionError:
                 pass
 
+    def map_isotope_key(self, k):
+        return self.arar_mapping.get(k,k)
+
     def get_value(self, attr):
+
+        attr = self.map_isotope_key(attr)
+
         r = ufloat(0, 0, tag=attr)
         if attr.endswith('bs'):
             iso = attr[:-2]
             if iso in self.isotopes:
                 r = self.isotopes[iso].baseline.uvalue
-        elif attr in ('uage_wo_j_err', 'uage_w_j_err', 'uF'):
+        elif attr in ('uage', 'uage_w_j_err', 'uage_w_position_err', 'uF'):
             r = getattr(self, attr)
         elif attr.startswith('u') and ('/' in attr or '_' in attr):
             attr = attr[1:]
             r = self.get_ratio(attr, non_ic_corr=True)
         elif attr == 'icf_40_36':
-            r = self.get_corrected_ratio('Ar40', 'Ar36')
+            a40 = self.map_isotope_key('Ar40')
+            a36 = self.map_isotope_key('Ar36')
+            r = self.get_corrected_ratio(a40, a36)
         elif attr.endswith('ic'):
             # ex. attr='Ar40ic'
             isok = attr[:-2]
@@ -291,29 +276,52 @@ class ArArAge(IsotopeGroup):
 
         return r
 
-    def get_interference_corrected_value(self, iso):
-        if iso in self.isotopes:
-            return self.isotopes[iso].get_interference_corrected_value()
-        else:
-            return ufloat(0, 0, tag=iso)
+    def set_sensitivity(self, sens):
+        for si in sorted(sens, key=itemgetter('create_date'), reverse=True):
+            if si['create_date'] < self.rundate:
+                self.sensitivity = si['sensitivity']
+                self.sensitivity_units = si['units']
+                break
 
-    def calculate_F(self):
-        self.calculate_decay_factors()
-        self._calculate_F()
+    def set_temporary_uic_factor(self, k, uv):
+        self.temporary_ic_factors[k] = uv
 
-    # @caller
+    def set_temporary_ic_factor(self, k, v, e, tag=None):
+        self.temporary_ic_factors[k] = uv = ufloat(v, e, tag=tag)
+        return uv
+
+    def set_temporary_blank(self, k, v, e, f, verbose=False):
+        if verbose:
+            self.debug('temp blank {}({:0.4f}+/-{:0.4f}) fit={}'.format(k, v, e, f))
+
+        if k in self.isotopes:
+            iso = self.isotopes[k]
+            tb = iso.temporary_blank
+            if tb is None:
+                iso.temporary_blank = tb = Blank(iso.name, iso.detector)
+
+            tb.value, tb.error, tb.fit = v, e, f
+
+    def set_j(self, s, e):
+        self.j = ufloat(s, std_dev=e, tag='J')
 
     def model_j(self, monitor_age, lambda_k):
         j = calculate_flux(self.uF, monitor_age, lambda_k=lambda_k)
         self.modeled_j = j
         return j
 
-    def recalculate_age(self):
-        print('recacl age', self)
-        if not self.uF:
+    def recalculate_age(self, force=False):
+        if not self.uF or force:
             self._calculate_F()
 
         self._set_age_values(self.uF)
+
+    def calculate_F(self):
+        self.calculate_decay_factors()
+        self._calculate_F()
+
+    def calculate_no_interference(self):
+        self._calculate_age(interferences={})
 
     def calculate_age(self, use_display_age=False, force=False, **kw):
         """
@@ -336,12 +344,6 @@ class ArArAge(IsotopeGroup):
             a37df, a39df = calculate_arar_decay_factors(dc37, dc39, self.chron_segments)
             self.ar37decayfactor = a37df
             self.ar39decayfactor = a39df
-
-    def get_non_ar_isotope(self, key):
-        return self.non_ar_isotopes.get(key, ufloat(0, 0))
-
-    def get_computed_value(self, key):
-        return self.computed.get(key, ufloat(0, 0))
 
     # private
     def _calculate_kca(self):
@@ -401,6 +403,21 @@ class ArArAge(IsotopeGroup):
 
         return [isotopes[self.arar_mapping[k]].get_intensity() for k in ARGON_KEYS]
 
+    def _assemble_isotope_intensities(self):
+        iso_intensities = self._assemble_ar_ar_isotopes()
+        if not iso_intensities:
+            self.debug('failed assembling isotopes')
+            return
+
+        arc = self.arar_constants
+        iso_intensities = abundance_sensitivity_correction(iso_intensities, arc.abundance_sensitivity)
+
+        # assuming all m/z(39) and m/z(37) is radioactive argon
+        # non gettered hydrocarbons will have a multiplicative systematic influence
+        iso_intensities[1] *= self.ar39decayfactor
+        iso_intensities[3] *= self.ar37decayfactor
+        return iso_intensities
+
     def _calculate_F(self, iso_intensities=None, interferences=None):
 
         if iso_intensities is None:
@@ -421,24 +438,6 @@ class ArArAge(IsotopeGroup):
             self.F_err = std_dev(f)
             self.F_err_wo_irrad = std_dev(f_wo_irrad)
             return f, f_wo_irrad, non_ar, computed, interference_corrected
-
-    def _assemble_isotope_intensities(self):
-        iso_intensities = self._assemble_ar_ar_isotopes()
-        if not iso_intensities:
-            self.debug('failed assembling isotopes')
-            return
-
-        arc = self.arar_constants
-        iso_intensities = abundance_sensitivity_correction(iso_intensities, arc.abundance_sensitivity)
-
-        # assuming all m/z(39) and m/z(37) is radioactive argon
-        # non gettered hydrocarbons will have a multiplicative systematic influence
-        iso_intensities[1] *= self.ar39decayfactor
-        iso_intensities[3] *= self.ar37decayfactor
-        return iso_intensities
-
-    def calculate_no_interference(self):
-        self._calculate_age(interferences={})
 
     def _calculate_age(self, use_display_age=False, include_decay_error=None, interferences=None):
         """
@@ -475,23 +474,25 @@ class ArArAge(IsotopeGroup):
         self._set_age_values(f, include_decay_error)
 
     def _set_age_values(self, f, include_decay_error=False):
-        if self.j is not None:
-            j = copy(self.j)
-        else:
-            j = ufloat(1e-4, 1e-7)
-
         arc = self.arar_constants
+        j = copy(self.j)
+        if j is None:
+            j = ufloat(1e-4, 1e-7)
+        j.tag = 'Position'
+        j.std_dev = self.position_jerr or 0
+        age = age_equation(j, f, include_decay_error=include_decay_error, arar_constants=arc)
+        self.uage_w_position_err = age
 
-        j.std_dev = self.position_jerr
+        j = self.j
+        if j is None:
+            j = ufloat(1e-4, 1e-7, tag='J')
 
         age = age_equation(j, f, include_decay_error=include_decay_error, arar_constants=arc)
-
         self.uage_w_j_err = age
 
-        if self.j is not None:
-            j = copy(self.j)
-        else:
-            j = ufloat(1e-4, 1e-7)
+        j = copy(self.j)
+        if j is None:
+            j = ufloat(1e-4, 1e-7, tag='J')
 
         j.std_dev = 0
         age = age_equation(j, f, include_decay_error=include_decay_error, arar_constants=arc)
@@ -500,8 +501,6 @@ class ArArAge(IsotopeGroup):
         self.age = nominal_value(age)
         self.age_err = std_dev(age)
         self.age_err_wo_j = std_dev(age)
-
-        self.uage_wo_j_err = ufloat(self.age, self.age_err_wo_j)
 
         for iso in self.itervalues():
             iso.age_error_component = self.get_error_component(iso.name)
@@ -539,4 +538,4 @@ class ArArAge(IsotopeGroup):
     def moles_Ar40(self):
         return self.sensitivity * self.get_isotope('Ar40').get_intensity()
 
-    # ============= EOF =============================================
+# ============= EOF =============================================

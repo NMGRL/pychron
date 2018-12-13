@@ -58,6 +58,12 @@ class BaseFindFluxNode(FindNode):
     def _to_template(self, d):
         d['irradiation'] = self.irradiation
 
+    def _irradiation_changed(self):
+        try:
+            self.level = self.levels[0]
+        except IndexError:
+            pass
+
     @cached_property
     def _get_samples(self):
         if self.irradiation and self.level:
@@ -67,7 +73,7 @@ class BaseFindFluxNode(FindNode):
 
     @cached_property
     def _get_levels(self):
-        if self.irradiation:
+        if self.irradiation and self.dvc:
             irrad = self.dvc.get_irradiation(self.irradiation)
             return sorted([l.name for l in irrad.levels])
         else:
@@ -75,8 +81,39 @@ class BaseFindFluxNode(FindNode):
 
     @cached_property
     def _get_irradiations(self):
-        irrads = self.dvc.get_irradiations()
-        return [i.name for i in irrads]
+        if self.dvc:
+            irrads = self.dvc.get_irradiations()
+            return [i.name for i in irrads]
+        else:
+            return []
+
+    def _fp_factory(self, geom, irradiation, level, identifier, sample, hole_id, fluxes):
+
+        pp = next((p for p in fluxes if p['identifier'] == identifier))
+
+        j, j_err, mean_j, mean_j_err, model_kind = 0, 0, 0, 0, ''
+        if pp:
+            j = pp.get('j', 0)
+            j_err = pp.get('j_err', 0)
+            mean_j = pp.get('mean_j', 0)
+            mean_j_err = pp.get('mean_j_err', 0)
+
+            options = pp.get('options')
+            if options:
+                model_kind = pp.get('model_kind', '')
+
+        x, y, r, idx = geom[hole_id - 1]
+        fp = FluxPosition(identifier=identifier,
+                          irradiation=irradiation,
+                          level=level,
+                          sample=sample, hole_id=hole_id,
+                          saved_j=j or 0,
+                          saved_jerr=j_err or 0,
+                          mean_j=mean_j or 0,
+                          mean_jerr=mean_j_err or 0,
+                          model_kind=model_kind,
+                          x=x, y=y)
+        return fp
 
 
 class FindVerticalFluxNode(BaseFindFluxNode):
@@ -119,6 +156,43 @@ class FindRepositoryAnalysesNode(FindNode):
         self.references = refs
 
 
+class FindFluxMonitorMeansNode(BaseFindFluxNode):
+    name = 'Find Flux Monitors'
+
+    def _load_hook(self, nodedict):
+        self.level = nodedict.get('level', '')
+        self.irradiation = nodedict.get('irradiation', '')
+
+    def run(self, state):
+        if not self.irradiation or not self.level:
+            self.configure()
+
+        if not self.irradiation or not self.level:
+            state.veto = self
+        else:
+            dvc = self.dvc
+            args = dvc.get_irradiation_geometry(self.irradiation, self.level)
+            if args:
+                geom, holder = args
+                state.geometry = geom
+                state.holder = holder
+
+            ips = dvc.get_flux_monitors(self.irradiation, self.level, self.monitor_sample_name)
+
+            fluxes = dvc.get_flux_positions(self.irradiation, self.level)
+            state.monitor_positions = [self._fp_factory(state.geometry, self.irradiation, self.level,
+                                                        ip.identifier, ip.sample.name, ip.position, fluxes)
+                                       for ip in ips if ip.identifier]
+
+    def traits_view(self):
+        v = self._view_factory(Item('irradiation', editor=EnumEditor(name='irradiations')),
+                               Item('level', editor=EnumEditor(name='levels')),
+                               Item('monitor_sample_name', editor=EnumEditor(name='samples')),
+                               width=300,
+                               title='Select Irradiation and Level')
+        return v
+
+
 class FindFluxMonitorsNode(BaseFindFluxNode):
     name = 'Find Flux Monitors'
 
@@ -152,34 +226,9 @@ class FindFluxMonitorsNode(BaseFindFluxNode):
                 monitors = self.dvc.find_flux_monitors(self.irradiation, self.level, self.monitor_sample_name)
 
             state.unknowns = monitors
-            state.flux_monitors = monitors
-            state.has_flux_monitors = True
+
             state.irradiation = self.irradiation
             state.level = self.level
-
-    def _fp_factory(self, geom, irradiation, level, identifier, sample, hole_id, fluxes):
-
-        pp = next((p for p in fluxes if p['identifier'] == identifier))
-
-        j, j_err, model_kind = 0, 0, ''
-        if pp:
-            j = pp.get('j', 0)
-            j_err = pp.get('j_err', 0)
-
-            options = pp.get('options')
-            if options:
-                model_kind = pp.get('model_kind', '')
-
-        x, y, r, idx = geom[hole_id - 1]
-        fp = FluxPosition(identifier=identifier,
-                          irradiation=irradiation,
-                          level=level,
-                          sample=sample, hole_id=hole_id,
-                          saved_j=j or 0,
-                          saved_jerr=j_err or 0,
-                          model_kind=model_kind,
-                          x=x, y=y)
-        return fp
 
     def _load_hook(self, nodedict):
         self.level = nodedict.get('level', '')
@@ -187,9 +236,6 @@ class FindFluxMonitorsNode(BaseFindFluxNode):
     def _to_template(self, d):
         super(FindFluxMonitorsNode, self)._to_template(d)
         d['level'] = self.level
-
-    def _irradiation_changed(self):
-        self.level = self.levels[0]
 
     def traits_view(self):
         v = self._view_factory(Item('irradiation', editor=EnumEditor(name='irradiations')),

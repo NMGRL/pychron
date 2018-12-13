@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 import time
 
 from pyface.timer.do_later import do_after
@@ -23,10 +22,8 @@ from traits.api import Instance
 from traitsui.api import View, Item, VGroup
 
 from pychron.canvas.canvas2D.furnace_canvas import FurnaceCanvas
+from pychron.furnace.base_stage_manager import BaseFurnaceStageManager
 from pychron.hardware.linear_axis import LinearAxis
-from pychron.paths import paths
-from pychron.stage.maps.furnace_map import FurnaceStageMap
-from pychron.stage.stage_manager import BaseStageManager
 
 
 class Feeder(LinearAxis):
@@ -53,20 +50,6 @@ class Feeder(LinearAxis):
         info = self._cdevice.edit_traits(view=v)
         if info.result:
             self._cdevice.write_jitter_config()
-
-
-class BaseFurnaceStageManager(BaseStageManager):
-    stage_map_klass = FurnaceStageMap
-
-    def __init__(self, *args, **kw):
-        super(BaseFurnaceStageManager, self).__init__(*args, **kw)
-        self.tray_calibration_manager.style = 'Linear'
-
-    def get_sample_states(self):
-        return [h.id for h in self.stage_map.sample_holes if h.analyzed]
-
-    def _root_default(self):
-        return paths.furnace_map_dir
 
 
 class NMGRLFurnaceStageManager(BaseFurnaceStageManager):

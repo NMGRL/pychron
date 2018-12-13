@@ -62,6 +62,9 @@ class BasePersister(Loggable):
     per_spec = Instance('pychron.experiment.automated_run.persistence_spec.PersistenceSpec', ())
     save_enabled = Bool(False)
 
+    def set_preferences(self, preferences):
+        pass
+
     def post_extraction_save(self):
         pass
 

@@ -24,7 +24,7 @@ from operator import itemgetter
 
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
-from git import Repo
+from git import Repo, GitCommandError
 from traits.api import Instance, Str, Set, List, provides, Bool, Int
 from uncertainties import nominal_value, std_dev, ufloat
 
@@ -749,6 +749,42 @@ class DVC(Loggable):
         return ret
 
     # repositories
+    def find_changes(self, names, remote, branch):
+        gs = self.application.get_services(IGitHost)
+        for gi in gs:
+            gi.new_session()
+
+        def func(item, prog, i, n):
+            name = item.name
+            if prog:
+                prog.change_message('Examining: {}({}/{})'.format(name, i, n))
+            self.debug('examining {}'.format(name))
+
+            r = Repo(repository_path(name))
+            lc = r.commit(branch).hexsha
+
+            for gi in gs:
+                outdated, sha = gi.up_to_date(self.organization, name, lc, branch)
+                if outdated:
+                    try:
+                        fsha = r.commit('FETCH_HEAD').hexsha
+                    except BaseException:
+                        fsha = None
+
+                    try:
+                        if fsha != sha:
+                            self.debug('fetching {}'.format(name))
+                            r.git.fetch()
+
+                        item.dirty = True
+                        item.update(fetch=False)
+                    except GitCommandError as e:
+                        self.warning('error examining {}. {}'.format(name, e))
+
+        progress_loader(names, func, threshold=1)
+        for gi in gs:
+            gi.close_session()
+
     def repository_add_paths(self, repository_identifier, paths):
         repo = self._get_repository(repository_identifier)
         return repo.add_paths(paths)

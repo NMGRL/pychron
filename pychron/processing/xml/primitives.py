@@ -210,7 +210,6 @@ class XMLAnalysis(Analysis):
         self.sensitivity = 0
 
         self.uage = self._make_ufloat(meas_elem, 'measuredAge')
-        self.uage_wo_j_err = self._make_ufloat(meas_elem, 'measuredAge')
 
         self.age = nominal_value(self.uage)
         self.age_err = std_dev(self.uage)

@@ -529,11 +529,6 @@ class DVCAnalysis(Analysis):
                 for iso in self.get_isotopes(key):
                     iso.ic_factor = ufloat(vv, ee, tag='{} IC'.format(iso.name))
                     iso.ic_factor_reviewed = r
-            # self.set_ic_factor(key, v['value'] or 0, v['error'] or 0)
-            # for iso in self.get_isotopes(det):
-            #     iso.ic
-            # elif key == 'reviewed':
-            #     self.icfactor_reviewed = v
 
     def _get_json(self, modifier):
         path = self._analysis_path(modifier=modifier)
@@ -550,13 +545,6 @@ class DVCAnalysis(Analysis):
         isos = jd.get('isotopes')
         if not isos:
             return
-
-        # this is a hack for some bad IC data
-        # if self.identifier == 'ic-01-F' and self.aliquot == 11:
-        #     isos = {'Ar40H2': Isotope('Ar40', 'H2'),
-        #             'Ar40H1': Isotope('Ar40', 'H1'),
-        #             'Ar40AX': Isotope('Ar40', 'AX'),
-        #             'Ar40L1': Isotope('Ar40', 'L1')}
 
         def factory(name, detector, v):
             i = Isotope(name, detector)

@@ -1479,7 +1479,8 @@ class DVCDatabase(DatabaseAdapter):
 
     def get_material(self, name, grainsize=None):
         if not isinstance(name, str) and not isinstance(name, six.text_type):
-            return name
+            if grainsize is None or name.grainsize == grainsize:
+                return name
 
         with self.session_ctx() as sess:
             q = sess.query(MaterialTbl)
@@ -1742,7 +1743,7 @@ class DVCDatabase(DatabaseAdapter):
             else:
                 q = q.filter(getattr(SampleTbl, attr).like(value))
 
-            return self._query_all(q, verbose_query=True, **kw)
+            return self._query_all(q, verbose_query=False, **kw)
 
     def get_samples(self, projects=None, principal_investigators=None, project_like=None, name_like=None, **kw):
         with self.session_ctx() as sess:

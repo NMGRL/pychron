@@ -16,18 +16,18 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import Str, Property, cached_property, Float
 
+from traits.api import Str, Property, cached_property, Float
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from uncertainties import ufloat
+
 from pychron.processing.analyses.analysis import Analysis
 
 
 class NonDBAnalysis(Analysis):
     # record_id = Str
     uage = Property(depends_on='age, age_err')
-    uage_wo_j_err = Property(depends_on='age, age_err')
     uuid = Str
     sample = Str
 
@@ -43,10 +43,6 @@ class NonDBAnalysis(Analysis):
     @cached_property
     def _get_uage(self):
         return ufloat(self.age, self.age_err)
-
-    @cached_property
-    def _get_uage_wo_j_err(self):
-        return self.uage
 
 
 class FileAnalysis(NonDBAnalysis):

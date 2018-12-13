@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import Interface
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.iextraction_device import IExtractionDevice

@@ -18,6 +18,10 @@ from pychron.spectrometer.isotopx.source.base import IsotopxSource
 
 
 class NGXSource(IsotopxSource):
+    def __init__(self, *args, **kw):
+        super(NGXSource, self).__init__(*args, **kw)
+        self.set_mftable('avftable')
+
     def set_hv(self, new):
         self.ask('SSO IE, {}'.format(new))
 

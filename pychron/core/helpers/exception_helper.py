@@ -209,8 +209,8 @@ def ignored_exceptions(exctype, value, tb):
     """
     # if exception was not generated from pychron. This should obviate the subsequent if statements
     tb = traceback.extract_tb(tb)
-
-    if '/pychron/' not in tb[0][0] and '/pychron/' not in tb[-1][0]:
+    sep = os.path.sep
+    if '{}pychron{}'.format(sep, sep) not in tb[0][0] and '{}pychron{}'.format(sep, sep) not in tb[-1][0]:
         print('ignore exception')
         return True
 

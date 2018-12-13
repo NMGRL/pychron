@@ -323,6 +323,7 @@ class LoadIndicator(Circle):
     default_color = 'black'
     fill_color = Color('lightblue')
     identifier_label = None
+    sample_label = None
     weight_label = None
     nxtals_label = None
     weight = None
@@ -334,7 +335,9 @@ class LoadIndicator(Circle):
         if self.identifier_label:
             self.primitives.remove(self.identifier_label)
             self.identifier_label = None
-
+        if self.sample_label:
+            self.primitives.remove(self.sample_label)
+            self.sample_label = None
         if self.weight_label:
             self.primitives.remove(self.weight_label)
             self.weight_label = None
@@ -349,6 +352,13 @@ class LoadIndicator(Circle):
 
         lb = self.add_text(*args, **kw)
         self.identifier_label = lb
+
+    def add_sample_label(self, *args, **kw):
+        if self.sample_label:
+            self.primitives.remove(self.sample_label)
+
+        lb = self.add_text(*args, **kw)
+        self.sample_label = lb
 
     def add_weight_label(self, *args, **kw):
         if self.weight_label:

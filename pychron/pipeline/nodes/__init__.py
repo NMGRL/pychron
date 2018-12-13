@@ -28,10 +28,10 @@ from pychron.pipeline.nodes.diff import DiffNode
 from pychron.pipeline.nodes.dvc_history import DVCHistoryNode
 from pychron.pipeline.nodes.email_node import EmailNode
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, SeriesNode, InverseIsochronNode, \
-    VerticalFluxNode, XYScatterNode, RadialNode, RegressionSeriesNode, HistoryIdeogramNode
+    VerticalFluxNode, XYScatterNode, RadialNode, RegressionSeriesNode, HistoryIdeogramNode, FluxVisualizationNode
 from pychron.pipeline.nodes.filter import FilterNode, MSWDFilterNode
 from pychron.pipeline.nodes.find import FindReferencesNode, FindFluxMonitorsNode, FindVerticalFluxNode, \
-    FindBlanksNode, FindRepositoryAnalysesNode
+    FindBlanksNode, FindRepositoryAnalysesNode, FindFluxMonitorMeansNode
 from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode, \
     FitFluxNode, DefineEquilibrationNode
 from pychron.pipeline.nodes.gain import GainCalibrationNode

@@ -101,6 +101,7 @@ class ArArConstants(HasTraits):
     lambda_Ar37_citation = Str  #'Min (2008)'
 
     allow_negative_ca_correction = Bool(True)
+    trapped_atm4036 = None
 
     def __init__(self, *args, **kw):
         try:
@@ -177,6 +178,9 @@ class ArArConstants(HasTraits):
         return ufloat(v, e, tag=attr)
 
     def _get_atm4036(self):
+        if self.trapped_atm4036 is not None:
+            return self.trapped_atm4036
+
         return self._get_ufloat('atm4036')
 
     def _get_atm4038(self):

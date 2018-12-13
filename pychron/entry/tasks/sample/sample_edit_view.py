@@ -15,14 +15,12 @@
 # ===============================================================================
 from __future__ import absolute_import
 from __future__ import print_function
+
 import re
 
 from traits.api import HasTraits, Instance, List, Str, Long, Float, BaseFloat
-from traitsui.api import View, UItem, Item, VGroup, TableEditor, EnumEditor, Controller, HGroup
+from traitsui.api import View, UItem, Item, VGroup, EnumEditor, HGroup
 from traitsui.menu import Action
-from traitsui.table_column import ObjectColumn
-
-
 
 EN = re.compile(r'(?P<a>[\w\W]+) \((?P<b>[\w\W]+, ?[\w\W]+)\)')
 
@@ -90,6 +88,7 @@ class SampleEditItem(HasTraits):
 
     _project = Str
     _material = Str
+    _grainsize = Str
     _note = Str
     _lat = LatFloat
     _lon = LonFloat
@@ -109,7 +108,8 @@ class SampleEditItem(HasTraits):
             # self.note = self._note = rec.note or ''
 
             self.project = self._project = rec.project.pname if rec.project else ''
-            self.material = self._material = rec.material.gname if rec.material else ''
+            self.material = self._material = rec.material.name if rec.material else ''
+            self.grainsize = self._grainsize = (rec.material.grainsize or '') if rec.material else ''
             # self.project_name = rec.project.name
             # self.principal_investigator = rec.project.principal_investigator
             for attr in SAMPLE_ATTRS:
@@ -123,7 +123,7 @@ class SampleEditItem(HasTraits):
 
     @property
     def altered(self):
-        attrs = ('name', 'project', 'material') + SAMPLE_ATTRS
+        attrs = ('name', 'project', 'material', 'grainsize') + SAMPLE_ATTRS
         try:
             return any((getattr(self, attr) != getattr(self, '_{}'.format(attr)) for attr in attrs))
         except AttributeError:
@@ -138,6 +138,7 @@ class SampleEditItem(HasTraits):
         vv = View(VGroup(Item('name', label='Sample Name'),
                          Item('project', editor=EnumEditor(name='_projects')),
                          Item('material', editor=EnumEditor(name='_materials')),
+                         Item('grainsize'),
                          HGroup(VGroup(Item('lat', label='Latitude'),
                                        Item('lon', label='Longitude'),
                                        Item('location'),
@@ -155,6 +156,7 @@ class SampleEditModel(HasTraits):
     dvc = Instance('pychron.dvc.dvc.DVC')
     sample = Str
     samples = List
+    sample_records = List
     _materials = List
     _projects = List
     sample_item = Instance(SampleEditItem, ())
@@ -164,7 +166,7 @@ class SampleEditModel(HasTraits):
 
     def init(self):
         self._projects = self.dvc.get_project_pnames()
-        self._materials = self.dvc.get_material_gnames()
+        self._materials = self.dvc.get_material_names()
 
     def save(self):
         db = self.dvc
@@ -176,18 +178,20 @@ class SampleEditModel(HasTraits):
             # dbsam.note = si.note
             # dbsam.lat = si.lat
             for attr in SAMPLE_ATTRS:
-                setattr(dbsam, attr, getattr(si, attr))
+                v = getattr(si, attr)
+                setattr(dbsam, attr, v)
 
-            print('a', si.project_pi, 'b', si.project)
             dbproj = db.get_project(*si.project_pi)
             if dbproj:
                 dbsam.projectID = dbproj.id
 
-            dbmat = db.get_material(*extract_names(si.material))
-            # print dbmat, extract_names(si.material)
+            dbmat = db.get_material(si.material, si.grainsize)
             if dbmat:
                 dbsam.materialID = dbmat.id
+
             db.commit()
+            db.expire(dbsam)
+
             return True
 
     # handlers

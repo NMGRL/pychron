@@ -28,7 +28,7 @@ from uncertainties import std_dev, nominal_value
 from yaml import YAMLError
 
 from pychron.core.helpers.binpack import encode_blob, pack
-from pychron.dvc import dvc_dump, analysis_path, repository_path
+from pychron.dvc import dvc_dump, analysis_path, repository_path, NPATH_MODIFIERS
 from pychron.experiment.automated_run.persistence import BasePersister
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths
@@ -230,7 +230,6 @@ class DVCPersister(BasePersister):
                 try:
                     ar.smart_pull(accept_their=True)
 
-
                     paths = [spec_path, ] + [self._make_path(modifier=m) for m in NPATH_MODIFIERS]
 
                     for p in paths:
@@ -327,7 +326,7 @@ class DVCPersister(BasePersister):
                     obj = yaml.load(rfile)
                 except YAMLError:
                     pass
-                
+
                 for k in ARGON_KEYS:
                     if k not in obj:
                         self.warning('Invalid arar_mapping.yaml file. required keys={}'.format(ARGON_KEYS))
@@ -351,8 +350,9 @@ class DVCPersister(BasePersister):
         ps = self.per_spec
         rs = ps.run_spec
         d = {k: getattr(rs, k) for k in ('uuid', 'analysis_type', 'aliquot',
-                                         'increment', 'mass_spectrometer', 'weight', 'comment',
+                                         'increment', 'mass_spectrometer', 'weight',
                                          'cleanup', 'duration', 'extract_value', 'extract_units')}
+        d['comment'] = rs.comment[:200] if rs.comment else ''
 
         ed = rs.extract_device
         if ed in (None, '', NULL_STR, LINE_STR, 'Extract Device'):
@@ -365,6 +365,8 @@ class DVCPersister(BasePersister):
         # save script names
         d['measurementName'] = ps.measurement_name
         d['extractionName'] = ps.extraction_name
+
+        d['experiment_type'] = self.per_spec.experiment_type
 
         db = self.dvc.db
         an = db.add_analysis(**d)
@@ -534,7 +536,7 @@ class DVCPersister(BasePersister):
         akeys = self.arar_mapping
         if akeys is None:
             akeys = ARAR_MAPPING
-            
+
         obj['arar_mapping'] = akeys
 
         # save experiment

@@ -72,7 +72,10 @@ class StashCTX(object):
         self._repo.git.stash()
 
     def __exit__(self, *args, **kw):
-        self._repo.git.stash('pop')
+        try:
+            self._repo.git.stash('pop')
+        except GitCommandError:
+            pass
 
 
 class GitRepoManager(Loggable):
@@ -710,7 +713,7 @@ class GitRepoManager(Loggable):
                         if self.confirmation_dialog('There appears to be a problem with {}.'
                                                     '\n\nWould you like to accept the master copy'.format(self.name)):
                             try:
-                                repo.git.merge('--abort')
+                                repo.git.rebase('--abort')
                             except GitCommandError:
                                 pass
 
