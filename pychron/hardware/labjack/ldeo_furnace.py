@@ -65,9 +65,9 @@ class LamontFurnaceControl(CoreDevice):
         self.scl_pin = self.dac_pin + 4
         self.sda_pin = self.scl_pin + 1
         self._device.configIO(FIOAnalog=15, NumberOfTimersEnabled=2, TimerCounterPinOffset=8)
-        self._device.configTimerClock(TimerClockBase=1, TimerClockDivisor=1000)
-        self._device.getFeedback(u3.Timer0Config(TimerMode=0, Value=2))  # 50% duty cycle
-        self._device.getFeedback(u3.Timer1Config(TimerMode=0, Value=2))  # 50% duty cycle
+        self._device.configTimerClock(TimerClockBase=3, TimerClockDivisor=50)  # 3 = 1 Mhz; 50 ==> 1/50 = 20 kHz
+        self._device.getFeedback(u3.Timer0Config(TimerMode=7, Value=100))  # FreqOut mode; Value 20 gives (20 kHz)/(2*100) = 100 Hz
+        self._device.getFeedback(u3.Timer1Config(TimerMode=7, Value=100))  # FreqOut mode; Value 20 gives (20 kHz)/(2*100) = 100 Hz
         print('device SN is ', self._device.serialNumber)
         data = self._i2c(0x50, [64], NumI2CBytesToReceive=36)
         response = data['I2CBytes']
