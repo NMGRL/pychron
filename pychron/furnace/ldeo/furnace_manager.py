@@ -90,7 +90,7 @@ class LDEOFurnaceManager(BaseFurnaceManager):
         else:
             self.controller.returnfrom_ball(pos)
 
-    def dump_sample(pos, *args, **kw):
+    def dump_sample(self, pos, *args, **kw):
         try:
             pos = int(pos)
         except TypeError:
