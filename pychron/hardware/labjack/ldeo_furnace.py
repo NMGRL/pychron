@@ -215,7 +215,7 @@ class LamontFurnaceControl(CoreDevice):
         stepper_number, runtime = positions[position - 1]
 
         if position == 0:  # position command zero returns all the way
-            runtime = max(positions, key=lambda x: x[1])[1]
+            runtime = max([t for motor, t in positions])
 
         if stepper_number == 1:
             a, b = 5, 4
