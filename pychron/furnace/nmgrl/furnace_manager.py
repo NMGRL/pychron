@@ -106,17 +106,17 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         if self.camera:
             ret = self.camera.get_image_data() is not None
         return ret, err
-
-    def test_furnace_api(self):
-        self.info('testing furnace api')
-        ret, err = False, ''
-        if self.controller:
-            ret = self.controller.test_connection()
-        return ret, err
-
-    def test_connection(self):
-        self.info('testing connection')
-        return self.test_furnace_api()
+    #
+    # def test_furnace_api(self):
+    #     self.info('testing furnace api')
+    #     ret, err = False, ''
+    #     if self.controller:
+    #         ret = self.controller.test_connection()
+    #     return ret, err
+    #
+    # def test_connection(self):
+    #     self.info('testing connection')
+    #     return self.test_furnace_api()
 
     def clear_sample_states(self):
         self._clear_sample_states()
