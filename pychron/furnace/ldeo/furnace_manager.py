@@ -91,6 +91,13 @@ class LDEOFurnaceManager(BaseFurnaceManager):
             self.controller.returnfrom_ball(pos)
 
     def dump_sample(self, pos):
+        try:
+            pos = int(pos)
+        except TypeError:
+            try:
+                pos = int(pos[0])
+            except TypeError:
+                self.warning('Position is not either an integer or a list')
         self.debug('drop sample {}'.format(pos))
         self.controller.drop_ball(pos)
 
