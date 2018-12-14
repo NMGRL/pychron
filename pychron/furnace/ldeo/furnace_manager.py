@@ -80,8 +80,8 @@ class LDEOFurnaceManager(BaseFurnaceManager):
         pv = self.controller.get_process_value()
         return pv
 
-    def extract(self, v, units='volts', furnace=1):
-        self.controller.extract(v, units, furnace)
+    def extract(self, v, units='volts'):
+        self.controller.extract(v, units, furnace=1)
 
     def move_to_position(self, pos, *args, **kw):
         self.debug('move to position {}'.format(pos))
