@@ -23,7 +23,7 @@ from pychron.furnace.tasks.ldeo.task import LDEOFurnaceTask
 class LDEOFurnacePlugin(BaseFurnacePlugin):
     name = 'LDEOFurnace'
     id = 'pychron.furnace.ldeo.plugin'
-
+    task_name = 'LDEO Furnace'
     klass = ('pychron.furnace.ldeo.furnace_manager', 'LDEOFurnaceManager')
     task_klass = LDEOFurnaceTask
 
