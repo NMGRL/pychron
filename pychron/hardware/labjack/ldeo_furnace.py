@@ -15,7 +15,8 @@
 # ===============================================================================
 import struct
 import time
-import json
+from threading import Thread
+
 
 from pychron.hardware.core.core_device import CoreDevice
 
@@ -64,7 +65,12 @@ class LamontFurnaceControl(CoreDevice):
     def initialize(self, *args, **kw):
         self.scl_pin = self.dac_pin + 4
         self.sda_pin = self.scl_pin + 1
-        self._device.configIO(FIOAnalog=15, TimerCounterPinOffset=8)
+        self._device.getFeedback(u3.BitStateWrite(4, 0))  # write both sleep lines low to prevent stepper from moving on load
+        self._device.getFeedback(u3.BitStateWrite(5, 0))  # write both sleep lines low to prevent stepper from moving on load
+        self._device.configIO(FIOAnalog=15, NumberOfTimersEnabled=2, TimerCounterPinOffset=8)
+        self._device.configTimerClock(TimerClockBase=3, TimerClockDivisor=50)  # 3 = 1 Mhz; 50 ==> 1/50 = 20 kHz
+        self._device.getFeedback(u3.Timer0Config(TimerMode=7, Value=100))  # FreqOut mode; Value 20 gives (20 kHz)/(2*100) = 100 Hz
+        self._device.getFeedback(u3.Timer1Config(TimerMode=7, Value=100))  # FreqOut mode; Value 20 gives (20 kHz)/(2*100) = 100 Hz
         print('device SN is ', self._device.serialNumber)
         data = self._i2c(0x50, [64], NumI2CBytesToReceive=36)
         response = data['I2CBytes']
@@ -74,16 +80,22 @@ class LamontFurnaceControl(CoreDevice):
         self.b_slope = self.to_double(response[16:24])
         self.b_offset = self.to_double(response[24:32])
 
+        self.test_connection()
+
+    def test_connection(self):
+
         sn = self.return_sn()
         if 256 <= sn <= 2147483647:
             self.info('Labjack loaded')
             ret = True
+            err = ''
 
         else:
             self.warning('Invalid Labjack serial number: check Labjack connection')
             ret = False
+            err = 'Invalid Labjack serial number: check Labjack connection'
 
-        return ret
+        return ret, err
 
     def read_analog_in(self, pin):
         v = self._device.getAIN(pin)
@@ -125,7 +137,7 @@ class LamontFurnaceControl(CoreDevice):
             self.warning('Temperature control not implemented')
             # Some PID control will be added later
 
-        self.set_furnace(value)
+        self.set_furnace_setpoint(value)
 
     def set_furnace_setpoint(self, value, furnace=1):
         # this function can be called separately from extract if another script is performing the units logic
@@ -162,11 +174,11 @@ class LamontFurnaceControl(CoreDevice):
 
     def goto_ball(self, position):
         positions = [[1, 5],
-                     [1, 50],
-                     [1, 80],
-                     [1, 110],
-                     [1, 140],
-                     [1, 170],
+                     [1, 10],
+                     [1, 15],
+                     [1, 20],
+                     [1, 25],
+                     [1, 30],
                      [1, 200],
                      [1, 230],
                      [1, 260],
@@ -175,6 +187,10 @@ class LamontFurnaceControl(CoreDevice):
                      [1, 350]]
 
         stepper_number, runtime = positions[position - 1]
+
+        if position == 0:  # position command zero does nothing
+            runtime = 0
+
         if stepper_number == 1:
             a, b = 5, 4
         elif stepper_number == 2:
@@ -184,11 +200,11 @@ class LamontFurnaceControl(CoreDevice):
 
     def returnfrom_ball(self, position):
         positions = [[1, 5],
-                     [1, 50],
-                     [1, 80],
-                     [1, 110],
-                     [1, 140],
-                     [1, 170],
+                     [1, 10],
+                     [1, 15],
+                     [1, 20],
+                     [1, 25],
+                     [1, 30],
                      [1, 200],
                      [1, 230],
                      [1, 260],
@@ -199,7 +215,7 @@ class LamontFurnaceControl(CoreDevice):
         stepper_number, runtime = positions[position - 1]
 
         if position == 0:  # position command zero returns all the way
-            runtime = max(positions, key=lambda x: x[1])[1]
+            runtime = max([t for motor, t in positions])
 
         if stepper_number == 1:
             a, b = 5, 4
@@ -223,20 +239,22 @@ class LamontFurnaceControl(CoreDevice):
         return summary
 
     def _run_stepper(self, runtime, direction, a_id, b_id):
-        dev = self._device
-        if direction == 'forward':
-            dev.getFeedback(u3.BitStateWrite(a_id, 0))
-        else:
-            dev.getFeedback(u3.BitStateWrite(a_id, 1))
+        def func():
+            dev = self._device
+            if direction == 'forward':
+                dev.getFeedback(u3.BitStateWrite(a_id, 0))
+            else:
+                dev.getFeedback(u3.BitStateWrite(a_id, 1))
 
-        delay = 0.3
-
-        st = time.time()
-        while time.time() - st < runtime:
+            # st = time.time()
             dev.getFeedback(u3.BitStateWrite(b_id, 1))
-            time.sleep(delay)
+            time.sleep(runtime)
+            # while time.time() - st < runtime:
+            #     time.sleep(1)
+
             dev.getFeedback(u3.BitStateWrite(b_id, 0))
-            time.sleep(delay)
+        t = Thread(target=func)
+        t.start()
 
 
 if __name__ == '__main__':

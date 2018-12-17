@@ -24,7 +24,7 @@ class NMGRLFurnacePlugin(BaseFurnacePlugin):
     name = 'NMGRLFurnace'
     id = 'pychron.furnace.nmgrl.plugin'
 
-    klass = ('pychron.furnace.furnace_manager', 'NMGRLFurnaceManager')
+    klass = ('pychron.furnace.nmgrl.furnace_manager', 'NMGRLFurnaceManager')
     task_klass = NMGRLFurnaceTask
 
     def _help_tips_default(self):

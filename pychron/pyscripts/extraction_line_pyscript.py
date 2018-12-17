@@ -575,6 +575,18 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
+    def drop_sample(self, position=''):
+        success = self._extraction_action([('drop_sample', (position,), {'block': True})])
+
+        if not success:
+            self.info('{} drop sample failed'.format(self.extract_device))
+            self.cancel()
+        else:
+            self.console_info('drop sample succeeded')
+            return True
+
+    @verbose_skip
+    @command_register
     def execute_pattern(self, pattern='', block=True, duration=None):
         if pattern == '':
             pattern = self.pattern

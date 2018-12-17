@@ -23,8 +23,8 @@ from pychron.furnace.tasks.ldeo.task import LDEOFurnaceTask
 class LDEOFurnacePlugin(BaseFurnacePlugin):
     name = 'LDEOFurnace'
     id = 'pychron.furnace.ldeo.plugin'
-
-    klass = ('pychron.furnace.furnace_manager', 'LDEOFurnaceManager')
+    task_name = 'LDEO Furnace'
+    klass = ('pychron.furnace.ldeo.furnace_manager', 'LDEOFurnaceManager')
     task_klass = LDEOFurnaceTask
 
     def _help_tips_default(self):
@@ -54,8 +54,7 @@ class LDEOFurnacePlugin(BaseFurnacePlugin):
         return man.test_furnace_api()
 
     def test_furnace_cam(self):
-        man = self._get_manager()
-        return man.test_furnace_cam()
+        pass
 
     def _preferences_panes_default(self):
         return [LDEOFurnacePreferencesPane, LDEOFurnaceControlPreferencesPane]
