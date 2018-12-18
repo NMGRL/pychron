@@ -56,4 +56,15 @@ class BaseFurnaceManager(StreamGraphManager):
     def _handle_state(self, new):
         pass
 
+    def test_furnace_api(self):
+        self.info('testing furnace api')
+        ret, err = False, ''
+        if self.controller:
+            ret, err = self.controller.test_connection()
+        return ret, err
+
+    def test_connection(self):
+        self.info('testing connection')
+        return self.test_furnace_api()
+
 # ============= EOF =============================================

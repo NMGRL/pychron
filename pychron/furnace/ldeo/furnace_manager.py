@@ -80,8 +80,8 @@ class LDEOFurnaceManager(BaseFurnaceManager):
         pv = self.controller.get_process_value()
         return pv
 
-    def extract(self, v, **kw):
-        self.controller.extract(self, v, units='volts', furnace=1)
+    def extract(self, v, units='volts'):
+        self.controller.extract(v, units, furnace=1)
 
     def move_to_position(self, pos, *args, **kw):
         self.debug('move to position {}'.format(pos))
@@ -90,7 +90,14 @@ class LDEOFurnaceManager(BaseFurnaceManager):
         else:
             self.controller.returnfrom_ball(pos)
 
-    def dump_sample(self, pos):
+    def drop_sample(self, pos, *args, **kw):
+        try:
+            pos = int(pos)
+        except TypeError:
+            try:
+                pos = int(pos[0])
+            except TypeError:
+                self.warning('Position is not either an integer or a list')
         self.debug('drop sample {}'.format(pos))
         self.controller.drop_ball(pos)
 
@@ -172,6 +179,10 @@ class LDEOFurnaceManager(BaseFurnaceManager):
             if temp1 is not None:
                 self.temperature_readback = temp1
             if output1 is not None:
+                if output1 < 0:
+                    output1 = 0
+                else:
+                    output1 = round(output1, 2)
                 self.output_percent_readback = output1 * 10  # this is a voltage on a 0-10 scale
 
             self._update_scan_graph(output1, temp1, 0)  # not writing setpoint at moment since not implemented
