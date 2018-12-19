@@ -674,6 +674,16 @@ class DVC(Loggable):
             except BaseException:
                 pass
 
+        bad_records = [r for r in records if r.repository_identifier is None]
+        if bad_records:
+            self.warning_dialog('Missing Repository Associations. Contact an expert!'
+                                'Cannot load analyses "{}"'.format(','.join([r.record_id for r in
+                                                                            bad_records])))
+            records = [r for r in records if r.repository_identifier is not None]
+
+        if not records:
+            return []
+
         exps = {r.repository_identifier for r in records}
         progress_iterator(exps, func, threshold=1)
 

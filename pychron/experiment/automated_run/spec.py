@@ -141,6 +141,8 @@ class AutomatedRunSpec(HasTraits):
 
     branch = 'master'
 
+    position_j =0
+    position_jerr =0
     uage = None
     v39 = None
 
