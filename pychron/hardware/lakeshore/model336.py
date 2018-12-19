@@ -14,8 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 from __future__ import absolute_import
-from traitsui.api import Group, Item, UItem, HGroup, VGroup, spring, Spring
-from traits.api import Float
+from traitsui.api import Group, Item, UItem, HGroup, VGroup, spring, Spring, Label
+from traits.api import Float, Int
 
 from pychron.core.ui.lcd_editor import LCDEditor
 from pychron.hardware.lakeshore.base_controller import BaseLakeShoreController
@@ -108,11 +108,16 @@ class Model336TemperatureController(BaseLakeShoreController):
         items = [Spring(height=10, springy=False)]
         for i, tag in enumerate('abcd'):
             idx = i + 1
-            h = HGroup(Item('input_{}'.format(tag), style='readonly',
+            if self.iomap[i] is not 'None':
+                setpoint_content_1 = Item('{}'.format(self.iomap[i]))
+                setpoint_content_2 = UItem('setpoint{}_readback'.format(idx), editor=LCDEditor(width=120, height=30),
+                                    style='readonly'), Spring(width=10, springy=False)
+            else:
+                setpoint_content_1 = []
+                setpoint_content_2 = []
+            h = VGroup(Label(self.ionames[i]), HGroup(Item('input_{}'.format(tag), style='readonly',
                             editor=LCDEditor(width=120, ndigits=6, height=30)),
-                       Item('setpoint{}'.format(idx)),
-                       UItem('setpoint{}_readback'.format(idx), editor=LCDEditor(width=120, height=30),
-                             style='readonly'), Spring(width=10, springy=False))
+                            setpoint_content_1, setpoint_content_2))
             items.append(h)
 
         # grp = VGroup(Spring(height=10, springy=False),

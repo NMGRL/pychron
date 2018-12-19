@@ -13,11 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.api import Enum, Float, Property, List
+from traits.api import Enum, Float, Property, List, Int
 from pychron.hardware import get_float
 from pychron.hardware.core.core_device import CoreDevice
 import re
 from time import sleep
+import string
 
 IDN_RE = re.compile(r'\w{4},\w{8},\w{7}\/[\w\#]{7},\d.\d')
 
@@ -49,6 +50,9 @@ class BaseLakeShoreController(CoreDevice):
     setpoint2 = Float(auto_set=False, enter_set=True)
     setpoint2_readback = Float
     range_tests = List
+    num_inputs = Int
+    ionames = List
+    iomap = List
 
     def load_additional_args(self, config):
         self.set_attribute(config, 'units', 'General', 'units', default='K')
@@ -66,6 +70,24 @@ class BaseLakeShoreController(CoreDevice):
 
         if items:
             self.range_tests = [RangeTest(*i) for i in items]
+
+        if config.has_section('IOConfig'):
+            iodict = dict(config.items('IOConfig'))
+            self.num_inputs = int(iodict['num_inputs'])
+            for i, tag in enumerate(string.ascii_lowercase[0:self.num_inputs]):
+                try:
+                    self.ionames.append(iodict['input_{}_name'.format(tag)])
+                except ValueError:
+                    self.ionames.append('input_{}.format(tag)')
+                mapsetpoint = iodict['input_{}'.format(tag)]
+                if mapsetpoint == 'none':
+                    self.iomap.append('None')
+                else:
+                    self.iomap.append(mapsetpoint)
+        else:
+            self.num_inputs = 2
+            self.ionames = ['', '', '', '']
+            self.iomap = ['setpoint1', 'setpoint2', 'setpoint3', 'setpoint4']
 
         return True
 
