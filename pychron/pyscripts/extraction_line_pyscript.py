@@ -678,7 +678,7 @@ class ExtractionPyScript(ValvePyScript):
         ed = ed.replace('_', ' ')
 
         # get current position and add as an extraction position
-        pos = self._extraction_actions(('get_position', (), {}))
+        pos = self._extraction_action(('get_position', (), {}))
         self._extraction_positions.append(pos)
 
         # set an experiment message
