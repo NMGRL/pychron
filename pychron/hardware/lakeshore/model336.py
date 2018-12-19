@@ -33,8 +33,8 @@ class Model336TemperatureController(BaseLakeShoreController):
     def update(self, **kw):
         self.input_a = self.read_input_a(**kw)
         self.input_b = self.read_input_b(**kw)
-        self.input_c = self.read_input_a(**kw)
-        self.input_d = self.read_input_b(**kw)
+        self.input_c = self.read_input_c(**kw)
+        self.input_d = self.read_input_d(**kw)
         self.setpoint1_readback = self.read_setpoint(1)
         self.setpoint2_readback = self.read_setpoint(2)
         self.setpoint3_readback = self.read_setpoint(3)
@@ -84,12 +84,12 @@ class Model336TemperatureController(BaseLakeShoreController):
                            UItem('setpoint1_readback', editor=LCDEditor(width=120, height=30),
                                  style='readonly'), Spring(width=10, springy=False)),
                     HGroup(Item('input_b', style='readonly', editor=LCDEditor(width=120, ndigits=6, height=30)),
-                           Item('setpoint2'),
-                           UItem('setpoint2_readback', editor=LCDEditor(width=120, height=30),
-                                 style='readonly'), Spring(width=10, springy=False)),
-                    HGroup(Item('input_c', style='readonly', editor=LCDEditor(width=120, ndigits=6, height=30)),
                            Item('setpoint3'),
                            UItem('setpoint3_readback', editor=LCDEditor(width=120, height=30),
+                                 style='readonly'), Spring(width=10, springy=False)),
+                    HGroup(Item('input_c', style='readonly', editor=LCDEditor(width=120, ndigits=6, height=30)),
+                           Item('setpoint2'),
+                           UItem('setpoint2_readback', editor=LCDEditor(width=120, height=30),
                                   style='readonly'), Spring(width=10, springy=False)),
                     HGroup(Item('input_d', style='readonly', editor=LCDEditor(width=120, ndigits=6, height=30)),
                            Item('setpoint4'),
