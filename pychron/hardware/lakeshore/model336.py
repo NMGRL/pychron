@@ -15,6 +15,7 @@
 # ===============================================================================
 from __future__ import absolute_import
 from traitsui.api import Group, Item, UItem, HGroup, VGroup, spring, Spring
+from traits.api import Float
 
 from pychron.core.ui.lcd_editor import LCDEditor
 from pychron.hardware.lakeshore.base_controller import BaseLakeShoreController
