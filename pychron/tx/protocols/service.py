@@ -83,7 +83,8 @@ class ServiceProtocol(Protocol):
         args = self._get_service(data)
         if args:
             service, data = args
-            self._get_response(service, data)
+            cdata = self._prepare_data(data)
+            service.callback(cdata)
 
     def register_service(self, service_name, success, err=None):
         """
@@ -126,7 +127,7 @@ class ServiceProtocol(Protocol):
     def _send_response(self, resp):
         resp = str(resp)
         self.debug('Response {data!r}', data=resp)
-        self.transport.write(resp)
+        self.transport.write('{}\n'.format(resp))
         self.transport.loseConnection()
 
     def _get_service(self, data):
@@ -141,7 +142,7 @@ class ServiceProtocol(Protocol):
         try:
             service = self._services[name]
             return service, jd
-        except KeyError, e:
+        except KeyError:
             traceback.print_exc()
             raise ServiceNameError(name, data)
 
@@ -161,10 +162,6 @@ class ServiceProtocol(Protocol):
 
         self.debug('Data {cdata!r}', cdata=cdata)
         return cdata
-
-    def _get_response(self, service, data):
-        cdata = self._prepare_data(data)
-        service.callback(cdata)
 
 # ============= EOF =============================================
 # def sleep(secs):

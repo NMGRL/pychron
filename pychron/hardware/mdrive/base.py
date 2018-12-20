@@ -198,23 +198,74 @@ class BaseMDrive(BaseLinearDrive):
         return True
 
     def start_jitter(self, turns, p1, p2, velocity=None, acceleration=None, deceleration=None):
-        def _jitter():
-            kw = dict(velocity=velocity, acceleration=acceleration, deceleration=deceleration, units='turns')
-            while not self._jitter_evt.is_set():
-                self.move_relative(turns, **kw)
-                time.sleep(p1)
-                self.move_relative(-turns, **kw)
-                time.sleep(p2)
+        """
+        instead of doing the jitter at the application level lets create a jitter program
+        and execute it.
+        stop_jitter will cancel the program execution
 
-        self._jitter_evt = Event()
-        t = Thread(target=_jitter)
-        t.setDaemon(True)
-        t.start()
+
+
+
+        @param turns:
+        @param p1:
+        @param p2:
+        @param velocity:
+        @param acceleration:
+        @param deceleration:
+        @return:
+        """
+
+        pos = self._get_steps(turns, 'turns')
+        prgm = """
+        `configuration
+        VM {}
+        A {}
+        D {}
+        VA C1
+        `main program
+        PG 1
+          LB Gx
+            MR {}
+            H
+            MR {}
+            H
+            IC C1
+            
+           BR Gx, C1<100
+        `end program
+        E
+        PG
+        """.format(velocity, acceleration, deceleration, pos, -pos)
+
+        for line in prgm:
+            line = line.strip()
+            if line.startswith('`'):
+                continue
+
+            line = line.split('`')[0]
+            self.tell(line.rstrip())
+
+        self.tell('EX 1')
+        # def _jitter():
+        #     kw = dict(velocity=velocity, acceleration=acceleration, deceleration=deceleration, units='turns')
+        #     while not self._jitter_evt.is_set():
+        #         self.move_relative(turns, **kw)
+        #         time.sleep(p1)
+        #         self.move_relative(-turns, **kw)
+        #         time.sleep(p2)
+        #
+        # self._jitter_evt = Event()
+        # t = Thread(target=_jitter)
+        # t.setDaemon(True)
+        # t.start()
+
         return True
 
     def stop_jitter(self):
-        if self._jitter_evt:
-            self._jitter_evt.set()
+        # if self._jitter_evt:
+        #     self._jitter_evt.set()
+        self.tell('ES')
+
         return True
 
     def set_initial_velocity(self, v):

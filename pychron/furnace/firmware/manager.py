@@ -18,7 +18,10 @@ import json
 import time
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+import json
+import os
 from threading import Thread, Event
+import time
 
 import yaml
 
@@ -83,28 +86,31 @@ class FirmwareManager(HeadlessLoggable):
     def bootstrap(self):
         self._start_time = time.time()
         p = paths.furnace_firmware
-        with open(p, 'r') as rfile:
-            yd = yaml.load(rfile)
+        if p and os.path.isfile(p):
+            with open(p, 'r') as rfile:
+                yd = yaml.load(rfile)
 
-        self._load_config(yd['config'])
-        self._load_devices(yd['devices'])
-        self._load_switch_mapping(yd['switch_mapping'])
-        self._load_switch_indicator_mapping(yd['switch_indicator_mapping'])
-        self._load_funnel(yd['funnel'])
-        self._load_magnets(yd['magnets'])
-        self._load_rotary_dumper()
+            self._load_config(yd['config'])
+            self._load_devices(yd['devices'])
+            self._load_switch_mapping(yd['switch_mapping'])
+            self._load_switch_indicator_mapping(yd['switch_indicator_mapping'])
+            self._load_funnel(yd['funnel'])
+            self._load_magnets(yd['magnets'])
+            self._load_rotary_dumper()
 
-        if self._use_broadcast_service:
-            self._broadcaster = Broadcaster()
-            self._broadcaster.setup(self._broadcaster_port)
-            self._broadcast_stop_event = Event()
-            t = Thread(target=self._broadcast, args=(self._broadcaster, self._broadcast_stop_event))
-            t.start()
+            if self._use_broadcast_service:
+                self._broadcaster = Broadcaster()
+                self._broadcaster.setup(self._broadcaster_port)
+                self._broadcast_stop_event = Event()
+                t = Thread(target=self._broadcast, args=(self._broadcaster, self._broadcast_stop_event))
+                t.start()
 
-        if self._use_video_service:
-            # start camera
-            if self.camera:
-                self.camera.start_video_service()
+            if self._use_video_service:
+                # start camera
+                if self.camera:
+                    self.camera.start_video_service()
+        else:
+            self.warning('No furnace configuration file located at {}'.format(p))
 
     # properties
     @property
@@ -229,6 +235,11 @@ class FirmwareManager(HeadlessLoggable):
 
     @debug
     def get_channel_state(self, data):
+        """
+        return the requested state of the channel
+        @param data:
+        @return:
+        """
         if self.switch_controller:
             ch, inverted = self._get_switch_channel(data)
             result = self.switch_controller.get_channel_state(ch)
@@ -238,15 +249,25 @@ class FirmwareManager(HeadlessLoggable):
 
     @debug
     def get_indicator_state(self, data):
+        """
+        return state of the indicator as a str, e.g open, close or Error: ...
+        @param data:
+        @return:
+        """
         if self.switch_controller:
             args = self._get_indicator_info(data)
             return args[0]
 
     @debug
     def get_indicator_component_states(self, data):
+        """
+        return csv str of result, open_state, close_state
+        @param data:
+        @return:
+        """
         if self.switch_controller:
             args = self._get_indicator_info(data)
-            return ','.join(args)
+            return ','.join([str(a) for a in args])
 
     @debug
     def get_di_state(self, data):
@@ -348,7 +369,7 @@ class FirmwareManager(HeadlessLoggable):
                         nsteps = data
 
                 self._is_energized = True
-                
+
                 t = Thread(target = self.rotary_dumper.energize, args=(nsteps, rpm))
                 t.start()
                 # while self.rotary_dumper.is_energized():
@@ -519,6 +540,24 @@ class FirmwareManager(HeadlessLoggable):
         return controller
 
     def _get_indicator_info(self, data):
+        """
+
+        returns a 3-tuple (result, open_state, close_state)
+
+        result: str  open, close or Error: ...
+        open_state: bool
+        close_state: bool
+
+        @param data:
+        @return:
+        """
+        def prep_channel(channel):
+            inv = False
+            if channel.startswith('i'):
+                ch = channel[1:]
+                inv = True
+            return ch, inv
+
         if self.switch_controller:
             if isinstance(data, dict):
                 alt_name = data['name']
@@ -527,27 +566,20 @@ class FirmwareManager(HeadlessLoggable):
             alt_ch, inverted = self._get_switch_channel(alt_name)
 
             open_ch, close_ch, action = self._get_switch_indicator(data)
+
             if open_ch == 'inverted':
-                oresult = self.switch_controller.get_channel_state(alt_ch)
-                oresult = not oresult
+                oresult = not self.switch_controller.get_channel_state(alt_ch)
             else:
-                invert = False
-                if open_ch.startswith('i'):
-                    open_ch = open_ch[1:]
-                    invert = True
-                oresult = self.switch_controller.get_channel_state(open_ch)
+                ch, invert = prep_channel(open_ch)
+                oresult = self.switch_controller.get_channel_state(ch)
                 if invert:
                     oresult = not oresult
 
             if close_ch is None:
                 cresult = None
             else:
-                invert = False
-                if close_ch.startswith('i'):
-                    close_ch = close_ch[1:]
-                    invert = True
-
-                cresult = self.switch_controller.get_channel_state(close_ch)
+                ch, invert = prep_channel(close_ch)
+                cresult = self.switch_controller.get_channel_state(ch)
                 if invert:
                     cresult = not cresult
 
@@ -556,7 +588,6 @@ class FirmwareManager(HeadlessLoggable):
                 result = 'Error: OpenIndicator={}, CloseIndicator={}'.format(oresult, cresult)
             else:
                 result = 'open' if result else 'closed'
-
             return result, oresult, cresult
 
     def _get_drive(self, data):
