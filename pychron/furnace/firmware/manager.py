@@ -154,7 +154,7 @@ class FirmwareManager(HeadlessLoggable):
 
     def get_percent_output(self, data):
         if self.controller:
-            return self.controller.get_output()
+            return self.controller.get_output(verbose=False)
 
     def get_full_summary(self):
         s = {'version': __version__}
@@ -190,7 +190,7 @@ class FirmwareManager(HeadlessLoggable):
     @debug
     def get_temperature(self, data):
         if self.controller:
-            return self.controller.get_process_value()
+            return self.controller.get_process_value(verbose=False)
 
     @debug
     def get_setpoint(self, data):
@@ -336,7 +336,6 @@ class FirmwareManager(HeadlessLoggable):
 
                 t = Thread(target=func)
                 t.start()
-                return True
         else:
             if self.rotary_dumper:
                 nsteps = None
@@ -349,7 +348,13 @@ class FirmwareManager(HeadlessLoggable):
                         nsteps = data
 
                 self._is_energized = True
-                self.rotary_dumper.energize(nsteps, rpm)
+                
+                t = Thread(target = self.rotary_dumper.energize, args=(nsteps, rpm))
+                t.start()
+                # while self.rotary_dumper.is_energized():
+                #     time.sleep(0.5)
+                # self._is_energized = False
+        return True
 
     @debug
     def is_energized(self, data):
@@ -362,7 +367,6 @@ class FirmwareManager(HeadlessLoggable):
             if self.switch_controller:
                 for m in self._magnet_channels:
                     self.switch_controller.set_channel_state(m, False)
-                return True
         else:
             if self.rotary_dumper:
                 nsteps = None
@@ -371,7 +375,11 @@ class FirmwareManager(HeadlessLoggable):
                         nsteps = data.get('nsteps')
                     else:
                         nsteps = data
-                self.rotary_dumper.denergize(nsteps)
+
+                t = Thread(target=self.rotary_dumper.denergize, args=(nsteps,))
+                t.start()
+
+        return True
 
     @debug
     def move_absolute(self, data):

@@ -452,7 +452,7 @@ class SerialCommunicator(Communicator):
         try:
             inw = self.handle.inWaiting()
             r += self.handle.read(inw)
-            #            print 'inw', inw, r, terminator
+           # print 'inw', inw, r, terminator
             if terminator is None:
                 terminator = ('\r\x00', '\r\n', '\r', '\n')
             if not isinstance(terminator, (list, tuple)):
@@ -473,6 +473,7 @@ class SerialCommunicator(Communicator):
         return r, terminated
 
     def _read_loop(self, func, delay, timeout=1):
+        
         if delay is not None:
             time.sleep(delay / 1000.)
 
@@ -493,9 +494,9 @@ class SerialCommunicator(Communicator):
                 r, isterminated = func(r)
                 if isterminated:
                     break
-            except (ValueError, TypeError):
-                pass
-            time.sleep(0.01)
+            except (ValueError, TypeError), e:
+                print e
+            time.sleep(0.001)
             ct = time.time()
 
         if ct - st > timeout:

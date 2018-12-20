@@ -28,7 +28,7 @@ from pychron.tx.protocols.service import ServiceProtocol
 
 class FurnaceFirmwareProtocol(ServiceProtocol):
     def __init__(self):
-        super(FurnaceFirmwareProtocol, self).__init__()
+        ServiceProtocol.__init__(self)
 
         self.manager = manager = FirmwareManager()
         manager.bootstrap()

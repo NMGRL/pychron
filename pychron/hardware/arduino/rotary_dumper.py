@@ -30,15 +30,15 @@ DEMO = False
 class RotaryDumper(HeadlessCoreDevice):
     _nsteps = 0
 
-    def initialize(self, *args, **kw):
-        if DEMO:
-            self.energize(325)
-            for i in range(100):
-                if not self.is_moving():
-                    print 'not moving'
-                    break
-                time.sleep(1)
-        self.denergize()
+    #def initialize(self, *args, **kw):
+    #    self.energize(325)
+    #    time.sleep(1)
+    #    for i in range(100):
+    #        if not self.is_moving():
+    #            print 'not moving'
+    #            break
+    #        time.sleep(1)
+    #    self.denergize()
 
     def energize(self, nsteps, rpm=None):
         if rpm:
@@ -56,13 +56,14 @@ class RotaryDumper(HeadlessCoreDevice):
             ret = int(s) > 4
         return ret
 
-    def ask(self, *args, **kw):
-        for i in range(3):
-            resp = super(RotaryDumper, self).ask(*args, **kw)
-            if resp:
-                return resp
-
-            time.sleep(0.5)
+#    def ask(self, *args, **kw):
+#        for i in range(3):
+#            resp = super(RotaryDumper, self).ask(*args, **kw)
+#            if resp:
+#                
+#                return resp
+#            print i, 'retry'
+#            time.sleep(0.5)
 
     def denergize(self, nsteps=None):
         if nsteps is None:
