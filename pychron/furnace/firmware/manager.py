@@ -14,16 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
+import json
+import time
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-import json
 from threading import Thread, Event
 
-from cStringIO import StringIO
-import time
-from cPickle import dumps
-import struct
 import yaml
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.strtools import to_bool
 from pychron.furnace.firmware import PARAMETER_REGISTRY, __version__
@@ -54,9 +52,9 @@ DEVICES = {'controller': HeadlessEurotherm,
 
 def debug(func):
     def wrapper(obj, data):
- #       obj.debug('------ {}, data={}'.format(func.__name__, data))
+        #       obj.debug('------ {}, data={}'.format(func.__name__, data))
         r = func(obj, data)
-#        obj.debug('------ result={}'.format(r))
+        #        obj.debug('------ result={}'.format(r))
         return r
 
     return wrapper
@@ -69,7 +67,7 @@ class FirmwareManager(HeadlessLoggable):
     feeder = None
     temp_hum = None
     camera = None
-    rotary_dumper =None
+    rotary_dumper = None
 
     _switch_mapping = None
     _switch_indicator_mapping = None
@@ -82,7 +80,7 @@ class FirmwareManager(HeadlessLoggable):
     _broadcaster = None
     _broadcast_stop_event = None
 
-    def bootstrap(self, **kw):
+    def bootstrap(self):
         self._start_time = time.time()
         p = paths.furnace_firmware
         with open(p, 'r') as rfile:
@@ -137,25 +135,6 @@ class FirmwareManager(HeadlessLoggable):
         if self.funnel:
             return self.funnel.position
 
-    # getters
-    # @debug
-    # def get_jpeg(self, data):
-    #     quality = 100
-    #     if isinstance(data, dict):
-    #         quality = data['quality']
-    #
-    #     memfile = StringIO()
-    #     self.camera.capture(memfile, name=None, quality=quality)
-    #     memfile.seek(0)
-    #     return json.dumps(memfile.read())
-    #
-    # def get_image_array(self, data):
-    #     if self.camera:
-    #         im = self.camera.get_image_array()
-    #         if im is not None:
-    #             imstr = im.dumps()
-    #             return '{:08X}{}'.format(len(imstr), imstr)
-
     def get_heartbeat(self, data):
         return '{},{}'.format(time.time(), self._start_time)
 
@@ -164,7 +143,7 @@ class FirmwareManager(HeadlessLoggable):
         if isinstance(data, dict):
             h2o_channel = data.get('h2o_channel')
 
-        s={}
+        s = {}
         if h2o_channel is not None:
             s['h2o_state'] = self.switch_controller.get_channel_state(h2o_channel)
 
@@ -325,7 +304,6 @@ class FirmwareManager(HeadlessLoggable):
         if self.funnel:
             return self.funnel.move_absolute(self._funnel_down, block=False)
 
-
     @debug
     def rotary_dumper_moving(self, data):
         if self.rotary_dumper:
@@ -372,9 +350,6 @@ class FirmwareManager(HeadlessLoggable):
 
                 self._is_energized = True
                 self.rotary_dumper.energize(nsteps, rpm)
-                # while self.rotary_dumper.is_energized():
-                #     time.sleep(0.5)
-                # self._is_energized = False
 
     @debug
     def is_energized(self, data):
@@ -397,6 +372,7 @@ class FirmwareManager(HeadlessLoggable):
                     else:
                         nsteps = data
                 self.rotary_dumper.denergize(nsteps)
+
     @debug
     def move_absolute(self, data):
         drive = self._get_drive(data)
@@ -543,8 +519,7 @@ class FirmwareManager(HeadlessLoggable):
             alt_ch, inverted = self._get_switch_channel(alt_name)
 
             open_ch, close_ch, action = self._get_switch_indicator(data)
-            #print 'ffffffff {} {} {}'.format(data, open_ch, close_ch)
-            if open_ch=='inverted':
+            if open_ch == 'inverted':
                 oresult = self.switch_controller.get_channel_state(alt_ch)
                 oresult = not oresult
             else:
@@ -553,14 +528,10 @@ class FirmwareManager(HeadlessLoggable):
                     open_ch = open_ch[1:]
                     invert = True
                 oresult = self.switch_controller.get_channel_state(open_ch)
-                #print 'gggggg {} {} {}'.format(invert, open_ch, oresult)
                 if invert:
                     oresult = not oresult
 
             if close_ch is None:
-                #cresult = self.get_channel_state(alt_ch)
-                #if inverted:
-                #    cresult = not cresult
                 cresult = None
             else:
                 invert = False
@@ -576,48 +547,9 @@ class FirmwareManager(HeadlessLoggable):
             if oresult == cresult:
                 result = 'Error: OpenIndicator={}, CloseIndicator={}'.format(oresult, cresult)
             else:
-                #if inverted:
-                #    result = not result
-
                 result = 'open' if result else 'closed'
-            #print 'result={}, oresult={}, cresult={}'.format(result, oresult, cresult)
-            return result, oresult, cresult
 
-            # oresult = None
-            # cresult = None
-            # if action == 'open' and open_ch is None:
-            #     result = self.get_channel_state(alt_ch)
-            # else:
-            #     oresult = False if action != 'open' else True
-            #     if open_ch:
-            #         oresult = self.switch_controller.get_channel_state(open_ch)
-            #
-            #     cresult = True if action != 'open' else False
-            #     if close_ch:
-            #         cresult = self.switch_controller.get_channel_state(close_ch)
-            #
-            #     if action == 'open':
-            #         result = oresult and not cresult
-            #     else:
-            #         result = not oresult and cresult
-            #
-            # # if ch is None:
-            # #     result = self.get_channel_state(alt_ch)
-            # # else:
-            # #     result = self.switch_controller.get_channel_state(ch)
-            #
-            # self.debug('indicator state {}, invert={} Open Indicator={}, Close Indicator={}'.format(result, inverted,
-            #                                                                                         oresult,
-            #                                                                                         cresult))
-            # if inverted:
-            #     result = not result
-            #
-            # if action == 'open' and result:
-            #     result = 'open'
-            # else:
-            #     result = 'closed'
-            #
-            # return result, oresult, cresult
+            return result, oresult, cresult
 
     def _get_drive(self, data):
         drive = data.get('drive')
@@ -639,7 +571,6 @@ class FirmwareManager(HeadlessLoggable):
             ch, inverted = ch.split(',')
             inverted = to_bool(inverted)
 
-        #self.debug('get switch channel {} {}'.format(name, ch))
         return ch, inverted
 
     def _get_switch_indicator(self, data):
@@ -651,9 +582,8 @@ class FirmwareManager(HeadlessLoggable):
 
         close_ch = None
         open_ch = self._switch_indicator_mapping.get(name)
-        #self.debug('get switch indicator channel {} {}'.format(name, open_ch))
         if open_ch == 'inverted':
-            return open_ch, None, None 
+            return open_ch, None, None
 
         if ',' in str(open_ch):
             def prep(ch):
@@ -662,11 +592,7 @@ class FirmwareManager(HeadlessLoggable):
                     ch = None
                 return ch
 
-            open_ch, close_ch = map(prep, open_ch.split(','))
-
-            # ch = o if action.lower() == 'open' else c
-            # if not ch or ch == '-':
-            #     ch = None
+            open_ch, close_ch = (prep(c) for c in open_ch.split(','))
 
         return open_ch, close_ch, action
 

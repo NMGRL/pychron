@@ -15,22 +15,23 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ServerEndpoint
-from twisted.internet.protocol import Factory, Protocol
+from twisted.internet.protocol import Factory
 
+from pychron.furnace.firmware.manager import FirmwareManager
 from pychron.headless_loggable import HeadlessLoggable
 from pychron.tx.protocols.service import ServiceProtocol
 
 
 class FurnaceFirmwareProtocol(ServiceProtocol):
-    def __init__(self, manager, addr):
-        self._manager = manager
-        self._addr = addr
-        ServiceProtocol.__init__(self)
+    def __init__(self):
+        super(FurnaceFirmwareProtocol, self).__init__()
+
+        self.manager = manager = FirmwareManager()
+        manager.bootstrap()
 
         misc_services = (('GetLabTemperature', manager.get_lab_temperature),
                          ('GetLabHumidity', manager.get_lab_humidity),
@@ -87,16 +88,10 @@ class FurnaceFirmwareProtocol(ServiceProtocol):
 
 
 class FirmwareFactory(Factory):
-    def __init__(self, manager):
-        self._manager = manager
-
-    def buildProtocol(self, addr):
-        return FurnaceFirmwareProtocol(self._manager, addr)
-
+    protocol = FurnaceFirmwareProtocol
+    
 
 class FirmwareServer(HeadlessLoggable):
-    manager = Instance('pychron.furnace.firmware.manager.FirmwareManager')
-
     def bootstrap(self, port=None, **kw):
         self.debug('bootstrap')
         self._load_config(port)
@@ -108,10 +103,10 @@ class FirmwareServer(HeadlessLoggable):
         self.debug('load config')
         if port is None:
             port = 8000
-        self.add_endpoint(port, FirmwareFactory(self.manager))
 
-    def add_endpoint(self, port, factory):
-        self.debug('add endbpoint port={} factory={}'.format(port, factory.__class__.__name__))
+        factory = FirmwareFactory()
+
+        self.debug('add endpoint port={} factory={}'.format(port, factory.__class__.__name__))
         endpoint = TCP4ServerEndpoint(reactor, port)
         endpoint.listen(factory)
 

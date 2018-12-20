@@ -38,7 +38,10 @@ class TxServer:
         logger = Logger(observer=obs)
 
         if self._has_endpoints:
-            self.start()
+            from threading import Thread
+            t = Thread(target=reactor.run, args=(False,))
+            t.setDaemon(True)
+            t.start()
 
     def add_endpoint(self, port, factory):
         self._has_endpoints = True
@@ -46,14 +49,8 @@ class TxServer:
         endpoint = TCP4ServerEndpoint(reactor, port)
         try:
             endpoint.listen(factory)
-        except CannotListenError, e:
+        except CannotListenError as e:
             return e
-
-    def start(self):
-        from threading import Thread
-        t = Thread(target=reactor.run, args=(False,))
-        t.setDaemon(True)
-        t.start()
 
     def stop(self):
         try:
