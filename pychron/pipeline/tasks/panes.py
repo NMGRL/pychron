@@ -357,6 +357,7 @@ class UnknownsAdapter(BaseAnalysesAdapter):
                    ('Run ID', 'record_id'),
                    ('Aliquot', 'aliquot'),
                    ('Step', 'step'),
+                   ('UUID', 'uuid'),
                    ('Sample', 'sample'),
                    ('Project', 'project'),
                    ('RepositoryID', 'repository_identifier'),
@@ -383,6 +384,7 @@ class UnknownsAdapter(BaseAnalysesAdapter):
     j_text = Property
     f_error_text = Property
     f_text = Property
+    uuid_text = Property
 
     model_j_error_text = Property
     model_j_text = Property
@@ -404,6 +406,9 @@ class UnknownsAdapter(BaseAnalysesAdapter):
                            Action(name='Save Analysis Group', action='save_analysis_group'),
                            Action(name='Configure', action='configure_unknowns'),
                            grp)
+
+    def _get_uuid_text(self):
+        return self.item.uuid[:8]
 
     def _get_f_text(self):
         r = floatfmt(self.item.F, n=4)
