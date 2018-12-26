@@ -25,6 +25,7 @@ from pychron.graph.stacked_regression_graph import StackedRegressionGraph
 
 class DefineEquilibrationResultsAdapter(TabularAdapter):
     columns = [('RunID', 'record_id'),
+               ('UUID', 'display_uuid'),
                ('Equilibration Times', 'equilibration_times')]
     record_id_width = Int(100)
 

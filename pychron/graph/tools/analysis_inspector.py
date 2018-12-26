@@ -133,7 +133,7 @@ class AnalysisPointInspector(PointInspector):
                             y = self.value_format(y)
 
                     tag = analysis.tag
-                    uuid = analysis.uuid[:8]
+                    uuid = analysis.display_uuid
 
                     info = [u'Analysis= {}'.format(rid),
                             u'UUID= {}'.format(uuid),

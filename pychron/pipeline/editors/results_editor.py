@@ -33,7 +33,11 @@ from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, LIGHT_RED
 
 
 class IsoEvolutionResultsAdapter(TabularAdapter):
-    columns = [('RunID', 'record_id'), ('Isotope', 'isotope'), ('Fit', 'fit'), ('N', 'nstr'),
+    columns = [('RunID', 'record_id'),
+               ('UUID', 'display_uuid'),
+               ('Isotope', 'isotope'),
+               ('Fit', 'fit'),
+               ('N', 'nstr'),
                ('Intercept', 'intercept_value'),
                (PLUSMINUS_ONE_SIGMA, 'intercept_error'),
                ('%', 'percent_error'),

@@ -183,6 +183,7 @@ class IdeogramPlotable(HasTraits):
     aliquot = 0
     step = ''
     timestamp = 0
+    uuid = None
 
     def __init__(self, make_arar_constants=True, *args, **kw):
         super(IdeogramPlotable, self).__init__(*args, **kw)
@@ -239,6 +240,13 @@ class IdeogramPlotable(HasTraits):
         a, e = self._value_string(t)
         pe = format_percent_error(a, e)
         return u'{} {}{} ({}%)'.format(floatfmt(a), PLUSMINUS, floatfmt(e), pe)
+
+    @property
+    def display_uuid(self):
+        u = self.uuid
+        if not u:
+            u = ''
+        return u[:8]
 
     @property
     def label_name(self):
@@ -309,7 +317,6 @@ class Analysis(ArArAge, IdeogramPlotable):
     laboratory = ''
     instrument_name = ''
     analystName = ''
-    uuid = None  # Str
     measured_response_stream = None
     requested_output_stream = None
     setpoint_stream = None
