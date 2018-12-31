@@ -13,12 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.api import Int
+from traits.api import Int, Bool, Range
 
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.fit import FitOptions
 from pychron.options.views.define_equilibration_views import VIEWS
-from pychron.pychron_constants import MAIN
+from pychron.pychron_constants import MAIN, DISPLAY
 
 
 class DefineEquilibrationAuxPlot(AuxPlot):
@@ -27,9 +27,11 @@ class DefineEquilibrationAuxPlot(AuxPlot):
 
 class DefineEquilibrationOptions(FitOptions):
     aux_plot_klass = DefineEquilibrationAuxPlot
+    show_statistics = Bool(False)
+    ncols = Range(1, 5)
 
     def initialize(self):
-        self.subview_names = [MAIN,]
+        self.subview_names = [MAIN, DISPLAY]
 
     def _get_subview(self, name):
         return VIEWS[name]

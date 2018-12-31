@@ -33,4 +33,11 @@ class BaseResult(HasTraits):
         if self.analysis:
             r = self.analysis.identifier
         return r
+
+    @property
+    def display_uuid(self):
+        r = ''
+        if self.analysis:
+            r = self.analysis.display_uuid
+        return r
 # ============= EOF =============================================
