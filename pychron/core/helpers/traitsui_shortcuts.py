@@ -16,15 +16,28 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traitsui.api import  Item, ListEditor, InstanceEditor
+
+from traitsui.api import Item, ListEditor, InstanceEditor
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 def instance_item(name, **kw):
     return Item(name, style='custom', show_label=False, **kw)
 
+
 def listeditor(name, **kw):
     return Item(name,
                 show_label=False,
                 editor=ListEditor(mutable=False, style='custom', editor=InstanceEditor()),
-                    **kw)
+                **kw)
+
+
+def rfloatitem(*args, **kw):
+    kw['style'] = 'readonly'
+    return floatitem(*args, **kw)
+
+
+def floatitem(name, sigfigs=3, **kw):
+    return Item(name, format_str='%0.{}f'.format(sigfigs), **kw)
 # ============= EOF =============================================

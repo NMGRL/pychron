@@ -16,10 +16,11 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-import six.moves.cPickle as pickle
+
 import os
 import shutil
 
+import six.moves.cPickle as pickle
 from traits.api import Float, Event, String, Any, Enum, Button, List, Instance
 
 from pychron.loggable import Loggable
@@ -63,8 +64,8 @@ def get_hole_calibration(name, hole):
 
 
 class TrayCalibrationManager(Loggable):
-    x = Float
-    y = Float
+    cx = Float
+    cy = Float
     rotation = Float
     scale = Float
     error = Float
@@ -97,7 +98,7 @@ class TrayCalibrationManager(Loggable):
         calobj = TrayCalibrator.load(stage_map)
         if calobj is not None:
             try:
-                self.x, self.y = calobj.cx, calobj.cy
+                self.cx, self.cy = calobj.cx, calobj.cy
                 self.rotation = calobj.rotation
                 self.scale = calobj.scale
                 self.style = calobj.style
@@ -145,6 +146,7 @@ class TrayCalibrationManager(Loggable):
 
     def _set_center_button_fired(self):
         x, y = self.parent.get_current_position()
+        self.info('setting center guess x={}, y={}'.format(x, y))
         self.parent.stage_map.set_center_guess(x, y)
 
     def _reset_holes_button_fired(self):
