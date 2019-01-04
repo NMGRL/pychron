@@ -122,6 +122,11 @@ class ExperimentEditor(BaseTraitsEditor):
         self.queue.refresh_table_needed = True
 
     def setup_tabular_adapters(self, c, ec, colors, use_atype_colors, atype_colors):
+        if c is None:
+            c = 'white'
+        if ec is None:
+            ec = 'white'
+
         self.bgcolor = c
         self.tabular_adapter = self.tabular_adapter_klass()
         self.executed_tabular_adapter = self.executed_tabular_adapter_klass()

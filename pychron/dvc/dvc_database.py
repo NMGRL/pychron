@@ -1478,13 +1478,18 @@ class DVCDatabase(DatabaseAdapter):
         return self._retrieve_item(IrradiationTbl, name)
 
     def get_material(self, name, grainsize=None):
-        if not isinstance(name, str) and not isinstance(name, six.text_type):
+        # if not isinstance(name, str) and not isinstance(name, six.text_type):
+        if isinstance(name, MaterialTbl):
             if grainsize is None or name.grainsize == grainsize:
                 return name
 
         with self.session_ctx() as sess:
             q = sess.query(MaterialTbl)
-            q = q.filter(MaterialTbl.name == name)
+            if isinstance(name, MaterialTbl):
+                q = q.filter(MaterialTbl.id == name.id)
+            else:
+                q = q.filter(MaterialTbl.name == name)
+
             if grainsize:
                 q = q.filter(MaterialTbl.grainsize == grainsize)
             return self._query_one(q)

@@ -117,9 +117,7 @@ class ExtractionPyScript(ValvePyScript):
     def get_grain_polygons(self):
         m = self._grain_polygons
         if not m:
-            m = self._extraction_action([('get_grain_polygon_blob', (), {})])
-            if m:
-                m = m[0]
+            m = self._extraction_action(('get_grain_polygon_blob', (), {}))
         return m
 
     def get_response_blob(self):
@@ -129,7 +127,7 @@ class ExtractionPyScript(ValvePyScript):
         :return: response blob. binary string representing time v measured output
         :rtype: str
         """
-        result = self._extraction_action([('get_response_blob', (), {})])
+        result = self._extraction_action(('get_response_blob', (), {}))
         if result:
             result = result[0]
         return result or ''
@@ -142,7 +140,7 @@ class ExtractionPyScript(ValvePyScript):
         :rtype: str
         """
 
-        result = self._extraction_action([('get_output_blob', (), {})])
+        result = self._extraction_action(('get_output_blob', (), {}))
         if result:
             result = result[0]
         return result or ''
@@ -155,7 +153,7 @@ class ExtractionPyScript(ValvePyScript):
         :rtype: str
         """
 
-        result = self._extraction_action([('get_setpoint_blob', (), {})])
+        result = self._extraction_action(('get_setpoint_blob', (), {}))
         if result:
             result = result[0]
         return result or ''
@@ -171,7 +169,7 @@ class ExtractionPyScript(ValvePyScript):
         :rtype: str
         """
         request = self.extract
-        ach = self._extraction_action([('get_achieved_output', (), {})])
+        ach = self._extraction_action(('get_achieved_output', (), {}))
         try:
             request = float(request)
         except (ValueError, TypeError):
@@ -185,7 +183,7 @@ class ExtractionPyScript(ValvePyScript):
         return ach, request
 
     def get_active_pid_parameters(self):
-        result = self._extraction_action([('get_active_pid_parameters', (), {})])
+        result = self._extraction_action(('get_active_pid_parameters', (), {}))
         if result:
             return result[0]
 
@@ -220,7 +218,7 @@ class ExtractionPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def get_pressure(self, controller, gauge):
-        result = self._manager_action(('get_pressure', (controller, gauge)), protocol=ELPROTOCOL)
+        result = self._manager_action(('get_pressure', (controller, gauge), {}), protocol=ELPROTOCOL)
         return result
 
     @verbose_skip
@@ -330,7 +328,7 @@ class ExtractionPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def set_response_recorder_period(self, p):
-        self._extraction_action(('set_response_recorder_period', (p,),))
+        self._extraction_action(('set_response_recorder_period', (p,), {}))
 
     @verbose_skip
     @command_register
@@ -443,7 +441,7 @@ class ExtractionPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def set_light(self, value=''):
-        self._extraction_action(('set_light', (value,)))
+        self._extraction_action(('set_light', (value,), {}))
 
     @verbose_skip
     @command_register
@@ -512,7 +510,7 @@ class ExtractionPyScript(ValvePyScript):
         if name and value is not '':
             l = 'YES' if value else 'NO'
             self.console_info('set motor lock to {}'.format(name, l))
-            self._extraction_action(('set_motor_lock', (name, value),))
+            self._extraction_action(('set_motor_lock', (name, value), {}))
 
     @verbose_skip
     @command_register
@@ -520,7 +518,7 @@ class ExtractionPyScript(ValvePyScript):
         self.console_info('setting motor "{}" to {}'.format(name, value))
         if name is not '' and value is not '':
             if value is not None:
-                self._extraction_action(('set_motor', (name, value),))
+                self._extraction_action(('set_motor', (name, value), {}))
 
     @verbose_skip
     @command_register
@@ -549,7 +547,7 @@ class ExtractionPyScript(ValvePyScript):
             ed = self.extract_device
             self.console_info('{} move to position {}'.format(ed, position))
             success = self._extraction_action(('move_to_position',
-                                              (position, autocenter),))
+                                              (position, autocenter), {}))
 
             if not success:
                 self.info('{} move to position failed'.format(ed))
@@ -575,6 +573,18 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
+    def drop_sample(self, position=''):
+        success = self._extraction_action([('drop_sample', (position,), {'block': True})])
+
+        if not success:
+            self.info('{} drop sample failed'.format(self.extract_device))
+            self.cancel()
+        else:
+            self.console_info('drop sample succeeded')
+            return True
+
+    @verbose_skip
+    @command_register
     def execute_pattern(self, pattern='', block=True, duration=None):
         if pattern == '':
             pattern = self.pattern
@@ -592,7 +602,7 @@ class ExtractionPyScript(ValvePyScript):
             tray = self.tray
 
         self.console_info('set tray to {}'.format(tray))
-        result = self._extraction_action(('set_stage_map', (tray,)))
+        result = self._extraction_action(('set_stage_map', (tray,), {}))
         return result
 
     @verbose_skip
@@ -668,7 +678,7 @@ class ExtractionPyScript(ValvePyScript):
         ed = ed.replace('_', ' ')
 
         # get current position and add as an extraction position
-        pos = self._extraction_actions(('get_position', (), {}))
+        pos = self._extraction_action(('get_position', (), {}))
         self._extraction_positions.append(pos)
 
         # set an experiment message
@@ -719,7 +729,7 @@ class ExtractionPyScript(ValvePyScript):
                 return
 
             self.console_info('ramp step {}. setpoint={}'.format(i, ramp_step))
-            if not self._extraction_action(('set_laser_power', (ramp_step,))):
+            if not self._extraction_action(('set_laser_power', (ramp_step,), {})):
                 return
 
             if self._cancel:
@@ -945,7 +955,7 @@ class ExtractionPyScript(ValvePyScript):
     # private
     # ===============================================================================
     def _check_responding(self, rr, st):
-        self._extraction_action([('check_responding', (rr, st), {})])
+        self._extraction_action(('check_responding', (rr, st), {}))
 
     def _abort_hook(self):
         self.disable()
@@ -1012,14 +1022,14 @@ class ExtractionPyScript(ValvePyScript):
         # if self.manager:
         #     self.manager.set_extract_state(False)
 
-        return self._extraction_action([('disable_device', (), {})], protocol=protocol)
+        return self._extraction_action(('disable_device', (), {}), protocol=protocol)
 
     def _set_axis(self, name, value, velocity):
         kw = dict(block=True)
         if velocity:
             kw['velocity'] = value
 
-        success = self._extraction_action([('set_{}'.format(name), (value,), kw)])
+        success = self._extraction_action(('set_{}'.format(name), (value,), kw))
         if not success:
             self.console_info('{} move to position failed'.format(self.extract_device))
         else:
@@ -1038,7 +1048,7 @@ class ExtractionPyScript(ValvePyScript):
         self.stop_grain_polygon()
 
     def _stop_pattern(self, protocol=None):
-        self._extraction_action([('stop_pattern', (), {})], protocol=protocol)
+        self._extraction_action(('stop_pattern', (), {}), protocol=protocol)
 
     def _automated_run_call(self, func, *args, **kw):
         if self.automated_run is None:

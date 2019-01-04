@@ -78,7 +78,7 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
 
     executed = Bool(False)
 
-    human_error_checker = Instance(HumanErrorChecker, ())
+    human_error_checker = Instance(HumanErrorChecker)
     execution_ratio = Property
 
     refresh_blocks_needed = Event
@@ -396,6 +396,19 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
         return rgen, len(runs)
 
     # private
+    def _human_error_checker_default(self):
+        return self._human_error_checker_factory()
+
+    def _human_error_checker_factory(self, klass = None):
+        if klass is None:
+            klass = HumanErrorChecker
+
+        from pychron.spectrometer.base_spectrometer_manager import BaseSpectrometerManager
+        spec_man = self.application.get_service(BaseSpectrometerManager)
+
+        hec = klass(spectrometer_manager=spec_man)
+        return hec
+
     def _find_run(self, aid):
         return next((a for a in self.automated_runs
                      if make_runid(a.labnumber, a.aliquot, a.step) == aid), None)
@@ -436,7 +449,7 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
         else:
             k = HumanErrorChecker
 
-        self.human_error_checker = k()
+        self.human_error_checker = self._human_error_checker_factory(k)
 
     @on_trait_change('automated_runs[]')
     def _refresh_info(self, new):

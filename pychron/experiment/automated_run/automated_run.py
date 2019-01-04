@@ -2472,10 +2472,10 @@ anaylsis_type={}
 
         klass = MeasurementPyScript
         if isinstance(self.spectrometer_manager, ThermoSpectrometerManager):
-            from pychron.pyscripts.measurement_pyscript import ThermoMeasurementPyScript
+            from pychron.pyscripts.thermo_measurement_pyscript import ThermoMeasurementPyScript
             klass = ThermoMeasurementPyScript
         elif isinstance(self.spectrometer_manager, NGXSpectrometerManager):
-            from pychron.pyscripts.measurement_pyscript import NGXMeasurementPyScript
+            from pychron.pyscripts.ngx_measurement_pyscript import NGXMeasurementPyScript
             klass = NGXMeasurementPyScript
 
         ms = klass(root=paths.measurement_dir, name=sname, automated_run=self, runner=self.runner)

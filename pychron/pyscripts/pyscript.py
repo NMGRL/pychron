@@ -86,7 +86,7 @@ def verbose_skip(func):
             if obj.testing_syntax or obj.is_canceled() or obj.is_truncated() or obj.is_aborted():
                 return 0
 
-            obj.debug('{} {} {}'.format(fname, args, kw))
+            obj.debug('func_name={} args={} kw={}'.format(fname, args, kw))
 
             return func(obj, *args, **kw)
 
