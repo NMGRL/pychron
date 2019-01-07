@@ -45,10 +45,17 @@ class LumenDetector(Locator):
     _cached_mask_value = None
     grain_measuring = False
     active_targets = None
+    _target = None
 
     def __init__(self, *args, **kw):
         super(LumenDetector, self).__init__(*args, **kw)
         self._color_mapper = hot(DataRange1D(low=0, high=1))
+
+    def reset(self):
+        self._target = None
+
+    def draw_targets(self, *args, **kw):
+        self._draw_targets(*args, **kw)
 
     def get_value(self, src, dim, threshold=10, area_threshold=10):
         """
@@ -70,27 +77,46 @@ class LumenDetector(Locator):
             pd = 1
         else:
             gsrc = src
-            tt = threshold / 100*pixel_depth
+            tt = threshold / 100 * pixel_depth
             pd = pixel_depth
 
-        targets = self.find_targets(None, src, dim, search={'n': 2})
-        if targets:
-            self.debug('found targets={}'.format(len(targets)))
-            area = targets[0].area
+        src[src <= threshold] = 0
+
+        if not self._target:
+            targets = self.find_targets(None, src, dim, search={'n': 2})
+            marea = m.sum()
+
+            area = 0
+            if targets:
+                self.debug('found targets={}'.format(len(targets)))
+                for t in targets:
+                    if t.area > marea * 0.15:
+                        if t.area > area:
+                            area = t.area
+                            self._target = t
+            else:
+                area = marea
+
+            if not area:
+                area = marea
         else:
-            area = m.sum()
+            area = self._target.area
+            targets = [self._target]
 
-        tsrc = gsrc[gsrc > tt]
-
+        if self._target:
+            points = self._target.poly_points
+            pmaskrr,pmaskcc = polygon(points[:,0], points[:,1], gsrc.shape)
+            tsrc = gsrc[pmaskrr, pmaskcc]
+        else:
+            tsrc = gsrc[gsrc > tt]
         # n = tsrc.shape[0]
         v = 0
         if area:
             ss = tsrc.sum()
-            v = ss / (area*pd)
-            self.debug('v={}, sum={}, area={}, pd={}'.format(v, ss, area, pd))
+            v = ss / (area * pd)
+            self.debug('v={}, sum={}, area={}, pd={}, mask={}'.format(v, ss, area, pd, m.sum()))
 
-        src[src <= threshold] = 0
-        return src, v
+        return src, v, targets
 
     def find_targets(self, image, src, dim, mask=False, search=None):
         targets = self._find_targets(image, src, dim,
@@ -104,7 +130,7 @@ class LumenDetector(Locator):
             if targets:
                 self.active_targets = targets
                 if image is not None:
-                    self._draw_targets(image.source_frame, targets, dim)
+                    self._draw_targets(image.source_frame, targets)
                 return targets
 
     def find_lum_peak(self, lum, dim, mask_dim, min_distance=5, blur=1):
@@ -136,7 +162,7 @@ class LumenDetector(Locator):
             px, py = target.centroid
             pt = px - w / 2, py - h / 2, 1
             area = target.area
-            self._draw_targets(src, targets, dim)
+            self._draw_targets(src, targets)
         else:
             area = mask.sum()
 

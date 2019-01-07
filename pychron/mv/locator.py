@@ -119,7 +119,7 @@ class Locator(Loggable):
             self._draw_center_indicator(src, size=2, shape='rect', radius=round(dim))
 
             # draw targets
-            self._draw_targets(src, targets, dim)
+            self._draw_targets(src, targets)
 
             if shape == 'circle':
                 if self.use_arc_approximation:
@@ -539,22 +539,22 @@ class Locator(Loggable):
     # ===============================================================================
     # draw
     # ===============================================================================
-    def _draw_targets(self, src, targets, dim):
+    def _draw_targets(self, src, targets):
         """
             draw a crosshairs indicator
         """
+        if targets:
+            for ta in targets:
+                pt = new_point(*ta.centroid)
+                self._draw_indicator(src, pt,
+                                     color=(0, 255, 0),
+                                     size=10,
+                                     shape='crosshairs')
+                # draw_circle(src, pt,
+                #             color=(0,255,0),
+                #             radius=int(dim))
 
-        for ta in targets:
-            pt = new_point(*ta.centroid)
-            self._draw_indicator(src, pt,
-                                 color=(0, 255, 0),
-                                 size=10,
-                                 shape='crosshairs')
-            # draw_circle(src, pt,
-            #             color=(0,255,0),
-            #             radius=int(dim))
-
-            draw_polygons(src, [ta.poly_points], color=(255, 255, 255))
+                draw_polygons(src, [ta.poly_points], color=(255, 255, 255))
 
     def _draw_center_indicator(self, src, color=(0, 0, 255), shape='crosshairs',
                                size=10, radius=1):

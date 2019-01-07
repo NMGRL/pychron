@@ -106,6 +106,7 @@ class StageControlPane(TraitsDockPane):
             recgrp = VGroup(HGroup(icon_button_editor('stage_manager.snapshot_button',
                                                       'camera',
                                                       tooltip='Take a snapshot'),
+                                   Item('stage_manager.snapshot_mode', label='Mode'),
                                    icon_button_editor('stage_manager.record',
                                                       'media-record',
                                                       tooltip='Record video'),
