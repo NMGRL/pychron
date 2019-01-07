@@ -357,6 +357,7 @@ class UnknownsAdapter(BaseAnalysesAdapter):
                    ('Run ID', 'record_id'),
                    ('Aliquot', 'aliquot'),
                    ('Step', 'step'),
+                   ('UUID', 'display_uuid'),
                    ('Sample', 'sample'),
                    ('Project', 'project'),
                    ('RepositoryID', 'repository_identifier'),

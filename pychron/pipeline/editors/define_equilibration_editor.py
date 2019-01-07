@@ -25,6 +25,7 @@ from pychron.graph.stacked_regression_graph import StackedRegressionGraph
 
 class DefineEquilibrationResultsAdapter(TabularAdapter):
     columns = [('RunID', 'record_id'),
+               ('UUID', 'display_uuid'),
                ('Equilibration Times', 'equilibration_times')]
     record_id_width = Int(100)
 
@@ -39,6 +40,8 @@ class DefineEquilibrationResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
     previous_button = Event
     next_enabled = Bool
     previous_enabled = Bool
+
+    options = Any
 
     def __init__(self, results, *args, **kw):
         super(DefineEquilibrationResultsEditor, self).__init__(*args, **kw)
@@ -68,7 +71,9 @@ class DefineEquilibrationResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
         if new:
             self.graph = new.analysis.get_isotope_evolutions(new.isotopes,
                                                              load_data=False,
-                                                             show_equilibration=True)
+                                                             show_equilibration=True,
+                                                             ncols=self.options.ncols,
+                                                             show_statistics=self.options.show_statistics)
             idx = self.results.index(new)
             if idx == len(self.results) - 1:
                 self.next_enabled = False
