@@ -1727,9 +1727,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         """
         self.heading('Pre Run Check')
 
-        if not self._check_scheduled_stop(spec):
-            return True
-
         if not self._check_dashboard(inform):
             return True
 
