@@ -575,6 +575,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     self.debug('caught a skipped run {}'.format(spec.runid))
                     continue
 
+                if self._check_scheduled_stop(spec):
+                    self.info('Experiment scheduled to stop')
+                    break
+
                 if self._pre_run_check(spec):
                     self.warning('pre run check failed')
                     break
@@ -611,13 +615,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 delay_after_previous_analysis = run.spec.get_delay_after(exp.delay_between_analyses,
                                                                          exp.delay_after_blank,
                                                                          exp.delay_after_air)
-
-                self.debug(
-                    '$$$$$$$$$$$$$$ delay after dp={}, d={} da={} db={}, at={}'.format(delay_after_previous_analysis,
-                                                                                       run.spec.delay_after,
-                                                                                       exp.delay_between_analyses,
-                                                                                       exp.delay_after_blank,
-                                                                                       run.spec.analysis_type))
 
                 if not run.is_last and run.spec.analysis_type == 'unknown' and spec.overlap[0]:
                     self.debug('waiting for extracting_run to finish')
@@ -1366,6 +1363,19 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     # ===============================================================================
     # checks
     # ===============================================================================
+    def _check_scheduled_stop(self, spec):
+        """
+        return True if the end time of the upcoming run is greater than the scheduled stop time
+        :param spec:
+        :return:
+        """
+
+        scheduled_stop = self.scheduler.stop_dt
+        if scheduled_stop is not None:
+            et = self.stats.get_endtime(spec)
+            self.debug('Scheduled stop check. Run End Time={}, Scheduled={}'.format(et, scheduled_stop))
+            return et > scheduled_stop
+
     def _check_for_email_plugin(self, inform):
         if any((eq.use_email or eq.use_group_email for eq in self.experiment_queues)):
             if not self.application.get_plugin('pychron.social.email.plugin'):
@@ -1716,6 +1726,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             return True to stop execution loop
         """
         self.heading('Pre Run Check')
+
+        if not self._check_scheduled_stop(spec):
+            return True
 
         if not self._check_dashboard(inform):
             return True
