@@ -27,6 +27,16 @@ from pychron.pipeline.plot.plotter.references_series import ReferencesSeries
 
 
 class ICFactor(ReferencesSeries):
+    def _get_plot_label_text(self, po):
+        n, d = po.name.split('/')
+
+        analysis = self.sorted_references[0]
+
+        niso = analysis.get_isotope(detector=n)
+        diso = analysis.get_isotope(detector=d)
+
+        return '{}/{}'.format(niso.name, diso.name)
+
     def _get_interpolated_value(self, po, analysis):
         n, d = po.name.split('/')
         #iso = next((i for i in analysis.isotopes.itervalues() if i.detector == d), None)
