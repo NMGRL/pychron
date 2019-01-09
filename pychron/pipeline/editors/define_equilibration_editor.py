@@ -20,7 +20,7 @@ from traitsui.tabular_adapter import TabularAdapter
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor, grouped_name
-from pychron.graph.stacked_regression_graph import StackedRegressionGraph
+from pychron.graph.graph import Graph
 
 
 class DefineEquilibrationResultsAdapter(TabularAdapter):
@@ -34,7 +34,7 @@ class DefineEquilibrationResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
     results = List
     adapter = Instance(DefineEquilibrationResultsAdapter, ())
     # dclicked = Event
-    graph = Instance(StackedRegressionGraph)
+    graph = Instance(Graph)
     selected = Any
     next_button = Event
     previous_button = Event

@@ -100,8 +100,9 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
     else:
         xmi, xma = 0, -Inf
 
-    isotopes = sort_isotopes(isotopes, reverse=False, key=attrgetter('name'))
     if ncols > 1:
+        isotopes = sort_isotopes(isotopes, reverse=True, key=attrgetter('name'))
+
         def reorder(l, n):
             l = [l[i:i + n] for i in range(0, len(l), n)]
             nl = []
@@ -119,6 +120,7 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
                                          container_dict={'padding_top': 40,
                                                          'padding_bottom': 40})
     else:
+        isotopes = sort_isotopes(isotopes, reverse=False, key=attrgetter('name'))
         g = StackedRegressionGraph(resizable=True, container_dict={'spacing': 10})
 
     # g.plotcontainer.spacing = 10
