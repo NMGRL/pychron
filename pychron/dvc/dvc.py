@@ -682,7 +682,11 @@ class DVC(Loggable):
             records = [r for r in records if r.repository_identifier is not None]
 
         if not records:
-            return []
+            if self.use_cache:
+                cache.clean()
+                return cached_records
+            else:
+                return []
 
         exps = {r.repository_identifier for r in records}
         progress_iterator(exps, func, threshold=1)
