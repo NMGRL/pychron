@@ -462,6 +462,8 @@ class ReferencesAdapter(BaseAnalysesAdapter):
 
     all_columns = [('RunDate', 'rundate'),
                    ('Run ID', 'record_id'),
+                   ('Aliquot', 'aliquot'),
+                   ('UUID', 'display_uuid'),
                    ('Sample', 'sample'),
                    ('Project', 'project'),
                    ('RepositoryID', 'repository_identifier'),
