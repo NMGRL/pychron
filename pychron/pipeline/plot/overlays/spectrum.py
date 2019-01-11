@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.data_label import draw_arrow
 from chaco.label import Label
@@ -24,15 +25,15 @@ from enable.colors import convert_from_pyqt_color
 from enable.font_metrics_provider import font_metrics_provider
 from enable.tools.drag_tool import DragTool
 from kiva.trait_defs.kiva_font_trait import KivaFont
-from traits.api import Array, Int, Float, Str, Color, Bool, List
-
 # ============= standard library imports ========================
 from numpy import where, array
+from six.moves import zip
+from traits.api import Array, Int, Float, Str, Color, Bool, List
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
 from pychron.graph.tools.info_inspector import InfoOverlay, InfoInspector
 from pychron.pychron_constants import PLUSMINUS, SIGMA
-from six.moves import zip
 
 
 class BasePlateauOverlay(AbstractOverlay):
@@ -40,10 +41,11 @@ class BasePlateauOverlay(AbstractOverlay):
 
     def _get_section(self, pt):
         d = self.component.map_data(pt)
-        cs = self.cumulative39s
+        cs = self.cumulative39s[::2]
         t = where(cs < d)[0]
+
         if len(t):
-            tt = t[-1] + 1
+            tt = t[-1]
         else:
             tt = 0
         return tt
@@ -121,14 +123,18 @@ class SpectrumTool(InfoInspector, BasePlateauOverlay):
 
     def normal_mouse_move(self, event):
         pt = event.x, event.y
+        # print('ht', self.hittest(pt), event.handled)
+
         if self.hittest(pt) is not None and not event.handled:
-            event.window.set_pointer('cross')
+            # print('setting cross')
+            # event.window.set_pointer('cross')
             hover = self._get_section(pt)
             self.component.index.metadata['hover'] = [hover]
             self.current_position = hover
             self.current_screen = pt
         else:
-            event.window.set_pointer('arrow')
+            # print('settinasg arrow')
+            # event.window.set_pointer('arrow')
             self.component.index.metadata['hover'] = None
 
             self.current_position = None
