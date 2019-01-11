@@ -601,7 +601,8 @@ class Isotope(BaseIsotope):
         if self.decay_corrected is not None:
             return self.decay_corrected
         else:
-            return self.get_interference_corrected_value()
+            return self.get_non_detector_corrected_value()
+            # return self.get_interference_corrected_value()
 
     def get_interference_corrected_value(self):
         if self.interference_corrected_value is not None:
