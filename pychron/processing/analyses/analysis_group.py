@@ -571,7 +571,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
             self.calculate_isochron_age()
             v = 1/self.isochron_4036
             if not include_error:
-                v = nominal_value(v)
+                v = ufloat(nominal_value(v), std_dev=0)
 
         for a in self.analyses:
             a.arar_constants.trapped_atm4036 = v
