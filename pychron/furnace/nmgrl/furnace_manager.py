@@ -481,6 +481,31 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         return self.loader_logic.close(name)
 
     def _update_scan(self):
+        state = self.controller.get_water_flow_state()
+        if state in (0, 1):
+            # self.water_flow_led.state = 2 if state else 0
+            self.water_flow_state = 2 if state else 0
+        else:
+            self.water_flow_state = 1
+
+        write_water_state = self._recorded_flow_state is None or self._recorded_flow_state != self.water_flow_state
+
+        if write_water_state:
+            with open(os.path.join(paths.data_dir, 'furnace_water.txt'), 'a') as wfile:
+                wfile.write('{},{}\n'.format(time.time(), state))
+                self._recorded_flow_state = self.water_flow_state
+
+        response = self.controller.get_process_value()
+        self.temperature_readback = response or 0
+
+        output = self.controller.get_output()
+        self.output_percent_readback = output or 0
+
+        setpoint = self.controller.get_setpoint()
+
+        self._update_scan_graph(response, output, setpoint or 0)
+
+    def _update_scan_old(self):
         d = self.controller.get_summary(verbose=self.verbose_scan)
         if d:
             state = d.get('h2o_state')
