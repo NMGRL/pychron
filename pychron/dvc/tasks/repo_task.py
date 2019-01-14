@@ -79,6 +79,7 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
     filter_repository_value = Str
     filter_origin_value = Str
     selected_repository = Instance(RepoItem)
+    ncommits = Int(enter_set=True, auto_set=False)
 
     selected_local_repositories = List
     selected_local_repository_name = Property(depends_on='selected_local_repositories')#Instance(RepoItem)
@@ -381,11 +382,17 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
                 self._refresh_branches()
                 self._refresh_tags()
 
-    def _branch_changed(self, new):
+    def _get_commits(self, new):
         if new:
-            self.commits = get_commits(self._repo.active_repo, new, None, '', limit=50)
+            self.commits = get_commits(self._repo.active_repo, new, None, '', limit=self.ncommits)
         else:
             self.commits = []
+
+    def _ncommits_changed(self):
+        self._get_commits(self.branch)
+
+    def _branch_changed(self, new):
+        self._get_commits(new)
 
     def _origin_column_clicked_changed(self, event):
         self._column_clicked_handled(event)

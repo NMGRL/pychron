@@ -260,6 +260,8 @@ class AnalysisTbl(Base, IDMixin):
 
         # force binding of irradiation_position
         self.irradiation_position
+        self.irradiation_level
+        self.irradiation
 
 
 class AnalysisIntensitiesTbl(Base, IDMixin):
