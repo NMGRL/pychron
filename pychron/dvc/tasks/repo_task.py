@@ -34,7 +34,7 @@ from pychron.dvc import repository_path
 from pychron.dvc.tasks import list_local_repos
 from pychron.dvc.tasks.actions import CloneAction, AddBranchAction, CheckoutBranchAction, PushAction, PullAction, \
     FindChangesAction, LoadOriginAction, DeleteLocalChangesAction, ArchiveRepositoryAction, SyncSampleInfoAction, \
-    SyncRepoAction, RepoStatusAction, BookmarkAction, RebaseAction
+    SyncRepoAction, RepoStatusAction, BookmarkAction, RebaseAction, DeleteChangesAction
 from pychron.dvc.tasks.panes import RepoCentralPane, SelectionPane
 from pychron.envisage.tasks.base_task import BaseTask
 # from pychron.git_archive.history import from_gitlog
@@ -98,6 +98,7 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
                           FindChangesAction(),
                           DeleteLocalChangesAction(),
                           ArchiveRepositoryAction(),
+                          DeleteChangesAction(),
                           RepoStatusAction(),
                           BookmarkAction()),
                  SToolBar(SyncSampleInfoAction())]
@@ -314,6 +315,14 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
                                           hexsha=hexsha)
                 else:
                     self.warning_dialog('A name is required to add a bookmark. Please try again')
+
+    def delete_commits(self):
+        selected = self._has_selected_local()
+        if selected and self.selected_commit:
+            hexsha = self.selected_commit.hexsha
+            msg = 'Are you sure you want to permanently delete your changes in "{}"'.format(selected.name)
+            if self.confirmation_dialog(msg):
+                self._repo.delete_commits(hexsha)
 
     # task
     def create_central_pane(self):
