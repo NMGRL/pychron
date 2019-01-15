@@ -547,6 +547,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     plateau_age = AGProperty()
     integrated_age = AGProperty()
 
+    integrated_include_omitted = Bool(False)
     include_j_error_in_plateau = Bool(True)
     plateau_steps_str = Str
     plateau_steps = None
@@ -645,7 +646,10 @@ class StepHeatAnalysisGroup(AnalysisGroup):
 
     @cached_property
     def _get_integrated_age(self):
-        ans = list(self.clean_analyses())
+        if self.integrated_include_omitted:
+            ans = self.analyses
+        else:
+            ans = list(self.clean_analyses())
         return self._calculate_integrated_age(ans, self.integrated_age_weighting)
 
     @property

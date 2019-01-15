@@ -79,7 +79,7 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
     filter_repository_value = Str
     filter_origin_value = Str
     selected_repository = Instance(RepoItem)
-    ncommits = Int(enter_set=True, auto_set=False)
+    ncommits = Int(50, enter_set=True, auto_set=False)
 
     selected_local_repositories = List
     selected_local_repository_name = Property(depends_on='selected_local_repositories')#Instance(RepoItem)

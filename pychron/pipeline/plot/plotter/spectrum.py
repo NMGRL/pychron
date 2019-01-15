@@ -143,6 +143,7 @@ class Spectrum(BaseArArFigure):
             spec.line_width = 0
 
         ag = self.analysis_group
+        ag.integrated_include_omitted = opt.integrated_include_omitted
         ag.include_j_error_in_plateau = opt.include_j_error_in_plateau
         ag.plateau_age_error_kind = opt.plateau_age_error_kind
         ag.plateau_nsteps = opt.pc_nsteps
@@ -450,7 +451,10 @@ class Spectrum(BaseArArFigure):
     def _make_integrated_text(self):
         ag = self.analysis_group
         tga = ag.integrated_age
-        n = ag.nanalyses
+        if ag.integrated_include_omitted:
+            n = len(ag.analyses)
+        else:
+            n = ag.nanalyses
         text = self._build_integrated_age_label(tga, n)
         return text
 
