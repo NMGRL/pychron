@@ -155,7 +155,7 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
                 iso.fit = 'linear'
 
             g.new_series(iso.offset_xs, iso.ys,
-                         fit=iso.fit,
+                         fit=iso.efit,
                          truncate=iso.truncate,
                          filter_outliers_dict=iso.filter_outliers_dict,
                          color='black')
@@ -165,7 +165,7 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
         if show_baseline:
             baseline = iso.baseline
             g.new_series(baseline.offset_xs, baseline.ys,
-                         type='scatter', fit=baseline.fit,
+                         type='scatter', fit=baseline.efit,
                          filter_outliers_dict=baseline.filter_outliers_dict,
                          color='blue')
             ymi, yma = min_max(ymi, yma, baseline.ys)

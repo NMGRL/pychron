@@ -406,7 +406,6 @@ class MainView(HasTraits):
 
     def _load_unknown_computed(self, an, new_list):
         attrs = (('Age', 'uage_w_j_err'),
-                 # ('Age', 'age', None, None, 'age_err'),
                  ('w/o J', 'wo_j', '', 'uage', 'age_err_wo_j'),
                  ('K/Ca', 'kca'),
                  ('K/Cl', 'kcl'),

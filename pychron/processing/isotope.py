@@ -182,6 +182,10 @@ class IsotopicMeasurement(BaseMeasurement):
             return self._regressor.get_xsquared_coefficient()
 
     @property
+    def efit(self):
+        return '{}_{}'.format(self.fit, self.error_type)
+
+    @property
     def rsquared(self):
         if self._regressor:
             return self._regressor.rsquared
