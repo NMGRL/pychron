@@ -601,6 +601,12 @@ class Isotope(BaseIsotope):
         self.baseline._revert_user_defined()
         self._revert_user_defined()
 
+    def get_ic_decay_corrected_value(self):
+        if self.decay_corrected is not None:
+            return self.decay_corrected
+        else:
+            return self.get_ic_corrected_value()
+
     def get_decay_corrected_value(self):
         if self.decay_corrected is not None:
             return self.decay_corrected
