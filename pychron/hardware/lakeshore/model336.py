@@ -49,7 +49,7 @@ class Model336TemperatureController(BaseLakeShoreController):
             contents = []
             if self.iomap[i] is not None:
                 contents = [Item('{}'.format(self.iomap[i])),
-                            UItem('setpoint{}_readback'.format(idx), editor=LCDEditor(width=120, height=30),
+                            UItem('{}_readback'.format(self.iomap[i]), editor=LCDEditor(width=120, height=30),
                                   style='readonly'), Spring(width=10, springy=False)]
 
             h = VGroup(Label(self.ionames[i]),

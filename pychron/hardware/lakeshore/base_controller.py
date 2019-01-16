@@ -52,6 +52,7 @@ class BaseLakeShoreController(CoreDevice):
     range_tests = List
     num_inputs = Int
     ionames = List
+    iolist = List
     iomap = List
 
     def load_additional_args(self, config):
@@ -79,6 +80,7 @@ class BaseLakeShoreController(CoreDevice):
                     self.ionames.append(iodict['input_{}_name'.format(tag)])
                 except ValueError:
                     self.ionames.append('input_{}'.format(tag))
+                self.iolist.append('input_{}'.format(tag))
                 mapsetpoint = iodict['input_{}'.format(tag)]
                 if mapsetpoint.lower() == 'none':
                     self.iomap.append(None)
@@ -101,7 +103,7 @@ class BaseLakeShoreController(CoreDevice):
         return bool(IDN_RE.match(resp))
 
     def update(self, **kw):
-        for tag in self.ionames:
+        for tag in self.iolist:
             func = getattr(self, 'read_{}'.format(tag))
             v = func(**kw)
             setattr(self, tag, v)
