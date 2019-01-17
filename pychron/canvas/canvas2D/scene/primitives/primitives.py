@@ -240,8 +240,7 @@ class Circle(QPrimitive):
             gc.arc(x, y, r, 0, 360)
             gc.fill_path()
 
-        self._render_name(gc, x + self.name_offsetx, y + self.name_offsety,
-                          r / 4., r / 2.)
+        self._render_name(gc, x + self.name_offsetx, y + self.name_offsety, 0, 0)
 
     def is_in(self, sx, sy):
         x, y = self.get_xy()
@@ -403,8 +402,9 @@ class LoadIndicator(Circle):
         if self.space == 'data':
             r = self.map_dimension(r)
 
-        self.name_offsetx = r
-        self.name_offsety = r
+        f = 2 ** 0.5 / 2
+        self.name_offsetx = (r*f)+8
+        self.name_offsety = (r*f)+8
 
         if self.state:
             with gc:
