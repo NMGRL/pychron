@@ -57,7 +57,8 @@ HW_PACKAGE_MAP = {
     'NMGRLMagnetDumper': 'pychron.furnace.magnet_dumper',
     'LamontFurnaceControl': 'pychron.hardware.labjack.ldeo_furnace',
 
-    'Model335TemperatureController': 'pychron.hardware.lakeshore.model335'
+    'Model335TemperatureController': 'pychron.hardware.lakeshore.model335',
+    'Model336TemperatureController': 'pychron.hardware.lakeshore.model336'
     # 'ControlModule': 'pychron.hardware.fusions.vue_diode_control_module'
 }
 
