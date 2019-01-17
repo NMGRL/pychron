@@ -226,7 +226,7 @@ class CSVAnalysesExportNode(CSVExportNode):
     def _get_header(self):
         header = self.selected_meta_attributes[:]
 
-        vargs = [], [], [], [], [], [], []
+        vargs = [], [], [], [], [], [], [], []
         for i in self.available_isotopes:
             for vs, (name, enabled) in zip(vargs, i.values()):
                 if enabled:
