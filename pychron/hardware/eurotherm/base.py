@@ -163,7 +163,7 @@ class BaseEurotherm(HasTraits):
     # private
     def _command(self, cmd, v, **kw):
         builder = getattr(self, '_{}_build_command'.format(self.protocol))
-        resp = self.ask(builder(cmd, v), read_terminator=ACK, terminator_position=0, **kw)
+        resp = self.ask(builder(cmd, v), read_terminator=ACK, terminator_position=-1, **kw)
         parser = getattr(self, '_{}_parse_command_response'.format(self.protocol))
 
         if not self.simulation:
@@ -173,7 +173,7 @@ class BaseEurotherm(HasTraits):
     def _query(self, cmd, **kw):
         builder = getattr(self, '_{}_build_query'.format(self.protocol))
 
-        resp = self.ask(builder(cmd), **kw)
+        resp = self.ask(builder(cmd), read_terminator=ETX, terminator_position=-2, **kw)
 
         parser = getattr(self, '_{}_parse_response'.format(self.protocol))
         if not self.simulation:
