@@ -424,7 +424,7 @@ class DefineEquilibrationNode(FitNode):
         fs = progress_loader(unks, self._assemble_result, threshold=1, step=10)
         self._set_saveable(state)
         if fs:
-            e = DefineEquilibrationResultsEditor(fs)
+            e = DefineEquilibrationResultsEditor(fs, options=po)
             state.editors.append(e)
 
     def _set_saveable(self, state):

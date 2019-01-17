@@ -404,6 +404,7 @@ class CocktailOptions(HasTraits):
 
 class RecallOptions(HasTraits):
     cocktail_options = Instance(CocktailOptions, ())
+    sig_figs = Int(5)
 
     def set_cocktail(self, co):
         cc = CocktailOptions()
@@ -411,10 +412,12 @@ class RecallOptions(HasTraits):
         self.cocktail_options = cc
 
     def get_dump(self):
-        return {'cocktail_options': self.cocktail_options.get_dump()}
+        return {'cocktail_options': self.cocktail_options.get_dump(),
+                'sig_figs': self.sig_figs}
 
     def traits_view(self):
-        v = View(UItem('cocktail_options', style='custom'))
+        v = View(Item('sig_figs', label='SigFigs'),
+                 UItem('cocktail_options', style='custom'))
         return v
 
 
@@ -480,6 +483,7 @@ class RecallTableConfigurer(TableConfigurer):
         if recall_options:
             r = RecallOptions()
             r.set_cocktail(recall_options.get('cocktail_options'))
+            r.sig_figs = recall_options.get('sig_figs', 5)
             self.recall_options = r
 
     def dump(self):

@@ -357,6 +357,7 @@ class UnknownsAdapter(BaseAnalysesAdapter):
                    ('Run ID', 'record_id'),
                    ('Aliquot', 'aliquot'),
                    ('Step', 'step'),
+                   ('UUID', 'display_uuid'),
                    ('Sample', 'sample'),
                    ('Project', 'project'),
                    ('RepositoryID', 'repository_identifier'),
@@ -461,6 +462,8 @@ class ReferencesAdapter(BaseAnalysesAdapter):
 
     all_columns = [('RunDate', 'rundate'),
                    ('Run ID', 'record_id'),
+                   ('Aliquot', 'aliquot'),
+                   ('UUID', 'display_uuid'),
                    ('Sample', 'sample'),
                    ('Project', 'project'),
                    ('RepositoryID', 'repository_identifier'),

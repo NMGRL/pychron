@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.data_label import draw_arrow
 from chaco.label import Label
@@ -24,15 +25,15 @@ from enable.colors import convert_from_pyqt_color
 from enable.font_metrics_provider import font_metrics_provider
 from enable.tools.drag_tool import DragTool
 from kiva.trait_defs.kiva_font_trait import KivaFont
-from traits.api import Array, Int, Float, Str, Color, Bool, List
-
 # ============= standard library imports ========================
 from numpy import where, array
+from six.moves import zip
+from traits.api import Array, Int, Float, Str, Color, Bool, List
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
 from pychron.graph.tools.info_inspector import InfoOverlay, InfoInspector
 from pychron.pychron_constants import PLUSMINUS, SIGMA
-from six.moves import zip
 
 
 class BasePlateauOverlay(AbstractOverlay):
@@ -40,10 +41,11 @@ class BasePlateauOverlay(AbstractOverlay):
 
     def _get_section(self, pt):
         d = self.component.map_data(pt)
-        cs = self.cumulative39s
+        cs = self.cumulative39s[::2]
         t = where(cs < d)[0]
+
         if len(t):
-            tt = t[-1] + 1
+            tt = t[-1]
         else:
             tt = 0
         return tt
@@ -56,37 +58,26 @@ class SpectrumTool(InfoInspector, BasePlateauOverlay):
     # current_screen = None
     analyses = List
 
-    def hittest(self, screen_pt, threshold=20):
+    _cached_lines = None
+
+    def hittest(self, screen_pt, ndx=None):
         comp = self.component
 
-        ndx = self._get_section(screen_pt)
+        if ndx is None:
+            ndx = self._get_section(screen_pt)
+
         ys = comp.value.get_data()[::2]
         if ndx < len(ys):
             yd = ys[ndx]
 
             e = comp.errors[ndx * 2] * self.nsigma
             yl, yu = comp.y_mapper.map_screen(array([yd - e, yd + e]))
-            # print ys
-            # print ndx, yd, yd+e, yd-e, yu, yl, screen_pt[1], self.nsigma
             if yu - yl < 1:
                 yu += 1
                 yl -= 1
 
             if yl < screen_pt[1] < yu:
                 return ndx
-
-    # def normal_mouse_move(self, event):
-    # xy=event.x, event.y
-    # pos=self.hittest(xy)
-    # if pos is not None:
-    # # if isinstance(pos, tuple):
-    # self.current_position = pos
-    # self.current_screen = xy
-    #         # event.handled = True
-    #     else:
-    #         self.current_position = None
-    #         self.current_screen = None
-    #     self.metadata_changed = True
 
     def normal_left_down(self, event):
         if event.handled:
@@ -101,34 +92,46 @@ class SpectrumTool(InfoInspector, BasePlateauOverlay):
             event.handled = True
 
     def assemble_lines(self):
-        idx = self.current_position
-        comp = self.component
+        if self._cached_lines is None:
+            idx = self.current_position
+            comp = self.component
 
-        e = comp.errors[idx * 2]
-        ys = comp.value.get_data()[::2]
-        v = ys[idx]
+            idx2 = idx * 2
+            e = comp.errors[idx2]
+            ys = comp.value.get_data()[::2]
+            v = ys[idx]
 
-        low_c = 0 if idx == 0 else self.cumulative39s[idx - 1]
+            low_c = self.cumulative39s[idx2]
+            high_c = self.cumulative39s[idx2 + 1]
 
-        an = self.analyses[idx]
-        return ['RunID={}'.format(an.record_id),
-                'Tag={}'.format(an.tag),
-                'Status={}'.format(an.status_text),
-                u'{}={} {}{} (1{})'.format(comp.container.y_axis.title, floatfmt(v), PLUSMINUS,
-                                           floatfmt(e), SIGMA),
-                'Cumulative. Ar39={}-{}'.format(floatfmt(low_c),
-                                                floatfmt(self.cumulative39s[idx]))]
+            an = self.analyses[idx]
+            lines = ['RunID={}'.format(an.record_id),
+                     'Tag={}'.format(an.tag),
+                     'Status={}'.format(an.status_text),
+                     u'{}={} {}{} (1{})'.format(comp.container.y_axis.title, floatfmt(v), PLUSMINUS,
+                                                floatfmt(e), SIGMA),
+                     'Cumulative. Ar39={}-{}'.format(floatfmt(low_c), floatfmt(high_c))]
+
+            self._cached_lines = lines
+
+        return self._cached_lines
 
     def normal_mouse_move(self, event):
         pt = event.x, event.y
-        if self.hittest(pt) is not None and not event.handled:
-            event.window.set_pointer('cross')
-            hover = self._get_section(pt)
+        hover = self._get_section(pt)
+
+        if self.hittest(pt, hover) is not None:
+            # print('setting cross')
+            # event.window.set_pointer('cross')
             self.component.index.metadata['hover'] = [hover]
+            if self.current_position != hover:
+                self._cached_lines = None
+
             self.current_position = hover
             self.current_screen = pt
         else:
-            event.window.set_pointer('arrow')
+            # print('settinasg arrow')
+            # event.window.set_pointer('arrow')
             self.component.index.metadata['hover'] = None
 
             self.current_position = None

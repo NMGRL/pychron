@@ -336,9 +336,9 @@ class DVCCommitView(HasTraits):
                    Item('show_all_commits', label='Show All Commits')),
 
             VSplit(UItem('commits', editor=myTabularEditor(adapter=HistoryCommitAdapter(),
-                                                    multi_select=True,
-                                                    editable=False,
-                                                    selected='selected_commits'))),
+                                                           multi_select=True,
+                                                           editable=False,
+                                                           selected='selected_commits'))),
             UItem('selected_message', style='custom',
                   height=-200,
                   editor=TextEditor(read_only=True))))
@@ -365,11 +365,10 @@ class HistoryView(DVCCommitView):
     def _load_commits(self):
         repo = self.repo
 
-        greps = ['<{}>'.format(t) for t in HISTORY_TAGS]
-
         args = [repo.active_branch.name, '--remove-empty', '--simplify-merges']
 
         if not self.show_all_commits:
+            greps = ['<{}>'.format(t) for t in HISTORY_TAGS]
             greps = '\|'.join(greps)
             args.append('--grep=^{}'.format(greps))
 
@@ -378,7 +377,10 @@ class HistoryView(DVCCommitView):
         args.extend(self._paths)
 
         txt = repo.git.log(*args)
+
+        cs = []
         if txt:
             cs = [from_gitlog(l.strip()) for l in txt.split('\n')]
+
         self.commits = cs
 # ============= EOF =============================================

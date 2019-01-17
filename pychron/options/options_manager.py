@@ -250,6 +250,8 @@ class OptionsManager(Loggable):
                 obj = self.options_klass()
 
             obj.initialize()
+            obj.setup()
+
             obj.name = new
             self.subview_names = obj.subview_names
             self.selected_options = obj

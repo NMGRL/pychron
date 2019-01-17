@@ -95,6 +95,12 @@ class DeleteLocalChangesAction(LocalRepositoryAction):
     image = icon('trashcan')
 
 
+class DeleteChangesAction(LocalRepositoryAction):
+    name = 'Delete Commits'
+    method = 'delete_commits'
+    image = icon('trashcan')
+
+
 class ArchiveRepositoryAction(LocalRepositoryAction):
     name = 'Archive Repository'
     method = 'archive_repository'

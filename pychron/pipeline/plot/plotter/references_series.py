@@ -27,6 +27,7 @@ from pychron.core.helpers.formatting import floatfmt
 from pychron.core.regression.base_regressor import BaseRegressor
 from pychron.core.regression.interpolation_regressor import InterpolationRegressor
 from pychron.graph.explicit_legend import ExplicitLegend
+from pychron.graph.offset_plot_label import OffsetPlotLabel
 from pychron.pipeline.plot.plotter.series import BaseSeries
 from pychron.pychron_constants import PLUSMINUS
 
@@ -84,6 +85,7 @@ class ReferencesSeries(BaseSeries):
 
             for i, p in enumerate(plots):
                 self._new_fit_series(i, p)
+                self._add_plot_label(i, p)
 
             mi, ma = self._get_min_max()
             self.xmi, self.xma = (mi - ma) / 3600., 0
@@ -115,6 +117,19 @@ class ReferencesSeries(BaseSeries):
 
     def _calc_limits(self, ys, ye):
         return calc_limits(ys, ye, self.options.nsigma)
+
+    def _add_plot_label(self, pid, po,  overlay_position='inside top', hjustify='left', **kw):
+        txt = self._get_plot_label_text(po)
+        if txt:
+            comp = self.graph.plots[pid]
+            pl = OffsetPlotLabel(txt,
+                                 component=comp,
+                                 overlay_position=overlay_position, hjustify=hjustify,
+                                 **kw)
+            comp.overlays.append(pl)
+
+    def _get_plot_label_text(self, po):
+        pass
 
     def _new_fit_series(self, pid, po):
         ymi, yma = self._plot_unknowns_current(pid, po)

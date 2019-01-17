@@ -15,12 +15,11 @@
 # ===============================================================================
 
 
-
 # =============enthought library imports=======================
-from __future__ import absolute_import
 
+from chaco.plot_containers import GridPlotContainer
 from chaco.scatterplot import ScatterPlot
-from traits.api import Bool, on_trait_change, Event
+from traits.api import Bool, on_trait_change, Event, Int
 
 # =============local library imports  ==========================
 from .graph import Graph
@@ -193,6 +192,57 @@ class StackedGraph(Graph):
         if bind_selection:
             def func(obj, name, old, new):
                 self._update_metadata(bind_id, obj, name, old, new)
+
             scatter.index.on_trait_change(func, 'metadata_changed')
 
+
+class ColumnStackedGraph(StackedGraph):
+    # class ColumnStackedGraph(Graph):
+    ncols = Int
+    nrows = Int
+
+    def _update_bounds(self, bounds, comps):
+        padding_top = sum([getattr(p, 'padding_top') for p in comps])
+        padding_bottom = sum([getattr(p, 'padding_bottom') for p in comps])
+        pt = padding_bottom+padding_top
+        n = self.nrows
+        if self.equi_stack:
+            for p in self.plotcontainer.components:
+                p.bounds = (1, (bounds[1] - pt) / n)
+        else:
+            try:
+                self.plots[0].bounds[1] = (bounds[1] - pt) / max(1, (n - 1))
+            except IndexError:
+                pass
+
+    def set_paddings(self):
+
+        pc = self.plotcontainer
+        n = self.nrows
+        comps = pc.components
+
+        def colsplit(l, ncols):
+            nn = len(l)
+            return [l[i:nn:ncols] for i in range(ncols)]
+
+        cols = colsplit(comps, self.ncols)
+
+        if n > 1:
+            for col in cols:
+                n = len(col)
+                for i, pi in enumerate(col):
+                    pi.padding_top = 0
+                    pi.padding_bottom = 0
+
+                    if i == n - 1:
+                        pi.index_axis.visible = True
+                    else:
+                        pi.index_axis.visible = False
+
+    def container_factory(self, *args, **kw):
+        kw['kind'] = 'g'
+        kw['shape'] = (self.nrows, self.ncols)
+        kw['spacing'] = (0, 0)
+        c = super(ColumnStackedGraph, self).container_factory(*args, **kw)
+        return c
 # ============= EOF ====================================

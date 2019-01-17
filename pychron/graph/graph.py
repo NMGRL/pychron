@@ -178,6 +178,7 @@ def container_factory(**kw):
         if k not in list(kw.keys()):
             kw[k] = options[k]
 
+    print('sdfs', kw)
     container = c(**kw)
 
     # add some tools
@@ -1146,9 +1147,11 @@ class Graph(ContextMenuMixin):
 
         return nc
 
-    def container_factory(self):
+    def container_factory(self, **kw):
         """
         """
+        self.container_dict.update(kw)
+
         return container_factory(**self.container_dict)
 
     # private

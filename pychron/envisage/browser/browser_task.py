@@ -155,11 +155,13 @@ class BaseBrowserTask(BaseEditorTask):
         tc = self.recall_configurer
         info = tc.edit_traits()
         if info.result:
-            for e in self.get_recall_editors()[:]:
+            editors = self.get_recall_editors()
+            for e in editors:
                 e.analysis_view.show_intermediate = tc.show_intermediate
-
-            for e in self.get_recall_editors():
+                e.analysis_view.main_view.set_options(e.analysis, self.recall_configurer.recall_options)
                 tc.set_fonts(e.analysis_view)
+
+            # for e in self.get_recall_editors():
 
     def configure_sample_table(self):
         self.debug('configure sample table')

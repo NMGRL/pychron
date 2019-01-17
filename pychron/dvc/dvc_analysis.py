@@ -181,13 +181,19 @@ class DVCAnalysis(Analysis):
 
         for modifier in modifiers:
             path = self._analysis_path(modifier=modifier)
-            if path and os.path.isfile(path):
-                jd = dvc_load(path)
-                func = getattr(self, '_load_{}'.format(modifier))
-                try:
-                    func(jd)
-                except BaseException as e:
-                    self.warning('Failed loading {}. error={}'.format(modifier, e))
+            if path:
+                if os.path.isfile(path):
+                    jd = dvc_load(path)
+                    if jd:
+                        func = getattr(self, '_load_{}'.format(modifier))
+                        try:
+                            func(jd)
+                        except BaseException as e:
+                            self.warning('Failed loading {}. path={}. error={}'.format(modifier, path, e))
+                    else:
+                        self.debug('path is empty. {}'.format(path))
+                else:
+                    self.debug('Non-existent path. {}'.format(path))
 
     def load_spectrometer_parameters(self, spec_sha):
         if spec_sha:

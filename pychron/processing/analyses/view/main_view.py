@@ -306,9 +306,16 @@ class MainView(HasTraits):
 
                 ci.trait_set(value=floatfmt(nominal_value(corrected)),
                              error=floatfmt(std_dev(corrected)),
+                             sig_figs=self.sig_figs,
                              noncorrected_value=nominal_value(noncorrected),
                              noncorrected_error=std_dev(noncorrected),
                              ic_factor=nominal_value(ic))
+
+    def _computed_value_factory(self, *args, **kw):
+        if 'sig_figs' not in kw:
+            kw['sig_figs'] = self.sig_figs
+
+        return ComputedValue(*args, **kw)
 
     def _load_air_computed(self, an, new_list):
         if new_list:
@@ -347,14 +354,14 @@ class MainView(HasTraits):
             cv = self._make_ratios(ratios)
 
             an.calculate_age()
-            cv.append(ComputedValue(name='F', tag='uf',
-                                    uvalue=an.uF))
+            cv.append(self._computed_value_factory(name='F', tag='uf',
+                                                   uvalue=an.uF))
 
-            cv.append(ComputedValue(name='40Ar*', tag='rad40_percent',
-                                    uvalue=an.rad40_percent))
+            cv.append(self._computed_value_factory(name='40Ar*', tag='rad40_percent',
+                                                   uvalue=an.rad40_percent))
 
-            cv.append(ComputedValue(name='Age', tag='uage',
-                                    uvalue=an.uage))
+            cv.append(self._computed_value_factory(name='Age', tag='uage',
+                                                   uvalue=an.uage))
 
             self.computed_values = cv
             self._update_ratios()
@@ -387,11 +394,11 @@ class MainView(HasTraits):
                 else:
                     e = std_dev(value)
 
-                return ComputedValue(name=n,
-                                     tag=a,
-                                     value=nominal_value(value or 0),
-                                     display_value=display_value,
-                                     error=e or 0)
+                return self._computed_value_factory(name=n,
+                                                    tag=a,
+                                                    value=nominal_value(value or 0),
+                                                    display_value=display_value,
+                                                    error=e or 0)
 
             cv = [comp_factory(*args)
                   for args in attrs]
@@ -403,10 +410,17 @@ class MainView(HasTraits):
                 v = getattr(an, attr)
                 ci.value = nominal_value(v)
                 ci.error = std_dev(v)
+                ci.sig_figs = self.sig_figs
+
+    @property
+    def sig_figs(self):
+        sig_figs = 5
+        if self.recall_options:
+            sig_figs = self.recall_options.sig_figs
+        return sig_figs
 
     def _load_unknown_computed(self, an, new_list):
         attrs = (('Age', 'uage_w_j_err'),
-                 # ('Age', 'age', None, None, 'age_err'),
                  ('w/o J', 'wo_j', '', 'uage', 'age_err_wo_j'),
                  ('K/Ca', 'kca'),
                  ('K/Cl', 'kcl'),
@@ -429,12 +443,12 @@ class MainView(HasTraits):
                 else:
                     e = std_dev(value)
 
-                return ComputedValue(name=n,
-                                     tag=a,
-                                     value=nominal_value(value) or 0,
-                                     value_tag=value_tag or '',
-                                     display_value=display_value,
-                                     error=e or 0)
+                return self._computed_value_factory(name=n,
+                                                    tag=a,
+                                                    value=nominal_value(value) or 0,
+                                                    value_tag=value_tag or '',
+                                                    display_value=display_value,
+                                                    error=e or 0)
 
             cv = [comp_factory(*args)
                   for args in attrs]
@@ -450,6 +464,7 @@ class MainView(HasTraits):
                 pass
 
             for ci in self.computed_values:
+                ci.sig_figs = self.sig_figs
                 attr = ci.tag
                 if attr == 'wo_j':
                     ci.error = an.age_err_wo_j or 0

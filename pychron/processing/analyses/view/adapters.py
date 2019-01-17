@@ -182,6 +182,14 @@ class IntermediateTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
                    (sigmaf('S*D'), 'disc_corrected_error'),
                    ('%(S*D)', 'disc_corrected_percent_error'),
 
+                   ('S*IC', 'ic_corrected'),
+                   (sigmaf('S*IC'), 'ic_corrected_error'),
+                   ('%(S*IC)', 'ic_corrected_percent_error'),
+
+                   ('S*IC*DecayFactor', 'ic_decay_corrected'),
+                   (sigmaf('S*IC*DecayFactor'), 'ic_decay_corrected_error'),
+                   ('%(S*IC*DecayFactor)', 'ic_decay_corrected_percent_error'),
+
                    ('IFC', 'interference_corrected'),
                    (sigmaf('IFC'), 'interference_corrected_error'),
                    ('%(IFC)', 'interference_corrected_percent_error')]
@@ -206,6 +214,16 @@ class IntermediateTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
     disc_corrected_error_text = Property
     disc_corrected_percent_error_text = Property
     disc_corrected_tooltip = Str('(D)iscrimination corrected signal')
+
+    ic_corrected_text = Property
+    ic_corrected_error_text = Property
+    ic_corrected_percent_error_text = Property
+    ic_corrected_tooltip = Str('(IC) Detector intercalibration corrected signal')
+
+    ic_decay_corrected_text = Property
+    ic_decay_corrected_error_text = Property
+    ic_decay_corrected_percent_error_text = Property
+    ic_decay_corrected_tooltip = Str('(IC) Detector intercalibration corrected signal and decay corrected')
 
     interference_corrected_text = Property
     interference_corrected_error_text = Property
@@ -273,7 +291,7 @@ class IntermediateTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
     @handle_error
     def _get_bs_corrected_percent_error_text(self):
         v = self.item.get_baseline_corrected_value()
-        return format_percent_error(v.nominal_value, v.std_dev)
+        return format_percent_error(nominal_value(v), std_dev(v))
 
     # ============================================================
     @handle_error
@@ -289,7 +307,7 @@ class IntermediateTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
     @handle_error
     def _get_bs_bk_corrected_percent_error_text(self):
         v = self.item.get_non_detector_corrected_value()
-        return format_percent_error(v.nominal_value, v.std_dev)
+        return format_percent_error(nominal_value(v), std_dev(v))
 
     # ============================================================
     @handle_error
@@ -305,7 +323,39 @@ class IntermediateTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
     @handle_error
     def _get_disc_corrected_percent_error_text(self):
         v = self.item.get_disc_corrected_value()
-        return format_percent_error(v.nominal_value, v.std_dev)
+        return format_percent_error(nominal_value(v), std_dev(v))
+
+    # ============================================================
+    @handle_error
+    def _get_ic_corrected_text(self):
+        v = self.item.get_ic_corrected_value()
+        return floatfmt(nominal_value(v), n=7)
+
+    @handle_error
+    def _get_ic_corrected_error_text(self):
+        v = self.item.get_ic_corrected_value()
+        return floatfmt(std_dev(v), n=7)
+
+    @handle_error
+    def _get_ic_corrected_percent_error_text(self):
+        v = self.item.get_ic_corrected_value()
+        return format_percent_error(nominal_value(v), std_dev(v))
+
+    # ============================================================
+    @handle_error
+    def _get_ic_decay_corrected_text(self):
+        v = self.item.get_ic_decay_corrected_value()
+        return floatfmt(nominal_value(v), n=7)
+
+    @handle_error
+    def _get_ic_decay_corrected_error_text(self):
+        v = self.item.get_ic_decay_corrected_value()
+        return floatfmt(std_dev(v), n=7)
+
+    @handle_error
+    def _get_ic_decay_corrected_percent_error_text(self):
+        v = self.item.get_ic_decay_corrected_value()
+        return format_percent_error(nominal_value(v), std_dev(v))
 
     # ============================================================
     @handle_error
@@ -321,7 +371,7 @@ class IntermediateTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
     @handle_error
     def _get_interference_corrected_percent_error_text(self):
         v = self.item.get_interference_corrected_value()
-        return format_percent_error(v.nominal_value, v.std_dev)
+        return format_percent_error(nominal_value(v), std_dev(v))
 
 
 class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):

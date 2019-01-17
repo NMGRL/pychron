@@ -14,14 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
-from traits.api import provides, Int
 # ============= standard library imports ========================
 import json
 import re
+
 # ============= local library imports  ==========================
 from pychron.furnace.furnace_controller import IFurnaceController
+# ============= enthought library imports =======================
+from traits.api import provides, Int
+
 from pychron.core.communication_helper import trim_bool
 from pychron.hardware import get_float
 from pychron.hardware.core.core_device import CoreDevice

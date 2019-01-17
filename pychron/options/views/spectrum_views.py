@@ -28,7 +28,9 @@ from pychron.pychron_constants import MAIN, APPEARANCE
 
 class SpectrumSubOptions(SubOptions):
     def traits_view(self):
-        integrated_grp = VGroup(Item('integrated_age_weighting', label='Integrated Age Weighting'))
+        integrated_grp = BorderVGroup(Item('integrated_age_weighting', label='Weighting'),
+                                      Item('integrated_include_omitted', label='Include Omitted'),
+                                      label='Integrated Age')
         iso_grp = BorderVGroup(HGroup(Item('use_isochron_trapped', label='Use Isochron'),
                                       Item('include_isochron_trapped_error'), label='Include Uncertainty'),
                                label='Trapped Ar40/Ar36')

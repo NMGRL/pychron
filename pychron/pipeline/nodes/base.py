@@ -104,6 +104,7 @@ class BaseNode(ColumnSorterMixin):
             if self.configure(refresh=False, pre_run=True):
                 return True
             else:
+                print('configure canceled')
                 state.canceled = True
         else:
             return True
