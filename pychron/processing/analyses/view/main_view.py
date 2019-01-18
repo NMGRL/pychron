@@ -206,13 +206,17 @@ class MainView(HasTraits):
             self._load_air_computed(an, new_list)
         elif self.analysis_type == COCKTAIL:
             self._load_cocktail_computed(an, new_list)
-
+            if self._corrected_enabled:
+                self._load_corrected_values(an, new_list)
     # def _get_isotope(self, name):
     #     return next((iso for iso in self.isotopes if iso.name == name), None)
 
     def _make_ratios(self, ratios):
         cv = []
         for name, nd, ref in ratios:
+            if nd is None:
+                continue
+
             n, d = nd.split('/')
             ns = [i for i in self.isotopes if i.name == n]
             ds = [i for i in self.isotopes if i.name == d]
@@ -233,7 +237,6 @@ class MainView(HasTraits):
                                        ref_ratio=ref,
                                        detectors=nd)
                     cv.append(dr)
-
         return cv
 
     def _get_non_corrected_ratio(self, niso, diso):
