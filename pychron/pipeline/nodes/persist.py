@@ -187,7 +187,8 @@ class ICFactorPersistNode(DVCPersistNode):
         wrapper = lambda ai, prog, i, n: self._save_icfactors(ai, prog, i, n,
                                                               state.saveable_keys,
                                                               state.saveable_fits,
-                                                              state.references)
+                                                              state.references,
+                                                              state.delete_existing_icfactors)
         progress_iterator(state.unknowns, wrapper, threshold=1)
 
         msg = self.commit_message
@@ -197,9 +198,12 @@ class ICFactorPersistNode(DVCPersistNode):
 
         self._persist(state, msg)
 
-    def _save_icfactors(self, ai, prog, i, n, saveable_keys, saveable_fits, reference):
+    def _save_icfactors(self, ai, prog, i, n, saveable_keys, saveable_fits, reference, delete_existing):
         if prog:
             prog.change_message('Save IC Factor for {} {}/{}'.format(ai.record_id, i, n))
+
+        if delete_existing:
+            self.dvc.delete_existing_icfactors(ai, saveable_keys)
 
         self.dvc.save_icfactors(ai, saveable_keys, saveable_fits, reference)
 

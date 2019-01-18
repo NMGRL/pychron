@@ -426,6 +426,19 @@ class DVCAnalysis(Analysis):
 
         self._dump(isos, path)
 
+    def delete_icfactors(self, dkeys):
+        jd, path = self._get_json('icfactors')
+
+        remove = []
+        for k in jd:
+            if k not in dkeys:
+                remove.append(k)
+
+        for r in remove:
+            jd.pop(r)
+
+        self._dump(jd, path)
+
     def dump_icfactors(self, dkeys, fits, refs=None, reviewed=False):
         jd, path = self._get_json('icfactors')
 

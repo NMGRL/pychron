@@ -15,10 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
-from six.moves import range
-from traits.api import Str, Float, Property, List
+from traits.api import Str, Float, Property, List, Bool
 
 from pychron.options.fit import FitAuxPlot
 from pychron.options.series import SeriesOptions
@@ -54,6 +51,7 @@ class ICFactorAuxPlot(FitAuxPlot):
 
 class ICFactorOptions(SeriesOptions):
     aux_plot_klass = ICFactorAuxPlot
+    delete_existing = Bool
 
     def initialize(self):
         self.subview_names = [MAIN, 'ICFactor', APPEARANCE]

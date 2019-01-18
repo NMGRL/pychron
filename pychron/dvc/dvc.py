@@ -486,6 +486,14 @@ class DVC(Loggable):
         else:
             return tag.path
 
+    def delete_existing_icfactors(self, ai, dets):
+        # remove all icfactors not in dets
+        if dets:
+            self.info('Delete existing icfactors for {}'.format(ai))
+            ai.delete_icfactors(dets)
+            if self._cache:
+                self._cache.remove(ai.uiid)
+
     def save_icfactors(self, ai, dets, fits, refs):
         if fits and dets:
             self.info('Saving icfactors for {}'.format(ai))
