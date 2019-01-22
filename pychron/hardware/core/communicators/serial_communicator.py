@@ -375,7 +375,7 @@ class SerialCommunicator(Communicator):
             try:
                 self.handle.write(cmd_str)
             except (serial.serialutil.SerialException, OSError, IOError, ValueError), e:
-                self.warning(e)
+                self.warning('Serial write exception: {}'.format(e))
 
         if not self.simulation:
 
@@ -449,27 +449,27 @@ class SerialCommunicator(Communicator):
 
     def _get_isterminated(self, r, terminator=None, pos=None):
         terminated = False
-        try:
-            inw = self.handle.inWaiting()
-            r += self.handle.read(inw)
-           # print 'inw', inw, r, terminator
-            if terminator is None:
-                terminator = ('\r\x00', '\r\n', '\r', '\n')
-            if not isinstance(terminator, (list, tuple)):
-                terminator = (terminator,)
+        inw = self.handle.inWaiting()
+        r += self.handle.read(inw)
+        if terminator is None:
+            terminator = ('\r\x00', '\r\n', '\r', '\n')
+        if not isinstance(terminator, (list, tuple)):
+            terminator = (terminator,)
 
-            if r and r.strip():
-                for ti in terminator:
-                    if pos:
+        if r and r.strip():
+            for ti in terminator:
+                if pos:
+                    try:
                         t = r[pos] == ti
-                    else:
-                        t = r.endswith(ti)
-
-                    if t:
-                        terminated = True
+                    except IndexError:
                         break
-        except BaseException, e:
-            self.warning(e)
+                else:
+                    t = r.endswith(ti)
+
+                if t:
+                    terminated = True
+                    break
+
         return r, terminated
 
     def _read_loop(self, func, delay, timeout=1):
@@ -495,8 +495,10 @@ class SerialCommunicator(Communicator):
                 if isterminated:
                     break
             except (ValueError, TypeError), e:
-                print e
-            time.sleep(0.001)
+                self.warning('read loop exception: {}'.format(e))
+                break
+
+            time.sleep(0.01)
             ct = time.time()
 
         if ct - st > timeout:
