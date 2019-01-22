@@ -14,8 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 from traits.api import HasTraits, Float, Str, List, Bool, Property
-from traitsui.api import View, UItem, Item, HGroup, VGroup, ListEditor, EnumEditor, Label, InstanceEditor
-from uncertainties import ufloat
+from traitsui.api import View, UItem, Item, HGroup, ListEditor, EnumEditor, Label, InstanceEditor
 
 from pychron.pipeline.nodes.data import BaseDVCNode
 from pychron.pychron_constants import PLUSMINUS
@@ -98,7 +97,7 @@ class BulkEditNode(BaseDVCNode):
                 # print('ic', ic_factor.det, ic_factor.value, ic_factor.error)
                 ic = ai.set_temporary_ic_factor(ic_factor.det, ic_factor.value, ic_factor.error,
                                                 tag='{} IC'.format(ic_factor.det))
-                for iso in ai.get_isotopes(ic_factor.det):
+                for iso in ai.get_isotopes_for_detector(ic_factor.det):
                     iso.ic_factor = ic
                 dump_ic = True
 

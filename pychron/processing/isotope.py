@@ -50,6 +50,8 @@ class BaseMeasurement(object):
     use_manual_error = False
     units = 'fA'
     _n = None
+    detector = None
+    detector_serial_id = None
 
     @property
     def n(self):
@@ -580,6 +582,12 @@ class Isotope(BaseIsotope):
         self.sniff = Sniff(name, detector)
         self.background = Background('{} bg'.format(name), detector)
         self.whiff = Whiff(name, detector)
+
+    def set_detector_serial_id(self, sid):
+        self.detector_serial_id = sid
+        self.blank.detector_serial_id = sid
+        self.sniff.detector_serial_id = sid
+        self.baseline.detector_serial_id = sid
 
     def set_time_zero(self, time_zero_offset):
         self.time_zero_offset = time_zero_offset

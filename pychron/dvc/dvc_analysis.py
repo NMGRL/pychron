@@ -545,7 +545,7 @@ class DVCAnalysis(Analysis):
             if isinstance(v, dict):
                 vv, ee = v['value'] or 0, v['error'] or 0
                 r = v.get('reviewed')
-                for iso in self.get_isotopes(key):
+                for iso in self.get_isotopes_for_detector(key):
                     iso.ic_factor = ufloat(vv, ee, tag='{} IC'.format(iso.name))
                     iso.ic_factor_reviewed = r
 
@@ -569,6 +569,8 @@ class DVCAnalysis(Analysis):
             i = Isotope(name, detector)
             i.set_units(v.get('units', 'fA'))
             i.set_time_zero(time_zero_offset)
+            i.set_detector_serial_id(v.get('serial_id', ''))
+
             return i
 
         try:

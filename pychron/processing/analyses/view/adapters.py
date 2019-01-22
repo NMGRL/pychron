@@ -377,6 +377,7 @@ class IntermediateTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
 class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
     all_columns = [('Name', 'name'),
                    ('Det.', 'detector'),
+                   ('Det. ID', 'detector_serial_id'),
                    ('Fit', 'fit_abbreviation'),
                    ('Error', 'error_type'),
                    ('Iso', 'value'),
