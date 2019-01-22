@@ -63,7 +63,7 @@ class StreamGraphManager(Manager):
     record_data_manager = Instance(CSVDataManager)
 
     timer = None
-    update_period = 1
+    update_period = 2
     _signal_failed_cnt = 0
 
     def reset_scan_timer(self, func=None):
