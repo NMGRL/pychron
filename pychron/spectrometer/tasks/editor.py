@@ -16,15 +16,17 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from pyface.tasks.traits_editor import TraitsEditor
 from traits.api import Button, Instance
 from traitsui.api import View, UItem, InstanceEditor, VGroup, HGroup, TabularEditor, VSplit
 from traitsui.tabular_adapter import TabularAdapter
 
+from pychron.envisage.icon_button_editor import icon_button_editor
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-
-from pychron.envisage.icon_button_editor import icon_button_editor
 
 
 class ScanEditor(TraitsEditor):
@@ -40,7 +42,10 @@ class ScanEditor(TraitsEditor):
 
 
 class PeakCenterResultsAdapter(TabularAdapter):
-    columns = [('Detector', 'detector'), ('Center DAC (V)', 'center_dac')]
+    columns = [('Detector', 'detector'), ('Center DAC (V)', 'center_dac'),
+               ('Resolution', 'resolution'),
+               ('Low Mass Resolving Power', 'low_resolving_power'),
+               ('High Mass Resolving Power', 'high_resolving_power')]
 
 
 class PeakCenterEditor(ScanEditor):

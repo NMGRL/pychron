@@ -24,6 +24,8 @@
 """
 from numpy import Inf, isscalar, array, argmax, polyfit, asarray, argsort, vstack, arange
 
+from pychron.pychron_constants import NULL_STR
+
 
 def _datacheck_peakdetect(x_axis, y_axis):
     if x_axis is None:
@@ -156,6 +158,29 @@ class PeakCenterError(BaseException):
         self.high_pos_error = kw.get('high_pos_error')
 
 
+def calculate_resolution(x, y):
+    try:
+        [lx, cx, hx], [ly, cy, hy], mx, my = calculate_peak_center(x, y, percent=5)
+        res = cx / (hx - lx)
+    except PeakCenterError:
+        res = NULL_STR
+
+    return res
+
+
+def calculate_resolving_power(x, y):
+    try:
+        [lx5, cx5, hx5], _, _, _ = calculate_peak_center(x, y, percent=5)
+        [lx95, cx95, hx95], _, _, _ = calculate_peak_center(x, y, percent=95)
+
+        lrp = abs(lx95 - lx5) / cx5
+        hrp = abs(hx95 - hx5) / cx95
+
+    except PeakCenterError:
+        lrp, hrp = NULL_STR, NULL_STR
+    return lrp, hrp
+
+
 def calculate_peak_center(x, y, test_peak_flat=True, min_peak_height=1.0, percent=80):
     """
         returns: (low_x, center_c, high_x), (low_y, center_y, high_y), max_y, min_y
@@ -176,8 +201,8 @@ def calculate_peak_center(x, y, test_peak_flat=True, min_peak_height=1.0, percen
     if ma < min_peak_height:
         raise PeakCenterError('No peak greater than {}. max = {}'.format(min_peak_height, ma))
 
-    if max_i == 0 or max_i == len(x)-1:
-        max_i = len(x)//2
+    if max_i == 0 or max_i == len(x) - 1:
+        max_i = len(x) // 2
 
     mx = x[max_i]
     my = ma
