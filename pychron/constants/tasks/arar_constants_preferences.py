@@ -105,6 +105,7 @@ class ArArConstantsPreferences(BasePreferencesHelper):
     ar37_ar39 = Float(0.01)
     ar37_ar39_error = Float(0.01)
     allow_negative_ca_correction = Bool
+    use_irradiation_endtime = Bool
 
     # ===========================================================================
     # spectrometer
@@ -289,6 +290,11 @@ class ArArConstantsPreferencesPane(PreferencesPane):
             ('Ar37/d', 'lambda_Ar37', 'lambda_Ar37_error'),
             ('Ar39/d', 'lambda_Ar39', 'lambda_Ar39_error')]
         items = [HGroup(Label(l), spring, UItem(v), UItem(e)) for l, v, e in vs]
+
+        items.append(Item('use_irradiation_endtime', label='Use Irradiation End time',
+                          tooltip='Use irradiation end time for decay calculations instead of the start time. '
+                                  'FYI Mass Spec and NMGRL by default use the start time. '
+                                  'McDougall and Harrison 1999 and ArArCalc use the end time.'))
         decay = VGroup(
             presets,
             HGroup(Item('total_k_decay', style='readonly', label='Total Ar40K/yr')),

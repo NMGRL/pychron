@@ -287,7 +287,14 @@ class DVCAnalysis(Analysis):
             return x.total_seconds() / (60. * 60 * 24)
 
         doses = chron.get_doses()
-        segments = [(pwr, convert_days(en - st), convert_days(analts - st), st, en)
+
+        def calc_ti(st, en):
+            t = st
+            if chron.use_irradiation_endtime:
+                t = en
+            return convert_days(analts - t)
+
+        segments = [(pwr, convert_days(en - st), calc_ti(st, en), st, en)
                     for pwr, st, en in doses
                     if st is not None and en is not None]
         d_o = 0

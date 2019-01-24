@@ -60,6 +60,7 @@ class Gains(MetaObject):
 class Chronology(MetaObject):
     _doses = None
     duration = 0
+    use_irradiation_endtime = False
 
     def __init__(self, *args, **kw):
         self._doses = []

@@ -686,7 +686,7 @@ class DVC(Loggable):
         if bad_records:
             self.warning_dialog('Missing Repository Associations. Contact an expert!'
                                 'Cannot load analyses "{}"'.format(','.join([r.record_id for r in
-                                                                            bad_records])))
+                                                                             bad_records])))
             records = [r for r in records if r.repository_identifier is not None]
 
         if not records:
@@ -1669,7 +1669,7 @@ class DVC(Loggable):
                            name='pychronmeta')
 
     def _meta_repo_default(self):
-        return MetaRepo()
+        return MetaRepo(application=self.application)
 
 
 if __name__ == '__main__':
