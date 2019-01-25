@@ -158,12 +158,13 @@ class Isot(HasTraits):
     bl_corrected_enabled = Bool(True)
     ic_corrected_enabled = Bool(True)
     ic_decay_corrected_enabled = Bool(True)
+    ifc_enabled = Bool(True)
     detector_enabled = Bool(True)
 
     def values(self):
         return (('{}_{}'.format(self.name, tag), getattr(self, '{}_enabled'.format(tag)))
                 for tag in ('detector', 'intercept', 'blank', 'baseline', 'bs_corrected',
-                            'bl_corrected', 'ic_corrected', 'ic_decay_corrected'))
+                            'bl_corrected', 'ic_corrected', 'ic_decay_corrected', 'ifc'))
 
 
 class CSVAnalysesExportNode(CSVExportNode):
@@ -186,7 +187,8 @@ class CSVAnalysesExportNode(CSVExportNode):
                 CheckboxColumn(name='bs_corrected_enabled', label='Baseline Corrected'),
                 CheckboxColumn(name='bl_corrected_enabled', label='Blank Corrected'),
                 CheckboxColumn(name='ic_corrected_enabled', label='IC Corrected'),
-                CheckboxColumn(name='ic_decay_corrected_enabled', label='IC+Decay Corrected')]
+                CheckboxColumn(name='ic_decay_corrected_enabled', label='IC+Decay Corrected'),
+                CheckboxColumn(name='ifc_enabled', label='Interference Corrected')]
 
         pgrp = HGroup(Item('pathname', springy=True, label='File Name'),
                       show_border=True)
@@ -226,7 +228,7 @@ class CSVAnalysesExportNode(CSVExportNode):
     def _get_header(self):
         header = self.selected_meta_attributes[:]
 
-        vargs = [], [], [], [], [], [], [], []
+        vargs = [], [], [], [], [], [], [], [], []
         for i in self.available_isotopes:
             for vs, (name, enabled) in zip(vargs, i.values()):
                 if enabled:
@@ -262,6 +264,9 @@ class CSVAnalysesExportNode(CSVExportNode):
         def get_ic_decay_corrected(iso):
             return iso.get_ic_decay_corrected_value()
 
+        def get_ifc(iso):
+            return iso.get_interference_corrected_value()
+
         row = []
         for attr in header:
             if attr == 'error':
@@ -273,7 +278,9 @@ class CSVAnalysesExportNode(CSVExportNode):
                               ('bs_corrected', get_baseline_corrected),
                               ('bl_corrected', get_blank_corrected),
                               ('ic_corrected', get_ic_corrected),
-                              ('ic_decay_corrected', get_ic_decay_corrected)):
+                              ('ic_decay_corrected', get_ic_decay_corrected),
+                              ('ifc', get_ifc)):
+
                 if attr.endswith(tag):
                     # iso = attr[:len(tag) + 1]
                     args = attr.split('_')
