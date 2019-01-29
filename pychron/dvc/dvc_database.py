@@ -1034,6 +1034,7 @@ class DVCDatabase(DatabaseAdapter):
                                repositories=None,
                                loads=None,
                                order='asc',
+                               limit=None,
                                verbose_query=True):
 
         with self.session_ctx() as sess:
@@ -1069,6 +1070,9 @@ class DVCDatabase(DatabaseAdapter):
 
             if order:
                 q = q.order_by(getattr(AnalysisTbl.timestamp, order)())
+
+            if limit:
+                q = q.limit(limit)
 
             tc = q.count()
             return self._query_all(q, verbose_query=verbose_query), tc
