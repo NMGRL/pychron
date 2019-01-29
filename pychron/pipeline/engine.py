@@ -207,18 +207,14 @@ class PipelineEngine(Loggable):
     predefined_templates = List
 
     selected = Instance(BaseNode, ())
-    # selected_node = Instance(BaseNode, ())
 
     dclicked = Event
     active_editor = Event
-    # active_inspector_item = Instance(BaseInspectorItem, ())
     selected_editor = Any
 
     resume_enabled = Bool(False)
     run_enabled = Bool(True)
 
-    # unknowns = List
-    # references = List
     add_pipeline = Event
     run_needed = Event
     refresh_all_needed = Event
@@ -227,10 +223,8 @@ class PipelineEngine(Loggable):
 
     repositories = List
     selected_repositories = List
-    # show_group_colors = Bool
 
     selected_pipeline_template = Any
-    # available_pipeline_templates = List
 
     selected_unknowns = List
     selected_references = List
@@ -239,11 +233,6 @@ class PipelineEngine(Loggable):
 
     recall_analyses_needed = Event
     reset_event = Event
-
-    # tag_event = Event
-    # invalid_event = Event
-    # recall_event = Event
-    # omit_event = Event
 
     state = Instance(EngineState)
     editors = List
@@ -255,7 +244,6 @@ class PipelineEngine(Loggable):
         self._confirmation_cache = {}
 
     def drop_factory(self, items):
-
         return self.dvc.make_analyses(items)
 
     def reset(self):
@@ -410,10 +398,8 @@ class PipelineEngine(Loggable):
         records = self.browser_model.get_analysis_records()
         if records:
             analyses = self.dvc.make_analyses(records)
-            # print len(records),len(analyses)
             node.unknowns.extend(analyses)
             node._manual_configured = True
-            # self.refresh_analyses()
 
     def add_test_filter(self):
         node = self.pipeline.nodes[-1]
@@ -886,7 +872,7 @@ class PipelineEngine(Loggable):
 
         # reorder groups
         ngroups = []
-        for gi in DEFAULT_PIPELINE_ROOTS:  #('Fit', 'Plot', 'Table',...)
+        for gi in DEFAULT_PIPELINE_ROOTS:  # ('Fit', 'Plot', 'Table',...)
             g = next((gii for gii in groups if gii.name == gi), None)
             if g is not None:
                 ngroups.append(g)
@@ -900,6 +886,38 @@ class PipelineEngine(Loggable):
 
         root.groups = ngroups
         self.pipeline_template_root = root
+
+    def refresh_unknowns(self, unks, refresh_editor=False):
+        self.selected.unknowns = unks
+        self.selected.editor.set_items(unks, refresh=refresh_editor)
+
+    def handle_status(self, new):
+        self.refresh_table_needed = True
+
+    def handle_len_unknowns(self, new):
+        self._handle_len('unknowns', lambda e: e.set_items(self.selected.unknowns))
+
+        def func(editor):
+            vs = self.selected.unknowns
+            editor.set_items(vs)
+            self.state.unknowns = vs
+            for node in self.pipeline.nodes:
+                if isinstance(node, UnknownNode) and node is not self.selected:
+                    node.unknowns = vs
+
+        self._handle_len('unknowns', func)
+
+    def handle_len_references(self, new):
+        def func(editor):
+            vs = self.selected.references
+            editor.set_references(vs)
+            self.state.references = vs
+
+            for node in self.pipeline.nodes:
+                if isinstance(node, ReferenceNode) and node is not self.selected:
+                    node.references = vs
+
+        self._handle_len('references', func)
 
     # private
     def _active_repositories(self):
@@ -917,7 +935,6 @@ class PipelineEngine(Loggable):
     def _set_grouping(self, items, gid, attr='group_id'):
         for si in items:
             setattr(si, attr, gid)
-            # si.group_id = gid
 
         if hasattr(self.selected, 'editor') and self.selected.editor:
             self.selected.editor.refresh_needed = True
@@ -975,11 +992,8 @@ class PipelineEngine(Loggable):
                 self.run_needed = newnode
 
     def _add_node(self, node, new):
-        # if new.configure():
         node = self._get_last_node(node)
         self.pipeline.add_after(node, new)
-        # if run:
-        #     self.run_needed = new
 
     def _get_last_node(self, node=None):
         if node is None:
@@ -1022,39 +1036,10 @@ class PipelineEngine(Loggable):
                 self.debug('Pipeline template {} selected'.format(new))
                 self._set_template(new)
 
-    def refresh_unknowns(self, unks, refresh_editor=False):
-        self.selected.unknowns = unks
-        self.selected.editor.set_items(unks, refresh=refresh_editor)
-
     _len_unknowns_cnt = 0
     _len_unknowns_removed = 0
     _len_references_cnt = 0
     _len_references_removed = 0
-
-    def handle_len_unknowns(self, new):
-        self._handle_len('unknowns', lambda e: e.set_items(self.selected.unknowns))
-
-        def func(editor):
-            vs = self.selected.unknowns
-            editor.set_items(vs)
-            self.state.unknowns = vs
-            for node in self.pipeline.nodes:
-                if isinstance(node, UnknownNode) and node is not self.selected:
-                    node.unknowns = vs
-
-        self._handle_len('unknowns', func)
-
-    def handle_len_references(self, new):
-        def func(editor):
-            vs = self.selected.references
-            editor.set_references(vs)
-            self.state.references = vs
-
-            for node in self.pipeline.nodes:
-                if isinstance(node, ReferenceNode) and node is not self.selected:
-                    node.references = vs
-
-        self._handle_len('references', func)
 
     def _handle_len(self, k, func):
         lr = '_len_{}_removed'.format(k)
@@ -1077,9 +1062,6 @@ class PipelineEngine(Loggable):
                 setattr(self, lc, 0)
                 func(editor)
                 editor.refresh_needed = True
-
-    def handle_status(self, new):
-        self.refresh_table_needed = True
 
     def _dclicked_changed(self, new):
         self.configure(new)

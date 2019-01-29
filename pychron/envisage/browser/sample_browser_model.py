@@ -399,19 +399,18 @@ class SampleBrowserModel(BrowserModel):
         return ans
 
     def _selected_projects_change_hook(self, names):
-        # print('asdf', names)
         self.selected_samples = []
         self.analysis_table.clear_non_frozen()
         #
         if not self._top_level_filter:
             self._top_level_filter = 'project'
 
-        db = self.db
         if names:
+            irrads = []
             if self._top_level_filter == 'project':
-                irrads = db.get_irradiations_for_projects(names, verbose_query=False)
+                irrads = self.db.get_irradiations(project_names=names)
         else:
-            irrads = db.get_irradiations()
+            irrads = self.db.get_irradiations()
 
         self.irradiations = [i.name for i in irrads]
 

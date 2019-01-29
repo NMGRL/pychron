@@ -64,19 +64,19 @@ class DecayConstantEntry(HasTraits):
 
 class AtmConstantsEntry(HasTraits):
     name = Str
-    Ar40_Ar36_atm = Float
-    Ar40_Ar36_atm_error = Float
-    Ar40_Ar38_atm = Float
-    Ar40_Ar38_atm_error = Float
+    ar40_ar36_atm = Float
+    ar40_ar36_atm_error = Float
+    ar40_ar38_atm = Float
+    ar40_ar38_atm_error = Float
 
     def totuple(self):
         return tuple([getattr(self, a) for a in ATM_ATTRS])
 
     def traits_view(self):
         v = View(VGroup(Item('name'),
-                        HGroup(UItem('Ar40_Ar36_atm'), Label(PLUSMINUS), UItem('Ar40_Ar36_atm_err'),
+                        HGroup(UItem('ar40_ar36_atm'), Label(PLUSMINUS), UItem('ar40_ar36_atm_error'),
                                show_border=True, label='(Ar40/Ar36)atm'),
-                        HGroup(UItem('Ar40_Ar38_atm'), Label(PLUSMINUS), UItem('Ar40_Ar38_atm_err'),
+                        HGroup(UItem('ar40_ar38_atm'), Label(PLUSMINUS), UItem('ar40_ar38_atm_error'),
                                show_border=True, label='(Ar40/Ar38)atm')),
                  buttons=['OK', 'Cancel'],
                  title='Add Atm Constant Entry',
@@ -190,6 +190,9 @@ class ArArConstantsPreferences(BasePreferencesHelper):
         if info.result and name:
             if name not in self.atm_constant_names:
                 nv = e.totuple()
+                for k,v in self.atm_constant_entries.items():
+                    print('k={}, v={}, nv={}'.format(k, v, nv))
+
                 exists = next((k for k, v in self.atm_constant_entries.items() if nv == v), None)
                 if exists:
                     warning(None,
