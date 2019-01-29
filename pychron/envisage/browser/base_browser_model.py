@@ -678,9 +678,11 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
             self._load_associated_labnumbers()
             self._load_associated_groups(new)
+        else:
+            names = None
 
-            self._selected_projects_change_hook(names)
-            self.dump_browser_selection()
+        self._selected_projects_change_hook(names)
+        self.dump_browser_selection()
 
     def _selected_projects_change_hook(self, names):
         pass

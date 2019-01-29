@@ -166,9 +166,7 @@ class BrowserModel(BaseBrowserModel):
     def _project_enabled_changed(self, new):
         if not new:
             self._top_level_filter = None
-
-            # obj = self._get_manager()
-            # self.irradiations = obj.irradiations
+            self.selected_projects = []
 
     @on_trait_change('irradiation,level')
     def _handle_irradiation_change(self, name, new):

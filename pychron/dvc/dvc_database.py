@@ -1808,8 +1808,16 @@ class DVCDatabase(DatabaseAdapter):
 
         return names
 
+    def get_irradiations_for_projects(self, pnames, order_func='desc', **kw):
+        order = None
+        if order_func:
+            order = getattr(IrradiationTbl.name, order_func)()
+        kw['joins'] = (LevelTbl, IrradiationPositionTbl, SampleTbl, ProjectTbl)
+        kw['filters'] = (ProjectTbl.name.in_(pnames),)
+
+        return self._retrieve_items(IrradiationTbl, order=order, **kw)
+
     def get_irradiations(self, names=None, order_func='desc',
-                         project_names=None,
                          mass_spectrometers=None, **kw):
 
         if names is not None:
@@ -1818,10 +1826,6 @@ class DVCDatabase(DatabaseAdapter):
             else:
                 f = (IrradiationTbl.name.in_(names),)
             kw = self._append_filters(f, kw)
-        if project_names:
-            kw = self._append_filters(ProjectTbl.name.in_(project_names), kw)
-            kw = self._append_joins(
-                (LevelTbl, IrradiationPositionTbl, SampleTbl), kw)
 
         if mass_spectrometers:
             kw = self._append_filters(
