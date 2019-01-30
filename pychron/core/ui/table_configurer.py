@@ -404,7 +404,9 @@ class CocktailOptions(HasTraits):
 
 class RecallOptions(HasTraits):
     cocktail_options = Instance(CocktailOptions, ())
-    sig_figs = Int(5)
+    isotope_sig_figs = Int(5)
+    computed_sig_figs = Int(5)
+    intermediate_sig_figs = Int(5)
 
     def set_cocktail(self, co):
         cc = CocktailOptions()
@@ -413,10 +415,14 @@ class RecallOptions(HasTraits):
 
     def get_dump(self):
         return {'cocktail_options': self.cocktail_options.get_dump(),
-                'sig_figs': self.sig_figs}
+                'computed_sig_figs': self.computed_sig_figs,
+                'sig_figs': self.isotope_sig_figs,
+                'intermediate_sig_figs': self.intermediate_sig_figs}
 
     def traits_view(self):
-        v = View(Item('sig_figs', label='SigFigs'),
+        v = View(Item('computed_sig_figs', label='Main SigFigs'),
+                 Item('isotope_sig_figs', label='Isotope SigFigs'),
+                 Item('intermediate_sig_figs', label='Intermediate SigFigs'),
                  UItem('cocktail_options', style='custom'))
         return v
 
@@ -483,7 +489,10 @@ class RecallTableConfigurer(TableConfigurer):
         if recall_options:
             r = RecallOptions()
             r.set_cocktail(recall_options.get('cocktail_options'))
-            r.sig_figs = recall_options.get('sig_figs', 5)
+            for tag in ('intermediate', 'isotope', 'computed'):
+                tag = '{}_sig_figs'.format(tag)
+                setattr(r, tag, recall_options.get(tag, 5))
+
             self.recall_options = r
 
     def dump(self):

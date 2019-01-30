@@ -419,7 +419,7 @@ class MainView(HasTraits):
     def sig_figs(self):
         sig_figs = 5
         if self.recall_options:
-            sig_figs = self.recall_options.sig_figs
+            sig_figs = self.recall_options.computed_sig_figs
         return sig_figs
 
     def _load_unknown_computed(self, an, new_list):

@@ -40,13 +40,13 @@ from pychron.graph.context_menu_mixin import ContextMenuMixin
 from pychron.graph.offset_plot_label import OffsetPlotLabel
 from .tools.contextual_menu_tool import ContextualMenuTool
 
-VALID_FONTS = [
+VALID_FONTS = [ 'Arial', 'Lucida Grande', 'Geneva', 'Courier']
     # 'Helvetica',
-    'Arial',
-    'Lucida Grande',
-    # 'Times New Roman',
-    'Geneva',
-    'Courier']
+    # 'Times New Roman'
+
+CONTAINERS = {'v': VPlotContainer, 'h': HPlotContainer, 'g': GridPlotContainer, 'o': OverlayPlotContainer}
+IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.tiff', '.tif', '.gif']
+DEFAULT_IMAGE_EXT = IMAGE_EXTENSIONS[0]
 
 
 def name_generator(base):
@@ -57,24 +57,10 @@ def name_generator(base):
         i += 1
 
 
-IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.tiff', '.tif', '.gif']
-DEFAULT_IMAGE_EXT = IMAGE_EXTENSIONS[0]
-
-
 def fmt(data):
     return ['%0.8f' % d for d in data]
 
 
-# class Graph(Viewable, ContextMenuMixin):
-# class GraphHandler(Handler):
-# def init(self, info):
-# info.object.ui = info.ui
-#
-#    def closed(self, info, isok):
-#        info.object.closed()
-
-
-# class Graph(Viewable, ContextMenuMixin):
 def get_file_path(action='save as', **kw):
     from pyface.api import FileDialog, OK
 
@@ -86,7 +72,6 @@ def get_file_path(action='save as', **kw):
 def add_aux_axis(po, p, title='', color='black'):
     """
     """
-    #        from chaco.axis import PlotAxis
     from chaco.axis import PlotAxis
 
     axis = PlotAxis(p, orientation='right',
@@ -98,7 +83,6 @@ def add_aux_axis(po, p, title='', color='black'):
 
     p.underlays.append(axis)
     po.add(p)
-    #        po.plots['aux'] = [p]
 
     po.x_grid.visible = False
     po.y_grid.visible = False
@@ -132,9 +116,7 @@ def plot_axis_factory(p, key, normal, **kw):
 def plot_factory(legend_kw=None, **kw):
     """
     """
-    p = Plot(data=ArrayPlotData(),
-             # use_backbuffer=True,
-             **kw)
+    p = Plot(data=ArrayPlotData(), **kw)
 
     vis = kw['show_legend'] if 'show_legend' in kw else False
 
@@ -152,9 +134,6 @@ def plot_factory(legend_kw=None, **kw):
     return p
 
 
-CONTAINERS = {'v': VPlotContainer, 'h': HPlotContainer, 'g': GridPlotContainer, 'o': OverlayPlotContainer}
-
-
 def container_factory(**kw):
     """
     """
@@ -163,32 +142,14 @@ def container_factory(**kw):
     else:
         kind = 'v'
 
-    # kinds = ['v', 'h', 'g', 'o']
-    # containers = [VPlotContainer, HPlotContainer, GridPlotContainer, OverlayPlotContainer]
+    cklass = CONTAINERS.get(kind, VPlotContainer)
 
-    # c = containers[kinds.index(kind)]
-    c = CONTAINERS.get(kind, VPlotContainer)
-
-    options = dict(
-        bgcolor='white',
-        padding=5,
-        fill_padding=True)
+    options = dict(bgcolor='white', padding=5, fill_padding=True)
 
     for k in options:
         if k not in list(kw.keys()):
             kw[k] = options[k]
-
-    print('sdfs', kw)
-    container = c(**kw)
-
-    # add some tools
-    #        cm=ContextualMenuTool(parent=container,
-    #                              component=container
-    #                              )
-    #        container.tools.append(cm)
-    #
-    # gt = TraitsTool(component = container)
-    # container.tools.append(gt)
+    container = cklass(**kw)
     return container
 
 

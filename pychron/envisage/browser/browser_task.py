@@ -155,6 +155,9 @@ class BaseBrowserTask(BaseEditorTask):
         tc = self.recall_configurer
         info = tc.edit_traits()
         if info.result:
+
+            self._set_adapter_sig_figs()
+
             editors = self.get_recall_editors()
             for e in editors:
                 e.analysis_view.show_intermediate = tc.show_intermediate
@@ -283,7 +286,13 @@ class BaseBrowserTask(BaseEditorTask):
     def _graphical_filter_hook(self, ans, is_append):
         pass
 
+    def _set_adapter_sig_figs(self):
+        self.isotope_adapter.sig_figs = self.recall_configurer.recall_options.isotope_sig_figs
+        self.intermediate_adapter.sig_figs = self.recall_configurer.recall_options.intermediate_sig_figs
+
     def _open_recall_editors(self, ans):
+        self._set_adapter_sig_figs()
+
         existing = [e.basename for e in self.get_recall_editors()]
         if ans:
             for rec in ans:

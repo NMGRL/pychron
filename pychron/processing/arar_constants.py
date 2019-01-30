@@ -57,7 +57,7 @@ class ArArConstants(HasTraits):
 
     lambda_k = Property
     _lambda_k = Any
-    lambda_Cl36 = Property(depends_on='lambda_Cl36_v, lambda_Cl36_e')
+    lambda_Cl36 = Property(depends_on='lambda_36_v, lambda_Cl36_e')
     lambda_Cl36_v = Float(6.308e-9)
     lambda_Cl36_e = Float(0)
     lambda_Ar37 = Property(depends_on='lambda_Ar37_v, lambda_Ar37_e')
@@ -113,12 +113,12 @@ class ArArConstants(HasTraits):
                                    ('lambda_b_e', 'lambda_b_error'),
                                    ('lambda_e_v', 'lambda_e'),
                                    ('lambda_e_e', 'lambda_e_error'),
-                                   ('lambda_Cl36_v', 'lambda_Cl36'),
-                                   ('lambda_Cl36_e', 'lambda_Cl36_error'),
-                                   ('lambda_Ar37_v', 'lambda_Ar37'),
-                                   ('lambda_Ar37_e', 'lambda_Ar37_error'),
-                                   ('lambda_Ar39_v', 'lambda_Ar39'),
-                                   ('lambda_Ar39_e', 'lambda_Ar39_error'),
+                                   ('lambda_Cl36_v', 'lambda_cl36'),
+                                   ('lambda_Cl36_e', 'lambda_cl36_error'),
+                                   ('lambda_Ar37_v', 'lambda_ar37'),
+                                   ('lambda_Ar37_e', 'lambda_ar37_error'),
+                                   ('lambda_Ar39_v', 'lambda_ar39'),
+                                   ('lambda_Ar39_e', 'lambda_ar39_error'),
 
                                    ('atm4036_v', 'ar40_ar36_atm'),
                                    ('atm4036_e', 'ar40_ar36_atm_error'),
@@ -132,9 +132,9 @@ class ArArConstants(HasTraits):
                                    ('atm4038_citation', 'ar40_ar39_atm_citation'),
                                    ('lambda_b_citation', 'lambda_b_citation'),
                                    ('lambda_e_citation', 'lambda_e_citation'),
-                                   ('lambda_Cl36_citation', 'lambda_Cl36_citation'),
-                                   ('lambda_Ar37_citation', 'lambda_Ar37_citation'),
-                                   ('lambda_Ar39_citation', 'lambda_Ar39_citation'),
+                                   ('lambda_Cl36_citation', 'lambda_cl36_citation'),
+                                   ('lambda_Ar37_citation', 'lambda_ar37_citation'),
+                                   ('lambda_Ar39_citation', 'lambda_ar39_citation'),
                                    ):
                 bind_preference(self, attr, '{}.{}'.format(prefid, prefattr))
 

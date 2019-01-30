@@ -316,9 +316,9 @@ class DiffEditor(BaseTraitsEditor):
             vv = [Value(name=n, lvalue=nominal_value(getattr(constants, k)),
                         rvalue=nominal_value(getattr(right, k)))
                   for n, k in (('Lambda K', 'lambda_k'),
-                               ('Lambda Ar37', 'lambda_Ar37'),
-                               ('Lambda Ar39', 'lambda_Ar39'),
-                               ('Lambda Cl36', 'lambda_Cl36'))]
+                               ('Lambda Ar37', 'lambda_ar37'),
+                               ('Lambda Ar39', 'lambda_ar39'),
+                               ('Lambda Cl36', 'lambda_cl36'))]
             vs.extend(vv)
 
         def filter_str(ii):

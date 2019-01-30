@@ -95,12 +95,12 @@ class ArArConstantsPreferences(BasePreferencesHelper):
     lambda_e_error = Float(0)
     lambda_b = Float(4.962e-10)
     lambda_b_error = Float(0)
-    lambda_Cl36 = Float(6.308e-9)
-    lambda_Cl36_error = Float(0)
-    lambda_Ar37 = Float(0.01975)
-    lambda_Ar37_error = Float(0)
-    lambda_Ar39 = Float(7.068e-6)
-    lambda_Ar39_error = Float(0)
+    lambda_cl36 = Float(6.308e-9)
+    lambda_cl36_error = Float(0)
+    lambda_cr37 = Float(0.01975)
+    lambda_ar37_error = Float(0)
+    lambda_ar39 = Float(7.068e-6)
+    lambda_ar39_error = Float(0)
     ar37_ar39_mode = Enum('Normal', 'Fixed')
     ar37_ar39 = Float(0.01)
     ar37_ar39_error = Float(0.01)
@@ -122,9 +122,9 @@ class ArArConstantsPreferences(BasePreferencesHelper):
     ar40_ar38_atm_citation = Str
     lambda_e_citation = Str
     lambda_b_citation = Str
-    lambda_Cl36_citation = Str
-    lambda_Ar37_citation = Str
-    lambda_Ar39_citation = Str
+    lambda_cl36_citation = Str
+    lambda_ar37_citation = Str
+    lambda_ar39_citation = Str
 
     decay_constant_entries = Dict(K_DECAY_CONSTANTS)
     add_decay_constant = Button
@@ -289,9 +289,9 @@ class ArArConstantsPreferencesPane(PreferencesPane):
         vs = [
             ('Ar40K epsilon/yr', 'lambda_e', 'lambda_e_error'),
             ('Ar40K beta/yr', 'lambda_b', 'lambda_b_error'),
-            ('Cl36/d', 'lambda_Cl36', 'lambda_Cl36_error'),
-            ('Ar37/d', 'lambda_Ar37', 'lambda_Ar37_error'),
-            ('Ar39/d', 'lambda_Ar39', 'lambda_Ar39_error')]
+            ('Cl36/d', 'lambda_cl36', 'lambda_cl36_error'),
+            ('Ar37/d', 'lambda_ar37', 'lambda_ar37_error'),
+            ('Ar39/d', 'lambda_ar39', 'lambda_ar39_error')]
         items = [HGroup(Label(l), spring, UItem(v), UItem(e)) for l, v, e in vs]
 
         items.append(Item('use_irradiation_endtime', label='Use Irradiation End time',
