@@ -97,7 +97,7 @@ class ArArConstantsPreferences(BasePreferencesHelper):
     lambda_b_error = Float(0)
     lambda_cl36 = Float(6.308e-9)
     lambda_cl36_error = Float(0)
-    lambda_cr37 = Float(0.01975)
+    lambda_ar37 = Float(0.01975)
     lambda_ar37_error = Float(0)
     lambda_ar39 = Float(7.068e-6)
     lambda_ar39_error = Float(0)
