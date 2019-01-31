@@ -282,6 +282,7 @@ class BasePeakCenter(HasTraits):
             p = self._calculate_peak_center(xs, ys)
             if p:
                 [lx, cx, hx], [ly, cy, hy], mx, my = p
+
                 if self.use_interpolation:
                     xs, ys = self._interpolate(xs, ys)
 
@@ -365,12 +366,6 @@ class BasePeakCenter(HasTraits):
             self.warning('interpolation failed: error={}. x.shape={}, y.shape={}'.format(e, x.shape, y.shape))
 
         return fx, fy
-
-    def _calculate_resolution(self, x, y):
-        if self.use_interpolation:
-            x, y = self._interpolate(x, y)
-
-        return calculate_resolution(x, y)
 
     def _calculate_peak_center(self, x, y):
         if self.use_interpolation:

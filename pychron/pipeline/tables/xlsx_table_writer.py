@@ -38,7 +38,7 @@ from pychron.pychron_constants import PLUSMINUS_NSIGMA, NULL_STR, DESCENDING, PL
 
 def format_mswd(t):
     m, v, _ = t
-    return 'mswd={}{:0.3f}'.format('' if v else '*', m)
+    return 'MSWD={}{:0.3f}'.format('' if v else '*', m)
 
 
 class XLSXAnalysisTableWriter(BaseTableWriter):
