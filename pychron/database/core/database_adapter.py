@@ -748,6 +748,9 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
         except SQLAlchemyError as e:
             if self.verbose:
                 self.debug('_query exception {}'.format(e))
+
+            self.rollback()
+            self.reset_connection()
             if reraise:
                 raise e
 

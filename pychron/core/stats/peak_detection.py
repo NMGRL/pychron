@@ -214,7 +214,6 @@ def calculate_peak_center(x, y, test_peak_flat=True, min_peak_height=1.0, percen
 
     x = array(x)
     y = array(y)
-    print('asdf', x.shape)
     xy = vstack((x, y)).T
     x, y = xy[argsort(xy[:, 0])].T
 
@@ -245,7 +244,6 @@ def calculate_peak_center(x, y, test_peak_flat=True, min_peak_height=1.0, percen
     # lx = x[i] - xstep
     # ly = y[i] - (y[i] - y[i - 1]) / 2.
     lx,ly = x[i], y[i]
-    print('xasdf', y[i], y[i+1])
 
     # look forward for point that is 80% of max
     for i in range(max_i, x.shape[0], 1):
@@ -258,9 +256,6 @@ def calculate_peak_center(x, y, test_peak_flat=True, min_peak_height=1.0, percen
     try:
         hx = x[i]
         hy = y[i]
-
-        print('yyyxasdf', y[i], y[i -1])
-
         # hx = x[i + 1] - xstep
         # hy = y[i] - (y[i] - y[i + 1]) / 2.
     except IndexError:

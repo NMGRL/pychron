@@ -66,7 +66,7 @@ Age Calculation
   lambda_k =  # total 40K decay constant
   f = # F-value e.g Ar40*/Ar39K
   j = # J-value e.g. neutron flux parameter
-  age = lambda_k ** -1 * log(1 + j * f))
+  age = lambda_k ** -1 * ln(1 + j * f))
 
 
 Apply Fixed (37/39)K

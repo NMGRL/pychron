@@ -802,6 +802,8 @@ class DVC(Loggable):
                         item.update(fetch=False)
                     except GitCommandError as e:
                         self.warning('error examining {}. {}'.format(name, e))
+                else:
+                    item.update(fetch=False)
 
         progress_loader(names, func, threshold=1)
         for gi in gs:

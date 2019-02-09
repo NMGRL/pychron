@@ -90,6 +90,17 @@ class BaseRegressor(HasTraits):
         return self.clean_ys.mean()
 
     @property
+    def mean_mswd(self):
+        if len(self.clean_yserr):
+            return calculate_mswd(self.clean_ys, self.clean_yserr)
+
+    @property
+    def valid_mean_mswd(self):
+        m = self.mean_mswd
+        if m is not None:
+            return validate_mswd(m, self.n)
+
+    @property
     def std(self):
         return self.clean_ys.std()
 

@@ -525,9 +525,11 @@ class _TabularEditor(qtTabularEditor):
         else:
             slot = self._on_row_selection
 
-        signal = 'selectionChanged(QItemSelection,QItemSelection)'
-        QtCore.QObject.connect(self.control.selectionModel(),
-                               QtCore.SIGNAL(signal), slot)
+        # signal = 'selectionChanged(QItemSelection,QItemSelection)'
+        # QtCore.QObject.connect(self.control.selectionModel(),
+        #                        QtCore.SIGNAL(signal), slot)
+
+        control.selectionModel().selectionChanged.connect(slot)
 
         # Synchronize other interesting traits as necessary:
         self.sync_value(factory.update, 'update', 'from')
@@ -543,20 +545,30 @@ class _TabularEditor(qtTabularEditor):
         self.sync_value(factory.scroll_to_row, 'scroll_to_row', 'from')
 
         # Connect other signals as necessary
-        signal = QtCore.SIGNAL('activated(QModelIndex)')
-        QtCore.QObject.connect(control, signal, self._on_activate)
-        signal = QtCore.SIGNAL('clicked(QModelIndex)')
-        QtCore.QObject.connect(control, signal, self._on_click)
-        signal = QtCore.SIGNAL('clicked(QModelIndex)')
-        QtCore.QObject.connect(control, signal, self._on_right_click)
-        signal = QtCore.SIGNAL('doubleClicked(QModelIndex)')
-        QtCore.QObject.connect(control, signal, self._on_dclick)
-        signal = QtCore.SIGNAL('sectionClicked(int)')
-        QtCore.QObject.connect(control.horizontalHeader(), signal, self._on_column_click)
+        # signal = QtCore.SIGNAL('activated(QModelIndex)')
+        # QtCore.QObject.connect(control, signal, self._on_activate)
+        control.activated.connect(self._on_activate)
+
+        # signal = QtCore.SIGNAL('clicked(QModelIndex)')
+        # QtCore.QObject.connect(control, signal, self._on_click)
+        control.clicked.connect(self._on_click)
+
+        # signal = QtCore.SIGNAL('clicked(QModelIndex)')
+        # QtCore.QObject.connect(control, signal, self._on_right_click)
+        control.clicked.connect(self._on_right_click)
+
+        # signal = QtCore.SIGNAL('doubleClicked(QModelIndex)')
+        # QtCore.QObject.connect(control, signal, self._on_dclick)
+        control.doubleClicked.connect(self._on_dclick)
+
+        # signal = QtCore.SIGNAL('sectionClicked(int)')
+        # QtCore.QObject.connect(control.horizontalHeader(), signal, self._on_column_click)
+        control.horizontalHeader().sectionClicked.connect(self._on_column_click)
 
         control.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        signal = QtCore.SIGNAL('customContextMenuRequested(QPoint)')
-        QtCore.QObject.connect(control, signal, self._on_context_menu)
+        # signal = QtCore.SIGNAL('customContextMenuRequested(QPoint)')
+        # QtCore.QObject.connect(control, signal, self._on_context_menu)
+        control.customContextMenuRequested.connect(self._on_context_menu)
 
         self.header_event_filter = HeaderEventFilter(self)
         control.horizontalHeader().installEventFilter(self.header_event_filter)
@@ -611,10 +623,10 @@ class _TabularEditor(qtTabularEditor):
 
         # control.link_copyable = factory.link_copyable
         control.pastable = factory.pastable
-        signal = QtCore.SIGNAL('sectionResized(int,int,int)')
-
-        QtCore.QObject.connect(control.horizontalHeader(), signal,
-                               self._on_column_resize)
+        # signal = QtCore.SIGNAL('sectionResized(int,int,int)')
+        # QtCore.QObject.connect(control.horizontalHeader(), signal,
+        #                        self._on_column_resize)
+        control.horizontalHeader().sectionResized.connect(self._on_column_resize)
 
     def refresh_editor(self):
         if self.control:
