@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2012 Jake Ross
+# Copyright 2019 ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
 # ============= standard library imports ========================
 from numpy import std, mean, where, delete
 # ============= enthought library imports =======================
@@ -26,7 +25,7 @@ from pychron.core.helpers.strtools import csv_to_ints
 from pychron.loggable import Loggable
 
 
-class MassSpecExportSpec(Loggable):
+class MassSpecPersistenceSpec(Loggable):
     runid = CStr
     labnumber = CStr
     aliquot = Either(CInt, Str)
@@ -344,13 +343,4 @@ class MassSpecExportSpec(Loggable):
 
     def _get_position(self):
         return self._position
-
-
-class XMLExportSpec(MassSpecExportSpec):
-    pass
-
-
-class YAMLExportSpec(Loggable):
-    shared_logger = True
-
-    # ============= EOF =============================================
+# ============= EOF =============================================

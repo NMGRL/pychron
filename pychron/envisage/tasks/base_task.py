@@ -39,7 +39,8 @@ from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import GenericSaveAction, GenericSaveAsAction, \
     GenericFindAction, RaiseAction, RaiseUIAction, ResetLayoutAction, \
     MinimizeAction, PositionAction, IssueAction, CloseAction, CloseOthersAction, AboutAction, OpenAdditionalWindow, \
-    NoteAction, RestartAction, DocumentationAction, CopyPreferencesAction, ChangeLogAction, StartupTestsAction
+    NoteAction, RestartAction, DocumentationAction, ChangeLogAction, StartupTestsAction, \
+    ShareSettingsAction, ApplySettingsAction
 from pychron.loggable import Loggable
 from pychron.paths import paths
 
@@ -213,7 +214,9 @@ class BaseTask(Task, Loggable, PreferenceMixin):
             id='file.menu', name='File')
 
         tools_menu = SMenu(
-            CopyPreferencesAction(),
+            ShareSettingsAction(),
+            ApplySettingsAction(),
+            # CopyPreferencesAction(),
             id='tools.menu', name='Tools')
 
         window_menu = SMenu(

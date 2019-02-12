@@ -34,5 +34,8 @@ def listeditor(name, **kw):
 
 
 def okcancel_view(*args, **kw):
+    if 'kind' not in kw:
+        kw['kind'] = 'livemodal'
+
     return View(buttons=['OK', 'Cancel'], *args, **kw)
 # ============= EOF =============================================

@@ -568,7 +568,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
                     for ii, item in enumerate(items):
                         # ounits = item.arar_constants.age_units
-                        item.arar_constants.age_units = options.age_units
+
                         is_plateau_step = None
                         if label == 'plateau':
                             is_plateau_step = a.get_is_plateau_step(ii)
@@ -814,6 +814,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         return fn
 
     def _make_analysis(self, sh, cols, item, is_last=False, is_plateau_step=None, cum=''):
+        item.arar_constants.age_units = self._options.age_units
+
         row = self._current_row
 
         fmt = self._workbook.add_format()

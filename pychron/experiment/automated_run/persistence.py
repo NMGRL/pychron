@@ -15,14 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 import binascii
 import math
 import os
 import time
 
-from six.moves import zip
 from traits.api import Instance, Bool, Interface, provides, Long, Str, Float
 from xlwt import Workbook, struct
 
@@ -32,9 +29,9 @@ from pychron.core.helpers.strtools import to_bool
 from pychron.core.ui.preference_binding import set_preference
 from pychron.database.adapters.local_lab_adapter import LocalLabAdapter
 from pychron.experiment.automated_run.hop_util import parse_hops
+from pychron.experiment.automated_run.mass_spec_persistence_spec import MassSpecPersistenceSpec
 from pychron.loggable import Loggable
 from pychron.paths import paths
-from pychron.processing.export.export_spec import MassSpecExportSpec
 from pychron.pychron_constants import NULL_STR, DETECTOR_IC
 
 DEBUG = False
@@ -955,21 +952,21 @@ class AutomatedRunPersister(BasePersister):
 
         # ic = self.per_spec.isotope_group.get_ic_factor('CDD')
 
-        exp = MassSpecExportSpec(runid=rid,
-                                 runscript_name=self.per_spec.runscript_name,
-                                 runscript_text=self.per_spec.runscript_blob,
-                                 # signal_fits=sf,
-                                 mass_spectrometer=self.per_spec.run_spec.mass_spectrometer.capitalize(),
-                                 # blanks=blanks,
-                                 # data_path=p,
-                                 power_achieved=self.per_spec.power_achieved,
-                                 isotopes=self.per_spec.isotope_group.isotopes,
-                                 # signal_intercepts=si,
-                                 # signal_intercepts=self._processed_signals_dict,
-                                 is_peak_hop=self.per_spec.save_as_peak_hop,
-                                 # ic_factor_v=float(nominal_value(ic)),
-                                 # ic_factor_e=float(std_dev(ic))
-                                 )
+        exp = MassSpecPersistenceSpec(runid=rid,
+                                      runscript_name=self.per_spec.runscript_name,
+                                      runscript_text=self.per_spec.runscript_blob,
+                                      # signal_fits=sf,
+                                      mass_spectrometer=self.per_spec.run_spec.mass_spectrometer.capitalize(),
+                                      # blanks=blanks,
+                                      # data_path=p,
+                                      power_achieved=self.per_spec.power_achieved,
+                                      isotopes=self.per_spec.isotope_group.isotopes,
+                                      # signal_intercepts=si,
+                                      # signal_intercepts=self._processed_signals_dict,
+                                      is_peak_hop=self.per_spec.save_as_peak_hop,
+                                      # ic_factor_v=float(nominal_value(ic)),
+                                      # ic_factor_e=float(std_dev(ic))
+                                      )
         exp.load_record(self.per_spec.run_spec)
 
         return exp

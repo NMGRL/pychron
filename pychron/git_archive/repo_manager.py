@@ -269,46 +269,49 @@ class GitRepoManager(Loggable):
 
     @classmethod
     def clone_from(cls, url, path):
-        # progress = open_progress(100)
+        repo = cls()
+        repo.clone(url, path)
+        return repo
+        # # progress = open_progress(100)
+        # #
+        # # def func(op_code, cur_count, max_count=None, message=''):
+        # #     if max_count:
+        # #         progress.max = int(max_count) + 2
+        # #         if message:
+        # #             message = 'Cloning repository {} -- {}'.format(url, message[2:])
+        # #             progress.change_message(message, auto_increment=False)
+        # #         progress.update(int(cur_count))
+        # #
+        # #     if op_code == 66:
+        # #         progress.close()
+        # # rprogress = CallableRemoteProgress(func)
+        # rprogress = None
+        # try:
+        #     Repo.clone_from(url, path, progress=rprogress)
+        # except GitCommandError as e:
+        #     print(e)
+        #     shutil.rmtree(path)
+        #     # def foo():
+        #     #     try:
+        #     #         Repo.clone_from(url, path, progress=rprogress)
+        #     #     except GitCommandError:
+        #     #         shutil.rmtree(path)
+        #     #
+        #     #     evt.set()
         #
-        # def func(op_code, cur_count, max_count=None, message=''):
-        #     if max_count:
-        #         progress.max = int(max_count) + 2
-        #         if message:
-        #             message = 'Cloning repository {} -- {}'.format(url, message[2:])
-        #             progress.change_message(message, auto_increment=False)
-        #         progress.update(int(cur_count))
-        #
-        #     if op_code == 66:
-        #         progress.close()
-        # rprogress = CallableRemoteProgress(func)
-        rprogress = None
-        try:
-            Repo.clone_from(url, path, progress=rprogress)
-        except GitCommandError as e:
-            print(e)
-            shutil.rmtree(path)
-            # def foo():
-            #     try:
-            #         Repo.clone_from(url, path, progress=rprogress)
-            #     except GitCommandError:
-            #         shutil.rmtree(path)
-            #
-            #     evt.set()
-
-            # t = Thread(target=foo)
-            # t.start()
-            # period = 0.1
-            # while not evt.is_set():
-            #     st = time.time()
-            #     # v = prog.get_value()
-            #     # if v == n - 2:
-            #     #     prog.increase_max(50)
-            #     #     n += 50
-            #     #
-            #     # prog.increment()
-            #     time.sleep(max(0, period - time.time() + st))
-            # prog.close()
+        #     # t = Thread(target=foo)
+        #     # t.start()
+        #     # period = 0.1
+        #     # while not evt.is_set():
+        #     #     st = time.time()
+        #     #     # v = prog.get_value()
+        #     #     # if v == n - 2:
+        #     #     #     prog.increase_max(50)
+        #     #     #     n += 50
+        #     #     #
+        #     #     # prog.increment()
+        #     #     time.sleep(max(0, period - time.time() + st))
+        #     # prog.close()
 
     def clone(self, url, path):
         try:
@@ -522,7 +525,7 @@ class GitRepoManager(Loggable):
             # except IOError,e:
             # print 'exception', e
         elif add_all:
-            self._repo.get.add('.')
+            self._repo.git.add('.')
         else:
             for r, ds, fs in os.walk(root):
                 ds[:] = [d for d in ds if d[0] != '.']
