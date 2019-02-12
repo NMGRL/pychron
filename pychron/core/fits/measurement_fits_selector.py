@@ -160,7 +160,9 @@ class MeasurementFitsSelectorView(Controller):
                              width=75),
                 CheckboxColumn(name='filter_outliers', label='Out.'),
                 ObjectColumn(name='filter_iterations', label='Iter.'),
-                ObjectColumn(name='filter_std_devs', label='SD')]
+                ObjectColumn(name='filter_std_devs', label='NSigma'),
+                CheckboxColumn(name='use_standard_deviation_filtering', label='Use SD'),
+                ]
 
         editor = myTableEditor(columns=cols,
                                selected='selected',

@@ -17,14 +17,10 @@
 # =============enthought library imports=======================
 
 # ============= standard library imports ========================
-from __future__ import absolute_import
-
 import math
 from copy import copy
 
 from numpy import asarray, average, array
-from six.moves import range
-from six.moves import zip
 from uncertainties import ufloat, umath, nominal_value, std_dev
 
 from pychron.core.stats.core import calculate_weighted_mean
@@ -56,16 +52,6 @@ def calculate_isochron(analyses, error_calc_kind, exclude=None, reg='NewYork', i
     if exclude is None:
         exclude = []
 
-    # exs, eys = [], []
-    # if exclude:
-    #     ans = [a for i, a in enumerate(analyses) if i in exclude]
-    #     args = extract_isochron_xy(ans)
-    #     if args:
-    #         exx, eyy = args[0], args[1]
-    #         exs, _ = unpack_value_error(exx)
-    #         eys, _ = unpack_value_error(eyy)
-
-    # analyses = [a for i, a in enumerate(analyses) if i not in exclude]
     ref = analyses[0]
     args = extract_isochron_xy(analyses)
     if args is None:
@@ -105,12 +91,10 @@ def calculate_isochron(analyses, error_calc_kind, exclude=None, reg='NewYork', i
             j = (nominal_value(ref.j), 0)
         age = age_equation(j, r, arar_constants=ref.arar_constants)
 
-    return age, yint, reg  # , #(xs, ys, xerrs, yerrs, exclude)
+    return age, yint, reg
 
 
-def isochron_regressor(xs, xes, ys, yes,
-                       xds, xdes, xns, xnes, yns, ynes,
-                       reg='Reed'):
+def isochron_regressor(xs, xes, ys, yes, xds, xdes, xns, xnes, yns, ynes, reg='Reed'):
     if reg.lower() in ('newyork', 'new_york'):
         from pychron.core.regression.new_york_regressor import NewYorkRegressor as klass
     else:
@@ -132,9 +116,6 @@ def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method='fl
 
         return age, error
     """
-    # print 'ages=array({})'.format(ages)
-    # print 'errors=array({})'.format(errors)
-    # print 'k39=array({})'.format(k39)
     if options is None:
         options = {}
 
@@ -217,7 +198,7 @@ def calculate_decay_time(dc, f):
     return math.log(f) / dc
 
 
-def calculate_decay_factor(dc, segments):
+def calculate_arar_decay_factors(dc37, dc39, segments):
     """
         McDougall and Harrison
         p.75 equation 3.22
@@ -228,20 +209,6 @@ def calculate_decay_factor(dc, segments):
 
         using start seems more appropriate
     """
-    if segments is None:
-        return 1.0
-    else:
-        a = sum([pi * ti for pi, ti, _, _, _ in segments])
-
-        b = sum([pi * ((1 - math.exp(-dc * ti)) / (dc * math.exp(dc * dti)))
-                 for pi, ti, dti, _, _ in segments])
-        try:
-            return a / b
-        except ZeroDivisionError:
-            return 1.0
-
-
-def calculate_arar_decay_factors(dc37, dc39, segments):
     if segments is None:
         return 1.0, 1.0
     else:
@@ -296,10 +263,7 @@ def apply_fixed_k3739(a39, pr, fixed_k3739):
     return ca37, ca39, k37, k39
 
 
-def interference_corrections(a39, a37,
-                             production_ratios,
-                             arar_constants=None,
-                             fixed_k3739=False):
+def interference_corrections(a39, a37, production_ratios, arar_constants=None, fixed_k3739=False):
     if production_ratios is None:
         production_ratios = {}
 
@@ -333,9 +297,7 @@ def interference_corrections(a39, a37,
     return k37, k38, k39, ca36, ca37, ca38, ca39
 
 
-def calculate_atmospheric(a38, a36, k38, ca38, ca36, decay_time,
-                          production_ratios=None,
-                          arar_constants=None):
+def calculate_atmospheric(a38, a36, k38, ca38, ca36, decay_time, production_ratios=None, arar_constants=None):
     """
         McDougall and Harrison
         Roddick 1983
@@ -353,11 +315,6 @@ def calculate_atmospheric(a38, a36, k38, ca38, ca36, decay_time,
     m = pr.get('Cl3638', 0) * nominal_value(arar_constants.lambda_Cl36) * decay_time
     atm3836 = nominal_value(arar_constants.atm3836)
 
-    # lcl36 = arar_constants.lambda_Cl36.nominal_value
-    # atm3836 = arar_constants.atm3836.nominal_value
-
-    # m = pr.get('Cl3638', 0) * lcl36 * decay_time
-    # atm36 = ufloat(0, 0, tag='atm36')
     atm36 = 0
     for _ in range(5):
         ar38atm = atm3836 * atm36
@@ -367,11 +324,7 @@ def calculate_atmospheric(a38, a36, k38, ca38, ca36, decay_time,
     return atm36, cl36, cl38
 
 
-def calculate_F(isotopes,
-                decay_time,
-                interferences=None,
-                arar_constants=None,
-                fixed_k3739=False):
+def calculate_F(isotopes, decay_time, interferences=None, arar_constants=None, fixed_k3739=False):
     """
         isotope values corrected for blank, baseline, (background)
         ic_factor, (discrimination), ar37 and ar39 decay
@@ -428,11 +381,7 @@ def calculate_F(isotopes,
     return f, f_wo_irrad, non_ar_isotopes, computed, interference_corrected
 
 
-def age_equation(j, f,
-                 include_decay_error=False,
-                 lambda_k=None,
-                 scalar=None,
-                 arar_constants=None):
+def age_equation(j, f, include_decay_error=False, lambda_k=None, scalar=None, arar_constants=None):
     if isinstance(j, tuple):
         j = ufloat(*j)
     elif isinstance(j, str):

@@ -283,17 +283,17 @@ class LoadingManager(DVCIrradiationable):
                     item.nxtals = pi.nxtals
                     item.weight = pi.weight
 
-                p = LoadPosition(identifier=ln,
-                                 sample=sample,
-                                 material=material,
-                                 weight=pi.weight or 0.0,
-                                 nxtals=pi.nxtals or 0,
-                                 project=project,
-                                 irradiation=irrad,
-                                 level=level,
-                                 irrad_position=int(irradpos),
-                                 position=pi.position)
-                pos.append(p)
+                    p = LoadPosition(identifier=ln,
+                                     sample=sample,
+                                     material=material,
+                                     weight=pi.weight or 0.0,
+                                     nxtals=pi.nxtals or 0,
+                                     project=project,
+                                     irradiation=irrad,
+                                     level=level,
+                                     irrad_position=int(irradpos),
+                                     position=pi.position)
+                    pos.append(p)
 
         self.positions = pos
         self._set_group_colors()

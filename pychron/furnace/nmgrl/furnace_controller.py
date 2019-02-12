@@ -41,30 +41,30 @@ class NMGRLFurnaceController(AbstractDevice):
         if self._cdevice:
             return self._cdevice.set_setpoint(v, **kw)
 
-    def get_output(self):
+    def get_output(self, **kw):
         r = 0
         if self._cdevice:
-            r = self._cdevice.get_output()
+            r = self._cdevice.get_output(**kw)
         return r or 0
 
     def get_setpoint(self, **kw):
         r = 0
         if self._cdevice:
-            r = self._cdevice.get_setpoint()
+            r = self._cdevice.get_setpoint(**kw)
         return r or 0
 
     def get_response(self, **kw):
         o = 0
         if self._cdevice:
-            o = self._cdevice.get_process_value()
+            o = self._cdevice.get_process_value(**kw)
 
         return o or 0
 
     def test_connection(self):
         if self._cdevice:
-            return self._cdevice.test_connection()
+            return self._cdevice.test_connection(), ''
         else:
-            return False
+            return False, 'No Device'
 
     def set_pid(self, pstr):
         if self._cdevice:

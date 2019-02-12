@@ -61,10 +61,10 @@ class ControlPane(TraitsDockPane):
         self.model.stop_motors()  # just refers to motor stop function for now
 
     def _dump_sample_button_fired(self):
-        self.model.dump_sample(self.dump_sample_number)
+        self.model.drop_sample(self.dump_sample_number)
 
     def _extract_button_fired(self):
-        self.model.extract(self.extract_value, 'percent', 1)
+        self.model.extract(self.extract_value, 'percent')
 
     # def _jitter_button_fired(self):
     #     if not self.jittering:

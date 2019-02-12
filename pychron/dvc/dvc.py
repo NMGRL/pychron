@@ -486,6 +486,14 @@ class DVC(Loggable):
         else:
             return tag.path
 
+    def delete_existing_icfactors(self, ai, dets):
+        # remove all icfactors not in dets
+        if dets:
+            self.info('Delete existing icfactors for {}'.format(ai))
+            ai.delete_icfactors(dets)
+            if self._cache:
+                self._cache.remove(ai.uiid)
+
     def save_icfactors(self, ai, dets, fits, refs):
         if fits and dets:
             self.info('Saving icfactors for {}'.format(ai))
@@ -678,11 +686,15 @@ class DVC(Loggable):
         if bad_records:
             self.warning_dialog('Missing Repository Associations. Contact an expert!'
                                 'Cannot load analyses "{}"'.format(','.join([r.record_id for r in
-                                                                            bad_records])))
+                                                                             bad_records])))
             records = [r for r in records if r.repository_identifier is not None]
 
         if not records:
-            return []
+            if self.use_cache:
+                cache.clean()
+                return cached_records
+            else:
+                return []
 
         exps = {r.repository_identifier for r in records}
         progress_iterator(exps, func, threshold=1)
@@ -790,6 +802,8 @@ class DVC(Loggable):
                         item.update(fetch=False)
                     except GitCommandError as e:
                         self.warning('error examining {}. {}'.format(name, e))
+                else:
+                    item.update(fetch=False)
 
         progress_loader(names, func, threshold=1)
         for gi in gs:
@@ -1657,7 +1671,7 @@ class DVC(Loggable):
                            name='pychronmeta')
 
     def _meta_repo_default(self):
-        return MetaRepo()
+        return MetaRepo(application=self.application)
 
 
 if __name__ == '__main__':

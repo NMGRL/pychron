@@ -77,6 +77,7 @@ class SpectrumOptions(AgeOptions):
     # center_line_style = Enum('No Line', 'solid', 'dash', 'dot dash', 'dot', 'long dash')
     extend_plateau_end_caps = Bool(True)
     plateau_arrow_visible = Bool
+    dim_non_plateau = Bool
     # plateau_line_width = Float
     # plateau_line_color = Color
     # user_plateau_line_color = Bool
@@ -89,6 +90,7 @@ class SpectrumOptions(AgeOptions):
     include_plateau_identifier = Bool
     use_isochron_trapped = Bool
     include_isochron_trapped_error = Bool
+    integrated_include_omitted = Bool
 
     group_options_klass = SpectrumGroupOptions
 

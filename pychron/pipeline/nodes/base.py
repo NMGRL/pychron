@@ -85,11 +85,9 @@ class BaseNode(ColumnSorterMixin):
         self._pre_run_hook(state)
 
         if not self.auto_configure:
-            print('not auto configure')
             return True
 
         if self._manual_configured:
-            print('manually configured')
             return True
 
         if state.unknowns:

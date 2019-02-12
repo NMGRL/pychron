@@ -252,6 +252,13 @@ nodes:
   - klass: CSVAnalysesExportNode
 """
 
+CSV_RAW_DATA_EXPORT = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: CSVRawDataExportNode
+"""
+
 CA_CORRECTION_FACTORS = """
 required:
 nodes:

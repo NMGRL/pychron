@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from pyface.qt import QtCore
+
 from pyface.qt.QtCore import QRegExp, Qt
 from pyface.qt.QtGui import QHBoxLayout, QPushButton, QSizePolicy, QLineEdit, QCheckBox, \
     QSortFilterProxyModel, QItemSelectionModel
@@ -181,9 +181,10 @@ class _FilterTabularEditor(_TabularEditor):
             slot = self._on_rows_selection
         else:
             slot = self._on_row_selection
-        signal = 'selectionChanged(QItemSelection,QItemSelection)'
-        QtCore.QObject.connect(self.control.selectionModel(),
-                               QtCore.SIGNAL(signal), slot)
+        # signal = 'selectionChanged(QItemSelection,QItemSelection)'
+        # QtCore.QObject.connect(self.control.selectionModel(),
+        #                        QtCore.SIGNAL(signal), slot)
+        self.control.selectionModel().selectionChanged.connect(slot)
 
     def _scroll_to_row_changed(self, row):
         scroll_hint = self.scroll_to_row_hint_map.get(self.factory.scroll_to_row_hint, self.control.PositionAtCenter)

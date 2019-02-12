@@ -179,7 +179,8 @@ class AutomatedRunSpec(HasTraits):
         result.analysis_timestamp = datetime.now()
         result.isotope_group = arun.isotope_group
         result.tripped_conditional = arun.tripped_conditional
-
+        if arun.peak_center:
+            result.centering_results = arun.peak_center.get_results()
         self.result = result
 
     def is_detector_ic(self):

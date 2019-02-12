@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2018 ross
+# Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,31 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.api import HasTraits, Instance, Str
 
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+from __future__ import absolute_import
 
-class BaseResult(HasTraits):
-    analysis = Instance('pychron.processing.analyses.analysis.Analysis')
-    isotope = Str
+from pychron.core.ui.factory import toolkit_factory
 
-    @property
-    def record_id(self):
-        r = ''
-        if self.analysis:
-            r = self.analysis.record_id
-        return r
+MapViewEditor = toolkit_factory('map_editor', 'MapViewEditor')
 
-    @property
-    def identifier(self):
-        r = ''
-        if self.analysis:
-            r = self.analysis.identifier
-        return r
-
-    @property
-    def display_uuid(self):
-        r = ''
-        if self.analysis:
-            r = self.analysis.display_uuid
-        return r
 # ============= EOF =============================================

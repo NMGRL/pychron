@@ -60,7 +60,7 @@ class IsotopeEvolutionOptions(FitOptions):
     show_sniff = Bool(False)
 
     def initialize(self):
-        self.subview_names = [MAIN, 'IsoEvo']
+        self.subview_names = [MAIN]
 
     def _get_subview(self, name):
         return VIEWS[name]

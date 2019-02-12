@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= standard library imports ========================
-from __future__ import absolute_import
 from numpy import where, polyval, polyfit
 # ============= enthought library imports =======================
 from traits.api import Str
@@ -75,7 +74,11 @@ class InterpolationRegressor(BaseRegressor):
         try:
             pb, ab, _, _ = self._bracketing_predictors(tm, exc, attr)
 
-            v = (pb + ab) / 2.0
+            if attr == 'value':
+                v = (pb + ab) / 2.0
+            else:
+                v = ((pb**2 + ab**2)**0.5)/2.0
+
         except TypeError:
             if attr == 'value':
                 v = self.ys[0]

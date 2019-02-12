@@ -14,14 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
-from pyface.ui.qt4.about_dialog import AboutDialog
-from traits.api import List, Str
+import sys
+
 # ============= standard library imports ========================
 from pyface.qt import QtGui, QtCore
 from pyface.qt.QtGui import QPlainTextEdit
-import sys
+# ============= enthought library imports =======================
+from pyface.ui.qt4.about_dialog import AboutDialog
+from traits.api import List, Str
+
 # ============= local library imports  ==========================
 
 _ABOUT_TEXT = '''
@@ -99,7 +100,8 @@ class myAboutDialog(AboutDialog):
         else:
             buttons.addButton(QtGui.QDialogButtonBox.Ok)
 
-        buttons.connect(buttons, QtCore.SIGNAL('accepted()'), parent, QtCore.SLOT('accept()'))
+        # buttons.connect(buttons, QtCore.SIGNAL('accepted()'), parent, QtCore.SLOT('accept()'))
+        buttons.accepted.connect(parent.accept)
 
         revisions = self._create_revisions()
         changes = self._create_changes()

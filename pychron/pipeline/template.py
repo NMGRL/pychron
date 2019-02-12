@@ -73,7 +73,6 @@ class PipelineTemplateRoot(HasTraits):
             group = None
 
         for gi in self.groups:
-            print(name, group, gi.name)
             if group is None or group == gi.name:
                 for t in gi.templates:
                     if t.name == name:
@@ -124,7 +123,6 @@ class PipelineTemplate(HasTraits):
             exclude_klass = []
 
         for i, ni in enumerate(nodes):
-            # print i, ni
             klass = ni['klass']
             if klass in exclude_klass:
                 continue
@@ -173,9 +171,6 @@ class PipelineTemplate(HasTraits):
             node.trait_set(recaller=recaller)
             if isinstance(node, MassSpecReducedNode):
                 node.trait_set(dvc=dvc)
-        # elif isinstance(node, GeochronNode):
-        #     service = application.get_service('pychron.geochron.geochron_service.GeochronService')
-        #     node.trait_set(service=service)
         elif isinstance(node, EmailNode):
             emailer = application.get_service('pychron.social.email.emailer.Emailer')
             if emailer is None:

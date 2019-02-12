@@ -31,15 +31,15 @@ class AutomatedRunResult(HasTraits):
     isotope_group = Instance(IsotopeGroup)
     summary = Property
     tripped_conditional = Instance(AutomatedRunConditional)
+    centering_results = None
 
     def _get_summary(self):
         at = self.analysis_timestamp
         if at is not None:
             at = at.strftime('%H:%M:%S %m-%d-%Y')
-
-        summary = self._make_header('Summary')
         return '''RUNID= {} 
 RUN TIME= {}
+{}
 {}
 {}
 {}
@@ -47,11 +47,34 @@ RUN TIME= {}
              at,
              self._intensities(),
              self._tripped_conditional(),
-             summary,
+             self._make_header('Summary'),
+             self._make_peak_statistics(),
              self._make_summary())
 
     def _make_summary(self):
         return 'No Summary Available'
+
+    def _make_peak_statistics(self):
+        ret = ''
+
+        def f(v):
+            try:
+                v = '{:0.2f}'.format(v)
+            except ValueError:
+                pass
+            return v
+
+        if self.centering_results:
+            fmt = '{:<5s} {:<10s} {:<10s} {:<10s}'
+            s = [fmt.format('Det', 'Res.', 'Low RP', 'High RP')]
+            for r in self.centering_results:
+                s.append(fmt.format(r.detector,
+                                    f(r.resolution),
+                                    f(r.low_resolving_power),
+                                    f(r.high_resolving_power)))
+
+            ret = '\n'.join(s)
+        return ret
 
     def _intensities(self):
         lines = []

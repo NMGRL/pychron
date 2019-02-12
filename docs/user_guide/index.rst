@@ -11,4 +11,5 @@ Pychron User Guide
   entry/index
   dashboard/index
   data_mapper/index
+  arar_age
   glossary

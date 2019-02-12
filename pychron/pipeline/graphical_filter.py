@@ -140,21 +140,33 @@ class SelectionGraph(Graph):
     grouping_tool = None
 
     def setup(self, x, y, ans):
-        from pychron.pipeline.plot.plotter.ticks import tick_formatter, StaticTickGenerator, TICKS
+        from pychron.pipeline.plot.plotter.ticks import StaticTickGenerator
+
+        def display_atype(a):
+            args = a.analysis_type.split('_')
+            return ' '.join([a.capitalize() for a in args])
+
+        atypes = list({display_atype(a) for a in ans})
 
         p = self.new_plot()
-        p.padding_left = 60
-        p.y_axis.tick_label_formatter = tick_formatter
-        p.y_axis.tick_generator = StaticTickGenerator()
+        p.padding_left = 90
+
+        def tickformatter(x):
+            return atypes[int(x)]
+
+        p.y_axis.tick_label_rotate_angle = 60
+        p.y_axis.tick_label_formatter = tickformatter
+        p.y_axis.tick_generator = StaticTickGenerator(_nticks=len(atypes))
         p.y_axis.title = 'Analysis Type'
         p.y_axis.title_font = 'modern 18'
         p.y_axis.tick_label_font = 'modern 14'
 
-        # p.y_grid.line_style='solid'
-        # p.y_grid.line_color='green'
-        # p.y_grid.line_weight = 1.5
+        self.add_axis_tool(p, p.x_axis)
+        self.add_axis_tool(p, p.y_axis)
+        self.add_limit_tool(p, 'x')
+        self.add_limit_tool(p, 'y')
 
-        self.set_y_limits(min_=-1, max_=len(TICKS))
+        self.set_y_limits(min_=-1, max_=len(atypes))
 
         p.index_range.tight_bounds = False
         p.x_axis.tick_generator = ScalesTickGenerator(scale=CalendarScaleSystem())

@@ -46,6 +46,8 @@ class FitNode(FigureNode):
     _keys = List
 
     # has_save_node = False
+    def _set_additional_options(self, state):
+        pass
 
     def _set_saveable(self, state):
         ps = self.plotter_options.get_saveable_aux_plots()
@@ -111,6 +113,8 @@ class FitReferencesNode(FitNode):
                 editor.set_references(list(refs))
 
         self._set_saveable(state)
+        self._set_additional_options(state)
+
         self.editor.force_update(force=True)
 
     def _get_reference_analysis_types(self):
@@ -182,16 +186,13 @@ class FitICFactorNode(FitReferencesNode):
         dets = list(udets.union(rdets))
         self.plotter_options_manager.set_detectors(dets)
 
-    # def set_detectors(self, dets):
-    #     self.plotter_options_manager.set_detectors(dets)
+    def _set_additional_options(self, state):
+        state.delete_existing_icfactors = self.plotter_options.delete_existing
 
     def _set_saveable(self, state):
         super(FitICFactorNode, self)._set_saveable(state)
         ps = self.plotter_options.get_saveable_aux_plots()
         state.saveable_keys = [p.denominator for p in ps]
-
-    # def run(self, state):
-    #     super(FitICFactorNode, self).run(state)
 
     def _check_refit(self, ai):
         for k in self._keys:
@@ -424,7 +425,7 @@ class DefineEquilibrationNode(FitNode):
         fs = progress_loader(unks, self._assemble_result, threshold=1, step=10)
         self._set_saveable(state)
         if fs:
-            e = DefineEquilibrationResultsEditor(fs)
+            e = DefineEquilibrationResultsEditor(fs, options=po)
             state.editors.append(e)
 
     def _set_saveable(self, state):

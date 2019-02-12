@@ -464,7 +464,6 @@ class DVCPersister(BasePersister):
             isos[key] = isod
 
             if iso.detector not in dets:
-                # bblob = base64.b64encode(iso.baseline.pack(endianness, as_hex=False))
                 bblob = encode_blob(iso.baseline.pack(endianness, as_hex=False))
                 baselines.append({'detector': iso.detector, 'blob': bblob})
                 dets[iso.detector] = {'deflection': per_spec.defl_dict.get(iso.detector),

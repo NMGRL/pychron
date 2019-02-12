@@ -609,7 +609,7 @@ class BaseArArFigure(SelectionFigure):
         if mswd_args and display_mswd:
             mswd, valid_mswd, _ = mswd_args
             vd = '' if valid_mswd else '*'
-            mswd = '{}mswd= {:0.2f}'.format(vd, mswd)
+            mswd = '{} MSWD= {:0.2f}'.format(vd, mswd)
         else:
             mswd = ''
 

@@ -56,6 +56,9 @@ class Updater(Loggable):
         if self.remote:
             return self._validate_origin(self.remote)
 
+    def set_revisions(self):
+        self._check_for_updates()
+
     def check_for_updates(self, inform=False):
         self.debug('checking for updates')
         branch = self.branch

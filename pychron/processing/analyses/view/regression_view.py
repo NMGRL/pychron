@@ -55,7 +55,8 @@ class RegressionView(HasTraits):
             bg.new_plot(ytitle=baseline.detector, xtitle='Time (s)', title='Baseline')
             if baseline.xs.shape[0]:
                 bg.new_series(baseline.offset_xs, baseline.ys,
-                              color='red', type='scatter', fit=baseline.fit)
+                              filter_outliers_dict=baseline.filter_outliers_dict,
+                              color='red', type='scatter', fit=baseline.efit)
             bg.set_y_limits(pad='0.1', plotid=i)
 
         ig = StackedRegressionGraph()
@@ -66,7 +67,8 @@ class RegressionView(HasTraits):
             ig.new_plot(ytitle=iso.name, xtitle='Time (s)', title='Isotope')
             if iso.xs.shape[0]:
                 ig.new_series(iso.offset_xs, iso.ys,
-                              color='blue', type='scatter', fit=iso.fit)
+                              filter_outliers_dict=iso.filter_outliers_dict,
+                              color='blue', type='scatter', fit=iso.efit)
             ig.set_y_limits(pad='0.1', plotid=i)
 
         container.add(sg.plotcontainer)

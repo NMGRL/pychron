@@ -60,7 +60,10 @@ class SparseLogTicks(DefaultTickGenerator):
         labels = array(['{:n}'.format(t) for t in ticks])
 
         # only label 0.1,1,10,100,1000...
-        labels[log10(ticks) % 1 != 0] = ''
+        try:
+            labels[log10(ticks) % 1 != 0] = ''
+        except ValueError:
+            pass
 
         return ticks, labels
 

@@ -240,6 +240,13 @@ class AnalysisTbl(Base, IDMixin):
         if self.repository_associations and len(self.repository_associations) == 1:
             return self.repository_associations[0].repository
 
+    @property
+    def display_uuid(self):
+        u = self.uuid
+        if not u:
+            u = ''
+        return u[:8]
+
     def get_load_name(self):
         ln = ''
         if self.measured_positions:
@@ -260,6 +267,8 @@ class AnalysisTbl(Base, IDMixin):
 
         # force binding of irradiation_position
         self.irradiation_position
+        self.irradiation_level
+        self.irradiation
 
 
 class AnalysisIntensitiesTbl(Base, IDMixin):

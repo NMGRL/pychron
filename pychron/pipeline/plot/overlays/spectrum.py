@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.data_label import draw_arrow
 from chaco.label import Label
@@ -24,15 +25,15 @@ from enable.colors import convert_from_pyqt_color
 from enable.font_metrics_provider import font_metrics_provider
 from enable.tools.drag_tool import DragTool
 from kiva.trait_defs.kiva_font_trait import KivaFont
-from traits.api import Array, Int, Float, Str, Color, Bool, List
-
 # ============= standard library imports ========================
 from numpy import where, array
+from six.moves import zip
+from traits.api import Array, Int, Float, Str, Color, Bool, List
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
 from pychron.graph.tools.info_inspector import InfoOverlay, InfoInspector
 from pychron.pychron_constants import PLUSMINUS, SIGMA
-from six.moves import zip
 
 
 class BasePlateauOverlay(AbstractOverlay):
@@ -40,10 +41,11 @@ class BasePlateauOverlay(AbstractOverlay):
 
     def _get_section(self, pt):
         d = self.component.map_data(pt)
-        cs = self.cumulative39s
+        cs = self.cumulative39s[::2]
         t = where(cs < d)[0]
+
         if len(t):
-            tt = t[-1] + 1
+            tt = t[-1]
         else:
             tt = 0
         return tt
@@ -56,37 +58,26 @@ class SpectrumTool(InfoInspector, BasePlateauOverlay):
     # current_screen = None
     analyses = List
 
-    def hittest(self, screen_pt, threshold=20):
+    _cached_lines = None
+
+    def hittest(self, screen_pt, ndx=None):
         comp = self.component
 
-        ndx = self._get_section(screen_pt)
+        if ndx is None:
+            ndx = self._get_section(screen_pt)
+
         ys = comp.value.get_data()[::2]
         if ndx < len(ys):
             yd = ys[ndx]
 
             e = comp.errors[ndx * 2] * self.nsigma
             yl, yu = comp.y_mapper.map_screen(array([yd - e, yd + e]))
-            # print ys
-            # print ndx, yd, yd+e, yd-e, yu, yl, screen_pt[1], self.nsigma
             if yu - yl < 1:
                 yu += 1
                 yl -= 1
 
             if yl < screen_pt[1] < yu:
                 return ndx
-
-    # def normal_mouse_move(self, event):
-    # xy=event.x, event.y
-    # pos=self.hittest(xy)
-    # if pos is not None:
-    # # if isinstance(pos, tuple):
-    # self.current_position = pos
-    # self.current_screen = xy
-    #         # event.handled = True
-    #     else:
-    #         self.current_position = None
-    #         self.current_screen = None
-    #     self.metadata_changed = True
 
     def normal_left_down(self, event):
         if event.handled:
@@ -101,34 +92,46 @@ class SpectrumTool(InfoInspector, BasePlateauOverlay):
             event.handled = True
 
     def assemble_lines(self):
-        idx = self.current_position
-        comp = self.component
+        if self._cached_lines is None:
+            idx = self.current_position
+            comp = self.component
 
-        e = comp.errors[idx * 2]
-        ys = comp.value.get_data()[::2]
-        v = ys[idx]
+            idx2 = idx * 2
+            e = comp.errors[idx2]
+            ys = comp.value.get_data()[::2]
+            v = ys[idx]
 
-        low_c = 0 if idx == 0 else self.cumulative39s[idx - 1]
+            low_c = self.cumulative39s[idx2]
+            high_c = self.cumulative39s[idx2 + 1]
 
-        an = self.analyses[idx]
-        return ['RunID={}'.format(an.record_id),
-                'Tag={}'.format(an.tag),
-                'Status={}'.format(an.status_text),
-                u'{}={} {}{} (1{})'.format(comp.container.y_axis.title, floatfmt(v), PLUSMINUS,
-                                           floatfmt(e), SIGMA),
-                'Cumulative. Ar39={}-{}'.format(floatfmt(low_c),
-                                                floatfmt(self.cumulative39s[idx]))]
+            an = self.analyses[idx]
+            lines = ['RunID={}'.format(an.record_id),
+                     'Tag={}'.format(an.tag),
+                     'Status={}'.format(an.status_text),
+                     u'{}={} {}{} (1{})'.format(comp.container.y_axis.title, floatfmt(v), PLUSMINUS,
+                                                floatfmt(e), SIGMA),
+                     'Cumulative. Ar39={}-{}'.format(floatfmt(low_c), floatfmt(high_c))]
+
+            self._cached_lines = lines
+
+        return self._cached_lines
 
     def normal_mouse_move(self, event):
         pt = event.x, event.y
-        if self.hittest(pt) is not None and not event.handled:
-            event.window.set_pointer('cross')
-            hover = self._get_section(pt)
+        hover = self._get_section(pt)
+
+        if self.hittest(pt, hover) is not None:
+            # print('setting cross')
+            # event.window.set_pointer('cross')
             self.component.index.metadata['hover'] = [hover]
+            if self.current_position != hover:
+                self._cached_lines = None
+
             self.current_position = hover
             self.current_screen = pt
         else:
-            event.window.set_pointer('arrow')
+            # print('settinasg arrow')
+            # event.window.set_pointer('arrow')
             self.component.index.metadata['hover'] = None
 
             self.current_position = None
@@ -163,6 +166,9 @@ class SpectrumErrorOverlay(AbstractOverlay):
     use_user_color = Bool(False)
     user_color = Color
 
+    platbounds = None
+    dim_non_plateau = Bool(False)
+
     def overlay(self, component, gc, *args, **kw):
         comp = self.component
         with gc:
@@ -195,6 +201,11 @@ class SpectrumErrorOverlay(AbstractOverlay):
                 selection_color = color[0], color[1], color[2], 0.3
 
             n = len(xs)
+
+            step_a, step_b = None, None
+            if self.platbounds:
+                step_a, step_b = self.platbounds
+
             for i, ((xa, xb), (ya, yb), (ea, eb)) in enumerate(zip(xs, ys, es)):
                 ea *= self.nsigma
                 # eb *= self.nsigma
@@ -208,12 +219,27 @@ class SpectrumErrorOverlay(AbstractOverlay):
                 w = p3[0] - p1[0]
                 h = p2[1] - p1[1]
 
-                c = selection_color if i in sels else color
+                if self.dim_non_plateau:
 
-                gc.set_fill_color(c)
-                gc.set_stroke_color(c)
+                    if step_a is not None and step_a <= i <= step_b:
+                        c = color
+                    else:
+                        c = selection_color
+
+                    fc, sc = c, c
+                    if i in sels:
+                        fc = (0, 0, 0, 0)
+                        sc = selection_color
+
+                else:
+                    sc = fc = selection_color if i in sels else color
+
+                gc.set_fill_color(fc)
+                gc.set_stroke_color(sc)
 
                 gc.rect(x, y, w, h)
+                gc.draw_path()
+
                 func()
                 if i > 0 and i <= n:
                     # draw verticals

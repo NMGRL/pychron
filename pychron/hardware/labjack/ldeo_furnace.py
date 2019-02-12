@@ -168,9 +168,13 @@ class LamontFurnaceControl(CoreDevice):
 
     def drop_ball(self, position):
 
-        self.goto_ball(position)
-        time.sleep(5)
-        self.returnfrom_ball(position)
+        def func():
+
+            self.goto_ball(position)
+            time.sleep(5)
+            self.returnfrom_ball(position)
+        t = Thread(target=func)
+        t.start()
 
     def goto_ball(self, position):
         positions = [[1, 5],
@@ -188,6 +192,8 @@ class LamontFurnaceControl(CoreDevice):
 
         stepper_number, runtime = positions[position - 1]
 
+        self.info('Going to position {}; running for {} seconds'.format(position, runtime))
+
         if position == 0:  # position command zero does nothing
             runtime = 0
 
@@ -197,6 +203,7 @@ class LamontFurnaceControl(CoreDevice):
             a, b = 4, 5
 
         self._run_stepper(runtime, 'forward', a, b)
+        time.sleep(runtime)
 
     def returnfrom_ball(self, position):
         positions = [[1, 5],
@@ -223,6 +230,7 @@ class LamontFurnaceControl(CoreDevice):
             a, b = 4, 5
 
         self._run_stepper(runtime + 3, 'backward', a, b)
+        time.sleep(runtime)
 
     def get_process_value(self):
         # note it is not possible to read the current setting for the LJTick-DAC, so we must measure voltage
@@ -249,6 +257,7 @@ class LamontFurnaceControl(CoreDevice):
             # st = time.time()
             dev.getFeedback(u3.BitStateWrite(b_id, 1))
             time.sleep(runtime)
+            self.info('adjk;fdsajf ', runtime)
             # while time.time() - st < runtime:
             #     time.sleep(1)
 

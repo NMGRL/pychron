@@ -105,7 +105,6 @@ class AppearanceSubOptions(SubOptions):
         # return rc_grp
         return VGroup(UItem('layout', style='custom'))
 
-
     def _get_xfont_group(self):
         v = VGroup(self._create_axis_group('x', 'title'),
                    self._create_axis_group('x', 'tick'),
@@ -264,6 +263,9 @@ class BaseOptions(HasTraits):
                     yd = yaml.load(rfile)
 
             self._load_factory_defaults(yd)
+
+    def setup(self):
+        pass
 
     def initialize(self):
         pass
@@ -497,6 +499,9 @@ class FigureOptions(BaseOptions):
             return str(self.xpad) if self.xpad_as_percent else self.xpad
 
 
+NAUX_PLOTS = 15
+
+
 class AuxPlotFigureOptions(FigureOptions):
     aux_plots = List
     aux_plot_klass = AuxPlot
@@ -505,6 +510,14 @@ class AuxPlotFigureOptions(FigureOptions):
     error_info_font = Property
     error_info_fontname = Enum(*FONTS)
     error_info_fontsize = Enum(*SIZES)
+
+    def setup(self):
+        while 1:
+            if len(self.aux_plots) == NAUX_PLOTS:
+                break
+
+            aux = self.aux_plot_klass()
+            self.aux_plots.append(aux)
 
     def add_aux_plot(self, name, i=0, **kw):
         plt = self.aux_plot_klass(name=name, **kw)
@@ -530,7 +543,7 @@ class AuxPlotFigureOptions(FigureOptions):
         return '{} {}'.format(self.error_info_fontname, self.error_info_fontsize)
 
     def _aux_plots_default(self):
-        return [self.aux_plot_klass() for _ in range(12)]
+        return [self.aux_plot_klass() for _ in range(NAUX_PLOTS)]
 
 
 class AgeOptions(AuxPlotFigureOptions, JErrorMixin):
@@ -569,7 +582,5 @@ class AgeOptions(AuxPlotFigureOptions, JErrorMixin):
 
     def _get_label_font(self):
         return '{} {}'.format(self.label_fontname, self.label_fontsize)
-
-
 
 # ============= EOF =============================================

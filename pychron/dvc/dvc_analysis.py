@@ -287,7 +287,14 @@ class DVCAnalysis(Analysis):
             return x.total_seconds() / (60. * 60 * 24)
 
         doses = chron.get_doses()
-        segments = [(pwr, convert_days(en - st), convert_days(analts - st), st, en)
+
+        def calc_ti(st, en):
+            t = st
+            if chron.use_irradiation_endtime:
+                t = en
+            return convert_days(analts - t)
+
+        segments = [(pwr, convert_days(en - st), calc_ti(st, en), st, en)
                     for pwr, st, en in doses
                     if st is not None and en is not None]
         d_o = 0
@@ -366,12 +373,11 @@ class DVCAnalysis(Analysis):
         isoks, dks = list(map(tuple, partition(keys, lambda x: x in sisos)))
 
         def update(d, i):
-            fd = i.filter_outliers_dict
             d.update(fit=i.fit, value=float(i.value), error=float(i.error),
                      n=i.n, fn=i.fn,
                      reviewed=reviewed,
                      include_baseline_error=i.include_baseline_error,
-                     filter_outliers_dict=fd)
+                     filter_outliers_dict=i.filter_outliers_dict)
 
         # save intercepts
         if isoks:
@@ -425,6 +431,19 @@ class DVCAnalysis(Analysis):
                     siso.blank.fit = f
 
         self._dump(isos, path)
+
+    def delete_icfactors(self, dkeys):
+        jd, path = self._get_json('icfactors')
+
+        remove = []
+        for k in jd:
+            if k not in dkeys:
+                remove.append(k)
+
+        for r in remove:
+            jd.pop(r)
+
+        self._dump(jd, path)
 
     def dump_icfactors(self, dkeys, fits, refs=None, reviewed=False):
         jd, path = self._get_json('icfactors')
@@ -532,7 +551,7 @@ class DVCAnalysis(Analysis):
             if isinstance(v, dict):
                 vv, ee = v['value'] or 0, v['error'] or 0
                 r = v.get('reviewed')
-                for iso in self.get_isotopes(key):
+                for iso in self.get_isotopes_for_detector(key):
                     iso.ic_factor = ufloat(vv, ee, tag='{} IC'.format(iso.name))
                     iso.ic_factor_reviewed = r
 
@@ -556,6 +575,8 @@ class DVCAnalysis(Analysis):
             i = Isotope(name, detector)
             i.set_units(v.get('units', 'fA'))
             i.set_time_zero(time_zero_offset)
+            i.set_detector_serial_id(v.get('serial_id', ''))
+
             return i
 
         try:

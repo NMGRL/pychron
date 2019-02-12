@@ -24,6 +24,8 @@
 """
 from numpy import Inf, isscalar, array, argmax, polyfit, asarray, argsort, vstack, arange
 
+from pychron.pychron_constants import NULL_STR
+
 
 def _datacheck_peakdetect(x_axis, y_axis):
     if x_axis is None:
@@ -156,9 +158,54 @@ class PeakCenterError(BaseException):
         self.high_pos_error = kw.get('high_pos_error')
 
 
+def fformat(v, format_str):
+    if format_str:
+        try:
+            v = format_str.format(v)
+        except ValueError:
+            pass
+    return v
+
+
+def calculate_resolution(x, y, format_str=None, return_all=False):
+    try:
+        [lx, cx, hx], [ly, cy, hy], mx, my = calculate_peak_center(x, y, percent=95)
+        print(lx, cx, hx, ly, cy, hy, my)
+        res = cx / (hx - lx)
+    except PeakCenterError:
+        res = NULL_STR
+
+    res = fformat(res, format_str)
+    if return_all:
+        return res, ([lx, cx, hx], [ly, cy, hy])
+    else:
+        return res
+
+
+def calculate_resolving_power(x, y, format_str=None, return_all=False):
+    try:
+        [lx5, cx5, hx5], [ly5, cy5, hy5], _, _ = calculate_peak_center(x, y, test_peak_flat=False, percent=95)
+        [lx95, cx95, hx95], [ly95, cy95, hy95], _, _ = calculate_peak_center(x, y, test_peak_flat=False, percent=5)
+
+        ldelta = abs(lx95 - lx5)
+        hdelta = abs(hx95 - hx5)
+
+        lrp = (lx5 + ldelta / 2) / ldelta
+        hrp = (hx95 + hdelta / 2) / hdelta
+
+    except PeakCenterError:
+        lrp, hrp = NULL_STR, NULL_STR
+
+    lrp, hrp = fformat(lrp, format_str), fformat(hrp, format_str)
+    if return_all:
+        return lrp, hrp, ((lx5, lx95), (ly5, ly95)), ((hx5, hx95), (hy5, hy95))
+    else:
+        return lrp, hrp
+
+
 def calculate_peak_center(x, y, test_peak_flat=True, min_peak_height=1.0, percent=80):
     """
-        returns: (low_x, center_c, high_x), (low_y, center_y, high_y), max_y, min_y
+        returns: (low_x, center_x, high_x), (low_y, center_y, high_y), max_y, min_y
 
             or
 
@@ -167,7 +214,6 @@ def calculate_peak_center(x, y, test_peak_flat=True, min_peak_height=1.0, percen
 
     x = array(x)
     y = array(y)
-
     xy = vstack((x, y)).T
     x, y = xy[argsort(xy[:, 0])].T
 
@@ -176,8 +222,8 @@ def calculate_peak_center(x, y, test_peak_flat=True, min_peak_height=1.0, percen
     if ma < min_peak_height:
         raise PeakCenterError('No peak greater than {}. max = {}'.format(min_peak_height, ma))
 
-    if max_i == 0 or max_i == len(x)-1:
-        max_i = len(x)//2
+    if max_i == 0 or max_i == len(x) - 1:
+        max_i = len(x) // 2
 
     mx = x[max_i]
     my = ma
@@ -194,9 +240,10 @@ def calculate_peak_center(x, y, test_peak_flat=True, min_peak_height=1.0, percen
         except IndexError:
             raise PeakCenterError('PeakCenterError: could not find a low pos', low_pos_error=True)
 
-    xstep = (x[i] - x[i - 1]) / 2.
-    lx = x[i] - xstep
-    ly = y[i] - (y[i] - y[i - 1]) / 2.
+    # xstep = (x[i] - x[i - 1]) / 2.
+    # lx = x[i] - xstep
+    # ly = y[i] - (y[i] - y[i - 1]) / 2.
+    lx,ly = x[i], y[i]
 
     # look forward for point that is 80% of max
     for i in range(max_i, x.shape[0], 1):
@@ -207,8 +254,10 @@ def calculate_peak_center(x, y, test_peak_flat=True, min_peak_height=1.0, percen
             raise PeakCenterError('PeakCenterError: could not find a high pos', high_pos_error=True)
 
     try:
-        hx = x[i + 1] - xstep
-        hy = y[i] - (y[i] - y[i + 1]) / 2.
+        hx = x[i]
+        hy = y[i]
+        # hx = x[i + 1] - xstep
+        # hy = y[i] - (y[i] - y[i + 1]) / 2.
     except IndexError:
         raise PeakCenterError('peak not well centered, len(x)={}, len(y)={}, i={}'.format(len(x), len(y), i))
 

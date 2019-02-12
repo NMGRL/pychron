@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.api import Instance, Float, Bool
+from traits.api import Instance, Float, Bool, Any
 from pychron.extraction_line.switch_manager import SwitchManager
 from pychron.furnace.base_stage_manager import BaseFurnaceStageManager
 from pychron.managers.stream_graph_manager import StreamGraphManager
@@ -22,6 +22,8 @@ from pychron.response_recorder import ResponseRecorder
 
 class BaseFurnaceManager(StreamGraphManager):
     controller_klass = None
+    controller = Any
+
     setpoint = Float(auto_set=False, enter_set=True)
     temperature_readback = Float
     output_percent_readback = Float

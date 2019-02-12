@@ -47,6 +47,7 @@ PACKAGE_DICT = dict(
     GitLabPlugin='pychron.git.tasks.gitlab_plugin',
     GitHubPlugin='pychron.git.tasks.github_plugin',
     PipelinePlugin='pychron.pipeline.tasks.plugin',
+    SparrowPlugin='pychron.sparrow.tasks.plugin',
 
     ClassifierPlugin='pychron.classifier.tasks.plugin',
     MDDPlugin='pychron.mdd.tasks.plugin',

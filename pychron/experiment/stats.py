@@ -261,6 +261,22 @@ class StatsGroup(ExperimentStats):
             calculate the time at which a selected run will execute
         """
         self.debug('calculating time of run {}'.format(sel.runid))
+        st, et = self._calculate_at(sel)
+
+        if at_times:
+            self.end_at = self.format_duration(et)
+            if st:
+                self.start_at = self.format_duration(st)
+
+    def get_endtime(self, sel):
+        st, et = self._calculate_at(sel)
+        return et
+
+    def get_starttime(self, sel):
+        st, et = self._calculate_at(sel)
+        return st
+
+    def _calculate_at(self, sel):
         et = 0
         st = 0
         for ei in self.experiment_queues:
@@ -280,11 +296,7 @@ class StatsGroup(ExperimentStats):
                 break
             else:
                 et += ei.stats.calculate_duration()
-
-        if at_times:
-            self.end_at = self.format_duration(et)
-            if st:
-                self.start_at = self.format_duration(st)
+        return st, et
 
     @property
     def etf_iso(self):

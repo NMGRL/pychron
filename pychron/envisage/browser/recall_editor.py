@@ -41,7 +41,7 @@ class RecallEditor(BaseRecallEditor):
     analysis_view = Instance('pychron.processing.analyses.view.analysis_view.AnalysisView')
 
     def __init__(self, analysis, av, *args, **kw):
-        # self.analysis = analysis
+        self.analysis = analysis
         self.analysis_view = av
         self.basename = analysis.record_id
         super(RecallEditor, self).__init__(*args, **kw)

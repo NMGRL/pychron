@@ -67,7 +67,9 @@ class ICFactorMainOptions(MainOptions):
 
 class ICFactorSubOptions(SubOptions):
     def traits_view(self):
-        v = View()
+        v = View(VGroup(Item('delete_existing', label='Delete Existing',
+                             tooltip='Delete existing icfactors. Only necessary if you have '
+                                     'redefined how you are handling the IC factor correction. ')))
         return v
 
 
@@ -80,6 +82,5 @@ class ICFactorAppearance(AppearanceSubOptions):
 VIEWS = {MAIN.lower(): ICFactorMainOptions,
          'icfactor': ICFactorSubOptions,
          APPEARANCE.lower(): ICFactorAppearance}
-
 
 # ============= EOF =============================================
