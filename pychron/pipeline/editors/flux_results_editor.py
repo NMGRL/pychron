@@ -212,7 +212,7 @@ class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
                 # ans = [ans[0].extend(aa), ans[0].extend(xx), ans[0].extend(yy), ans[0].extend(es)]
             else:
                 ans = list(vs)
-
+        self._analyses = ans
         self.monitor_positions = sorted(poss, key=attrgetter('hole_id'))
 
         if unk is not None:
