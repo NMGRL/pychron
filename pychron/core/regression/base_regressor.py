@@ -191,7 +191,11 @@ class BaseRegressor(HasTraits):
         return r
 
     def calculate_outliers(self, nsigma=2):
-        s = self.calculate_standard_error_fit()
+
+        if self.filter_outliers_dict.get('use_standard_deviation_filtering'):
+            s = self.std()
+        else:
+            s = self.calculate_standard_error_fit()
 
         # calculate residuals for every point not just cleaned arrays
         residuals = abs(self.ys - self.predict(self.xs))

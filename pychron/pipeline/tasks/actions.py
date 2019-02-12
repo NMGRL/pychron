@@ -376,4 +376,9 @@ class SaveFigureAction(TaskAction):
     name = 'Save Figure'
     method = 'save_figure'
 
+
+class SaveTableAction(TaskAction):
+    name = 'Save Table'
+    method = 'save_table'
+    image = icon('table_save')
 # ============= EOF =============================================

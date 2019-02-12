@@ -99,6 +99,7 @@ class DisplaySubOptions(TitleSubOptions):
                                       tooltip='Add the Identifier to the Plateau indicator',
                                       label='Identifier')),
                           Item('plateau_arrow_visible'),
+                          Item('dim_non_plateau', label='Dim Non Plateau'),
                           show_border=True,
                           label='Plateau')
 

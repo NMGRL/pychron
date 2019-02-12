@@ -166,6 +166,9 @@ class SpectrumErrorOverlay(AbstractOverlay):
     use_user_color = Bool(False)
     user_color = Color
 
+    platbounds = None
+    dim_non_plateau = Bool(False)
+
     def overlay(self, component, gc, *args, **kw):
         comp = self.component
         with gc:
@@ -198,6 +201,11 @@ class SpectrumErrorOverlay(AbstractOverlay):
                 selection_color = color[0], color[1], color[2], 0.3
 
             n = len(xs)
+
+            step_a, step_b = None, None
+            if self.platbounds:
+                step_a, step_b = self.platbounds
+
             for i, ((xa, xb), (ya, yb), (ea, eb)) in enumerate(zip(xs, ys, es)):
                 ea *= self.nsigma
                 # eb *= self.nsigma
@@ -211,12 +219,27 @@ class SpectrumErrorOverlay(AbstractOverlay):
                 w = p3[0] - p1[0]
                 h = p2[1] - p1[1]
 
-                c = selection_color if i in sels else color
+                if self.dim_non_plateau:
 
-                gc.set_fill_color(c)
-                gc.set_stroke_color(c)
+                    if step_a is not None and step_a <= i <= step_b:
+                        c = color
+                    else:
+                        c = selection_color
+
+                    fc, sc = c, c
+                    if i in sels:
+                        fc = (0, 0, 0, 0)
+                        sc = selection_color
+
+                else:
+                    sc = fc = selection_color if i in sels else color
+
+                gc.set_fill_color(fc)
+                gc.set_stroke_color(sc)
 
                 gc.rect(x, y, w, h)
+                gc.draw_path()
+
                 func()
                 if i > 0 and i <= n:
                     # draw verticals

@@ -655,10 +655,11 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
         fmt = self._workbook.add_format({'font_size': 14, 'bold': True,
                                          'bottom': 6 if not title else 0})
-        sh.write_rich_string(self._current_row, 0, 'Table X. {}'.format(name), fmt)
+
+        sh.write_string(self._current_row, 0, 'Table X. {}'.format(name), fmt)
         if title:
             self._current_row += 1
-            sh.write_rich_string(self._current_row, 0, title)
+            sh.write_string(self._current_row, 0, title)
 
         for i in range(1, len(cols)):
             sh.write_blank(self._current_row, i, '', cell_format=fmt)
@@ -709,29 +710,35 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                         args.append(center)
                     else:
                         args.append(border)
-                    sh.write_rich_string(row, i, *args)
+
+                    # sh.write_rich_string(row, i, *args)
+                    try:
+                        sh.write_string(row, i, *args)
+                    except TypeError:
+                        sh.write_rich_string(row, i, *args)
+
                 else:
                     if use_border:
                         # border.set_align('center')
-                        sh.write_rich_string(row, i, ci, border)
+                        sh.write_string(row, i, ci, border)
                     else:
-                        sh.write_rich_string(row, i, ci, center)
+                        sh.write_string(row, i, ci, center)
             self._current_row += 1
 
     def _make_meta(self, sh, group):
         fmt = self._bold
         row = self._current_row
-        sh.write_rich_string(row, 1, 'Sample:', fmt)
-        sh.write_rich_string(row, 2, group.sample, fmt)
+        sh.write_string(row, 1, 'Sample:', fmt)
+        sh.write_string(row, 2, group.sample, fmt)
 
-        sh.write_rich_string(row, 5, 'Identifier:', fmt)
-        sh.write_rich_string(row, 6, group.identifier, fmt)
+        sh.write_string(row, 5, 'Identifier:', fmt)
+        sh.write_string(row, 6, group.identifier, fmt)
 
         self._current_row += 1
 
         row = self._current_row
-        sh.write_rich_string(row, 1, 'Material:', fmt)
-        sh.write_rich_string(row, 2, group.material, fmt)
+        sh.write_string(row, 1, 'Material:', fmt)
+        sh.write_string(row, 2, group.material, fmt)
 
         self._current_row += 1
 
@@ -755,7 +762,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
         startcol = 1
         sh.write(row, startcol, '{:02n}'.format(ag.aliquot), fmt2)
-        sh.write_rich_string(row, startcol + 1, label, fmt2)
+        sh.write_string(row, startcol + 1, label, fmt2)
         cols[startcol + 1].calculate_width(label)
 
         age = ag.uage
@@ -868,13 +875,13 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             else:
                 label = kind.capitalize()
 
-            sh.write_rich_string(self._current_row, start_col,
-                                 u'{} K/Ca {}'.format(label, pmsigma),
-                                 fmt)
+            sh.write_string(self._current_row, start_col,
+                            u'{} K/Ca {}'.format(label, pmsigma),
+                            fmt)
 
             sh.write_number(self._current_row, idx, pv.value, nfmt)
             sh.write_number(self._current_row, idx + 1, pv.error * nsigma, nfmt)
-            sh.write_rich_string(self._current_row, idx + 2, pv.error_kind, fmt)
+            sh.write_string(self._current_row, idx + 2, pv.error_kind, fmt)
             self._current_row += 1
 
         nfmt = self._get_number_format('summary_age')
@@ -890,16 +897,16 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         # label = label.capitalize()
         age = group.get_preferred_obj('age')
 
-        sh.write_rich_string(self._current_row, start_col, u'{} Age {}'.format(age.computed_kind.capitalize(), pmsigma),
-                             fmt)
+        sh.write_string(self._current_row, start_col, u'{} Age {}'.format(age.computed_kind.capitalize(), pmsigma),
+                        fmt)
         sh.write_number(self._current_row, idx, age.value, nfmt)
         sh.write_number(self._current_row, idx + 1, age.error * nsigma, nfmt)
 
-        sh.write_rich_string(self._current_row, idx + 2, 'n={}/{}'.format(group.nanalyses,
-                                                                          group.total_n), fmt)
+        sh.write_string(self._current_row, idx + 2, 'n={}/{}'.format(group.nanalyses,
+                                                                     group.total_n), fmt)
 
         mt = group.get_preferred_mswd_tuple()
-        sh.write_rich_string(self._current_row, idx + 3, format_mswd(mt), fmt)
+        sh.write_string(self._current_row, idx + 3, format_mswd(mt), fmt)
 
         if age.computed_kind == 'Plateau':
             if self._options.include_plateau_age and hasattr(group, 'plateau_age'):
@@ -911,7 +918,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             self._current_row += 1
 
         if self._options.include_integrated_age and group.integrated_enabled:
-            sh.write_rich_string(self._current_row, start_col, u'Total Integrated Age {}'.format(pmsigma), fmt)
+            sh.write_string(self._current_row, start_col, u'Total Integrated Age {}'.format(pmsigma), fmt)
             sh.write_number(self._current_row, idx, nominal_value(group.integrated_age), nfmt)
             sh.write_number(self._current_row, idx + 1, std_dev(group.integrated_age) * nsigma, nfmt)
 
@@ -922,20 +929,20 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             self._current_row += 1
 
         if self._options.include_isochron_age:
-            sh.write_rich_string(self._current_row, start_col, u'Isochron Age {}'.format(pmsigma),
-                                 fmt)
+            sh.write_string(self._current_row, start_col, u'Isochron Age {}'.format(pmsigma),
+                            fmt)
             iage = group.isochron_age
             sh.write_number(self._current_row, idx, nominal_value(iage), nfmt)
             sh.write_number(self._current_row, idx + 1, std_dev(iage) * nsigma, nfmt)
 
             mt = group.isochron_mswd()
             try:
-                trapped = 1/group.isochron_4036
+                trapped = 1 / group.isochron_4036
                 trapped_value, trapped_error = nominal_value(trapped), std_dev(trapped)
             except ZeroDivisionError:
                 trapped_value, trapped_error = 'NaN', 'NaN'
 
-            sh.write_rich_string(self._current_row, idx + 3, format_mswd(mt), fmt)
+            sh.write_string(self._current_row, idx + 3, format_mswd(mt), fmt)
             sh.write_rich_string(self._current_row, idx + 4,
                                  '(', self._superscript, '40',
                                  'Ar/',
@@ -944,17 +951,18 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             self._current_row += 1
 
     def _make_notes(self, groups, sh, ncols, name):
-        top = self._workbook.add_format({'top': 1})
-        sh.write_rich_string(self._current_row, 0, self._bold, 'Notes:', top)
+        top = self._workbook.add_format({'top': 1, 'bold': True})
+
+        sh.write_string(self._current_row, 0, 'Notes:', top)
         for i in range(1, ncols):
-            sh.write_blank(self._current_row, i, 'Notes:', cell_format=top)
+            sh.write_blank(self._current_row, i, '', cell_format=top)
         self._current_row += 1
 
         func = getattr(self, '_make_{}_notes'.format(name.lower()))
         func(groups, sh)
 
         for i in range(0, ncols):
-            sh.write_blank(self._current_row, i, 'Notes:', cell_format=top)
+            sh.write_blank(self._current_row, i, '', cell_format=top)
 
     def _make_summary_notes(self, groups, sh):
         notes = six.text_type(self._options.summary_notes)
@@ -1024,8 +1032,11 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         for line in notes.splitlines():
             line = interpolate_noteline(line, self._superscript, self._subscript,
                                         self._ital, self._bold)
+            try:
+                sh.write_string(self._current_row, 0, *line)
+            except TypeError:
+                sh.write_rich_string(self._current_row, 0, *line)
 
-            sh.write_rich_string(self._current_row, 0, *line)
             self._current_row += 1
 
     def _get_names_units(self, cols):

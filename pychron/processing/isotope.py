@@ -269,10 +269,13 @@ class IsotopicMeasurement(BaseMeasurement):
                     if s < cnt < e:
                         return f
 
-    def set_filter_outliers_dict(self, filter_outliers=True, iterations=1, std_devs=2, notify=True):
+    def set_filter_outliers_dict(self, filter_outliers=True, iterations=1, std_devs=2,
+                                 use_standard_deviation_filtering=False):
+
         self.filter_outliers_dict = {'filter_outliers': filter_outliers,
                                      'iterations': iterations,
-                                     'std_devs': std_devs}
+                                     'std_devs': std_devs,
+                                     'use_standard_deviation_filtering': use_standard_deviation_filtering}
 
         self._fn = None
         if self._regressor:
@@ -307,7 +310,8 @@ class IsotopicMeasurement(BaseMeasurement):
 
                 self.set_filter_outliers_dict(filter_outliers=bool(fit.filter_outliers),
                                               iterations=int(fit.filter_outlier_iterations or 0),
-                                              std_devs=int(fit.filter_outlier_std_devs or 0))
+                                              std_devs=int(fit.filter_outlier_std_devs or 0),
+                                              use_standard_deviation_filtering=fit.use_standard_deviation_filtering)
                 self.truncate = fit.truncate
 
     def set_uvalue(self, v):

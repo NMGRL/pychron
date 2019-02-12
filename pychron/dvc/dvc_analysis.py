@@ -373,12 +373,11 @@ class DVCAnalysis(Analysis):
         isoks, dks = list(map(tuple, partition(keys, lambda x: x in sisos)))
 
         def update(d, i):
-            fd = i.filter_outliers_dict
             d.update(fit=i.fit, value=float(i.value), error=float(i.error),
                      n=i.n, fn=i.fn,
                      reviewed=reviewed,
                      include_baseline_error=i.include_baseline_error,
-                     filter_outliers_dict=fd)
+                     filter_outliers_dict=i.filter_outliers_dict)
 
         # save intercepts
         if isoks:

@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= standard library imports ========================
-from __future__ import absolute_import
-
 from numpy import where, polyval, polyfit
 # ============= enthought library imports =======================
 from traits.api import Str
@@ -79,7 +77,7 @@ class InterpolationRegressor(BaseRegressor):
             if attr == 'value':
                 v = (pb + ab) / 2.0
             else:
-                v = (pb**2 + ab**2)**0.5
+                v = ((pb**2 + ab**2)**0.5)/2.0
 
         except TypeError:
             if attr == 'value':

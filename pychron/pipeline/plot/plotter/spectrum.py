@@ -223,6 +223,13 @@ class Spectrum(BaseArArFigure):
         plot.overlays.append(o)
 
     def _add_plot(self, xs, ys, es, plotid, po):
+        ag = self.analysis_group
+
+        plateau_age = ag.plateau_age
+        platbounds = None
+        if plateau_age:
+            platbounds = ag.plateau_steps
+
         graph = self.graph
 
         group = self.options.get_group(self.group_id)
@@ -254,7 +261,10 @@ class Spectrum(BaseArArFigure):
                                       user_color=group.color,
                                       alpha=group.alpha,
                                       use_fill=group.use_fill,
-                                      nsigma=ns)
+                                      nsigma=ns,
+                                      platbounds=platbounds,
+                                      dim_non_plateau=self.options.dim_non_plateau
+                                      )
             ds.underlays.append(sp)
 
         omit = self._get_omitted_by_tag(self.sorted_analyses)
