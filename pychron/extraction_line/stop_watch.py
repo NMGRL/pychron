@@ -47,6 +47,7 @@ class StopWatch(HasTraits):
 
     start_stop_label = Property(depends_on='_alive')
     _base_time = 0
+    _timer = None
 
     def destroy(self):
         if self._timer:

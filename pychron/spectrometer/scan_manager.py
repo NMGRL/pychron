@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 
 import os
 import time
@@ -23,8 +22,7 @@ from threading import Thread
 
 import yaml
 from pyface.timer.do_later import do_later
-from six.moves import zip
-from six.moves.queue import Queue
+from queue import Queue
 from traits.api import Instance, Any, DelegatesTo, List, Property, \
     Bool, Button, String, cached_property, \
     Str, TraitError
@@ -580,7 +578,9 @@ class ScanManager(StreamGraphManager):
             det.series_id = i
 
         if plot.plots:
+
             cp = plot.plots[det.name][0]
+            print('setuo plot', det.name, cp)
             dt = DataTool(plot=cp, component=plot,
                           normalize_time=True,
                           use_date_str=False)

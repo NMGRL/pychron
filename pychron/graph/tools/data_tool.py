@@ -124,7 +124,9 @@ class DataToolOverlay(TextBoxOverlay):
         else:
             self.alternate_position = None
 
-        self.text = event.get('text', '')
+        txt = event.get('text', '')
+        if txt is not None:
+            self.text = txt
         self.component.request_redraw()
 
     def _visible_changed(self):

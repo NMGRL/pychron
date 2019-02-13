@@ -71,7 +71,7 @@ class NMGRLFurnaceEurotherm(CoreDevice):
 
     @get_float(default=0)
     def get_setpoint(self, **kw):
-        return self.ask('GetSetpoint')
+        return self.ask('GetSetpoint', **kw)
 
     read_setpoint = get_setpoint
 

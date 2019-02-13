@@ -15,8 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from traits.api import Str, Color, Button, Float, Bool
+from traits.api import Str, Color, Button, Float, Bool, Property
 # ============= standard library imports ========================
 from threading import Event
 import time
@@ -35,6 +34,7 @@ class WaitControl(Loggable):
     duration = Float(10)
 
     current_time = Float
+    current_display_time = Property(depends_on='current_time')
 
     auto_start = Bool(False)
     timer = None
@@ -162,6 +162,9 @@ class WaitControl(Loggable):
                 # if self.current_time <= 0:
                 # self._end()
                 # self._canceled = False
+
+    def _get_current_display_time(self):
+        return '{:04n}'.format(self.current_time)
 
     # ===============================================================================
     # handlers

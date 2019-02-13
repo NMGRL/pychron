@@ -65,7 +65,7 @@ RUN TIME= {}
             return v
 
         if self.centering_results:
-            fmt = '{:<5s} {:<10s} {:<10s} {:<10s}'
+            fmt = '{:<10s} {:<10s} {:<10s} {:<10s}'
             s = [fmt.format('Det', 'Res.', 'Low RP', 'High RP')]
             for r in self.centering_results:
                 s.append(fmt.format(r.detector,
