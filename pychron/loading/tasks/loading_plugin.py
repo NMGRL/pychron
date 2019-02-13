@@ -62,16 +62,16 @@ class LoadingPlugin(BaseTaskPlugin):
         table = self.service_offer_factory(protocol=LoadTablePane,
                                            factory=LoadTablePane)
         man = self.service_offer_factory(protocol=LoadingManager,
-                                         factory=LoadingManager,
-                                         properties={
-                                             'application': self.application})
+                                         factory=self._loading_manager_factory)
 
         return [load, table, man]
 
+    def _loading_manager_factory(self):
+        return LoadingManager(application=self.application,
+                              dvc=self.application.get_service(DVC_PROTOCOL))
+
     def _load_task_factory(self):
-        m = LoadingManager(application=self.application,
-                           dvc=self.application.get_service(DVC_PROTOCOL))
-        return LoadingTask(manager=m)
+        return LoadingTask(manager=self._loading_manager_factory())
 
     def _preferences_panes_default(self):
         return [LoadingPreferencesPane]

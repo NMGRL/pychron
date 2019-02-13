@@ -24,6 +24,8 @@ import yaml
 
 from pychron.paths import paths
 
+STARTUP_MESSAGE_POSITION = (100, 300)
+
 SPECTROMETER_PROTOCOL = 'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager'
 ION_OPTICS_PROTOCOL = 'pychron.spectrometer.ion_optics_manager.IonOpticsManager'
 SCAN_PROTOCOL = 'pychron.spectrometer.scan_manager.ScanManager'

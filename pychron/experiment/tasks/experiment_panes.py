@@ -179,7 +179,8 @@ class ExperimentFactoryPane(TraitsDockPane):
         v = View(VGroup(button_bar,
                         button_bar2,
                         UItem('pane.info_label', style='readonly'),
-                        edit_grp),
+                        edit_grp,
+                        enabled_when='edit_enabled'),
                  kind='live',
                  width=225)
         return v

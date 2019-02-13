@@ -17,15 +17,17 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
+from threading import current_thread
+
 from traits.api import HasTraits, Any, String
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.confirmation import confirmation_dialog
-from pychron.globals import globalv
 from pychron.core.helpers.color_generators import colorname_generator
 from pychron.core.helpers.logger_setup import new_logger
-from threading import current_thread
+from pychron.globals import globalv
 
 # from pychron.core.ui.dialogs import myConfirmationDialog, myMessageDialog
 # from pychron.core.ui.gui import invoke_in_main_thread
@@ -134,7 +136,7 @@ class Loggable(HasTraits):
         self._log_('debug', msg)
 
     # dialogs
-    def warning_dialog(self, msg, sound=None, title='Warning'):
+    def warning_dialog(self, msg, sound=None, title='Warning', **kw):
         self.warning(msg)
 
         from pychron.core.ui.dialogs import myMessageDialog
@@ -142,7 +144,7 @@ class Loggable(HasTraits):
         dialog = myMessageDialog(
             parent=None, message=str(msg),
             title=title,
-            severity='warning')
+            severity='warning', **kw)
         #         if sound:
         #             from pychron.core.helpers.media import loop_sound
         #             evt = loop_sound(sound)
@@ -155,12 +157,12 @@ class Loggable(HasTraits):
     def confirmation_dialog(self, *args, **kw):
         return confirmation_dialog(*args, **kw)
 
-    def information_dialog(self, msg, title='Information'):
+    def information_dialog(self, msg, title='Information', **kw):
         from pychron.core.ui.dialogs import myMessageDialog
 
         dlg = myMessageDialog(parent=None, message=msg,
                               title=title,
-                              severity='information')
+                              severity='information', **kw)
         dlg.open()
 
     def message(self, msg):

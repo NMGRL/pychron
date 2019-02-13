@@ -18,8 +18,10 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from __future__ import absolute_import
+
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.git.hosts import IGitHost
+from pychron.pychron_constants import STARTUP_MESSAGE_POSITION
 
 
 class BaseGitPlugin(BaseTaskPlugin):
@@ -31,7 +33,8 @@ class BaseGitPlugin(BaseTaskPlugin):
         pwd = p.get('pychron.github.password')
         tok = p.get('pychron.github.oauth_token')
         if not tok and not (usr and pwd):
-            self.information_dialog('Please set user name and password or token in {} preferences'.format(self.name))
+            self.information_dialog('Please set user name and password or token in {} preferences'.format(self.name),
+                                    position=STARTUP_MESSAGE_POSITION)
 
     def test_api(self):
         service = self.application.get_service(IGitHost)

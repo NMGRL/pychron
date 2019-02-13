@@ -222,6 +222,9 @@ class Experimentor(DVCIrradiationable):
         if eq:
             self.experiment_factory.queue = eq
             self.experiment_factory.sync_queue_meta()
+            self.experiment_factory.edit_enabled = True
+        else:
+            self.experiment_factory.edit_enabled = False
 
     @on_trait_change('executor:experiment_queue')
     def _activate_editor(self, eq):
