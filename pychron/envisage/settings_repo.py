@@ -80,7 +80,6 @@ class SettingsRepoManager(GitRepoManager):
         save settings files in <name> directory
         push to github
 
-        :param event:
         :return:
         """
         settings_root = os.path.join(self.path, 'settings')
@@ -101,7 +100,6 @@ class SettingsRepoManager(GitRepoManager):
                     if resp:
                         msg = 'Overwrote'
                         shutil.rmtree(os.path.join(settings_root, name))
-                        # os.rmdir()
                         break
                 else:
                     break
@@ -112,13 +110,12 @@ class SettingsRepoManager(GitRepoManager):
         os.mkdir(working_root)
 
         # copy settings directories
-        # for srctree in (os.path.join(paths.plotter_options_dir, globalv.username), ):
         srctree = os.path.join(paths.plotter_options_dir, globalv.username)
         shutil.copytree(srctree, os.path.join(working_root, 'plotter_options'))
 
         self.add_unstaged(add_all=True)
-        # self.commit('{} Settings "{}"'.format(msg, name))
-        # self.push()
+        self.commit('{} Settings "{}"'.format(msg, name))
+        self.push()
 
     # private
     def _get_existing_settings_names(self):
