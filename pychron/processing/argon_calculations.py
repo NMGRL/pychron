@@ -271,15 +271,15 @@ def interference_corrections(a39, a37, production_ratios, arar_constants=None, f
         arar_constants = ArArConstants()
 
     pr = production_ratios
-    k37 = ufloat(0, 0, tag='k37')
-
     if arar_constants.k3739_mode.lower() == 'normal' and not fixed_k3739:
-        # iteratively calculate 37, 39
-        for _ in range(5):
-            ca37 = a37 - k37
-            ca39 = pr.get('Ca3937', 0) * ca37
-            k39 = a39 - ca39
-            k37 = pr.get('K3739', 0) * k39
+
+        ca3937 = pr.get('Ca3937', 0)
+        k3739 = pr.get('K3739', 0)
+        k39 = (a39 - ca3937 * a37) / (1 - k3739 * ca3937)
+        k37 = pr.get('K3739', 0) * k39
+
+        ca37 = a37 - k37
+        ca39 = pr.get('Ca3937', 0) * ca37
     else:
         if not fixed_k3739:
             fixed_k3739 = arar_constants.fixed_k3739

@@ -25,30 +25,49 @@ F-valve Calculation
     trapped_4036= # trapped Ar40/Ar36
 
     # ca-correction
-    # iteratively calculate 37, 39
-    k37 = 0
-    for _ in range(5):
-        ca37 = a37 - k37
-        ca39 = ca3937 * ca37
-        k39 = a39 - ca39
-        k37 = k3739 * k39
+    # ca37 = a37 - k37
+    # ca39 = ca3937 * ca37
+    # k39 = a39 - ca39
+    # k37 = k3739 * k39
 
+    # k39 = a39-ca3937*(a37-(k3739*k39))
+    #    = a39-ca3937*a37+k3739*k39*ca3937
+    # k39*(1-k3739*ca3937) = a39-ca3937*a37
+
+    k39 = (a39-ca3937*a37)/(1-k3739*ca3937)
+    k37 = k3739 * k39
     k38 = k3839 * k39
+
+    ca37 = a37 - k37
+    ca39 = ca3937 * ca37
 
     ca36 = ca3637 * ca37
     ca38 = ca3837 * ca37
 
-
     # cl-correction
-    m = cl3638 * lambda_cl36 * decay_time
+    # calculate atm36, cl36, cl38
 
-    atm36 = 0
-    for _ in range(5):
-        ar38atm = atm3836 * atm36
-        cl38 = a38 - ar38atm - k38 - ca38
-        cl36 = cl38 * m
-        atm36 = a36 - ca36 - cl36
+    # starting with the following equations
+    # atm36 = a36 - ca36 - cl36
 
+    # m = cl3638*lambda_cl36*decay_time
+    # cl36 = cl38 * m
+
+    # cl38 = a38 - k38 - ca38 - ar38atm
+    # ar38atm = atm3836 * atm36
+
+    # rearranging to solve for atm36
+    # cl38 = a38  - k38 - c38 - atm3836 * atm36
+
+    # cl36 = m * (a38  - k38 - ca38 - atm3836 * atm36)
+    #     = m (a38  - k38 - ca38) - m * atm3836 * atm36
+    # atm36 = a36 - ca36 - m (a38  - k38 - ca38) + m * atm3836 * atm36
+    # atm36 - m * atm3836 * atm36 =  a36 - ca36 - m (a38  - k38 - ca38)
+    # atm36 * (1 - m*atm3836) = a36 - ca36 - m (a38  - k38 - ca38)
+    # atm36 = (a36 - ca36 - m (a38  - k38 - c38))/(1 - m*atm3836)
+
+    m = cl3638 * lambda_Cl36 * decay_time
+    atm36 = (a36 - ca36 - m*(a38 - k38 - ca38)) / (1 - m * atm3836)
 
     atm40 = atm36 * trapped_4036
 
