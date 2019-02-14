@@ -113,7 +113,7 @@ class ExperimentPlugin(BaseTaskPlugin):
                     eflag = True
                     additions.append(SchemaAddition(id='experiment.edit',
                                                     factory=lambda: SGroup(id='experiment.group'),
-                                                    path='MenuBar/Edit'), )
+                                                    path='MenuBar/edit.menu'), )
         if additions:
             extensions.append(TaskExtension(actions=additions, task_id=''))
 
@@ -129,9 +129,9 @@ class ExperimentPlugin(BaseTaskPlugin):
     def _available_task_extensions_default(self):
         return [(self.id, '', 'Experiment',
                  [SchemaAddition(id='pychron.experiment.open_queue_conditionals', factory=QueueConditionalsAction,
-                                 path='MenuBar/Edit'),
+                                 path='MenuBar/edit.menu'),
                   SchemaAddition(id='pychron.experiment.open_system_conditionals', factory=SystemConditionalsAction,
-                                 path='MenuBar/Edit'),
+                                 path='MenuBar/edit.menu'),
                   SchemaAddition(id='pychron.experiment.open_experiment', factory=OpenExperimentQueueAction,
                                  path='MenuBar/file.menu/Open'),
                   SchemaAddition(id='pychron.experiment.open_current_experiment',
@@ -155,15 +155,15 @@ class ExperimentPlugin(BaseTaskPlugin):
                                  path='MenuBar/file.menu/Open')]),
                 ('{}.edit'.format(self.id), 'pychron.experiment.task', 'ExperimentEdit',
                  [SchemaAddition(id='pychron.experiment.edit.deselect', factory=DeselectAction,
-                                 path='MenuBar/Edit/experiment.group'),
+                                 path='MenuBar/edit.menu/experiment.group'),
                   SchemaAddition(id='pychron.experiment.edit.reset', factory=ResetQueuesAction,
-                                 path='MenuBar/Edit/experiment.group'),
+                                 path='MenuBar/edit.menu/experiment.group'),
                   SchemaAddition(id='pychron.experiment.edit.sync', factory=SyncQueueAction,
-                                 path='MenuBar/Edit/experiment.group'),
+                                 path='MenuBar/edit.menu/experiment.group'),
                   SchemaAddition(id='pychron.experiment.edit.undo', factory=UndoAction,
-                                 path='MenuBar/Edit/experiment.group'),
+                                 path='MenuBar/edit.menu/experiment.group'),
                   SchemaAddition(id='pychron.experiment.edit.configure', factory=ConfigureEditorTableAction,
-                                 path='MenuBar/Edit/experiment.group'),
+                                 path='MenuBar/edit.menu/experiment.group'),
                   SchemaAddition(id='pychron.experiment.save_as_current_experiment',
                                  factory=SaveAsCurrentExperimentAction,
                                  path='MenuBar/file.menu/Save')])]

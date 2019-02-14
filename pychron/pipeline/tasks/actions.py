@@ -78,24 +78,24 @@ class SwitchToBrowserAction(TaskAction):
 
 
 class ConfigureRecallAction(TaskAction):
-    name = 'Configure Recall'
-    dname = 'Configure Recall'
+    name = 'Recall Configuration...'
+    dname = 'Recall Configuration...'
     method = 'configure_recall'
     image = icon('cog')
 
 
-class ConfigureAnalysesTableAction(TaskAction):
-    name = 'Configure Analyses Table'
-    dname = 'Configure Analyses Table'
-    method = 'configure_analyses_table'
-    image = icon('cog')
-
-
-class ConfigureSampleTableAction(TaskAction):
-    name = 'Configure Sample Table'
-    dname = 'Configure Sample Table'
-    method = 'configure_sample_table'
-    image = icon('cog')
+# class ConfigureAnalysesTableAction(TaskAction):
+#     name = 'Configure Analyses Table'
+#     dname = 'Configure Analyses Table'
+#     method = 'configure_analyses_table'
+#     image = icon('cog')
+#
+#
+# class ConfigureSampleTableAction(TaskAction):
+#     name = 'Configure Sample Table'
+#     dname = 'Configure Sample Table'
+#     method = 'configure_sample_table'
+#     image = icon('cog')
 
 
 class LoadReviewStatusAction(TaskAction):

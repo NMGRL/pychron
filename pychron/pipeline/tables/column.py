@@ -32,6 +32,7 @@ class Column(HasTraits):
     width = None
     calculated_width = None
     nsigfigs = Int
+    visible = Bool
 
     def calculate_width(self, txt):
         if self.calculated_width is None:
@@ -66,7 +67,8 @@ class Column(HasTraits):
 
     def _enabled_default(self):
         return True
-
+    def _visible_default(self):
+        return True
 
 class VColumn(Column):
     def _func_default(self):

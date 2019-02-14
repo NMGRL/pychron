@@ -115,9 +115,9 @@ class ArArConstantsPreferences(BasePreferencesHelper):
     ic_factor = Float(1.0)
     ic_factor_error = Float(0.0)
 
-    age_units = Enum('Ma', 'ka', 'Ga')
+    age_units = Enum('a', 'ka', 'Ma', 'Ga')
 
-    #citations
+    # citations
     ar40_ar36_atm_citation = Str
     ar40_ar38_atm_citation = Str
     lambda_e_citation = Str
@@ -190,7 +190,7 @@ class ArArConstantsPreferences(BasePreferencesHelper):
         if info.result and name:
             if name not in self.atm_constant_names:
                 nv = e.totuple()
-                for k,v in self.atm_constant_entries.items():
+                for k, v in self.atm_constant_entries.items():
                     print('k={}, v={}, nv={}'.format(k, v, nv))
 
                 exists = next((k for k, v in self.atm_constant_entries.items() if nv == v), None)
@@ -264,7 +264,7 @@ class ArArConstantsPreferences(BasePreferencesHelper):
     def _get_value(self, name, value):
         if name == 'total_k_decay':
             return self._get_total_k_decay()
-        elif name in ('decay_constant_entry_deletable','atm_constant_entry_deletable'):
+        elif name in ('decay_constant_entry_deletable', 'atm_constant_entry_deletable'):
             pass
         else:
             return super(ArArConstantsPreferences, self)._get_value(name, value)

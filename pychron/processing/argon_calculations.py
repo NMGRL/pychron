@@ -416,15 +416,22 @@ def age_equation(j, f, include_decay_error=False, lambda_k=None, scalar=None, ar
             arar_constants = ArArConstants()
         lambda_k = arar_constants.lambda_k
 
-    if not scalar:
-        if arar_constants is None:
-            arar_constants = ArArConstants()
-        scalar = float(arar_constants.age_scalar)
+    # if not scalar:
+    #     if arar_constants is None:
+    #         arar_constants = ArArConstants()
+    #     scalar = float(arar_constants.age_scalar)
+
+    if arar_constants is None:
+        arar_constants = ArArConstants()
 
     if not include_decay_error:
         lambda_k = nominal_value(lambda_k)
     try:
-        return (lambda_k ** -1 * umath.log(1 + j * f)) / scalar
+
+        # lambda is defined in years, so age is in years
+        age = lambda_k ** -1 * umath.log(1 + j * f)
+
+        return arar_constants.scale_age(age, current='a')
     except (ValueError, TypeError):
         return ufloat(0, 0)
 

@@ -15,36 +15,13 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from __future__ import absolute_import
-
 from traits.api import HasTraits, Property, Float, Enum, Str, Bool, Any
 from uncertainties import ufloat, nominal_value, std_dev
 
-from pychron.pychron_constants import AGE_SCALARS, AGE_MA_SCALARS
+# from pychron.pychron_constants import AGE_SCALARS, AGE_MA_SCALARS
 
 
 # =============local library imports  ==========================
-
-# class ICFactor(HasTraits):
-#     detector = Str
-#     value = Float
-#     error = Float
-
-
-# class ICFactorPreferenceBinding(PreferenceBinding):
-#     def _get_value(self, name, value):
-#         path = self.preference_path.split('.')[:-1]
-#         path.append('stored_ic_factors')
-#         path = '.'.join(path)
-#         ics = self.preferences.get(path)
-#         ics = eval(ics)
-#         ss = []
-#         for ic in ics:
-#             detector, v, e = ic.split(',')
-#             ss.append(ICFactor(detector=detector,
-#                                value=float(v),
-#                                error=float(e)))
-#         return ss
 
 
 class ArArConstants(HasTraits):
@@ -86,9 +63,9 @@ class ArArConstants(HasTraits):
     k3739_v = Float(0.01)
     k3739_e = Float(0.0001)
 
-    age_units = Str('Ma')
-    age_scalar = Property(depends_on='age_units')
-    ma_age_scalar = Property(depends_on='age_units')
+    age_units = Str
+    # age_scalar = Property(depends_on='age_units')
+    # ma_age_scalar = Property(depends_on='age_units')
     abundance_sensitivity = Float
 
     # ic_factors = Either(List, Str)
@@ -146,6 +123,35 @@ class ArArConstants(HasTraits):
             pass
 
         super(ArArConstants, self).__init__(*args, **kw)
+
+    def scale_age(self, age, target=None, current=None):
+        if target is None:
+            target = self.age_units
+        if current is None:
+            current = self.age_units
+
+        scalar = 1
+        targetscalar = 1
+
+        if current == 'a':
+            scalar = 1
+        elif current == 'ka':
+            scalar = 1e3
+        elif current == 'Ma':
+            scalar = 1e6
+        elif current == 'Ga':
+            scalar = 1e9
+
+        if target == 'a':
+            targetscalar = 1
+        elif target == 'ka':
+            targetscalar = 1e-3
+        elif target == 'Ma':
+            targetscalar = 1e-6
+        elif target == 'Ga':
+            targetscalar = 1e-9
+
+        return age * scalar * targetscalar
 
     def to_dict(self):
         d = dict()
@@ -211,14 +217,14 @@ class ArArConstants(HasTraits):
         self._lambda_k = k
         # return ufloat(k.nominal_value, k.std_dev)
 
-    def _get_age_scalar(self):
-        try:
-            return AGE_SCALARS[self.age_units]
-        except KeyError:
-            return 1
-
-    def _get_ma_age_scalar(self):
-        try:
-            return AGE_MA_SCALARS[self.age_units]
-        except KeyError:
-            return 1
+    # def _get_age_scalar(self):
+    #     try:
+    #         return AGE_SCALARS[self.age_units]
+    #     except KeyError:
+    #         return 1
+    #
+    # def _get_ma_age_scalar(self):
+    #     try:
+    #         return AGE_MA_SCALARS[self.age_units]
+    #     except KeyError:
+    #         return 1

@@ -197,7 +197,7 @@ class BaseTask(Task, Loggable, PreferenceMixin):
             menus = []
 
         edit_menu = SMenu(GenericFindAction(),
-                          id='Edit', name='&Edit')
+                          id='edit.menu', name='&Edit')
 
         # entry_menu = SMenu(
         #     id='entry.menu',

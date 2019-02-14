@@ -28,7 +28,7 @@ from pychron.processing.analyses.analysis import IdeogramPlotable
 from pychron.processing.analyses.preferred import Preferred
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
-from pychron.pychron_constants import ALPHAS, AGE_MA_SCALARS, MSEM, SD, SUBGROUPING_ATTRS, ERROR_TYPES, WEIGHTED_MEAN, \
+from pychron.pychron_constants import ALPHAS, MSEM, SD, SUBGROUPING_ATTRS, ERROR_TYPES, WEIGHTED_MEAN, \
     DEFAULT_INTEGRATED, SUBGROUPINGS, ARITHMETIC_MEAN, PLATEAU_ELSE_WEIGHTED_MEAN, WEIGHTINGS
 
 
@@ -79,7 +79,7 @@ class AnalysisGroup(IdeogramPlotable):
     location = Str
 
     _sample = Str
-    age_scalar = Property
+    # age_scalar = Property
     age_units = Property
 
     j_err = AGProperty()
@@ -127,10 +127,6 @@ class AnalysisGroup(IdeogramPlotable):
         mswd = self.mswd
         valid_mswd = validate_mswd(mswd, self.nanalyses)
         return mswd, valid_mswd, self.nanalyses
-
-    def set_temporary_age_units(self, a):
-        self._age_units = a
-        self.dirty = True
 
     def set_j_error(self, individual, mean, dirty=False):
         self.include_j_position_error = individual
@@ -182,9 +178,9 @@ class AnalysisGroup(IdeogramPlotable):
     def _get_arar_constants(self):
         return self.analyses[0].arar_constants
 
-    def _get_age_scalar(self):
-        au = self.age_units
-        return AGE_MA_SCALARS[au]
+    # def _get_age_scalar(self):
+    #     au = self.age_units
+    #     return AGE_MA_SCALARS[au]
 
     # @cached_property
     def _get_mswd(self):
@@ -894,7 +890,10 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
 
     def get_ma_scaled_age(self):
         a = self._get_preferred_age()
-        return a / self.age_scalar
+        return self.arar_constants.scale_age(a, 'Ma')
+
+    def scaled_age(self, a, units='Ma'):
+        return self.arar_constants.scale_age(a, units)
 
     def get_preferred_mswd(self):
         pv = self._get_pv('age')

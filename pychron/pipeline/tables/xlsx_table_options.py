@@ -27,7 +27,7 @@ from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.paths import paths
 from pychron.persistence_loggable import dumpable
 from pychron.processing.j_error_mixin import JErrorMixin, J_ERROR_GROUP
-from pychron.pychron_constants import AGE_MA_SCALARS, SIGMA, AGE_SORT_KEYS
+from pychron.pychron_constants import SIGMA, AGE_SORT_KEYS
 
 
 class XLSXAnalysisTableWriterOptions(BasePersistenceOptions, JErrorMixin):
@@ -146,6 +146,10 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
     subgroup_age_sorting = dumpable(Enum(*AGE_SORT_KEYS))
     individual_age_sorting = dumpable(Enum(*AGE_SORT_KEYS))
 
+    status_enabled = dumpable(Bool(True))
+    tag_enabled = dumpable(Bool(True))
+    analysis_label_enabled = dumpable(Bool(True))
+
     _persistence_name = 'xlsx_table_options'
 
     # include_j_error_in_individual_analyses = dumpable(Bool(False))
@@ -194,9 +198,9 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                 obj = yaml.load(rf)
                 return obj.get(group)
 
-    @property
-    def age_scalar(self):
-        return AGE_MA_SCALARS[self.age_units]
+    # @property
+    # def age_scalar(self):
+    #     return AGE_MA_SCALARS[self.age_units]
 
     @property
     def path(self):
@@ -221,8 +225,6 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
 
         class UUItem(UCustom):
             height = -50
-
-
         unknown_grp = VGroup(Item('unknown_title', label='Table Heading', springy=True),
                              VBorder(VBorder(UItem('unknown_note_name',
                                                    editor=EnumEditor(name='available_unknown_note_names')),
@@ -309,7 +311,10 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                                      label='Summary Rows'),
                               label='Ar/Ar')
 
-        general_col_grp = VGroup(iinc('rundate', 'Analysis RunDate'),
+        general_col_grp = VGroup(Item('status_enabled', label='Status'),
+                                 Item('analysis_label_enabled', label='Analysis Label'),
+                                 Item('tag_enabled', label='Tag'),
+                                 iinc('rundate', 'Analysis RunDate'),
                                  iinc('blanks', 'Applied Blank'),
                                  iinc('intercepts', 'Intercepts'),
                                  label='General')

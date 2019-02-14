@@ -38,6 +38,8 @@ from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 
 
 class PipelinePlugin(BaseTaskPlugin):
+    name = 'Pipeline'
+    id = 'pychron.pipeline.plugin'
     nodes = ExtensionPoint(List, id='pychron.pipeline.nodes')
     node_factories = ExtensionPoint(List, id='pychron.pipeline.node_factories')
     predefined_templates = ExtensionPoint(List, id='pychron.pipeline.predefined_templates')
@@ -117,7 +119,7 @@ class PipelinePlugin(BaseTaskPlugin):
                           SchemaAddition(factory=RecallAction,
                                          path=reg),
                           SchemaAddition(factory=InterpretedAgeRecallAction,
-                                         path=reg)
+                                         path=reg),
                           # SchemaAddition(factory=TimeViewBrowserAction,
                           #                path=reg)
                           ]
@@ -168,7 +170,7 @@ class PipelinePlugin(BaseTaskPlugin):
                         SchemaAddition(factory=ClearAnalysisSetsAction,
                                        path='MenuBar/help.menu')]
         configure_recall = SchemaAddition(factory=ConfigureRecallAction,
-                                          path='MenuBar/Edit')
+                                          path='MenuBar/edit.menu')
 
         actions = recall_actions
         actions.extend(plotting_actions)
