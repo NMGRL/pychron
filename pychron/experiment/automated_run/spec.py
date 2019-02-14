@@ -145,6 +145,7 @@ class AutomatedRunSpec(HasTraits):
     position_jerr =0
     uage = None
     v39 = None
+    display_k3739_mode = ''
 
     _estimated_duration = 0
     _changed = False
