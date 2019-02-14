@@ -130,6 +130,8 @@ class MainView(HasTraits):
                                value=floatfmt(a39)),
               MeasurementValue(name='Ar37Decay',
                                value=floatfmt(a37)),
+              MeasurementValue(name='K3739 Mode',
+                               value=an.display_k3739_mode),
               MeasurementValue(name='Sens.',
                                value=floatfmt(an.sensitivity, use_scientific=True),
                                units=an.sensitivity_units)]

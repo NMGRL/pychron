@@ -14,15 +14,16 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from traits.api import Str, Color, Button, Float, Bool, Property
 # ============= standard library imports ========================
 from threading import Event
-import time
+
+# ============= enthought library imports =======================
+from traits.api import Str, Color, Button, Float, Bool, Property
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
-from pychron.loggable import Loggable
 from pychron.core.helpers.timer import Timer
+from pychron.loggable import Loggable
 
 
 class WaitControl(Loggable):
@@ -164,7 +165,7 @@ class WaitControl(Loggable):
                 # self._canceled = False
 
     def _get_current_display_time(self):
-        return '{:04n}'.format(self.current_time)
+        return '{:03n}'.format(self.current_time)
 
     # ===============================================================================
     # handlers

@@ -170,6 +170,10 @@ class ArArAge(IsotopeGroup):
     def lambda_k(self, v):
         self._lambda_k = v
 
+    @property
+    def display_k3739_mode(self):
+        return 'Fixed' if self.fixed_k3739 or self.arar_constants.k3739_mode.lower() == 'fixed' else 'Normal'
+
     def baseline_corrected_intercepts_to_dict(self):
         return {k: value_error(v.get_baseline_corrected_value()) for k, v in self.iteritems()}
 
@@ -226,7 +230,7 @@ class ArArAge(IsotopeGroup):
                 pass
 
     def map_isotope_key(self, k):
-        return self.arar_mapping.get(k,k)
+        return self.arar_mapping.get(k, k)
 
     def get_value(self, attr):
 

@@ -751,6 +751,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
 
             self.rollback()
             self.reset_connection()
+            self.connect()
             if reraise:
                 raise e
 

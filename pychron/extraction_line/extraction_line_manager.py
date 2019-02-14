@@ -723,7 +723,7 @@ class ExtractionLineManager(Manager, Consoleable):
     @on_trait_change('use_hardware_update')
     def _update_use_hardware_update(self):
         if self.use_hardware_update:
-            self._trigger_update()
+            do_after(1000, self._update)
 
     @on_trait_change('switch_manager:pipette_trackers:counts')
     def _update_pipette_counts(self, obj, name, old, new):
