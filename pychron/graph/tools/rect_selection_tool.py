@@ -16,11 +16,11 @@
 
 # =============enthought library imports=======================
 from __future__ import absolute_import
-from chaco.api import AbstractOverlay, BaseTool
-from traits.api import Any, Str
 
+from chaco.api import AbstractOverlay, BaseTool
 # =============standard library imports ========================
 from numpy import vstack
+from traits.api import Any, Str
 
 
 # =============local library imports  ==========================
@@ -51,11 +51,11 @@ class RectSelectionTool(BaseTool):
     hover_metadata_name = Str('hover')
     persistent_hover = False
     selection_metadata_name = Str('selections')
-    # mask_metadata_name = Str('selections_mask')
-    #    active = True
+    group_id = 0
+
     _start_pos = None
     _end_pos = None
-    group_id = 0
+    _cached_data = None
 
     def select_key_pressed(self, event):
         if event.character == 'Esc':
@@ -66,34 +66,6 @@ class RectSelectionTool(BaseTool):
 
     def normal_mouse_leave(self, event):
         event.window.set_pointer('arrow')
-
-    # def normal_mouse_move(self, event):
-    #     if event.handled:
-    #         return
-    #
-    #     plot = self.component
-    #     index = plot.map_index((event.x, event.y), threshold=self.threshold)
-    #
-    #     if index is not None:
-    #         #            plot.index.metadata['mouse_xy'] = mxy
-    #         plot.index.suppress_hover_update = True
-    #         # plot.index.metadata[self.hover_metadata_name] = [index]
-    #         if hasattr(plot, "value"):
-    #             plot.value.suppress_hover_update = True
-    #             plot.value.metadata[self.hover_metadata_name] = [index]
-    #             plot.value.suppress_hover_update = False
-    #         plot.index.suppress_hover_update = False
-    #
-    #     elif not self.persistent_hover:
-    #         plot.index.suppress_hover_update = True
-    #         plot.index.metadata.pop(self.hover_metadata_name, None)
-    #         if hasattr(plot, "value"):
-    #             plot.value.suppress_hover_update = True
-    #             plot.value.metadata.pop(self.hover_metadata_name, None)
-    #             plot.value.suppress_hover_update = False
-    #         plot.index.suppress_hover_update = False
-    #
-    #     return
 
     def _get_selection_token(self, event):
         return self.component.map_index((event.x, event.y), threshold=self.threshold)
@@ -108,7 +80,6 @@ class RectSelectionTool(BaseTool):
             if md is None or self.selection_metadata_name not in md:
                 continue
 
-            # print token, md[self.selection_metadata_name]
             if token in md[self.selection_metadata_name]:
                 already = True
                 break
@@ -117,10 +88,9 @@ class RectSelectionTool(BaseTool):
 
     def normal_left_dclick(self, event):
         if self._end_pos is None:
-            #            print id(self), self.component, 'meta []'
             self.component.index.metadata[self.selection_metadata_name] = []
         elif abs(self._end_pos[0] - self._start_pos[0]) < 2 and \
-                        abs(self._end_pos[1] - self._start_pos[1]) < 2:
+                abs(self._end_pos[1] - self._start_pos[1]) < 2:
             self.component.index.metadata[self.selection_metadata_name] = []
 
     def normal_left_down(self, event):
@@ -198,25 +168,31 @@ class RectSelectionTool(BaseTool):
         if self._start_pos and self._end_pos:
             x, y = self._start_pos
             x2, y2 = self._end_pos
+            # normalize points so that x,y is always upper left of selection box
+            if y2 > y:
+                y2, y = y, y2
+                if x2 < x:
+                    x2, x = x, x2
+            elif x2 < x:
+                x2, x = x, x2
 
             if abs(x - x2) > 3 and abs(y - y2) > 3:
                 dx, dy = comp.map_data([x, y])
                 dx2, dy2 = comp.map_data([x2, y2])
 
-                datax = index.get_data()
-                datay = comp.value.get_data()
+                data = self._cached_data
+                if data is None:
+                    datax = index.get_data()
+                    datay = comp.value.get_data()
 
-                data = vstack([datax, datay]).transpose()
+                    data = vstack([datax, datay]).transpose()
+                    self._cached_data = data
 
-                ind = [i for i, (xi, yi) in enumerate(data) \
-                       if (dx <= xi <= dx2 and dy >= yi >= dy2) or
-                       (dx >= xi >= dx2) and dy <= yi <= dy2]
+                ind = [i for i, (xi, yi) in enumerate(data) if dx <= xi <= dx2 and dy2 <= yi <= dy]
 
         selection = index.metadata[self.selection_metadata_name]
         nind = list(set(ind) ^ set(selection))
         index.metadata[self.selection_metadata_name] = nind
-        # index.metadata_changed = True
-        # return ret
 
     def _end_select(self, event):
         self.event_state = 'normal'
