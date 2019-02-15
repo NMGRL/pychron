@@ -192,7 +192,7 @@ class FilterNode(BaseNode):
             fi.show_chain = i != 0
 
     def traits_view(self):
-        v = View(VGroup(VGroup(icon_button_editor('add_filter_button', 'add'),
+        v = okcancel_view(VGroup(VGroup(icon_button_editor('add_filter_button', 'add'),
                                UItem('filters', editor=ListEditor(mutable=False,
                                                                   style='custom',
                                                                   editor=InstanceEditor())),
@@ -206,9 +206,7 @@ class FilterNode(BaseNode):
                  height=400,
                  width=600,
                  kind='livemodal',
-                 title='Edit Filter',
-                 resizable=True,
-                 buttons=['OK', 'Cancel'])
+                 title='Edit Filter')
         return v
 
     def _generate_filter(self):

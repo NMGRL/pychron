@@ -18,11 +18,11 @@
 from __future__ import absolute_import
 
 from traits.api import Bool, Any, List, Str
-from traitsui.api import View
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.column_sorter_mixin import ColumnSorterMixin
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 
 
 class BaseNode(ColumnSorterMixin):
@@ -165,8 +165,7 @@ class BaseNode(ColumnSorterMixin):
         if 'title' not in kw:
             kw['title'] = 'Configure {}'.format(self.name)
 
-        return View(buttons=['OK', 'Cancel'],
-                    kind='livemodal', *items, **kw)
+        return okcancel_view(*items, **kw)
 
     def __str__(self):
         return '{}<{}>'.format(self.name, self.__class__.__name__)

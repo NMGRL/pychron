@@ -38,7 +38,7 @@ class ErrorBarOverlay(AbstractOverlay):
     index = None
     value = None
     error = None
-    data_orientation = 'y'
+    data_orientation = 'x'
 
     def _get_cached_points(self):
         pts = self._cached_points

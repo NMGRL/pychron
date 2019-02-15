@@ -16,9 +16,10 @@
 import os
 
 from traits.api import Instance, Str, Bool
-from traitsui.api import View, UItem, Item, VGroup
+from traitsui.api import UItem, Item, VGroup
 
 from pychron.core.helpers.iterfuncs import groupby_repo, groupby_key
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.progress import progress_loader
 from pychron.dvc import dvc_dump, dvc_load, MASS_SPEC_REDUCED
 from pychron.dvc.dvc import DVC
@@ -38,10 +39,9 @@ class MassSpecReducedNode(BaseNode):
     _paths = None
 
     def traits_view(self):
-        v = View(VGroup(VGroup(UItem('message', style='custom'), label='Message', show_border=True),
+        v = okcancel_view(VGroup(VGroup(UItem('message', style='custom'), label='Message', show_border=True),
                         Item('share_changes', label='Share Changes')),
-                 title='Configure Mass Spec Reduced',
-                 buttons=['OK', 'Cancel'])
+                 title='Configure Mass Spec Reduced')
         return v
 
     def run(self, state):

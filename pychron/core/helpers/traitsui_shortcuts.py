@@ -20,6 +20,7 @@ from traitsui.api import Item, ListEditor, InstanceEditor, View
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from traitsui.menu import OKButton
 
 
 def instance_item(name, **kw):
@@ -36,6 +37,8 @@ def listeditor(name, **kw):
 def okcancel_view(*args, **kw):
     if 'kind' not in kw:
         kw['kind'] = 'livemodal'
+    if 'default_button' not in kw:
+        kw['default_button'] = OKButton
 
     return View(buttons=['OK', 'Cancel'], *args, **kw)
 # ============= EOF =============================================

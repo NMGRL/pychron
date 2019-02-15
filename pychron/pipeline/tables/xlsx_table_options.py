@@ -17,10 +17,11 @@ import os
 
 import yaml
 from traits.api import Enum, Bool, Str, Int, Float, Color, List, Directory
-from traitsui.api import VGroup, HGroup, Tabbed, View, Item, UItem, EnumEditor
+from traitsui.api import VGroup, HGroup, Tabbed, Item, UItem, EnumEditor
 from traitsui.item import UCustom
 
 from pychron.core.helpers.filetools import unique_path2, add_extension
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.persistence_options import BasePersistenceOptions
 from pychron.core.pychron_traits import SingleStr
 from pychron.core.ui.combobox_editor import ComboboxEditor
@@ -225,6 +226,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
 
         class UUItem(UCustom):
             height = -50
+
         unknown_grp = VGroup(Item('unknown_title', label='Table Heading', springy=True),
                              VBorder(VBorder(UItem('unknown_note_name',
                                                    editor=EnumEditor(name='available_unknown_note_names')),
@@ -355,11 +357,11 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
 
         calc_grp = VGroup(J_ERROR_GROUP, label='Calc.')
 
-        v = View(Tabbed(g1, unknown_grp, calc_grp, blank_grp, air_grp, monitor_grp, summary_grp),
-                 resizable=True,
-                 width=750,
-                 title='XLSX Analysis Table Options',
-                 buttons=['OK', 'Cancel'])
+        v = okcancel_view(Tabbed(g1, unknown_grp, calc_grp, blank_grp, air_grp, monitor_grp, summary_grp),
+                          resizable=True,
+                          width=750,
+                          title='XLSX Analysis Table Options',
+                          )
         return v
 
 

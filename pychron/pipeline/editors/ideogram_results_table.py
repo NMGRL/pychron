@@ -32,8 +32,8 @@ class IdeogramResultsAdapter(TabularAdapter):
                ('MSWD', 'mswd')]
 
     group_id_width = Int(50)
-    identifier_width = Int(50)
-    sample_width = Int(100)
+    identifier_width = Int(75)
+    sample_width = Int(200)
     age_span_width = Int(150)
     weighted_mean_age_width = Int(150)
     weighted_mean_age_error_width = Int(150)

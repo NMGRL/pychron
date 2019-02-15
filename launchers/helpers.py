@@ -150,15 +150,6 @@ class myPanel(BasePanel):
             bar = parent.tabBar()
             if not isinstance(bar, myQTabBar):
                 parent.setTabBar(myQTabBar())
-
-        # p = parent
-        # while p is not None:
-        #     try:
-        #         bar = p.tabBar()
-        #     except AttributeError:
-        #         bar = None
-        #     print p, bar
-        #     p = p.parent()
         # =========================================
 
         # Panels must be widgets as it is only the TraitsUI PyQt code that can

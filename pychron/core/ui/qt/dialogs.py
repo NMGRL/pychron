@@ -14,17 +14,17 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from pyface.qt.QtCore import Qt
-from pyface.qt.QtGui import QMessageBox
-from pyface.qt.QtGui import QSizePolicy, QCheckBox
-from pyface.api import OK, YES
-from pyface.message_dialog import MessageDialog
-from pyface.ui.qt4.confirmation_dialog import ConfirmationDialog
-
 # ============= standard library imports ========================
 import time
 from threading import Event, currentThread, _MainThread, Thread
+
+from pyface.api import OK, YES
+from pyface.message_dialog import MessageDialog
+from pyface.qt.QtCore import Qt
+from pyface.qt.QtGui import QMessageBox
+from pyface.qt.QtGui import QSizePolicy, QCheckBox
+from pyface.ui.qt4.confirmation_dialog import ConfirmationDialog
+
 # ============= local library imports  ==========================
 from pychron.core.ui.gui import invoke_in_main_thread
 

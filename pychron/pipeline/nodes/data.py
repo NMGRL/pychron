@@ -25,8 +25,9 @@ from pyface.file_dialog import FileDialog
 from pyface.message_dialog import warning, information
 from pyface.timer.do_later import do_after
 from traits.api import Instance, Bool, Int, Str, List, Enum, Float, Time
-from traitsui.api import View, Item, EnumEditor, CheckListEditor
+from traitsui.api import Item, EnumEditor, CheckListEditor
 
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.globals import globalv
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pychron_constants import ANALYSIS_TYPES
@@ -302,7 +303,7 @@ class BaseAutoUnknownNode(UnknownNode):
         return BaseNode.configure(self, pre_run=pre_run, *args, **kw)
 
     def traits_view(self):
-        v = View(Item('mode', tooltip='Normal: get analyses between now and start of pipeline - hours\n'
+        v = okcancel_view(Item('mode', tooltip='Normal: get analyses between now and start of pipeline - hours\n'
                                       'Window: get analyses between now and now - hours'),
                  Item('hours'),
                  Item('period', label='Update Period (s)',
@@ -313,9 +314,7 @@ class BaseAutoUnknownNode(UnknownNode):
                       editor=CheckListEditor(name='available_analysis_types', cols=len(self.available_analysis_types))),
                  Item('post_analysis_delay', label='Post Analysis Found Delay',
                       tooltip='Time (min) to delay before next "check for new analyses"'),
-                 Item('verbose'),
-                 kind='livemodal',
-                 buttons=['OK', 'Cancel'])
+                 Item('verbose'))
         return v
 
     def post_run(self, engine, state):
@@ -441,7 +440,7 @@ class ListenUnknownNode(BaseAutoUnknownNode):
         engine.pipeline.active = True
 
     def traits_view(self):
-        v = View(Item('mode', tooltip='Normal: get analyses between now and start of pipeline - hours\n'
+        v = okcancel_view(Item('mode', tooltip='Normal: get analyses between now and start of pipeline - hours\n'
                                       'Window: get analyses between now and now - hours'),
                  Item('hours'),
                  Item('period', label='Update Period (s)',
@@ -454,8 +453,7 @@ class ListenUnknownNode(BaseAutoUnknownNode):
                       tooltip='Time (min) to delay before next "check for new analyses"'),
                  Item('verbose'),
                  title='Configure',
-                 kind='livemodal',
-                 buttons=['OK', 'Cancel'])
+                 )
         return v
 
     def run(self, state):
@@ -565,7 +563,7 @@ class CalendarUnknownNode(BaseAutoUnknownNode):
         do_after(1000 * period, self._iter)
 
     def traits_view(self):
-        v = View(Item('run_time'),
+        v = okcancel_view(Item('run_time'),
                  Item('hours'),
                  # Item('period', label='Update Period (s)',
                  #      tooltip='Defauly time (s) to delay between "check for new analyses"'),
@@ -575,8 +573,6 @@ class CalendarUnknownNode(BaseAutoUnknownNode):
                       editor=CheckListEditor(name='available_analysis_types', cols=len(self.available_analysis_types))),
                  # Item('post_analysis_delay', label='Post Analysis Found Delay',
                  #      tooltip='Time (min) to delay before next "check for new analyses"'),
-                 Item('verbose'),
-                 kind='livemodal',
-                 buttons=['OK', 'Cancel'])
+                 Item('verbose'))
         return v
 # ============= EOF =============================================

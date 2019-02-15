@@ -91,6 +91,7 @@ class FigureNode(SortableNode):
                         unks = [u for u in unks if u.tag.lower() != 'skip']
 
                     editor.set_items(list(unks))
+                    print('reefejs meeded run')
                     editor.refresh_needed = True
                     # if hasattr(editor, 'component'):
                     #     editor.component.invalidate_and_redraw()
