@@ -182,6 +182,7 @@ class IdeogramSubOptions(SubOptions):
 
         rtgrp = BorderVGroup(Item('show_results_table', label='Show',
                                   tooltip='Display a summary table below the ideogram'),
+                             Item('show_ttest_table', label='Show T-test'),
                              label='Summary Table')
 
         return self._make_view(VGroup(xgrp, tgrp, rtgrp))

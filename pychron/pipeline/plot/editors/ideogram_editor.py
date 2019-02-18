@@ -17,14 +17,15 @@
 # ============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.label import Label
-from traits.api import Instance, List
-from traitsui.api import View, VSplit, VGroup
+from traits.api import Instance, List, on_trait_change
+from traitsui.api import View, VSplit, VGroup, HGroup
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.traitsui_shortcuts import listeditor
-from pychron.pipeline.editors.ideogram_results_table import IdeogramResultsTable
+from pychron.pipeline.plot.editors.ideogram_results_table import IdeogramResultsTable
 from pychron.pipeline.plot.editors.interpreted_age_editor import InterpretedAgeEditor
+from pychron.pipeline.plot.editors.ttest_table import TTestTable
 from pychron.pipeline.plot.models.ideogram_model import IdeogramModel
 from pychron.processing.analyses.file_analysis import InterpretedAgeAnalysis
 
@@ -55,9 +56,15 @@ class IdeogramEditor(InterpretedAgeEditor):
     figure_model_klass = IdeogramModel
     basename = 'ideo'
     results_tables = List
+    ttest_tables = List
+
+    @on_trait_change('figure_model:panels:figures:recalculate_event')
+    def recalculate(self):
+        self._get_component_hook()
 
     def _get_component_hook(self):
         rs = []
+        ts = []
         for p in self.figure_model.panels:
             ags = []
             for pp in p.figures:
@@ -68,9 +75,15 @@ class IdeogramEditor(InterpretedAgeEditor):
                 ags.append(ag)
 
             # ags = [pp.analysis_group for pp in p.figures]
-            r = IdeogramResultsTable(ags)
-            rs.append(r)
+            if self.plotter_options.show_results_table:
+                r = IdeogramResultsTable(ags)
+                rs.append(r)
+            if self.plotter_options.show_ttest_table:
+                t = TTestTable(ags)
+                ts.append(t)
+
         self.results_tables = rs
+        self.ttest_tables = ts
 
     def plot_interpreted_ages(self, iages):
         def construct(a):
@@ -96,11 +109,15 @@ class IdeogramEditor(InterpretedAgeEditor):
 
     def traits_view(self):
         tbl_grp = VGroup(listeditor('results_tables',
-                                    height=100,
-                                    visible_when='plotter_options.show_results_table'),
-                         scrollable=True)
+                                    height=100),
+                         scrollable=True,
+                         visible_when='plotter_options.show_results_table')
+
+        ttest_grp = VGroup(listeditor('ttest_tables'),
+                           visible_when='plotter_options.show_ttest_table')
+
         v = View(VSplit(VGroup(self.get_component_view()),
-                        tbl_grp),
+                        HGroup(tbl_grp, ttest_grp)),
                  resizable=True)
         return v
 # ============= EOF =============================================

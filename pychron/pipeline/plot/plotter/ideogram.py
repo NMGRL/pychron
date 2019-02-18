@@ -118,7 +118,6 @@ class Ideogram(BaseArArFigure):
     ytitle = 'Relative Probability'
     subgroup_id = 0
     subgroup = None
-
     # xlimits_updated = Event
     # ylimits_updated = Event
 
@@ -568,6 +567,7 @@ class Ideogram(BaseArArFigure):
         sel = obj.metadata.get('selections', [])
         self._set_selected(ans, sel)
         self._rebuild_ideo(sel)
+        self.recalculate_event = True
 
         # self._filter_metadata_changes(obj, sorted_ans, self._rebuild_ideo)
 

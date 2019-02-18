@@ -98,6 +98,8 @@ class BaseArArFigure(SelectionFigure):
 
     _has_formatting_hash = None
 
+    recalculate_event = Event
+
     def get_update_dict(self):
         return {}
 
