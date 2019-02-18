@@ -319,6 +319,9 @@ class MaterialTbl(Base, NameMixin):
     def gname(self):
         return '{} ({})'.format(self.name, self.grainsize) if self.grainsize else self.name
 
+    def __repr__(self):
+        return '{}<{}>'.format(self.__class__.__name__, self.gname)
+
 
 class SampleTbl(Base, NameMixin):
     materialID = Column(Integer, ForeignKey('MaterialTbl.id'))

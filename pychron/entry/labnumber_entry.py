@@ -505,69 +505,70 @@ class LabnumberEntry(DVCIrradiationable):
 
         if not irradiation:
             irradiation = self.irradiation
+        dvc = self.dvc
+        with dvc.session_ctx():
+            for ir in self.irradiated_positions:
+                sam = ir.sample
 
-        for ir in self.irradiated_positions:
-            sam = ir.sample
+                if not sam:
+                    self.dvc.remove_irradiation_position(irradiation, level, ir.hole)
+                    continue
 
-            if not sam:
-                self.dvc.remove_irradiation_position(irradiation, level, ir.hole)
-                continue
+                # mssql will not allow multiple null identifiers
+                # so need to use placeholder
 
-            # mssql will not allow multiple null identifiers
-            # so need to use placeholder
+                # if not ir.identifier and (db.kind == 'mssql' or not self.allow_multiple_null_identifiers):
+                if db.kind == 'mssql' or not self.allow_multiple_null_identifiers:
+                    k = '{:02n}'.format(ir.hole)
+                    if self.use_packet_for_default_identifier:
+                        k = ir.packet
 
-            # if not ir.identifier and (db.kind == 'mssql' or not self.allow_multiple_null_identifiers):
-            if db.kind == 'mssql' or not self.allow_multiple_null_identifiers:
-                k = '{:02n}'.format(ir.hole)
-                if self.use_packet_for_default_identifier:
-                    k = ir.packet
+                    temp = '{}:{}{}'.format(irradiation, level, k)
+                    if not ir.identifier or ir.identifier != temp:
+                        ir.identifier = temp
 
-                temp = '{}:{}{}'.format(irradiation, level, k)
-                if not ir.identifier or ir.identifier != temp:
-                    ir.identifier = temp
+                ln = ir.identifier
+                dbpos = db.get_irradiation_position(irradiation, level, ir.hole)
+                if not dbpos:
+                    dbpos = db.add_irradiation_position(irradiation, level, ir.hole)
 
-            ln = ir.identifier
-            dbpos = db.get_irradiation_position(irradiation, level, ir.hole)
-            if not dbpos:
-                dbpos = db.add_irradiation_position(irradiation, level, ir.hole)
+                if ln:
+                    dbpos2 = db.get_identifier(ln)
+                    if dbpos2:
+                        irradname = dbpos2.level.irradiation.name
+                        if irradname != irradiation:
+                            self.warning_dialog('Labnumber {} already exists '
+                                                'in Irradiation {}'.format(ln, irradname))
+                            return
+                    else:
+                        dbpos.identifier = ln
 
-            if ln:
-                dbpos2 = db.get_identifier(ln)
-                if dbpos2:
-                    irradname = dbpos2.level.irradiation.name
-                    if irradname != irradiation:
-                        self.warning_dialog('Labnumber {} already exists '
-                                            'in Irradiation {}'.format(ln, irradname))
-                        return
-                else:
-                    dbpos.identifier = ln
+                self.dvc.meta_repo.update_flux(irradiation, level,
+                                               ir.hole, ir.identifier, ir.j, ir.j_err, 0, 0)
 
-            self.dvc.meta_repo.update_flux(irradiation, level,
-                                           ir.hole, ir.identifier, ir.j, ir.j_err, 0, 0)
+                dbpos.weight = float(ir.weight or 0)
+                dbpos.note = ir.note
+                dbpos.packet = ir.packet
 
-            dbpos.weight = float(ir.weight or 0)
-            dbpos.note = ir.note
-            dbpos.packet = ir.packet
+                proj = ir.project
+                mat = ir.material
+                grainsize = ir.grainsize
+                if proj:
+                    proj = db.add_project(proj, pi=ir.principal_investigator)
 
-            proj = ir.project
-            mat = ir.material
-            grainsize = ir.grainsize
-            if proj:
-                proj = db.add_project(proj, pi=ir.principal_investigator)
+                if mat:
+                    mat = db.add_material(mat, grainsize=grainsize)
 
-            if mat:
-                mat = db.add_material(mat, grainsize=grainsize)
+                if sam:
+                    sam = db.add_sample(sam,
+                                        proj.name,
+                                        ir.principal_investigator,
+                                        mat, grainsize=grainsize)
+                    # sam.igsn = ir.igsn
+                    dbpos.sample = sam
 
-            if sam:
-                sam = db.add_sample(sam,
-                                    proj.name,
-                                    ir.principal_investigator,
-                                    mat, grainsize=grainsize)
-                # sam.igsn = ir.igsn
-                dbpos.sample = sam
-
-            prog.change_message('Saving {}{}{} identifier={}'.format(irradiation, level, ir.hole, ln))
-            db.commit()
+                prog.change_message('Saving {}{}{} identifier={}'.format(irradiation, level, ir.hole, ln))
+                db.commit()
 
         prog.close()
 

@@ -405,9 +405,8 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     def _selected_samples_changed(self, new):
         if new:
             ni = new[0]
-            # self.manager.set_selected_attr(new.name, 'sample')
-            self.manager.set_selected_attrs((ni.name, ni.material, ni.project, ni.principal_investigator),
-                                            ('sample', 'material', 'project', 'principal_investigator'))
+            self.manager.set_selected_attrs((ni.name, ni.material, ni.grainsize, ni.project, ni.principal_investigator),
+                                            ('sample', 'material', 'grainsize', 'project', 'principal_investigator'))
 
     def _load_associated_samples(self, names=None):
         if names is None:
