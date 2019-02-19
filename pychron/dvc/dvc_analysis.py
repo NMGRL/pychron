@@ -129,7 +129,7 @@ class DVCAnalysis(Analysis):
         # self.collection_version = jd['collection_version']
         self._set_isotopes(jd)
 
-        if self.analysis_type.lower() == 'sample':
+        if self.analysis_type.lower() == 'sample' or not self.analysis_type:
             self.analysis_type = 'unknown'
         self.arar_mapping = jd.get('arar_mapping', ARAR_MAPPING)
 
