@@ -22,7 +22,7 @@ import os
 
 import yaml
 from traits.api import Str, Button, List
-from traitsui.api import View, HGroup, UItem, VGroup, Item
+from traitsui.api import HGroup, UItem, VGroup, Item
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.handler import Controller
 from traitsui.table_column import ObjectColumn
@@ -31,6 +31,7 @@ from pychron.core.fits.filter_fit_selector import FilterFitSelector
 from pychron.core.fits.fit import FilterFit
 from pychron.core.helpers.filetools import add_extension, glob_list_directory
 from pychron.core.helpers.iterfuncs import partition
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.enum_editor import myEnumEditor
 from pychron.core.ui.table_editor import myTableEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
@@ -126,11 +127,10 @@ class MeasurementFitsSelectorView(Controller):
     duplicate_button = Button
 
     def _duplicate_button_fired(self):
-        info = self.model.edit_traits(view=View(Item('name'),
-                                                title='Enter a new name',
-                                                width=300,
-                                                kind='modal',
-                                                buttons=['OK', 'Cancel']))
+        info = self.model.edit_traits(view=okcancel_view(Item('name'),
+                                                         title='Enter a new name',
+                                                         width=300,
+                                                         kind='modal'))
         if info.result:
             self.model.duplicate()
 
@@ -181,14 +181,12 @@ class MeasurementFitsSelectorView(Controller):
         name_grp = HGroup(
             UItem('name', editor=myEnumEditor(name='available_names')),
             icon_button_editor('controller.duplicate_button', 'duplicate'))
-        v = View(VGroup(name_grp,
-                        self._get_toggle_group(),
-                        self._get_auto_group(),
-                        self._get_fit_group()),
-                 height=400,
-                 title='Edit Default Fits',
-                 buttons=['OK', 'Cancel'],
-                 resizable=True)
+        v = okcancel_view(VGroup(name_grp,
+                                 self._get_toggle_group(),
+                                 self._get_auto_group(),
+                                 self._get_fit_group()),
+                          height=400,
+                          title='Edit Default Fits')
         return v
 
 
@@ -206,7 +204,4 @@ if __name__ == '__main__':
     a = MeasurementFitsSelectorView(model=m)
     a.configure_traits()
 
-
-
 # ============= EOF =============================================
-

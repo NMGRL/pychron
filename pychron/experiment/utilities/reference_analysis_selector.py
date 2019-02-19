@@ -15,12 +15,13 @@
 # ===============================================================================
 
 # ============= standard library imports ========================
-from __future__ import absolute_import
-from traits.api import HasTraits, Instance, List, Str, Any, Property, Int
-from traitsui.api import View, UItem, TabularEditor
+from traits.api import Instance, List, Str, Any, Property, Int
+from traitsui.api import UItem, TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
+
 # ============= local library imports  ==========================
 from pychron.column_sorter_mixin import ColumnSorterMixin
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 
 
 class SelectorAdapter(TabularAdapter):
@@ -62,9 +63,7 @@ class ReferenceAnalysisSelector(ColumnSorterMixin):
                                                 column_clicked='column_clicked',
                                                 editable=False,
                                                 selected='selected'))
-        v = View(g, title=self.title,
-                 width=750,
-                 buttons=['OK', 'Cancel'])
+        v = okcancel_view(g, title=self.title, width=750)
         return v
 
 # ============= EOF =============================================

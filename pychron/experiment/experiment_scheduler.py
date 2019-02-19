@@ -17,8 +17,9 @@ import datetime
 import time
 
 from traits.api import Bool, Time, Date
-from traitsui.api import View, UItem
+from traitsui.api import UItem
 
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pychron_traits import BorderHGroup
 from pychron.loggable import Loggable
 
@@ -40,17 +41,15 @@ class ExperimentScheduler(Loggable):
         self.start_date = n.date()
 
     def traits_view(self):
-        v = View(BorderHGroup(UItem('delayed_start_enabled'),
-                              UItem('start_date', enabled_when='delayed_start_enabled'),
-                              UItem('start_time', enabled_when='delayed_start_enabled'),
-                              label='Start'),
-                 BorderHGroup(UItem('scheduled_stop_enabled'),
-                              UItem('stop_date', enabled_when='scheduled_stop_enabled'),
-                              UItem('stop_time', enabled_when='scheduled_stop_enabled'),
-                              label='Stop'),
-                 title='Configure Scheduler',
-                 buttons=['OK', 'Cancel'],
-                 resizable=True)
+        v = okcancel_view(BorderHGroup(UItem('delayed_start_enabled'),
+                                       UItem('start_date', enabled_when='delayed_start_enabled'),
+                                       UItem('start_time', enabled_when='delayed_start_enabled'),
+                                       label='Start'),
+                          BorderHGroup(UItem('scheduled_stop_enabled'),
+                                       UItem('stop_date', enabled_when='scheduled_stop_enabled'),
+                                       UItem('stop_time', enabled_when='scheduled_stop_enabled'),
+                                       label='Stop'),
+                          title='Configure Scheduler')
         return v
 
     @property

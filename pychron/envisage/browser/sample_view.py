@@ -22,6 +22,7 @@ from traitsui.api import View, UItem, VGroup, EnumEditor, \
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.ui.qt.tabular_editors import FilterTabularEditor
 from pychron.core.ui.tabular_editor import myTabularEditor
@@ -48,31 +49,25 @@ class BaseBrowserSampleView(PaneModelView):
     configure_mass_spectrometer_filter_button = Button
 
     def _configure_date_filter_button_fired(self):
-        v = View(self._get_date_group(), resizable=True,
-                 height=150,
-                 kind='livemodal',
-                 buttons=['OK', 'Cancel'],
-                 title='Configure Date Filter')
+        v = okcancel_view(self._get_date_group(),
+                          height=150,
+                          title='Configure Date Filter')
         info = self.edit_traits(view=v)
         if info.result:
             self.model.refresh_samples()
 
     def _configure_analysis_type_filter_button_fired(self):
-        v = View(self._get_analysis_type_group(), resizable=True,
-                 height=150,
-                 kind='livemodal',
-                 buttons=['OK', 'Cancel'],
-                 title='Configure Analysis Type Filter')
+        v = okcancel_view(self._get_analysis_type_group(),
+                          height=150,
+                          title='Configure Analysis Type Filter')
         info = self.edit_traits(view=v)
         if info.result:
             self.model.refresh_samples()
 
     def _configure_mass_spectrometer_filter_button_fired(self):
-        v = View(self._get_mass_spectrometer_group(), resizable=True,
-                 height=150,
-                 kind='livemodal',
-                 buttons=['OK', 'Cancel'],
-                 title='Configure Mass Spectrometer Filter')
+        v = okcancel_view(self._get_mass_spectrometer_group(),
+                          height=150,
+                          title='Configure Mass Spectrometer Filter')
         info = self.edit_traits(view=v)
         if info.result:
             self.model.refresh_samples()

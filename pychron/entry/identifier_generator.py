@@ -16,9 +16,9 @@
 
 # ============= enthought library imports =======================
 from traits.api import Any, Str, List, Bool, Int, CInt, Instance
-from traitsui.api import View
 from traitsui.item import Item
 
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.progress import open_progress
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.loggable import Loggable
@@ -90,14 +90,12 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
         self.mon_start = self.mon_maxs[0] if self.mon_maxs else 0
         self.unk_start = self.unk_maxs[0] if self.unk_maxs else 0
 
-        info = self.edit_traits(view=View(Item('offset'), Item('level_offset'),
-                                          Item('mon_start', label='Starting Monitor L#',
-                                               editor=ComboboxEditor(name='mon_maxs')),
-                                          Item('unk_start', label='Starting Unknown L#',
-                                               editor=ComboboxEditor(name='unk_maxs')),
-                                          kind='livemodal',
-                                          title='Configure Identifier Generation',
-                                          buttons=['OK', 'Cancel']), )
+        info = self.edit_traits(view=okcancel_view(Item('offset'), Item('level_offset'),
+                                                   Item('mon_start', label='Starting Monitor L#',
+                                                        editor=ComboboxEditor(name='mon_maxs')),
+                                                   Item('unk_start', label='Starting Unknown L#',
+                                                        editor=ComboboxEditor(name='unk_maxs')),
+                                                   title='Configure Identifier Generation'))
         if info.result:
             self.dump()
             return True
@@ -395,6 +393,4 @@ if __name__ == '__main__':
            63186]
     print(get_maxs(lns))
 
-
 # ============= EOF =============================================
-

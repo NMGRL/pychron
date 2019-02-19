@@ -51,7 +51,6 @@ class SelectDataReductionTagView(Controller):
                                                      editable=False,
                                                      selected='selected')),
                           width=500,
-                          resizable=True,
                           title='Select Data Reduction Tag')
         return v
 

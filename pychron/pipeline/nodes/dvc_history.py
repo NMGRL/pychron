@@ -15,9 +15,10 @@
 # ===============================================================================
 
 from traits.api import HasTraits, List, Any, Str
-from traitsui.api import View, UItem, TabularEditor, EnumEditor, VGroup
+from traitsui.api import UItem, TabularEditor, EnumEditor, VGroup
 
 from pychron.core.helpers.iterfuncs import groupby_repo
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.git_archive.utils import get_commits
 from pychron.git_archive.views import CommitAdapter
 from pychron.pipeline.nodes.data import BaseDVCNode
@@ -40,15 +41,14 @@ class CommitSelector(HasTraits):
         self.commits = cs
 
     def traits_view(self):
-        v = View(VGroup(UItem('branch',
-                              editor=EnumEditor(name='branches')),
-                        UItem('commits',
-                              editor=TabularEditor(adapter=CommitAdapter(),
-                                                   editable=False,
-                                                   selected='selected'))),
-                 height=600,
-                 width=700,
-                 buttons=['OK', 'Cancel'])
+        v = okcancel_view(VGroup(UItem('branch',
+                                       editor=EnumEditor(name='branches')),
+                                 UItem('commits',
+                                       editor=TabularEditor(adapter=CommitAdapter(),
+                                                            editable=False,
+                                                            selected='selected'))),
+                          height=600,
+                          width=700)
         return v
 
 

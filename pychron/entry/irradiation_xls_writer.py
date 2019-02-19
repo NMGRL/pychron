@@ -16,13 +16,15 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from pyface.message_dialog import warning
 from traits.api import HasTraits, List
-from traitsui.api import View, UItem, ListStrEditor
+from traitsui.api import UItem, ListStrEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from xlwt import Workbook, XFStyle
 
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.pychron_constants import INTERFERENCE_KEYS
 
 
@@ -31,12 +33,9 @@ class IrradiationSelector(HasTraits):
     irradiations = List
 
     def traits_view(self):
-        v = View(UItem('irradiations', editor=ListStrEditor(multi_select=True,
-                                                            selected='selected')),
-                 kind='livemodal',
-                 resizable=True,
-                 title='Select Irradiations',
-                 buttons=['OK', 'Cancel'])
+        v = okcancel_view(UItem('irradiations', editor=ListStrEditor(multi_select=True,
+                                                                     selected='selected')),
+                          title='Select Irradiations')
         return v
 
 

@@ -16,24 +16,27 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
+
+import hashlib
+import os
+
+# ============= standard library imports ========================
+import yaml
 from pyface.action.menu_manager import MenuManager
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
 from pyface.tasks.action.schema_addition import SchemaAddition
 from traits.api import HasTraits, Str, Instance, Event, Bool, List, Enum, Any
-from traitsui.api import View, UItem, VGroup, TreeNode, Handler, HGroup, TextEditor
+from traitsui.api import UItem, VGroup, TreeNode, Handler, HGroup, TextEditor
 from traitsui.menu import Action
 
-# ============= standard library imports ========================
-import yaml
-import hashlib
-import os
-# ============= local library imports  ==========================
-from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.paths import paths
-from pychron.envisage.resources import icon
 from pychron.core.helpers.strtools import to_bool
+# ============= local library imports  ==========================
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.tree_editor import TreeEditor
+from pychron.envisage.icon_button_editor import icon_button_editor
+from pychron.envisage.resources import icon
+from pychron.paths import paths
 
 
 class AdditionTreeNode(TreeNode):
@@ -50,6 +53,7 @@ class ViewModel(HasTraits):
     otask_extensions = List
     task_extensions = List
     enabled = True
+
     # pychron.update.check_for_updates',
 
     def filter(self, new):
@@ -335,14 +339,11 @@ def edit_task_extensions(ts):
                         editor=TextEditor(read_only=True)),
                   show_border=True, label='Description')
 
-    av = View(VGroup(tgrp, dgrp),
-              title='Edit UI',
-              width=500,
-              height=700,
-              resizable=True,
-              handler=EEHandler(),
-              buttons=['OK', 'Cancel'],
-              kind='livemodal')
+    av = okcancel_view(VGroup(tgrp, dgrp),
+                       title='Edit UI',
+                       width=500,
+                       height=700,
+                       handler=EEHandler())
 
     # info = e.configure_traits(view=AView)
     info = e.edit_traits(view=av)

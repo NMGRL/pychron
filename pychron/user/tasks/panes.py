@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traitsui.api import View, TableEditor, UItem, HGroup, Item
 # ============= standard library imports ========================
@@ -23,10 +24,11 @@ from traitsui.api import View, TableEditor, UItem, HGroup, Item
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 
-NewUserView = View(Item('new_user_name', label='Name'),
-                   Item('new_user_email', label='Email'),
-                   buttons=['OK', 'Cancel'],
-                   title='New User')
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+
+NewUserView = okcancel_view(Item('new_user_name', label='Name'),
+                            Item('new_user_email', label='Email'),
+                            title='New User')
 
 
 class UsersPane(TraitsTaskPane):

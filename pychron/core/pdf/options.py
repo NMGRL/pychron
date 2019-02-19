@@ -23,6 +23,7 @@ from reportlab.lib.units import inch, cm
 from traits.api import Str, Bool, Enum, Button, Float, Color
 from traitsui.api import View, Item, UItem, HGroup, Group, VGroup, spring, Spring
 
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pdf.pdf_graphics_context import UNITS_MAP
 from pychron.core.persistence_options import BasePersistenceOptions
 from pychron.envisage.icon_button_editor import icon_button_editor
@@ -60,10 +61,8 @@ PDFLayoutGroup = VGroup(Item('orientation'),
                         cgrp,
                         label='Layout')
 
-PDFLayoutView = View(PDFLayoutGroup,
-                     buttons=['OK', 'Cancel'],
-                     title='PDF Save Options',
-                     resizable=True)
+PDFLayoutView = okcancel_view(PDFLayoutGroup,
+                              title='PDF Save Options')
 
 
 class BasePDFOptions(BasePersistenceOptions):
@@ -226,12 +225,12 @@ class PDFTableOptions(BasePDFOptions):
                              HGroup(Item('kca_sig_figs', label='K/Ca')),
                              label='Sig Figs'),
                          label='Data')
-        v = View(
-            layout_grp,
-            table_grp,
-            data_grp,
-            title='PDF Options',
-            buttons=['OK', 'Cancel', 'Revert'])
+
+        v = okcancel_view(layout_grp,
+                          table_grp,
+                          data_grp,
+                          title='PDF Options',
+                          buttons=['OK', 'Cancel', 'Revert'])
         return v
 
 # ============= EOF =============================================

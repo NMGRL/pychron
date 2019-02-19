@@ -15,30 +15,26 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from traits.api import HasTraits, List
-from traitsui.api import View, ListStrEditor, UItem
+from traitsui.api import ListStrEditor, UItem
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+
 
 class IrradiationTableView(HasTraits):
     irradiations = List
     selected = List
 
     def traits_view(self):
-        v = View(UItem('irradiations',
-                       editor=ListStrEditor(selected='selected',
-                                            multi_select=True,
-                                            editable=False)
-        ),
-                 buttons=['OK', 'Cancel'],
-                 title='Irradiations',
-                 height=500,
-                 resizable=True,
-                 kind='modal'
-        )
+        v = okcancel_view(UItem('irradiations',
+                                editor=ListStrEditor(selected='selected',
+                                                     multi_select=True,
+                                                     editable=False)),
+                          title='Irradiations',
+                          height=500,
+                          kind='modal')
         return v
 
         # ============= EOF =============================================
-

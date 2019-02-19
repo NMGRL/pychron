@@ -14,8 +14,6 @@
 # limitations under the License.
 # ===============================================================================
 
-from __future__ import absolute_import
-
 import os
 
 # ============= enthought library imports =======================
@@ -31,6 +29,7 @@ from pychron import json
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
 from pychron.canvas.utils import load_holder_canvas
 from pychron.core.helpers.logger_setup import logging_setup
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.database.core.defaults import parse_irradiation_tray_map, load_irradiation_map
 from pychron.dvc.meta_repo import MetaRepo
@@ -53,10 +52,9 @@ class NewProduction(HasTraits):
     reactor = Str
 
     def traits_view(self):
-        v = View(HGroup('name', 'reactor'),
-                 buttons=['OK', 'Cancel', 'Revert'],
-                 title='New Production Ratio',
-                 kind='livemodal')
+        v = okcancel_view(HGroup('name', 'reactor'),
+                          buttons=['OK', 'Cancel', 'Revert'],
+                          title='New Production Ratio')
         return v
 
 
@@ -114,18 +112,15 @@ class EditView(ModelView):
                                  UItem('canvas', editor=ComponentEditor(), width=0.75)),
                           label='Tray')
 
-        v = View(VGroup(HGroup(Item('name'), Item('z')),
-                        VGroup(UItem('level_note', style='custom'), label='Level Note', show_border=True),
-                        Group(
-                            pr_group,
-                            tray_grp,
-                            layout='tabbed')),
-                 resizable=True,
-                 width=550,
-                 height=650,
-                 title=self.title,
-                 kind='livemodal',
-                 buttons=['OK', 'Cancel'])
+        v = okcancel_view(VGroup(HGroup(Item('name'), Item('z')),
+                                 VGroup(UItem('level_note', style='custom'), label='Level Note', show_border=True),
+                                 Group(
+                                     pr_group,
+                                     tray_grp,
+                                     layout='tabbed')),
+                          width=550,
+                          height=650,
+                          title=self.title)
         return v
 
 
@@ -135,12 +130,10 @@ class AddView(EditView):
 
 class UpdateReactorView(ModelView):
     def traits_view(self):
-        v = View(UItem('update_reactor_name',
-                       editor=ComboboxEditor(name='update_reactor_names')),
-                 kind='livemodal',
-                 width=300,
-                 title='Update Reactor Default',
-                 buttons=['OK', 'Cancel'])
+        v = okcancel_view(UItem('update_reactor_name',
+                                editor=ComboboxEditor(name='update_reactor_names')),
+                          width=300,
+                          title='Update Reactor Default')
         return v
 
 
@@ -474,8 +467,7 @@ class LevelEditor(Loggable):
             self.meta_repo.commit('Edited production {} for Irradiation {}'.format(prname, self.irradiation))
 
     def _add_production_button_fired(self):
-        v = View(Item('new_production_name',
-                      label='Name'), title='New Production', kind='livemodal', buttons=['OK', 'Cancel'])
+        v = okcancel_view(Item('new_production_name', label='Name'), title='New Production')
         info = self.edit_traits(v)
         if info.result:
             self._save_production(name=self.new_production_name)

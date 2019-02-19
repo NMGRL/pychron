@@ -24,6 +24,7 @@ from traitsui.table_column import ObjectColumn
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
 from pychron.processing.analyses.preferred import preferred_item
 
@@ -78,16 +79,13 @@ cols = [
     # UObjectColumn(name='preferred_age_error', format='%0.4f', label=PLUSMINUS_ONE_SIGMA,
     #               width=70),
     # UObjectColumn(name='preferred_mswd', format='%0.4f', label='MSWD')
-    ]
+]
 
 editor = TableEditor(columns=cols, orientation='vertical',
                      sortable=False, edit_view=EDIT_VIEW)
-VIEW = View(Item('items', show_label=False, editor=editor),
-            resizable=True,
-            width=900,
-            title='Set Interpreted Age',
-            kind='livemodal',
-            buttons=['OK', 'Cancel'])
+VIEW = okcancel_view(Item('items', show_label=False, editor=editor),
+                     width=900,
+                     title='Set Interpreted Age')
 
 
 class InterpretedAgeFactoryModel(HasTraits):

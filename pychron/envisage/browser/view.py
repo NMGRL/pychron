@@ -89,11 +89,9 @@ class StandaloneBrowserView(BaseBrowserView):
                       CustomLabel('datasource_url', color='maroon'),
                       show_border=True)
 
-        v = View(VGroup(hgrp, main_grp),
-                 buttons=['OK', 'Cancel'],
-                 title='Standalone Browser',
-                 width=-900,
-                 resizable=True)
+        v = okcancel_view(VGroup(hgrp, main_grp),
+                          title='Standalone Browser',
+                          width=-900)
 
         return v
 
@@ -116,8 +114,7 @@ class BrowserView(BaseBrowserView):
         tool_grp = self._get_browser_tool_group()
         v = okcancel_view(VGroup(tool_grp, main_grp),
                           title='Browser',
-                          width=1200,
-                          resizable=True)
+                          width=1200)
 
         return v
 
@@ -150,8 +147,7 @@ class InterpretedAgeBrowserView(HasTraits):
         v = okcancel_view(VGroup(tool_grp,
                                  UItem('pane.sample_view', style='custom')),
                           title='Interpreted Age Browser',
-                          width=900,
-                          resizable=True)
+                          width=900)
 
         return v
 

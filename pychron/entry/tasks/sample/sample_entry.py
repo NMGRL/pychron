@@ -24,8 +24,9 @@ import yaml
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Bool, Property, Event, cached_property, \
     Button, String, Instance, List, Float, on_trait_change
-from traitsui.api import View, UItem, Item, VGroup, HGroup
+from traitsui.api import UItem, Item, VGroup, HGroup
 
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pychron_traits import EmailStr
 from pychron.dvc.dvc_irradiationable import DVCAble
 from pychron.entry.tasks.sample.sample_edit_view import SampleEditModel, LatFloat, LonFloat, SAMPLE_ATTRS
@@ -61,7 +62,6 @@ class PIStr(String):
 
 # class MaterialStr(RString):
 #     regex = MATERIAL_REGEX
-
 
 
 class ProjectStr(String):
@@ -239,7 +239,7 @@ class SampleEntry(DVCAble):
     db_samples = List
     sample_filter = String(enter_set=True, auto_set=False)
     sample_filter_attr = Str('name')
-    sample_filter_attrs = List(('name', 'project', 'material', 'principal_investigator')+SAMPLE_ATTRS)
+    sample_filter_attrs = List(('name', 'project', 'material', 'principal_investigator') + SAMPLE_ATTRS)
     selected_db_samples = List
 
     _samples = List
@@ -508,31 +508,28 @@ class SampleEntry(DVCAble):
         self.approximate_age = 0
 
     def _configure_pi_button_fired(self):
-        v = View(VGroup(VGroup(UItem('principal_investigator'),
-                               label='Name', show_border=True),
-                        VGroup(Item('affiliation', label='Affiliation'),
-                               Item('email', label='Email'),
-                               label='Optional', show_border=True)),
-                 kind='livemodal', title='Set Principal Investigator Attributes',
-                 buttons=['OK', 'Cancel'])
+        v = okcancel_view(VGroup(VGroup(UItem('principal_investigator'),
+                                        label='Name', show_border=True),
+                                 VGroup(Item('affiliation', label='Affiliation'),
+                                        Item('email', label='Email'),
+                                        label='Optional', show_border=True)),
+                          title='Set Principal Investigator Attributes')
         self.edit_traits(view=v)
 
     def _configure_sample_button_fired(self):
-        v = View(VGroup(HGroup(icon_button_editor('clear_sample_attributes_button', 'clear')),
-                        VGroup(UItem('sample'),
-                               label='Name', show_border=True),
-                        VGroup(Item('lat', label='Latitude'),
-                               Item('lon', label='Longitude'),
-                               Item('location'),
-                               Item('elevation'),
-                               label='Location', show_border=True),
-                        VGroup(Item('lithology'),
-                               Item('approximate_age', label='Approx. Age (Ma)'),
-                               Item('storage_location'),
-                               show_border=True),
-                        ),
-                 kind='livemodal', title='Set Sample Attributes',
-                 buttons=['OK', 'Cancel'])
+        v = okcancel_view(VGroup(HGroup(icon_button_editor('clear_sample_attributes_button', 'clear')),
+                                 VGroup(UItem('sample'),
+                                        label='Name', show_border=True),
+                                 VGroup(Item('lat', label='Latitude'),
+                                        Item('lon', label='Longitude'),
+                                        Item('location'),
+                                        Item('elevation'),
+                                        label='Location', show_border=True),
+                                 VGroup(Item('lithology'),
+                                        Item('approximate_age', label='Approx. Age (Ma)'),
+                                        Item('storage_location'),
+                                        show_border=True)),
+                          title='Set Sample Attributes')
         self.edit_traits(view=v)
 
     def _add_sample_button_fired(self):

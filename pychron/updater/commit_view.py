@@ -16,14 +16,17 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traits.api import Str, Int, Property, List
-from traitsui.api import View, VGroup, UItem, HGroup, Group, Tabbed
+from traitsui.api import VGroup, UItem, HGroup, Group, Tabbed
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.editors import TabularEditor
 from traitsui.handler import Controller
 from traitsui.item import Readonly
 from traitsui.tabular_adapter import TabularAdapter
+
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.git_archive.history import CommitAdapter, BaseGitHistory
 from pychron.pychron_constants import LIGHT_YELLOW
 
@@ -75,13 +78,10 @@ class BaseCommitsView(Controller):
     model = BaseGitHistory
 
     def traits_view(self):
-        v = View(VGroup(*self._groups()),
-                 kind='livemodal',
-                 width=900,
-                 height=400,
-                 buttons=['OK', 'Cancel'],
-                 title='Available Updates- Branch= {}'.format(self.model.branchname),
-                 resizable=True)
+        v = okcancel_view(VGroup(*self._groups()),
+                          width=900,
+                          height=400,
+                          title='Available Updates- Branch= {}'.format(self.model.branchname))
         return v
 
     def _groups(self):

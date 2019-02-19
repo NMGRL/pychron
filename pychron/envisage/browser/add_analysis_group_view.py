@@ -18,11 +18,11 @@ from __future__ import absolute_import
 
 from pyface.message_dialog import warning
 from traits.api import Str, HasTraits, Dict, Any
-from traitsui.api import View, Item, EnumEditor
-
+from traitsui.api import Item, EnumEditor
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 
 
 class AddAnalysisGroupView(HasTraits):
@@ -57,11 +57,9 @@ class AddAnalysisGroupView(HasTraits):
         return True
 
     def traits_view(self):
-        v = View(Item('name'),
-                 Item('project', editor=EnumEditor(name='projects')),
-                 resizable=True,
-                 buttons=['OK', 'Cancel'],
-                 title='Add Analysis Group')
+        v = okcancel_view(Item('name'),
+                          Item('project', editor=EnumEditor(name='projects')),
+                          title='Add Analysis Group')
         return v
 
 # ============= EOF =============================================

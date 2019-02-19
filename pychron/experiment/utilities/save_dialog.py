@@ -16,12 +16,14 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import os
 
 from traits.api import HasTraits, Bool, Directory, Int, Str
-from traitsui.api import View, HGroup, VGroup, Item, UItem
+from traitsui.api import HGroup, VGroup, Item, UItem
 
 from pychron.core.helpers.filetools import add_extension
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.strings import PascalCase, SpacelessStr
 
 
@@ -51,12 +53,9 @@ class IncrementalHeatTemplateSaveDialog(BaseSaveDialog):
         ngrp = HGroup(Item('fname',
                            tooltip='No spaces in name. Name is automatically prefixed with the number of steps'))
         dgrp = HGroup(Item('root', label='Directory'))
-        v = View(VGroup(ngrp, dgrp),
-                 kind='livemodal',
-                 width=400,
-                 title='Save Step Heat Template',
-                 buttons=['OK', 'Cancel'],
-                 resizable=True)
+        v = okcancel_view(VGroup(ngrp, dgrp),
+                          width=400,
+                          title='Save Step Heat Template')
         return v
 
 
@@ -79,12 +78,9 @@ class ExperimentSaveDialog(BaseSaveDialog):
         dgrp = HGroup(Item('root', label='Directory'))
         hgrp = UItem('help_str', style='readonly')
 
-        v = View(VGroup(ngrp, hgrp, dgrp),
-                 kind='livemodal',
-                 width=400,
-                 title='Save Experiment',
-                 buttons=['OK', 'Cancel'],
-                 resizable=True)
+        v = okcancel_view(VGroup(ngrp, hgrp, dgrp),
+                          width=400,
+                          title='Save Experiment')
         return v
 
 # ============= EOF =============================================

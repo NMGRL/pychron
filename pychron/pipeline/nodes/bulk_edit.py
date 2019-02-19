@@ -16,6 +16,7 @@
 from traits.api import HasTraits, Float, Str, List, Bool, Property
 from traitsui.api import View, UItem, Item, HGroup, ListEditor, EnumEditor, Label, InstanceEditor
 
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.pipeline.nodes.data import BaseDVCNode
 from pychron.pychron_constants import PLUSMINUS
 
@@ -52,13 +53,11 @@ class BulkOptions(HasTraits):
         return [ic.tostr() for ic in self.ic_factors if ic.enabled]
 
     def traits_view(self):
-        v = View(UItem('ic_factors',
-                       editor=ListEditor(mutable=False,
-                                         style='custom',
-                                         editor=InstanceEditor())),
-                 resizable=True,
-                 buttons=['OK', 'Cancel'],
-                 title='Bulk Edit Options')
+        v = okcancel_view(UItem('ic_factors',
+                                editor=ListEditor(mutable=False,
+                                                  style='custom',
+                                                  editor=InstanceEditor())),
+                          title='Bulk Edit Options')
         return v
 
     def _ic_factors_default(self):

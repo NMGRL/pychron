@@ -23,6 +23,7 @@ from traits.api import HasTraits, Str, Bool, Float, Either, List, Enum, Int, Any
 from traitsui.api import View, Item, HGroup, EnumEditor, UItem, VGroup, InstanceEditor
 
 from pychron.core.helpers.filetools import add_extension, glob_list_directory
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.check_list_editor import CheckListEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.paths import paths
@@ -81,6 +82,7 @@ class PeakCenterConfig(HasTraits):
     update_others = Bool(True)
 
     use_extend = Bool(False)
+
     # def _integration_time_default(self):
     #     return QTEGRA_INTEGRATION_TIMES[4]  # 1.048576
 
@@ -231,11 +233,12 @@ class ItemConfigurer(Saveable):
 
     def dump_item(self, item):
         name = item.name
+        if not name:
+            name = 'Default'
+
         p = os.path.join(self.root, add_extension(name, '.p'))
-        print('dump itme')
         with open(p, 'wb') as wfile:
             pickle.dump(item, wfile)
-            print('sdfasdf')
 
     def get(self, name):
         p = os.path.join(self.root, add_extension(name, '.p'))
@@ -260,10 +263,9 @@ class ItemConfigurer(Saveable):
             self.active_item = self.get(name)
 
     def _add_button_fired(self):
-        v = View(UItem('new_name'),
-                 kind='livemodal',
-                 width=300,
-                 buttons=['OK', 'Cancel'], title='New Configuration Name')
+        v = okcancel_view(UItem('new_name'),
+                          width=300,
+                          title='New Configuration Name')
         info = self.edit_traits(view=v)
         if info.result:
             obj = self.active_item

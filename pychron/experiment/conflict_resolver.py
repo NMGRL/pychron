@@ -19,6 +19,7 @@ from traits.api import HasTraits, Str, List, Instance
 from traitsui.api import View, UItem, Item, TableEditor
 from traitsui.table_column import ObjectColumn
 
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.enum_editor import myEnumEditor
 
 
@@ -63,10 +64,8 @@ class ConflictResolver(HasTraits):
                              tooltip='Set of repositories that already contain this L#',
                              editable=False)]
 
-        v = View(UItem('conflicts', editor=TableEditor(columns=cols)),
-                 title='Resolve Repository Conflicts',
-                 resizable=True,
-                 buttons=['OK', 'Cancel'])
+        v = okcancel_view(UItem('conflicts', editor=TableEditor(columns=cols)),
+                          title='Resolve Repository Conflicts')
         return v
 
 
@@ -111,14 +110,17 @@ if __name__ == '__main__':
 
     from traits.api import Button
 
+
     class Demo(HasTraits):
         test = Button
 
         def traits_view(self):
             return View(Item('test'))
+
         def _test_fired(self):
             main()
 
-    d=Demo()
+
+    d = Demo()
     d.configure_traits()
 # ============= EOF =============================================

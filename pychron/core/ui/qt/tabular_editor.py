@@ -22,13 +22,14 @@ import six
 from pyface.qt import QtCore, QtGui
 from pyface.qt.QtGui import QHeaderView, QApplication
 from traits.api import Bool, Str, List, Any, Instance, Property, Int, HasTraits, Color, Either, Callable
-from traitsui.api import View, Item, TabularEditor, Handler
+from traitsui.api import Item, TabularEditor, Handler
 from traitsui.mimedata import PyMimeData
 from traitsui.qt4.tabular_editor import TabularEditor as qtTabularEditor, \
     _TableView as TableView, HeaderEventFilter, _ItemDelegate
 from traitsui.qt4.tabular_model import TabularModel, tabular_mime_type
 
 from pychron.core.helpers.ctx_managers import no_update
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 
 
 class myTabularEditor(TabularEditor):
@@ -75,11 +76,9 @@ class MoveToRow(HasTraits):
         self._row = v
 
     def traits_view(self):
-        v = View(Item('row'),
-                 buttons=['OK', 'Cancel'],
-                 width=300,
-                 title='Move Selected to Row',
-                 kind='livemodal')
+        v = okcancel_view(Item('row'),
+                          width=300,
+                          title='Move Selected to Row')
         return v
 
 
@@ -343,7 +342,7 @@ class _TableView(TableView):
             items = md.instance()
         except AttributeError:
             return
-        
+
         if items is not None:
             editor = self._editor
             model = editor.model
@@ -395,7 +394,7 @@ class _TableView(TableView):
         # Note that setting 'EditKeyPressed' as an edit trigger does not work on
         # most platforms, which is why we do this here.
         if (event.key() in (QtCore.Qt.Key_Enter, QtCore.Qt.Key_Return) and
-                    self.state() != QtGui.QAbstractItemView.EditingState and
+                self.state() != QtGui.QAbstractItemView.EditingState and
                 factory.editable and 'edit' in factory.operations):
             if factory.multi_select:
                 rows = editor.multi_selected_rows
@@ -408,7 +407,7 @@ class _TableView(TableView):
                 self.edit(editor.model.index(row, 0))
 
         elif (event.key() in (QtCore.Qt.Key_Backspace, QtCore.Qt.Key_Delete) and
-                  factory.editable and 'delete' in factory.operations):
+              factory.editable and 'delete' in factory.operations):
             event.accept()
             '''
                 sets _no_update and update_needed on the editor.object e.g
@@ -426,7 +425,7 @@ class _TableView(TableView):
                     editor.model.removeRow(editor.selected_row)
 
         elif (event.key() == QtCore.Qt.Key_Insert and
-                  factory.editable and 'insert' in factory.operations):
+              factory.editable and 'insert' in factory.operations):
             event.accept()
 
             if factory.multi_select:

@@ -15,12 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from traits.api import HasTraits, Str, Float, List, Dict, Instance
-from traitsui.api import View, Item, HGroup
+from traitsui.api import Item, HGroup
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.combobox_editor import ComboboxEditor
 
 
@@ -36,12 +36,9 @@ class MolecularWeight(HasTraits):
             self.mass = self.weights[name]
 
     def traits_view(self):
-        v = View(HGroup(
-            Item('name', editor=ComboboxEditor(name='names')),
-            Item('mass')),
-            width=500, title='Add New Molecular Weight',
-            buttons=['OK', 'Cancel'],
-            resizable=True)
+        v = okcancel_view(HGroup(Item('name', editor=ComboboxEditor(name='names')),
+                                 Item('mass')),
+                          width=500, title='Add New Molecular Weight')
         return v
 
 

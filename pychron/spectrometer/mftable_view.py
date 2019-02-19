@@ -16,12 +16,15 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traitsui.api import View, UItem, TableEditor
+
+from pychron.spectrometer.mftable import FieldTable
+from traitsui.api import UItem, TableEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.handler import Controller
 from traitsui.table_column import ObjectColumn
-from pychron.spectrometer.mftable import FieldTable
+
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 
 
 class MagnetFieldTableView(Controller):
@@ -42,13 +45,10 @@ class MagnetFieldTableView(Controller):
                                      format='%0.5f',
                                      label=di))
 
-        v = View(UItem('items',
-                       editor=TableEditor(columns=cols,
-                                          sortable=False)),
-                 title='Edit Magnet Field Table',
-                 buttons=['OK', 'Cancel'],
-                 kind='livemodal',
-                 resizable=True)
+        v = okcancel_view(UItem('items',
+                                editor=TableEditor(columns=cols,
+                                                   sortable=False)),
+                          title='Edit Magnet Field Table')
         return v
 
 
@@ -60,6 +60,3 @@ if __name__ == '__main__':
     mv.configure_traits()
 
 # ============= EOF =============================================
-
-
-

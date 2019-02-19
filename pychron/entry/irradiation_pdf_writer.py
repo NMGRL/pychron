@@ -16,14 +16,17 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.units import inch
 from reportlab.platypus import Paragraph
+from six.moves import range
 from traits.api import Bool, Float
-from traitsui.api import View, VGroup, Tabbed, Item
+from traitsui.api import VGroup, Tabbed, Item
 
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pdf.base_table_pdf_writer import BasePDFTableWriter
 from pychron.core.pdf.items import Row
 from pychron.core.pdf.options import BasePDFOptions, dumpable
@@ -31,7 +34,6 @@ from pychron.dvc.meta_repo import irradiation_holder_holes, irradiation_chronolo
 from pychron.entry.editors.level_editor import load_holder_canvas
 from pychron.loading.component_flowable import ComponentFlowable
 from pychron.pychron_constants import DEFAULT_MONITOR_NAME
-from six.moves import range
 
 MATERIAL_MAP = {'GroundmassConcentrate': 'GMC'}
 
@@ -80,13 +82,10 @@ class IrradiationPDFTableOptions(BasePDFOptions):
                                label='Only Selected Level'),
                           label='Main')
 
-        v = View(Tabbed(main_grp,
-                        layout_grp,
-                        width_grp),
-                 kind='livemodal',
-                 buttons=['OK', 'Cancel'],
-                 title='PDF Save Options',
-                 resizable=True)
+        v = okcancel_view(Tabbed(main_grp,
+                                 layout_grp,
+                                 width_grp),
+                          title='PDF Save Options')
         return v
 
 
@@ -183,7 +182,7 @@ class IrradiationPDFWriter(BasePDFTableWriter):
         rows = [make_row(li) for li in sorted(irrad.levels, key=lambda x: x.name)]
         rows.insert(0, header)
 
-        t = self._new_table(ts, rows, col_widths=[0.5*inch, 1*inch, 5*inch])
+        t = self._new_table(ts, rows, col_widths=[0.5 * inch, 1 * inch, 5 * inch])
         return t
 
     def _make_level_table(self, irrad, level, c):

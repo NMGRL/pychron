@@ -14,10 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 from __future__ import absolute_import
-from traits.api import HasTraits, List, Button, Str, Enum, Bool, on_trait_change
-from traitsui.api import View, UItem, Item, VGroup, InstanceEditor, ListEditor, EnumEditor, HGroup
-from uncertainties import nominal_value, std_dev
 
+from traits.api import HasTraits, List, Button, Str, Enum, Bool, on_trait_change
+from traitsui.api import View, UItem, VGroup, InstanceEditor, ListEditor, EnumEditor, HGroup
+
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.envisage.icon_button_editor import icon_button_editor
 
 
@@ -134,16 +135,13 @@ class AdvancedFilterView(HasTraits):
             fi.show_chain = i != 0
 
     def traits_view(self):
-        v = View(VGroup(icon_button_editor('add_filter_button', 'add'),
-                        UItem('filters', editor=ListEditor(mutable=False,
-                                                           style='custom',
-                                                           editor=InstanceEditor()))),
-                 kind='livemodal',
-                 title='Advanced Search',
-                 resizable=True,
-                 width=700,
-                 height=350,
-                 buttons=['OK', 'Cancel'])
+        v = okcancel_view(VGroup(icon_button_editor('add_filter_button', 'add'),
+                                 UItem('filters', editor=ListEditor(mutable=False,
+                                                                    style='custom',
+                                                                    editor=InstanceEditor()))),
+                          title='Advanced Search',
+                          width=700,
+                          height=350)
         return v
 
 

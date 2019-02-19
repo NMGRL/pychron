@@ -15,13 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, Tabbed
 from traits.api import on_trait_change, Button, Float, Str, Int, Bool, Event, HasTraits
-from traitsui.api import View, Item, VGroup, UItem, HGroup
+from traitsui.api import Item, VGroup, UItem, HGroup
 
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pychron_traits import PacketStr
 from pychron.entry.graphic_generator import GraphicModel, GraphicGeneratorController
 from pychron.entry.labnumber_entry import LabnumberEntry
@@ -71,18 +70,16 @@ class ClearSelectionView(HasTraits):
         return [(a, v) for a, v in ATTRS if getattr(self, a)]
 
     def traits_view(self):
-        v = View(VGroup(HGroup(UItem('select_all'),
-                               UItem('clear_all')),
-                        VGroup(Item('sample'),
-                               Item('material'),
-                               Item('project'),
-                               Item('principal_investigator'),
-                               Item('weight'),
-                               Item('j', label='J'),
-                               Item('j_err', label='J Err.'))),
-                 buttons=['OK', 'Cancel'],
-                 kind='livemodal',
-                 title='Clear Selection')
+        v = okcancel_view(VGroup(HGroup(UItem('select_all'),
+                                        UItem('clear_all')),
+                                 VGroup(Item('sample'),
+                                        Item('material'),
+                                        Item('project'),
+                                        Item('principal_investigator'),
+                                        Item('weight'),
+                                        Item('j', label='J'),
+                                        Item('j_err', label='J Err.'))),
+                          title='Clear Selection')
         return v
 
 
@@ -368,7 +365,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
             if not v:
                 v = ''
             a = m.group('number')
-            self.packet = '{}{:02n}'.format(v, int(a)+1)
+            self.packet = '{}{:02n}'.format(v, int(a) + 1)
 
     # handlers
     def _estimate_j_button_fired(self):

@@ -25,6 +25,7 @@ from traitsui.api import View, UItem, TabularEditor, Label, \
     HGroup
 from traitsui.tabular_adapter import TabularAdapter
 
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.loggable import Loggable
 from pychron.paths import paths
 
@@ -37,9 +38,11 @@ class LayoutAdapter(TabularAdapter):
 
                ]
 
+
 class UserLayout(HasTraits):
     name = Str
     layouts = List
+
 
 class LayoutManager(Loggable):
     selected = Any
@@ -100,7 +103,8 @@ class LayoutManager(Loggable):
                     self.save()
                     break
                 else:
-                    if not self.confirmation_dialog('Name {} already exists. Choose a different name (Yes/No)?'.format(name)):
+                    if not self.confirmation_dialog(
+                            'Name {} already exists. Choose a different name (Yes/No)?'.format(name)):
                         break
 
     def save(self, remove=None):
@@ -122,34 +126,23 @@ class LayoutManager(Loggable):
             return d
 
     def save_view(self):
-        v = View(
-                 Label('Enter name for new layout'),
-                 UItem('new_layout_name'),
-                 kind='livemodal',
-                 buttons=['OK', 'Cancel'],
-                 title='New Window Layout',
-                 width=300
-                 )
+        v = okcancel_view(Label('Enter name for new layout'),
+                          UItem('new_layout_name'),
+                          title='New Window Layout',
+                          width=300)
         return v
 
     def traits_view(self):
-        v = View(
-                 UItem('layouts',
+        v = View(UItem('layouts',
                        editor=TabularEditor(adapter=LayoutAdapter(),
-#                                             editable=False,
-                                            selected='selected',
-                                            )
-                       ),
+                                            selected='selected')),
                  UItem('activate_button', enabled_when='selected'),
-                 HGroup(UItem('add_button',),
+                 HGroup(UItem('add_button', ),
                         UItem('remove_button', enabled_when='selected'),
-                        show_labels=False,
-                        ),
+                        show_labels=False),
                  title='Positions',
                  width=300,
-                 buttons=['OK', ]
-                 )
+                 buttons=['OK'])
         return v
-
 
 # ============= EOF =============================================

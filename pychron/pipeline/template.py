@@ -21,8 +21,9 @@ import os
 import yaml
 from pyface.message_dialog import warning
 from traits.api import HasTraits, List, Str, Enum
-from traitsui.api import View, UItem
+from traitsui.api import UItem
 
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.strings import PascalCase
 from pychron.paths import paths
 from pychron.pipeline.nodes import MassSpecReducedNode
@@ -55,11 +56,9 @@ class PipelineTemplateSaveView(HasTraits):
             return os.path.join(root, self.name)
 
     def traits_view(self):
-        v = View(UItem('name'),
-                 UItem('group'),
-                 kind='livemodal', title='New Template Name',
-                 resizable=True,
-                 buttons=['OK', 'Cancel'])
+        v = okcancel_view(UItem('name'),
+                          UItem('group'),
+                          title='New Template Name')
         return v
 
 

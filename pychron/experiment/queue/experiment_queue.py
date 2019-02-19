@@ -27,6 +27,7 @@ from traitsui.api import View, Item, UItem
 
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.helpers.iterfuncs import groupby_key
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.select_same import SelectSameMixin
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.ui.qt.tabular_editor import MoveToRow
@@ -43,11 +44,10 @@ class RepeatRunBlockView(HasTraits):
     value = Int
 
     def traits_view(self):
-        v = View(Item('value', label='Repeat'),
-                 kind='modal',
-                 title='Repeat Selected Run Block',
-                 width=300,
-                 buttons=['OK', 'Cancel'])
+        v = okcancel_view(Item('value', label='Repeat'),
+                          kind='modal',
+                          title='Repeat Selected Run Block',
+                          width=300)
         return v
 
 
@@ -55,11 +55,10 @@ class NewRunBlockView(HasTraits):
     name = Str
 
     def traits_view(self):
-        v = View(Item('name'),
-                 kind='modal',
-                 title='New Run Block',
-                 buttons=['OK', 'Cancel'],
-                 width=200)
+        v = okcancel_view(Item('name'),
+                          kind='modal',
+                          title='New Run Block',
+                          width=200)
         return v
 
 
@@ -142,7 +141,7 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
             gs = []
             for i, a in enumerate(self.automated_runs):
                 if a.extract_value == evs[0]:
-                    gs.extend(self.automated_runs[i:i+n])
+                    gs.extend(self.automated_runs[i:i + n])
 
             if gs:
                 for gi in gs:
@@ -210,12 +209,11 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
     def move(self, step):
         if self.selected:
             with no_update(self):
-
                 run = self.selected[0]
                 idx = self.automated_runs.index(run)
 
-                idx = max(min(0, idx+step), len(self.automated_runs)-1)
-                self._move_selected(idx+step)
+                idx = max(min(0, idx + step), len(self.automated_runs) - 1)
+                self._move_selected(idx + step)
 
     def copy_selected_first(self):
         self._copy_selected(0)
@@ -399,7 +397,7 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
     def _human_error_checker_default(self):
         return self._human_error_checker_factory()
 
-    def _human_error_checker_factory(self, klass = None):
+    def _human_error_checker_factory(self, klass=None):
         if klass is None:
             klass = HumanErrorChecker
 

@@ -24,7 +24,7 @@ import pickle
 from pyface.constant import OK
 from pyface.directory_dialog import DirectoryDialog
 from traits.api import HasTraits, List, Str, Bool, Button
-from traitsui.api import View, Item, HGroup, UItem, Label, Handler, VGroup, EnumEditor
+from traitsui.api import HGroup, UItem, Label, Handler, EnumEditor
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.combobox_editor import ComboboxEditor
@@ -141,31 +141,31 @@ class Login(HasTraits):
         return v
 
 
-class SrcDestUsers(HasTraits):
-    users = List
-    src_user = Str
-    dest_user = Str
-    copy_all = Bool
-
-    def get_dest_user(self):
-        us = self.users
-        us.remove(self.src_user)
-        return us if self.copy_all else (self.dest_user,)
-
-    def traits_view(self):
-        v = View(Label('Copy "Source" preferences to "Destination"'),
-                 VGroup(UItem('src_user', width=225, editor=ComboboxEditor(name='users')),
-                        label='Source', show_border=True),
-                 VGroup(
-                     Item('copy_all', label='Copy All', tooltip='Copy "Source" to all destinations'),
-                     UItem('dest_user', editor=ComboboxEditor(name='users'),
-                           enabled_when='not copy_all',
-                           width=225),
-                     label='Destination', show_border=True),
-                 buttons=['OK', 'Cancel'],
-                 title='Login',
-                 kind='livemodal')
-        return v
+# class SrcDestUsers(HasTraits):
+#     users = List
+#     src_user = Str
+#     dest_user = Str
+#     copy_all = Bool
+#
+#     def get_dest_user(self):
+#         us = self.users
+#         us.remove(self.src_user)
+#         return us if self.copy_all else (self.dest_user,)
+#
+#     def traits_view(self):
+#         v = View(Label('Copy "Source" preferences to "Destination"'),
+#                  VGroup(UItem('src_user', width=225, editor=ComboboxEditor(name='users')),
+#                         label='Source', show_border=True),
+#                  VGroup(
+#                      Item('copy_all', label='Copy All', tooltip='Copy "Source" to all destinations'),
+#                      UItem('dest_user', editor=ComboboxEditor(name='users'),
+#                            enabled_when='not copy_all',
+#                            width=225),
+#                      label='Destination', show_border=True),
+#                  buttons=['OK', 'Cancel'],
+#                  title='Login',
+#                  kind='livemodal')
+#         return v
 
 
 def get_last_login(last_login):

@@ -18,7 +18,7 @@
 from threading import Event
 
 # ============= enthought library imports =======================
-from traits.api import Str, Color, Button, Float, Bool, Property
+from traits.api import Str, Color, Button, Float, Bool, Property, Int
 
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
@@ -31,7 +31,7 @@ class WaitControl(Loggable):
     message = Str
     message_color = Color('black')
 
-    high = Float
+    high = Int
     duration = Float(10)
 
     current_time = Float
@@ -122,7 +122,7 @@ class WaitControl(Loggable):
 
     def reset(self):
         with no_update(self, fire_update_needed=False):
-            self.high = self.duration
+            self.high = int(self.duration)
             self.current_time = self.duration
             self._paused = False
 

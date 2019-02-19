@@ -23,9 +23,10 @@ from sqlalchemy.sql.functions import count
 from sqlalchemy.util import OrderedSet
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Str, List
-from traitsui.api import View, Item
+from traitsui.api import Item
 
 from pychron.core.helpers.datetime_tools import bin_datetimes
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.spell_correct import correct
 from pychron.database.core.database_adapter import DatabaseAdapter, binfunc
 from pychron.database.core.query import compile_query, in_func
@@ -134,11 +135,9 @@ class NewMassSpectrometerView(HasTraits):
     kind = Str
 
     def traits_view(self):
-        v = View(Item('name'),
-                 Item('kind'),
-                 buttons=['OK', 'Cancel'],
-                 title='New Mass Spectrometer',
-                 kind='livemodal')
+        v = okcancel_view(Item('name'),
+                          Item('kind'),
+                          title='New Mass Spectrometer')
         return v
 
 

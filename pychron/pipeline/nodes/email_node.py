@@ -14,14 +14,16 @@
 # limitations under the License.
 # ===============================================================================
 from __future__ import absolute_import
+
 import os
 
 import yaml
 from traits.api import Instance, List, HasTraits, Str, Bool
-from traitsui.api import View, UItem, TableEditor
+from traitsui.api import UItem, TableEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.paths import paths
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.social.email.emailer import Emailer
@@ -43,12 +45,9 @@ class EmailNode(BaseNode):
                 ObjectColumn(name='name'),
                 ObjectColumn(name='email', label='Address')]
 
-        v = View(UItem('addresses',
-                       editor=TableEditor(columns=cols)),
-                 buttons=['OK', 'Cancel'],
-                 resizable=True,
-                 title='Configure Email',
-                 kind='livemodal')
+        v = okcancel_view(UItem('addresses',
+                                editor=TableEditor(columns=cols)),
+                          title='Configure Email')
         return v
 
     def configure(self, *args, **kw):

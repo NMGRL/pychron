@@ -16,27 +16,29 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from pyface.tasks.action.schema import SToolBar
-from pyface.tasks.task_layout import PaneItem, TaskLayout, Tabbed, VSplitter
-from traits.api import String, List, Instance, Any, \
-    on_trait_change, Bool, Int
-from traitsui.api import View, UItem, EnumEditor
 
 # ============= standard library imports ========================
 import os
-# ============= local library imports  ==========================
-from pychron.envisage.tasks.editor_task import EditorTask
+
+from pyface.tasks.action.schema import SToolBar
+from pyface.tasks.task_layout import PaneItem, TaskLayout, Tabbed, VSplitter
+from traits.api import String, List, Instance, Any, \
+    on_trait_change, Bool
+from traitsui.api import UItem, EnumEditor
+
 from pychron.core.helpers.filetools import add_extension
+# ============= local library imports  ==========================
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+from pychron.envisage.tasks.editor_task import EditorTask
+from pychron.execute_mixin import ExecuteMixin
 from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
-from pychron.extraction_line.pyscript_runner import PyScriptRunner
 from pychron.loggable import Loggable
+from pychron.paths import paths
 from pychron.pyscripts.tasks.git_actions import CommitChangesAction
 from pychron.pyscripts.tasks.pyscript_actions import JumpToGosubAction, ExpandGosubsAction, MakeGosubAction
 from pychron.pyscripts.tasks.pyscript_editor import ExtractionEditor, MeasurementEditor
 from pychron.pyscripts.tasks.pyscript_panes import CommandsPane, DescriptionPane, \
     CommandEditorPane, ControlPane, ScriptBrowserPane, ContextEditorPane, RepoPane
-from pychron.paths import paths
-from pychron.execute_mixin import ExecuteMixin
 
 
 class ScriptExecutorMixin(ExecuteMixin):
@@ -48,14 +50,14 @@ class ScriptExecutorMixin(ExecuteMixin):
     # def _start_execute(self):
     #     self.debug('start execute')
     #     return True
-        # make a script runner
-        # self._runner = None
-        # runner = self._runner_factory()
-        # if runner is None:
-        #     return
-        # else:
-        #     self._runner = runner
-        #     return True
+    # make a script runner
+    # self._runner = None
+    # runner = self._runner_factory()
+    # if runner is None:
+    #     return
+    # else:
+    #     self._runner = runner
+    #     return True
 
     def _do_execute(self, name=None, root=None, kind='Extraction', **kw):
         self._start_execute()
@@ -221,10 +223,8 @@ class PyScriptTask(EditorTask, ScriptExecutorMixin):
             return True
 
     def kind_select_view(self):
-        v = View(UItem('kind', editor=EnumEditor(name='kinds')),
-                 title='Select Pyscript kind',
-                 buttons=['OK', 'Cancel'],
-                 kind='livemodal')
+        v = okcancel_view(UItem('kind', editor=EnumEditor(name='kinds')),
+                          title='Select Pyscript kind')
         return v
 
     # task protocol

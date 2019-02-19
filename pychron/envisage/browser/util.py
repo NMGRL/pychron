@@ -29,9 +29,9 @@ from traits.trait_types import Float, Date, Time
 from traits.traits import Property
 from traitsui.group import HGroup, VGroup
 from traitsui.item import UItem, Item
-from traitsui.view import View
 
 # ============= local library imports  ==========================
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.paths import paths
 
 
@@ -113,12 +113,9 @@ class PadEntry(HasTraits):
         h = VGroup(UItem('high_post_time'),
                    UItem('high_post_date', style='custom'))
 
-        v = View(Item('pad', label='Pad (hrs)'),
-                 HGroup(l, h),
-                 kind='livemodal',
-                 width=500,
-                 resizable=True,
-                 buttons=['OK', 'Cancel'])
+        v = okcancel_view(Item('pad', label='Pad (hrs)'),
+                          HGroup(l, h),
+                          width=500)
         return v
 
 # ============= EOF =============================================

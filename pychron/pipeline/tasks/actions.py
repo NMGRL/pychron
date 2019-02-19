@@ -28,11 +28,6 @@ from traitsui.menu import Action
 from pychron.envisage.resources import icon
 
 
-class GitRollbackAction(TaskAction):
-    name = 'Git Undo'
-    method = 'git_rollback'
-
-
 class SavePipelineTemplateAction(TaskAction):
     name = 'Save Pipeline Template'
     method = 'save_pipeline_template'

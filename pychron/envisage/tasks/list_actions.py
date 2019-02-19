@@ -16,24 +16,23 @@
 
 # ============= enthought library imports =======================
 
-from traits.api import HasTraits, Int, Str, Bool
-from traitsui.api import View, Item
-from traitsui.menu import Action
-from pyface.tasks.action.task_action import TaskAction
-
 import os
 import time
-import yaml
 from queue import Empty, Queue
 from threading import Thread
 
+import yaml
+from pyface.tasks.action.task_action import TaskAction
+from traits.api import HasTraits, Int, Str, Bool
+from traitsui.api import Item
+from traitsui.menu import Action
+
 from pychron.core.helpers.filetools import add_extension
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.experiment.automated_run.hop_util import parse_hop
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.paths import paths
-
-
 from pychron.pyscripts.tasks.pyscript_task import ScriptExecutor
 
 
@@ -57,15 +56,12 @@ class PatternAction(ListAction):
         man.execute_pattern(self.pattern_path, lase=self.lase, thread_safe=False)
 
 
-
-
 class HopConfig(HasTraits):
     ncycles = Int(1)
 
     def traits_view(self):
-        v = View(Item('ncycles', label='Cycles'),
-                 buttons=['OK', 'Cancel'],
-                 title='Configure Magnet Hops')
+        v = okcancel_view(Item('ncycles', label='Cycles'),
+                          title='Configure Magnet Hops')
         return v
 
 

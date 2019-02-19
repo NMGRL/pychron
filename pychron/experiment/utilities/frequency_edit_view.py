@@ -15,16 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
 import os
 import pickle
 
 from traits.api import HasTraits, Bool, Str, Int, Property, List
-from traitsui.api import View, Item, Controller
+from traitsui.api import Item, Controller
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.experiment.utilities.frequency_generator import validate_frequency_template
 from pychron.paths import paths
@@ -98,15 +97,11 @@ class FrequencyEditView(Controller):
                 self.templates = pickle.load(rfile)
 
     def traits_view(self):
-        v = View(Item('frequency_int'),
-                 # Item('before'),
-                 # Item('after'),
-                 Item('template', tooltip=TEMPLATE_HELP,
-                      editor=ComboboxEditor(name='controller.templates',
-                                            addable=False)),
-                 title='Edit Frequency Options',
-                 buttons=['OK', 'Cancel'],
-                 resizable=True)
+        v = okcancel_view(Item('frequency_int'),
+                          Item('template', tooltip=TEMPLATE_HELP,
+                               editor=ComboboxEditor(name='controller.templates',
+                                                     addable=False)),
+                          title='Edit Frequency Options')
         return v
 
 
@@ -116,6 +111,3 @@ if __name__ == '__main__':
     fev.configure_traits()
     print(fm.frequency)
 # ============= EOF =============================================
-
-
-

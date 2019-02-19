@@ -26,6 +26,7 @@ from traitsui.api import View, Item, UItem, Spring, Label, spring, VGroup, HGrou
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 from pychron.pychron_constants import PLUSMINUS, NULL_STR, K_DECAY_CONSTANTS, PLUSMINUS_ONE_SIGMA
@@ -50,15 +51,13 @@ class DecayConstantEntry(HasTraits):
         return tuple([getattr(self, a) for a in LAMBDA_K_ATTRS])
 
     def traits_view(self):
-        v = View(VGroup(Item('name'),
-                        HGroup(UItem('lambda_e'), Label(PLUSMINUS), UItem('lambda_e_error'),
-                               show_border=True, label='Ar40K epsilon/yr'),
-                        HGroup(UItem('lambda_b'), Label(PLUSMINUS), UItem('lambda_b_error'),
-                               show_border=True, label='Ar40K beta/yr'),
-                        Item('total_k_decay', style='readonly')),
-                 buttons=['OK', 'Cancel'],
-                 title='Add Decay Constant Entry',
-                 kind='livemodal')
+        v = okcancel_view(VGroup(Item('name'),
+                                 HGroup(UItem('lambda_e'), Label(PLUSMINUS), UItem('lambda_e_error'),
+                                        show_border=True, label='Ar40K epsilon/yr'),
+                                 HGroup(UItem('lambda_b'), Label(PLUSMINUS), UItem('lambda_b_error'),
+                                        show_border=True, label='Ar40K beta/yr'),
+                                 Item('total_k_decay', style='readonly')),
+                          title='Add Decay Constant Entry')
         return v
 
 
@@ -73,14 +72,12 @@ class AtmConstantsEntry(HasTraits):
         return tuple([getattr(self, a) for a in ATM_ATTRS])
 
     def traits_view(self):
-        v = View(VGroup(Item('name'),
-                        HGroup(UItem('ar40_ar36_atm'), Label(PLUSMINUS), UItem('ar40_ar36_atm_error'),
-                               show_border=True, label='(Ar40/Ar36)atm'),
-                        HGroup(UItem('ar40_ar38_atm'), Label(PLUSMINUS), UItem('ar40_ar38_atm_error'),
-                               show_border=True, label='(Ar40/Ar38)atm')),
-                 buttons=['OK', 'Cancel'],
-                 title='Add Atm Constant Entry',
-                 kind='livemodal')
+        v = okcancel_view(VGroup(Item('name'),
+                                 HGroup(UItem('ar40_ar36_atm'), Label(PLUSMINUS), UItem('ar40_ar36_atm_error'),
+                                        show_border=True, label='(Ar40/Ar36)atm'),
+                                 HGroup(UItem('ar40_ar38_atm'), Label(PLUSMINUS), UItem('ar40_ar38_atm_error'),
+                                        show_border=True, label='(Ar40/Ar38)atm')),
+                          title='Add Atm Constant Entry')
         return v
 
 

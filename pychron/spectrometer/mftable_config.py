@@ -14,11 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 from __future__ import absolute_import
-from traits.api import HasTraits, Any, List, Str, Bool, Float
-from traitsui.api import View, UItem, InstanceEditor, VGroup, Item, EnumEditor, TableEditor
-from traitsui.extras.checkbox_column import CheckboxColumn
-from traitsui.table_column import TableColumn, ObjectColumn
 
+from traits.api import HasTraits, Any, List, Str, Bool, Float
+from traitsui.api import UItem, InstanceEditor, VGroup, Item, EnumEditor, TableEditor
+from traitsui.extras.checkbox_column import CheckboxColumn
+from traitsui.table_column import ObjectColumn
+
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.persistence_loggable import PersistenceMixin
 
 
@@ -68,16 +70,14 @@ class MFTableConfig(HasTraits, PersistenceMixin):
         cols = [CheckboxColumn(name='enabled'), ObjectColumn(name='name'),
                 ObjectColumn(name='deflection')]
 
-        v = View(VGroup(Item('detectors',
-                             editor=TableEditor(columns=cols)),
-                        Item('isotope', editor=EnumEditor(name='isotopes')),
-                        VGroup(Item('finish_detector', editor=EnumEditor(name='available_detector_names')),
-                               Item('finish_isotope', editor=EnumEditor(name='isotopes')),
-                               show_border=True, label='End Position'),
-                        pcc),
-                 title='Populate Magnetic Field Table',
-                 kind='livemodal',
-                 buttons=['OK', 'Cancel'])
+        v = okcancel_view(VGroup(Item('detectors',
+                                      editor=TableEditor(columns=cols)),
+                                 Item('isotope', editor=EnumEditor(name='isotopes')),
+                                 VGroup(Item('finish_detector', editor=EnumEditor(name='available_detector_names')),
+                                        Item('finish_isotope', editor=EnumEditor(name='isotopes')),
+                                        show_border=True, label='End Position'),
+                                 pcc),
+                          title='Populate Magnetic Field Table')
         return v
 
 # ============= EOF =============================================

@@ -16,15 +16,17 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import os
 import pickle
 
 from traits.api import HasTraits, Bool, List, Any, Float
-from traitsui.api import View, Item,UItem, Controller, VGroup, HGroup, TabularEditor
-
+from traitsui.api import Item, UItem, Controller, VGroup, HGroup, TabularEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from uncertainties import ufloat
+
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.progress_dialog import myProgressDialog
 from pychron.envisage.browser.adapters import AnalysisAdapter
 from pychron.paths import paths
@@ -61,7 +63,7 @@ class K3739EditModel(HasTraits):
 
         self.dump()
 
-    #persistence
+    # persistence
     def load(self):
         p = self.pickle_path
         if os.path.isfile(p):
@@ -100,20 +102,15 @@ class K3739EditView(Controller):
     #         self.model.apply_modified()
 
     def traits_view(self):
-        v = View(
-            VGroup(
-                Item('normal_k3739', label='Normal (37/39)K'),
-                HGroup(
-                    Item('k3739', label='(37/39)K'),
-                    Item('k3739_err', label=PLUSMINUS_ONE_SIGMA),
-                    show_border=True,
-                    enabled_when='not normal_k3739')),
-            UItem('analyses', editor=TabularEditor(adapter=AnalysisAdapter())),
-            HGroup(Item('save_to_db', label='Save to Database')),
-            title='Edit (37/39)K',
-            buttons=['OK', 'Cancel'],
-            kind='livemodal')
+        v = okcancel_view(VGroup(Item('normal_k3739', label='Normal (37/39)K'),
+                                 HGroup(
+                                     Item('k3739', label='(37/39)K'),
+                                     Item('k3739_err', label=PLUSMINUS_ONE_SIGMA),
+                                     show_border=True,
+                                     enabled_when='not normal_k3739')),
+                          UItem('analyses', editor=TabularEditor(adapter=AnalysisAdapter())),
+                          HGroup(Item('save_to_db', label='Save to Database')),
+                          title='Edit (37/39)K')
         return v
 
 # ============= EOF =============================================
-

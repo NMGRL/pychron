@@ -22,7 +22,6 @@ from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter
 # ============= enthought library imports =======================
 from traits.api import Instance, Bool, on_trait_change, Any
 
-from pychron.core.helpers.filetools import list_gits
 from pychron.core.pdf.save_pdf_dialog import save_pdf
 from pychron.dvc import dvc_dump
 from pychron.dvc.dvc import DVCInterpretedAge
@@ -45,20 +44,11 @@ from pychron.pipeline.tasks.actions import RunAction, ResumeAction, ResetAction,
     EditAnalysisAction, RunFromAction, PipelineRecallAction, LoadReviewStatusAction, DiffViewAction, SaveTableAction
 from pychron.pipeline.tasks.interpreted_age_factory import set_interpreted_age
 from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane, RepositoryPane, EditorOptionsPane
-from pychron.pipeline.tasks.select_repo import SelectExperimentIDView
 
 
 class DataMenu(SMenu):
     id = 'data.menu'
     name = 'Data'
-
-
-def select_experiment_repo():
-    a = list_gits(paths.repository_dataset_dir)
-    v = SelectExperimentIDView(available=a)
-    info = v.edit_traits()
-    if info.result:
-        return v.selected
 
 
 class PipelineTask(BaseBrowserTask):
@@ -342,12 +332,6 @@ class PipelineTask(BaseBrowserTask):
     def set_interpreted_age(self):
         ias = self.active_editor.get_interpreted_ages()
         set_interpreted_age(self.dvc, ias)
-
-    def git_rollback(self):
-        # select experiment
-        expid = select_experiment_repo()
-        if expid:
-            self.dvc.rollback_repository(expid)
 
     def clear(self):
         self.reset()

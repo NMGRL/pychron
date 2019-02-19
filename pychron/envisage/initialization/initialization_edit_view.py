@@ -25,11 +25,12 @@ from pyface.action.menu_manager import MenuManager
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
 from traits.api import HasTraits, Str, List, Event, Instance, Dict, Button
-from traitsui.api import View, UItem, Handler, VGroup, HGroup, EnumEditor, Item
+from traitsui.api import UItem, Handler, VGroup, HGroup, EnumEditor, Item
 from traitsui.menu import Action
 from traitsui.tree_node import TreeNode
 
 # ============= local library imports  ==========================
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.tree_editor import TreeEditor
 from pychron.envisage.initialization.nodes import Plugin, PluginTree, PluginTreeNode, GlobalsTreeNode, GlobalTree, \
     InitializationModel, PackageTreeNode, GlobalValue, BaseNode
@@ -166,25 +167,22 @@ class InitializationEditView(HasTraits):
                             auto_open=True,
                             children='values')]
 
-        v = View(VGroup(HGroup(Item('default', label='Predefined Initialization',
-                                    editor=EnumEditor(name='defaults'))),
-                        UItem('model', editor=TreeEditor(nodes=nodes,
-                                                         editable=False,
-                                                         selection_mode='extended',
-                                                         selected='selected',
-                                                         dclick='dclicked',
-                                                         show_disabled=True,
-                                                         refresh_all_icons='refresh_all_needed',
-                                                         refresh_icons='refresh_needed')),
-                        VGroup(UItem('description', style='readonly'), show_border=True),
-                        VGroup(UItem('help_str', style='readonly'), show_border=True)),
-                 title='Edit Initialization - {}'.format(self.model.path_name),
-                 handler=PEVHandler(),
-                 height=600,
-                 width=400,
-                 kind='livemodal',
-                 buttons=['OK', 'Cancel'],
-                 resizable=True)
+        v = okcancel_view(VGroup(HGroup(Item('default', label='Predefined Initialization',
+                                             editor=EnumEditor(name='defaults'))),
+                                 UItem('model', editor=TreeEditor(nodes=nodes,
+                                                                  editable=False,
+                                                                  selection_mode='extended',
+                                                                  selected='selected',
+                                                                  dclick='dclicked',
+                                                                  show_disabled=True,
+                                                                  refresh_all_icons='refresh_all_needed',
+                                                                  refresh_icons='refresh_needed')),
+                                 VGroup(UItem('description', style='readonly'), show_border=True),
+                                 VGroup(UItem('help_str', style='readonly'), show_border=True)),
+                          title='Edit Initialization - {}'.format(self.model.path_name),
+                          handler=PEVHandler(),
+                          height=600,
+                          width=400)
         return v
 
 
@@ -204,8 +202,4 @@ def edit_initialization():
         if pev.model.is_dirty():
             return confirm(None, 'Restart for changes to take effect. Restart now?') == YES
 
-
 # ============= EOF =============================================
-
-
-

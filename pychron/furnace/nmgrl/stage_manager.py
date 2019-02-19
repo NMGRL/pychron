@@ -19,9 +19,10 @@ import time
 
 from pyface.timer.do_later import do_after
 from traits.api import Instance
-from traitsui.api import View, Item, VGroup
+from traitsui.api import Item, VGroup
 
 from pychron.canvas.canvas2D.furnace_canvas import FurnaceCanvas
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.furnace.base_stage_manager import BaseFurnaceStageManager
 from pychron.hardware.linear_axis import LinearAxis
 
@@ -45,8 +46,7 @@ class Feeder(LinearAxis):
                    Item('jperiod2', label='Period2'),
                    Item('jturns', label='Turns'))
 
-        v = View(g, title='Configure Jitter', kind='livemodal',
-                 buttons=['OK', 'Cancel'])
+        v = okcancel_view(g, title='Configure Jitter')
         info = self._cdevice.edit_traits(view=v)
         if info.result:
             self._cdevice.write_jitter_config()

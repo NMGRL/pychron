@@ -18,8 +18,9 @@ import os
 
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Int, List, Str, Bool
-from traitsui.api import View, UItem, Item, VGroup, Controller, EnumEditor, CheckListEditor
+from traitsui.api import UItem, Item, VGroup, Controller, EnumEditor, CheckListEditor
 
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceMixin
 from pychron.pychron_constants import DEFAULT_MONITOR_NAME
@@ -61,33 +62,32 @@ class FindReferencesConfigView(Controller):
             self.model.dump()
 
     def traits_view(self):
-        v = View(VGroup(VGroup(UItem('analysis_types',
-                                     style='custom',
-                                     editor=CheckListEditor(values=['Blank Unknown', 'Blank Air',
-                                                                    'Blank Cocktail', 'Blank',
-                                                                    'Air', 'Cocktail'])),
-                               show_border=True,
-                               label='Analysis Types'),
-                        VGroup(UItem('mass_spectrometers', style='custom',
-                                     editor=CheckListEditor(name='available_mass_spectrometers')),
-                               show_border=True,
-                               label='Mass Spectrometers'),
-                        VGroup(UItem('extract_devices', style='custom',
-                                     editor=CheckListEditor(name='available_extract_devices')),
-                               show_border=True,
-                               label='Extract Devices'),
-                        VGroup(UItem('irradiations', style='custom',
-                                     editor=CheckListEditor(name='available_irradiations')),
-                               Item('monitor_sample',
-                                    editor=EnumEditor(name='monitor_samples')),
-                               show_border=True,
-                               label='Monitors'),
-                        Item('replace', label='Replace analyses used to find the references with the references'),
-                        Item('threshold', label='Threshold (hrs)')),
+        v = okcancel_view(VGroup(VGroup(UItem('analysis_types',
+                                              style='custom',
+                                              editor=CheckListEditor(values=['Blank Unknown', 'Blank Air',
+                                                                             'Blank Cocktail', 'Blank',
+                                                                             'Air', 'Cocktail'])),
+                                        show_border=True,
+                                        label='Analysis Types'),
+                                 VGroup(UItem('mass_spectrometers', style='custom',
+                                              editor=CheckListEditor(name='available_mass_spectrometers')),
+                                        show_border=True,
+                                        label='Mass Spectrometers'),
+                                 VGroup(UItem('extract_devices', style='custom',
+                                              editor=CheckListEditor(name='available_extract_devices')),
+                                        show_border=True,
+                                        label='Extract Devices'),
+                                 VGroup(UItem('irradiations', style='custom',
+                                              editor=CheckListEditor(name='available_irradiations')),
+                                        Item('monitor_sample',
+                                             editor=EnumEditor(name='monitor_samples')),
+                                        show_border=True,
+                                        label='Monitors'),
+                                 Item('replace',
+                                      label='Replace analyses used to find the references with the references'),
+                                 Item('threshold', label='Threshold (hrs)')),
 
-                 title='Configure Find References',
-                 buttons=['OK', 'Cancel'],
-                 kind='livemodal')
+                          title='Configure Find References')
 
         return v
 

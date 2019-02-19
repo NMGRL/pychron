@@ -16,8 +16,9 @@
 
 # ============= enthought library imports =======================
 from traits.api import Button, Int, Bool, Float, Property, on_trait_change, List, Enum, Range, Color
-from traitsui.api import View, Item
+from traitsui.api import Item
 
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.group.spectrum_group_options import SpectrumGroupOptions
 from pychron.options.options import AgeOptions
@@ -36,7 +37,6 @@ class SpectrumAuxPlot(AuxPlot):
 
 
 class SpectrumOptions(AgeOptions):
-
     aux_plot_klass = SpectrumAuxPlot
     edit_plateau_criteria = Button
 
@@ -114,12 +114,10 @@ class SpectrumOptions(AgeOptions):
     #         self.refresh_plot_needed = True
 
     def _edit_plateau_criteria_fired(self):
-        v = View(Item('pc_nsteps', label='Num. Steps', tooltip='Number of contiguous steps'),
-                 Item('pc_gas_fraction', label='Min. Gas%',
-                      tooltip='Plateau must represent at least Min. Gas% release'),
-                 buttons=['OK', 'Cancel'],
-                 title='Edit Plateau Criteria',
-                 kind='livemodal')
+        v = okcancel_view(Item('pc_nsteps', label='Num. Steps', tooltip='Number of contiguous steps'),
+                          Item('pc_gas_fraction', label='Min. Gas%',
+                               tooltip='Plateau must represent at least Min. Gas% release'),
+                          title='Edit Plateau Criteria')
         self.edit_traits(v)
 
     def _get_error_calc_method(self):

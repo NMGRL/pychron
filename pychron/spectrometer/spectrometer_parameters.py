@@ -14,8 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 from __future__ import absolute_import
+
 from traits.etsconfig.etsconfig import ETSConfig
-import six
+
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+
 ETSConfig.toolkit = 'qt4'
 
 # ============= enthought library imports =======================
@@ -33,6 +36,7 @@ from pychron.spectrometer import get_spectrometer_config_path
 class Parameter(HasTraits):
     name = Str
     value = Float
+
 
 class SpectrometerParameters(Loggable):
     groups = List
@@ -87,33 +91,36 @@ Do you want to send these parameters to the spectrometer?
 
         return p
 
+
 class SpectrometerParametersGroup(HasTraits):
     parameters = List
     name = Str
+
     def traits_view(self):
         columns = [
-                   ObjectColumn(name='name',
-                                editable=False,
-                              label='Name',
-                              width=150
-                              ),
-                   ObjectColumn(name='value',
-                              label='Value',
-                              width=100
-                              )
-                  ]
+            ObjectColumn(name='name',
+                         editable=False,
+                         label='Name',
+                         width=150
+                         ),
+            ObjectColumn(name='value',
+                         label='Value',
+                         width=100
+                         )
+        ]
         editor = TableEditor(columns=columns,
                              sortable=False
                              )
         v = View(UItem('parameters', style='custom',
-                     editor=editor
-                     ),
+                       editor=editor
+                       ),
                  resizable=True,
                  width=300,
                  title='Spectrometer Settings'
-               )
+                 )
 
         return v
+
 
 class SHandler(Handler):
     def closed(self, info, ok):
@@ -123,24 +130,22 @@ class SHandler(Handler):
 
 class SpectrometerParametersView(HasTraits):
     model = Instance('SpectrometerParameters')
+
     def trait_context(self):
-        return {'object':self.model}
+        return {'object': self.model}
 
     def traits_view(self):
-        v = View(UItem('groups',
-                    style='custom',
-                    editor=ListEditor(mutable=False,
-                                      use_notebook=True,
-                                      page_name='.name'
-                                      )
-                     ),
-                 buttons=['OK', 'Cancel'],
-                 handler=SHandler,
-                 title='Spectrometer Settings',
-                 kind='livemodal'
-               )
+        v = okcancel_view(UItem('groups',
+                                style='custom',
+                                editor=ListEditor(mutable=False,
+                                                  use_notebook=True,
+                                                  page_name='.name'
+                                                  )),
+                          handler=SHandler,
+                          title='Spectrometer Settings')
 
         return v
+
 
 if __name__ == '__main__':
     paths.build('_dev')

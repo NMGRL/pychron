@@ -28,6 +28,7 @@ from traitsui.tabular_adapter import TabularAdapter
 from uncertainties import nominal_value, std_dev
 
 from pychron.core.helpers.formatting import floatfmt
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
@@ -420,13 +421,11 @@ class DiffEditor(BaseTraitsEditor):
             return yaml.dump(self.diff_tags, wfile)
 
     def _edit_configuration_button_fired(self):
-        v = View(VGroup(HGroup(UItem('select_all_button'),
-                               UItem('clear_all_button')),
-                        UItem('diff_tags', style='custom',
-                              editor=CheckListEditor(values=DIFF_TAGS, cols=5))),
-                 kind='livemodal',
-                 buttons=['OK', 'Cancel'],
-                 title='Configure Diff')
+        v = okcancel_view(VGroup(HGroup(UItem('select_all_button'),
+                                        UItem('clear_all_button')),
+                                 UItem('diff_tags', style='custom',
+                                       editor=CheckListEditor(values=DIFF_TAGS, cols=5))),
+                          title='Configure Diff')
 
         cfg = self._get_configuration()
         if cfg is None:

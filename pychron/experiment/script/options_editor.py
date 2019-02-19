@@ -15,13 +15,14 @@
 # ===============================================================================
 from __future__ import absolute_import
 
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui import set_qt
 
 set_qt()
 
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Any, List
-from traitsui.api import View, UItem, HGroup
+from traitsui.api import UItem, HGroup
 
 from traitsui.editors import TableEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
@@ -29,6 +30,8 @@ from traitsui.table_column import ObjectColumn
 # ============= standard library imports ========================
 import os
 import yaml
+
+
 # ============= local library imports  ==========================
 
 
@@ -68,13 +71,11 @@ class OptionsEditor(HasTraits):
         bcols = [ObjectColumn(name='name', editable=False),
                  CheckboxColumn(name='value')]
 
-        v = View(HGroup(UItem('numeric_options',
-                              editor=TableEditor(columns=ncols), ),
-                        UItem('bool_options',
-                              editor=TableEditor(columns=bcols))),
-                 resizable=True,
-                 title='Script Options',
-                 buttons=['OK', 'Cancel'])
+        v = okcancel_view(HGroup(UItem('numeric_options',
+                                       editor=TableEditor(columns=ncols), ),
+                                 UItem('bool_options',
+                                       editor=TableEditor(columns=bcols))),
+                          title='Script Options')
         return v
 
 
@@ -84,4 +85,3 @@ if __name__ == '__main__':
     v.configure_traits()
 
 # ============= EOF =============================================
-

@@ -29,6 +29,7 @@ from traitsui.api import View, Item, UItem, CheckListEditor, VGroup, Handler, HG
 from traitsui.table_column import ObjectColumn
 from traitsui.tabular_adapter import TabularAdapter
 
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pychron_traits import BorderVGroup
 from pychron.paths import paths
 from pychron.pychron_constants import ARGON_KEYS, SIZES
@@ -40,6 +41,14 @@ class TableConfigurerHandler(Handler):
             info.object.closed(is_ok)
             # info.object.dump()
             # info.object.set_columns()
+
+
+def get_columns_group():
+    col_grp = VGroup(UItem('columns',
+                           style='custom',
+                           editor=CheckListEditor(name='available_columns', cols=3)),
+                     label='Columns', show_border=True)
+    return col_grp
 
 
 class TableConfigurer(HasTraits):
@@ -212,8 +221,8 @@ class TableConfigurer(HasTraits):
 
     def set_adapter(self, adp):
         self.adapter = adp
-    # def _adapter_changed(self, adp):
-    #     if adp:
+        # def _adapter_changed(self, adp):
+        #     if adp:
         acols = [c for c, _ in adp.all_columns]
 
         # set currently visible columns
@@ -230,23 +239,22 @@ class TableConfigurer(HasTraits):
         self._load_state()
 
     def traits_view(self):
-        v = View(VGroup(HGroup(UItem('show_all', tooltip='Show all columns'),
-                               UItem('set_sparse',
-                                     tooltip='Set the current set of columns to the Sparse Column Set',
-                                     enabled_when='sparse_enabled'),
-                               UItem('toggle_sparse',
-                                     tooltip='Display only Sparse Column Set'),
-                               UItem('default_button',
-                                     tooltip='Set to Laboratory defaults. File located at '
-                                             '[root]/experiments/experiment_defaults.yaml')),
-                        VGroup(UItem('columns',
-                                     style='custom',
-                                     editor=CheckListEditor(name='available_columns', cols=3)),
-                               Item('font', enabled_when='fontsize_enabled'),
-                               show_border=True)),
-                 handler=TableConfigurerHandler(),
-                 title=self.title,
-                 buttons=['OK', 'Cancel'], )
+        v = okcancel_view(VGroup(HGroup(UItem('show_all', tooltip='Show all columns'),
+                                        UItem('set_sparse',
+                                              tooltip='Set the current set of columns to the Sparse Column Set',
+                                              enabled_when='sparse_enabled'),
+                                        UItem('toggle_sparse',
+                                              tooltip='Display only Sparse Column Set'),
+                                        UItem('default_button',
+                                              tooltip='Set to Laboratory defaults. File located at '
+                                                      '[root]/experiments/experiment_defaults.yaml')),
+                                 VGroup(UItem('columns',
+                                              style='custom',
+                                              editor=CheckListEditor(name='available_columns', cols=3)),
+                                        Item('font', enabled_when='fontsize_enabled'),
+                                        show_border=True)),
+                          handler=TableConfigurerHandler(),
+                          title=self.title)
         return v
 
 
@@ -289,35 +297,22 @@ class AnalysisTableConfigurer(TableConfigurer):
         self.omit_invalid = obj.get('omit_invalid', True)
 
     def traits_view(self):
-        v = View(VGroup(VGroup(UItem('columns',
-                                     style='custom',
-                                     editor=CheckListEditor(name='available_columns', cols=3)),
-                               label='Columns', show_border=True),
-                        # Group(
-                        # VGroup(HGroup(Heading('Lower Bound'), UItem('use_low_post')),
-                        # UItem('low_post', style='custom', enabled_when='use_low_post')),
-                        # VGroup(HGroup(Heading('Upper Bound'), UItem('use_high_post')),
-                        # UItem('high_post', style='custom', enabled_when='use_high_post')),
-                        #     VGroup(HGroup(Heading('Named Range'), UItem('use_named_date_range')),
-                        #            UItem('named_date_range', enabled_when='use_named_date_range'))),
-                        Item('omit_invalid'),
-                        Item('limit',
-                             tooltip='Limit number of displayed analyses',
-                             label='Limit'),
-                        show_border=True,
-                        label='Limiting'),
-                 buttons=['OK', 'Cancel', 'Revert'],
-                 # kind='modal',
-                 title=self.title,
-                 handler=TableConfigurerHandler,
-                 resizable=True,
-                 width=300)
+        v = okcancel_view(VGroup(get_columns_group(),
+                                 Item('omit_invalid'),
+                                 Item('limit',
+                                      tooltip='Limit number of displayed analyses',
+                                      label='Limit'),
+                                 show_border=True,
+                                 label='Limiting'),
+                          buttons=['OK', 'Cancel', 'Revert'],
+                          title=self.title,
+                          handler=TableConfigurerHandler,
+                          width=300)
         return v
 
 
 class SampleTableConfigurer(TableConfigurer):
     title = 'Configure Sample Table'
-    # parent = Any
     id = 'sample.table'
     filter_non_run_samples = Bool(True)
 
@@ -331,21 +326,14 @@ class SampleTableConfigurer(TableConfigurer):
         self.filter_non_run_samples = obj.get('filter_non_run_samples', True)
 
     def traits_view(self):
-        v = View(VGroup(
-            VGroup(UItem('columns',
-                         style='custom',
-                         editor=CheckListEditor(name='available_columns', cols=3)),
-                   label='Columns', show_border=True),
-            Item('filter_non_run_samples',
-                 tooltip='Omit samples that have not been analyzed to date',
-                 label='Exclude Non-Run')
-        ),
-            buttons=['OK', 'Cancel', 'Revert'],
-            # kind='modal',
-            title=self.title,
-            handler=TableConfigurerHandler,
-            resizable=True,
-            width=300)
+        v = okcancel_view(VGroup(get_columns_group(),
+                                 Item('filter_non_run_samples',
+                                      tooltip='Omit samples that have not been analyzed to date',
+                                      label='Exclude Non-Run')),
+                          buttons=['OK', 'Cancel', 'Revert'],
+                          title=self.title,
+                          handler=TableConfigurerHandler,
+                          width=300)
         return v
 
 
@@ -353,9 +341,7 @@ class IsotopeTableConfigurer(TableConfigurer):
     id = 'recall.isotopes'
 
     def traits_view(self):
-        v = View(VGroup(UItem('columns',
-                              style='custom',
-                              editor=CheckListEditor(name='available_columns', cols=3)),
+        v = View(VGroup(get_columns_group(),
                         Item('font', enabled_when='fontsize_enabled'),
                         show_border=True,
                         label='Isotopes'))
@@ -367,7 +353,7 @@ class IntermediateTableConfigurer(TableConfigurer):
 
 
 class Ratio(HasTraits):
-    isotopes = List(['']+list(ARGON_KEYS))
+    isotopes = List([''] + list(ARGON_KEYS))
     numerator = Str
     denominator = Str
 
@@ -387,7 +373,6 @@ class CocktailOptions(HasTraits):
         return {'ratios': [r.get_dump() for r in self.ratios]}
 
     def set_ratios(self, ratios):
-
         self.ratios = [Ratio(numerator=r['numerator'], denominator=r['denominator']) for r in ratios]
 
     def _ratios_default(self):
@@ -444,10 +429,6 @@ class RecallTableConfigurer(TableConfigurer):
     global_fontsize = Enum(*SIZES)
 
     recall_options = Instance(RecallOptions, ())
-
-    # def closed(self):
-    # super(RecallTableConfigurer, self).closed()
-    # self.experiment_view
 
     def _get_dump(self):
         obj = super(RecallTableConfigurer, self)._get_dump()
