@@ -204,6 +204,22 @@ class DVCDatabase(DatabaseAdapter):
                     if not self.get_users():
                         self.add_user('root')
 
+    def sync_ia_metadata(self, ia):
+        identifier = ia.identifier
+        info = self.get_analysis_info(identifier)
+        if info:
+            for attr in ('latitude', 'longitude', 'material',
+                         'project', 'principal_investigator', 'sample',
+                         'irradiation',
+                         'irradiation_level',
+                         'irradiation_position'):
+                if isinstance(attr, tuple):
+                    iaattr, dbattr = attr
+                else:
+                    iaattr, dbattr = attr, attr
+
+                setattr(ia, iaattr, info.get(dbattr))
+
     def check_restricted_name(self, name, category, check_principal_investigator=False):
         """
         return True is name is restricted
@@ -264,23 +280,30 @@ class DVCDatabase(DatabaseAdapter):
                 self.warning('{} is not an identifier in the database'.format(li))
                 return None
             else:
-                project, pi, sample, material, irradiation, level, pos = '', '', '', '', '', '', ''
+                info = {}
                 sample = dbpos.sample
                 if sample:
                     if sample.project:
                         project = sample.project.name
+                        info['project'] = project
                         if sample.project.principal_investigator:
                             pi = sample.project.principal_investigator.name
+                            info['principal_investigator'] = pi
 
                     if sample.material:
                         material = sample.material.name
-                    sample = sample.name
+                        info['material'] = material
+                        info['grainsize'] = sample.material.grainsize
 
-                level = dbpos.level.name
-                pos = dbpos.position
-                irradiation = dbpos.level.irradiation.name
+                    info['sample'] = sample.name
+                    info['latitude'] = sample.lat
+                    info['longitude'] = sample.lon
 
-            return project, pi, sample, material, irradiation, level, pos
+                info['irradiation_level'] = dbpos.level.name
+                info['irradiation_position'] = dbpos.position
+                info['irradiation'] = dbpos.level.irradiation.name
+
+            return info
 
     def set_analysis_tag(self, item, tagname):
         with self.session_ctx() as sess:

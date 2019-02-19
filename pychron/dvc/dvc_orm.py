@@ -333,6 +333,11 @@ class SampleTbl(Base, NameMixin):
 
     storage_location = deferred(stringcolumn(140))
     lithology = deferred(stringcolumn(140))
+
+    lithology_class = deferred(stringcolumn(140))
+    lithology_type = deferred(stringcolumn(140))
+    lithology_group = deferred(stringcolumn(140))
+
     location = deferred(stringcolumn(140))
     approximate_age = deferred(Column(Float))
     elevation = deferred(Column(Float))

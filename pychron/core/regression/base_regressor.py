@@ -193,7 +193,7 @@ class BaseRegressor(HasTraits):
     def calculate_outliers(self, nsigma=2):
 
         if self.filter_outliers_dict.get('use_standard_deviation_filtering'):
-            s = self.std()
+            s = self.std
         else:
             s = self.calculate_standard_error_fit()
 

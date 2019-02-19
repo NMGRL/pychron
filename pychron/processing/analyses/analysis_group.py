@@ -64,21 +64,30 @@ class AnalysisGroup(IdeogramPlotable):
     isochron_age_error_kind = Str
     identifier = Property
 
-    repository_identifier = Property(depends_on='_repository_identifier')
-    _repository_identifier = Str
-
-    irradiation = Property
     irradiation_label = Property
-    sample = Property
-    project = Property
+
     aliquot = Property(depends_on='_aliquot')
     _aliquot = Any
 
+    repository_identifier = Property
+    irradiation = Property
+    irradiation_level = Property
+    irradiation_position = Property
+    sample = Property
+    project = Property
     material = Property
+
+    _repository_identifier = None
+    _sample = None
+    _material = None
+    _project = None
+    _irradiation = None
+    _irradiation_position = None
+    _irradiation_level = None
+
     unit = Str
     location = Str
 
-    _sample = Str
     # age_scalar = Property
     age_units = Property
 
@@ -98,7 +107,6 @@ class AnalysisGroup(IdeogramPlotable):
 
     isochron_4036 = None
     isochron_regressor = None
-    _age_units = None
 
     def __init__(self, *args, **kw):
         super(AnalysisGroup, self).__init__(make_arar_constants=False, *args, **kw)
@@ -170,17 +178,10 @@ class AnalysisGroup(IdeogramPlotable):
         return 'uage_w_position_err' if self.include_j_position_error else 'uage'
 
     def _get_age_units(self):
-        if self._age_units:
-            return self._age_units
-
-        return self.analyses[0].arar_constants.age_units
+        return self.arar_constants.age_units
 
     def _get_arar_constants(self):
         return self.analyses[0].arar_constants
-
-    # def _get_age_scalar(self):
-    #     au = self.age_units
-    #     return AGE_MA_SCALARS[au]
 
     # @cached_property
     def _get_mswd(self):
@@ -232,16 +233,6 @@ class AnalysisGroup(IdeogramPlotable):
 
         return a
 
-    @cached_property
-    def _get_aliquot(self):
-        a = self._aliquot
-        if not a:
-            a = self.analyses[0].aliquot
-        return a
-
-    def _set_aliquot(self, a):
-        self._aliquot = a
-
     @property
     def monitor_age(self):
         return self.analyses[0].monitor_age
@@ -258,42 +249,6 @@ class AnalysisGroup(IdeogramPlotable):
     @cached_property
     def _get_identifier(self):
         return self.analyses[0].labnumber
-
-    @cached_property
-    def _get_repository_identifier(self):
-        if self._repository_identifier:
-            return self._repository_identifier
-        else:
-            return self.analyses[0].repository_identifier
-
-    def _set_repository_identifier(self, v):
-        self._repository_identifier = v
-
-    @cached_property
-    def _get_irradiation_label(self):
-        return self.analyses[0].irradiation_label
-
-    @cached_property
-    def _get_irradiation(self):
-        return self.analyses[0].irradiation
-
-    @cached_property
-    def _get_material(self):
-        return self.analyses[0].material
-
-    @cached_property
-    def _get_sample(self):
-        sam = self._sample
-        if not sam:
-            sam = self.analyses[0].sample
-        return sam
-
-    def _set_sample(self, s):
-        self._sample = s
-
-    @cached_property
-    def _get_project(self):
-        return self.analyses[0].project
 
     @cached_property
     def _get_arith_age(self):
@@ -369,6 +324,73 @@ class AnalysisGroup(IdeogramPlotable):
             ret = self.analyses[0].production_ratios
 
         return ret
+
+    # metadata properties
+    @cached_property
+    def _get_aliquot(self):
+        return self._get_property('aliquot')
+
+    @cached_property
+    def _get_repository_identifier(self):
+        return self._get_property('repository_identifier')
+
+    @cached_property
+    def _get_irradiation_label(self):
+        return self.analyses[0].irradiation_label
+
+    @cached_property
+    def _get_irradiation(self):
+        return self._get_property('irradiation')
+
+    @cached_property
+    def _get_irradiation_level(self):
+        return self._get_property('irradiation_level')
+
+    @cached_property
+    def _get_irradiation_position(self):
+        return self._get_property('irradiation_position')
+
+    @cached_property
+    def _get_material(self):
+        return self._get_property('material')
+
+    @cached_property
+    def _get_sample(self):
+        return self._get_property('sample')
+
+    @cached_property
+    def _get_project(self):
+        return self._get_property('project')
+
+    def _set_irradiation(self, i):
+        self._irradiation = i
+
+    def _set_irradiation_position(self, p):
+        self._irradiation_position = p
+
+    def _set_irradiation_level(self, l):
+        self._irradiation_level = l
+
+    def _set_repository_identifier(self, v):
+        self._repository_identifier = v
+
+    def _set_aliquot(self, a):
+        self._aliquot = a
+
+    def _set_material(self, mat):
+        self._material = mat
+
+    def _set_sample(self, s):
+        self._sample = s
+
+    def _set_project(self, p):
+        self._project = p
+
+    def _get_property(self, tag):
+        v = getattr(self, '_{}'.format(tag))
+        if v is None:
+            v = getattr(self.analyses[0], tag)
+        return v
 
     def _get_values(self, attr):
         vs = (ai.get_value(attr) for ai in self.clean_analyses())
@@ -733,7 +755,10 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
     lithologies = List
 
     reference = Str
-    lat_long = Str
+
+    latitude = Float
+    longitude = Float
+
     rlocation = Str
 
     comments = Str
@@ -748,33 +773,15 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
     def __init__(self, *args, **kw):
         super(InterpretedAgeGroup, self).__init__(*args, **kw)
         super(Preferred, self).__init__()
-        self.has_subgroups(self.analyses)
-
-    def __getattr__(self, item):
-        return ''
+        if self.analyses:
+            self.has_subgroups(self.analyses)
+            self._set_metadata(self.analyses[0])
 
     def set_preferred_age(self, pk, ek):
         pv = self._get_pv('age')
         pv.error_kind = ek
         pv.kind = pk
         pv.dirty = True
-
-    @on_trait_change('analyses')
-    def has_subgroups(self, new):
-        hs = any((isinstance(a, InterpretedAgeGroup) for a in new))
-        for pv in self.preferred_values:
-            if pv.attr == 'age':
-                continue
-
-            if hs:
-                if pv.attr in ('kca', 'kcl', 'moles_k39', 'signal_k39'):
-                    pv.kind = ARITHMETIC_MEAN
-                else:
-                    pv.kind = WEIGHTED_MEAN
-
-                pv.kinds = [WEIGHTED_MEAN, ARITHMETIC_MEAN]
-            else:
-                pv.kinds = SUBGROUPINGS
 
     def ages(self, asfloat=True):
         vs = {k: getattr(self, k) for k in ('weighted_age', 'plateau_age', 'isochron_age', 'integrated_age')}
@@ -832,15 +839,6 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
         pv = self._get_pv('signal_k39')
         return pv.uvalue
 
-    def _value_string(self, t):
-        try:
-            v = getattr(self, t)
-            a, e = nominal_value(v), std_dev(v)
-        except AttributeError:
-            a, e = '---', '---'
-
-        return a, e
-
     def get_value(self, attr):
         if hasattr(self, attr):
             ret = getattr(self, attr)
@@ -848,24 +846,25 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
             ret = ufloat(0, 0)
         return ret
 
-    def _name_default(self):
-        name = ''
-        if self.analyses:
-            name = make_aliquot(self.analyses[0].aliquot)
-        return name
+    @on_trait_change('analyses')
+    def has_subgroups(self, new):
+        hs = any((isinstance(a, InterpretedAgeGroup) for a in new))
+        for pv in self.preferred_values:
+            if pv.attr == 'age':
+                continue
 
-    def _get_nanalyses(self):
-        pv = self._get_pv('age')
-        k = pv.computed_kind.lower()
+            if hs:
+                if pv.attr in ('kca', 'kcl', 'moles_k39', 'signal_k39'):
+                    pv.kind = ARITHMETIC_MEAN
+                else:
+                    pv.kind = WEIGHTED_MEAN
 
-        if k == 'plateau':
-            n = self.nsteps
-        else:
-            n = super(InterpretedAgeGroup, self)._get_nanalyses()
-        return n
+                pv.kinds = [WEIGHTED_MEAN, ARITHMETIC_MEAN]
+            else:
+                pv.kinds = SUBGROUPINGS
 
     @on_trait_change('preferred_values:[kind, error_kind, dirty, weighting]')
-    def _preferred_kind_changd(self, obj, name, old, new):
+    def handle_preferred_change(self, obj, name, old, new):
         if obj.attr == 'age':
             if 'Plateau' in obj.kind:
                 self.plateau_age_error_kind = obj.error_kind
@@ -951,6 +950,11 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
         pv = self._get_pv(attr)
         return pv
 
+    # private
+    def _set_metadata(self, analysis):
+        self.latitude = analysis.latitude
+        self.longitude = analysis.longitude
+
     # get preferred objects
     def _get_preferred_age(self):
         pa = ufloat(0, 0)
@@ -1010,5 +1014,32 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
             pa = ufloat(*pa)
         return pa, kind
 
+    def _name_default(self):
+        name = ''
+        if self.analyses:
+            name = make_aliquot(self.analyses[0].aliquot)
+        return name
+
+    def _get_nanalyses(self):
+        pv = self._get_pv('age')
+        k = pv.computed_kind.lower()
+
+        if k == 'plateau':
+            n = self.nsteps
+        else:
+            n = super(InterpretedAgeGroup, self)._get_nanalyses()
+        return n
+
+    def _value_string(self, t):
+        try:
+            v = getattr(self, t)
+            a, e = nominal_value(v), std_dev(v)
+        except AttributeError:
+            a, e = '---', '---'
+
+        return a, e
+
+    def __getattr__(self, item):
+        return ''
 
 # ============= EOF =============================================

@@ -62,6 +62,7 @@ META_ATTRS = ('analysis_type', 'uuid', 'identifier', 'aliquot', 'increment',
               'username', 'queue_conditionals_name',
               'repository_identifier',
               'acquisition_software',
+              'latitude', 'longitude',
               'data_reduction_software', 'instrument_name', 'laboratory', 'experiment_queue_name', 'experiment_type')
 
 

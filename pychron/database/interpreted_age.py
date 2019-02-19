@@ -57,9 +57,9 @@ class InterpretedAge(IdeogramPlotable):
     display_age_err = Property
     display_age_units = Str('Ma')
 
-    reference = Str
-    rlocation = Str  # location of sample within unit
-    lat_long = Str
+    # reference = Str
+    # rlocation = Str  # location of sample within unit
+    # lat_long = Str
 
     uuid = Str
 

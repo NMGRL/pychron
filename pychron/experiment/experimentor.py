@@ -143,16 +143,8 @@ class Experimentor(DVCIrradiationable):
                     if not info:
                         cache[ln] = dict(identifier_error=True)
                     else:
-                        project, pi, sample, material, irrad, level, pos = info
-
-                        cache[ln] = dict(project=project or '',
-                                         principal_investigator=pi or '',
-                                         sample=sample or '',
-                                         material=material or '',
-                                         irradiation=irrad or '',
-                                         irradiation_level=level or '',
-                                         irradiation_position=pos or '',
-                                         identifier_error=False)
+                        info['identifier_error'] = False
+                        cache[ln] = info
 
                 ai.trait_set(**cache[ln])
 

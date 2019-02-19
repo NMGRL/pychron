@@ -15,11 +15,13 @@
 # ===============================================================================
 from __future__ import absolute_import
 from __future__ import print_function
+
 import requests
 
 
 class MacroStrat:
     api_url = 'http://macrostrat.org/api'
+    _cached_lithologies = None
 
     def get_lithologies(self, lith_type=None, lith_class=None, lith_group=None):
         s = requests.Session()
@@ -40,7 +42,6 @@ class MacroStrat:
         else:
             url = '{}{}'.format(url, '&'.join(qs))
 
-        print('url={}'.format(url))
         r = s.get(url)
 
         obj = r.json()
@@ -48,21 +49,23 @@ class MacroStrat:
         return obj['success']['data']
 
     def get_lithology_values(self):
-        ls = self.get_lithologies()
-        groups = []
-        classes = []
-        types = []
+        ret = self._cached_lithologies
+        if ret is None:
+            ls = self.get_lithologies()
+            groups = []
+            classes = []
+            types = []
+            liths = []
+            for li in ls:
+                groups.append(li['group'])
+                types.append(li['type'])
+                classes.append(li['class'])
+                liths.append(li['name'])
 
-        for li in ls:
-            groups.append(li['group'])
-            types.append(li['type'])
-            classes.append(li['class'])
+            ret = [sorted(list(set(a))) for a in (liths, groups, classes, types)]
+            self._cached_lithologies = ret
 
-        groups = list(set(groups))
-        classes = list(set(classes))
-        types = list(set(types))
-
-        return groups, classes, types
+        return ret
 
     def get_minerals(self, min_type=None):
         s = requests.Session()
