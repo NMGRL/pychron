@@ -135,12 +135,19 @@ def set_interpreted_age(dvc, ias):
             if no_lat_lon:
                 n = ','.join(no_lat_lon)
                 if not confirm(None, 'No Lat/Lon. entered for {}. Are you sure you want to continue without setting a '
-                                     'Lat/Lon?' 
-                                     ''.format(n)) == YES:
+                                     'Lat/Lon?'.format(n)) == YES:
                     continue
 
+            ris = []
             for rid, iass in groupby_key(ias, key='repository_identifier'):
-                dvc.add_interpreted_ages(rid, iass)
+                if dvc.add_interpreted_ages(rid, iass):
+                    ris.append(rid)
+
+            if ris:
+                if confirm(None, 'Would you like to share changes to {}?'.format(','.join(ris))) == YES:
+                    for rid in ris:
+                        dvc.push_repository(rid)
+                    information(None, 'Pushes complete')
 
             break
         else:

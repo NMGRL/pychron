@@ -814,7 +814,7 @@ class DVC(Loggable):
         return repo.add_paths(paths)
 
     def repository_commit(self, repository, msg):
-        self.debug('Experiment commit: {} msg: {}'.format(repository, msg))
+        self.debug('Repository commit: {} msg: {}'.format(repository, msg))
         repo = self._get_repository(repository)
         repo.commit(msg)
 
@@ -1005,12 +1005,13 @@ class DVC(Loggable):
         ialabels = []
         for ia in iass:
             d = self._make_interpreted_age_dict(ia)
-            rid, p = self._add_interpreted_age(d)
+            rid, p = self._add_interpreted_age(ia, d)
             ps.append(p)
             ialabels.append('{} {} {}'.format(ia.name, ia.identifier, ia.sample))
 
         if self.repository_add_paths(rid, ps):
             self.repository_commit(rid, '<IA> added interpreted ages {}'.format(','.join(ialabels)))
+            return True
 
     def add_interpreted_age(self, ia):
         d = self._make_interpreted_age_dict(ia)
