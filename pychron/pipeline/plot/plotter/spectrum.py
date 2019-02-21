@@ -60,7 +60,8 @@ class Spectrum(BaseArArFigure):
 
                 legend.plots[key] = plot
 
-        self._set_ml_title('Cumulative %<sup>39</sup>Ar<sub>K</sub>', 0, 'x')
+        # self._set_ml_title('Cumulative %<sup>39</sup>Ar<sub>K</sub>', 0, 'x')
+        graph.set_x_title('Cumulative %<sup>39</sup>Ar<sub>K</sub>', plotid=0)
 
     def max_x(self, attr):
         return max([ai.nominal_value for ai in self._unpack_attr(attr)])
@@ -109,11 +110,11 @@ class Spectrum(BaseArArFigure):
 
     def _plot_aux(self, title, vk, po, pid):
         graph = self.graph
-        if '<sup>' in title or '<sub>' in title:
-            self._set_ml_title(title, pid, 'y')
-        else:
-            graph.set_y_title(title, plotid=pid)
+        # if '<sup>' in title or '<sub>' in title:
+        #     self._set_ml_title(title, pid, 'y')
+        # else:
 
+        graph.set_y_title(title, plotid=pid)
         xs, ys, es, c39s, s39, vs = self._calculate_spectrum(value_key=vk)
         self.calculate_ylimits(po, s39, vs)
 

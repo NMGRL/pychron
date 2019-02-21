@@ -290,8 +290,8 @@ class DiffEditor(BaseTraitsEditor):
                             rvalue=right.age_err_wo_j or 0))
 
             vs.append(Value(name='40Ar* %',
-                            lvalue=nominal_value(left.rad40_percent or 0),
-                            rvalue=nominal_value(right.rad40_percent or 0)))
+                            lvalue=nominal_value(left.radiogenic_yield or 0),
+                            rvalue=nominal_value(right.radiogenic_yield or 0)))
             vs.append(Value(name='Rad4039',
                             lvalue=nominal_value(left.uF),
                             rvalue=nominal_value(right.rad4039)))

@@ -94,15 +94,10 @@ class GroupSubOptions(SubOptions):
 
 
 class AppearanceSubOptions(SubOptions):
+    def _get_nominal_group(self):
+        return HGroup(self._get_bg_group(), self._get_grid_group())
+
     def _get_layout_group(self):
-        # rc_grp = VGroup(HGroup(Item('object.layout.rows',
-        #                             enabled_when='object.layout.row_enabled'),
-        #                        Item('object.layout.columns',
-        #                             enabled_when='object.layout.column_enabled'
-        #                             ),
-        #                        Item('object.layout.fixed')),
-        #                 label='Layout', show_border=True)
-        # return rc_grp
         return VGroup(UItem('layout', style='custom'))
 
     def _get_xfont_group(self):
@@ -510,10 +505,19 @@ class AuxPlotFigureOptions(FigureOptions):
     error_info_font = Property
     error_info_fontname = Enum(*FONTS)
     error_info_fontsize = Enum(*SIZES)
+    naux_plots = Int(15)
 
     def setup(self):
+        while len(self.aux_plots) > self.naux_plots:
+
+            p = next((pp for pp in self.aux_plots if not pp.name or not pp.plot_enabled), None)
+            if not p:
+                break
+
+            self.aux_plots.remove(p)
+
         while 1:
-            if len(self.aux_plots) == NAUX_PLOTS:
+            if len(self.aux_plots) >= self.naux_plots:
                 break
 
             aux = self.aux_plot_klass()

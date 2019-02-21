@@ -155,7 +155,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                            units='(%)', attr='cumulative_ar39'),
                    VColumn(visible=ubit and options.include_radiogenic_yield,
                            label=('%', '<sup>40</sup>', 'Ar'),
-                           units='(%)', attr='rad40_percent'),
+                           units='(%)', attr='radiogenic_yield'),
                    VColumn(visible=ubit and options.include_F,
                            label=('<sup>40</sup>', 'Ar*/', '<sup>39</sup>', 'Ar', '<sub>K</sub>'),
                            attr='uF'),
@@ -178,7 +178,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                            attr='isochron3640')]
 
         # setup formats
-        sigfigs = ('age', 'kca', 'rad40_percent', 'cumulative_ar39', 'uF')
+        sigfigs = ('age', 'kca', 'radiogenic_yield', 'cumulative_ar39', 'uF')
         for c in columns:
             if c.attr in sigfigs:
                 c.sigformat = c.attr
@@ -293,7 +293,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                    EColumn(visible=ubit, attr='kca'),
                    VColumn(visible=ubit and options.include_radiogenic_yield,
                            label=('%', '<sup>40</sup>', 'Ar'),
-                           units='(%)', attr='rad40_percent'),
+                           units='(%)', attr='radiogenic_yield'),
                    VColumn(visible=ubit and options.include_F,
                            label=('<sup>40</sup>', 'Ar*/', '<sup>39</sup>', 'Ar', '<sub>K</sub>'),
                            attr='uF'),
@@ -1136,7 +1136,7 @@ if __name__ == '__main__':
             self.interference_corrections = {}
             self.production_ratios = {'Ca_K': 1.312}
             self.uF = ufloat(frand(10, 10), frand(10))
-            self.rad40_percent = frand(3, 100)
+            self.radiogenic_yield = frand(3, 100)
             self.rundate = datetime.now()
             self.decay_days = frand(2, 200)
             self.k2o = frand(2)

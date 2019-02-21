@@ -37,7 +37,9 @@ from traitsui.api import View, Item, UItem
 from pychron.core.helpers.color_generators import colorname_generator as color_generator
 from pychron.core.helpers.filetools import add_extension
 from pychron.graph.context_menu_mixin import ContextMenuMixin
+from pychron.graph.ml_label import MPlotAxis
 from pychron.graph.offset_plot_label import OffsetPlotLabel
+from pychron.graph.tools.axis_tool import AxisTool
 from .tools.contextual_menu_tool import ContextualMenuTool
 
 VALID_FONTS = [ 'Arial', 'Lucida Grande', 'Geneva', 'Courier']
@@ -690,7 +692,6 @@ class Graph(ContextMenuMixin):
         self._set_title('y_axis', title, plotid, **font)
 
     def add_axis_tool(self, plot, axis):
-        from pychron.graph.tools.axis_tool import AxisTool
         t = AxisTool(component=axis)
         plot.tools.append(t)
 
@@ -1332,13 +1333,31 @@ class Graph(ContextMenuMixin):
         axis = getattr(self.plots[plotid], axis)
         return axis.title
 
-    def _set_title(self, axis, title, plotid, font=None, size=None):
+    def _set_title(self, axistag, title, plotid, font=None, size=None):
         """
         """
         if plotid is None:
             plotid = len(self.plots) - 1
 
-        axis = getattr(self.plots[plotid], axis)
+        axis = getattr(self.plots[plotid], axistag)
+
+        if '<sup>' in title or '<sub>' in title:
+            plot = self.plots[plotid]
+            for t in plot.tools:
+                if t.component == axis:
+                    plot.tools.remove(t)
+                    break
+
+            nxa = MPlotAxis()
+            nxa.title = title
+            nxa.clone(axis)
+
+            t = AxisTool(component=nxa)
+            plot.tools.append(t)
+
+            setattr(self.plots[plotid], axistag, nxa)
+            axis = nxa
+
         params = dict(title=title)
 
         if font not in VALID_FONTS:

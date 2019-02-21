@@ -28,11 +28,9 @@ from uncertainties import std_dev, nominal_value, ufloat
 from pychron.core.filtering import filter_ufloats, sigma_filter
 from pychron.core.helpers.formatting import floatfmt, format_percent_error
 from pychron.graph.error_bar_overlay import ErrorBarOverlay
-from pychron.graph.ml_label import MPlotAxis
 from pychron.graph.ticks import SparseLogTicks
 from pychron.graph.ticks import SparseTicks
 from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
-from pychron.graph.tools.axis_tool import AxisTool
 from pychron.graph.tools.point_inspector import PointInspectorOverlay
 from pychron.graph.tools.rect_selection_tool import RectSelectionOverlay, \
     RectSelectionTool
@@ -377,7 +375,7 @@ class BaseArArFigure(SelectionFigure):
         return self._plot_aux('ifc <sup>40</sup>Ar/<sup>36</sup>Ar', k, po, pid)
 
     def _plot_radiogenic_yield(self, po, pobj, pid):
-        k = 'rad40_percent'
+        k = 'radiogenic_yield'
         return self._plot_aux('%<sup>40</sup>Ar*', k, po, pid)
 
     def _plot_kcl(self, po, pobj, pid):
@@ -411,36 +409,6 @@ class BaseArArFigure(SelectionFigure):
     def _get_aux_plot_data(self, k, scalar=1):
         vs = list(self._unpack_attr(k, scalar=scalar))
         return [nominal_value(vi) for vi in vs], [std_dev(vi) for vi in vs]
-
-    def _set_ml_title(self, text, plotid, ax):
-        plot = self.graph.plots[plotid]
-
-        tag = '{}_axis'.format(ax)
-        xa = getattr(plot, tag)
-        # remove the axis tool
-        self._remove_axis_tool(plot, xa)
-
-        nxa = MPlotAxis()
-
-        nxa.title = text
-        nxa.clone(xa)
-
-        setattr(plot, tag, nxa)
-        self._add_axis_tool(plot, nxa)
-        # nxa.do_layout(force=True)
-
-    # ===============================================================================
-    #
-    # ===============================================================================
-    def _remove_axis_tool(self, plot, axis):
-        for t in plot.tools:
-            if t.component == axis:
-                plot.tools.remove(t)
-                break
-
-    def _add_axis_tool(self, plot, axis):
-        t = AxisTool(component=axis)
-        plot.tools.append(t)
 
     def _handle_ylimits(self):
         pass

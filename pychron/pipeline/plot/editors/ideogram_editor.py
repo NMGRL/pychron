@@ -58,6 +58,10 @@ class IdeogramEditor(InterpretedAgeEditor):
     results_tables = List
     ttest_tables = List
 
+    # @on_trait_change('figure_model:panels:correlation_event')
+    # def handle_correlation_event(self, evt):
+    #     print('asdf', evt)
+
     @on_trait_change('figure_model:panels:figures:recalculate_event')
     def recalculate(self):
         self._get_component_hook()
@@ -78,7 +82,8 @@ class IdeogramEditor(InterpretedAgeEditor):
             if self.plotter_options.show_results_table:
                 r = IdeogramResultsTable(ags)
                 rs.append(r)
-            if self.plotter_options.show_ttest_table:
+
+            if self.plotter_options.show_ttest_table and len(ags) > 1:
                 t = TTestTable(ags)
                 ts.append(t)
 
@@ -109,12 +114,12 @@ class IdeogramEditor(InterpretedAgeEditor):
 
     def traits_view(self):
         tbl_grp = VGroup(listeditor('results_tables',
-                                    height=100),
+                                    height=130),
                          scrollable=True,
-                         visible_when='plotter_options.show_results_table')
+                         visible_when='results_tables')
 
-        ttest_grp = VGroup(listeditor('ttest_tables'),
-                           visible_when='plotter_options.show_ttest_table')
+        ttest_grp = VGroup(listeditor('ttest_tables', height=130),
+                           visible_when='ttest_tables')
 
         v = View(VSplit(VGroup(self.get_component_view()),
                         HGroup(tbl_grp, ttest_grp)),

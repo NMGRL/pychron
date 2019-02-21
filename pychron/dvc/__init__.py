@@ -64,6 +64,7 @@ class AnalysisNotAnvailableError(BaseException):
 
 def dvc_dump(obj, path):
     if obj is None:
+        print('no object to dump')
         return
 
     with open(path, 'w') as wfile:

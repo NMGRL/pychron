@@ -325,12 +325,21 @@ class Analysis(ArArAge, IdeogramPlotable):
     # sample
     sample = ''
     material = ''
+    grainsize = ''
     project = ''
     principal_investigator = ''
     latitude = 0
     longitude = 0
     elevation = 0
     igsn = ''
+    lithology = ''
+    lithology_type = ''
+    lithology_group = ''
+    lithology_class = ''
+    latitude = 0
+    longitude = 0
+    reference = ''
+    rlocation = ''
 
     # collection
     acquisition_software = None

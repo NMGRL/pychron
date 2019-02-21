@@ -54,21 +54,18 @@ def view(title):
                                      enabled_when='selected',
                                      tooltip='Apply factory defaults'))
 
-    # sgrp = VGroup(UItem('selected_subview',
-    #                     editor=ListStrEditor(name='subview_names')))
     sgrp = UItem('subview_names',
                  width=-120,
                  editor=TabularEditor(editable=False,
                                       adapter=SubviewAdapter(),
                                       selected='selected_subview'))
-    # sgrp = VGroup(UItem('selected_subview', editor=EnumEditor(name='subview_names')))
 
     ogrp = UItem('subview',
                  style='custom')
     bgrp = HGroup(sgrp, ogrp)
 
     v = okcancel_view(VGroup(agrp, bgrp),
-                      width=750,
+                      width=800,
                       height=750,
                       resizable=True,
                       title=title)

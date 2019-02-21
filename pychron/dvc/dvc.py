@@ -49,7 +49,7 @@ from pychron.git_archive.views import StatusView
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.paths import paths, r_mkdir
-from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS, NULL_STR
+from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS, NULL_STR, SAMPLE_METADATA
 
 TESTSTR = {'blanks': 'auto update blanks', 'iso_evo': 'auto update iso_evo'}
 
@@ -1000,63 +1000,24 @@ class DVC(Loggable):
         return [i.name for i in irrads]
 
     # add
+    def add_interpreted_ages(self, rid, iass):
+        ps = []
+        ialabels = []
+        for ia in iass:
+            d = self._make_interpreted_age_dict(ia)
+            rid, p = self._add_interpreted_age(d)
+            ps.append(p)
+            ialabels.append('{} {} {}'.format(ia.name, ia.identifier, ia.sample))
+
+        if self.repository_add_paths(rid, ps):
+            self.repository_commit(rid, '<IA> added interpreted ages {}'.format(','.join(ialabels)))
+
     def add_interpreted_age(self, ia):
-
-        a = ia.get_ma_scaled_age()
-        mswd = ia.get_preferred_mswd()
-
-        if isnan(mswd):
-            mswd = 0
-
-        d = {attr: getattr(ia, attr) for attr in ('sample', 'material', 'project', 'identifier', 'nanalyses',
-                                                  'irradiation',
-                                                  'name', 'uuid',
-                                                  'include_j_error_in_mean',
-                                                  'include_j_error_in_plateau',
-                                                  'include_j_position_error')}
-
-        db = self.db
-        with db.session_ctx():
-            dbid = db.get_identifier(ia.identifier)
-            if dbid:
-                sample = dbid.sample
-                if sample:
-                    d['latitude'] = sample.latitude
-                    d['longitude'] = sample.longitude
-                    d['lithology'] = sample.lithology
-
-        def analysis_factory(x):
-            return dict(uuid=x.uuid,
-                        record_id=x.record_id,
-                        age=x.age,
-                        age_err=x.age_err,
-                        age_err_wo_j=x.age_err_wo_j,
-                        radiogenic_yield=nominal_value(x.rad40_percent),
-                        radiogenic_yield_err=std_dev(x.rad40_percent),
-                        kca=float(nominal_value(x.kca)),
-                        kca_err=float(std_dev(x.kca)),
-                        kcl=float(nominal_value(x.kcl)),
-                        kcl_err=float(std_dev(x.kcl)),
-                        tag=x.tag,
-                        plateau_step=ia.get_is_plateau_step(x),
-                        baseline_corrected_intercepts=x.baseline_corrected_intercepts_to_dict(),
-                        blanks=x.blanks_to_dict(),
-                        icfactors=x.icfactors_to_dict(),
-                        ic_corrected_values=x.ic_corrected_values_to_dict(),
-                        interference_corrected_values=x.interference_corrected_values_to_dict())
-
-        d.update(age=float(nominal_value(a)),
-                 age_err=float(std_dev(a)),
-                 display_age_units=ia.age_units,
-                 preferred_kinds=ia.preferred_values_to_dict(),
-                 mswd=float(mswd),
-                 arar_constants=ia.arar_constants.to_dict(),
-                 ages=ia.ages(),
-                 analyses=[analysis_factory(xi) for xi in ia.analyses])
-
-        d['macrochron'] = self._make_macrochron(ia)
-
-        self._add_interpreted_age(ia, d)
+        d = self._make_interpreted_age_dict(ia)
+        rid, p = self._add_interpreted_age(ia, d)
+        if self.repository_add_paths(rid, p):
+            self.repository_commit(rid, '<IA> added interpreted age '
+                                        '{} identifier={} sample={}'.format(ia.name, ia.identifier, ia.sample))
 
     def add_repository_association(self, expid, runspec):
         db = self.db
@@ -1346,31 +1307,73 @@ class DVC(Loggable):
             ip.j = float(j)
             ip.j_err = float(e)
 
-    def _make_macrochron(self, ia):
-        m = {'material': ia.material,
-             'lithology': ia.lithology,
-             'lithology_group': ia.lithology_group,
-             'lithology_class': ia.lithology_class,
-             'lithology_type': ia.lithology_type,
-             'reference': ia.reference,
-             'rlocation': ia.rlocation}
-        return m
+    def _make_interpreted_age_dict(self, ia):
+        def ia_dict(keys):
+            return {attr: getattr(ia, attr) for attr in keys}
+
+        # make general
+        d = ia_dict(('name', 'uuid'))
+
+        # make analyses
+        def analysis_factory(x):
+            return dict(uuid=x.uuid,
+                        record_id=x.record_id,
+                        age=x.age,
+                        age_err=x.age_err,
+                        age_err_wo_j=x.age_err_wo_j,
+                        radiogenic_yield=nominal_value(x.radiogenic_yield),
+                        radiogenic_yield_err=std_dev(x.radiogenic_yield),
+                        kca=float(nominal_value(x.kca)),
+                        kca_err=float(std_dev(x.kca)),
+                        kcl=float(nominal_value(x.kcl)),
+                        kcl_err=float(std_dev(x.kcl)),
+                        tag=x.tag,
+                        plateau_step=ia.get_is_plateau_step(x),
+                        baseline_corrected_intercepts=x.baseline_corrected_intercepts_to_dict(),
+                        blanks=x.blanks_to_dict(),
+                        icfactors=x.icfactors_to_dict(),
+                        ic_corrected_values=x.ic_corrected_values_to_dict(),
+                        interference_corrected_values=x.interference_corrected_values_to_dict())
+
+        d['analyses'] = [analysis_factory(xi) for xi in ia.analyses]
+
+        # make sample metadata
+        d['sample_metadata'] = ia_dict(SAMPLE_METADATA)
+
+        # make preferred
+        pf = ia_dict(('nanalyses',
+                      'include_j_error_in_mean',
+                      'include_j_error_in_plateau',
+                      'include_j_position_error'))
+
+        a = ia.get_preferred_age()
+        mswd = ia.get_preferred_mswd()
+        pf.update({'age': float(nominal_value(a)),
+                   'age_err': float(std_dev(a)),
+                   'display_age_units': ia.age_units,
+                   'preferred_kinds': ia.preferred_values_to_dict(),
+                   'mswd': float(0 if isnan(mswd) else mswd),
+                   'arar_constants': ia.arar_constants.to_dict(),
+                   'ages': ia.ages()})
+        d['preferred'] = pf
+        return d
 
     def _add_interpreted_age(self, ia, d):
         rid = ia.repository_identifier
 
         ia_path_name = ia.identifier.replace(':', '_')
-        p = analysis_path(ia_path_name, rid, modifier='ia', mode='w')
 
         i = 0
-        while os.path.isfile(p):
-            p = analysis_path('{}_{:05d}'.format(ia.identifier, i), rid, modifier='ia', mode='w')
+        while 1:
+            p = analysis_path('{}_{:05d}'.format(ia_path_name, i), rid, modifier='ia', mode='w')
             i += 1
+            if not os.path.isfile(p):
+                break
 
         self.debug('saving interpreted age. {}'.format(p))
         dvc_dump(d, p)
-        if self.repository_add_paths(rid, p):
-            self.repository_commit(rid, '<IA> added interpreted age {}'.format(ia.name))
+        return rid, p
+
 
     def _load_repository(self, expid, prog, i, n):
         if prog:

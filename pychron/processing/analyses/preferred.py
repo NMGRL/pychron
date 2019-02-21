@@ -61,7 +61,7 @@ def make_preferred_values():
     preferred_values = [PreferredValue(name=name, attr=attr) for name, attr in (
         ('K/Ca', 'kca'),
         ('K/Cl', 'kcl'),
-        ('%40Ar*', 'rad40_percent'),
+        ('%40Ar*', 'radiogenic_yield'),
         ('Mol 39K', 'moles_k39'),
         ('Signal 39K', 'signal_k39'))]
     preferred_values.insert(0, AgePreferredValue(name='Age', attr='age'))

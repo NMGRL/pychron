@@ -79,7 +79,7 @@ SUBGROUPINGS = [WEIGHTED_MEAN,
                 INTEGRATED, VALID_INTEGRATED, PLATEAU_INTEGRATED, DEFAULT_INTEGRATED,
                 ARITHMETIC_MEAN]
 
-SUBGROUPING_ATTRS = ('age', 'kca', 'kcl', 'rad40_percent', 'moles_k39', 'signal_k39')
+SUBGROUPING_ATTRS = ('age', 'kca', 'kcl', 'radiogenic_yield', 'moles_k39', 'signal_k39')
 
 WEIGHTINGS = (NULL_STR, 'Volume', 'Variance')
 INTERPOLATE_TYPES = ['Preceding', 'Bracketing Interpolate', 'Bracketing Average']
@@ -234,4 +234,19 @@ IMAGE_STEPS = ('mount', 'us_wand', 'eds', 'cl', 'bse', 'se')
 
 SAMPLE_PREP_STEPS = INITIAL_STEPS + HIGH_GRADE_STEPS + IMAGE_STEPS
 
+SAMPLE_METADATA = ('sample',
+                   'material',
+                   'grainsize',
+                   'project',
+                   'principal_investigator',
+                   'latitude',
+                   'longitude',
+                   'lithology',
+                   'lithology_class',
+                   'lithology_group',
+                   'lithology_type',
+                   'rlocation',
+                   'irradiation',
+                   'irradiation_level',
+                   'irradiation_position')
 # ============= EOF =============================================

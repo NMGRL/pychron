@@ -105,7 +105,7 @@ class ConditionalsEditView(ConditionalsViewable):
     # pre_run_terminations_group = Any
 
     def __init__(self, detectors=None, *args, **kw):
-        attrs = ['', 'age', 'kca', 'kcl', 'cak', 'clk', 'rad40_percent'] + list(ARGON_KEYS)
+        attrs = ['', 'age', 'kca', 'kcl', 'cak', 'clk', 'radiogenic_yield'] + list(ARGON_KEYS)
 
         ratio_matrix = ['{}/{}'.format(i, j) for i in ARGON_KEYS for j in ARGON_KEYS if i != j]
         attrs.extend(ratio_matrix)

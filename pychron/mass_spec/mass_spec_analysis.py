@@ -70,7 +70,7 @@ class MassSpecAnalysis(Analysis):
         self.age = 0
         self.age_err = 0
         self.age_err_wo_j = 0
-        self.rad40_percent = ufloat(0, 0)
+        self.radiogenic_yield = ufloat(0, 0)
         self.rad4039 = ufloat(0, 0)
 
         arar = None
@@ -81,7 +81,7 @@ class MassSpecAnalysis(Analysis):
                 self.age = arar.Age
                 self.age_err = arar.ErrAge
                 self.age_err_wo_j = arar.ErrAgeWOErInJ
-                self.rad40_percent = ufloat(arar.PctRad, arar.PctRadEr)
+                self.radiogenic_yield = ufloat(arar.PctRad, arar.PctRadEr)
                 self.rad4039 = ufloat(arar.Rad4039, arar.Rad4039Er)
                 self.r3739 = ufloat(arar.R3739Cor, arar.ErR3739Cor)
                 self.Cl3839 = ufloat(arar.Cl3839, 0)

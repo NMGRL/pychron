@@ -20,6 +20,7 @@ from traitsui.tabular_adapter import TabularAdapter
 from uncertainties import nominal_value
 
 from pychron.core.helpers.formatting import floatfmt
+from pychron.core.pychron_traits import BorderVGroup
 
 
 class Result(HasTraits):
@@ -75,6 +76,8 @@ class TTestTable(HasTraits):
     adapter = Instance(TabularAdapter)
 
     def __init__(self, ags, *args, **kw):
+        super().__init__(*args, **kw)
+
         self.analysis_groups = ags
 
         self.adapter = self._make_adapter(ags)
@@ -88,11 +91,12 @@ class TTestTable(HasTraits):
         adp = ResultsAdapter()
 
         cols = [(a.identifier, '{}_value'.format(a.identifier)) for a in ags[1:]]
-        adp.columns = [('Name', 'name'), ] + cols
+        adp.columns = [('Identifier', 'name'), ] + cols
         return adp
 
     def traits_view(self):
-        v = View(UItem('results', editor=TabularEditor(adapter=self.adapter)))
+        v = View(BorderVGroup(UItem('results', editor=TabularEditor(adapter=self.adapter)),
+                              label='T-test Probabilities'))
         return v
 
 

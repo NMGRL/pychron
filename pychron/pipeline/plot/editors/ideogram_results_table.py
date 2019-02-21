@@ -19,6 +19,7 @@ from traitsui.tabular_adapter import TabularAdapter
 from uncertainties import std_dev, nominal_value
 
 from pychron.core.helpers.formatting import floatfmt
+from pychron.core.pychron_traits import BorderVGroup
 
 
 class IdeogramResultsAdapter(TabularAdapter):
@@ -72,6 +73,8 @@ class IdeogramResultsTable(HasTraits):
         self.analysis_groups = analysis_groups
 
     def traits_view(self):
-        v = View(UItem('analysis_groups', editor=TabularEditor(adapter=IdeogramResultsAdapter())))
+        v = View(BorderVGroup(UItem('analysis_groups',
+                                    editor=TabularEditor(adapter=IdeogramResultsAdapter())),
+                              label='Summary'))
         return v
 # ============= EOF =============================================

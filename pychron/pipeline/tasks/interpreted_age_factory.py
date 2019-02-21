@@ -15,14 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.confirmation_dialog import confirm
+from pyface.constant import YES
 from pyface.message_dialog import information
 from traits.api import List, HasTraits, Button, Any
-from traitsui.api import View, Item, TableEditor, EnumEditor, Controller, VGroup, TextEditor, HGroup
+from traitsui.api import View, Item, TableEditor, EnumEditor, Controller, VGroup, TextEditor, HGroup, UItem
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.macrochron.macrostrat_api import MacroStrat
@@ -38,15 +41,19 @@ class UObjectColumn(BaseColumn):
     editable = False
 
 
-lithology_grp = VGroup(
-                       Item('lithology', editor=EnumEditor(name='lithologies')),
+lithology_grp = VGroup(Item('lithology', editor=EnumEditor(name='lithologies')),
                        Item('lithology_class', label='Class', editor=EnumEditor(name='lithology_classes')),
                        Item('lithology_group', label='Group', editor=EnumEditor(name='lithology_groups')),
                        Item('lithology_type', label='Type', editor=EnumEditor(name='lithology_types')),
                        show_border=True, label='Lithology')
 
-metadata_grp = VGroup(Item('reference'),
-                      Item('rlocation'),
+metadata_grp = VGroup(HGroup(Item('sample'), Item('igsn')),
+                      HGroup(Item('material'), UItem('grainsize', tooltip='Grainsize (optional)')),
+                      Item('project'),
+                      Item('reference', label='Reference',
+                           tooltip='Published reference/citation for this interpreted age'),
+                      Item('rlocation', label='Relative Location', tooltip='Relative location of the sample '
+                                                                           'within the unit'),
                       HGroup(Item('latitude', label='Lat.'), Item('longitude', label='Lon.')),
                       lithology_grp,
                       show_border=True,
@@ -79,7 +86,7 @@ VIEW = okcancel_view(HGroup(icon_button_editor('sync_metadata_button', 'database
                                                        'this option if the metadata is missing or if the metadata '
                                                        'was modified after analysis')),
                      Item('items', show_label=False, editor=editor),
-                     width=900,
+                     width=1200,
                      title='Set Interpreted Age')
 
 
@@ -115,11 +122,29 @@ def set_interpreted_age(dvc, ias):
                                        dvc=dvc)
     iaf = InterpretedAgeFactoryView(model=model,
                                     repository_identifiers=repos)
-    info = iaf.edit_traits()
-    if info.result:
-        for ia in ias:
-            if ia.use:
-                dvc.add_interpreted_age(ia)
+
+    while 1:
+        info = iaf.edit_traits()
+        if info.result:
+            no_lat_lon = []
+            ias = [ia for ia in ias if ia.use]
+            for ia in ias:
+                if not ia.latitude and not ia.longitude:
+                    no_lat_lon.append('{} ({})'.format(ia.name, ia.identifier))
+
+            if no_lat_lon:
+                n = ','.join(no_lat_lon)
+                if not confirm(None, 'No Lat/Lon. entered for {}. Are you sure you want to continue without setting a '
+                                     'Lat/Lon?' 
+                                     ''.format(n)) == YES:
+                    continue
+
+            for rid, iass in groupby_key(ias, key='repository_identifier'):
+                dvc.add_interpreted_ages(rid, iass)
+
+            break
+        else:
+            break
 
 
 if __name__ == '__main__':

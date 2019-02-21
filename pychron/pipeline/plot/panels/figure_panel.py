@@ -28,20 +28,17 @@ from pychron.processing.analysis_graph import AnalysisStackedGraph
 
 class FigurePanel(HasTraits):
     figures = List
-    # graph = Any
     analyses = Any
     plot_options = Any
-    _index_attr = ''
     equi_stack = False
 
+    _index_attr = ''
     _graph_klass = AnalysisStackedGraph
     _figure_klass = Any
 
-    # plot_spacing = Int(0)
     meta = Any
     title = Str
     use_previous_limits = True
-
     track_value = True
 
     # @on_trait_change('analyses[]')

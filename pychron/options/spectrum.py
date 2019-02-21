@@ -37,6 +37,7 @@ class SpectrumAuxPlot(AuxPlot):
 
 
 class SpectrumOptions(AgeOptions):
+    naux_plots = 8
     aux_plot_klass = SpectrumAuxPlot
     edit_plateau_criteria = Button
 

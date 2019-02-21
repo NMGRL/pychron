@@ -176,7 +176,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                         'age.std',
                         'kca.std',
                         'kcl.std',
-                        'rad40_percent',
+                        'radiogenic_yield',
                         'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36'])
     trunc_comp = Enum('>', '<', '>=', '<=', '=')
     trunc_crit = Float(5000, enter_set=True, auto_set=False)

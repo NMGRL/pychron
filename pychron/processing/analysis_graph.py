@@ -16,7 +16,9 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traits.api import Event
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.graph.graph import Graph
@@ -42,6 +44,26 @@ class AnalysisGraph(Graph):
 
 class AnalysisStackedGraph(AnalysisGraph, StackedGraph):
     pass
+
+
+class SpectrumGraph(AnalysisStackedGraph):
+    make_ideogram_event = Event
+
+    def get_child_context_menu_actions(self):
+        return [self.action_factory('Ideogram...', 'make_ideogram')]
+
+    def make_ideogram(self):
+        self.make_ideogram_event = True
+
+
+class IdeogramGraph(AnalysisStackedGraph):
+    make_correlation_event = Event
+
+    def get_child_context_menu_actions(self):
+        return [self.action_factory('Correlation...', 'make_correlation')]
+
+    def make_correlation(self):
+        self.make_correlation_event = self.selected_plotid, self.selected_plot.y_axis.title
 
 
 class AnalysisStackedRegressionGraph(AnalysisGraph, StackedRegressionGraph):

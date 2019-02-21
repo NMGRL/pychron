@@ -126,8 +126,10 @@ class InverseIsochron(Isochron):
         xtitle = '<sup>39</sup>Ar/<sup>40</sup>Ar'
         ytitle = '<sup>36</sup>Ar/<sup>40</sup>Ar'
 
-        self._set_ml_title(ytitle, pid, 'y')
-        self._set_ml_title(xtitle, pid, 'x')
+        # self._set_ml_title(ytitle, pid, 'y')
+        # self._set_ml_title(xtitle, pid, 'x')
+        graph.set_y_title(ytitle, plotid=pid)
+        graph.set_x_title(xtitle, plotid=pid)
 
         p = graph.plots[pid]
         p.y_axis.title_spacing = 50

@@ -67,7 +67,7 @@ class ArArAge(IsotopeGroup):
     cak = 0
     kcl = 0
     clk = 0
-    rad40_percent = 0
+    radiogenic_yield = 0
     rad40 = 0
     total40 = 0
     k39 = None
@@ -467,7 +467,7 @@ class ArArAge(IsotopeGroup):
 
         self.non_ar_isotopes = non_ar
         self.computed = computed
-        self.rad40_percent = computed['rad40_percent']
+        self.radiogenic_yield = computed['radiogenic_yield']
         self.rad40 = computed['rad40']
         self.total40 = computed['a40']
         self.k39 = computed['k39']

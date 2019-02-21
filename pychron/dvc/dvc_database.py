@@ -41,7 +41,7 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
     AnalysisIntensitiesTbl, SimpleIdentifierTbl, SamplePrepChoicesTbl
 from pychron.globals import globalv
 from pychron.pychron_constants import ALPHAS, alpha_to_int, NULL_STR, EXTRACT_DEVICE, NO_EXTRACT_DEVICE, \
-    SAMPLE_PREP_STEPS
+    SAMPLE_PREP_STEPS, SAMPLE_METADATA
 
 
 def listify(obj):
@@ -208,17 +208,8 @@ class DVCDatabase(DatabaseAdapter):
         identifier = ia.identifier
         info = self.get_analysis_info(identifier)
         if info:
-            for attr in ('latitude', 'longitude', 'material',
-                         'project', 'principal_investigator', 'sample',
-                         'irradiation',
-                         'irradiation_level',
-                         'irradiation_position'):
-                if isinstance(attr, tuple):
-                    iaattr, dbattr = attr
-                else:
-                    iaattr, dbattr = attr, attr
-
-                setattr(ia, iaattr, info.get(dbattr))
+            for attr in SAMPLE_METADATA:
+                setattr(ia, attr, info.get(attr))
 
     def check_restricted_name(self, name, category, check_principal_investigator=False):
         """
@@ -293,11 +284,19 @@ class DVCDatabase(DatabaseAdapter):
                     if sample.material:
                         material = sample.material.name
                         info['material'] = material
-                        info['grainsize'] = sample.material.grainsize
+                        info['grainsize'] = sample.material.grainsize or ''
 
                     info['sample'] = sample.name
                     info['latitude'] = sample.lat
                     info['longitude'] = sample.lon
+                    info['lithology'] = sample.lithology
+                    info['lithology_class'] = sample.lithology_class
+                    info['lithology_type'] = sample.lithology_type
+                    info['lithology_group'] = sample.lithology_group
+
+                    # todo: add rlocatiion/reference to database
+                    info['rlocation'] = ''
+                    info['reference'] = ''
 
                 info['irradiation_level'] = dbpos.level.name
                 info['irradiation_position'] = dbpos.position

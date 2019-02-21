@@ -40,6 +40,14 @@ def AGProperty(*depends):
     return Property(depends_on=d)
 
 
+def MetaDataProperty(*depends):
+    d = 'metadata_refresh_needed'
+    if depends:
+        d = '{},{}'.format(','.join(depends), d)
+
+    return Property(depends_on=d)
+
+
 class AnalysisGroup(IdeogramPlotable):
     attribute = Str('uage')
     analyses = List
@@ -49,6 +57,11 @@ class AnalysisGroup(IdeogramPlotable):
     weighted_age = AGProperty()
     arith_age = AGProperty()
     integrated_age = AGProperty()
+    isochron_age = AGProperty()
+    j_err = AGProperty()
+    j = AGProperty()
+    total_n = AGProperty()
+
     integrated_age_weighting = Enum(WEIGHTINGS)
 
     age_error_kind = Enum(*ERROR_TYPES)
@@ -60,50 +73,44 @@ class AnalysisGroup(IdeogramPlotable):
 
     mswd = Property
 
-    isochron_age = AGProperty()
     isochron_age_error_kind = Str
-    identifier = Property
 
-    irradiation_label = Property
+    identifier = Any
+    aliquot = Any
+    repository_identifier = Any
+    irradiation = Any
+    irradiation_level = Any
+    irradiation_position = Any
+    sample = Any
+    project = Any
+    material = Any
+    igsn = Any
+    lithology = Any
+    lithology_type = Any
+    lithology_group = Any
+    lithology_class = Any
+    latitude = Any
+    longitude = Any
+    reference = Any
+    rlocation = Any
 
-    aliquot = Property(depends_on='_aliquot')
-    _aliquot = Any
-
-    repository_identifier = Property
-    irradiation = Property
-    irradiation_level = Property
-    irradiation_position = Property
-    sample = Property
-    project = Property
-    material = Property
-
-    _repository_identifier = None
-    _sample = None
-    _material = None
-    _project = None
-    _irradiation = None
-    _irradiation_position = None
-    _irradiation_level = None
+    arar_constants = Any
+    production_ratios = Any
+    monitor_info = Any
+    age_units = Any
+    grainsize = Any
 
     unit = Str
     location = Str
 
     # age_scalar = Property
-    age_units = Property
+    # age_units = AGProperty()
 
-    j_err = AGProperty()
-    j = AGProperty()
     include_j_error_in_mean = Bool(True)
     include_j_position_error = Bool(False)
 
     # percent_39Ar = AGProperty()
     dirty = Event
-
-    total_n = AGProperty()
-
-    arar_constants = AGProperty()
-    production_ratios = AGProperty()
-    monitor_info = AGProperty()
 
     isochron_4036 = None
     isochron_regressor = None
@@ -111,9 +118,35 @@ class AnalysisGroup(IdeogramPlotable):
     def __init__(self, *args, **kw):
         super(AnalysisGroup, self).__init__(make_arar_constants=False, *args, **kw)
 
-    @property
-    def nratio(self):
-        return '{}/{}'.format(self.nanalyses, len(self.analyses))
+    def _analyses_changed(self, new):
+        if new:
+            a = new[0]
+            for attr in ('identifier',
+                         'aliquot',
+                         'repository_identifier',
+                         'igsn',
+                         'sample',
+                         'material',
+                         'grainsize',
+                         'project',
+                         'irradiation',
+                         'irradiation_position',
+                         'irradiation_level',
+                         'irradiation_label',
+                         'lithology',
+                         'lithology_type',
+                         'lithology_group',
+                         'lithology_class',
+                         'latitude',
+                         'longitude',
+                         'reference',
+                         'rlocation',
+                         'production_ratios',
+                         'arar_constants'):
+                setattr(self, attr, getattr(a, attr))
+
+            self.monitor_info = a.monitor_age, a.monitor_reference
+            self.age_units = self.arar_constants.age_units
 
     def attr_stats(self, attr):
         w, sd, sem, (vs, es) = self._calculate_weighted_mean(attr, error_kind='both')
@@ -173,17 +206,26 @@ class AnalysisGroup(IdeogramPlotable):
 
             return ufloat(v, e)
 
+    def isochron_mswd(self):
+        if not self.isochron_4036:
+            self.calculate_isochron_age()
+        reg = self.isochron_regressor
+
+        return reg.mswd, reg.valid_mswd, reg.n
+
+    # properties
+    @property
+    def nratio(self):
+        return '{}/{}'.format(self.nanalyses, len(self.analyses))
+
+    @property
+    def labnumber(self):
+        return self.identifier
+
     @property
     def age_attr(self):
         return 'uage_w_position_err' if self.include_j_position_error else 'uage'
 
-    def _get_age_units(self):
-        return self.arar_constants.age_units
-
-    def _get_arar_constants(self):
-        return self.analyses[0].arar_constants
-
-    # @cached_property
     def _get_mswd(self):
         attr = self.attribute
         if attr.startswith('uage'):
@@ -192,16 +234,6 @@ class AnalysisGroup(IdeogramPlotable):
                 attr = 'uage_w_position_err'
 
         return self._calculate_mswd(attr)
-
-    def _calculate_mswd(self, attr, values=None):
-        m = 0
-        if values is None:
-            values = self._get_values(attr)
-        if values:
-            vs, es = values
-            m = calculate_mswd(vs, es)
-
-        return m
 
     @cached_property
     def _get_age_span(self):
@@ -233,23 +265,6 @@ class AnalysisGroup(IdeogramPlotable):
 
         return a
 
-    @property
-    def monitor_age(self):
-        return self.analyses[0].monitor_age
-
-    @property
-    def monitor_reference(self):
-        return self.analyses[0].monitor_reference
-
-    @cached_property
-    def _get_monitor_info(self):
-        a = self.analyses[0]
-        return a.monitor_age, a.monitor_reference
-
-    @cached_property
-    def _get_identifier(self):
-        return self.analyses[0].labnumber
-
     @cached_property
     def _get_arith_age(self):
         v, e = self._calculate_arithmetic_mean(self.age_attr)
@@ -271,6 +286,25 @@ class AnalysisGroup(IdeogramPlotable):
 
         except AttributeError:
             return ufloat(0, 0)
+
+    @cached_property
+    def _get_total_n(self):
+        return len(self.analyses)
+
+    @cached_property
+    def _get_nanalyses(self):
+        return len(list(self.clean_analyses()))
+
+    # private functions
+    def _calculate_mswd(self, attr, values=None):
+        m = 0
+        if values is None:
+            values = self._get_values(attr)
+        if values:
+            vs, es = values
+            m = calculate_mswd(vs, es)
+
+        return m
 
     def _apply_j_err(self, wa, force=False):
         if self.include_j_error_in_mean or force:
@@ -308,89 +342,6 @@ class AnalysisGroup(IdeogramPlotable):
         mswd = self._calculate_mswd(attr)
         e = self._modify_error(v, e, kind, mswd)
         return ufloat(v, e)
-
-    @cached_property
-    def _get_total_n(self):
-        return len(self.analyses)
-
-    @cached_property
-    def _get_nanalyses(self):
-        return len(list(self.clean_analyses()))
-
-    @cached_property
-    def _get_production_ratios(self):
-        ret = {}
-        if self.analyses:
-            ret = self.analyses[0].production_ratios
-
-        return ret
-
-    # metadata properties
-    @cached_property
-    def _get_aliquot(self):
-        return self._get_property('aliquot')
-
-    @cached_property
-    def _get_repository_identifier(self):
-        return self._get_property('repository_identifier')
-
-    @cached_property
-    def _get_irradiation_label(self):
-        return self.analyses[0].irradiation_label
-
-    @cached_property
-    def _get_irradiation(self):
-        return self._get_property('irradiation')
-
-    @cached_property
-    def _get_irradiation_level(self):
-        return self._get_property('irradiation_level')
-
-    @cached_property
-    def _get_irradiation_position(self):
-        return self._get_property('irradiation_position')
-
-    @cached_property
-    def _get_material(self):
-        return self._get_property('material')
-
-    @cached_property
-    def _get_sample(self):
-        return self._get_property('sample')
-
-    @cached_property
-    def _get_project(self):
-        return self._get_property('project')
-
-    def _set_irradiation(self, i):
-        self._irradiation = i
-
-    def _set_irradiation_position(self, p):
-        self._irradiation_position = p
-
-    def _set_irradiation_level(self, l):
-        self._irradiation_level = l
-
-    def _set_repository_identifier(self, v):
-        self._repository_identifier = v
-
-    def _set_aliquot(self, a):
-        self._aliquot = a
-
-    def _set_material(self, mat):
-        self._material = mat
-
-    def _set_sample(self, s):
-        self._sample = s
-
-    def _set_project(self, p):
-        self._project = p
-
-    def _get_property(self, tag):
-        v = getattr(self, '_{}'.format(tag))
-        if v is None:
-            v = getattr(self.analyses[0], tag)
-        return v
 
     def _get_values(self, attr):
         vs = (ai.get_value(attr) for ai in self.clean_analyses())
@@ -472,7 +423,7 @@ class AnalysisGroup(IdeogramPlotable):
                     if weighting == 'Volume':
                         weights = ks / sks
                     elif weighting == 'Variance':
-                        weights = [1/std_dev(k)**2 for k in ks]
+                        weights = [1 / std_dev(k) ** 2 for k in ks]
 
                     if weights is not None:
                         wmean, sum_weights = average([nominal_value(fi) for fi in ks / cas], weights=weights,
@@ -503,10 +454,10 @@ class AnalysisGroup(IdeogramPlotable):
                 elif attr == 'signal_k39':
                     uv = sks
 
-            elif attr == 'rad40_percent':
+            elif attr == 'radiogenic_yield':
                 ns = [ai.rad40 for ai in ans]
                 ds = [ai.total40 for ai in ans]
-                uv = sum(ns)/sum(ds)*100
+                uv = sum(ns) / sum(ds) * 100
             elif attr == 'moles_k39':
                 uv = sum([ai.moles_k39 for ai in ans])
             elif attr == 'age':
@@ -535,7 +486,7 @@ class AnalysisGroup(IdeogramPlotable):
             if weighting == 'Volume':
                 weights = ks / sks
             elif weighting == 'Variance':
-                weights = [1 / std_dev(k) ** 2 for k in rs/ks]
+                weights = [1 / std_dev(k) ** 2 for k in rs / ks]
 
             if weights is not None:
                 wmean, sum_weights = average([nominal_value(fi) for fi in rs / ks], weights=weights, returned=True)
@@ -552,13 +503,6 @@ class AnalysisGroup(IdeogramPlotable):
                 pass
 
         return ret
-
-    def isochron_mswd(self):
-        if not self.isochron_4036:
-            self.calculate_isochron_age()
-        reg = self.isochron_regressor
-
-        return reg.mswd, reg.valid_mswd, reg.n
 
 
 class StepHeatAnalysisGroup(AnalysisGroup):
@@ -588,7 +532,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
         v = None
         if state:
             self.calculate_isochron_age()
-            v = 1/self.isochron_4036
+            v = 1 / self.isochron_4036
             if not include_error:
                 v = ufloat(nominal_value(v), std_dev=0)
 
@@ -609,10 +553,6 @@ class StepHeatAnalysisGroup(AnalysisGroup):
 
     def plateau_analyses(self):
         return [a for a in self.clean_analyses() if self.get_is_plateau_step(a)]
-
-    @property
-    def labnumber(self):
-        return self.identifier
 
     @cached_property
     def _get_total_k2o(self):
@@ -742,24 +682,10 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
     name = Str
     use = Bool
 
-    lithology_class = Str
     lithology_classes = List
-
-    lithology_group = Str
     lithology_groups = List
-
-    lithology_type = Str
     lithology_types = List
-
-    lithology = Str
     lithologies = List
-
-    reference = Str
-
-    latitude = Float
-    longitude = Float
-
-    rlocation = Str
 
     comments = Str
     preferred_age = Property
@@ -775,7 +701,6 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
         super(Preferred, self).__init__()
         if self.analyses:
             self.has_subgroups(self.analyses)
-            self._set_metadata(self.analyses[0])
 
     def set_preferred_age(self, pk, ek):
         pv = self._get_pv('age')
@@ -821,8 +746,8 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
         return pv.uvalue
 
     @property
-    def rad40_percent(self):
-        pv = self._get_pv('rad40_percent')
+    def radiogenic_yield(self):
+        pv = self._get_pv('radiogenic_yield')
         return pv.uvalue
 
     @property
@@ -887,6 +812,9 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
     def preferred_values_to_dict(self):
         return [pv.to_dict() for pv in self.preferred_values]
 
+    def get_preferred_age(self):
+        return self._get_preferred_age()
+
     def get_ma_scaled_age(self):
         a = self._get_preferred_age()
         return self.arar_constants.scale_age(a, 'Ma')
@@ -950,11 +878,6 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
         pv = self._get_pv(attr)
         return pv
 
-    # private
-    def _set_metadata(self, analysis):
-        self.latitude = analysis.latitude
-        self.longitude = analysis.longitude
-
     # get preferred objects
     def _get_preferred_age(self):
         pa = ufloat(0, 0)
@@ -1017,7 +940,7 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
     def _name_default(self):
         name = ''
         if self.analyses:
-            name = make_aliquot(self.analyses[0].aliquot)
+            name = make_aliquot(self.aliquot)
         return name
 
     def _get_nanalyses(self):

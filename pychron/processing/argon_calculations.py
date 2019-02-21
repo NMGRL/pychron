@@ -379,7 +379,7 @@ def calculate_F(isotopes, decay_time, interferences=None, arar_constants=None, f
         except ZeroDivisionError:
             rp = ufloat(0, 0)
 
-        comp = {'rad40': rad40, 'a40': a40, 'rad40_percent': rp, 'ca37': ca37, 'ca39': ca39, 'ca36': ca36, 'k39': k39,
+        comp = {'rad40': rad40, 'a40': a40, 'radiogenic_yield': rp, 'ca37': ca37, 'ca39': ca39, 'ca36': ca36, 'k39': k39,
                 'atm40': atm40}
 
         ifc = {'Ar40': a40 - k40, 'Ar39': k39, 'Ar38': a38, 'Ar37': a37, 'Ar36': atm36}

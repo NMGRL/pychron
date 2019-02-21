@@ -23,6 +23,10 @@ from pychron.core.regression.mean_regressor import MeanRegressor
 from pychron.graph.tools.info_inspector import InfoInspector, InfoOverlay
 from pychron.pychron_constants import PLUSMINUS
 
+def make_correlation_statistics(reg):
+    lines = ['R\u00b2={}, R\u00b2-Adj.={}'.format(floatfmt(reg.rsquared), floatfmt(reg.rsquared_adj))]
+    return lines
+
 
 def make_statistics(reg, x=None):
     v, e = reg.predict(0), reg.predict_error(0)

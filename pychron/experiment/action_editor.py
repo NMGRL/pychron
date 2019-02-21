@@ -32,7 +32,7 @@ from pychron.paths import paths
 
 
 class ActionItem(HasTraits):
-    attr = Enum('age', 'kca', 'rad40_percent', 'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36', 'Ar41', '37/39')
+    attr = Enum('age', 'kca', 'radiogenic_yield', 'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36', 'Ar41', '37/39')
     comp = Enum('less than', 'greater than', 'between')
     value = Float
     value1 = Float

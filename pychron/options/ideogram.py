@@ -35,7 +35,7 @@ class IdeogramAuxPlot(AuxPlot):
 
 
 class IdeogramOptions(AgeOptions):
-
+    naux_plots = 8
     aux_plot_klass = IdeogramAuxPlot
 
     edit_label_format_button = Button

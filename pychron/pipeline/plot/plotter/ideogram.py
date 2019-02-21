@@ -716,10 +716,10 @@ class Ideogram(BaseArArFigure):
         if not po.ytitle_visible:
             title = ''
 
-        if '<sup>' in title or '<sub>' in title:
-            self._set_ml_title(title, pid, 'y')
-        else:
-            graph.set_y_title(title, plotid=pid)
+        # if '<sup>' in title or '<sub>' in title:
+        #     self._set_ml_title(title, pid, 'y')
+        # else:
+        graph.set_y_title(title, plotid=pid)
         graph.set_series_label('{}-{}'.format(title, self.group_id + 1),
                                plotid=pid)
         s.history_id = self.group_id

@@ -30,7 +30,15 @@ from pychron.graph.tools.point_inspector import PointInspector, \
 from pychron.graph.tools.rect_selection_tool import RectSelectionTool, \
     RectSelectionOverlay
 from pychron.graph.tools.regression_inspector import RegressionInspectorTool, \
-    RegressionInspectorOverlay, make_statistics
+    RegressionInspectorOverlay, make_statistics, make_correlation_statistics
+
+
+class StatisticsTextBoxOverlay(TextBoxOverlay):
+    pass
+
+
+class CorrelationTextBoxOverlay(TextBoxOverlay):
+    pass
 
 
 class NoRegressionCTX(object):
@@ -207,14 +215,25 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
             scatter.overlays.append(rect_overlay)
             scatter.tools.append(rect_tool)
 
+    def add_correlation_statistics(self, plotid=0):
+        plot = self.plots[plotid]
+        for k, v in plot.plots.items():
+            if k.startswith('fit'):
+                pp = v[0]
+                text = '\n'.join(make_correlation_statistics(pp.regressor))
+                label = CorrelationTextBoxOverlay(text=text,
+                                                  border_color='black')
+                pp.overlays.append(label)
+                break
+
     def add_statistics(self, plotid=0):
         plot = self.plots[plotid]
         for k, v in plot.plots.items():
             if k.startswith('fit'):
                 pp = v[0]
                 text = '\n'.join(make_statistics(pp.regressor))
-                label = TextBoxOverlay(text=text,
-                                       border_color='black')
+                label = StatisticsTextBoxOverlay(text=text,
+                                                 border_color='black')
                 pp.overlays.append(label)
                 break
 
@@ -566,9 +585,15 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
             for k, v in plot.plots.items():
                 if k.startswith('fit'):
                     pp = v[0]
-                    o = next((oo for oo in pp.overlays if isinstance(oo, TextBoxOverlay)), None)
+                    o = next((oo for oo in pp.overlays if isinstance(oo, StatisticsTextBoxOverlay)), None)
                     if o:
                         o.text = '\n'.join(make_statistics(pp.regressor))
                         o.request_redraw()
-                    break
+                        break
+
+                    o = next((oo for oo in pp.overlays if isinstance(oo, CorrelationTextBoxOverlay)), None)
+                    if o:
+                        o.text = '\n'.join(make_correlation_statistics(pp.regressor))
+                        o.request_redraw()
+                        break
 # ============= EOF =============================================

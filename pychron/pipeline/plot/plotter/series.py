@@ -42,7 +42,7 @@ AGE = 'Age'
 
 ATTR_MAPPING = {PEAK_CENTER: 'peak_center',
                 AGE: 'uage',
-                RADIOGENIC_YIELD: 'rad40_percent',
+                RADIOGENIC_YIELD: 'radiogenic_yield',
                 LAB_TEMP: 'lab_temperature',
                 LAB_HUM: 'lab_humidity',
                 LAB_AIRPRESSUE: 'lab_airpressure'}
@@ -185,10 +185,10 @@ class Series(BaseSeries):
                     ytitle = '{}{}'.format(ytitle, match.group('rem'))
 
         super(Series, self)._setup_plot(pid, pp, po)
-        if '<sup>' in ytitle or '<sub>' in ytitle:
-            self._set_ml_title(ytitle, pid, 'y')
-        else:
-            self.graph.set_y_title(ytitle, plotid=pid)
+        # if '<sup>' in ytitle or '<sub>' in ytitle:
+        #     self._set_ml_title(ytitle, pid, 'y')
+        # else:
+        self.graph.set_y_title(ytitle, plotid=pid)
 
     def plot(self, plots, legend=None):
         """

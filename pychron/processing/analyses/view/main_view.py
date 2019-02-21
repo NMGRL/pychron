@@ -362,8 +362,8 @@ class MainView(HasTraits):
             cv.append(self._computed_value_factory(name='F', tag='uf',
                                                    uvalue=an.uF))
 
-            cv.append(self._computed_value_factory(name='40Ar*', tag='rad40_percent',
-                                                   uvalue=an.rad40_percent))
+            cv.append(self._computed_value_factory(name='40Ar*', tag='radiogenic_yield',
+                                                   uvalue=an.radiogenic_yield))
 
             cv.append(self._computed_value_factory(name='Age', tag='uage',
                                                    uvalue=an.uage))
@@ -429,7 +429,7 @@ class MainView(HasTraits):
                  ('w/o J', 'wo_j', '', 'uage', 'age_err_wo_j'),
                  ('K/Ca', 'kca'),
                  ('K/Cl', 'kcl'),
-                 ('40Ar*', 'rad40_percent'),
+                 ('40Ar*', 'radiogenic_yield'),
                  ('F', 'uF'),
                  ('w/o Irrad', 'wo_irrad', '', 'uF', 'F_err_wo_irrad'))
 
