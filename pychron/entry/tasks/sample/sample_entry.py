@@ -26,9 +26,9 @@ from traitsui.api import UItem, Item, VGroup, HGroup, EnumEditor
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pychron_traits import EmailStr
 from pychron.dvc.dvc_irradiationable import DVCAble
+from pychron.entry.macrostrat_api import get_lithology_values
 from pychron.entry.tasks.sample.sample_edit_view import SampleEditModel, LatFloat, LonFloat, SAMPLE_ATTRS
 from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.macrochron.macrostrat_api import MacroStrat
 from pychron.paths import paths
 
 PI_REGEX = re.compile(r'^[A-Z]+\w+(, ?[A-Z]{1})*$')
@@ -374,8 +374,7 @@ class SampleEntry(DVCAble):
             self.db_samples = sams
 
     def _load_lithologies(self):
-        m = MacroStrat()
-        liths, groups, classes, types = m.get_lithology_values()
+        liths, groups, classes, types = get_lithology_values()
         self.lithologies = liths
         self.lithology_groups = groups
         self.lithology_classes = classes
