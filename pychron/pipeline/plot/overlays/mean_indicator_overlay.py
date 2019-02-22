@@ -16,10 +16,11 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.plot_label import PlotLabel
 from chaco.scatterplot import render_markers
-from traits.api import Color, Instance, Str, Float, Int, HasTraits, Any
+from traits.api import Color, Instance, Str, Float, Int, Any
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -27,7 +28,7 @@ from traits.api import Color, Instance, Str, Float, Int, HasTraits, Any
 from pychron.pipeline.plot.point_move_tool import LabelMoveTool
 
 
-class Movable(HasTraits):
+class MovableMixin:
     current_screen_point = None
     altered_screen_point = Any
 
@@ -38,7 +39,7 @@ class Movable(HasTraits):
         return data_pt
 
 
-class XYPlotLabel(PlotLabel, Movable):
+class XYPlotLabel(PlotLabel, MovableMixin):
     sx = Float
     sy = Float
 
@@ -117,7 +118,7 @@ def render_end_cap(gc, x, y, length=3):
         gc.draw_path()
 
 
-class MeanIndicatorOverlay(AbstractOverlay, Movable):
+class MeanIndicatorOverlay(AbstractOverlay, MovableMixin):
     color = Color
     label = Instance(PlotLabel)
     text = Str

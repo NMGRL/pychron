@@ -31,17 +31,21 @@ from pychron.core.helpers.strtools import to_bool
 from pychron.envisage.view_util import open_view, close_views, report_view_stats
 from pychron.globals import globalv
 from pychron.hardware.core.i_core_device import ICoreDevice
-from pychron.loggable import Loggable
+from pychron.loggable import LoggableMixin
 from pychron.paths import paths
 from pychron.startup_test.results_view import ResultsView
 from pychron.startup_test.tester import StartupTester
 
 
-class BaseTasksApplication(TasksApplication, Loggable):
+class BaseTasksApplication(TasksApplication, LoggableMixin):
     about_dialog = Instance(Dialog)
     startup_tester = Instance(StartupTester)
     uis = List
     available_task_extensions = ExtensionPoint(id='pychron.available_task_extensions')
+
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
+        self.init_logger()
 
     def _started_fired(self):
         st = self.startup_tester

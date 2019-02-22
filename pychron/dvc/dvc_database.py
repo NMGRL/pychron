@@ -206,7 +206,7 @@ class DVCDatabase(DatabaseAdapter):
 
     def sync_ia_metadata(self, ia):
         identifier = ia.identifier
-        info = self.get_analysis_info(identifier)
+        info = self.get_identifier_info(identifier)
         if info:
             for attr in SAMPLE_METADATA:
                 setattr(ia, attr, info.get(attr))
@@ -264,7 +264,7 @@ class DVCDatabase(DatabaseAdapter):
             r = self.get_repository(repo)
             return [a.analysis for a in r.repository_associations]
 
-    def get_analysis_info(self, li):
+    def get_identifier_info(self, li):
         with self.session_ctx():
             dbpos = self.get_identifier(li)
             if not dbpos:

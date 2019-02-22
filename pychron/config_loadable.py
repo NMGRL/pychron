@@ -16,15 +16,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from pychron.base_config_loadable import BaseConfigLoadable
-from .loggable import Loggable
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.loggable import LoggableMixin
 
 
-class ConfigLoadable(BaseConfigLoadable, Loggable):
+class ConfigLoadable(BaseConfigLoadable, LoggableMixin):
     """
     """
-
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
+        self.init_logger()
 # ============= EOF =============================================

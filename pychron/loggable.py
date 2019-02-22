@@ -58,11 +58,11 @@ class unique(object):
         return wrapped_f
 
 
-class Loggable(HasTraits):
+class LoggableMixin:
     """
     """
     application = Any
-    logger = Any  # (transient=True)
+    logger = None  # (transient=True)
     name = String
     logger_name = String
     # use_logger_display = True
@@ -70,10 +70,11 @@ class Loggable(HasTraits):
     logcolor = 'black'
     shared_logger = False
 
-    # logger_display = None
-    def __init__(self, *args, **kw):
-        super(Loggable, self).__init__(*args, **kw)
+    # def __init__(self, *args, **kw):
+    #     super().__init__(*args, **kw)
+    #     self.init_logger()
 
+    def init_logger(self):
         t = str(type(self))
         if self.shared_logger and t in __gloggers__:
             self.logger = __gloggers__[t]
@@ -183,10 +184,9 @@ class Loggable(HasTraits):
         """
 
         """
-
-        if self.logger_name:
+        if isinstance(self.logger_name, str):
             name = self.logger_name
-        elif self.name:
+        elif isinstance(self.name, str):
             name = self.name
         else:
             name = self.__class__.__name__
@@ -232,5 +232,11 @@ class Loggable(HasTraits):
 
     def _logger_name_changed(self):
         self._add_logger()
+
+
+class Loggable(HasTraits, LoggableMixin):
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
+        self.init_logger()
 
 # ============= EOF =============================================

@@ -139,6 +139,11 @@ class AutomatedRunSpec(HasTraits):
     grainsize = ''
     latitude = ''
     longitude = ''
+    lithology = ''
+    lithology_class = ''
+    lithology_group = ''
+    lithology_type = ''
+
     data_reduction_tag = ''
     result_str = ''
 

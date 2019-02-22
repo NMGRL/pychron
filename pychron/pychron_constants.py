@@ -249,4 +249,25 @@ SAMPLE_METADATA = ('sample',
                    'irradiation',
                    'irradiation_level',
                    'irradiation_position')
+
+EXTRACTION_ATTRS = ('weight', 'extract_device', 'tray', 'extract_value',
+                    'extract_units',
+                    # 'duration',
+                    # 'cleanup',
+                    'load_name',
+                    'load_holder',
+                    'extract_duration',
+                    'cleanup_duration',
+                    'pattern', 'beam_diameter', 'ramp_duration', 'ramp_rate')
+
+META_ATTRS = ('analysis_type', 'uuid', 'identifier', 'aliquot', 'increment',
+
+              'comment', 'mass_spectrometer',
+              'username', 'queue_conditionals_name',
+              'repository_identifier',
+              'acquisition_software',
+              'data_reduction_software', 'instrument_name', 'laboratory', 'experiment_queue_name', 'experiment_type',
+
+              ) + SAMPLE_METADATA
+
 # ============= EOF =============================================

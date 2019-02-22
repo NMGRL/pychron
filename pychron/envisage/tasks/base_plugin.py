@@ -16,36 +16,21 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from envisage.plugin import Plugin
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.loggable import Loggable
+from pychron.loggable import LoggableMixin
 
 
-class BasePlugin(Plugin, Loggable):
+class BasePlugin(Plugin, LoggableMixin):
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
+        self.init_logger()
+
     def check(self):
         return True
-
-        # def _set_preference_defaults(self, defaults, prefid):
-        #     """
-        #
-        #     :param defaults: list(tuple) [(str, object),]
-        #     :param prefid: str preference_path e.g pychron.update
-        #     :return:
-        #     """
-        #     change = False
-        #     prefs = self.application.preferences
-        #     self.debug('setting default preferences for {} {}'.format(self.name, self.id))
-        #     for k, d in defaults:
-        #         if k not in prefs.keys(prefid):
-        #             self.debug('Setting default preference {}={}'.format(k, d))
-        #             prefs.set('{}.{}'.format(prefid, k), d)
-        #             change = True
-        #
-        #     if change:
-        #         prefs.flush()
-        #     else:
-        #         self.debug('defaults already set')
 
 # ============= EOF =============================================
 

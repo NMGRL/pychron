@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
-from traits.has_traits import HasTraits
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 import time
@@ -25,7 +25,7 @@ from queue import Queue, Empty
 from threading import Thread
 
 
-class ConsumerMixin(HasTraits):
+class ConsumerMixin:
     _consumer_queue = None
     _should_consume = False
     _consume_func = None

@@ -45,26 +45,6 @@ Fit = namedtuple('Fit', 'fit '
 
 logger = new_logger('Analysis')
 
-EXTRACTION_ATTRS = ('weight', 'extract_device', 'tray', 'extract_value',
-                    'extract_units',
-                    # 'duration',
-                    # 'cleanup',
-                    'load_name',
-                    'load_holder',
-                    'extract_duration',
-                    'cleanup_duration',
-                    'pattern', 'beam_diameter', 'ramp_duration', 'ramp_rate')
-
-META_ATTRS = ('analysis_type', 'uuid', 'identifier', 'aliquot', 'increment',
-              'sample', 'project', 'principal_investigator', 'material',
-              'irradiation', 'irradiation_level', 'irradiation_position',
-              'comment', 'mass_spectrometer',
-              'username', 'queue_conditionals_name',
-              'repository_identifier',
-              'acquisition_software',
-              'latitude', 'longitude',
-              'data_reduction_software', 'instrument_name', 'laboratory', 'experiment_queue_name', 'experiment_type')
-
 
 def min_max(a, b, vs):
     return min(a, vs.min()), max(b, vs.max())
@@ -115,7 +95,7 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
                         pass
             return nl
 
-        nrows = ceil(len(isotopes)/ncols)
+        nrows = ceil(len(isotopes) / ncols)
         isotopes = reorder(isotopes, nrows)
         g = ColumnStackedRegressionGraph(resizable=True, ncols=ncols, nrows=nrows,
                                          container_dict={'padding_top': 40,

@@ -32,7 +32,7 @@ from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.envisage.tasks.editor_task import EditorTask
 from pychron.execute_mixin import ExecuteMixin
 from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
-from pychron.loggable import Loggable
+from pychron.loggable import LoggableMixin
 from pychron.paths import paths
 from pychron.pyscripts.tasks.git_actions import CommitChangesAction
 from pychron.pyscripts.tasks.pyscript_actions import JumpToGosubAction, ExpandGosubsAction, MakeGosubAction
@@ -123,8 +123,10 @@ class ScriptExecutorMixin(ExecuteMixin):
     #     return PyScriptRunner()
 
 
-class ScriptExecutor(ScriptExecutorMixin, Loggable):
-    pass
+class ScriptExecutor(ScriptExecutorMixin, LoggableMixin):
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
+        self.init_logger()
 
 
 class PyScriptTask(EditorTask, ScriptExecutorMixin):

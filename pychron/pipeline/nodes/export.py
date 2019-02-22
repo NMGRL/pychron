@@ -31,7 +31,7 @@ from pychron.core.ui.strings import SpacelessStr
 from pychron.paths import paths
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.state import get_isotope_set
-from pychron.processing.analyses.analysis import META_ATTRS, EXTRACTION_ATTRS
+from pychron.pychron_constants import EXTRACTION_ATTRS, META_ATTRS
 
 
 class CSVExportNode(BaseNode):
