@@ -1,0 +1,57 @@
+name: sphinx_pychron
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - alabaster=0.7.12=py_0
+  - asn1crypto=0.24.0=py37_1003
+  - babel=2.6.0=py_1
+  - bzip2=1.0.6=h1de35cc_1002
+  - ca-certificates=2018.11.29=ha4d7672_0
+  - certifi=2018.11.29=py37_1000
+  - cffi=1.12.1=py37h342bebf_0
+  - chardet=3.0.4=py37_1003
+  - commonmark=0.8.1=py_0
+  - cryptography=2.5=py37ha12b0ac_0
+  - docutils=0.14=py37_1001
+  - future=0.17.1=py37_1000
+  - icu=58.2=h0a44026_1000
+  - idna=2.8=py37_1000
+  - imagesize=1.1.0=py_0
+  - jinja2=2.10=py_1
+  - jpeg=9c=h1de35cc_1001
+  - libcxx=7.0.0=h2d50403_2
+  - libffi=3.2.1=h0a44026_1005
+  - libpng=1.6.36=ha441bb4_1000
+  - llvm-meta=7.0.0=0
+  - markupsafe=1.1.0=py37h1de35cc_1000
+  - ncurses=6.1=h0a44026_1002
+  - openssl=1.1.1a=h1de35cc_1000
+  - packaging=19.0=py_0
+  - pip=19.0.3=py37_0
+  - pycparser=2.19=py_0
+  - pygments=2.3.1=py_0
+  - pyopenssl=19.0.0=py37_0
+  - pyparsing=2.3.1=py_0
+  - pyqt=5.6.0=py37hc26a216_1008
+  - pysocks=1.6.8=py37_1002
+  - python=3.7.2=haf84260_0
+  - pytz=2018.9=py_0
+  - qt=5.6.2=h822fa55_1013
+  - readline=7.0=hcfe32e1_1001
+  - recommonmark=0.5.0=py_0
+  - requests=2.21.0=py37_1000
+  - setuptools=40.8.0=py37_0
+  - sip=4.18.1=py37h0a44026_1000
+  - six=1.12.0=py37_1000
+  - snowballstemmer=1.2.1=py_1
+  - sphinx=1.8.4=py37_0
+  - sphinxcontrib-websupport=1.1.0=py_1
+  - sqlite=3.26.0=h1765d9f_1000
+  - tk=8.6.9=ha441bb4_1000
+  - urllib3=1.24.1=py37_1000
+  - wheel=0.33.1=py37_0
+  - xz=5.2.4=h1de35cc_1001
+  - zlib=1.2.11=h1de35cc_1004
+#prefix: //anaconda/envs/sphinx_pychron
+
