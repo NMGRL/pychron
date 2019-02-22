@@ -27,7 +27,7 @@ from traitsui.table_column import ObjectColumn
 # ============= local library imports  ==========================
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
-from pychron.entry.macrostrat_api import get_lithology_values
+from pychron.entry.providers.macrostrat import get_lithology_values
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
 from pychron.processing.analyses.preferred import preferred_item
