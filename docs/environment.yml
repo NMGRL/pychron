@@ -53,5 +53,5 @@ dependencies:
   - wheel=0.33.1=py37_0
   - xz=5.2.4=h1de35cc_1001
   - zlib=1.2.11=h1de35cc_1004
-#prefix: //anaconda/envs/sphinx_pychron
+prefix: //anaconda/envs/sphinx_pychron
 
