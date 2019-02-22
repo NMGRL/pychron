@@ -1,7 +1,7 @@
-requirements_file: docs/requirements.txt
+#requirements_file: docs/requirements.txt
 
 python:
    version: 3.5
 
 conda:
-   environment: environment.yml
+   environment: docs/environment.yml
