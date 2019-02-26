@@ -407,11 +407,11 @@ class UnknownsAdapter(BaseAnalysesAdapter):
                            grp)
 
     def _get_f_text(self):
-        r = floatfmt(self.item.F, n=4)
+        r = floatfmt(self.item.f, n=4)
         return r
 
     def _get_f_error_text(self):
-        r = floatfmt(self.item.F_err, n=4)
+        r = floatfmt(self.item.f_err, n=4)
         return r
 
     def _get_j_text(self):

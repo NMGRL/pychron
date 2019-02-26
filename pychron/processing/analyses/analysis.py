@@ -543,7 +543,7 @@ class Analysis(ArArAge, IdeogramPlotable):
 
     def _value_string(self, t):
         if t == 'uF':
-            a, e = self.F, self.F_err
+            a, e = self.f, self.f_err
         elif t == 'uage':
             a, e = nominal_value(self.uage), std_dev(self.uage)
         else:

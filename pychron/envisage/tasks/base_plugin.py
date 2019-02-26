@@ -21,10 +21,10 @@ from envisage.plugin import Plugin
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.loggable import LoggableMixin
+from pychron.loggable import Loggable
 
 
-class BasePlugin(Plugin, LoggableMixin):
+class BasePlugin(Plugin, Loggable):
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
         self.init_logger()

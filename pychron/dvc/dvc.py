@@ -1010,6 +1010,12 @@ class DVC(Loggable):
             ialabels.append('{} {} {}'.format(ia.name, ia.identifier, ia.sample))
 
         if self.repository_add_paths(rid, ps):
+            sparrow = self.application.get_service('pychron.sparrow.sparrow.Sparrow')
+            if sparrow:
+                if sparrow.connect():
+                    for p in ps:
+                        sparrow.insert_ia(p)
+
             self.repository_commit(rid, '<IA> added interpreted ages {}'.format(','.join(ialabels)))
             return True
 
@@ -1319,6 +1325,7 @@ class DVC(Loggable):
         def analysis_factory(x):
             return dict(uuid=x.uuid,
                         record_id=x.record_id,
+                        extract_value=x.extract_value,
                         age=x.age,
                         age_err=x.age_err,
                         age_err_wo_j=x.age_err_wo_j,

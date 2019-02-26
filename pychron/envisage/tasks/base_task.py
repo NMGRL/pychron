@@ -41,7 +41,7 @@ from pychron.envisage.tasks.actions import GenericSaveAction, GenericSaveAsActio
     MinimizeAction, PositionAction, IssueAction, CloseAction, CloseOthersAction, AboutAction, OpenAdditionalWindow, \
     NoteAction, RestartAction, DocumentationAction, ChangeLogAction, StartupTestsAction, \
     ShareSettingsAction, ApplySettingsAction
-from pychron.loggable import LoggableMixin
+from pychron.loggable import Loggable
 from pychron.paths import paths
 
 
@@ -132,7 +132,7 @@ class TaskGroup(Group):
     items = List
 
 
-class BaseTask(Task, LoggableMixin, PreferenceMixin):
+class BaseTask(Task, Loggable, PreferenceMixin):
 
     _full_window = False
 

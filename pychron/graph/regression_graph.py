@@ -460,7 +460,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
     def _poly_regress(self, scatter, r, fit):
         from pychron.core.regression.ols_regressor import PolynomialRegressor
         from pychron.core.regression.wls_regressor import WeightedPolynomialRegressor
-        if hasattr(scatter, 'yerror'):
+        if hasattr(scatter, 'yerror') and any(scatter.yerror.get_data()):
             if r is None or not isinstance(r, WeightedPolynomialRegressor):
                 r = WeightedPolynomialRegressor()
         else:

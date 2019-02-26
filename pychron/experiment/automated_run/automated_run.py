@@ -617,7 +617,7 @@ class AutomatedRun(Loggable):
                     self.debug('peak center: mean={} threshold={}'.format(ym, self.peak_center_threshold))
                     if ym < peak_center_threshold:
                         self.warning(
-                            'Skipping peak center. intensities to small. {}<{}'.format(ym, self.peak_center_threshold))
+                            'Skipping peak center. intensities too small. {}<{}'.format(ym, self.peak_center_threshold))
                         return
                 else:
                     self.debug('No isotope="{}", Det="{}" in isotope group. {}'.format(isotope, detector,

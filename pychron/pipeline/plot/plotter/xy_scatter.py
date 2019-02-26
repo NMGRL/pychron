@@ -17,11 +17,9 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
-from __future__ import absolute_import
-
 from numpy import array
 # ============= local library imports  ==========================
-from uncertainties import nominal_value
+from uncertainties import nominal_value, std_dev
 
 # from pychron.processing.plotters.xy.xy_scatter_tool import XYScatterTool
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
@@ -30,14 +28,17 @@ from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 class XYScatter(BaseArArFigure):
     def build(self, plots):
         graph = self.graph
-        padding = self.options.paddings()
+        opt = self.options
+        padding = opt.paddings()
         for i, po in enumerate(plots):
             p = graph.new_plot(ytitle=po.ytitle, xtitle=po.xtitle, padding=padding)
-
-            p.value_range.tight_bounds = False
             self._setup_plot(i, p, po)
 
+        graph.refresh()
+
     def plot(self, plots, legend=None):
+        graph = self.graph
+        opt = self.options
         if plots:
             for i, po in enumerate(plots):
                 if po.name in ('Ratio', 'Scatter'):
@@ -45,14 +46,30 @@ class XYScatter(BaseArArFigure):
                 elif po.name == 'TimeSeries':
                     self._plot_series(po, i)
 
+                if opt.show_statistics:
+                    graph.add_statistics(plotid=i)
+
     def _plot_ratio(self, po, i):
         xs = [nominal_value(ai) for ai in self._unpack_attr(po.xtitle)]
         ys = [nominal_value(ai) for ai in self._unpack_attr(po.ytitle)]
 
-        self.graph.new_series(x=array(xs), y=array(ys),
-                              add_inspector=False,
-                              marker=po.marker,
-                              marker_size=po.marker_size)
+        plot, scatter, line = self.graph.new_series(x=array(xs), y=array(ys),
+                                                    fit='linear',
+                                                    add_inspector=False,
+                                                    marker=po.marker,
+                                                    marker_size=po.marker_size)
+
+        opt = self.options
+        nsigma = opt.error_bar_nsigma
+        for axk in 'xy':
+            caps = getattr(opt, '{}_end_caps'.format(axk))
+            visible = getattr(po, '{}_error'.format(axk))
+
+            attr = getattr(po, '{}title'.format(axk))
+            es = [std_dev(ai) for ai in self._unpack_attr(attr)]
+            self._add_error_bars(scatter, es, axk, nsigma,
+                                 end_caps=caps,
+                                 visible=visible)
 
     def _plot_series(self, po, i):
         pass

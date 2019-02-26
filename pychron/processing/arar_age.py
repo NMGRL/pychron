@@ -77,6 +77,7 @@ class ArArAge(IsotopeGroup):
     F_err = None
     F_err_wo_irrad = None
 
+
     uage = None
     uage_w_j_err = None
     uage_w_position_err = None
@@ -118,6 +119,14 @@ class ArArAge(IsotopeGroup):
         self.production_ratios = {}
         self.temporary_ic_factors = {}
         self.discrimination = ufloat(1, 0)
+
+    @property
+    def f(self):
+        return self.F
+
+    @property
+    def f_err(self):
+        return self.F_err
 
     @property
     def k2o(self):

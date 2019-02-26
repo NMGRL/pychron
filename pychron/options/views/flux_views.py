@@ -19,6 +19,7 @@ from chaco.default_colormaps import color_map_name_dict
 from traitsui.api import Item, HGroup, VGroup, Readonly, EnumEditor
 
 from pychron.options.options import SubOptions, AppearanceSubOptions
+from pychron.pychron_constants import MAIN, APPEARANCE
 
 
 class FluxSubOptions(SubOptions):
@@ -68,6 +69,6 @@ class FluxAppearanceSubOptions(AppearanceSubOptions):
         return self._make_view(VGroup(twodgrp, onedgrp, scalegrp))
 
 
-VIEWS = {'main': FluxSubOptions,
-         'appearance': FluxAppearanceSubOptions}
+VIEWS = {MAIN.lower(): FluxSubOptions,
+         APPEARANCE.lower(): FluxAppearanceSubOptions}
 # ============= EOF =============================================

@@ -20,7 +20,7 @@ from traits.api import Bool
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.loggable import LoggableMixin
+from pychron.loggable import Loggable
 
 
 def grouped_name(names, delimiter='-'):
@@ -45,7 +45,7 @@ def grouped_name(names, delimiter='-'):
     return s
 
 
-class BaseTraitsEditor(TraitsEditor, LoggableMixin):
+class BaseTraitsEditor(TraitsEditor, Loggable):
     dirty = Bool(False)
     _destroyed = False
 

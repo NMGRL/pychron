@@ -88,6 +88,8 @@ class CryoManager(Manager):
 
         if v1 is not None:
             self.devices[idx].set_setpoints(v1, v2)
+
+        self.debug('set_setpoint returning "{}","{}"'.format(v1, v2))
         return v1, v2
 
     def _lookup_species_temp(self, v):

@@ -74,9 +74,6 @@ class IdeogramOptions(AgeOptions):
     # asymptotic_width = Float)
     asymptotic_height_percent = Float
 
-    x_end_caps = Bool(False)
-    y_end_caps = Bool(False)
-    error_bar_nsigma = Enum(1, 2, 3)
     analysis_number_sorting = Enum('Oldest @Top', 'Youngest @Top')
 
     mean_indicator_font = Property

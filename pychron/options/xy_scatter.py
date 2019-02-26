@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str, List
+from traits.api import Str, List, Bool
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -77,13 +77,16 @@ NAMES = ['Ratio', 'TimeSeries', 'Scatter']
 
 class XYScatterOptions(AuxPlotFigureOptions):
     aux_plot_klass = XYScatterAuxPlot
+    naux_plots = 4
+
+    show_statistics = Bool
 
     def initialize(self):
-        self.subview_names = [MAIN, APPEARANCE]
+        self.subview_names = [MAIN, 'Options', APPEARANCE]
 
     def set_names(self, isotope_keys):
         nn = isotope_keys + NAMES
-        anames = isotope_keys + ['age', 'kca',
+        anames = isotope_keys + ['age', 'f', 'j', 'kca', 'kcl',
                                  'extract_value', 'extract_duration', 'cleanup_duration']
         for ai in self.aux_plots:
             if ai.name not in nn:

@@ -97,6 +97,8 @@ class AnalysisGroup(IdeogramPlotable):
     arar_constants = Any
     production_ratios = Any
     monitor_info = Any
+    monitor_age = Any
+    monitor_reference = Any
     age_units = Any
     grainsize = Any
 
@@ -142,7 +144,9 @@ class AnalysisGroup(IdeogramPlotable):
                          'reference',
                          'rlocation',
                          'production_ratios',
-                         'arar_constants'):
+                         'arar_constants',
+                         'monitor_age',
+                         'monitor_reference'):
                 setattr(self, attr, getattr(a, attr))
 
             self.monitor_info = a.monitor_age, a.monitor_reference

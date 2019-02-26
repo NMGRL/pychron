@@ -507,6 +507,10 @@ class AuxPlotFigureOptions(FigureOptions):
     error_info_fontsize = Enum(*SIZES)
     naux_plots = Int(15)
 
+    x_end_caps = Bool(False)
+    y_end_caps = Bool(False)
+    error_bar_nsigma = Enum(1, 2, 3)
+
     def setup(self):
         while len(self.aux_plots) > self.naux_plots:
 

@@ -14,6 +14,7 @@ JSON format
             "age_err_wo_j": float,
             "baseline_corrected_intercepts": {},
             "blanks": {},
+            "extract_value": float,
             "ic_corrected_values": {},
             "icfactors": {},
             "interference_corrected_values": {},
@@ -65,6 +66,8 @@ JSON format
         "include_j_error_in_mean": bool,
         "include_j_error_in_plateau": bool,
         "include_j_position_error": bool,
+        "monitor_age": float,
+        "monitor_reference": str,
         "mswd": float,
         "nanalyses": int,
         "preferred_kinds": [
