@@ -52,5 +52,6 @@ dependencies:
   - wheel
   - xz
   - zlib
+  - sqlalchemy
 prefix: //anaconda/envs/sphinx_pychron
 

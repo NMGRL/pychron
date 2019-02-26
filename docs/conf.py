@@ -21,9 +21,9 @@ os.environ['RTD'] = 'True'
 
 sys.path.insert(0, os.path.abspath('../'))
 
-
-autodoc_mock_imports = ['chaco','traits', 'traitsui','pyface',
-                        'pyvisa', 'serial', 'numpy', 'scipy', 'yaml', 'sqlalchemy',
+autodoc_mock_imports = ['chaco',
+                        'traitsui', 'pyface', 'traits',
+                        'pyvisa', 'serial', 'numpy', 'scipy', 'yaml',
                         'git', 'apptools', 'xlwt', 'uncertainties', 'twisted',
                         'enable', 'gitdb', 'kiva', 'statsmodels', 'envisage',
                         'xlsxwriter', 'reportlab']

@@ -30,9 +30,8 @@ from pychron.pipeline.nodes.data import BaseDVCNode
 from pychron.pipeline.nodes.group_age import GroupAgeNode
 from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
 from pychron.pychron_constants import PLUSMINUS_NSIGMA, AIR, BLANK_TYPES, UNKNOWN
-
-
 # ============= enthought library imports =======================
+from pychron.utils import autodoc_helper
 
 
 class TableNode(BaseDVCNode):
@@ -87,8 +86,7 @@ class XLSXAnalysisTableNode(AnalysisTableNode):
     #     self.set_groups(state)
 
 
-class TableOptions(HasTraits, PersistenceMixin):
-    pass
+TableOptions = autodoc_helper('TableOptions', (HasTraits, PersistenceMixin))
 
 
 class AnalysisTableOptions(TableOptions):

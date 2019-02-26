@@ -20,12 +20,8 @@
 from pychron.config_loadable import ConfigLoadable
 from pychron.hardware.core.base_core_device import BaseCoreDevice
 from pychron.hardware.core.scanable_device import ScanableDevice
+from pychron.utils import autodoc_helper
 
+CoreDevice = autodoc_helper('CoreDevice', (BaseCoreDevice, ConfigLoadable, ScanableDevice))
 
-class A(BaseCoreDevice, ConfigLoadable):
-    pass
-
-
-class CoreDevice(A, ScanableDevice):
-    pass
 # ========================= EOF ============================================

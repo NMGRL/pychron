@@ -104,7 +104,6 @@ class PipelineTask(BaseBrowserTask):
         self.engine.browser_model = self.browser_model
         self.engine.interpreted_age_browser_model = self.interpreted_age_browser_model
 
-        print('fasdf', self.id)
     def _debug(self):
         # self.engine.add_data()
         # if globalv.select_default_data:

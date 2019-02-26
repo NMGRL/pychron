@@ -184,9 +184,9 @@ class Loggable(HasTraits):
         """
 
         """
-        if isinstance(self.logger_name, str):
+        if self.logger_name:
             name = self.logger_name
-        elif isinstance(self.name, str):
+        elif self.name:
             name = self.name
         else:
             name = self.__class__.__name__

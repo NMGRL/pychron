@@ -19,6 +19,7 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from __future__ import absolute_import
+
 from chaco.lineplot import LinePlot
 from chaco.scatterplot import ScatterPlot
 
@@ -55,42 +56,50 @@ class BaseIdeogramInset(BaseInset):
         return r.low, r.high
 
 
-class IdeogramInset(BaseIdeogramInset, LinePlot):
-    def __init__(self, *args, **kw):
-        self.border_visible = kw.get('border_visible', True)
-        BaseInset.__init__(self, *args, **kw)
-        LinePlot.__init__(self)
+try:
+    class IdeogramInset(BaseIdeogramInset, LinePlot):
+        def __init__(self, *args, **kw):
+            self.border_visible = kw.get('border_visible', True)
+            BaseInset.__init__(self, *args, **kw)
+            LinePlot.__init__(self)
 
-        self.y_axis.trait_set(tick_label_formatter=lambda x: '',
-                              tick_visible=False)
-        # self.set_limits()
+            self.y_axis.trait_set(tick_label_formatter=lambda x: '',
+                                  tick_visible=False)
+            # self.set_limits()
+except TypeError:
+    # documentation auto doc hack
+    class IdeogramInset:
+        pass
 
+try:
+    class IdeogramPointsInset(BaseIdeogramInset, ScatterPlot):
+        def __init__(self, *args, **kw):
+            BaseInset.__init__(self, *args, **kw)
+            ScatterPlot.__init__(self)
 
-class IdeogramPointsInset(BaseIdeogramInset, ScatterPlot):
-    def __init__(self, *args, **kw):
-        BaseInset.__init__(self, *args, **kw)
-        ScatterPlot.__init__(self)
+            self.border_visible = kw.get('border_visible', True)
+            self.marker = 'circle'
+            # self.color = 'red'
+            self.marker_size = 1.5
+            if not self.visible_axes:
+                self.x_axis.visible = False
+                self.y_axis.visible = False
 
-        self.border_visible = kw.get('border_visible', True)
-        self.marker = 'circle'
-        # self.color = 'red'
-        self.marker_size = 1.5
-        if not self.visible_axes:
-            self.x_axis.visible = False
-            self.y_axis.visible = False
+            # self.set_limits()
 
-        # self.set_limits()
-
-        nsigma = 1
-        orientation = 'x'
-        line_width = 1
-        visible = True
-        ebo = ErrorBarOverlay(component=self,
-                              orientation=orientation,
-                              nsigma=nsigma,
-                              line_width=line_width,
-                              use_end_caps=False,
-                              visible=visible)
-        self.overlays.append(ebo)
-
+            nsigma = 1
+            orientation = 'x'
+            line_width = 1
+            visible = True
+            ebo = ErrorBarOverlay(component=self,
+                                  orientation=orientation,
+                                  nsigma=nsigma,
+                                  line_width=line_width,
+                                  use_end_caps=False,
+                                  visible=visible)
+            self.overlays.append(ebo)
+except TypeError:
+    # documentation auto doc hack
+    class IdeogramPointsInset:
+        pass
 # ============= EOF =============================================
