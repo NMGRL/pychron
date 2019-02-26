@@ -21,7 +21,6 @@ from datetime import datetime
 from traits.api import Bool
 from uncertainties import ufloat
 
-from pychron.canvas.utils import iter_geom
 from pychron.core.helpers.datetime_tools import ISO_FORMAT_STR
 from pychron.core.helpers.filetools import glob_list_directory, add_extension, \
     list_directory
@@ -263,21 +262,45 @@ class MetaRepo(GitRepoManager):
         if add:
             self.add(p, commit=False)
 
-    def add_irradiation_holder(self, name, blob, commit=False, overwrite=False, add=True):
+    def add_irradiation_holder_file(self, path):
+
+        try:
+            holder = IrradiationHolder(path)
+            if not holder.holes:
+                raise BaseException
+        except BaseException:
+            self.warning_dialog('Invalid Irradiation holder file. Failed to import')
+            return
+        self.smart_pull()
         root = os.path.join(paths.meta_root, 'irradiation_holders')
         if not os.path.isdir(root):
             os.mkdir(root)
-        p = os.path.join(root, add_extension(name))
 
-        if not os.path.isfile(p) or overwrite:
-            with open(p, 'w') as wfile:
-                holes = list(iter_geom(blob))
-                n = len(holes)
-                wfile.write('{},0.0175\n'.format(n))
-                for idx, (x, y, r) in holes:
-                    wfile.write('{:0.4f},{:0.4f},{:0.4f}\n'.format(x, y, r))
-            if add:
-                self.add(p, commit=commit)
+        name = os.path.basename(path)
+        dest = os.path.join(root, name)
+        shutil.copyfile(path, dest)
+        self.add(dest, commit=False)
+        self.commit('added irradiation holder file {}'.format(name))
+
+        self.push()
+        self.information_dialog('Irradiation Holder "{}" added'.format(name))
+
+        # p = os.path.join(root, add_extension(name))
+    # def add_irradiation_holder(self, name, blob, commit=False, overwrite=False, add=True):
+    #     root = os.path.join(paths.meta_root, 'irradiation_holders')
+    #     if not os.path.isdir(root):
+    #         os.mkdir(root)
+    #     p = os.path.join(root, add_extension(name))
+    #
+    #     if not os.path.isfile(p) or overwrite:
+    #         with open(p, 'w') as wfile:
+    #             holes = list(iter_geom(blob))
+    #             n = len(holes)
+    #             wfile.write('{},0.0175\n'.format(n))
+    #             for idx, (x, y, r) in holes:
+    #                 wfile.write('{:0.4f},{:0.4f},{:0.4f}\n'.format(x, y, r))
+    #         if add:
+    #             self.add(p, commit=commit)
 
     def get_load_holders(self):
         p = os.path.join(paths.meta_root, 'load_holders')
