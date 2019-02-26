@@ -168,8 +168,8 @@ class consumable(object):
         self._main = main
 
     def __enter__(self):
-        self._consumer = c = ConsumerMixin(auto_start=False)
-        c.setup_consumer(func=self._func, main=self._main)
+        self._consumer = c = ConsumerMixin()
+        c.setup_consumer(func=self._func, main=self._main, auto_start=False)
         return c
 
     def __exit__(self, *args, **kw):
