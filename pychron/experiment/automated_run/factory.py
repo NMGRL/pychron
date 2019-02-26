@@ -228,7 +228,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
     edit_mode = Bool(False)
     edit_mode_label = Property(depends_on='edit_mode')
-    edit_enabled = Bool(False)
+    edit_enabled = Bool(True)
 
     mass_spectrometer = String
     extract_device = Str
