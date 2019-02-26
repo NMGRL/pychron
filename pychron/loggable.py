@@ -58,7 +58,7 @@ class unique(object):
         return wrapped_f
 
 
-class LoggableMixin:
+class Loggable(HasTraits):
     """
     """
     application = Any
@@ -234,9 +234,9 @@ class LoggableMixin:
         self._add_logger()
 
 
-class Loggable(HasTraits, LoggableMixin):
-    def __init__(self, *args, **kw):
-        super().__init__(*args, **kw)
-        self.init_logger()
+# class Loggable(HasTraits, Loggable):
+#     def __init__(self, *args, **kw):
+#         super().__init__(*args, **kw)
+#         self.init_logger()
 
 # ============= EOF =============================================
