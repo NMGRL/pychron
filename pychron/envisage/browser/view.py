@@ -52,6 +52,7 @@ class BaseBrowserView(HasTraits):
                       icon_button_editor('load_recent_button', 'edit-history-2', tooltip='Load recent analyses'),
                       icon_button_editor('find_references_button',
                                          '3d_glasses',
+                                         enabled_when='find_references_enabled',
                                          tooltip='Find references associated with current selection'),
                       icon_button_editor('refresh_selectors_button', 'arrow_refresh',
                                          tooltip='Refresh the database selectors'

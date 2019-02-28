@@ -147,9 +147,16 @@ class AnalysisGroup(IdeogramPlotable):
                          'arar_constants',
                          'monitor_age',
                          'monitor_reference'):
-                setattr(self, attr, getattr(a, attr))
+                try:
+                    setattr(self, attr, getattr(a, attr))
+                except AttributeError:
+                    pass
 
-            self.monitor_info = a.monitor_age, a.monitor_reference
+            try:
+                self.monitor_info = a.monitor_age, a.monitor_reference
+            except AttributeError:
+                pass
+
             self.age_units = self.arar_constants.age_units
 
     def attr_stats(self, attr):
@@ -417,7 +424,7 @@ class AnalysisGroup(IdeogramPlotable):
 
                 return v
 
-            if attr in ('kca', 'kcl'):
+            if attr in ('kca', 'kcl', 'signal_k39'):
                 ks = array([ai.get_computed_value('k39') for ai in ans])
                 sks = ks.sum()
 

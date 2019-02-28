@@ -50,6 +50,9 @@ class InterpretedAgeBrowserModel(BrowserModel):
         # if not ses:
         #     ses = self.repositories
         ses = self.repositories
+        if not ses:
+            self.load_repositories()
+            ses = self.repositories
 
         idns = [idn.identifier for idn in identifiers]
         # repos = {idn.repository_identifier for idn in identifiers}

@@ -42,10 +42,19 @@ class InterpretedAgeRecordView(object):
         self.identifier = idn
         self.name = obj.get('name')
         self.path = path
-        self.age = obj.get('age')
-        self.age_err = obj.get('age_err')
-        self.age_kind = obj.get('age_kind')
-        self.age_error_kind = obj.get('age_error_kind')
+
+        pf = obj.get('preferred')
+        self.age = pf.get('age')
+        self.age_err = pf.get('age_err')
+
+        kinds = pf.get('preferred_kinds')
+        for k in kinds:
+            if k['attr'] == 'age':
+                self.age_kind = k['kind']
+                self.age_error_kind = k['error_kind']
+
+        # self.age_kind = .get('age_kind')
+        # self.age_error_kind = obj.get('age_error_kind')
 
     @property
     def id(self):

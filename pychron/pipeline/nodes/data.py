@@ -104,12 +104,14 @@ class InterpretedAgeNode(DVCNode):
 
             if records:
                 interpreted_ages = self.dvc.make_interpreted_ages(records)
+                ias = self.interpreted_ages
+                ias.extend(interpreted_ages)
 
-                if browser_view.is_append:
-                    ias = self.interpreted_ages
-                    ias.extend(interpreted_ages)
-                else:
-                    self.interpreted_ages = interpreted_ages
+                # if browser_view.is_append:
+                #     ias = self.interpreted_ages
+                #     ias.extend(interpreted_ages)
+                # else:
+                #     self.interpreted_ages = interpreted_ages
 
             return True
 

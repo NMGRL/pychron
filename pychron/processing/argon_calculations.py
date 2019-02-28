@@ -343,7 +343,7 @@ def calculate_atmospheric(a38, a36, k38, ca38, ca36, decay_time, production_rati
     return atm36, cl36, cl38
 
 
-def calculate_F(isotopes, decay_time, interferences=None, arar_constants=None, fixed_k3739=False):
+def calculate_f(isotopes, decay_time, interferences=None, arar_constants=None, fixed_k3739=False):
     """
         isotope values corrected for blank, baseline, (background)
         ic_factor, (discrimination), ar37 and ar39 decay
@@ -372,14 +372,16 @@ def calculate_F(isotopes, decay_time, interferences=None, arar_constants=None, f
         except ZeroDivisionError:
             ff = ufloat(1.0, 0)
 
-        nar = {'k40': k40, 'ca39': ca39, 'k38': k38, 'ca38': ca38, 'cl38': cl38, 'k37': k37, 'ca37': ca37, 'ca36': ca36,
+        nar = {'k40': k40, 'ca39': ca39, 'k38': k38, 'ca38': ca38,
+               'cl38': cl38, 'k37': k37, 'ca37': ca37, 'ca36': ca36,
                'cl36': cl36}
         try:
             rp = rad40 / a40 * 100
         except ZeroDivisionError:
             rp = ufloat(0, 0)
 
-        comp = {'rad40': rad40, 'a40': a40, 'radiogenic_yield': rp, 'ca37': ca37, 'ca39': ca39, 'ca36': ca36, 'k39': k39,
+        comp = {'rad40': rad40, 'a40': a40, 'radiogenic_yield': rp,
+                'ca37': ca37, 'ca39': ca39, 'ca36': ca36, 'k39': k39,
                 'atm40': atm40}
 
         ifc = {'Ar40': a40 - k40, 'Ar39': k39, 'Ar38': a38, 'Ar37': a37, 'Ar36': atm36}
@@ -400,7 +402,7 @@ def calculate_F(isotopes, decay_time, interferences=None, arar_constants=None, f
     return f, f_wo_irrad, non_ar_isotopes, computed, interference_corrected
 
 
-def age_equation(j, f, include_decay_error=False, lambda_k=None, scalar=None, arar_constants=None):
+def age_equation(j, f, include_decay_error=False, lambda_k=None, arar_constants=None):
     if isinstance(j, tuple):
         j = ufloat(*j)
     elif isinstance(j, str):
@@ -415,11 +417,6 @@ def age_equation(j, f, include_decay_error=False, lambda_k=None, scalar=None, ar
         if arar_constants is None:
             arar_constants = ArArConstants()
         lambda_k = arar_constants.lambda_k
-
-    # if not scalar:
-    #     if arar_constants is None:
-    #         arar_constants = ArArConstants()
-    #     scalar = float(arar_constants.age_scalar)
 
     if arar_constants is None:
         arar_constants = ArArConstants()

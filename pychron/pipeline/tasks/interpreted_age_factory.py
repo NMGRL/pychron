@@ -18,7 +18,7 @@
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
 from pyface.message_dialog import information
-from traits.api import List, HasTraits, Button, Any
+from traits.api import List, HasTraits, Button, Any, on_trait_change
 from traitsui.api import View, Item, TableEditor, EnumEditor, Controller, VGroup, TextEditor, HGroup, UItem
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
@@ -78,6 +78,8 @@ cols = [
 ]
 
 editor = TableEditor(columns=cols, orientation='vertical',
+                     selection_mode='rows',
+                     selected='selected',
                      sortable=False, edit_view=EDIT_VIEW)
 
 VIEW = okcancel_view(HGroup(icon_button_editor('sync_metadata_button', 'database_link',
@@ -94,6 +96,21 @@ class InterpretedAgeFactoryModel(HasTraits):
     items = List
     sync_metadata_button = Button
     dvc = Any
+    selected = List
+
+    _triggered = False
+
+    @on_trait_change('items:preferred_values:[kind, error_kind]')
+    def handle_change(self, obj, name, old, new):
+        # print('asdf', obj, new)
+        # print('saelect', self.selected)
+        if not self._triggered:
+            self._triggered = True
+
+            for s in self.selected:
+                s.set_preferred_kind(obj.attr, obj.kind, obj.error_kind)
+
+            self._triggered = False
 
     def _sync_metadata_button_fired(self):
         with self.dvc.session_ctx():
@@ -118,6 +135,7 @@ def set_interpreted_age(dvc, ias):
         ia.lithologies = liths
 
     model = InterpretedAgeFactoryModel(items=ias,
+                                       selected=ias[:1],
                                        dvc=dvc)
     iaf = InterpretedAgeFactoryView(model=model,
                                     repository_identifiers=repos)

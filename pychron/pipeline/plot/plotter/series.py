@@ -39,13 +39,19 @@ LAB_TEMP = 'Lab Temperature'
 LAB_HUM = 'Lab Humidity'
 LAB_AIRPRESSUE = 'Lab Air Pressure'
 AGE = 'Age'
+EXTRACT_VALUE = 'Extract Value'
+EXTRACT_DURATION = 'Extract Duration'
+CLEANUP = 'Cleanup'
 
 ATTR_MAPPING = {PEAK_CENTER: 'peak_center',
                 AGE: 'uage',
                 RADIOGENIC_YIELD: 'radiogenic_yield',
                 LAB_TEMP: 'lab_temperature',
                 LAB_HUM: 'lab_humidity',
-                LAB_AIRPRESSUE: 'lab_airpressure'}
+                LAB_AIRPRESSUE: 'lab_airpressure',
+                EXTRACT_VALUE: 'extract_value',
+                EXTRACT_DURATION: 'extract_duration',
+                CLEANUP: 'cleanup'}
 
 AR4039 = 'Ar40/Ar39'
 UAR4039 = 'uAr40/Ar39'

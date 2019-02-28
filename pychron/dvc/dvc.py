@@ -49,7 +49,7 @@ from pychron.git_archive.views import StatusView
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.paths import paths, r_mkdir
-from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS, NULL_STR, SAMPLE_METADATA
+from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS, SAMPLE_METADATA
 
 TESTSTR = {'blanks': 'auto update blanks', 'iso_evo': 'auto update iso_evo'}
 
@@ -111,26 +111,40 @@ class DVCInterpretedAge(InterpretedAge):
         self.tag_note = obj.get('note', '')
 
     def from_json(self, obj):
-        for a in ('age', 'age_err', 'age_kind',
-                  # 'kca', 'kca_err','kca_kind',
-                  'mswd',
-                  'sample', 'material', 'identifier', 'nanalyses', 'irradiation',
-                  'name', 'project', 'uuid', 'age_error_kind'):
-            try:
-                setattr(self, a, obj.get(a, NULL_STR))
-            except BaseException as a:
-                print('exception DVCInterpretdAge.from_json', a)
+        for attr in ('name', 'uuid'):
+            setattr(self, attr, obj.get(attr, ''))
+
+        pf = obj['preferred']
+        for attr in ('age', 'age_err'):
+            setattr(self, attr, pf.get(attr, 0))
+
+        sm = obj['sample_metadata']
+        for attr in ('sample', 'material', 'project', 'irradiation'):
+            setattr(self, attr, sm.get(attr, ''))
+
+        # for a in ('age', 'age_err', 'age_kind',
+        #           # 'kca', 'kca_err','kca_kind',
+        #           'mswd',
+        #           'sample', 'material', 'identifier', 'nanalyses', 'irradiation',
+        #           'name', 'project', 'uuid', 'age_error_kind'):
+        #     try:
+        #         setattr(self, a, obj.get(a, NULL_STR))
+        #     except BaseException as a:
+        #         print('exception DVCInterpretdAge.from_json', a)
 
         self.labnumber = self.identifier
-        self.uage = ufloat(self.age, self.age_err)
+        # self.uage = ufloat(self.age, self.age_err)
         self._record_id = '{} {}'.format(self.identifier, self.name)
 
         self.analyses = obj.get('analyses', [])
 
-        pkinds = obj.get('preferred_kinds')
+        pkinds = pf.get('preferred_kinds')
         if pkinds:
             for k in pkinds:
-                setattr(self, k['attr'], ufloat(k['value'], k['error']))
+                attr = k['attr']
+                if attr == 'age':
+                    attr = 'uage'
+                setattr(self, attr, ufloat(k['value'], k['error']))
 
     def get_value(self, attr):
         try:
@@ -578,6 +592,7 @@ class DVC(Loggable):
         self.meta_repo.remove_irradiation_position(irradiation, level, hole)
 
     def find_interpreted_ages(self, identifiers, repositories):
+        self.debug('find interpreted ages {}, {}'.format(identifiers, repositories))
         ias = [InterpretedAgeRecordView(idn, path, dvc_load(path))
                for idn in identifiers
                for path in find_interpreted_age_path(idn, repositories)]
@@ -618,13 +633,16 @@ class DVC(Loggable):
             return records
 
     def make_interpreted_ages(self, ias):
+        self.debug('making interpreted ages {}'.format(ias))
         if not isinstance(ias, (tuple, list)):
             ias = (ias,)
 
         def func(x, prog, i, n):
             if prog:
                 prog.change_message('Making Interpreted age {}'.format(x.name))
+
             obj = dvc_load(x.path)
+            print('asdfasdf', x.path, obj)
             ia = DVCInterpretedAge()
             ia.repository_identifier = os.path.basename(os.path.dirname(os.path.dirname(os.path.dirname(x.path))))
             ia.from_json(obj)
@@ -1382,7 +1400,6 @@ class DVC(Loggable):
         dvc_dump(d, p)
         return rid, p
 
-
     def _load_repository(self, expid, prog, i, n):
         if prog:
             prog.change_message('Loading repository {}. {}/{}'.format(expid, i, n))
@@ -1455,7 +1472,7 @@ class DVC(Loggable):
                     a.set_chronology(chronos['cocktail'])
                     a.j = fluxes['cocktail']
 
-                elif a.irradiation and a.irradiation not in ('NoIrradiation',):
+                elif a.irradiation:  # and a.irradiation not in ('NoIrradiation',):
                     if chronos:
                         chronology = chronos[a.irradiation]
                     else:
@@ -1520,10 +1537,10 @@ class DVC(Loggable):
                             except KeyError:
                                 pass
 
-                    if calculate_f_only:
-                        a.calculate_F()
-                    else:
-                        a.calculate_age()
+                if calculate_f_only:
+                    a.calculate_f()
+                else:
+                    a.calculate_age()
 
         if self._cache:
             self._cache.update(record.uuid, a)

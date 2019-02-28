@@ -125,6 +125,7 @@ def find_interpreted_age_path(idn, repositories, prefixlen=3):
 
     ret = [p for repo in repositories
            for p in glob.glob(repository_path(repo, prefix, 'ia', suffix))]
+    print(prefix, ret)
     return ret
 
 

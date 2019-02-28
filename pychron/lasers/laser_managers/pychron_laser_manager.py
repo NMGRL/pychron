@@ -167,7 +167,7 @@ class PychronLaserManager(EthernetLaserManager):
         return blobs
 
     def get_response_blob(self):
-        return self._ask('GetResponseBlob')
+        return self._ask('GetResponseBlob', verbose=True)
 
     def get_output_blob(self):
         return self._ask('GetOutputBlob')

@@ -28,7 +28,7 @@ from uncertainties import ufloat, std_dev, nominal_value
 
 from pychron.core.helpers.isotope_utils import sort_detectors
 from pychron.processing.arar_constants import ArArConstants
-from pychron.processing.argon_calculations import calculate_F, abundance_sensitivity_correction, age_equation, \
+from pychron.processing.argon_calculations import calculate_f, abundance_sensitivity_correction, age_equation, \
     calculate_flux, calculate_arar_decay_factors
 from pychron.processing.isotope import Blank
 from pychron.processing.isotope_group import IsotopeGroup
@@ -325,13 +325,13 @@ class ArArAge(IsotopeGroup):
 
     def recalculate_age(self, force=False):
         if not self.uF or force:
-            self._calculate_F()
+            self._calculate_f()
 
         self._set_age_values(self.uF)
 
-    def calculate_F(self):
+    def calculate_f(self):
         self.calculate_decay_factors()
-        self._calculate_F()
+        self._calculate_f()
 
     def calculate_no_interference(self):
         self._calculate_age(interferences={})
@@ -431,7 +431,7 @@ class ArArAge(IsotopeGroup):
         iso_intensities[3] *= self.ar37decayfactor
         return iso_intensities
 
-    def _calculate_F(self, iso_intensities=None, interferences=None):
+    def _calculate_f(self, iso_intensities=None, interferences=None):
 
         if iso_intensities is None:
             iso_intensities = self._assemble_isotope_intensities()
@@ -440,7 +440,7 @@ class ArArAge(IsotopeGroup):
             if interferences is None:
                 interferences = self.interference_corrections
 
-            f, f_wo_irrad, non_ar, computed, interference_corrected = calculate_F(iso_intensities,
+            f, f_wo_irrad, non_ar, computed, interference_corrected = calculate_f(iso_intensities,
                                                                                   decay_time=self.decay_days,
                                                                                   interferences=interferences,
                                                                                   arar_constants=self.arar_constants,
@@ -471,9 +471,8 @@ class ArArAge(IsotopeGroup):
 
         self.corrected_intensities = {k: v for k, v in zip(ARGON_KEYS, iso_intensities)}
 
-        f, f_wo_irrad, non_ar, computed, interference_corrected = self._calculate_F(iso_intensities,
+        f, f_wo_irrad, non_ar, computed, interference_corrected = self._calculate_f(iso_intensities,
                                                                                     interferences=interferences)
-
         self.non_ar_isotopes = non_ar
         self.computed = computed
         self.radiogenic_yield = computed['radiogenic_yield']
@@ -488,24 +487,30 @@ class ArArAge(IsotopeGroup):
 
     def _set_age_values(self, f, include_decay_error=False):
         arc = self.arar_constants
+        for iso in self.itervalues():
+            iso.age_error_component = self.get_error_component(iso.name)
+
+        if self.j is None:
+            return
+
         j = copy(self.j)
-        if j is None:
-            j = ufloat(1e-4, 1e-7)
+        # if j is None:
+        #     j = ufloat(1e-4, 1e-7)
         j.tag = 'Position'
         j.std_dev = self.position_jerr or 0
         age = age_equation(j, f, include_decay_error=include_decay_error, arar_constants=arc)
         self.uage_w_position_err = age
 
         j = self.j
-        if j is None:
-            j = ufloat(1e-4, 1e-7, tag='J')
+        # if j is None:
+        #     j = ufloat(1e-4, 1e-7, tag='J')
 
         age = age_equation(j, f, include_decay_error=include_decay_error, arar_constants=arc)
         self.uage_w_j_err = age
 
         j = copy(self.j)
-        if j is None:
-            j = ufloat(1e-4, 1e-7, tag='J')
+        # if j is None:
+        #     j = ufloat(1e-4, 1e-7, tag='J')
 
         j.std_dev = 0
         age = age_equation(j, f, include_decay_error=include_decay_error, arar_constants=arc)
@@ -514,9 +519,6 @@ class ArArAge(IsotopeGroup):
         self.age = nominal_value(age)
         self.age_err = std_dev(age)
         self.age_err_wo_j = std_dev(age)
-
-        for iso in self.itervalues():
-            iso.age_error_component = self.get_error_component(iso.name)
 
     @property
     def detector_keys(self):

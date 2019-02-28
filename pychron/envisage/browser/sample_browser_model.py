@@ -19,7 +19,7 @@ from operator import attrgetter
 
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
-from traits.api import Button, Instance, Str
+from traits.api import Button, Instance, Str, Property
 
 from pychron.envisage.browser.advanced_filter_view import AdvancedFilterView
 from pychron.envisage.browser.analysis_table import AnalysisTable
@@ -32,6 +32,7 @@ from pychron.envisage.browser.util import get_pad
 class SampleBrowserModel(BrowserModel):
     graphical_filter_button = Button
     find_references_button = Button
+    find_references_enabled = Property(depends_on='analysis_table:analyses[]')
 
     load_recent_button = Button
     toggle_view = Button
@@ -39,7 +40,6 @@ class SampleBrowserModel(BrowserModel):
     add_analysis_group_button = Button
     analysis_table = Instance(AnalysisTable)
     time_view_model = Instance(TimeViewModel)
-
     monitor_sample_name = Str
 
     def __init__(self, *args, **kw):
@@ -321,8 +321,8 @@ class SampleBrowserModel(BrowserModel):
 
     def _find_references_hook(self):
         ans = self.analysis_table.analyses
-        ms = list({a.mass_spectrometer for a in ans if a.mass_spectrometer})
-        es = list({a.extract_device for a in ans if a.extract_device})
+        ms = list({a.mass_spectrometer.lower() for a in ans if a.mass_spectrometer})
+        es = list({a.extract_device.lower() for a in ans if a.extract_device})
         irs = list({'{},{}'.format(a.irradiation, a.irradiation_level.upper()) for a in ans})
 
         samples = []
@@ -413,6 +413,9 @@ class SampleBrowserModel(BrowserModel):
             irrads = self.db.get_irradiations()
 
         self.irradiations = [i.name for i in irrads]
+
+    def _get_find_references_enabled(self):
+        return bool(self.analysis_table.analyses)
 
     def _time_view_model_default(self):
         return TimeViewModel(db=self.db)

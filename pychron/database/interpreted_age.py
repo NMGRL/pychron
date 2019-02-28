@@ -15,8 +15,7 @@
 # ===============================================================================
 import uuid
 
-from traits.trait_types import Date as TDate, Long, Str, Float, Int, Bool
-from traits.traits import Property
+from traits.trait_types import Date as TDate, Long, Str, Float, Int, Bool, Any
 from traitsui.group import HGroup
 from traitsui.item import Item
 from traitsui.view import View
@@ -39,8 +38,7 @@ class InterpretedAge(IdeogramPlotable):
 
     age = Float
     age_err = Float
-    kca = Float
-    kca_err = Float
+    kca = Any
 
     age_kind = Str
     kca_kind = Str
@@ -53,9 +51,9 @@ class InterpretedAge(IdeogramPlotable):
     include_j_position_error = Bool
     # include_j_error_in_individual_analyses = Bool
 
-    display_age = Property
-    display_age_err = Property
-    display_age_units = Str('Ma')
+    # display_age = Property
+    # display_age_err = Property
+    # display_age_units = Str('Ma')
 
     # reference = Str
     # rlocation = Str  # location of sample within unit
@@ -74,34 +72,34 @@ class InterpretedAge(IdeogramPlotable):
             a, e = nominal_value(self.uage), std_dev(self.uage)
         return a, e
 
-    def _get_display_age(self):
-        a = self.age
-        return self._scale_age(a)
-
-    def _get_display_age_err(self):
-        e = self.age_err
-        return self._scale_age(e)
-
-    def _scale_age(self, a):
-        if self.display_age_units == 'ka':
-            a *= 1000
-        elif self.display_age_units == 'Ga':
-            a *= 0.001
-
-        return a
+    # def _get_display_age(self):
+    #     a = self.age
+    #     return self._scale_age(a)
+    #
+    # def _get_display_age_err(self):
+    #     e = self.age_err
+    #     return self._scale_age(e)
+    #
+    # def _scale_age(self, a):
+    #     if self.display_age_units == 'ka':
+    #         a *= 1000
+    #     elif self.display_age_units == 'Ga':
+    #         a *= 0.001
+    #
+    #     return a
 
 
 interpreted_age_view = View(HGroup(Item('age_kind',
                                         style='readonly', show_label=False),
-                                   Item('display_age', format_func=lambda x: floatfmt(x, 3),
-                                        label='Age',
-                                        style='readonly'),
-                                   Item('display_age_err',
-                                        label=u'\u00b11\u03c3',
-                                        format_func=lambda x: floatfmt(x, 4),
-                                        style='readonly'),
-                                   Item('display_age_units',
-                                        style='readonly', show_label=False),
+                                   # Item('display_age', format_func=lambda x: floatfmt(x, 3),
+                                   #      label='Age',
+                                   #      style='readonly'),
+                                   # Item('display_age_err',
+                                   #      label=u'\u00b11\u03c3',
+                                   #      format_func=lambda x: floatfmt(x, 4),
+                                   #      style='readonly'),
+                                   # Item('display_age_units',
+                                   #      style='readonly', show_label=False),
                                    Item('mswd',
                                         format_func=lambda x: floatfmt(x, 2),
                                         style='readonly', label='MSWD')))

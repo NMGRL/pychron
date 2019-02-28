@@ -30,7 +30,7 @@ from pychron.options.views.views import view
 from pychron.pipeline.editors.flux_visualization_editor import FluxVisualizationEditor
 from pychron.pipeline.nodes.base import SortableNode
 from pychron.pipeline.plot.plotter.series import RADIOGENIC_YIELD, PEAK_CENTER, \
-    ANALYSIS_TYPE, AGE, LAB_TEMP, LAB_HUM
+    ANALYSIS_TYPE, AGE, LAB_TEMP, LAB_HUM, EXTRACT_VALUE, EXTRACT_DURATION, CLEANUP
 from pychron.pychron_constants import COCKTAIL, UNKNOWN, DETECTOR_IC
 
 
@@ -251,7 +251,7 @@ class SeriesNode(FigureNode):
 
                             names.append('{}/{} DetIC'.format(vj.detector, vi.detector))
 
-            names.extend([PEAK_CENTER, ANALYSIS_TYPE, LAB_TEMP, LAB_HUM])
+            names.extend([PEAK_CENTER, ANALYSIS_TYPE, LAB_TEMP, LAB_HUM, EXTRACT_VALUE, EXTRACT_DURATION, CLEANUP])
 
             pom.set_names(names)
 

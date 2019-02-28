@@ -70,9 +70,9 @@ class Loggable(HasTraits):
     logcolor = 'black'
     shared_logger = False
 
-    # def __init__(self, *args, **kw):
-    #     super().__init__(*args, **kw)
-    #     self.init_logger()
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
+        self.init_logger()
 
     def init_logger(self):
         t = str(type(self))
