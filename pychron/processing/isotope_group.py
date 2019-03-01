@@ -399,7 +399,7 @@ class IsotopeGroup(HasTraits):
                 return self.get_value(n) / self.get_value(d)
             except (ZeroDivisionError, TypeError):
                 return ufloat(0, 0)
-        elif attr.startswith('u') or attr in self.isotope_keys:
+        elif attr != 'unit' and (attr.startswith('u') or attr in self.isotope_keys):
             return self.get_value(attr)
         else:
             raise AttributeError(attr)
