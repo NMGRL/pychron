@@ -23,7 +23,7 @@ from pychron.core.pychron_traits import BorderVGroup
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.options import SubOptions, AppearanceSubOptions, GroupSubOptions, checkbox_column, object_column, \
     MainOptions, TitleSubOptions
-from pychron.pychron_constants import MAIN, APPEARANCE
+from pychron.pychron_constants import MAIN, APPEARANCE, FLECK_PLATEAU_DEFINITION, MAHON_PLATEAU_DEFINITION
 
 
 class SpectrumSubOptions(SubOptions):
@@ -135,7 +135,10 @@ class DisplaySubOptions(TitleSubOptions):
 
 class CalculationSubOptions(SubOptions):
     def traits_view(self):
-        lgrp = VGroup(Item('plateau_method', label='Method'),
+        lgrp = VGroup(Item('plateau_method',
+                           tooltip='Fleck 1977={}\n'
+                                   'Mahon 1996={}\n'.format(FLECK_PLATEAU_DEFINITION, MAHON_PLATEAU_DEFINITION),
+                           label='Method'),
                       # Item('nsigma'),
                       Item('plateau_age_error_kind',
                            width=-100,
@@ -159,9 +162,8 @@ class CalculationSubOptions(SubOptions):
                                        label='N. Sigma')),
                            show_border=True,
                            label='Error Envelope')
-        integrated_grp = VGroup(Item('integrated_age_weighting', label='Integrated Age Weighting'))
 
-        return self._make_view(VGroup(plat_grp, error_grp, integrated_grp))
+        return self._make_view(VGroup(plat_grp, error_grp))
 
 
 class SpectrumMainOptions(MainOptions):

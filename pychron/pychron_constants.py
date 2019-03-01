@@ -81,6 +81,14 @@ SUBGROUPINGS = [WEIGHTED_MEAN,
 
 SUBGROUPING_ATTRS = ('age', 'kca', 'kcl', 'radiogenic_yield', 'moles_k39', 'signal_k39')
 
+
+FLECK_PLATEAU_DEFINITION = 'X contiguous Steps, Representing >Y% of the gas, Overlapping at N sigma'
+MAHON_PLATEAU_DEFINITION = 'X contiguous Steps, Representing >Y% of the gas, with all plateau steps yielding a valid ' \
+                           'MSWD'
+
+FLECK = 'Fleck 1977'
+MAHON = 'Mahon 1996'
+
 WEIGHTINGS = (NULL_STR, 'Volume', 'Variance')
 INTERPOLATE_TYPES = ['Preceding', 'Bracketing Interpolate', 'Bracketing Average']
 FIT_TYPES_INTERPOLATE = FIT_TYPES + INTERPOLATE_TYPES

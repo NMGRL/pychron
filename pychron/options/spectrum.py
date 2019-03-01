@@ -24,7 +24,7 @@ from pychron.options.group.spectrum_group_options import SpectrumGroupOptions
 from pychron.options.options import AgeOptions
 from pychron.options.views.spectrum_views import VIEWS
 from pychron.pychron_constants import NULL_STR, ERROR_TYPES, SIZES, FONTS, SIG_FIGS, WEIGHTINGS, MAIN, APPEARANCE, \
-    DISPLAY, GROUPS
+    DISPLAY, GROUPS, MAHON, FLECK
 
 
 class SpectrumAuxPlot(AuxPlot):
@@ -83,7 +83,7 @@ class SpectrumOptions(AgeOptions):
     # plateau_line_color = Color
     # user_plateau_line_color = Bool
 
-    plateau_method = Enum('Fleck 1977', 'Mahon 1996')
+    plateau_method = Enum(FLECK, MAHON)
     error_calc_method = Property
     use_error_envelope_fill = Bool
 

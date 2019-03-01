@@ -491,17 +491,22 @@ class AnalysisGroup(IdeogramPlotable):
 
             rs = array([a.get_computed_value('rad40') for a in ans])
             ks = array([a.get_computed_value('k39') for a in ans])
-            sks = ks.sum()
 
+            sks = ks.sum()
+            fs = rs / ks
             weights = None
             if weighting == 'Volume':
-                weights = ks / sks
+                vpercent = array([nominal_value(v) for v in ks / sks])
+                errs = array([std_dev(f) for f in fs])
+                weights = (vpercent / errs) ** 2
+
             elif weighting == 'Variance':
-                weights = [1 / std_dev(k) ** 2 for k in rs / ks]
+                weights = [std_dev(f) ** -2 for f in fs]
 
             if weights is not None:
-                wmean, sum_weights = average([nominal_value(fi) for fi in rs / ks], weights=weights, returned=True)
+                wmean, sum_weights = average([nominal_value(fi) for fi in fs], weights=weights, returned=True)
                 werr = sum_weights ** -0.5
+
                 f = ufloat(wmean, werr)
             else:
                 f = rs.sum() / sks
@@ -509,7 +514,7 @@ class AnalysisGroup(IdeogramPlotable):
             a = ans[0]
             j = a.j
             try:
-                ret = age_equation(f, j, a.arar_constants)  # / self.age_scalar
+                ret = age_equation(f, j, arar_constants=a.arar_constants)
             except ZeroDivisionError:
                 pass
 
