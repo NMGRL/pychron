@@ -30,6 +30,7 @@ class SpectrumSubOptions(SubOptions):
     def traits_view(self):
         integrated_grp = BorderVGroup(Item('integrated_age_weighting', label='Weighting'),
                                       Item('integrated_include_omitted', label='Include Omitted'),
+                                      Item('include_j_error_in_integrated', label='Include J Error'),
                                       label='Integrated Age')
         iso_grp = BorderVGroup(HGroup(Item('use_isochron_trapped', label='Use Isochron'),
                                       Item('include_isochron_trapped_error'), label='Include Uncertainty'),
@@ -137,13 +138,15 @@ class CalculationSubOptions(SubOptions):
     def traits_view(self):
         lgrp = VGroup(Item('plateau_method',
                            tooltip='Fleck 1977={}\n'
-                                   'Mahon 1996={}\n'.format(FLECK_PLATEAU_DEFINITION, MAHON_PLATEAU_DEFINITION),
+                                   'Mahon 1996={}'.format(FLECK_PLATEAU_DEFINITION, MAHON_PLATEAU_DEFINITION),
                            label='Method'),
                       # Item('nsigma'),
                       Item('plateau_age_error_kind',
                            width=-100,
                            label='Error Type'),
-                      Item('include_j_error_in_plateau', label='Include J Error'))
+                      Item('include_j_error_in_plateau',
+                           tooltip='Include J error in plateau age',
+                           label='Include J Error'))
         rgrp = VGroup(Item('extend_plateau_end_caps',
                            label='Extend End Caps'),
                       icon_button_editor('edit_plateau_criteria', 'cog',

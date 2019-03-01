@@ -333,7 +333,7 @@ class SampleTbl(Base, NameMixin):
 
     storage_location = deferred(stringcolumn(140))
     lithology = deferred(stringcolumn(140))
-
+    unit = deferred(stringcolumn(80))
     lithology_class = deferred(stringcolumn(140))
     lithology_type = deferred(stringcolumn(140))
     lithology_group = deferred(stringcolumn(140))

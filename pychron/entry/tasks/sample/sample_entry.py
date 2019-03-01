@@ -136,6 +136,7 @@ class SampleSpec(Spec):
     lat = Float
     lon = Float
     igsn = Str
+    unit = Str
     storage_location = Str
     lithology = Str
     lithology_class = Str
@@ -204,6 +205,7 @@ class SampleEntry(DVCAble):
     lat = LatFloat
     lon = LonFloat
     igsn = Str
+    unit = Str
 
     lithology = Str
     lithology_class = Str
@@ -451,6 +453,7 @@ class SampleEntry(DVCAble):
                                   s.material.name,
                                   s.material.grainsize or None,
                                   igsn=s.igsn,
+                                  unit=s.unit,
                                   storage_location=s.storage_location,
                                   lithology=s.lithology,
                                   lithology_class=s.lithology_class,
@@ -532,6 +535,7 @@ class SampleEntry(DVCAble):
         self.igsn = ''
         self.note = ''
         self.approximate_age = 0
+        self.unit = ''
 
     def _configure_pi_button_fired(self):
         v = okcancel_view(VGroup(VGroup(UItem('principal_investigator'),
@@ -579,7 +583,7 @@ class SampleEntry(DVCAble):
 
             kw = {'project': project_spec, 'material': material_spec}
             for attr in (('name', 'sample'),
-                         'lat', 'lon', 'igsn', 'note',
+                         'lat', 'lon', 'igsn', 'note', 'unit',
                          'lithology', 'lithology_class', 'lithology_type', 'lithology_group'):
                 if isinstance(attr, tuple):
                     specattr, attr = attr

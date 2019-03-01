@@ -25,7 +25,7 @@ from uncertainties import ufloat, umath, nominal_value, std_dev
 
 from pychron.core.stats.core import calculate_weighted_mean
 from pychron.processing.arar_constants import ArArConstants
-from pychron.pychron_constants import ALPHAS
+from pychron.pychron_constants import ALPHAS, FLECK
 
 
 def extract_isochron_xy(analyses):
@@ -108,7 +108,7 @@ def isochron_regressor(xs, xes, ys, yes, xds, xdes, xns, xnes, yns, ynes, reg='R
     return reg
 
 
-def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method='fleck 1977', options=None, excludes=None):
+def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method=FLECK, options=None, excludes=None):
     """
         ages: list of ages
         errors: list of corresponding  1sigma errors

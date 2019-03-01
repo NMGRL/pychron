@@ -82,9 +82,9 @@ SUBGROUPINGS = [WEIGHTED_MEAN,
 SUBGROUPING_ATTRS = ('age', 'kca', 'kcl', 'radiogenic_yield', 'moles_k39', 'signal_k39')
 
 
-FLECK_PLATEAU_DEFINITION = 'X contiguous Steps, Representing >Y% of the gas, Overlapping at N sigma'
-MAHON_PLATEAU_DEFINITION = 'X contiguous Steps, Representing >Y% of the gas, with all plateau steps yielding a valid ' \
-                           'MSWD'
+FLECK_PLATEAU_DEFINITION = 'X contiguous Steps, Representing >Y% of the gas, Overlapping at 2 sigma'
+MAHON_PLATEAU_DEFINITION = 'X contiguous Steps, Representing >Y% of the gas, ' \
+                           'with all plateau steps yielding a valid MSWD'
 
 FLECK = 'Fleck 1977'
 MAHON = 'Mahon 1996'
@@ -249,6 +249,7 @@ SAMPLE_METADATA = ('sample',
                    'principal_investigator',
                    'latitude',
                    'longitude',
+                   'unit',
                    'lithology',
                    'lithology_class',
                    'lithology_group',

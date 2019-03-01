@@ -29,7 +29,7 @@ from pychron.processing.analyses.preferred import Preferred
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
 from pychron.pychron_constants import ALPHAS, MSEM, SD, SUBGROUPING_ATTRS, ERROR_TYPES, WEIGHTED_MEAN, \
-    DEFAULT_INTEGRATED, SUBGROUPINGS, ARITHMETIC_MEAN, PLATEAU_ELSE_WEIGHTED_MEAN, WEIGHTINGS
+    DEFAULT_INTEGRATED, SUBGROUPINGS, ARITHMETIC_MEAN, PLATEAU_ELSE_WEIGHTED_MEAN, WEIGHTINGS, FLECK
 
 
 def AGProperty(*depends):
@@ -63,6 +63,7 @@ class AnalysisGroup(IdeogramPlotable):
     total_n = AGProperty()
 
     integrated_age_weighting = Enum(WEIGHTINGS)
+    include_j_error_in_integrated = Bool(False)
 
     age_error_kind = Enum(*ERROR_TYPES)
     kca_error_kind = Enum(*ERROR_TYPES)
@@ -135,6 +136,7 @@ class AnalysisGroup(IdeogramPlotable):
                          'irradiation_position',
                          'irradiation_level',
                          'irradiation_label',
+                         'unit',
                          'lithology',
                          'lithology_type',
                          'lithology_group',
@@ -485,7 +487,7 @@ class AnalysisGroup(IdeogramPlotable):
     def _calculate_weighted_mean(self, attr, error_kind=None):
         return self._calculate_mean(attr, use_weights=True, error_kind=error_kind)
 
-    def _calculate_integrated_age(self, ans, weighting):
+    def _calculate_integrated_age(self, ans):
         ret = ufloat(0, 0)
         if ans and all((not isinstance(a, InterpretedAgeGroup) for a in ans)):
 
@@ -495,6 +497,7 @@ class AnalysisGroup(IdeogramPlotable):
             sks = ks.sum()
             fs = rs / ks
             weights = None
+            weighting = self.integrated_age_weighting
             if weighting == 'Volume':
                 vpercent = array([nominal_value(v) for v in ks / sks])
                 errs = array([std_dev(f) for f in fs])
@@ -511,8 +514,10 @@ class AnalysisGroup(IdeogramPlotable):
             else:
                 f = rs.sum() / sks
 
-            a = ans[0]
-            j = a.j
+            j = self.j
+            if not self.include_j_error_in_integrated:
+                j = nominal_value(j)
+
             try:
                 ret = age_equation(f, j, arar_constants=a.arar_constants)
             except ZeroDivisionError:
@@ -540,6 +545,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     plateau_overlap_sigma = Int(2)
     plateau_mswd = Float
     plateau_mswd_valid = Bool
+    plateau_method = Str(FLECK)
 
     total_ar39 = AGProperty()
     total_k2o = AGProperty()
@@ -655,7 +661,8 @@ class StepHeatAnalysisGroup(AnalysisGroup):
                            'fixed_steps': self.fixed_steps}
 
                 excludes = [i for i, ai in enumerate(ans) if ai.is_omitted()]
-                args = calculate_plateau_age(ages, errors, k39, options=options, excludes=excludes)
+                args = calculate_plateau_age(ages, errors, k39, method=self.plateau_method,
+                                             options=options, excludes=excludes)
 
                 if args:
                     v, e, pidx = args

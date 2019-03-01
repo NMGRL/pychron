@@ -47,6 +47,7 @@ class SpectrumOptions(AgeOptions):
 
     integrated_age_weighting = Enum(WEIGHTINGS)
 
+    include_j_error_in_integrated = Bool(False)
     include_j_error_in_plateau = Bool(True)
     plateau_age_error_kind = Enum(*ERROR_TYPES)
     weighted_age_error_kind = Enum(*ERROR_TYPES)

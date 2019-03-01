@@ -289,6 +289,7 @@ class DVCDatabase(DatabaseAdapter):
                     info['sample'] = sample.name
                     info['latitude'] = sample.lat
                     info['longitude'] = sample.lon
+                    info['unit'] = sample.unit
                     info['lithology'] = sample.lithology
                     info['lithology_class'] = sample.lithology_class
                     info['lithology_type'] = sample.lithology_type

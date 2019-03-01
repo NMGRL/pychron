@@ -164,7 +164,7 @@ def set_interpreted_age(dvc, ias):
                 if confirm(None, 'Would you like to share changes to {}?'.format(','.join(ris))) == YES:
                     for rid in ris:
                         dvc.push_repository(rid)
-                    information(None, 'Pushes complete')
+                    information(None, 'Sharing changes complete')
 
             break
         else:
