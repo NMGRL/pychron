@@ -26,16 +26,20 @@ from pychron.core.helpers.filetools import glob_list_directory, add_extension, \
     list_directory
 from pychron.core.helpers.strtools import to_bool
 from pychron.dvc import dvc_dump, dvc_load, repository_path, list_frozen_productions
-from pychron.dvc.meta_object import IrradiationHolder, Chronology, Production, cached, Gains, LoadHolder
+from pychron.dvc.meta_object import IrradiationGeometry, Chronology, Production, cached, Gains, LoadGeometry
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths, r_mkdir
 from pychron.pychron_constants import INTERFERENCE_KEYS, RATIO_KEYS, DEFAULT_MONITOR_NAME, DATE_FORMAT, NULL_STR
 
 
-def irradiation_holder_holes(name):
+def irradiation_geometry(name):
     p = os.path.join(paths.meta_root, 'irradiation_holders', add_extension(name))
-    holder = IrradiationHolder(p)
-    return holder.holes
+    return IrradiationGeometry(p)
+
+
+def irradiation_geometry_holes(name):
+    geom = irradiation_geometry(name)
+    return geom.holes
 
 
 def irradiation_chronology(name):
@@ -262,15 +266,16 @@ class MetaRepo(GitRepoManager):
         if add:
             self.add(p, commit=False)
 
-    def add_irradiation_holder_file(self, path):
+    def add_irradiation_geometry_file(self, path):
 
         try:
-            holder = IrradiationHolder(path)
+            holder = IrradiationGeometry(path)
             if not holder.holes:
                 raise BaseException
         except BaseException:
-            self.warning_dialog('Invalid Irradiation holder file. Failed to import')
+            self.warning_dialog('Invalid Irradiation Geometry file. Failed to import')
             return
+
         self.smart_pull()
         root = os.path.join(paths.meta_root, 'irradiation_holders')
         if not os.path.isdir(root):
@@ -280,10 +285,10 @@ class MetaRepo(GitRepoManager):
         dest = os.path.join(root, name)
         shutil.copyfile(path, dest)
         self.add(dest, commit=False)
-        self.commit('added irradiation holder file {}'.format(name))
+        self.commit('added irradiation geometry file {}'.format(name))
 
         self.push()
-        self.information_dialog('Irradiation Holder "{}" added'.format(name))
+        self.information_dialog('Irradiation Geometry "{}" added'.format(name))
 
         # p = os.path.join(root, add_extension(name))
     # def add_irradiation_holder(self, name, blob, commit=False, overwrite=False, add=True):
@@ -559,12 +564,12 @@ class MetaRepo(GitRepoManager):
 
     @cached('clear_cache')
     def get_irradiation_holder_holes(self, name, **kw):
-        return irradiation_holder_holes(name)
+        return irradiation_geometry_holes(name)
 
     @cached('clear_cache')
     def get_load_holder_holes(self, name, **kw):
         p = os.path.join(paths.meta_root, 'load_holders', add_extension(name))
-        holder = LoadHolder(p)
+        holder = LoadGeometry(p)
         return holder.holes
 
     @property

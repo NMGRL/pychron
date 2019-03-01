@@ -16,21 +16,22 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import List
+
 from envisage.extension_point import ExtensionPoint
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema import SMenu, SGroup
 from pyface.tasks.action.schema_addition import SchemaAddition
+from traits.api import List
 
 from pychron.entry.editors.flux_monitor_editor import FluxMonitorEditor
 from pychron.entry.editors.molecular_weight_editor import MolecularWeightEditor
 from pychron.entry.tasks.actions import MakeIrradiationBookPDFAction, MakeIrradiationTemplateAction, \
     SensitivityEntryAction, AddMolecularWeightAction, AddFluxMonitorAction, \
     GenerateTrayAction, \
-    ImportIrradiationHolderAction, ExportIrradiationAction, ImportIrradiationAction, \
+    ImportIrradiationGeometryAction, ExportIrradiationAction, ImportIrradiationAction, \
     TransferJAction, ImportSamplesAction, ImportIrradiationFileAction, GetIGSNAction, GenerateIrradiationTableAction, \
-    GenerateStatusReportAction, ImportAnalysesAction
+    GenerateStatusReportAction, ImportAnalysesAction, EditIrradiationGeometryAction
 from pychron.entry.tasks.labnumber.actions import LabnumberEntryAction
 from pychron.entry.tasks.preferences import LabnumberEntryPreferencesPane, SamplePrepPreferencesPane
 from pychron.entry.tasks.project.actions import ProjectAction
@@ -114,7 +115,6 @@ class EntryPlugin(BaseTaskPlugin):
                  'Entry Tools',
                  [SchemaAddition(id='pychron.entry2.transfer_j', factory=TransferJAction, path=g2path),
                   SchemaAddition(id='pychron.entry2.get_igsns', factory=GetIGSNAction, path=g2path),
-                  # SchemaAddition(id='pychron.entry2.import_irradiation', factory=ImportIrradiationAction, path=g2path),
                   SchemaAddition(id='pychron.entry2.export_irradiation', factory=ExportIrradiationAction, path=g2path),
                   SchemaAddition(id='pychron.entry2.import_samples_from_file', factory=ImportSamplesAction,
                                  path=g2path),
@@ -127,8 +127,6 @@ class EntryPlugin(BaseTaskPlugin):
                 (self.id, '', 'Entry',
                  [SchemaAddition(id='pychron.entry1.sample_entry', factory=SampleEntryAction,
                                  path=spath, absolute_position='first'),
-                  # SchemaAddition(id='pychron.entry1.sample_edit', factory=SampleEditAction,
-                  #                path=spath, after='pychron.entry1.sample_entry'),
                   SchemaAddition(id='pychron.entry1.sample_prep', factory=SamplePrepAction,
                                  path=spath, after='pychron.entry1.sample_edit'),
                   SchemaAddition(id='pychron.entry1.labnumber_entry', factory=LabnumberEntryAction,
@@ -141,7 +139,9 @@ class EntryPlugin(BaseTaskPlugin):
                                  path=g2path),
                   SchemaAddition(id='pychron.entry1.generate_irradiation_table', factory=GenerateIrradiationTableAction,
                                  path=gpath),
-                  SchemaAddition(id='pychron.entry1.import_irradiation_holder', factory=ImportIrradiationHolderAction,
+                  SchemaAddition(id='pychron.entry1.import_irradiation_geom', factory=ImportIrradiationGeometryAction,
+                                 path=gpath),
+                  SchemaAddition(id='pychron.entry1.edit_irradiation_geom', factory=EditIrradiationGeometryAction,
                                  path=gpath),
                   SchemaAddition(id='pychron.entry1.sensitivity_entry', factory=SensitivityEntryAction,
                                  path=gpath),

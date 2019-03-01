@@ -30,7 +30,7 @@ from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pdf.base_table_pdf_writer import BasePDFTableWriter
 from pychron.core.pdf.items import Row
 from pychron.core.pdf.options import BasePDFOptions, dumpable
-from pychron.dvc.meta_repo import irradiation_holder_holes, irradiation_chronology
+from pychron.dvc.meta_repo import irradiation_geometry_holes, irradiation_chronology
 from pychron.entry.editors.level_editor import load_holder_canvas
 from pychron.loading.component_flowable import ComponentFlowable
 from pychron.pychron_constants import DEFAULT_MONITOR_NAME
@@ -271,7 +271,7 @@ class IrradiationPDFWriter(BasePDFTableWriter):
 
     def _make_canvas(self, level):
         if level.holder:
-            holes = irradiation_holder_holes(level.holder)
+            holes = irradiation_geometry_holes(level.holder)
             canvas = IrradiationCanvas()
             load_holder_canvas(canvas, holes)
             return canvas
