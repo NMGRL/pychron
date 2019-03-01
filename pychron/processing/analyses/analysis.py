@@ -37,7 +37,7 @@ from pychron.graph.stacked_regression_graph import ColumnStackedRegressionGraph,
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.arar_constants import ArArConstants
 from pychron.processing.isotope import Isotope
-from pychron.pychron_constants import PLUSMINUS, NULL_STR
+from pychron.pychron_constants import PLUSMINUS, NULL_STR, AR_AR
 
 Fit = namedtuple('Fit', 'fit '
                         'filter_outliers filter_outlier_iterations filter_outlier_std_devs '
@@ -322,6 +322,7 @@ class Analysis(ArArAge, IdeogramPlotable):
     rlocation = ''
 
     # collection
+    experiment_type = AR_AR
     acquisition_software = None
     data_reduction_software = None
     laboratory = ''

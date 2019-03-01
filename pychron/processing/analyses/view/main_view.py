@@ -30,7 +30,7 @@ from pychron.processing.analyses.view.values import ExtractionValue, ComputedVal
 #     def show_isotope_evolution(self, uiinfo, obj):
 #         isos = obj.selected
 #         obj.show_iso_evo_needed = isos
-from pychron.pychron_constants import PLUSMINUS, COCKTAIL, BLANK_TYPES, UNKNOWN, AIR
+from pychron.pychron_constants import PLUSMINUS, COCKTAIL, BLANK_TYPES, UNKNOWN, AIR, AR_AR
 
 
 class MainView(HasTraits):
@@ -203,7 +203,6 @@ class MainView(HasTraits):
             self._load_unknown_computed(an, new_list)
             if self._corrected_enabled:
                 self._load_corrected_values(an, new_list)
-
         elif self.analysis_type == AIR or self.analysis_type in BLANK_TYPES:
             self._load_air_computed(an, new_list)
         elif self.analysis_type == COCKTAIL:
@@ -323,26 +322,30 @@ class MainView(HasTraits):
         return ComputedValue(*args, **kw)
 
     def _load_air_computed(self, an, new_list):
-        if new_list:
-            c = an.arar_constants
-            ratios = [('40Ar/36Ar', 'Ar40/Ar36', nominal_value(c.atm4036)),
-                      ('40Ar/38Ar', 'Ar40/Ar38', nominal_value(c.atm4038))]
-            cv = self._make_ratios(ratios)
-            self.computed_values = cv
+        if an.experiment_type == AR_AR:
+            if new_list:
+                c = an.arar_constants
+                ratios = [('40Ar/36Ar', 'Ar40/Ar36', nominal_value(c.atm4036)),
+                          ('40Ar/38Ar', 'Ar40/Ar38', nominal_value(c.atm4038))]
+                cv = self._make_ratios(ratios)
+                self.computed_values = cv
 
-        self._update_ratios()
+            self._update_ratios()
 
-        try:
-            niso, diso = self._get_ratio('Ar40/Ar36')
-            if niso and diso:
-                noncorrected = self._get_non_corrected_ratio(niso, diso)
-                v, e = nominal_value(noncorrected), std_dev(noncorrected)
-                ref = 295.5
-                self.summary_str = u'Ar40/Ar36={} {}{}({}%) IC={:0.5f}'.format(floatfmt(v),
-                                                                               PLUSMINUS, floatfmt(e),
-                                                                               format_percent_error(v, e),
-                                                                               nominal_value(noncorrected / ref))
-        except:
+            try:
+                niso, diso = self._get_ratio('Ar40/Ar36')
+                if niso and diso:
+                    noncorrected = self._get_non_corrected_ratio(niso, diso)
+                    v, e = nominal_value(noncorrected), std_dev(noncorrected)
+                    ref = 295.5
+                    self.summary_str = u'Ar40/Ar36={} {}{}({}%) IC={:0.5f}'.format(floatfmt(v),
+                                                                                   PLUSMINUS, floatfmt(e),
+                                                                                   format_percent_error(v, e),
+                                                                                   nominal_value(noncorrected / ref))
+            except:
+                pass
+        else:
+            # todo add ratios for other isotopes. e.g Ne
             pass
 
     def _load_cocktail_computed(self, an, new_list):
