@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.label import Label
-from traits.api import Instance, List, on_trait_change
+from traits.api import Instance, List, on_trait_change, Property
 from traitsui.api import View, VSplit, VGroup, HGroup
 
 # ============= standard library imports ========================
@@ -61,15 +61,24 @@ class IdeogramEditor(InterpretedAgeEditor):
     # @on_trait_change('figure_model:panels:correlation_event')
     # def handle_correlation_event(self, evt):
     #     print('asdf', evt)
+    additional_visible = Property
+
+    def _get_additional_visible(self):
+        return self.ttest_tables or self.results_tables
 
     @on_trait_change('figure_model:panels:figures:recalculate_event')
-    def recalculate(self):
+    def _handle_recalculate(self):
+        print('recalads')
         self._get_component_hook()
 
-    def _get_component_hook(self):
+    def _get_component_hook(self, model=None):
+        if model is None:
+            model = self.figure_model
+
         rs = []
         ts = []
-        for p in self.figure_model.panels:
+        print(self.plotter_options.show_results_table, 'show reasdf')
+        for p in model.panels:
             ags = []
             for pp in p.figures:
                 ag = pp.analysis_group
@@ -122,7 +131,7 @@ class IdeogramEditor(InterpretedAgeEditor):
                            visible_when='ttest_tables')
 
         v = View(VSplit(VGroup(self.get_component_view()),
-                        HGroup(tbl_grp, ttest_grp)),
+                        HGroup(tbl_grp, ttest_grp, visible_when='additional_visible')),
                  resizable=True)
         return v
 # ============= EOF =============================================
