@@ -831,6 +831,7 @@ class AutomatedRun(Loggable):
                 self.spec.state = 'failed'
                 self.experiment_queue.refresh_table_needed = True
 
+        self.spectrometer_manager.spectrometer.active_detectors = []
         self.stop()
 
     def stop(self):
@@ -1732,6 +1733,8 @@ anaylsis_type={}
         self.plot_panel = p
 
         self._active_detectors = self._set_active_detectors(dets)
+
+        self.spectrometer_manager.spectrometer.active_detectors = self._active_detectors
 
         if create:
             p.create(self._active_detectors)

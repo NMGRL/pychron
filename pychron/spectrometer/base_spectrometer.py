@@ -64,6 +64,7 @@ class BaseSpectrometer(SpectrometerDevice):
 
     _prev_signals = None
     _no_intensity_change_cnt = 0
+    active_detectors = List
 
     def convert_to_axial(self, det, v):
         return v
@@ -292,8 +293,13 @@ class BaseSpectrometer(SpectrometerDevice):
                 self.debug('molweights={}'.format(self.molecular_weights))
                 index = det.index
                 try:
+
+                    dets = self._active_detectors
+                    if not dets:
+                        dets=self.detectors
+
                     nmass = self.map_mass(isotope)
-                    for di in self.detectors:
+                    for di in dets:
                         mass = nmass - di.index + index
                         isotope = self.map_isotope(mass)
                         self.debug('setting detector {} to {} ({})'.format(di.name, isotope, mass))
