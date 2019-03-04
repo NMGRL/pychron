@@ -62,8 +62,8 @@ class BaseTasksApplication(TasksApplication, Loggable):
             testbot = TestBot(application=self)
             testbot.run()
 
-    def get_boolean_preference(self, pid):
-        return to_bool(self.preferences.get(pid))
+    def get_boolean_preference(self, pid, default=None):
+        return to_bool(self.preferences.get(pid, default))
 
     def get_task_extensions(self, pid):
         import yaml

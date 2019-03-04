@@ -166,6 +166,8 @@ class FigurePanel(HasTraits):
                 g.set_x_limits(mi, ma, pad=xpad or self.plot_options.xpadding)
 
             self.figures[-1].post_make()
+            self.figures[-1].post_plot(plots)
+
             for fig in self.figures:
                 for i in range(len(plots)):
                     fig.update_options_limits(i)

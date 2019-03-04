@@ -1867,7 +1867,11 @@ anaylsis_type={}
         return plot_panel
 
     def _convert_valve(self, valve):
+        if isinstance(valve, int):
+            valve = str(valve)
+
         if valve and not isinstance(valve, (tuple, list)):
+
             if ',' in valve:
                 valve = [v.strip() for v in valve.split(',')]
             else:

@@ -1245,6 +1245,19 @@ class Graph(ContextMenuMixin):
             plotid = len(self.plots) - 1
 
         axis = getattr(self.plots[plotid], axistag)
+        params = dict(title=title)
+
+        if font not in VALID_FONTS:
+            font = 'arial'
+
+        if font is not None or size is not None:
+            if size is None:
+                size = 12
+
+            tfont = '{} {}'.format(font, size)
+            params.update(title_font=tfont)
+
+        axis.trait_set(**params)
 
         if '<sup>' in title or '<sub>' in title:
             plot = self.plots[plotid]
@@ -1261,21 +1274,8 @@ class Graph(ContextMenuMixin):
             plot.tools.append(t)
 
             setattr(self.plots[plotid], axistag, nxa)
-            axis = nxa
+            # axis = nxa
 
-        params = dict(title=title)
-
-        if font not in VALID_FONTS:
-            font = 'arial'
-
-        if font is not None or size is not None:
-            if size is None:
-                size = 12
-
-            tfont = '{} {}'.format(font, size)
-            params.update(title_font=tfont)
-
-        axis.trait_set(**params)
         self.plotcontainer.request_redraw()
 
     def _get_limits(self, axis, plotid):

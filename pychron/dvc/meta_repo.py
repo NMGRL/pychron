@@ -24,7 +24,6 @@ from uncertainties import ufloat
 from pychron.core.helpers.datetime_tools import ISO_FORMAT_STR
 from pychron.core.helpers.filetools import glob_list_directory, add_extension, \
     list_directory
-from pychron.core.helpers.strtools import to_bool
 from pychron.dvc import dvc_dump, dvc_load, repository_path, list_frozen_productions
 from pychron.dvc.meta_object import IrradiationGeometry, Chronology, Production, cached, Gains, LoadGeometry
 from pychron.git_archive.repo_manager import GitRepoManager
@@ -557,9 +556,8 @@ class MetaRepo(GitRepoManager):
 
         chron = irradiation_chronology(name)
 
-        chron.use_irradiation_endtime = to_bool(self.application.preferences.get(
-            'pychron.arar.constants.use_irradiation_endtime', False))
-
+        chron.use_irradiation_endtime = self.application.get_boolean_preference(
+            'pychron.arar.constants.use_irradiation_endtime', False)
         return chron
 
     @cached('clear_cache')

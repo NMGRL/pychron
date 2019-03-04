@@ -108,14 +108,14 @@ class GraphEditor(BaseEditor):
             if not self.figure_container:
                 self.figure_container = FigureContainer()
             #
-            # omodel = self.figure_container.model
+            omodel = self.figure_container.model
             self.figure_container.model = model
-            # if model == omodel:
-            #     self._get_component_hook(model)
-            #     self.figure_container.model_changed()
-            # else:
+            if model == omodel:
+                # self._get_component_hook(model)
+                self.figure_container.model_changed()
+            else:
 
-            self._get_component_hook(model)
+                self._get_component_hook(model)
 
             return self.figure_container.component
 

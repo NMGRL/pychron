@@ -26,8 +26,7 @@ class ChromiumPlugin(BaseLaserPlugin):
 
     def test_communication(self):
         man = self._get_manager()
-        c = man.test_connection()
-        return 'Passed' if c else 'Failed'
+        return man.test_connection()
 
     def _get_task_klass(self):
         factory = __import__(self.task_klass[0], fromlist=[self.task_klass[1]])

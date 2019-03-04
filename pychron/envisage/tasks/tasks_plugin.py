@@ -34,7 +34,6 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 from traits.api import List, Tuple, HasTraits, Password
 from traitsui.api import View, Item
 
-from pychron.core.helpers.strtools import to_bool
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import ToggleFullWindowAction, EditInitializationAction, EditTaskExtensionsAction
 from pychron.envisage.tasks.base_plugin import BasePlugin
@@ -98,7 +97,7 @@ class PychronTasksPlugin(BasePlugin):
         self.application.preferences.save()
 
     def _random_tip(self):
-        if globalv.random_tip_enabled and to_bool(self.application.preferences.get('pychron.general.show_random_tip')):
+        if globalv.random_tip_enabled and self.application.get_boolean_preference('pychron.general.show_random_tip'):
             from pychron.envisage.tasks.tip_view import TipView
 
             t = random.choice(self.help_tips)
