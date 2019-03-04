@@ -125,7 +125,7 @@ class GraphEditor(BaseEditor):
     def recalculate(self, model):
         pass
 
-    def _get_component_hook(self):
+    def _get_component_hook(self, *args, **kw):
         pass
 
     def _no_component_factory(self):
