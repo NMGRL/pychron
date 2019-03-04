@@ -142,8 +142,12 @@ class SelectionGraph(Graph):
     scatter = None
     grouping_tool = None
 
-    def setup(self, x, y, ans, atypes):
+    def setup(self, x, y, ans, atypes, mapping):
         from pychron.pipeline.plot.plotter.ticks import StaticTickGenerator
+
+        def get_analysis_type(x):
+            x = int(math.floor(x))
+            return next((k for k, v in mapping.items() if v == x))
 
         p = self.new_plot()
         p.padding_left = 200
@@ -234,7 +238,7 @@ class GraphicalFilterModel(HasTraits):
         ans = self.analyses
 
         atypes = list(sorted({a.analysis_type for a in ans}))
-        mapping = {a: idx for idx, a in enumerate(atypes)}
+        mapping = {a.lower(): idx for idx, a in enumerate(atypes)}
 
         f = analysis_type_func(ans, mapping, offset=self.use_offset_analyses)
 
@@ -254,7 +258,7 @@ class GraphicalFilterModel(HasTraits):
         else:
             x, y, ans = [], [], []
 
-        self.graph.setup(x, y, ans, display_atypes)
+        self.graph.setup(x, y, ans, display_atypes, mapping)
 
     def get_filtered_selection(self):
         selection = self.graph.scatter.index.metadata['selections']
