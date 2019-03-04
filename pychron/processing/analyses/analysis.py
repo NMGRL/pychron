@@ -99,10 +99,11 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
         isotopes = reorder(isotopes, nrows)
         g = ColumnStackedRegressionGraph(resizable=True, ncols=ncols, nrows=nrows,
                                          container_dict={'padding_top': 40,
+                                                         'spacing': (0, 15),
                                                          'padding_bottom': 40})
     else:
         isotopes = sort_isotopes(isotopes, reverse=False, key=attrgetter('name'))
-        g = StackedRegressionGraph(resizable=True, container_dict={'spacing': 10})
+        g = StackedRegressionGraph(resizable=True, container_dict={'spacing': 15})
 
     # g.plotcontainer.spacing = 10
     g.window_height = min(275 * len(isotopes), 800)

@@ -17,7 +17,6 @@
 
 # =============enthought library imports=======================
 
-from chaco.plot_containers import GridPlotContainer
 from chaco.scatterplot import ScatterPlot
 from traits.api import Bool, on_trait_change, Event, Int
 
@@ -242,7 +241,8 @@ class ColumnStackedGraph(StackedGraph):
     def container_factory(self, *args, **kw):
         kw['kind'] = 'g'
         kw['shape'] = (self.nrows, self.ncols)
-        kw['spacing'] = (0, 0)
+
+        # kw['spacing'] = (0, 0)
         c = super(ColumnStackedGraph, self).container_factory(*args, **kw)
         return c
 # ============= EOF ====================================
