@@ -31,6 +31,7 @@ class IrradiationEntryPreferences(BasePreferencesHelper):
     irradiation_project_prefix = Str
     allow_multiple_null_identifiers = Bool
     use_packet_for_default_identifier = Bool
+    use_consecutive_identifiers = Bool
 
 
 class LabnumberEntryPreferencesPane(PreferencesPane):
@@ -56,6 +57,7 @@ class LabnumberEntryPreferencesPane(PreferencesPane):
                                 Item('use_packet_for_default_identifier',
                                      label='Use Packet for Default Identifier',
                                      tooltip='Use packet# when generating default Identifiers instead of the hole#'),
+                                Item('use_consecutive_identifiers'),
                                 show_border=True,
                                 label='Irradiations')
         v = View(irradiation_grp)

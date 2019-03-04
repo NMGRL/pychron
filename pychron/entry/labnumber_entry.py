@@ -115,6 +115,7 @@ class LabnumberEntry(DVCIrradiationable):
     monitor_material = Str
     monitor_age = Str
     monitor_decay_constant = Str
+    use_consecutive_identifiers = Bool
 
     _level_editor = None
     _irradiation_editor = None
@@ -132,7 +133,8 @@ class LabnumberEntry(DVCIrradiationable):
                     'monitor_name',
                     'allow_multiple_null_identifiers',
                     'use_packet_for_default_identifier',
-                    'monitor_material', 'j_multiplier'):
+                    'monitor_material', 'j_multiplier',
+                    'use_consecutive_identifiers'):
             bind_preference(self, key, 'pychron.entry.{}'.format(key))
 
         bind_preference(self, 'default_principal_investigator', 'pychron.general.default_principal_investigator')
@@ -360,6 +362,7 @@ class LabnumberEntry(DVCIrradiationable):
                 overwrite = ret == YES
                 lg = IdentifierGenerator(monitor_name=self.monitor_name,
                                          irradiation=self.irradiation,
+                                         use_consecutive_identifiers=self.use_consecutive_identifiers,
                                          overwrite=overwrite,
                                          dvc=self.dvc,
                                          db=self.dvc.db)
@@ -377,13 +380,19 @@ class LabnumberEntry(DVCIrradiationable):
             return
 
         lg = IdentifierGenerator(monitor_name=self.monitor_name,
+                                 irradiation=self.irradiation,
                                  overwrite=True,
+                                 use_consecutive_identifiers=self.use_consecutive_identifiers,
                                  db=self.dvc.db)
         if lg.setup():
-            lg.preview(self.irradiated_positions, self.irradiation, self.level)
+            lg.preview(self.irradiated_positions, self.level)
             self.refresh_table = True
 
     def check_monitor_name(self):
+
+        if self.use_consecutive_identifiers:
+            return
+
         if not self.monitor_name.strip():
             self.warning_dialog('No monitor name set in Preferences.'
                                 ' Set before trying to generate identifiers. e.g "FC-2"')
@@ -481,7 +490,8 @@ class LabnumberEntry(DVCIrradiationable):
                 if n:
                     no.append('Position={} L#={}\n    {}'.format(irs.hole, irs.identifier, ', '.join(n)))
             else:
-                if self.use_packet_for_default_identifier and (self.dvc.kind == 'mssql' or not self.allow_multiple_null_identifiers):
+                if self.use_packet_for_default_identifier and (
+                        self.dvc.kind == 'mssql' or not self.allow_multiple_null_identifiers):
                     if irs.sample and not irs.packet:
                         no.append('Packet needs to be set for Hole:{}, Sample:{}'.format(irs.hole, irs.sample))
 
