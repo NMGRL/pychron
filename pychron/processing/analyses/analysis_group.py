@@ -420,7 +420,7 @@ class AnalysisGroup(IdeogramPlotable):
 
             f = ufloat(wmean, werr)
         else:
-            f = fs.sum()
+            f = rs.sum()/sks
 
         return f
 
