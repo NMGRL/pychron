@@ -163,12 +163,12 @@ class AnalysisView(HasTraits):
     analysis_id = Str
     selected_tab = Any
 
-    main_view = Instance(MainView)
+    main_view = Instance(MainView, ())
 
     experiment_view = Instance(ExperimentView)
     measurement_view = Instance(MeasurementView)
     extraction_view = Instance(ExtractionView)
-    isotope_view = Instance(IsotopeView)
+    isotope_view = Instance(IsotopeView, ())
 
     groups = List
 
@@ -195,15 +195,17 @@ class AnalysisView(HasTraits):
         analysis_id = an.record_id
         self.analysis_id = analysis_id
 
-        main_view = MainView(an, analysis_type=analysis_type, analysis_id=analysis_id)
-        self.main_view = main_view
+        # main_view = MainView(an, analysis_type=analysis_type, analysis_id=analysis_id)
+        self.main_view.trait_set(analysis_type=analysis_type, analysis_id=analysis_id)
+        self.main_view.load(an)
+        # self.main_view = main_view
 
-        self.groups.append(main_view)
+        self.groups.append(self.main_view)
 
         isos = [an.isotopes[k] for k in an.isotope_keys]
-        iso_view = IsotopeView(isotopes=isos)
-        self.isotope_view = iso_view
-        self.groups.append(iso_view)
+        # iso_view = IsotopeView(isotopes=isos)
+        self.isotope_view.isotopes = isos
+        self.groups.append(self.isotope_view)
         self._make_subviews(an)
 
     def refresh(self):

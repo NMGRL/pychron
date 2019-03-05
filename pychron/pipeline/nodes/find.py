@@ -18,7 +18,7 @@
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
 from traits.api import Float, Str, List, Property, cached_property, Button, Bool
-from traitsui.api import Item, EnumEditor, UItem, VGroup
+from traitsui.api import Item, EnumEditor, UItem, VGroup, HGroup
 
 from pychron.core.helpers.iterfuncs import partition, groupby_group_id
 from pychron.core.pychron_traits import BorderHGroup, BorderVGroup
@@ -271,6 +271,8 @@ class FindReferencesNode(FindNode):
     enable_mass_spectrometer = Bool
     mass_spectrometers = List
     use_graphical_filter = Bool
+    use_extract_device = Bool
+    use_mass_spectrometer = Bool
 
     def reset(self):
         self.user_choice = None
@@ -282,6 +284,8 @@ class FindReferencesNode(FindNode):
         self.name = nodedict.get('name', 'Find References')
         self.limit_to_analysis_loads = nodedict.get('limit_to_analysis_loads', True)
         self.use_graphical_filter = nodedict.get('use_graphical_filter', True)
+        self.use_extract_device = nodedict.get('use_extract_device', True)
+        self.use_mass_spectrometer = nodedict.get('use_mass_spectrometer', True)
 
     def finish_load(self):
         self.extract_devices = self.dvc.get_extraction_device_names()
@@ -325,8 +329,8 @@ class FindReferencesNode(FindNode):
 
     def _run_group(self, state, gid, unknowns):
         atypes = [ai.lower().replace(' ', '_') for ai in self.analysis_types]
-        kw = dict(extract_devices=self.extract_device,
-                  mass_spectrometers=self.mass_spectrometer,
+        kw = dict(extract_devices=self.extract_device if self.use_extract_device else '',
+                  mass_spectrometers=self.mass_spectrometer if self.use_mass_sepctrometer else '',
                   make_records=False)
 
         while 1:
@@ -354,11 +358,14 @@ class FindReferencesNode(FindNode):
 
         if refs:
             if self.use_graphical_filter:
+                ed = self.extract_device if self.use_extract_device else ''
+                ms = self.mass_spectrometer if self.use_mass_spectrometer else ''
+
                 unknowns.extend(refs)
                 model = GraphicalFilterModel(analyses=unknowns,
                                              dvc=self.dvc,
-                                             extract_device=self.extract_device,
-                                             mass_spectrometer=self.mass_spectrometer,
+                                             extract_device=ed,
+                                             mass_spectrometer=ms,
                                              low_post=times[0],
                                              high_post=times[-1],
                                              threshold=self.threshold,
@@ -387,14 +394,16 @@ class FindReferencesNode(FindNode):
                                      tooltip='Limit Loads based on the selected analyses',
                                      label='Limit Loads by Analyses'),
                                 label='Load')
-        inst_grp = BorderVGroup(Item('extract_device',
-                                     enabled_when='enable_extract_device',
-                                     editor=EnumEditor(name='extract_devices'),
-                                     label='Extract Device'),
-                                Item('mass_spectrometer',
-                                     label='Mass Spectrometer',
-                                     enabled_when='enable_mass_spectrometer',
-                                     editor=EnumEditor(name='mass_spectrometers')),
+        inst_grp = BorderVGroup(HGroup(UItem('use_extract_device'),
+                                       Item('extract_device',
+                                            enabled_when='enable_extract_device',
+                                            editor=EnumEditor(name='extract_devices'),
+                                            label='Extract Device')),
+                                HGroup(UItem('use_mass_spectrometer'),
+                                       Item('mass_spectrometer',
+                                            label='Mass Spectrometer',
+                                            enabled_when='enable_mass_spectrometer',
+                                            editor=EnumEditor(name='mass_spectrometers'))),
                                 label='Instruments')
 
         filter_grp = BorderVGroup(Item('threshold',
