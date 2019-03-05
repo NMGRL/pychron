@@ -31,7 +31,6 @@ from pychron.core.helpers.formatting import floatfmt, calc_percent_error, format
 from pychron.core.stats import validate_mswd
 from pychron.graph.error_ellipse_overlay import ErrorEllipseOverlay
 from pychron.graph.error_envelope_overlay import ErrorEnvelopeOverlay
-from pychron.pipeline.plot.flow_label import FlowPlotLabel
 from pychron.pipeline.plot.overlays.isochron_inset import InverseIsochronPointsInset, InverseIsochronLineInset
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 from pychron.pychron_constants import PLUSMINUS, SIGMA
@@ -238,13 +237,15 @@ class InverseIsochron(Isochron):
             ts.append('Error Type: {}'.format(self.options.error_calc_method))
 
         if ts:
-            pl = FlowPlotLabel(text='\n'.join(ts),
-                               overlay_position='inside top',
-                               hjustify='left',
-                               bgcolor=plot.bgcolor,
-                               font=self.options.info_font,
-                               component=plot)
-            plot.overlays.append(pl)
+            self._add_info_label(plot, ts, font=self.options.info_font)
+
+            # pl = FlowPlotLabel(text='\n'.join(ts),
+            #                    overlay_position='inside top',
+            #                    hjustify='left',
+            #                    bgcolor=plot.bgcolor,
+            #                    font=self.options.info_font,
+            #                    component=plot)
+            # plot.overlays.append(pl)
 
     def _add_inset(self, plot, reg):
 
@@ -313,7 +314,9 @@ class InverseIsochron(Isochron):
             p = calc_percent_error(intercept, err, scale=1)
             err = inv_intercept * p * self.options.nsigma
             mse = err * mswd ** 0.5
-            v, e, p, mse = floatfmt(inv_intercept, s=3), floatfmt(err, s=3), floatfmt(p * 100, n=2), floatfmt(mse, s=3)
+            sf = self.options.yintercept_sig_figs
+            v, e, p, mse = floatfmt(inv_intercept, n=sf, s=3), floatfmt(err, n=sf, s=3), \
+                           floatfmt(p * 100, n=2), floatfmt(mse, s=3)
         except ZeroDivisionError:
             v, e, p, mse = 'NaN', 'NaN', 'NaN', 'NaN'
 
@@ -332,9 +335,10 @@ class InverseIsochron(Isochron):
         if not valid:
             mswd = '*{}'.format(mswd)
 
-        age_line = u'Age= {} {}{} ({}%) {}. MSE= {}'.format(floatfmt(v, n=3),
+        af = self.options.age_sig_figs
+        age_line = u'Age= {} {}{} ({}%) {}. MSE= {}'.format(floatfmt(v, n=af),
                                                             PLUSMINUS,
-                                                            floatfmt(e, n=4, s=3), p, ag.age_units,
+                                                            floatfmt(e, n=af, s=3), p, ag.age_units,
                                                             floatfmt(mse_age, s=3))
         mswd_line = 'N= {} MSWD= {}'.format(n, mswd)
         if label is None:

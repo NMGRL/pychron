@@ -538,11 +538,15 @@ class BaseArArFigure(SelectionFigure):
     # ===============================================================================
     # labels
     # ===============================================================================
-    def _add_info_label(self, plot, text_lines):
+    def _add_info_label(self, plot, text_lines, font=None):
+        if font is None:
+            font = self.options.error_info_font
+
         ov = FlowPlotLabel(text='\n'.join(text_lines),
                            overlay_position='inside top',
                            hjustify='left',
-                           font=self.options.error_info_font,
+                           bgcolor=plot.bgcolor,
+                           font=font,
                            component=plot)
         plot.overlays.append(ov)
         plot.tools.append(OverlayMoveTool(component=ov))

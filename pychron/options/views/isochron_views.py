@@ -16,8 +16,10 @@
 
 # ============= enthought library imports =======================
 from traitsui.api import View, Item, HGroup, VGroup, Group, UItem, RangeEditor
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.pychron_traits import BorderHGroup, BorderVGroup
 from pychron.options.options import SubOptions, AppearanceSubOptions, GroupSubOptions
 
 
@@ -40,48 +42,49 @@ class InverseIsochronMainOptions(SubOptions):
                   show_border=True,
                   label='Calculations')
 
-        info_grp = HGroup(Item('show_info', label='Calculations'),
-                          UItem('info_fontname'),
-                          UItem('info_fontsize'))
+        info_grp = HGroup(Item('show_info', label='Info'),
+                          BorderHGroup(UItem('info_fontname'),
+                                       UItem('info_fontsize')))
 
         results_grp = HGroup(Item('show_results_info', label='Results'),
-                             VGroup(HGroup(Item('nsigma'),
-                                           Item('results_info_spacing',
-                                                editor=RangeEditor(mode='spinner', low=2,
-                                                                   high=20, is_float=False),
-                                                label='Spacing')),
-                                    HGroup(UItem('results_fontname'),
-                                           UItem('results_fontsize'))))
+                             VGroup(BorderVGroup(HGroup(Item('nsigma', label='NSigma'),
+                                                        Item('results_info_spacing',
+                                                             editor=RangeEditor(mode='spinner', low=2,
+                                                                                high=20, is_float=False),
+                                                             label='Spacing')),
+                                                 HGroup(UItem('results_fontname'),
+                                                        UItem('results_fontsize'))),
+                                    BorderHGroup(Item('age_sig_figs', label='Age'),
+                                                 Item('yintercept_sig_figs', label='Y-Int.'),
+                                                 label='SigFigs')))
 
-        ellipse_grp = HGroup(Item('fill_ellipses', label='fill'),
-                             Item('ellipse_kind', label='Kind'),
-                             show_border=True,
-                             label='Error Ellipse')
-        label_grp = VGroup(Item('show_labels'),
-                           HGroup(Item('label_box'),
-                                  UItem('label_fontname'),
-                                  UItem('label_fontsize'),
-                                  enabled_when='show_labels'),
-                           show_border=True, label='Labels')
-        g2 = Group(VGroup(info_grp,
-                          results_grp,
-                          show_border=True,
-                          label='Info'),
+        ellipse_grp = BorderHGroup(Item('fill_ellipses', label='fill'),
+                                   Item('ellipse_kind', label='Kind'),
+                                   label='Error Ellipse')
+        label_grp = BorderVGroup(Item('show_labels'),
+                                 HGroup(Item('label_box'),
+                                        UItem('label_fontname'),
+                                        UItem('label_fontsize'),
+                                        enabled_when='show_labels'),
+                                 label='Labels')
+        g2 = Group(BorderVGroup(info_grp,
+                                results_grp,
+                                label='Info'),
                    ellipse_grp,
                    label_grp,
 
-                   VGroup(Item('show_nominal_intercept'),
-                          HGroup(Item('nominal_intercept_label', label='Label', enabled_when='show_nominal_intercept'),
-                                 Item('nominal_intercept_value', label='Value', enabled_when='show_nominal_intercept')),
-                          show_border=True,
-                          label='Nominal Intercept'),
-                   VGroup(Item('display_inset'),
-                          Item('inset_location'),
-                          HGroup(Item('inset_marker_size', label='Marker Size')),
-                          HGroup(Item('inset_width', label='Width'),
-                                 Item('inset_height', label='Height')),
-                          show_border=True,
-                          label='Inset'),
+                   BorderVGroup(Item('show_nominal_intercept'),
+                                HGroup(Item('nominal_intercept_label', label='Label',
+                                            enabled_when='show_nominal_intercept'),
+                                       Item('nominal_intercept_value', label='Value',
+                                            enabled_when='show_nominal_intercept')),
+                                label='Nominal Intercept'),
+                   BorderVGroup(Item('display_inset'),
+                                Item('inset_location'),
+                                HGroup(Item('inset_marker_size', label='Marker Size')),
+                                HGroup(Item('inset_width', label='Width'),
+                                       Item('inset_height', label='Height')),
+                                label='Inset'),
                    show_border=True,
                    label='Display')
         return self._make_view(VGroup(g, g2))

@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str, Bool, Float, Property, Enum, Range
+from traits.api import Str, Bool, Float, Property, Enum, Range, Int
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -26,6 +26,8 @@ from pychron.pychron_constants import FIT_ERROR_TYPES, ELLIPSE_KINDS, FONTS, SIZ
 
 
 class IsochronOptions(AgeOptions):
+    age_sig_figs = Int(2)
+    yintercept_sig_figs = Int(2)
 
     def initialize(self):
         self.subview_names = [MAIN, APPEARANCE, GROUPS]
