@@ -745,6 +745,8 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
         f = getattr(q, func)
         try:
             return f()
+        except NoResultFound:
+            self.info('no results found for query -- {}'.format(compile_query(q)))
         except SQLAlchemyError as e:
             if self.verbose:
                 self.debug('_query exception {}'.format(e))
