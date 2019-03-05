@@ -490,7 +490,7 @@ class Ideogram(BaseArArFigure):
                     ts.append('Error Type: {}'.format(self.options.error_calc_method))
 
                 if ts:
-                    self._add_info_overlay(plot, ts)
+                    self._add_info_label(plot, ts)
 
     def _add_mean_indicator(self, g, line, po, bins, probs, pid):
         wm, we, mswd, valid_mswd, n = self._calculate_stats(bins, probs)
