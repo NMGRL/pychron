@@ -34,8 +34,9 @@ from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
 from pychron.graph.tools.point_inspector import PointInspectorOverlay
 from pychron.graph.tools.rect_selection_tool import RectSelectionOverlay, \
     RectSelectionTool
-from pychron.pipeline.plot.flow_label import FlowDataLabel
+from pychron.pipeline.plot.flow_label import FlowDataLabel, FlowPlotLabel
 from pychron.pipeline.plot.overlays.points_label_overlay import PointsLabelOverlay
+from pychron.pipeline.plot.point_move_tool import OverlayMoveTool
 from pychron.processing.analyses.analysis_group import AnalysisGroup
 from pychron.pychron_constants import PLUSMINUS
 
@@ -537,6 +538,15 @@ class BaseArArFigure(SelectionFigure):
     # ===============================================================================
     # labels
     # ===============================================================================
+    def _add_info_label(self, plot, text_lines):
+        ov = FlowPlotLabel(text='\n'.join(text_lines),
+                           overlay_position='inside top',
+                           hjustify='left',
+                           font=self.options.error_info_font,
+                           component=plot)
+        plot.overlays.append(ov)
+        plot.tools.append(OverlayMoveTool(component=ov))
+
     def _add_data_label(self, s, text, point, bgcolor='transparent',
                         label_position='top right', color=None, append=True, **kw):
         if color is None:

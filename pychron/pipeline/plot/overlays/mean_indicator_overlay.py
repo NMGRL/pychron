@@ -29,11 +29,16 @@ from pychron.pipeline.plot.point_move_tool import LabelMoveTool
 class MovableMixin:
     current_screen_point = None
     altered_screen_point = None
+    delta_screen_point = None
 
     def get_current_point(self):
         data_pt = self.altered_screen_point
         if data_pt is None:
             data_pt = self.current_screen_point
+
+        if data_pt is None:
+            data_pt = (self.x, self.y)
+
         return data_pt
 
 
@@ -199,12 +204,6 @@ try:
 
             for o in self.overlays:
                 o.overlay(other_component, gc, view_bounds=view_bounds, mode=mode)
-
-        def get_current_point(self):
-            data_pt = self.altered_screen_point
-            if data_pt is None:
-                data_pt = self.current_screen_point
-            return data_pt
 
         def _gather_data(self):
             comp = self.component

@@ -21,7 +21,6 @@ from numpy import hstack, array
 from traits.api import Array, List, Instance
 from uncertainties import nominal_value, std_dev
 
-from pychron.pipeline.plot.flow_label import FlowPlotLabel
 from pychron.pipeline.plot.overlays.label_overlay import SpectrumLabelOverlay, RelativePlotLabel
 from pychron.pipeline.plot.overlays.spectrum import SpectrumTool, \
     SpectrumErrorOverlay, PlateauTool, PlateauOverlay, SpectrumInspectorOverlay
@@ -209,12 +208,7 @@ class Spectrum(BaseArArFigure):
                       u'Error Env. {}{}{}'.format(PLUSMINUS, self.options.step_nsigma, SIGMA)]
 
                 if ts:
-                    pl = FlowPlotLabel(text='\n'.join(ts),
-                                       overlay_position='inside top',
-                                       hjustify='left',
-                                       font=self.options.error_info_font,
-                                       component=plot)
-                    plot.overlays.append(pl)
+                    self._add_info_label(plot, ts)
 
     def _add_age_label(self, plot, text, font='modern 10', relative_position=0, **kw):
 

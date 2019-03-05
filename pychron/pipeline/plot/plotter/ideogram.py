@@ -33,7 +33,6 @@ from pychron.core.helpers.formatting import floatfmt
 from pychron.core.stats.peak_detection import fast_find_peaks
 from pychron.core.stats.probability_curves import cumulative_probability, kernel_density
 from pychron.graph.ticks import IntTickGenerator
-from pychron.pipeline.plot.flow_label import FlowPlotLabel
 from pychron.pipeline.plot.overlays.ideogram_inset_overlay import IdeogramInset, IdeogramPointsInset
 from pychron.pipeline.plot.overlays.mean_indicator_overlay import MeanIndicatorOverlay
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
@@ -491,12 +490,7 @@ class Ideogram(BaseArArFigure):
                     ts.append('Error Type: {}'.format(self.options.error_calc_method))
 
                 if ts:
-                    pl = FlowPlotLabel(text='\n'.join(ts),
-                                       overlay_position='inside top',
-                                       hjustify='left',
-                                       font=self.options.error_info_font,
-                                       component=plot)
-                    plot.overlays.append(pl)
+                    self._add_info_overlay(plot, ts)
 
     def _add_mean_indicator(self, g, line, po, bins, probs, pid):
         wm, we, mswd, valid_mswd, n = self._calculate_stats(bins, probs)

@@ -15,23 +15,33 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from chaco.data_label import DataLabel
 from chaco.plot_label import PlotLabel
-from traits.api import Bool, Str
-
 # ============= standard library imports ========================
 from numpy import max
+from traits.api import Bool, Str
+
 # ============= local library imports  ==========================
+from pychron.pipeline.plot.overlays.mean_indicator_overlay import MovableMixin
 
 
-class FlowPlotLabel(PlotLabel):
+class FlowPlotLabel(PlotLabel, MovableMixin):
     def overlay(self, component, gc, *args, **kw):
         # face name was getting set to "Helvetica" by reportlab during pdf generation
         # set face_name back to "" to prevent font display issue. see issue #72
         # self._label.font.face_name = ''
 
+        if self.delta_screen_point:
+            dx, dy = self.delta_screen_point
+            self.x -= dx
+            self.y -= dy
+
         super(FlowPlotLabel, self).overlay(component, gc, *args, **kw)
+
+    def hittest(self, pt):
+        x, y = pt
+        w, h = self.get_preferred_size()
+        return abs(x - self.x) < w and abs(y - self.y) < h
 
 
 class FlowDataLabel(DataLabel):
@@ -45,6 +55,7 @@ class FlowDataLabel(DataLabel):
     constrain_y = Bool(True)
     # position_event=Event
     id = Str
+
     # _ox=None
 
     # def _draw(self, gc, **kw):
