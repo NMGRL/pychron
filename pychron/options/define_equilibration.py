@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.api import Int, Bool, Range
+from traits.api import Int, Bool
 
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.fit import FitOptions
@@ -28,7 +28,7 @@ class DefineEquilibrationAuxPlot(AuxPlot):
 class DefineEquilibrationOptions(FitOptions):
     aux_plot_klass = DefineEquilibrationAuxPlot
     show_statistics = Bool(False)
-    ncols = Range(1, 5)
+    ncols = Int
 
     def initialize(self):
         self.subview_names = [MAIN, DISPLAY]

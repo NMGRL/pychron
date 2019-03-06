@@ -70,7 +70,7 @@ class CloseHandler(Handler):
 
 
 def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibration=False, show_baseline=False,
-                            show_statistics=False, ncols=1):
+                            show_statistics=False, ncols=1, scale_to_equilibration=False):
     if WINDOW_CNT > 20:
         information(None, 'You have too many Isotope Evolution windows open. Close some before proceeding')
         return
@@ -141,8 +141,10 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
                          truncate=iso.truncate,
                          filter_outliers_dict=iso.filter_outliers_dict,
                          color='black')
-            ymi, yma = min_max(ymi, yma, iso.ys)
-            xmi, xma = min_max(xmi, xma, iso.offset_xs)
+
+            if not scale_to_equilibration:
+                ymi, yma = min_max(ymi, yma, iso.ys)
+                xmi, xma = min_max(xmi, xma, iso.offset_xs)
 
         if show_baseline:
             baseline = iso.baseline
@@ -150,11 +152,22 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
                          type='scatter', fit=baseline.efit,
                          filter_outliers_dict=baseline.filter_outliers_dict,
                          color='blue')
-            ymi, yma = min_max(ymi, yma, baseline.ys)
-            xmi, xma = min_max(xmi, xma, baseline.offset_xs)
+            if not scale_to_equilibration:
+                ymi, yma = min_max(ymi, yma, baseline.ys)
+                xmi, xma = min_max(xmi, xma, baseline.offset_xs)
 
-        g.set_x_limits(min_=xmi, max_=xma, pad='0.025,0.05')
-        g.set_y_limits(min_=ymi, max_=yma, pad='0.05', plotid=i)
+        xpad = '0.025,0.05'
+        ypad = '0.05'
+        if scale_to_equilibration:
+            xma *= 1.1
+            ypad = None
+            r = (yma - ymi) / 5
+            yma += r
+            ymi -= r
+
+        g.set_x_limits(min_=xmi, max_=xma, pad=xpad)
+        g.set_y_limits(min_=ymi, max_=yma, pad=ypad, plotid=i)
+
         g.set_x_title('Time (s)', plotid=i)
         g.set_y_title('{} ({})'.format(iso.name, iso.units), plotid=i)
 

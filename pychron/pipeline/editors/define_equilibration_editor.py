@@ -73,7 +73,8 @@ class DefineEquilibrationResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
                                                              load_data=False,
                                                              show_equilibration=True,
                                                              ncols=self.options.ncols,
-                                                             show_statistics=self.options.show_statistics)
+                                                             show_statistics=self.options.show_statistics,
+                                                             scale_to_equilibration=True)
             idx = self.results.index(new)
             if idx == len(self.results) - 1:
                 self.next_enabled = False
