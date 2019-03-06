@@ -321,7 +321,11 @@ class InverseIsochron(Isochron):
             v, e, p, mse = 'NaN', 'NaN', 'NaN', 'NaN'
 
         sample_line = u'{}({})'.format(ag.identifier, ag.sample)
-        ratio_line = u'Ar40/Ar36= {} {}{} ({}%) mse= {}'.format(v, PLUSMINUS, e, p, mse)
+        mse_text = ''
+        if self.options.include_4036_mse:
+            mse_text = ' MSE= {}'.format(mse)
+
+        ratio_line = u'Ar40/Ar36= {} {}{} ({}%){}'.format(v, PLUSMINUS, e, p, mse_text)
 
         v = nominal_value(age)
         e = std_dev(age) * self.options.nsigma
@@ -336,10 +340,14 @@ class InverseIsochron(Isochron):
             mswd = '*{}'.format(mswd)
 
         af = self.options.age_sig_figs
-        age_line = u'Age= {} {}{} ({}%) {}. MSE= {}'.format(floatfmt(v, n=af),
+
+        mse_text = ''
+        if self.options.include_age_mse:
+            mse_text = ' MSE= {}'.format(floatfmt(mse_age, s=3))
+
+        age_line = u'Age= {} {}{} ({}%) {}{}'.format(floatfmt(v, n=af),
                                                             PLUSMINUS,
-                                                            floatfmt(e, n=af, s=3), p, ag.age_units,
-                                                            floatfmt(mse_age, s=3))
+                                                            floatfmt(e, n=af, s=3), p, ag.age_units, mse_text)
         mswd_line = 'N= {} MSWD= {}'.format(n, mswd)
         if label is None:
             th = 0
