@@ -674,7 +674,7 @@ THIS CHANGE CANNOT BE UNDONE')
         if name is None:
             name = self.level
 
-        self.debug('update level= "{}"'.format(name))
+        self.debug('update irradiation={}, level= "{}"'.format(self.irradiation, name))
         db = self.dvc.db
         meta_repo = self.dvc.meta_repo
 

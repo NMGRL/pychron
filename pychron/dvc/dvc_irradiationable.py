@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 
 from traits.api import Str, Property, cached_property, Instance, Event, Any
 
@@ -70,7 +69,8 @@ class DVCIrradiationable(DVCAble):
                 if irs:
                     irrad_names = [i.name for i in irs]
                     if irrad_names:
-                        self.irradiation = irrad_names[0]
+                        if not self.irradiation:
+                            self.irradiation = irrad_names[0]
         return irrad_names
 
     @cached_property
@@ -83,6 +83,7 @@ class DVCIrradiationable(DVCAble):
                 if irrad:
                     levels = sorted([li.name for li in irrad.levels])
                     if levels:
-                        self.level = levels[0]
+                        if not self.level:
+                            self.level = levels[0]
         return levels
 # ============= EOF =============================================
