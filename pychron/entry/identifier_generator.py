@@ -74,7 +74,7 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
     unk_start = CInt(1000)
 
     pattributes = ('level_offset', 'offset')
-    persistence_path = 'identifier_generator'
+    persistence_name = 'identifier_generator.p'
     mon_maxs = List
     unk_maxs = List
 

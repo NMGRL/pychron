@@ -17,10 +17,12 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
+
 import os
 import pickle
 
 from pychron.loggable import Loggable
+from pychron.paths import paths
 
 
 def load_persistence_dict(p):
@@ -57,6 +59,7 @@ def dumpable(klass, *args, **kw):
 
 class PersistenceMixin(object):
     pattributes = None
+    persistence_name = None
 
     def get_attributes(self):
         attrs = self.pattributes
@@ -71,6 +74,13 @@ class PersistenceMixin(object):
             pass
 
         return attrs
+
+    @property
+    def persistence_path(self):
+        if not self.persistence_name:
+            raise NotImplementedError
+
+        return os.path.join(paths.hidden_dir, self.persistence_name)
 
     def get_persistence_path(self):
         try:
