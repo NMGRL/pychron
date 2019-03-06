@@ -223,21 +223,15 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def get_pressure(self, controller, gauge):
-        result = self._manager_action([('get_pressure', (controller, gauge), {})], protocol=ELPROTOCOL)
-        return result[0]
-
-    @verbose_skip
-    @command_register
     def set_cryo(self, value):
-        result = self._manager_action([('set_cryo', (value,), {})], protocol=ELPROTOCOL)
+        result = self._manager_action(('set_cryo', (value,), {}), protocol=ELPROTOCOL)
         self.debug('set cyro result={}'.format(result))
         return result
 
     @verbose_skip
     @command_register
     def get_cryo_temp(self, value):
-        result = self._manager_action([('get_cryo_temp', (value,), {})], protocol=ELPROTOCOL)
+        result = self._manager_action(('get_cryo_temp', (value,), {}), protocol=ELPROTOCOL)
         return result
 
     @calculate_duration
