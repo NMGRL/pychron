@@ -128,7 +128,8 @@ class BaseLakeShoreController(CoreDevice):
 
     @get_float(default=0)
     def read_setpoint(self, output, verbose=False):
-        return self.ask('SETP? {}'.format(output), verbose=verbose)
+        if output is not None:
+            return self.ask('SETP? {}'.format(re.sub('[^0-9]', '', output)), verbose=verbose)
 
     def set_setpoints(self, *setpoints):
         for i, v in enumerate(setpoints):
