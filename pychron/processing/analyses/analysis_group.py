@@ -458,11 +458,12 @@ class AnalysisGroup(IdeogramPlotable):
                 if attr == 'kca':
                     cas = array([ai.get_non_ar_isotope('ca37') for ai in ans])
                     f = self._calculate_integrated_mean_error(weighting, ks, cas)
-                    uv = apply_pr(f, 'Ca_K')
+                    uv = 1/apply_pr(f, 'Ca_K')
+
                 elif attr == 'kcl':
                     cls = array([ai.get_non_ar_isotope('cl38') for ai in ans])
                     f = self._calculate_integrated_mean_error(weighting, ks, cls)
-                    uv = apply_pr(f, 'Cl_K')
+                    uv = 1/apply_pr(f, 'Cl_K')
 
                 elif attr == 'signal_k39':
                     uv = ks.sum()
