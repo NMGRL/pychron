@@ -253,7 +253,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             cols = [c for iso, mass in isos
                     for c in (Column(visible=bit, attr='{}{}'.format(iso, mass),
                                      label=('<sup>{}</sup>'.format(mass), iso),
-                                     units='(fA)',
+                                     units='({})'.format(self._options.intensity_units),
                                      func=iso_value(tag),
                                      sigformat='signal'),
                               EColumn(visible=bit,

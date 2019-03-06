@@ -54,7 +54,8 @@ class XLSXAnalysisTableWriterOptions(BasePersistenceOptions, JErrorMixin):
 
     ensure_trailing_zeros = dumpable(Bool(False))
 
-    power_units = dumpable(Enum('W', 'C'))
+    power_units = dumpable(Enum('W', 'C', '%'))
+    intensity_units = dumpable(Enum('fA', 'cps'))
     age_units = dumpable(Enum('Ma', 'Ga', 'ka', 'a'))
     hide_gridlines = dumpable(Bool(False))
     include_F = dumpable(Bool(True))
@@ -256,6 +257,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
 
         appearence_grp = VGroup(Item('hide_gridlines', label='Hide Gridlines'),
                                 Item('power_units', label='Power Units'),
+                                Item('intensity_units', label='Intensity Units'),
                                 Item('age_units', label='Age Units'),
                                 Item('sensitivity_units', label='Sensitivity Units'),
                                 Item('group_age_sorting', label='Group Age Sorting'),
