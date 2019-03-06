@@ -235,6 +235,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     username = Str
     laboratory = Str
 
+    persistence_name = 'run_factory'
     pattributes = ('collection_time_zero_offset',
                    'selected_irradiation', 'selected_level',
                    'extract_value', 'extract_units', 'cleanup',
@@ -1576,9 +1577,5 @@ post_equilibration_script:name''')
     @property
     def run_block_enabled(self):
         return self.run_block not in ('RunBlock', LINE_STR)
-
-    @property
-    def persistence_path(self):
-        return os.path.join(paths.hidden_dir, 'run_factory')
 
 # ============= EOF =============================================

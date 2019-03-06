@@ -116,6 +116,7 @@ class LabnumberEntry(DVCIrradiationable):
     monitor_age = Str
     monitor_decay_constant = Str
     use_consecutive_identifiers = Bool
+    lab_name = Str
 
     _level_editor = None
     _irradiation_editor = None
@@ -138,6 +139,7 @@ class LabnumberEntry(DVCIrradiationable):
             bind_preference(self, key, 'pychron.entry.{}'.format(key))
 
         bind_preference(self, 'default_principal_investigator', 'pychron.general.default_principal_investigator')
+        bind_preference(self, 'lab_name', 'pychron.general.lab_name')
 
     def activated(self):
         pass
@@ -317,6 +319,9 @@ class LabnumberEntry(DVCIrradiationable):
         if info.result:
             if table.selected:
                 w = LabbookPDFWriter()
+                if self.lab_name:
+                    w.title = self.lab_name
+
                 info = w.options.edit_traits()
                 if info.result:
                     w.options.dump()

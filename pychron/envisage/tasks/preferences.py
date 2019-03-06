@@ -42,6 +42,7 @@ class GeneralPreferences(GitRepoPreferencesHelper):
 
     organization = String(enter_set=True, auto_set=False)
     default_principal_investigator = String
+    lab_name = String
 
     def _get__usernames(self):
         return get_usernames()
@@ -79,6 +80,7 @@ class GeneralPreferencesPane(PreferencesPane):
                         Item('show_random_tip', label='Random Tip',
                              tooltip='Display a Random Tip whe the application starts'),
                         Item('default_principal_investigator', resizable=True, label='Default PI'),
+                        Item('lab_name', label='Laboratory Name'),
                         # Item('use_advanced_ui', label='Advanced UI',
                         #      tooltip='Display the advanced UI'),
                         # root_grp,

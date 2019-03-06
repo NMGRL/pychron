@@ -813,11 +813,6 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             db.on_trait_change(self._handle_source_change, 'data_source')
             return db
 
-    # persistence
-    @property
-    def persistence_path(self):
-        return os.path.join(paths.hidden_dir, self.persistence_name)
-
     @property
     def selection_persistence_path(self):
         p = os.path.join(paths.hidden_dir, self.selection_persistence_name)

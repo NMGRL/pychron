@@ -35,7 +35,6 @@ from pychron.dvc.dvc_irradiationable import DVCAble
 from pychron.entry.tasks.sample_prep.sample_locator import SampleLocator
 from pychron.image.camera import CameraViewer
 from pychron.image.viewer import ImageViewer
-from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceMixin
 from pychron.pychron_constants import SAMPLE_PREP_STEPS
 
@@ -193,9 +192,7 @@ class SamplePrep(DVCAble, PersistenceMixin):
     camera = Any
     selected_image = Any
 
-    @property
-    def persistence_path(self):
-        return os.path.join(paths.hidden_dir, 'sample_prep')
+    persistence_name = 'sample_prep'
 
     def activated(self):
 

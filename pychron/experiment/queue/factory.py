@@ -74,6 +74,7 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
 
     ok_make = Property(depends_on='mass_spectrometer, username')
 
+    persistence_name = 'queue_factory'
     pattributes = ('mass_spectrometer',
                    'extract_device',
                    'use_group_email',
@@ -99,10 +100,6 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
         self.dump()
 
     # persistence
-    @property
-    def persistence_path(self):
-        return os.path.join(paths.hidden_dir, 'queue_factory')
-
     def _load_queue_conditionals(self):
         root = paths.queue_conditionals_dir
         cs = glob_list_directory(root, remove_extension=True)

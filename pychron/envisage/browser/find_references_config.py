@@ -14,14 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-import os
-
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Int, List, Str, Bool
 from traitsui.api import UItem, Item, VGroup, Controller, EnumEditor, CheckListEditor
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
-from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceMixin
 from pychron.pychron_constants import DEFAULT_MONITOR_NAME
 
@@ -44,9 +41,7 @@ class FindReferencesConfigModel(HasTraits, PersistenceMixin):
     replace = Bool(False)
     pattributes = ('analysis_types', 'threshold')
 
-    @property
-    def persistence_path(self):
-        return os.path.join(paths.hidden_dir, 'find_references_config')
+    persistence_name = 'find_references_config'
 
     @property
     def formatted_analysis_types(self):

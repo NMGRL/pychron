@@ -278,6 +278,8 @@ class IrradiationPDFWriter(BasePDFTableWriter):
 
 
 class LabbookPDFWriter(IrradiationPDFWriter):
+    title = 'New Mexico Geochronology Research Laboratory'
+
     def _build(self, doc, irrads, progress=None, *args, **kw):
         flowables = []
 
@@ -286,7 +288,6 @@ class LabbookPDFWriter(IrradiationPDFWriter):
         for irrad in irrads:
             self.options.page_number_format = '{} {{page:d}} - {{total:d}}'.format(irrad.name)
             fs = self._make_levels(irrad, progress)
-            # flowables.extend(self._make_summary(irrad))
 
             flowables.extend(fs)
 
@@ -295,7 +296,7 @@ class LabbookPDFWriter(IrradiationPDFWriter):
     def _make_title_page(self, irrads):
         start = irrads[0].name
         end = irrads[-1].name
-        l1 = 'New Mexico Geochronology Research Laboratory'
+        l1 = self.title
         l2 = 'Irradiation Labbook'
         if start != end:
             l3 = '{} to {}'.format(start, end)
