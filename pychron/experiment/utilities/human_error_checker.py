@@ -30,10 +30,10 @@ from pychron.pychron_constants import LINE_STR, SCRIPT_NAMES, NULL_STR
 class HumanErrorChecker(Loggable):
     _extraction_line_required = False
     _mass_spec_required = True
-    extraction_script_enabled = Bool(True)
-    queue_enabled = Bool(True)
-    runs_enabled = Bool(True)
-    non_fatal_enabled = Bool(True)
+    extraction_script_enabled = Bool
+    queue_enabled = Bool
+    runs_enabled = Bool
+    non_fatal_enabled = Bool
     spectrometer_manager = None
 
     def __init__(self, *args, **kw):

@@ -411,7 +411,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                'use_group_email': exp.use_group_email,
                'user_email': exp.email,
                'group_emails': self._get_group_emails(exp.email),
-               }
+               'mass_spectrometer': exp.mass_spectrometer}
         return ctx
 
     def _reset(self):
@@ -525,11 +525,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.stats.reset()
         self.stats.start_timer()
 
+        exp.start_timestamp = datetime.now()  # .strftime('%m-%d-%Y %H:%M:%S')
+
         self._do_event(events.START_QUEUE)
 
         # save experiment to database
         # self.info('saving experiment "{}" to database'.format(exp.name))
-        exp.start_timestamp = datetime.now()  # .strftime('%m-%d-%Y %H:%M:%S')
 
         exp.n_executed_display = int(self.application.preferences.get('pychron.experiment.n_executed_display', 5))
 
@@ -844,8 +845,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._close_cv()
 
         self._do_event(events.END_RUN,
-                       run=run,
-                       experiment_queue=self.experiment_queue)
+                       run=run)
 
         remove_root_handler(handler)
         run.post_finish()

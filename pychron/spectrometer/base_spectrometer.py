@@ -255,7 +255,7 @@ class BaseSpectrometer(SpectrometerDevice):
             if d < 0.15 and d < mi:
                 mi = d
                 found = k
-            # self.debug('map isotope {:0.3f} {} {:0.3f} {:0.3f} {} {}'.format(mass, k, v, d, mi, found))
+                # self.debug('map isotope {:0.3f} {} {:0.3f} {:0.3f} {} {}'.format(mass, k, v, d, mi, found))
 
         if found is None:
             found = 'Iso{:0.4f}'.format(mass)
@@ -294,9 +294,9 @@ class BaseSpectrometer(SpectrometerDevice):
                 index = det.index
                 try:
 
-                    dets = self._active_detectors
+                    dets = self.active_detectors
                     if not dets:
-                        dets=self.detectors
+                        dets = self.detectors
 
                     nmass = self.map_mass(isotope)
                     for di in dets:
@@ -492,7 +492,7 @@ class BaseSpectrometer(SpectrometerDevice):
         for k, v in zip(keys, signals):
             det = self.get_detector(k)
             det.set_intensity(v)
-            gsignals.append(v*det.gain)
+            gsignals.append(v * det.gain)
 
         return keys, array(gsignals)
 

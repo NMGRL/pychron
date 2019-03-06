@@ -54,8 +54,8 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
         #         at = self.add_analysis_type(analysis_type)
 
         an = Analysis(**rd)
-        if at:
-            an.analysis_type = at
+        # if at:
+        #     an.analysis_type = at
 
         an.experiment = dbexp
         return self._add_item(an)
@@ -131,8 +131,11 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
     # def get_analysis_type(self, name):
     #     return self._retrieve_item(AnalysisType, name, key='Name')
     #
-    # def get_experiment(self, hid):
-    #     return self._retrieve_item(Experiment, hid, key='HashID')
+    def get_experiment(self, hid):
+        q = self.session.query(Experiment)
+        q = q.filter(Experiment.hashid == hid)
+        return q.first()
+        # return self._retrieve_item(Experiment, hid, key='HashID')
     #
     # def get_status(self):
     #     with self.session_ctx() as sess:

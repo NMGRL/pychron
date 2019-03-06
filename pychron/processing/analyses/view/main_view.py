@@ -58,6 +58,7 @@ class MainView(HasTraits):
     selected = Any
     show_iso_evo_needed = Event
     recall_options = None
+    experiment_type = AR_AR
 
     def __init__(self, analysis=None, *args, **kw):
         super(MainView, self).__init__(*args, **kw)
@@ -69,6 +70,7 @@ class MainView(HasTraits):
         self.load(an, True)
 
     def load(self, an, refresh=False):
+        self.experiment_type = an.experiment_type
         self._load(an)
         if refresh:
             self.refresh_needed = True
@@ -322,7 +324,7 @@ class MainView(HasTraits):
         return ComputedValue(*args, **kw)
 
     def _load_air_computed(self, an, new_list):
-        if an.experiment_type == AR_AR:
+        if self.experiment_type == AR_AR:
             if new_list:
                 c = an.arar_constants
                 ratios = [('40Ar/36Ar', 'Ar40/Ar36', nominal_value(c.atm4036)),

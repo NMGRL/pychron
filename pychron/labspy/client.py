@@ -160,13 +160,17 @@ class LabspyClient(Loggable):
             time.sleep(max(0, period - et))
 
     @auto_connect
-    def add_experiment(self, name, starttime, mass_spectrometer, username):
-        # if self.db.connected:
-        # with self.db.session_ctx():
-        # hid = self._generate_hid(exp)
-        self.db.add_experiment(name, starttime, mass_spectrometer, username)
-        # ExtractionDevice=exp.extract_device,
-        # HashID=hid)
+    def add_experiment(self, exp):
+        name = exp.name
+        starttime = exp.start_timestamp
+        mass_spectrometer = exp.mass_spectrometer
+        username = exp.username
+        hid = self._generate_hid(name, starttime.isoformat(), mass_spectrometer, username)
+        self.db.add_experiment(hashid=hid,
+                               name=name,
+                               system=mass_spectrometer,
+                               user=username,
+                               start_time=starttime)
 
     @auto_connect
     def update_experiment(self, exp, err_msg):
@@ -176,7 +180,7 @@ class LabspyClient(Loggable):
         #         exp = self.db.get_experiment(hid)
         #         # exp.EndTime = exp.endtime
         #         # exp.State = err_msg
-        hid = self._generate_hid(exp)
+        hid = self._generate_hid_from_exp(exp)
         exp = self.db.get_experiment(hid)
 
     @auto_connect
@@ -213,13 +217,13 @@ class LabspyClient(Loggable):
 
     @auto_connect
     def add_run(self, run, exp):
-        exp = self.db.get_experiment(self._generate_hid(exp))
+        exp = self.db.get_experiment(self._generate_hid_from_exp(exp))
         self.db.add_analysis(exp, self._run_dict(run))
-        ms = run.mass_spectrometer.capitalize()
+        ms = run.spec.mass_spectrometer.capitalize()
 
         config = self._get_configuration()
 
-        for name, units, atypes, value in config:
+        for name, units, attr, atypes in config:
             units = units or ''
             if atypes[0] == 'all':
                 add = True
@@ -228,14 +232,14 @@ class LabspyClient(Loggable):
 
             if add:
                 args = []
-                if value == 'peak_center':
-                    value = 'get_reference_peakcenter_result'
-                elif '/' in value:
-                    args = (value,)
-                    value = 'get_ratio'
+                if attr == 'peak_center':
+                    attr = 'get_reference_peakcenter_result'
+                elif '/' in attr:
+                    args = (attr,)
+                    attr = 'get_ratio'
 
                 try:
-                    v = getattr(run, value)(*args)
+                    v = getattr(run, attr)(*args)
                 except AttributeError:
                     continue
 
@@ -321,7 +325,9 @@ class LabspyClient(Loggable):
     def _run_dict(self, run):
 
         spec = run.spec
-        return {'runid': spec.runid,
+        return {'identifier': spec.identifier,
+                'aliquot': spec.aliquot,
+                'increment': spec.increment,
                 'start_time': spec.analysis_timestamp}
 
         d = {dbk: getattr(spec, k) for k, dbk in (('runid', 'Runid'),
@@ -348,11 +354,15 @@ class LabspyClient(Loggable):
 
         return d
 
-    def _generate_hid(self, exp):
+    def _generate_hid_from_exp(self, exp):
+        return self._generate_hid(exp.name, exp.start_timestamp.isoformat(), exp.mass_spectrometer, exp.username)
+
+    def _generate_hid(self, name, starttime, mass_spectrometer, username):
         md5 = hashlib.md5()
-        md5.update(exp.name)
-        md5.update(exp.spectrometer)
-        md5.update(exp.starttime.isoformat())
+        md5.update(name.encode('utf8'))
+        md5.update(starttime.encode('utf8'))
+        md5.update(mass_spectrometer.encode('utf8'))
+        md5.update(username.encode('utf8'))
         return md5.hexdigest()
 
 
@@ -449,6 +459,7 @@ def main1():
     # experiments/runs
     # exp = add_experiment(clt)
     # add_runs(clt, exp)
+
 
 def main2():
     clt = LabspyClient(bind=False)
