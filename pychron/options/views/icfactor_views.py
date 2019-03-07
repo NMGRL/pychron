@@ -35,7 +35,8 @@ class ICFactorMainOptions(MainOptions):
                    Item('analysis_type', editor=EnumEditor(name='analysis_types')),
                    Item('standard_ratio'), show_border=True, label='IC')
 
-        s = VGroup(HGroup(Item('marker', editor=EnumEditor(values=marker_names)),
+        s = VGroup(Item('height'),
+                   HGroup(Item('marker', editor=EnumEditor(values=marker_names)),
                           Item('marker_size')), show_border=True, label='Scatter')
         y = VGroup(HGroup(Item('ymin', label='Min'),
                           Item('ymax', label='Max')), show_border=True, label='Y Limits')
@@ -56,6 +57,7 @@ class ICFactorMainOptions(MainOptions):
             object_column(name='error_type',
                           editor=EnumEditor(name='error_types'),
                           width=75, label='Error'),
+            object_column(name='height', label='Height')
 
             # checkbox_column(name='filter_outliers', label='Out.'),
             # object_column(name='filter_outlier_iterations', label='Iter.'),
@@ -69,7 +71,11 @@ class ICFactorSubOptions(SubOptions):
     def traits_view(self):
         v = View(VGroup(Item('delete_existing', label='Delete Existing',
                              tooltip='Delete existing icfactors. Only necessary if you have '
-                                     'redefined how you are handling the IC factor correction. ')))
+                                     'redefined how you are handling the IC factor correction. '),
+                        Item('show_statistics'),
+                        Item('link_plots', label='Link Plots', tooltip='Link plots together so that omitting an '
+                                                                       'analysis from any plot omits the analysis on '
+                                                                       'all other plots')))
         return v
 
 

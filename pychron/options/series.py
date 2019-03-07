@@ -49,6 +49,7 @@ class SeriesOptions(FitOptions):
     end_caps = Bool(False)
     show_info = Bool(True)
     show_statistics = Bool(False)
+    link_plots = Bool(True)
 
     # use_restricted_references = Bool
     def initialize(self):

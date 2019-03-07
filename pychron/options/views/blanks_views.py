@@ -27,7 +27,11 @@ from pychron.pychron_constants import FIT_TYPES_INTERPOLATE, FIT_ERROR_TYPES, MA
 
 class BlanksSubOptions(SubOptions):
     def traits_view(self):
-        v = View()
+        v = View(Item('show_statistics'),
+                 Item('link_plots', label='Link Plots', tooltip='Link plots together so that omitting an '
+                                                                'analysis from any plot omits the analysis on '
+                                                                'all other plots')
+                 )
         return v
 
 
@@ -40,6 +44,7 @@ class BlanksMainOptions(MainOptions):
         v = View(VGroup(HGroup(Item('name', editor=EnumEditor(name='names')),
                                Item('fit', editor=EnumEditor(values=FIT_TYPES_INTERPOLATE)),
                                UItem('error_type', editor=EnumEditor(values=FIT_ERROR_TYPES))),
+                        Item('height'),
                         HGroup(UItem('marker', editor=EnumEditor(values=marker_names)),
                                Item('marker_size', label='Size'),
                                show_border=True, label='Marker'),
@@ -60,6 +65,7 @@ class BlanksMainOptions(MainOptions):
                 object_column(name='error_type',
                               editor=EnumEditor(values=FIT_ERROR_TYPES),
                               width=75, label='Error'),
+                object_column(name='height', label='Height'),
                 checkbox_column(name='filter_outliers', label='Out.'),
                 object_column(name='filter_outlier_iterations', label='Iter.'),
                 object_column(name='filter_outlier_std_devs', label='SD')]

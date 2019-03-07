@@ -82,10 +82,12 @@ class ReferencesSeries(BaseSeries):
 
             self.xs = self._get_xs(plots, self.sorted_analyses, tzero=mx)
             self.rxs = self._get_xs(plots, self.sorted_references, tzero=mx)
-
+            graph = self.graph
             for i, p in enumerate(plots):
                 self._new_fit_series(i, p)
                 self._add_plot_label(i, p)
+                if self.options.show_statistics:
+                    graph.add_statistics(plotid=i)
 
             mi, ma = self._get_min_max()
             self.xmi, self.xma = (mi - ma) / 3600., 0
@@ -278,11 +280,15 @@ class ReferencesSeries(BaseSeries):
 
                 ffit = po.fit
             else:
+                bind_id = None
+                if self.options.link_plots:
+                    bind_id = hash(tuple(refs))
+
                 ffit = '{}_{}'.format(po.fit, po.error_type)
                 _, scatter, l = graph.new_series(r_xs, r_ys,
                                                  yerror=ArrayDataSource(data=r_es),
                                                  fit=ffit,
-                                                 bind_id=hash(tuple(refs)),
+                                                 bind_id=bind_id,
                                                  **kw)
                 if hasattr(l, 'regressor'):
                     reg = l.regressor
