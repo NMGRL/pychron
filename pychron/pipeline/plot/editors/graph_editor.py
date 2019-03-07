@@ -91,6 +91,7 @@ class GraphEditor(BaseEditor):
             if compress:
                 self._compress_groups()
             if refresh:
+                print('set items refresh')
                 self.refresh_needed = True
 
     def _compress_groups(self):
@@ -103,24 +104,13 @@ class GraphEditor(BaseEditor):
     @cached_property
     def _get_component(self):
         if self.items:
-            model = self._figure_model_factory()
-
-            if not self.figure_container:
-                self.figure_container = FigureContainer()
-            #
-            omodel = self.figure_container.model
-            self.figure_container.model = model
-            if model == omodel:
-                # self._get_component_hook(model)
-                self.figure_container.model_changed()
-            else:
-
-                self._get_component_hook(model)
-
-            return self.figure_container.component
-
+            comp = self._component_factory()
         else:
-            return self._no_component_factory()
+            comp = self._no_component_factory()
+        return comp
+
+    def _component_factory(self):
+        raise NotImplementedError
 
     def recalculate(self, model):
         pass

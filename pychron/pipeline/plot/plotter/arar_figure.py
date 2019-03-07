@@ -225,13 +225,17 @@ class BaseArArFigure(SelectionFigure):
                 pp.y_axis.axis_line_visible = False
 
             pp.value_scale = po.scale
-            if self.use_sparse_ticks:
-                if po.scale == 'log':
+            if po.scale == 'log':
+                if po.use_sparse_ticks:
                     st = SparseLogTicks()
                     pp.value_axis.tick_generator = st
                     pp.value_grid.tick_generator = st
-                else:
-                    pp.value_axis.tick_generator = SparseTicks()
+            else:
+                pp.value_axis.tick_interval = po.ytick_interval
+                if po.use_sparse_yticks:
+                    st = SparseTicks(step=po.sparse_yticks_step)
+                    pp.value_axis.tick_generator = st
+                    pp.value_grid.tick_generator = st
 
     def _set_options_format(self, pp):
         # print 'using options format'

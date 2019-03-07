@@ -15,10 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 from traits.api import HasTraits, Str, Int, Bool, \
-    Float, Property, on_trait_change, Dict, Tuple, Enum, List, Any
+    Float, Property, on_trait_change, Dict, Tuple, Enum, List, Any, Trait
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -43,6 +41,10 @@ class AuxPlot(HasTraits):
     ytick_visible = Bool(True)
     show_labels = Bool(False)
     y_axis_right = Bool(False)
+
+    use_sparse_yticks = Bool(True)
+    sparse_yticks_step = Int(2)
+    ytick_interval = Trait('auto', 'auto', Float)
 
     filter_str = FilterPredicate
     sigma_filter_n = Int

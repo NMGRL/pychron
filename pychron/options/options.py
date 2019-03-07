@@ -15,17 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
-
 import os
 
 import yaml
+from chaco.axis_view import float_or_auto
 from enable.markers import marker_names
 from traits.api import HasTraits, Str, Int, Bool, Float, Property, Enum, List, Range, \
     Color, Button, Instance
 from traitsui.api import View, Item, HGroup, VGroup, EnumEditor, Spring, Group, \
-    spring, UItem, ListEditor, InstanceEditor, CheckListEditor
+    spring, UItem, ListEditor, InstanceEditor, CheckListEditor, TextEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.handler import Controller
 from traitsui.table_column import ObjectColumn
@@ -33,6 +31,7 @@ from traitsui.table_column import ObjectColumn
 from pychron.core.helpers.color_generators import colornames
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.helpers.iterfuncs import groupby_group_id
+from pychron.core.pychron_traits import BorderHGroup
 from pychron.core.ui.table_editor import myTableEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.aux_plot import AuxPlot
@@ -183,10 +182,19 @@ class MainOptions(SubOptions):
 
         return cols
 
+    def _get_yticks_grp(self):
+        g = BorderHGroup(Item('use_sparse_yticks', label='Sparse'),
+                         Item('sparse_yticks_step', label='Step', enabled_when='use_sparse_yticks'),
+                         Item('ytick_interval', label='Interval',
+                              editor=TextEditor(evaluate=float_or_auto)),
+                         label='Y Ticks'),
+        return g
+
     def _get_edit_view(self):
         v = View(VGroup(HGroup(Item('name', editor=EnumEditor(name='names')),
                                Item('scale', editor=EnumEditor(values=['linear', 'log']))),
                         Item('height'),
+                        self._get_yticks_grp(),
                         HGroup(UItem('marker', editor=EnumEditor(values=marker_names)),
                                Item('marker_size', label='Size'),
                                show_border=True, label='Marker'),

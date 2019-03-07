@@ -58,6 +58,7 @@ class FigureNode(SortableNode):
 
     def refresh(self):
         for e in self.editors.values():
+            print('figure not refresh needed')
             e.refresh_needed = True
 
     def run(self, state):

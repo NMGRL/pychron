@@ -297,9 +297,11 @@ class PipelineTask(BaseBrowserTask):
             info = options.edit_traits(kind='modal')
             if info.result:
                 writer = XLSXAnalysisTableWriter()
-                from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
-                groups = [InterpretedAgeGroup(analyses=ed.analyses)]
-                run_groups = {'unknowns': groups, 'machine_unknowns': groups}
+                # from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
+                # groups = [InterpretedAgeGroup(analyses=ed.analyses)]
+
+                gs = ed.get_analysis_groups()
+                run_groups = {'unknowns': gs, 'machine_unknowns': gs}
                 writer.build(run_groups, options=options)
 
     def save_figure_pdf(self):

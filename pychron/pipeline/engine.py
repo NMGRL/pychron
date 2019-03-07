@@ -225,6 +225,7 @@ class PipelineEngine(Loggable):
     selected_repositories = List
 
     selected_pipeline_template = Any
+    dclicked_pipeline_template = Event
 
     selected_unknowns = List
     selected_references = List
@@ -619,6 +620,7 @@ class PipelineEngine(Loggable):
     def refresh_figure_editors(self):
         for ed in self.state.editors:
             if isinstance(ed, FigureEditor):
+                print('refresh figure editors')
                 ed.refresh_needed = True
 
     def rerun_with(self, unks, post_run=True):
@@ -1029,6 +1031,9 @@ class PipelineEngine(Loggable):
     def _dclicked_references_fired(self):
         if self.selected_references:
             self.recall_references()
+
+    def _dclicked_pipeline_template_fired(self):
+        self.run_needed = True
 
     def _selected_pipeline_template_changed(self, new):
         if isinstance(new, (PipelineTemplate, str, tuple)):

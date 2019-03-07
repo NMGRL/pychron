@@ -308,6 +308,7 @@ class PipelinePane(TraitsDockPane):
         teditor = TreeEditor(nodes=tnodes,
                              editable=False,
                              selected='selected_pipeline_template',
+                             dclick='dclicked_pipeline_template',
                              hide_root=True,
                              lines_mode='off')
 

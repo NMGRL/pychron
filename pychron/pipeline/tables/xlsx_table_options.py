@@ -23,7 +23,7 @@ from traitsui.item import UCustom
 from pychron.core.helpers.filetools import unique_path2, add_extension
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.persistence_options import BasePersistenceOptions
-from pychron.core.pychron_traits import SingleStr
+from pychron.core.pychron_traits import SingleStr, BorderHGroup, BorderVGroup
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.paths import paths
 from pychron.persistence_loggable import dumpable
@@ -248,51 +248,55 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
         blank_grp = note('blank')
         monitor_grp = note('monitor')
 
-        grp = VGroup(Item('name', label='Filename'),
-                     Item('root_directory'),
-                     Item('root_name', editor=ComboboxEditor(name='root_names'),
-                          enabled_when='not root_directory'),
-                     Item('auto_view', label='Open in Excel'),
-                     show_border=True)
+        grp = BorderVGroup(Item('name', label='Filename'),
+                           Item('root_directory'),
+                           Item('root_name', editor=ComboboxEditor(name='root_names'),
+                                enabled_when='not root_directory'),
+                           Item('auto_view', label='Open in Excel'))
 
-        appearence_grp = VGroup(Item('hide_gridlines', label='Hide Gridlines'),
-                                Item('power_units', label='Power Units'),
-                                Item('intensity_units', label='Intensity Units'),
-                                Item('age_units', label='Age Units'),
-                                Item('sensitivity_units', label='Sensitivity Units'),
-                                Item('group_age_sorting', label='Group Age Sorting'),
-                                Item('subgroup_age_sorting', label='SubGroup Age Sorting'),
-                                Item('individual_age_sorting', label='Individual Age Sorting'),
-                                Item('asummary_kca_nsigma', label='K/Ca Nsigma'),
-                                Item('asummary_age_nsigma', label='Age Nsigma'),
-                                Item('repeat_header', label='Repeat Header'),
-                                HGroup(Item('highlight_non_plateau'),
-                                       UItem('highlight_color', enabled_when='highlight_non_plateau')),
-                                show_border=True, label='Appearance')
+        units_grp = BorderVGroup(HGroup(Item('power_units', label='Power Units'),
+                                        Item('age_units', label='Age Units')),
+                                 HGroup(Item('intensity_units', label='Intensity Units'),
+                                        Item('sensitivity_units', label='Sensitivity Units')),
+                                 label='Units')
+        sigma_grp = BorderHGroup(Item('asummary_kca_nsigma', label='K/Ca'),
+                                 Item('asummary_age_nsigma', label='Age'), label='N. Sigma')
+        sort_grp = BorderVGroup(HGroup(Item('group_age_sorting', label='Group'),
+                                       Item('subgroup_age_sorting', label='SubGroup')),
+                                Item('individual_age_sorting', label='Individual'),
+                                label='Sorting')
+        appearence_grp = BorderVGroup(HGroup(Item('hide_gridlines', label='Hide Gridlines'),
+                                             Item('repeat_header', label='Repeat Header')),
+                                      units_grp,
+                                      sigma_grp,
+                                      sort_grp,
+                                      HGroup(Item('highlight_non_plateau'),
+                                             UItem('highlight_color', enabled_when='highlight_non_plateau')),
+                                      label='Appearance')
 
         def sigfig(k):
             return '{}_sig_figs'.format(k)
 
         def isigfig(k, label, **kw):
-            return Item(sigfig(k), label=label, **kw)
+            return Item(sigfig(k), width=-40, label=label, **kw)
 
-        sig_figs_grp = VGroup(Item('sig_figs', label='Default'),
-                              isigfig('age', 'Age'),
-                              isigfig('summary_age', 'Summary Age'),
-                              isigfig('kca', 'K/Ca'),
-                              isigfig('summary_kca', 'Summary K/Ca'),
-                              isigfig('radiogenic_yield', '%40Ar*'),
-                              isigfig('cumulative_ar39', 'Cum. %39Ar'),
-                              isigfig('signal', 'Signal'),
-                              isigfig('j', 'Flux'),
-                              isigfig('ic', 'IC'),
-                              isigfig('disc', 'Disc.'),
-                              isigfig('decay', 'Decay'),
-                              isigfig('correction', 'Correction Factors'),
-                              isigfig('sens', 'Sensitivity'),
-                              isigfig('k2o', 'K2O'),
-                              Item('ensure_trailing_zeros', label='Ensure Trailing Zeros'),
-                              show_border=True, label='Significant Figures')
+        sig_figs_grp = BorderVGroup(Item('sig_figs', label='Default'),
+                                    HGroup(isigfig('age', 'Age'),
+                                           isigfig('summary_age', 'Summary Age')),
+                                    HGroup(isigfig('kca', 'K/Ca'),
+                                           isigfig('summary_kca', 'Summary K/Ca')),
+                                    HGroup(isigfig('radiogenic_yield', '%40Ar*'),
+                                           isigfig('cumulative_ar39', 'Cum. %39Ar')),
+                                    HGroup(isigfig('signal', 'Signal'),
+                                           isigfig('j', 'Flux')),
+                                    HGroup(isigfig('ic', 'IC'),
+                                           isigfig('disc', 'Disc.')),
+                                    HGroup(isigfig('decay', 'Decay'),
+                                           isigfig('correction', 'Correction Factors')),
+                                    HGroup(isigfig('sens', 'Sensitivity'),
+                                           isigfig('k2o', 'K2O')),
+                                    Item('ensure_trailing_zeros', label='Ensure Trailing Zeros'),
+                                    label='Significant Figures')
 
         def inc(k):
             return 'include_{}'.format(k)
@@ -361,9 +365,9 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
 
         v = okcancel_view(Tabbed(g1, unknown_grp, calc_grp, blank_grp, air_grp, monitor_grp, summary_grp),
                           resizable=True,
-                          width=750,
-                          title='XLSX Analysis Table Options',
-                          )
+                          width=775,
+                          height=0.75,
+                          title='XLSX Analysis Table Options', scrollable=True)
         return v
 
 

@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 from enable.markers import marker_names
 from traitsui.api import UItem, Item, HGroup, VGroup, Group, EnumEditor, spring, View
 
@@ -231,23 +229,20 @@ Additional examples
 5. xyz<=10 and error>=0.1"""
         sigma_tooltip = """Omit analyses greater the N sigma from the arithmetic mean"""
 
-        fgrp = VGroup(HGroup(Item('filter_str', tooltip=tooltip, label='Filter'),
-                             UItem('filter_str_tag')),
-                      HGroup(Item('sigma_filter_n', label='Sigma Filter N', tooltip=sigma_tooltip),
-                             UItem('sigma_filter_tag')),
-                      show_border=True,
-                      label='Filtering')
+        fgrp = BorderVGroup(HGroup(Item('filter_str', tooltip=tooltip, label='Filter'),
+                                   UItem('filter_str_tag')),
+                            HGroup(Item('sigma_filter_n', label='Sigma Filter N', tooltip=sigma_tooltip),
+                                   UItem('sigma_filter_tag')),
+                            label='Filtering')
 
         v = View(VGroup(HGroup(Item('name', editor=EnumEditor(name='names')),
                                Item('scale', editor=EnumEditor(values=['linear', 'log']))),
                         Item('height'),
-                        HGroup(UItem('marker', editor=EnumEditor(values=marker_names)),
-                               Item('marker_size', label='Size'),
-                               show_border=True, label='Marker'),
-                        HGroup(Item('ymin', label='Min'),
-                               Item('ymax', label='Max'),
-                               show_border=True,
-                               label='Y Limits'),
+                        self._get_yticks_grp(),
+                        BorderHGroup(UItem('marker', editor=EnumEditor(values=marker_names)),
+                                     Item('marker_size', label='Size'), label='Marker'),
+                        BorderHGroup(Item('ymin', label='Min'),
+                                     Item('ymax', label='Max'), label='Y Limits'),
                         fgrp,
                         show_border=True))
         return v

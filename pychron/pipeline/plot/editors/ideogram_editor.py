@@ -17,7 +17,8 @@
 # ============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.label import Label
-from traits.api import Instance, List, on_trait_change, Property
+from pyface.timer.do_later import do_later
+from traits.api import Instance, List, Property
 from traitsui.api import View, VSplit, VGroup, HGroup
 
 # ============= standard library imports ========================
@@ -66,10 +67,10 @@ class IdeogramEditor(InterpretedAgeEditor):
     def _get_additional_visible(self):
         return self.ttest_tables or self.results_tables
 
-    @on_trait_change('figure_model:panels:figures:recalculate_event')
-    def _handle_recalculate(self):
-        print('recalads')
-        self._get_component_hook()
+    # @on_trait_change('figure_model:panels:figures:recalculate_event')
+    # def _handle_recalculate(self):
+    #     print('recalads')
+    #     self._get_component_hook()
 
     def _get_component_hook(self, model=None):
         if model is None:
@@ -77,7 +78,7 @@ class IdeogramEditor(InterpretedAgeEditor):
 
         rs = []
         ts = []
-        print(self.plotter_options.show_results_table, 'show reasdf')
+
         for p in model.panels:
             ags = []
             for pp in p.figures:
@@ -96,8 +97,7 @@ class IdeogramEditor(InterpretedAgeEditor):
                 t = TTestTable(ags)
                 ts.append(t)
 
-        self.results_tables = rs
-        self.ttest_tables = ts
+        do_later(self.trait_set, results_tables=rs, ttest_tables=ts)
 
     def plot_interpreted_ages(self, iages):
         def construct(a):
@@ -125,13 +125,16 @@ class IdeogramEditor(InterpretedAgeEditor):
         tbl_grp = VGroup(listeditor('results_tables',
                                     height=130),
                          scrollable=True,
-                         visible_when='results_tables')
+                         visible_when='results_tables'
+                         )
 
         ttest_grp = VGroup(listeditor('ttest_tables', height=130),
-                           visible_when='ttest_tables')
+                           visible_when='ttest_tables'
+                           )
 
         v = View(VSplit(VGroup(self.get_component_view()),
-                        HGroup(tbl_grp, ttest_grp, visible_when='additional_visible')),
+                        HGroup(tbl_grp, ttest_grp, visible_when='additional_visible')
+                        ),
                  resizable=True)
         return v
 # ============= EOF =============================================

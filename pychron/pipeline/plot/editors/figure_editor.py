@@ -21,6 +21,7 @@ from __future__ import absolute_import
 from traits.api import Any, List
 
 from pychron.pipeline.plot.editors.graph_editor import GraphEditor
+from pychron.pipeline.plot.figure_container import FigureContainer
 
 
 class FigureEditor(GraphEditor):
@@ -35,7 +36,7 @@ class FigureEditor(GraphEditor):
 
     # annotation_tool = Any
 
-    analysis_groups = List
+    # analysis_groups = List
 
     # tag = Event
     # save_db_figure = Event
@@ -52,6 +53,16 @@ class FigureEditor(GraphEditor):
     # @on_trait_change('plotter_options:save_required')
     # def handle_save_required(self):
     #     self.save_required = True
+    def get_analysis_groups(self):
+        ags = []
+        for p in self.figure_model.panels:
+            for pp in p.figures:
+                ag = pp.analysis_group
+                group = pp.options.get_group(pp.group_id)
+                color = group.color
+                ag.color = color
+                ags.append(ag)
+        return ags
 
     def enable_aux_plots(self):
         po = self.plotter_options
@@ -73,6 +84,21 @@ class FigureEditor(GraphEditor):
         model = self._figure_model_factory()
         model.refresh(force=force)
 
+    def _component_factory(self):
+        model = self._figure_model_factory()
+
+        if not self.figure_container:
+            self.figure_container = FigureContainer()
+        #
+        omodel = self.figure_container.model
+        self.figure_container.model = model
+        if model == omodel:
+            self.figure_container.model_changed()
+
+        self._get_component_hook(model)
+
+        return self.figure_container.component
+
     def _figure_model_factory(self):
         model = self.figure_model
         if model is None:
@@ -80,7 +106,7 @@ class FigureEditor(GraphEditor):
             self.figure_model = model
 
         model.trait_set(plot_options=self.plotter_options,
-                        analysis_groups=self.analysis_groups,
+                        # analysis_groups=self.analysis_groups,
                         # titles=self.titles,
                         analyses=self.items,
                         references=self.references)

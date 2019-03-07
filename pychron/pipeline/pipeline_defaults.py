@@ -107,6 +107,7 @@ INVERSE_ISOCHRON = """
 required:
 nodes:
   - klass: UnknownNode
+  - klass: GroupingNode
   - klass: InverseIsochronNode
 """
 
