@@ -35,7 +35,7 @@ class IntercalibrationFactorEditor(InterpolationEditor):
             self.figure_model = model
 
         model.trait_set(plot_options=self.plotter_options,
-                        analysis_groups=self.analysis_groups,
+                        # analysis_groups=self.analysis_groups,
                         references_name=self.references_name,
                         analyses=self.items,
                         references=self.references)
