@@ -145,9 +145,10 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
                          filter_outliers_dict=iso.filter_outliers_dict,
                          color='black')
 
+            xmi, xma = min_max(xmi, xma, iso.offset_xs)
             if not scale_to_equilibration:
                 ymi, yma = min_max(ymi, yma, iso.ys)
-                xmi, xma = min_max(xmi, xma, iso.offset_xs)
+
 
         if show_baseline:
             baseline = iso.baseline
@@ -155,14 +156,13 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
                          type='scatter', fit=baseline.efit,
                          filter_outliers_dict=baseline.filter_outliers_dict,
                          color='blue')
+            xmi, xma = min_max(xmi, xma, baseline.offset_xs)
             if not scale_to_equilibration:
                 ymi, yma = min_max(ymi, yma, baseline.ys)
-                xmi, xma = min_max(xmi, xma, baseline.offset_xs)
 
         xpad = '0.025,0.05'
         ypad = '0.05'
         if scale_to_equilibration:
-            xma *= 1.1
             ypad = None
             r = (yma - ymi) / 10
             ymi = yma - r
