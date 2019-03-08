@@ -15,18 +15,55 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 from traits.api import List
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.iterfuncs import groupby_group_id
+from pychron.envisage.view_util import open_view
+from pychron.graph.regression_graph import RegressionGraph
+from pychron.options.layout import filled_grid
 from pychron.pipeline.plot.panels.figure_panel import FigurePanel
+from pychron.processing.analysis_graph import ReferencesGraph
 
 
 class ReferencesPanel(FigurePanel):
     references = List
+    _graph_klass = ReferencesGraph
+
+    def _handle_make_correlation_event(self, evt):
+        refplot, xtitle = evt
+
+        fi = self.figures[0]
+
+        n = len(list(fi.options.get_plotable_aux_plots()))
+        plots = list(reversed(fi.graph.plots))
+
+        xs = refplot.data.get_data('y1')
+
+        r, c = filled_grid(n - 1)
+        g = RegressionGraph(container_dict={'kind': 'g', 'shape': (r, c)}, window_title='Correlation')
+        i = 0
+        for pp in plots:
+            ytitle = pp.y_axis.title
+            if ytitle == xtitle:
+                continue
+
+            g.new_plot(xtitle=xtitle, ytitle=ytitle, padding=[80, 10, 10, 40])
+            ys = pp.data.get_data('y1')
+            g.new_series(xs, ys, fit='linear', use_error_envelope=False, plotid=i)
+            g.add_correlation_statistics(plotid=i)
+
+            g.set_x_limits(pad='0.1', plotid=i)
+            g.set_y_limits(pad='0.1', plotid=i)
+            i += 1
+
+        g.refresh()
+
+        open_view(g)
+
+    def _make_graph_hook(self, g):
+        g.on_trait_change(self._handle_make_correlation_event, 'make_correlation_event')
 
     def _make_figures(self):
         gs = super(ReferencesPanel, self)._make_figures()

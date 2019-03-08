@@ -15,15 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from traits.api import Dict, on_trait_change
-# ============= standard library imports ========================
-from pychron.processing.analysis_graph import AnalysisStackedRegressionGraph
+
+from pychron.pipeline.plot.panels.figure_panel import FigurePanel
 from pychron.pipeline.plot.plotter.dashboard_series import DashboardSeries
 from pychron.pipeline.plot.plotter.series import Series
-from pychron.pipeline.plot.panels.figure_panel import FigurePanel
-
+# ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.processing.analysis_graph import AnalysisStackedRegressionGraph
 
 
 class SeriesPanel(FigurePanel):
@@ -35,6 +34,7 @@ class SeriesPanel(FigurePanel):
 
     def _make_graph_hook(self, g):
         g.refresh()
+
 
 class DashboardSeriesPanel(SeriesPanel):
     _figure_klass = DashboardSeries

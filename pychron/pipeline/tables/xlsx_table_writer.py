@@ -384,6 +384,9 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             pv = ag.get_preferred_obj('age')
             return ag.scaled_age(pv.error, opt.age_units) * opt.summary_age_nsigma
 
+        def get_plateau_ar39(ag, *args):
+            return ag.plateau_total_ar39()
+
         cols = [Column(visible=opt.include_summary_sample, label='Sample', attr='sample'),
                 Column(visible=opt.include_summary_identifier, label='Identifier', attr='identifier'),
                 Column(visible=opt.include_summary_unit, label='Unit', attr='unit'),
@@ -395,7 +398,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
                 Column(visible=opt.include_summary_n, label='N', attr='nratio'),
                 Column(visible=opt.include_summary_percent_ar39, label=('%', '<sup>39</sup>', 'Ar'),
-                       attr='percent_39Ar'),
+                       func=get_plateau_ar39),
                 Column(visible=opt.include_summary_mswd, label='MSWD', attr='mswd'),
                 Column(visible=opt.include_summary_kca, label='K/Ca', attr='weighted_kca', func=get_kca),
 
@@ -579,9 +582,13 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                     pv = group.get_preferred_obj('age')
                     label = pv.computed_kind.lower()
                     is_plateau_step = None
+                    cum = ''
                     if label == 'plateau':
                         is_plateau_step = group.get_is_plateau_step(j)
-                    self._make_analysis(worksheet, cols, a, is_last=j == n - 1, is_plateau_step=is_plateau_step)
+                        cum = group.cumulative_ar39(j)
+                    self._make_analysis(worksheet, cols, a,
+                                        cum=cum,
+                                        is_last=j == n - 1, is_plateau_step=is_plateau_step)
 
             if nsubgroups == 1 and isinstance(a, InterpretedAgeGroup):
                 ngroups.append(a)

@@ -46,6 +46,10 @@ class AnalysisStackedGraph(AnalysisGraph, StackedGraph):
     pass
 
 
+class AnalysisStackedRegressionGraph(AnalysisGraph, StackedRegressionGraph):
+    pass
+
+
 class SpectrumGraph(AnalysisStackedGraph):
     make_ideogram_event = Event
 
@@ -66,7 +70,13 @@ class IdeogramGraph(AnalysisStackedGraph):
         self.make_correlation_event = self.selected_plotid, self.selected_plot.y_axis.title
 
 
-class AnalysisStackedRegressionGraph(AnalysisGraph, StackedRegressionGraph):
-    pass
+class ReferencesGraph(AnalysisStackedRegressionGraph):
+    make_correlation_event = Event
+
+    def get_child_context_menu_actions(self):
+        return [self.action_factory('Correlation...', 'make_correlation')]
+
+    def make_correlation(self):
+        self.make_correlation_event = self.selected_plot, self.selected_plot.y_axis.title
 
 # ============= EOF =============================================

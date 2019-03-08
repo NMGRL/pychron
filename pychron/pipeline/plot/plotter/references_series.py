@@ -51,7 +51,7 @@ class ReferencesSeries(BaseSeries):
     show_current = True
     rxs = Array
     references_name = 'References'
-
+    xtitle = 'Time (hrs)'
     _normalization_factor = 3600.
 
     def set_interpolated_values(self, iso, reg, fit):

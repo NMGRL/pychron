@@ -49,14 +49,6 @@ class IdeogramPanel(FigurePanel):
             gi = fi.analysis_group
             p = g.new_plot(xtitle='age', ytitle=ytitle, title='{}({})'.format(gi.sample, gi.identifier))
 
-            # yax = p.y_axis
-            # nxa = MPlotAxis()
-            #
-            # nxa.title = ytitle
-            # nxa.clone(yax)
-            #
-            # p.y_axis = nxa
-
             xs = [nominal_value(a.uage) for a in gi.clean_analyses()]
             ys = [nominal_value(a.get_value(tag)) for a in gi.clean_analyses()]
 

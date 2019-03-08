@@ -21,12 +21,10 @@ from traits.api import Str
 # ============= local library imports  ==========================
 from pychron.pipeline.plot.panels.references_panel import ReferencesPanel
 from pychron.pipeline.plot.plotter.icfactor import ICFactor
-from pychron.processing.analysis_graph import AnalysisStackedRegressionGraph
 
 
 class ICFactorPanel(ReferencesPanel):
     _figure_klass = ICFactor
-    _graph_klass = AnalysisStackedRegressionGraph
     references_name = Str
 
     def _figure_factory(self, *args, **kw):
