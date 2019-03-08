@@ -104,6 +104,7 @@ class BrowserPreferences(BasePreferencesHelper):
     blank_color = Color
     air_color = Color
     use_analysis_colors = Bool
+    one_selected_is_all = Bool
 
 
 class BrowserPreferencesPane(PreferencesPane):
@@ -136,6 +137,8 @@ class BrowserPreferencesPane(PreferencesPane):
                               'references between oldest_analysis_time - 10 and youngest_analysis_time+10'),
                  Item('max_history', label='Max. Analysis Sets',
                       tooltip='Maximum number of analysis sets to maintain'),
+                 Item('one_selected_is_all', tooltip='If enabled and only one analysis is selected pychron assumes '
+                                                     'you actually want the entire dataset'),
                  acgrp, load_grp)
         return v
 

@@ -149,7 +149,6 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
             if not scale_to_equilibration:
                 ymi, yma = min_max(ymi, yma, iso.ys)
 
-
         if show_baseline:
             baseline = iso.baseline
             g.new_series(baseline.offset_xs, baseline.ys,
