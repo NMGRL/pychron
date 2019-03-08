@@ -99,10 +99,12 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
         nrows = ceil(len(isotopes) / ncols)
         isotopes = reorder(isotopes, nrows)
         g = ColumnStackedRegressionGraph(resizable=True, ncols=ncols, nrows=nrows,
-                                         container_dict={'padding_top': 40,
+                                         container_dict={'padding_top': 15*nrows,
                                                          'spacing': (0, 15),
                                                          'padding_bottom': 40})
+        resizable = 'hv'
     else:
+        resizable = 'h'
         isotopes = sort_isotopes(isotopes, reverse=False, key=attrgetter('name'))
         g = StackedRegressionGraph(resizable=True, container_dict={'spacing': 15})
 
@@ -114,7 +116,7 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
     for i, iso in enumerate(isotopes):
         ymi, yma = Inf, -Inf
 
-        p = g.new_plot(padding=[80, 10, 10, 40])
+        p = g.new_plot(padding=[80, 10, 10, 40], resizable=resizable)
         g.add_limit_tool(p, 'x')
         g.add_limit_tool(p, 'y')
         g.add_axis_tool(p, p.x_axis)
@@ -162,7 +164,7 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
         if scale_to_equilibration:
             xma *= 1.1
             ypad = None
-            r = (yma - ymi) / 5
+            r = (yma - ymi) / 10
             ymi = yma - r
 
             fit = iso.fit

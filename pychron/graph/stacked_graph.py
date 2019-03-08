@@ -21,7 +21,7 @@ from chaco.scatterplot import ScatterPlot
 from traits.api import Bool, on_trait_change, Event, Int
 
 # =============local library imports  ==========================
-from .graph import Graph
+from pychron.graph.graph import Graph
 
 
 # =============standard library imports ========================
@@ -97,7 +97,9 @@ class StackedGraph(Graph):
 
         n = len(self.plotcontainer.components)
         if n > 0:
-            kw['resizable'] = 'h'
+            if 'resizable' not in kw:
+                kw['resizable'] = 'h'
+            # kw['resizable'] = 'h'
             if 'bounds' not in kw:
                 kw['bounds'] = (1, self.panel_height)
 
@@ -113,6 +115,8 @@ class StackedGraph(Graph):
 
         self.set_paddings()
         self._bounds_changed(self.plotcontainer.bounds)
+        # p.fill_padding=True
+        # p.bgcolor='green'
         return p
 
     def set_paddings(self):
@@ -196,18 +200,19 @@ class StackedGraph(Graph):
 
 
 class ColumnStackedGraph(StackedGraph):
-    # class ColumnStackedGraph(Graph):
     ncols = Int
     nrows = Int
 
     def _update_bounds(self, bounds, comps):
         padding_top = sum([getattr(p, 'padding_top') for p in comps])
         padding_bottom = sum([getattr(p, 'padding_bottom') for p in comps])
-        pt = padding_bottom+padding_top
+        pt = padding_bottom + padding_top
+
         n = self.nrows
         if self.equi_stack:
             for p in self.plotcontainer.components:
                 p.bounds = (1, (bounds[1] - pt) / n)
+
         else:
             try:
                 self.plots[0].bounds[1] = (bounds[1] - pt) / max(1, (n - 1))
@@ -215,7 +220,6 @@ class ColumnStackedGraph(StackedGraph):
                 pass
 
     def set_paddings(self):
-
         pc = self.plotcontainer
         n = self.nrows
         comps = pc.components
@@ -245,4 +249,18 @@ class ColumnStackedGraph(StackedGraph):
         # kw['spacing'] = (0, 0)
         c = super(ColumnStackedGraph, self).container_factory(*args, **kw)
         return c
+
+
+if __name__ == '__main__':
+    g = ColumnStackedGraph(resizable=True,
+                           nrows=4, ncols=2, container_dict={'padding_top': 15*4,
+                                                             'spacing': (0, 15),
+                                                             'padding_bottom': 40})
+    for i in range(7):
+        p = g.new_plot(padding=[80, 10, 10, 40])
+        p.fill_padding = True
+        p.bgcolor = 'green'
+        # p=g.new_plot()
+        g.new_series([1, 2, 3], [4, 5, 10*i])
+    g.configure_traits()
 # ============= EOF ====================================

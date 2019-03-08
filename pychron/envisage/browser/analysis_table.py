@@ -152,7 +152,7 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
 
         self._analysis_filter_changed(self.analysis_filter)
         self.selected = []
-        
+
     def remove_invalid(self):
         self.oanalyses = [ai for ai in self.oanalyses if ai.tag != 'invalid']
         self._analysis_filter_changed(self.analysis_filter)
@@ -256,7 +256,7 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
 
     def get_analysis_records(self):
         records = self.selected
-        if not records:
+        if not records or len(records) == 1:
             records = self.analyses
 
         return records
