@@ -195,7 +195,8 @@ class AnalysisAdapter(BrowserAdapter):
 
         select_actions = [Action(name='Same Identifier', action='select_same'),
                           Action(name='Same Attr', action='select_same_attr'),
-                          Action(name='Clear', action='clear_selection')]
+                          Action(name='Clear', action='clear_selection'),
+                          Action(name='Remove Others', action='remove_others')]
 
         actions = [Action(name='Configure', action='configure_analysis_table'),
                    Action(name='Unselect', action='unselect_analyses'),

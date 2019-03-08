@@ -321,6 +321,9 @@ class BrowserSampleView(BaseBrowserSampleView):
     def group_selected(self, info, obj):
         obj.group_selected()
 
+    def remove_others(self, info, obj):
+        obj.remove_others()
+
     def clear_selection(self, info, obj):
         obj.clear_selection()
 

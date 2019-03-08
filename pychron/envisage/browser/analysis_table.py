@@ -213,6 +213,10 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
     def configure_table(self):
         self.table_configurer.edit_traits(kind='livemodal')
 
+    def remove_others(self):
+        self.set_analyses(self.selected)
+        # self.analyses = self.oanalyses = [self.selected]
+
     def group_selected(self):
         max_gid = max([si.group_id for si in self.analyses]) + 1
         for s in self.get_selected_analyses():
