@@ -90,7 +90,7 @@ FLECK = 'Fleck 1977'
 MAHON = 'Mahon 1996'
 
 WEIGHTINGS = (NULL_STR, 'Volume', 'Variance')
-INTERPOLATE_TYPES = ['Preceding', 'Bracketing Interpolate', 'Bracketing Average']
+INTERPOLATE_TYPES = ['Preceding', 'Bracketing Interpolate', 'Bracketing Average', 'Succeeding']
 FIT_TYPES_INTERPOLATE = FIT_TYPES + INTERPOLATE_TYPES
 DELIMITERS = {',': 'comma', '\t': 'tab', ' ': 'space'}
 

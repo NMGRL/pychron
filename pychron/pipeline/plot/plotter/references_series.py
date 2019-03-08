@@ -267,7 +267,7 @@ class ReferencesSeries(BaseSeries):
                       marker_size=po.marker_size, )
 
             update_meta_func = None
-            if efit in ['preceding', 'bracketing interpolate', 'bracketing average']:
+            if efit in ['preceding', 'bracketing interpolate', 'bracketing average', 'succeeding']:
                 reg = InterpolationRegressor(xs=r_xs, ys=r_ys, yserr=r_es, kind=efit)
                 kw['add_tools'] = False
                 scatter, _p = graph.new_series(r_xs, r_ys, yerror=r_es, type='scatter', fit=False,
