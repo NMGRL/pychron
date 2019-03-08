@@ -73,6 +73,7 @@ class InverseIsochronMainOptions(SubOptions):
         g2 = Group(BorderVGroup(info_grp,
                                 results_grp,
                                 label='Info'),
+                   Item('include_error_envelope'),
                    ellipse_grp,
                    label_grp,
 

@@ -72,6 +72,7 @@ class InverseIsochronOptions(IsochronOptions):
 
     include_4036_mse = Bool
     include_age_mse = Bool
+    include_error_envelope = Bool(True)
 
     def _get_results_font(self):
         return '{} {}'.format(self.results_fontname, self.results_fontsize)

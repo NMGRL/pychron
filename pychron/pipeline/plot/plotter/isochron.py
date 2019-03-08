@@ -179,12 +179,13 @@ class InverseIsochron(Isochron):
             self.ymis.append(ymi)
             self.ymas.append(yma)
 
-        lci, uci = reg.calculate_error_envelope(l.index.get_data())
-        ee = ErrorEnvelopeOverlay(component=l,
-                                  upper=uci, lower=lci,
-                                  line_color=color)
-        l.underlays.append(ee)
-        l.error_envelope = ee
+        if self.options.include_error_envelope:
+            lci, uci = reg.calculate_error_envelope(l.index.get_data())
+            ee = ErrorEnvelopeOverlay(component=l,
+                                      upper=uci, lower=lci,
+                                      line_color=color)
+            l.underlays.append(ee)
+            l.error_envelope = ee
 
         if self.options.display_inset:
             self._add_inset(plot, reg)
@@ -412,11 +413,22 @@ class InverseIsochron(Isochron):
         fit.index.set_data(rxs)
         fit.value.set_data(rys)
 
-        fit.error_envelope.invalidate()
+        if self.options.include_error_envelope:
+            lci, uci = reg.calculate_error_envelope(rxs)
+            if not hasattr(fit, 'error_envelope'):
+                group = self.options.get_group(self.group_id)
+                color = group.color
+                ee = ErrorEnvelopeOverlay(component=fit,
+                                          upper=uci, lower=lci,
+                                          line_color=color)
+                fit.underlays.append(ee)
+                fit.error_envelope = ee
+            else:
 
-        lci, uci = reg.calculate_error_envelope(rxs)
-        fit.error_envelope.lower = lci
-        fit.error_envelope.upper = uci
+                fit.error_envelope.invalidate()
+
+                fit.error_envelope.lower = lci
+                fit.error_envelope.upper = uci
 
     def update_graph_metadata(self, obj, name, old, new):
         if obj:
