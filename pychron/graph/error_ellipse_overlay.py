@@ -15,22 +15,22 @@
 # ===============================================================================
 
 
+import math
+
 # ============= enthought library imports =======================
 from chaco.api import AbstractOverlay
-from traits.api import Bool, Enum
 # ============= standard library imports ========================
-from numpy import linspace, hstack, sqrt, corrcoef, column_stack, array, delete
+from numpy import linspace, hstack, sqrt, corrcoef, column_stack, array
 from numpy.linalg import eig
-import math
 from six.moves import zip
-
-# ============= local library imports  ==========================
-
-# http://www.earth-time.org/projects/upb/public_docs/ErrorEllipses.pdf
-# 5) To create a 95% confidence ellipse from the 1s error ellipse, we must enlarge it by a factor of 2.4477.
-from traits.traits import Color
+from traits.api import Bool, Enum
 
 from pychron.pychron_constants import ELLIPSE_KINDS, ELLIPSE_KIND_SCALE_FACTORS
+
+
+# ============= local library imports  ==========================
+# http://www.earth-time.org/projects/upb/public_docs/ErrorEllipses.pdf
+# 5) To create a 95% confidence ellipse from the 1s error ellipse, we must enlarge it by a factor of 2.4477.
 
 
 def error_ellipse(sx, sy, pxy, kind, aspectratio=1):
@@ -127,8 +127,10 @@ class ErrorEllipseOverlay(AbstractOverlay):
 
         gc.set_stroke_color(self.border_color_)
         if self.fill:
-            gc.set_fill_color((0, 0, 0, 0.5))
-            gc.fill_path()
+            c = self.border_color_
+            c = c[0], c[1], c[2], 0.5
+            gc.set_fill_color(c)
+            gc.draw_path()
         else:
             gc.stroke_path()
 
