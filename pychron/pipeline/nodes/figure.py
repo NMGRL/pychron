@@ -303,6 +303,6 @@ class CompositeNode(FigureNode):
     name = 'Spectrum/Isochron'
     editor_klass = 'pychron.pipeline.plot.editors.composite_editor,CompositeEditor'
     plotter_options_manager_klass = CompositeOptionsManager
-    configurable = False
-    skip_configure = True
+    # configurable = False
+    # skip_configure = True
 # ============= EOF =============================================
