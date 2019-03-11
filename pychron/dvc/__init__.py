@@ -80,8 +80,8 @@ def dvc_load(path):
         with open(path, 'r') as rfile:
             try:
                 ret = json.load(rfile)
-            except ValueError:
-                pass
+            except ValueError as e:
+                print('dvc load exception. error: {}, {}'.format(e, path))
     return ret
 
 

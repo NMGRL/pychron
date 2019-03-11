@@ -119,19 +119,26 @@ class ExtractionView(HasTraits):
     name = 'Extraction'
     refresh_needed = Event
 
-    def setup_graph(self, response_data, request_data):
-        self.graph = g = StackedGraph()
+    def setup_graph(self, response_data, request_data, setpoint_data):
+        self.graph = g = StackedGraph(container_dict={'spacing': 10})
         ret = False
+        pid = 0
         if response_data:
             try:
                 x, y = unpack(response_data, fmt='<ff', decode=True)
                 if x[1:]:
-                    g.new_plot()
-                    g.set_x_title('Time')
+                    p = g.new_plot()
+                    p.value_range.tight_bounds = False
+                    g.set_x_title('Time (s)')
                     g.set_y_title('Temp C')
                     g.new_series(x[1:], y[1:])
-                    g.set_x_limits()
+                    pid += 1
                     ret = True
+
+                    if setpoint_data:
+                        x, y = unpack(setpoint_data, fmt='<ff', decode=True)
+                        if x[1:]:
+                            g.new_series(x[1:], y[1:])
 
             except ValueError:
                 pass
@@ -140,11 +147,12 @@ class ExtractionView(HasTraits):
             try:
                 x, y = unpack(request_data, fmt='<ff', decode=True)
                 if x[1:]:
-                    self.graph.new_plot()
+                    p = self.graph.new_plot()
+
                     g.set_x_title('Time')
                     g.set_y_title('% Power')
                     g.new_series(x[1:], y[1:])
-                    g.set_x_limits()
+                    g.set_y_limits(min_=0, max_=max(y) * 1.1, plotid=pid)
                     ret = True
             except ValueError:
                 pass
@@ -235,7 +243,7 @@ class AnalysisView(HasTraits):
         self.groups.append(view)
         if an.measured_response_stream:
             ev = ExtractionView()
-            if ev.setup_graph(an.measured_response_stream, an.requested_output_stream):
+            if ev.setup_graph(an.measured_response_stream, an.requested_output_stream, an.setpoint_stream):
                 self.groups.append(ev)
 
         if an.snapshots:
