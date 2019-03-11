@@ -25,7 +25,7 @@ from pychron.core.helpers.strtools import ratio
 from pychron.core.progress import progress_iterator
 from pychron.options.options_manager import IdeogramOptionsManager, OptionsController, SeriesOptionsManager, \
     SpectrumOptionsManager, InverseIsochronOptionsManager, VerticalFluxOptionsManager, XYScatterOptionsManager, \
-    RadialOptionsManager, RegressionSeriesOptionsManager, FluxVisualizationOptionsManager
+    RadialOptionsManager, RegressionSeriesOptionsManager, FluxVisualizationOptionsManager, CompositeOptionsManager
 from pychron.options.views.views import view
 from pychron.pipeline.editors.flux_visualization_editor import FluxVisualizationEditor
 from pychron.pipeline.nodes.base import SortableNode
@@ -298,4 +298,11 @@ class RadialNode(FigureNode):
     editor_klass = 'pychron.pipeline.plot.editors.radial_editor,RadialEditor'
     plotter_options_manager_klass = RadialOptionsManager
 
+
+class CompositeNode(FigureNode):
+    name = 'Spectrum/Isochron'
+    editor_klass = 'pychron.pipeline.plot.editors.composite_editor,CompositeEditor'
+    plotter_options_manager_klass = CompositeOptionsManager
+    configurable = False
+    skip_configure = True
 # ============= EOF =============================================

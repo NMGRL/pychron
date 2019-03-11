@@ -29,7 +29,8 @@ from pychron.pipeline.nodes.dvc_history import DVCHistoryNode
 from pychron.pipeline.nodes.email_node import EmailNode
 from pychron.pipeline.nodes.export import CSVAnalysesExportNode, CSVRawDataExportNode
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, SeriesNode, InverseIsochronNode, \
-    VerticalFluxNode, XYScatterNode, RadialNode, RegressionSeriesNode, HistoryIdeogramNode, FluxVisualizationNode
+    VerticalFluxNode, XYScatterNode, RadialNode, RegressionSeriesNode, HistoryIdeogramNode, FluxVisualizationNode, \
+    CompositeNode
 from pychron.pipeline.nodes.filter import FilterNode, MSWDFilterNode
 from pychron.pipeline.nodes.find import FindReferencesNode, FindFluxMonitorsNode, FindVerticalFluxNode, \
     FindBlanksNode, FindRepositoryAnalysesNode, FindFluxMonitorMeansNode

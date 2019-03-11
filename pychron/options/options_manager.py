@@ -30,6 +30,7 @@ from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.mdd.tasks.mdd_figure import MDDFigureOptions
 from pychron.options.blanks import BlanksOptions
+from pychron.options.composite import CompositeOptions
 from pychron.options.define_equilibration import DefineEquilibrationOptions
 from pychron.options.flux import FluxOptions, VerticalFluxOptions, FluxVisualizationOptions
 from pychron.options.icfactor import ICFactorOptions
@@ -395,6 +396,11 @@ class MDDFigureOptionsManager(FigureOptionsManager):
     options_klass = MDDFigureOptions
 
 
+class CompositeOptionsManager(FigureOptionsManager):
+    id = 'composite'
+    options_klass = CompositeOptions
+
+
 class OptionsController(Controller):
     delete_options = Button
     add_options = Button
@@ -420,7 +426,7 @@ class OptionsController(Controller):
 
     def controller_save_as_options_changed(self, info):
         info = self.edit_traits(view=okcancel_view(Item('new_name', label='Name'),
-                                          title='New Options'))
+                                                   title='New Options'))
         if info.result:
             self.model.save_selected_as()
 

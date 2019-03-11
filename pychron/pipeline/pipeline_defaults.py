@@ -119,6 +119,13 @@ nodes:
   - klass: SpectrumNode
 """
 
+COMPOSITE = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: CompositeNode
+"""
+
 FLUX_VISUALIZATION = """
 required:
 nodes:
