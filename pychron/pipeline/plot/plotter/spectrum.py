@@ -237,7 +237,7 @@ class Spectrum(BaseArArFigure):
                                  plotid=plotid)
 
         ds.value_mapper.fill_value = 1e-20
-        ds.index.on_trait_change(self._update_graph_metadata, 'metadata_changed')
+        ds.index.on_trait_change(self.update_graph_metadata, 'metadata_changed')
 
         ds.index.sort_order = 'ascending'
         ns = self.options.step_nsigma
@@ -321,7 +321,7 @@ class Spectrum(BaseArArFigure):
     # if new is True:
     # self._update_graph_metadata(gid, None, name, old, new)
 
-    def _update_graph_metadata(self, obj, name, old, new):
+    def update_graph_metadata(self, obj, name, old, new):
         # print 'update graph metadata, {} {} {} {}'.format(obj, name, old, new)
         sel = obj.metadata['selections']
 
@@ -346,7 +346,7 @@ class Spectrum(BaseArArFigure):
             self.plateau_overlay.info_txt = text
 
         self.graph.plotcontainer.invalidate_and_redraw()
-        self.refresh_unknowns_table = True
+        self.recalculate_event = True
 
     # ===============================================================================
     # utils

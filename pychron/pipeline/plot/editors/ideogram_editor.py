@@ -18,7 +18,7 @@
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.label import Label
 from pyface.timer.do_later import do_later
-from traits.api import Instance, List, Property
+from traits.api import Instance, List, Property, on_trait_change
 from traitsui.api import View, VSplit, VGroup, HGroup
 
 # ============= standard library imports ========================
@@ -67,10 +67,9 @@ class IdeogramEditor(InterpretedAgeEditor):
     def _get_additional_visible(self):
         return self.ttest_tables or self.results_tables
 
-    # @on_trait_change('figure_model:panels:figures:recalculate_event')
-    # def _handle_recalculate(self):
-    #     print('recalads')
-    #     self._get_component_hook()
+    @on_trait_change('figure_model:panels:figures:recalculate_event')
+    def _handle_recalculate(self):
+        print('recaladifaasdfsds')
 
     def _get_component_hook(self, model=None):
         if model is None:

@@ -70,10 +70,15 @@ class InverseIsochronMainOptions(SubOptions):
                                         UItem('label_fontsize'),
                                         enabled_when='show_labels'),
                                  label='Labels')
+
+        marker_grp = BorderHGroup(Item('marker_size', label='Size'),
+                                  Item('marker', label='Marker'),
+                                  label='Marker')
         g2 = Group(BorderVGroup(info_grp,
                                 results_grp,
                                 label='Info'),
                    Item('include_error_envelope'),
+                   marker_grp,
                    ellipse_grp,
                    label_grp,
 

@@ -108,6 +108,9 @@ class AnalysisPointInspector(PointInspector):
 
                     rid = analysis.record_id
                     name = component.container.y_axis.title
+                    for tag in ('<sub>','</sub>', '<sup>', '</sup>'):
+                        name = name.replace(tag,'')
+
                     y = ys[ind]
                     # x = xs[ind]
 

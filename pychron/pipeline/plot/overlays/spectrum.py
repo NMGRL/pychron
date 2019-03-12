@@ -123,7 +123,7 @@ class SpectrumTool(InfoInspector, BasePlateauOverlay):
         if self.hittest(pt, hover) is not None:
             # print('setting cross')
             # event.window.set_pointer('cross')
-            self.component.index.metadata['hover'] = [hover]
+            # self.component.index.metadata['hover'] = [hover]
             if self.current_position != hover:
                 self._cached_lines = None
 
@@ -132,7 +132,7 @@ class SpectrumTool(InfoInspector, BasePlateauOverlay):
         else:
             # print('settinasg arrow')
             # event.window.set_pointer('arrow')
-            self.component.index.metadata['hover'] = None
+            # self.component.index.metadata['hover'] = None
 
             self.current_position = None
             self.current_screen = None

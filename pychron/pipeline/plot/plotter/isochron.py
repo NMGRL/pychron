@@ -113,12 +113,9 @@ class InverseIsochron(Isochron):
         pass
 
     def _plot_inverse_isochron(self, po, plot, pid):
-        self.analysis_group.isochron_age_error_kind = self.options.error_calc_method
+        opt = self.options
+        self.analysis_group.isochron_age_error_kind = opt.error_calc_method
         _, _, reg = self.analysis_group.get_isochron_data()
-
-        # _, _, reg = data
-        # self._cached_data = data
-        # self._cached_reg = reg
 
         graph = self.graph
 
@@ -135,24 +132,29 @@ class InverseIsochron(Isochron):
 
         graph.set_grid_traits(visible=False)
         graph.set_grid_traits(visible=False, grid='y')
-        group = self.options.get_group(self.group_id)
+        group = opt.get_group(self.group_id)
         color = group.color
+
+        marker = opt.marker
+        marker_size = opt.marker_size
 
         scatter, _p = graph.new_series(reg.xs, reg.ys,
                                        xerror=ArrayDataSource(data=reg.xserr),
                                        yerror=ArrayDataSource(data=reg.yserr),
                                        type='scatter',
-                                       marker='circle',
+                                       marker=marker,
+                                       selection_marker=marker,
+                                       selection_marker_size=marker_size,
                                        bind_id=self.group_id,
                                        color=color,
-                                       marker_size=2)
+                                       marker_size=marker_size)
         graph.set_series_label('data{}'.format(self.group_id))
 
         eo = ErrorEllipseOverlay(component=scatter,
                                  reg=reg,
                                  border_color=color,
-                                 fill=self.options.fill_ellipses,
-                                 kind=self.options.ellipse_kind)
+                                 fill=opt.fill_ellipses,
+                                 kind=opt.ellipse_kind)
         scatter.overlays.append(eo)
 
         ma = max(reg.xs)
@@ -179,7 +181,7 @@ class InverseIsochron(Isochron):
             self.ymis.append(ymi)
             self.ymas.append(yma)
 
-        if self.options.include_error_envelope:
+        if opt.include_error_envelope:
             lci, uci = reg.calculate_error_envelope(l.index.get_data())
             ee = ErrorEnvelopeOverlay(component=l,
                                       upper=uci, lower=lci,
@@ -187,20 +189,20 @@ class InverseIsochron(Isochron):
             l.underlays.append(ee)
             l.error_envelope = ee
 
-        if self.options.display_inset:
+        if opt.display_inset:
             self._add_inset(plot, reg)
 
         if self.group_id == 0:
-            if self.options.show_nominal_intercept:
+            if opt.show_nominal_intercept:
                 self._add_atm_overlay(plot)
 
             graph.add_vertical_rule(0, color='black')
-        if self.options.show_results_info:
+        if opt.show_results_info:
             self._add_results_info(plot, text_color=color)
-        if self.options.show_info:
+        if opt.show_info:
             self._add_info(plot)
 
-        if self.options.show_labels:
+        if opt.show_labels:
             self._add_point_labels(scatter)
 
         def ad(i, x, y, ai):
@@ -215,13 +217,14 @@ class InverseIsochron(Isochron):
             except ZeroDivisionError:
                 pe = '(Inf%)'
 
-            return u'39Ar/40Ar = {} {}{} {}'.format(floatfmt(v, n=6), PLUSMINUS, floatfmt(e, n=7), pe)
+            return u'39Ar/40Ar= {} {}{} {}'.format(floatfmt(v, n=6), PLUSMINUS, floatfmt(e, n=7), pe)
 
         self._add_scatter_inspector(scatter, additional_info=ad)
         p.index_mapper.on_trait_change(self.update_index_mapper, 'updated')
 
-        sel = self._get_omitted_by_tag(self.analyses)
-        self._rebuild_iso(sel)
+        # sel = self._get_omitted_by_tag(self.analyses)
+        # self._rebuild_iso(sel)
+        self.replot()
 
     # ===============================================================================
     # overlays
@@ -239,14 +242,6 @@ class InverseIsochron(Isochron):
 
         if ts:
             self._add_info_label(plot, ts, font=self.options.info_font)
-
-            # pl = FlowPlotLabel(text='\n'.join(ts),
-            #                    overlay_position='inside top',
-            #                    hjustify='left',
-            #                    bgcolor=plot.bgcolor,
-            #                    font=self.options.info_font,
-            #                    component=plot)
-            # plot.overlays.append(pl)
 
     def _add_inset(self, plot, reg):
 
@@ -374,19 +369,18 @@ class InverseIsochron(Isochron):
         label.request_redraw()
 
     def replot(self):
-        # self.suppress = True
-        # om = self._get_omitted(self.sorted_analyses)
-        self._rebuild_iso()
-        # self.suppress = False
-        pass
+        sel = self._get_omitted_by_tag(self.analyses)
+        self._rebuild_iso(sel)
 
     def _rebuild_iso(self, sel=None):
+        if not self.graph:
+            return
+
         if sel is not None:
             g = self.graph
             ss = [p.plots[pp][0] for p in g.plots
                   for pp in p.plots
                   if pp == 'data{}'.format(self.group_id)]
-
             self._set_renderer_selection(ss, sel)
 
         # reg = self._cached_reg

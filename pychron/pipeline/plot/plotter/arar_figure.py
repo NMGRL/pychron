@@ -632,8 +632,7 @@ class BaseArArFigure(SelectionFigure):
     def _set_renderer_selection(self, rs, sel):
         meta = {'selections': sel}
         for rend in rs:
-            rend.index.trait_set(metadata=meta,
-                                 trait_change_notify=False)
+            rend.index.trait_set(metadata=meta)
 
     def _handle_label_move(self, obj, name, old, new):
         axps = [a for a in self.options.aux_plots if a.plot_enabled][::-1]
