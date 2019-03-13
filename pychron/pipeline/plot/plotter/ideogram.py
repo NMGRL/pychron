@@ -487,7 +487,7 @@ class Ideogram(BaseArArFigure):
                     es = self.options.error_bar_nsigma
                     ts.append(u'Mean: {} {}{}{} Data: {}{}{}'.format(m, PLUSMINUS, s, SIGMA, PLUSMINUS, es, SIGMA))
                 if self.options.show_error_type_info:
-                    ts.append('Error Type: {}'.format(self.options.error_calc_method))
+                    ts.append(u'Error Type: {}'.format(self.options.error_calc_method))
 
                 if ts:
                     self._add_info_label(plot, ts)

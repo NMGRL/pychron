@@ -14,19 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 from pychron.options.views.isochron_views import InverseIsochronMainOptions, InverseIsochronAppearance
-from pychron.options.views.spectrum_views import SpectrumMainOptions, SpectrumAppearance
-
-# class MainSpectrumView(SpectrumMainOptions):
-#     pass
-#
-#
-# class MainIsochronView(InverseIsochronMainOptions):
-#     pass
-
+from pychron.options.views.spectrum_views import SpectrumMainOptions, SpectrumAppearance, DisplaySubOptions, \
+    CalculationSubOptions
 
 VIEWS = {'main': SpectrumMainOptions,
          'spectrum': SpectrumMainOptions,
          'isochron': InverseIsochronMainOptions,
+         'display(spec.)': DisplaySubOptions,
+         'calculations(spec.)': CalculationSubOptions,
          'appearance(spec.)': SpectrumAppearance,
          'appearance(iso.)': InverseIsochronAppearance}
 # ============= EOF =============================================

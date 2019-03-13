@@ -537,7 +537,7 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         self.max_j = max(z)
 
         g = self.graph
-        layout = FigureLayout(fixed='square')
+        layout = FigureLayout(fixed='filled_grid')
         nrows, ncols = layout.calculate(len(x))
 
         if not isinstance(g, Graph):

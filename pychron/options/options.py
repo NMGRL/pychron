@@ -242,6 +242,19 @@ class BaseOptions(HasTraits):
     _main_options_klass = MainOptions
     subview_names = List(transient=True)
 
+    _subview_cache = None
+
+    def get_cached_subview(self, name):
+        if self._subview_cache is None:
+            self._subview_cache = {}
+
+        try:
+            return self._subview_cache[name]
+        except KeyError:
+            v = self.get_subview(name)
+            self._subview_cache[name] = v
+            return v
+
     def to_dict(self):
         keys = [trait for trait in self.traits() if
                 not trait.startswith('trait') and not trait.endswith('button') and self.to_dict_test(trait)]
