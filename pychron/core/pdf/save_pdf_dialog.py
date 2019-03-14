@@ -14,23 +14,23 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+# ============= standard library imports ========================
+import os
+
 from chaco.plot_label import PlotLabel
 from kiva.fonttools.font_manager import findfont, FontProperties
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
-from traitsui.handler import Controller
-# ============= standard library imports ========================
-import os
 from reportlab.pdfbase import _fontdata
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont, TTFError
+from traitsui.handler import Controller
 
+from pychron import pychron_constants
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import view_file, add_extension
 from pychron.core.pdf.options import BasePDFOptions, PDFLayoutView
 from pychron.core.pdf.pdf_graphics_context import PdfPlotGraphicsContext
-from pychron import pychron_constants
-
 
 for face in pychron_constants.FONTS:
     for face_name in (face, face.lower()):
@@ -111,24 +111,27 @@ def save_pdf(component, path=None, default_directory=None, view=False, options=N
             # component.fill_padding = True
             # component.bgcolor = 'green'
             obounds = component.bounds
-            size = None
+            # size = None
             if not obounds[0] and not obounds[1]:
                 size = options.bounds
+                component.do_layout(size=size, force=True)
 
             if options.fit_to_page:
                 size = options.bounds
+                component.do_layout(size=size, force=True)
 
-            component.do_layout(size=size, force=True)
             gc.render_component(component,
                                 valign='center')
             gc.save()
             if view:
                 view_file(path)
-            component.do_layout(size=obounds, force=True)
+
+            if options.fit_to_page:
+                component.do_layout(size=obounds, force=True)
 
 
 if __name__ == '__main__':
-    from traits.api import HasTraits, Button, Instance, Unicode, Any
+    from traits.api import HasTraits, Button, Instance
     from traitsui.api import View
     from pychron.graph.graph import Graph
     from pychron.paths import paths

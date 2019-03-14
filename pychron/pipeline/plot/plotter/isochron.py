@@ -15,29 +15,125 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.array_data_source import ArrayDataSource
+from chaco.label import Label
 from chaco.plot_label import PlotLabel
 from enable.enable_traits import LineStyle
+from kiva import FILL
 from kiva.trait_defs.kiva_font_trait import KivaFont
-from numpy import linspace
+from numpy import linspace, pi
 from six.moves import zip
-from traits.api import Float, Str
+from traits.api import Float, Str, Instance
 from uncertainties import std_dev, nominal_value
 
 from pychron.core.helpers.formatting import floatfmt, calc_percent_error, format_percent_error
 from pychron.core.stats import validate_mswd
 from pychron.graph.error_ellipse_overlay import ErrorEllipseOverlay
 from pychron.graph.error_envelope_overlay import ErrorEnvelopeOverlay
+from pychron.graph.ml_label import tokenize
 from pychron.pipeline.plot.overlays.isochron_inset import InverseIsochronPointsInset, InverseIsochronLineInset
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 from pychron.pychron_constants import PLUSMINUS, SIGMA
 
 
+class MLTextLabel(Label):
+    def draw(self, gc):
+        """ Draws the label.
+
+        This method assumes the graphics context has been translated to the
+        correct position such that the origin is at the lower left-hand corner
+        of this text label's box.
+        """
+        # Make sure `max_width` is respected
+        self._fit_text_to_max_width(gc)
+
+        # For this version we're not supporting rotated text.
+        self._calc_line_positions(gc)
+
+        with gc:
+            bb_width, bb_height = self.get_bounding_box(gc)
+
+            # Rotate label about center of bounding box
+            width, height = self._bounding_box
+            gc.translate_ctm(bb_width/2.0, bb_height/2.0)
+            gc.rotate_ctm(pi/180.0*self.rotate_angle)
+            gc.translate_ctm(-width/2.0, -height/2.0)
+
+            # Draw border and fill background
+            if self.bgcolor != "transparent":
+                gc.set_fill_color(self.bgcolor_)
+                gc.draw_rect((0, 0, width, height), FILL)
+            if self.border_visible and self.border_width > 0:
+                gc.set_stroke_color(self.border_color_)
+                gc.set_line_width(self.border_width)
+                border_offset = (self.border_width-1)/2.0
+                gc.rect(border_offset, border_offset,
+                        width-2*border_offset, height-2*border_offset)
+                gc.stroke_path()
+
+            gc.set_fill_color(self.color_)
+            gc.set_stroke_color(self.color_)
+            gc.set_font(self.font)
+            if self.font.size <= 8.0:
+                gc.set_antialias(0)
+            else:
+                gc.set_antialias(1)
+
+            lines = self.text.split("\n")
+            if self.border_visible:
+                gc.translate_ctm(self.border_width, self.border_width)
+
+            # width, height = self.get_width_height(gc)
+            for i, line in enumerate(lines):
+                if line == "":
+                    continue
+                x_offset = round(self._line_xpos[i])
+                y_offset = round(self._line_ypos[i])
+                with gc:
+                    gc.translate_ctm(x_offset, y_offset)
+                    self._draw_line(gc, line)
+
+    def _draw_line(self, gc, txt):
+        def gen():
+            offset = 0
+            for ti in tokenize(txt):
+                if ti == 'sup':
+                    offset = 1
+                elif ti == 'sub':
+                    offset = -1
+                elif ti in ('/sup', '/sub'):
+                    offset = 0
+                else:
+                    yield offset, ti
+
+        ofont = self.font
+        sfont = self.font.copy()
+        sfont.size = int(sfont.size * 0.80)
+        suph = int(ofont.size * 0.4)
+        subh = -int(ofont.size * 0.3)
+
+        x = 0
+        for offset, text in gen():
+            with gc:
+                if offset == 1:
+                    gc.translate_ctm(0, suph)
+                    gc.set_font(sfont)
+                elif offset == -1:
+                    gc.set_font(sfont)
+                    gc.translate_ctm(0, subh)
+                else:
+                    gc.set_font(ofont)
+
+                w, h, _, _ = gc.get_full_text_extent(text)
+                gc.set_text_position(x, 0)
+                gc.show_text(text)
+                x += w
+
+
 class OffsetPlotLabel(PlotLabel):
     offset = None
+    _label = Instance(MLTextLabel, args=())
 
     def overlay(self, component, gc, view_bounds=None, mode="normal"):
         with gc:
@@ -321,7 +417,7 @@ class InverseIsochron(Isochron):
         if self.options.include_4036_mse:
             mse_text = ' MSE= {}'.format(mse)
 
-        ratio_line = u'Ar40/Ar36= {} {}{} ({}%){}'.format(v, PLUSMINUS, e, p, mse_text)
+        ratio_line = '<sup>40</sup>Ar/<sup>36</sup>Ar= {} {}{} ({}%){}'.format(v, PLUSMINUS, e, p, mse_text)
 
         v = nominal_value(age)
         e = std_dev(age) * self.options.nsigma

@@ -258,7 +258,7 @@ def max_path_cnt(root, base, delimiter='-', extension='.txt'):
     :param extension:
     :return: int max+1
     """
-    basename = '{}*{}'.format(base, extension)
+    basename = '{}{}*{}'.format(base, delimiter, extension)
     cnt = 0
 
     for p in glob.iglob(os.path.join(root, basename)):
