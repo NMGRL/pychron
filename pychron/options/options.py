@@ -296,7 +296,6 @@ class BaseOptions(HasTraits):
         pass
 
     def _fontname_changed(self):
-        print('setting font name', self.fontname)
         self._set_fonts(self.fontname)
         for attr in self.traits():
             if attr.endswith('_fontname'):

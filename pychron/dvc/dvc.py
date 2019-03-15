@@ -1141,7 +1141,10 @@ class DVC(Loggable):
 
         root = repository_path(identifier)
         if os.path.isdir(root):
+            self.db.add_repository(identifier, principal_investigator)
             self.debug('already a directory {}'.format(identifier))
+            if inform:
+                self.warning_dialog('{} already exists.'.format(root))
             return True
 
         names = self.remote_repository_names()

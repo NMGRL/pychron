@@ -33,7 +33,8 @@ from pychron.entry.tasks.actions import MakeIrradiationBookPDFAction, MakeIrradi
     TransferJAction, ImportSamplesAction, ImportIrradiationFileAction, GetIGSNAction, GenerateIrradiationTableAction, \
     GenerateStatusReportAction, ImportAnalysesAction, EditIrradiationGeometryAction
 from pychron.entry.tasks.labnumber.actions import LabnumberEntryAction
-from pychron.entry.tasks.preferences import LabnumberEntryPreferencesPane, SamplePrepPreferencesPane
+from pychron.entry.tasks.preferences import LabnumberEntryPreferencesPane, SamplePrepPreferencesPane, \
+    SampleEntryPreferencesPane
 from pychron.entry.tasks.project.actions import ProjectAction
 from pychron.entry.tasks.sample.actions import SampleEntryAction
 from pychron.entry.tasks.sample_prep.actions import SamplePrepAction
@@ -192,7 +193,8 @@ class EntryPlugin(BaseTaskPlugin):
 
     def _preferences_panes_default(self):
         return [LabnumberEntryPreferencesPane,
-                SamplePrepPreferencesPane]
+                SamplePrepPreferencesPane,
+                SampleEntryPreferencesPane]
 
         # ============= EOF =============================================
         # def _task_extensions_default(self):

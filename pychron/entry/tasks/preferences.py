@@ -22,6 +22,22 @@ from traitsui.api import View, Item, Group, VGroup, HGroup
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
+class SampleEntryPreferences(BasePreferencesHelper):
+    preferences_path = 'pychron.entry.sample'
+    auto_add_project_repository = Bool
+
+
+class SampleEntryPreferencesPane(PreferencesPane):
+    model_factory = SampleEntryPreferences
+    category = 'Entry'
+
+    def traits_view(self):
+        v = View(Item('auto_add_project_repository',
+                      label='Auto Add Project Repo.',
+                      tooltip='Automatically add a repository with the same name as the project'))
+        return v
+
+
 class IrradiationEntryPreferences(BasePreferencesHelper):
     preferences_path = 'pychron.entry'
     irradiation_prefix = Str

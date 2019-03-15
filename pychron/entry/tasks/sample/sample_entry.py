@@ -19,6 +19,7 @@ import re
 
 import yaml
 # ============= enthought library imports =======================
+from apptools.preferences.preference_binding import bind_preference
 from traits.api import HasTraits, Str, Bool, Property, Event, cached_property, \
     Button, String, Instance, List, Float, on_trait_change
 from traitsui.api import UItem, Item, VGroup, HGroup, EnumEditor
@@ -269,7 +270,12 @@ class SampleEntry(DVCAble):
 
     sample_edit_model = Instance(SampleEditModel, ())
 
+    auto_add_project_repository = Bool
+
     def activated(self):
+
+        bind_preference(self, 'auto_add_project_repository', 'pychron.entry.sample.auto_add_project_repository')
+
         self.refresh_pis = True
         self.refresh_materials = True
         self.refresh_projects = True
@@ -432,6 +438,9 @@ class SampleEntry(DVCAble):
                     if dvc.add_project(p.name, p.principal_investigator.name, **p.optionals):
                         p.added = True
                         dvc.commit()
+
+                if self.auto_add_project_repository:
+                    dvc.add_repository(p.name, p.principal_investigator.name, inform=False)
 
         for m in self._materials:
             with dvc.session_ctx(use_parent_session=False):

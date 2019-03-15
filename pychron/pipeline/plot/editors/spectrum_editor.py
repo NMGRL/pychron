@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance
+from traits.api import Instance, on_trait_change
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -29,9 +29,9 @@ class SpectrumEditor(InterpretedAgeEditor):
     basename = 'spec'
     figure_model_klass = SpectrumModel
 
-    # @on_trait_change('figure_model:panels:make_ideogram_event')
-    # def handle_make_ideogram(self, evt):
-    #     self.information_dialog('make ideogram from spectrum not yet enabled')
+    @on_trait_change('figure_model:panels:make_ideogram_event')
+    def handle_make_ideogram(self, evt):
+        self.information_dialog('make ideogram from spectrum not yet enabled')
 
     def _set_preferred_age_kind(self, ias):
         for ia in ias:

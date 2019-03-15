@@ -16,21 +16,21 @@
 
 # ============= enthought library imports =======================
 
-from traits.api import Str, Property, cached_property, Instance, Event, Any
+from traits.api import Str, Property, cached_property, Instance, Event
 
 from pychron.loggable import Loggable
 
 
 class DVCAble(Loggable):
     dvc = Instance('pychron.dvc.dvc.DVC')
-    iso_db_man = Any
-
-    def get_database(self):
-        if self.dvc:
-            db = self.dvc
-        else:
-            db = self.iso_db_man.db
-        return db
+    # iso_db_man = Any
+    #
+    # def get_database(self):
+    #     if self.dvc:
+    #         db = self.dvc
+    #     else:
+    #         db = self.iso_db_man.db
+    #     return db
 
 
 class DVCIrradiationable(DVCAble):

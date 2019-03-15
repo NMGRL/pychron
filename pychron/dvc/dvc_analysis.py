@@ -415,7 +415,11 @@ class DVCAnalysis(Analysis):
         sisos = self.isotopes
 
         for k in keys:
-            blank = isos.get(k, {})
+            if isinstance(isos, dict):
+                blank = isos.get(k, {})
+            else:
+                blank = {}
+
             if k in sisos:
                 siso = sisos[k]
                 if siso.temporary_blank is not None:

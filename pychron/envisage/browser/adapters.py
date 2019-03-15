@@ -114,6 +114,7 @@ class AnalysisAdapter(BrowserAdapter):
                    ('UUID', 'uuid'),
                    ('Sample', 'sample'),
                    ('Project', 'project'),
+                   ('Repository', 'repository_identifier'),
                    ('Packet', 'packet'),
                    ('Irradiation', 'irradiation_info'),
                    ('Tag', 'tag'),
@@ -247,7 +248,7 @@ class InterpretedAgeAdapter(TabularAdapter):
                ('Age', 'age'),
                (PLUSMINUS_ONE_SIGMA, 'age_err'),
                ('AgeKind', 'age_kind'),
-               ('AgeErroKind', 'age_error_kind')]
+               ('AgeErrorKind', 'age_error_kind')]
 
     font = 'arial 10'
 

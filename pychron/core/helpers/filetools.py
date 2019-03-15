@@ -232,7 +232,7 @@ def unique_path2(root, base, delimiter='-', extension='.txt', width=3):
     if not extension.startswith('.'):
         extension = '.{}'.format(extension)
 
-    cnt = max_path_cnt(root, '{}-'.format(base), delimiter=delimiter, extension=extension)
+    cnt = max_path_cnt(root, base, delimiter=delimiter, extension=extension)
     p = os.path.join(root, '{{}}-{{:0{}d}}{{}}'.format(width).format(base, cnt, extension))
     return p, cnt
 
@@ -258,9 +258,8 @@ def max_path_cnt(root, base, delimiter='-', extension='.txt'):
     :param extension:
     :return: int max+1
     """
-    basename = '{}{}*{}'.format(base, delimiter, extension)
+    basename = '{}{}[0123456789][0123456789][0123456789]{}'.format(base, delimiter, extension)
     cnt = 0
-
     for p in glob.iglob(os.path.join(root, basename)):
         p = os.path.basename(p)
         head, tail = os.path.splitext(p)
