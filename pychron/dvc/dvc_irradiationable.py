@@ -26,9 +26,7 @@ class DVCAble(Loggable):
 
     def get_database(self):
         if self.dvc:
-            db = self.dvc
-
-        return db
+            return self.dvc
 
 
 class DVCIrradiationable(DVCAble):
