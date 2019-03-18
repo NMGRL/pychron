@@ -23,14 +23,12 @@ from pychron.loggable import Loggable
 
 class DVCAble(Loggable):
     dvc = Instance('pychron.dvc.dvc.DVC')
-    # iso_db_man = Any
-    #
-    # def get_database(self):
-    #     if self.dvc:
-    #         db = self.dvc
-    #     else:
-    #         db = self.iso_db_man.db
-    #     return db
+
+    def get_database(self):
+        if self.dvc:
+            db = self.dvc
+
+        return db
 
 
 class DVCIrradiationable(DVCAble):
