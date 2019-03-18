@@ -397,6 +397,9 @@ class Analysis(ArArAge, IdeogramPlotable):
     peak_center_data = None
     peak_center_reference_detector = None
     additional_peak_center_data = None
+    peak_center_interpolation_kind = None
+    peak_center_use_interpolation = False
+    peak_center_reference_isotope = None
     collection_version = ''
     source_parameters = Dict
     filament_parameters = Dict

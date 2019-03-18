@@ -169,41 +169,43 @@ def fformat(v, format_str):
 
 def calculate_resolution(x, y, format_str=None, return_all=False):
     try:
-        [lx, cx, hx], [ly, cy, hy], mx, my = calculate_peak_center(x, y, percent=95)
-        print(lx, cx, hx, ly, cy, hy, my)
+        [lx, cx, hx], [ly, cy, hy], mx, my = calculate_peak_center(x, y, percent=95, ignore_max=True)
         res = cx / (hx - lx)
-    except PeakCenterError:
-        res = NULL_STR
+        data = ([lx, cx, hx], [ly, cy, hy])
+    except PeakCenterError as e:
+        res, data = NULL_STR, None
 
     res = fformat(res, format_str)
     if return_all:
-        return res, ([lx, cx, hx], [ly, cy, hy])
+        return res, data
     else:
         return res
 
 
 def calculate_resolving_power(x, y, format_str=None, return_all=False):
     try:
-        [lx5, cx5, hx5], [ly5, cy5, hy5], _, _ = calculate_peak_center(x, y, test_peak_flat=False, percent=95)
-        [lx95, cx95, hx95], [ly95, cy95, hy95], _, _ = calculate_peak_center(x, y, test_peak_flat=False, percent=5)
+        [lx5, cx5, hx5], [ly5, cy5, hy5], _, _ = calculate_peak_center(x, y, test_peak_flat=False, percent=95,
+                                                                       ignore_max=True)
+        [lx95, cx95, hx95], [ly95, cy95, hy95], _, _ = calculate_peak_center(x, y, test_peak_flat=False, percent=5,
+                                                                             ignore_max=True)
 
         ldelta = abs(lx95 - lx5)
         hdelta = abs(hx95 - hx5)
 
         lrp = (lx5 + ldelta / 2) / ldelta
         hrp = (hx95 + hdelta / 2) / hdelta
-
+        ldata, hdata = ((lx5, lx95), (ly5, ly95)), ((hx5, hx95), (hy5, hy95))
     except PeakCenterError:
-        lrp, hrp = NULL_STR, NULL_STR
+        lrp, hrp, ldata, hdata = NULL_STR, NULL_STR, None, None
 
     lrp, hrp = fformat(lrp, format_str), fformat(hrp, format_str)
     if return_all:
-        return lrp, hrp, ((lx5, lx95), (ly5, ly95)), ((hx5, hx95), (hy5, hy95))
+        return lrp, hrp, ldata, hdata
     else:
         return lrp, hrp
 
 
-def calculate_peak_center(x, y, test_peak_flat=True, min_peak_height=1.0, percent=80):
+def calculate_peak_center(x, y, test_peak_flat=True, min_peak_height=1.0, percent=80, ignore_max=False):
     """
         returns: (low_x, center_x, high_x), (low_y, center_y, high_y), max_y, min_y
 
@@ -219,7 +221,7 @@ def calculate_peak_center(x, y, test_peak_flat=True, min_peak_height=1.0, percen
 
     ma = max(y)
     max_i = argmax(y)
-    if ma < min_peak_height:
+    if not ignore_max and ma < min_peak_height:
         raise PeakCenterError('No peak greater than {}. max = {}'.format(min_peak_height, ma))
 
     if max_i == 0 or max_i == len(x) - 1:
@@ -243,7 +245,7 @@ def calculate_peak_center(x, y, test_peak_flat=True, min_peak_height=1.0, percen
     # xstep = (x[i] - x[i - 1]) / 2.
     # lx = x[i] - xstep
     # ly = y[i] - (y[i] - y[i - 1]) / 2.
-    lx,ly = x[i], y[i]
+    lx, ly = x[i], y[i]
 
     # look forward for point that is 80% of max
     for i in range(max_i, x.shape[0], 1):

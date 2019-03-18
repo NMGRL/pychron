@@ -33,9 +33,18 @@ EL_PROTOCOL = 'pychron.extraction_line.extraction_line_manager.ExtractionLineMan
 DVC_PROTOCOL = 'pychron.dvc.dvc.DVC'
 FURNACE_PROTOCOL = 'pychron.furnace.furnace_manager.BaseFurnaceManager'
 
-TTF_FONTS = ['Courier New', 'Arial', 'Georgia', 'Impact', 'Verdana']
+TTF_FONTS = ['Andale Mono', 'Arial', 'Arial Black',
+             'Calibri', 'Cambria', 'Comic Sans MS', 'Consolas', 'Courier New',
+             'Georgia',
+             'Impact',
+             'Trebuchet MS',
+             'Verdana']
 FONTS = ['Helvetica'] + TTF_FONTS
 SIZES = [10, 6, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36]
+
+from kiva.fonttools.font_manager import fontManager
+
+fontManager.defaultFamily = {'ttf': 'Arial', 'afm': 'Arial'}
 
 PLUSMINUS = '\N{Plus-minus sign}'
 SIGMA = '\N{Greek Small Letter Sigma}'
@@ -80,7 +89,6 @@ SUBGROUPINGS = [WEIGHTED_MEAN,
                 ARITHMETIC_MEAN]
 
 SUBGROUPING_ATTRS = ('age', 'kca', 'kcl', 'radiogenic_yield', 'moles_k39', 'signal_k39')
-
 
 FLECK_PLATEAU_DEFINITION = 'X contiguous Steps, Representing >Y% of the gas, Overlapping at 2 sigma'
 MAHON_PLATEAU_DEFINITION = 'X contiguous Steps, Representing >Y% of the gas, ' \

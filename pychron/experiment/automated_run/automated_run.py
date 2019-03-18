@@ -1166,12 +1166,12 @@ class AutomatedRun(Loggable):
             sblob = script.get_setpoint_blob()
             snapshots = script.snapshots
             videos = script.videos
-            grain_polygon_blob = script.get_grain_polygons() or []
-            self.debug('grain polygon blob n={}'.format(len(grain_polygon_blob)))
+            grain_polygons = script.get_grain_polygons() or []
+            self.debug('grain polygons n={}'.format(len(grain_polygons)))
 
             pid = script.get_active_pid_parameters()
             self._update_persister_spec(pid=pid or '',
-                                        grain_polygon_blob=grain_polygon_blob,
+                                        grain_polygons=grain_polygons,
                                         power_achieved=ach,
                                         response_blob=rblob,
                                         output_blob=oblob,

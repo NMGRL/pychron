@@ -335,7 +335,7 @@ def calculate_atmospheric(a38, a36, k38, ca38, ca36, decay_time, production_rati
     pr = production_ratios
     m = pr.get('Cl3638', 0) * nominal_value(arar_constants.lambda_Cl36) * decay_time
     atm3836 = nominal_value(arar_constants.atm3836)
-    atm36 = (a36 - ca36 - m*(a38 - k38 - ca38)) / (1 - m * atm3836)
+    atm36 = (a36 - ca36 - m * (a38 - k38 - ca38)) / (1 - m * atm3836)
     ar38atm = atm3836 * atm36
     cl38 = a38 - ar38atm - k38 - ca38
     cl36 = cl38 * m
@@ -475,6 +475,76 @@ def calculate_error_t(F, ssF, j, ssJ):
     ll = constants().lambdak.nominal_value ** 2
     sst = (JJ * ssF + FF * ssJ) / (ll * (1 + F * j) ** 2)
     return sst ** 0.5
+
+
+def calculate_fractional_loss(t, temp, a, model='plane', material='kfeldspar'):
+    """
+
+    :param t: years
+    :param a: mm
+    :return:
+    """
+
+    r = 1.9872036E-3  # kcal/(K*mol)
+
+    # convert a (mm) to cm
+    a /= 10
+    # convert t (years) to seconds
+    t *= 365.25 * 24 * 3600
+
+    # convert temp (C) to Kelvin
+    temp += 273.15
+
+    if material == 'kfeldspar':
+        d_0 = 0.0098  # cm/s**2
+        ea = 43.8  # kcal/mol
+
+    d = d_0 * math.exp(-ea / (r * temp))
+
+    if model == 'plane':
+        f = 2 / math.pi ** 0.5 * (d * t / a ** 2) ** 0.5
+        if 1 >= f >= 0.45:
+            f = 1 - (8 / math.pi ** 2) * math.exp(-math.pi ** 2 * d * t / (4 * a ** 2))
+
+    return f
+
+
+if __name__ == '__main__':
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    constant_a = True
+    if constant_a:
+        # constant a
+        a = 0.1
+        for temp in (300, 400, 500, 600, 700):
+            ts = np.linspace(1,1000)
+            fs = [calculate_fractional_loss(ti, temp, a) for ti in ts]
+            # for t in ts:
+
+            # print(t, calculate_fractional_loss(t, temp, a))
+
+            plt.plot(ts, fs, label='{}C'.format(temp))
+        plt.title('Constant Diffusion Length Scale ({}mm)'.format(a))
+    else:
+        # constant temp
+        temp = 475
+        for a in (0.01, 0.1, 1):
+            ts = (1, 5, 10, 50, 100, 500, 1000)
+            fs = [calculate_fractional_loss(ti, temp, a) for ti in ts]
+            # for t in ts:
+
+            # print(t, calculate_fractional_loss(t, temp, a))
+
+            plt.plot(ts, fs, label='{}mm'.format(a))
+
+        plt.title('Constant Temp ({}C)'.format(temp))
+
+    plt.legend()
+    plt.xlabel('Time (a)')
+    plt.ylabel('fractional loss')
+    plt.ylim(0, 1)
+    plt.show()
 
 # ============= EOF =====================================
 # # plateau definition

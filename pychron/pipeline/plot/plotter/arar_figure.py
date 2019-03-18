@@ -22,7 +22,7 @@ from chaco.tools.broadcaster import BroadcasterTool
 from chaco.tools.data_label_tool import DataLabelTool
 from numpy import Inf, vstack, zeros_like, ma
 from traits.api import HasTraits, Any, Int, Str, Property, \
-    Event, Bool, cached_property, List, Float, Instance
+    Event, cached_property, List, Float, Instance
 from uncertainties import std_dev, nominal_value, ufloat
 
 from pychron.core.filtering import filter_ufloats, sigma_filter
@@ -61,7 +61,6 @@ class SelectionFigure(HasTraits):
 
 
 class BaseArArFigure(SelectionFigure):
-    inspector_event = Event
     analyses = Any
     sorted_analyses = Property(depends_on='analyses')
 
@@ -71,33 +70,27 @@ class BaseArArFigure(SelectionFigure):
 
     group_id = Int
     ytitle = Str
+    title = Str
+    xtitle = Str
+
     replot_needed = Event
-    _reverse_sorted_analyses = False
+    recalculate_event = Event
 
     options = Any
 
-    use_sparse_ticks = Bool(True)
-
     refresh_unknowns_table = Event
-    _suppress_table_update = False
     suppress_ylimits_update = False
     suppress_xlimits_update = False
 
     xpad = None
 
-    title = Str
-
-    bgcolor = None
-
     ymas = List
     ymis = List
     xmi = Float
     xma = Float
-    xtitle = None
 
     _has_formatting_hash = None
-
-    recalculate_event = Event
+    _reverse_sorted_analyses = False
 
     def get_update_dict(self):
         return {}
@@ -119,8 +112,6 @@ class BaseArArFigure(SelectionFigure):
             title = self.options.title
 
         for i, po in enumerate(plots):
-            # kw = {'padding': self.padding,
-            # 'ytitle': po.name}
             kw = {'ytitle': po.name}
             if plot_dict:
                 kw.update(plot_dict)
@@ -142,13 +133,11 @@ class BaseArArFigure(SelectionFigure):
 
             kw['padding'] = self.options.paddings()
             p = graph.new_plot(**kw)
+            if i == (len(plots) - 1):
+                p.title_font = self.options.title_font
             # set a tag for easy identification
             p.y_axis.tag = po.name
             self._setup_plot(i, p, po)
-
-            # if self.options.use_legend:
-            # if True:
-            # self._add_legend()
 
     def post_make(self):
         self._fix_log_axes()
@@ -226,8 +215,8 @@ class BaseArArFigure(SelectionFigure):
 
             pp.value_scale = po.scale
             if po.scale == 'log':
-                if po.use_sparse_ticks:
-                    st = SparseLogTicks()
+                if po.use_sparse_yticks:
+                    st = SparseLogTicks(step=po.sparse_yticks_step)
                     pp.value_axis.tick_generator = st
                     pp.value_grid.tick_generator = st
             else:
@@ -265,17 +254,9 @@ class BaseArArFigure(SelectionFigure):
 
         return gen()
 
-    def _set_y_limits(self, a, b, min_=None, max_=None,
-                      pid=0, pad=None):
+    def _set_y_limits(self, a, b, min_=None, max_=None, pid=0, pad=None):
 
-        # mi, ma = 0, 0
-        # if self.group_id > 0:
         mi, ma = self.graph.get_y_limits(plotid=pid)
-
-        # print mi, ma, a, b
-        # print pid, self.group_id, mi, ma, a, b
-        # mi = min(mi, a)
-        # ma = max(ma, b)
 
         mi = min_ if min_ is not None else min(mi, a)
 
@@ -467,7 +448,6 @@ class BaseArArFigure(SelectionFigure):
         return ebo
 
     def _add_scatter_inspector(self,
-                               # container,
                                scatter,
                                inspector=None,
                                add_tool=True,
@@ -492,10 +472,13 @@ class BaseArArFigure(SelectionFigure):
 
             if inspector is None:
                 if value_format is None:
-                    value_format = lambda x: '{:0.5f}'.format(x)
+                    def value_format(x):
+                        return '{:0.5f}'.format(x)
 
                 if convert_index is None:
-                    convert_index = lambda x: '{:0.3f}'.format(x)
+                    def convert_index(x):
+                        return '{:0.3f}'.format(x)
+
                 if items is None:
                     items = self.sorted_analyses
                 inspector = AnalysisPointInspector(scatter,
@@ -532,9 +515,6 @@ class BaseArArFigure(SelectionFigure):
                 update_meta_func = self.update_graph_metadata
             # u = lambda a, b, c, d: self.update_graph_metadata(a, b, c, d)
             scatter.index.on_trait_change(update_meta_func, 'metadata_changed')
-
-    def _handle_inspection(self, new):
-        self.inspector_event = new
 
     def update_graph_metadata(self, obj, name, old, new):
         pass
@@ -641,7 +621,7 @@ class BaseArArFigure(SelectionFigure):
                      if obj.component == pp[0]), None):
                 axp = axps[i]
                 if hasattr(new, '__iter__'):
-                    new = list(map(float, new))
+                    new = [float(ni) for ni in new]
                 else:
                     new = float(new)
                 axp.set_overlay_position(obj.id, new)
@@ -653,7 +633,7 @@ class BaseArArFigure(SelectionFigure):
                      if obj.component == pp[0]), None):
                 axp = axps[i]
                 if hasattr(new, '__iter__'):
-                    new = list(map(float, new))
+                    new = [float(ni) for ni in new]
                 else:
                     new = float(new)
                 axp.set_overlay_position(obj.id, new)
@@ -662,6 +642,7 @@ class BaseArArFigure(SelectionFigure):
 
     def _analysis_group_hook(self, ag):
         pass
+
     # ===============================================================================
     # property get/set
     # ===============================================================================

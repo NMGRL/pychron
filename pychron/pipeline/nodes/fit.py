@@ -27,7 +27,7 @@ from pychron.options.options_manager import BlanksOptionsManager, ICFactorOption
     FluxOptionsManager, DefineEquilibrationOptionsManager
 from pychron.options.views.views import view
 from pychron.pipeline.editors.define_equilibration_editor import DefineEquilibrationResultsEditor
-from pychron.pipeline.editors.flux_results_editor import FluxResultsEditor
+from pychron.pipeline.editors.flux_results_editor import FluxResultsEditor, GridFluxResultsEditor
 from pychron.pipeline.editors.results_editor import IsoEvolutionResultsEditor
 from pychron.pipeline.nodes.figure import FigureNode
 from pychron.pipeline.results.define_equilibration import DefineEquilibrationResult
@@ -481,6 +481,16 @@ class FitFluxNode(FitNode):
     name = 'Fit Flux'
     editor_klass = FluxResultsEditor
     plotter_options_manager_klass = FluxOptionsManager
+
+    def _editor_factory(self):
+        if self.plotter_options.plot_kind == 'Grid':
+            klass = GridFluxResultsEditor
+        else:
+            klass = FluxResultsEditor
+        editor = klass()
+
+        editor.plotter_options = self.plotter_options
+        return editor
 
     def _options_view_default(self):
         return view('Flux Options')

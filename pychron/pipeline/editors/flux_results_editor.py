@@ -16,8 +16,9 @@
 from operator import attrgetter
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Int, Bool, Float, Property, List, Event, Button
-from traitsui.api import View, UItem, TableEditor, VGroup, HGroup, Item, spring, Tabbed, Readonly
+from numpy import average, array
+from traits.api import HasTraits, Str, Int, Bool, Float, Property, List, Event, Button, on_trait_change
+from traitsui.api import View, UItem, TableEditor, VGroup, HGroup, Item, spring, Tabbed, Readonly, EnumEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 from uncertainties import nominal_value, std_dev, ufloat
@@ -77,6 +78,66 @@ def omean_j(ans, error_kind, monitor_age, lambda_k):
     return j, mswd
 
 
+def column(klass=ObjectColumn, editable=False, **kw):
+    return klass(text_font='arial 10', editable=editable, **kw)
+
+
+def sciformat(x):
+    return '{:0.6E}'.format(x) if x else ''
+
+
+def ff(x):
+    return floatfmt(x, n=2) if x else ''
+
+
+MONITOR_COLUMNS = [
+    column(klass=CheckboxColumn, name='use', label='Use', editable=True, width=30),
+    column(klass=CheckboxColumn, name='save', label='Save', editable=True, width=30),
+    column(name='hole_id', label='Hole'),
+    column(name='identifier', label='Identifier'),
+    column(name='sample', label='Sample', width=115),
+
+    column(name='n', label='N'),
+    column(name='saved_j', label='Saved J',
+           format_func=sciformat),
+    column(name='saved_jerr', label=PLUSMINUS_ONE_SIGMA,
+           format_func=sciformat),
+    column(name='percent_saved_error',
+           label='%',
+           format_func=ff),
+    column(name='mean_j', label='Mean J',
+           format_func=sciformat),
+    column(name='mean_jerr', label=PLUSMINUS_ONE_SIGMA,
+           format_func=sciformat),
+    column(name='percent_mean_error',
+           label='%',
+           format_func=ff),
+    column(name='mean_j_mswd',
+           label='MSWD',
+           format_func=ff),
+    column(name='j', label='Pred. J',
+           format_func=sciformat,
+           width=75),
+    column(name='jerr',
+           format_func=sciformat,
+           label=PLUSMINUS_ONE_SIGMA,
+           width=75),
+    column(name='percent_pred_error',
+           label='%',
+           format_func=ff),
+    column(name='dev', label='dev',
+           format='%0.2f',
+           width=70),
+    column(name='position_jerr',
+           format_func=sciformat,
+           label='Position Err.'),
+    column(name='percent_position_jerr',
+           label='%',
+           format_func=ff)]
+
+MONITOR_EDITOR = TableEditor(columns=MONITOR_COLUMNS, sortable=False, reorderable=False)
+
+
 class FluxPosition(HasTraits):
     hole_id = Int
     identifier = Str
@@ -115,6 +176,10 @@ class FluxPosition(HasTraits):
     lambda_k = Float
     was_altered = Bool
 
+    bracket_a = Int
+    bracket_b = Int
+    available_positions = List
+
     def set_mean_j(self):
 
         ans = [a for a in self.analyses if not a.is_omitted()]
@@ -143,7 +208,6 @@ class FluxPosition(HasTraits):
 
 
 class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
-
     save_all_button = Event
     save_unknowns_button = Event
     recalculate_button = Button('Calculate')
@@ -156,9 +220,10 @@ class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
         return self._analyses[0] if self._analyses else []
 
     def set_items(self, analyses):
-        if self.geometry:
-            self.set_positions(analyses)
-            self.predict_values()
+        pass
+        # if self.geometry:
+        #     self.set_positions(analyses)
+        #     self.predict_values()
 
     def _recalculate_button_fired(self):
         self.predict_values()
@@ -216,6 +281,9 @@ class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
         self.monitor_positions = sorted(poss, key=attrgetter('hole_id'))
 
         if unk is not None:
+            ps = [p.hole_id for p in self.monitor_positions]
+            for ui in unk:
+                ui.available_positions = ps
             self.unknown_positions = sorted(unk, key=attrgetter('hole_id'))
 
     def _update_graph_metadata(self, obj, name, old, new):
@@ -246,60 +314,6 @@ class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
         self.predict_values(refresh=True)
 
     def traits_view(self):
-        def column(klass=ObjectColumn, editable=False, **kw):
-            return klass(text_font='arial 10', editable=editable, **kw)
-
-        def sciformat(x):
-            return '{:0.6E}'.format(x) if x else ''
-
-        def ff(x):
-            return floatfmt(x, n=2) if x else ''
-
-        cols = [
-            column(klass=CheckboxColumn, name='use', label='Use', editable=True, width=30),
-            column(klass=CheckboxColumn, name='save', label='Save', editable=True, width=30),
-            column(name='hole_id', label='Hole'),
-            column(name='identifier', label='Identifier'),
-            column(name='sample', label='Sample', width=115),
-
-            column(name='n', label='N'),
-            column(name='saved_j', label='Saved J',
-                   format_func=sciformat),
-            column(name='saved_jerr', label=PLUSMINUS_ONE_SIGMA,
-                   format_func=sciformat),
-            column(name='percent_saved_error',
-                   label='%',
-                   format_func=ff),
-            column(name='mean_j', label='Mean J',
-                   format_func=sciformat),
-            column(name='mean_jerr', label=PLUSMINUS_ONE_SIGMA,
-                   format_func=sciformat),
-            column(name='percent_mean_error',
-                   label='%',
-                   format_func=ff),
-            column(name='mean_j_mswd',
-                   label='MSWD',
-                   format_func=ff),
-            column(name='j', label='Pred. J',
-                   format_func=sciformat,
-                   width=75),
-            column(name='jerr',
-                   format_func=sciformat,
-                   label=PLUSMINUS_ONE_SIGMA,
-                   width=75),
-            column(name='percent_pred_error',
-                   label='%',
-                   format_func=ff),
-            column(name='dev', label='dev',
-                   format='%0.2f',
-                   width=70),
-            column(name='position_jerr',
-                   format_func=sciformat,
-                   label='Position Err.'),
-            column(name='percent_position_jerr',
-                   label='%',
-                   format_func=ff)]
-
         unk_cols = [column(klass=CheckboxColumn, name='save', label='Save', editable=True, width=30),
                     column(name='hole_id', label='Hole'),
                     column(name='identifier', label='Identifier'),
@@ -325,19 +339,17 @@ class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
                     column(name='dev', label='dev',
                            format='%0.2f',
                            width=70)]
-        mon_editor = TableEditor(columns=cols, sortable=False,
-                                 reorderable=False)
 
         unk_editor = TableEditor(columns=unk_cols, sortable=False,
                                  reorderable=False)
 
-        pgrp = VGroup(HGroup(UItem('monitor_positions', editor=mon_editor),
+        pgrp = VGroup(HGroup(UItem('monitor_positions', editor=MONITOR_EDITOR),
                              show_border=True, label='Monitors'),
                       HGroup(UItem('unknown_positions', editor=unk_editor),
                              show_border=True, label='Unknowns'),
                       label='Tables')
 
-        ggrp = UItem('graph', style='custom')
+        ggrp = UItem('graph', style='custom', defined_when='graph')
         tgrp = HGroup(UItem('recalculate_button'),
                       Item('min_j', format_str='%0.4e',
                            style='readonly',
@@ -362,5 +374,89 @@ class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
         v = View(VGroup(tgrp, Tabbed(ggrp, pgrp)))
         return v
 
+
+class GridFluxResultsEditor(FluxResultsEditor):
+    @on_trait_change('unknown_positions:[bracket_a, bracket_b]')
+    def handle_bracket(self, obj, name, old, new):
+        if obj.bracket_a and obj.bracket_b:
+            a, b = [p for p in self.monitor_positions if p.hole_id in (obj.bracket_a, obj.bracket_b)]
+
+            ws = array([1 / a.mean_jerr ** 2, 1 / b.mean_jerr ** 2])
+            vs = array([a.mean_j, b.mean_j])
+            if self.plotter_options.use_weighted_fit:
+
+                j = average(vs, weights=ws)
+                je = sum(ws)
+
+            else:
+                j, je = vs.mean(), vs.std()
+
+            oj = obj.saved_j
+            obj.j = j
+            obj.jerr = je
+            obj.dev = (oj - j) / j * 100
+
+    def traits_view(self):
+        unk_cols = [column(klass=CheckboxColumn, name='save', label='Save', editable=True, width=30),
+                    column(name='hole_id', label='Hole'),
+                    column(name='identifier', label='Identifier'),
+                    column(name='sample', label='Sample', width=115),
+                    column(name='bracket_a', editable=True, label='Bracket A', editor=EnumEditor(
+                        name='available_positions')),
+                    column(name='bracket_b', editable=True, label='Bracket B', editor=EnumEditor(
+                        name='available_positions')),
+
+                    column(name='saved_j', label='Saved J',
+                           format_func=sciformat),
+                    column(name='saved_jerr', label=PLUSMINUS_ONE_SIGMA,
+                           format_func=sciformat),
+                    column(name='percent_saved_error',
+                           label='%',
+                           format_func=ff),
+                    column(name='j', label='Pred. J',
+                           format_func=sciformat,
+                           width=75),
+                    column(name='jerr',
+                           format_func=sciformat,
+                           label=PLUSMINUS_ONE_SIGMA,
+                           width=75),
+                    column(name='percent_pred_error',
+                           label='%',
+                           format_func=ff),
+                    column(name='dev', label='dev',
+                           format='%0.2f',
+                           width=70)]
+
+        unk_editor = TableEditor(columns=unk_cols, sortable=False, reorderable=False)
+
+        pgrp = VGroup(HGroup(UItem('monitor_positions', editor=MONITOR_EDITOR),
+                             show_border=True, label='Monitors'),
+                      HGroup(UItem('unknown_positions', editor=unk_editor),
+                             show_border=True, label='Unknowns'),
+                      label='Tables')
+
+        tgrp = HGroup(UItem('recalculate_button'),
+                      Item('min_j', format_str='%0.4e',
+                           style='readonly',
+                           label='Min. J'),
+                      Item('max_j',
+                           style='readonly',
+                           format_str='%0.4e', label='Max. J'),
+                      Item('percent_j_change',
+                           style='readonly',
+                           format_func=floatfmt,
+                           label='Delta J(%)'),
+                      Readonly('holder', label='Tray'),
+                      # Item('j_gradient',
+                      #      style='readonly',
+                      #      format_func=floatfmt,
+                      #      label='Gradient J(%/cm)'),
+                      spring, icon_button_editor('save_unknowns_button', 'dialog-ok-5',
+                                                 tooltip='Toggle "save" for unknown positions'),
+                      icon_button_editor('save_all_button', 'dialog-ok-apply-5',
+                                         tooltip='Toggle "save" for all positions'))
+
+        v = View(VGroup(tgrp, pgrp))
+        return v
 
 # ============= EOF =============================================

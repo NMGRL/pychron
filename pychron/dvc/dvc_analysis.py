@@ -486,6 +486,9 @@ class DVCAnalysis(Analysis):
 
         self.peak_center = pd['center_dac']
         self.peak_center_reference_detector = refdet
+        self.peak_center_use_interpolation = jd.get('use_interpolation', True)
+        self.peak_center_interpolation_kind = jd.get('interpolation_kind', 'cubic')
+        self.peak_center_reference_isotope = jd.get('reference_isotope')
 
     def _load_tags(self, jd):
         self.set_tag(jd)

@@ -52,7 +52,9 @@ class PeakCenterView(HasTraits):
             g.plotcontainer.spacing = 10
             g.equi_stack = False
             p = g.new_plot(xtitle='DAC', ytitle='Intensity', padding_left=70,
-                           padding_right=5)
+                           padding_right=5,
+                           show_legend='ur',
+                           legend_kw=dict(font='modern 12', line_spacing=1))
 
             g.add_axis_tool(p, p.x_axis)
             g.add_axis_tool(p, p.y_axis)
@@ -62,10 +64,16 @@ class PeakCenterView(HasTraits):
             s, p = g.new_series(ref_xs, ref_ys, type='scatter')
             s.index.sort_order = 'ascending'
 
-            f = interpolate.interp1d(ref_xs, ref_ys, kind='cubic')
-            xs = linspace(ref_xs.min(), ref_xs.max(), 1000)
-            ys = f(xs)
+            if an.peak_center_use_interpolation:
+                fxs = linspace(ref_xs.min(), ref_xs.max(), 1000)
+                f = interpolate.interp1d(ref_xs, ref_ys, kind=an.peak_center_interpolation_kind)
+                ys = f(fxs)
+                xs = fxs
+            else:
+                xs, ys = ref_xs, ref_ys
+
             g.new_series(xs, ys, color=s.color)
+            g.set_series_label('*{}({})'.format(ref_k, an.peak_center_reference_isotope))
 
             # t = CursorTool(s,
             #                drag_button="left",
@@ -79,7 +87,6 @@ class PeakCenterView(HasTraits):
             v = nominal_value(an.peak_center)
             label_text = None
             if v is not None:
-                # t.current_position = v, 0
                 g.add_vertical_rule(v)
                 txt, rdata, lrpdata, hrpdata = calculate_peak_statistics(xs, ys, ref_k, v)
                 label_text = [txt]
@@ -118,10 +125,15 @@ class PeakCenterView(HasTraits):
 
                         s, p = g.new_series(xs, ys1, type='scatter', plotid=0)
 
-                        f = interpolate.interp1d(xs, ys1, kind='cubic')
-                        xs = linspace(min(xs), max(xs), 500)
-                        ys = f(xs)
+                        if an.peak_center_use_interpolation:
+                            f = interpolate.interp1d(xs, ys1, kind=an.peak_center_interpolation_kind)
+                            ys = f(fxs)
+                            xs = fxs
+                        else:
+                            ys = ys1
+
                         g.new_series(xs, ys, color=s.color, plotid=0)
+                        g.set_series_label(k)
                         txt, rdata, lrp, hrp = calculate_peak_statistics(xs, ys, k)
                         label_text.append(txt)
                         # zid = ys != 0
@@ -142,8 +154,13 @@ class PeakCenterView(HasTraits):
                         # g.set_y_limits(-200, 200, plotid=2)
             if label_text:
                 g.add_plot_label('\n'.join(label_text),
-                                 font='modern 12',
-                                 color='darkgreen')
+                                 x_offset=10,
+                                 y_offset=-10,
+                                 border_visible=True,
+                                 border_width=1,
+                                 bgcolor='white',
+                                 font='modern 10',
+                                 color='black')
             return True
 
     def traits_view(self):

@@ -117,10 +117,6 @@ class Ideogram(BaseArArFigure):
     ytitle = 'Relative Probability'
     subgroup_id = 0
     subgroup = None
-    # xlimits_updated = Event
-    # ylimits_updated = Event
-
-    # _omit_key = 'omit_ideo'
 
     def plot(self, plots, legend=None):
         """

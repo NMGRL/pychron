@@ -31,7 +31,7 @@ from traitsui.table_column import ObjectColumn
 from pychron.core.helpers.color_generators import colornames
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.helpers.iterfuncs import groupby_group_id
-from pychron.core.pychron_traits import BorderHGroup
+from pychron.core.pychron_traits import BorderHGroup, BorderVGroup
 from pychron.core.ui.table_editor import myTableEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.aux_plot import AuxPlot
@@ -67,14 +67,16 @@ class TitleSubOptions(SubOptions):
         return v
 
     def _get_title_group(self):
-        title_grp = HGroup(Item('auto_generate_title',
-                                tooltip='Auto generate a title based on the analysis list'),
-                           Item('title', springy=False,
-                                enabled_when='not auto_generate_title',
-                                tooltip='User specified plot title'),
-                           icon_button_editor('edit_title_format_button', 'cog',
-                                              enabled_when='auto_generate_title'),
-                           label='Title', show_border=True)
+        a = HGroup(UItem('title_fontname'), UItem('title_fontsize'))
+        b = HGroup(Item('auto_generate_title',
+                        tooltip='Auto generate a title based on the analysis list'),
+                   Item('title', springy=False,
+                        enabled_when='not auto_generate_title',
+                        tooltip='User specified plot title'),
+                   icon_button_editor('edit_title_format_button', 'cog',
+                                      enabled_when='auto_generate_title'))
+
+        title_grp = BorderVGroup(a, b, label='Title')
         return title_grp
 
 
@@ -348,6 +350,9 @@ class FigureOptions(BaseOptions):
     title_delimiter = Str(',')
     title_leading_text = Str
     title_trailing_text = Str
+    title_font = Property
+    title_fontsize = Enum(*SIZES)
+    title_fontname = Enum(*FONTS)
     edit_title_format_button = Button
 
     use_xgrid = Bool(True)
@@ -482,6 +487,9 @@ class FigureOptions(BaseOptions):
     # ===============================================================================
     # property get/set
     # ===============================================================================
+    def _get_title_font(self):
+        return self._get_font('title', default_size=12)
+
     def _get_xtick_font(self):
         return self._get_font('xtick', default_size=10)
 
