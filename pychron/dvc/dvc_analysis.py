@@ -190,6 +190,8 @@ class DVCAnalysis(Analysis):
                             func(jd)
                         except BaseException as e:
                             self.warning('Failed loading {}. path={}. error={}'.format(modifier, path, e))
+                            import traceback
+                            self.debug(traceback.format_exc())
                     else:
                         self.debug('path is empty. {}'.format(path))
                 else:
@@ -481,13 +483,16 @@ class DVCAnalysis(Analysis):
 
             self.additional_peak_center_data = {k: unpack(pd['points'], jd['fmt'], decode=True)
                                                 for k, pd in jd.items() if k not in (refdet, 'fmt',
+                                                                                     'interpolation',
                                                                                      'reference_detector',
                                                                                      'reference_isotope')}
 
         self.peak_center = pd['center_dac']
         self.peak_center_reference_detector = refdet
-        self.peak_center_use_interpolation = jd.get('use_interpolation', True)
-        self.peak_center_interpolation_kind = jd.get('interpolation_kind', 'cubic')
+
+        interpolation = jd.get('interpolation', 'cubic')
+        self.peak_center_use_interpolation = bool(interpolation)
+        self.peak_center_interpolation_kind = interpolation
         self.peak_center_reference_isotope = jd.get('reference_isotope')
 
     def _load_tags(self, jd):
