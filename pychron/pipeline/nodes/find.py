@@ -100,7 +100,7 @@ class BaseFindFluxNode(FindNode):
 
             options = pp.get('options')
             if options:
-                model_kind = pp.get('model_kind', '')
+                model_kind = options.get('model_kind', '')
 
         x, y, r, idx = geom[hole_id - 1]
         fp = FluxPosition(identifier=identifier,

@@ -398,7 +398,7 @@ class MetaRepo(GitRepoManager):
                 'options': options,
                 'analyses': [{'uuid': ai.uuid,
                               'record_id': ai.record_id,
-                              'status': ai.is_omitted()}
+                              'is_omitted': ai.is_omitted()}
                              for ai in analyses]}
         if positions:
             added = any((ji['position'] == pos for ji in positions))

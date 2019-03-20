@@ -566,11 +566,12 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
                     except IndexError:
                         continue
                     if hasattr(g, 'rules'):
-                        l1, l2, l3 = g.rules[idx]
-                        l1.value = yy
-                        l2.value = yy + ye
-                        l3.value = yy - ye
-                        g.refresh()
+                        if idx in g.rules:
+                            l1, l2, l3 = g.rules[idx]
+                            l1.value = yy
+                            l2.value = yy + ye
+                            l3.value = yy - ye
+                            g.refresh()
 
                 else:
                     plot = g.new_plot(padding_left=65, padding_right=5, padding_top=30, padding_bottom=5)
@@ -599,10 +600,12 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
                     l1 = g.add_horizontal_rule(yy, color='black', line_style='solid', plotid=idx)
                     l2 = g.add_horizontal_rule(yy + ye, plotid=idx)
                     l3 = g.add_horizontal_rule(yy - ye, plotid=idx)
+                    rs = (l1, l2, l3)
+                    d = {idx: rs}
                     if hasattr(g, 'rules'):
-                        g.rules.append((l1, l2, l3))
+                        g.rules.update(d)
                     else:
-                        g.rules = [(l1, l2, l3)]
+                        g.rules = d
 
                     # plot individual analyses
                     fs = [a.model_j(monage, lk) * scale for a in ais]
