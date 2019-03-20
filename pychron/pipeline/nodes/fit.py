@@ -27,7 +27,7 @@ from pychron.options.options_manager import BlanksOptionsManager, ICFactorOption
     FluxOptionsManager, DefineEquilibrationOptionsManager
 from pychron.options.views.views import view
 from pychron.pipeline.editors.define_equilibration_editor import DefineEquilibrationResultsEditor
-from pychron.pipeline.editors.flux_results_editor import FluxResultsEditor, GridFluxResultsEditor
+from pychron.pipeline.editors.flux_results_editor import FluxResultsEditor, BracketingFluxResultsEditor
 from pychron.pipeline.editors.results_editor import IsoEvolutionResultsEditor
 from pychron.pipeline.nodes.figure import FigureNode
 from pychron.pipeline.results.define_equilibration import DefineEquilibrationResult
@@ -483,8 +483,8 @@ class FitFluxNode(FitNode):
     plotter_options_manager_klass = FluxOptionsManager
 
     def _editor_factory(self):
-        if self.plotter_options.plot_kind == 'Grid':
-            klass = GridFluxResultsEditor
+        if self.plotter_options.model_kind == 'Bracketing':
+            klass = BracketingFluxResultsEditor
         else:
             klass = FluxResultsEditor
         editor = klass()

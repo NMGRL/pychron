@@ -20,8 +20,6 @@ def autodoc_helper(name, bases):
     try:
         return type(name, bases, {})
     except TypeError as e:
-        print(e)
-        print('asdfasdasfasdfasdfasdf', name, bases)
         return type(name)
 
 

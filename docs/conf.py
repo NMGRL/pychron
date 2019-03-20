@@ -22,7 +22,8 @@ os.environ['RTD'] = 'True'
 sys.path.insert(0, os.path.abspath('../'))
 
 autodoc_mock_imports = ['chaco',
-                        'traitsui', 'pyface', 'traits',
+                        'traitsui', 'pyface',
+                        'traits',
                         'pyvisa', 'serial', 'numpy', 'scipy', 'yaml',
                         'git', 'apptools', 'xlwt', 'uncertainties', 'twisted',
                         'enable', 'gitdb', 'kiva', 'statsmodels', 'envisage',
@@ -40,7 +41,8 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.coverage',
               # 'sphinx.ext.pngmath',
               # 'sphinx.ext.mathjax',
-              'sphinx.ext.viewcode']
+              'sphinx.ext.viewcode',
+              ]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

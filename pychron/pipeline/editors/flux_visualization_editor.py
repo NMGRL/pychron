@@ -195,8 +195,7 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         if options.plot_kind == '2D':
             self._graph_contour(x, y, z, r, reg, refresh)
         elif options.plot_kind == 'Grid':
-            pass
-            # self._graph_grid(x, y, z, ze, r, reg, refresh)
+            self._graph_grid(x, y, z, ze, r, reg, refresh)
         else:
             self._graph_hole_vs_j(x, y, r, reg, refresh)
 

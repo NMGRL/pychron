@@ -27,6 +27,7 @@ from pyface.timer.do_later import do_after
 from traits.api import Instance, Bool, Int, Str, List, Enum, Float, Time
 from traitsui.api import Item, EnumEditor, CheckListEditor
 
+from pychron.core.helpers.iterfuncs import groupby_idx
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.globals import globalv
 from pychron.pipeline.nodes.base import BaseNode
@@ -157,13 +158,13 @@ runid, age, age_err
 
 Optional columns are:
 
-group, aliquot
+group, aliquot, sample
 
 e.x.
 runid, age, age_error
-SampleA, 10, 0.24
-SampleB, 11, 0.32
-SampleC, 10, 0.40'''
+Run1, 10, 0.24
+Run2, 11, 0.32
+Run3, 10, 0.40'''
             information(None, msg)
 
             dlg = FileDialog()
@@ -199,22 +200,34 @@ SampleC, 10, 0.40'''
     def _get_items_from_file(self, parser):
         from pychron.processing.analyses.file_analysis import FileAnalysis
 
-        def gen():
-            for d in parser.values():
-                try:
-                    f = FileAnalysis(age=float(d['age']),
-                                     age_err=float(d['age_err']),
-                                     record_id=d['runid'],
-                                     sample=d.get('sample', ''),
-                                     aliquot=int(d.get('aliquot', 0)),
-                                     group_id=int(d.get('group', 0)))
-                    yield f
-                except TypeError:
-                    pass
+        # def gen():
+        #     for d in parser.values():
+        #         try:
+        #             f = FileAnalysis(age=float(d['age']),
+        #                              age_err=float(d['age_err']),
+        #                              record_id=d['runid'],
+        #                              sample=d.get('sample', ''),
+        #                              aliquot=int(d.get('aliquot', 0)),
+        #                              group_id=int(d.get('group', 0)))
+        #             yield f
+        #         except TypeError:
+        #             pass
+        #
 
         try:
-            return tuple(gen())
-        except ValueError as e:
+            ans = [(d.get('group', 0), FileAnalysis(age=float(d['age']),
+                                                    age_err=float(d['age_err']),
+                                                    record_id=d['runid'],
+                                                    sample=d.get('sample', ''),
+                                                    aliquot=int(d.get('aliquot', 0)))) for d in parser.values()]
+            items = []
+            for i, (gid, aa) in enumerate(groupby_idx(ans, 0)):
+                for ai in aa:
+                    ai.group_id = i
+                    items.append(ai)
+            return items
+
+        except (TypeError, ValueError) as e:
             warning(None, 'Invalid values in the import file. Error="{}"'.format(e))
 
 
@@ -306,17 +319,18 @@ class BaseAutoUnknownNode(UnknownNode):
 
     def traits_view(self):
         v = okcancel_view(Item('mode', tooltip='Normal: get analyses between now and start of pipeline - hours\n'
-                                      'Window: get analyses between now and now - hours'),
-                 Item('hours'),
-                 Item('period', label='Update Period (s)',
-                      tooltip='Default time (s) to delay between "check for new analyses"'),
-                 Item('mass_spectrometer', label='Mass Spectrometer',
-                      editor=EnumEditor(name='available_spectrometers')),
-                 Item('analysis_types', style='custom',
-                      editor=CheckListEditor(name='available_analysis_types', cols=len(self.available_analysis_types))),
-                 Item('post_analysis_delay', label='Post Analysis Found Delay',
-                      tooltip='Time (min) to delay before next "check for new analyses"'),
-                 Item('verbose'))
+                                               'Window: get analyses between now and now - hours'),
+                          Item('hours'),
+                          Item('period', label='Update Period (s)',
+                               tooltip='Default time (s) to delay between "check for new analyses"'),
+                          Item('mass_spectrometer', label='Mass Spectrometer',
+                               editor=EnumEditor(name='available_spectrometers')),
+                          Item('analysis_types', style='custom',
+                               editor=CheckListEditor(name='available_analysis_types',
+                                                      cols=len(self.available_analysis_types))),
+                          Item('post_analysis_delay', label='Post Analysis Found Delay',
+                               tooltip='Time (min) to delay before next "check for new analyses"'),
+                          Item('verbose'))
         return v
 
     def post_run(self, engine, state):
@@ -443,19 +457,20 @@ class ListenUnknownNode(BaseAutoUnknownNode):
 
     def traits_view(self):
         v = okcancel_view(Item('mode', tooltip='Normal: get analyses between now and start of pipeline - hours\n'
-                                      'Window: get analyses between now and now - hours'),
-                 Item('hours'),
-                 Item('period', label='Update Period (s)',
-                      tooltip='Default time (s) to delay between "check for new analyses"'),
-                 Item('mass_spectrometer', label='Mass Spectrometer',
-                      editor=EnumEditor(name='available_spectrometers')),
-                 Item('analysis_types', style='custom',
-                      editor=CheckListEditor(name='available_analysis_types', cols=len(self.available_analysis_types))),
-                 Item('post_analysis_delay', label='Post Analysis Found Delay',
-                      tooltip='Time (min) to delay before next "check for new analyses"'),
-                 Item('verbose'),
-                 title='Configure',
-                 )
+                                               'Window: get analyses between now and now - hours'),
+                          Item('hours'),
+                          Item('period', label='Update Period (s)',
+                               tooltip='Default time (s) to delay between "check for new analyses"'),
+                          Item('mass_spectrometer', label='Mass Spectrometer',
+                               editor=EnumEditor(name='available_spectrometers')),
+                          Item('analysis_types', style='custom',
+                               editor=CheckListEditor(name='available_analysis_types',
+                                                      cols=len(self.available_analysis_types))),
+                          Item('post_analysis_delay', label='Post Analysis Found Delay',
+                               tooltip='Time (min) to delay before next "check for new analyses"'),
+                          Item('verbose'),
+                          title='Configure',
+                          )
         return v
 
     def run(self, state):
@@ -566,15 +581,16 @@ class CalendarUnknownNode(BaseAutoUnknownNode):
 
     def traits_view(self):
         v = okcancel_view(Item('run_time'),
-                 Item('hours'),
-                 # Item('period', label='Update Period (s)',
-                 #      tooltip='Defauly time (s) to delay between "check for new analyses"'),
-                 Item('mass_spectrometer', label='Mass Spectrometer',
-                      editor=EnumEditor(name='available_spectrometers')),
-                 Item('analysis_types', style='custom',
-                      editor=CheckListEditor(name='available_analysis_types', cols=len(self.available_analysis_types))),
-                 # Item('post_analysis_delay', label='Post Analysis Found Delay',
-                 #      tooltip='Time (min) to delay before next "check for new analyses"'),
-                 Item('verbose'))
+                          Item('hours'),
+                          # Item('period', label='Update Period (s)',
+                          #      tooltip='Defauly time (s) to delay between "check for new analyses"'),
+                          Item('mass_spectrometer', label='Mass Spectrometer',
+                               editor=EnumEditor(name='available_spectrometers')),
+                          Item('analysis_types', style='custom',
+                               editor=CheckListEditor(name='available_analysis_types',
+                                                      cols=len(self.available_analysis_types))),
+                          # Item('post_analysis_delay', label='Post Analysis Found Delay',
+                          #      tooltip='Time (min) to delay before next "check for new analyses"'),
+                          Item('verbose'))
         return v
 # ============= EOF =============================================

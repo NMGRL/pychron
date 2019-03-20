@@ -349,7 +349,7 @@ class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
                              show_border=True, label='Unknowns'),
                       label='Tables')
 
-        ggrp = UItem('graph', style='custom', defined_when='graph')
+        ggrp = UItem('graph', style='custom')
         tgrp = HGroup(UItem('recalculate_button'),
                       Item('min_j', format_str='%0.4e',
                            style='readonly',
@@ -375,7 +375,7 @@ class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
         return v
 
 
-class GridFluxResultsEditor(FluxResultsEditor):
+class BracketingFluxResultsEditor(FluxResultsEditor):
     @on_trait_change('unknown_positions:[bracket_a, bracket_b]')
     def handle_bracket(self, obj, name, old, new):
         if obj.bracket_a and obj.bracket_b:
@@ -456,7 +456,8 @@ class GridFluxResultsEditor(FluxResultsEditor):
                       icon_button_editor('save_all_button', 'dialog-ok-apply-5',
                                          tooltip='Toggle "save" for all positions'))
 
-        v = View(VGroup(tgrp, pgrp))
+        ggrp = UItem('graph', style='custom')
+        v = View(VGroup(tgrp, Tabbed(ggrp, pgrp)))
         return v
 
 # ============= EOF =============================================

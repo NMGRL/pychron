@@ -21,7 +21,7 @@
 from __future__ import absolute_import
 
 from itertools import tee, groupby
-from operator import attrgetter
+from operator import attrgetter, itemgetter
 
 
 def partition(seq, predicate):
@@ -43,6 +43,11 @@ def groupby_key(items, key, reverse=False):
 
     return groupby(sorted(items, key=key, reverse=reverse), key=key)
 
+def groupby_idx(items, key, reverse=False):
+    if isinstance(key, int):
+        key = itemgetter(key)
+
+    return groupby(sorted(items, key=key, reverse=reverse), key=key)
 
 def groupby_group_id(items):
     return groupby_key(items, 'group_id')
