@@ -329,7 +329,6 @@ class ExperimentFactory(DVCAble): #, ConsumerMixin):
             klass = AutomatedRunFactory
 
         rf = klass(dvc=self.dvc,
-                   iso_db_man=self.iso_db_man,
                    application=self.application,
                    extract_device=self.extract_device,
                    mass_spectrometer=self.mass_spectrometer)
@@ -484,7 +483,6 @@ class ExperimentFactory(DVCAble): #, ConsumerMixin):
 
     def _queue_factory_default(self):
         eq = ExperimentQueueFactory(dvc=self.dvc,
-                                    iso_db_man=self.iso_db_man,
                                     application=self.application)
 
         eq.on_trait_change(self._update_queue, '''mass_spectrometer,

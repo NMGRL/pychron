@@ -313,7 +313,6 @@ class Experimentor(DVCIrradiationable):
 
         e = ExperimentFactory(application=self.application,
                               dvc=self.dvc,
-                              iso_db_man=self.iso_db_man,
                               default_mass_spectrometer=dms)
         return e
 
