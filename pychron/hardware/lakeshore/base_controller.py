@@ -118,11 +118,12 @@ class BaseLakeShoreController(CoreDevice):
         for i, (tag, key) in enumerate(zip(self.iomap, string.ascii_lowercase)):
             idx = i + 1
             v = self._read_input(key, self.units)
-            setpoint = getattr(self, tag)
-            if abs(v - setpoint) > tol:
-                return
-            else:
-                self.debug('setpoint {} achieved'.format(idx))
+            if tag is not None:
+                setpoint = getattr(self, tag)
+                if abs(v - setpoint) > tol:
+                    return
+                else:
+                    self.debug('setpoint {} achieved'.format(idx))
 
         return True
 
