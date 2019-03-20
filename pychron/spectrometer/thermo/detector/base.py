@@ -99,7 +99,7 @@ class ThermoDetector(BaseDetector, SpectrometerDevice):
         self.ask('SetGain {},{}'.format(self.name, self.gain))
 
     def _read_gain(self):
-        v = self.ask('GetGain {}'.format(self.name))
+        return self.ask('GetGain {}'.format(self.name))
 
     def _set_deflection(self, v):
         if self.use_deflection:
