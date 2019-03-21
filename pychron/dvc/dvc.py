@@ -1330,11 +1330,6 @@ class DVC(Loggable):
                                    options=options, add=add,
                                    position_jerr=position_jerr)
 
-        with self.session_ctx():
-            ip = self.get_identifier(identifier)
-            ip.j = float(j)
-            ip.j_err = float(e)
-
     def _make_interpreted_age_dict(self, ia):
         def ia_dict(keys):
             return {attr: getattr(ia, attr) for attr in keys}
