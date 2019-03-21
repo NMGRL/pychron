@@ -34,6 +34,7 @@ from pychron.graph.error_bar_overlay import ErrorBarOverlay
 from pychron.graph.error_envelope_overlay import ErrorEnvelopeOverlay
 from pychron.graph.explicit_legend import ExplicitLegend
 from pychron.graph.graph import container_factory, Graph
+from pychron.graph.regression_graph import RegressionGraph
 from pychron.graph.stacked_graph import StackedGraph
 from pychron.graph.tools.data_tool import DataTool, DataToolOverlay
 from pychron.options.layout import FigureLayout
@@ -541,9 +542,9 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         nrows, ncols = layout.calculate(len(x))
 
         if not isinstance(g, Graph):
-            g = Graph(container_dict={'bgcolor': 'gray',
-                                      'kind': 'g',
-                                      'shape': (nrows, ncols)})
+            g = RegressionGraph(container_dict={'bgcolor': 'gray',
+                                                'kind': 'g',
+                                                'shape': (nrows, ncols)})
             self.graph = g
 
         def get_ip(xi, yi):
@@ -565,13 +566,13 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
                         ye = ze[idx] * scale
                     except IndexError:
                         continue
-                    if hasattr(g, 'rules'):
-                        if idx in g.rules:
-                            l1, l2, l3 = g.rules[idx]
-                            l1.value = yy
-                            l2.value = yy + ye
-                            l3.value = yy - ye
-                            g.refresh()
+                    # if hasattr(g, 'rules'):
+                    #     if idx in g.rules:
+                    #         l1, l2, l3 = g.rules[idx]
+                    #         l1.value = yy
+                    #         l2.value = yy + ye
+                    #         l3.value = yy - ye
+
 
                 else:
                     plot = g.new_plot(padding_left=65, padding_right=5, padding_top=30, padding_bottom=5)
@@ -597,15 +598,15 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
                     n = len(ais)
 
                     # plot mean value
-                    l1 = g.add_horizontal_rule(yy, color='black', line_style='solid', plotid=idx)
-                    l2 = g.add_horizontal_rule(yy + ye, plotid=idx)
-                    l3 = g.add_horizontal_rule(yy - ye, plotid=idx)
-                    rs = (l1, l2, l3)
-                    d = {idx: rs}
-                    if hasattr(g, 'rules'):
-                        g.rules.update(d)
-                    else:
-                        g.rules = d
+                    # l1 = g.add_horizontal_rule(yy, color='black', line_style='solid', plotid=idx)
+                    # l2 = g.add_horizontal_rule(yy + ye, plotid=idx)
+                    # l3 = g.add_horizontal_rule(yy - ye, plotid=idx)
+                    # rs = (l1, l2, l3)
+                    # d = {idx: rs}
+                    # if hasattr(g, 'rules'):
+                    #     g.rules.update(d)
+                    # else:
+                    #     g.rules = d
 
                     # plot individual analyses
                     fs = [a.model_j(monage, lk) * scale for a in ais]
@@ -613,10 +614,15 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
                     iys = array([nominal_value(fi) for fi in fs])
                     ies = array([std_dev(fi) for fi in fs])
 
-                    s, _p = g.new_series(linspace(0, n - 1, n), iys, yerror=ies, type='scatter',
-                                         marker='circle', marker_size=3)
+                    p_, s, l_ = g.new_series(linspace(0, n - 1, n), iys, yerror=ies, type='scatter',
+                                             fit='weighted mean' if self.plotter_options.use_weighted_fit else
+                                             'average_sem',
+                                             add_point_inspector=False,
+                                             add_inspector=False,
+                                             marker='circle', marker_size=3)
                     g.set_x_limits(0, n - 1, pad='0.1', plotid=idx)
                     g.set_y_limits(min(iys - ies), max(iys + ies), pad='0.1', plotid=idx)
+                    g.add_statistics(plotid=idx)
 
                     ebo = ErrorBarOverlay(component=s, orientation='y')
                     s.underlays.append(ebo)
@@ -628,6 +634,7 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
                     sel = [i for i, a in enumerate(ais) if a.is_omitted()]
                     s.index.metadata['selections'] = sel
                     self.suppress_metadata_change = False
+        g.refresh()
 
     def _graph_individual_analyses(self):
         g = self.graph
@@ -718,7 +725,7 @@ class FluxVisualizationEditor(BaseFluxVisualizationEditor):
             unkj = [p.mean_j for p in unknowns]
             fx, fy, mx, my = self.model_plane(x, y, z, ze, model_points=unkpts)
 
-            x,y = zip(*unkpts)
+            x, y = zip(*unkpts)
             mx = arctan2(x, y)
             ys = (unkj - my) / unkj * 100
             s = g.new_series(mx, ys)[0]
