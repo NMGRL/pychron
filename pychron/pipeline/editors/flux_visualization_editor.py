@@ -148,7 +148,7 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         # print(z)
         # print(ze)
         n = x.shape[0]
-        if n >= 3:
+        if n >= 3 or self.plotter_options.model_kind in ('Weighted Mean', 'Matching', 'Bracketing'):
             # n = z.shape[0] * 10
             r = max((max(abs(x)), max(abs(y))))
             # r *= 1.25
