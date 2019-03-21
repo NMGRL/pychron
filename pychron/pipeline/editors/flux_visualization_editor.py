@@ -567,7 +567,7 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
                         continue
                     if hasattr(g, 'rules'):
                         if idx in g.rules:
-                            l1, l2, l3 = g.rulesh[idx]
+                            l1, l2, l3 = g.rules[idx]
                             l1.value = yy
                             l2.value = yy + ye
                             l3.value = yy - ye
