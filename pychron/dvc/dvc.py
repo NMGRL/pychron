@@ -19,29 +19,27 @@ import shutil
 import time
 from datetime import datetime
 from itertools import groupby
-from math import isnan
 from operator import itemgetter
 
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
 from git import Repo, GitCommandError
 from traits.api import Instance, Str, Set, List, provides, Bool, Int
-from uncertainties import nominal_value, std_dev, ufloat
 
 from pychron import json
 from pychron.core.helpers.filetools import remove_extension, list_subdirectories
 from pychron.core.helpers.iterfuncs import groupby_key, groupby_repo
 from pychron.core.i_datastore import IDatastore
 from pychron.core.progress import progress_loader, progress_iterator, open_progress
-from pychron.database.interpreted_age import InterpretedAge
 from pychron.dvc import dvc_dump, dvc_load, analysis_path, repository_path, AnalysisNotAnvailableError, PATH_MODIFIERS
 from pychron.dvc.cache import DVCCache
 from pychron.dvc.defaults import TRIGA, HOLDER_24_SPOKES, LASER221, LASER65
 from pychron.dvc.dvc_analysis import DVCAnalysis
 from pychron.dvc.dvc_database import DVCDatabase
-from pychron.dvc.func import find_interpreted_age_path, GitSessionCTX, push_repositories
+from pychron.dvc.func import find_interpreted_age_path, GitSessionCTX, push_repositories, make_interpreted_age_dict
 from pychron.dvc.meta_repo import MetaRepo, get_frozen_flux, get_frozen_productions
 from pychron.dvc.tasks.dvc_preferences import DVCConnectionItem
+from pychron.dvc.util import Tag, DVCInterpretedAge
 from pychron.envisage.browser.record_views import InterpretedAgeRecordView
 from pychron.git.hosts import IGitHost, CredentialException
 from pychron.git_archive.repo_manager import GitRepoManager, format_date, get_repository_branch
@@ -49,112 +47,8 @@ from pychron.git_archive.views import StatusView
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.paths import paths, r_mkdir
-from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS, SAMPLE_METADATA
-
-TESTSTR = {'blanks': 'auto update blanks', 'iso_evo': 'auto update iso_evo'}
-
-
-class DVCException(BaseException):
-    def __init__(self, attr):
-        self._attr = attr
-
-    def __repr__(self):
-        return 'DVCException: neither DVCDatabase or MetaRepo have {}'.format(self._attr)
-
-    def __str__(self):
-        return self.__repr__()
-
-
-class Tag(object):
-    name = None
-    path = None
-    note = ''
-    subgroup = ''
-    uuid = ''
-    record_id = ''
-
-    @classmethod
-    def from_analysis(cls, an, **kw):
-        tag = cls()
-        tag.name = an.tag
-        tag.note = an.tag_note
-        tag.record_id = an.record_id
-        tag.uuid = an.uuid
-        tag.repository_identifier = an.repository_identifier
-        # tag.path = analysis_path(an.record_id, an.repository_identifier, modifier='tags')
-        tag.path = analysis_path(an, an.repository_identifier, modifier='tags')
-        tag.subgroup = an.subgroup
-
-        for k, v in kw.items():
-            setattr(tag, k, v)
-
-        return tag
-
-    def dump(self):
-        obj = {'name': self.name,
-               'note': self.note,
-               'subgroup': self.subgroup}
-        if not self.path:
-            self.path = analysis_path(self.uuid, self.repository_identifier, modifier='tags', mode='w')
-
-        dvc_dump(obj, self.path)
-
-
-class DVCInterpretedAge(InterpretedAge):
-    labnumber = None
-    isotopes = None
-    repository_identifier = None
-    analyses = None
-
-    def load_tag(self, obj):
-        self.tag = obj.get('name', '')
-        self.tag_note = obj.get('note', '')
-
-    def from_json(self, obj):
-        for attr in ('name', 'uuid'):
-            setattr(self, attr, obj.get(attr, ''))
-
-        pf = obj['preferred']
-        for attr in ('age', 'age_err'):
-            setattr(self, attr, pf.get(attr, 0))
-
-        sm = obj['sample_metadata']
-        for attr in ('sample', 'material', 'project', 'irradiation'):
-            setattr(self, attr, sm.get(attr, ''))
-
-        # for a in ('age', 'age_err', 'age_kind',
-        #           # 'kca', 'kca_err','kca_kind',
-        #           'mswd',
-        #           'sample', 'material', 'identifier', 'nanalyses', 'irradiation',
-        #           'name', 'project', 'uuid', 'age_error_kind'):
-        #     try:
-        #         setattr(self, a, obj.get(a, NULL_STR))
-        #     except BaseException as a:
-        #         print('exception DVCInterpretdAge.from_json', a)
-
-        self.labnumber = self.identifier
-        # self.uage = ufloat(self.age, self.age_err)
-        self._record_id = '{} {}'.format(self.identifier, self.name)
-
-        self.analyses = obj.get('analyses', [])
-
-        pkinds = pf.get('preferred_kinds')
-        if pkinds:
-            for k in pkinds:
-                attr = k['attr']
-                if attr == 'age':
-                    attr = 'uage'
-                setattr(self, attr, ufloat(k['value'], k['error']))
-
-    def get_value(self, attr):
-        try:
-            return getattr(self, attr)
-        except AttributeError:
-            return ufloat(0, 0)
-
-    @property
-    def status(self):
-        return 'X' if self.is_omitted() else ''
+from pychron.processing.interpreted_age import InterpretedAge
+from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS
 
 
 @provides(IDatastore)
@@ -1022,7 +916,7 @@ class DVC(Loggable):
         ps = []
         ialabels = []
         for ia in iass:
-            d = self._make_interpreted_age_dict(ia)
+            d = make_interpreted_age_dict(ia)
             rid, p = self._add_interpreted_age(ia, d)
             ps.append(p)
             ialabels.append('{} {} {}'.format(ia.name, ia.identifier, ia.sample))
@@ -1038,7 +932,7 @@ class DVC(Loggable):
             return True
 
     def add_interpreted_age(self, ia):
-        d = self._make_interpreted_age_dict(ia)
+        d = make_interpreted_age_dict(ia)
         rid, p = self._add_interpreted_age(ia, d)
         if self.repository_add_paths(rid, p):
             self.repository_commit(rid, '<IA> added interpreted age '
@@ -1329,58 +1223,6 @@ class DVC(Loggable):
                                    analyses=analyses,
                                    options=options, add=add,
                                    position_jerr=position_jerr)
-
-    def _make_interpreted_age_dict(self, ia):
-        def ia_dict(keys):
-            return {attr: getattr(ia, attr) for attr in keys}
-
-        # make general
-        d = ia_dict(('name', 'uuid'))
-
-        # make analyses
-        def analysis_factory(x):
-            return dict(uuid=x.uuid,
-                        record_id=x.record_id,
-                        extract_value=x.extract_value,
-                        age=x.age,
-                        age_err=x.age_err,
-                        age_err_wo_j=x.age_err_wo_j,
-                        radiogenic_yield=nominal_value(x.radiogenic_yield),
-                        radiogenic_yield_err=std_dev(x.radiogenic_yield),
-                        kca=float(nominal_value(x.kca)),
-                        kca_err=float(std_dev(x.kca)),
-                        kcl=float(nominal_value(x.kcl)),
-                        kcl_err=float(std_dev(x.kcl)),
-                        tag=x.tag,
-                        plateau_step=ia.get_is_plateau_step(x),
-                        baseline_corrected_intercepts=x.baseline_corrected_intercepts_to_dict(),
-                        blanks=x.blanks_to_dict(),
-                        icfactors=x.icfactors_to_dict(),
-                        ic_corrected_values=x.ic_corrected_values_to_dict(),
-                        interference_corrected_values=x.interference_corrected_values_to_dict())
-
-        d['analyses'] = [analysis_factory(xi) for xi in ia.analyses]
-
-        # make sample metadata
-        d['sample_metadata'] = ia_dict(SAMPLE_METADATA)
-
-        # make preferred
-        pf = ia_dict(('nanalyses',
-                      'include_j_error_in_mean',
-                      'include_j_error_in_plateau',
-                      'include_j_position_error'))
-
-        a = ia.get_preferred_age()
-        mswd = ia.get_preferred_mswd()
-        pf.update({'age': float(nominal_value(a)),
-                   'age_err': float(std_dev(a)),
-                   'display_age_units': ia.age_units,
-                   'preferred_kinds': ia.preferred_values_to_dict(),
-                   'mswd': float(0 if isnan(mswd) else mswd),
-                   'arar_constants': ia.arar_constants.to_dict(),
-                   'ages': ia.ages()})
-        d['preferred'] = pf
-        return d
 
     def _add_interpreted_age(self, ia, d):
         rid = ia.repository_identifier

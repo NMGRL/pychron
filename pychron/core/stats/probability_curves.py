@@ -44,7 +44,7 @@ def cumulative_probability(ages, errors, xmi, xma, n=100):
     return x, probs
 
 
-def kernel_density(self, ages, errors, xmi, xma, n=100):
+def kernel_density(ages, errors, xmi, xma, n=100):
     from scipy.stats.kde import gaussian_kde
 
     pdf = gaussian_kde(ages)

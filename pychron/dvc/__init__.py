@@ -53,6 +53,17 @@ PATH_MODIFIERS = HISTORY_PATHS + static
 NPATH_MODIFIERS = (None, DATA, TAGS) + static
 
 
+class DVCException(BaseException):
+    def __init__(self, attr):
+        self._attr = attr
+
+    def __repr__(self):
+        return 'DVCException: neither DVCDatabase or MetaRepo have {}'.format(self._attr)
+
+    def __str__(self):
+        return self.__repr__()
+
+
 class AnalysisNotAnvailableError(BaseException):
     def __init__(self, root, runid):
         self._root = root

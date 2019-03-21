@@ -24,8 +24,8 @@ from traits.api import Instance, Bool, on_trait_change, Any
 
 from pychron.core.pdf.save_pdf_dialog import save_pdf
 from pychron.dvc import dvc_dump
-from pychron.dvc.dvc import DVCInterpretedAge
 from pychron.dvc.func import repository_has_staged
+from pychron.dvc.util import DVCInterpretedAge
 from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.envisage.browser.recall_editor import RecallEditor
 from pychron.envisage.browser.view import BrowserView, InterpretedAgeBrowserView
