@@ -25,6 +25,9 @@ class BaseSource(SpectrometerDevice, FieldMixin):
     nominal_hv = Float(4500)
     current_hv = Float(4500)
 
+    def finish_loading(self):
+        self.field_table_setup()
+
     def map_mass_to_hv(self, mass):
         return self.field_table.map_mass_to_dac(mass)
 

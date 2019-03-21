@@ -95,7 +95,7 @@ class BaseSpectrometer(SpectrometerDevice):
             self.name = self.microcontroller.name
 
         self.magnet.finish_loading()
-
+        self.source.finish_loading()
         self.test_connection()
 
     def test_connection(self, force=True):
