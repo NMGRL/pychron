@@ -55,4 +55,7 @@ class NodeFactory:
     def __init__(self, name, factory):
         self.name = name
         self.factory = factory
+
+    def __call__(self, *args, **kw):
+        return self.factory(*args, **kw)
 # ============= EOF =============================================
