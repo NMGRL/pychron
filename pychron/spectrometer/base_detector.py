@@ -33,6 +33,7 @@ class BaseDetector(HasTraits):
     nstd = Int(10)
     active = Bool(True)
     gain = Float
+    software_gain = Float(1.0)
 
     color = Color
     series_id = Int

@@ -128,9 +128,7 @@ class ExtractionPyScript(ValvePyScript):
         :rtype: str
         """
         result = self._extraction_action(('get_response_blob', (), {}))
-        if result:
-            result = result[0]
-        return result or ''
+        return result or b''
 
     def get_output_blob(self):
         """
@@ -141,9 +139,7 @@ class ExtractionPyScript(ValvePyScript):
         """
 
         result = self._extraction_action(('get_output_blob', (), {}))
-        if result:
-            result = result[0]
-        return result or ''
+        return result or b''
 
     def get_setpoint_blob(self):
         """
@@ -154,9 +150,7 @@ class ExtractionPyScript(ValvePyScript):
         """
 
         result = self._extraction_action(('get_setpoint_blob', (), {}))
-        if result:
-            result = result[0]
-        return result or ''
+        return result or b''
 
     def output_achieved(self):
         """
@@ -184,8 +178,7 @@ class ExtractionPyScript(ValvePyScript):
 
     def get_active_pid_parameters(self):
         result = self._extraction_action(('get_active_pid_parameters', (), {}))
-        if result:
-            return result[0]
+        return result or ''
 
     def get_command_register(self):
         cm = super(ExtractionPyScript, self).get_command_register()
@@ -658,7 +651,7 @@ class ExtractionPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def set_pid_parameters(self, v):
-        self._extraction_action(('set_pid_parameters', (v,)))
+        self._extraction_action(('set_pid_parameters', (v,), {}))
 
     @verbose_skip
     @command_register
@@ -853,7 +846,7 @@ class ExtractionPyScript(ValvePyScript):
         self._set_extraction_state('{} Enabled'.format(ed), flash=False)
         # self.manager.set_extract_state('{} Enabled'.format(ed))
 
-        return self._manager_action(('enable_device',),
+        return self._manager_action(('enable_device', (), {}),
                                     protocol=ILaserManager,
                                     name=self.extract_device)
 
@@ -865,7 +858,7 @@ class ExtractionPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def prepare(self):
-        return self._extraction_action(('prepare',))
+        return self._extraction_action(('prepare', (), {}))
 
     @verbose_skip
     @command_register

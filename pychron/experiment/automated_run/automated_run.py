@@ -28,6 +28,7 @@ import yaml
 from numpy import Inf, polyfit, linspace, polyval
 from traits.api import Any, Str, List, Property, \
     Event, Instance, Bool, HasTraits, Float, Int, Long, Tuple, Dict
+from traits.trait_errors import TraitError
 
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.filetools import get_path
@@ -355,7 +356,8 @@ class AutomatedRun(Loggable):
         if self.spectrometer_manager:
             self.spectrometer_manager.spectrometer.ask(cmd)
 
-    def py_data_collection(self, obj, ncounts, starttime, starttime_offset, series=0, fit_series=0, group='signal', integration_time=None):
+    def py_data_collection(self, obj, ncounts, starttime, starttime_offset, series=0, fit_series=0, group='signal',
+                           integration_time=None):
         if not self._alive:
             return
 
@@ -1372,7 +1374,7 @@ anaylsis_type={}
                     st = time.time()
                     try:
                         env[tag] = getattr(lclient, 'get_latest_{}'.format(tag))()
-                        self.debug('Get latest {}. elapsed: {}'.format(tag, time.time()-st))
+                        self.debug('Get latest {}. elapsed: {}'.format(tag, time.time() - st))
                     except BaseException as e:
                         self.debug('Get Labspy Environmentals: {}'.format(e))
                         self.debug_exception()
@@ -1382,7 +1384,7 @@ anaylsis_type={}
         else:
             self.debug('LabspyClient not enabled. Could not retrieve environmentals')
 
-        self.info('getting environmentals finished: total duration: {}'.format(time.time()-tst))
+        self.info('getting environmentals finished: total duration: {}'.format(time.time() - tst))
         return env
 
     def _start(self):
@@ -1512,7 +1514,12 @@ anaylsis_type={}
             self.debug('setting fod for {}= {}'.format(i.detector, fod))
 
     def _update_persister_spec(self, **kw):
-        self.persistence_spec.trait_set(**kw)
+        ps = self.persistence_spec
+        for k, v in kw.items():
+            try:
+                ps.trait_set(**{k: v})
+            except TraitError as e:
+                self.warning('failed setting persistence spec attr={}, value={} error={}'.format(k, v, e))
 
     def _persister_save_action(self, func, *args, **kw):
         self.debug('persistence save...')
@@ -1751,7 +1758,7 @@ anaylsis_type={}
 
         cb = False
         if (not self.spec.analysis_type.startswith('blank')
-                and not self.spec.analysis_type.startswith('background')):
+            and not self.spec.analysis_type.startswith('background')):
             cb = True
 
         for d in self._active_detectors:
@@ -2304,7 +2311,7 @@ anaylsis_type={}
         if starttime_offset > mi:
             min_ = -starttime_offset
 
-        graph.set_x_limits(min_=min_, max_=max_*1.1)
+        graph.set_x_limits(min_=min_, max_=max_ * 1.1)
 
         series = self.collector.series_idx
         for k, iso in self.isotope_group.items():
@@ -2361,7 +2368,7 @@ anaylsis_type={}
         if starttime_offset > mi:
             min_ = -starttime_offset
 
-        graph.set_x_limits(min_=min_, max_=max_*1.1)
+        graph.set_x_limits(min_=min_, max_=max_ * 1.1)
         regressing = grpname != 'sniff'
         series = self.collector.series_idx
         for k, iso in self.isotope_group.items():

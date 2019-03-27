@@ -165,7 +165,7 @@ class WaitControl(Loggable):
                 # self._canceled = False
 
     def _get_current_display_time(self):
-        return '{:03n}'.format(self.current_time)
+        return '{:03d}'.format(int(self.current_time))
 
     # ===============================================================================
     # handlers

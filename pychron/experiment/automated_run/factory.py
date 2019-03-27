@@ -720,8 +720,6 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             v, e = self._flux, self._flux_error
             if self.dvc:
                 self.dvc.save_flux(self.labnumber, v, e)
-            elif self.iso_db_man:
-                self.iso_db_man.save_flux(self.labnumber, v, e)
 
     # ===============================================================================
     #

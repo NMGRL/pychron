@@ -147,6 +147,11 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         if self.timer:
             self.timer.stop()
 
+    def get_setpoint_blob(self):
+        self.debug('get setpoint blob')
+        blob = self.response_recorder.get_setpoint_blob()
+        return blob
+
     def get_response_blob(self):
         self.debug('get response blob')
         blob = self.response_recorder.get_response_blob()

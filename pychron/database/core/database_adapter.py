@@ -345,7 +345,7 @@ class DatabaseAdapter(Loggable):
                 url = self.url
                 if url is not None:
                     self.info('{} connecting to database {}'.format(id(self), self.public_url))
-                    engine = create_engine(url, echo=self.echo)
+                    engine = create_engine(url, echo=self.echo, pool_recycle=3600)
                     #                     Session.configure(bind=engine)
 
                     self.session_factory = sessionmaker(bind=engine, autoflush=self.autoflush,

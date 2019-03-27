@@ -120,17 +120,17 @@ class DVCPersister(BasePersister):
         sblob = per_spec.setpoint_blob  # time vs requested
         gp = per_spec.grain_polygons
 
-        if rblob:
+        if rblob is not None:
             rblob = encode_blob(rblob)
-        if oblob:
+        if oblob is not None:
             oblob = encode_blob(oblob)
-        if sblob:
+        if sblob is not None:
             sblob = encode_blob(sblob)
 
         if gp:
             gp = [encode_blob(g) for g in gp]
 
-        obj = {'measured_response': rblob,  # time vs
+        obj = {'measured_response': rblob,
                'requested_output': oblob,
                'setpoint_stream': sblob,
                'snapshots': per_spec.snapshots,

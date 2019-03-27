@@ -222,8 +222,7 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
 
     # handlers
     def _edit_user_fired(self):
-        a = UserEntry(dvc=self.dvc,
-                      iso_db_man=self.iso_db_man)
+        a = UserEntry(dvc=self.dvc)
 
         nuser = a.edit(self.username)
         if nuser:

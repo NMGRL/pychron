@@ -46,6 +46,24 @@ def auto_connect(func):
     return wrapper
 
 
+def auto_reset_connect(func):
+    def wrapper(obj, *args, **kw):
+        with obj.session_lock:
+            if not obj.db.connected:
+                obj.connect()
+            else:
+
+                obj.db.reset_connection()
+                obj.db.reset_connection()
+                obj.db.connect()
+
+            if obj.db.connected:
+                with obj.db.session_ctx(use_parent_session=False):
+                    return func(obj, *args, **kw)
+
+    return wrapper
+
+
 class NotificationTrigger(object):
     def __init__(self, params):
         self._params = params
@@ -159,7 +177,7 @@ class LabspyClient(Loggable):
             et = time.time() - st
             time.sleep(max(0, period - et))
 
-    @auto_connect
+    @auto_reset_connect
     def add_experiment(self, exp):
         name = exp.name
         starttime = exp.start_timestamp
@@ -215,10 +233,19 @@ class LabspyClient(Loggable):
         for k, v in kw.items():
             setattr(status, k, v)
 
-    @auto_connect
+    @auto_reset_connect
     def add_run(self, run, exp):
-        exp = self.db.get_experiment(self._generate_hid_from_exp(exp))
-        self.db.add_analysis(exp, self._run_dict(run))
+        hid = self._generate_hid_from_exp(exp)
+        expid = self.db.get_experiment(hid)
+        if not expid:
+            self.add_experiment(exp)
+            expid = self.db.get_experiment(hid)
+
+        if not expid:
+            # use a dumpy experiment id just so that the analysis is saved
+            expid = '1'
+
+        self.db.add_analysis(expid, self._run_dict(run))
         ms = run.spec.mass_spectrometer.capitalize()
 
         config = self._get_configuration()
@@ -291,7 +318,7 @@ class LabspyClient(Loggable):
         """
         config = []
         p = paths.labspy_client_config
-        if os.path.isfile(p):
+        if p and os.path.isfile(p):
             with open(p, 'r') as rfile:
                 config = yaml.load(rfile)
 
@@ -327,8 +354,7 @@ class LabspyClient(Loggable):
         spec = run.spec
         return {'identifier': spec.identifier,
                 'aliquot': spec.aliquot,
-                'increment': spec.increment,
-                'start_time': spec.analysis_timestamp}
+                'increment': spec.increment}
 
         d = {dbk: getattr(spec, k) for k, dbk in (('runid', 'Runid'),
                                                   ('analysis_type',
