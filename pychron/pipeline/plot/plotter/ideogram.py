@@ -494,7 +494,6 @@ class Ideogram(BaseArArFigure):
         gid = ogid + 1
 
         opt = self.options
-        we = opt.nsigma
         text = ''
         if opt.display_mean:
             total_n = self.xs.shape[0]
@@ -509,16 +508,13 @@ class Ideogram(BaseArArFigure):
             text = self._make_mean_label(wm, we * opt.nsigma, n, total_n, mswd_args,
                                          display_n=opt.display_mean_n)
 
-        # group = self.options.get_group(self.group_id)
-        # color = group.color
-
         plotkw = opt.get_plot_dict(ogid, self.subgroup_id)
 
         m = MeanIndicatorOverlay(component=line,
                                  x=wm,
                                  y=20 * gid,
                                  error=we,
-                                 nsgima=opt.nsigma,
+                                 nsigma=opt.nsigma,
                                  color=plotkw['color'],
                                  visible=opt.display_mean_indicator,
                                  id='mean_{}'.format(self.group_id))

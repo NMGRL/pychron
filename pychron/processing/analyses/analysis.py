@@ -163,7 +163,7 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
         ypad = '0.05'
         if scale_to_equilibration:
             ypad = None
-            r = (yma - ymi) / 10
+            r = (yma - ymi) * 0.02
             ymi = yma - r
 
             fit = iso.fit
