@@ -549,9 +549,13 @@ class Ideogram(BaseArArFigure):
         #     self.update_graph_metadata(None, name, old, new)
 
     def update_graph_metadata(self, obj, name, old, new):
+        if hasattr(obj, 'suppress_update') and obj.suppress_update:
+            return
+
         ans = self.sorted_analyses
         sel = obj.metadata.get('selections', [])
         self._set_selected(ans, sel)
+
         self._rebuild_ideo(sel)
         self.recalculate_event = True
 

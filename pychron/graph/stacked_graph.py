@@ -186,8 +186,8 @@ class StackedGraph(Graph):
                 if si.index is not obj:
                     if hasattr(si, 'bind_id'):
                         if si.bind_id == bind_id:
-                            md = obj.metadata
-                            si.index.metadata = md
+                            si.index.suppress_update = True
+                            si.index.metadata = obj.metadata
                             si.index.suppress_update = False
         obj.suppress_update = False
 
