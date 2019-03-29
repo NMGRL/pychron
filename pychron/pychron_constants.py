@@ -36,10 +36,12 @@ FURNACE_PROTOCOL = 'pychron.furnace.furnace_manager.BaseFurnaceManager'
 TTF_FONTS = ['Andale Mono', 'Arial', 'Arial Black',
              'Calibri', 'Cambria', 'Comic Sans MS', 'Consolas', 'Courier New',
              'Georgia',
+             'Helvetica',
              'Impact',
              'Trebuchet MS',
              'Verdana']
-FONTS = ['Helvetica'] + TTF_FONTS
+
+FONTS = TTF_FONTS
 SIZES = [10, 6, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36]
 
 from kiva.fonttools.font_manager import fontManager
