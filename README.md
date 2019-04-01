@@ -67,7 +67,7 @@ furPi
 -------
 Furnace firmware running on a networked RaspberryPi. RPC interface via Twisted for remote control
 
-Mac OSX 10.9 and Latere
+Mac OSX 10.9 and Later
 --------------------
 Mac OSX and macOS operating systems later than 10.9 (Mavericks) include a memory management tool called App Nap. It is necessary to 
 turn off App Nap for pychron. 
