@@ -16,15 +16,11 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from __future__ import absolute_import
-from __future__ import print_function
 from collections import namedtuple
 
 from numpy import array, asarray, ndarray
 from numpy.lib.function_base import percentile
 from scipy.ndimage.filters import laplace
-from six.moves import map
-from six.moves import zip
 
 try:
     from cv2 import VideoCapture, VideoWriter, imwrite, line, fillPoly, \
@@ -82,11 +78,14 @@ def colorspace(src, cs=None):
 
     return gray2rgb(src)
 
+
 #
 def grayspace(src):
     from skimage.color.colorconv import rgb2gray
     dst = rgb2gray(src)
     return dst
+
+
 #
 #
 # def resize(src, w, h, dst=None):
@@ -114,6 +113,8 @@ def get_size(src):
     else:
         h, w = src.shape[:2]
         return w, h
+
+
 #
 #
 # def swap_rb(src):
@@ -167,7 +168,7 @@ _new_point = namedtuple('Point', 'x y')
 
 
 def new_point(x, y, tt=False):
-    x, y = list(map(int, (x, y)))
+    x, y = int(x), int(y)
     if tt:
         return x, y
     else:

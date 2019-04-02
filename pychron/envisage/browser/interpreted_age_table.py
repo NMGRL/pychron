@@ -15,11 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
+import os
+
 from traits.api import List, Any, Bool, Event, Instance
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.column_sorter_mixin import ColumnSorterMixin
+from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.envisage.browser.adapters import InterpretedAgeAdapter
 
 
@@ -34,18 +37,6 @@ class InterpretedAgeTable(ColumnSorterMixin):
     dclicked = Any
 
     context_menu_event = Event
-    #
-    # analysis_filter = CStr
-    # analysis_filter_values = List
-    # analysis_filter_comparator = Enum('=', '<', '>', '>=', '<=', 'not =', 'startswith')
-    # analysis_filter_parameter = Str
-    # analysis_filter_parameters = Property(List, depends_on='tabular_adapter.columns')
-
-    # omit_invalid = Bool(True)
-    # table_configurer = Instance(AnalysisTableConfigurer)
-    #
-    # limit = DelegatesTo('table_configurer')
-    # omit_invalid = DelegatesTo('table_configurer')
 
     no_update = False
     scroll_to_row = Event
@@ -53,26 +44,29 @@ class InterpretedAgeTable(ColumnSorterMixin):
     tabular_adapter = Instance(InterpretedAgeAdapter)
     append_replace_enabled = Bool(True)
 
-    # def add_analyses(self, ans):
-    #     items = self.analyses
-    #     items.extend(ans)
-    #     self.oanalyses = self.analyses = sort_items(items)
-    #
-    # def set_analyses(self, ans, tc=None, page=None, reset_page=False, selected_identifiers=None):
-    #     if selected_identifiers:
-    #         aa = self.analyses
-    #         aa = [ai for ai in aa if ai.identifier in selected_identifiers]
-    #         aa.extend(ans)
-    #     else:
-    #         aa = ans
-    #
-    #     self.oanalyses = self.analyses = sort_items(aa)
+    dvc = Instance('pychron.dvc.dvc.DVC')
 
-    # def configure_table(self):
-    #     self.table_configurer.edit_traits(kind='livemodal')
     def set_interpreted_ages(self, ias):
         self.interpreted_ages = self.ointerpreted_ages = ias
-        # self.oanalyses = self.analyses = sort_items(ias)
+
+    def delete(self):
+        if self.selected:
+            def key(s):
+                return os.path.basename(os.path.dirname(os.path.dirname(os.path.dirname(s.path))))
+
+            dvc = self.dvc
+            for repo, records in groupby_key(self.selected, key):
+                ps = []
+                ns = []
+                for r in records:
+                    if os.path.isfile(r.path):
+                        os.remove(r.path)
+                        ps.append(r.path)
+                        ns.append(r.name)
+                        self.interpreted_ages.remove(r)
+
+                if dvc.repository_add_paths(repo, ps):
+                    dvc.repository_commit(repo, 'Removed interpreted ages {}'.format(','.join(ns)))
 
     # handlers
     def _interpreted_ages_items_changed(self, old, new):
@@ -82,44 +76,6 @@ class InterpretedAgeTable(ColumnSorterMixin):
         if new.removed:
             for ai in new.removed:
                 self.ointerpreted_ages.remove(ai)
-
-    # def _analysis_filter_changed(self, new):
-    #     if new:
-    #         name = self.analysis_filter_parameter
-    #         self.analyses = fuzzyfinder(new, self.oanalyses, name)
-    #         # self.analyses = filter(filter_func(new, name), self.oanalyses)
-    #     else:
-    #         self.analyses = self.oanalyses
-    #
-    # def _analysis_filter_comparator_changed(self):
-    #     self._analysis_filter_changed(self.analysis_filter)
-    #
-    # # def _analysis_filter_parameter_changed(self, new):
-    # #     if new:
-    # #         vs = []
-    # #         p = self._get_analysis_filter_parameter()
-    # #         for si in self.oanalyses:
-    # #             v = getattr(si, p)
-    # #             if v not in vs:
-    # #                 vs.append(v)
-    # #
-    # #         self.analysis_filter_values = vs
-    #
-    # def _get_analysis_filter_parameter(self):
-    #     p = self.analysis_filter_parameter
-    #     return p.lower()
-    #
-    # @cached_property
-    # def _get_analysis_filter_parameters(self):
-    #     return dict([(ci[1], ci[0]) for ci in self.tabular_adapter.columns])
-    #
-    # # defaults
-    # def _table_configurer_default(self):
-    #     return AnalysisTableConfigurer(id='analysis.table',
-    #                                    title='Configure Analysis Table')
-    #
-    # def _analysis_filter_parameter_default(self):
-    #     return 'record_id'
 
     def _tabular_adapter_default(self):
         # adapter = AnalysisAdapter()

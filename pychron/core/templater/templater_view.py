@@ -15,12 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from traits.api import Int, Str
-from traitsui.api import View, Item, VGroup, HGroup, ListStrEditor, EnumEditor, UItem, Controller
+from traitsui.api import Item, VGroup, HGroup, ListStrEditor, EnumEditor, UItem, Controller
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.envisage.icon_button_editor import icon_button_editor
 
 
@@ -28,7 +28,7 @@ class BaseTemplateView(Controller):
     width = Int(500)
     view_title = Str
 
-    #views
+    # views
     def _get_main_view(self):
         return VGroup(HGroup(Item('predefined_label',
                                   editor=EnumEditor(name='predefined_labels'))),
@@ -59,16 +59,9 @@ class BaseTemplateView(Controller):
         if grps:
             vg.content.extend(grps)
 
-        v = View(
-            vg,
-            resizable=True,
-            width=self.width,
-            title=self.view_title,
-            buttons=['OK', 'Cancel'],
-            kind='livemodal')
+        v = okcancel_view(vg,
+                          width=self.width,
+                          title=self.view_title)
         return v
 
 # ============= EOF =============================================
-
-
-

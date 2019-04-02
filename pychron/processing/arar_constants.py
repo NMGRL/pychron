@@ -15,35 +15,13 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from __future__ import absolute_import
 from traits.api import HasTraits, Property, Float, Enum, Str, Bool, Any
 from uncertainties import ufloat, nominal_value, std_dev
 
-from pychron.pychron_constants import AGE_SCALARS
+# from pychron.pychron_constants import AGE_SCALARS, AGE_MA_SCALARS
 
 
 # =============local library imports  ==========================
-
-# class ICFactor(HasTraits):
-#     detector = Str
-#     value = Float
-#     error = Float
-
-
-# class ICFactorPreferenceBinding(PreferenceBinding):
-#     def _get_value(self, name, value):
-#         path = self.preference_path.split('.')[:-1]
-#         path.append('stored_ic_factors')
-#         path = '.'.join(path)
-#         ics = self.preferences.get(path)
-#         ics = eval(ics)
-#         ss = []
-#         for ic in ics:
-#             detector, v, e = ic.split(',')
-#             ss.append(ICFactor(detector=detector,
-#                                value=float(v),
-#                                error=float(e)))
-#         return ss
 
 
 class ArArConstants(HasTraits):
@@ -56,7 +34,7 @@ class ArArConstants(HasTraits):
 
     lambda_k = Property
     _lambda_k = Any
-    lambda_Cl36 = Property(depends_on='lambda_Cl36_v, lambda_Cl36_e')
+    lambda_Cl36 = Property(depends_on='lambda_36_v, lambda_Cl36_e')
     lambda_Cl36_v = Float(6.308e-9)
     lambda_Cl36_e = Float(0)
     lambda_Ar37 = Property(depends_on='lambda_Ar37_v, lambda_Ar37_e')
@@ -85,66 +63,95 @@ class ArArConstants(HasTraits):
     k3739_v = Float(0.01)
     k3739_e = Float(0.0001)
 
-    age_units = Str('Ma')
-    age_scalar = Property(depends_on='age_units')
+    age_units = Str
+    # age_scalar = Property(depends_on='age_units')
+    # ma_age_scalar = Property(depends_on='age_units')
     abundance_sensitivity = Float
 
     # ic_factors = Either(List, Str)
 
-    atm4036_citation = Str  #'Nier (1950)'
-    atm4038_citation = Str  #'Nier (1950)'
-    lambda_b_citation = Str  #'Min (2008)'
-    lambda_e_citation = Str  #'Min (2008)'
-    lambda_Ar39_citation = Str  #'Min (2008)'
-    lambda_Ar37_citation = Str  #'Min (2008)'
+    atm4036_citation = Str  # 'Nier (1950)'
+    atm4038_citation = Str  # 'Nier (1950)'
+    lambda_b_citation = Str  # 'Min (2008)'
+    lambda_e_citation = Str  # 'Min (2008)'
+    lambda_Ar39_citation = Str  # 'Min (2008)'
+    lambda_Ar37_citation = Str  # 'Min (2008)'
+    use_irradiation_endtime = Bool
 
     allow_negative_ca_correction = Bool(True)
+    trapped_atm4036 = None
 
     def __init__(self, *args, **kw):
-        #print 'init arar constants'
         try:
             from pychron.core.ui.preference_binding import bind_preference
-            bind_preference(self, 'lambda_b_v', 'pychron.arar.constants.lambda_b')
-            bind_preference(self, 'lambda_b_e', 'pychron.arar.constants.lambda_b_error')
-            bind_preference(self, 'lambda_e_v', 'pychron.arar.constants.lambda_e')
-            bind_preference(self, 'lambda_e_e', 'pychron.arar.constants.lambda_e_error')
-            bind_preference(self, 'lambda_Cl36_v', 'pychron.arar.constants.lambda_Cl36')
-            bind_preference(self, 'lambda_Cl36_e', 'pychron.arar.constants.lambda_Cl36_error')
-            bind_preference(self, 'lambda_Ar37_v', 'pychron.arar.constants.lambda_Ar37')
-            bind_preference(self, 'lambda_Ar37_e', 'pychron.arar.constants.lambda_Ar37_error')
-            bind_preference(self, 'lambda_Ar39_v', 'pychron.arar.constants.lambda_Ar39')
-            bind_preference(self, 'lambda_Ar39_e', 'pychron.arar.constants.lambda_Ar39_error')
-
-            bind_preference(self, 'atm4036_v', 'pychron.arar.constants.Ar40_Ar36_atm')
-            bind_preference(self, 'atm4036_e', 'pychron.arar.constants.Ar40_Ar36_atm_error')
-            bind_preference(self, 'atm4038_v', 'pychron.arar.constants.Ar40_Ar38_atm')
-            bind_preference(self, 'atm4038_e', 'pychron.arar.constants.Ar40_Ar38_atm_error')
-
-            bind_preference(self, 'k3739_mode', 'pychron.arar.constants.Ar37_Ar39_mode')
-            bind_preference(self, 'k3739_v', 'pychron.arar.constants.Ar37_Ar39')
-            bind_preference(self, 'k3739_e', 'pychron.arar.constants.Ar37_Ar39_error')
-
-            bind_preference(self, 'age_units', 'pychron.arar.constants.age_units')
-            bind_preference(self, 'abundance_sensitivity', 'pychron.arar.constants.abundance_sensitivity')
-
-            # bind_preference(self, 'ic_factors', 'pychron.spectrometer.ic_factors',
-            #                 factory=ICFactorPreferenceBinding)
-
             prefid = 'pychron.arar.constants'
-            bind_preference(self, 'atm4036_citation', '{}.Ar40_Ar36_atm_citation'.format(prefid))
-            bind_preference(self, 'atm4038_citation', '{}.Ar40_Ar38_atm_citation'.format(prefid))
-            bind_preference(self, 'lambda_b_citation', '{}.lambda_b_citation'.format(prefid))
-            bind_preference(self, 'lambda_e_citation', '{}.lambda_e_citation'.format(prefid))
-            bind_preference(self, 'lambda_Cl36_citation', '{}.lambda_Cl36_citation'.format(prefid))
-            bind_preference(self, 'lambda_Ar37_citation', '{}.lambda_Ar37_citation'.format(prefid))
-            bind_preference(self, 'lambda_Ar39_citation', '{}.lambda_Ar39_citation'.format(prefid))
 
-            bind_preference(self, 'allow_negative_ca_correction', '{}.allow_negative_ca_correction'.format(prefid))
+            for attr, prefattr in (('lambda_b_v', 'lambda_b'),
+                                   ('lambda_b_e', 'lambda_b_error'),
+                                   ('lambda_e_v', 'lambda_e'),
+                                   ('lambda_e_e', 'lambda_e_error'),
+                                   ('lambda_Cl36_v', 'lambda_cl36'),
+                                   ('lambda_Cl36_e', 'lambda_cl36_error'),
+                                   ('lambda_Ar37_v', 'lambda_ar37'),
+                                   ('lambda_Ar37_e', 'lambda_ar37_error'),
+                                   ('lambda_Ar39_v', 'lambda_ar39'),
+                                   ('lambda_Ar39_e', 'lambda_ar39_error'),
 
-        except (AttributeError, ImportError):
+                                   ('atm4036_v', 'ar40_ar36_atm'),
+                                   ('atm4036_e', 'ar40_ar36_atm_error'),
+                                   ('atm4038_v', 'ar40_ar38_atm'),
+                                   ('atm4038_e', 'ar40_ar38_atm_error'),
+
+                                   ('k3739_mode', 'ar37_ar39_mode'),
+                                   ('k3739_v', 'ar37_ar39'),
+                                   ('k3739_e', 'ar37_ar39_error'),
+                                   ('atm4036_citation', 'ar40_ar36_atm_citation'),
+                                   ('atm4038_citation', 'ar40_ar39_atm_citation'),
+                                   ('lambda_b_citation', 'lambda_b_citation'),
+                                   ('lambda_e_citation', 'lambda_e_citation'),
+                                   ('lambda_Cl36_citation', 'lambda_cl36_citation'),
+                                   ('lambda_Ar37_citation', 'lambda_ar37_citation'),
+                                   ('lambda_Ar39_citation', 'lambda_ar39_citation'),
+                                   ):
+                bind_preference(self, attr, '{}.{}'.format(prefid, prefattr))
+
+            for attr in ('use_irradiation_endtime', 'age_units', 'abundance_sensitivity',
+                         'allow_negative_ca_correction'):
+                bind_preference(self, attr, '{}.{}'.format(prefid, attr))
+
+        except (AttributeError, ImportError) as e:
             pass
 
         super(ArArConstants, self).__init__(*args, **kw)
+
+    def scale_age(self, age, target=None, current=None):
+        if target is None:
+            target = self.age_units
+        if current is None:
+            current = self.age_units
+
+        scalar = 1
+        targetscalar = 1
+
+        if current == 'a':
+            scalar = 1
+        elif current == 'ka':
+            scalar = 1e3
+        elif current == 'Ma':
+            scalar = 1e6
+        elif current == 'Ga':
+            scalar = 1e9
+
+        if target == 'a':
+            targetscalar = 1
+        elif target == 'ka':
+            targetscalar = 1e-3
+        elif target == 'Ma':
+            targetscalar = 1e-6
+        elif target == 'Ga':
+            targetscalar = 1e-9
+
+        return age * scalar * targetscalar
 
     def to_dict(self):
         d = dict()
@@ -177,6 +184,9 @@ class ArArConstants(HasTraits):
         return ufloat(v, e, tag=attr)
 
     def _get_atm4036(self):
+        if self.trapped_atm4036 is not None:
+            return self.trapped_atm4036
+
         return self._get_ufloat('atm4036')
 
     def _get_atm4038(self):
@@ -207,9 +217,14 @@ class ArArConstants(HasTraits):
         self._lambda_k = k
         # return ufloat(k.nominal_value, k.std_dev)
 
-    def _get_age_scalar(self):
-        try:
-            return AGE_SCALARS[self.age_units]
-        except KeyError:
-            return 1
-
+    # def _get_age_scalar(self):
+    #     try:
+    #         return AGE_SCALARS[self.age_units]
+    #     except KeyError:
+    #         return 1
+    #
+    # def _get_ma_age_scalar(self):
+    #     try:
+    #         return AGE_MA_SCALARS[self.age_units]
+    #     except KeyError:
+    #         return 1

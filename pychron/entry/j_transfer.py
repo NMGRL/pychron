@@ -16,10 +16,13 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traits.api import HasTraits, Instance, Bool, Str, Any
-from traitsui.api import View, Item, VGroup, Controller, Readonly
+from traitsui.api import Item, VGroup, Controller, Readonly
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.loggable import Loggable
 
 
@@ -40,14 +43,11 @@ class TransferConfigView(Controller):
             Item('include_note', label='Note', tooltip='Transfer Notes'),
             label='Transfer', show_border=True)
 
-        v = View(VGroup(Readonly('massspecname', label='Mass Spec DB Name'),
-                        transfer_grp,
-                        Item('forward_transfer', label='MassSpec to Pychron'),
-                        Item('auto_save', tooltip='Automatically save transferred J to the database')),
-                 buttons=['OK', 'Cancel'],
-                 kind='livemodal',
-                 title='Configure J Transfer',
-                 resizable=True)
+        v = okcancel_view(VGroup(Readonly('massspecname', label='Mass Spec DB Name'),
+                                 transfer_grp,
+                                 Item('forward_transfer', label='MassSpec to Pychron'),
+                                 Item('auto_save', tooltip='Automatically save transferred J to the database')),
+                          title='Configure J Transfer')
         return v
 
 
@@ -144,6 +144,3 @@ class JTransferer(Loggable):
         pass
 
 # ============= EOF =============================================
-
-
-

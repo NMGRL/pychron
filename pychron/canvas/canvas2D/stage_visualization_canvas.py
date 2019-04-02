@@ -16,14 +16,15 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from chaco.abstract_overlay import AbstractOverlay
 from traits.api import List, on_trait_change
+
 # from enable.abstract_overlay import AbstractOverlay
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.base_data_canvas import BaseDataCanvas
 from pychron.core.helpers.iterfuncs import partition
-from six.moves import zip
 
 
 class HoleOverlay(AbstractOverlay):

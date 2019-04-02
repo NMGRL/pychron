@@ -19,7 +19,7 @@ from random import random
 from numpy import array
 from traits.api import Any, cached_property, List, TraitError, Str, Property, Bool
 
-from pychron.core.helpers.filetools import list_directory2
+from pychron.core.helpers.filetools import glob_list_directory
 from pychron.globals import globalv
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR
@@ -27,8 +27,6 @@ from pychron.spectrometer import get_spectrometer_config_path, get_spectrometer_
     set_spectrometer_config_name
 from pychron.spectrometer.base_detector import BaseDetector
 from pychron.spectrometer.spectrometer_device import SpectrometerDevice
-import six
-from six.moves import zip
 
 
 class NoIntensityChange(BaseException):
@@ -66,6 +64,7 @@ class BaseSpectrometer(SpectrometerDevice):
 
     _prev_signals = None
     _no_intensity_change_cnt = 0
+    active_detectors = List
 
     def convert_to_axial(self, det, v):
         return v
@@ -96,7 +95,7 @@ class BaseSpectrometer(SpectrometerDevice):
             self.name = self.microcontroller.name
 
         self.magnet.finish_loading()
-
+        self.source.finish_loading()
         self.test_connection()
 
     def test_connection(self, force=True):
@@ -251,10 +250,12 @@ class BaseSpectrometer(SpectrometerDevice):
 
         found = None
         mi = 1
-        for k, v in six.iteritems(molweights):
+        for k, v in molweights.items():
             d = abs(v - mass)
             if d < 0.15 and d < mi:
+                mi = d
                 found = k
+                # self.debug('map isotope {:0.3f} {} {:0.3f} {:0.3f} {} {}'.format(mass, k, v, d, mi, found))
 
         if found is None:
             found = 'Iso{:0.4f}'.format(mass)
@@ -288,16 +289,26 @@ class BaseSpectrometer(SpectrometerDevice):
                 self.debug('cannot update detector "{}"'.format(detector))
             else:
                 det.isotope = isotope
-
+                det.mass = self.map_mass(isotope)
                 self.debug('molweights={}'.format(self.molecular_weights))
-                index = det.index
+
                 try:
+                    index = det.index
+                    dets = self.active_detectors
+                    if not dets:
+                        dets = self.detectors
+                        idxs = [di.index for di in dets]
+                    else:
+                        idxs = range(len(dets))
+                        index = next((i for i, d in enumerate(dets) if d.index == index), 0)
+
                     nmass = self.map_mass(isotope)
-                    for di in self.detectors:
-                        mass = nmass - di.index + index
+                    for di, didx in zip(dets, idxs):
+                        mass = nmass - didx + index
                         isotope = self.map_isotope(mass)
                         self.debug('setting detector {} to {} ({})'.format(di.name, isotope, mass))
                         di.isotope = isotope
+                        di.mass = mass
 
                 except BaseException as e:
                     self.warning(
@@ -364,8 +375,8 @@ class BaseSpectrometer(SpectrometerDevice):
         self.load_detectors()
         self.magnet.load()
         # load local configurations
-        self.spectrometer_configurations = list_directory2(paths.spectrometer_config_dir, remove_extension=True,
-                                                           extension='.cfg')
+        self.spectrometer_configurations = glob_list_directory(paths.spectrometer_config_dir, remove_extension=True,
+                                                               extension='.cfg')
 
         name = get_spectrometer_config_name()
         sc, _ = os.path.splitext(name)
@@ -389,7 +400,7 @@ class BaseSpectrometer(SpectrometerDevice):
                 mws = {l[0]: float(l[1]) for l in reader}
         elif os.path.isfile(yp):
             self.info('loading "molecular_weights.yaml" file. {}'.format(yp))
-            with open(p, 'r') as f:
+            with open(yp, 'r') as f:
                 mws = yaml.load(f)
         else:
             self.info('writing a default "molecular_weights.csv" file')
@@ -417,6 +428,7 @@ class BaseSpectrometer(SpectrometerDevice):
 
         for i, name in enumerate(config.sections()):
             relative_position = self.config_get(config, name, 'relative_position', cast='float')
+            software_gain = self.config_get(config, name, 'software_gain', cast='float', default=1.0)
 
             color = self.config_get(config, name, 'color', default='black')
             default_state = self.config_get(config, name, 'default_state',
@@ -426,6 +438,7 @@ class BaseSpectrometer(SpectrometerDevice):
                                    optional=True)
             pt = self.config_get(config, name, 'protection_threshold',
                                  default=None, optional=True, cast='float')
+            serial_id = self.config_get(config, name, 'serial_id', default='00000')
 
             index = self.config_get(config, name, 'index', cast='float')
             if index is None:
@@ -440,9 +453,12 @@ class BaseSpectrometer(SpectrometerDevice):
                 deflection_correction_sign = self.config_get(config, name, 'deflection_correction_sign', cast='int')
 
             deflection_name = self.config_get(config, name, 'deflection_name', optional=True, default=name)
+            ypadding = self.config_get(config, name, 'ypadding', optional=True, default='0.1')
 
             self._add_detector(name=name,
                                index=index,
+                               software_gain=software_gain,
+                               serial_id=serial_id,
                                relative_position=relative_position,
                                use_deflection=use_deflection,
                                protection_threshold=pt,
@@ -451,7 +467,8 @@ class BaseSpectrometer(SpectrometerDevice):
                                color=color,
                                active=default_state,
                                isotope=isotope,
-                               kind=kind)
+                               kind=kind,
+                               ypadding=ypadding)
 
     def get_intensities(self, tagged=True, trigger=False):
         """
@@ -476,11 +493,13 @@ class BaseSpectrometer(SpectrometerDevice):
 
         self._check_intensity_no_change(signals)
 
+        gsignals = []
         for k, v in zip(keys, signals):
             det = self.get_detector(k)
             det.set_intensity(v)
+            gsignals.append(v * det.software_gain)
 
-        return keys, signals
+        return keys, array(gsignals)
 
     def _check_intensity_no_change(self, signals):
         if self.simulation:
@@ -563,10 +582,6 @@ class BaseSpectrometer(SpectrometerDevice):
 
     def read_parameter_word(self):
         pass
-
-    def settle(self):
-        import time
-        time.sleep(self.integration_time)
 
     # private
     def _spectrometer_configuration_changed(self, new):

@@ -14,14 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
-import re
 from datetime import datetime, timedelta
+from operator import attrgetter
 
+# ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
-from traits.api import Button, Instance, Str
+from traits.api import Button, Instance, Str, Property
 
 from pychron.envisage.browser.advanced_filter_view import AdvancedFilterView
 from pychron.envisage.browser.analysis_table import AnalysisTable
@@ -30,20 +28,18 @@ from pychron.envisage.browser.find_references_config import FindReferencesConfig
 from pychron.envisage.browser.time_view import TimeViewModel
 from pychron.envisage.browser.util import get_pad
 
-NCHARS = 60
-REG = re.compile(r'.' * NCHARS)
-
 
 class SampleBrowserModel(BrowserModel):
     graphical_filter_button = Button
     find_references_button = Button
+    find_references_enabled = Property(depends_on='analysis_table:analyses[]')
+
     load_recent_button = Button
     toggle_view = Button
 
     add_analysis_group_button = Button
     analysis_table = Instance(AnalysisTable)
     time_view_model = Instance(TimeViewModel)
-
     monitor_sample_name = Str
 
     def __init__(self, *args, **kw):
@@ -51,16 +47,18 @@ class SampleBrowserModel(BrowserModel):
         prefid = 'pychron.browser'
         bind_preference(self.search_criteria, 'reference_hours_padding',
                         '{}.reference_hours_padding'.format(prefid))
+
         bind_preference(self, 'monitor_sample_name', 'pychron.entry.monitor_name')
 
     def reattach(self):
+
         self.debug('reattach')
 
-        oans = self.analysis_table.oanalyses
-        uuids = [ai.uuid for ai in oans]
+        ans = sorted(self.analysis_table.oanalyses, key=attrgetter('uuid'))
+        uuids = [ai.uuid for ai in ans]
         nans = self.db.get_analyses_uuid(uuids)
 
-        for ni, ai in zip(nans, oans):
+        for ni, ai in zip(nans, ans):
             ai.dbrecord = ni
 
         if self.selected_projects:
@@ -71,8 +69,8 @@ class SampleBrowserModel(BrowserModel):
         self.analysis_table.dump()
 
     def activated(self, force=False):
-        self.analysis_table.load()
         self.reattach()
+        self.analysis_table.load()
 
         if not self.is_activated or force:
             self.load_browser_options()
@@ -159,10 +157,32 @@ class SampleBrowserModel(BrowserModel):
 
     def delete_analysis_group(self):
         self.debug('delete analysis groups')
-        for g in self.selected_analysis_groups:
+        n = len(self.selected_analysis_groups)
+        for i, g in enumerate(self.selected_analysis_groups):
             self.debug('deleting analysis group. {}'.format(g))
-            self.db.delete_analysis_group(g)
+            self.db.delete_analysis_group(g, commit=i == n - 1)
             self.analysis_groups.remove(g)
+
+    def add_analysis_group(self, ans):
+        from pychron.envisage.browser.add_analysis_group_view import AddAnalysisGroupView
+        # a = AddAnalysisGroupView(projects={'{:05n}:{}'.format(i, p.name): p for i, p in enumerate(self.projects)})
+        projects = self.db.get_projects(order='asc')
+        projects = self._make_project_records(projects, include_recent=False)
+        agv = AddAnalysisGroupView(db=self.db,
+                                   projects={p: '{:05n}:{}'.format(i, p.name) for i, p in
+                                             enumerate(projects)})
+
+        project, pp = tuple({(a.project, a.principal_investigator) for a in ans})[0]
+        try:
+            project = next((p for p in projects if p.name == project and p.principal_investigator == pp))
+            agv.project = project
+        except StopIteration:
+            pass
+
+        info = agv.edit_traits(kind='livemodal')
+        if info.result:
+            if agv.save(ans, self.db):
+                self.load_associated_groups(projects)
 
     def set_tags(self, tagname):
         items = self.get_analysis_records()
@@ -206,30 +226,24 @@ class SampleBrowserModel(BrowserModel):
     def _add_analysis_group_button_fired(self):
         ans = self.analysis_table.get_selected_analyses()
         if ans:
-            from pychron.envisage.browser.add_analysis_group_view import AddAnalysisGroupView
-            # a = AddAnalysisGroupView(projects={'{:05n}:{}'.format(i, p.name): p for i, p in enumerate(self.projects)})
-            agv = AddAnalysisGroupView(db=self.db,
-                                       projects={p: '{:05n}:{}'.format(i, p.name) for i, p in
-                                                 enumerate(self.oprojects)})
-
-            project, pp = tuple({(a.project, a.principal_investigator) for a in ans})[0]
-
-            project = next((p for p in self.oprojects if p.name == project and p.principal_investigator == pp))
-            agv.project = project
-
-            info = agv.edit_traits(kind='livemodal')
-            if info.result:
-                agv.save(ans, self.db)
+            self.add_analysis_group(ans)
 
     def _analysis_set_changed(self, new):
         if self.analysis_table.suppress_load_analysis_set:
             return
 
         self.debug('analysis set changed={}'.format(new))
-        ans = self.analysis_table.get_analysis_set(new)
-        ans = self.db.get_analyses_uuid([a[0] for a in ans])
-        xx = self._make_records(ans)
-        self.analysis_table.set_analyses(xx)
+        try:
+            ans = self.analysis_table.get_analysis_set(new)
+            ans = self.db.get_analyses_uuid([a[0] for a in ans])
+            xx = self._make_records(ans)
+
+            # for a in (xx[0], xx[-1]):
+            #     print('ab', a.record_id, a.timestampf)
+
+            self.analysis_table.set_analyses(xx)
+        except StopIteration:
+            pass
 
     def _find_references_button_fired(self):
         self.debug('find references button fired')
@@ -281,6 +295,9 @@ class SampleBrowserModel(BrowserModel):
     # private
     def _load_recent(self):
         from pychron.envisage.browser.recent_view import RecentView
+        if not self.available_mass_spectrometers:
+            self._load_mass_spectrometers()
+
         v = RecentView(mass_spectrometers=self.available_mass_spectrometers)
         v.load()
         info = v.edit_traits()
@@ -293,18 +310,19 @@ class SampleBrowserModel(BrowserModel):
                                         high_post=now,
                                         low_post=lp,
                                         filter_non_run=self.filter_non_run_samples)
-            sams = self._load_sample_record_views(ls)
+            if ls:
+                sams = self._load_sample_record_views(ls)
 
-            self.samples = sams
-            self.osamples = sams
+                self.samples = sams
+                self.osamples = sams
 
-            xx = self._get_analysis_series(lp, now, v.mass_spectrometer, analysis_types=v.analysis_types)
-            self.analysis_table.set_analyses(xx)
+                xx = self._get_analysis_series(lp, now, v.mass_spectrometer, analysis_types=v.analysis_types)
+                self.analysis_table.set_analyses(xx)
 
     def _find_references_hook(self):
         ans = self.analysis_table.analyses
-        ms = list({a.mass_spectrometer for a in ans})
-        es = list({a.extract_device for a in ans})
+        ms = list({a.mass_spectrometer.lower() for a in ans if a.mass_spectrometer})
+        es = list({a.extract_device.lower() for a in ans if a.extract_device})
         irs = list({'{},{}'.format(a.irradiation, a.irradiation_level.upper()) for a in ans})
 
         samples = []
@@ -381,26 +399,31 @@ class SampleBrowserModel(BrowserModel):
         return ans
 
     def _selected_projects_change_hook(self, names):
-
         self.selected_samples = []
-        self.analysis_table.analyses = []
-
+        self.analysis_table.clear_non_frozen()
+        #
         if not self._top_level_filter:
             self._top_level_filter = 'project'
 
         if names:
+            irrads = []
             if self._top_level_filter == 'project':
-                db = self.db
-                irrads = db.get_irradiations(project_names=names)
-                self.irradiations = [i.name for i in irrads]
+                irrads = self.db.get_irradiations(project_names=names)
+        else:
+            irrads = self.db.get_irradiations()
+
+        self.irradiations = [i.name for i in irrads]
+
+    def _get_find_references_enabled(self):
+        return bool(self.analysis_table.analyses)
 
     def _time_view_model_default(self):
         return TimeViewModel(db=self.db)
 
     def _analysis_table_default(self):
         at = AnalysisTable(dvc=self.dvc)
-        at.load()
         at.on_trait_change(self._analysis_set_changed, 'analysis_set')
+        # at.load()
         prefid = 'pychron.browser'
         bind_preference(at, 'max_history', '{}.max_history'.format(prefid))
 

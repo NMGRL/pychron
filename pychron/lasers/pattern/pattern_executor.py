@@ -242,6 +242,8 @@ class PatternExecutor(Patternable):
         pat = self.pattern
         self.info('starting pattern {}'.format(pat.name))
         st = time.time()
+        self.controller.update_position()
+        time.sleep(1)
         pat.cx, pat.cy = self.controller.x, self.controller.y
         try:
             for ni in range(pat.niterations):

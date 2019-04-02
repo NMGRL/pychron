@@ -15,8 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
+
 import re
 import time
 
@@ -40,13 +39,19 @@ LAB_TEMP = 'Lab Temperature'
 LAB_HUM = 'Lab Humidity'
 LAB_AIRPRESSUE = 'Lab Air Pressure'
 AGE = 'Age'
+EXTRACT_VALUE = 'Extract Value'
+EXTRACT_DURATION = 'Extract Duration'
+CLEANUP = 'Cleanup'
 
 ATTR_MAPPING = {PEAK_CENTER: 'peak_center',
                 AGE: 'uage',
-                RADIOGENIC_YIELD: 'rad40_percent',
+                RADIOGENIC_YIELD: 'radiogenic_yield',
                 LAB_TEMP: 'lab_temperature',
                 LAB_HUM: 'lab_humidity',
-                LAB_AIRPRESSUE: 'lab_airpressure'}
+                LAB_AIRPRESSUE: 'lab_airpressure',
+                EXTRACT_VALUE: 'extract_value',
+                EXTRACT_DURATION: 'extract_duration',
+                CLEANUP: 'cleanup'}
 
 AR4039 = 'Ar40/Ar39'
 UAR4039 = 'uAr40/Ar39'
@@ -186,10 +191,10 @@ class Series(BaseSeries):
                     ytitle = '{}{}'.format(ytitle, match.group('rem'))
 
         super(Series, self)._setup_plot(pid, pp, po)
-        if '<sup>' in ytitle or '<sub>' in ytitle:
-            self._set_ml_title(ytitle, pid, 'y')
-        else:
-            self.graph.set_y_title(ytitle, plotid=pid)
+        # if '<sup>' in ytitle or '<sub>' in ytitle:
+        #     self._set_ml_title(ytitle, pid, 'y')
+        # else:
+        self.graph.set_y_title(ytitle, plotid=pid)
 
     def plot(self, plots, legend=None):
         """
@@ -257,6 +262,9 @@ class Series(BaseSeries):
                 scatter, p = args
             else:
                 p, scatter, l = args
+
+                if self.options.show_statistics:
+                    graph.add_statistics(plotid=pid)
 
             sel = scatter.index.metadata.get('selections', [])
             sel += omits

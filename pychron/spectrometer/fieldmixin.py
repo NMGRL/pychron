@@ -14,11 +14,24 @@
 # limitations under the License.
 # ===============================================================================
 from __future__ import absolute_import
+
 from traits.api import Instance, HasTraits
 
 
 class FieldMixin(HasTraits):
     field_table = Instance('pychron.spectrometer.field_table.FieldTable', ())
+
+    def field_table_setup(self):
+        if self.spectrometer:
+            molweights = self.spectrometer.molecular_weights
+            name = self.spectrometer.name
+        else:
+            from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS as molweights
+
+            name = ''
+
+        self.field_table.initialize(molweights)
+        self.field_table.spectrometer_name = name.lower()
 
     def reload_field_table(self, *args, **kw):
         self.field_table.load_table(*args, **kw)

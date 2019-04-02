@@ -15,23 +15,21 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
+
 from pickle import dumps
 
+import six
 from pyface.qt import QtCore, QtGui
-from pyface.qt.QtGui import QColor, QHeaderView, QApplication
+from pyface.qt.QtGui import QHeaderView, QApplication
 from traits.api import Bool, Str, List, Any, Instance, Property, Int, HasTraits, Color, Either, Callable
-from traits.trait_base import SequenceTypes
-from traitsui.api import View, Item, TabularEditor, Handler
+from traitsui.api import Item, TabularEditor, Handler
 from traitsui.mimedata import PyMimeData
 from traitsui.qt4.tabular_editor import TabularEditor as qtTabularEditor, \
     _TableView as TableView, HeaderEventFilter, _ItemDelegate
-from traitsui.qt4.tabular_model import TabularModel, alignment_map
+from traitsui.qt4.tabular_model import TabularModel, tabular_mime_type
 
 from pychron.core.helpers.ctx_managers import no_update
-import six
-from six.moves import range
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 
 
 class myTabularEditor(TabularEditor):
@@ -78,11 +76,9 @@ class MoveToRow(HasTraits):
         self._row = v
 
     def traits_view(self):
-        v = View(Item('row'),
-                 buttons=['OK', 'Cancel'],
-                 width=300,
-                 title='Move Selected to Row',
-                 kind='livemodal')
+        v = okcancel_view(Item('row'),
+                          width=300,
+                          title='Move Selected to Row')
         return v
 
 
@@ -126,6 +122,12 @@ class TabularEditorHandler(UnselectTabularEditorHandler):
 
     def copy_to_end(self, info, obj):
         obj.copy_selected_last()
+
+    def move_down(self, info, obj):
+        obj.move(1)
+
+    def move_up(self, info, obj):
+        obj.move(-1)
 
 
 class ItemDelegate(_ItemDelegate):
@@ -336,7 +338,11 @@ class _TableView(TableView):
     def _paste(self):
         clipboard = QApplication.clipboard()
         md = clipboard.mimeData()
-        items = md.instance()
+        try:
+            items = md.instance()
+        except AttributeError:
+            return
+
         if items is not None:
             editor = self._editor
             model = editor.model
@@ -437,6 +443,43 @@ class _TableView(TableView):
 
 
 class _TabularModel(TabularModel):
+    def dropMimeData(self, mime_data, action, row, column, parent):
+        if action == QtCore.Qt.IgnoreAction:
+            return False
+
+        # this is a drag from a tabular model
+        data = mime_data.data(tabular_mime_type)
+        if not data.isNull() and action == QtCore.Qt.MoveAction:
+            id_and_rows = [int(di) for di in data.split(' ')]
+            table_id = id_and_rows[0]
+            # is it from ourself?
+            if table_id == id(self):
+                current_rows = id_and_rows[1:]
+                self.moveRows(current_rows, parent.row())
+                return True
+
+        # this is an external drag
+        data = PyMimeData.coerce(mime_data).instance()
+        if data is not None:
+            if not isinstance(data, list):
+                data = [data]
+            editor = self._editor
+            object = editor.object
+            name = editor.name
+            adapter = editor.adapter
+            if row == -1 and parent.isValid():
+                # find correct row number
+                row = parent.row()
+            if row == -1 and adapter.len(object, name) == 0:
+                # if empty list, target is after end of list
+                row = 0
+            if all(adapter.get_can_drop(object, name, row, item)
+                   for item in data):
+                for item in reversed(data):
+                    self.dropItem(item, row)
+                return True
+        return False
+
     def data(self, mi, role=None):
         """ Reimplemented to return the data.
         """
@@ -481,9 +524,11 @@ class _TabularEditor(qtTabularEditor):
         else:
             slot = self._on_row_selection
 
-        signal = 'selectionChanged(QItemSelection,QItemSelection)'
-        QtCore.QObject.connect(self.control.selectionModel(),
-                               QtCore.SIGNAL(signal), slot)
+        # signal = 'selectionChanged(QItemSelection,QItemSelection)'
+        # QtCore.QObject.connect(self.control.selectionModel(),
+        #                        QtCore.SIGNAL(signal), slot)
+
+        control.selectionModel().selectionChanged.connect(slot)
 
         # Synchronize other interesting traits as necessary:
         self.sync_value(factory.update, 'update', 'from')
@@ -499,20 +544,30 @@ class _TabularEditor(qtTabularEditor):
         self.sync_value(factory.scroll_to_row, 'scroll_to_row', 'from')
 
         # Connect other signals as necessary
-        signal = QtCore.SIGNAL('activated(QModelIndex)')
-        QtCore.QObject.connect(control, signal, self._on_activate)
-        signal = QtCore.SIGNAL('clicked(QModelIndex)')
-        QtCore.QObject.connect(control, signal, self._on_click)
-        signal = QtCore.SIGNAL('clicked(QModelIndex)')
-        QtCore.QObject.connect(control, signal, self._on_right_click)
-        signal = QtCore.SIGNAL('doubleClicked(QModelIndex)')
-        QtCore.QObject.connect(control, signal, self._on_dclick)
-        signal = QtCore.SIGNAL('sectionClicked(int)')
-        QtCore.QObject.connect(control.horizontalHeader(), signal, self._on_column_click)
+        # signal = QtCore.SIGNAL('activated(QModelIndex)')
+        # QtCore.QObject.connect(control, signal, self._on_activate)
+        control.activated.connect(self._on_activate)
+
+        # signal = QtCore.SIGNAL('clicked(QModelIndex)')
+        # QtCore.QObject.connect(control, signal, self._on_click)
+        control.clicked.connect(self._on_click)
+
+        # signal = QtCore.SIGNAL('clicked(QModelIndex)')
+        # QtCore.QObject.connect(control, signal, self._on_right_click)
+        control.clicked.connect(self._on_right_click)
+
+        # signal = QtCore.SIGNAL('doubleClicked(QModelIndex)')
+        # QtCore.QObject.connect(control, signal, self._on_dclick)
+        control.doubleClicked.connect(self._on_dclick)
+
+        # signal = QtCore.SIGNAL('sectionClicked(int)')
+        # QtCore.QObject.connect(control.horizontalHeader(), signal, self._on_column_click)
+        control.horizontalHeader().sectionClicked.connect(self._on_column_click)
 
         control.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        signal = QtCore.SIGNAL('customContextMenuRequested(QPoint)')
-        QtCore.QObject.connect(control, signal, self._on_context_menu)
+        # signal = QtCore.SIGNAL('customContextMenuRequested(QPoint)')
+        # QtCore.QObject.connect(control, signal, self._on_context_menu)
+        control.customContextMenuRequested.connect(self._on_context_menu)
 
         self.header_event_filter = HeaderEventFilter(self)
         control.horizontalHeader().installEventFilter(self.header_event_filter)
@@ -567,14 +622,10 @@ class _TabularEditor(qtTabularEditor):
 
         # control.link_copyable = factory.link_copyable
         control.pastable = factory.pastable
-        signal = QtCore.SIGNAL('sectionResized(int,int,int)')
-
-        QtCore.QObject.connect(control.horizontalHeader(), signal,
-                               self._on_column_resize)
-
-    # def dispose(self):
-    #     # self.control._should_consume = False
-    #     super(_TabularEditor, self).dispose()
+        # signal = QtCore.SIGNAL('sectionResized(int,int,int)')
+        # QtCore.QObject.connect(control.horizontalHeader(), signal,
+        #                        self._on_column_resize)
+        control.horizontalHeader().sectionResized.connect(self._on_column_resize)
 
     def refresh_editor(self):
         if self.control:
@@ -599,9 +650,10 @@ class _TabularEditor(qtTabularEditor):
 
     def _on_column_resize(self, idx, old, new):
         control = self.control
-        header = control.horizontalHeader()
-        cs = [header.sectionSize(i) for i in range(header.count())]
-        self.col_widths = cs
+        if control:
+            header = control.horizontalHeader()
+            cs = [header.sectionSize(i) for i in range(header.count())]
+            self.col_widths = cs
 
     def _multi_selected_rows_changed(self, selected_rows):
         super(_TabularEditor, self)._multi_selected_rows_changed(selected_rows)
@@ -618,10 +670,10 @@ class _TabularEditor(qtTabularEditor):
                 row = self.value.index(row)
             self.scroll_to_row = row
 
-    # def _scroll_to_row_changed(self, row):
-    #     row = min(row, self.model.rowCount(None)) - 1
-    #     super(_TabularEditor, self)._scroll_to_row_changed(0)
-    #     super(_TabularEditor, self)._scroll_to_row_changed(row)
+            # def _scroll_to_row_changed(self, row):
+            #     row = min(row, self.model.rowCount(None)) - 1
+            #     super(_TabularEditor, self)._scroll_to_row_changed(0)
+            #     super(_TabularEditor, self)._scroll_to_row_changed(row)
 
 # ============= EOF =============================================
 # def _paste(self):

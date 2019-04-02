@@ -15,15 +15,18 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from enable.markers import marker_names
 from traitsui.api import UItem, Item, HGroup, VGroup, Group, EnumEditor, spring, View
 
+from pychron.core.pychron_traits import BorderVGroup, BorderHGroup
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.options import SubOptions, AppearanceSubOptions, GroupSubOptions, MainOptions, TitleSubOptions
+from pychron.processing.j_error_mixin import J_ERROR_GROUP
+from pychron.pychron_constants import MAIN, APPEARANCE
 
 
 class DisplaySubOptions(TitleSubOptions):
+
     def traits_view(self):
         errbar_grp = VGroup(HGroup(Item('x_end_caps', label='X End Caps'),
                                    Item('y_end_caps', label='Y End Caps'),
@@ -51,30 +54,39 @@ class DisplaySubOptions(TitleSubOptions):
                    HGroup(Item('peak_label_border', label='Border Width',
                                tooltip='Border width in pixels, user 0 to disable'),
                           Item('peak_label_border_color', label='Border'), enabled_when='peak_label_border'),
+                   Item('peak_label_sigfigs', label='SigFigs'),
                    show_border=True,
                    label='Peaks'),
             show_border=True, label='Label')
+
         inset_grp = VGroup(HGroup(Item('display_inset', label='Use'),
                                   Item('inset_location', label='Location'),
                                   Item('inset_width', label='Width'),
                                   Item('inset_height', label='Height')),
                            show_border=True,
                            label='Inset')
-        mean_grp = VGroup(HGroup(Item('display_mean_indicator', label='Indicator'),
-                                 Item('display_mean', label='Value',
-                                      enabled_when='display_mean_indicator'),
-                                 Item('display_percent_error', label='%Error',
-                                      enabled_when='display_mean_indicator'),
-                                 Item('mean_sig_figs', label='SigFigs')),
-                          HGroup(Item('mean_label_display',
-                                      label='Mean Label Format',
-                                      width=100,
-                                      style='readonly'),
-                                 spring,
-                                 icon_button_editor('edit_mean_format_button', 'cog',
-                                                    tooltip='Open Mean Label maker')),
+
+        mean_label = HGroup(Item('mean_label_display',
+                                 label='Mean Label Format',
+                                 width=100,
+                                 style='readonly'),
+                            spring,
+                            icon_button_editor('edit_mean_format_button', 'cog',
+                                               tooltip='Open Mean Label maker'))
+
+        submean = HGroup(VGroup(Item('display_mean', label='Value', ),
+                                Item('display_percent_error', label='%Error', )),
+                         VGroup(Item('display_mean_mswd', label='MSWD', ),
+                                Item('display_mean_n', label='N')),
+                         Item('mean_sig_figs', label='SigFigs'),
+                         enabled_when='display_mean_indicator')
+
+        mean_grp = VGroup(Item('display_mean_indicator', label='Indicator'),
+                          submean,
+                          mean_label,
                           show_border=True,
                           label='Mean')
+
         info_grp = HGroup(Item('show_info', label='Show'),
                           Item('show_mean_info', label='Mean', enabled_when='show_info'),
                           Item('show_error_type_info', label='Error Type', enabled_when='show_info'),
@@ -108,16 +120,11 @@ class CalculationSubOptions(SubOptions):
                  width=-150,
                  label='Error Calculation Method'),
             Item('nsigma', label='Age Error NSigma'),
-            HGroup(
-                Item('include_j_error',
-                     label='Include in Analyses'),
-                Item('include_j_error_in_mean',
-                     label='Include in Mean',
-                     enabled_when='not include_j_error'),
-                show_border=True, label='J Error'),
 
-            Item('include_irradiation_error'),
-            Item('include_decay_error'),
+            VGroup(J_ERROR_GROUP,
+                   HGroup(Item('include_irradiation_error'),
+                          Item('include_decay_error'), show_border=True),
+                   label='Uncertainty', show_border=True),
             show_border=True,
             label='Calculations')
 
@@ -166,33 +173,45 @@ class IdeogramSubOptions(SubOptions):
                              show_border=True),
                       show_border=True,
                       label='X')
-        tgrp = VGroup(Item('omit_by_tag', label='Omit Tags',
-                           tooltip='If selected only analyses tagged as "OK" are included in the calculations'),
-                      label='Tags', show_border=True)
 
-        return self._make_view(VGroup(xgrp, tgrp))
+        tgrp = BorderVGroup(Item('omit_by_tag', label='Omit Tags',
+                                 tooltip='If selected only analyses tagged as "OK" are included in the calculations'),
+                            label='Tags')
+
+        rtgrp = BorderVGroup(Item('show_results_table', label='Show',
+                                  tooltip='Display a summary table below the ideogram'),
+                             Item('show_ttest_table', label='Show T-test'),
+                             label='Summary Table')
+
+        return self._make_view(VGroup(xgrp, tgrp, rtgrp))
 
 
 class IdeogramAppearance(AppearanceSubOptions):
     def traits_view(self):
-        mi = HGroup(Item('mean_indicator_fontname', label='Mean Indicator'),
-                    Item('mean_indicator_fontsize', show_label=False))
-        ee = HGroup(Item('error_info_fontname', label='Error Info'),
-                    Item('error_info_fontsize', show_label=False))
+        mi = BorderHGroup(UItem('mean_indicator_fontname'),
+                          UItem('mean_indicator_fontsize'),
+                          label='Mean Indicator')
 
-        ll = HGroup(Item('label_fontname', label='Labels'),
-                    Item('label_fontsize', show_label=False))
-        fgrp = VGroup(UItem('fontname'),
-                      mi, ee, ll,
-                      HGroup(self._get_xfont_group(),
-                             self._get_yfont_group()),
-                      label='Fonts', show_border=True)
+        ee = BorderHGroup(UItem('error_info_fontname'),
+                          UItem('error_info_fontsize'),
+                          label='Error Info')
 
-        g = VGroup(self._get_bg_group(),
+        ll = BorderHGroup(UItem('label_fontname'),
+                          UItem('label_fontsize'),
+                          label='Labels')
+
+        fgrp = BorderVGroup(BorderHGroup(UItem('fontname'), label='Change All'),
+                            HGroup(mi, ee),
+                            ll,
+                            HGroup(self._get_xfont_group(),
+                                   self._get_yfont_group()),
+                            label='Fonts')
+
+        g = VGroup(self._get_nominal_group(),
                    self._get_layout_group(),
                    self._get_padding_group(),
-                   self._get_grid_group())
-        return self._make_view(VGroup(g, fgrp))
+                   fgrp)
+        return self._make_view(g)
 
 
 class IdeogramMainOptions(MainOptions):
@@ -201,7 +220,7 @@ class IdeogramMainOptions(MainOptions):
 greater than 10. The value of x depends on the Auxiliary plot e.g. x is age for Analysis Number or K/Ca for KCa.
 x is simply a placeholder and can be replaced by any letter or word except for a few exceptions
 (i.e and, or, is, on, if, not...). To filter based on error or %error use "error" and "percent_error". Multiple predicates may be combined
-with "and", "or". Valid comparators are "<,<=,>,>=,==,!=". "==" means "equals" and "!=" means is not equal.
+with "and", "or". Valid comparators are "<,<=,>,>=,==,!=". "==" means "equals" and "!=" means "not equal".
 Additional examples
 1. x<10
 2. age<10 or age>100
@@ -210,23 +229,20 @@ Additional examples
 5. xyz<=10 and error>=0.1"""
         sigma_tooltip = """Omit analyses greater the N sigma from the arithmetic mean"""
 
-        fgrp = VGroup(HGroup(Item('filter_str', tooltip=tooltip, label='Filter'),
-                             UItem('filter_str_tag')),
-                      HGroup(Item('sigma_filter_n', label='Sigma Filter N', tooltip=sigma_tooltip),
-                             UItem('sigma_filter_tag')),
-                      show_border=True,
-                      label='Filtering')
+        fgrp = BorderVGroup(HGroup(Item('filter_str', tooltip=tooltip, label='Filter'),
+                                   UItem('filter_str_tag')),
+                            HGroup(Item('sigma_filter_n', label='Sigma Filter N', tooltip=sigma_tooltip),
+                                   UItem('sigma_filter_tag')),
+                            label='Filtering')
 
         v = View(VGroup(HGroup(Item('name', editor=EnumEditor(name='names')),
                                Item('scale', editor=EnumEditor(values=['linear', 'log']))),
                         Item('height'),
-                        HGroup(UItem('marker', editor=EnumEditor(values=marker_names)),
-                               Item('marker_size', label='Size'),
-                               show_border=True, label='Marker'),
-                        HGroup(Item('ymin', label='Min'),
-                               Item('ymax', label='Max'),
-                               show_border=True,
-                               label='Y Limits'),
+                        self._get_yticks_grp(),
+                        BorderHGroup(UItem('marker', editor=EnumEditor(values=marker_names)),
+                                     Item('marker_size', label='Size'), label='Marker'),
+                        BorderHGroup(Item('ymin', label='Min'),
+                                     Item('ymax', label='Max'), label='Y Limits'),
                         fgrp,
                         show_border=True))
         return v
@@ -234,13 +250,12 @@ Additional examples
 
 # ===============================================================
 # ===============================================================
-VIEWS = {}
-VIEWS['main'] = IdeogramMainOptions
-VIEWS['ideogram'] = IdeogramSubOptions
-VIEWS['appearance'] = IdeogramAppearance
-VIEWS['calculations'] = CalculationSubOptions
-VIEWS['display'] = DisplaySubOptions
-VIEWS['groups'] = GroupSubOptions
+VIEWS = {MAIN.lower(): IdeogramMainOptions,
+         'ideogram': IdeogramSubOptions,
+         APPEARANCE.lower(): IdeogramAppearance,
+         'calculations': CalculationSubOptions,
+         'display': DisplaySubOptions,
+         'groups': GroupSubOptions}
 
 # ===============================================================
 # ===============================================================

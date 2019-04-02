@@ -13,27 +13,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from __future__ import absolute_import
-from traits.api import List
+from traits.api import List, Bool
 
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.options import AgeOptions
 from pychron.options.views.regression_series_views import VIEWS
-from pychron.pychron_constants import NULL_STR
+from pychron.pychron_constants import NULL_STR, MAIN, APPEARANCE, DISPLAY, GROUPS
 
 
 class RegressionSeriesAuxPlot(AuxPlot):
-    names = List([NULL_STR])
-    # names = List([NULL_STR, 'Analysis Number Nonsorted', 'Analysis Number',
-    #               'Radiogenic 40Ar', 'K/Ca', 'K/Cl', 'Mol K39', 'Ideogram'])
-    # _plot_names = List(['', 'analysis_number_nonsorted', 'analysis_number', 'radiogenic_yield',
-    #                     'kca', 'kcl', 'moles_k39', 'relative_probability'])
+    names = List([NULL_STR], transient=True)
 
 
 class RegressionSeriesOptions(AgeOptions):
-    subview_names = List(['Main', 'Appearance', 'Display', 'Groups'],
-                         transient=True)
     aux_plot_klass = RegressionSeriesAuxPlot
+    show_statistics = Bool(False)
+
+    def initialize(self):
+        self.subview_names = [MAIN, 'Regression Series', APPEARANCE, DISPLAY, GROUPS]
 
     def set_names(self, names, clear_missing=True):
         for ai in self.aux_plots:

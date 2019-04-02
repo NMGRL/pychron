@@ -16,10 +16,12 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traits.api import HasTraits, Str, Float, Property, List, Instance, Dict
-from traitsui.api import View, UItem, Item, HGroup, VGroup, EnumEditor, TabularEditor
+from traitsui.api import UItem, Item, HGroup, VGroup, EnumEditor, TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
 
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.experiment.utilities.detector_ic import make_items, get_columns
 from pychron.processing.analyses.view.detector_ic_view import DetectorICTabularAdapter
@@ -180,9 +182,8 @@ class GainCalibrationEditor(BaseTraitsEditor):
         results_grp = VGroup(UItem('results', editor=TabularEditor(adapter=ResultsAdapter(),
                                                                    editable=False)))
 
-        v = View(VGroup(HGroup(l_grp, r_grp), results_grp),
-                 title='Configure Gain Calibration',
-                 buttons=['OK', 'Cancel'])
+        v = okcancel_view(VGroup(HGroup(l_grp, r_grp), results_grp),
+                          title='Configure Gain Calibration')
         return v
 
 # ============= EOF =============================================

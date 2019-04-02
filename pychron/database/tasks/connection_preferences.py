@@ -18,50 +18,61 @@ from envisage.ui.tasks.preferences_pane import PreferencesPane
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
 from pyface.message_dialog import warning
-from pyface.timer.do_later import do_later, do_after
-from traits.api import Str, Password, Enum, Button, on_trait_change, Color, String, List, Event, File, HasTraits, Bool
-from traitsui.api import View, Item, Group, VGroup, HGroup, ListStrEditor, spring, Label, Spring, \
+from pyface.timer.do_later import do_later
+from traits.api import Str, Password, Enum, Button, on_trait_change, Color, String, List, File, HasTraits, Bool
+from traitsui.api import View, VGroup, HGroup, spring, Label, Spring, \
     EnumEditor, ObjectColumn, TableEditor, UItem
-from traitsui.editors import TextEditor, FileEditor
-
+from traitsui.editors import TextEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
 
-from pychron.core.helpers.strtools import to_bool
-from pychron.core.pychron_traits import IPAddress, IPREGEX
-from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.envisage.tasks.base_preferences_helper import FavoritesPreferencesHelper, FavoritesAdapter
+from pychron.core.helpers.strtools import to_bool, to_csv_str
+from pychron.core.pychron_traits import HostStr
 from pychron.core.ui.custom_label_editor import CustomLabel
+from pychron.envisage.icon_button_editor import icon_button_editor
+from pychron.envisage.tasks.base_preferences_helper import FavoritesPreferencesHelper
+from pychron.pychron_constants import NULL_STR
 
 
 # IPREGEX = re.compile(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$')
 
 
-def show_databases(host, user, password, schema_identifier='AnalysisTbl', exclude=None):
-    import pymysql
-    if exclude is None:
-        exclude = ('information_schema', 'performance_schema', 'mysql')
-    names = []
-    try:
-        conn = pymysql.connect(host=host, port=3306, user=user,
-                               connect_timeout=0.25,
-                               passwd=password, db='information_schema')
-        cur = conn.cursor()
-        if schema_identifier:
-            sql = '''select TABLE_SCHEMA from
-TABLES
-where TABLE_NAME="{}"'''.format(schema_identifier)
-        else:
-            sql = 'SHOW TABLES'
+def show_databases(kind, host, user, password, schema_identifier='AnalysisTbl', exclude=None):
+    records = []
+    if kind == 'mysql':
+        import pymysql
+        if exclude is None:
+            exclude = ('information_schema', 'performance_schema', 'mysql')
+        try:
+            conn = pymysql.connect(host=host, port=3306, user=user,
+                                   connect_timeout=0.25,
+                                   passwd=password, db='information_schema')
+            cur = conn.cursor()
+            if schema_identifier:
+                sql = '''select TABLE_SCHEMA from TABLES where TABLE_NAME="{}"'''.format(schema_identifier)
+            else:
+                sql = 'SHOW TABLES'
 
-        cur.execute(sql)
+            cur.execute(sql)
+            records = cur.fetchall()
 
-        names = [di[0] for di in cur if di[0] not in exclude]
-    except BaseException as e:
-        print('exception show names', e)
-        pass
+        except BaseException:
+            pass
+    elif kind == 'mssql':
+        import pymssql
+        if exclude is None:
+            exclude = ('master', 'tempdb', 'model', 'msdb')
+        try:
+            conn = pymssql.connect(host, user, password, timeout=1)
+            cur = conn.cursor()
+            sql = 'SELECT * FROM sys.databases'
+            cur.execute(sql)
+            records = cur.fetchall()
+        except pymssql.OperationalError:
+            pass
 
+    names = [di[0] for di in records if di[0] not in exclude]
     return names
 
 
@@ -94,29 +105,36 @@ class ConnectionMixin(HasTraits):
         mod = __import__(mod, fromlist=[klass])
         return getattr(mod, klass)
 
-    def _test_connection_button_fired(self):
-        kw = self._get_connection_dict()
+    def _test_connection(self, kw):
         klass = self._get_adapter()
         db = klass(**kw)
         self._connected_label = ''
         if self._test_func:
             db.test_func = self._test_func
 
-        c = db.connect(warn=False)
-        if c:
-            self._connected_color = 'green'
-            self._connected_label = 'Connected'
+        return db.connect(warn=False)
+
+    def _test_connection_button_fired(self):
+        kw = self._get_connection_dict()
+        self._connected_label = 'Not Connected'
+        self._connected_color = 'red'
+
+        if kw is not None:
+            c = self._test_connection(kw)
+
+            if c:
+                self._connected_color = 'green'
+                self._connected_label = 'Connected'
         else:
-            self._connected_label = 'Not Connected'
-            self._connected_color = 'red'
+            warning(None, 'Please select a connection to test')
 
 
 class ConnectionFavoriteItem(HasTraits):
     enabled = Bool
     name = Str
     dbname = Str
-    host = Str
-    kind = Enum('mysql', 'sqlite')
+    host = HostStr
+    kind = Enum('mysql', 'sqlite', 'mssql', 'postgres', NULL_STR)
     username = Str
     names = List
     password = Password
@@ -124,9 +142,13 @@ class ConnectionFavoriteItem(HasTraits):
     path = File
     default = Bool
 
-    def __init__(self, schema_identifier='', attrs=None):
+    attributes = ('name', 'kind', 'username', 'host', 'dbname', 'password', 'enabled', 'default', 'path')
+
+    def __init__(self, schema_identifier='', attrs=None, kind=None):
         super(ConnectionFavoriteItem, self).__init__()
         self.schema_identifier = schema_identifier
+        if kind is not None:
+            self.kind = kind
 
         if attrs:
             attrs = attrs.split(',')
@@ -155,13 +177,20 @@ class ConnectionFavoriteItem(HasTraits):
     def load_names(self):
         if self.username and self.host and self.password:
             if self.schema_identifier:
-                if IPREGEX.match(self.host) or self.host == 'localhost':
-                    names = show_databases(self.host, self.username, self.password, self.schema_identifier)
-                    self.names = names
+                names = show_databases(self.kind, self.host, self.username, self.password, self.schema_identifier)
+                self.names = names
 
     def to_string(self):
-        return ','.join([str(getattr(self, attr)) for attr in ('name', 'kind', 'username', 'host',
-                                                               'dbname', 'password', 'enabled', 'default', 'path')])
+        attrs = [getattr(self, attr) for attr in self.attributes]
+        return to_csv_str(attrs)
+
+    # def to_string(self):
+    #     attrs = [getattr(self, attr) for attr in ('name', 'kind', 'username', 'host',
+    #                                               'dbname', 'password', 'enabled', 'default', 'path')]
+    #     return to_csv_str(attrs)
+
+    # return ','.join([str(getattr(self, attr)) for attr in ('name', 'kind', 'username', 'host',
+    #                                                        'dbname', 'password', 'enabled', 'default', 'path')])
 
     def __repr__(self):
         return self.name
@@ -173,6 +202,7 @@ class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
 
     _fav_klass = ConnectionFavoriteItem
     _schema_identifier = None
+    load_names_button = Button
 
     def __init__(self, *args, **kw):
         super(ConnectionPreferences, self).__init__(*args, **kw)
@@ -191,17 +221,21 @@ class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
         return f
 
     def _get_connection_dict(self):
-
         obj = self._selected
-
-        return dict(username=obj.username,
-                    host=obj.host,
-                    password=obj.password,
-                    name=obj.dbname,
-                    kind=obj.kind)
+        if obj is not None:
+            return dict(username=obj.username,
+                        host=obj.host,
+                        password=obj.password,
+                        name=obj.dbname,
+                        kind=obj.kind)
 
     def __selected_changed(self):
         self._reset_connection_label(True)
+
+    def _load_names_button_fired(self):
+        obj = self._selected
+        if obj:
+            obj.load_names()
 
     @on_trait_change('_fav_items:+')
     def fav_item_changed(self, obj, name, old, new):
@@ -225,19 +259,7 @@ class ConnectionPreferencesPane(PreferencesPane):
     model_factory = ConnectionPreferences
     category = 'Database'
 
-    def traits_view(self):
-        # db_auth_grp = Group(
-        #     Item('host',
-        #          editor=TextEditor(enter_set=True, auto_set=False),
-        #          width=125, label='Host'),
-        #     Item('username', label='User',
-        #          editor=TextEditor(enter_set=True, auto_set=False)),
-        #     Item('password', label='Password',
-        #          editor=TextEditor(enter_set=True, auto_set=False, password=True)),
-        #     enabled_when='kind=="mysql"',
-        #     show_border=True,
-        #     label='Authentication')
-
+    def get_columns(self):
         cols = [CheckboxColumn(name='enabled'),
                 CheckboxColumn(name='default'),
                 ObjectColumn(name='kind'),
@@ -251,43 +273,45 @@ class ConnectionPreferencesPane(PreferencesPane):
                              label='Database',
                              editor=EnumEditor(name='names')),
                 ObjectColumn(name='path', style='readonly')]
+        return cols
+
+    def get_buttons(self):
+        return HGroup(icon_button_editor('add_favorite', 'database_add',
+                                         tooltip='Add saved connection'),
+                      icon_button_editor('add_favorite_path', 'dbs_sqlite',
+                                         tooltip='Add sqlite database'),
+                      icon_button_editor('delete_favorite', 'delete',
+                                         tooltip='Delete saved connection'),
+                      icon_button_editor('test_connection_button', 'database_connect',
+                                         tooltip='Test connection'),
+                      icon_button_editor('load_names_button', 'arrow_refresh',
+                                         enabled_when='load_names_enabled',
+                                         tooltip='Load available database schemas on the selected server'))
+
+    def get_fav_group(self, edit_view=None):
+        cols = self.get_columns()
+        editor = TableEditor(columns=cols,
+                             selected='_selected',
+                             sortable=False)
+        if edit_view:
+            editor.edit_view = edit_view
 
         fav_grp = VGroup(UItem('_fav_items',
                                width=100,
-                               editor=TableEditor(columns=cols,
-                                                  selected='_selected',
-                                                  sortable=False)),
-                         HGroup(
-                             icon_button_editor('add_favorite', 'database_add',
-                                                tooltip='Add saved connection'),
-                             icon_button_editor('add_favorite_path', 'dbs_sqlite',
-                                                tooltip='Add sqlite database'),
-                             icon_button_editor('delete_favorite', 'delete',
-                                                tooltip='Delete saved connection'),
-                             icon_button_editor('test_connection_button', 'database_connect',
-                                                tooltip='Test connection'),
-                             Spring(width=10, springy=False),
-                             Label('Status:'),
-                             CustomLabel('_connected_label',
-                                         label='Status',
-                                         weight='bold',
-                                         color_name='_connected_color'),
-                             spring,
-                             show_labels=False))
+                               editor=editor),
+                         HGroup(self.get_buttons(),
+                                Spring(width=10, springy=False),
+                                Label('Status:'),
+                                CustomLabel('_connected_label',
+                                            label='Status',
+                                            weight='bold',
+                                            color_name='_connected_color'),
+                                spring,
+                                show_labels=False))
+        return fav_grp
 
-        # db_grp = Group(HGroup(Item('kind', show_label=False),
-        #                       Item('name',
-        #                            label='Database Name',
-        #                            editor=EnumEditor(name='_names'),
-        #                            visible_when='kind=="mysql"')),
-        #                HGroup(fav_grp, db_auth_grp, visible_when='kind=="mysql"'),
-        #
-        #                VGroup(Item('path', label='Database File'),
-        #                       visible_when='kind=="sqlite"'),
-        #                show_border=True,
-        #                label='Pychron DB')
-
-        db_grp = HGroup(fav_grp)
-        return View(db_grp)
+    def traits_view(self):
+        fav_grp = self.get_fav_group()
+        return View(fav_grp)
 
 # ============= EOF =============================================

@@ -15,8 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from six.moves.queue import Empty
+
+# ============= standard library imports ========================
+from queue import Empty
 
 from pyface.qt.QtGui import QPlainTextEdit, QTextCursor, QPalette, QColor, QFont
 from traits.api import Color, Str, Event, Int
@@ -24,7 +25,6 @@ from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
 
 
-# ============= standard library imports ========================
 # ============= local library imports  ==========================
 
 

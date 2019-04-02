@@ -15,11 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from traits.api import HasTraits, Str
-from traitsui.api import View, UItem
+from traitsui.api import UItem
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 
 
 class AddRemoteView(HasTraits):
@@ -27,11 +28,10 @@ class AddRemoteView(HasTraits):
     name = 'origin'
 
     def traits_view(self):
-        v = View(UItem('name'),
-                 UItem('url'),
-                 width=600,
-                 buttons=['OK', 'Cancel'],
-                 title='Add Remote')
+        v = okcancel_view(UItem('name'),
+                          UItem('url'),
+                          width=600,
+                          title='Add Remote')
         return v
 
 # ============= EOF =============================================

@@ -15,13 +15,40 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from traits.api import HasTraits, Str, Property, Any
-from traitsui.api import View, UItem
-
-
+from traits.api import HasTraits, Str, Any
+from traits.trait_types import Int
+from traits.traits import Property
+from traitsui.api import View, UItem, TextEditor, Item, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from traitsui.tabular_adapter import TabularAdapter
+
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+
+
+class StatusView(HasTraits):
+    def traits_view(self):
+        v = View(UItem('status', style='custom',
+                       editor=TextEditor(read_only=True)),
+                 kind='modal',
+                 title='Repository Status',
+                 width=500,
+                 resizable=True)
+        return v
+
+
+class NewTagView(HasTraits):
+    message = Str
+    name = Str
+
+    def traits_view(self):
+        v = okcancel_view(VGroup(Item('name'),
+                                 VGroup(UItem('message', style='custom'),
+                                        show_border=True, label='Message')),
+                          width=400,
+                          title='New Tag')
+
+        return v
 
 
 class NewBranchView(HasTraits):
@@ -30,11 +57,9 @@ class NewBranchView(HasTraits):
     _name = Str
 
     def traits_view(self):
-        v = View(UItem('name'),
-                 kind='livemodal',
-                 buttons=['OK', 'Cancel'],
-                 width=200,
-                 title='New Branch')
+        v = okcancel_view(UItem('name'),
+                          width=200,
+                          title='New Branch')
         return v
 
     def _get_name(self):
@@ -47,5 +72,49 @@ class NewBranchView(HasTraits):
         if v not in self.branches:
             if ' ' not in v:
                 return v
+
+
+class GitObjectAdapter(TabularAdapter):
+    hexsha_width = Int(80)
+    message_width = Int(300)
+    date_width = Int(120)
+
+    font = '10'
+    hexsha_text = Property
+    message_text = Property
+
+    def _get_hexsha_text(self):
+        return self.item.hexsha[:8]
+
+    def _get_message_text(self):
+        return self._truncate_message(self.item.message)
+
+    def _truncate_message(self, m):
+        if len(m) > 200:
+            m = '{}...'.format(m[:200])
+        return m
+
+
+class GitTagAdapter(GitObjectAdapter):
+    columns = [('Name', 'name'),
+               ('Message', 'message'),
+               ('Date', 'date'),
+               ('Commit', 'hexsha'),
+               ('Commit Message', 'commit_message')]
+    name_width = Int(60)
+    commit_message_text = Property
+
+    def _get_commit_message_text(self):
+        return self._truncate_message(self.item.commit_message)
+
+
+class CommitAdapter(GitObjectAdapter):
+    columns = [('ID', 'hexsha'),
+               ('Date', 'date'),
+               ('Message', 'message'),
+               ('Author', 'author'),
+               ('Email', 'email'),
+               ]
+    author_width = Int(100)
 
 # ============= EOF =============================================

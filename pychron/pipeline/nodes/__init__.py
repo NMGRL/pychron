@@ -18,28 +18,41 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
-from __future__ import absolute_import
+from pychron.pipeline.nodes.audit import AuditNode
+from pychron.pipeline.nodes.bulk_edit import BulkEditNode
+from pychron.pipeline.nodes.correction_factors import CaCorrectionFactorsNode, KCorrectionFactorsNode
 from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode, FluxMonitorsNode, ListenUnknownNode, CSVNode, \
     InterpretedAgeNode, CalendarUnknownNode
 from pychron.pipeline.nodes.detector_yield import YieldNode
 from pychron.pipeline.nodes.diff import DiffNode
-from pychron.pipeline.nodes.email import EmailNode
+from pychron.pipeline.nodes.dvc_history import DVCHistoryNode
+from pychron.pipeline.nodes.email_node import EmailNode
+from pychron.pipeline.nodes.export import CSVAnalysesExportNode, CSVRawDataExportNode
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, SeriesNode, InverseIsochronNode, \
-    VerticalFluxNode, XYScatterNode, RadialNode, RegressionSeriesNode
-from pychron.pipeline.nodes.filter import FilterNode
-from pychron.pipeline.nodes.find import FindReferencesNode, FindFluxMonitorsNode, FindVerticalFluxNode
-from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode, FitFluxNode
+    VerticalFluxNode, XYScatterNode, RadialNode, RegressionSeriesNode, HistoryIdeogramNode, FluxVisualizationNode, \
+    CompositeNode
+from pychron.pipeline.nodes.filter import FilterNode, MSWDFilterNode
+from pychron.pipeline.nodes.find import FindReferencesNode, FindFluxMonitorsNode, FindVerticalFluxNode, \
+    FindBlanksNode, FindRepositoryAnalysesNode, FindFluxMonitorMeansNode
+from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode, \
+    FitFluxNode, DefineEquilibrationNode
 from pychron.pipeline.nodes.gain import GainCalibrationNode
-from pychron.pipeline.nodes.geochron import GeochronNode
-from pychron.pipeline.nodes.grouping import GroupingNode, GraphGroupingNode
-from pychron.pipeline.nodes.persist import CSVAnalysesExportNode, InterpretedAgeTablePersistNode, SetInterpretedAgeNode
+from pychron.pipeline.nodes.group_age import GroupAgeNode
+from pychron.pipeline.nodes.grouping import GroupingNode, GraphGroupingNode, SubGroupingNode
+from pychron.pipeline.nodes.ia import SetInterpretedAgeNode
+from pychron.pipeline.nodes.mass_spec_reduced import MassSpecReducedNode
+from pychron.pipeline.nodes.ml import MLDataNode, MLRegressionNode
 from pychron.pipeline.nodes.persist import DVCPersistNode, PDFFigureNode, \
-    BlanksPersistNode, IsotopeEvolutionPersistNode, ICFactorPersistNode, FluxPersistNode, XLSXTablePersistNode
+    BlanksPersistNode, IsotopeEvolutionPersistNode, ICFactorPersistNode, FluxPersistNode, \
+    XLSXAnalysisTablePersistNode, InterpretedAgePersistNode, DefineEquilibrationPersistNode
 from pychron.pipeline.nodes.push import PushNode
 from pychron.pipeline.nodes.report import ReportNode
 from pychron.pipeline.nodes.review import ReviewNode
-from pychron.pipeline.nodes.table import XLSXAnalysisTableNode, InterpretedAgeTableNode
-from pychron.pipeline.nodes.correction_factors import CorrectionFactorsNode
-# from pychron.pipeline.nodes.analysis_metadata import AnalysisMetadataNode
+from pychron.pipeline.nodes.table import AnalysisTableNode, InterpretedAgeTableNode
 
+
+class NodeFactory:
+    def __init__(self, name, factory):
+        self.name = name
+        self.factory = factory
 # ============= EOF =============================================

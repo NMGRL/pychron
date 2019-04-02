@@ -15,28 +15,21 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-# from traits.api import HasTraits
-# from pychron.core.ui import set_toolkit
-# set_toolkit('qt4')
+
 # ============= standard library imports ========================
-from __future__ import absolute_import
 from unittest import TestCase
 
 from numpy import linspace, polyval
 
 # ============= local library imports  ==========================
-from pychron.core.regression.mean_regressor import MeanRegressor  #, WeightedMeanRegressor
+from pychron.core.regression.least_squares_regressor import ExponentialRegressor
+from pychron.core.regression.mean_regressor import MeanRegressor  # , WeightedMeanRegressor
 from pychron.core.regression.new_york_regressor import ReedYorkRegressor, NewYorkRegressor
 from pychron.core.regression.ols_regressor import OLSRegressor
 # from pychron.core.regression.york_regressor import YorkRegressor
-from pychron.core.regression.tests.standard_data import mean_data, filter_data, ols_data, pearson
+from pychron.core.regression.tests.standard_data import mean_data, filter_data, ols_data, pearson, pre_truncated_data, \
+    expo_data, expo_data_linear
 
-# class RegressionTestCase(TestCase):
-#     def setUp(self):
-#         self.reg = MeanRegressor()
-#
-#     def test_something(self):
-#         self.assertEqual(True, False)
 
 class RegressionTestCase(object):
     @classmethod
@@ -45,6 +38,29 @@ class RegressionTestCase(object):
 
     def testN(self):
         self.assertEqual(self.reg.n, self.solution['n'])
+
+
+class TruncateRegressionTest(TestCase):
+    def setUp(self):
+        self.reg = MeanRegressor()
+
+    def test_pre_truncate(self):
+        xs, ys, sol = pre_truncated_data()
+        self.reg.trait_set(xs=xs, ys=ys)
+        self.solution = sol
+        self.reg.trait_set(xs=xs, ys=ys)
+        self.reg.set_truncate('x<5')
+
+        self.assertEqual(self.reg.mean, self.solution['pre_mean'])
+
+    def test_post_truncate(self):
+        xs, ys, sol = pre_truncated_data()
+        self.reg.trait_set(xs=xs, ys=ys)
+        self.solution = sol
+        self.reg.trait_set(xs=xs, ys=ys)
+        self.reg.set_truncate('x>=5')
+
+        self.assertEqual(self.reg.mean, self.solution['post_mean'])
 
 
 class MeanRegressionTest(RegressionTestCase, TestCase):
@@ -87,21 +103,23 @@ class OLSRegressionTest(RegressionTestCase, TestCase):
 
 class OLSRegressionTest2(RegressionTestCase, TestCase):
     reg_klass = OLSRegressor
+
     def setUp(self):
-        n=100
-        coeffs=[2.12,1.13,5.14]
+        n = 100
+        coeffs = [2.12, 1.13, 5.14]
         xs = linspace(0, 100, n)
         ys = polyval(coeffs, xs)
 
         self.reg.trait_set(xs=xs, ys=ys, fit='parabolic')
 
-        sol = {'coefficients':coeffs, 'n':n}
+        sol = {'coefficients': coeffs, 'n': n}
         self.solution = sol
         self.reg.calculate()
 
     def testcoefficients(self):
         self.assertListEqual(list([round(x, 6) for x in self.reg.coefficients[::-1]]),
                              self.solution['coefficients'])
+
 
 class FilterOLSRegressionTest(RegressionTestCase, TestCase):
     reg_klass = OLSRegressor
@@ -129,6 +147,7 @@ class FilterOLSRegressionTest(RegressionTestCase, TestCase):
 
 class PearsonRegressionTest(RegressionTestCase):
     kind = ''
+
     def setUp(self):
         xs, ys, wxs, wys = pearson()
 
@@ -136,10 +155,10 @@ class PearsonRegressionTest(RegressionTestCase):
         eys = wys ** -0.5
 
         self.reg.trait_set(xs=xs, ys=ys,
-                                     xserr=exs,
-                                     yserr=eys)
+                           xserr=exs,
+                           yserr=eys)
         self.reg.calculate()
-        self.solution={'n':len(xs)}
+        self.solution = {'n': len(xs)}
 
     def test_slope(self):
         exp = pearson(self.kind)
@@ -162,6 +181,38 @@ class ReedRegressionTest(PearsonRegressionTest, TestCase):
 class NewYorkRegressionTest(PearsonRegressionTest, TestCase):
     reg_klass = NewYorkRegressor
     kind = 'reed'
+
+
+class ExpoRegressionTest(TestCase):
+    def setUp(self):
+        xs, ys, sol = expo_data()
+        self.reg = ExponentialRegressor(xs=xs, ys=ys)
+        self.solution = sol
+
+    def test_a(self):
+        self.reg.calculate()
+        self.assertAlmostEqual(self.reg.coefficients[0], self.solution['coefficients'][0])
+
+    def test_b(self):
+        self.reg.calculate()
+        self.assertAlmostEqual(self.reg.coefficients[1], self.solution['coefficients'][1])
+
+    def test_c(self):
+        self.reg.calculate()
+        self.assertAlmostEqual(self.reg.coefficients[2], self.solution['coefficients'][2])
+
+
+class ExpoRegressionTest2(TestCase):
+    def setUp(self):
+        xs, ys, sol = expo_data_linear()
+        self.reg = ExponentialRegressor(xs=xs, ys=ys)
+        self.solution = sol
+
+    def test_c(self):
+        self.reg.calculate()
+        self.assertAlmostEqual(self.reg.coefficients[2], self.solution['coefficients'][2])
+# ============= EOF =============================================
+
 # class WeightedMeanRegressionTest(RegressionTestCase, TestCase):
 #     @staticmethod
 #     def regressor_factory():
@@ -363,5 +414,3 @@ class NewYorkRegressionTest(PearsonRegressionTest, TestCase):
 # #        print y, yal
 #        self.assertEqual(y, self.Yprederr_5_parabolic)
 # #        self.assertEqual(yal, self.Yprederr_5_parabolic)
-
-# ============= EOF =============================================

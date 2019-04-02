@@ -15,19 +15,19 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from __future__ import absolute_import
 from chaco.api import AbstractOverlay
 from enable.colors import color_table
-from traits.api import Enum, Bool, Float, on_trait_change
-
 # ============= standard library imports ========================
 from numpy import column_stack
+from traits.api import Enum, Bool, Float, on_trait_change
+
+
 # ============= local library imports  ==========================
 
 
 class ErrorBarOverlay(AbstractOverlay):
     orientation = Enum('x', 'y')
-
+    use_component = True
     draw_layer = 'underlay'
     nsigma = 1
     use_end_caps = Bool(True)
@@ -35,40 +35,70 @@ class ErrorBarOverlay(AbstractOverlay):
     _cached_points = None
     _cache_valid = False
 
+    index = None
+    value = None
+    error = None
+    data_orientation = 'x'
+
     def _get_cached_points(self):
-        # print 'laa', self.layout_needed, self._layout_needed, self._cache_valid
         pts = self._cached_points
         if pts is None or not self._cache_valid:
             comp = self.component
-            x = comp.index.get_data()
-            y = comp.value.get_data()
+
+            if not self.use_component:
+                x = self.index
+                y = self.value
+            else:
+                x = comp.index.get_data()
+                y = comp.value.get_data()
+
             if self.orientation == 'x':
-                y = comp.value_mapper.map_screen(y)
-                err = comp.xerror.get_data()
 
-                scaled_err = err * self.nsigma
-                xlow, xhigh = x - scaled_err, x + scaled_err
-                xlow = comp.index_mapper.map_screen(xlow)
-                xhigh = comp.index_mapper.map_screen(xhigh)
+                err = self.error
+                if self.use_component:
+                    err = comp.xerror.get_data()
 
-                start, end = column_stack((xlow, y)), column_stack((xhigh, y))
-                lstart, lend = column_stack((xlow, y - 5)), column_stack((xlow, y + 5))
-                ustart, uend = column_stack((xhigh, y - 5)), column_stack((xhigh, y + 5))
+                if err is not None:
+                    scaled_err = err * self.nsigma
+                    # print(xlow, y)
+                    if self.data_orientation == 'x':
+                        y = comp.value_mapper.map_screen(y)
+                        xlow, xhigh = x - scaled_err, x + scaled_err
+                        xlow = comp.index_mapper.map_screen(xlow)
+                        xhigh = comp.index_mapper.map_screen(xhigh)
+                        start, end = column_stack((xlow, y)), column_stack((xhigh, y))
+                        lstart, lend = column_stack((xlow, y - 5)), column_stack((xlow, y + 5))
+                        ustart, uend = column_stack((xhigh, y - 5)), column_stack((xhigh, y + 5))
+
+                    else:
+                        x = comp.index_mapper.map_screen(x)
+                        ylow, yhigh = y - scaled_err, y + scaled_err
+                        ylow = comp.value_mapper.map_screen(ylow)
+                        yhigh = comp.value_mapper.map_screen(yhigh)
+                        start, end = column_stack((ylow, x)), column_stack((yhigh, x))
+                        lstart, lend = column_stack((ylow, x - 5)), column_stack((ylow, x + 5))
+                        ustart, uend = column_stack((yhigh, x - 5)), column_stack((yhigh, x + 5))
+
+                    pts = start, end, lstart, lend, ustart, uend
 
             else:
                 x = comp.index_mapper.map_screen(x)
-                err = comp.yerror.get_data()
-                # print 'fff', len(x), len(err), comp.color
-                scaled_err = err * self.nsigma
-                ylow, yhigh = y - scaled_err, y + scaled_err
-                ylow = comp.value_mapper.map_screen(ylow)
-                yhigh = comp.value_mapper.map_screen(yhigh)
-                # idx = arange(len(x))
-                start, end = column_stack((x, ylow)), column_stack((x, yhigh))
-                lstart, lend = column_stack((x - 5, ylow)), column_stack((x + 5, ylow))
-                ustart, uend = column_stack((x - 5, yhigh)), column_stack((x + 5, yhigh))
 
-            pts = start, end, lstart, lend, ustart, uend
+                err = self.error
+                if self.use_component:
+                    err = comp.yerror.get_data()
+
+                if err is not None:
+                    scaled_err = err * self.nsigma
+                    ylow, yhigh = y - scaled_err, y + scaled_err
+                    ylow = comp.value_mapper.map_screen(ylow)
+                    yhigh = comp.value_mapper.map_screen(yhigh)
+
+                    start, end = column_stack((x, ylow)), column_stack((x, yhigh))
+                    lstart, lend = column_stack((x - 5, ylow)), column_stack((x + 5, ylow))
+                    ustart, uend = column_stack((x - 5, yhigh)), column_stack((x + 5, yhigh))
+
+                    pts = start, end, lstart, lend, ustart, uend
             self._cached_points = pts
             self._cache_valid = True
 
@@ -76,26 +106,27 @@ class ErrorBarOverlay(AbstractOverlay):
 
     def overlay(self, component, gc, view_bounds, mode='normal'):
         with gc:
-            gc.clip_to_rect(component.x, component.y,
-                            component.width, component.height)
-            # draw normal
-            color = component.color
-            if isinstance(color, str):
-                color = color_table[color]
-                # print 'ebo color',color
+            pts = self._get_cached_points()
+            if pts:
+                gc.clip_to_rect(component.x, component.y,
+                                component.width, component.height)
+                # draw normal
+                color = component.color
+                if isinstance(color, str):
+                    color = color_table[color]
 
-            gc.set_line_width(self.line_width)
-            gc.set_stroke_color(color)
-            gc.set_fill_color(color)
+                gc.set_line_width(self.line_width)
+                gc.set_stroke_color(color)
+                gc.set_fill_color(color)
 
-            start, end, lstart, lend, ustart, uend = self._get_cached_points()
-            gc.line_set(start, end)
+                start, end, lstart, lend, ustart, uend = pts
+                gc.line_set(start, end)
 
-            if self.use_end_caps:
-                gc.line_set(lstart, lend)
-                gc.line_set(ustart, uend)
+                if self.use_end_caps:
+                    gc.line_set(lstart, lend)
+                    gc.line_set(ustart, uend)
 
-            gc.draw_path()
+                gc.draw_path()
 
     @on_trait_change('component:[bounds, _layout_needed, index_mapper:updated, value_mapper:updated]')
     def _handle_component_change(self, obj, name, new):

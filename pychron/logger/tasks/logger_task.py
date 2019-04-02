@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traits.api import on_trait_change, Any, Instance
 
 from pychron.displays.gdisplays import gLoggerDisplay, gWarningDisplay
@@ -25,7 +26,7 @@ from pychron.logger.tasks.logger_panes import DisplayPane
 
 class LoggerTask(BaseTask):
     name = 'Logger'
-    id = 'pychron.logger'
+    id = 'pychron.logger.task'
 
     display_pane = Instance(DisplayPane)
     warning_display = Any
@@ -50,7 +51,7 @@ class LoggerTask(BaseTask):
         app = self.window.application
         for win in app.windows:
             if win.active_task:
-                if win.active_task.id == 'pychron.logger':
+                if win.active_task.id == 'pychron.logger.task':
                     evt.veto = True
                     break
 

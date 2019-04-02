@@ -16,69 +16,40 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from pyface.file_dialog import FileDialog
-from traits.api import List, Any, Event, Bool
+
+from traits.api import Any, Event
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.envisage.tasks.base_editor import grouped_name, BaseTraitsEditor
-from pychron.pipeline.editors.base_adapter import TableBlank, TableSeparator
-from pychron.core.helpers.filetools import add_extension
-from pychron.paths import paths
+from pychron.pipeline.plot.editors.base_editor import BaseEditor
 
 
-class BaseTableEditor(BaseTraitsEditor):
-    items = List
-    records = List
-    # oitems = List
-    col_widths = List
+class BaseTableEditor(BaseEditor):
     selected = Any
     refresh_needed = Event
-    use_alternating_background = Bool(False)
-
     basename = 'table'
 
-    def save_file(self, p, title=''):
-        if p.endswith('.xls'):
-            self.make_xls_table(title, p)
-        elif p.endswith('.pdf'):
-            self.make_pdf_table(title, p)
-        else:
-            self.make_csv_table(title, p)
-
-    def set_items(self, items):
-        self.items = items
-
-    def _items_changed(self):
-        self._set_name()
-
-    def _set_name(self):
-        na = list(set([ni.sample for ni in self.items]))
-        na = grouped_name(na)
-        self.name = '{} {}'.format(na, self.basename)
-
-    def clean_rows(self):
-        return self._clean_items()
-
-    def _clean_items(self):
-        return [x for x in self.items if not isinstance(x, (TableBlank, TableSeparator))]
-
-    def _get_save_path(self, path, ext='.pdf'):
-        if path is None:
-            dlg = FileDialog(action='save as', default_directory=paths.processed_dir)
-            if dlg.open():
-                if dlg.path:
-                    path = add_extension(dlg.path, ext)
-
-        return path
-
-    def make_pdf_table(self, *args, **kw):
-        pass
-
-    def make_xls_table(self, *args, **kw):
-        pass
-
-    def make_csv_table(self, *args, **kw):
-        pass
+    # def save_file(self, p, title=''):
+    #     if p.endswith('.xls'):
+    #         self.make_xls_table(title, p)
+    #     elif p.endswith('.pdf'):
+    #         self.make_pdf_table(title, p)
+    #     else:
+    #         self.make_csv_table(title, p)
+    #
+    # def clean_rows(self):
+    #     return self._clean_items()
+    #
+    # def _clean_items(self):
+    #     return [x for x in self.items if not isinstance(x, (TableBlank, TableSeparator))]
+    #
+    # def _get_save_path(self, path, ext='.pdf'):
+    #     if path is None:
+    #         dlg = FileDialog(action='save as', default_directory=paths.processed_dir)
+    #         if dlg.open():
+    #             if dlg.path:
+    #                 path = add_extension(dlg.path, ext)
+    #
+    #     return path
 
 # ============= EOF =============================================

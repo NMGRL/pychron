@@ -17,19 +17,22 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
-from traits.api import List, HasTraits, Str, Bool, Float, Property
-from traitsui.api import View, UItem, TableEditor
+
 # ============= standard library imports ========================
 from random import random
+
 from six.moves.configparser import ConfigParser
-import time
+from traits.api import List, HasTraits, Str, Bool, Float, Property
+from traitsui.api import UItem, TableEditor
 # ============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
+
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.stats.peak_detection import PeakCenterError
+from pychron.spectrometer import get_spectrometer_config_path
 from pychron.spectrometer.jobs.magnet_sweep import MagnetSweep
 from pychron.spectrometer.jobs.peak_center import calculate_peak_center, BasePeakCenter
-from pychron.spectrometer import get_spectrometer_config_path
 
 
 class ResultsView(HasTraits):
@@ -45,11 +48,9 @@ class ResultsView(HasTraits):
                 ObjectColumn(name='old_deflection'),
                 ObjectColumn(name='new_deflection')]
 
-        v = View(UItem('results', editor=TableEditor(columns=cols,
-                                                     sortable=False)),
-                 title='Deflection Results',
-                 buttons=['OK', 'Cancel'],
-                 kind='livemodal')
+        v = okcancel_view(UItem('results', editor=TableEditor(columns=cols,
+                                                              sortable=False)),
+                          title='Deflection Results')
         return v
 
 
@@ -89,6 +90,7 @@ class Coincidence(BasePeakCenter, MagnetSweep):
         """
         graph = self.graph
         plot = graph.plots[0]
+
         # time.sleep(0.05)
 
         # wait for graph to fully update
@@ -301,4 +303,3 @@ class Coincidence(BasePeakCenter, MagnetSweep):
 #     def _reference_detector_default(self):
 #         self.additional_detectors = self.detectors[1:]
 #         return self.detectors[0]
-

@@ -16,10 +16,12 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traits.api import HasTraits, Str, Any, Property, cached_property
-from traitsui.api import View, UItem, Item, HGroup, VGroup, EnumEditor, TabularEditor
+from traitsui.api import UItem, Item, HGroup, VGroup, EnumEditor, TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
 
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.combobox_editor import ComboboxEditor
 
 
@@ -74,12 +76,9 @@ class SampleLocator(HasTraits):
                            editor=ComboboxEditor(name='samples')))
         bgrp = VGroup(UItem('sessions', editor=TabularEditor(adapter=SessionAdapter(),
                                                              selected='session')))
-        v = View(VGroup(agrp,
-                        bgrp),
-                 buttons=['OK', 'Cancel'],
-                 kind='livemodal',
-                 resizable=True,
-                 title='Locate Sample')
+        v = okcancel_view(VGroup(agrp,
+                                 bgrp),
+                          title='Locate Sample')
         return v
 
 # ============= EOF =============================================

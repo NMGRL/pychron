@@ -18,10 +18,27 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from __future__ import absolute_import
+
 from pychron.core.xml.xml_parser import XMLParser
 
 
 class SwitchParser(XMLParser):
+    def get_all_switches(self):
+        switches = []
+        for g in self.get_groups():
+            for v in self.get_valves(group=g):
+                switches.append(v)
+
+        for v in self.get_valves():
+            switches.append(v)
+
+        for s in self.get_switches():
+            switches.append(s)
+
+        for mv in self.get_manual_valves():
+            switches.append(mv)
+        return switches
+
     def get_manual_valve(self, *args, **kw):
         return self._get_item('manual_valve', *args, **kw)
 

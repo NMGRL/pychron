@@ -14,12 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
+from queue import Queue
+from threading import Event, Thread
+
+import time
 # ============= enthought library imports =======================
 from traits.api import Any, List, CInt, Int, Bool, Enum, Str, Instance
 
-import time
-from threading import Event, Thread
-from queue import Queue
 from pychron.envisage.consoleable import Consoleable
 from pychron.pychron_constants import AR_AR, SIGNAL, BASELINE, WHIFF, SNIFF
 
@@ -134,13 +135,13 @@ class DataCollector(Consoleable):
 
         def writefunc():
             writer = self.data_writer
-            while not q.empty() or not evt.wait(1):
+            while not q.empty() or not evt.wait(10):
                 dets = self.detectors
                 while not q.empty():
                     x, keys, signals = q.get()
                     writer(dets, x, keys, signals)
 
-        # only write to file every 1 seconds and not on main thread
+        # only write to file every 10 seconds and not on main thread
         t = Thread(target=writefunc)
         # t.setDaemon(True)
         t.start()
@@ -294,9 +295,13 @@ class DataCollector(Consoleable):
                 fit = 'average'
             gs = [(self.plot_panel.baseline_graph, det, fit, 0, 0)]
         else:
+            title = self.isotope_group.get_isotope_title(name=iso, detector=det)
             iso = self.isotope_group.get_isotope(name=iso, detector=det)
             fit = iso.get_fit(cnt)
-            gs = [(self.plot_panel.isotope_graph, iso.name, fit, self.series_idx, self.fit_series_idx)]
+            gs = [(self.plot_panel.isotope_graph, title, fit, self.series_idx, self.fit_series_idx)]
+
+        dd = self._get_detector(det)
+        ypadding = dd.ypadding
 
         for g, name, fit, series, fit_series in gs:
 
@@ -305,7 +310,7 @@ class DataCollector(Consoleable):
                         series=series,
                         plotid=pid,
                         update_y_limits=True,
-                        ypadding='0.1')
+                        ypadding=ypadding)
             if fit:
                 g.set_fit(fit, plotid=pid, series=fit_series)
 

@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
@@ -25,6 +26,7 @@ from traitsui.api import View, Item, UItem, Spring, Label, spring, VGroup, HGrou
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 from pychron.pychron_constants import PLUSMINUS, NULL_STR, K_DECAY_CONSTANTS, PLUSMINUS_ONE_SIGMA
@@ -49,37 +51,33 @@ class DecayConstantEntry(HasTraits):
         return tuple([getattr(self, a) for a in LAMBDA_K_ATTRS])
 
     def traits_view(self):
-        v = View(VGroup(Item('name'),
-                        HGroup(UItem('lambda_e'), Label(PLUSMINUS), UItem('lambda_e_error'),
-                               show_border=True, label='Ar40K epsilon/yr'),
-                        HGroup(UItem('lambda_b'), Label(PLUSMINUS), UItem('lambda_b_error'),
-                               show_border=True, label='Ar40K beta/yr'),
-                        Item('total_k_decay', style='readonly')),
-                 buttons=['OK', 'Cancel'],
-                 title='Add Decay Constant Entry',
-                 kind='livemodal')
+        v = okcancel_view(VGroup(Item('name'),
+                                 HGroup(UItem('lambda_e'), Label(PLUSMINUS), UItem('lambda_e_error'),
+                                        show_border=True, label='Ar40K epsilon/yr'),
+                                 HGroup(UItem('lambda_b'), Label(PLUSMINUS), UItem('lambda_b_error'),
+                                        show_border=True, label='Ar40K beta/yr'),
+                                 Item('total_k_decay', style='readonly')),
+                          title='Add Decay Constant Entry')
         return v
 
 
 class AtmConstantsEntry(HasTraits):
     name = Str
-    Ar40_Ar36_atm = Float
-    Ar40_Ar36_atm_error = Float
-    Ar40_Ar38_atm = Float
-    Ar40_Ar38_atm_error = Float
+    ar40_ar36_atm = Float
+    ar40_ar36_atm_error = Float
+    ar40_ar38_atm = Float
+    ar40_ar38_atm_error = Float
 
     def totuple(self):
         return tuple([getattr(self, a) for a in ATM_ATTRS])
 
     def traits_view(self):
-        v = View(VGroup(Item('name'),
-                        HGroup(UItem('Ar40_Ar36_atm'), Label(PLUSMINUS), UItem('Ar40_Ar36_atm_err'),
-                               show_border=True, label='(Ar40/Ar36)atm'),
-                        HGroup(UItem('Ar40_Ar38_atm'), Label(PLUSMINUS), UItem('Ar40_Ar38_atm_err'),
-                               show_border=True, label='(Ar40/Ar38)atm')),
-                 buttons=['OK', 'Cancel'],
-                 title='Add Atm Constant Entry',
-                 kind='livemodal')
+        v = okcancel_view(VGroup(Item('name'),
+                                 HGroup(UItem('ar40_ar36_atm'), Label(PLUSMINUS), UItem('ar40_ar36_atm_error'),
+                                        show_border=True, label='(Ar40/Ar36)atm'),
+                                 HGroup(UItem('ar40_ar38_atm'), Label(PLUSMINUS), UItem('ar40_ar38_atm_error'),
+                                        show_border=True, label='(Ar40/Ar38)atm')),
+                          title='Add Atm Constant Entry')
         return v
 
 
@@ -94,16 +92,17 @@ class ArArConstantsPreferences(BasePreferencesHelper):
     lambda_e_error = Float(0)
     lambda_b = Float(4.962e-10)
     lambda_b_error = Float(0)
-    lambda_Cl36 = Float(6.308e-9)
-    lambda_Cl36_error = Float(0)
-    lambda_Ar37 = Float(0.01975)
-    lambda_Ar37_error = Float(0)
-    lambda_Ar39 = Float(7.068e-6)
-    lambda_Ar39_error = Float(0)
+    lambda_cl36 = Float(6.308e-9)
+    lambda_cl36_error = Float(0)
+    lambda_ar37 = Float(0.01975)
+    lambda_ar37_error = Float(0)
+    lambda_ar39 = Float(7.068e-6)
+    lambda_ar39_error = Float(0)
     ar37_ar39_mode = Enum('Normal', 'Fixed')
     ar37_ar39 = Float(0.01)
     ar37_ar39_error = Float(0.01)
     allow_negative_ca_correction = Bool
+    use_irradiation_endtime = Bool
 
     # ===========================================================================
     # spectrometer
@@ -113,16 +112,16 @@ class ArArConstantsPreferences(BasePreferencesHelper):
     ic_factor = Float(1.0)
     ic_factor_error = Float(0.0)
 
-    age_units = Enum('Ma', 'ka', 'Ga')
+    age_units = Enum('a', 'ka', 'Ma', 'Ga')
 
-    #citations
+    # citations
     ar40_ar36_atm_citation = Str
     ar40_ar38_atm_citation = Str
     lambda_e_citation = Str
     lambda_b_citation = Str
-    lambda_Cl36_citation = Str
-    lambda_Ar37_citation = Str
-    lambda_Ar39_citation = Str
+    lambda_cl36_citation = Str
+    lambda_ar37_citation = Str
+    lambda_ar39_citation = Str
 
     decay_constant_entries = Dict(K_DECAY_CONSTANTS)
     add_decay_constant = Button
@@ -188,6 +187,9 @@ class ArArConstantsPreferences(BasePreferencesHelper):
         if info.result and name:
             if name not in self.atm_constant_names:
                 nv = e.totuple()
+                for k, v in self.atm_constant_entries.items():
+                    print('k={}, v={}, nv={}'.format(k, v, nv))
+
                 exists = next((k for k, v in self.atm_constant_entries.items() if nv == v), None)
                 if exists:
                     warning(None,
@@ -259,7 +261,7 @@ class ArArConstantsPreferences(BasePreferencesHelper):
     def _get_value(self, name, value):
         if name == 'total_k_decay':
             return self._get_total_k_decay()
-        elif name in ('decay_constant_entry_deletable','atm_constant_entry_deletable'):
+        elif name in ('decay_constant_entry_deletable', 'atm_constant_entry_deletable'):
             pass
         else:
             return super(ArArConstantsPreferences, self)._get_value(name, value)
@@ -284,10 +286,15 @@ class ArArConstantsPreferencesPane(PreferencesPane):
         vs = [
             ('Ar40K epsilon/yr', 'lambda_e', 'lambda_e_error'),
             ('Ar40K beta/yr', 'lambda_b', 'lambda_b_error'),
-            ('Cl36/d', 'lambda_Cl36', 'lambda_Cl36_error'),
-            ('Ar37/d', 'lambda_Ar37', 'lambda_Ar37_error'),
-            ('Ar39/d', 'lambda_Ar39', 'lambda_Ar39_error')]
+            ('Cl36/d', 'lambda_cl36', 'lambda_cl36_error'),
+            ('Ar37/d', 'lambda_ar37', 'lambda_ar37_error'),
+            ('Ar39/d', 'lambda_ar39', 'lambda_ar39_error')]
         items = [HGroup(Label(l), spring, UItem(v), UItem(e)) for l, v, e in vs]
+
+        items.append(Item('use_irradiation_endtime', label='Use Irradiation End time',
+                          tooltip='Use irradiation end time for decay calculations instead of the start time. '
+                                  'FYI Mass Spec and NMGRL by default use the start time. '
+                                  'McDougall and Harrison 1999 and ArArCalc use the end time.'))
         decay = VGroup(
             presets,
             HGroup(Item('total_k_decay', style='readonly', label='Total Ar40K/yr')),
@@ -321,15 +328,17 @@ class ArArConstantsPreferencesPane(PreferencesPane):
                    Label('Citation')),
             HGroup(Item('ar40_ar36_atm', label='(40Ar/36Ar)atm'),
                    Item('ar40_ar36_atm_error', show_label=False),
-                   Item('ar40_ar36_atm_citation', show_label=False)),
+                   Item('ar40_ar36_atm_citation', show_label=False),
+                   enabled_when='atm_constant_entry_deletable'),
             HGroup(Item('ar40_ar38_atm', label='(40Ar/38Ar)atm'),
                    Item('ar40_ar38_atm_error', show_label=False),
-                   Item('ar40_ar38_atm_citation', show_label=False)),
+                   Item('ar40_ar38_atm_citation', show_label=False),
+                   enabled_when='atm_constant_entry_deletable'),
             Item('_'),
             HGroup(
                 Item('ar37_ar39_mode', label='(37Ar/39Ar)K'),
-                Item('ar37_ar39', show_label=False),
-                Item('ar37_ar39_error', show_label=False)),
+                Item('ar37_ar39', show_label=False, enabled_when='ar37_ar39_mode=="Fixed"'),
+                Item('ar37_ar39_error', show_label=False, enabled_when='ar37_ar39_mode=="Fixed"')),
             label='Ratios')
         return ratios
 

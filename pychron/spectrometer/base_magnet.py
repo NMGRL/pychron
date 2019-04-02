@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 import os
 import time
 from math import pi
@@ -23,7 +22,6 @@ from math import pi
 import yaml
 from numpy import arange, sin
 from traits.api import Property, Float, Event, Instance
-from traitsui.api import View, Item, VGroup, HGroup, Spring, RangeEditor
 
 from pychron.paths import paths
 from pychron.spectrometer.fieldmixin import FieldMixin
@@ -78,16 +76,17 @@ class BaseMagnet(SpectrometerDevice, FieldMixin):
         read DAC from device
         :return:
         """
-        if self.spectrometer:
-            molweights = self.spectrometer.molecular_weights
-            name = self.spectrometer.name
-        else:
-            from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS as molweights
-
-            name = ''
-
-        self.field_table.initialize(molweights)
-        self.field_table.spectrometer_name = name.lower()
+        # if self.spectrometer:
+        #     molweights = self.spectrometer.molecular_weights
+        #     name = self.spectrometer.name
+        # else:
+        #     from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS as molweights
+        #
+        #     name = ''
+        #
+        # self.field_table.initialize(molweights)
+        # self.field_table.spectrometer_name = name.lower()
+        self.field_table_setup()
 
         d = self.read_dac()
         if d is not None:
@@ -329,6 +328,8 @@ class BaseMagnet(SpectrometerDevice, FieldMixin):
     # views
     # ===============================================================================
     def traits_view(self):
+        from traitsui.api import View, Item, VGroup, HGroup, Spring, RangeEditor
+
         v = View(VGroup(VGroup(Item('dac', editor=RangeEditor(low_name='dacmin',
                                                               high_name='dacmax',
                                                               format='%0.5f')),

@@ -16,14 +16,17 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traits.api import Str, Int, Property, List
-from traitsui.api import View, VGroup, UItem, HGroup, Group, Tabbed
+from traitsui.api import VGroup, UItem, HGroup, Group, Tabbed
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.editors import TabularEditor
 from traitsui.handler import Controller
 from traitsui.item import Readonly
 from traitsui.tabular_adapter import TabularAdapter
+
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.git_archive.history import CommitAdapter, BaseGitHistory
 from pychron.pychron_constants import LIGHT_YELLOW
 
@@ -37,6 +40,7 @@ class UpdateGitHistory(BaseGitHistory):
 
     def set_tags(self, tags):
         gfactory = self.git_sha_object_factory
+
         def factory(t):
             obj = gfactory(t.commit)
             obj.name = t.name
@@ -63,23 +67,21 @@ class CommitAdapter(TabularAdapter):
 
 
 class TagAdapter(CommitAdapter):
-    columns = [('Tag','name'),
+    columns = [('Tag', 'name'),
                ('Message', 'message'),
                ('Date', 'date'),
                ('SHA', 'hexsha')]
     name_width = Int(100)
 
+
 class BaseCommitsView(Controller):
     model = BaseGitHistory
 
     def traits_view(self):
-        v = View(VGroup(*self._groups()),
-                 kind='livemodal',
-                 width=900,
-                 height=400,
-                 buttons=['OK', 'Cancel'],
-                 title='Available Updates- Branch= {}'.format(self.model.branchname),
-                 resizable=True)
+        v = okcancel_view(VGroup(*self._groups()),
+                          width=900,
+                          height=400,
+                          title='Available Updates- Branch= {}'.format(self.model.branchname))
         return v
 
     def _groups(self):
@@ -127,6 +129,3 @@ class CommitView(BaseCommitsView):
         #     return v
 
 # ============= EOF =============================================
-
-
-

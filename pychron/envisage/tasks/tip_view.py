@@ -13,13 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from __future__ import absolute_import
-from pychron.core.ui import set_qt
 
-set_qt()
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Str
 from traitsui.api import View, UItem, TextEditor
+from traitsui.menu import OKButton
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -34,6 +34,7 @@ class TipView(HasTraits):
                        style='custom',
                        editor=TextEditor(read_only=True)),
                  buttons=['OK'],
+                 default_button=OKButton,
                  height=400,
                  width=400,
                  title='Random Tip',
@@ -45,6 +46,3 @@ if __name__ == '__main__':
     t = TipView()
     t.configure_traits()
 # ============= EOF =============================================
-
-
-

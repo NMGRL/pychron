@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
+
 import hashlib
 import random
 from threading import Thread
@@ -33,7 +34,6 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 from traits.api import List, Tuple, HasTraits, Password
 from traitsui.api import View, Item
 
-from pychron.core.helpers.strtools import to_bool
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import ToggleFullWindowAction, EditInitializationAction, EditTaskExtensionsAction
 from pychron.envisage.tasks.base_plugin import BasePlugin
@@ -97,7 +97,7 @@ class PychronTasksPlugin(BasePlugin):
         self.application.preferences.save()
 
     def _random_tip(self):
-        if globalv.random_tip_enabled and to_bool(self.application.preferences.get('pychron.general.show_random_tip')):
+        if globalv.random_tip_enabled and self.application.get_boolean_preference('pychron.general.show_random_tip'):
             from pychron.envisage.tasks.tip_view import TipView
 
             t = random.choice(self.help_tips)
@@ -111,7 +111,7 @@ class PychronTasksPlugin(BasePlugin):
                 '<b>2.</b> Set the flag <i>random_tip_enabled</i> to False in the initialization file',
                 'Use <b>Window/Reset Layout</b> to change the current window back to its default "Look"',
                 'Submit bugs or issues to the developers manually using <b>Help/Add Request/Report Bug</b>',
-                'The current version of Pychron contains over 151K lines of code',
+                'The current version of Pychron contains over 154K lines of code',
                 'If menu actions are missing first check that the desired "Plugin" is enabled using <b>Help/Edit '
                 'Initialization</b>. If "Plugin" is enabled, check that the desired action is enabled using '
                 '<b>Help/Edit UI</b>.']

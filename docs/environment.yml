@@ -1,0 +1,57 @@
+name: sphinx_pychron
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - alabaster
+  - asn1crypto
+  - babel
+  - bzip2
+  - ca-certificates
+  - certifi
+  - cffi
+  - chardet
+  - commonmark
+  - cryptography
+  - cryptography-vectors
+  - docutils
+  - future
+  - icu
+  - idna
+  - imagesize
+  - jinja2
+  - jpeg
+  - libcxx
+  - libffi
+  - libpng
+  - llvm-meta
+  - markupsafe
+  - ncurses
+  - openssl
+  - packaging
+  - pip
+  - pycparser
+  - pygments
+  - pyopenssl
+  - pyparsing
+  - pysocks
+  - python
+  - pytz
+  - readline
+  - recommonmark
+  - requests
+  - setuptools
+  - sip
+  - six
+  - snowballstemmer
+  - sphinx
+  - sphinxcontrib-websupport
+  - sqlite
+  - tk
+  - urllib3
+  - wheel
+  - xz
+  - zlib
+  - sqlalchemy
+prefix: //anaconda/envs/sphinx_pychron
+

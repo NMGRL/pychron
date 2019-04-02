@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
+
 import os
 
 from envisage.ui.tasks.task_extension import TaskExtension
@@ -25,7 +26,7 @@ from pyface.tasks.action.schema import SMenu
 from pyface.tasks.action.schema_addition import SchemaAddition
 from traits.api import List, Str
 
-from pychron.core.helpers.filetools import list_directory2
+from pychron.core.helpers.filetools import glob_list_directory
 from pychron.core.helpers.strtools import to_bool
 from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
@@ -38,31 +39,28 @@ from pychron.paths import paths
 
 
 def pattern_action(name, application, manager_name, lase=False):
-    a = PatternAction(id='pattern.action.{}'.format(name),
-                      name=name.capitalize(),
-                      application=application,
-                      manager_name=manager_name,
-                      pattern_path=os.path.join(paths.pattern_dir, name),
-                      lase=lase)
-    return lambda: a
+    def factory():
+        a = PatternAction(id='pattern.action.{}'.format(name),
+                          name=name.capitalize(),
+                          application=application,
+                          manager_name=manager_name,
+                          pattern_path=os.path.join(paths.pattern_dir, name),
+                          lase=lase)
+        return a
+
+    return factory
 
 
 class CoreLaserPlugin(BaseTaskPlugin):
     def _task_extensions_default(self):
-        actions = [
-            SchemaAddition(factory=OpenPowerMapAction,
-                           path='MenuBar/file.menu/Open')]
-
-        # if experiment plugin available dont add pattern actions
-        ids = [p.id for p in self.application.plugin_manager._plugins]
-        if 'pychron.experiment.task' not in ids:
-            actions.extend([
-                SchemaAddition(id='Open Pattern',
-                               factory=OpenPatternAction,
-                               path='MenuBar/file.menu/Open'),
-                SchemaAddition(id='New Pattern',
-                               factory=NewPatternAction,
-                               path='MenuBar/file.menu/New')])
+        actions = [SchemaAddition(factory=OpenPowerMapAction,
+                           path='MenuBar/file.menu/Open'),
+                   SchemaAddition(id='Open Pattern',
+                                  factory=OpenPatternAction,
+                                  path='MenuBar/file.menu/Open'),
+                   SchemaAddition(id='New Pattern',
+                                  factory=NewPatternAction,
+                                  path='MenuBar/file.menu/New')]
 
         return [TaskExtension(actions=actions)]
 
@@ -158,63 +156,12 @@ class BaseLaserPlugin(BaseTaskPlugin):
         #             pass
         #     return ['file://{}'.format(path)]
 
+    def _setup_pattern_extensions(self, exts, actions=None):
+        if actions is None:
+            actions = []
 
-class FusionsPlugin(BaseLaserPlugin):
-    task_name = Str
-
-    def test_communication(self):
-        man = self._get_manager()
-        return man.test_connection()
-
-
-    def _tasks_default(self):
-        return [TaskFactory(id=self.id,
-                            task_group='hardware',
-                            factory=self._task_factory,
-                            name=self.task_name,
-                            image='laser',
-                            accelerator=self.accelerator),
-                # TaskFactory(id='pychron.laser.calibration',
-                #             task_group='hardware',
-                #             factory=self._calibration_task_factory,
-                #             name='Laser Calibration',
-                #             accelerator='Ctrl+Shift+2')
-                ]
-
-    # def _calibration_task_factory(self):
-    #     t = LaserCalibrationTask(manager=self._get_manager())
-    #     return t
-
-    sources = List(contributes_to='pychron.video.sources')
-
-    def _sources_default(self):
-        ip = InitializationParser()
-        plugin = ip.get_plugin(self.task_name.replace(' ', ''),
-                               category='hardware')
-        source = ip.get_parameter(plugin, 'video_source')
-        rs = []
-        if source:
-            rs = [(source, self.task_name)]
-        return rs
-
-    def _task_extensions_default(self):
-        def efactory():
-            return SMenu(id='laser.menu', name='Laser')
-
-        actions = [SchemaAddition(id='Laser',
-                                  factory=efactory,
-                                  path='MenuBar',
-                                  before='tools.menu',
-                                  after='view.menu')]
-
-        exts = [TaskExtension(actions=actions)]
-
-        actions = [SchemaAddition(factory=ShowMotionConfigureAction,
-                                  path='MenuBar/laser.menu'),
-                   SchemaAddition(factory=LaserScriptExecuteAction,
-                                  path='MenuBar/laser.menu')]
         lactions = []
-        for f in list_directory2(paths.pattern_dir, extension='.lp', remove_extension=True):
+        for f in glob_list_directory(paths.pattern_dir, extension='.lp', remove_extension=True):
             actions.append(SchemaAddition(id='pattern.{}'.format(f),
                                           factory=pattern_action(f, self.application, self.name),
                                           path='MenuBar/laser.menu/patterns.menu'))
@@ -237,6 +184,60 @@ class FusionsPlugin(BaseLaserPlugin):
             exts.append(TaskExtension(actions=actions))
         else:
             self.warning('no patterns scripts located in "{}"'.format(paths.pattern_dir))
+
+    def _create_task_extensions(self):
+        def efactory():
+            return SMenu(id='laser.menu', name='Laser')
+
+        actions = [SchemaAddition(id='Laser',
+                                  factory=efactory,
+                                  path='MenuBar',
+                                  before='tools.menu',
+                                  after='view.menu')]
+
+        exts = [TaskExtension(actions=actions)]
+        return exts
+
+
+class FusionsPlugin(BaseLaserPlugin):
+    task_name = Str
+    sources = List(contributes_to='pychron.video.sources')
+
+    def test_communication(self):
+        man = self._get_manager()
+        return man.test_connection()
+
+    def _tasks_default(self):
+        return [TaskFactory(id=self.id,
+                            task_group='hardware',
+                            factory=self._task_factory,
+                            name=self.task_name,
+                            image='laser',
+                            accelerator=self.accelerator),
+                # TaskFactory(id='pychron.laser.calibration',
+                #             task_group='hardware',
+                #             factory=self._calibration_task_factory,
+                #             name='Laser Calibration',
+                #             accelerator='Ctrl+Shift+2')
+                ]
+
+    def _sources_default(self):
+        ip = InitializationParser()
+        plugin = ip.get_plugin(self.task_name.replace(' ', ''),
+                               category='hardware')
+        source = ip.get_parameter(plugin, 'video_source')
+        rs = []
+        if source:
+            rs = [(source, self.task_name)]
+        return rs
+
+    def _task_extensions_default(self):
+        exts = self._create_task_extensions()
+        actions = [SchemaAddition(factory=ShowMotionConfigureAction,
+                                  path='MenuBar/laser.menu'),
+                   SchemaAddition(factory=LaserScriptExecuteAction,
+                                  path='MenuBar/laser.menu')]
+        self._setup_pattern_extensions(exts, actions)
 
         return exts
 

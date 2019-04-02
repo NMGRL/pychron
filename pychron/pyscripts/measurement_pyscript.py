@@ -18,12 +18,13 @@
 # ============= standard library imports ========================
 from __future__ import absolute_import
 from __future__ import print_function
+
 import ast
 import os
 import time
-from six.moves.configparser import ConfigParser
 
 import yaml
+from six.moves.configparser import ConfigParser
 
 from pychron.core.helpers.filetools import fileiter
 from pychron.paths import paths
@@ -200,7 +201,8 @@ class MeasurementPyScript(ValvePyScript):
                                         self._time_zero,
                                         self._time_zero_offset,
                                         fit_series=self._fit_series_count,
-                                        series=self._series_count):
+                                        series=self._series_count,
+                                        integration_time=integration_time):
             self.cancel()
 
     @count_verbose_skip
@@ -249,7 +251,8 @@ class MeasurementPyScript(ValvePyScript):
                                         use_dac=use_dac,
                                         fit_series=self._fit_series_count,
                                         settling_time=settling_time,
-                                        series=series):
+                                        series=series,
+                                        integration_time=integration_time):
             self.cancel()
         self._baseline_series = series
         # self._series_count += 2
@@ -506,7 +509,7 @@ class MeasurementPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def position_magnet(self, pos, detector='AX', use_dac=False):
+    def position_magnet(self, pos, detector='AX', use_dac=False, for_collection=True):
         """
 
         :param pos: location to set magnetic field
@@ -523,7 +526,7 @@ class MeasurementPyScript(ValvePyScript):
             position_magnet('Ar40', detector='AX') #Ar40 will be converted to 39.962 use mole weight dict
 
         """
-        self._automated_run_call('py_position_magnet', pos, detector, use_dac=use_dac)
+        self._automated_run_call('py_position_magnet', pos, detector, use_dac=use_dac, for_collection=for_collection)
 
     @verbose_skip
     @command_register
@@ -651,166 +654,8 @@ class MeasurementPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def set_ysymmetry(self, v):
-        """
-        Set YSymmetry to v
-
-        :param v: ysymmetry value
-        :type v: int, float
-
-        """
-        self._set_spectrometer_parameter('SetYSymmetry', v)
-
-    @verbose_skip
-    @command_register
-    def set_zsymmetry(self, v):
-        """
-        Set ZSymmetry to v
-
-        :param v: zsymmetry value
-        :type v: int, float
-        """
-        self._set_spectrometer_parameter('SetZSymmetry', v)
-
-    @verbose_skip
-    @command_register
-    def set_zfocus(self, v):
-        """
-        Set ZFocus to v
-
-        :param v: zfocus value
-        :type v: int, float
-        """
-        self._set_spectrometer_parameter('SetZFocus', v)
-
-    @verbose_skip
-    @command_register
-    def set_extraction_focus(self, v):
-        """
-        Set ExtractionFocus to v
-
-        :param v: extractionfocus value
-        :type v: int, float
-        """
-        self._set_spectrometer_parameter('SetExtractionFocus', v)
-
-    @verbose_skip
-    @command_register
-    def set_extraction_symmetry(self, v):
-        """
-        Set Extraction Symmetry to v
-
-        :param v: extraction symmetry value
-        :type v: int, float
-        """
-        self._set_spectrometer_parameter('SetExtractionSymmetry', v)
-
-    @verbose_skip
-    @command_register
-    def set_extraction_lens(self, v):
-        """
-        Set Extraction Lens to v
-
-        :param v: extraction lens value
-        :type v: int, float
-        """
-        self._set_spectrometer_parameter('SetExtractionLens', v)
-
-    @verbose_skip
-    @command_register
-    def set_deflection(self, detname, v=''):
-        """
-        if v is an empty str (default) then get the deflection value from
-        the configuration file.
-
-        :param detname: name of detector
-        :type detname: str
-        :param v: deflection value or an empty string
-        :type v: '', int, float
-
-        """
-        if v == '':
-            v = self._get_deflection_from_file(detname)
-
-        if v is not None:
-            v = '{},{}'.format(detname, v)
-            self._set_spectrometer_parameter('SetDeflection', v)
-        else:
-            self.debug('no deflection value for {} supplied or in the config file'.format(detname))
-
-    @verbose_skip
-    @command_register
-    def get_deflection(self, detname):
-        """
-        Read the deflection from the spectrometer
-
-        :param detname: name of detector
-        :type detname: str
-        :return: float
-        """
-        return self._get_spectrometer_parameter('GetDeflection', detname)
-
-    @verbose_skip
-    @command_register
-    def set_cdd_operating_voltage(self, v=''):
-        """
-        if v is '' (default) use value from file
-
-        :param v: cdd operating voltage
-        :type v: '', int, float
-        """
-        if self.automated_run is None:
-            return
-
-        if v == '':
-            config = self._get_config()
-            v = config.getfloat('CDDParameters', 'OperatingVoltage')
-
-        self._set_spectrometer_parameter('SetIonCounterVoltage', v)
-
-    @verbose_skip
-    @command_register
-    def set_source_optics(self, **kw):
-        """
-        example ::
-
-            # set all source parameters to values stored in config.cfg
-            set_source_optics()
-
-            # set ysymmetry to 10.
-            # set all other values using config.cfg
-            set_source_optics(YSymmetry=10.0)
-
-        """
-        attrs = ['YSymmetry', 'ZSymmetry', 'ZFocus', 'ExtractionLens']
-        self._set_from_file(attrs, 'SourceOptics', **kw)
-
-    @verbose_skip
-    @command_register
-    def set_source_parameters(self, **kw):
-        attrs = ['IonRepeller', 'ElectronVolts']
-        self._set_from_file(attrs, 'SourceParameters', **kw)
-
-    @verbose_skip
-    @command_register
-    def set_accelerating_voltage(self, v=''):
-        self._set_spectrometer_parameter('SetHV', v)
-
-    @verbose_skip
-    @command_register
-    def set_deflections(self):
-        """
-        Set deflections to values stored in config.cfg
-        """
-        func = self._set_spectrometer_parameter
-
-        config = self._get_config()
-        section = 'Deflections'
-        dets = config.options(section)
-        for dn in dets:
-            v = config.getfloat(section, dn)
-            if v is not None:
-                func('SetDeflection', '{},{}'.format(dn, v))
+    def raw_spectrometer_command(self, command):
+        self._automated_run_call('py_raw_spectrometer_command', command)
 
     @verbose_skip
     @command_register
@@ -950,5 +795,6 @@ class MeasurementPyScript(ValvePyScript):
 
         self.abbreviated_count_ratio = None
         self.ncounts = 0
+
 
 # ============= EOF =============================================

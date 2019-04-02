@@ -16,11 +16,14 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traits.api import Bool
-from traitsui.api import View, UItem, Item, HGroup, EnumEditor, VGroup
+from traitsui.api import UItem, Item, HGroup, EnumEditor, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.editors.check_list_editor import CheckListEditor
+
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.spectrometer.ion_optics.peak_center_config import PeakCenterConfig, PeakCenterConfigHandler
 
 
@@ -56,11 +59,9 @@ class CoincidenceConfig(PeakCenterConfig):
                              editor=CheckListEditor(name='available_detectors', cols=len(self.available_detectors))),
                        show_border=True, label='Detectors')
 
-        v = View(VGroup(rgrp, degrp, dgrp),
-                 buttons=['OK', 'Cancel'],
-                 kind='livemodal',
-                 title='Coincidence',
-                 handler=CoincidenceConfigHandler())
+        v = okcancel_view(VGroup(rgrp, degrp, dgrp),
+                          title='Coincidence',
+                          handler=CoincidenceConfigHandler())
         return v
 
 # ============= EOF =============================================

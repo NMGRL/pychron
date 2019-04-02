@@ -53,7 +53,8 @@ class PipelinePreferencesPane(PreferencesPane):
                                       'If X is selected all analyses tagged as "Skip" are excluded when making X',
                               style='custom',
                               editor=CheckListEditor(cols=5,
-                                                     values=['Table', 'Ideogram', 'Spectrum', 'Series', 'Isochron'])),
+                                                     values=['Human Table', 'Machine Table', 'Ideogram',
+                                                             'Spectrum', 'Series', 'Isochron'])),
                         label='Skip Tag Associations',
                         show_border=True))
         return v

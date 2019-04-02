@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from pyface.action.menu_manager import MenuManager
 from traits.trait_types import Int, Str
 from traits.traits import Property
@@ -112,9 +113,11 @@ class DetectorRatioTabularAdapter(BaseTabularAdapter):
 
 class MeasurementTabularAdapter(BaseTabularAdapter):
     columns = [('Name', 'name'),
-               ('Value', 'value'), ]
-    name_width = Int(80)
-    value_width = Int(80)
+               ('Value', 'value'),
+               ('Units', 'units')]
+    name_width = Int(120)
+    value_width = Int(250)
+    units_width = Int(40)
 
 
 class ExtractionTabularAdapter(BaseTabularAdapter):
@@ -122,8 +125,8 @@ class ExtractionTabularAdapter(BaseTabularAdapter):
                ('Value', 'value'),
                ('Units', 'units')]
 
-    name_width = Int(100)
-    value_width = Int(200)
+    name_width = Int(120)
+    value_width = Int(250)
     units_width = Int(40)
 
 
@@ -164,7 +167,7 @@ class ComputedValueTabularAdapter(BaseTabularAdapter):
 
 
 class IntermediateTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
-    all_columns = [('Iso.', 'name'),
+    all_columns = [('Name', 'name'),
                    ('I', 'intercept'),
                    (SIGMA_1, 'intercept_error'),
                    ('%', 'intercept_percent_error'),
@@ -179,10 +182,18 @@ class IntermediateTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
                    (sigmaf('S*D'), 'disc_corrected_error'),
                    ('%(S*D)', 'disc_corrected_percent_error'),
 
+                   ('S*IC', 'ic_corrected'),
+                   (sigmaf('S*IC'), 'ic_corrected_error'),
+                   ('%(S*IC)', 'ic_corrected_percent_error'),
+
+                   ('S*IC*DecayFactor', 'ic_decay_corrected'),
+                   (sigmaf('S*IC*DecayFactor'), 'ic_decay_corrected_error'),
+                   ('%(S*IC*DecayFactor)', 'ic_decay_corrected_percent_error'),
+
                    ('IFC', 'interference_corrected'),
                    (sigmaf('IFC'), 'interference_corrected_error'),
                    ('%(IFC)', 'interference_corrected_percent_error')]
-    columns = [('Iso.', 'name')]
+    columns = [('Name', 'name')]
 
     intercept_text = Property
     intercept_error_text = Property
@@ -203,6 +214,16 @@ class IntermediateTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
     disc_corrected_error_text = Property
     disc_corrected_percent_error_text = Property
     disc_corrected_tooltip = Str('(D)iscrimination corrected signal')
+
+    ic_corrected_text = Property
+    ic_corrected_error_text = Property
+    ic_corrected_percent_error_text = Property
+    ic_corrected_tooltip = Str('(IC) Detector intercalibration corrected signal')
+
+    ic_decay_corrected_text = Property
+    ic_decay_corrected_error_text = Property
+    ic_decay_corrected_percent_error_text = Property
+    ic_decay_corrected_tooltip = Str('(IC) Detector intercalibration corrected signal and decay corrected')
 
     interference_corrected_text = Property
     interference_corrected_error_text = Property
@@ -242,15 +263,23 @@ class IntermediateTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
     intensity_error_width = eewidth
     intensity_percent_error_width = pwidth
 
+    sig_figs = Int(7)
+
+    def _value(self, v):
+        return floatfmt(nominal_value(v), n=self.sig_figs)
+
+    def _error(self, v):
+        return floatfmt(std_dev(v), n=self.sig_figs)
+
     @handle_error
     def _get_intercept_text(self):
         v = self.item.value
-        return floatfmt(v, n=7)
+        return self._value(v)
 
     @handle_error
     def _get_intercept_error_text(self):
         v = self.item.error
-        return floatfmt(v, n=7)
+        return self._value(v)
 
     @handle_error
     def _get_intercept_percent_error_text(self):
@@ -260,73 +289,106 @@ class IntermediateTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
     @handle_error
     def _get_bs_corrected_text(self):
         v = self.item.get_baseline_corrected_value()
-        return floatfmt(nominal_value(v), n=7)
+        return self._value(v)
 
     @handle_error
     def _get_bs_corrected_error_text(self):
         v = self.item.get_baseline_corrected_value()
-        return floatfmt(std_dev(v), n=7)
+        return self._error(v)
 
     @handle_error
     def _get_bs_corrected_percent_error_text(self):
         v = self.item.get_baseline_corrected_value()
-        return format_percent_error(v.nominal_value, v.std_dev)
+        return format_percent_error(nominal_value(v), std_dev(v))
 
     # ============================================================
     @handle_error
     def _get_bs_bk_corrected_text(self):
         v = self.item.get_non_detector_corrected_value()
-        return floatfmt(nominal_value(v), n=7)
+        return self._value(v)
 
     @handle_error
     def _get_bs_bk_corrected_error_text(self):
         v = self.item.get_non_detector_corrected_value()
-        return floatfmt(std_dev(v), n=7)
+        return self._error(v)
 
     @handle_error
     def _get_bs_bk_corrected_percent_error_text(self):
         v = self.item.get_non_detector_corrected_value()
-        return format_percent_error(v.nominal_value, v.std_dev)
+        return format_percent_error(nominal_value(v), std_dev(v))
 
     # ============================================================
     @handle_error
     def _get_disc_corrected_text(self):
         v = self.item.get_disc_corrected_value()
-        return floatfmt(nominal_value(v), n=7)
+        return self._value(v)
 
     @handle_error
     def _get_disc_corrected_error_text(self):
         v = self.item.get_disc_corrected_value()
-        return floatfmt(std_dev(v), n=7)
+        return self._error(v)
 
     @handle_error
     def _get_disc_corrected_percent_error_text(self):
         v = self.item.get_disc_corrected_value()
-        return format_percent_error(v.nominal_value, v.std_dev)
+        return format_percent_error(nominal_value(v), std_dev(v))
+
+    # ============================================================
+    @handle_error
+    def _get_ic_corrected_text(self):
+        v = self.item.get_ic_corrected_value()
+        return self._value(v)
+
+    @handle_error
+    def _get_ic_corrected_error_text(self):
+        v = self.item.get_ic_corrected_value()
+        return self._error(v)
+
+    @handle_error
+    def _get_ic_corrected_percent_error_text(self):
+        v = self.item.get_ic_corrected_value()
+        return format_percent_error(nominal_value(v), std_dev(v))
+
+    # ============================================================
+    @handle_error
+    def _get_ic_decay_corrected_text(self):
+        v = self.item.get_ic_decay_corrected_value()
+        return self._value(v)
+
+    @handle_error
+    def _get_ic_decay_corrected_error_text(self):
+        v = self.item.get_ic_decay_corrected_value()
+        return self._error(v)
+
+    @handle_error
+    def _get_ic_decay_corrected_percent_error_text(self):
+        v = self.item.get_ic_decay_corrected_value()
+        return format_percent_error(nominal_value(v), std_dev(v))
 
     # ============================================================
     @handle_error
     def _get_interference_corrected_text(self):
         v = self.item.get_interference_corrected_value()
-        return floatfmt(nominal_value(v), n=7)
+        return self._value(v)
 
     @handle_error
     def _get_interference_corrected_error_text(self):
         v = self.item.get_interference_corrected_value()
-        return floatfmt(std_dev(v), n=7)
+        return self._error(v)
 
     @handle_error
     def _get_interference_corrected_percent_error_text(self):
         v = self.item.get_interference_corrected_value()
-        return format_percent_error(v.nominal_value, v.std_dev)
+        return format_percent_error(nominal_value(v), std_dev(v))
 
 
 class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
-    all_columns = [('Iso.', 'name'),
+    all_columns = [('Name', 'name'),
                    ('Det.', 'detector'),
+                   ('Det. ID', 'detector_serial_id'),
                    ('Fit', 'fit_abbreviation'),
                    ('Error', 'error_type'),
-                   ('Int.', 'value'),
+                   ('Iso', 'value'),
                    (SIGMA_1, 'error'),
                    ('%', 'value_percent_error'),
                    ('I. BsEr', 'include_baseline_error'),
@@ -342,11 +404,11 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
                    (sigmaf('IC'), 'ic_factor_error'),
                    ('Disc', 'discrimination'),
                    ('Error Comp.', 'age_error_component')]
-    columns = [('Iso.', 'name'),
+    columns = [('Name', 'name'),
                ('Det.', 'detector'),
                ('Fit', 'fit_abbreviation'),
                ('Error', 'error_type'),
-               ('Int.', 'value'),
+               ('Iso', 'value'),
                (SIGMA_1, 'error'),
                ('%', 'value_percent_error'),
                # ('I. BsEr', 'include_baseline_error'),
@@ -399,6 +461,7 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
     ic_factor_width = Int(60)
     ic_factor_error_width = Int(70)
     discrimination_width = Int(50)
+    sig_figs = Int(4)
 
     def get_menu(self, obj, trait, row, column):
         return MenuManager(Action(name='Show Isotope Evolution',
@@ -421,7 +484,7 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
         else:
             v = nominal_value(ic)
 
-        return floatfmt(v, n=4)
+        return floatfmt(v, n=self.sig_figs)
 
     def _get_ic_factor_error_text(self):
         ic = self.item.ic_factor
@@ -430,7 +493,7 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
         else:
             v = std_dev(ic)
 
-        return floatfmt(v, n=4)
+        return floatfmt(v, n=self.sig_figs)
 
     def _get_discrimination_text(self):
         ic = self.item.discrimination
@@ -439,7 +502,7 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
         else:
             v, e = nominal_value(ic), std_dev(ic)
 
-        return '{}+/-{}'.format(floatfmt(v, n=4), floatfmt(e, n=4))
+        return '{}+/-{}'.format(floatfmt(v, n=self.sig_figs), floatfmt(e, n=self.sig_figs))
 
     def _get_value_text(self, *args, **kw):
         v = self.item.get_intensity()
@@ -449,7 +512,10 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
         v = self.item.get_intensity()
         return self._format(self.item, std_dev(v), 'error')
 
-    def _format(self, item, v, v_or_e, n=6):
+    def _format(self, item, v, v_or_e, n=None):
+        if n is None:
+            n = self.sig_figs
+
         if isinstance(item, str):
             item = getattr(self.item, item)
 

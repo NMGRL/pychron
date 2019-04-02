@@ -17,23 +17,26 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
+
 import os
 import socket
+from datetime import datetime
 
 import paramiko
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
 from traits.api import HasTraits, Str, Bool, Property, Button, on_trait_change, List, cached_property, \
     Instance, Event, Date, Enum, Long, Any, Int
-from traitsui.api import View, UItem, Item, EnumEditor
+from traitsui.api import UItem, Item, EnumEditor
 
 from pychron.core.helpers.datetime_tools import get_date
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.dvc.dvc_irradiationable import DVCAble
 from pychron.entry.tasks.sample_prep.sample_locator import SampleLocator
 from pychron.image.camera import CameraViewer
 from pychron.image.viewer import ImageViewer
-from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceMixin
+from pychron.pychron_constants import SAMPLE_PREP_STEPS
 
 DEBUG = False
 
@@ -78,6 +81,13 @@ class PrepStepRecord(HasTraits):
     frantz = Str
     pick = Str
     heavy_liquid = Str
+    mount = Str
+    gold_table = Str
+    us_wand = Str
+    eds = Str
+    cl = Str
+    bse = Str
+    se = Str
 
     nimages = Int
 
@@ -88,6 +98,28 @@ class PrepStepRecord(HasTraits):
     flag_frantz = Bool
     flag_pick = Bool
     flag_heavy_liquid = Bool
+    flag_mount = Bool
+    flag_gold_table = Bool
+    flag_us_wand = Bool
+    flag_eds = Bool
+    flag_cl = Bool
+    flag_bse = Bool
+    flag_se = Bool
+
+    choices_crush = List
+    choices_sieve = List
+    choices_wash = List
+    choices_acid = List
+    choices_frantz = List
+    choices_pick = List
+    choices_heavy_liquid = List
+    choices_mount = List
+    choices_gold_table = List
+    choices_us_wand = List
+    choices_eds = List
+    choices_cl = List
+    choices_bse = List
+    choices_se = List
 
     status = Enum('', 'Good', 'Bad', 'Use For Irradiation')
     comment = Str
@@ -102,11 +134,9 @@ class PrepStepRecord(HasTraits):
         setattr(self, attr, 'X' if new else '')
 
     def _edit_comment_button_fired(self):
-        v = View(UItem('comment', style='custom'),
-                 title='Edit Comment',
-                 resizable=True,
-                 kind='livemodal',
-                 buttons=['OK', 'Cancel', 'Revert'])
+        v = okcancel_view(UItem('comment', style='custom'),
+                          title='Edit Comment',
+                          buttons=['OK', 'Cancel', 'Revert'])
 
         self.edit_traits(view=v)
 
@@ -132,10 +162,12 @@ class SamplePrep(DVCAble, PersistenceMixin):
     prep_step = Instance(PrepStepRecord, ())
 
     selected = List
+    selection_enabled = Property(depends_on='worker, selected, session')
     add_selection_button = Button
     add_session_button = Button
     add_worker_button = Button
     add_step_button = Button
+    clear_step_button = Button
     edit_session_button = Button
 
     snapshot_button = Button('Snapshot')
@@ -160,9 +192,7 @@ class SamplePrep(DVCAble, PersistenceMixin):
     camera = Any
     selected_image = Any
 
-    @property
-    def persistence_path(self):
-        return os.path.join(paths.hidden_dir, 'sample_prep')
+    persistence_name = 'sample_prep'
 
     def activated(self):
 
@@ -171,6 +201,11 @@ class SamplePrep(DVCAble, PersistenceMixin):
         self._load_workers()
 
         self.load()
+
+        if self.worker not in self.workers:
+            self.worker = ''
+        if self.session not in self.sessions:
+            self.session = ''
 
         if DEBUG:
             self.worker = self.workers[0]
@@ -183,6 +218,8 @@ class SamplePrep(DVCAble, PersistenceMixin):
         self.camera = CameraViewer()
         # self.camera = ToupCamCamera()
         self.camera.activate()
+
+        self._load_choices()
 
     def prepare_destroy(self):
         self.dvc.close_session()
@@ -208,15 +245,22 @@ class SamplePrep(DVCAble, PersistenceMixin):
             self._load_session_samples()
 
     # private
+    def _get_selection_enabled(self):
+        return self.worker and self.session and self.selected
+
+    def _load_choices(self):
+        # load choices
+        for k in SAMPLE_PREP_STEPS:
+            cs = self.dvc.get_sample_prep_choice_names(k)
+            setattr(self.prep_step, 'choices_{}'.format(k), cs)
+
     def _get_new_session(self):
 
         self.move_to_sessions = [s for s in self.sessions if s != self.session]
 
-        v = View(Item('move_to_session_name',
-                      editor=EnumEditor(name='move_to_sessions')),
-                 title='Move to Session',
-                 buttons=['OK', 'Cancel'],
-                 resizable=True, kind='livemodal')
+        v = okcancel_view(Item('move_to_session_name',
+                               editor=EnumEditor(name='move_to_sessions')),
+                          title='Move to Session')
 
         info = self.edit_traits(v)
         if info.result:
@@ -256,16 +300,31 @@ class SamplePrep(DVCAble, PersistenceMixin):
 
     def _load_steps_for_sample(self, asample):
         def factory(s):
+            ts = s.timestamp
+            if not isinstance(ts, datetime):
+                ts = datetime.strptime(ts, '%Y-%m-%d %H:%M:%S')
+
+            params = {}
+            for k in SAMPLE_PREP_STEPS:
+                params[k] = getattr(s, k) or ''
+
             pstep = PrepStepRecord(id=s.id,
-                                   crush=s.crush or '',
-                                   sieve=s.sieve or '',
-                                   wash=s.wash or '',
-                                   acid=s.acid or '',
-                                   frantz=s.frantz or '',
-                                   pick=s.pick or '',
-                                   heavy_liquid=s.heavy_liquid or '',
-                                   timestamp=s.timestamp,
-                                   nimages=len(s.images))
+                                   # crush=s.crush or '',
+                                   # sieve=s.sieve or '',
+                                   # wash=s.wash or '',
+                                   # acid=s.acid or '',
+                                   # frantz=s.frantz or '',
+                                   # pick=s.pick or '',
+                                   # heavy_liquid=s.heavy_liquid or '',
+                                   # mount=s.mount or '',
+                                   # gold_table=s.gold_table or '',
+                                   # us_wand=s.us_wand or '',
+                                   # eds=s.eds or '',
+                                   # cl=s.cl or '',
+                                   # bse=s.bse or '',
+                                   # se=s.se or '',
+                                   timestamp=ts,
+                                   nimages=len(s.images), **params)
             return pstep
 
         asample.steps = [factory(i) for i in self.dvc.get_sample_prep_steps(asample.worker, asample.session,
@@ -275,8 +334,7 @@ class SamplePrep(DVCAble, PersistenceMixin):
                                                                             asample.grainsize)]
 
     def _make_step(self):
-        attrs = ('crush', 'wash', 'sieve', 'acid', 'frantz',
-                 'heavy_liquid', 'pick', 'status', 'comment')
+        attrs = SAMPLE_PREP_STEPS + ('status', 'comment')
         d = {a: getattr(self.prep_step, a) for a in attrs}
         return d
 
@@ -293,9 +351,11 @@ class SamplePrep(DVCAble, PersistenceMixin):
     # handlers
     @on_trait_change('fcrush, fsieve, fwash, facid, ffrantz, fheavy_liquid, fpick, fstatus')
     def _handle_filter(self):
+
+        keys = SAMPLE_PREP_STEPS + ('status',)
+
         def test(si):
-            r = [si.has_step(f) for f in ('crush', 'sieve', 'wash', 'acid', 'heavy_liquid', 'pick', 'status')
-                 if getattr(self, 'f{}'.format(f))]
+            r = [si.has_step(f) for f in keys if getattr(self, 'f{}'.format(f))]
             return all(r)
 
         self.session_samples = [s for s in self.osession_samples if test(s)]
@@ -304,14 +364,20 @@ class SamplePrep(DVCAble, PersistenceMixin):
         if new:
             self._load_steps_for_sample(new)
 
+    def _clear_step_button_fired(self):
+        for k in SAMPLE_PREP_STEPS + ('status', 'comment'):
+            setattr(self.prep_step, k, '')
+
     def _add_step_button_fired(self):
         if self.active_sample:
             params = self._make_step()
             self.dvc.add_sample_prep_step(self.active_sample.args(), self.worker, self.session,
                                           **params)
             self._load_steps_for_sample(self.active_sample)
+            self._load_choices()
 
     def _add_selection_button_fired(self):
+
         if self.selected:
             dvc = self.dvc
             for s in self.selected:

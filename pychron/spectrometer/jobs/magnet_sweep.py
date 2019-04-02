@@ -14,14 +14,16 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from traits.api import Float
-from traitsui.api import View, Item, EnumEditor, Group, HGroup, spring, ButtonEditor
+import random
+
 # ============= standard library imports ========================
 from numpy import linspace
 from numpy.core.umath import exp
-import random
+# ============= enthought library imports =======================
+from traitsui.api import View, Item, EnumEditor, Group, HGroup, spring, ButtonEditor
+
 # ============= local library imports  ==========================
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.spectrometer.jobs.sweep import BaseSweep
 
 
@@ -96,27 +98,24 @@ class MagnetSweep(BaseSweep):
         return super(MagnetSweep, self)._do_sweep(sm, em, stm, directions)
 
     def edit_view(self):
-        v = View(Group(Item('reference_detector', editor=EnumEditor(name='detectors')),
-                       Item('integration_time', label='Integration (s)'),
-                       label='Magnet Scan',
-                       show_border=True),
-                 title=self.title,
-                 buttons=['OK', 'Cancel'], )
+        v = okcancel_view(Group(Item('reference_detector', editor=EnumEditor(name='detectors')),
+                                Item('integration_time', label='Integration (s)'),
+                                label='Magnet Scan',
+                                show_border=True),
+                          title=self.title)
 
         return v
 
     def traits_view(self):
-        v = View(
-            Group(
-                Item('reference_detector', editor=EnumEditor(name='detectors')),
-                Item('start_value', label='Start Mass', tooltip='Start scan at this mass'),
-                Item('stop_value', label='Stop Mass', tooltip='Stop scan when magnet reaches this mass'),
-                Item('step_value', label='Step Mass', tooltip='Step from Start to Stop by this amount'),
-                Item('integration_time', label='Integration (s)'),
-                HGroup(spring, Item('execute_button', editor=ButtonEditor(label_value='execute_label'),
-                                    show_label=False)),
-                label='Magnet Scan',
-                show_border=True))
+        v = View(Group(Item('reference_detector', editor=EnumEditor(name='detectors')),
+                       Item('start_value', label='Start Mass', tooltip='Start scan at this mass'),
+                       Item('stop_value', label='Stop Mass', tooltip='Stop scan when magnet reaches this mass'),
+                       Item('step_value', label='Step Mass', tooltip='Step from Start to Stop by this amount'),
+                       Item('integration_time', label='Integration (s)'),
+                       HGroup(spring, Item('execute_button', editor=ButtonEditor(label_value='execute_label'),
+                                           show_label=False)),
+                       label='Magnet Scan',
+                       show_border=True))
 
         return v
 

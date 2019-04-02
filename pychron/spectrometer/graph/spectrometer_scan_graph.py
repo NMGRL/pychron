@@ -45,7 +45,7 @@ class SpectrometerScanGraph(TimeSeriesStreamGraph):
         self.invalidate_markers()
 
     def clear_markers(self):
-        self.markers=[]
+        self.markers = []
 
     def invalidate_markers(self):
         for o in self.get_marker_overlays():
@@ -56,7 +56,7 @@ class SpectrometerScanGraph(TimeSeriesStreamGraph):
     def get_marker_overlays(self):
         return [o for p in self.plots
                 for layer in (p.underlays, p.overlays)
-                    for o in layer if isinstance(o, (MarkerOverlay, MarkerLineOverlay))]
+                for o in layer if isinstance(o, (MarkerOverlay, MarkerLineOverlay))]
 
     def add_visual_marker(self, text=None, bgcolor='white'):
         if text is None:
@@ -109,17 +109,17 @@ class SpectrometerScanGraph(TimeSeriesStreamGraph):
 
     @on_trait_change('markers:x')
     def _handle_marker_layout(self, obj, name, old, new):
-        if new<0:
+        if new < 0:
             self.markers.remove(obj)
 
     @on_trait_change('markers[]')
     def _handle_markers_change(self, obj, name, old, new):
-        if len(new)<len(old):
+        if len(new) < len(old):
             clear = not self.markers
 
             def _get_underlay(pp):
                 for u in p.underlays:
-                    if isinstance(u,MarkerLineOverlay):
+                    if isinstance(u, MarkerLineOverlay):
                         return u
 
             def _remove_lays(o, un):
@@ -129,7 +129,7 @@ class SpectrometerScanGraph(TimeSeriesStreamGraph):
                         un.lines.pop(j)
 
             def _clear_lays(o, un):
-                o.labels=[]
+                o.labels = []
                 un.lines = []
 
             for p in self.plots:
@@ -144,7 +144,5 @@ class SpectrometerScanGraph(TimeSeriesStreamGraph):
 
             self.invalidate_markers()
             self.redraw()
+
 # ============= EOF =============================================
-
-
-

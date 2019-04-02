@@ -13,11 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.api import Enum, Float, Property, List
+from traits.api import Enum, Float, Property, List, Int
 from pychron.hardware import get_float
 from pychron.hardware.core.core_device import CoreDevice
 import re
 from time import sleep
+import string
 
 IDN_RE = re.compile(r'\w{4},\w{8},\w{7}\/[\w\#]{7},\d.\d')
 
@@ -49,6 +50,10 @@ class BaseLakeShoreController(CoreDevice):
     setpoint2 = Float(auto_set=False, enter_set=True)
     setpoint2_readback = Float
     range_tests = List
+    num_inputs = Int
+    ionames = List
+    iolist = List
+    iomap = List
 
     def load_additional_args(self, config):
         self.set_attribute(config, 'units', 'General', 'units', default='K')
@@ -67,6 +72,25 @@ class BaseLakeShoreController(CoreDevice):
         if items:
             self.range_tests = [RangeTest(*i) for i in items]
 
+        if config.has_section('IOConfig'):
+            iodict = dict(config.items('IOConfig'))
+            self.num_inputs = int(iodict['num_inputs'])
+            for i, tag in enumerate(string.ascii_lowercase[:self.num_inputs]):
+                try:
+                    self.ionames.append(iodict['input_{}_name'.format(tag)])
+                except ValueError:
+                    self.ionames.append('input_{}'.format(tag))
+                self.iolist.append('input_{}'.format(tag))
+                mapsetpoint = iodict['input_{}'.format(tag)]
+                if mapsetpoint.lower() == 'none':
+                    self.iomap.append(None)
+                else:
+                    self.iomap.append(mapsetpoint)
+        else:
+            self.num_inputs = 2
+            self.ionames = ['', '', '', '']
+            self.iomap = ['setpoint1', 'setpoint2', 'setpoint3', 'setpoint4']
+
         return True
 
     def initialize(self, *args, **kw):
@@ -79,30 +103,40 @@ class BaseLakeShoreController(CoreDevice):
         return bool(IDN_RE.match(resp))
 
     def update(self, **kw):
-        self.input_a = self.read_input_a(**kw)
-        self.input_b = self.read_input_b(**kw)
-        self.setpoint1_readback = self.read_setpoint(1)
-        self.setpoint2_readback = self.read_setpoint(2)
+        for tag in self.iolist:
+            func = getattr(self, 'read_{}'.format(tag))
+            v = func(**kw)
+            setattr(self, tag, v)
+
+        for tag in self.iomap:
+            v = self.read_setpoint(tag)
+            setattr(self, '{}_readback'.format(tag), v)
+
         return self.input_a
 
     def setpoints_achieved(self, tol=1):
-        v1 = self.read_input_a()
-        if abs(v1 - self.setpoint1) < tol:
-            self.debug('setpoint 1 achieved')
-            v2 = self.read_input_a()
-            if abs(v2 - self.setpoint2) < tol:
-                self.debug('setpoint 2 achieved')
-                return True
+        for i, (tag, key) in enumerate(zip(self.iomap, string.ascii_lowercase)):
+            idx = i + 1
+            v = self._read_input(key, self.units)
+            if tag is not None:
+                setpoint = getattr(self, tag)
+                if abs(v - setpoint) > tol:
+                    return
+                else:
+                    self.debug('setpoint {} achieved'.format(idx))
+
+        return True
 
     @get_float(default=0)
     def read_setpoint(self, output, verbose=False):
-        return self.ask('SETP? {}'.format(output), verbose=verbose)
+        if output is not None:
+            return self.ask('SETP? {}'.format(re.sub('[^0-9]', '', output)), verbose=verbose)
 
-    def set_setpoints(self, v1, v2):
-        # self.set_setpoint(v1, 1)
-        self.setpoint1 = v1
-        if v2 is not None:
-            self.setpoint2 = v2
+    def set_setpoints(self, *setpoints):
+        for i, v in enumerate(setpoints):
+            if v is not None:
+                idx = i + 1
+                setattr(self, 'setpoint{}'.format(idx), v)
 
     def set_setpoint(self, v, output=1):
         self.set_range(v, output)
@@ -126,7 +160,7 @@ class BaseLakeShoreController(CoreDevice):
 
     def read_input(self, v, **kw):
         if isinstance(v, int):
-            v = 'ab'[v - 1]
+            v = string.ascii_lowercase[v - 1]
         return self._read_input(v, self.units, **kw)
 
     def read_input_a(self, **kw):

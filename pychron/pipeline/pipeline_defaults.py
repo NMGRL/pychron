@@ -13,6 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+ML = """
+required:
+nodes:
+  - klass: MLDataNode
+  - klass: MLRegressionNode
+"""
 
 REGRESSION_SERIES = """
 required:
@@ -33,13 +39,7 @@ nodes:
   - klass: UnknownNode
   - klass: YieldNode
 """
-GEOCHRON = """
-required:
- - pychron.geochron.geochron_service.GeochronService
-nodes:
- - klass: UnknownNode
- - klass: GeochronNode
-"""
+
 ICFACTOR = """
 required:
 nodes:
@@ -48,17 +48,21 @@ nodes:
     threshold: 10
     analysis_types: 
       - Air
+    name: Find Airs
   - klass: ReferenceNode
   - klass: FitICFactorNode
-    fits:
-      - numerator: H1
-        denominator: CDD
-        standard_ratio: 295.5
-        analysis_type: Air
-        save_enabled: True
-        plot_enabled: True
   - klass: ReviewNode
   - klass: ICFactorPersistNode
+"""
+
+DEFINE_EQUILIBRATION = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: DefineEquilibrationNode
+  - klass: ReviewNode
+  - klass: DefineEquilibrationPersistNode
+    use_editor: False
 """
 
 ISOEVO = """
@@ -75,10 +79,9 @@ BLANKS = """
 required:
 nodes:
   - klass: UnknownNode
-  - klass: FindReferencesNode
+  - klass: FindBlanksNode
     threshold: 10
-    analysis_types: 
-      - Blank Unknown
+    name: Find Blanks
   - klass: ReferenceNode
   - klass: FitBlanksNode
   - klass: ReviewNode
@@ -104,6 +107,7 @@ INVERSE_ISOCHRON = """
 required:
 nodes:
   - klass: UnknownNode
+  - klass: GroupingNode
   - klass: InverseIsochronNode
 """
 
@@ -111,7 +115,25 @@ SPEC = """
 required:
 nodes:
   - klass: UnknownNode
+  - klass: GroupingNode
   - klass: SpectrumNode
+"""
+
+COMPOSITE = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: GroupingNode
+  - klass: CompositeNode
+"""
+
+FLUX_VISUALIZATION = """
+required:
+nodes:
+  - klass: FindFluxMonitorMeansNode
+    # level: K
+    # irradiation: NM-300
+  - klass: FluxVisualizationNode
 """
 
 VERTICAL_FLUX = """
@@ -133,8 +155,25 @@ required:
 nodes:
   - klass: UnknownNode
   - klass: GroupingNode
-  - klass: XLSXAnalysisTableNode
-  - klass: XLSXTablePersistNode
+  - klass: SubGroupingNode
+  - klass: AnalysisTableNode
+  - klass: ReviewNode
+  - klass: XLSXAnalysisTablePersistNode
+"""
+
+ANALYSIS_TABLE_W_IA = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: GroupingNode
+  - klass: SubGroupingNode
+  - klass: AnalysisTableNode
+  - klass: ReviewNode
+  - klass: SetInterpretedAgeNode
+  - klass: ReviewNode
+  - klass: InterpretedAgePersistNode
+  - klass: XLSXAnalysisTablePersistNode
+  
 """
 
 INTERPRETED_AGE_TABLE = """
@@ -153,37 +192,47 @@ nodes:
   - klass: IdeogramNode
 """
 
-AUTO_IDEOGRAM = """
+HYBRID_IDEOGRAM = """
 required:
 nodes:
-  - klass: ListenUnknownNode
-  - klass: FilterNode
-    filters:
-     - age>0
+  - klass: UnknownNode
   - klass: GroupingNode
-    key: Identifier
+  - klass: InterpretedAgeNode
   - klass: IdeogramNode
-    no_analyses_warning: False
 """
+
+SUBGROUP_IDEOGRAM = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: GroupingNode
+  - klass: SubGroupingNode
+  - klass: GroupAgeNode
+  - klass: ReviewNode
+  - klass: IdeogramNode
+"""
+
+HISTORY_IDEOGRAM = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: DVCHistoryNode
+  - klass: HistoryIdeogramNode
+"""
+
+HISTORY_SPECTRUM = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: DVCHistoryNode
+  - klass: SpectrumNode
+"""
+
 REPORT = """
 required:
 nodes:
   - klass: UnknownNode
   - klass: ReportNode
-"""
-
-AUTO_REPORT = """
-required:
-nodes:
-  - klass: CalendarUnknownNode 
-  - klass: ReportNode
-  - klass: EmailNode
-"""
-AUTO_SERIES = """
-required:
-nodes:
-  - klass: ListenUnknownNode
-  - klass: SeriesNode
 """
 
 SERIES = """
@@ -197,14 +246,9 @@ FLUX = """
 required:
 nodes:
   - klass: FindFluxMonitorsNode
-#  irradiation: NM-274
-#  level: E
+    # irradiation: NM-299
+    # level: A
   - klass: FluxMonitorsNode
-#  - klass: GroupingNode
-#  key: Identifier
-#  - klass: IdeogramNode
-#  - klass: TableNode
-#  - klass: ReviewNode
   - klass: FitFluxNode
   - klass: ReviewNode
   - klass: FluxPersistNode
@@ -217,11 +261,26 @@ nodes:
   - klass: CSVAnalysesExportNode
 """
 
-CORRECTION_FACTORS = """
+CSV_RAW_DATA_EXPORT = """
 required:
 nodes:
   - klass: UnknownNode
-  - klass: CorrectionFactorsNode
+  - klass: CSVRawDataExportNode
+"""
+
+CA_CORRECTION_FACTORS = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: CaCorrectionFactorsNode
+
+"""
+
+K_CORRECTION_FACTORS = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: KCorrectionFactorsNode
 
 """
 
@@ -232,4 +291,25 @@ nodes:
   - klass: AnalysisMetadataNode
 
 """
+
+BULK_EDIT = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: BulkEditNode"""
+
+AUDIT = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: AuditNode
+"""
+
+MASSSPEC_REDUCED = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: MassSpecReducedNode
+"""
+
 # ============= EOF =============================================

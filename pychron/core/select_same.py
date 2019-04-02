@@ -13,9 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from __future__ import absolute_import
 from traits.api import HasTraits, List
-from traitsui.api import View, UItem, CheckListEditor
+from traitsui.api import UItem, CheckListEditor
+
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 
 
 class SelectSameMixin(HasTraits):
@@ -62,12 +63,10 @@ class SelectAttrView(HasTraits):
     available_attributes = List
 
     def traits_view(self):
-        v = View(UItem('attributes', style='custom',
-                       editor=CheckListEditor(name='available_attributes',
-                                              cols=3)),
-                 title='Select Attributes',
-                 buttons=['OK', 'Cancel'],
-                 kind='livemodal')
+        v = okcancel_view(UItem('attributes', style='custom',
+                                editor=CheckListEditor(name='available_attributes',
+                                                       cols=3)),
+                          title='Select Attributes')
         return v
 
 # ============= EOF =============================================

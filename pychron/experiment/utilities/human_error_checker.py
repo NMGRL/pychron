@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traits.api import Bool
 
 # ============= standard library imports ========================
@@ -24,16 +25,16 @@ from pychron.core.ui.preference_binding import bind_preference
 from pychron.experiment.utilities.identifier import get_analysis_type
 from pychron.loggable import Loggable
 from pychron.pychron_constants import LINE_STR, SCRIPT_NAMES, NULL_STR
-import six
 
 
 class HumanErrorChecker(Loggable):
     _extraction_line_required = False
     _mass_spec_required = True
-    extraction_script_enabled = Bool(True)
-    queue_enabled = Bool(True)
-    runs_enabled = Bool(True)
-    non_fatal_enabled = Bool(True)
+    extraction_script_enabled = Bool
+    queue_enabled = Bool
+    runs_enabled = Bool
+    non_fatal_enabled = Bool
+    spectrometer_manager = None
 
     def __init__(self, *args, **kw):
         super(HumanErrorChecker, self).__init__(*args, **kw)
@@ -102,7 +103,7 @@ class HumanErrorChecker(Loggable):
 
     def report_errors(self, errdict):
 
-        msg = '\n'.join(['{} {}'.format(k, v) for k, v in six.iteritems(errdict)])
+        msg = '\n'.join(['{} {}'.format(k, v) for k, v in errdict.items()])
         self.warning_dialog(msg)
 
     def check_run(self, run, inform=True, test=False):
@@ -140,6 +141,7 @@ class HumanErrorChecker(Loggable):
 
     def _check_run(self, run, inform, test):
         if test:
+            run.spectrometer_manager = self.spectrometer_manager
             run.test_scripts(script_context=self._script_context,
                              warned=self._warned,
                              duration=False)

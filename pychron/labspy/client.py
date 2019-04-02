@@ -14,8 +14,6 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
 import hashlib
 import os
 import time
@@ -23,6 +21,7 @@ from datetime import datetime
 from threading import Thread, Lock
 
 import yaml
+# ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Instance, Bool, Int
 
@@ -32,8 +31,6 @@ from pychron.labspy.database_adapter import LabspyDatabaseAdapter
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pychron_constants import SCRIPT_NAMES, NULL_STR
-from six.moves import map
-from six.moves import range
 
 
 def auto_connect(func):
@@ -41,6 +38,24 @@ def auto_connect(func):
         with obj.session_lock:
             if not obj.db.connected:
                 obj.connect()
+
+            if obj.db.connected:
+                with obj.db.session_ctx(use_parent_session=False):
+                    return func(obj, *args, **kw)
+
+    return wrapper
+
+
+def auto_reset_connect(func):
+    def wrapper(obj, *args, **kw):
+        with obj.session_lock:
+            if not obj.db.connected:
+                obj.connect()
+            else:
+
+                obj.db.reset_connection()
+                obj.db.reset_connection()
+                obj.db.connect()
 
             if obj.db.connected:
                 with obj.db.session_ctx(use_parent_session=False):
@@ -110,9 +125,7 @@ class LabspyClient(Loggable):
 
         self.debug('Start Connection status timer')
         if self.application and self.use_connection_status:
-            self.debug(
-                'timer started period={}'.format(
-                    self.connection_status_period))
+            self.debug('timer started period={}'.format(self.connection_status_period))
 
             devs = self.application.get_services(ICoreDevice)
             if devs:
@@ -164,14 +177,18 @@ class LabspyClient(Loggable):
             et = time.time() - st
             time.sleep(max(0, period - et))
 
-    @auto_connect
-    def add_experiment(self, name, starttime, mass_spectrometer, username):
-        # if self.db.connected:
-        # with self.db.session_ctx():
-        # hid = self._generate_hid(exp)
-        self.db.add_experiment(name, starttime, mass_spectrometer, username)
-        # ExtractionDevice=exp.extract_device,
-        # HashID=hid)
+    @auto_reset_connect
+    def add_experiment(self, exp):
+        name = exp.name
+        starttime = exp.start_timestamp
+        mass_spectrometer = exp.mass_spectrometer
+        username = exp.username
+        hid = self._generate_hid(name, starttime.isoformat(), mass_spectrometer, username)
+        self.db.add_experiment(hashid=hid,
+                               name=name,
+                               system=mass_spectrometer,
+                               user=username,
+                               start_time=starttime)
 
     @auto_connect
     def update_experiment(self, exp, err_msg):
@@ -181,7 +198,7 @@ class LabspyClient(Loggable):
         #         exp = self.db.get_experiment(hid)
         #         # exp.EndTime = exp.endtime
         #         # exp.State = err_msg
-        hid = self._generate_hid(exp)
+        hid = self._generate_hid_from_exp(exp)
         exp = self.db.get_experiment(hid)
 
     @auto_connect
@@ -199,11 +216,10 @@ class LabspyClient(Loggable):
         except ValueError:
             pass
 
-        with self.db.session_ctx():
-            self.db.set_connection(ts,
-                                   appname.strip(),
-                                   user.strip(),
-                                   devname, com, addr, status)
+        self.db.set_connection(ts,
+                               appname.strip(),
+                               user.strip(),
+                               devname, com, addr, status)
 
     @auto_connect
     def update_status(self, **kw):
@@ -217,15 +233,24 @@ class LabspyClient(Loggable):
         for k, v in kw.items():
             setattr(status, k, v)
 
-    @auto_connect
+    @auto_reset_connect
     def add_run(self, run, exp):
-        exp = self.db.get_experiment(self._generate_hid(exp))
-        self.db.add_analysis(exp, self._run_dict(run))
-        ms = run.mass_spectrometer.capitalize()
+        hid = self._generate_hid_from_exp(exp)
+        expid = self.db.get_experiment(hid)
+        if not expid:
+            self.add_experiment(exp)
+            expid = self.db.get_experiment(hid)
+
+        if not expid:
+            # use a dumpy experiment id just so that the analysis is saved
+            expid = '1'
+
+        self.db.add_analysis(expid, self._run_dict(run))
+        ms = run.spec.mass_spectrometer.capitalize()
 
         config = self._get_configuration()
 
-        for name, units, atypes, value in config:
+        for name, units, attr, atypes in config:
             units = units or ''
             if atypes[0] == 'all':
                 add = True
@@ -234,17 +259,17 @@ class LabspyClient(Loggable):
 
             if add:
                 args = []
-                if value == 'peak_center':
-                    value = 'get_reference_peakcenter_result'
-                elif '/' in value:
-                    args = (value,)
-                    value = 'get_ratio'
+                if attr == 'peak_center':
+                    attr = 'get_reference_peakcenter_result'
+                elif '/' in attr:
+                    args = (attr,)
+                    attr = 'get_ratio'
 
                 try:
-                    v = getattr(run, value)(*args)
+                    v = getattr(run, attr)(*args)
                 except AttributeError:
                     continue
-                    
+
                 self.db.add_measurement('{}Monitor'.format(ms), '{}{}'.format(ms, name), v, units)
 
     @auto_connect
@@ -293,7 +318,7 @@ class LabspyClient(Loggable):
         """
         config = []
         p = paths.labspy_client_config
-        if os.path.isfile(p):
+        if p and os.path.isfile(p):
             with open(p, 'r') as rfile:
                 config = yaml.load(rfile)
 
@@ -327,8 +352,9 @@ class LabspyClient(Loggable):
     def _run_dict(self, run):
 
         spec = run.spec
-        return {'runid': spec.runid,
-                'start_time': spec.analysis_timestamp}
+        return {'identifier': spec.identifier,
+                'aliquot': spec.aliquot,
+                'increment': spec.increment}
 
         d = {dbk: getattr(spec, k) for k, dbk in (('runid', 'Runid'),
                                                   ('analysis_type',
@@ -349,28 +375,30 @@ class LabspyClient(Loggable):
                                                   ('state', 'State'))}
 
         for si in SCRIPT_NAMES:
-            k = ''.join(map(str.capitalize, si.split('_')[:-1]))
+            k = ''.join([sii.capitalize() for sii in si.split('_')[:-1]])
             d[k] = getattr(spec, si)
 
         return d
 
-    def _generate_hid(self, exp):
+    def _generate_hid_from_exp(self, exp):
+        return self._generate_hid(exp.name, exp.start_timestamp.isoformat(), exp.mass_spectrometer, exp.username)
+
+    def _generate_hid(self, name, starttime, mass_spectrometer, username):
         md5 = hashlib.md5()
-        md5.update(exp.name)
-        md5.update(exp.spectrometer)
-        md5.update(exp.starttime.isoformat())
+        md5.update(name.encode('utf8'))
+        md5.update(starttime.encode('utf8'))
+        md5.update(mass_spectrometer.encode('utf8'))
+        md5.update(username.encode('utf8'))
         return md5.hexdigest()
 
 
 # ================= testing =========================
-
-if __name__ == '__main__':
+def main1():
     from random import random
 
     # from pychron.paths import paths
 
     paths.build('_dev')
-
 
     # def add_runs(c, e):
     # class Spec():
@@ -433,7 +461,6 @@ if __name__ == '__main__':
 
             time.sleep(1)
 
-
     logging_setup('labspyclient', use_archiver=False)
     # c = LabspyClient(bind=False, host='129.138.12.138', port=27017)
     # c = MeteorLabspyClient(bind=False, host='localhost', port=3001)
@@ -458,4 +485,25 @@ if __name__ == '__main__':
     # experiments/runs
     # exp = add_experiment(clt)
     # add_runs(clt, exp)
+
+
+def main2():
+    clt = LabspyClient(bind=False)
+    clt.db.host = '129.138.12.160'
+    clt.db.username = os.environ.get('DB_USER')
+    clt.db.password = os.environ.get('DB_PWD')
+    clt.db.name = 'labspy'
+    clt.test_connection()
+
+    for tag in ('lab_temperatures', 'lab_humiditys', 'lab_pneumatics'):
+        st = time.time()
+        try:
+            print(getattr(clt, 'get_latest_{}'.format(tag))())
+            print('Get latest {}. elapsed: {}'.format(tag, time.time() - st))
+        except BaseException as e:
+            pass
+
+
+if __name__ == '__main__':
+    main2()
 # ============= EOF =============================================

@@ -16,19 +16,15 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-import os
-from itertools import groupby
 
 from traits.api import HasTraits, Str, Int, Bool, Any, Button, Instance, List, Dict
 
 from pychron.core.fuzzyfinder import fuzzyfinder
+from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.progress import open_progress
-from pychron.dvc.dvc_persister import DVCPersister, format_repository_identifier
+from pychron.dvc.dvc_persister import DVCPersister
 from pychron.entry.entry_views.repository_entry import RepositoryIdentifierEntry
-from pychron.experiment.utilities.identifier import IDENTIFIER_REGEX
-from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.loggable import Loggable
-from pychron.paths import paths
 
 
 class IrradiationItem(HasTraits):
@@ -276,12 +272,12 @@ class DVCAnalysisImporterModel(BaseDVCImporterModel):
         def key(s):
             return s.run_spec.irradiation
 
-        for irrad, aspec in groupby(sorted(aspecs, key=key), key=key):
+        for irrad, iaspec in groupby_key(aspecs, key):
             if not dest.get_irradiation(irrad):
-                self.warning_dialog('No Irradiation {}. Please import the irradiation'.format(irrad))
+                self.warning_dialog('No Irradiation "{}". Please import the irradiation'.format(irrad))
                 continue
 
-            for aspec in aspecs:
+            for aspec in iaspec:
                 rspec = aspec.run_spec
 
                 rspec.repository_identifier = self.repository_identifier
@@ -300,7 +296,11 @@ class DVCAnalysisImporterModel(BaseDVCImporterModel):
                 self._add_sample(aspec)
                 self._add_position(aspec)
 
-                persister.per_spec_save(aspec, commit=True, commit_tag='Transfer:{}'.format(self.source.url()))
+                persister.per_spec_save(aspec, commit=True,
+                                        commit_tag='Transfer:{}'.format(self.source.url()),
+                                        push=False)
+
+            persister.push()
 
     def _add_position(self, spec):
         rspec = spec.run_spec

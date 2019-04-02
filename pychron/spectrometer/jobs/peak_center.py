@@ -16,18 +16,20 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import time
 
 from numpy import max, argmax, vstack, linspace
 from scipy import interpolate
+from six.moves import range
 from traits.api import Float, Str, Int, List, Enum, HasTraits
 
-from .magnet_sweep import MagnetSweep, AccelVoltageSweep
 from pychron.core.helpers.color_generators import colornames
-from pychron.core.stats.peak_detection import calculate_peak_center, PeakCenterError
+from pychron.core.stats.peak_detection import calculate_peak_center, PeakCenterError, calculate_resolution, \
+    calculate_resolving_power
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.graph.graph import Graph
-from six.moves import range
+from .magnet_sweep import MagnetSweep, AccelVoltageSweep
 
 
 class PeakCenterResult:
@@ -41,6 +43,9 @@ class PeakCenterResult:
 
     detector = None
     points = None
+    resolution = None
+    low_resolving_power = None
+    high_resolving_power = None
 
     def __init__(self, det, pts):
         self.detector = det
@@ -185,6 +190,7 @@ class BasePeakCenter(HasTraits):
         st = time.time()
         while 1:
             signal = get_reference_intensity()
+            time.sleep(spec.integration_time)
             if signal <= tol:
                 self.info('Peak center baseline intensity achieved')
                 break
@@ -193,7 +199,6 @@ class BasePeakCenter(HasTraits):
             if et > timeout:
                 self.warning('Peak center failed to move to a baseline position')
                 break
-            time.sleep(spec.integration_time)
 
         center, smart_shift, success = None, False, False
 
@@ -267,8 +272,6 @@ class BasePeakCenter(HasTraits):
                 return self._alive
 
     def _get_result(self, i, det):
-        # ys = self.graph.get_data(series=i, axis=1)
-
         xs = self.graph.get_data(series=i)
         ys = getattr(self.graph.plots[0], 'odata{}'.format(i))
 
@@ -279,6 +282,16 @@ class BasePeakCenter(HasTraits):
             p = self._calculate_peak_center(xs, ys)
             if p:
                 [lx, cx, hx], [ly, cy, hy], mx, my = p
+
+                if self.use_interpolation:
+                    xs, ys = self._interpolate(xs, ys)
+
+                result.resolution = calculate_resolution(xs, ys)
+                lrp, hrp = calculate_resolving_power(xs, ys)
+                result.low_resolving_power = lrp
+                result.high_resolving_power = hrp
+
+                result.percent = self.percent
                 result.low_dac = lx
                 result.center_dac = cx
                 result.high_dac = hx

@@ -16,6 +16,7 @@
 # ============= enthought library imports =======================
 
 from __future__ import absolute_import
+
 import logging
 
 from envisage.core_plugin import CorePlugin
@@ -46,12 +47,15 @@ PACKAGE_DICT = dict(
     GitLabPlugin='pychron.git.tasks.gitlab_plugin',
     GitHubPlugin='pychron.git.tasks.github_plugin',
     PipelinePlugin='pychron.pipeline.tasks.plugin',
+    SparrowPlugin='pychron.sparrow.tasks.plugin',
 
     ClassifierPlugin='pychron.classifier.tasks.plugin',
+    MDDPlugin='pychron.mdd.tasks.plugin',
+    AutoPlugin='pychron.pipeline.tasks.auto_plugin',
 
     # data mappers
     USGSVSCDataPlugin='pychron.data_mapper.tasks.usgs_vsc.plugin',
-    WiscArDataPlugin='pychron.data_mapper.tasks.wisc_ar.plugin',
+    WiscArDataPlugin='pychron.data_mapper.tasks.wiscar.plugin',
 
     # experiment
     EntryPlugin='pychron.entry.tasks.entry_plugin',
@@ -71,8 +75,10 @@ PACKAGE_DICT = dict(
     FusionsUVPlugin='pychron.lasers.tasks.plugins.uv',
     LoadingPlugin='pychron.loading.tasks.loading_plugin',
     CoreLaserPlugin='pychron.lasers.tasks.plugins.laser_plugin',
-    NMGRLFurnacePlugin='pychron.furnace.tasks.furnace_plugin',
-    NMGRLFurnaceControlPlugin='pychron.furnace.tasks.furnace_control_plugin',
+    NMGRLFurnacePlugin='pychron.furnace.tasks.nmgrl.furnace_plugin',
+    NMGRLFurnaceControlPlugin='pychron.furnace.tasks.nmgrl.furnace_control_plugin',
+    LDEOFurnacePlugin='pychron.furnace.tasks.ldeo.furnace_plugin',
+    LDEOFurnaceControlPlugin='pychron.furnace.tasks.ldeo.furnace_control_plugin',
 
     # spectrometers
     ArgusSpectrometerPlugin='pychron.spectrometer.tasks.thermo.argus',
@@ -181,7 +187,7 @@ def get_user_plugins():
     core_added = False
     for p in ps:
         # if laser plugin add CoreLaserPlugin
-        if p in ('FusionsCO2', 'FusionsDiode'):
+        if p in ('FusionsCO2', 'FusionsDiode', 'ChromiumCO2'):
             plugin = get_plugin('CoreLaserPlugin')
             if plugin and not core_added:
                 core_added = True

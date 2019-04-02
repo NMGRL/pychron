@@ -22,6 +22,7 @@ from traitsui.api import View, UItem, VGroup, EnumEditor, \
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.ui.qt.tabular_editors import FilterTabularEditor
 from pychron.core.ui.tabular_editor import myTabularEditor
@@ -48,31 +49,25 @@ class BaseBrowserSampleView(PaneModelView):
     configure_mass_spectrometer_filter_button = Button
 
     def _configure_date_filter_button_fired(self):
-        v = View(self._get_date_group(), resizable=True,
-                 height=150,
-                 kind='livemodal',
-                 buttons=['OK', 'Cancel'],
-                 title='Configure Date Filter')
+        v = okcancel_view(self._get_date_group(),
+                          height=150,
+                          title='Configure Date Filter')
         info = self.edit_traits(view=v)
         if info.result:
             self.model.refresh_samples()
 
     def _configure_analysis_type_filter_button_fired(self):
-        v = View(self._get_analysis_type_group(), resizable=True,
-                 height=150,
-                 kind='livemodal',
-                 buttons=['OK', 'Cancel'],
-                 title='Configure Analysis Type Filter')
+        v = okcancel_view(self._get_analysis_type_group(),
+                          height=150,
+                          title='Configure Analysis Type Filter')
         info = self.edit_traits(view=v)
         if info.result:
             self.model.refresh_samples()
 
     def _configure_mass_spectrometer_filter_button_fired(self):
-        v = View(self._get_mass_spectrometer_group(), resizable=True,
-                 height=150,
-                 kind='livemodal',
-                 buttons=['OK', 'Cancel'],
-                 title='Configure Mass Spectrometer Filter')
+        v = okcancel_view(self._get_mass_spectrometer_group(),
+                          height=150,
+                          title='Configure Mass Spectrometer Filter')
         info = self.edit_traits(view=v)
         if info.result:
             self.model.refresh_samples()
@@ -109,21 +104,6 @@ class BaseBrowserSampleView(PaneModelView):
                             label='Projects')
         return project_grp
 
-    # def _get_repositories_group(self):
-    #     exp_grp = Group(UItem('repositories',
-    #                           height=-150,
-    #                           editor=FilterTabularEditor(editable=False,
-    #                                                      use_fuzzy=True,
-    #                                                      enabled_cb='repository_enabled',
-    #                                                      refresh='refresh_needed',
-    #                                                      selected='selected_repositories',
-    #                                                      adapter=ProjectAdapter(),
-    #                                                      multi_select=True)),
-    #                     springy=False,
-    #                     visible_when='repository_visible',
-    #                     show_border=True,
-    #                     label='Repositories')
-    #     return exp_grp
     def _get_simple_analysis_type_group(self):
         grp = HGroup(UItem('use_analysis_type_filtering',
                            tooltip='Enable Analysis Type filter'),
@@ -174,7 +154,6 @@ class BaseBrowserSampleView(PaneModelView):
                           UItem('high_post', style='custom', enabled_when='use_high_post'),
                           UItem('use_named_date_range'),
                           UItem('named_date_range'),
-                          # icon_button_editor('date_configure_button', 'calendar'),
                           label='Date',
                           visible_when='date_visible',
                           show_border=True)
@@ -257,7 +236,6 @@ class BaseBrowserSampleView(PaneModelView):
                                                  tooltip='Clear Sample Table'))
 
         analysis_grp_table = UItem('analysis_groups',
-                                   # height=100,
                                    editor=myTabularEditor(adapter=AnalysisGroupsAdapter(),
                                                           multi_select=True,
                                                           editable=False,
@@ -272,8 +250,6 @@ class BaseBrowserSampleView(PaneModelView):
                                         multi_select=True,
                                         dclicked='dclicked_sample',
                                         column_clicked='column_clicked',
-                                        # update='update_sample_table',
-                                        # refresh='update_sample_table',
                                         stretch_last_section=False)),
                               show_border=True, label='Samples')
         grp = VGroup(top_level_filter_grp, Tabbed(sample_table, analysis_grp_table))
@@ -339,6 +315,18 @@ class BrowserSampleView(BaseBrowserSampleView):
     def review_status_details(self, info, obj):
         obj.review_status_details()
 
+    def clear_grouping(self, info, obj):
+        obj.clear_grouping()
+
+    def group_selected(self, info, obj):
+        obj.group_selected()
+
+    def remove_others(self, info, obj):
+        obj.remove_others()
+
+    def clear_selection(self, info, obj):
+        obj.clear_selection()
+
     def toggle_freeze(self, info, obj):
         obj.toggle_freeze()
 
@@ -379,30 +367,24 @@ class BrowserSampleView(BaseBrowserSampleView):
 
 class BrowserInterpretedAgeView(BaseBrowserSampleView):
     def delete(self, info, obj):
-        print('asfdasfdasdfasdf', info, obj)
+        obj.delete()
 
     def trait_context(self):
         ctx = super(BrowserInterpretedAgeView, self).trait_context()
-        ctx['interpreted_table'] = self.model.interpreted_age_table
+        ctx['table'] = self.model.table
         return ctx
 
     def _get_interpreted_age_group(self):
         grp = VGroup(
-            UItem('interpreted_table.interpreted_ages',
-                  # width=0.4,
+            UItem('table.interpreted_ages',
                   editor=myTabularEditor(
                       auto_resize=True,
-                      adapter=self.model.interpreted_age_table.tabular_adapter,
+                      adapter=self.model.table.tabular_adapter,
                       operations=['move', 'delete'],
-                      # column_clicked=make_name('column_clicked'),
-                      # refresh='interpreted_table.refresh_needed',
-                      selected='interpreted_table.selected',
-                      # dclicked='interpreted_table.dclicked',
+                      selected='table.selected',
+                      dclicked='table.dclicked',
                       multi_select=True,
-                      # drag_external=True,
-                      # scroll_to_row='interpreted_table.scroll_to_row',
                       stretch_last_section=False)),
-            # HGroup(spring, Item(make_name('omit_invalid'))),
             show_border=True,
             label='Interpreted Ages')
 

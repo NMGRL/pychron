@@ -14,13 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from traits.api import HasTraits, List, Any, \
-    Enum, Float, on_trait_change, Str, Int, Property, Button, Bool, CStr
+    Enum, Float, on_trait_change, Str, Int, Property, Button, Bool, CStr, TraitError
+from traits.trait_handlers import TraitListObject
 from traitsui.api import View, UItem, \
-    TabularEditor, VGroup, Item, HGroup, HSplit
+    TabularEditor, VGroup, Item, HGroup, HSplit, CheckListEditor
 
 from pychron.core.helpers.ctx_managers import no_update
+from pychron.core.pychron_traits import BorderVGroup, BorderHGroup
 from pychron.core.ui.enum_editor import myEnumEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.experiment.conditional.conditional import conditional_from_dict, BaseConditional, MODIFICATION_ACTIONS, \
@@ -29,6 +30,7 @@ from pychron.experiment.conditional.regexes import CP_REGEX, STD_REGEX, ACTIVE_R
     MAX_REGEX, MIN_REGEX, AVG_REGEX, COMP_REGEX, ARGS_REGEX, BETWEEN_REGEX, SLOPE_REGEX
 from pychron.experiment.conditional.tabular_adapters import EActionConditionalsAdapter, EPRConditionalsAdapter, \
     EConditionalsAdapter, EModificationConditionalsAdapter, PRConditionalsAdapter, ConditionalsAdapter
+from pychron.pychron_constants import ANALYSIS_TYPES
 
 FUNCTIONS = ['', 'Max', 'Min', 'Slope', 'Average', 'Between']
 FUNC_DICT = {'slope': 'slope({})', 'max': 'max({})', 'min': 'min({})', 'average': 'average({})'}
@@ -37,7 +39,7 @@ MOD_DICT = {'Current': '{}.cur', 'StdDev': '{}.std', 'Baseline': '{}.bs',
             'BaselineCorrected': '{}.bs_corrected',
             'Between': '{}.between'}
 
-TAGS = 'start_count,frequency,attr,window,mapper,ntrips'
+TAGS = 'start_count,frequency,attr,window,mapper,ntrips,analysis_types'
 
 
 class ConditionalGroup(HasTraits):
@@ -52,6 +54,7 @@ class ConditionalGroup(HasTraits):
     comparator = Enum('', '>', '<', '>=', '<=', '==')
     secondary_value = Float
     use_invert = Bool
+    analysis_types = List
 
     modifier_enabled = Property(depends_on='function')
     modifier = Str
@@ -71,7 +74,8 @@ class ConditionalGroup(HasTraits):
                        ('window', ''), ('mapper', ''),
                        ('start_count', ''),
                        ('teststr', ''),
-                       ('ntrips', '')])
+                       ('ntrips', ''),
+                       ('analysis_types', '')])
 
     tabular_adapter_klass = ConditionalsAdapter
 
@@ -107,7 +111,12 @@ class ConditionalGroup(HasTraits):
             for a, b in self.dump_attrs:
                 if not b:
                     b = a
-                d[a] = getattr(ci, b)
+                v = getattr(ci, b)
+
+                if isinstance(v, TraitListObject):
+                    v = list(v)
+
+                d[a] = v
 
             cs.append(d)
         return cs
@@ -186,7 +195,7 @@ class ConditionalGroup(HasTraits):
                 for a in TAGS.split(','):
                     try:
                         setattr(self, a, getattr(new, a))
-                    except AttributeError:
+                    except (AttributeError, TraitError):
                         continue
 
                 self.function = ''
@@ -254,59 +263,68 @@ class ConditionalGroup(HasTraits):
         return item
 
     def _get_opt_grp(self):
-        opt_grp = VGroup(Item('function',
-                              editor=myEnumEditor(values=FUNCTIONS),
-                              tooltip='Optional. Apply a predefined function to this attribute. '
-                                      'Functions include {}'.format(','.join(FUNCTIONS[1:]))),
-                         Item('window', enabled_when='not modifier_enabled'),
-                         Item('modifier',
-                              enabled_when='modifier_enabled',
-                              tooltip='Optional. Apply a modifier to this attribute.'
-                                      'For example to check if CDD is active use '
-                                      'Atttribute=CDD, Modifier=Inactive',
-                              editor=myEnumEditor(values=['', 'StdDev', 'Current', 'Inactive',
-                                                        'Baseline', 'BaselineCorrected'])),
-                         show_border=True,
-                         label='Optional')
+        opt_grp = BorderVGroup(Item('function',
+                                    editor=myEnumEditor(values=FUNCTIONS),
+                                    tooltip='Optional. Apply a predefined function to this attribute. '
+                                            'Functions include {}'.format(','.join(FUNCTIONS[1:]))),
+                               Item('window', enabled_when='not modifier_enabled'),
+                               Item('modifier',
+                                    enabled_when='modifier_enabled',
+                                    tooltip='Optional. Apply a modifier to this attribute.'
+                                            'For example to check if CDD is active use '
+                                            'Atttribute=CDD, Modifier=Inactive',
+                                    editor=myEnumEditor(values=['', 'StdDev', 'Current', 'Inactive',
+                                                                'Baseline', 'BaselineCorrected'])),
+                               label='Optional')
         return opt_grp
 
     def _get_cmp_grp(self):
-        cmp_grp = VGroup(Item('comparator', label='Operation',
-                              enabled_when='not function=="Between"',
-                              tooltip='Numeric and logical comparisons. Conditional trips when it '
-                                      'evaluates to True'),
-                         Item('value'),
-                         Item('secondary_value', enabled_when='function=="Between"'),
-                         Item('use_invert', label='Invert'),
-                         show_border=True,
-                         label='Comparison')
+        cmp_grp = BorderVGroup(Item('comparator', label='Operation',
+                                    enabled_when='not function=="Between"',
+                                    tooltip='Numeric and logical comparisons. Conditional trips when it '
+                                            'evaluates to True'),
+                               Item('value'),
+                               Item('secondary_value', enabled_when='function=="Between"'),
+                               Item('use_invert', label='Invert'),
+                               label='Comparison')
         return cmp_grp
 
     def _get_cnt_grp(self):
-        cnt_grp = VGroup(Item('start_count',
-                              tooltip='Number of counts to wait until performing check',
-                              label='Start'),
-                         Item('frequency',
-                              tooltip='Number of counts between each check'),
-                         Item('ntrips',
-                              label='N Trips',
-                              tooltip='Number of trips (conditional evaluates True) '
-                                      'before action is taken. Default=1'),
-                         show_border=True, label='Counts')
+        cnt_grp = BorderVGroup(Item('start_count',
+                                    tooltip='Number of counts to wait until performing check',
+                                    label='Start'),
+                               Item('frequency',
+                                    tooltip='Number of counts between each check'),
+                               Item('ntrips',
+                                    label='N Trips',
+                                    tooltip='Number of trips (conditional evaluates True) '
+                                            'before action is taken. Default=1'),
+                               label='Counts')
         return cnt_grp
+
+    def _get_atype_grp(self):
+
+        atypes = [(a.lower().replace(' ', '_'), a) for a in ANALYSIS_TYPES]
+
+        grp = BorderVGroup(UItem('analysis_types', style='custom', editor=CheckListEditor(values=atypes,
+                                                                                          cols=4)))
+        return grp
 
     def _get_edit_group(self):
 
         cnt_grp = self._get_cnt_grp()
         cmp_grp = self._get_cmp_grp()
         opt_grp = self._get_opt_grp()
+        atype_grp = self._get_atype_grp()
 
         edit_grp = VGroup(Item('attr',
                                label='Attribute',
                                editor=myEnumEditor(name='available_attrs')),
-                          opt_grp,
-                          VGroup(cmp_grp,
+
+                          VGroup(opt_grp,
+                                 cmp_grp,
                                  cnt_grp,
+                                 atype_grp,
                                  enabled_when='attr'))
         return edit_grp
 
@@ -331,16 +349,17 @@ class ActionConditionalGroup(ConditionalGroup):
         cnt_grp = self._get_cnt_grp()
         cmp_grp = self._get_cmp_grp()
         opt_grp = self._get_opt_grp()
+        atype_grp = self._get_atype_grp()
 
-        act_grp = VGroup(Item('action'),
-                         show_border=True,
-                         label='Action')
+        act_grp = BorderVGroup(Item('action'),
+                               label='Action')
         edit_grp = VGroup(Item('attr',
                                label='Attribute',
                                editor=myEnumEditor(name='available_attrs')),
-                          opt_grp,
-                          VGroup(cmp_grp,
+                          VGroup(opt_grp,
+                                 cmp_grp,
                                  cnt_grp,
+                                 atype_grp,
                                  act_grp,
                                  enabled_when='attr'))
         return edit_grp
@@ -363,7 +382,7 @@ class PostRunGroup(ConditionalGroup):
                                  Item('modifier',
                                       enabled_when='modifier_enabled',
                                       editor=myEnumEditor(values=['', 'StdDev', 'Current', 'Inactive',
-                                                                'Baseline', 'BaselineCorrected'])),
+                                                                  'Baseline', 'BaselineCorrected'])),
                                  Item('comparator', label='Operation',
                                       enabled_when='not function=="Between"'),
                                  Item('value'),
@@ -423,24 +442,25 @@ class ModificationGroup(ConditionalGroup):
         cnt_grp = self._get_cnt_grp()
         cmp_grp = self._get_cmp_grp()
         opt_grp = self._get_opt_grp()
+        atype_grp = self._get_atype_grp()
 
-        act_grp = VGroup(HGroup(Item('action'), Item('nskip', enabled_when='action=="Skip N Runs"', label='N')),
-                         HGroup(Item('use_truncation', label='Truncate'),
-                                Item('use_termination', label='Terminate')),
-                         HGroup(UItem('extraction_str', tooltip='''modify extract value for associated runs. e.g.
+        act_grp = BorderVGroup(HGroup(Item('action'), Item('nskip', enabled_when='action=="Skip N Runs"', label='N')),
+                               HGroup(Item('use_truncation', label='Truncate'),
+                                      Item('use_termination', label='Terminate')),
+                               BorderHGroup(UItem('extraction_str', tooltip='''modify extract value for associated runs. e.g.
 1. 1,2,3 (increase step i by 1W, step i+1 by 2W, step i+2 by 3W)
 2. 10%,50% (increase step i by 10%, step i+1 by 50%)'''),
-                                visible_when='action=="Set Extract"',
-                                show_border=True,
-                                label='Extraction'),
-                         show_border=True,
-                         label='Modification')
+                                            visible_when='action=="Set Extract"',
+                                            label='Extraction'),
+                               label='Modification')
         edit_grp = VGroup(Item('attr',
                                label='Attribute',
                                editor=myEnumEditor(name='available_attrs')),
-                          opt_grp,
-                          VGroup(cmp_grp,
+
+                          VGroup(opt_grp,
+                                 cmp_grp,
                                  cnt_grp,
+                                 atype_grp,
                                  act_grp,
                                  enabled_when='attr'))
         return edit_grp

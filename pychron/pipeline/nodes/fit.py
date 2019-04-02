@@ -14,26 +14,30 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
-from itertools import groupby
-
+from numpy import inf, hstack, invert
 from pyface.confirmation_dialog import confirm
-from pyface.constant import NO, YES
-from traits.api import Bool, List, HasTraits, Str, Float, Instance, Int
+from pyface.constant import YES
+# ============= enthought library imports =======================
+from traits.api import Bool, List
 
+from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.core.progress import progress_loader
 from pychron.options.options_manager import BlanksOptionsManager, ICFactorOptionsManager, \
     IsotopeEvolutionOptionsManager, \
-    FluxOptionsManager
+    FluxOptionsManager, DefineEquilibrationOptionsManager
 from pychron.options.views.views import view
-from pychron.pipeline.editors.flux_results_editor import FluxResultsEditor
+from pychron.pipeline.editors.define_equilibration_editor import DefineEquilibrationResultsEditor
+from pychron.pipeline.editors.flux_results_editor import FluxResultsEditor, BracketingFluxResultsEditor
 from pychron.pipeline.editors.results_editor import IsoEvolutionResultsEditor
 from pychron.pipeline.nodes.figure import FigureNode
+from pychron.pipeline.results.define_equilibration import DefineEquilibrationResult
+from pychron.pipeline.results.iso_evo import IsoEvoResult
 from pychron.pipeline.state import get_detector_set
 from pychron.pychron_constants import NULL_STR
-import six
-from six.moves import zip
+
+
+class RefitException(BaseException):
+    pass
 
 
 class FitNode(FigureNode):
@@ -42,6 +46,8 @@ class FitNode(FigureNode):
     _keys = List
 
     # has_save_node = False
+    def _set_additional_options(self, state):
+        pass
 
     def _set_saveable(self, state):
         ps = self.plotter_options.get_saveable_aux_plots()
@@ -50,14 +56,18 @@ class FitNode(FigureNode):
 
     def _get_valid_unknowns(self, unks):
         if self.plotter_options.analysis_types:
-            unks = [u for u in unks if u.analysis_type in self.plotter_options.analysis_types]
+            unks = [u for u in unks if not u.is_omitted() and u.analysis_type in self.plotter_options.analysis_types]
         return unks
 
     def check_refit(self, unks):
         unks = self._get_valid_unknowns(unks)
         for ui in unks:
-            if self._check_refit(ui):
-                break
+            try:
+                if self._check_refit(ui):
+                    break
+
+            except RefitException:
+                return False
         else:
             if confirm(None, self._refit_message) == YES:
                 return True
@@ -73,7 +83,7 @@ class FitReferencesNode(FitNode):
     def run(self, state):
         po = self.plotter_options
 
-        self._fits = list(reversed([pi for pi in po.get_loadable_aux_plots()]))
+        self._fits = list(reversed([pi for pi in po.get_saveable_aux_plots()]))
         self._keys = [fi.name for fi in self._fits]
         unks = self._get_valid_unknowns(state.unknowns)
         if self.check_refit(unks):
@@ -85,8 +95,8 @@ class FitReferencesNode(FitNode):
 
         # self.plotter_options.set_detectors(state.union_detectors)
         if state.references:
-            key = lambda x: x.group_id
-            for i, (gid, refs) in enumerate(groupby(sorted(state.references, key=key), key=key)):
+
+            for i, (gid, refs) in enumerate(groupby_group_id(state.references)):
                 if i == 0:
                     editor = self.editor
                 else:
@@ -95,14 +105,16 @@ class FitReferencesNode(FitNode):
 
                 unks = [u for u in unks if u.group_id == gid]
                 editor.set_items(unks, compress=False)
-                if self.plotter_options.use_restricted_references:
-                    refas = self._get_reference_analysis_types()
-                    if refas:
-                        refs = [r for r in refs if r.analysis_type in refas]
+                # if self.plotter_options.use_restricted_references:
+                #     refas = self._get_reference_analysis_types()
+                #     if refas:
+                #         refs = [r for r in refs if r.analysis_type in refas]
 
                 editor.set_references(list(refs))
 
         self._set_saveable(state)
+        self._set_additional_options(state)
+
         self.editor.force_update(force=True)
 
     def _get_reference_analysis_types(self):
@@ -113,7 +125,6 @@ class FitBlanksNode(FitReferencesNode):
     editor_klass = 'pychron.pipeline.plot.editors.blanks_editor,BlanksEditor'
     plotter_options_manager_klass = BlanksOptionsManager
     name = 'Fit Blanks'
-    basename = 'Blanks'
     _refit_message = 'The selected Isotopes have already been fit for blanks. Would you like to skip refitting?'
 
     def _check_refit(self, ai):
@@ -140,6 +151,10 @@ class FitBlanksNode(FitReferencesNode):
             atypes = list({a.analysis_type for a in self.unknowns})
             pom.set_analysis_types(atypes)
 
+        if self.references:
+            atypes = list({a.analysis_type for a in self.references})
+            pom.set_reference_types(atypes)
+
 
 ATTRS = ('numerator', 'denominator', 'standard_ratio', 'analysis_type')
 
@@ -149,10 +164,15 @@ class FitICFactorNode(FitReferencesNode):
                    'IntercalibrationFactorEditor'
     plotter_options_manager_klass = ICFactorOptionsManager
     name = 'Fit ICFactor'
-    basename = 'ICFactor'
 
     predefined = List
     _refit_message = 'The selected IC Factors have already been fit. Would you like to skip refitting?'
+
+    def _editor_factory(self):
+        e = super(FitICFactorNode, self)._editor_factory()
+        a = self.plotter_options.aux_plots[0]
+        e.references_name = a.analysis_type
+        return e
 
     def _get_reference_analysis_types(self):
         return ['air', 'cocktail']
@@ -166,33 +186,37 @@ class FitICFactorNode(FitReferencesNode):
         dets = list(udets.union(rdets))
         self.plotter_options_manager.set_detectors(dets)
 
-    # def set_detectors(self, dets):
-    #     self.plotter_options_manager.set_detectors(dets)
+    def _set_additional_options(self, state):
+        state.delete_existing_icfactors = self.plotter_options.delete_existing
 
     def _set_saveable(self, state):
         super(FitICFactorNode, self)._set_saveable(state)
         ps = self.plotter_options.get_saveable_aux_plots()
         state.saveable_keys = [p.denominator for p in ps]
 
-    # def run(self, state):
-    #     super(FitICFactorNode, self).run(state)
-
     def _check_refit(self, ai):
         for k in self._keys:
             num, dem = k.split('/')
             i = ai.get_isotope(detector=dem)
-            if not i.ic_factor_reviewed:
-                return True
+            if i is not None:
+                if not i.ic_factor_reviewed:
+                    return True
+            else:
+                from pyface.message_dialog import warning
+                warning(None, 'Data for detector {} is missing from {}'.format(dem, ai.record_id))
+                raise RefitException()
 
     def load(self, nodedict):
-        try:
-            fits = nodedict['fits']
-        except KeyError as e:
-            return
 
         pom = self.plotter_options_manager
-        self.plotter_options = pom.selected_options
-        self.plotter_options.set_aux_plots(fits)
+        if pom.selected_options.name == 'Default':
+            try:
+                fits = nodedict['fits']
+            except KeyError as e:
+                return
+
+            self.plotter_options = pom.selected_options
+            self.plotter_options.set_aux_plots(fits)
 
     def _to_template(self, d):
         d['fits'] = [{'numerator': a.numerator,
@@ -200,73 +224,6 @@ class FitICFactorNode(FitReferencesNode):
                       'standard_ratio': a.standard_ratio,
                       'analysis_type': a.analysis_type}
                      for a in self.plotter_options.aux_plots]
-
-
-GOODNESS_TAGS = ('int_err', 'slope', 'outlier', 'curvature')
-GOODNESS_NAMES = ('Intercept Error', 'Slope', 'Outliers', 'Curvature')
-
-
-class IsoEvoResult(HasTraits):
-    # record_id = Str
-    isotope = Str
-    n = Str
-    fit = Str
-    intercept_value = Float
-    intercept_error = Float
-    percent_error = Float
-    regression_str = Str
-    int_err_goodness = None
-    slope_goodness = None
-    outlier_goodness = None
-    curvature_goodness = None
-
-    int_err_threshold = None
-    slope_threshold = None
-    outlier_threshold = None
-    curvature_threshold = None
-    int_err = None
-    slope = None
-    outlier = None
-    curvature = None
-
-    analysis = Instance('pychron.processing.analyses.analysis.Analysis')
-
-    @property
-    def goodness(self):
-        good = True
-        for g in GOODNESS_TAGS:
-            v = getattr(self, '{}_goodness'.format(g))
-            if v is not None:
-                good &= v
-
-        return good
-
-    @property
-    def tooltip(self):
-
-        def f(t, m):
-            v = getattr(self, '{}_goodness'.format(t))
-            if v is not None:
-                v = 'OK' if v else "Bad {}>{}".format('{}'.format(t), '{}_threshold'.format(t))
-            else:
-                v = 'Not Tested'
-            return '{:<25}: {}'.format(m, v)
-
-        return '\n'.join([f(g, n) for g, n in zip(GOODNESS_TAGS, GOODNESS_NAMES)])
-
-    @property
-    def record_id(self):
-        r = ''
-        if self.analysis:
-            r = self.analysis.record_id
-        return r
-
-    @property
-    def identifier(self):
-        r = ''
-        if self.analysis:
-            r = self.analysis.identifier
-        return r
 
 
 class FitIsotopeEvolutionNode(FitNode):
@@ -303,6 +260,8 @@ class FitIsotopeEvolutionNode(FitNode):
                 dets = unk.detector_keys
                 if dets:
                     names.extend(dets)
+
+                names.insert(0, NULL_STR)
                 pom.set_names(names)
 
             atypes = list({a.analysis_type for a in self.unknowns})
@@ -313,7 +272,7 @@ class FitIsotopeEvolutionNode(FitNode):
 
         po = self.plotter_options
 
-        self._fits = list(reversed([pi for pi in po.get_loadable_aux_plots()]))
+        self._fits = list(reversed([pi for pi in po.get_saveable_aux_plots()]))
         self._keys = [fi.name for fi in self._fits]
 
         unks = self._get_valid_unknowns(state.unknowns)
@@ -326,13 +285,10 @@ class FitIsotopeEvolutionNode(FitNode):
             if self.editor:
                 self.editor.analysis_groups = [(ai,) for ai in unks]
 
-            # for ai in state.unknowns:
-            #     ai.graph_id = 0
-
             self._set_saveable(state)
             if fs:
                 e = IsoEvolutionResultsEditor(fs)
-                e.plotter_options = po
+                # e.plotter_options = po
                 state.editors.append(e)
 
     def _assemble_result(self, xi, prog, i, n):
@@ -350,11 +306,13 @@ class FitIsotopeEvolutionNode(FitNode):
                 iso = isotopes[k]
             else:
                 iso = xi.get_isotope(detector=k, kind='baseline')
-                # iso = next((i.baseline for i in six.itervalues(isotopes) if i.detector == k), None)
 
             if iso:
                 i, e = iso.value, iso.error
-                pe = abs(e / i * 100)
+                try:
+                    pe = abs(e / i * 100)
+                except ZeroDivisionError:
+                    pe = inf
 
                 goodness_threshold = f.goodness_threshold
                 int_err_goodness = None
@@ -365,10 +323,10 @@ class FitIsotopeEvolutionNode(FitNode):
                 slope_goodness = None
                 slope_threshold = None
                 if f.slope_goodness:
-                    if f.slope_goodness_intensity > i:
+                    if f.slope_goodness_intensity < i:
                         slope_threshold = f.slope_goodness
                         slope = iso.get_slope()
-                        slope_goodness = bool(slope < 0 or i < slope_threshold)
+                        slope_goodness = bool(slope < 0 or slope < slope_threshold)
 
                 outliers = None
                 outliers_threshold = None
@@ -390,12 +348,28 @@ class FitIsotopeEvolutionNode(FitNode):
                 if iso.noutliers():
                     nstr = '{}({})'.format(iso.n - iso.noutliers(), nstr)
 
+                rsquared_goodness = None
+                rsquared = 0
+                rsquared_threshold = 0
+                if f.rsquared_goodness:
+                    rsquared = iso.rsquared_adj
+                    rsquared_threshold = f.rsquared_goodness
+                    rsquared_goodness = rsquared > rsquared_threshold
+
+                signal_to_blank_goodness = None
+                signal_to_blank = 0
+                signal_to_blank_threshold = 0
+                if f.signal_to_blank_goodness:
+                    signal_to_blank = iso.blank.value / iso.value * 100
+                    signal_to_blank_threshold = f.signal_to_blank_goodness
+                    signal_to_blank_goodness = signal_to_blank < signal_to_blank_threshold
+
                 yield IsoEvoResult(analysis=xi,
                                    nstr=nstr,
                                    intercept_value=i,
                                    intercept_error=e,
                                    percent_error=pe,
-                                   int_err=i,
+                                   int_err=pe,
                                    int_err_threshold=goodness_threshold,
                                    int_err_goodness=int_err_goodness,
 
@@ -410,15 +384,113 @@ class FitIsotopeEvolutionNode(FitNode):
                                    curvature=curvature,
                                    curvature_threshold=curvature_threshold,
                                    curvature_goodness=curvature_goodness,
+
+                                   rsquared=rsquared,
+                                   rsquared_threshold=rsquared_threshold,
+                                   rsquared_goodness=rsquared_goodness,
+
+                                   signal_to_blank=signal_to_blank,
+                                   signal_to_blank_threshold=signal_to_blank_threshold,
+                                   signal_to_blank_goodness=signal_to_blank_goodness,
+
                                    regression_str=iso.regressor.tostring(),
                                    fit=iso.fit,
                                    isotope=k)
+
+
+class DefineEquilibrationNode(FitNode):
+    name = 'Define Equilibration'
+
+    plotter_options_manager_klass = DefineEquilibrationOptionsManager
+    use_plotting = False
+    _refit_message = 'The selected Equilibrations have already been fit. Would you like to skip refitting?'
+
+    def _configure_hook(self):
+        pom = self.plotter_options_manager
+        if self.unknowns:
+            unk = self.unknowns[0]
+            names = unk.isotope_keys
+            names.insert(0, NULL_STR)
+            pom.set_names(names)
+
+    def run(self, state):
+        super(DefineEquilibrationNode, self).run(state)
+        po = self.plotter_options
+
+        self._fits = list(reversed([pi for pi in po.get_saveable_aux_plots()]))
+        self._keys = [fi.name for fi in self._fits]
+
+        unks = state.unknowns
+
+        fs = progress_loader(unks, self._assemble_result, threshold=1, step=10)
+        self._set_saveable(state)
+        if fs:
+            e = DefineEquilibrationResultsEditor(fs, options=po)
+            state.editors.append(e)
+
+    def _set_saveable(self, state):
+        ps = self.plotter_options.get_saveable_aux_plots()
+        state.saveable_keys = [p.name for p in ps]
+        state.saveable_fits = [p.equilibration_time for p in ps]
+
+    def _assemble_result(self, xi, prog, i, n):
+        fits = self._fits
+        xi.load_raw_data(self._keys)
+
+        delay = xi.admit_delay
+
+        isotopes = xi.isotopes
+        ks = []
+        eqs = []
+        for fi in fits:
+            k = fi.name
+
+            if k in isotopes:
+                iso = isotopes[k]
+
+                # recombine sniff and isotope data
+                xs = hstack((iso.sniff.xs, iso.xs))
+                ys = hstack((iso.sniff.ys, iso.ys))
+
+                # ex = eval('x', {'x': xs})
+
+                ex = xs < fi.equilibration_time - delay
+                iex = invert(ex)
+
+                # split data based on trunc criteria
+                sniff_xs = xs[ex]
+                iso_xs = xs[iex]
+
+                sniff_ys = ys[ex]
+                iso_ys = ys[iex]
+
+                iso.sniff.xs = sniff_xs
+                iso.sniff.ys = sniff_ys
+
+                iso.xs = iso_xs
+                iso.ys = iso_ys
+                ks.append(k)
+                eqs.append('{}({})'.format(k, fi.equilibration_time))
+        if ks:
+            yield DefineEquilibrationResult(analysis=xi,
+                                            isotopes=ks,
+                                            equilibration_times=','.join(eqs))
 
 
 class FitFluxNode(FitNode):
     name = 'Fit Flux'
     editor_klass = FluxResultsEditor
     plotter_options_manager_klass = FluxOptionsManager
+
+    def _editor_factory(self):
+        if self.plotter_options.model_kind == 'Bracketing':
+            klass = BracketingFluxResultsEditor
+        else:
+            klass = FluxResultsEditor
+        editor = klass()
+
+        editor.plotter_options = self.plotter_options
+        return editor
 
     def _options_view_default(self):
         return view('Flux Options')
@@ -432,19 +504,25 @@ class FitFluxNode(FitNode):
 
         self.name = 'Fit Flux {}'.format(state.irradiation, state.level)
         geom = state.geometry
-        monitors = state.flux_monitors
+        monitors = state.unknowns
 
         if monitors:
-            lk = self.plotter_options.lambda_k
-            state.decay_constants = {'lambda_k_total': lk, 'lambda_k_total_error': 0}
+            po = self.plotter_options
+            # lk = po.lambda_k
+            # state.decay_constants = {'lambda_k_total': lk, 'lambda_k_total_error': 0}
+            # state.error_calc_method = po.
+            # state.flux_fit = po.
+            state.flux_options = po
 
-            editor.plotter_options = self.plotter_options
+            editor.plotter_options = po
             editor.geometry = geom
             editor.irradiation = state.irradiation
             editor.level = state.level
+            editor.holder = state.holder
 
             editor.set_positions(monitors, state.unknown_positions)
             state.saveable_irradiation_positions = editor.monitor_positions + state.unknown_positions
             editor.predict_values()
+            editor.name = 'Flux: {}{}'.format(state.irradiation, state.level)
 
 # ============= EOF =============================================

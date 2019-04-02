@@ -17,15 +17,17 @@
 # ============= enthought library imports =======================
 
 from __future__ import absolute_import
-from traits.api import Bool, Float, Date, Enum, List
-from traitsui.api import View, UItem, Item, HGroup, VGroup
-from traitsui.editors.check_list_editor import CheckListEditor
-# ============= standard library imports ========================
-import os
-# ============= local library imports  ==========================
 
-from pychron.paths import paths
+from traits.api import Bool, Float, Date, Enum, List
+from traitsui.api import UItem, Item, HGroup, VGroup
+from traitsui.editors.check_list_editor import CheckListEditor
+
+# ============= local library imports  ==========================
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.persistence_loggable import PersistenceLoggable
+
+
+# ============= standard library imports ========================
 
 
 class AnalysisRangeSelector(PersistenceLoggable):
@@ -44,13 +46,11 @@ class AnalysisRangeSelector(PersistenceLoggable):
     pattributes = ('n', 'use_date_range', 'low_post', 'high_post', 'time_units',
                    'selected_mass_spectrometers', 'selected_analysis_types')
 
+    persistence_name = 'analysis_range_selector.p'
+
     def set_mass_spectrometers(self, ms):
         self.available_mass_spectrometers = ms
         self.selected_mass_spectrometers = [mi for mi in self.selected_mass_spectrometers if mi in ms]
-
-    @property
-    def persistence_path(self):
-        return os.path.join(paths.hidden_dir, 'analysis_range_selector.p')
 
     @property
     def nhours(self):
@@ -76,14 +76,13 @@ class AnalysisRangeSelector(PersistenceLoggable):
                      show_border=True,
                      label='Analysis Types')
 
-        v = View(VGroup(msg, atg,
-                        HGroup(Item('n', enabled_when='not use_date_range'),
-                               UItem('time_units', style='custom')),
-                        VGroup('use_date_range',
-                               HGroup(UItem('low_post'), UItem('high_post'),
-                                      enabled_when='use_date_range'),
-                               show_border=True)),
-                 buttons=['OK', 'Cancel'])
+        v = okcancel_view(VGroup(msg, atg,
+                                 HGroup(Item('n', enabled_when='not use_date_range'),
+                                        UItem('time_units', style='custom')),
+                                 VGroup('use_date_range',
+                                        HGroup(UItem('low_post'), UItem('high_post'),
+                                               enabled_when='use_date_range'),
+                                        show_border=True)))
         return v
 
 # ============= EOF =============================================

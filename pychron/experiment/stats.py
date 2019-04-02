@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import time
 from datetime import datetime, timedelta
 
@@ -26,7 +27,6 @@ from pychron.core.ui.pie_clock import PieClockModel
 from pychron.experiment.duration_tracker import AutomatedRunDurationTracker
 from pychron.loggable import Loggable
 from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR, NULL_STR
-from six.moves import map
 
 
 class ExperimentStats(Loggable):
@@ -157,12 +157,13 @@ class ExperimentStats(Loggable):
 
             def convert_hexcolor_to_int(c):
                 c = c[1:]
-                func = lambda i: int(c[i:i + 2], 16)
-                return list(map(func, (0, 2, 4)))
+                # func = lambda i: int(c[i:i + 2], 16)
+                # return list(map(func, (0, 2, 4)))
+                return [int(c[i:i + 2], 16) for i in (0, 2, 4)]
 
-            ec, mc = list(map(convert_hexcolor_to_int,
-                         (EXTRACTION_COLOR, MEASUREMENT_COLOR)))
-
+            # ec, mc = list(map(convert_hexcolor_to_int,
+            #                   (EXTRACTION_COLOR, MEASUREMENT_COLOR)))
+            ec, mc = convert_hexcolor_to_int(EXTRACTION_COLOR), convert_hexcolor_to_int(MEASUREMENT_COLOR)
             self.clock.set_slices([extraction_slice, measurement_slice],
                                   [ec, mc])
             self.clock.start()
@@ -260,6 +261,22 @@ class StatsGroup(ExperimentStats):
             calculate the time at which a selected run will execute
         """
         self.debug('calculating time of run {}'.format(sel.runid))
+        st, et = self._calculate_at(sel)
+
+        if at_times:
+            self.end_at = self.format_duration(et)
+            if st:
+                self.start_at = self.format_duration(st)
+
+    def get_endtime(self, sel):
+        st, et = self._calculate_at(sel)
+        return et
+
+    def get_starttime(self, sel):
+        st, et = self._calculate_at(sel)
+        return st
+
+    def _calculate_at(self, sel):
         et = 0
         st = 0
         for ei in self.experiment_queues:
@@ -279,11 +296,7 @@ class StatsGroup(ExperimentStats):
                 break
             else:
                 et += ei.stats.calculate_duration()
-
-        if at_times:
-            self.end_at = self.format_duration(et)
-            if st:
-                self.start_at = self.format_duration(st)
+        return st, et
 
     @property
     def etf_iso(self):

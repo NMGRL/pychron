@@ -34,6 +34,7 @@ HW_PACKAGE_MAP = {
     'PychronMicroIonController': 'pychron.hardware.gauges.granville_phillips.pychron_micro_ion_controller',
     'QtegraMicroIonController': 'pychron.hardware.gauges.granville_phillips.pychron_micro_ion_controller',
     'MKSController': 'pychron.hardware.gauges.mks.controller',
+    'PfeifferMaxiGaugeController': 'pychron.hardware.gauges.pfeiffer.maxi_gauge_controller',
     'ArgusController': 'pychron.hardware.thermo_spectrometer_controller',
     'HelixController': 'pychron.hardware.thermo_spectrometer_controller',
     'FerrupsUPS': 'pychron.hardware.FerrupsUPS',
@@ -54,8 +55,10 @@ HW_PACKAGE_MAP = {
     'TempHumMicroServer': 'pychron.hardware.environmental_probe',
     'AirTransducer': 'pychron.hardware.transducer',
     'NMGRLMagnetDumper': 'pychron.furnace.magnet_dumper',
-    
-    'Model335TemperatureController': 'pychron.hardware.lakeshore.model335'
+    'LamontFurnaceControl': 'pychron.hardware.labjack.ldeo_furnace',
+
+    'Model335TemperatureController': 'pychron.hardware.lakeshore.model335',
+    'Model336TemperatureController': 'pychron.hardware.lakeshore.model336'
     # 'ControlModule': 'pychron.hardware.fusions.vue_diode_control_module'
 }
 

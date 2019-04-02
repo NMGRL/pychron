@@ -23,40 +23,45 @@ This file defines the text for various default files.
 Values are used in pychron.paths when building directory structure
 """
 from __future__ import absolute_import
+
 import yaml
 
 from pychron.core.helpers.strtools import to_bool
 
-PIPELINE_TEMPLATES = '''- Isotope Evolutions
-- Blanks
-- IC Factor
-- Flux
-- Ideogram
-- Spectrum
-- Inverse Isochron
-- Series
-- Regression Series
-- Radial
-- Analysis Table
-- Interpreted Age Table
-- Interpreted Age Ideogram
-- Auto Ideogram
-- Auto Series
-- Auto Report
-- Report
-- Diff
-- Vertical Flux
-- Xy Scatter
-- Geochron
-- Yield
-- CSV Analyses Export
-- CSV Ideogram
-- Correction Factors
-- Monitor Chain
-- Analysis Metadata
-'''
+# PIPELINE_TEMPLATES = '''- Isotope Evolutions
+# - Blanks
+# - IC Factor
+# - Flux
+# - Ideogram
+# - Spectrum
+# - Inverse Isochron
+# - Series
+# - Regression Series
+# - Radial
+# - Analysis Table
+# - Interpreted Age Table
+# - Interpreted Age Ideogram
+# - Auto Ideogram
+# - Auto Series
+# - Auto Report
+# - Report
+# - Diff
+# - Vertical Flux
+# - Xy Scatter
+# - Geochron
+# - Yield
+# - CSV Analyses Export
+# - CSV Ideogram
+# - Correction Factors
+# - Monitor Chain
+# - Analysis Metadata
+# '''
 
 IDENTIFIERS_DEFAULT = """
+- name: Blank
+  shortname: b
+  extractable: False
+  special: True
 - name: Blank Air
   shortname: ba
   extractable: False
@@ -186,7 +191,6 @@ TASK_EXTENSION_DEFAULT = """
 -
  plugin_id: pychron.experiment.plugin
  actions:
-  - pychron.experiment.reset_system_health, False
   - pychron.experiment.open_system_conditionals, True
   - pychron.experiment.open_queue_conditionals, True
   - pychron.experiment.open_experiment, True
@@ -298,9 +302,6 @@ columns:
   - Comment
 '''
 
-SYSTEM_HEALTH = '''
-'''
-
 
 def make_screen(**kw):
     obj = {'padding_left': 100,
@@ -339,6 +340,7 @@ def make_presentation(**kw):
     return yaml.dump(obj, default_flow_style=False)
 
 
+DEFINE_EQUILIBRATION_SCREEN = make_screen()
 ISO_EVO_SCREEN = make_screen()
 SERIES_SCREEN = make_screen()
 BLANKS_SCREEN = make_screen()
@@ -394,11 +396,19 @@ RADIAL_SCREEN = make_screen(**radial_d)
 
 regression_series_d = dict()
 REGRESSION_SERIES_SCREEN = make_screen(**regression_series_d)
-# ===============================================================
-# Pipeline Templates
-# ===============================================================
 
 
+FLUX_CONSTANTS_DEFAULT = """
+# This is an example flux file. Add additional decay_constant and monitor_age pairs here
+"FC MIN":
+  lambda_ec: [5.80e-11, 0]
+  lambda_b: [4.884e-10, 0]
+  monitor_age: 28.201
+"FC SJ":
+  lambda_ec: [5.81e-11, 0]
+  lambda_b: [4.962e-10, 0]
+  monitor_age: 28.02
+"""
 
 REACTORS_DEFAULT = '''{
     "Triga": {
@@ -414,115 +424,5 @@ REACTORS_DEFAULT = '''{
             }
 }
 '''
-# SYSTEM_HEALTH = '''
-# values:
-#  - Ar40/Ar36
-#  - uAr40/Ar36
-#  - ysymmetry
-#  - extraction_lens
-#  - ysymmetry
-#  - zsymmetry
-#  - zfocus
-#  - H2_deflection
-#  - H1_deflection
-#  - AX_deflection
-#  - L1_deflection
-#  - L2_deflection
-#  - CDD_deflection
-# general:
-#  limit: 100
-# conditionals:
-#  -
-#   attribute: Ar40/Ar36
-#   function: std
-#   comparison: x>1
-#   action: cancel
-#   min_n: 10
-#   bin_hours: 6
-#   analysis_types:
-#    - air
-#  -
-#   attribute: ysymmetry
-#   function: value
-#   action: cancel
-#   analysis_types:
-#    - air
-#
-# '''
-#
-# # SCREEN_FORMATTING_DEFAULTS = '''
-# # x_tick_in: 2
-# # x_tick_out: 5
-# # x_title_font: Helvetica 12
-# # x_tick_label_font: Helvetica 10
-# #
-# # y_tick_in: 2
-# # y_tick_out: 5
-# # y_title_font: Helvetica 12
-# # y_tick_label_font: Helvetica 10
-# #
-# # bgcolor: white
-# # plot_bgcolor: white
-# #
-# # label_font: Helvetica 10
-# # '''
-# #
-# # PRESENTATION_FORMATTING_DEFAULTS = '''
-# # x_tick_in: 2
-# # x_tick_out: 5
-# # x_title_font: Helvetica 22
-# # x_tick_label_font: Helvetica 14
-# #
-# # y_tick_in: 2
-# # y_tick_out: 5
-# # y_title_font: Helvetica 22
-# # y_tick_label_font: Helvetica 14
-# #
-# # bgcolor: 239,238,185
-# # plot_bgcolor: 208,243,241
-# #
-# # label_font: Helvetica 14
-# # '''
-# #
-# # DISPLAY_FORMATTING_DEFAULTS = '''
-# # x_tick_in: 2
-# # x_tick_out: 5
-# # x_title_font: Helvetica 22
-# # x_tick_label_font: Helvetica 14
-# #
-# # y_tick_in: 2
-# # y_tick_out: 5
-# # y_title_font: Helvetica 22
-# # y_tick_label_font: Helvetica 14
-# #
-# # bgcolor: 239,238,185
-# # plot_bgcolor: 208,243,241
-# #
-# # label_font: Helvetica 14
-# # '''
 # ============= EOF =============================================
-# IDEOGRAM_DEFAULTS = '''
-# padding_left: 100
-# padding_right: 100
-# padding_top: 100
-# padding_bottom: 100
-#
-# probability_curve_kind: cumulative
-# mean_calculation_kind: 'weighted mean'
-#
-# mean_indicator_fontsize: 12
-# mean_sig_figs: 2
-#
-# index_attr: uage
-#
-# xtick_in: 1
-# xtick_out: 5
-# ytick_in: 1
-# ytick_out: 5
-# use_xgrid: False
-# use_ygrid: False
-#
-# bgcolor: 239,238,185
-# plot_bgcolor: 208,243,241
-#
-# '''
+

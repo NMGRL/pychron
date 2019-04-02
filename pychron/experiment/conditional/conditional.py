@@ -15,24 +15,23 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
+
 import os
+import pprint
 
-from traits.api import Str, Either, Int, Callable, Bool, Float, Enum
-
+import yaml
+from traits.api import Str, Either, Int, Callable, Bool, Float, Enum, List
 # ============= standard library imports ========================
 from traits.trait_types import BaseStr
 from uncertainties import nominal_value, std_dev
-import pprint
+
 # ============= local library imports  ==========================
-import yaml
 from pychron.experiment.conditional.regexes import MAPPER_KEY_REGEX, \
     STD_REGEX, INTERPOLATE_REGEX, EXTRACTION_STR_ABS_REGEX, EXTRACTION_STR_PERCENT_REGEX
 from pychron.experiment.conditional.utilities import tokenize, get_teststr_attr_func, extract_attr
 from pychron.experiment.utilities.conditionals import RUN, QUEUE, SYSTEM
 from pychron.loggable import Loggable
 from pychron.paths import paths
-from six.moves import range
 
 
 def dictgetter(d, attrs, default=None):
@@ -152,15 +151,19 @@ class BaseConditional(Loggable):
 
         ntrips = cd.get('ntrips', 1)
 
-        analysis_types = cd.get('analysis_types')
+        analysis_types = cd.get('analysis_types', [])
         if analysis_types:
-            analysis_types = [a.lower() for a in analysis_types]
+            analysis_types = [a.lower().replace(' ', '_') for a in analysis_types]
+        else:
+            analysis_types = []
+
         attr = extract_attr(teststr)
 
         self.trait_set(start_count=start, frequency=freq,
                        attr=attr,
                        window=win, mapper=mapper,
-                       ntrips=ntrips, analysis_types=analysis_types,
+                       ntrips=ntrips,
+                       analysis_types=analysis_types,
                        **kw)
         self._from_dict_hook(cd)
 
@@ -205,7 +208,7 @@ class AutomatedRunConditional(BaseConditional):
     # used to specify a window (in counts) of data to average, etc.
     window = Int
     mapper = Str
-    analysis_types = None
+    analysis_types = List
 
     _mapper_key = ''
 
@@ -253,7 +256,7 @@ class AutomatedRunConditional(BaseConditional):
         return {'teststr': self.teststr, 'start_count': self.start_count,
                 'frequency': self.frequency, 'ntrips': self.ntrips,
                 'level': self.level,
-                'analysis_types': self.analysis_types, 'location': self.location}
+                'analysis_types': tuple(self.analysis_types), 'location': self.location}
 
     def result_dict(self):
         hash_id = self._hash_id()
@@ -261,7 +264,13 @@ class AutomatedRunConditional(BaseConditional):
 
     def _should_check(self, run, data, cnt):
         if self.analysis_types:
-            if run.analysis_type.lower() not in self.analysis_types:
+            # check if checking should be done on this run based on analysis_type
+            atype = run.analysis_type.lower()
+            if 'blank' in self.analysis_types:
+                if atype.startswith('blank'):
+                    return
+
+            if atype not in self.analysis_types:
                 return
 
         if self.active:
@@ -271,12 +280,9 @@ class AutomatedRunConditional(BaseConditional):
 
                 ocnt = cnt - self.start_count
 
-                # "a" flag not necessary cnt>scnt == cnt-scnt>0
-                # a = cnt > self.start_count
                 b = ocnt > 0
                 c = ocnt % self.frequency == 0
                 cnt_flag = b and c
-                # print ocnt, self.frequency, b, c
                 return cnt_flag
 
     def _check(self, run, data, verbose=False):

@@ -15,9 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 import logging
-from cStringIO import StringIO
+from io import StringIO
 
 import requests
 from PIL import Image
@@ -64,16 +63,17 @@ class NMGRLCamera(ConfigLoadable):
     def get_image_data(self, size=None):
         resp = self._session.get('http://{}/html/cam_pic.php'.format(self.host), timeout=2)
         if resp.status_code == 200:
-            buf = StringIO(resp.content)
-            try:
-                im = Image.open(buf)
-            except IOError:
-                return
+            if resp.content:
+                buf = StringIO(resp.content)
+                try:
+                    im = Image.open(buf)
+                except IOError:
+                    return
 
-            if size:
-                im = im.resize(size, Image.ANTIALIAS)
+                if size:
+                    im = im.resize(size, Image.ANTIALIAS)
 
-            return array(im)
+                return array(im)
 
     def load(self, *args, **kw):
         config = self.get_configuration()

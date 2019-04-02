@@ -23,14 +23,13 @@ import codecs
 import glob
 import os
 import sys
-import time
 
-import binascii
 import serial
+import time
+from six.moves import range
+
 # =============local library imports  ==========================
 from .communicator import Communicator, process_response, prep_str, remove_eol_func
-from six.moves import map
-from six.moves import range
 
 
 def get_ports():
@@ -150,13 +149,13 @@ class SerialCommunicator(Communicator):
                            optional=True, default=None, cast='int')
 
         self.set_attribute(config, 'write_terminator', 'Communications', 'write_terminator',
-                           optional=True, default='\r')
+                           optional=True, default=b'\r')
 
         if self.write_terminator == 'CRLF':
-            self.write_terminator = '\r\n'
+            self.write_terminator = b'\r\n'
 
         if self.read_terminator == 'CRLF':
-            self.read_terminator = '\r\n'
+            self.read_terminator = b'\r\n'
 
         if self.read_terminator == 'ETX':
             self.read_terminator = chr(3)
@@ -383,15 +382,16 @@ class SerialCommunicator(Communicator):
         """
 
         if not self.simulation:
-            if not isinstance(cmd, bytes):
-                cmd = bytes(cmd, 'utf-8')
-
+            cmd = bytes(cmd, 'utf-8')
             if is_hex:
                 cmd = codecs.decode(cmd, 'hex')
                 # cmd = cmd.decode('hex')
             else:
-                if self.write_terminator is not None:
-                    cmd += bytes(self.write_terminator, 'utf-8')
+                wt = self.write_terminator
+                if wt is not None:
+                    if isinstance(wt, str):
+                        wt = bytes(wt, 'utf-8')
+                    cmd += wt
 
             try:
                 self.handle.write(cmd)
@@ -479,6 +479,10 @@ class SerialCommunicator(Communicator):
                     if pos:
                         t = r[pos] == ti
                     else:
+
+                        if isinstance(ti, str):
+                            ti = ti.encode()
+
                         t = r.endswith(ti)
 
                     if t:

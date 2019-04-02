@@ -15,11 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-
-from __future__ import absolute_import
-from __future__ import print_function
-import time
-from itertools import groupby
 from math import isinf
 
 from chaco.legend import Legend
@@ -27,26 +22,25 @@ from numpy import inf
 from traits.api import HasTraits, Any, List, Str
 
 from pychron.core.codetools.inspection import caller
+from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.processing.analysis_graph import AnalysisStackedGraph
 
 
 class FigurePanel(HasTraits):
     figures = List
-    # graph = Any
     analyses = Any
     plot_options = Any
-    _index_attr = ''
     equi_stack = False
 
+    _index_attr = ''
     _graph_klass = AnalysisStackedGraph
     _figure_klass = Any
 
-    # plot_spacing = Int(0)
     meta = Any
     title = Str
     use_previous_limits = True
-
     track_value = True
+
     # @on_trait_change('analyses[]')
     # def _analyses_items_changed(self):
     #     self.figures = self._make_figures()
@@ -54,12 +48,12 @@ class FigurePanel(HasTraits):
     def make_figures(self):
         self.figures = self._make_figures()
 
+    def _figure_factory(self, *args, **kw):
+        return self._figure_klass(*args, **kw)
+
     def _make_figures(self, **kw):
-        key = lambda x: x.group_id
-        ans = sorted(self.analyses, key=key)
-        gs = [self._figure_klass(analyses=list(ais),
-                                 group_id=gid, **kw)
-              for gid, ais in groupby(ans, key=key)]
+        gs = [self._figure_factory(analyses=list(ais), group_id=gid, **kw)
+              for gid, ais in groupby_group_id(self.analyses)]
         return gs
 
     # def dump_metadata(self):
@@ -145,33 +139,35 @@ class FigurePanel(HasTraits):
                 for p in plots:
                     if p.has_xlimits():
                         tmi, tma = p.xlimits
-                        print('previous xllimits', tmi, tma)
+                        # print('previous xllimits', tmi, tma)
                         if tmi != -inf and tma != inf:
                             mi, ma = tmi, tma
 
             for i, p in enumerate(plots):
                 g.plots[i].value_scale = p.scale
                 if p.ymin or p.ymax:
-                    print('has ymin max set', p.ymin, p.ymax)
+                    # print('has ymin max set', p.ymin, p.ymax)
                     ymi, yma = p.ymin, p.ymax
                     if p.ymin > p.ymax:
                         yma = None
                     g.set_y_limits(ymi, yma, plotid=i)
                 elif p.has_ylimits():
-                    print('has ylimits', i, p.ylimits[0], p.ylimits[1])
+                    # print('has ylimits', i, p.ylimits[0], p.ylimits[1])
                     g.set_y_limits(p.ylimits[0], p.ylimits[1], plotid=i)
                 elif p.calculated_ymin or p.calculated_ymax:
-                    print('has calculated', p.calculated_ymin, p.calculated_ymax)
+                    # print('has calculated', p.calculated_ymin, p.calculated_ymax)
                     g.set_y_limits(p.calculated_ymin, p.calculated_ymax, plotid=i)
 
             if mi is None and ma is None:
                 mi, ma = 0, 100
 
             if not (isinf(mi) or isinf(ma)):
-                print('setting xlimits', id(self), mi, ma, xpad, self.plot_options.xpadding)
+                # print('setting xlimits', id(self), mi, ma, xpad, self.plot_options.xpadding)
                 g.set_x_limits(mi, ma, pad=xpad or self.plot_options.xpadding)
 
             self.figures[-1].post_make()
+            self.figures[-1].post_plot(plots)
+
             for fig in self.figures:
                 for i in range(len(plots)):
                     fig.update_options_limits(i)

@@ -14,7 +14,6 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from traits.api import HasTraits, Str, Int, Color, Button, Any, Instance, on_trait_change, Bool
 from traitsui.api import View, UItem
 from traitsui.qt4.editor import Editor
@@ -22,7 +21,6 @@ from traitsui.basic_editor_factory import BasicEditorFactory
 from pyface.qt.QtGui import QLabel
 # ============= standard library imports ========================
 import random
-import six
 # ============= local library imports  ==========================
 
 
@@ -80,10 +78,10 @@ class _CustomLabelEditor(Editor):
 
         control.setStyleSheet(css)
 
-    def update_editor(self):
-        if self.control:
-            if isinstance(self.value, (str, int, float, int, six.text_type)):
-                self.control.setText(str(self.value))
+    # def update_editor(self):
+    #     if self.control:
+    #         if isinstance(self.value, (str, int, float, int, six.text_type)):
+    #             self.control.setText(self.str_value)
 
     def _create_control(self, parent):
         control = QLabel()

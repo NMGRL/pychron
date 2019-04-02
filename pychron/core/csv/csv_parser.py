@@ -14,24 +14,20 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
+# ============= standard library imports ========================
 import csv
 
+# ============= enthought library imports =======================
 from traits.api import HasTraits, provides
 
-
-# ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.i_column_parser import IColumnParser
-from six.moves import map
-from six.moves import range
 
 
 @provides(IColumnParser)
 class BaseColumnParser(HasTraits):
     _header_offset = 1
+    _header_idx = 0
 
     def load(self, p, header_idx=0, **kw):
         self._header_idx = header_idx
@@ -63,7 +59,7 @@ class BaseColumnParser(HasTraits):
         data = array([[gv(ri, ki) for ki in keys] for ri in self.iternrows()], dtype=float)
         return data.T
 
-    def itervalues(self, keys=None):
+    def values(self, keys=None):
         """
             returns a row iterator
             each iteration is a dictionary containing "keys"
@@ -73,8 +69,9 @@ class BaseColumnParser(HasTraits):
         if keys is None:
             keys = self._header
         gv = self.get_value
-        return ({ki: gv(ri, ki) for ki in keys}
-                for ri in self.iternrows())
+        return ({ki: gv(ri, ki) for ki in keys} for ri in self.iternrows())
+
+    itervalues = values
 
     def iternrows(self):
         return range(self._header_offset, self.nrows, 1)
@@ -104,7 +101,7 @@ class CSVColumnParser(BaseColumnParser):
         with open(p, 'U') as rfile:
             reader = csv.reader(rfile, delimiter=self.delimiter)
             self._lines = list(reader)
-            self._header = list(map(str.strip, self._lines[header_idx]))
+            self._header = [l.strip() for l in self._lines[header_idx]]
             self._nrows = len(self._lines)
 
     def get_value(self, ri, ci):
@@ -115,6 +112,14 @@ class CSVColumnParser(BaseColumnParser):
             return self._lines[ri][ci]
         except IndexError:
             pass
+
+    def check(self, keys):
+        """
+        check  header matches keys
+        :param keys:
+        :return:
+        """
+        return all(k in self._header for k in keys)
 
     @property
     def nrows(self):

@@ -15,10 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
+
 import os
 import time
-from itertools import groupby
 
 from pyface.timer.do_later import do_later
 from traits.api import Any, on_trait_change, Int, List, Bool, \
@@ -27,7 +26,9 @@ from traits.trait_types import Date
 from traitsui.api import View, Item, UItem
 
 from pychron.core.helpers.ctx_managers import no_update
-from pychron.core.select_same import SelectSameMixin, SelectAttrView
+from pychron.core.helpers.iterfuncs import groupby_key
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+from pychron.core.select_same import SelectSameMixin
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.ui.qt.tabular_editor import MoveToRow
 from pychron.envisage.view_util import open_view
@@ -43,11 +44,10 @@ class RepeatRunBlockView(HasTraits):
     value = Int
 
     def traits_view(self):
-        v = View(Item('value', label='Repeat'),
-                 kind='modal',
-                 title='Repeat Selected Run Block',
-                 width=300,
-                 buttons=['OK', 'Cancel'])
+        v = okcancel_view(Item('value', label='Repeat'),
+                          kind='modal',
+                          title='Repeat Selected Run Block',
+                          width=300)
         return v
 
 
@@ -55,11 +55,10 @@ class NewRunBlockView(HasTraits):
     name = Str
 
     def traits_view(self):
-        v = View(Item('name'),
-                 kind='modal',
-                 title='New Run Block',
-                 buttons=['OK', 'Cancel'],
-                 width=200)
+        v = okcancel_view(Item('name'),
+                          kind='modal',
+                          title='New Run Block',
+                          width=200)
         return v
 
 
@@ -72,21 +71,22 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
     executed_runs = List
     executed_runs_scroll_to_row = Int
     automated_runs_scroll_to_row = Int
-    # linked_copy_cache = List
     start_timestamp = Date
-    # queue_actions = List
     auto_save_detector_ic = Bool
+    patterns = List
 
     executed = Bool(False)
 
-    human_error_checker = Instance(HumanErrorChecker, ())
+    human_error_checker = Instance(HumanErrorChecker)
     execution_ratio = Property
 
     refresh_blocks_needed = Event
-    _auto_save_time = 0
-    _temp_analysis = None
 
     default_attr = 'identifier'
+    patterns = List
+
+    _auto_save_time = 0
+    _temp_analysis = None
 
     def auto_save(self):
         if self._auto_save_time and time.time() - self._auto_save_time < 0.25:
@@ -128,11 +128,59 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
         self.selected = []
         self.refresh_table_needed = True
 
+    def group_extractions2(self):
+        """
+        group using ABC, ABC, ABC
+        :return:
+        """
+        sel = self.selected
+        evs = sorted({s.extract_value for s in sel})
+        n = len(evs)
+
+        with no_update(self):
+            gs = []
+            for i, a in enumerate(self.automated_runs):
+                if a.extract_value == evs[0]:
+                    gs.extend(self.automated_runs[i:i + n])
+
+            if gs:
+                for gi in gs:
+                    self.automated_runs.remove(gi)
+
+                for gi in reversed(gs):
+                    self.automated_runs.insert(0, gi)
+
+    def group_extractions(self):
+        """
+        group using AAA, BBB, CCC
+        :return:
+        """
+        sel = self.selected
+
+        evs = {s.extract_value for s in sel}
+
+        with no_update(self):
+            gs = []
+            for ev in sorted(evs):
+                for a in self.automated_runs:
+                    if a.extract_value == ev:
+                        gs.append(a)
+
+            if gs:
+                for gi in gs:
+                    self.automated_runs.remove(gi)
+
+                for gi in reversed(gs):
+                    self.automated_runs.insert(0, gi)
+
     def repeat_block(self):
-        rbv = RepeatRunBlockView()
-        info = rbv.edit_traits()
-        if info.result:
-            self.add_runs(self.selected, freq=rbv.value, is_repeat_block=True)
+        if self.selected:
+            rbv = RepeatRunBlockView()
+            info = rbv.edit_traits()
+            if info.result:
+                self.add_runs(self.selected, freq=rbv.value, is_repeat_block=True)
+        else:
+            self.information_dialog('Please select a set of analyses to repeat')
 
     def make_run_block(self):
         nrbv = NewRunBlockView()
@@ -157,6 +205,15 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
             for si in self.selected:
                 self.automated_runs.remove(si)
             self.automated_runs.extend(self.selected)
+
+    def move(self, step):
+        if self.selected:
+            with no_update(self):
+                run = self.selected[0]
+                idx = self.automated_runs.index(run)
+
+                idx = max(min(0, idx + step), len(self.automated_runs) - 1)
+                self._move_selected(idx + step)
 
     def copy_selected_first(self):
         self._copy_selected(0)
@@ -191,11 +248,7 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
         ans = [ai for ai in self.automated_runs if ai.labnumber == ln and ai.is_step_heat()]
         i = 0
 
-        def key(x):
-            return x.user_defined_aliquot
-
-        ans = sorted(ans, key=key)
-        for _ in groupby(ans, key=key):
+        for _ in groupby_key(ans, 'user_defined_aliquot'):
             i += 1
         return i
 
@@ -341,6 +394,21 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
         return rgen, len(runs)
 
     # private
+    def _human_error_checker_default(self):
+        return self._human_error_checker_factory()
+
+    def _human_error_checker_factory(self, klass=None):
+        if klass is None:
+            klass = HumanErrorChecker
+
+        spec_man = None
+        if self.application:
+            from pychron.spectrometer.base_spectrometer_manager import BaseSpectrometerManager
+            spec_man = self.application.get_service(BaseSpectrometerManager)
+
+        hec = klass(spectrometer_manager=spec_man)
+        return hec
+
     def _find_run(self, aid):
         return next((a for a in self.automated_runs
                      if make_runid(a.labnumber, a.aliquot, a.step) == aid), None)
@@ -381,7 +449,7 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
         else:
             k = HumanErrorChecker
 
-        self.human_error_checker = k()
+        self.human_error_checker = self._human_error_checker_factory(k)
 
     @on_trait_change('automated_runs[]')
     def _refresh_info(self, new):

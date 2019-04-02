@@ -16,16 +16,16 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import json
-import time
+
 from pyface.message_dialog import warning
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change, Button
+from traits.api import HasTraits, Str, Int, Button
 from traitsui.api import View, UItem, Item, HGroup, VGroup, TextEditor
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.hardware.core.communicators.ethernet_communicator import EthernetCommunicator, MessageFrame
-from pychron.hardware.furnace.nmgrl.camera import NMGRLCamera
+from pychron.hardware.core.communicators.ethernet_communicator import EthernetCommunicator
 
 
 class FirmwareClient(HasTraits):

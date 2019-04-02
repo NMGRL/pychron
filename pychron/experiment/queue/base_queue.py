@@ -14,7 +14,6 @@
 # limitations under the License.
 # ===============================================================================
 
-from __future__ import absolute_import
 import datetime
 import os
 
@@ -28,10 +27,7 @@ from pychron.core.helpers.ctx_managers import no_update
 from pychron.experiment.queue.run_block import RunBlock
 from pychron.experiment.stats import ExperimentStats
 from pychron.experiment.utilities.frequency_generator import frequency_index_gen
-from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR, LINE_STR
-from six.moves import map
-from six.moves import zip
 
 
 def extract_meta(line_gen):
@@ -103,6 +99,10 @@ class BaseExperimentQueue(RunBlock):
     _no_update = False
     _frequency_group_counter = 0
 
+    @property
+    def no_update(self):
+        return self._no_update
+
     # ===============================================================================
     # persistence
     # ===============================================================================
@@ -138,7 +138,7 @@ class BaseExperimentQueue(RunBlock):
             writeline('#' + '=' * 80)
 
         def tab(l, comment=False):
-            s = '\t'.join(map(str, l))
+            s = '\t'.join([str(li) for li in l])
             if comment:
                 s = '#{}'.format(s)
             writeline(s)
@@ -231,13 +231,14 @@ class BaseExperimentQueue(RunBlock):
             run = runspecs[0]
             rtype = run.analysis_type
             incrementable_types = ('unknown',)
-            if rtype.startswith('blank'):
-                incrementable_types = ('unknown', 'air', 'cocktail')
-            elif rtype.startswith('air') or rtype.startswith('cocktail'):
-                incrementable_types = ('unknown',)
+
+            if len(runspecs) == 1:
+                if rtype.startswith('blank'):
+                    t = '_'.join(rtype.split('_')[1:])
+                    incrementable_types = (t, )
 
         for idx in reversed(list(frequency_index_gen(runblock, freq, incrementable_types,
-                                                     freq_before, freq_after, sidx=sidx))):
+                                                freq_before, freq_after, sidx=sidx))):
             for ri in reversed(runspecs):
                 run = ri.clone_traits()
                 run.frequency_group = fcnt
@@ -277,9 +278,6 @@ class BaseExperimentQueue(RunBlock):
         return meta
 
     def _load_meta(self, meta):
-        # load sample map
-        self._load_map(meta)
-
         # default = lambda x: str(x) if x else ' '
         default_int = lambda x: x if x is not None else 1
         key_default = lambda k: lambda x: str(x) if x else k
@@ -301,27 +299,31 @@ class BaseExperimentQueue(RunBlock):
         self._set_meta_param('load_name', meta, default, metaname='load')
         self._set_meta_param('queue_conditionals_name', meta, default)
         self._set_meta_param('repository_identifier', meta, default)
+
+        # # load sample map
+        # self._load_map()
+
         self._load_meta_hook(meta)
 
     def _load_meta_hook(self, meta):
         pass
 
-    def _load_map(self, meta):
-        from pychron.stage.maps.laser_stage_map import LaserStageMap
-        from pychron.experiment.map_view import MapView
-
-        def create_map(name):
-            if name:
-                if not name.endswith('.txt'):
-                    name = '{}.txt'.format(name)
-                name = os.path.join(paths.map_dir, name)
-
-                if os.path.isfile(name):
-                    sm = LaserStageMap(file_path=name)
-                    mv = MapView(stage_map=sm)
-                    return mv
-
-        self._set_meta_param('sample_map', meta, create_map, metaname='tray')
+    # def _load_map(self):
+    #     name = self.tray
+    #
+    #     if name:
+    #         name = str(name)
+    #         if not name.endswith('.txt'):
+    #             name = '{}.txt'.format(name)
+    #
+    #         name = os.path.join(paths.map_dir, name)
+    #         if os.path.isfile(name):
+    #             from pychron.stage.maps.laser_stage_map import LaserStageMap
+    #             from pychron.experiment.map_view import MapView
+    #
+    #             sm = LaserStageMap(file_path=name)
+    #             mv = MapView(stage_map=sm)
+    #             self.map_view = mv
 
     def _set_meta_param(self, attr, meta, func, metaname=None):
         if metaname is None:
@@ -422,5 +424,9 @@ class BaseExperimentQueue(RunBlock):
             return os.path.splitext(os.path.basename(self.path))[0]
         else:
             return ''
+
+    @property
+    def load_holder(self):
+        return self.tray
 
 # ============= EOF =============================================

@@ -13,20 +13,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from __future__ import absolute_import
-from traits.api import File, Directory
 # ============= standard library imports ========================
 from datetime import datetime, timedelta
+
 from numpy import array
-import os
-# ============= local library imports  ==========================
+from traits.api import File
 
 from pychron.data_mapper.sources.file_source import FileSource, get_float, get_int, get_next, get_ufloat
 from pychron.processing.isotope import Isotope, Baseline
 from pychron.processing.isotope_group import IsotopeGroup
 from pychron.pychron_constants import INTERFERENCE_KEYS
-from six.moves import range
-from six.moves import zip
+
+
+# ============= local library imports  ==========================
 
 
 def make_ed(s):
@@ -43,22 +42,8 @@ def make_ed(s):
 class USGSVSCSource(FileSource):
     _delimiter = '\t'
     irradiation_path = File
-    directory = Directory
 
-    def get_analysis_import_specs(self, delimiter=None):
-        if self.directory:
-            ps = []
-            for di in os.listdir(self.directory):
-                self.path = os.path.join(self.directory, di)
-                try:
-                    s = self.get_analysis_import_spec()
-                    ps.append(s)
-                except BaseException:
-                    pass
-        elif self.path:
-            ps = [self.get_analysis_import_spec(delimiter)]
 
-        return ps
 
 
 class USGSVSCNuSource(USGSVSCSource):

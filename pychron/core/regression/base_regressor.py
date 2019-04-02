@@ -14,22 +14,19 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-
-from __future__ import absolute_import
 import logging
 import math
 import re
 
-from numpy import where, delete
+from numpy import where, delete, polyfit
+# ============= enthought library imports =======================
 from traits.api import Array, List, Event, Property, Any, \
     Dict, Str, Bool, cached_property, HasTraits
 
+from pychron.core.regression.tinv import tinv
 from pychron.core.stats.core import calculate_mswd, validate_mswd
+from pychron.core.stats.monte_carlo import RegressionEstimator
 from pychron.pychron_constants import ALPHAS, PLUSMINUS
-from .tinv import tinv
-from six.moves import range
-from six.moves import zip
 
 logger = logging.getLogger('BaseRegressor')
 
@@ -63,7 +60,7 @@ class BaseRegressor(HasTraits):
     filter_ys = Array
     # _filtering = Bool(False)
 
-    error_calc_type = 'SD'
+    error_calc_type = 'CI'
 
     mswd = Property(depends_on='dirty, xs, ys')
     valid_mswd = Bool
@@ -79,6 +76,7 @@ class BaseRegressor(HasTraits):
 
     degrees_of_freedom = Property
     integrity_warning = False
+    filter_bound_value = 0
 
     @property
     def min(self):
@@ -93,12 +91,43 @@ class BaseRegressor(HasTraits):
         return self.clean_ys.mean()
 
     @property
+    def mean_mswd(self):
+        if len(self.clean_yserr):
+            return calculate_mswd(self.clean_ys, self.clean_yserr)
+
+    @property
+    def valid_mean_mswd(self):
+        m = self.mean_mswd
+        if m is not None:
+            return validate_mswd(m, self.n)
+
+    @property
     def std(self):
         return self.clean_ys.std()
 
     @property
     def sem(self):
         return self.std / self.n ** 0.5
+
+    @property
+    def rsquared(self):
+        return self._get_rsquared()
+
+    def _get_rsquared(self):
+        return 0
+
+    @property
+    def rsquared_adj(self):
+        return self._get_rsquared_adj()
+
+    def _get_rsquared_adj(self):
+        return 0
+
+    def get_xsquared_coefficient(self):
+        x = self.clean_xs
+        y = self.clean_ys
+        a, b, c = polyfit(x, y, 2)
+        return b
 
     def calculate_filtered_data(self):
         fod = self.filter_outliers_dict
@@ -110,7 +139,7 @@ class BaseRegressor(HasTraits):
                 self.calculate(filtering=True)
 
                 self.dirty = True
-                outliers = self.calculate_outliers(nsigma=fod.get('std_devs', 2))
+                outliers = self.calculate_outliers()
 
                 self.outlier_excluded = list(set(self.outlier_excluded + list(outliers)))
                 self.dirty = True
@@ -122,7 +151,7 @@ class BaseRegressor(HasTraits):
         return list(set(self.user_excluded + self.outlier_excluded + self.truncate_excluded))
 
     def set_truncate(self, trunc):
-        self.truncate = trunc
+        self.truncate = trunc or ''
         if self.truncate:
             m = re.match(r'[A-Za-z]+', self.truncate)
             if m:
@@ -130,6 +159,7 @@ class BaseRegressor(HasTraits):
                 exclude = eval(self.truncate, {k: self.xs})
                 excludes = list(exclude.nonzero()[0])
                 self.truncate_excluded = excludes
+                self.dirty = True
 
     def calculate(self, *args, **kw):
         pass
@@ -161,11 +191,36 @@ class BaseRegressor(HasTraits):
         r = i_n * sum(A * B)
         return r
 
-    def calculate_outliers(self, nsigma=2):
-        s = self.calculate_standard_error_fit()
+    def calculate_filter_bounds(self, model=None, bound=None):
+        if bound is None:
+            bound = self.filter_bound_value
+            if not bound:
+                if self.filter_outliers_dict.get('use_standard_deviation_filtering'):
+                    bound = self.std
+                else:
+                    bound = self.calculate_standard_error_fit()
+
+                bound *= self.filter_outliers_dict.get('std_devs', 2)
+
+        if model is None:
+            model = self.predict(self.xs)
+
+        lower = model - bound
+        upper = model + bound
+        return lower, upper
+
+    def calculate_outliers(self):
+        if self.filter_outliers_dict.get('use_standard_deviation_filtering'):
+            s = self.std
+        else:
+            s = self.calculate_standard_error_fit()
+
+        nsigma = self.filter_outliers_dict.get('std_devs', 2)
 
         # calculate residuals for every point not just cleaned arrays
         residuals = abs(self.ys - self.predict(self.xs))
+
+        self.filter_bound_value = s*nsigma
 
         return where(residuals >= (s * nsigma))[0]
 
@@ -207,27 +262,19 @@ class BaseRegressor(HasTraits):
         if error_calc is None:
             error_calc = self.error_calc_type
 
-        func = self.calculate_ci
-        if error_calc == 'SEM':
-            func = self.calculate_sem_error_envelope
-        elif error_calc == 'SD':
-            func = self.calculate_sd_error_envelope
+        es = self.predict_error(rx, error_calc=error_calc)
+        if es is None:
+            es = 0
 
-        return func(rx, rmodel)
+        return rmodel-es, rmodel+es
 
-    def calculate_sd_error_envelope(self, rx, rmodel):
-        es = self.predict_error(rx, error_calc='SD')
-        return rmodel - es, rmodel + es
+    def calculate_mc_error(self, rx):
+        if isinstance(rx, (float, int)):
+            rx = [rx]
 
-    def calculate_sem_error_envelope(self, rx, rmodel):
-        es = self.predict_error(rx, error_calc='SEM')
-        return rmodel - es, rmodel + es
-
-    def calculate_ci(self, rx, rmodel):
-        cors = self.calculate_ci_error(rx)
-        if rmodel is not None and cors is not None:
-            if rmodel.shape[0] and cors.shape[0]:
-                return rmodel - cors, rmodel + cors
+        estimator = RegressionEstimator(10000, self)
+        _,es = estimator.estimate(rx)
+        return es
 
     def calculate_ci_error(self, rx):
         cors = self._calculate_ci(rx)
@@ -291,6 +338,10 @@ class BaseRegressor(HasTraits):
         s = '{}({})    y={}+{}'.format(fit, self.error_calc_type or 'CI', eq, constant)
         return s
 
+    def get_exog(self, x):
+        return x
+
+    # private
     def _calculate_ci(self, rx):
         if isinstance(rx, (float, int)):
             rx = [rx]
@@ -317,8 +368,6 @@ class BaseRegressor(HasTraits):
             ssx = self.get_ssx(xm)
             d = n ** -1 + (rx - xm) ** 2 / ssx
             cors = ti * syx * d ** 0.5
-
-            # print rx, cors[0]
 
             return cors / 2.
 
@@ -356,7 +405,7 @@ class BaseRegressor(HasTraits):
         return delete(v, list(exc), 0)
 
     def _clean_array(self, v):
-        exc = set(self.user_excluded) ^ set(self.truncate_excluded) ^ set(self.outlier_excluded)
+        exc = self.get_excluded()
         return delete(v, list(exc), 0)
 
     def _check_integrity(self, x, y, verbose=False):

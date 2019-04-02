@@ -1,6 +1,6 @@
 from __future__ import absolute_import
-import numpy as np
 
+import numpy as np
 from numpy import random
 
 
@@ -30,6 +30,13 @@ def pearson(expected=False):
     return xs, ys, wxs, wys
 
 
+def pre_truncated_data(n=10):
+    x = np.linspace(0, n - 1, n)
+    y = np.hstack((np.zeros(5), np.ones(n - 5)))
+    solution = {'pre_mean': 1, 'post_mean': 0}
+    return x, y, solution
+
+
 def mean_data(scalar=5, std=1.5, n=1000):
     rs = random.RandomState(123456)
     n = int(n)
@@ -42,11 +49,26 @@ def mean_data(scalar=5, std=1.5, n=1000):
     # rv=stats.norm(scalar,std)
     # ys=rv.rvs(size=n)
 
-
     # solution={'mean':rv.mean(),
     #           'std':rv.std(),
     #           'n': n}
 
+    return xs, ys, solution
+
+
+def expo_data():
+    xs = np.linspace(1, 100)
+    a, b, c = 100, -0.05, 1
+    ys = a * np.exp(-b * xs) + c
+    solution = {'coefficients': [a,b,c]}
+    return xs, ys, solution
+
+
+def expo_data_linear():
+    xs = np.linspace(1, 20)
+    a,b,c = 0, 0.012, 80
+    ys = b*(xs-c)**2
+    solution = {'coefficients': [1.34633849e+02, 1.43805607e-02, -5.78015102e+01]}
     return xs, ys, solution
 
 
@@ -61,7 +83,6 @@ def ols_data():
     ys = [10.98, 11.13, 12.51, 8.4, 9.27, 8.73, 6.36, 8.50,
           7.82, 9.14, 8.24, 12.19, 11.88, 9.57, 10.94, 9.58,
           10.09, 8.11, 6.83, 8.88, 7.68, 8.47, 8.86, 10.36, 11.08]
-
 
     # self.Xk = 28.6
     # self.ypred_k = 0.3091

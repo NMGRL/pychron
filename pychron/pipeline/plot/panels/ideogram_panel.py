@@ -15,28 +15,55 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from traits.api import on_trait_change
+
 # ============= standard library imports ========================
 from numpy import Inf
+from uncertainties import nominal_value
 
+from pychron.envisage.view_util import open_view
+from pychron.graph.regression_graph import RegressionGraph
+from pychron.options.layout import filled_grid
 from pychron.pipeline.plot.panels.figure_panel import FigurePanel
 from pychron.pipeline.plot.plotter.ideogram import Ideogram
-from six.moves import zip
-
-
 # ============= local library imports  ==========================
+from pychron.processing.analysis_graph import IdeogramGraph
 
 
 class IdeogramPanel(FigurePanel):
     _figure_klass = Ideogram
+    _graph_klass = IdeogramGraph
 
-    # _index_attr = 'uage'
+    def _handle_make_correlation_event(self, evt):
 
-    # @on_trait_change('figures:xlimits_updated')
-    # def _handle_limits(self, obj, name, new):
-    #     for f in self.figures:
-    #         f.replot()
+        idx, ytitle = evt
+
+        fi = self.figures[0]
+        plots = list(fi.options.get_plotable_aux_plots())
+        tag = plots[idx].plot_name
+
+        n = len(self.figures)
+
+        r, c = filled_grid(n)
+        g = RegressionGraph(container_dict={'kind': 'g', 'shape': (r, c)}, window_title='Correlation')
+        for i, fi in enumerate(self.figures):
+            gi = fi.analysis_group
+            p = g.new_plot(xtitle='age', ytitle=ytitle, title='{}({})'.format(gi.sample, gi.identifier))
+
+            xs = [nominal_value(a.uage) for a in gi.clean_analyses()]
+            ys = [nominal_value(a.get_value(tag)) for a in gi.clean_analyses()]
+
+            g.new_series(xs, ys, fit='linear', use_error_envelope=False, plotid=i)
+            g.add_correlation_statistics(plotid=i)
+
+            g.set_x_limits(pad='0.1', plotid=i)
+            g.set_y_limits(pad='0.1', plotid=i)
+
+        g.refresh()
+
+        open_view(g)
+
+    def _make_graph_hook(self, g):
+        g.on_trait_change(self._handle_make_correlation_event, 'make_correlation_event')
 
     def _handle_rescale(self, obj, name, new):
         if new == 'y':
@@ -74,7 +101,7 @@ class IdeogramPanel(FigurePanel):
                 mi, ma = po.xlow, po.xhigh
             else:
                 xmas, xmis = list(zip(*[(i.max_x(attr), i.min_x(attr))
-                                   for i in self.figures]))
+                                        for i in self.figures]))
                 mi, ma = min(xmis), max(xmas)
 
                 cs = [i.mean_x(attr) for i in self.figures]

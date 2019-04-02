@@ -39,7 +39,7 @@ class WaitPane(TraitsDockPane):
             HGroup(Spring(width=-5, springy=False),
                    Item('high', label='Set Max. Seconds'),
                    spring,
-                   CustomLabel('current_time',
+                   CustomLabel('current_display_time',
                                size=24,
                                weight='bold'),
                    UItem('pause_button'),

@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 import binascii
 import math
 import os
@@ -30,12 +29,10 @@ from pychron.core.helpers.strtools import to_bool
 from pychron.core.ui.preference_binding import set_preference
 from pychron.database.adapters.local_lab_adapter import LocalLabAdapter
 from pychron.experiment.automated_run.hop_util import parse_hops
+from pychron.experiment.automated_run.mass_spec_persistence_spec import MassSpecPersistenceSpec
 from pychron.loggable import Loggable
 from pychron.paths import paths
-from pychron.processing.export.export_spec import MassSpecExportSpec
 from pychron.pychron_constants import NULL_STR, DETECTOR_IC
-import six
-from six.moves import zip
 
 DEBUG = False
 
@@ -61,6 +58,9 @@ class IPersister(Interface):
 class BasePersister(Loggable):
     per_spec = Instance('pychron.experiment.automated_run.persistence_spec.PersistenceSpec', ())
     save_enabled = Bool(False)
+
+    def set_preferences(self, preferences):
+        pass
 
     def post_extraction_save(self):
         pass
@@ -836,7 +836,7 @@ class AutomatedRunPersister(BasePersister):
 
         if self.per_spec.spec_dict:
             db.add_spectrometer_parameters(meas, self.per_spec.spec_dict)
-            for det, deflection in six.iteritems(self.per_spec.defl_dict):
+            for det, deflection in self.per_spec.defl_dict.items():
                 det = db.add_detector(det)
                 db.add_deflection(meas, det, deflection)
 
@@ -898,7 +898,7 @@ class AutomatedRunPersister(BasePersister):
                 'selected_{}'.format(name), history)
 
         func = getattr(db, 'add_{}'.format(name))
-        for isotope, v in six.iteritems(values):
+        for isotope, v in values.items():
             uv = v.nominal_value
             ue = float(v.std_dev)
             if preceding_id:
@@ -952,21 +952,21 @@ class AutomatedRunPersister(BasePersister):
 
         # ic = self.per_spec.isotope_group.get_ic_factor('CDD')
 
-        exp = MassSpecExportSpec(runid=rid,
-                                 runscript_name=self.per_spec.runscript_name,
-                                 runscript_text=self.per_spec.runscript_blob,
-                                 # signal_fits=sf,
-                                 mass_spectrometer=self.per_spec.run_spec.mass_spectrometer.capitalize(),
-                                 # blanks=blanks,
-                                 # data_path=p,
-                                 power_achieved=self.per_spec.power_achieved,
-                                 isotopes=self.per_spec.isotope_group.isotopes,
-                                 # signal_intercepts=si,
-                                 # signal_intercepts=self._processed_signals_dict,
-                                 is_peak_hop=self.per_spec.save_as_peak_hop,
-                                 # ic_factor_v=float(nominal_value(ic)),
-                                 # ic_factor_e=float(std_dev(ic))
-                                 )
+        exp = MassSpecPersistenceSpec(runid=rid,
+                                      runscript_name=self.per_spec.runscript_name,
+                                      runscript_text=self.per_spec.runscript_blob,
+                                      # signal_fits=sf,
+                                      mass_spectrometer=self.per_spec.run_spec.mass_spectrometer.capitalize(),
+                                      # blanks=blanks,
+                                      # data_path=p,
+                                      power_achieved=self.per_spec.power_achieved,
+                                      isotopes=self.per_spec.isotope_group.isotopes,
+                                      # signal_intercepts=si,
+                                      # signal_intercepts=self._processed_signals_dict,
+                                      is_peak_hop=self.per_spec.save_as_peak_hop,
+                                      # ic_factor_v=float(nominal_value(ic)),
+                                      # ic_factor_e=float(std_dev(ic))
+                                      )
         exp.load_record(self.per_spec.run_spec)
 
         return exp

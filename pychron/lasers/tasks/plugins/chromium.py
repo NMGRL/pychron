@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from envisage.ui.tasks.task_factory import TaskFactory
 
 from pychron.lasers.tasks.plugins.laser_plugin import BaseLaserPlugin
@@ -25,8 +26,7 @@ class ChromiumPlugin(BaseLaserPlugin):
 
     def test_communication(self):
         man = self._get_manager()
-        c = man.test_connection()
-        return 'Passed' if c else 'Failed'
+        return man.test_connection()
 
     def _get_task_klass(self):
         factory = __import__(self.task_klass[0], fromlist=[self.task_klass[1]])
@@ -46,4 +46,9 @@ class ChromiumPlugin(BaseLaserPlugin):
                             image='laser',
                             accelerator=self.accelerator)]
 
+    def _task_extensions_default(self):
+        exts = self._create_task_extensions()
+        self._setup_pattern_extensions(exts)
+
+        return exts
 # ============= EOF =============================================

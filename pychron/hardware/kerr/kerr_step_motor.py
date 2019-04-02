@@ -15,19 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
 from traits.api import CInt, Str, Bool, Dict, Float, HasTraits, Any
 from traitsui.api import View, Item, EnumEditor, RangeEditor
-# from pychron.core.ui.custom_label_editor import CustomLabel
-from pychron.hardware.core.data_helper import make_bitarray
-from six.moves import map
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-SPEED_MODES = {'1x': '11', '2x': '10', '4x': '01', '8x': '00'}
+from pychron.hardware.core.data_helper import make_bitarray
 from pychron.hardware.kerr.kerr_motor import KerrMotor
 
+SPEED_MODES = {'1x': '11', '2x': '10', '4x': '01', '8x': '00'}
 '''
     status byte
     0 1 2 3 4 5 6 7
@@ -223,8 +219,8 @@ class KerrStepMotor(KerrMotor):
         move_cmd = ''.join((cmd, control, v, a))
 
         cmds = [  # (addr,home_cmd,10,'=======Set Homing===='),
-                  (addr, home_cmd, 100, 'Set homing options'),
-                  (addr, move_cmd, 100, 'Send to Home')]
+            (addr, home_cmd, 100, 'Set homing options'),
+            (addr, move_cmd, 100, 'Send to Home')]
         self._execute_hex_commands(cmds)
 
         '''
@@ -299,7 +295,7 @@ class KerrStepMotor(KerrMotor):
         if status_byte == 'simulation':
             status_byte = 'DFDF'
 
-        status_register = list(map(int, make_bitarray(int(status_byte[:2], 16))))
+        status_register = [int(bi) for bi in make_bitarray(int(status_byte[:2], 16))]
         return status_register[7]
 
     def control_view(self):

@@ -35,7 +35,8 @@ class ChromiumClientPane(ClientPane):
         return ctx
 
     def traits_view(self):
-        pos_grp = VGroup(UItem('move_enabled_button'),
+        pos_grp = VGroup(UItem('move_enabled_button',
+                               editor=ButtonEditor(label_value='move_enabled_label')),
                          VGroup(HGroup(Item('position'),
                                        UItem('stage_manager.stage_map_name',
                                              editor=EnumEditor(name='stage_manager.stage_map_names')),

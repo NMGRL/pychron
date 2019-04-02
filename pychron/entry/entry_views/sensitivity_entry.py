@@ -16,45 +16,79 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import HasTraits, List, Str, Int, Float, \
-    Date, Any, Bool
+
+from datetime import datetime
+
+from traits.api import HasTraits, List, Str, Float, \
+    Date, Any, TraitError
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.entry.entry_views.entry import BaseEntry
+from pychron.core.helpers.iterfuncs import groupby_key
+from pychron.dvc.dvc_irradiationable import DVCAble
 from pychron.paths import paths
+from pychron.pychron_constants import DATE_FORMAT
 
 
 class SensitivityRecord(HasTraits):
-    user = Str
-    note = Str
-    mass_spectrometer = Str
-    sensitivity = Float
-    create_date = Date
-    primary_key = Int
-    editable = Bool(True)
+    user = Str(dictable=True)
+    note = Str(dictable=True)
+    mass_spectrometer = Str(dictable=True)
+    sensitivity = Float(dictable=True)
+    create_date = Date(dictable=True)
+    units = Str('mol/fA', dictable=True)
 
-    def __init__(self, rec=None, *args, **kw):
-        super(SensitivityRecord, self).__init__(*args, **kw)
-        if rec:
-            self._create(rec)
+    def to_dict(self):
+        d = {k: getattr(self, k) for k in self.traits(dictable=True)}
 
-    def _create(self, dbrecord):
-        self.user = dbrecord.user or ''
-        self.note = dbrecord.note or ''
-        self.create_date = dbrecord.create_date
-        self.primary_key = int(dbrecord.id)
-        self.editable = False
+        cd = d['create_date']
+        if not cd:
+            self.create_date = cd = datetime.now()
 
-        if dbrecord.mass_spectrometer:
-            self.mass_spectrometer = dbrecord.mass_spectrometer.name
+        d['create_date'] = cd.strftime(DATE_FORMAT)
+        return d
 
-        self.sensitivity = dbrecord.sensitivity
+    @classmethod
+    def from_dict(cls, d):
+        record = cls()
+        for attr in record.traits(dictable=True):
+            if attr == 'create_date':
+                cd = d.get(attr)
+                if cd and not isinstance(cd, datetime):
+                    cd = datetime.strptime(cd, DATE_FORMAT)
+                record.create_date = cd
+            else:
+                try:
+                    setattr(record, attr, d.get(attr))
+                except TraitError:
+                    pass
+        return record
 
-    def flush(self, dbrecord):
-        attrs = ['sensitivity', 'note', 'user']
-        for ai in attrs:
-            v = getattr(self, ai)
-            setattr(dbrecord, ai, v)
+    # primary_key = Int
+    # editable = Bool(True)
+
+    # def __init__(self, rec=None, *args, **kw):
+    #     super(SensitivityRecord, self).__init__(*args, **kw)
+    #     if rec:
+    #         self._create(rec)
+    #
+    # def _create(self, dbrecord):
+    #     self.user = dbrecord.user or ''
+    #     self.note = dbrecord.note or ''
+    #     self.create_date = dbrecord.create_date
+    #     self.primary_key = int(dbrecord.id)
+    #     self.editable = False
+    #
+    #     if dbrecord.mass_spectrometer:
+    #         self.mass_spectrometer = dbrecord.mass_spectrometer.name
+    #
+    #     self.sensitivity = dbrecord.sensitivity
+    #
+    # def flush(self, dbrecord):
+    #     attrs = ['sensitivity', 'note', 'user']
+    #     for ai in attrs:
+    #         v = getattr(self, ai)
+    #         setattr(dbrecord, ai, v)
 
 
 #     dbrecord = Any
@@ -84,18 +118,18 @@ class SensitivityRecord(HasTraits):
 #
 #         self.dbrecord.mass_spectrometer = spec
 
-class database_enabled(object):
-    def __call__(self, func):
-        def wrapper(obj, *args, **kw):
-            if obj.db is not None:
-                return func(obj, *args, **kw)
-            else:
-                obj.warning('database not enabled')
+# class database_enabled(object):
+#     def __call__(self, func):
+#         def wrapper(obj, *args, **kw):
+#             if obj.db is not None:
+#                 return func(obj, *args, **kw)
+#             else:
+#                 obj.warning('database not enabled')
+#
+#         return wrapper
 
-        return wrapper
 
-
-class SensitivityEntry(BaseEntry):
+class SensitivityEntry(DVCAble):
     records = List(SensitivityRecord)
     selected = Any
 
@@ -105,35 +139,24 @@ class SensitivityEntry(BaseEntry):
     def activate(self):
         self._load_records()
 
-    @database_enabled()
+    # @database_enabled()
     def _load_records(self):
-        recs = self.db.get_sensitivities()
-        self.records = [SensitivityRecord(ri)
-                        for ri in recs]
+        specs = self.dvc.get_sensitivities()
+        print('asdf', specs)
+        self.records = [SensitivityRecord.from_dict(sens) for spec in specs.values() for sens in spec]
 
-    @database_enabled()
+    # @database_enabled()
     def save(self):
-        db = self.db
-        for si in self.records:
-            dbrecord = db.get_sensitivity(si.primary_key)
-            if dbrecord is None:
-                dbrecord = db.add_sensitivity(si.mass_spectrometer,
-                                              sensitivity=si.sensitivity,
-                                              note=si.note)
-            else:
-                dbrecord.sensitivity = si.sensitivity
-                dbrecord.note = si.note
+        sens = {}
+        for ms, ss in groupby_key(self.records, 'mass_spectrometer'):
 
-            si.flush(dbrecord)
-        db.commit()
+            sens[ms] = [ri.to_dict() for ri in ss]
+
+        self.dvc.save_sensitivities(sens)
 
     def add(self):
         rec = SensitivityRecord()
         self.records.append(rec)
-
-    def paste(self, obj):
-        return obj.clone_traits(traits=['mass_spectrometer',
-                                        'sensitivity'])
 
 
 # ===============================================================================

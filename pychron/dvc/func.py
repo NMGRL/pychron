@@ -15,17 +15,18 @@
 # ===============================================================================
 
 # ============= standard library imports ========================
-from __future__ import absolute_import
 import glob
 import os
-from datetime import datetime
+from math import isnan
+
 from git import Repo
 from traits.api import Str, Bool, HasTraits
+from uncertainties import nominal_value, std_dev
 
 from pychron import json
-from pychron.dvc import analysis_path
+from pychron.dvc import analysis_path, repository_path
 from pychron.git_archive.repo_manager import GitRepoManager
-from pychron.paths import paths
+from pychron.pychron_constants import SAMPLE_METADATA
 
 
 def repository_has_staged(ps, remote='origin', branch='master'):
@@ -35,7 +36,7 @@ def repository_has_staged(ps, remote='origin', branch='master'):
     changed = []
     # repo = GitRepoManager()
     for p in ps:
-        pp = os.path.join(paths.repository_dataset_dir, p)
+        pp = repository_path(p)
         repo = Repo(pp)
 
         if repo.git.log('{}/{}..HEAD'.format(remote, branch), '--oneline'):
@@ -46,7 +47,7 @@ def repository_has_staged(ps, remote='origin', branch='master'):
 
 def push_repositories(ps, remote='origin', branch='master', quiet=True):
     for p in ps:
-        pp = os.path.join(paths.repository_dataset_dir, p)
+        pp = repository_path(p)
         # repo = Repo(pp)
         repo = GitRepoManager()
         repo.open_repo(pp)
@@ -86,13 +87,13 @@ class RSDItem(HasTraits):
 def get_review_status(record):
     ms = 0
     ritems = []
-    root = os.path.join(paths.repository_dataset_dir, record.repository_identifier)
+    root = repository_path(record.repository_identifier)
     if os.path.isdir(root):
         repo = Repo(root)
         for m, func in (('blanks', is_blank_reviewed),
                         ('intercepts', is_intercepts_reviewed),
                         ('icfactors', is_icfactors_reviewed)):
-            p = analysis_path(record.record_id, record.repository_identifier, modifier=m)
+            p = analysis_path(record, record.repository_identifier, modifier=m)
             if os.path.isfile(p):
                 with open(p, 'r') as rfile:
                     obj = json.load(rfile)
@@ -126,7 +127,8 @@ def find_interpreted_age_path(idn, repositories, prefixlen=3):
     #         ret.extend(ps)
 
     ret = [p for repo in repositories
-           for p in glob.glob(os.path.join(paths.repository_dataset_dir, repo, prefix, 'ia', suffix))]
+           for p in glob.glob(repository_path(repo, prefix, 'ia', suffix))]
+    print(prefix, ret)
     return ret
 
 
@@ -144,5 +146,58 @@ class GitSessionCTX(object):
         if exc_type is None:
             if self._parent.is_dirty():
                 self._parent.repository_commit(self._repository_id, self._message)
+
+
+def make_interpreted_age_dict(ia):
+    def ia_dict(keys):
+        return {attr: getattr(ia, attr) for attr in keys}
+
+    # make general
+    d = ia_dict(('name', 'uuid'))
+
+    # make analyses
+    def analysis_factory(x):
+        return dict(uuid=x.uuid,
+                    record_id=x.record_id,
+                    extract_value=x.extract_value,
+                    age=x.age,
+                    age_err=x.age_err,
+                    age_err_wo_j=x.age_err_wo_j,
+                    radiogenic_yield=nominal_value(x.radiogenic_yield),
+                    radiogenic_yield_err=std_dev(x.radiogenic_yield),
+                    kca=float(nominal_value(x.kca)),
+                    kca_err=float(std_dev(x.kca)),
+                    kcl=float(nominal_value(x.kcl)),
+                    kcl_err=float(std_dev(x.kcl)),
+                    tag=x.tag,
+                    plateau_step=ia.get_is_plateau_step(x),
+                    baseline_corrected_intercepts=x.baseline_corrected_intercepts_to_dict(),
+                    blanks=x.blanks_to_dict(),
+                    icfactors=x.icfactors_to_dict(),
+                    ic_corrected_values=x.ic_corrected_values_to_dict(),
+                    interference_corrected_values=x.interference_corrected_values_to_dict())
+
+    d['analyses'] = [analysis_factory(xi) for xi in ia.analyses]
+
+    # make sample metadata
+    d['sample_metadata'] = ia_dict(SAMPLE_METADATA)
+
+    # make preferred
+    pf = ia_dict(('nanalyses',
+                  'include_j_error_in_mean',
+                  'include_j_error_in_plateau',
+                  'include_j_position_error'))
+
+    a = ia.get_preferred_age()
+    mswd = ia.get_preferred_mswd()
+    pf.update({'age': float(nominal_value(a)),
+               'age_err': float(std_dev(a)),
+               'display_age_units': ia.age_units,
+               'preferred_kinds': ia.preferred_values_to_dict(),
+               'mswd': float(0 if isnan(mswd) else mswd),
+               'arar_constants': ia.arar_constants.to_dict(),
+               'ages': ia.ages()})
+    d['preferred'] = pf
+    return d
 
 # ============= EOF =============================================

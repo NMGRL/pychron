@@ -14,20 +14,46 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= standard library imports ========================
 # ============= local library imports  ==========================
-from __future__ import absolute_import
 from envisage.ui.tasks.task_extension import TaskExtension
 from pyface.tasks.action.schema_addition import SchemaAddition
+# ============= standard library imports ========================
+from traits.api import List
 
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.geochron.geochron_service import GeochronService
 from pychron.geochron.tasks.actions import UploadAction
+from pychron.geochron.tasks.node import GeochronNode
 from pychron.geochron.tasks.preferences import GeochronPreferencesPane
+from pychron.pipeline.nodes import NodeFactory
+
+GEOCHRON = """
+required:
+ - pychron.geochron.geochron_service.GeochronService
+nodes:
+ - klass: UnknownNode
+ - klass: GeochronNode
+"""
 
 
 class GeochronPlugin(BaseTaskPlugin):
     id = 'pychron.geochron.plugin'
+
+    node_factories = List(contributes_to='pychron.pipeline.node_factories')
+
+    predefined_templates = List(contributes_to='pychron.pipeline.predefined_templates')
+
+    def _node_factories_default(self):
+        def geochron_factory():
+            node = GeochronNode()
+            service = self.application.get_service('pychron.geochron.geochron_service.GeochronService')
+            node.trait_set(service=service)
+            return node
+
+        return [NodeFactory('GeochronNode', geochron_factory), ]
+
+    def _predefined_templates_default(self):
+        return [('Share', (('Geochron', GEOCHRON),))]
 
     def _help_tips_default(self):
         return ['More information about Geochron is located at http://geochron.org/']

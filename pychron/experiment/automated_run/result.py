@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from traits.api import HasTraits, Str, Property, Instance
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -24,7 +23,6 @@ from uncertainties import nominal_value, std_dev
 from pychron.core.helpers.formatting import uformat_percent_error, floatfmt, errorfmt
 from pychron.experiment.conditional.conditional import AutomatedRunConditional
 from pychron.processing.isotope_group import IsotopeGroup
-from six.moves import map
 
 
 class AutomatedRunResult(HasTraits):
@@ -33,15 +31,15 @@ class AutomatedRunResult(HasTraits):
     isotope_group = Instance(IsotopeGroup)
     summary = Property
     tripped_conditional = Instance(AutomatedRunConditional)
+    centering_results = None
 
     def _get_summary(self):
         at = self.analysis_timestamp
         if at is not None:
             at = at.strftime('%H:%M:%S %m-%d-%Y')
-
-        summary = self._make_header('Summary')
         return '''RUNID= {} 
 RUN TIME= {}
+{}
 {}
 {}
 {}
@@ -49,11 +47,34 @@ RUN TIME= {}
              at,
              self._intensities(),
              self._tripped_conditional(),
-             summary,
+             self._make_header('Summary'),
+             self._make_peak_statistics(),
              self._make_summary())
 
     def _make_summary(self):
         return 'No Summary Available'
+
+    def _make_peak_statistics(self):
+        ret = ''
+
+        def f(v):
+            try:
+                v = '{:0.2f}'.format(v)
+            except ValueError:
+                pass
+            return v
+
+        if self.centering_results:
+            fmt = '{:<10s} {:<10s} {:<10s} {:<10s}'
+            s = [fmt.format('Det', 'Res.', 'Low RP', 'High RP')]
+            for r in self.centering_results:
+                s.append(fmt.format(r.detector,
+                                    f(r.resolution),
+                                    f(r.low_resolving_power),
+                                    f(r.high_resolving_power)))
+
+            ret = '\n'.join(s)
+        return ret
 
     def _intensities(self):
         lines = []
@@ -65,7 +86,8 @@ RUN TIME= {}
                     'Blank (fA)', '%Err'
 
             colwidths = 6, 8, 25, 8, 25, 8, 25, 8, 25, 8
-            cols = list(map('{{:<{}s}}'.format, colwidths))
+            # cols = list(map('{{:<{}s}}'.format, colwidths))
+            cols = ['{{:<{}s}}'.format(ci) for ci in colwidths]
             colstr = ''.join(cols)
 
             divider = ''.join(['{} '.format('-' * (x - 1)) for x in colwidths])
@@ -92,7 +114,7 @@ RUN TIME= {}
                  'Ar40/Ar36= {} {}'.format(floatfmt(nominal_value(a4036)), errorfmt(nominal_value(a4036),
                                                                                     std_dev(a4036))),
                  'Ar40/Ar38= {} {}'.format(floatfmt(nominal_value(a4038)), errorfmt(nominal_value(a4038),
-                                                                                    std_dev(a4036)))]
+                                                                                    std_dev(a4038)))]
 
         return self._make_lines(lines)
 

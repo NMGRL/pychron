@@ -17,14 +17,26 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 from __future__ import absolute_import
+
 from numpy import array
+from six.moves import zip
 # ============= local library imports  ==========================
 from uncertainties import std_dev, nominal_value
+
 from pychron.pipeline.plot.plotter.references_series import ReferencesSeries
-from six.moves import zip
 
 
 class ICFactor(ReferencesSeries):
+    def _get_plot_label_text(self, po):
+        n, d = po.name.split('/')
+
+        analysis = self.sorted_references[0]
+
+        niso = analysis.get_isotope(detector=n)
+        diso = analysis.get_isotope(detector=d)
+
+        return '{}/{}'.format(niso.name, diso.name)
+
     def _get_interpolated_value(self, po, analysis):
         n, d = po.name.split('/')
         #iso = next((i for i in analysis.isotopes.itervalues() if i.detector == d), None)
@@ -57,12 +69,16 @@ class ICFactor(ReferencesSeries):
             nys = [ri.get_isotope(detector=n) for ri in self.sorted_references]
             dys = [ri.get_isotope(detector=d) for ri in self.sorted_references]
 
-            nys = array([ni.get_non_detector_corrected_value() for ni in nys if ni is not None])
-            dys = array([di.get_non_detector_corrected_value() for di in dys if di is not None])
+            # nys = array([ni.get_non_detector_corrected_value() for ni in nys if ni is not None])
+            # dys = array([di.get_non_detector_corrected_value() for di in dys if di is not None])
+
+            nys = array([ni.get_decay_corrected_value() for ni in nys if ni is not None])
+            dys = array([di.get_decay_corrected_value() for di in dys if di is not None])
+
             rys = nys / dys
         else:
             rys = array([ri.get_value(po.name) for ri in self.sorted_references])
         rys = rys / po.standard_ratio
-        return rys
+        return self.sorted_references, self.rxs, rys
 
 # ============= EOF =============================================

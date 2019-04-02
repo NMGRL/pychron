@@ -13,26 +13,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from __future__ import absolute_import
 from traits.api import List
+
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.options import AgeOptions
 from pychron.options.views.radial_views import VIEWS
-from pychron.pychron_constants import NULL_STR
+from pychron.pychron_constants import NULL_STR, MAIN, APPEARANCE, DISPLAY, GROUPS
 
 
 class RadialAuxPlot(AuxPlot):
-    names = List([NULL_STR, 'Radial'])
-    # names = List([NULL_STR, 'Analysis Number Nonsorted', 'Analysis Number',
-    #               'Radiogenic 40Ar', 'K/Ca', 'K/Cl', 'Mol K39', 'Ideogram'])
-    # _plot_names = List(['', 'analysis_number_nonsorted', 'analysis_number', 'radiogenic_yield',
-    #                     'kca', 'kcl', 'moles_k39', 'relative_probability'])
+    names = List([NULL_STR, 'Radial'], transient=True)
 
 
 class RadialOptions(AgeOptions):
-    subview_names = List(['Main', 'Radial', 'Appearance', 'Calculations', 'Display', 'Groups'],
-                         transient=True)
     aux_plot_klass = RadialAuxPlot
+
+    def initialize(self):
+        self.subview_names = [MAIN, 'Radial', APPEARANCE, 'Calculations', DISPLAY, GROUPS]
 
     def _get_subview(self, name):
         return VIEWS[name]

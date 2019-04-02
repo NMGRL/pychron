@@ -15,27 +15,26 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
+
 import os
 
 from git import Repo
 from pyface.message_dialog import information
-from traits.api import HasTraits, Str, Int, Bool, List, Event, Either, Float, on_trait_change, Property, cached_property
-from traitsui.api import View, UItem, VGroup, TabularEditor, HGroup, Item
+from traits.api import HasTraits, Str, Int, Bool, List, Event, Either, Float, on_trait_change
+from traitsui.api import View, UItem, VGroup, TabularEditor, HGroup, Item, TextEditor, VSplit
 from traitsui.tabular_adapter import TabularAdapter
 
+from pychron import json
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.ui.tabular_editor import myTabularEditor
-from pychron.dvc import analysis_path
+from pychron.dvc import analysis_path, HISTORY_TAGS, HISTORY_PATHS
 from pychron.dvc.tasks.panes import CommitAdapter
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.view_util import open_view
 from pychron.git_archive.repo_manager import isoformat_date
-from pychron.git_archive.utils import get_commits, get_diff, get_head_commit, get_log, from_gitlog
+from pychron.git_archive.utils import get_diff, get_head_commit, from_gitlog
 from pychron.paths import paths
 from pychron.pychron_constants import LIGHT_RED, PLUSMINUS_ONE_SIGMA, LIGHT_YELLOW
-from pychron import json
 
 TAGS = 'TAG', 'BLANK', 'ISOEVO', 'ICFactor'
 TAG_COLORS = {'TAG': '#f5f7c8', 'BLANKS': '#cac8f7',
@@ -267,12 +266,6 @@ class DiffView(BaseDiffView):
         return v
 
 
-# VIEWS = {'TAG': TagDiffView, 'BLANKS': BlanksDiffView,
-#          'ISOEVO': IsoEvoDiffView,
-#          'ICFactor': ICFactorDiffView,
-#          'COLLECTED': ImportDiffView}
-
-
 class DVCCommitView(HasTraits):
     commits = List
     commit_tag = Str
@@ -281,79 +274,32 @@ class DVCCommitView(HasTraits):
     commits_func = Str
     modifier = Str
     record_id = Str
-
-    def __init__(self, an, *args, **kw):
-        super(DVCCommitView, self).__init__(*args, **kw)
-
-        self.repo = Repo(os.path.join(paths.repository_dataset_dir, an.repository_identifier))
-        self.record_id = an.record_id
-        self.repository_identifier = an.repository_identifier
+    repository_identifier = Str
+    repo = None
+    uuid = Str
+    show_all_commits = Bool(True)
+    selected_message = Str
 
     def initialize(self, an):
         pass
 
-    # def initialize(self, an):
-    #     path = self._make_path(an)
-    #
-    #     self.commits = self._get_commits(path, self.commit_tag)
-    #     print 'asfd', len(self.commits)
-    #     # self.commits = getattr(an, self.commits_func)(self.commit_tag)
-    #     # self.commits = an.get_commits(tag='^<{}>'.format(self.commit_tag))
-
     def _selected_commits_changed(self, new):
         if new:
+            self.selected_message = new[0].message
             if len(new) == 1:
                 self.selected_lhs = new[0]
                 self.selected_rhs = get_head_commit(self.repo)
             elif len(new) == 2:
                 a, b = new
                 self.selected_rhs = a if b == self.selected_lhs else b
+        else:
+            self.selected_message = ''
 
     def _make_path(self, an):
         return an.make_path(self.modifier)
 
-    def _get_commits(self, path, tag=None):
-        repo = self.repo
-        args = [repo, repo.active_branch.name, path, tag]
-        if tag:
-            args.append('--grep=^<{}>'.format(tag))
-
-        return get_commits(*args)
-
     def _do_diff_fired(self):
         if self.selected_commits:
-            # n = len(self.selected_commits)
-            # lhs = self.selected_lhs
-            # if n == 1:
-            #     rhsid = 'HEAD'
-            #     obj = self.repo.head.commit
-            #     rhsdate = isoformat_date(obj.committed_date)
-            # if lhs.tag == 'IMPORT':
-            #     diffs = []
-            #     for a in ('blanks', 'icfactors', 'tags', 'intercepts'):
-            #         p = analysis_path(self.record_id, self.repository_identifier, modifier=a)
-            #         dd = get_diff(self.repo, lhs.hexsha, 'HEAD', p)
-            #         if dd:
-            #             diffs.append((a, dd))
-            #     if diffs:
-            #         v = ImportDiffView(self.record_id, lhsid, rhsid, lhsdate, rhsdate)
-            #         for a, (aa, bb) in diffs:
-            #             func = getattr(v, 'set_{}'.format(a))
-            #             func(json.load(aa.data_stream),
-            #                  json.load(bb.data_stream))
-            #         v.finish()
-            #         open_view(v)
-            #
-            #     return
-            # else:
-            #     d = get_diff(self.repo, lhs.hexsha, 'HEAD', lhs.path)
-            #
-            # elif n == 2:
-            #     lhs = self.selected_lhs
-            #     rhs = self.selected_rhs
-            # else:
-            #     warning(None, 'Can only diff max of 2')
-            #     return
 
             lhs = self.selected_lhs
             rhs = self.selected_rhs
@@ -366,7 +312,7 @@ class DVCCommitView(HasTraits):
 
             diffs = []
             for a in ('blanks', 'icfactors', 'intercepts'):
-                p = analysis_path(self.record_id, self.repository_identifier, modifier=a)
+                p = analysis_path((self.uuid, self.record_id), self.repository_identifier, modifier=a)
                 dd = get_diff(self.repo, lhs.hexsha, rhs.hexsha, p)
                 if dd:
                     diffs.append((a, dd))
@@ -386,55 +332,55 @@ class DVCCommitView(HasTraits):
 
     def traits_view(self):
         v = View(VGroup(
-            icon_button_editor('do_diff', 'edit_diff', tooltip='Make Diff between two commits'),
-            UItem('commits', editor=myTabularEditor(adapter=HistoryCommitAdapter(),
-                                                    multi_select=True,
-                                                    editable=False,
-                                                    selected='selected_commits'))))
+            HGroup(icon_button_editor('do_diff', 'edit_diff', tooltip='Make Diff between two commits'),
+                   Item('show_all_commits', label='Show All Commits')),
+
+            VSplit(UItem('commits', editor=myTabularEditor(adapter=HistoryCommitAdapter(),
+                                                           multi_select=True,
+                                                           editable=False,
+                                                           selected='selected_commits'))),
+            UItem('selected_message', style='custom',
+                  height=-200,
+                  editor=TextEditor(read_only=True))))
         return v
 
 
 class HistoryView(DVCCommitView):
     name = 'History'
+    _paths = None
+
+    def _show_all_commits_changed(self):
+        self._load_commits()
 
     def initialize(self, an, force=False):
+        self.repo = Repo(os.path.join(paths.repository_dataset_dir, an.repository_identifier))
+        self.record_id = an.record_id
+        self.repository_identifier = an.repository_identifier
+
+        ps = [an.make_path(p) for p in HISTORY_PATHS]
+        self._paths = ps
         if not self.commits or force:
-            repo = self.repo
-            cs = []
-            hexshas = []
-            for a, b in (('TAG', 'tag'),
-                         ('ISOEVO', 'intercepts'),
-                         ('ISOEVO', 'baselines'),
-                         ('BLANKS', 'blanks'),
-                         ('ICFactor', 'icfactors')):
-                path = an.make_path(b)
-                if path:
-                    css = get_commits(repo, repo.active_branch.name, path, a, '--grep=^<{}>'.format(a))
-                    for ci in css:
-                        if ci.hexsha not in hexshas:
-                            ci.path = path
-                            hexshas.append(ci.hexsha)
-                            cs.append(ci)
+            self._load_commits()
 
-                            # css = [c for c]
-                            # cs.extend(css)
+    def _load_commits(self):
+        repo = self.repo
 
-            # logtxt = get_log(repo, repo.active_branch.name, path)
-            # if logtxt:
-            #     cs.extend((from_gitlog(l.strip(), path) for l in logtxt.split('\n')))
+        args = [repo.active_branch.name, '--remove-empty', '--simplify-merges']
 
-            self.commits = sorted(cs, key=lambda x: x.date, reverse=True)
+        if not self.show_all_commits:
+            greps = ['<{}>'.format(t) for t in HISTORY_TAGS]
+            greps = '\|'.join(greps)
+            args.append('--grep=^{}'.format(greps))
 
-# class FitsView(DVCCommitView):
-#     commit_tag = 'ISOEVO'
-#
-#
-# class BlanksView(DVCCommitView):
-#     commit_tag = 'BLANK'
+        args.append('--pretty=%H|%cn|%ce|%ct|%s')
+        args.append('--')
+        args.extend(self._paths)
 
+        txt = repo.git.log(*args)
 
-# class TagsView(DVCCommitView):
-#     commit_tag = 'TAG'
-#     modifier = 'tag'
+        cs = []
+        if txt:
+            cs = [from_gitlog(l.strip()) for l in txt.split('\n')]
 
+        self.commits = cs
 # ============= EOF =============================================

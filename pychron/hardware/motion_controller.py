@@ -16,14 +16,18 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import Property, Dict, Float, Any, Instance
-from traitsui.api import View, VGroup, Item, RangeEditor
+
 # from pyface.timer.api import Timer
 # ============= standard library imports ========================
 import os
 import time
+
+from traits.api import Property, Dict, Float, Any, Instance
+from traitsui.api import View, VGroup, Item, RangeEditor
+
 # ============= local library imports  ==========================
 from pychron.core.codetools.inspection import caller
+from pychron.core.helpers.strtools import csv_to_floats
 from pychron.core.helpers.timer import Timer
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.core.motion.motion_profiler import MotionProfiler
@@ -89,6 +93,9 @@ class MotionController(CoreDevice):
     groupobj = None
     _not_moving_count = 0
     _homing = False
+
+    def update_position(self):
+        pass
 
     def update_axes(self):
         for a in self.axes:
@@ -163,14 +170,15 @@ class MotionController(CoreDevice):
 
         lp = self.config_get(config, 'General', 'loadposition')
         if lp is not None:
-            loadposition = [float(f) for f in lp.split(',')]
+            loadposition = csv_to_floats(lp)
         else:
             loadposition = [0, 0, 0]
 
         config_path = self.configuration_dir_path
         for i, a in enumerate(mapping):
             self.info('loading axis {},{}'.format(i, a))
-            limits = [float(v) for v in config.get('Axes Limits', a).split(',')]
+            limits = csv_to_floats(config.get('Axes Limits', a))
+
             na = self._axis_factory(config_path,
                                     name=a,
                                     id=i + 1,

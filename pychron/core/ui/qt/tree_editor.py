@@ -15,17 +15,20 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
-import collections
-
 from pyface.qt import QtGui, QtCore
 from pyface.qt.QtCore import Qt
 from pyface.qt.QtGui import QIcon, QTreeWidgetItemIterator, QColor
 from traits.api import Str, Bool, Event
 from traitsui.api import TreeEditor as _TreeEditor
 from traitsui.qt4.tree_editor import SimpleEditor as _SimpleEditor
-from six.moves import range
+
+import collections
+import platform
+
+
+LABEL_FONT_SIZE = 14
+if platform.system() == 'Windows':
+    LABEL_FONT_SIZE = 8
 
 
 class SimpleEditor(_SimpleEditor):
@@ -42,6 +45,32 @@ class SimpleEditor(_SimpleEditor):
         self.sync_value(self.factory.collapse_all, 'collapse_all', 'from')
         self.sync_value(self.factory.expand_all, 'expand_all', 'from')
         self.sync_value(self.factory.update, 'update', 'from')
+
+    def _refresh_changed( self ):
+        nids = self._tree.selectedItems()
+        obj, node = self._node_for(self.selected)
+        bg = node.get_background(obj)
+        b = self._get_brush(bg)
+        for ni in nids:
+            ni.setBackground(0, b)
+
+        super(SimpleEditor, self)._refresh_changed()
+
+    def _label_updated(self, obj, name, label):
+        """  Handles the label of an object being changed.
+        """
+        # Prevent the itemChanged() signal from being emitted.
+        blk = self._tree.blockSignals(True)
+
+        nids = {}
+        for name2, nid in self._map[id(obj)]:
+            if id(nid) not in nids:
+                nids[id(nid)] = None
+                node = self._get_node_data(nid)[1]
+                self._set_label(nid, node.get_label(obj), 0)
+                self._update_icon(nid)
+
+        self._tree.blockSignals(blk)
 
     def _collapse_all_fired(self):
         ctrl = self.control
@@ -189,7 +218,7 @@ class PipelineDelegate(QtGui.QStyledItemDelegate):
         # draw text
         painter.setPen(Qt.black)
         font = painter.font()
-        font.setPointSize(14)
+        font.setPointSize(LABEL_FONT_SIZE)
         painter.setFont(font)
 
         painter.drawText(option.rect.left() + iconwidth,
@@ -210,6 +239,7 @@ class _PipelineEditor(SimpleEditor):
         if self._tree:
             item = PipelineDelegate(self._tree, self.factory.show_icons)
             self._tree.setItemDelegate(item)
+
 
     def _create_item(self, nid, node, obj, index=None):
         """ Create  a new TreeWidgetItem as per word_wrap policy.

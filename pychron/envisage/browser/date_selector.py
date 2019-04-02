@@ -15,23 +15,21 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from traitsui.api import View, Controller, VGroup, UItem, HGroup, Heading
+from traitsui.api import Controller, VGroup, UItem, HGroup, Heading
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+
 
 class DateSelector(Controller):
     def traits_view(self):
-        v = View(VGroup(VGroup(HGroup(Heading('Lower Bound'), UItem('use_low_post')),
+        v = okcancel_view(VGroup(VGroup(HGroup(Heading('Lower Bound'), UItem('use_low_post')),
                                UItem('low_post', style='custom', enabled_when='use_low_post')),
                         VGroup(HGroup(Heading('Upper Bound'), UItem('use_high_post')),
                                UItem('high_post', style='custom', enabled_when='use_high_post')),
                         VGroup(HGroup(Heading('Named Range'), UItem('use_named_date_range')),
-                               UItem('named_date_range', enabled_when='use_named_date_range'))),
-                 buttons=['OK', 'Cancel'],
-                 resizable=True,
-                 kind='livemodal')
+                               UItem('named_date_range', enabled_when='use_named_date_range'))))
         return v
 
 

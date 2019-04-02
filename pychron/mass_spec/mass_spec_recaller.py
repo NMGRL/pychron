@@ -16,11 +16,13 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traits.api import Instance
 
 from pychron.loggable import Loggable
 from pychron.mass_spec.database.massspec_database_adapter import MassSpecDatabaseAdapter
 from pychron.mass_spec.mass_spec_analysis import MassSpecAnalysis, MassSpecBlank
+from pychron.pychron_constants import IRRADIATION_KEYS
 
 
 class MassSpecRecaller(Loggable):
@@ -32,10 +34,33 @@ class MassSpecRecaller(Loggable):
     def connect(self):
         return self.db.connect()
 
+    def get_flux(self, identifier):
+        db = self.db
+        with db.session_ctx():
+            return db.get_flux(identifier)
+
+    def get_production(self, irrad, level):
+        db = self.db
+        prod = {}
+        with db.session_ctx():
+            irrad = db.get_irradiation_level(irrad, level)
+            dbprod = irrad.production
+            name = dbprod.Label
+
+            prod['Ca_K'] = [dbprod.CaOverKMultiplier, dbprod.CaOverKMultiplierEr]
+            prod['Cl_K'] = [dbprod.ClOverKMultiplier, dbprod.ClOverKMultiplierEr]
+
+            for k, _ in IRRADIATION_KEYS:
+                k = k.capitalize()
+                prod[k] = [getattr(dbprod, k), getattr(dbprod, '{}Er'.format(k))]
+            prod['name'] = name
+
+        return prod
+
     def find_analysis(self, labnumber, aliquot, step):
 
         db = self.db
-        with db.session_ctx(use_parent_session=False):
+        with db.session_ctx():
             dbrec = db.get_analysis(labnumber, aliquot, step)
             if dbrec:
                 # need to handle blanks differently
@@ -63,10 +88,10 @@ class MassSpecRecaller(Loggable):
                     if c:
                         rec.sync_fn(iso.Label, c.PDPBlob)
 
-                    prefs = db.get_latest_preferences(iso.IsotopeID, iso.Label)
+                    # prefs = db.get_latest_preferences(iso.IsotopeID, iso.Label)
 
-                    riso = rec.isotopes[iso.Label]
-                    rec.sync_filtering(riso, prefs)
+                    # riso = rec.isotopes[iso.Label]
+                    # rec.sync_filtering(riso, prefs)
 
                     # prefs = db.get_latest_baseline_preferences(iso.baseline.BslnID)
                     # rec.sync_filtering(riso.baseline, prefs)

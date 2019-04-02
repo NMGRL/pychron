@@ -15,12 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 import os
-
 import pickle
+
 from envisage.extension_point import ExtensionPoint
+from envisage.ui.tasks.task_window_event import VetoableTaskWindowEvent, TaskWindowEvent
 from envisage.ui.tasks.tasks_application import TasksApplication, TasksApplicationState, logger
 from pyface.dialog import Dialog
 from pyface.tasks.task_window_layout import TaskWindowLayout
@@ -42,11 +41,20 @@ class BaseTasksApplication(TasksApplication, Loggable):
     uis = List
     available_task_extensions = ExtensionPoint(id='pychron.available_task_extensions')
 
-    def _started_fired(self):
-        st = self.startup_tester
-        if st.results:
-            v = ResultsView(model=st)
-            open_view(v)
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
+        self.init_logger()
+
+    def _application_initialized_fired(self):
+        if globalv.use_startup_tests:
+            st = StartupTester()
+            for plugin in iter(self.plugin_manager):
+                st.test_plugin(plugin)
+
+            if st.results:
+                if globalv.show_startup_results or not st.all_passed:
+                    v = ResultsView(model=st)
+                    open_view(v)
 
         if globalv.use_testbot:
             from pychron.testbot.testbot import TestBot
@@ -54,8 +62,8 @@ class BaseTasksApplication(TasksApplication, Loggable):
             testbot = TestBot(application=self)
             testbot.run()
 
-    def get_boolean_preference(self, pid):
-        return to_bool(self.preferences.get(pid))
+    def get_boolean_preference(self, pid, default=None):
+        return to_bool(self.preferences.get(pid, default))
 
     def get_task_extensions(self, pid):
         import yaml
@@ -76,14 +84,16 @@ class BaseTasksApplication(TasksApplication, Loggable):
     def about(self):
         self.about_dialog.open()
 
-    def start(self):
-        if globalv.open_logger_on_launch:
-            self._load_state()
-            self.open_task('pychron.logger')
-
-        self.startup_tester = StartupTester()
-
-        return super(BaseTasksApplication, self).start()
+    # def start(self):
+    #     # if globalv.open_logger_on_launch:
+    #     #     self.debug('load_state')
+    #     #     self._load_state()
+    #     #     self.debug('open logger')
+    #     #     self.open_task('pychron.logger')
+    #
+    #     self.startup_tester = StartupTester()
+    #
+    #     return super(BaseTasksApplication, self).start()
 
     def get_open_task(self, tid):
         for win in self.windows:
@@ -116,7 +126,8 @@ class BaseTasksApplication(TasksApplication, Loggable):
                 win.open()
 
         if win:
-            win.active_task.window = win
+            if win.active_task:
+                win.active_task.window = win
 
             return win.active_task
 
@@ -183,4 +194,41 @@ class BaseTasksApplication(TasksApplication, Loggable):
         except:
             # If anything goes wrong, log the error and continue.
             logger.exception('Saving application layout')
+
+    def _on_window_closing(self, window, trait_name, event):
+        # Event notification.
+        self.window_closing = window_event = VetoableTaskWindowEvent(
+            window=window)
+
+        if window_event.veto:
+            event.veto = True
+        else:
+            # Store the layout of the window.
+            window_layout = window.get_window_layout()
+            self._state.push_window_layout(window_layout)
+
+            # If we're exiting implicitly and this is the last window, save
+            # state, because we won't get another chance.
+            if globalv.quit_on_last_window:
+                if len(self.windows) == 1 and not self._explicit_exit:
+                    self._prepare_exit()
+            else:
+                if len(self.windows) == 1:
+                    if not self.confirmation_dialog('Closing the last open window will quit Pychron. '
+                                                    'Are you sure you want to continue?'):
+                        window_event.veto = True
+                        event.veto = True
+                    else:
+                        self._prepare_exit()
+
+    def _on_window_closed(self, window, trait_name, event):
+        self.windows.remove(window)
+
+        # Event notification.
+        self.window_closed = TaskWindowEvent(window=window)
+
+        # Was this the last window?
+        if len(self.windows) == 0:
+            self.stop()
+
 # ============= EOF =============================================

@@ -15,24 +15,25 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
+
 import os
 import time
-from six.moves.queue import Queue, Empty
+from queue import Empty, Queue
 from threading import Thread
 
 import yaml
 from pyface.tasks.action.task_action import TaskAction
-from traits.api import Str, Bool
+from traits.api import HasTraits, Int, Str, Bool
+from traitsui.api import Item
 from traitsui.menu import Action
 
 from pychron.core.helpers.filetools import add_extension
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.experiment.automated_run.hop_util import parse_hop
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.paths import paths
-from six.moves import range
-from six.moves import zip
+from pychron.pyscripts.tasks.pyscript_task import ScriptExecutor
 
 
 class ShowMotionConfigureAction(TaskAction):
@@ -55,17 +56,12 @@ class PatternAction(ListAction):
         man.execute_pattern(self.pattern_path, lase=self.lase, thread_safe=False)
 
 
-from traits.api import HasTraits, Int
-from traitsui.api import View, Item
-
-
 class HopConfig(HasTraits):
     ncycles = Int(1)
 
     def traits_view(self):
-        v = View(Item('ncycles', label='Cycles'),
-                 buttons=['OK', 'Cancel'],
-                 title='Configure Magnet Hops')
+        v = okcancel_view(Item('ncycles', label='Cycles'),
+                          title='Configure Magnet Hops')
         return v
 
 
@@ -149,12 +145,10 @@ class HopsAction(ListAction):
 
                 use_af_demag = positioning.get('use_af_demag', False)
 
-                zd = list(zip(dets, defls))
-
                 # set deflections
                 deflect = len([d for d in defls if d is not None])
                 if deflect:
-                    for det, defl in zd:
+                    for det, defl in zip(dets, defls):
                         spec.set_deflection(det, defl)
 
                 for pd in pdets:
@@ -236,12 +230,14 @@ class ProcedureAction(ListAction):
 
         manager.info(info('Started Procedure "{}"'.format(name)))
 
-        task = app.get_task('pychron.pyscript.task', activate=False)
+        # task = app.get_task('pychron.pyscript.task', activate=False)
+        script_executor = ScriptExecutor(application=app)
         context = {'analysis_type': 'blank' if 'blank' in name else 'unknown'}
-        task.execute_script(name, root,
-                            delay_start=1,
-                            manager=manager,
-                            on_completion=lambda: manager.info(info('Finished Procedure "{}"'.format(name))),
-                            context=context)
+
+        script_executor.execute_script(name, root,
+                                       delay_start=1,
+                                       manager=manager,
+                                       on_completion=lambda: manager.info(info('Finished Procedure "{}"'.format(name))),
+                                       context=context)
 
 # ============= EOF =============================================

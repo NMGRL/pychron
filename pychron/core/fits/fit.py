@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traits.api import HasTraits, Str, Bool, Property, List, Int, cached_property
 
 # ============= standard library imports ========================
@@ -71,6 +72,8 @@ class FilterFit(Fit):
     filter_outliers = Bool
     filter_outlier_iterations = Int
     filter_outlier_std_devs = Int
+    use_standard_deviation_filtering = Bool
+
     truncate = Str
     include_baseline_error = Bool
 

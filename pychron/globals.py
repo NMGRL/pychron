@@ -17,7 +17,6 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from __future__ import absolute_import
 from pychron.core.helpers.strtools import to_bool
 
 
@@ -31,10 +30,11 @@ class Globals(object):
     # use_debug_logger = True
 
     open_logger_on_launch = True
-
+    quit_on_last_window = False
     # force display flags
     show_warnings = True
     show_infos = True
+    show_startup_results = True
 
     # using ipc_dgram is currently not working
     ipc_dgram = False
@@ -71,9 +71,10 @@ class Globals(object):
     automated_run_debug = False
     spectrometer_debug = False
     system_monitor_debug = False
-    figure_debug = False
-    browser_debug = False
+    # figure_debug = False
+    # browser_debug = False
     auto_pipeline_debug = False
+    skip_configure = False
 
     load_valve_states = True
     load_soft_locks = True
@@ -82,9 +83,9 @@ class Globals(object):
     debug = False
     use_logger_display = True
     use_warning_display = True
-    recall_debug = False
+    # recall_debug = False
     pipeline_debug = False
-
+    mdd_workspace_debug = False
     pipeline_template = None
     select_default_data = True
     run_pipeline = False
@@ -120,24 +121,29 @@ class Globals(object):
                            ('ignore_initialization_required', to_bool),
                            ('ignore_initialization_questions', to_bool),
                            ('ignore_shareable', to_bool),
+                           ('show_startup_results', to_bool),
                            ('show_infos', to_bool),
                            ('show_warnings', to_bool),
+                           ('open_logger_on_launch', to_bool),
+                           ('quit_on_last_window', to_bool),
                            ('video_test', to_bool),
                            ('load_valve_states', to_bool),
                            ('load_soft_locks', to_bool),
                            ('load_manual_states', to_bool),
                            ('experiment_debug', to_bool),
                            ('experiment_savedb', to_bool),
-                           ('recall_debug', to_bool),
-
-                           ('auto_pipeline_debug', to_bool),
-                           ('pipeline_debug', to_bool),
                            ('run_pipeline', to_bool),
                            ('select_default_data', to_bool),
                            ('pipeline_template', str),
+                           ('mdd_workspace_debug', to_bool),
 
-                           ('figure_debug', to_bool),
-                           ('browser_debug', to_bool),
+                           ('auto_pipeline_debug', to_bool),
+                           ('pipeline_debug', to_bool),
+                           # ('recall_debug', to_bool),
+                           # ('figure_debug', to_bool),
+                           # ('browser_debug', to_bool),
+                           ('skip_configure', to_bool),
+
                            ('valve_debug', to_bool),
                            ('communication_simulation', to_bool),
                            ('dashboard_simulation', to_bool),

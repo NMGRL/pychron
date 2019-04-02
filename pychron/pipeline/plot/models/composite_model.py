@@ -17,20 +17,33 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from __future__ import absolute_import
 from pychron.pipeline.plot.models.figure_model import FigureModel
 from pychron.pipeline.plot.panels.isochron_panel import InverseIsochronPanel
 from pychron.pipeline.plot.panels.spectrum_panel import SpectrumPanel
 
 
 class CompositeModel(FigureModel):
+
+    # @on_trait_change('panels:figures:recalculate_event')
+    # def _handle_recalculate(self):
+    #     print('recalads')
+    #     for p in self.panels:
+    #         p.make_graph()
+
+    # def _refresh_panels_hook(self):
+    #     self.on_trait_change(self._handle_recalculate, 'panels:figures:recalculate_event')
+
     def _make_panels(self):
-        spo = self.plot_options.get_options('spectrum')
-        ipo = self.plot_options.get_options('inverseisochron')
+
+        # spo = SpectrumOptionsManager().selected_options
+        # ipo = InverseIsochronOptionsManager().selected_options
+
         gs = [SpectrumPanel(analyses=self.analyses,
-                            plot_options=spo),
+                            plot_options=self.plot_options.spectrum_options),
               InverseIsochronPanel(analyses=self.analyses,
-                                   plot_options=ipo)]
+                                   plot_options=self.plot_options.isochron_options)]
+        for gi in gs:
+            gi.make_figures()
 
         return gs
 

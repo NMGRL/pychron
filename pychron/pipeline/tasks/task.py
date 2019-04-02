@@ -14,28 +14,25 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
 import os
-from itertools import groupby
 
 from pyface.tasks.action.schema import SToolBar, SMenu
 from pyface.tasks.action.schema_addition import SchemaAddition
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter
-from traits.api import Instance, Bool, on_trait_change
+# ============= enthought library imports =======================
+from traits.api import Instance, Bool, on_trait_change, Any
 
-from pychron.core.helpers.filetools import list_gits
 from pychron.core.pdf.save_pdf_dialog import save_pdf
-from pychron.database.interpreted_age import InterpretedAge
 from pychron.dvc import dvc_dump
 from pychron.dvc.func import repository_has_staged
+from pychron.dvc.util import DVCInterpretedAge
 from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.envisage.browser.recall_editor import RecallEditor
-from pychron.envisage.browser.view import BrowserView
+from pychron.envisage.browser.view import BrowserView, InterpretedAgeBrowserView
 from pychron.globals import globalv
 from pychron.paths import paths
-from pychron.pipeline.engine import PipelineEngine
+from pychron.pipeline.engine import PipelineEngine, Pipeline, NodeGroup
+from pychron.pipeline.nodes.figure import FigureNode
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.interpreted_age_editor import InterpretedAgeEditor
 from pychron.pipeline.save_figure import SaveFigureView, SaveFigureModel
@@ -44,13 +41,9 @@ from pychron.pipeline.state import EngineState
 from pychron.pipeline.tasks.actions import RunAction, ResumeAction, ResetAction, \
     ConfigureRecallAction, TagAction, SetInterpretedAgeAction, ClearAction, SavePDFAction, SetInvalidAction, \
     SetFilteringTagAction, \
-    EditAnalysisAction, RunFromAction, IdeogramAction, PipelineRecallAction, SpectrumAction, \
-    InverseIsochronAction, LoadReviewStatusAction, DiffViewAction
-from pychron.pipeline.tasks.interpreted_age_factory import InterpretedAgeFactoryView, \
-    InterpretedAgeFactoryModel, set_interpreted_age
-from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane, RepositoryPane
-from pychron.pipeline.tasks.select_repo import SelectExperimentIDView
-import six
+    EditAnalysisAction, RunFromAction, PipelineRecallAction, LoadReviewStatusAction, DiffViewAction, SaveTableAction
+from pychron.pipeline.tasks.interpreted_age_factory import set_interpreted_age
+from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane, RepositoryPane, EditorOptionsPane
 
 
 class DataMenu(SMenu):
@@ -58,61 +51,49 @@ class DataMenu(SMenu):
     name = 'Data'
 
 
-def select_experiment_repo():
-    a = list_gits(paths.repository_dataset_dir)
-    v = SelectExperimentIDView(available=a)
-    info = v.edit_traits()
-    if info.result:
-        return v.selected
-
-
 class PipelineTask(BaseBrowserTask):
     name = 'Pipeline Data Processing'
     engine = Instance(PipelineEngine)
-    tool_bars = [
 
-        # SToolBar(PipelineRecallAction(),
-        #               IdeogramAction(),
-        #               SpectrumAction(),
-        #               InverseIsochronAction()),
-
-        SToolBar(PipelineRecallAction(),
-                 ConfigureRecallAction()),
-        SToolBar(RunAction(),
-                 ResumeAction(),
-                 RunFromAction(),
-                 ResetAction(),
-                 ClearAction(),
-                 # SavePipelineTemplateAction(),
-                 name='Pipeline'),
-        SToolBar(SavePDFAction(),
-                 # SaveFigureAction(),
-                 name='Save'),
-        SToolBar(EditAnalysisAction(),
-                 name='Edit'),
-        SToolBar(LoadReviewStatusAction(),
-                 DiffViewAction(),
-                 name='View'),
-        # SToolBar(GitRollbackAction(), label='Git Toolbar'),
-        SToolBar(TagAction(),
-                 SetInvalidAction(),
-                 SetFilteringTagAction(),
-                 SetInterpretedAgeAction(),
-                 # TabularViewAction(),
-                 name='Misc')]
+    tool_bars = [SToolBar(PipelineRecallAction(),
+                          ConfigureRecallAction(),
+                          name='Recall'
+                          ),
+                 SToolBar(RunAction(),
+                          ResumeAction(),
+                          RunFromAction(),
+                          ResetAction(),
+                          ClearAction(),
+                          # SavePipelineTemplateAction(),
+                          name='Pipeline'),
+                 SToolBar(SavePDFAction(),
+                          # SaveFigureAction(),
+                          name='Save'),
+                 SToolBar(EditAnalysisAction(),
+                          name='Edit'),
+                 SToolBar(LoadReviewStatusAction(),
+                          DiffViewAction(),
+                          name='View'),
+                 SToolBar(TagAction(),
+                          SetInvalidAction(),
+                          SetFilteringTagAction(),
+                          SetInterpretedAgeAction(),
+                          SaveTableAction(),
+                          name='Misc')]
 
     state = Instance(EngineState)
-    # resume_enabled = Bool(False)
-    # run_enabled = Bool(True)
     set_interpreted_enabled = Bool(False)
-    # run_to = None
+    active_editor_options = Any
 
     modified = False
     projects = None
-    _browser_info = None
     diff_enabled = Bool
 
+    _browser_info = None
+    _interpreted_age_browser_info = None
+
     def activated(self):
+        # 2=a
         self.debug('activating pipeline')
         super(PipelineTask, self).activated()
 
@@ -124,9 +105,9 @@ class PipelineTask(BaseBrowserTask):
         self.engine.interpreted_age_browser_model = self.interpreted_age_browser_model
 
     def _debug(self):
-        self.engine.add_data()
-        if globalv.select_default_data:
-            self.engine.select_default()
+        # self.engine.add_data()
+        # if globalv.select_default_data:
+        #     self.engine.select_default()
 
         if globalv.pipeline_template:
             self.engine.set_template(globalv.pipeline_template)
@@ -140,11 +121,11 @@ class PipelineTask(BaseBrowserTask):
         super(PipelineTask, self).prepare_destroy()
 
     def create_dock_panes(self):
+
         panes = [PipelinePane(model=self.engine),
                  AnalysesPane(model=self.engine),
-                 RepositoryPane(model=self.engine)
-                 # InspectorPane(model=self.engine)
-                 ]
+                 RepositoryPane(model=self.engine),
+                 EditorOptionsPane(model=self)]
         return panes
 
     # toolbar actions
@@ -178,7 +159,6 @@ class PipelineTask(BaseBrowserTask):
 
         from pychron.pipeline.editors.diff_editor import DiffEditor
         editor = DiffEditor(recaller=recaller)
-        # left.set_stored_value_states(True, save=True)
 
         if not left.check_has_n():
             left.load_raw_data(n_only=True)
@@ -188,7 +168,6 @@ class PipelineTask(BaseBrowserTask):
             self._open_editor(editor)
         else:
             self.warning_dialog('Failed to locate analysis {} in MassSpec database'.format(left.record_id))
-            # left.revert_use_stored_values()
 
     def pipeline_recall(self):
         if self._browser_info:
@@ -199,10 +178,20 @@ class PipelineTask(BaseBrowserTask):
         self.dvc.create_session(force=True)
 
         self.browser_model.activated()
-        browser_view = BrowserView(show_append_replace_buttons=False,
-                                   model=self.browser_model)
+        browser_view = BrowserView(model=self.browser_model)
         info = browser_view.edit_traits(kind='live')
         self._browser_info = info
+
+    def pipeline_interpreted_age_recall(self):
+        if self._interpreted_age_browser_info:
+            if self._interpreted_age_browser_info.control:
+                self._interpreted_age_browser_info.control.raise_()
+                return
+
+        self.interpreted_age_browser_model.activated()
+        browser_view = InterpretedAgeBrowserView(model=self.interpreted_age_browser_model)
+        info = browser_view.edit_traits(kind='live')
+        self._interpreted_age_browser_info = info
 
     def tabular_view(self):
         self.debug('open tabular view')
@@ -257,19 +246,25 @@ class PipelineTask(BaseBrowserTask):
                 tag = tag.lower()
 
                 self.dvc.tag_items(tag, items, note)
-
                 if use_filter:
                     for e in self.editor_area.editors:
-                        if isinstance(e, FigureEditor):
-                            e.set_items([ai for ai in e.analyses if ai.tag != 'invalid'])
+                        if hasattr(e, 'set_items'):
+                            try:
+                                ans = e.items
+                            except AttributeError:
+                                ans = e.analyses
+
+                            if ans:
+                                fans = [ai for ai in ans if ai.tag.lower() != 'invalid']
+                                e.set_items(fans)
 
                 if self.active_editor:
+                    self.active_editor.figure_model = None
                     self.active_editor.refresh_needed = True
 
                 self.browser_model.analysis_table.set_tags(tag, items)
                 self.browser_model.analysis_table.remove_invalid()
-                self.browser_model.analysis_table.refresh_needed = True
-                self.engine.refresh_table_needed = True
+                self.engine.remove_invalid()
 
     def set_invalid(self):
         items = self._get_selection()
@@ -286,6 +281,29 @@ class PipelineTask(BaseBrowserTask):
         obj = self._make_save_figure_object(ed)
         dvc_dump(obj, path)
 
+    def save_table(self):
+        self.debug('save table')
+        if not self.has_active_editor():
+            return
+
+        ed = self.active_editor
+        if isinstance(ed, FigureEditor):
+            from pychron.pipeline.tables.xlsx_table_options import XLSXAnalysisTableWriterOptions
+            from pychron.pipeline.tables.xlsx_table_writer import XLSXAnalysisTableWriter
+
+            options = XLSXAnalysisTableWriterOptions()
+            ri = tuple({ai.repository_identifier for ai in ed.analyses})
+            options.root_name = ri[0]
+            info = options.edit_traits(kind='modal')
+            if info.result:
+                writer = XLSXAnalysisTableWriter()
+                # from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
+                # groups = [InterpretedAgeGroup(analyses=ed.analyses)]
+
+                gs = ed.get_analysis_groups()
+                run_groups = {'unknowns': gs, 'machine_unknowns': gs}
+                writer.build(run_groups, options=options)
+
     def save_figure_pdf(self):
         self.debug('save figure pdf')
         if not self.has_active_editor():
@@ -301,7 +319,6 @@ class PipelineTask(BaseBrowserTask):
                 save_pdf(ed.component,
                          path=path,
                          options=sfm.pdf_options,
-                         # path='/Users/ross/Documents/test.pdf',
                          view=True)
 
     def run(self):
@@ -317,12 +334,6 @@ class PipelineTask(BaseBrowserTask):
         ias = self.active_editor.get_interpreted_ages()
         set_interpreted_age(self.dvc, ias)
 
-    def git_rollback(self):
-        # select experiment
-        expid = select_experiment_repo()
-        if expid:
-            self.dvc.rollback_repository(expid)
-
     def clear(self):
         self.reset()
         self.engine.clear()
@@ -331,14 +342,15 @@ class PipelineTask(BaseBrowserTask):
     def reset(self):
         self.engine.run_enabled = True
         self.engine.resume_enabled = False
-        # self._temp_state = None
-        # self.state = None
         self.engine.reset()
 
     def save_pipeline_template(self):
         self.engine.save_pipeline_template()
 
     # action handlers
+    def mass_spec_reduced_transfer(self):
+        self._set_action_template('Mass Spec Reduced')
+
     def freeze_flux(self):
         ans = self._get_active_analyses()
         if ans:
@@ -357,7 +369,7 @@ class PipelineTask(BaseBrowserTask):
         self._set_action_template('Iso Evo')
 
     def set_icfactor_template(self):
-        self._set_action_template('ICFactor')
+        self._set_action_template('IC Factor')
 
     def set_blanks_template(self):
         self._set_action_template('Blanks')
@@ -366,10 +378,10 @@ class PipelineTask(BaseBrowserTask):
         self._set_action_template('Flux')
 
     def set_ideogram_template(self):
-        self._set_action_template('Ideogram')
+        self._set_action_template('Ideogram', 'Plot')
 
     def set_spectrum_template(self):
-        self._set_action_template('Spectrum')
+        self._set_action_template('Spectrum', 'Plot')
 
     def set_isochron_template(self):
         self._set_action_template('Isochron')
@@ -386,6 +398,15 @@ class PipelineTask(BaseBrowserTask):
     def set_xy_scatter_template(self):
         self._set_action_template('XYScatter')
 
+    def set_subgroup_ideogram_template(self):
+        self._set_action_template('SubGroup Ideogram')
+
+    def set_hybrid_ideogram_template(self):
+        self._set_action_template('Hybrid Ideogram')
+
+    def set_history_ideogram_template(self):
+        self._set_action_template('Ideogram', 'History')
+
     def set_last_n_analyses_template(self):
         self.engine.selected_pipeline_template = 'Series'
         # get n analyses from user
@@ -395,7 +416,6 @@ class PipelineTask(BaseBrowserTask):
         node = self.engine.get_unknowns_node()
         if node:
             # get last n analyses as unks
-            # set node.unknowns = unks
             node.set_last_n_analyses(n)
 
             self.run()
@@ -419,7 +439,7 @@ class PipelineTask(BaseBrowserTask):
         self._set_last_nhours(24 * 7 * 30.5)
 
     def set_analysis_table_template(self):
-        self.engine.selected_pipeline_template = 'Analysis Table'
+        self.engine.selected_pipeline_template = 'Analysis'
         self.run()
 
     # private
@@ -433,9 +453,9 @@ class PipelineTask(BaseBrowserTask):
             node.set_last_n_hours_analyses(n)
             self.run()
 
-    def _set_action_template(self, name):
+    def _set_action_template(self, name, group=None):
         self.activated()
-        self.engine.selected_pipeline_template = name
+        self.engine.selected_pipeline_template = (name, group)
         self.run()
 
     def _make_save_figure_object(self, editor):
@@ -455,26 +475,29 @@ class PipelineTask(BaseBrowserTask):
                 break
 
     def _run(self, message, func, close_all=False):
-        self.debug('{} started'.format(message))
-        if close_all:
-            self.close_all()
 
-        self.dvc.db.session = None
-        self.dvc.create_session()
+        if self.engine.pre_run_check(func):
 
-        if not getattr(self.engine, func)():
-            self.engine.resume_enabled = True
-            self.engine.run_enabled = False
-            self.debug('false {} {}'.format(message, func))
-        else:
-            self.engine.run_enabled = True
-            self.engine.resume_enabled = False
-            self.debug('true {} {}'.format(message, func))
+            self.debug('{} started'.format(message))
+            if close_all:
+                self.close_all()
 
-        for editor in self.engine.state.editors:
-            self._open_editor(editor)
+            self.dvc.db.session = None
+            self.dvc.create_session()
 
-        self.debug('{} finished'.format(message))
+            if not getattr(self.engine, func)():
+                self.engine.resume_enabled = True
+                self.engine.run_enabled = False
+                self.debug('false {} {}'.format(message, func))
+            else:
+                self.engine.run_enabled = True
+                self.engine.resume_enabled = False
+                self.debug('true {} {}'.format(message, func))
+
+            for editor in self.engine.state.editors:
+                self._open_editor(editor)
+
+            self.debug('{} finished'.format(message))
 
     def _run_from_pipeline(self):
         self._run('run from', 'run_from_pipeline')
@@ -518,8 +541,7 @@ class PipelineTask(BaseBrowserTask):
 
                 'Use <b>Data>XY Scatter</b> to plot a XY Scatter plot of '
                 'any Analysis value versus any other Analysis value',
-                'Use <b>Data>Recall</b> to view analytical data for individual analyses',
-                ]
+                'Use <b>Data>Recall</b> to view analytical data for individual analyses']
 
     # handlers
     @on_trait_change('editor_area:editors[]')
@@ -535,30 +557,66 @@ class PipelineTask(BaseBrowserTask):
             self.engine.select_node_by_editor(new)
 
         self.set_interpreted_enabled = isinstance(new, InterpretedAgeEditor)
+        if hasattr(new, 'editor_options'):
+            self.active_editor_options = new.editor_options
+        else:
+            self.active_editor_options = None
 
-    # @on_trait_change('active_editor:save_needed')
-    # def _handle_save_needed(self):
-    #     self.engine.run_persist(self._temp_state)
+    @on_trait_change('engine:selected')
+    def _handle_engine_selected(self, obj, name, old, new):
+        if isinstance(new, Pipeline):
+            self.engine.pipeline = new
+        elif isinstance(new, NodeGroup):
+            pass
+        else:
+            # self.engine.selected_node = new
+            if old:
+                old.on_trait_change(self._handle_tag, 'unknowns:tag_event,references:tag_event', remove=True)
+                old.on_trait_change(self._handle_invalid, 'unknowns:invalid_event,references:invalid_event',
+                                    remove=True)
+                old.on_trait_change(self._handle_omit, 'unknowns:omit_event,references:omit_event', remove=True)
+                old.on_trait_change(self._handle_recall, 'unknowns:recall_event,references:recall_event', remove=True)
+                old.on_trait_change(self.engine.handle_len_unknowns, 'unknowns_items', remove=True)
+                old.on_trait_change(self.engine.handle_len_references, 'references_items', remove=True)
+                old.on_trait_change(self.engine.handle_status, 'unknowns:temp_status,references:temp_status',
+                                    remove=True)
 
-    @on_trait_change('engine:[tag_event, invalid_event, recall_event, omit_event]')
-    def _handle_analysis_tagging(self, name, new):
-        if name == 'tag_event':
-            self.set_tag(items=new)
-        elif name == 'invalid_event':
-            self._set_invalid(new)
-        elif name == 'omit_event':
-            self._set_omit(new)
-        elif name == 'recall_event':
-            self.recall(new)
+            if new:
+                new.on_trait_change(self._handle_tag, 'unknowns:tag_event,references:tag_event')
+                new.on_trait_change(self._handle_invalid, 'unknowns:invalid_event,references:invalid_event')
+                new.on_trait_change(self._handle_omit, 'unknowns:omit_event,references:omit_event')
+                new.on_trait_change(self._handle_recall, 'unknowns:recall_event,references:recall_event')
+                new.on_trait_change(self.engine.handle_status, 'unknowns:temp_status,references:temp_status')
+                new.on_trait_change(self.engine.handle_len_unknowns, 'unknowns_items')
+                new.on_trait_change(self.engine.handle_len_references, 'references_items')
+
+            if isinstance(new, FigureNode):
+                if new.editor:
+                    editor = new.editor
+                    self.engine.selected_editor = editor
+                    self.engine.active_editor = editor
+
+    def _handle_tag(self, name, new):
+        self.set_tag(items=new)
+
+    def _handle_invalid(self, name, new):
+        self._set_invalid(new)
+
+    def _handle_omit(self, name, new):
+        self._set_omit(new)
 
     @on_trait_change('engine:run_needed')
     def _handle_run_needed(self, new):
         self.debug('run needed for {}'.format(new))
-        self.run()
+        if self.engine.resume_enabled:
+            self.resume()
+        else:
+            self.run()
 
     @on_trait_change('engine:recall_analyses_needed')
     def _handle_recall(self, new):
-        self.recall(new)
+        if not isinstance(new, DVCInterpretedAge):
+            self.recall(new)
 
     def _prompt_for_save(self):
         if globalv.ignore_shareable:
@@ -584,21 +642,20 @@ class PipelineTask(BaseBrowserTask):
             self._debug()
 
     def _get_selection(self):
-        items = self.engine.selected.unknowns
-        items.extend(self.engine.selected.references)
-        items = [i for i in items if i.temp_selected]
+        selected = self.engine.selected
+        if selected and not isinstance(selected, Pipeline):
+            items = selected.unknowns
+            items.extend(selected.references)
+            items = [i for i in items if i.temp_selected]
 
-        uuids = [i.uuid for i in items]
-        for ans in (self.engine.selected_unknowns,
-                    self.engine.selected_references):
-            for i in ans:
-                if i.uuid not in uuids:
-                    items.append(i)
+            uuids = [i.uuid for i in items]
+            for ans in (self.engine.selected_unknowns,
+                        self.engine.selected_references):
+                for i in ans:
+                    if i.uuid not in uuids:
+                        items.append(i)
 
-        # items.extend(self.engine.selected_unknowns)
-        # items.extend(self.engine.selected_references)
-
-        return items
+            return items
 
     def _get_tagname(self, items):
         from pychron.pipeline.tagging.analysis_tags import AnalysisTagModel
@@ -612,15 +669,6 @@ class PipelineTask(BaseBrowserTask):
         info = tv.edit_traits()
         if info.result:
             return model.tag, model.get_items(), model.use_filter, model.note
-
-    # def _get_dr_tagname(self, items):
-    #     from pychron.pipeline.tagging.data_reduction_tags import DataReductionTagModel
-    #     from pychron.pipeline.tagging.views import DataReductionTagView
-    #
-    #     tv = DataReductionTagView(model=DataReductionTagModel(items=items))
-    #     info = tv.edit_traits()
-    #     if info.result:
-    #         return tv.model
 
     def _engine_default(self):
         e = PipelineEngine(application=self.application)

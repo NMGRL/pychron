@@ -16,12 +16,13 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traits.api import Instance
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ServerEndpoint
-from twisted.internet.protocol import Factory, Protocol
+from twisted.internet.protocol import Factory
 
 from pychron.headless_loggable import HeadlessLoggable
 from pychron.tx.protocols.service import ServiceProtocol

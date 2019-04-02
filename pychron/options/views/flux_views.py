@@ -15,48 +15,60 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from chaco.default_colormaps import color_map_name_dict
 from traitsui.api import Item, HGroup, VGroup, Readonly, EnumEditor
 
 from pychron.options.options import SubOptions, AppearanceSubOptions
+from pychron.pychron_constants import MAIN, APPEARANCE
 
 
 class FluxSubOptions(SubOptions):
     def traits_view(self):
-        twodgrp = VGroup(HGroup(Item('color_map_name',
-                                     label='Color Map',
-                                     editor=EnumEditor(values=sorted(color_map_name_dict.keys()))),
-                                Item('levels')),
-                         Item('model_kind'),
-                         visible_when='plot_kind=="2D"')
-        onedgrp = VGroup(Item('marker_size'),
-                         visible_when='plot_kind=="1D"')
+        calc_grp = VGroup(Item('selected_decay', label='Flux Const.'),
+                          Readonly('lambda_k', label=u'Total \u03BB K'),
+                          Readonly('monitor_age'),
 
-        # ogrp = HGroup(Item('confirm_save',
-        #                    label='Confirm Save', tooltip='Allow user to review evolutions '
-        #                                                  'before saving to file'))
+                          Item('model_kind'),
+                          Item('error_kind', label='Mean J Error'),
+                          Item('predicted_j_error_type', label='Predicted J Error'),
+                          Item('use_weighted_fit', visible_when='model_kind!="Matching"'),
+
+                          VGroup(HGroup(Item('use_monte_carlo', label='Use'),
+                                 Item('monte_carlo_ntrials', label='N. Trials',
+                                      tooltip='Number of trials to perform monte carlo simulation')),
+                                 Item('position_error', label='Position Error (Beta)',
+                                      tooltip='Set this value to the radius (same units as hole XY positions) of the '
+                                              'irradiation hole. '
+                                              'This is to test "monte carloing" the irradiation geometry'),
+                                 show_border=True,
+                                 visible_when='model_kind not in ("Matching", "Bracketing")',
+                                 label='Monte Carlo'),
+                          show_border=True,
+                          label='Calculations')
+
         grp = VGroup(Item('plot_kind'),
-                     twodgrp,
-                     onedgrp,
-                     Item('selected_decay', label='Decay Const.'),
-                     Readonly('lambda_k', label=u'Total \u03BB K'),
-                     Item('monitor_age'),
-                     Item('error_kind', label='Mean J Error'),
-                     Item('predicted_j_error_type', label='Predicted J Error'),
-                     Item('use_weighted_fit', ),
-                     Item('monte_carlo_ntrials', ),
-                     Item('use_monte_carlo', ),
-                     label='Fits',
-                     show_border=True)
+                     calc_grp)
 
         return self._make_view(grp)
 
 
 class FluxAppearanceSubOptions(AppearanceSubOptions):
-    pass
+    def traits_view(self):
+        twodgrp = VGroup(HGroup(Item('color_map_name',
+                                     label='Color Map',
+                                     editor=EnumEditor(values=sorted(color_map_name_dict.keys()))),
+                                Item('levels')),
+                         visible_when='plot_kind=="2D"',
+                         label='Options',
+                         show_border=True)
+        onedgrp = VGroup(Item('marker_size'),
+                         visible_when='plot_kind=="1D"',
+                         label='Options',
+                         show_border=True)
+        scalegrp = VGroup(Item('flux_scalar', label='Scale', tooltip='Multiple flux by Scale. FOR DISPLAY ONLY'))
+        return self._make_view(VGroup(twodgrp, onedgrp, scalegrp))
 
 
-VIEWS = {'main': FluxSubOptions,
-         'appearance': FluxAppearanceSubOptions}
+VIEWS = {MAIN.lower(): FluxSubOptions,
+         APPEARANCE.lower(): FluxAppearanceSubOptions}
 # ============= EOF =============================================

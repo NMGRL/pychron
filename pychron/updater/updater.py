@@ -14,18 +14,17 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from apptools.preferences.preference_binding import bind_preference
-from traits.api import Bool, Str, Directory
-
 import os
 import sys
+
 import requests
+# ============= enthought library imports =======================
+from apptools.preferences.preference_binding import bind_preference
 from git import GitCommandError
+from traits.api import Bool, Str, Directory
 
 from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.loggable import Loggable
-from pychron.paths import build_repo
 from pychron.paths import r_mkdir
 from pychron.updater.commit_view import CommitView, UpdateGitHistory
 
@@ -56,6 +55,9 @@ class Updater(Loggable):
     def test_origin(self):
         if self.remote:
             return self._validate_origin(self.remote)
+
+    def set_revisions(self):
+        self._check_for_updates()
 
     def check_for_updates(self, inform=False):
         self.debug('checking for updates')
@@ -277,14 +279,18 @@ class Updater(Loggable):
         if not self._repo:
             from git import Repo
 
-            p = build_repo
+            p = self.build_repo
+            if not p:
+                self.information_dialog('Please set "build repo" in Updater Preferences')
+                return
+
             if not os.path.isdir(p):
                 r_mkdir(p)
                 if self.remote:
                     url = 'https://github.com/{}.git'.format(self.remote)
                     repo = Repo.clone_from(url, p)
                 else:
-                    self.information_dialog('Please set "remote" in Updater preferences')
+                    self.information_dialog('Please set "remote" in Updater Preferences')
                     return
             else:
                 repo = Repo(p)

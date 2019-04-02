@@ -40,7 +40,7 @@ class FurnaceCanvas(StageCanvas):
     aspect_ratio = 3.
 
     def __init__(self, *args, **kw):
-        super(FurnaceCanvas, self).__init__(*args, **kw)
+
         self.border_visible = False
         self.show_axes = True
         self.use_zoom = False
@@ -58,6 +58,7 @@ class FurnaceCanvas(StageCanvas):
         self.padding_bottom = 5
         self.use_valid_holes = False
         self.show_indicators = False
+        super(FurnaceCanvas, self).__init__(*args, **kw)
 
     def set_map(self, mp):
         super(FurnaceCanvas, self).set_map(mp)

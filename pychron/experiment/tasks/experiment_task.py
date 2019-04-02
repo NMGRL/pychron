@@ -13,18 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from pyface.constant import CANCEL, NO
-from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
-from pyface.timer.do_later import do_after
-from traits.api import Int, on_trait_change, Bool, Instance, Event, Color
-
 import os
 import shutil
 import time
+
 import xlrd
+from pyface.constant import CANCEL, NO
+from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
+from pyface.timer.do_later import do_after
+from traits.api import on_trait_change, Bool, Instance, Event
 
 from pychron.core.helpers.filetools import add_extension, backup
-from pychron.core.ui.preference_binding import color_bind_preference
+from pychron.core.helpers.strtools import to_bool
 from pychron.envisage.tasks.editor_task import EditorTask
 from pychron.envisage.tasks.pane_helpers import ConsolePane
 from pychron.envisage.tasks.wait_pane import WaitPane
@@ -40,7 +40,7 @@ from pychron.experiment.utilities.save_dialog import ExperimentSaveDialog
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.paths import paths
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
-from pychron.pychron_constants import SPECTROMETER_PROTOCOL, DVC_PROTOCOL
+from pychron.pychron_constants import SPECTROMETER_PROTOCOL, DVC_PROTOCOL, COCKTAIL, AIR, BLANK
 
 
 class ExperimentEditorTask(EditorTask):
@@ -52,11 +52,11 @@ class ExperimentEditorTask(EditorTask):
 
     loading_manager = Instance('pychron.loading.loading_manager.LoadingManager')
 
-    # analysis_health = Instance(AnalysisHealth)
     last_experiment_changed = Event
 
-    bgcolor = Color
-    even_bgcolor = Color
+    # bgcolor = Color
+    # even_bgcolor = Color
+    # use_analysis_type_color = Bool
 
     automated_runs_editable = Bool
 
@@ -111,8 +111,7 @@ class ExperimentEditorTask(EditorTask):
                 dnames = spec.spectrometer.detector_names
 
             edit_conditionals(self.manager.experiment_factory.queue_factory.queue_conditionals_name,
-                              detectors=dnames,
-                              app=self.application)
+                              detectors=dnames)
 
     def reset_queues(self):
         for editor in self.editor_area.editors:
@@ -146,8 +145,7 @@ class ExperimentEditorTask(EditorTask):
             if manager.load():
                 self.manager.experiment_factory.activate(load_persistence=True)
 
-                editor = ExperimentEditor(application=self.application)
-                editor.setup_tabular_adapters(self.bgcolor, self.even_bgcolor, self._assemble_state_colors())
+                editor = self._editor_factory()
                 editor.new_queue()
 
                 self._open_editor(editor)
@@ -168,8 +166,8 @@ class ExperimentEditorTask(EditorTask):
         self._preference_binder('pychron.experiment',
                                 ('automated_runs_editable',))
 
-        color_bind_preference(self, 'bgcolor', 'pychron.experiment.bg_color')
-        color_bind_preference(self, 'even_bgcolor', 'pychron.experiment.even_bg_color')
+        # color_bind_preference(self, 'bgcolor', 'pychron.experiment.bg_color')
+        # color_bind_preference(self, 'even_bgcolor', 'pychron.experiment.even_bg_color')
 
     # ===============================================================================
     # tasks protocol
@@ -208,7 +206,6 @@ class ExperimentEditorTask(EditorTask):
                  ControlsPane(model=ex, task=self),
                  ConsolePane(model=ex),
                  LoggerPane(),
-                 # AnalysisHealthPane(model=self.analysis_health),
                  ConnectionStatusPane(model=ex),
                  self.experiment_factory_pane,
                  self.isotope_evolution_pane,
@@ -233,6 +230,32 @@ class ExperimentEditorTask(EditorTask):
         return panes
 
     # private
+    def _editor_factory(self, is_uv=False, **kw):
+        klass = UVExperimentEditor if is_uv else ExperimentEditor
+        editor = klass(application=self.application,
+                       automated_runs_editable=self.automated_runs_editable,
+                       **kw)
+
+        prefs = self.application.preferences
+        prefid = 'pychron.experiment'
+        bgcolor = prefs.get('{}.bg_color'.format(prefid))
+        even_bgcolor = prefs.get('{}.even_bg_color'.format(prefid))
+        use_analysis_type_colors = to_bool(prefs.get('{}.use_analysis_type_colors'.format(prefid)))
+
+        editor.setup_tabular_adapters(bgcolor, even_bgcolor,
+                                      self._assemble_state_colors(),
+                                      use_analysis_type_colors,
+                                      self._assemble_analysis_type_colors())
+        return editor
+
+    def _assemble_analysis_type_colors(self):
+        colors = {}
+        for c in (BLANK, AIR, COCKTAIL):
+            v = self.application.preferences.get('pychron.experiment.{}_color'.format(c))
+            colors[c] = v or '#FFFFFF'
+
+        return colors
+
     def _assemble_state_colors(self):
         colors = {}
         for c in ('success', 'extraction', 'measurement', 'canceled', 'truncated',
@@ -299,11 +322,8 @@ class ExperimentEditorTask(EditorTask):
             else:
                 txt, is_uv = self._open_txt(path)
 
-            klass = UVExperimentEditor if is_uv else ExperimentEditor
-            editor = klass(path=path,
-                           application=self.application,
-                           automated_runs_editable=self.automated_runs_editable)
-            editor.setup_tabular_adapters(self.bgcolor, self.even_bgcolor, self._assemble_state_colors())
+            editor = self._editor_factory(is_uv=is_uv, path=path)
+
             editor.new_queue(txt)
             self._open_editor(editor)
         else:
@@ -371,7 +391,7 @@ class ExperimentEditorTask(EditorTask):
     def _save_file(self, path):
         if self.active_editor.save(path):
             self.manager.refresh_executable()
-            self.debug('queues saved')
+            self.debug('queue saved')
             self.manager.reset_run_generator()
             return True
 
@@ -458,9 +478,12 @@ class ExperimentEditorTask(EditorTask):
     # ===============================================================================
     def _active_editor_changed(self):
         if self.active_editor:
+            self.manager.experiment_factory.edit_enabled = True
             self.manager.experiment_queue = self.active_editor.queue
             self.manager.executor.active_editor = self.active_editor
             self._show_pane(self.experiment_factory_pane)
+        else:
+            self.manager.experiment_factory.edit_enabled = False
 
     @on_trait_change('loading_manager:group_positions')
     def _update_group_positions(self, new):

@@ -13,31 +13,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from __future__ import absolute_import
-import yaml
 
-from pychron.core.helpers.filetools import add_extension
-from pychron.core.ui import set_qt
-from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.paths import paths
-
-
-set_qt()
-
-
-# ============= enthought library imports =======================
 import os
+
+# ============= standard library imports ========================
+import yaml
+# ============= enthought library imports =======================
 from pyface.file_dialog import FileDialog
 from traits.api import HasTraits, List, Enum, Float, Int, Button, Any, Property, Str
 from traitsui.api import View, Item, Controller, UItem, HGroup, VGroup
 from traitsui.editors import ListEditor
 
-# ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.filetools import add_extension
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+from pychron.envisage.icon_button_editor import icon_button_editor
+from pychron.paths import paths
 
 
 class ActionItem(HasTraits):
-    attr = Enum('age', 'kca', 'rad40_percent', 'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36', 'Ar41', '37/39')
+    attr = Enum('age', 'kca', 'radiogenic_yield', 'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36', 'Ar41', '37/39')
     comp = Enum('less than', 'greater than', 'between')
     value = Float
     value1 = Float
@@ -117,13 +112,6 @@ class ActionModel(HasTraits):
 
 
 class ActionEditor(Controller):
-    # def init( self, info):
-    #     self.load()
-    # @on_trait_change('model:path')
-    # def _handle_path(self):
-    #     if self.model.path:
-    #
-    #         self.info.title=os.path.basename(self.model.path)
     title = Str
 
     def init(self, info):
@@ -177,33 +165,15 @@ class ActionEditor(Controller):
         return p
 
     def traits_view(self):
-        v = View(
-
-            HGroup(icon_button_editor('add_button', 'add'),
-                   icon_button_editor('remove_button', 'delete')),
-            UItem('actions',
-                  style='custom',
-                  editor=ListEditor(
-                      use_notebook=True,
-                      selected='selected',
-                      page_name='.label'
-                      # style='custom',
-                      #               mutable=False,
-                      #               use_notebook=True,
-                      #               selected='selected',
-                      #               page_name='.attr',
-                      #               view='traits_view',
-                      #               editor=InstanceEditor()
-                  )),
-            buttons=['OK', 'Cancel'],
-            resizable=True)
+        v = okcancel_view(HGroup(icon_button_editor('add_button', 'add'),
+                                 icon_button_editor('remove_button', 'delete')),
+                          UItem('actions',
+                                style='custom',
+                                editor=ListEditor(
+                                    use_notebook=True,
+                                    selected='selected',
+                                    page_name='.label')))
         return v
-        # def traits_view(self):
-        #     cols=[ObjectColumn(name='attr'),
-        #           ObjectColumn(name='comp')
-        #           ]
-        #     v=View(UItem('actions', editor=TableEditor(columns=cols)), resizable=True)
-        #     return v
 
 
 if __name__ == '__main__':
@@ -211,4 +181,3 @@ if __name__ == '__main__':
     a.configure_traits()
 
 # ============= EOF =============================================
-

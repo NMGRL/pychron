@@ -206,7 +206,7 @@ class NewYorkRegressor(YorkRegressor):
             b=slope
             a=intercept
         """
-
+        a = 0
         if abs(pb - b) < tol or cnt > total:
             W = self._calculate_W(b)
             XBar, YBar = self._calculate_xy_bar(W)
@@ -226,9 +226,13 @@ class NewYorkRegressor(YorkRegressor):
 
             sumA = sum(W ** 2 * V * (U * var_y + b * V * var_x - r * V * sig_x * sig_y))
             sumB = sum(W ** 2 * U * (U * var_y + b * V * var_x - b * r * U * sig_x * sig_y))
-            nb = sumA / sumB
+            try:
+                nb = sumA / sumB
+                b, a, cnt = self._calculate_slope_intercept(b, nb, cnt + 1)
+            except ZeroDivisionError:
+                pass
 
-            return self._calculate_slope_intercept(b, nb, cnt + 1)
+        return b, a, cnt
 
     def _calculate_W(self, b):
         sig_x = self.clean_xserr

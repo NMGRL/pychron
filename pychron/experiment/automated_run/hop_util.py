@@ -20,10 +20,6 @@
 # ============= local library imports  ==========================
 
 
-from __future__ import absolute_import
-from six.moves import map
-from six.moves import range
-from six.moves import zip
 def parse_hop(args):
     if isinstance(args, dict):
         counts = args['counts']
@@ -34,7 +30,7 @@ def parse_hop(args):
         defls = [ci.get('deflection') for ci in cc]
         pdets = [ci['detector'] for ci in cc if ci.get('protect', False)]
         is_baselines = [ci['is_baseline'] for ci in cc]
-        active_detectors = [ci['detector'] for ci in cc if ci.get('active',False)]
+        active_detectors = [ci['detector'] for ci in cc if ci.get('active', False)]
         pos = args['positioning']
 
     else:
@@ -111,7 +107,7 @@ def parse_hops(hops, ret=None):
 
 def split_hopstr(hop):
     for hi in hop.split(','):
-        args = list(map(str.strip, hi.split(':')))
+        args = [hh.strip() for hh in hi.split(':')]
         defl = None
         is_baseline = False
         if len(args) == 4:

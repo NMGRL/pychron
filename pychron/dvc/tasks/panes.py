@@ -15,49 +15,43 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
-from traits.api import Int, Property
-from traitsui.api import View, UItem, VGroup, ListStrEditor, TabularEditor, EnumEditor
+from traits.api import Property
+from traitsui.api import View, UItem, VGroup, TabularEditor, EnumEditor, VSplit, Item
 from traitsui.tabular_adapter import TabularAdapter
-
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-
-
-class CommitAdapter(TabularAdapter):
-    columns = [('ID', 'hexsha'),
-               ('Date', 'date'),
-               ('Message', 'message'),
-               ('Author', 'author'),
-               ('Email', 'email'),
-               ]
-    hexsha_width = Int(80)
-    message_width = Int(300)
-    date_width = Int(120)
-    author_width = Int(100)
-
-    font = '10'
-    hexsha_text = Property
-
-    def _get_hexsha_text(self):
-        return self.item.hexsha[:8]
+from pychron.core.helpers.datetime_tools import ISO_FORMAT_STR
+from pychron.git_archive.views import CommitAdapter, GitTagAdapter
 
 
 class RepoCentralPane(TraitsTaskPane):
     def traits_view(self):
+        commit_grp = VGroup(Item('ncommits', label='Limit'),
+                            VGroup(UItem('commits',
+                                         editor=TabularEditor(adapter=CommitAdapter(),
+                                                              selected='selected_commit')),
+                                   show_border=True, label='Commits'))
+        bookmark_grp = VGroup(VGroup(UItem('git_tags', editor=TabularEditor(adapter=GitTagAdapter()),
+                                           height=200),
+                                     show_border=True, label='Bookmarks'))
+
         v = View(VGroup(UItem('branch',
                               editor=EnumEditor(name='branches')),
-                        UItem('commits',
-                              editor=TabularEditor(adapter=CommitAdapter(),
-                                                   selected='selected_commit'))))
+                        VSplit(commit_grp, bookmark_grp)))
         return v
 
 
 class RepoAdapter(TabularAdapter):
-    columns = [('Name', 'name')]
+    columns = [('Name', 'name'),
+               ('Branch', 'active_branch'),
+               ('Status (Ahead,Behind)', 'status')]
+
+    # name_text = Property
+    # def _get_name_text(self):
+    #     return '{} ({})'.format(self.item.name, self.item.active_branch)
 
     def get_bg_color(self, obj, trait, row, column=0):
         item = getattr(obj, trait)[row]
@@ -67,20 +61,44 @@ class RepoAdapter(TabularAdapter):
         return color
 
 
+class OriginAdapter(TabularAdapter):
+    columns = [('Name', 'name'),
+               ('Created', 'create_date'),
+               ('Last Commit', 'push_date')]
+    create_date_text = Property
+    push_date_text = Property
+
+    def _get_create_date_text(self):
+        return self.item.create_date.strftime(ISO_FORMAT_STR)
+
+    def _get_push_date_text(self):
+        return self.item.push_date.strftime(ISO_FORMAT_STR)
+
+
 class SelectionPane(TraitsDockPane):
     id = 'pychron.repo.selection'
     name = 'Repositories'
 
     def traits_view(self):
-        origin_grp = VGroup(UItem('repository_names',
-                                  editor=ListStrEditor(selected='selected_repository_name',
+        origin_grp = VGroup(UItem('filter_origin_value',
+                                  tooltip='Fuzzy filter list of repositories available at "Origin". '
+                                          'e.g. "foo" will match "foo", "foobar", "fobaro", "barfoo", etc'),
+                            UItem('repository_names',
+                                  editor=TabularEditor(selected='selected_repository',
+                                                       column_clicked='origin_column_clicked',
+                                                       adapter=OriginAdapter(),
                                                        editable=False)),
                             show_border=True, label='Origin')
 
-        local_grp = VGroup(UItem('local_names',
+        local_grp = VGroup(UItem('filter_repository_value',
+                                 tooltip='Fuzzy filter list of repositories available at on this computer. '
+                                         'e.g. "foo" will match "foo", "foobar", "fobaro", "barfoo", etc'),
+                           UItem('local_names',
                                  editor=TabularEditor(adapter=RepoAdapter(),
-                                                      selected='selected_local_repository_name',
-                                                      editable=False
+                                                      column_clicked='column_clicked',
+                                                      selected='selected_local_repositories',
+                                                      editable=False,
+                                                      multi_select=True,
                                                       )),
                            show_border=True, label='Local')
 

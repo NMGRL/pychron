@@ -29,22 +29,10 @@ from pychron.envisage.tasks.base_task import BaseTask
 class DashboardServerTask(BaseTask):
     name = 'Dashboard Server'
     server = Instance(DashboardServer)
-    #devices = DelegatesTo('server')
-    #selected_device = Instance(DashboardDevice)
 
     def activated(self):
-        emailer = self.application.get_service('pychron.social.emailer.Emailer')
-        self.server.emailer = emailer
+        self.server.activate()
 
-    #load devices
-    #self._load_devices()
-    #
-    #if self.devices:
-    #    self.setup_notifier()
-    #    self.start_poll()
-
-    #def prepare_destroy(self):
-    #    self._alive = False
     def create_central_pane(self):
         return DashboardCentralPane(model=self.server)
 

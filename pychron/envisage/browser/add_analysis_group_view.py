@@ -15,12 +15,14 @@
 # ===============================================================================
 
 from __future__ import absolute_import
-from traits.api import Str, List, HasTraits, Dict, Any
-from traitsui.api import View, Item, EnumEditor
 
+from pyface.message_dialog import warning
+from traits.api import Str, HasTraits, Dict, Any
+from traitsui.api import Item, EnumEditor
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 
 
 class AddAnalysisGroupView(HasTraits):
@@ -30,6 +32,13 @@ class AddAnalysisGroupView(HasTraits):
 
     def save(self, ans, db):
         append = False
+        if not self.name:
+            warning(None, 'Please specify a name for the analysis group')
+            return
+
+        if not self.project:
+            warning(None, 'Please specify an associated project for the analysis group')
+            return
 
         gdb = db.get_analysis_groups_by_name(self.name, self.project)
         ok = True
@@ -45,12 +54,12 @@ class AddAnalysisGroupView(HasTraits):
         elif ok:
             db.add_analysis_group(ans, self.name, self.project)
 
+        return True
+
     def traits_view(self):
-        v = View(Item('name'),
-                 Item('project', editor=EnumEditor(name='projects')),
-                 resizable=True,
-                 buttons=['OK', 'Cancel'],
-                 title='Add Analysis Group')
+        v = okcancel_view(Item('name'),
+                          Item('project', editor=EnumEditor(name='projects')),
+                          title='Add Analysis Group')
         return v
 
 # ============= EOF =============================================

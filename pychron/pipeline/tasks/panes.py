@@ -15,24 +15,24 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
+import six
 from pyface.action.menu_manager import MenuManager
 from pyface.tasks.traits_dock_pane import TraitsDockPane
-from traits.api import Int, Property, Button, Str
+from traits.api import Int, Property, Button, Instance
 from traits.has_traits import MetaHasTraits
-from traitsui.api import View, UItem, VGroup, InstanceEditor, HGroup, VSplit, ListStrEditor, \
-    Handler, TabularEditor, TreeEditor
+from traitsui.api import View, UItem, VGroup, InstanceEditor, HGroup, VSplit, Handler, TabularEditor, TreeEditor
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 from traitsui.tree_node import TreeNode
 from uncertainties import nominal_value, std_dev
 
+from pychron.core.configurable_tabular_adapter import ConfigurableMixin
 from pychron.core.helpers.color_generators import colornames
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.ui.enum_editor import myEnumEditor
 from pychron.core.ui.qt.tree_editor import PipelineEditor
+from pychron.core.ui.table_configurer import TableConfigurer
 from pychron.core.ui.tabular_editor import myTabularEditor
-from pychron.envisage.browser.sample_view import BaseBrowserSampleView
 from pychron.envisage.browser.view import PaneBrowserView
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.pipeline.engine import Pipeline, PipelineGroup, NodeGroup
@@ -40,19 +40,17 @@ from pychron.pipeline.nodes import FindReferencesNode
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.nodes.data import DataNode, InterpretedAgeNode
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, SeriesNode
-from pychron.pipeline.nodes.filter import FilterNode
+from pychron.pipeline.nodes.filter import FilterNode, MSWDFilterNode
 from pychron.pipeline.nodes.find import FindFluxMonitorsNode
 from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode, FitFluxNode
-from pychron.pipeline.nodes.grouping import GroupingNode
+from pychron.pipeline.nodes.grouping import GroupingNode, SubGroupingNode
 from pychron.pipeline.nodes.persist import PDFNode, DVCPersistNode
 from pychron.pipeline.nodes.review import ReviewNode
-from pychron.pipeline.nodes.table import InterpretedAgeTableNode
 from pychron.pipeline.tasks.tree_node import SeriesTreeNode, PDFTreeNode, GroupingTreeNode, SpectrumTreeNode, \
     IdeogramTreeNode, FilterTreeNode, DataTreeNode, DBSaveTreeNode, FindTreeNode, FitTreeNode, PipelineTreeNode, \
     ReviewTreeNode, PipelineGroupTreeNode, NodeGroupTreeNode
 from pychron.pipeline.template import PipelineTemplate, PipelineTemplateGroup, PipelineTemplateRoot
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, LIGHT_RED, LIGHT_YELLOW
-import six
 
 
 def node_adder(name):
@@ -67,10 +65,11 @@ def node_adder(name):
 class PipelineHandlerMeta(MetaHasTraits):
     def __new__(cls, *args, **kwargs):
         klass = MetaHasTraits.__new__(cls, *args, **kwargs)
-        for t in ('review', 'pdf_figure', 'iso_evo_persist', 'data', 'filter', 'ideogram', 'spectrum', 'grouping',
+        for t in ('review', 'pdf_figure', 'iso_evo_persist', 'data', 'filter', 'mswd_filter', 'ideogram', 'spectrum',
                   'series', 'isotope_evolution', 'blanks', 'detector_ic', 'flux', 'find_blanks', 'find_airs',
                   'icfactor', 'push', 'inverse_isochron',
-                  'graph_grouping', 'set_interpreted_age', 'interpreted_ages'):
+                  'grouping', 'graph_grouping', 'subgrouping',
+                  'set_interpreted_age', 'interpreted_ages'):
             name = 'add_{}'.format(t)
             setattr(klass, name, node_adder(name))
 
@@ -105,7 +104,6 @@ class PipelineHandler(six.with_metaclass(PipelineHandlerMeta, Handler)):
 
     def toggle_skip_configure(self, info, obj):
         obj.skip_configure = not obj.skip_configure
-        # info.object.refresh_all_needed = True
         info.object.update_needed = True
 
     def configure(self, info, obj):
@@ -125,7 +123,6 @@ class PipelineHandler(six.with_metaclass(PipelineHandlerMeta, Handler)):
 
     def _toggle_enable(self, info, obj, state):
         obj.enabled = state
-        # info.object.run_needed = True
         info.object.refresh_all_needed = True
         info.object.update_needed = True
 
@@ -151,14 +148,7 @@ class PipelinePane(TraitsDockPane):
                                name='Enable/Disable')
 
         def menu_factory(*actions):
-            return MenuManager(
-                               # Action(name='Enable',
-                               #        action='enable',
-                               #        visible_when='not object.enabled'),
-                               # Action(name='Disable',
-                               #        action='disable',
-                               #        visible_when='object.enabled'),
-                               Action(name='Configure', action='configure'),
+            return MenuManager(Action(name='Configure', action='configure'),
                                Action(name='Enable Auto Configure',
                                       action='toggle_skip_configure',
                                       visible_when='object.skip_configure'),
@@ -180,8 +170,12 @@ class PipelinePane(TraitsDockPane):
                                       action='add_grouping'),
                                Action(name='Add Graph Grouping',
                                       action='add_graph_grouping'),
+                               Action(name='Add SubGrouping',
+                                      action='add_subgrouping'),
                                Action(name='Add Filter',
                                       action='add_filter'),
+                               Action(name='Add MSWD Filter',
+                                      action='add_mswd_filter'),
                                Action(name='Add Inverse Isochron',
                                       action='add_inverse_isochron'),
                                Action(name='Add Ideogram',
@@ -263,11 +257,6 @@ class PipelinePane(TraitsDockPane):
                                 enable_disable_menu_factory(),
                                 add_menu_factory(), fit_menu_factory())
 
-        # def default_menu():
-        #     return MenuManager(Action(name='Add Data',
-        #                        action='add_data'),
-        #                        chain_menu_factory())
-
         nodes = [PipelineGroupTreeNode(node_for=[PipelineGroup],
                                        children='pipelines',
                                        auto_open=True
@@ -277,20 +266,18 @@ class PipelinePane(TraitsDockPane):
                                   children='nodes',
                                   icon_open='',
                                   label='name',
-                                  auto_open=True,
-                                  # menu=default_menu()
-                                  ),
+                                  auto_open=True),
                  NodeGroupTreeNode(node_for=[NodeGroup],
                                    children='nodes',
                                    auto_open=True,
                                    label='name'),
                  DataTreeNode(node_for=[DataNode, InterpretedAgeNode], menu=data_menu_factory()),
-                 FilterTreeNode(node_for=[FilterNode], menu=filter_menu_factory()),
+                 FilterTreeNode(node_for=[FilterNode, MSWDFilterNode], menu=filter_menu_factory()),
                  IdeogramTreeNode(node_for=[IdeogramNode], menu=figure_menu_factory()),
                  SpectrumTreeNode(node_for=[SpectrumNode], menu=figure_menu_factory()),
                  SeriesTreeNode(node_for=[SeriesNode], menu=figure_menu_factory()),
                  PDFTreeNode(node_for=[PDFNode], menu=menu_factory()),
-                 GroupingTreeNode(node_for=[GroupingNode], menu=data_menu_factory()),
+                 GroupingTreeNode(node_for=[GroupingNode, SubGroupingNode], menu=data_menu_factory()),
                  DBSaveTreeNode(node_for=[DVCPersistNode], menu=data_menu_factory()),
                  FindTreeNode(node_for=[FindReferencesNode, FindFluxMonitorsNode], menu=ffind_menu_factory()),
                  FitTreeNode(node_for=[FitIsotopeEvolutionNode,
@@ -321,13 +308,9 @@ class PipelinePane(TraitsDockPane):
         teditor = TreeEditor(nodes=tnodes,
                              editable=False,
                              selected='selected_pipeline_template',
+                             dclick='dclicked_pipeline_template',
                              hide_root=True,
                              lines_mode='off')
-
-        # HGroup(UItem('selected_pipeline_template',
-        #              editor=myEnumEditor(name='available_pipeline_templates')),
-        #        icon_button_editor('run_needed', 'start'),
-        #        icon_button_editor('add_pipeline', 'add')),
 
         v = View(VSplit(UItem('pipeline_template_root',
                               editor=teditor),
@@ -339,39 +322,19 @@ class PipelinePane(TraitsDockPane):
         return v
 
 
-class UnknownsAdapter(TabularAdapter):
-    columns = [('Run ID', 'record_id'),
-               ('Sample', 'sample'),
-               ('Age', 'age'),
-               (PLUSMINUS_ONE_SIGMA, 'error'),
-               ('Comment', 'comment'),
-               ('Tag', 'tag'),
-               ('GroupID', 'group_id'),
-               ('GraphID', 'graph_id')]
-
-    record_id_width = Int(80)
-    sample_width = Int(80)
-    age_width = Int(70)
-    error_width = Int(60)
-    tag_width = Int(50)
-    graph_id_width = Int(30)
-
-    age_text = Property
-    error_text = Property
-
+class BaseAnalysesAdapter(TabularAdapter, ConfigurableMixin):
     font = 'arial 10'
+    rundate_text = Property
+    record_id_width = Int(80)
+    tag_width = Int(50)
+    sample_width = Int(80)
 
-    def __init__(self, *args, **kw):
-        super(UnknownsAdapter, self).__init__(*args, **kw)
-        self._ncolors = len(colornames)
-
-    def get_menu(self, obj, trait, row, column):
-        return MenuManager(Action(name='Recall', action='recall_unknowns'),
-                           Action(name='Graph Group Selected', action='unknowns_graph_group_by_selected'),
-                           Action(name='Group Selected', action='unknowns_group_by_selected'),
-                           Action(name='Clear Group', action='unknowns_clear_grouping'),
-                           Action(name='Clear All Group', action='unknowns_clear_all_grouping'),
-                           Action(name='Save Analysis Group', action='save_analysis_group'))
+    def _get_rundate_text(self):
+        try:
+            r = self.item.rundate.strftime('%m-%d-%Y %H:%M')
+        except AttributeError:
+            r = ''
+        return r
 
     def get_bg_color(self, obj, trait, row, column=0):
         if self.item.tag == 'invalid':
@@ -379,14 +342,104 @@ class UnknownsAdapter(TabularAdapter):
         elif self.item.is_omitted():
             c = '#FAC0C0'
         else:
-            c = super(UnknownsAdapter, self).get_bg_color(obj, trait, row, column)
+            c = super(BaseAnalysesAdapter, self).get_bg_color(obj, trait, row, column)
         return c
+
+
+class UnknownsAdapter(BaseAnalysesAdapter):
+    columns = [('Run ID', 'record_id'),
+               ('Sample', 'sample'),
+               ('Age', 'age'),
+               ('Comment', 'comment'),
+               ('Tag', 'tag'),
+               ('GroupID', 'group_id')]
+
+    all_columns = [('RunDate', 'rundate'),
+                   ('Run ID', 'record_id'),
+                   ('Aliquot', 'aliquot'),
+                   ('Step', 'step'),
+                   ('UUID', 'display_uuid'),
+                   ('Sample', 'sample'),
+                   ('Project', 'project'),
+                   ('RepositoryID', 'repository_identifier'),
+                   ('Age', 'age'),
+                   ('Age {}'.format(PLUSMINUS_ONE_SIGMA), 'age_error'),
+                   ('F', 'f'),
+                   ('F {}'.format(PLUSMINUS_ONE_SIGMA), 'f_error'),
+                   ('Saved J', 'j'),
+                   ('Saved J {}'.format(PLUSMINUS_ONE_SIGMA), 'j_error'),
+                   ('Model J', 'model_j'),
+                   ('Model J {}'.format(PLUSMINUS_ONE_SIGMA), 'model_j_error'),
+                   ('Model J Kind', 'model_j_kind'),
+                   ('Comment', 'comment'),
+                   ('Tag', 'tag'),
+                   ('GroupID', 'group_id'),
+                   ('GraphID', 'graph_id')]
+    age_width = Int(70)
+    error_width = Int(60)
+    graph_id_width = Int(30)
+
+    age_text = Property
+    age_error_text = Property
+    j_error_text = Property
+    j_text = Property
+    f_error_text = Property
+    f_text = Property
+
+    model_j_error_text = Property
+    model_j_text = Property
+
+    def __init__(self, *args, **kw):
+        super(UnknownsAdapter, self).__init__(*args, **kw)
+        self._ncolors = len(colornames)
+
+    def get_menu(self, obj, trait, row, column):
+        grp = MenuManager(Action(name='Group Selected', action='unknowns_group_by_selected'),
+                          Action(name='Group by Sample', action='unknowns_group_by_sample'),
+                          Action(name='Group by Aliquot', action='unknowns_group_by_aliquot'),
+                          Action(name='Group by Identifier', action='unknowns_group_by_identifier'),
+                          Action(name='Clear Group', action='unknowns_clear_grouping'),
+                          Action(name='Clear All Group', action='unknowns_clear_all_grouping'), name='Plot Grouping')
+
+        return MenuManager(Action(name='Recall', action='recall_unknowns'),
+                           Action(name='Graph Group Selected', action='unknowns_graph_group_by_selected'),
+                           Action(name='Save Analysis Group', action='save_analysis_group'),
+                           Action(name='Configure', action='configure_unknowns'),
+                           grp)
+
+    def _get_f_text(self):
+        r = floatfmt(self.item.f, n=4)
+        return r
+
+    def _get_f_error_text(self):
+        r = floatfmt(self.item.f_err, n=4)
+        return r
+
+    def _get_j_text(self):
+        r = floatfmt(nominal_value(self.item.j), n=8)
+        return r
+
+    def _get_j_error_text(self):
+        r = floatfmt(std_dev(self.item.j), n=8)
+        return r
+
+    def _get_model_j_text(self):
+        r = ''
+        if self.item.modeled_j:
+            r = floatfmt(nominal_value(self.item.modeled_j), n=8)
+        return r
+
+    def _get_model_j_error_text(self):
+        r = ''
+        if self.item.modeled_j:
+            r = floatfmt(std_dev(self.item.modeled_j), n=8)
+        return r
 
     def _get_age_text(self):
         r = floatfmt(nominal_value(self.item.uage), n=3)
         return r
 
-    def _get_error_text(self):
+    def _get_age_error_text(self):
         r = floatfmt(std_dev(self.item.uage), n=4)
         return r
 
@@ -404,15 +457,37 @@ class UnknownsAdapter(TabularAdapter):
         return color
 
 
-class ReferencesAdapter(TabularAdapter):
-    columns = [('Run ID', 'record_id'), ]
-    font = 'arial 10'
+class ReferencesAdapter(BaseAnalysesAdapter):
+    columns = [('Run ID', 'record_id'),
+               ('Comment', 'comment')]
+
+    all_columns = [('RunDate', 'rundate'),
+                   ('Run ID', 'record_id'),
+                   ('Aliquot', 'aliquot'),
+                   ('UUID', 'display_uuid'),
+                   ('Sample', 'sample'),
+                   ('Project', 'project'),
+                   ('RepositoryID', 'repository_identifier'),
+                   ('Comment', 'comment'),
+                   ('Tag', 'tag')]
 
     def get_menu(self, object, trait, row, column):
-        return MenuManager(Action(name='Recall', action='recall_references'))
+        return MenuManager(Action(name='Recall', action='recall_references'),
+                           Action(name='Configure', action='configure_references'))
 
 
 class AnalysesPaneHandler(Handler):
+    def unknowns_group_by_sample(self, info, obj):
+        obj = info.ui.context['object']
+        obj.unknowns_group_by('sample')
+
+    def unknowns_group_by_identifier(self, info, obj):
+        obj = info.ui.context['object']
+        obj.unknowns_group_by('identifier')
+
+    def unknowns_group_by_aliquot(self, info, obj):
+        obj = info.ui.context['object']
+        obj.unknowns_group_by('aliquot')
 
     def unknowns_graph_group_by_selected(self, info, obj):
         obj = info.ui.context['object']
@@ -442,26 +517,64 @@ class AnalysesPaneHandler(Handler):
         obj = info.ui.context['object']
         obj.recall_references()
 
+    def configure_unknowns(self, info, obj):
+        pane = info.ui.context['pane']
+        pane.configure_unknowns()
+
+    def configure_references(self, info, obj):
+        pane = info.ui.context['pane']
+        pane.configure_references()
+
+
+class UnknownsTableConfigurer(TableConfigurer):
+    id = 'unknowns_pane'
+
+
+class ReferencesTableConfigurer(TableConfigurer):
+    id = 'references_pane'
+
 
 class AnalysesPane(TraitsDockPane):
     name = 'Analyses'
     id = 'pychron.pipeline.analyses'
 
+    unknowns_adapter = Instance(UnknownsAdapter)
+    unknowns_table_configurer = Instance(UnknownsTableConfigurer, ())
+
+    references_adapter = Instance(ReferencesAdapter)
+    references_table_configurer = Instance(ReferencesTableConfigurer, ())
+
+    def configure_unknowns(self):
+        self.unknowns_table_configurer.edit_traits()
+
+    def configure_references(self):
+        self.references_table_configurer.edit_traits()
+
+    def _unknowns_adapter_default(self):
+        a = UnknownsAdapter()
+        self.unknowns_table_configurer.set_adapter(a)
+        return a
+
+    def _references_adapter_default(self):
+        a = ReferencesAdapter()
+        self.references_table_configurer.set_adapter(a)
+        return a
+
     def traits_view(self):
-        v = View(VGroup(UItem('object.selected_node.unknowns',
+        v = View(VGroup(UItem('object.selected.unknowns',
                               width=200,
-                              editor=TabularEditor(adapter=UnknownsAdapter(),
+                              editor=TabularEditor(adapter=self.unknowns_adapter,
                                                    update='refresh_table_needed',
                                                    multi_select=True,
-                                                   column_clicked='column_clicked',
+                                                   column_clicked='object.selected.column_clicked',
                                                    # drag_external=True,
                                                    # drop_factory=self.model.drop_factory,
                                                    dclicked='dclicked_unknowns',
                                                    selected='selected_unknowns',
                                                    operations=['delete'])),
-                        UItem('object.selected_node.references',
-                              visible_when='object.selected_node.references',
-                              editor=TabularEditor(adapter=ReferencesAdapter(),
+                        UItem('object.selected.references',
+                              visible_when='object.selected.references',
+                              editor=TabularEditor(adapter=self.references_adapter,
                                                    update='refresh_table_needed',
                                                    # drag_external=True,
                                                    multi_select=True,
@@ -480,7 +593,8 @@ class RepositoryTabularAdapter(TabularAdapter):
     def get_menu(self, obj, trait, row, column):
         return MenuManager(Action(name='Refresh Status', action='refresh_repository_status'),
                            Action(name='Get Changes', action='pull'),
-                           Action(name='Share Changes', action='push'))
+                           Action(name='Share Changes', action='push'),
+                           Action(name='Delete Local Changes', action='delete_local_changes'))
 
     def get_bg_color(self, obj, trait, row, column=0):
         if self.item.behind:
@@ -502,6 +616,10 @@ class RepositoryPaneHandler(Handler):
     def push(self, info, obj):
         obj.push()
 
+    def delete_local_changes(self, info, obj):
+        obj.delete_local_changes()
+        obj.refresh_repository_status()
+
 
 class RepositoryPane(TraitsDockPane):
     name = 'Repositories'
@@ -511,17 +629,18 @@ class RepositoryPane(TraitsDockPane):
         v = View(UItem('object.repositories', editor=myTabularEditor(adapter=RepositoryTabularAdapter(),
                                                                      editable=False,
                                                                      multi_select=True,
+                                                                     refresh='object.refresh_needed',
                                                                      selected='object.selected_repositories')),
                  handler=RepositoryPaneHandler())
         return v
 
 
-class InspectorPane(TraitsDockPane):
-    name = 'Inspector'
-    id = 'pychron.pipeline.inspector'
+class EditorOptionsPane(TraitsDockPane):
+    name = 'Editor Options'
+    id = 'pychron.pipeline.editor_options'
 
     def traits_view(self):
-        v = View(UItem('object.active_inspector_item', style='custom',
+        v = View(UItem('object.active_editor_options', style='custom',
                        editor=InstanceEditor()))
         return v
 
@@ -551,34 +670,5 @@ class SearcherPane(TraitsDockPane):
                                                      selected='object.analysis_table.selected',
                                                      dclicked='object.analysis_table.dclicked'))))
         return v
-
-# class AnalysisGroupsAdapter(TabularAdapter):
-#     columns = [('Set', 'name'),
-#                ('Date', 'create_date')]
-#
-#     font = 'Arial 10'
-
-#
-# class AnalysisGroupsPane(TraitsDockPane, BaseBrowserSampleView):
-#     name = 'Analysis Groups'
-#     id = 'pychron.browser.analysis_groups.pane'
-#
-#     def traits_view(self):
-#         tgrp = UItem('object.analysis_table.analyses',
-#                      height=400,
-#                      editor=myTabularEditor(adapter=self.model.analysis_table.tabular_adapter,
-#                                             operations=['move', 'delete'],
-#                                             column_clicked='object.analysis_table.column_clicked',
-#                                             refresh='object.analysis_table.refresh_needed',
-#                                             selected='object.analysis_table.selected',
-#                                             dclicked='object.analysis_table.dclicked'))
-#
-#         pgrp = HGroup(self._get_pi_group(), self._get_project_group())
-#         agrp = UItem('object.analysis_groups',
-#                      height=100, editor=myTabularEditor(adapter=AnalysisGroupsAdapter(),
-#                                                         multi_select=True,
-#                                                         selected='object.selected_analysis_groups'))
-#         v = View(VSplit(pgrp, agrp, tgrp))
-#         return v
 
 # ============= EOF =============================================

@@ -15,12 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, Tabbed
 from traits.api import on_trait_change, Button, Float, Str, Int, Bool, Event, HasTraits
-from traitsui.api import View, Item, VGroup, UItem, HGroup
+from traitsui.api import Item, VGroup, UItem, HGroup
 
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+from pychron.core.pychron_traits import PacketStr
 from pychron.entry.graphic_generator import GraphicModel, GraphicGeneratorController
 from pychron.entry.labnumber_entry import LabnumberEntry
 from pychron.entry.tasks.actions import SavePDFAction, DatabaseSaveAction, PreviewGenerateIdentifiersAction, \
@@ -32,6 +33,7 @@ from pychron.envisage.browser.record_views import SampleRecordView
 from pychron.envisage.tasks.base_task import BaseManagerTask
 from pychron.globals import globalv
 from pychron.pychron_constants import DVC_PROTOCOL
+from pychron.regex import PACKETREGEX
 
 ATTRS = (('sample', ''),
          ('material', ''),
@@ -68,18 +70,16 @@ class ClearSelectionView(HasTraits):
         return [(a, v) for a, v in ATTRS if getattr(self, a)]
 
     def traits_view(self):
-        v = View(VGroup(HGroup(UItem('select_all'),
-                               UItem('clear_all')),
-                        VGroup(Item('sample'),
-                               Item('material'),
-                               Item('project'),
-                               Item('principal_investigator'),
-                               Item('weight'),
-                               Item('j', label='J'),
-                               Item('j_err', label='J Err.'))),
-                 buttons=['OK', 'Cancel'],
-                 kind='livemodal',
-                 title='Clear Selection')
+        v = okcancel_view(VGroup(HGroup(UItem('select_all'),
+                                        UItem('clear_all')),
+                                 VGroup(Item('sample'),
+                                        Item('material'),
+                                        Item('project'),
+                                        Item('principal_investigator'),
+                                        Item('weight'),
+                                        Item('j', label='J'),
+                                        Item('j_err', label='J Err.'))),
+                          title='Clear Selection')
         return v
 
 
@@ -111,18 +111,28 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     note = Str
     weight = Float
     sample_search_str = Str
+    packet = PacketStr
 
+    set_packet_event = Event
+    use_increment_packet = Bool
     include_recent = False
     _suppress_load_labnumbers = True
 
-    def __init__(self, *args, **kw):
-        super(LabnumberEntryTask, self).__init__(*args, **kw)
-        self.db.create_session()
+    # def __init__(self, *args, **kw):
+    #     super(LabnumberEntryTask, self).__init__(*args, **kw)
+    #     self.db.create_session()
 
     def prepare_destroy(self):
         self.db.close_session()
 
+    def _opened_hook(self):
+        self.db.create_session()
+
+    def _closed_hook(self):
+        self.db.close_session()
+
     def activated(self):
+        self.debug('activated labnumber')
         if self.manager.verify_database_connection(inform=True):
             if self.db.connected:
                 self.manager.activated()
@@ -300,6 +310,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     def _manager_default(self):
         dvc = self.application.get_service(DVC_PROTOCOL)
         dvc.connect()
+        dvc.create_session()
         return LabnumberEntry(application=self.application, dvc=dvc)
 
     # def _importer_default(self):
@@ -346,6 +357,17 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     def save_to_db(self):
         self.manager.save()
 
+    # private
+    def _increment_packet(self):
+        m = PACKETREGEX.search(self.packet)
+        if m:
+            v = m.group('prefix')
+            if not v:
+                v = ''
+            a = m.group('number')
+            self.packet = '{}{:02n}'.format(v, int(a) + 1)
+
+    # handlers
     def _estimate_j_button_fired(self):
         self.manager.estimate_j()
 
@@ -359,6 +381,19 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
         if new:
             self.manager.set_selected_attr(new, name)
 
+    @on_trait_change('set_packet_event')
+    def _handle_packet(self):
+        if not self.manager.selected:
+            self.warning_dialog('Please select an Irradiation Position before trying to set the Packet')
+            return
+
+        for s in self.manager.selected:
+            s.packet = self.packet
+
+        self.manager.refresh_table = True
+        if self.use_increment_packet:
+            self._increment_packet()
+
     def _sample_search_str_changed(self, new):
         if len(new) >= 3:
             sams = self.db.get_samples(name_like=new)
@@ -367,9 +402,8 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     def _selected_samples_changed(self, new):
         if new:
             ni = new[0]
-            # self.manager.set_selected_attr(new.name, 'sample')
-            self.manager.set_selected_attrs((ni.name, ni.material, ni.project, ni.principal_investigator),
-                                            ('sample', 'material', 'project', 'principal_investigator'))
+            self.manager.set_selected_attrs((ni.name, ni.material, ni.grainsize, ni.project, ni.principal_investigator),
+                                            ('sample', 'material', 'grainsize', 'project', 'principal_investigator'))
 
     def _load_associated_samples(self, names=None):
         if names is None:
@@ -386,7 +420,6 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
         self.samples = sams
         self.osamples = sams
 
-    # handlers
     def _dclicked_fired(self):
         self.selected_samples = []
 
@@ -397,51 +430,6 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     def _update_irradiations(self):
         self.manager.updated = True
 
-    # def _generate_identifiers_button_fired(self):
-    #     self.generate_identifiers()
-    #
-    # def _preview_generate_identifiers_button_fired(self):
-    #     self.preview_generate_identifiers()
-
-    # # def _add_project_button_fired(self):
-    # #     dvc = self.manager.dvc
-    # #     pr = ProjectEntry(dvc=self.manager.dvc)
-    # #     pr.available = dvc.get_project_names()
-    # #     if pr.do():
-    # #         self.load_projects(include_recent=False)
-    # #
-    # # def _add_sample_button_fired(self):
-    # #     project = ''
-    # #     if self.selected_projects:
-    # #         project = self.selected_projects[0].name
-    # #
-    # #     mats = self.db.get_material_names()
-    # #     sam = SampleEntry(dvc=self.manager.dvc,
-    # #                       project=project,
-    # #                       projects=[p.name for p in self.projects],
-    # #                       materials=mats)
-    # #     if sam.do():
-    # #         self._load_associated_samples()
-    #
-    # def _add_material_button_fired(self):
-    #     dvc = self.manager.dvc
-    #     mat = MaterialEntry(dvc=dvc)
-    #     mat.available = dvc.get_material_names()
-    #     mat.do()
-    #     # self._load_materials()
-
-    # def _edit_project_button_fired(self):
-    #     pr = ProjectEntry(db=self.manager.db)
-    #     pr.edit_project(self.selected_projects)
-    #
-    # def _edit_sample_button_fired(self):
-    #     se = SampleEntry(db=self.manager.db)
-    #     sam = self.selected_samples
-    #
-    #     se.edit_sample(sam.name,
-    #                    self.selected_projects,
-    #                    sam.material)
-    #
     def _principal_investigator_changed(self, new):
         if new:
             self._load_projects_for_principal_investigators(pis=[new])

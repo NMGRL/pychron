@@ -14,13 +14,16 @@
 # limitations under the License.
 # ===============================================================================
 from __future__ import absolute_import
-from traits.api import List
+
 # ============= enthought library imports =======================
 import math
+
+from traits.api import List
 
 from pychron.canvas.canvas2D.scene.primitives.base import Connectable
 from pychron.canvas.canvas2D.scene.primitives.primitives import Bordered, Circle, Label
 from pychron.canvas.canvas2D.scene.primitives.rounded import RoundedRectangle, rounded_rect
+
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -28,6 +31,7 @@ from pychron.canvas.canvas2D.scene.primitives.rounded import RoundedRectangle, r
 
 class Switch(Connectable, Circle):
     associations = List
+
     def set_label(self, label, offset_x, offset_y, **kw):
         lb = Label(0, 0,
                    text=label,
@@ -43,7 +47,6 @@ class Switch(Connectable, Circle):
 
     def _render(self, gc):
         x, y = self.get_xy()
-        # print 'asaaaa', self.radius
         r = self.radius
         r = self.map_dimension(r)
 
@@ -52,25 +55,19 @@ class Switch(Connectable, Circle):
         else:
             gc.set_fill_color(self._convert_color(self.default_color))
 
-        # if self.fill_color:
         gc.arc(x + r, y + r / 2., r, 0, 360)
         gc.set_stroke_color((0, 0, 0))
         gc.set_line_width(2)
         gc.draw_path()
 
         for p in self.primitives:
-            # p._layout_needed=False
             p.x, p.y = self.x, self.y
-            # p._cached_xy = (x + r, y + r / 2.)
             p.render(gc)
-
-            # self._render_name(gc, x + self.name_offsetx, y + self.name_offsety, r / 4., r / 2.)
 
     def is_in(self, sx, sy):
 
         x, y = self.get_xy()
         r = self.map_dimension(self.radius)
-        # print ((x - sx) ** 2 + (y - sy) ** 2) ** 0.5, r
         return ((x + r - sx) ** 2 + (y + r / 2. - sy) ** 2) ** 0.5 < r
 
 
@@ -79,12 +76,6 @@ class BaseValve(Connectable):
     owned = False
     oactive_color = (0, 255, 0)
     description = ''
-
-    # def is_in(self, x, y):
-    #     mx, my = self.get_xy()
-    #     w, h = self.get_wh()
-    #     if mx <= x <= (mx + w) and my <= y <= (my + h):
-    #         return True
 
     def get_tooltip_text(self):
         state = 'Open' if self.state else 'Closed'
@@ -99,39 +90,56 @@ class ManualSwitch(BaseValve, RoundedRectangle):
     corner_radius = 4
     use_border_gaps = False
 
-    def _render(self, gc):
-        # self._rotate(gc, 45)
-        super(ManualSwitch, self)._render(gc)
-
     def _rotate(self, gc, angle):
         x, y = self.get_xy()
         w, h = self.get_wh()
-        xx=x+w/2
-        yy=y+h/2.
-        gc.translate_ctm(xx,yy)
+        xx = x + w / 2
+        yy = y + h / 2.
+        gc.translate_ctm(xx, yy)
         gc.rotate_ctm(math.radians(angle))
-        gc.translate_ctm(-xx,-yy)
+        gc.translate_ctm(-xx, -yy)
 
     def _render_textbox(self, gc, *args, **kw):
         with gc:
-            #self._rotate(gc, -45)
             gc.translate_ctm(0, 25)
             super(ManualSwitch, self)._render_textbox(gc, *args, **kw)
-    # def _render_name(self, gc, x, y, w, h):
-    #     # dont use this render_name
-    #     # this gets call with rotation
-    #     with gc:
-    #         self._rotate(gc, -45)
-    #         gc.translate_ctm(0, 25)
-    #         super(ManualSwitch, self)._render_name(gc,x,y,w,h)
 
 
-# class Valve(RoundedRectangle, BaseValve):
 class Valve(BaseValve, RoundedRectangle):
     width = 2
     height = 2
     corner_radius = 4
     use_border_gaps = False
+    not_connected_color = (100, 100, 100)
+
+    def __init__(self, *args, **kw):
+        super(Valve, self).__init__(*args, **kw)
+        self.state = None
+
+    def _get_border_color(self):
+        c = self.get_color()
+        c = [ci / 2. for ci in c]
+        if len(c) == 4:
+            c[3] = 1
+
+        return c
+
+    def set_stroke_color(self, gc):
+        gc.set_stroke_color(self.get_color())
+
+    def set_fill_color(self, gc):
+        gc.set_fill_color(self.get_color())
+
+    def get_color(self):
+        if self.state is None:
+            c = self._convert_color(self.not_connected_color)
+        else:
+            if self.state:
+                c = self._convert_color(self.active_color)
+            else:
+                c = self._convert_color(self.default_color)
+
+        return c
 
     def _render(self, gc):
         x, y = self.get_xy(clear_layout_needed=False)
@@ -176,19 +184,19 @@ class Valve(BaseValve, RoundedRectangle):
             with gc:
                 gc.translate_ctm(x, y)
 
-                #lower left
+                # lower left
                 gc.move_to(o, o)
                 gc.line_to(o + l, o + l)
 
-                #upper left
+                # upper left
                 gc.move_to(o, h - o)
                 gc.line_to(o + l, h - o - l)
 
-                #lower right
+                # lower right
                 gc.move_to(w - o, o)
                 gc.line_to(w - o - l, o + l)
 
-                #upper left
+                # upper left
                 gc.move_to(w - o, h - o)
                 gc.line_to(w - o - l, h - o - l)
                 gc.draw_path()
@@ -263,21 +271,20 @@ class RoughValve(BaseValve, Bordered):
                 l = 6
                 o = 2
 
-                #lower left
+                # lower left
                 gc.move_to(o + cr, o)
                 gc.line_to(o + cr + l, o + l - 3)
 
-                #lower right
+                # lower right
                 gc.move_to(w - o - cr, o)
                 gc.line_to(w - o - cr - l, o + l - 3)
 
-                #upper center
+                # upper center
                 w2 = w / 2. + 1
                 gc.move_to(w2, h)
                 gc.line_to(w2, h - l)
 
                 gc.draw_path()
-
 
 # class RoughValve2(BaseValve):
 #     def _render_(self, gc):

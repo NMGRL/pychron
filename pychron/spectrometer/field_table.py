@@ -17,23 +17,22 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
+
 import csv
 import hashlib
 import os
 import shutil
 
+import six
 from numpy import asarray, array, nonzero, polyval
 from scipy.optimize import leastsq, brentq
-from traits.api import HasTraits, List, Str, Dict, Bool, Property, Event
+from traits.api import HasTraits, List, Str, Dict, Bool, Property
 
 from pychron.core.helpers.filetools import add_extension, backup
 from pychron.loggable import Loggable
 from pychron.paths import paths
-from pychron.pychron_constants import NULL_STR
+from pychron.pychron_constants import NULL_STR, STARTUP_MESSAGE_POSITION
 from pychron.spectrometer import set_mftable_name, get_mftable_name
-import six
-from six.moves import map
-from six.moves import zip
 
 
 def get_detector_name(det):
@@ -94,7 +93,7 @@ class FieldTable(Loggable):
         self.molweights = molweights
         p = self.path
         if not os.path.isfile(p):
-            self.warning_dialog('No Magnet Field Table. Create {}'.format(p))
+            self.warning_dialog('No Magnet Field Table. Create {}'.format(p), position=STARTUP_MESSAGE_POSITION)
         else:
             self.load_table(load_items=True)
 
@@ -194,7 +193,7 @@ class FieldTable(Loggable):
             # need to calculate all ys
             # using simple linear offset
             # ys += delta
-            for k, (isoks, mws, dacs, _) in six.iteritems(d):
+            for k, (isoks, mws, dacs, _) in d.items():
                 if not update_others and k != det:
                     continue
 
@@ -306,7 +305,11 @@ class FieldTable(Loggable):
         if path is None:
             path = self.path
 
-        self.debug('Using mftable located at {}'.format(path))
+        if not os.path.isfile(path):
+            self.debug('Using mftable located at "{}" does not exist'.format(path))
+            return
+
+        self.debug('Using mftable located at "{}"'.format(path))
 
         mws = self.molweights
 
@@ -324,7 +327,8 @@ class FieldTable(Loggable):
             else:
                 mass_func = line0[0].strip()
                 detline = next(reader)
-            detectors = list(map(str.strip, detline[1:]))
+
+            detectors = [d.strip() for d in detline[1:]]
 
             if mass_func is None:
                 self.warning('Using default ')
@@ -431,8 +435,9 @@ class FieldTable(Loggable):
         return self._mftable_hash != current_hash
 
     def _make_hash(self, p):
-        with open(p, 'rb') as rfile:
-            return hashlib.md5(rfile.read())
+        if p and os.path.isfile(p):
+            with open(p, 'rb') as rfile:
+                return hashlib.md5(rfile.read())
 
     def _set_mftable_hash(self, p):
         self._mftable_hash = self._make_hash(p)

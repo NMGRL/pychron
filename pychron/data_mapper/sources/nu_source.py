@@ -13,19 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from __future__ import absolute_import
 import os
-from traits.api import File
-
 from datetime import datetime
+
 from numpy import array
+from traits.api import File
 
 from pychron.data_mapper.sources.file_source import FileSource, get_next, get_int
 from pychron.data_mapper.sources.nice_parser import NiceParser
 from pychron.processing.isotope import Isotope
 from pychron.processing.isotope_group import IsotopeGroup
-from six.moves import map
-from six.moves import range
 
 
 class NuFileSource(FileSource):
@@ -37,9 +34,17 @@ class NuFileSource(FileSource):
 
         ident = os.path.splitext(os.path.basename(self.path))[0]
         pspec.run_spec.uuid = ident
-        pspec.run_spec.runid = ident
 
-        rspec = pspec.run_spec
+        # labnumber = '100000'
+        # irradiation_level = 'A'
+        # irradiation_position = 1
+
+        aliquot = int(ident[-4:])
+        # pspec.run_spec.labnumber = labnumber
+        pspec.run_spec.aliquot = aliquot
+
+        # pspec.run_spec.irradiation_level = irradiation_level
+        # pspec.run_spec.irradiation_position = irradiation_position
 
         version = next(f)
         ncycles = next(f)
@@ -53,9 +58,16 @@ class NuFileSource(FileSource):
         pspec.timestamp = datetime.strptime(get_next(f, 1), '#%Y-%m-%d %H:%M:%S#')
 
         collector_gains = next(f)
+        print('casd', collector_gains)
+        # int_posts = [next(f) for i in range(41)]
+        # print(int_posts)
+        while 1:
+            i = next(f)
+            if i[0] == '"Number of peaks centred"':
+                npeakscentered = i[1]
+                break
 
-        int_posts = [next(f) for i in range(41)]
-        npeakscentered = next(f)
+        print('fff', npeakscentered)
         ndeflectors = next(f)[1]
         source_ht = next(f)
         half_plate_v = next(f)
@@ -85,7 +97,24 @@ class NuFileSource(FileSource):
         Filter_IC3 = next(f)
         Deflect_IC3 = next(f)
         mdfpath = next(f)
-        _ = next(f)
+        analysis_type_info = next(f)
+
+        # trim off quotes
+        ati = analysis_type_info[1:-1]
+        ati = ati.split(' ')
+
+        if ati[0] == 'Blank':
+            pspec.run_spec.labnumber = 'ba-01'
+            pspec.run_spec.irradiation = 'NoIrradiation'
+            pspec.run_spec.irradiation_level = 'A'
+            pspec.run_spec.irradiation_position = 1
+        elif ati[0] == 'Air':
+            a = int(ati[1])
+            pspec.run_spec.labnumber = 'a-{:02n}'.format(a)
+            pspec.run_spec.irradiation = 'NoIrradiation'
+            pspec.run_spec.irradiation_level = 'A'
+            pspec.run_spec.irradiation_position = a + 1
+
         ics = next(f)
         discs = next(f)
 
@@ -97,7 +126,7 @@ class NuFileSource(FileSource):
             _type = int(line[-1])
 
             if _type:
-                signals.append(list(map(float, line)))
+                signals.append([float(li) for li in line])
 
         signals = array(signals)
 

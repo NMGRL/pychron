@@ -17,15 +17,17 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
+
 import os
 
+import six
 from traits.api import HasTraits, Button, String, List, Any, Instance
 from traitsui.api import View, UItem, HGroup, VGroup, ListStrEditor, HSplit, \
     TabularEditor
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.helpers.filetools import list_directory2, add_extension
+from pychron.core.helpers.filetools import glob_list_directory, add_extension
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
 from pychron.experiment.automated_run.tabular_adapter import RunBlockAdapter
@@ -33,8 +35,6 @@ from pychron.experiment.automated_run.uv.spec import UVAutomatedRunSpec
 from pychron.experiment.queue.parser import RunParser, UVRunParser
 from pychron.loggable import Loggable
 from pychron.paths import paths
-from six.moves import map
-import six
 
 
 class RunBlock(Loggable):
@@ -59,8 +59,7 @@ class RunBlock(Loggable):
     def _runs_gen(self, line_gen):
         delim = '\t'
 
-        header = list(map(str.strip, next(line_gen).split(delim)))
-
+        header = [l.strip() for l in next(line_gen).split(delim)]
         pklass = RunParser
         if self.extract_device == 'Fusions UV':
             pklass = UVRunParser
@@ -125,7 +124,7 @@ class RunBlockEditView(HasTraits):
 
     def _load_blocks(self):
         p = paths.run_block_dir
-        blocks = list_directory2(p, '.txt', remove_extension=True)
+        blocks = glob_list_directory(p, '.txt', remove_extension=True)
         self.blocks = blocks
 
     def _delete_run_fired(self):

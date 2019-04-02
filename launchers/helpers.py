@@ -14,24 +14,22 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
+import logging
+import os
+import subprocess
+# ============= standard library imports ========================
+import sys
+import warnings
+
+import traits.has_traits
+from pyface.confirmation_dialog import confirm
+from pyface.message_dialog import warning
+from pyface.qt import QtGui, QtCore
 from traits.etsconfig.api import ETSConfig
+from traitsui.qt4.table_editor import TableDelegate
 from traitsui.qt4.ui_panel import heading_text
 
 from pychron.environment.util import set_application_home
-from pyface.confirmation_dialog import confirm
-from pyface.message_dialog import warning
-
-from traitsui.qt4.table_editor import TableDelegate
-from pyface.qt import QtGui, QtCore
-import traits.has_traits
-# ============= standard library imports ========================
-import sys
-import logging
-import subprocess
-import warnings
-import os
 
 # ============= local library imports  ==========================
 
@@ -152,15 +150,6 @@ class myPanel(BasePanel):
             bar = parent.tabBar()
             if not isinstance(bar, myQTabBar):
                 parent.setTabBar(myQTabBar())
-
-        # p = parent
-        # while p is not None:
-        #     try:
-        #         bar = p.tabBar()
-        #     except AttributeError:
-        #         bar = None
-        #     print p, bar
-        #     p = p.parent()
         # =========================================
 
         # Panels must be widgets as it is only the TraitsUI PyQt code that can
@@ -507,9 +496,8 @@ def initialize_version(appname, debug):
     # setup logging. set a basename for log files and logging level
     logging_setup('pychron', level='DEBUG')
 
-    from pychron.core.helpers.exception_helper import set_exception_handler, report_issues
+    from pychron.core.helpers.exception_helper import set_exception_handler
     set_exception_handler()
-    report_issues()
 
     return env
 

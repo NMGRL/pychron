@@ -20,8 +20,10 @@
 
 # ============= standard library imports ========================
 import os
-import time
 import subprocess
+import time
+
+
 # ============= local library imports  ==========================
 
 def write_stats(stats):

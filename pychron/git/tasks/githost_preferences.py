@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
 import requests
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Str, Password, Button, Color
@@ -42,12 +40,15 @@ class GitHostPreferences(BasePreferencesHelper):
         self._remote_status_color = 'red'
         self._remote_status = 'Invalid'
         try:
-            header = authorization(self.username, self.password, self._token)
+            kw = {'verify': globalv.cert_file}
 
-            resp = requests.get(self._url,
-                                headers=header,
-                                verify=globalv.cert_file)
+            if self._token:
+                header = authorization('', '', self._token)
+                kw['headers'] = header
+            else:
+                kw['auth'] = (self.username, self.password)
 
+            resp = requests.get(self._url, **kw)
             if resp.status_code == 200:
                 self._remote_status = 'Valid'
                 self._remote_status_color = 'green'
@@ -58,9 +59,7 @@ class GitHostPreferences(BasePreferencesHelper):
 class GitHubPreferences(GitHostPreferences):
     preferences_path = 'pychron.github'
 
-    @property
-    def _url(self):
-        return 'https://api.github.com/'
+    _url = 'https://api.github.com/user'
 
     @property
     def _token(self):
@@ -88,7 +87,7 @@ class GitHostPreferencesPane(PreferencesPane):
                           Item('password'),
                           show_border=True, label='Basic'),
                    VGroup(Item('oauth_token',
-                               resizable= True, label='Token'),
+                               resizable=True, label='Token'),
                           show_border=True, label='OAuth'),
                    HGroup(test_connection_item(),
                           CustomLabel('_remote_status',

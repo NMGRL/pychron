@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from configparser import ConfigParser, RawConfigParser
-import os
 # ============= standard library imports ========================
+import os
 # ============= local library imports  ==========================
+from configparser import ConfigParser, RawConfigParser
+
 from pychron.paths import paths
 
 

@@ -14,18 +14,16 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
-from traits.api import HasTraits, Property, List, String, Bool
 # ============= standard library imports ========================
 from numpy import poly1d, polyval
 from scipy import optimize
+# ============= enthought library imports =======================
+from traits.api import HasTraits, Property, List, String, Bool
+
 from pychron.core.helpers.formatting import floatfmt
-from six.moves import map
-from six.moves import zip
-
-
 # ============= local library imports  ==========================
+from pychron.core.helpers.strtools import csv_to_floats, to_csv_str
+
 
 class MeterCalibration(HasTraits):
     coeff_string = Property(String(enter_set=True, auto_set=False))
@@ -56,7 +54,7 @@ class MeterCalibration(HasTraits):
 
     def _parse_coeff_string(self, coeffs):
         try:
-            return list(map(float, coeffs.split(',')))
+            return csv_to_floats(coeffs)
         except:
             pass
 
@@ -74,7 +72,7 @@ class MeterCalibration(HasTraits):
         return c
 
     def dump_coeffs(self):
-        return ','.join(map(str, self.coefficients))
+        return to_csv_str(self.coefficients)
 
     def get_input(self, response):
         """

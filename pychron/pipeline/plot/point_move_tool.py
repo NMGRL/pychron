@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from chaco.tools.api import DragTool
 from enable.enable_traits import Pointer
 from traits.api import Enum, CArray
@@ -29,6 +30,8 @@ hand_pointer = Pointer('hand')
 class PointMoveTool(DragTool):
     event_state = Enum("normal", "dragging")
     _prev_pt = CArray
+    _start_pt = None
+
     constrain = Enum(None, 'x', 'y')
 
     def is_draggable(self, x, y):
@@ -81,26 +84,36 @@ class OverlayMoveTool(PointMoveTool):
     def is_draggable(self, x, y):
         return self.component.hittest((x, y))
 
-    def drag_end(self, event):
-        event.window.set_pointer('arrow')
+    # def drag_end(self, event):
+    #     event.window.set_pointer('arrow')
 
     def drag_start(self, event):
-        event.window.set_pointer('hand')
+        # event.window.set_pointer('hand')
         data_pt = self.component.get_current_point()
         # data_pt = self.component.map_data((event.x, event.y), all_values=True)
+        self._start_pt = event.x, event.y
         self._prev_pt = data_pt
+
         event.handled = True
 
     def dragging(self, event):
-        curp = self.component.get_current_point()
+        cpx, cpy = self.component.get_current_point()
         if self.constrain == 'x':
-            ax, ay = curp[0], event.y
+            ax, ay = cpx, event.y
         elif self.constrain == 'y':
-            ax, ay = event.x, curp[1]
+            ax, ay = event.x, cpy
         else:
             ax, ay = event.x, event.y
 
         self.component.altered_screen_point = ax, ay
+        try:
+            px, py = self._start_pt
+            dx, dy = px - event.x, py - event.y
+            self._start_pt = event.x, event.y
+            self.component.delta_screen_point = (dx, dy)
+        except ValueError:
+            pass
+
         self._prev_pt = (event.x, event.y)
         self.component.request_redraw()
         event.handled = True

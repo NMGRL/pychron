@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traits.api import HasTraits, Str, Float, Bool, Int, Property, CStr
 from traitsui.tabular_adapter import TabularAdapter
 
@@ -69,6 +70,7 @@ class IrradiatedPosition(BaseIrradiatedPosition):
     note = Str
     analyzed = Bool
     nanalyses = Int
+    packet = Str
 
 
 class BaseIrradiatedPositionAdapter(TabularAdapter):
@@ -89,6 +91,7 @@ class IrradiatedPositionAdapter(TabularAdapter):
     columns = [
         ('', 'analyzed'),
         ('Hole', 'hole'),
+        ('Packet', 'packet'),
         ('Identifier', 'identifier'),
         ('Sample', 'sample'),
         ('IGSN', 'igsn'),
@@ -105,6 +108,7 @@ class IrradiatedPositionAdapter(TabularAdapter):
     igsn_width = Int(70)
     identifier_width = Int(80)
     hole_width = Int(50)
+    packet_width = Int(100)
     sample_width = Int(100)
     project_width = Int(150)
     material_width = Int(100)

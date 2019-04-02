@@ -40,19 +40,21 @@ class LabspyClientPlugin(BaseTaskPlugin):
         return [e1, e2]
 
     def _add_run(self, ctx):
-        self.debug('add run')
-        if self.application.get_boolean_preference('pychron.labspy.experiment.enabled'):
-            client = self.application.get_service(LabspyClient)
-            client.add_run(ctx['run'], ctx['experiment_queue'])
+        enabled = self.application.get_boolean_preference('pychron.labspy.experiment.enabled')
+        self.debug('add run enabled={}'.format(enabled))
+        if enabled:
+            run = ctx['run']
+            if run.spec.state in ('success', 'truncated'):
+                self.info('adding run to labspy')
+                client = self.application.get_service(LabspyClient)
+                client.add_run(ctx['run'], ctx['experiment'])
 
     def _add_experiment(self, ctx):
-        self.debug('add experiment')
-        if self.application.get_boolean_preference('pychron.labspy.experiment.enabled'):
+        enabled = self.application.get_boolean_preference('pychron.labspy.experiment.enabled')
+        self.debug('add experiment enabled={}'.format(enabled))
+        if enabled:
             client = self.application.get_service(LabspyClient)
-            client.add_experiment(ctx['experiment_name'],
-                                  ctx['starttime'],
-                                  ctx['mass_spectrometer'],
-                                  ctx['username'])
+            client.add_experiment(ctx['experiment'])
 
     def _labspy_client_factory(self, *args, **kw):
         return LabspyClient(application=self.application)

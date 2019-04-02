@@ -16,12 +16,15 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from datetime import datetime
+
 from traits.api import HasTraits, Instance
 from traitsui.api import View, UItem
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from uncertainties import ufloat, nominal_value, std_dev
+
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.analyses.view.main_view import MainView
@@ -121,6 +124,7 @@ class XMLIsotope(XMLBaseValue):
 
 class XMLAnalysisRecord(object):
     selected_histories = None
+
     def __init__(self, elem, meas_elem):
         self.uuid = meas_elem.get('measurementNumber')
         self.labnumber = XMLLabnumber(elem)
@@ -206,7 +210,6 @@ class XMLAnalysis(Analysis):
         self.sensitivity = 0
 
         self.uage = self._make_ufloat(meas_elem, 'measuredAge')
-        self.uage_wo_j_err = self._make_ufloat(meas_elem, 'measuredAge')
 
         self.age = nominal_value(self.uage)
         self.age_err = std_dev(self.uage)
@@ -218,7 +221,7 @@ class XMLAnalysis(Analysis):
 
         self.age_err_wo_j = 0
         self.kcl = ufloat(0, 0)
-        self.rad40_percent = ufloat(meas_elem.get('fraction40ArRadiogenic'), 0)
+        self.radiogenic_yield = ufloat(meas_elem.get('fraction40ArRadiogenic'), 0)
 
         self.F_err_wo_irrad = 0
         # self.Ar40/Ar39_decay_corrected=0
@@ -227,6 +230,7 @@ class XMLAnalysis(Analysis):
         # self.Ar38/Ar39_decay_corrected=0
         # self.Ar37_decay_corrected/Ar39_decay_corrected=0
         # self.Ar36/Ar39_decay_corrected=0
+
     def calculate_age(self, force=False, **kw):
         pass
 
@@ -326,6 +330,3 @@ class XMLIrradiation(object):
         self.name = irrad.get('irradiationName')
 
 # ============= EOF =============================================
-
-
-

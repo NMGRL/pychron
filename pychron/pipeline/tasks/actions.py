@@ -15,7 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
+
+
 import os
 
 from pyface.confirmation_dialog import confirm
@@ -25,11 +26,6 @@ from pyface.tasks.action.task_action import TaskAction
 from traitsui.menu import Action
 
 from pychron.envisage.resources import icon
-
-
-class GitRollbackAction(TaskAction):
-    name = 'Git Undo'
-    method = 'git_rollback'
 
 
 class SavePipelineTemplateAction(TaskAction):
@@ -77,24 +73,24 @@ class SwitchToBrowserAction(TaskAction):
 
 
 class ConfigureRecallAction(TaskAction):
-    name = 'Configure Recall'
-    dname = 'Configure Recall'
+    name = 'Recall Configuration...'
+    dname = 'Recall Configuration...'
     method = 'configure_recall'
     image = icon('cog')
 
 
-class ConfigureAnalysesTableAction(TaskAction):
-    name = 'Configure Analyses Table'
-    dname = 'Configure Analyses Table'
-    method = 'configure_analyses_table'
-    image = icon('cog')
-
-
-class ConfigureSampleTableAction(TaskAction):
-    name = 'Configure Sample Table'
-    dname = 'Configure Sample Table'
-    method = 'configure_sample_table'
-    image = icon('cog')
+# class ConfigureAnalysesTableAction(TaskAction):
+#     name = 'Configure Analyses Table'
+#     dname = 'Configure Analyses Table'
+#     method = 'configure_analyses_table'
+#     image = icon('cog')
+#
+#
+# class ConfigureSampleTableAction(TaskAction):
+#     name = 'Configure Sample Table'
+#     dname = 'Configure Sample Table'
+#     method = 'configure_sample_table'
+#     image = icon('cog')
 
 
 class LoadReviewStatusAction(TaskAction):
@@ -148,8 +144,10 @@ class RecallAction(PipelineAction):
     name = 'Recall...'
     action = 'pipeline_recall'
 
-    # def perform(self, event):
-    #     self._get_task(event)
+
+class InterpretedAgeRecallAction(PipelineAction):
+    name = 'Interpreted Age Recall...'
+    action = 'pipeline_interpreted_age_recall'
 
 
 class TimeViewBrowserAction(BrowserAction):
@@ -242,6 +240,24 @@ class IdeogramAction(PlotAction):
     accelerator = 'Ctrl+i'
 
 
+class SubgroupIdeogramAction(PlotAction):
+    name = 'SubGroup Ideogram'
+    action = 'set_subgroup_ideogram_template'
+    image = icon('histogram')
+
+
+class HybridIdeogramAction(PlotAction):
+    name = 'Hybrid Ideogram'
+    action = 'set_hybrid_ideogram_template'
+    image = icon('histogram')
+
+
+class HistoryIdeogramAction(PlotAction):
+    name = 'History Ideogram'
+    action = 'set_history_ideogram_template'
+    image = icon('histogram')
+
+
 class SpectrumAction(PlotAction):
     name = 'Spectrum'
     action = 'set_spectrum_template'
@@ -286,30 +302,36 @@ class ExtractionAction(Action):
                     break
 
 
+class MassSpecReducedAction(PipelineAction):
+    name = 'Mass Spec Reduced Transfer'
+    dname = 'Mass Spec Reduced Transfer'
+    action = 'mass_spec_reduced_transfer'
+
+
 # ============= Quick Series ====================================
-class LastNAnalysesSeriesAction(PipelineAction):
-    name = 'Last N...'
-    action = 'set_last_n_analyses_template'
-
-
-class LastNHoursSeriesAction(PipelineAction):
-    name = 'Last N Hours...'
-    action = 'set_last_n_hours_template'
-
-
-class LastDaySeriesAction(PipelineAction):
-    name = 'Last Day'
-    action = 'set_last_day_template'
-
-
-class LastWeekSeriesAction(PipelineAction):
-    name = 'Last Week'
-    action = 'set_last_week_template'
-
-
-class LastMonthSeriesAction(PipelineAction):
-    name = 'Last Month'
-    action = 'set_last_month_template'
+# class LastNAnalysesSeriesAction(PipelineAction):
+#     name = 'Last N...'
+#     action = 'set_last_n_analyses_template'
+#
+#
+# class LastNHoursSeriesAction(PipelineAction):
+#     name = 'Last N Hours...'
+#     action = 'set_last_n_hours_template'
+#
+#
+# class LastDaySeriesAction(PipelineAction):
+#     name = 'Last Day'
+#     action = 'set_last_day_template'
+#
+#
+# class LastWeekSeriesAction(PipelineAction):
+#     name = 'Last Week'
+#     action = 'set_last_week_template'
+#
+#
+# class LastMonthSeriesAction(PipelineAction):
+#     name = 'Last Month'
+#     action = 'set_last_month_template'
 
 
 # ============= tag =============================================
@@ -349,4 +371,9 @@ class SaveFigureAction(TaskAction):
     name = 'Save Figure'
     method = 'save_figure'
 
+
+class SaveTableAction(TaskAction):
+    name = 'Save Table'
+    method = 'save_table'
+    image = icon('table_save')
 # ============= EOF =============================================

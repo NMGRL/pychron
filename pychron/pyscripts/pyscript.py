@@ -17,16 +17,17 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
+
 import hashlib
 import inspect
 import os
 import sys
 import time
 import traceback
-from six.moves.queue import Empty, LifoQueue
 from threading import Event, Thread, Lock
 
 import yaml
+from six.moves.queue import Empty, LifoQueue
 from traits.api import Str, Any, Bool, Property, Int, Dict
 
 from pychron.globals import globalv
@@ -85,7 +86,7 @@ def verbose_skip(func):
             if obj.testing_syntax or obj.is_canceled() or obj.is_truncated() or obj.is_aborted():
                 return 0
 
-            obj.debug('{} {} {}'.format(fname, args, kw))
+            obj.debug('func_name={} args={} kw={}'.format(fname, args, kw))
 
             return func(obj, *args, **kw)
 
@@ -466,6 +467,7 @@ class PyScript(Loggable):
             self._wait_control.stop()
         self._abort_hook()
 
+    @command_register
     def cancel(self, **kw):
         self._cancel = True
         if self._gosub_script is not None:
@@ -749,7 +751,12 @@ class PyScript(Loggable):
             self.debug('no application available. self.manager = {}'.format(self.manager))
         return app
 
-    def _manager_action(self, func, name=None, protocol=None, protocols=None, *args, **kw):
+    def _manager_action(self, func, *args, **kw):
+        result = self._manager_actions([func], *args, **kw)
+        if result:
+            return result[0]
+
+    def _manager_actions(self, func, name=None, protocol=None, protocols=None, *args, **kw):
         man = self.manager
 
         app = self._get_application()
@@ -775,12 +782,23 @@ class PyScript(Loggable):
         if man is not None:
             if not isinstance(func, list):
                 func = [(func, args, kw)]
+
             rs = []
-            for f, a, k in func:
+            for params in func:
+                if len(params) == 1:
+                    f, a, k = params[0], (), {}
+                elif len(params) == 2:
+                    f, a = params
+                    k = None
+                else:
+                    f, a, k = params
 
                 r = None
+                self.debug('man={}, func={}, hasattr={}'.format(man, f, hasattr(man, f)))
                 if hasattr(man, f):
                     r = getattr(man, f)(*a, **k)
+                    self.debug('result={}'.format(r))
+
                 rs.append(r)
             return rs
             # return [getattr(man, f)(*a, **k) for f, a, k in func]
@@ -838,7 +856,7 @@ class PyScript(Loggable):
                 # with self._block_lock:
                 wd = self._setup_wait_control()
 
-            msg = 'WaitControl setup for {:0.1f}  {}'.format(timeout, message)
+            msg = 'WaitControl setup for {:03n}  {}'.format(timeout, message)
 
             self.debug(msg)
             wd.start(duration=timeout, message=msg)

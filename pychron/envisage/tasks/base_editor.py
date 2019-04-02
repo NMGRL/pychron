@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from pyface.tasks.traits_editor import TraitsEditor
 from traits.api import Bool
 
@@ -46,19 +45,25 @@ def grouped_name(names, delimiter='-'):
     return s
 
 
-class BaseTraitsEditor(TraitsEditor, Loggable):
-    dirty = Bool(False)
-    _destroyed = False
+try:
+    class BaseTraitsEditor(TraitsEditor, Loggable):
+        dirty = Bool(False)
+        _destroyed = False
 
-    def prepare_destroy(self):
+        def __init__(self, *args, **kw):
+            super().__init__(*args, **kw)
+            self.init_logger()
+
+        def prepare_destroy(self):
+            pass
+
+        def destroy(self):
+            self._destroyed = True
+            self.prepare_destroy()
+            super().destroy()
+
+except TypeError:
+    # documentation auto doc hack
+    class BaseTraitsEditor:
         pass
-
-    def destroy(self):
-        self._destroyed = True
-        self.prepare_destroy()
-        super(BaseTraitsEditor, self).destroy()
-
-    def filter_invalid_analyses(self):
-        pass
-
 # ============= EOF =============================================

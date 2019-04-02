@@ -16,24 +16,11 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-import os
-from envisage.ui.tasks.task_extension import TaskExtension
-from pyface.tasks.action.schema import SMenu, SGroup
-from pyface.tasks.action.schema_addition import SchemaAddition
 
-from pychron.core.helpers.filetools import list_directory2
 from pychron.core.helpers.strtools import to_bool
-from pychron.envisage.tasks.list_actions import HopsAction, SpectrometerScriptAction
 from pychron.envisage.view_util import open_view
-from pychron.paths import paths
 from pychron.spectrometer.readout_view import ReadoutView
 from pychron.spectrometer.tasks.base_spectrometer_plugin import BaseSpectrometerPlugin
-from pychron.spectrometer.tasks.spectrometer_actions import PeakCenterAction, \
-    CoincidenceScanAction, SpectrometerParametersAction, MagnetFieldTableAction, MagnetFieldTableHistoryAction, \
-    ToggleSpectrometerTask, EditGainsAction, SendConfigAction, ViewReadoutAction, DefinePeakCenterAction, \
-    ReloadMFTableAction, PopulateMFTableAction
-from pychron.spectrometer.tasks.spectrometer_preferences import SpectrometerPreferencesPane
-from pychron.spectrometer.thermo.manager.argus import ArgusSpectrometerManager
 
 
 class ThermoSpectrometerPlugin(BaseSpectrometerPlugin):

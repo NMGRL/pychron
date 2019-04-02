@@ -16,22 +16,21 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import math
+import re
 
 from chaco.axis import PlotAxis
 from enable.component_editor import ComponentEditor
 from enable.label import Label
-from traits.api import HasTraits, Str
-from traitsui.api import View, UItem
-
 # ============= standard library imports ========================
 from numpy import array, float64
-# ============= local library imports  ==========================
+from traits.api import HasTraits
+from traitsui.api import View, UItem
 
+# ============= local library imports  ==========================
 # http://stackoverflow.com/questions/2358890/python-lexical-analysis-and-tokenization
 # http://effbot.org/zone/xml-scanner.htm
-
-import re
 
 xml = re.compile(r"""
     <([/?!]?\w+)     # 1. tags
@@ -135,20 +134,17 @@ class MPlotAxis(PlotAxis):
 
 class MLLabel(Label):
     _text_positions = None
-    mltext = Str
+    # mltext = Str
     _cached_text_width = None
 
-    def _text_changed(self, t):
+    def _text_changed(self):
         self._cached_text_width = None
-
-        self.mltext = t
-        self.trait_setq(text=clean(t))
         self._calculate_text_positions()
 
     def _calculate_text_positions(self):
         texts = []
         offset = 0
-        for ti in tokenize(self.mltext):
+        for ti in tokenize(self.text):
             if ti == 'sup':
                 offset = 1
             elif ti == 'sub':

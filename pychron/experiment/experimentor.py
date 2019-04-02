@@ -16,7 +16,6 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from itertools import groupby
 
 from traits.api import Instance, List, on_trait_change, Bool, Event
 
@@ -24,7 +23,6 @@ from pychron.dvc.dvc_irradiationable import DVCIrradiationable
 from pychron.experiment.experiment_executor import ExperimentExecutor
 from pychron.experiment.factory import ExperimentFactory
 from pychron.experiment.queue.experiment_queue import ExperimentQueue
-from pychron.experiment.stats import StatsGroup
 
 
 class Experimentor(DVCIrradiationable):
@@ -124,17 +122,6 @@ class Experimentor(DVCIrradiationable):
         for qi in queues:
             qi.refresh_table_needed = True
 
-    def _group_analyses(self, ans, exclude=None):
-        """
-            sort, group and filter by labnumber
-        """
-        if exclude is None:
-            exclude = tuple()
-        key = lambda x: x.labnumber
-
-        return ((ln, group) for ln, group in groupby(sorted(ans, key=key), key)
-                if ln not in exclude)
-
     def _set_analysis_metadata(self):
         cache = dict()
 
@@ -151,21 +138,13 @@ class Experimentor(DVCIrradiationable):
 
                 # is run in cache
                 if ln not in cache:
-                    info = db.get_analysis_info(ln)
+                    info = db.get_identifier_info(ln)
                     self.debug('Info for {}={}'.format(ln, info))
                     if not info:
                         cache[ln] = dict(identifier_error=True)
                     else:
-                        project, pi, sample, material, irrad, level, pos = info
-
-                        cache[ln] = dict(project=project or '',
-                                         principal_investigator=pi or '',
-                                         sample=sample or '',
-                                         material=material or '',
-                                         irradiation=irrad or '',
-                                         irradiation_level=level or '',
-                                         irradiation_position=pos or '',
-                                         identifier_error=False)
+                        info['identifier_error'] = False
+                        cache[ln] = info
 
                 ai.trait_set(**cache[ln])
 
@@ -235,6 +214,9 @@ class Experimentor(DVCIrradiationable):
         if eq:
             self.experiment_factory.queue = eq
             self.experiment_factory.sync_queue_meta()
+            self.experiment_factory.edit_enabled = True
+        else:
+            self.experiment_factory.edit_enabled = False
 
     @on_trait_change('executor:experiment_queue')
     def _activate_editor(self, eq):
@@ -331,7 +313,6 @@ class Experimentor(DVCIrradiationable):
 
         e = ExperimentFactory(application=self.application,
                               dvc=self.dvc,
-                              iso_db_man=self.iso_db_man,
                               default_mass_spectrometer=dms)
         return e
 

@@ -12,12 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ===============================================================================
+# =============================================== ================================
 
 # ========== standard library imports ==========
 import time
 # ========== local library imports =============
-from gp_actuator import GPActuator
+from pychron.hardware.actuators.gp_actuator import GPActuator
 from pychron.globals import globalv
 
 

@@ -16,11 +16,13 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from numpy import argmax, array
+from six.moves import range
 from traits.api import HasTraits, List, Array
 
 from pychron.core.stats.core import validate_mswd, calculate_mswd
-from six.moves import range
+from pychron.pychron_constants import MAHON
 
 
 def memoize(function):
@@ -61,7 +63,7 @@ class Plateau(HasTraits):
         """
             method: str either fleck 1977 or mahon 1996
         """
-        if method.lower() == 'mahon 1996':
+        if method.lower() == MAHON:
             self.use_mswd = True
             self.use_overlap = False
         else:

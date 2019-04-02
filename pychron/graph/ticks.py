@@ -15,18 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-import math
-
 from chaco.ticks import DefaultTickGenerator
-from numpy import hstack
+from numpy import array
 from numpy.core.umath import log10
 from traits.api import Int
 
-
 # ============= standard library imports ========================
-# from numpy import log10
 # ============= local library imports  ==========================
+from pychron.graph.graph import Graph
+
+
 class IntTickGenerator(DefaultTickGenerator):
     def get_ticks(self, data_low, data_high, bounds_low,
                   bounds_high, interval, use_endpoints=False,
@@ -57,23 +55,44 @@ class SparseTicks(DefaultTickGenerator):
 
 
 class SparseLogTicks(DefaultTickGenerator):
-    def get_ticks(self, *args, **kw):
-        oticks = super(SparseLogTicks, self).get_ticks(*args, **kw)
+    def get_ticks_and_labels(self, data_low, data_high, bounds_low, bounds_high):
+        ticks = self.get_ticks(data_low, data_high, bounds_low, bounds_high, 'auto')
+        labels = array(['{:n}'.format(t) for t in ticks])
 
-        # get only 0.1,1,10,100,1000...
-        ticks = oticks[oticks > 0]
-        ticks = ticks[log10(ticks) % 1 == 0]
+        # only label 0.1,1,10,100,1000...
+        try:
+            labels[log10(ticks) % 1 != 0] = ''
+        except ValueError:
+            pass
 
-        if ticks.shape[0] == 1:
-            tlow = 10 ** math.floor(math.log10(ticks[0]))
-            if tlow == ticks[0]:
-                tlow = 10 ** math.floor(math.log10(ticks[0]) - 1)
+        return ticks, labels
 
-            ticks = hstack(([tlow], ticks))
-            ticks = hstack((ticks, [10 ** math.ceil(math.log10(oticks[-1]))]))
+    def get_ticks(self, data_low, data_high, bounds_low,
+                  bounds_high, interval, use_endpoints=False,
+                  scale='log'):
+        i = 1
+        while 1:
+            if data_low < data_high:
+                break
+            data_low = min(10 ** -i, data_low)
+            i += 1
 
-            ticks[0] = max(oticks[0], ticks[0])
+        oticks = super(SparseLogTicks, self).get_ticks(data_low, data_high, bounds_low,
+                                                       bounds_high, interval, use_endpoints=use_endpoints,
+                                                       scale=scale)
+        ticks = oticks[oticks > data_low]
 
         return ticks
 
+
+if __name__ == '__main__':
+    g = Graph()
+    pp = g.new_plot()
+    g.new_series([1, 2, 3, 4, 5, 6, 7], [-1, 1, 10, 20, 30, 80, 105])
+
+    pp.value_scale = 'log'
+    pp.value_axis.tick_generator = SparseLogTicks()
+    g.configure_traits(
+
+    )
 # ============= EOF =============================================

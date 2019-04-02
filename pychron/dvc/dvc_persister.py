@@ -14,25 +14,27 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from traits.api import Instance, Bool, Str
-
-import base64
 import hashlib
 import os
 import shutil
-import struct
 from datetime import datetime
-from git.exc import GitCommandError
-from uncertainties import std_dev, nominal_value
 
-from pychron.dvc import dvc_dump, analysis_path
+import yaml
+from apptools.preferences.preference_binding import bind_preference
+from git.exc import GitCommandError
+# ============= enthought library imports =======================
+from traits.api import Instance, Bool, Str
+from uncertainties import std_dev, nominal_value
+from yaml import YAMLError
+
+from pychron.core.helpers.binpack import encode_blob, pack
+from pychron.dvc import dvc_dump, analysis_path, repository_path, NPATH_MODIFIERS
 from pychron.experiment.automated_run.persistence import BasePersister
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths
-from pychron.processing.analyses.analysis import EXTRACTION_ATTRS, META_ATTRS
-from pychron.pychron_constants import DVC_PROTOCOL, LINE_STR, NULL_STR
-from pychron.core.helpers.binpack import encode_blob, pack
+from pychron.pychron_constants import DVC_PROTOCOL, LINE_STR, NULL_STR, ARGON_KEYS, ARAR_MAPPING, EXTRACTION_ATTRS, \
+    META_ATTRS
+
 
 def format_repository_identifier(project):
     return project.replace('/', '_').replace('\\', '_')
@@ -52,15 +54,21 @@ class DVCPersister(BasePersister):
     active_repository = Instance(GitRepoManager)
     dvc = Instance(DVC_PROTOCOL)
     use_isotope_classifier = Bool(False)
+    use_uuid_path_name = Bool(False)
     # isotope_classifier = Instance(IsotopeClassifier, ())
     stage_files = Bool(True)
     default_principal_investigator = Str
     _positions = None
 
-    macrochron_enabled = Bool(True)
     save_log_enabled = Bool(False)
+    arar_mapping = None
 
-    def per_spec_save(self, pr, repository_identifier=None, commit=False, commit_tag=None):
+    def __init__(self, *args, **kw):
+        super(DVCPersister, self).__init__(*args, **kw)
+        bind_preference(self, 'use_uuid_path_name', 'pychron.experiment.use_uuid_path_name')
+        self._load_arar_mapping()
+
+    def per_spec_save(self, pr, repository_identifier=None, commit=False, commit_tag=None, push=True):
         self.per_spec = pr
 
         if repository_identifier:
@@ -69,7 +77,13 @@ class DVCPersister(BasePersister):
         self.pre_extraction_save()
         self.pre_measurement_save()
         self.post_extraction_save()
-        self.post_measurement_save(commit=commit, commit_tag=commit_tag)
+        self.post_measurement_save(commit=commit, commit_tag=commit_tag, push=push)
+
+    def push(self):
+        # push changes
+        self.dvc.push_repository(self.active_repository)
+        # push commit
+        self.dvc.meta_push()
 
     def initialize(self, repository, pull=True):
         """
@@ -87,7 +101,7 @@ class DVCPersister(BasePersister):
         repository = format_repository_identifier(repository)
         self.active_repository = repo = GitRepoManager()
 
-        root = os.path.join(paths.repository_dataset_dir, repository)
+        root = repository_path(repository)
         repo.open_repo(root)
 
         remote = 'origin'
@@ -104,23 +118,24 @@ class DVCPersister(BasePersister):
         rblob = per_spec.response_blob  # time vs measured response
         oblob = per_spec.output_blob  # time vs %output
         sblob = per_spec.setpoint_blob  # time vs requested
+        gp = per_spec.grain_polygons
 
-        if rblob:
-            # rblob = base64.b64encode(rblob.encode('utf-8')).decode('utf-8')
+        if rblob is not None:
             rblob = encode_blob(rblob)
-        if oblob:
-            # oblob = base64.b64encode(oblob.encode('utf-8')).decode('utf-8')
+        if oblob is not None:
             oblob = encode_blob(oblob)
-        if sblob:
-            # sblob = base64.b64encode(sblob.encode('utf-8')).decode('utf-8')
+        if sblob is not None:
             sblob = encode_blob(sblob)
 
-        obj = {'measured_response': rblob,  # time vs
+        if gp:
+            gp = [encode_blob(g) for g in gp]
+
+        obj = {'measured_response': rblob,
                'requested_output': oblob,
                'setpoint_stream': sblob,
                'snapshots': per_spec.snapshots,
                'videos': per_spec.videos,
-               'grain_polygon_blob': per_spec.grain_polygon_blob}
+               'grain_polygons': gp}
 
         pid = per_spec.pid
         if pid:
@@ -130,29 +145,32 @@ class DVCPersister(BasePersister):
             v = getattr(per_spec.run_spec, e)
             obj[e] = v
 
-        ps = []
-        for i, pp in enumerate(per_spec.positions):
-            pos, x, y, z = None, None, None, None
-            if isinstance(pp, tuple):
-                if len(pp) == 2:
-                    x, y = pp
-                elif len(pp) == 3:
-                    x, y, z = pp
-            else:
-                pos = pp
-                try:
-                    ep = per_spec.extraction_positions[i]
-                    x = ep[0]
-                    y = ep[1]
-                    if len(ep) == 3:
-                        z = ep[2]
-                except IndexError:
-                    self.debug('no extraction position for {}'.format(pp))
-            pd = {'x': x, 'y': y, 'z': z, 'position': pos, 'is_degas': per_spec.run_spec.identifier == 'dg'}
-            ps.append(pd)
+        if not per_spec.positions:
+            ps = [dict()]
+        else:
+            ps = []
+            for i, pp in enumerate(per_spec.positions):
+                pos, x, y, z = None, None, None, None
+                if isinstance(pp, tuple):
+                    if len(pp) == 2:
+                        x, y = pp
+                    elif len(pp) == 3:
+                        x, y, z = pp
+                else:
+                    pos = pp
+                    try:
+                        ep = per_spec.extraction_positions[i]
+                        x = ep[0]
+                        y = ep[1]
+                        if len(ep) == 3:
+                            z = ep[2]
+                    except IndexError:
+                        self.debug('no extraction position for {}'.format(pp))
+                pd = {'x': x, 'y': y, 'z': z, 'position': pos, 'is_degas': per_spec.run_spec.identifier == 'dg'}
+                ps.append(pd)
+                obj['positions'] = ps
 
         self._positions = ps
-        obj['positions'] = ps
 
         hexsha = self.dvc.get_meta_head()
         obj['commit'] = str(hexsha)
@@ -164,7 +182,7 @@ class DVCPersister(BasePersister):
     def pre_measurement_save(self):
         pass
 
-    def post_measurement_save(self, commit=True, commit_tag='COLLECTION'):
+    def post_measurement_save(self, commit=True, commit_tag='COLLECTION', push=True):
         """
         save
             - analysis.json
@@ -216,8 +234,7 @@ class DVCPersister(BasePersister):
                 try:
                     ar.smart_pull(accept_their=True)
 
-                    pms = (None, '.data', 'tags', 'peakcenter', 'extraction', 'monitor')
-                    paths = [spec_path, ] + [self._make_path(modifier=m) for m in pms]
+                    paths = [spec_path, ] + [self._make_path(modifier=m) for m in NPATH_MODIFIERS]
 
                     for p in paths:
                         if os.path.isfile(p):
@@ -250,17 +267,18 @@ class DVCPersister(BasePersister):
                         if os.path.isfile(p):
                             ar.add(p, commit=False)
                             ar.commit('<{}> {}'.format(tag, msg))
-
-                    # push changes
-                    dvc.push_repository(ar)
+                    if push:
+                        # push changes
+                        dvc.push_repository(ar)
 
                     # update meta
                     dvc.meta_pull(accept_our=True)
 
                     dvc.meta_commit('repo updated for analysis {}'.format(self.per_spec.run_spec.runid))
 
-                    # push commit
-                    dvc.meta_push()
+                    if push:
+                        # push commit
+                        dvc.meta_push()
                 except GitCommandError as e:
                     self.warning(e)
                     if self.confirmation_dialog('NON FATAL\n\n'
@@ -288,6 +306,38 @@ class DVCPersister(BasePersister):
             self.dvc.push_repository(ar)
 
     # private
+    def _load_arar_mapping(self):
+        """
+        Isotope: IsotopeKey
+
+        example arar_mapping.yaml
+
+        {
+            Ar40: 'Ar40',
+            Ar39: 'Ar39',
+            Ar38: 'Ar38',
+            Ar37: 'Ar37',
+            Ar36: 'Ar36L1'
+        }
+
+        :return:
+        """
+        p = os.path.join(paths.setup_dir, 'arar_mapping.yaml')
+        if os.path.isfile(p):
+            self.debug('loading arar mapping from {}'.format(p))
+            with open(p, 'r') as rfile:
+                try:
+                    obj = yaml.load(rfile)
+                except YAMLError:
+                    pass
+
+                for k in ARGON_KEYS:
+                    if k not in obj:
+                        self.warning('Invalid arar_mapping.yaml file. required keys={}'.format(ARGON_KEYS))
+                        return
+
+                self.arar_mapping = obj
+
     def _check_repository_identifier(self):
         repo_id = self.per_spec.run_spec.repository_identifier
         db = self.dvc.db
@@ -300,12 +350,15 @@ class DVCPersister(BasePersister):
                 db.add_repository('NoRepo', self.default_principal_investigator)
 
     def _save_analysis_db(self, timestamp):
-        rs = self.per_spec.run_spec
-        d = {k: getattr(rs, k) for k in ('uuid', 'analysis_type', 'aliquot',
-                                         'increment', 'mass_spectrometer', 'weight', 'comment',
-                                         'cleanup', 'duration', 'extract_value', 'extract_units')}
 
-        ed = self.per_spec.run_spec.extract_device
+        ps = self.per_spec
+        rs = ps.run_spec
+        d = {k: getattr(rs, k) for k in ('uuid', 'analysis_type', 'aliquot',
+                                         'increment', 'mass_spectrometer', 'weight',
+                                         'cleanup', 'duration', 'extract_value', 'extract_units')}
+        d['comment'] = rs.comment[:200] if rs.comment else ''
+
+        ed = rs.extract_device
         if ed in (None, '', NULL_STR, LINE_STR, 'Extract Device'):
             d['extract_device'] = 'No Extract Device'
         else:
@@ -314,43 +367,48 @@ class DVCPersister(BasePersister):
         d['timestamp'] = timestamp
 
         # save script names
-        d['measurementName'] = self.per_spec.measurement_name
-        d['extractionName'] = self.per_spec.extraction_name
+        d['measurementName'] = ps.measurement_name
+        d['extractionName'] = ps.extraction_name
+
+        d['experiment_type'] = self.per_spec.experiment_type
 
         db = self.dvc.db
         an = db.add_analysis(**d)
 
         # save results
-        for iso in self.per_spec.isotope_group.isotopes.values():
+        for iso in ps.isotope_group.isotopes.values():
             db.add_analysis_result(an, iso)
 
         # save media
-        if self.per_spec.snapshots:
-            for p in self.per_spec.snapshots:
+        if ps.snapshots:
+            for p in ps.snapshots:
                 db.add_media(p, an)
 
-        if self.per_spec.videos:
-            for p in self.per_spec.videos:
+        if ps.videos:
+            for p in ps.videos:
                 db.add_media(p, an)
 
         if self._positions:
-            db = self.dvc.db
-            load_name = self.per_spec.load_name
-            load_holder = self.per_spec.load_holder
+            if rs.load_name and rs.load_name != NULL_STR:
+                load_name = rs.load_name
+                load_holder = rs.load_holder
 
-            db.add_load(load_name, load_holder)
-            db.flush()
-            db.commit()
+                db.add_load(load_name, load_holder, rs.username)
+                db.flush()
+                db.commit()
 
-            for position in self._positions:
-                dbpos = db.add_measured_position(load=load_name, **position)
-                an.measured_positions.append(dbpos)
+                for position in self._positions:
+                    self.debug('adding measured position {}'.format(position))
+                    dbpos = db.add_measured_position(load=load_name, **position)
+                    if dbpos:
+                        an.measured_positions.append(dbpos)
+                    else:
+                        self.warning('failed adding position {}, load={}'.format(position, load_name))
 
-                # an.measured_position = pos
         # all associations are handled by the ExperimentExecutor._retroactive_experiment_identifiers
         # *** _retroactive_experiment_identifiers is currently disabled ***
 
-        if self.per_spec.use_repository_association:
+        if ps.use_repository_association:
             db.add_repository_association(rs.repository_identifier, an)
 
         self.debug('get identifier "{}"'.format(rs.identifier))
@@ -358,7 +416,7 @@ class DVCPersister(BasePersister):
         self.debug('setting analysis irradiation position={}'.format(pos))
         an.irradiation_position = pos
 
-        t = self.per_spec.tag
+        t = ps.tag
 
         db.flush()
 
@@ -384,16 +442,12 @@ class DVCPersister(BasePersister):
 
         source = {'emission': per_spec.emission,
                   'trap': per_spec.trap}
-        keys = []
 
         clf = None
         if self.use_isotope_classifier:
             clf = self.application.get_service('pychron.classifier.isotope_classifier.IsotopeClassifier')
 
-        for iso in per_spec.isotope_group.values():
-
-            # sblob = base64.b64encode(iso.pack(endianness, as_hex=False))
-            # snblob = base64.b64encode(iso.sniff.pack(endianness, as_hex=False))
+        for key, iso in per_spec.isotope_group.items():
             sblob = encode_blob(iso.pack(endianness, as_hex=False))
             snblob = encode_blob(iso.sniff.pack(endianness, as_hex=False))
 
@@ -401,31 +455,19 @@ class DVCPersister(BasePersister):
                 d = {'isotope': iso.name, 'detector': iso.detector, 'blob': blob}
                 ss.append(d)
 
-            isod = {'detector': iso.detector, 'name': iso.name}
+            detector = next((d for d in per_spec.active_detectors if d.name == iso.detector), None)
+
+            isod = {'detector': iso.detector, 'name': iso.name,
+                    'serial_id': detector.serial_id if detector else '00000'}
 
             if clf is not None:
                 klass, prob = clf.predict_isotope(iso)
                 isod.update(classification=klass,
                             classification_probability=prob)
-            key = iso.name
-            if key in keys:
-                if key in isos:
-                    nd = isos.pop(key)
-                    nkey = '{}{}'.format(nd['name'], nd['detector'])
-                    isos[nkey] = nd
-
-                    nd = intercepts.pop(key)
-                    intercepts[nkey] = nd
-
-                    nd = blanks.pop(key)
-                    blanks[nkey] = nd
-
-                key = '{}{}'.format(key, iso.detector)
 
             isos[key] = isod
 
             if iso.detector not in dets:
-                # bblob = base64.b64encode(iso.baseline.pack(endianness, as_hex=False))
                 bblob = encode_blob(iso.baseline.pack(endianness, as_hex=False))
                 baselines.append({'detector': iso.detector, 'blob': bblob})
                 dets[iso.detector] = {'deflection': per_spec.defl_dict.get(iso.detector),
@@ -454,19 +496,17 @@ class DVCPersister(BasePersister):
                            'value': float(iso.blank.value),
                            'error': float(iso.blank.error)}
 
-            keys.append(iso.name)
-
         obj = self._make_analysis_dict()
 
-        # from pychron.version import __version__ as pversion
-        # from pychron.experiment import __version__ as eversion
-        # from pychron.dvc import __version__ as dversion
+        from pychron.version import __version__ as pversion
+        from pychron.experiment import __version__ as eversion
+        from pychron.dvc import __version__ as dversion
 
         obj['timestamp'] = timestamp.isoformat()
 
-        # obj['collection_version'] = '{}:{}'.format(eversion, dversion)
-        # obj['acquisition_software'] = 'pychron version={}'.format(pversion)
-        # obj['data_reduction_software'] = 'pychron version={}'.format(pversion)
+        obj['collection_version'] = '{}:{}'.format(eversion, dversion)
+        obj['acquisition_software'] = 'pychron {}'.format(pversion)
+        obj['data_reduction_software'] = 'pychron {}'.format(pversion)
 
         obj['environmental'] = {'lab_temperatures': per_spec.lab_temperatures,
                                 'lab_humiditys': per_spec.lab_humiditys,
@@ -495,13 +535,19 @@ class DVCPersister(BasePersister):
             self.dvc.meta_repo.update_script(ms, name, blob)
             obj[si] = name
 
+        # save keys for the arar isotopes
+        akeys = self.arar_mapping
+        if akeys is None:
+            akeys = ARAR_MAPPING
+
+        obj['arar_mapping'] = akeys
+
         # save experiment
         self.debug('---------------- Experiment Queue saving disabled')
         # self.dvc.update_experiment_queue(ms, self.per_spec.experiment_queue_name,
         #                                  self.per_spec.experiment_queue_blob)
 
-        if self.macrochron_enabled:
-            self._save_macrochron(obj)
+        self._save_macrochron(obj)
 
         hexsha = str(self.dvc.get_meta_head())
         obj['commit'] = hexsha
@@ -539,7 +585,7 @@ class DVCPersister(BasePersister):
             p = self._make_path(modifier='monitor')
             checks = []
             for ci in self.per_spec.monitor.checks:
-                data = b''.join([struct.pack('>ff', x, y) for x, y in ci.data])
+                data = encode_blob(pack('>ff', ci.data))
                 params = dict(name=ci.name,
                               parameter=ci.parameter, criterion=ci.criterion,
                               comparator=ci.comparator, tripped=ci.tripped,
@@ -565,12 +611,12 @@ class DVCPersister(BasePersister):
             fmt = '>ff'
             obj = {'reference_detector': pc.reference_detector.name,
                    'reference_isotope': pc.reference_isotope,
-                   'fmt': fmt}
+                   'fmt': fmt,
+                   'interpolation': pc.interpolation_kind if pc.use_interpolation else ''}
 
             results = pc.get_results()
             if results:
                 for result in results:
-
                     points = encode_blob(pack(fmt, result.points))
 
                     obj[result.detector] = {'low_dac': result.low_dac,
@@ -579,14 +625,24 @@ class DVCPersister(BasePersister):
                                             'low_signal': result.low_signal,
                                             'center_signal': result.center_signal,
                                             'high_signal': result.high_signal,
+                                            'resolution': result.resolution,
+                                            'low_resolving_power': result.low_resolving_power,
+                                            'high_resolving_power': result.high_resolving_power,
                                             'points': points}
 
             dvc_dump(obj, p)
 
     def _make_path(self, modifier=None, extension='.json'):
         runid = self.per_spec.run_spec.runid
+        uuid = self.per_spec.run_spec.uuid
         repository_identifier = self.per_spec.run_spec.repository_identifier
-        return analysis_path(runid, repository_identifier, modifier, extension, mode='w')
+
+        if self.use_uuid_path_name:
+            name = uuid, runid
+        else:
+            name = runid, runid
+
+        return analysis_path(name, repository_identifier, modifier, extension, mode='w')
 
     def _make_analysis_dict(self, keys=None):
         if keys is None:

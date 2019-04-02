@@ -15,17 +15,23 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str, Bool, Float, Property, List, Color, Enum
+from enable.markers import MarkerTrait
+from traits.api import Str, Bool, Float, Property, Enum, Range, Int
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.options.group.inverse_isochron_group_options import InverseIsochronGroupOptions
-from pychron.options.views.isochron_views import INVERSE_ISOCHRON_VIEWS, ISOCHRON_VIEWS
 from pychron.options.options import AgeOptions
-from pychron.pychron_constants import FIT_ERROR_TYPES, ELLIPSE_KINDS, FONTS, SIZES
+from pychron.options.views.isochron_views import INVERSE_ISOCHRON_VIEWS, ISOCHRON_VIEWS
+from pychron.pychron_constants import FIT_ERROR_TYPES, ELLIPSE_KINDS, FONTS, SIZES, MAIN, APPEARANCE, GROUPS
 
 
 class IsochronOptions(AgeOptions):
-    subview_names = List(['Main', 'Appearance', 'Groups'])
+    age_sig_figs = Int(2)
+    yintercept_sig_figs = Int(2)
+
+    def initialize(self):
+        self.subview_names = [MAIN, APPEARANCE, GROUPS]
 
     def get_subview(self, name):
         name = name.lower()
@@ -52,7 +58,6 @@ class InverseIsochronOptions(IsochronOptions):
     nominal_intercept_value = Float(295.5)
 
     inset_marker_size = Float(1.0)
-    inset_marker_color = Color('black')
     regressor_kind = Enum('Reed', 'NewYork')
     group_options_klass = InverseIsochronGroupOptions
 
@@ -64,6 +69,15 @@ class InverseIsochronOptions(IsochronOptions):
     info_fontname = Enum(*FONTS)
     info_fontsize = Enum(*SIZES)
 
+    results_info_spacing = Range(2, 20)
+
+    include_4036_mse = Bool
+    include_age_mse = Bool
+    include_error_envelope = Bool(True)
+
+    marker_size = Float(2)
+    marker = MarkerTrait()
+
     def _get_results_font(self):
         return '{} {}'.format(self.results_fontname, self.results_fontsize)
 
@@ -73,7 +87,7 @@ class InverseIsochronOptions(IsochronOptions):
     @property
     def inominal_intercept_value(self):
         try:
-            return 1/self.nominal_intercept_value
+            return 1 / self.nominal_intercept_value
         except ZeroDivisionError:
             return 0
 

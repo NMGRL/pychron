@@ -15,18 +15,19 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 import datetime
 import re
+from operator import attrgetter
 
-from traits.api import HasTraits, Str, Property, List, Enum, Button, Bool, on_trait_change
+from traits.api import HasTraits, Str, Property, List, Enum, Button, Bool, Float, Range
 from traitsui.api import View, UItem, HGroup, EnumEditor, InstanceEditor, Item, VGroup
 from traitsui.editors import ListEditor
 from uncertainties import std_dev, nominal_value
 
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+from pychron.core.stats import calculate_mswd, validate_mswd
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.pipeline.nodes.base import BaseNode
-from six.moves import filter
 
 COMP_RE = re.compile(r'<=|>=|>|<|==|between|not between')
 
@@ -100,7 +101,8 @@ class PipelineFilter(HasTraits):
 
             try:
                 result = eval(test, edict)
-            except (AttributeError, ValueError):
+            except (AttributeError, ValueError, TypeError) as e:
+                print('filter evaluation failed e={} test={}, dict={}'.format(e, test, edict))
                 result = False
 
             return result
@@ -109,10 +111,16 @@ class PipelineFilter(HasTraits):
 
     def evaluate(self, item):
         attr = self.attribute
-        val = self._get_value(item, attr)
-        attr = attr.replace(' ', '_')
-        edict = {attr: val}
-        return self._eval_func(edict)
+        comp = self.comparator
+        crit = self.criterion
+        ret = True
+        if attr and comp and crit:
+            val = self._get_value(item, attr)
+            attr = attr.replace(' ', '_')
+            edict = {attr: val}
+            ret = self._eval_func(edict)
+
+        return ret
 
     def _convert_date(self, d):
         for s in ('%B', '%b', '%m',
@@ -140,7 +148,7 @@ class PipelineFilter(HasTraits):
         return val
 
     def traits_view(self):
-        v = View(HGroup(icon_button_editor('remove_button', 'remove'),
+        v = View(HGroup(icon_button_editor('remove_button', 'delete'),
                         UItem('chain_operator', visible_when='show_chain'),
                         UItem('attribute',
                               editor=EnumEditor(name='attributes')),
@@ -184,18 +192,21 @@ class FilterNode(BaseNode):
             fi.show_chain = i != 0
 
     def traits_view(self):
-        v = View(VGroup(icon_button_editor('add_filter_button', 'add'),
-                        UItem('filters', editor=ListEditor(mutable=False,
-                                                           style='custom',
-                                                           editor=InstanceEditor())),
-                        Item('remove', label='Remove Analyses',
-                             tooltip='Remove Analyses from the list if checked  otherwise '
-                                     'set temporary tag to "omit"'),
+        v = okcancel_view(VGroup(VGroup(icon_button_editor('add_filter_button', 'add'),
+                               UItem('filters', editor=ListEditor(mutable=False,
+                                                                  style='custom',
+                                                                  editor=InstanceEditor())),
+                               show_border=True,
+                               label='Filters'),
+                        VGroup(Item('remove', label='Remove Analyses',
+                                    tooltip='Remove Analyses from the list if checked  otherwise '
+                                            'set temporary tag to "omit"'),
+                               show_border=True),
                         VGroup(UItem('help_str', style='readonly'), label='Help', show_border=True)),
+                 height=400,
+                 width=600,
                  kind='livemodal',
-                 title='Edit Filter',
-                 resizable=True,
-                 buttons=['OK', 'Cancel'])
+                 title='Edit Filter')
         return v
 
     def _generate_filter(self):
@@ -227,14 +238,15 @@ class FilterNode(BaseNode):
                     flag = flag or b
             return flag
 
+        ans = getattr(state, self.analysis_kind)
         if self.remove:
-            vs = list(filter(filterfunc, getattr(state, self.analysis_kind)))
+            # vs = list(filter(filterfunc, getattr(state, self.analysis_kind)))
+            vs = [a for a in ans if filterfunc(a)]
             setattr(state, self.analysis_kind, vs)
         else:
-            ans = getattr(state, self.analysis_kind)
             for a in ans:
                 if not filterfunc(a):
-                    a.tag = 'omit'
+                    a.temp_status = 'omit'
 
     def add_filter(self, attr, comp, crit):
         self.filters.append(PipelineFilter(attribute=attr, comparator=comp, criterion=crit))
@@ -247,7 +259,64 @@ class FilterNode(BaseNode):
         d['filters'] = vs
 
 
+class MSWDFilterNode(BaseNode):
+    name = 'MSWD Filter'
+    kind = Enum('Mahon', 'Threshold', 'Plateau')
+    mswd_threshold = Float
+    plateau_threshold = Range(0.0, 5.0)
+    attr = Enum('Age', 'KCa')
+    _prev_mswd = 0
+
+    def traits_view(self):
+        v = okcancel_view(VGroup(HGroup(UItem('kind'), UItem('attr')),
+                          VGroup(Item('mswd_threshold', label='Threshold', visible_when='kind=="Threshold"'),
+                                 Item('plateau_threshold', label='% Threshold', visible_when='kind=="Plateau"'))),
+                          title='Configure MSWD Filter',
+                          width=300,
+                          height=100,
+                          resizable=True)
+        return v
+
+    def run(self, state):
+        unks = state.unknowns
+        unks = [ui for ui in unks if not ui.is_omitted_by_tag()]
+        attr = self.attr.lower()
+        unks = sorted(unks, key=attrgetter(attr))
+        kind = self.kind.lower()
+        self._prev_mswd = 0
+        for i in range(len(unks) - 2):
+            if self._validate_mswd(kind, unks, attr):
+                break
+            else:
+                unks = self._filter_mswd(unks)
+
+    def _validate_mswd(self, kind, unks, attr):
+        if attr == 'age':
+            xs = [u.age for u in unks]
+            es = [u.age_err_wo_j for u in unks]
+        elif attr == 'kca':
+            vs = [u.kca for u in unks]
+            xs = [nominal_value(v) for v in vs]
+            es = [std_dev(v) for v in vs]
+
+        mswd = calculate_mswd(xs, es)
+        if kind == 'mahon':
+            v = validate_mswd(mswd, len(xs))
+        elif kind == 'threshold':
+            v = mswd < self.mswd_threshold
+        else:
+            v = abs(mswd - self._prev_mswd) / mswd * 100 < self.plateau_threshold
+            self._prev_mswd = mswd
+
+        return v
+
+    def _filter_mswd(self, unks):
+        # remove oldest age
+        unks[-1].temp_status = 'omit'
+        return unks[:-1]
+
+
 if __name__ == '__main__':
-    a=FilterNode()
+    a = FilterNode()
     a.configure_traits()
 # ============= EOF =============================================

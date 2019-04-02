@@ -14,8 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 from __future__ import absolute_import
+
 from traits.api import Float
-from traitsui.api import View, Item, RangeEditor
 
 from pychron.spectrometer.fieldmixin import FieldMixin
 from pychron.spectrometer.spectrometer_device import SpectrometerDevice
@@ -24,6 +24,12 @@ from pychron.spectrometer.spectrometer_device import SpectrometerDevice
 class BaseSource(SpectrometerDevice, FieldMixin):
     nominal_hv = Float(4500)
     current_hv = Float(4500)
+
+    def finish_loading(self):
+        self.field_table_setup()
+
+    def map_mass_to_hv(self, mass):
+        return self.field_table.map_mass_to_dac(mass)
 
     def sync_parameters(self):
         pass

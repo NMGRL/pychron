@@ -14,25 +14,18 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-
-from __future__ import absolute_import
-from __future__ import print_function
 import logging
 
-from numpy import asarray, column_stack, ones, \
-    matrix, sqrt, dot, linalg, zeros_like, hstack
+from numpy import asarray, column_stack, matrix, sqrt, dot, linalg, zeros_like, hstack, ones_like
 from statsmodels.api import OLS
 from traits.api import Int, Property
 
+# ============= local library imports  ==========================
 from pychron.core.helpers.fits import FITS
-from pychron.pychron_constants import MSEM
-from pychron.pychron_constants import SEM
-from six.moves import range
+from pychron.core.regression.base_regressor import BaseRegressor
+from pychron.pychron_constants import MSEM, SEM
 
 logger = logging.getLogger('Regressor')
-
-# ============= local library imports  ==========================
-from .base_regressor import BaseRegressor
 
 
 class OLSRegressor(BaseRegressor):
@@ -60,11 +53,18 @@ class OLSRegressor(BaseRegressor):
     def get_exog(self, x):
         return self._get_X(x)
 
-    def fast_predict(self, endog, exog):
+    def fast_predict(self, endog, pexog, exog=None):
         ols = self._ols
         ols.wendog = ols.whiten(endog)
+
+        if exog is not None:
+            ols.wexog = ols.whiten(exog)
+
+            # force recalculation
+            del ols.pinv_wexog
+
         result = ols.fit()
-        return result.predict(exog)
+        return result.predict(pexog)
 
     def fast_predict2(self, endog, exog):
         """
@@ -124,7 +124,7 @@ class OLSRegressor(BaseRegressor):
 
                 traceback.print_exc()
 
-    def calculate_error_envelope2(self, fx, fy):
+    def calculate_prediction_envelope(self, fx, fy):
         from statsmodels.sandbox.regression.predstd import wls_prediction_std
 
         prstd, iv_l, iv_u = wls_prediction_std(self._result)
@@ -163,13 +163,18 @@ class OLSRegressor(BaseRegressor):
 
         x = asarray(x)
 
-        if error_calc == 'CI':
+        if not error_calc or error_calc == 'CI':
             e = self.calculate_ci_error(x)
+        elif error_calc == 'MC':
+            e = self.calculate_mc_error(x)
         else:
             e = self.predict_error_matrix(x, error_calc)
 
         if return_single:
-            e = e[0]
+            try:
+                e = e[0]
+            except TypeError:
+                e = 0
         return e
 
     def predict_error_algebraic(self, x, error_calc='SEM'):
@@ -278,6 +283,13 @@ class OLSRegressor(BaseRegressor):
 
         # def calculate_x(self, y):
         # return 0
+    def _get_rsquared(self):
+        if self._result:
+            return self._result.rsquared
+
+    def _get_rsquared_adj(self):
+        if self._result:
+            return self._result.rsquared_adj
 
     def _calculate_coefficients(self):
         """
@@ -358,15 +370,19 @@ class MultipleLinearRegressor(OLSRegressor):
         if you have a tuple of x,y pairs
         X=array(xy)
     """
+    def fast_predict2(self, endog, pexog, **kw):
+        # OLSRegressor fast_predict2 is not working for multiplelinear regressor
+        # use fast_predict instead
+        return self.fast_predict(endog, pexog, **kw)
 
     def _get_X(self, xs=None):
         if xs is None:
             xs = self.clean_xs
 
-        r, c = xs.shape
-        if c == 2:
-            xs = column_stack((xs, ones(r)))
-            return xs
+        xs = asarray(xs)
+        x1, x2 = xs.T
+        xs = column_stack((x1, x2, ones_like(x1)))
+        return xs
 
 
 if __name__ == '__main__':
@@ -388,31 +404,3 @@ if __name__ == '__main__':
     print(r.predict_error([(0, 2)]))
     print(r.predict_error([(0.1, 1)]))
 # ============= EOF =============================================
-# def predict_error_al(self, x, error_calc='sem'):
-#        result = self._result
-#        cov_varM = result.cov_params()
-#        cov_varM = matrix(cov_varM)
-#        se = self.calculate_standard_error_fit()
-#
-#        def predict_yi_err(xi):
-#            '''
-#
-#                bx= x**0,x**1,x**n where n= degree of fit linear=2, parabolic=3 etc
-#
-#            '''
-#            bx = asarray([pow(xi, i) for i in range(self.degree + 1)])
-#            bx_covar = bx * cov_varM
-#            bx_covar = asarray(bx_covar)[0]
-#            var = sum(bx * bx_covar)
-# #            print var
-#            s = var ** 0.5
-#            if error_calc == 'sd':
-#                s = (se ** 2 + s ** 2) ** 2
-#
-#            return s
-#
-#        if isinstance(x, (float, int)):
-#            x = [x]
-#        x = asarray(x)
-#
-#        return [predict_yi_err(xi) for xi in x]

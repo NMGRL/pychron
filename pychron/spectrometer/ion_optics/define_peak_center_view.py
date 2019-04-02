@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traits.api import HasTraits, Str, Float, List
 from traitsui.api import View, UItem, Item, VGroup, EnumEditor
 
@@ -34,9 +35,7 @@ class DefinePeakCenterView(HasTraits):
         v = View(VGroup(UItem('detector', editor=EnumEditor(name='detectors')),
                         UItem('isotope', editor=EnumEditor(name='isotopes')),
                         Item('dac', label='DAC')),
-                 title='Define Peak Center',
-                 kind='livemodal',
-                 buttons=['OK', 'Cancel'])
+                 title='Define Peak Center')
         return v
 
 # ============= EOF =============================================

@@ -15,10 +15,11 @@
 # ===============================================================================
 
 from __future__ import absolute_import
-from pychron.core.ui import set_qt
-import six
+
 from six.moves import range
 from six.moves import zip
+
+from pychron.core.ui import set_qt
 
 set_qt()
 # =============enthought library imports=======================
@@ -122,7 +123,7 @@ class StreamGraph(Graph):
     def update_y_limits(self, plotid=0, **kw):
         ma = -1
         mi = 1e10
-        for _k, v in six.iteritems(self.plots[plotid].plots):
+        for _k, v in self.plots[plotid].plots.items():
             ds = v[0].value.get_data()
             try:
                 ma = max(ma, max(ds))

@@ -15,14 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 import os
 import sys
 from datetime import datetime
 
 from apptools.preferences.preference_binding import bind_preference
-from pyface.api import SplashScreen
 from pyface.image_resource import ImageResource
+from pyface.splash_screen import SplashScreen
 from traits.api import List, Str
 
 from pychron.applications.about_dialog import myAboutDialog

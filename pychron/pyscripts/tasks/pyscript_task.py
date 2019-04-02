@@ -16,27 +16,120 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from pyface.tasks.action.schema import SToolBar
-from pyface.tasks.task_layout import PaneItem, TaskLayout, Tabbed, VSplitter
-from traits.api import String, List, Instance, Any, \
-    on_trait_change, Bool, Int
-from traitsui.api import View, UItem, EnumEditor
 
 # ============= standard library imports ========================
 import os
-# ============= local library imports  ==========================
-from pychron.envisage.tasks.editor_task import EditorTask
+
+from pyface.tasks.action.schema import SToolBar
+from pyface.tasks.task_layout import PaneItem, TaskLayout, Tabbed, VSplitter
+from traits.api import String, List, Instance, Any, \
+    on_trait_change, Bool
+from traitsui.api import UItem, EnumEditor
+
 from pychron.core.helpers.filetools import add_extension
+# ============= local library imports  ==========================
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+from pychron.envisage.tasks.editor_task import EditorTask
+from pychron.execute_mixin import ExecuteMixin
+from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
+from pychron.loggable import Loggable
+from pychron.paths import paths
 from pychron.pyscripts.tasks.git_actions import CommitChangesAction
 from pychron.pyscripts.tasks.pyscript_actions import JumpToGosubAction, ExpandGosubsAction, MakeGosubAction
 from pychron.pyscripts.tasks.pyscript_editor import ExtractionEditor, MeasurementEditor
 from pychron.pyscripts.tasks.pyscript_panes import CommandsPane, DescriptionPane, \
     CommandEditorPane, ControlPane, ScriptBrowserPane, ContextEditorPane, RepoPane
-from pychron.paths import paths
-from pychron.execute_mixin import ExecuteMixin
 
 
-class PyScriptTask(EditorTask, ExecuteMixin):
+class ScriptExecutorMixin(ExecuteMixin):
+    _current_script = Any
+
+    def execute_script(self, *args, **kw):
+        return self._do_execute(*args, **kw)
+
+    # def _start_execute(self):
+    #     self.debug('start execute')
+    #     return True
+    # make a script runner
+    # self._runner = None
+    # runner = self._runner_factory()
+    # if runner is None:
+    #     return
+    # else:
+    #     self._runner = runner
+    #     return True
+
+    def _do_execute(self, name=None, root=None, kind='Extraction', **kw):
+        self._start_execute()
+
+        self.debug('do execute')
+
+        self._current_script = None
+
+        # if not (name and root and kind):
+        #     ae = self.active_editor
+        #     if isinstance(ae, ExtractionEditor):
+        #         root, name = os.path.split(ae.path)
+        #         kind = self._extract_kind(ae.path)
+
+        if name and root and kind:
+            ret = self._execute_extraction(name, root, kind, **kw)
+            self.executing = False
+            return ret
+
+    def _execute_extraction(self, name, root, kind, new_thread=True,
+                            delay_start=0,
+                            on_completion=None,
+                            context=None,
+                            manager=None):
+        from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
+
+        klass = ExtractionPyScript
+        if kind == 'Laser':
+            from pychron.pyscripts.laser_pyscript import LaserPyScript
+
+            klass = LaserPyScript
+        elif kind == 'Spectrometer':
+            from pychron.pyscripts.spectrometer_pyscript import SpectrometerPyScript
+            klass = SpectrometerPyScript
+
+        runner = self.application.get_service(IPyScriptRunner)
+        script = klass(application=self.application,
+                       manager=manager,
+                       root=root,
+                       name=add_extension(name, '.py'),
+                       runner=runner)
+
+        if script.bootstrap():
+            script.set_default_context(**context)
+            try:
+                script.test()
+            except Exception as e:
+                return
+            self._current_script = script
+
+            # script.setup_context(extract_device='fusions_diode')
+
+            # if self.use_trace:
+            #     self.active_editor.trace_delay = self.trace_delay
+
+            # ret = script.execute(trace=self.use_trace, new_thread=new_thread, delay_start=delay_start,
+            #                      on_completion=on_completion)
+            ret = script.execute(new_thread=new_thread, delay_start=delay_start,
+                                 on_completion=on_completion)
+            return not script.is_canceled() and ret
+
+    # def _runner_factory(self):
+    #     return PyScriptRunner()
+
+
+class ScriptExecutor(ScriptExecutorMixin, Loggable):
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
+        self.init_logger()
+
+
+class PyScriptTask(EditorTask, ScriptExecutorMixin):
     id = 'pychron.pyscript.task'
     name = 'PyScript'
     kind = String
@@ -53,9 +146,9 @@ class PyScriptTask(EditorTask, ExecuteMixin):
     _default_extension = '.py'
 
     auto_detab = Bool(True)
-    _current_script = Any
-    use_trace = Bool(False)
-    trace_delay = Int(50)
+    # _current_script = Any
+    # use_trace = Bool(False)
+    # trace_delay = Int(50)
 
     description = String
 
@@ -112,8 +205,8 @@ class PyScriptTask(EditorTask, ExecuteMixin):
             # if name:
             #     self._open_pyscript(name, root)
 
-    def execute_script(self, *args, **kw):
-        return self._do_execute(*args, **kw)
+    # def execute_script(self, *args, **kw):
+    #     return self._do_execute(*args, **kw)
 
     def find(self):
         if self.active_editor:
@@ -132,10 +225,8 @@ class PyScriptTask(EditorTask, ExecuteMixin):
             return True
 
     def kind_select_view(self):
-        v = View(UItem('kind', editor=EnumEditor(name='kinds')),
-                 title='Select Pyscript kind',
-                 buttons=['OK', 'Cancel'],
-                 kind='livemodal')
+        v = okcancel_view(UItem('kind', editor=EnumEditor(name='kinds')),
+                          title='Select Pyscript kind')
         return v
 
     # task protocol
@@ -188,74 +279,74 @@ class PyScriptTask(EditorTask, ExecuteMixin):
 
         return ret
 
-    def _do_execute(self, name=None, root=None, kind='Extraction', **kw):
-        self._start_execute()
+    # def _do_execute(self, name=None, root=None, kind='Extraction', **kw):
+    #     self._start_execute()
+    #
+    #     self.debug('do execute')
+    #
+    #     self._current_script = None
+    #
+    #     if not (name and root and kind):
+    #         ae = self.active_editor
+    #         if isinstance(ae, ExtractionEditor):
+    #             root, name = os.path.split(ae.path)
+    #             kind = self._extract_kind(ae.path)
+    #
+    #     if name and root and kind:
+    #         ret = self._execute_extraction(name, root, kind, **kw)
+    #         self.executing = False
+    #         return ret
 
-        self.debug('do execute')
+    # def _execute_extraction(self, name, root, kind, new_thread=True,
+    #                         delay_start=0,
+    #                         on_completion=None,
+    #                         context=None,
+    #                         manager=None):
+    #     from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
+    #
+    #     klass = ExtractionPyScript
+    #     if kind == 'Laser':
+    #         from pychron.pyscripts.laser_pyscript import LaserPyScript
+    #
+    #         klass = LaserPyScript
+    #     elif kind == 'Spectrometer':
+    #         from pychron.pyscripts.spectrometer_pyscript import SpectrometerPyScript
+    #         klass = SpectrometerPyScript
+    #
+    #     script = klass(application=self.application,
+    #                    manager=manager,
+    #                    root=root,
+    #                    name=add_extension(name, '.py'),
+    #                    runner=self._runner)
+    #
+    #     if script.bootstrap():
+    #         script.set_default_context(**context)
+    #         try:
+    #             script.test()
+    #         except Exception as e:
+    #             return
+    #         self._current_script = script
+    #
+    #         # script.setup_context(extract_device='fusions_diode')
+    #
+    #         if self.use_trace:
+    #             self.active_editor.trace_delay = self.trace_delay
+    #
+    #         ret = script.execute(trace=self.use_trace, new_thread=new_thread, delay_start=delay_start,
+    #                              on_completion=on_completion)
+    #         return not script.is_canceled() and ret
 
-        self._current_script = None
-
-        if not (name and root and kind):
-            ae = self.active_editor
-            if isinstance(ae, ExtractionEditor):
-                root, name = os.path.split(ae.path)
-                kind = self._extract_kind(ae.path)
-
-        if name and root and kind:
-            ret = self._execute_extraction(name, root, kind, **kw)
-            self.executing = False
-            return ret
-
-    def _execute_extraction(self, name, root, kind, new_thread=True,
-                            delay_start=0,
-                            on_completion=None,
-                            context=None,
-                            manager=None):
-        from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
-
-        klass = ExtractionPyScript
-        if kind == 'Laser':
-            from pychron.pyscripts.laser_pyscript import LaserPyScript
-
-            klass = LaserPyScript
-        elif kind == 'Spectrometer':
-            from pychron.pyscripts.spectrometer_pyscript import SpectrometerPyScript
-            klass = SpectrometerPyScript
-
-        script = klass(application=self.application,
-                       manager=manager,
-                       root=root,
-                       name=add_extension(name, '.py'),
-                       runner=self._runner)
-
-        if script.bootstrap():
-            script.set_default_context(**context)
-            try:
-                script.test()
-            except Exception as e:
-                return
-            self._current_script = script
-
-            # script.setup_context(extract_device='fusions_diode')
-
-            if self.use_trace:
-                self.active_editor.trace_delay = self.trace_delay
-
-            ret = script.execute(trace=self.use_trace, new_thread=new_thread, delay_start=delay_start,
-                                 on_completion=on_completion)
-            return not script.is_canceled() and ret
-
-    def _start_execute(self):
-        self.debug('start execute')
-
-        # make a script runner
-        self._runner = None
-        runner = self._runner_factory()
-        if runner is None:
-            return
-        else:
-            self._runner = runner
-            return True
+    # def _start_execute(self):
+    #     self.debug('start execute')
+    #
+    #     # make a script runner
+    #     self._runner = None
+    #     runner = self._runner_factory()
+    #     if runner is None:
+    #         return
+    #     else:
+    #         self._runner = runner
+    #         return True
 
     def _cancel_execute(self):
         self.debug('cancel execute')

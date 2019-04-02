@@ -80,6 +80,9 @@ class DashboardServer(Loggable):
         bind_preference(self.notifier, 'enabled', 'pychron.dashboard.server.notifier_enabled')
 
     def activate(self):
+        emailer = self.application.get_service('pychron.social.emailer.Emailer')
+        self.emailer = emailer
+
         if not self.extraction_line_manager:
             self.warning_dialog('Extraction Line Plugin not initialized. Will not be able to take valve actions')
         self.setup_notifier()

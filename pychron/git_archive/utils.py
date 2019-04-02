@@ -16,61 +16,50 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import os
+import re
 from datetime import datetime
 
-import re
+import six
 from git import Repo, Blob, Diff
 from gitdb.util import hex_to_bin
-from traits.api import HasTraits, Str, Bool, Date
-import six
-
 
 # ============= local library imports  ==========================
+from pychron.git_archive.git_objects import GitSha, GitTag
 
-TAG_RE = re.compile(r'^\<\w+\>')
-
-
-class GitShaObject(HasTraits):
-    message = Str
-    date = Date
-    blob = Str
-    name = Str
-    hexsha = Str
-    author = Str
-    email = Str
-    active = Bool
-    tag = Str
+TAG_RE = re.compile(r'(?P<tag>^\<[\w ]+\>)')
 
 
-def from_gitlog(obj, path, tag=None):
+def from_gitlog(obj, tag=None):
     hexsha, author, email, ct, message = obj.split('|')
     date = datetime.fromtimestamp(float(ct))
 
     if tag is None:
-        tag = TAG_RE.match('message')
+        tag = TAG_RE.match(message)
         if tag:
-            tag = tag.group('tag')
+            tag = tag.group('tag')[1:-1]
         else:
             tag = 'NULL'
 
-    g = GitShaObject(hexsha=hexsha,
-                     message=message,
-                     date=date,
-                     author=author,
-                     email=email,
-                     path=path,
-                     tag=tag)
+    g = GitSha(hexsha=hexsha,
+               message=message,
+               date=date,
+               author=author,
+               email=email,
+               tag=tag)
     return g
 
 
-def gitlog(repo, branch=None, args=None, path=None):
+def gitlog(repo, branch=None, args=None, path=None, limit=None):
     cmd = []
     if branch:
         cmd.append(branch)
 
-    fmt = '%H|%cn|%ce|%ct|%s'
-    cmd.append('--pretty={}'.format(fmt))
+    cmd.append('--pretty=%H|%cn|%ce|%ct|%s')
+
+    if limit:
+        cmd.append('-{}'.format(limit))
 
     if args:
         cmd.extend(args)
@@ -82,36 +71,24 @@ def gitlog(repo, branch=None, args=None, path=None):
 
 def get_head_commit(repo):
     txt = gitlog(repo, args=('-n', '1', 'HEAD'))
-    return from_gitlog(txt.strip(), '', '')
+    return from_gitlog(txt.strip(), '')
 
 
-def get_commits(repo, branch, path, tag, *args):
-    if isinstance(repo, (str, six.text_type)):
-        if not os.path.isdir(repo):
-            return
-        repo = Repo(repo)
+def get_commits(repo, branch, path, tag, *args, limit=None):
+    repo = get_repo(repo)
+    txt = gitlog(repo, branch=branch, args=args, path=path, limit=limit)
 
-    txt = gitlog(repo, branch=branch, args=args, path=path)
+    return [from_gitlog(l.strip(), tag) for l in txt.split('\n')] if txt else []
 
-    return [from_gitlog(l.strip(), path, tag) for l in txt.split('\n')] if txt else []
+
+def get_tags(repo):
+    repo = get_repo(repo)
+    return [GitTag(t) for t in repo.tags]
 
 
 def get_log(repo, branch, path):
-    if isinstance(repo, (str, six.text_type)):
-        if not os.path.isdir(repo):
-            return
-        repo = Repo(repo)
-
+    repo = get_repo(repo)
     return gitlog(repo, branch=branch, path=path)
-
-
-def get_repo(repo):
-    if isinstance(repo, (str, six.text_type)):
-        if not os.path.isdir(repo):
-            return
-        repo = Repo(repo)
-
-    return repo
 
 
 def get_diff(repo, a, b, path, change_type='M'):
@@ -130,19 +107,28 @@ def ahead_behind(repo, fetch=True, remote='origin'):
 
     ahead = 0
     behind = 0
-    if fetch:
-        repo.git.fetch(remote)
+    if repo:
+        if fetch:
+            repo.git.fetch(remote)
 
-    status = repo.git.status('-sb')
-
-    ma = aregex.search(status)
-    mb = bregex.search(status)
-    if ma:
-        ahead = int(ma.group('count'))
-    if mb:
-        behind = int(mb.group('count'))
+        status = repo.git.status('-sb')
+        ma = aregex.search(status)
+        mb = bregex.search(status)
+        if ma:
+            ahead = int(ma.group('count'))
+        if mb:
+            behind = int(mb.group('count'))
 
     return ahead, behind
+
+
+def get_repo(repo):
+    if isinstance(repo, (str, six.text_type)):
+        if not os.path.isdir(repo):
+            return
+        repo = Repo(repo)
+
+    return repo
 
 
 def fu(repo, text):

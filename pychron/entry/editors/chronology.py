@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
 from datetime import date, time, timedelta, datetime
 
 from traits.api import HasTraits, List, Date, Time, Float, Button
@@ -24,7 +22,6 @@ from traitsui.api import View, UItem, HGroup, VGroup, TableEditor, Item
 from traitsui.table_column import ObjectColumn
 
 from pychron.envisage.icon_button_editor import icon_button_editor
-from six.moves import map
 
 
 class IrradiationDosage(HasTraits):
@@ -62,28 +59,6 @@ class IrradiationDosage(HasTraits):
         print('tooo', str(self.power), self.start(), self.end())
         return str(self.power), self.start(), self.end()
 
-        # def validate_dosage(self, prev_dose):
-        #     if self.start_date is None:
-        #         return 'Start date not set'
-        #     if self.end_date is None:
-        #         return 'End date not set'
-        #     if self.start_time is None:
-        #         return 'Start time not set'
-        #     if self.end_time is None:
-        #         return 'End time not set'
-        #
-        #     if prev_dose:
-        #         if not prev_dose.enddate <= self.start_date:
-        #             return 'Date > Prev Date'
-        #         if not prev_dose.endtime <= self.start_time:
-        #             return 'Time > Prev Time'
-        #
-        #     if not self.start_date <= self.end_date:
-        #         return 'Start Date > End Date'
-        #
-        #     if not self.start_time < self.end_time:
-        #         return 'Start Time > End Time'
-
 
 class IrradiationChronology(HasTraits):
     dosages = List(IrradiationDosage)
@@ -105,7 +80,7 @@ class IrradiationChronology(HasTraits):
                                      end_date=e.date(),
                                      end_time=e.time(), power=p)
 
-        self.dosages = list(map(dose_factory, ds))
+        self.dosages = [dose_factory(d) for d in ds]
 
     def get_doses(self):
         """

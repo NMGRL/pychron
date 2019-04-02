@@ -13,15 +13,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from __future__ import absolute_import
-from traits.api import List, Dict
+
+from traits.api import List
 from traitsui.api import View, UItem, VGroup
+
 from pychron.data_mapper.sources.wiscar_source import WiscArNuSource
 from pychron.envisage.tasks.base_plugin import BasePlugin
 
 
 class ViewWiscArNuSource(WiscArNuSource):
-    pass
+    def traits_view(self):
+        n = VGroup(UItem('nice_path'), show_border=True, label='Nice')
+        mp = VGroup(UItem('metadata_path'), show_border=True, label='MetaData')
+        d = VGroup(UItem('directory'), show_border=True, label='Directory')
+        p = VGroup(UItem('path'), show_border=True, label='File', enabled_when='not directory')
+        return View(VGroup(n, mp, d, p))
 
 
 class WiscArDataPlugin(BasePlugin):

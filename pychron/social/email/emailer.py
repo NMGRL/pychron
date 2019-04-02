@@ -16,22 +16,21 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import os
 # ============= standard library imports ========================
 import smtplib
+import time
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-import time
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import HasTraits, Str, Enum, Bool, Int
 from traitsui.api import View
 
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
-import six
-from six.moves import range
 
 
 class User(HasTraits):
@@ -83,7 +82,8 @@ class Emailer(Loggable):
                 server.quit()
                 return True
         except (smtplib.SMTPServerDisconnected, BaseException) as e:
-            self.debug('SMTPServer connection host={}, user={}, port={}'.format(self.server_host, self.server_username, self.server_port))
+            self.debug('SMTPServer connection err: {}'
+                       'host={}, user={}, port={}'.format(e, self.server_host, self.server_username, self.server_port))
             if warn:
                 self.warning('SMTPServer not properly configured')
             server = None
@@ -91,7 +91,7 @@ class Emailer(Loggable):
         return server
 
     def send(self, addrs, sub, msg, paths=None):
-        self.debug('Send email. addrs: {}'.format(addrs, sub))
+        self.info('Send email. addrs: {}'.format(addrs, sub))
         # self.debug('========= Message ========')
         # for m in msg.split('\n'):
         #     self.debug(m)
@@ -105,7 +105,7 @@ class Emailer(Loggable):
             time.sleep(1)
 
         if server:
-            if isinstance(addrs, (str, six.text_type)):
+            if not isinstance(addrs, (list, tuple)):
                 addrs = [addrs]
 
             msg = self._message_factory(addrs, sub, msg, paths)
@@ -136,53 +136,3 @@ class Emailer(Loggable):
         return msg
 
 # ============= EOF =============================================
-# def broadcast(self, text, level=0, subject=None):
-#
-# recipients = self.get_emails(level)
-#     self.debug('broadcasting to recipients {}. level={}'.format(recipients, level))
-#     if recipients:
-#         r = ','.join(recipients)
-#
-#         msg = self._message_factory(text, r, subject)
-#         server = self.connect()
-#         if server:
-#             self.info('Broadcasting message to {}'.format(r))
-#             server.sendmail(self.sender, recipients, msg.as_string())
-#             server.close()
-#         else:
-#             self.debug('SMTP server not available')
-#
-# def get_emails(self, level):
-#     return [u.email for u in self.users
-#             if u.email_enabled and u.level <= level]
-#
-# def _message_factory(self, text, recipients, subject='!Pychron Alert!'):
-#     from email.mime.multipart import MIMEMultipart
-#     from email.mime.text import MIMEText
-#
-#     msg = MIMEMultipart()
-#     msg['From'] = self.sender  # 'nmgrl@gmail.com'
-#     msg['To'] = recipients
-#     msg['Subject'] = subject
-#
-#     msg.attach(MIMEText(text))
-#     return msg
-#
-# def _users_default(self):
-#     path = os.path.join(paths.setup_dir, 'users.cfg')
-#     config = self.configparser_factory()
-#     config.read(path)
-#     users = []
-#     for user in config.sections():
-#         self.info('loading user {}'.format(user))
-#         kw = dict(name=user)
-#         for opt, func in [('email', None), ('level', 'int'), ('enabled', 'boolean')]:
-#             if func is None:
-#                 func = config.get
-#             else:
-#                 func = getattr(config, 'get{}'.format(func))
-#
-#             kw[opt] = func(user, opt)
-#         users.append(User(**kw))
-#
-#     return users

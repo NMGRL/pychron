@@ -16,8 +16,8 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import os
-from itertools import groupby
 
 from envisage.ui.tasks.action.task_window_launch_group import TaskWindowLaunchAction
 from pyface.action.api import ActionItem, Group
@@ -32,13 +32,15 @@ from pyface.timer.do_later import do_later, do_after
 from traits.api import Any, on_trait_change, List, Unicode, Instance
 
 from pychron.core.helpers.filetools import add_extension, view_file
+from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.preference_mixin import PreferenceMixin
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import GenericSaveAction, GenericSaveAsAction, \
     GenericFindAction, RaiseAction, RaiseUIAction, ResetLayoutAction, \
     MinimizeAction, PositionAction, IssueAction, CloseAction, CloseOthersAction, AboutAction, OpenAdditionalWindow, \
-    NoteAction, RestartAction, DocumentationAction, CopyPreferencesAction, ChangeLogAction, StartupTestsAction
+    NoteAction, RestartAction, DocumentationAction, ChangeLogAction, StartupTestsAction, \
+    ShareSettingsAction, ApplySettingsAction
 from pychron.loggable import Loggable
 from pychron.paths import paths
 
@@ -131,9 +133,12 @@ class TaskGroup(Group):
 
 
 class BaseTask(Task, Loggable, PreferenceMixin):
-    # application = DelegatesTo('window')
 
     _full_window = False
+
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
+        self.init_logger()
 
     def _activate_task(self, tid):
         if self.window:
@@ -195,7 +200,7 @@ class BaseTask(Task, Loggable, PreferenceMixin):
             menus = []
 
         edit_menu = SMenu(GenericFindAction(),
-                          id='Edit', name='&Edit')
+                          id='edit.menu', name='&Edit')
 
         # entry_menu = SMenu(
         #     id='entry.menu',
@@ -212,7 +217,9 @@ class BaseTask(Task, Loggable, PreferenceMixin):
             id='file.menu', name='File')
 
         tools_menu = SMenu(
-            CopyPreferencesAction(),
+            ShareSettingsAction(),
+            ApplySettingsAction(),
+            # CopyPreferencesAction(),
             id='tools.menu', name='Tools')
 
         window_menu = SMenu(
@@ -278,9 +285,7 @@ class BaseTask(Task, Loggable, PreferenceMixin):
 
         application = self.window.application
         groups = []
-        for _, factories in groupby(sorted(application.task_factories,
-                                           key=groupfunc),
-                                    key=groupfunc):
+        for _, factories in groupby_key(application.task_factories,groupfunc):
             items = []
             for factory in factories:
                 for win in application.windows:

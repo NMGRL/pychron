@@ -15,14 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
-import math
-from traits.api import HasTraits, Str, Int, Enum
-from six.moves import range
-
-
+from traits.api import HasTraits, Str, Int, Enum, Property
+from traitsui.api import View, Item, HGroup, VGroup
 # ============= standard library imports ========================
+
+
 # ============= local library imports  ==========================
 
 
@@ -33,10 +30,62 @@ class LayoutItem(HasTraits):
     identifier = Str
 
 
+def filled_grid(n):
+    """
+
+    n = 2  1x2
+    0 1
+
+    n = 3  2x2
+    0 1
+    2 x
+
+    n = 4  2x2
+    0 1
+    2 3
+
+    n = 5  2x3
+    0 1 2
+    3 4 x
+
+    n = 6 2x3
+
+    n=7 3x3
+
+    :param n:
+    :return:
+    """
+
+    i = 0
+    r, c = 1, 1
+    while r * c < n:
+        if i % 2:
+            r += 1
+        else:
+            c += 1
+
+        i += 1
+
+    return r, c
+
+
 class FigureLayout(HasTraits):
     rows = Int(1)
     columns = Int(2)
-    fixed = Enum('column', 'row', 'square')
+    fixed = Enum('column', 'row', 'filled_grid')
+
+    row_enabled = Property(depends_on='fixed')
+    column_enabled = Property(depends_on='fixed')
+
+    # def __init__(self, *args, **kw):
+    #     super(FigureLayout, self).__init__(*args, **kw)
+    #     self._fixed_changed()
+
+    def _get_row_enabled(self):
+        return self.fixed == 'row'
+
+    def _get_column_enabled(self):
+        return self.fixed == 'column'
 
     def __call__(self, n):
         return self.calculate(n)
@@ -45,11 +94,10 @@ class FigureLayout(HasTraits):
         r = self.rows
         c = self.columns
 
-        if n == 1:
+        if n <= 1:
             r = c = 1
-        elif self.fixed == 'square':
-            s = int(math.ceil(n ** 0.5))
-            r, c = s, s
+        elif self.fixed == 'filled_grid':
+            r, c = filled_grid(n)
         else:
             while n > r * c:
                 if self.fixed == 'column':
@@ -74,9 +122,26 @@ class FigureLayout(HasTraits):
     def add_item(self, kind):
         self.items.append(LayoutItem(kind=kind))
 
+    def traits_view(self):
+        rc_grp = VGroup(HGroup(Item('rows',
+                                    enabled_when='row_enabled'),
+                               Item('columns',
+                                    enabled_when='column_enabled'
+                                    ),
+                               Item('fixed')),
+                        label='Layout', show_border=True)
+        v = View(rc_grp, resizable=True)
+        return v
+
 
 if __name__ == '__main__':
-    f = FigureLayout(rows=4, columns=1, fixed='square')
-    for i in range(20):
-        print(i + 1, f(i + 1))
+    # f = FigureLayout(rows=4, columns=1, fixed='square')
+    # f.calculate(5)
+    # for i in range(20):
+    #     print(i + 1, f(i + 1))
+    # f.configure_traits()
+
+    for i in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10):
+        print(i, filled_grid(i))
+
 # ============= EOF =============================================

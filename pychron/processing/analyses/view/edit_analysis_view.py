@@ -16,16 +16,17 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import HasTraits, List, on_trait_change, Bool, Event, Float, Str, Instance
-from traitsui.api import View, UItem, TableEditor, HGroup, spring, Handler, VGroup, Group, Label
-from traitsui.table_column import ObjectColumn
 
+from traits.api import HasTraits, List, on_trait_change, Bool, Event, Float, Str, Instance
+from traitsui.api import UItem, TableEditor, HGroup, spring, Handler, VGroup, Group, Label
+from traitsui.table_column import ObjectColumn
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from uncertainties import std_dev, nominal_value, ufloat
+
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.pychron_constants import PLUSMINUS
-import six
 
 
 class AnalysisEditViewHandler(Handler):
@@ -282,8 +283,6 @@ class AnalysisEditView(HasTraits):
     # handlers
     def _save_button_fired(self):
         model = self.editor.analysis
-
-        runid = model.record_id
         repository_identifier = model.repository_identifier
 
         dvc = self.dvc
@@ -306,7 +305,7 @@ class AnalysisEditView(HasTraits):
                         edited_items.append('{}.{}_error'.format(name, tag))
 
             if updated_errors or updated_values:
-                p = dvc.manual_edit(runid, repository_identifier,
+                p = dvc.manual_edit(model, repository_identifier,
                                     updated_values, updated_errors, modifier)
                 ps.append(p)
 
@@ -318,8 +317,7 @@ class AnalysisEditView(HasTraits):
     def _revert_original_button_fired(self):
         analysis = self.editor.analysis
         repository_identifier = analysis.repository_identifier
-        runid = analysis.record_id
-        self.dvc.revert_manual_edits(runid, repository_identifier)
+        self.dvc.revert_manual_edits(analysis, repository_identifier)
 
         tags = ('intercepts', 'baselines', 'blanks', 'icfactors')
         analysis.load_paths(tags)
@@ -405,18 +403,16 @@ class AnalysisEditView(HasTraits):
                           label='Flux (J)',
                           defined_when='object.flux',
                           show_border=True)
-        v = View(VGroup(Group(iso_grp, baseline_grp,
-                              icgrp,
-                              layout='tabbed'),
-                        blank_grp,
-                        flux_grp,
-                        bgrp),
-                 buttons=['OK', 'Cancel'],
-                 handler=AnalysisEditViewHandler(),
-                 resizable=True,
-                 title=self.title,
-                 x=0.05,
-                 y=0.05)
+        v = okcancel_view(VGroup(Group(iso_grp, baseline_grp,
+                                       icgrp,
+                                       layout='tabbed'),
+                                 blank_grp,
+                                 flux_grp,
+                                 bgrp),
+                          handler=AnalysisEditViewHandler(),
+                          title=self.title,
+                          x=0.05,
+                          y=0.05)
 
         return v
 

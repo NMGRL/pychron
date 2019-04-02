@@ -18,10 +18,8 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from __future__ import absolute_import
 from pychron.canvas.canvas2D.scene.scene_canvas import SceneCanvas
 from pychron.canvas.canvas2D.scene.strat_scene import StratScene
-import six
 
 
 class StratCanvas(SceneCanvas):
@@ -63,7 +61,7 @@ class StratCanvas(SceneCanvas):
         self.index_range.low_setting = io = low - pad
         self.index_range.high_setting = high + pad
 
-        for i in six.iteritems(self.scene):
+        for i in self.scene.items():
             i.index_origin = io
 
 # ============= EOF =============================================

@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traits.has_traits import HasTraits, on_trait_change
 from traits.trait_types import List, Event, Bool, Button, Str, Any
 from traits.traits import Property
@@ -26,11 +27,10 @@ from traitsui.item import UItem, Item
 from traitsui.table_column import ObjectColumn as _ObjectColumn
 from traitsui.view import View
 
+from pychron.core.fits.fit import Fit
 from pychron.core.ui.table_editor import myTableEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.core.fits.fit import Fit
 from pychron.pychron_constants import FIT_TYPES, FIT_ERROR_TYPES
-from six.moves import zip
 
 
 class ColumnMixin(object):
@@ -190,9 +190,9 @@ class FitSelector(HasTraits):
 
             pf.fit = fit
             pf.filter_outliers = fod.get('filter_outliers', False)
-
             pf.filter_iterations = fod.get('iterations', 0)
             pf.filter_std_devs = fod.get('std_devs', 0)
+            pf.use_standard_deviation_filtering = fod.get('use_standard_deviation_filtering', False)
             pf.error_type = et
 
             nfs.append(pf)

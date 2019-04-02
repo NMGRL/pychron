@@ -16,17 +16,16 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import HasTraits, Bool, Any, List, Str
-from traitsui.api import View
-import six
 
+from traits.api import Bool, Any, List, Str
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.column_sorter_mixin import ColumnSorterMixin
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 
 
-class BaseNode(HasTraits):
+class BaseNode(ColumnSorterMixin):
     name = 'Base'
     enabled = Bool(True)
     visited = Bool(False)
@@ -47,6 +46,11 @@ class BaseNode(HasTraits):
     index = -1
 
     skip_meaning = Str
+    use_state_unknowns = True
+    use_state_references = True
+
+    def resume(self, state):
+        pass
 
     def clear_data(self):
         self.unknowns = []
@@ -58,7 +62,7 @@ class BaseNode(HasTraits):
         self.active = False
 
     def pre_load(self, nodedict):
-        for k, v in six.iteritems(nodedict):
+        for k, v in nodedict.items():
             if hasattr(self, k):
                 setattr(self, k, v)
 
@@ -74,13 +78,18 @@ class BaseNode(HasTraits):
     def disable(self):
         self.enabled = False
 
+    def _pre_run_hook(self, state):
+        pass
+
     def pre_run(self, state, configure=True):
+        self._pre_run_hook(state)
 
         if not self.auto_configure:
             return True
 
         if self._manual_configured:
             return True
+
         if state.unknowns:
             self.unknowns = state.unknowns
         if state.references:
@@ -156,8 +165,7 @@ class BaseNode(HasTraits):
         if 'title' not in kw:
             kw['title'] = 'Configure {}'.format(self.name)
 
-        return View(buttons=['OK', 'Cancel'],
-                    kind='livemodal', *items, **kw)
+        return okcancel_view(*items, **kw)
 
     def __str__(self):
         return '{}<{}>'.format(self.name, self.__class__.__name__)

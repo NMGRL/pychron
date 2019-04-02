@@ -16,13 +16,13 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from chaco.text_box_overlay import TextBoxOverlay
-from enable.base_tool import BaseTool, KeySpec
-from traits.api import Event, Any, Enum, Tuple, Bool, Int
 
 # ============= standard library imports ========================
 from datetime import datetime
-from six.moves import zip
+
+from chaco.text_box_overlay import TextBoxOverlay
+from enable.base_tool import BaseTool, KeySpec
+from traits.api import Event, Any, Enum, Tuple, Bool, Int
 
 
 # ============= local library imports  ==========================
@@ -38,6 +38,8 @@ class DataTool(BaseTool):
     use_date_str = True
     normalize_time = False
     x_format = '{:0.2f}'
+    predict_value_func = None
+    filter_components = True
 
     def normal_key_pressed(self, event):
         if self.inspector_key.match(event):
@@ -50,39 +52,44 @@ class DataTool(BaseTool):
         if comp is not None:
             d = dict()
 
-            x, y = comp.map_data([event.x, event.y + 2])
-            comps = comp.container.components_at(event.x, event.y)
-            #            print comps
-            if not self.component in comps:
-                self.new_value = d
-                return
+            x, y = comp.map_data([event.x, event.y])
+            if self.filter_components:
+                comps = comp.container.components_at(event.x, event.y)
+                if comp not in comps:
+                    self.new_value = d
+                    return
 
             ind = plot.index.metadata.get('hover')
             if ind is not None:
                 y = plot.value.get_data()[ind][0]
                 x = plot.index.get_data()[ind][0]
 
-            if self.normalize_time:
-                try:
-                    sx = plot.index.get_data()[0]
-                    x -= sx
-                except IndexError:
-                    return
-
-            if self.use_date_str:
-                # convert timestamp to str
-                date = datetime.fromtimestamp(x)
-                xi = date.strftime('%d/%m %H:%M:%S')
-            else:
-                try:
-                    xi = self.x_format.format(x)
-                except ValueError:
-                    xi = ''
-
-            d['xy'] = (xi, '{:0.3f}'.format(y))
+            d['text'] = self._make_text(plot, x, y)
             self.new_value = d
-
             self.last_mouse_position = (event.x, event.y)
+
+    def _make_text(self, plot, x, y):
+        if self.normalize_time:
+            try:
+                sx = plot.index.get_data()[0]
+                x -= sx
+            except IndexError:
+                return
+
+        if self.use_date_str:
+            # convert timestamp to str
+            date = datetime.fromtimestamp(x)
+            xi = date.strftime('%d/%m %H:%M:%S')
+        else:
+            try:
+                xi = self.x_format.format(x)
+            except ValueError:
+                xi = ''
+
+        ret = '{},{:0.3f}'.format(xi, y)
+        if self.predict_value_func:
+            ret = '{},{}'.format(ret, self.predict_value_func(x, y))
+        return ret
 
 
 class DataToolOverlay(TextBoxOverlay):
@@ -91,8 +98,7 @@ class DataToolOverlay(TextBoxOverlay):
     tool = Any
     visibility = Enum("auto", True, False)
     visible = False
-    #    visible = True
-    #    tooltip_mode = Bool(True)
+    font = 'arial 12'
     tooltip_mode = Bool(False)
 
     def _tool_changed(self, old, new):
@@ -118,25 +124,9 @@ class DataToolOverlay(TextBoxOverlay):
         else:
             self.alternate_position = None
 
-        d = event
-        #        newstring = ""
-        #       ''' if 'indices' in d:
-        #            newstring += '(%d, %d)' % d['indices'] + '\n'
-        #        if 'color_value' in d:
-        #            newstring += "(%d, %d, %d)" % tuple(map(int, d['color_value'][:3])) + "\n"
-        #        if 'data_value' in d:
-        #            newstring += str(d['data_value'])
-        ns = []
-        if 'xy' in d:
-            ns.append('{},{}'.format(*d['xy']))
-        if 'coeffs' in d:
-            cs = d['coeffs']
-            xx = ['', 'x', 'x2', 'x3']
-            ss = '+ '.join(['{:0.2e}{}'.format(*x) for x in zip(cs, xx[:len(cs)][::-1])])
-
-            ns.append(ss)
-
-        self.text = '\n'.join(ns)
+        txt = event.get('text', '')
+        if txt is not None:
+            self.text = txt
         self.component.request_redraw()
 
     def _visible_changed(self):

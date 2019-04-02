@@ -2,15 +2,13 @@ Welcome to Pychron's documentation!
 ===================================
 
 .. image:: images/NMGRL_logo.png
-  :scale: 33%
-  :width: 50%
+  :scale: 25%
 
 .. image:: images/pychronlabslogo_v5.png
-  :width: 33%
-  :scale: 35%
+  :scale: 20%
 
 .. image:: images/NMT_logo.png
-  :width: 33%
+  :scale: 40%
 
 
 .. toctree::
@@ -20,8 +18,6 @@ Welcome to Pychron's documentation!
   python
   user_guide/index
   dev_guide/index
-  course/index
-  tutorials/index
   api/index
   massspec_pychron
 

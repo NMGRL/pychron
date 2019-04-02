@@ -15,20 +15,24 @@
 # ===============================================================================
 # ============= enthought library imports =======================
 import os
-import shutil
 
 import apptools.sweet_pickle as pickle
 from traits.api import Str, List, Button, Instance, Tuple, Property, cached_property
-from traitsui.api import Controller, View, Item
+from traitsui.api import Controller, Item
 
-from pychron.core.helpers.filetools import list_directory2
-from pychron.file_defaults import SPECTRUM_PRESENTATION, RADIAL_SCREEN, REGRESSION_SERIES_SCREEN
+from pychron.core.helpers.filetools import glob_list_directory
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+from pychron.file_defaults import SPECTRUM_PRESENTATION, RADIAL_SCREEN, REGRESSION_SERIES_SCREEN, \
+    DEFINE_EQUILIBRATION_SCREEN
 from pychron.file_defaults import SPECTRUM_SCREEN, IDEOGRAM_SCREEN, IDEOGRAM_PRESENTATION, SERIES_SCREEN, BLANKS_SCREEN, \
     ICFACTOR_SCREEN, INVERSE_ISOCHRON_SCREEN, INVERSE_ISOCHRON_PRESENTATION, ISO_EVO_SCREEN, BLANKS_PRESENTATION
 from pychron.globals import globalv
 from pychron.loggable import Loggable
+from pychron.mdd.tasks.mdd_figure import MDDFigureOptions
 from pychron.options.blanks import BlanksOptions
-from pychron.options.flux import FluxOptions, VerticalFluxOptions
+from pychron.options.composite import CompositeOptions
+from pychron.options.define_equilibration import DefineEquilibrationOptions
+from pychron.options.flux import FluxOptions, VerticalFluxOptions, FluxVisualizationOptions
 from pychron.options.icfactor import ICFactorOptions
 from pychron.options.ideogram import IdeogramOptions
 from pychron.options.iso_evo import IsotopeEvolutionOptions
@@ -100,6 +104,10 @@ class OptionsManager(Loggable):
         if self.selected_options:
             self.selected_options.set_analysis_types(atypes)
 
+    def set_reference_types(self, atypes):
+        if self.selected_options:
+            self.selected_options.set_reference_types(atypes)
+
     def _selected_options_changed(self, new):
         if new:
             if self._cached_names:
@@ -166,8 +174,6 @@ class OptionsManager(Loggable):
         self.save(name, p)
         self._load_names()
 
-        # print self.names
-        # print self.name
         self.selected = name
 
     def factory_default(self):
@@ -187,13 +193,12 @@ class OptionsManager(Loggable):
 
                     self.selected = name
                     break
+            else:
+                self.information_dialog('Factory Defaults not available for "{}". '
+                                        'Not a factory provided options set'.format(options_name))
 
-                    # warning(None, 'Factory defaults temporarily disabled')
-
-                    # print  os.path.isfile(self._defaults_path), self._defaults_path
-                    # if os.path.isfile(self._defaults_path):
-                    #     self.debug('load factory defaults {}'.format(self._defaults_path))
-                    #     self.selected_options.load_factory_defaults(self._defaults_path)
+        else:
+            self.information_dialog('Not Factory Defaults available')
 
     def _initialize(self):
         selected = self._load_selected_po()
@@ -223,9 +228,9 @@ class OptionsManager(Loggable):
         self._load_names()
 
     def _load_names(self):
-        self.names = [n for n in list_directory2(self.persistence_root,
-                                                 extension='.p',
-                                                 remove_extension=True) if n != 'selected']
+        self.names = [n for n in glob_list_directory(self.persistence_root,
+                                                     extension='.p',
+                                                     remove_extension=True) if n != 'selected']
 
     def _selected_subview_changed(self, new):
         if new:
@@ -247,6 +252,8 @@ class OptionsManager(Loggable):
                 obj = self.options_klass()
 
             obj.initialize()
+            obj.setup()
+
             obj.name = new
             self.subview_names = obj.subview_names
             self.selected_options = obj
@@ -298,6 +305,12 @@ class IsotopeEvolutionOptionsManager(FigureOptionsManager):
     _default_options_txt = ISO_EVO_SCREEN
 
 
+class DefineEquilibrationOptionsManager(FigureOptionsManager):
+    id = 'define_equilibration'
+    options_klass = DefineEquilibrationOptions
+    _default_options_txt = DEFINE_EQUILIBRATION_SCREEN
+
+
 class FluxOptionsManager(FigureOptionsManager):
     id = 'flux'
     options_klass = FluxOptions
@@ -306,6 +319,11 @@ class FluxOptionsManager(FigureOptionsManager):
 class VerticalFluxOptionsManager(FigureOptionsManager):
     id = 'vertical_flux'
     options_klass = VerticalFluxOptions
+
+
+class FluxVisualizationOptionsManager(FigureOptionsManager):
+    id = 'flux_visualization'
+    options_klass = FluxVisualizationOptions
 
 
 class XYScatterOptionsManager(FigureOptionsManager):
@@ -373,6 +391,16 @@ class RadialOptionsManager(FigureOptionsManager):
     _default_options_txt = RADIAL_SCREEN
 
 
+class MDDFigureOptionsManager(FigureOptionsManager):
+    id = 'mdd'
+    options_klass = MDDFigureOptions
+
+
+class CompositeOptionsManager(FigureOptionsManager):
+    id = 'composite'
+    options_klass = CompositeOptions
+
+
 class OptionsController(Controller):
     delete_options = Button
     add_options = Button
@@ -388,10 +416,8 @@ class OptionsController(Controller):
         self.model.delete_selected()
 
     def controller_add_options_changed(self, info):
-        info = self.edit_traits(view=View(Item('new_name', label='Name'),
-                                          title='New Options',
-                                          kind='livemodal',
-                                          buttons=['OK', 'Cancel']))
+        info = self.edit_traits(view=okcancel_view(Item('new_name', label='Name'),
+                                                   title='New Options'))
         if info.result:
             self.model.add(self.model.new_name)
 
@@ -399,10 +425,8 @@ class OptionsController(Controller):
         self.model.save()
 
     def controller_save_as_options_changed(self, info):
-        info = self.edit_traits(view=View(Item('new_name', label='Name'),
-                                          title='New Options',
-                                          kind='livemodal',
-                                          buttons=['OK', 'Cancel']))
+        info = self.edit_traits(view=okcancel_view(Item('new_name', label='Name'),
+                                                   title='New Options'))
         if info.result:
             self.model.save_selected_as()
 

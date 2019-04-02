@@ -18,6 +18,7 @@
 
 # ============= standard library imports ========================
 from __future__ import absolute_import
+
 import os
 import pickle
 from datetime import datetime, timedelta
@@ -28,9 +29,9 @@ from traits.trait_types import Float, Date, Time
 from traits.traits import Property
 from traitsui.group import HGroup, VGroup
 from traitsui.item import UItem, Item
-from traitsui.view import View
 
 # ============= local library imports  ==========================
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.paths import paths
 
 
@@ -44,9 +45,9 @@ def get_pad(low, high):
     pe = None
     if os.path.isfile(p):
         try:
-            with open(p, 'r') as rfile:
+            with open(p, 'rb') as rfile:
                 pe = pickle.load(rfile)
-        except (pickle.PickleError, OSError, EOFError):
+        except (pickle.PickleError, OSError, EOFError, TypeError):
             pass
 
     if not pe:
@@ -61,7 +62,7 @@ def get_pad(low, high):
 
     info = pe.edit_traits()
     if info.result:
-        with open(p, 'w') as wfile:
+        with open(p, 'wb') as wfile:
             pickle.dump(pe, wfile)
         return pe
 
@@ -112,12 +113,9 @@ class PadEntry(HasTraits):
         h = VGroup(UItem('high_post_time'),
                    UItem('high_post_date', style='custom'))
 
-        v = View(Item('pad', label='Pad (hrs)'),
-                 HGroup(l, h),
-                 kind='livemodal',
-                 width=500,
-                 resizable=True,
-                 buttons=['OK', 'Cancel'])
+        v = okcancel_view(Item('pad', label='Pad (hrs)'),
+                          HGroup(l, h),
+                          width=500)
         return v
 
 # ============= EOF =============================================

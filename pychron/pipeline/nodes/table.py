@@ -14,84 +14,79 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
 import os
-from itertools import groupby
 
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import HasTraits, List, Enum, Bool, Str
-from traitsui.api import View, UItem, Item, TableEditor, ObjectColumn, VGroup
+from traitsui.api import UItem, Item, TableEditor, ObjectColumn, VGroup
 from traitsui.extras.checkbox_column import CheckboxColumn
 
+from pychron.core.helpers.iterfuncs import groupby_group_id
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceMixin
 from pychron.pipeline.editors.interpreted_age_table_editor import InterpretedAgeTableEditor
-from pychron.pipeline.nodes.base import BaseNode
-from pychron.pipeline.tables.xlsx_table_writer import XLSXTableWriterOptions
+from pychron.pipeline.nodes.data import BaseDVCNode
+from pychron.pipeline.nodes.group_age import GroupAgeNode
 from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
-from pychron.pychron_constants import PLUSMINUS_NSIGMA
-from six.moves import zip
+from pychron.pychron_constants import PLUSMINUS_NSIGMA, AIR, BLANK_TYPES, UNKNOWN
+# ============= enthought library imports =======================
+from pychron.utils import autodoc_helper
 
 
-class TableNode(BaseNode):
+class TableNode(BaseDVCNode):
     pass
 
 
-class XLSXAnalysisTableNode(TableNode):
-    name = 'Analysis Table'
-    options_klass = XLSXTableWriterOptions
-
-    def _finish_configure(self):
-        self.options.dump()
-
-    def run(self, state):
+class AnalysisTableNode(GroupAgeNode):
+    def set_groups(self, state):
         bind_preference(self, 'skip_meaning', 'pychron.pipeline.skip_meaning')
 
-        self._make_table(state)
+        def factory(ans, tag='Human Table'):
+            if self.skip_meaning:
+                if tag in self.skip_meaning:
+                    ans = (ai for ai in ans if ai.tag.lower() != 'skip')
 
-    def _make_table(self, state):
-        unknowns = (a for a in state.unknowns if a.analysis_type == 'unknown')
-        blanks = (a for a in state.unknowns if a.analysis_type == 'blank_unknown')
-        airs = (a for a in state.unknowns if a.analysis_type == 'air')
+            g = InterpretedAgeGroup(analyses=list(ans))
+            return g
 
-        key = lambda x: x.group_id
+        unknowns = list(a for a in state.unknowns if a.analysis_type == UNKNOWN)
+        blanks = (a for a in state.unknowns if a.analysis_type in BLANK_TYPES)
+        airs = (a for a in state.unknowns if a.analysis_type == AIR)
 
-        options = self.options
-        skip_meaning = self.skip_meaning
+        # unk_group = [factory(analyses) for _, analyses in groupby(sorted(unknowns, key=key), key=key)]
+        blank_group = [factory(analyses) for _, analyses in groupby_group_id(blanks)]
+        air_group = [factory(analyses) for _, analyses in groupby_group_id(airs)]
+        munk_group = [factory(analyses, 'Machine Table') for _, analyses in groupby_group_id(unknowns)]
 
-        if self.options.table_kind == 'Step Heat':
-            def factory(ans):
-                if skip_meaning:
-                    if 'Table' in skip_meaning:
-                        ans = (ai for ai in ans if ai.tag.lower() != 'skip')
+        groups = {
+            # 'unknowns': unk_group,
+            'blanks': blank_group,
+            'airs': air_group,
+            'machine_unknowns': munk_group}
 
-                return InterpretedAgeGroup(analyses=list(ans),
-                                           plateau_nsteps=options.plateau_nsteps,
-                                           plateau_gas_fraction=options.plateau_gas_fraction,
-                                           fixed_step_low=options.fixed_step_low,
-                                           fixed_step_high=options.fixed_step_high)
-
-        else:
-            def factory(ans):
-                if self.skip_meaning:
-                    if 'Table' in skip_meaning:
-                        ans = (ai for ai in ans if ai.tag.lower() != 'skip')
-
-                return InterpretedAgeGroup(analyses=list(ans))
-
-        unk_group = [factory(analyses) for _, analyses in groupby(sorted(unknowns, key=key), key=key)]
-        blank_group = [factory(analyses) for _, analyses in groupby(sorted(blanks, key=key), key=key)]
-        air_group = [factory(analyses) for _, analyses in groupby(sorted(airs, key=key), key=key)]
-
-        state.tables.append({'options': options,
-                             'unknowns': unk_group,
-                             'blanks': blank_group,
-                             'airs': air_group})
+        state.run_groups = groups
 
 
-class TableOptions(HasTraits, PersistenceMixin):
-    pass
+class XLSXAnalysisTableNode(AnalysisTableNode):
+    name = 'Analysis Table'
+    # options_klass = XLSXTableWriterOptions
+
+    # def _finish_configure(self):
+    #     self.options.dump()
+    # auto_configure = False
+    # configurable = False
+
+    # def run(self, state):
+    #     unknowns = list(a for a in state.unknowns if a.analysis_type == 'unknown')
+    #
+    #     editor = ArArTableEditor(dvc=self.dvc)
+    #     editor.items = unknowns
+    #     state.editors.append(editor)
+    #     self.set_groups(state)
+
+
+TableOptions = autodoc_helper('TableOptions', (HasTraits, PersistenceMixin))
 
 
 class AnalysisTableOptions(TableOptions):
@@ -157,14 +152,13 @@ class InterpretedAgeTableOptions(TableOptions):
 
         sigma = VGroup(Item('age_nsigma'), Item('kca_nsigma'))
 
-        v = View(VGroup(UItem('columns', editor=TableEditor(columns=cols, sortable=False)),
-                        sigma,
-                        ),
-                 title='Interpreted Age Table Options',
-                 resizable=True,
-                 height=500,
-                 width=300,
-                 buttons=['OK', 'Cancel'])
+        v = okcancel_view(VGroup(UItem('columns', editor=TableEditor(columns=cols, sortable=False)),
+                                 sigma,
+                                 ),
+                          title='Interpreted Age Table Options',
+                          resizable=True,
+                          height=500,
+                          width=300)
         return v
 
 

@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2015 Jake Ross
+# Copyright 2018 ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,33 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
-# ============= enthought library imports =======================
-from __future__ import absolute_import
-from pyface.tasks.task_layout import TaskLayout, PaneItem
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task import BaseManagerTask
-from pychron.furnace.tasks.panes import FurnacePane, ControlPane
 
 
-class FurnaceTask(BaseManagerTask):
-    id = 'pychron.furnace.task'
-    name = 'Furnace'
-
+class BaseFurnaceTask(BaseManagerTask):
     def activated(self):
         self.manager.activate()
 
     def prepare_destroy(self):
         self.manager.prepare_destroy()
-
-    def create_dock_panes(self):
-        return [ControlPane(model=self.manager)]
-
-    def create_central_pane(self):
-        return FurnacePane(model=self.manager)
-
-    def _default_layout_default(self):
-        return TaskLayout(left=PaneItem('pychron.nmgrlfurnace.controls'))
-
 # ============= EOF =============================================

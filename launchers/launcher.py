@@ -13,14 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from __future__ import absolute_import
 import os
+
 from helpers import entry_point
 
-appname = os.environ.get('PYCHRON_APPNAME', 'pysampleprep')
+appname = os.environ.get('PYCHRON_APPNAME', 'pyview')
 debug = os.environ.get('PYCHRON_DEBUG', False)
 
 entry_point(appname, debug=debug)
-
 
 # ============= EOF =============================================

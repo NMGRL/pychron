@@ -14,27 +14,26 @@
 # limitations under the License.
 # ===============================================================================
 
+# ============= standard library imports ========================
+from itertools import groupby
+
+import six
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
-from pyface.qt import QtCore
 from pyface.qt.QtGui import QTextEdit, QWidget, QHBoxLayout, QTextFormat, QColor, QPainter, QFrame, \
     QSizePolicy, QPainterPath
 from traits.trait_errors import TraitError
-# ============= standard library imports ========================
-from operator import itemgetter
-from itertools import groupby
-# ============= local library imports  ==========================
 from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
+
+# ============= local library imports  ==========================
 from pychron.git_archive.diff_util import extract_line_numbers
-from six.moves import map
-import six
+
 
 def get_ranges(data):
-    return [list(map(itemgetter(1), g))
+    return [[gi[0] for gi in g]
             for k, g in groupby(enumerate(data),
                                 lambda i_x: i_x[0] - i_x[1])]
+
 
 class QDiffConnector(QFrame):
     _left_y = 0
@@ -219,13 +218,15 @@ class _DiffEditor(Editor):
         self.control = self._create_control(parent)
 
     def _create_control(self, parent):
-        ctrl = QDiffEdit(parent)
-        QtCore.QObject.connect(ctrl.left,
-                               QtCore.SIGNAL('textChanged()'), self.update_left_object)
-        QtCore.QObject.connect(ctrl.right,
-                               QtCore.SIGNAL('textChanged()'), self.update_right_object)
+        control = QDiffEdit(parent)
+        # QtCore.QObject.connect(ctrl.left,
+        #                        QtCore.SIGNAL('textChanged()'), self.update_left_object)
+        # QtCore.QObject.connect(ctrl.right,
+        #                        QtCore.SIGNAL('textChanged()'), self.update_right_object)
+        control.left.textChanged.connect(self.update_left_object)
+        control.right.textChanged.connect(self.update_right_object)
 
-        return ctrl
+        return control
 
     def update_editor(self):
         if self.value:
