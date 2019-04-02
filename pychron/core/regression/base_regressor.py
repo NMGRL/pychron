@@ -76,6 +76,7 @@ class BaseRegressor(HasTraits):
 
     degrees_of_freedom = Property
     integrity_warning = False
+    filter_bound_value = 0
 
     @property
     def min(self):
@@ -138,7 +139,7 @@ class BaseRegressor(HasTraits):
                 self.calculate(filtering=True)
 
                 self.dirty = True
-                outliers = self.calculate_outliers(nsigma=fod.get('std_devs', 2))
+                outliers = self.calculate_outliers()
 
                 self.outlier_excluded = list(set(self.outlier_excluded + list(outliers)))
                 self.dirty = True
@@ -190,15 +191,36 @@ class BaseRegressor(HasTraits):
         r = i_n * sum(A * B)
         return r
 
-    def calculate_outliers(self, nsigma=2):
+    def calculate_filter_bounds(self, model=None, bound=None):
+        if bound is None:
+            bound = self.filter_bound_value
+            if not bound:
+                if self.filter_outliers_dict.get('use_standard_deviation_filtering'):
+                    bound = self.std
+                else:
+                    bound = self.calculate_standard_error_fit()
 
+                bound *= self.filter_outliers_dict.get('std_devs', 2)
+
+        if model is None:
+            model = self.predict(self.xs)
+
+        lower = model - bound
+        upper = model + bound
+        return lower, upper
+
+    def calculate_outliers(self):
         if self.filter_outliers_dict.get('use_standard_deviation_filtering'):
             s = self.std
         else:
             s = self.calculate_standard_error_fit()
 
+        nsigma = self.filter_outliers_dict.get('std_devs', 2)
+
         # calculate residuals for every point not just cleaned arrays
         residuals = abs(self.ys - self.predict(self.xs))
+
+        self.filter_bound_value = s*nsigma
 
         return where(residuals >= (s * nsigma))[0]
 
