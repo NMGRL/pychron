@@ -97,8 +97,9 @@ class StreamGraphManager(Manager):
             with open(p, 'rb') as f:
                 try:
                     return pickle.load(f, encoding='utf-8')
-                except (pickle.PickleError, EOFError):
+                except (pickle.PickleError, EOFError, UnicodeDecodeError) as e:
                     self.warning('Failed unpickling scan settings file {}'.format(p))
+                    self.debug(e)
                     return
         else:
             self.warning('No scan settings file {}'.format(p))

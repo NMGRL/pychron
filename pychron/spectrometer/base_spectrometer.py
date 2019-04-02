@@ -289,7 +289,7 @@ class BaseSpectrometer(SpectrometerDevice):
                 self.debug('cannot update detector "{}"'.format(detector))
             else:
                 det.isotope = isotope
-
+                det.mass = self.map_mass(isotope)
                 self.debug('molweights={}'.format(self.molecular_weights))
 
                 try:
@@ -308,6 +308,7 @@ class BaseSpectrometer(SpectrometerDevice):
                         isotope = self.map_isotope(mass)
                         self.debug('setting detector {} to {} ({})'.format(di.name, isotope, mass))
                         di.isotope = isotope
+                        di.mass = mass
 
                 except BaseException as e:
                     self.warning(

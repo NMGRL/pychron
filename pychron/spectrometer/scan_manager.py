@@ -18,11 +18,11 @@
 
 import os
 import time
+from queue import Queue
 from threading import Thread
 
 import yaml
 from pyface.timer.do_later import do_later
-from queue import Queue
 from traits.api import Instance, Any, DelegatesTo, List, Property, \
     Bool, Button, String, cached_property, \
     Str, TraitError
@@ -580,7 +580,6 @@ class ScanManager(StreamGraphManager):
         if plot.plots:
 
             cp = plot.plots[det.name][0]
-            print('setuo plot', det.name, cp)
             dt = DataTool(plot=cp, component=plot,
                           normalize_time=True,
                           use_date_str=False)

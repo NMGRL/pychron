@@ -157,7 +157,7 @@ class FindRepositoryAnalysesNode(FindNode):
 
 
 class FindFluxMonitorMeansNode(BaseFindFluxNode):
-    name = 'Find Flux Monitors'
+    name = 'Find Flux Monitors Means'
 
     def _load_hook(self, nodedict):
         self.level = nodedict.get('level', '')

@@ -38,6 +38,7 @@ class BaseDetector(HasTraits):
     color = Color
     series_id = Int
     isotope = Str
+    mass = Float
 
     isotopes = Property
 

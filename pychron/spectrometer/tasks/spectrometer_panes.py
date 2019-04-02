@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traits.api import Str
 from traitsui.api import View, Item, VGroup, HGroup, EnumEditor, spring, \
@@ -68,6 +69,8 @@ class IntensitiesPane(TraitsDockPane):
     def traits_view(self):
         cols = [ColorColumn(cell_color_name='color', label='Color'),
                 ObjectColumn(name='name', width=175),
+                ObjectColumn(name='mass', width=75),
+                ObjectColumn(name='isotope', width=75),
                 ObjectColumn(name='intensity', width=100),
                 ObjectColumn(name='std', label=PLUSMINUS_ONE_SIGMA, width=100)]
         g = UItem('detectors', editor=TableEditor(columns=cols,
