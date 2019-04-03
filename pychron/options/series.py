@@ -15,13 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
-from traits.api import Bool, Enum
+from traits.api import Bool, Enum, cached_property
 
 from pychron.options.fit import FitAuxPlot, FitOptions
 from pychron.options.views.series_views import VIEWS
-from pychron.pychron_constants import MAIN, APPEARANCE
+from pychron.pychron_constants import MAIN, APPEARANCE, SERIES_FIT_TYPES
 
 
 class SeriesFitAuxPlot(FitAuxPlot):
@@ -41,6 +39,10 @@ class SeriesFitAuxPlot(FitAuxPlot):
     @property
     def filter_outliers_dict(self):
         return {}
+
+    @cached_property
+    def _get_fit_types(self):
+        return SERIES_FIT_TYPES
 
 
 class SeriesOptions(FitOptions):

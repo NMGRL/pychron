@@ -55,6 +55,7 @@ class SeriesMainOptions(MainOptions):
                               width=130,
                               editor=EnumEditor(name='names')),
                 object_column(name='scale'),
+                object_column(name='fit', editor=EnumEditor(name='fit_types')),
                 object_column(name='height',
                               format_func=lambda x: str(x) if x else ''),
                 checkbox_column(name='show_labels', label='Labels'),
