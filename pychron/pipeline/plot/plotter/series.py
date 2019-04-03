@@ -264,7 +264,7 @@ class Series(BaseSeries):
                 p, scatter, l = args
 
                 if self.options.show_statistics:
-                    graph.add_statistics(plotid=pid)
+                    graph.add_statistics(plotid=pid, options=self.options.get_statistics_options())
 
             sel = scatter.index.metadata.get('selections', [])
             sel += omits

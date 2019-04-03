@@ -15,20 +15,23 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 from traitsui.api import View, UItem, VGroup, EnumEditor, Item, HGroup
 
+from pychron.core.pychron_traits import BorderVGroup
 from pychron.options.options import SubOptions, AppearanceSubOptions, MainOptions, object_column, checkbox_column
+
+SHOW_STATISTICS_GROUP = BorderVGroup(Item('show_statistics'),
+                                     Item('display_min_max'),
+                                     label='Statistics Display')
 
 
 class SeriesSubOptions(SubOptions):
     def traits_view(self):
-        v = View(VGroup('use_time_axis',
-                        Item('error_bar_nsigma'),
-                        Item('end_caps'),
-                        Item('show_info'),
-                        Item('show_statistics'), show_border=True))
+        v = View(VGroup(BorderVGroup('use_time_axis',
+                                     Item('error_bar_nsigma'),
+                                     Item('end_caps'),
+                                     Item('show_info')),
+                        SHOW_STATISTICS_GROUP))
         return v
 
 

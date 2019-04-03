@@ -248,16 +248,18 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                 pp.overlays.append(label)
                 break
 
-    def add_statistics(self, plotid=0):
+    def add_statistics(self, plotid=0, options=None):
         plot = self.plots[plotid]
         for k, v in plot.plots.items():
             if k.startswith('fit'):
                 pp = v[0]
-                text = '\n'.join(make_statistics(pp.regressor))
-                label = StatisticsTextBoxOverlay(text=text,
-                                                 border_color='black')
-                pp.overlays.append(label)
-                break
+                if hasattr(pp, 'regressor'):
+                    pp.statistics_options = options
+                    text = '\n'.join(make_statistics(pp.regressor, options=options))
+                    label = StatisticsTextBoxOverlay(text=text,
+                                                     border_color='black')
+                    pp.overlays.append(label)
+                    break
 
     def set_filter_outliers(self, fi, plotid=0, series=0):
         plot = self.plots[plotid]
@@ -627,7 +629,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                     pp = v[0]
                     o = next((oo for oo in pp.overlays if isinstance(oo, StatisticsTextBoxOverlay)), None)
                     if o:
-                        o.text = '\n'.join(make_statistics(pp.regressor))
+                        o.text = '\n'.join(make_statistics(pp.regressor, options=pp.statistics_options))
                         o.request_redraw()
                         break
 

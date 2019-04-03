@@ -50,8 +50,13 @@ class SeriesOptions(FitOptions):
     error_bar_nsigma = Enum(1, 2, 3)
     end_caps = Bool(False)
     show_info = Bool(True)
-    show_statistics = Bool(False)
     link_plots = Bool(True)
+
+    show_statistics = Bool(False)
+    display_min_max = Bool(False)
+
+    def get_statistics_options(self):
+        return {k: getattr(self, k) for k in ('display_min_max', )}
 
     # use_restricted_references = Bool
     def initialize(self):
