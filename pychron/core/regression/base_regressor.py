@@ -110,6 +110,10 @@ class BaseRegressor(HasTraits):
         return self.std / self.n ** 0.5
 
     @property
+    def dev(self):
+        return self.max - self.min
+
+    @property
     def rsquared(self):
         return self._get_rsquared()
 
@@ -265,7 +269,6 @@ class BaseRegressor(HasTraits):
         es = self.predict_error(rx, error_calc=error_calc)
         if es is None:
             es = 0
-
         return rmodel-es, rmodel+es
 
     def calculate_mc_error(self, rx):

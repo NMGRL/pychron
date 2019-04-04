@@ -53,10 +53,13 @@ class SeriesOptions(FitOptions):
     link_plots = Bool(True)
 
     show_statistics = Bool(False)
+    show_statistics_as_table = Bool(False)
+    use_group_statistics = Bool(True)
+
     display_min_max = Bool(False)
 
     def get_statistics_options(self):
-        return {k: getattr(self, k) for k in ('display_min_max', )}
+        return {k: getattr(self, k) for k in ('show_statistics_as_table', 'display_min_max', )}
 
     # use_restricted_references = Bool
     def initialize(self):

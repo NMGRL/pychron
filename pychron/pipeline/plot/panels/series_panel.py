@@ -33,6 +33,30 @@ class SeriesPanel(FigurePanel):
     use_previous_limits = False
 
     def _make_graph_hook(self, g):
+        dma = 0
+        for fig in self.figures:
+            mi, ma = fig.get_data_x()
+            dma = max(ma, dma)
+
+        dmi = 0
+        ma = 0
+        for fig in self.figures:
+            xs = fig.normalize(dma)
+
+            dmi = min(dmi, min(xs))
+            ma = max(ma, max(xs))
+
+        g.set_x_limits(dmi, ma, pad=self.plot_options.xpadding or '0.1')
+        for pid, p in enumerate(g.plots):
+
+            ymi, yma = 0, 0
+            for fig in self.figures:
+                ys = p.data.get_data('y{}'.format(fig.group_id*2))
+                # ys = fig.get_data_y(pid)
+                ymi = min(ymi, min(ys))
+                yma = max(yma, max(ys))
+
+            g.set_y_limits(ymi, yma, pad='0.1', plotid=pid)
         g.refresh()
 
 

@@ -395,7 +395,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
     def _regress(self, plot, scatter, line):
         fit, err = convert_fit(scatter.fit)
         if fit is None:
-            print('fit is none, {}'.format(scatter.fit))
             return
 
         r = None

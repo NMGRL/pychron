@@ -88,6 +88,7 @@ class BaseArArFigure(SelectionFigure):
     ymis = List
     xmi = Float
     xma = Float
+    data_xma = 0
 
     _has_formatting_hash = None
     _reverse_sorted_analyses = False

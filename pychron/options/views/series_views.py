@@ -21,6 +21,8 @@ from pychron.core.pychron_traits import BorderVGroup
 from pychron.options.options import SubOptions, AppearanceSubOptions, MainOptions, object_column, checkbox_column
 
 SHOW_STATISTICS_GROUP = BorderVGroup(Item('show_statistics'),
+                                     Item('show_statistics_as_table'),
+                                     Item('use_group_statistics'),
                                      Item('display_min_max'),
                                      label='Statistics Display')
 

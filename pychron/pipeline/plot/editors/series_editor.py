@@ -15,42 +15,73 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import List, Event
+from traitsui.api import View, UItem, Group, VSplit
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from __future__ import absolute_import
+from traitsui.editors import TabularEditor
+from traitsui.tabular_adapter import TabularAdapter
+
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.models.series_model import SeriesModel
 
 
+class SeriesStatsTabularAdapter(TabularAdapter):
+    columns = [('Mean', 'mean'),
+               ('StdDev', 'std'),
+               ('Mean MSWD', 'mean_mswd'),
+               ('Min', 'min'),
+               ('Max', 'max'),
+               ('Dev.', 'dev'), ]
+
+
+class SeriesStatistics:
+    def __init__(self, reg):
+        self._reg = reg
+
+    def __getattr__(self, attr):
+        if hasattr(self._reg, attr):
+            return getattr(self._reg, attr)
+
+
 class SeriesEditor(FigureEditor):
-    # plotter_options_manager = Instance(PlotterOptionsManager)
-    # plotter_options_manager_klass = SeriesOptionsManager
     figure_model_klass = SeriesModel
     pickle_path = 'series'
     basename = 'Series'
-    # model_klass = SeriesModel
-    # auto_group = False
+    statistics = List
+    update_needed = Event
 
-    # def _plotter_options_manager_default(self):
-    # return self.plotter_options_manager_klass()
+    def _get_component_hook(self, model=None):
+        if model is None:
+            model = self.figure_model
 
-    # def _update_analyses_hook(self):
-    #     # po = self.plotter_options_manager.plotter_options
-    #     po = self.plotter_options
-    #     ref = self.analyses[0]
-    #     po.load_aux_plots(ref)
-    #
-    #     self._set_name()
+        ss = []
+        for p in model.panels:
+            g = p.figures[-1].graph
+            if self.plotter_options.show_statistics_as_table:
+                g.on_trait_change(self._handle_reg, 'regression_results')
+                for plot in g.plots:
+                    for k, v in plot.plots.items():
+                        if k.startswith('fit'):
+                            ss.append(SeriesStatistics(v[0].regressor))
 
-        # def get_component(self, ans, plotter_options):
-        # if plotter_options is None:
-        #         pom = self.plotter_options_manager_klass()
-        #         plotter_options = pom.plotter_options
-        #
-        #     model = self.model_klass(plot_options=plotter_options)
-        #     model.analyses = ans
-        #     iv = FigureContainer(model=model)
-        #
-        #     return model, iv.component
+            else:
+                g.on_trait_change(self._handle_reg, 'regression_results', remove=True)
+        self.statistics = ss
+
+    def _handle_reg(self, new):
+        self.update_needed = True
+
+    def traits_view(self):
+        tblgrp = Group(UItem('statistics',
+                             height=100,
+                             editor=TabularEditor(adapter=SeriesStatsTabularAdapter(),
+                                                  update='update_needed')),
+                       visible_when='object.plotter_options.show_statistics_as_table',
+                       label='Stats.')
+
+        v = View(VSplit(self.get_component_view(), tblgrp),
+                 resizable=True)
+        return v
 
 # ============= EOF =============================================
