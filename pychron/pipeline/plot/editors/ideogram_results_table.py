@@ -44,6 +44,7 @@ class IdeogramResultsAdapter(TabularAdapter):
     weighted_mean_age_error_text = Property
     mswd_text = Property
     age_span_text = Property
+    nsigma = Int(1)
 
     def get_text_color(self, obj, trait, row, column=0):
         item = getattr(obj, trait)[row]
@@ -62,19 +63,20 @@ class IdeogramResultsAdapter(TabularAdapter):
 
     def _get_weighted_mean_age_error_text(self):
         wt = self.item.weighted_age
-        return floatfmt(std_dev(wt), n=5)
+        return floatfmt(std_dev(wt)*self.nsigma, n=5)
 
 
 class IdeogramResultsTable(HasTraits):
     analysis_groups = List
 
-    def __init__(self, analysis_groups, *args, **kw):
+    def __init__(self, analysis_groups, nsigma, *args, **kw):
         super(IdeogramResultsTable, self).__init__(*args, **kw)
         self.analysis_groups = analysis_groups
+        self.adapter = IdeogramResultsAdapter(nsigma=nsigma)
 
     def traits_view(self):
         v = View(BorderVGroup(UItem('analysis_groups',
-                                    editor=TabularEditor(adapter=IdeogramResultsAdapter())),
+                                    editor=TabularEditor(adapter=self.adapter)),
                               label='Summary'))
         return v
 # ============= EOF =============================================
