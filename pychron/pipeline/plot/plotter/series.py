@@ -81,6 +81,10 @@ UAR4036 = 'uAr40/Ar36'
 class BaseSeries(BaseArArFigure):
     xs = Array
 
+    def get_data_x(self):
+        vs = [ai.timestamp for ai in self.sorted_analyses]
+        return min(vs), max(vs)
+
     def max_x(self, *args):
         if len(self.xs):
             return max(self.xs)
@@ -96,8 +100,16 @@ class BaseSeries(BaseArArFigure):
             return self.xs.mean()
         return 0
 
-    def _get_xs(self, plots, ans, tzero=None):
+    def normalize(self, tzero):
+        xs = array([ai.timestamp for ai in self.sorted_analyses])
 
+        xs -= tzero
+        xs /= 3600.
+        for p in self.graph.plots:
+            p.data.set_data('x{}'.format(self.group_id*2), xs)
+        return xs
+
+    def _get_xs(self, plots, ans, tzero=None):
         if self.options.use_time_axis:
             xs = array([ai.timestamp for ai in ans])
             px = plots[0]
@@ -112,9 +124,9 @@ class BaseSeries(BaseArArFigure):
                 xs /= 3600.
             else:
                 self.graph.convert_index_func = lambda x: '{:0.2f} hrs'.format(x / 3600.)
+
         else:
             xs = arange(len(ans))
-
         return xs
 
     def _handle_limits(self):
@@ -135,7 +147,6 @@ class Series(BaseSeries):
     #             ai = self.sorted_analyses[0]
     #             a = bool(ai.get_value(name))
     #     return a
-
     def build(self, plots):
 
         graph = self.graph
@@ -214,7 +225,6 @@ class Series(BaseSeries):
                 self._plot_series(po, i, omits)
 
             self.xmi, self.xma = self.min_x(), self.max_x()
-            self.xpad = '0.1'
 
     def _plot_series(self, po, pid, omits):
         graph = self.graph
@@ -264,7 +274,7 @@ class Series(BaseSeries):
                 p, scatter, l = args
 
                 if self.options.show_statistics:
-                    graph.add_statistics(plotid=pid)
+                    graph.add_statistics(plotid=pid, options=self.options.get_statistics_options())
 
             sel = scatter.index.metadata.get('selections', [])
             sel += omits

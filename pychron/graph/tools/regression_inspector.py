@@ -28,7 +28,12 @@ def make_correlation_statistics(reg):
     return lines
 
 
-def make_statistics(reg, x=None):
+def make_statistics(reg, x=None, options=None):
+    if options is None:
+        options = {}
+
+    display_min_max = options.get('display_min_max', True)
+
     v, e = reg.predict(0), reg.predict_error(0)
 
     lines = [reg.make_equation(),
@@ -48,10 +53,11 @@ def make_statistics(reg, x=None):
         lines.append('Fit MSWD= {}{}, N={}'.format(valid,
                                                floatfmt(reg.mswd, n=3), reg.n))
 
-    mi, ma = reg.min, reg.max
-    lines.append('Min={}, Max={}, Dev={}%'.format(floatfmt(mi),
-                                                  floatfmt(ma),
-                                                  floatfmt((ma - mi) / ma * 100, n=2)))
+    if display_min_max:
+        mi, ma = reg.min, reg.max
+        lines.append('Min={}, Max={}, Dev={}%'.format(floatfmt(mi),
+                                                      floatfmt(ma),
+                                                      floatfmt((ma - mi) / ma * 100, n=2)))
 
     lines.append('Mean={}, SD={}, SEM={}, N={}'.format(floatfmt(reg.mean), floatfmt(reg.std),
                                                        floatfmt(reg.sem), reg.n))

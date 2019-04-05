@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from datetime import date, time, timedelta, datetime
 
-from traits.api import HasTraits, List, Date, Time, Float, Button
+from traits.api import HasTraits, List, Date, Time, Float, Button, Property
 from traitsui.api import View, UItem, HGroup, VGroup, TableEditor, Item
 from traitsui.table_column import ObjectColumn
 
@@ -38,6 +38,15 @@ class IrradiationDosage(HasTraits):
             self.start_time = time(hour=8)
         if not self.end_time:
             self.end_time = time(hour=17)
+
+    def duration(self):
+        """
+        return duration of this dose in hours
+        :return:
+        """
+        st = datetime.combine(self.start_date, self.start_time)
+        et = datetime.combine(self.end_date, self.end_time)
+        return (et-st).total_seconds()/3600.
 
     def _start_date_default(self):
         return date.today()
@@ -67,6 +76,8 @@ class IrradiationChronology(HasTraits):
     selected_dosage = IrradiationDosage
     duration = Float(8)
     apply_duration_button = Button
+
+    total_duration = Property(depends_on='dosages[], dosages:[start_date,end_date,start_time,end_time]')
 
     def set_dosages(self, ds):
         """
@@ -119,10 +130,16 @@ class IrradiationChronology(HasTraits):
             self.selected_dosage.end_date = nt.date()
             self.selected_dosage.end_time = nt.time()
 
+    def _get_total_duration(self):
+        s = 0
+        for d in self.dosages:
+            s += d.duration()
+        return s
+
     def traits_view(self):
-        tb = HGroup(icon_button_editor('add_button', 'add'),
-                    icon_button_editor('remove_button', 'delete'),
-                    Item('duration'),
+        tb = HGroup(icon_button_editor('add_button', 'add', tooltip='Add an irradiation segment'),
+                    icon_button_editor('remove_button', 'delete', tooltip='Delete selected irradiation segment'),
+                    Item('duration', tooltip='Set "Duration" used for when the "Right Arrow" is clicked'),
                     icon_button_editor('apply_duration_button', 'arrow_right',
                                        tooltip='Apply "Duration" to selected row. i.e EndDateTime = StartDateTime + '
                                                'Duration'))
@@ -137,7 +154,8 @@ class IrradiationChronology(HasTraits):
                                                     selected='selected_dosage',
                                                     sortable=False),
                       width=450)
-        v = View(VGroup(tb, table))
+        td = VGroup(Item('total_duration', format_str='%0.3f', label='Total Duration', style='readonly'))
+        v = View(VGroup(tb, table, td))
         return v
 
 

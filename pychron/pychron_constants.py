@@ -79,6 +79,11 @@ FIT_TYPES = ['Linear', 'Parabolic', 'Cubic',
              'Average', 'Exponential', WEIGHTED_MEAN]
 
 FIT_ERROR_TYPES = [SD, SEM, 'CI', 'MonteCarlo']
+SERIES_FIT_TYPES = [NULL_STR] + FIT_TYPES
+
+INTERPOLATE_TYPES = ['Preceding', 'Bracketing Interpolate', 'Bracketing Average', 'Succeeding']
+FIT_TYPES_INTERPOLATE = FIT_TYPES + INTERPOLATE_TYPES
+
 
 ARITHMETIC_MEAN = 'Arithmetic Mean'
 PLATEAU_ELSE_WEIGHTED_MEAN = 'Plateau else Weighted Mean'
@@ -100,8 +105,7 @@ FLECK = 'Fleck 1977'
 MAHON = 'Mahon 1996'
 
 WEIGHTINGS = (NULL_STR, 'Volume', 'Variance')
-INTERPOLATE_TYPES = ['Preceding', 'Bracketing Interpolate', 'Bracketing Average', 'Succeeding']
-FIT_TYPES_INTERPOLATE = FIT_TYPES + INTERPOLATE_TYPES
+
 DELIMITERS = {',': 'comma', '\t': 'tab', ' ': 'space'}
 
 # AGE_SCALARS = {'Ga': 1e9, 'Ma': 1e6, 'ka': 1e3, 'a': 1}

@@ -172,7 +172,7 @@ class FigurePanel(HasTraits):
                 for i in range(len(plots)):
                     fig.update_options_limits(i)
 
-        self._make_graph_hook(g)
+            self._make_graph_hook(g)
 
         return g.plotcontainer
 
