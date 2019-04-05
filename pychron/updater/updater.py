@@ -26,6 +26,7 @@ from traits.api import Bool, Str, Directory
 from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.loggable import Loggable
 from pychron.paths import r_mkdir
+from pychron.pychron_constants import STARTUP_MESSAGE_POSITION
 from pychron.updater.commit_view import CommitView, UpdateGitHistory
 
 CONDA_DISTRO = 'miniconda2'
@@ -115,8 +116,6 @@ class Updater(Loggable):
         # install dependencies
         import subprocess
         root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-
-
 
         if conda_env:
             conda_distro = os.path.join(conda_distro, 'envs', conda_env)
@@ -281,7 +280,8 @@ class Updater(Loggable):
 
             p = self.build_repo
             if not p:
-                self.information_dialog('Please set "build repo" in Updater Preferences')
+                self.information_dialog('Please set "build repo" in Updater Preferences',
+                                        position=STARTUP_MESSAGE_POSITION)
                 return
 
             if not os.path.isdir(p):
@@ -290,7 +290,8 @@ class Updater(Loggable):
                     url = 'https://github.com/{}.git'.format(self.remote)
                     repo = Repo.clone_from(url, p)
                 else:
-                    self.information_dialog('Please set "remote" in Updater Preferences')
+                    self.information_dialog('Please set "remote" in Updater Preferences',
+                                            position=STARTUP_MESSAGE_POSITION)
                     return
             else:
                 repo = Repo(p)
