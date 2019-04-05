@@ -15,23 +15,29 @@
 # ===============================================================================
 import os
 
+from numpy import array
 from pyface.confirmation_dialog import confirm
 from pyface.constant import OK, YES
 from pyface.file_dialog import FileDialog
 from pyface.message_dialog import information
-from traits.api import Float, Int, Str, HasTraits, List, Button, CFloat, CInt, on_trait_change
-from traitsui.api import View, UItem, TableEditor, HGroup, Item, VGroup, EnumEditor, ListStrEditor, Handler
+from traits.api import Float, Int, Str, HasTraits, List, Button, CFloat, CInt, on_trait_change, Bool
+from traitsui.api import UItem, TableEditor, HGroup, Item, VGroup, ListStrEditor, Handler, HSplit, \
+    VSplit
+from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.menu import Action, Menu as MenuManager
 from traitsui.table_column import ObjectColumn
 
 from pychron.core.csv.csv_parser import CSVColumnParser
 from pychron.core.fuzzyfinder import fuzzyfinder
+from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pychron_traits import BorderVGroup
+from pychron.core.stats import calculate_weighted_mean, calculate_mswd
 from pychron.core.ui.strings import SpacelessStr
 from pychron.paths import paths
+from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
-HEADER = 'runid', 'age', 'age_err', 'group', 'aliquot', 'sample'
+HEADER = 'enabled, runid', 'age', 'age_err', 'group', 'aliquot', 'sample'
 
 
 def make_line(vs, delimiter=','):
@@ -45,12 +51,53 @@ class CSVRecord(HasTraits):
     group = CInt
     aliquot = CInt
     sample = Str
+    status = Bool(True)
 
     def valid(self):
         return self.runid and self.age and self.age_err
 
     def to_csv(self, delimiter=','):
         return make_line([str(getattr(self, attr)) for attr in HEADER], delimiter=delimiter)
+
+
+class CSVRecordGroup(HasTraits):
+    name = Str
+    records = List
+    weighted_mean = Float
+    mean = Float
+    std = Float
+
+    weighted_mean_err = Float
+    mswd = Float
+    n = Int
+    excluded = Int
+    displayn = Str
+
+    def __init__(self, name, records, *args, **kw):
+        super(CSVRecordGroup, self).__init__(*args, **kw)
+
+        self.name = str(name)
+        self.records = list(records)
+        self.calculate()
+
+    @on_trait_change('records:[age,age_err,status]')
+    def calculate(self):
+        total = len(self.records)
+        data = array([(a.age, a.age_err) for a in self.records if a.status])
+        x, errs = data.T
+
+        self.mean = x.mean()
+        self.std = x.std()
+
+        self.n = n = len(x)
+        self.weighted_mean, self.weighted_mean_err = calculate_weighted_mean(x, errs)
+
+        self.mean = sum(x) / n
+        self.mswd = calculate_mswd(x, errs, self.weighted_mean)
+
+        self.displayn = '{}'.format(n)
+        if total > n:
+            self.displayn = '{}/{}'.format(n, total)
 
 
 class CSVDataSetFactoryHandler(Handler):
@@ -64,6 +111,8 @@ class CSVDataSetFactoryHandler(Handler):
 
 class CSVDataSetFactory(HasTraits):
     records = List
+    groups = List
+
     selected = List
     test_button = Button('Load Test Data')
     save_button = Button('Save')
@@ -167,6 +216,14 @@ class CSVDataSetFactory(HasTraits):
     def _handle_change(self):
         self.dirty = True
 
+    @on_trait_change('records:group')
+    def _handle_group_change(self):
+        self._make_groups()
+
+    def _make_groups(self):
+        rs = [r for r in self.records if r.valid()]
+        self.groups = [CSVRecordGroup(gid, rs) for gid, rs in groupby_key(rs, 'group')]
+
     def _load_csv_data(self, p):
         if os.path.isfile(p):
             parser = CSVColumnParser()
@@ -175,6 +232,9 @@ class CSVDataSetFactory(HasTraits):
             records = [CSVRecord(**row) for row in parser.values()]
             records.extend((CSVRecord() for i in range(50 - len(records))))
             self.records = records
+
+            self._make_groups()
+
             self.data_path = p
             self.dirty = False
 
@@ -186,7 +246,7 @@ class CSVDataSetFactory(HasTraits):
         self.onames = self.names
 
     def _records_default(self):
-        return [CSVRecord() for i in range(50)]
+        return [CSVRecord() for i in range(5)]
 
     def _group_selected(self, selection=None):
         if selection:
@@ -195,35 +255,61 @@ class CSVDataSetFactory(HasTraits):
                 si.group = gid
 
     def traits_view(self):
-        cols = [ObjectColumn(name='runid'),
-                ObjectColumn(name='age'),
-                ObjectColumn(name='age_err'),
-                ObjectColumn(name='group'),
-                ObjectColumn(name='aliquot'),
-                ObjectColumn(name='sample')]
+        cols = [
+            CheckboxColumn(name='status'),
+            ObjectColumn(name='status'),
+            ObjectColumn(name='runid'),
+            ObjectColumn(name='age'),
+            ObjectColumn(name='age_err'),
+            ObjectColumn(name='group'),
+            ObjectColumn(name='aliquot'),
+            ObjectColumn(name='sample'),
+        ]
+
+        gcols = [ObjectColumn(name='name'),
+                 ObjectColumn(name='weighted_mean', label='Wtd. Mean',
+                              format='%0.6f', ),
+                 ObjectColumn(name='weighted_mean_err',
+                              format='%0.6f',
+                              label=PLUSMINUS_ONE_SIGMA),
+                 ObjectColumn(name='mswd',
+                              format='%0.3f',
+                              label='MSWD'),
+                 ObjectColumn(name='displayn', label='N'),
+                 ObjectColumn(name='mean', format='%0.6f', label='Mean'),
+                 ObjectColumn(name='std', format='%0.6f', label='Std')
+                 ]
 
         button_grp = HGroup(UItem('save_button'), UItem('save_as_button'),
                             UItem('clear_button'), UItem('open_via_finder_button'), UItem('test_button')),
 
         repo_grp = VGroup(BorderVGroup(UItem('repo_filter'),
-                                       UItem('repositories', editor=ListStrEditor(selected='repository')),
+                                       UItem('repositories',
+                                             width=200,
+                                             editor=ListStrEditor(selected='repository')),
                                        label='Repositories'),
                           BorderVGroup(UItem('name_filter'),
                                        UItem('names', editor=ListStrEditor(selected='name')),
                                        label='DataSets'))
-        record_grp = VGroup(UItem('records', editor=TableEditor(columns=cols,
+
+        record_grp = VSplit(UItem('records', editor=TableEditor(columns=cols,
                                                                 selected='selected',
                                                                 sortable=False,
+                                                                edit_on_first_click=False,
+                                                                # clear_selection_on_dclicked=True,
                                                                 menu=MenuManager(Action(name='Group Selected',
                                                                                         perform=self._group_selected)),
-                                                                selection_mode='rows')))
-        main_grp = HGroup(repo_grp, record_grp)
+                                                                selection_mode='rows')),
+                            UItem('groups', editor=TableEditor(columns=gcols)))
+
+        main_grp = HSplit(repo_grp, record_grp)
 
         v = okcancel_view(VGroup(button_grp, main_grp),
-                          width=600,
+                          width=800,
                           height=500,
                           title='CSV Dataset',
-                          handler=CSVDataSetFactoryHandler())
+                          # handler=CSVDataSetFactoryHandler()
+                          )
         return v
 
     def _test_button_fired(self):
@@ -238,6 +324,10 @@ class CSVDataSetFactory(HasTraits):
         self.records[0].age_err = 10
         self.records[1].age_err = 20
         self.records[2].age_err = 30
+
+        self._make_groups()
+        # rs = [r for r in self.records if r.valid()]
+        # self.groups = [CSVRecordGroup(gid, rs) for gid, rs in groupby_key(rs, 'group')]
 
 
 if __name__ == '__main__':
