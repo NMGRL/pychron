@@ -20,9 +20,7 @@ import os
 import time
 from datetime import datetime, timedelta
 
-from pyface.constant import OK
-from pyface.file_dialog import FileDialog
-from pyface.message_dialog import warning, information
+from pyface.message_dialog import warning
 from pyface.timer.do_later import do_after
 from traits.api import Instance, Bool, Int, Str, List, Enum, Float, Time
 from traitsui.api import Item, EnumEditor, CheckListEditor
@@ -30,6 +28,7 @@ from traitsui.api import Item, EnumEditor, CheckListEditor
 from pychron.core.helpers.iterfuncs import groupby_idx
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.globals import globalv
+from pychron.pipeline.csv_dataset_factory import CSVDataSetFactory
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pychron_constants import ANALYSIS_TYPES
 
@@ -137,7 +136,7 @@ class DataNode(DVCNode):
         return self.set_browser_analyses()
 
 
-class CSVNode(BaseNode):
+class CSVNode(BaseDVCNode):
     path = Str
     name = 'CSV Data'
 
@@ -150,26 +149,39 @@ class CSVNode(BaseNode):
             self._manual_configured = True
 
         if not self.path or not os.path.isfile(self.path):
-            msg = '''CSV File Format
-Create/select a file with a column header as the first line. 
-The following columns are required:
+            dsf = CSVDataSetFactory(dvc=self.dvc)
+            dsf.load()
+            info = dsf.edit_traits()
+            if info.result:
+                if dsf.data_path:
+                    self.path = dsf.data_path
 
-runid, age, age_err
-
-Optional columns are:
-
-group, aliquot, sample
-
-e.x.
-runid, age, age_error
-Run1, 10, 0.24
-Run2, 11, 0.32
-Run3, 10, 0.40'''
-            information(None, msg)
-
-            dlg = FileDialog()
-            if dlg.open() == OK:
-                self.path = dlg.path
+            # if confirm(None, 'Would you like to create a new CSV dataset?'):
+            #     # open a table editor to enter all the information
+            #     pass
+            # else:
+            #     # select a file from DVC or native finder
+            #     pass
+        #             msg = '''CSV File Format
+        # Create/select a file with a column header as the first line.
+        # The following columns are required:
+        #
+        # runid, age, age_err
+        #
+        # Optional columns are:
+        #
+        # group, aliquot, sample
+        #
+        # e.x.
+        # runid, age, age_error
+        # Run1, 10, 0.24
+        # Run2, 11, 0.32
+        # Run3, 10, 0.40'''
+        #             information(None, msg)
+        #
+        #             dlg = FileDialog()
+        #             if dlg.open() == OK:
+        #                 self.path = dlg.path
 
         return bool(self.path)
 
@@ -199,21 +211,6 @@ Run3, 10, 0.40'''
 
     def _get_items_from_file(self, parser):
         from pychron.processing.analyses.file_analysis import FileAnalysis
-
-        # def gen():
-        #     for d in parser.values():
-        #         try:
-        #             f = FileAnalysis(age=float(d['age']),
-        #                              age_err=float(d['age_err']),
-        #                              record_id=d['runid'],
-        #                              sample=d.get('sample', ''),
-        #                              aliquot=int(d.get('aliquot', 0)),
-        #                              group_id=int(d.get('group', 0)))
-        #             yield f
-        #         except TypeError:
-        #             pass
-        #
-
         try:
             ans = [(d.get('group', 0), FileAnalysis(age=float(d['age']),
                                                     age_err=float(d['age_err']),
@@ -222,7 +219,7 @@ Run3, 10, 0.40'''
                                                     aliquot=int(d.get('aliquot', 0)))) for d in parser.values()]
             items = []
             for i, (gid, aa) in enumerate(groupby_idx(ans, 0)):
-                for ai in aa:
+                for _, ai in aa:
                     ai.group_id = i
                     items.append(ai)
             return items

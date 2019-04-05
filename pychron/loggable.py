@@ -161,6 +161,7 @@ class Loggable(HasTraits):
     def information_dialog(self, msg, title='Information', **kw):
         from pychron.core.ui.dialogs import myMessageDialog
 
+        self.info(msg)
         dlg = myMessageDialog(parent=None, message=msg,
                               title=title,
                               severity='information', **kw)
