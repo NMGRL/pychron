@@ -13,10 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from __future__ import absolute_import
 
 import re
-
 import six
 from traitsui.api import View, Item, HGroup, Group, ListEditor, InstanceEditor
 

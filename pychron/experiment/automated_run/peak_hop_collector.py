@@ -52,7 +52,9 @@ class PeakHopCollector(DataCollector):
 
     def _iter_hook(self, i):
         return self._iteration(i, detectors=self._detectors)
+
         # args = self._do_hop()
+        #
         # if args:
         #     is_baseline, dets, isos = args
         #     if not is_baseline:

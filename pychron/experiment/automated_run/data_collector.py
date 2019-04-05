@@ -177,6 +177,36 @@ class DataCollector(Consoleable):
 
         self.debug('measurement finished')
 
+    def _pre_trigger_hook(self):
+        return True
+
+    # def _iter(self, i):
+    #     # st = time.time()
+    #     result = self._check_iteration(i)
+    #     # self.debug('check iteration duration={}'.format(time.time() - st))
+    #
+    #     if not result:
+    #         try:
+    #             if i <= 1:
+    #                 self.automated_run.plot_panel.counts = 1
+    #             else:
+    #                 self.automated_run.plot_panel.counts += 1
+    #         except AttributeError:
+    #             pass
+    #
+    #         if not self._iter_hook(i):
+    #             # evt.set()
+    #             return
+    #
+    #         self._post_iter_hook(i)
+    #         return True
+    #     else:
+    #         if result == 'cancel':
+    #             self.canceled = True
+    #         elif result == 'terminate':
+    #             self.terminated = True
+    #             # evt.set()
+
     def _post_iter_hook(self, i):
         if self.experiment_type == AR_AR and self.refresh_age and not i % 5:
             self.isotope_group.calculate_age(force=True)
