@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
-from enable.colors import black_color_trait
+from enable.colors import black_color_trait, ColorTrait
 # ============= standard library imports ========================
 from numpy import array, zeros
 from traits.api import Array
@@ -32,6 +32,7 @@ class ErrorEnvelopeOverlay(AbstractOverlay):
     lower = Array
     use_downsampling = False
     line_color = black_color_trait
+    region_color = ColorTrait((0.5, 0.5, 0.5, 0.5))
     use_region = False
     xs = None
 
@@ -90,7 +91,8 @@ class ErrorEnvelopeOverlay(AbstractOverlay):
                 gc.line_to(x2, y2)
                 gc.line_to(x3, y3)
                 gc.line_to(x4, y4)
-                gc.set_fill_color((1, 0.4, 0.1, 0.5))
+                # gc.set_fill_color((1, 0.4, 0.1, 0.5))
+                gc.set_fill_color(self.region_color_)
                 gc.fill_path()
 
             else:

@@ -56,8 +56,8 @@ class BaseRegressor(HasTraits):
     filter_outliers_dict = Dict
     truncate = Str
 
-    filter_xs = Array
-    filter_ys = Array
+    # filter_xs = Array
+    # filter_ys = Array
     # _filtering = Bool(False)
 
     error_calc_type = 'CI'

@@ -43,23 +43,23 @@ class RegressionView(HasTraits):
         for i, iso in enumerate(isos):
             sniff = iso.sniff
             sg.new_plot(ytitle=iso.name, xtitle='Time (s)', title='Equilibration')
-            if sniff.xs.shape[0]:
+            if sniff.offset_xs.shape[0]:
                 sg.new_series(sniff.offset_xs, sniff.ys, marker='circle', type='scatter')
-            sg.set_y_limits(pad='0.1', plotid=i)
-            sg.set_x_limits(min_=0, max_=max(sniff.offset_xs)*1.05, plotid=i)
+                sg.set_y_limits(pad='0.1', plotid=i)
+                sg.set_x_limits(min_=0, max_=max(sniff.offset_xs)*1.05, plotid=i)
 
         bg = StackedRegressionGraph(container_dict=container_dict)
 
         for i, iso in enumerate(isos):
             baseline = iso.baseline
             bg.new_plot(ytitle=baseline.detector, xtitle='Time (s)', title='Baseline')
-            if baseline.xs.shape[0]:
+            if baseline.offset_xs.shape[0]:
                 bg.new_series(baseline.offset_xs, baseline.ys,
                               filter_outliers_dict=baseline.filter_outliers_dict,
                               display_filter_bounds=True,
                               color='red', type='scatter', fit=baseline.efit)
-            bg.set_y_limits(pad='0.1', plotid=i)
-            bg.set_x_limits(pad='0.025', plotid=i)
+                bg.set_y_limits(pad='0.1', plotid=i)
+                bg.set_x_limits(pad='0.025', plotid=i)
 
         bg.refresh()
 
@@ -67,13 +67,13 @@ class RegressionView(HasTraits):
 
         for i, iso in enumerate(isos):
             ig.new_plot(ytitle=iso.name, xtitle='Time (s)', title='Isotope')
-            if iso.xs.shape[0]:
+            if iso.offset_xs.shape[0]:
                 ig.new_series(iso.offset_xs, iso.ys,
                               display_filter_bounds=True,
                               filter_outliers_dict=iso.filter_outliers_dict,
                               color='blue', type='scatter', fit=iso.efit)
-            ig.set_y_limits(pad='0.1', plotid=i)
-            ig.set_x_limits(min_=0, max_=max(iso.offset_xs)*1.05, plotid=i)
+                ig.set_y_limits(pad='0.1', plotid=i)
+                ig.set_x_limits(min_=0, max_=max(iso.offset_xs)*1.05, plotid=i)
 
         ig.refresh()
 
