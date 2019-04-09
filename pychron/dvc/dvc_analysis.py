@@ -389,11 +389,12 @@ class DVCAnalysis(Analysis):
             for k in isoks:
                 try:
                     iso = isos[k]
-                    siso = sisos[k]
-                    if siso:
-                        update(iso, siso)
                 except KeyError:
-                    pass
+                    iso = {}
+
+                siso = sisos[k]
+                if siso:
+                    update(iso, siso)
 
             self._dump(isos, path)
 
