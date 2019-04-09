@@ -391,6 +391,7 @@ class DVCAnalysis(Analysis):
                     iso = isos[k]
                 except KeyError:
                     iso = {}
+                    isos[k] = iso
 
                 siso = sisos[k]
                 if siso:
