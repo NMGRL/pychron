@@ -51,7 +51,7 @@ class ValvePyScript(PyScript):
     @command_register
     def lock(self, name=None, description=''):
         if description is None:
-            description = '---'
+            description = NULL_STR
 
         self.console_info('locking {} ({})'.format(name, description))
         if self.allow_lock:
@@ -64,7 +64,7 @@ class ValvePyScript(PyScript):
     @command_register
     def unlock(self, name=None, description=''):
         if description is None:
-            description = '---'
+            description = NULL_STR
 
         self.console_info('unlocking {} ({})'.format(name, description))
         if self.allow_lock:

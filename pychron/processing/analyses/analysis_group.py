@@ -29,7 +29,7 @@ from pychron.processing.analyses.preferred import Preferred
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
 from pychron.pychron_constants import ALPHAS, MSEM, SD, SUBGROUPING_ATTRS, ERROR_TYPES, WEIGHTED_MEAN, \
-    DEFAULT_INTEGRATED, SUBGROUPINGS, ARITHMETIC_MEAN, PLATEAU_ELSE_WEIGHTED_MEAN, WEIGHTINGS, FLECK
+    DEFAULT_INTEGRATED, SUBGROUPINGS, ARITHMETIC_MEAN, PLATEAU_ELSE_WEIGHTED_MEAN, WEIGHTINGS, FLECK, NULL_STR
 
 
 def AGProperty(*depends):
@@ -987,7 +987,7 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
             v = getattr(self, t)
             a, e = nominal_value(v), std_dev(v)
         except AttributeError:
-            a, e = '---', '---'
+            a, e = NULL_STR, NULL_STR
 
         return a, e
 

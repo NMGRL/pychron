@@ -27,6 +27,7 @@ from uncertainties import nominal_value, std_dev
 from pychron.core.configurable_tabular_adapter import ConfigurableMixin
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.helpers.formatting import format_percent_error
+from pychron.pychron_constants import NULL_STR
 
 SIGMA_1 = u'\u00b11\u03c3'
 TABLE_FONT = 'arial 11'
@@ -93,7 +94,7 @@ class DetectorRatioTabularAdapter(BaseTabularAdapter):
         try:
             return floatfmt(getattr(self.item, attr))
         except AttributeError:
-            return '---'
+            return NULL_STR
 
     def _get_ic_factor_text(self):
         return self._get_attr_text('ic_factor')
