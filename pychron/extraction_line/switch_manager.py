@@ -259,11 +259,11 @@ class SwitchManager(Manager):
     def get_valve_by_description(self, a, name=None):
         """
         """
-        if name and name!=NULL_STR:
+        if name and name != NULL_STR:
             v = self._get_valve_by((a, name), ('description', 'name'))
         else:
             v = self._get_valve_by(a, 'description')
-            return v
+        return v
 
     def get_switch_by_name(self, n):
         """
