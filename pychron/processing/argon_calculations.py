@@ -255,7 +255,11 @@ def apply_fixed_k3739(a39, pr, fixed_k3739):
         ca37=(T*x*y)/(x+y)
     """
     x = fixed_k3739
-    y = 1 / pr.get('Ca3937', 1)
+    try:
+        y = 1 / pr.get('Ca3937', 1)
+    except ZeroDivisionError:
+        y = 1
+
     ca37 = (a39 * x * y) / (x + y)
     ca39 = pr.get('Ca3937', 0) * ca37
     k39 = a39 - ca39

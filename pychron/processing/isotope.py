@@ -215,12 +215,12 @@ class IsotopicMeasurement(BaseMeasurement):
     @property
     def user_excluded(self):
         if self._regressor:
-            return self._regressor.user_excluded
+            return [int(i) for i in self._regressor.user_excluded]
 
     @property
     def outlier_excluded(self):
         if self._regressor:
-            return self._regressor.outlier_excluded
+            return [int(i) for i in self._regressor.outlier_excluded]
 
     def set_user_excluded(self, ue):
         if ue:
