@@ -159,7 +159,7 @@ class Series(BaseSeries):
             elif po.use_percent_dev:
                 ytitle = '{} Dev %'.format(ytitle)
 
-            kw = {'padding': self.options.paddings(),
+            kw = {'padding': self.options.get_paddings(),
                   'ytitle': ytitle}
 
             if self.options.use_time_axis:

@@ -132,7 +132,7 @@ class BaseArArFigure(SelectionFigure):
             if self.xtitle:
                 kw['xtitle'] = self.xtitle
 
-            kw['padding'] = self.options.paddings()
+            kw['padding'] = self.options.get_paddings()
             p = graph.new_plot(**kw)
             if i == (len(plots) - 1):
                 p.title_font = self.options.title_font

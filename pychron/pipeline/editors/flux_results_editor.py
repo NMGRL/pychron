@@ -16,7 +16,8 @@
 from operator import attrgetter
 
 # ============= enthought library imports =======================
-from numpy import average, array
+from numpy import average, array, diff, arctan
+from scipy.stats import mode
 from traits.api import HasTraits, Str, Int, Bool, Float, Property, List, Event, Button, on_trait_change
 from traitsui.api import View, UItem, TableEditor, VGroup, HGroup, Item, spring, Tabbed, Readonly, EnumEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
@@ -30,7 +31,7 @@ from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.pipeline.editors.flux_visualization_editor import BaseFluxVisualizationEditor
 from pychron.pipeline.plot.plotter.arar_figure import SelectionFigure
 from pychron.processing.argon_calculations import calculate_flux
-from pychron.pychron_constants import MSEM, SD
+from pychron.pychron_constants import MSEM, SD, LEAST_SQUARES_1D, WEIGHTED_MEAN_1D
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 
@@ -240,6 +241,23 @@ class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
         ans = []
         slope = True
         prev = None
+
+        # calculate padding of the individuals analyses
+        # by taking mean of the diffs between adjacent positions divided by 4
+        if opt.model_kind in (LEAST_SQUARES_1D, WEIGHTED_MEAN_1D):
+            idx = 0 if self.plotter_options.one_d_axis == 'X' else 1
+            vs = array([p[idx] for p in geom])
+            vs = abs(diff(vs))
+            vs = vs[vs.astype(bool)].mean()
+        else:
+            vs = [p[1]/p[0] for p in geom]
+            vs = arctan(vs)
+
+            vs = abs(diff(vs))
+            vs = mode(vs[vs.astype(bool)], axis=None)[0][0]
+
+        padding = vs / 4.
+
         for identifier, ais in groupby_key(monitors, 'identifier'):
 
             ais = list(ais)
@@ -271,7 +289,7 @@ class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
             if prev:
                 slope = prev < p.j
             prev = p.j
-            vs = self._sort_individuals(p, monage, lk, slope)
+            vs = self._sort_individuals(p, monage, lk, slope, padding)
             if ans:
                 ans = [list(ans[i]) + list(v) for i, v in enumerate(vs)]
                 # ans = [ans[0].extend(aa), ans[0].extend(xx), ans[0].extend(yy), ans[0].extend(es)]
