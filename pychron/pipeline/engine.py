@@ -30,7 +30,7 @@ from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pipeline.grouping import group_analyses_by_key
-from pychron.pipeline.nodes import FindReferencesNode
+from pychron.pipeline.nodes import FindReferencesNode, AuditNode
 from pychron.pipeline.nodes import PushNode
 from pychron.pipeline.nodes import ReviewNode
 from pychron.pipeline.nodes.base import BaseNode
@@ -546,6 +546,13 @@ class PipelineEngine(Loggable):
             self.pipeline.add_after(node, new)
             if new.use_save_node:
                 self.add_iso_evo_persist(new)
+
+    def add_audit(self, node=None):
+        new = AuditNode()
+        if new.configure():
+            node = self._get_last_node(node)
+
+            self.pipeline.add_after(node, new)
 
     # save
     def add_icfactor_persist(self, node=None):
