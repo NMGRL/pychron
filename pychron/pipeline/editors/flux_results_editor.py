@@ -16,7 +16,7 @@
 from operator import attrgetter
 
 # ============= enthought library imports =======================
-from numpy import average, array, diff, arctan
+from numpy import average, array, diff, arctan, Inf
 from scipy.stats import mode
 from traits.api import HasTraits, Str, Int, Bool, Float, Property, List, Event, Button, on_trait_change
 from traitsui.api import View, UItem, TableEditor, VGroup, HGroup, Item, spring, Tabbed, Readonly, EnumEditor
@@ -250,7 +250,7 @@ class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
             vs = abs(diff(vs))
             vs = vs[vs.astype(bool)].mean()
         else:
-            vs = [p[1]/p[0] for p in geom]
+            vs = [p[1]/p[0] if p[0] else Inf for p in geom]
             vs = arctan(vs)
 
             vs = abs(diff(vs))
