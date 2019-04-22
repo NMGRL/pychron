@@ -954,7 +954,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
             mt = group.isochron_mswd()
             try:
-                trapped = 1 / group.isochron_4036
+                trapped = group.isochron_4036
                 trapped_value, trapped_error = nominal_value(trapped), std_dev(trapped)
             except ZeroDivisionError:
                 trapped_value, trapped_error = 'NaN', 'NaN'

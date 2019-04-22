@@ -394,7 +394,7 @@ class InverseIsochron(Isochron):
         ag = self.analysis_group
 
         age = ag.isochron_age
-        a = ag.isochron_4036
+        a = ag.isochron_3640
 
         n = ag.nanalyses
         mswd = ag.isochron_regressor.mswd

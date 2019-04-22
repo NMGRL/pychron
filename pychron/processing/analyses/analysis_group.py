@@ -115,7 +115,7 @@ class AnalysisGroup(IdeogramPlotable):
     # percent_39Ar = AGProperty()
     dirty = Event
 
-    isochron_4036 = None
+    isochron_3640 = None
     isochron_regressor = None
 
     def __init__(self, *args, **kw):
@@ -211,7 +211,7 @@ class AnalysisGroup(IdeogramPlotable):
         args = self.get_isochron_data()
         if args:
             age = args[0]
-            self.isochron_4036 = args[1]
+            self.isochron_3640 = args[1]
             reg = args[2]
             self.isochron_regressor = reg
             v, e = nominal_value(age), std_dev(age)
@@ -220,13 +220,21 @@ class AnalysisGroup(IdeogramPlotable):
             return ufloat(v, e)
 
     def isochron_mswd(self):
-        if not self.isochron_4036:
+        if not self.isochron_3640:
             self.calculate_isochron_age()
         reg = self.isochron_regressor
 
         return reg.mswd, reg.valid_mswd, reg.n
 
     # properties
+    @property
+    def isochron_4036(self):
+        if self.isochron_3640:
+            v = 1 / self.isochron_3640
+        else:
+            v = ufloat(0, 0)
+        return v
+
     @property
     def nratio(self):
         return '{}/{}'.format(self.nanalyses, len(self.analyses))
@@ -420,7 +428,7 @@ class AnalysisGroup(IdeogramPlotable):
 
             f = ufloat(wmean, werr)
         else:
-            f = rs.sum()/sks
+            f = rs.sum() / sks
 
         return f
 
@@ -458,12 +466,12 @@ class AnalysisGroup(IdeogramPlotable):
                 if attr == 'kca':
                     cas = array([ai.get_non_ar_isotope('ca37') for ai in ans])
                     f = self._calculate_integrated_mean_error(weighting, ks, cas)
-                    uv = 1/apply_pr(f, 'Ca_K')
+                    uv = 1 / apply_pr(f, 'Ca_K')
 
                 elif attr == 'kcl':
                     cls = array([ai.get_non_ar_isotope('cl38') for ai in ans])
                     f = self._calculate_integrated_mean_error(weighting, ks, cls)
-                    uv = 1/apply_pr(f, 'Cl_K')
+                    uv = 1 / apply_pr(f, 'Cl_K')
 
                 elif attr == 'signal_k39':
                     uv = ks.sum()
@@ -560,7 +568,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
         v = None
         if state:
             self.calculate_isochron_age()
-            v = 1 / self.isochron_4036
+            v = self.isochron_4036
             if not include_error:
                 v = ufloat(nominal_value(v), std_dev=0)
 
