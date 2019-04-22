@@ -76,7 +76,10 @@ class BaseFindFluxNode(FindNode):
     def _get_levels(self):
         if self.irradiation and self.dvc:
             irrad = self.dvc.get_irradiation(self.irradiation)
-            return sorted([l.name for l in irrad.levels])
+            if irrad:
+                return sorted([l.name for l in irrad.levels])
+            else:
+                return []
         else:
             return []
 
