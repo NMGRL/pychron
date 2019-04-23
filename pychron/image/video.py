@@ -64,8 +64,8 @@ def convert_to_video(path, fps, name_filter='snapshot%03d.jpg',
     subprocess.call(call_args)
 
 
-BIT_8 = 2**8-1
-BIT_16 = 2**16-1
+BIT_8 = 2 ** 8 - 1
+BIT_16 = 2 ** 16 - 1
 
 
 def pil_save(src, p):
@@ -74,7 +74,7 @@ def pil_save(src, p):
         # assume its a pylon mono12 frame
         # for tiff need to rescale image to 16bit
         # for jpg need to rescale to 8bit and change dtype
-        src = src/4095
+        src = src / 4095
 
         if ext == '.jpg':
             src = (src * BIT_8).astype('uint8')
@@ -108,6 +108,7 @@ class Video(Image):
     ffmpeg_path = Str
     fps = Int
     identifier = 0
+    max_recording_duration = Float
 
     @property
     def pixel_depth(self):
@@ -139,6 +140,7 @@ class Video(Image):
                     self.output_pic_mode = vid.get('output_pic_mode', 'jpg')
                     self.ffmpeg_path = vid.get('ffmpeg_path', '')
                     self.fps = vid.get('fps')
+                    self.max_recording_duration = vid.get('max_recording_duration', 30)
 
                 if hasattr(self.cap, 'load_configuration'):
                     self.cap.load_configuration(cfg)
@@ -249,9 +251,11 @@ class Video(Image):
 
             return True
 
-    def _ffmpeg_record(self, path, stop, fps, renderer=None):
+    def _ffmpeg_record(self, path, stop, renderer=None):
         """
             use ffmpeg to stitch a directory of jpegs into a video
+
+            max_duration: recording will stop after max_duration minutes
 
         """
         root = os.path.dirname(path)
@@ -274,19 +278,22 @@ class Video(Image):
                 if frame is not None:
                     pil_save(frame, p)
 
-        fps_1 = 1 / fps
+        fps_1 = 1 / self.fps
 
         ext = self.output_pic_mode
+        max_duration = self.max_recording_duration * 60
+        start = time.time()
         while not stop.is_set():
             st = time.time()
-            pn = os.path.join(image_dir, 'image_{:05d}.{}'.format(cnt, ext))
 
-            renderer(pn)
+            if max_duration and st - start > max_duration:
+                break
+
+            renderer(os.path.join(image_dir, 'image_{:05d}.{}'.format(cnt, ext)))
             cnt += 1
-            dur = time.time() - st
-            time.sleep(max(0, fps_1 - dur))
+            time.sleep(max(0, fps_1 - (time.time() - st)))
 
-        self._convert_to_video(image_dir, fps, name_filter='image_%05d.{}'.format(ext), output=path)
+        self._convert_to_video(image_dir, name_filter='image_%05d.{}'.format(ext), output=path)
 
         if self._save_ok_event:
             self._save_ok_event.set()
@@ -322,8 +329,8 @@ class Video(Image):
             if s:
                 return img
 
-    def _convert_to_video(self, path, fps, name_filter='snapshot%03d.jpg', output=None):
+    def _convert_to_video(self, path, name_filter='snapshot%03d.jpg', output=None):
         ffmpeg = self.ffmpeg_path
-        convert_to_video(path, fps, name_filter, ffmpeg, output)
+        convert_to_video(path, self.fps, name_filter, ffmpeg, output)
 
 # =================== EOF =================================================
