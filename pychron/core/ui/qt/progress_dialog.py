@@ -131,10 +131,14 @@ class myProgressDialog(ProgressDialog):
         return self._user_accepted
 
     def change_message(self, message, auto_increment=True):
+        print('asdf', message)
         try:
             self.message_control.setText(message)
             if auto_increment:
                 self.increment()
+            else:
+                QtGui.QApplication.processEvents()
+
         except RuntimeError as e:
             print('exception', e)
 

@@ -137,7 +137,7 @@ class Locator(Loggable):
         self.info('dx={}, dy={}'.format(dx, dy))
         return dx, dy
 
-    def _find_targets(self, image, frame, dim, shape,
+    def _find_targets(self, image, frame, dim, shape='circle',
                       search=None, preprocess=True,
                       filter_targets=True,
                       convexity_filter=False,
