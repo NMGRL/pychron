@@ -16,7 +16,7 @@
 from operator import attrgetter
 
 # ============= enthought library imports =======================
-from numpy import average, array, diff, arctan, Inf
+from numpy import average, array, diff, arctan, Inf, mean, std
 from scipy.stats import mode
 from traits.api import HasTraits, Str, Int, Bool, Float, Property, List, Event, Button, on_trait_change
 from traitsui.api import View, UItem, TableEditor, VGroup, HGroup, Item, spring, Tabbed, Readonly, EnumEditor
@@ -35,13 +35,16 @@ from pychron.pychron_constants import MSEM, SD, LEAST_SQUARES_1D, WEIGHTED_MEAN_
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 
-def mean_j(ans, error_kind, monitor_age, lambda_k):
+def mean_j(ans, use_weights, error_kind, monitor_age, lambda_k):
     js = [calculate_flux(ai.uF, monitor_age, lambda_k=lambda_k) for ai in ans]
 
     fs = [nominal_value(fi) for fi in js]
     es = [std_dev(fi) for fi in js]
 
-    av, werr = calculate_weighted_mean(fs, es)
+    if use_weights:
+        av, werr = calculate_weighted_mean(fs, es)
+    else:
+        av, werr = mean(fs), std(fs)
 
     mswd = None
     if error_kind == SD:
@@ -181,11 +184,11 @@ class FluxPosition(HasTraits):
     bracket_b = Int
     available_positions = List
 
-    def set_mean_j(self):
+    def set_mean_j(self, use_weights):
 
         ans = [a for a in self.analyses if not a.is_omitted()]
         if ans:
-            j, mswd = mean_j(ans, self.error_kind, self.monitor_age, self.lambda_k)
+            j, mswd = mean_j(ans, use_weights, self.error_kind, self.monitor_age, self.lambda_k)
             self.mean_j = nominal_value(j)
             self.mean_jerr = std_dev(j)
             self.mean_j_mswd = mswd
@@ -284,7 +287,7 @@ class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
                              x=x, y=y,
                              n=n)
 
-            p.set_mean_j()
+            p.set_mean_j(self.plotter_options.use_weighted_fit)
             poss.append(p)
             if prev:
                 slope = prev < p.j
@@ -323,11 +326,11 @@ class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
             for p in self.monitor_positions:
                 if p.identifier == identifier:
                     # self.debug('recalculate position {} {}, {}'.format(sel, p.hole_id, p.identifier))
-                    p.set_mean_j()
+                    p.set_mean_j(self.plotter_options.use_weighted_fit)
                     p.was_altered = True
                 elif p.was_altered:
                     # self.debug('was altered recalculate position {} {}, {}'.format(sel, p.hole_id, p.identifier))
-                    p.set_mean_j()
+                    p.set_mean_j(self.plotter_options.use_weighted_fit)
                     p.was_altered = False
 
         self.predict_values(refresh=True)

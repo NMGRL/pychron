@@ -20,7 +20,7 @@ from traitsui.api import Item, HGroup, VGroup, Readonly, EnumEditor
 
 from pychron.core.pychron_traits import BorderVGroup
 from pychron.options.options import SubOptions, AppearanceSubOptions
-from pychron.pychron_constants import MAIN, APPEARANCE, LEAST_SQUARES_1D, MATCHING, WEIGHTED_MEAN_1D
+from pychron.pychron_constants import MAIN, APPEARANCE, LEAST_SQUARES_1D, WEIGHTED_MEAN_1D
 
 
 class FluxSubOptions(SubOptions):
@@ -33,7 +33,7 @@ class FluxSubOptions(SubOptions):
                                        Item('error_kind', label='Mean J Error'),
                                        Item('predicted_j_error_type', label='Predicted J Error'),
 
-                                       Item('use_weighted_fit', visible_when='model_kind!="{}"'.format(MATCHING)),
+                                       Item('use_weighted_fit'),
                                        Item('least_squares_fit',
                                             visible_when='model_kind=="{}"'.format(LEAST_SQUARES_1D)),
                                        Item('one_d_axis', label='Axis',
