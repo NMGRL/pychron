@@ -217,8 +217,7 @@ class Video(Image):
         if self.cap is not None:
             self._recording = True
 
-            t = Thread(target=self._ffmpeg_record, args=(path, self._stop_recording_event,
-                                                         self.fps, renderer))
+            t = Thread(target=self._ffmpeg_record, args=(path, self._stop_recording_event, renderer))
             t.start()
 
     def stop_recording(self, wait=False):
