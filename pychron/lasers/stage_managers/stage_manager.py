@@ -155,14 +155,22 @@ class StageManager(BaseStageManager):
                         factory=ColorPreferenceBinding)
         #        bind_preference(self.canvas, 'render_map', '{}.render_map'.format(pref_id))
         #
+
         bind_preference(self.canvas, 'crosshairs_kind', '{}.crosshairs_kind'.format(pref_id))
-        bind_preference(self.canvas, 'crosshairs_line_width', '{}.crosshairs_line_width'.format(pref_id))
-        bind_preference(self.canvas, 'crosshairs_color',
-                        '{}.crosshairs_color'.format(pref_id),
-                        factory=ColorPreferenceBinding)
-        bind_preference(self.canvas, 'crosshairs_radius', '{}.crosshairs_radius'.format(pref_id))
-        bind_preference(self.canvas, 'crosshairs_offsetx', '{}.crosshairs_offsetx'.format(pref_id))
-        bind_preference(self.canvas, 'crosshairs_offsety', '{}.crosshairs_offsety'.format(pref_id))
+        for tag in ('', 'aux_'):
+            for key in ('line_width', 'color', 'radius', 'offsetx', 'offsety'):
+                key = '{}crosshairs_{}'.format(tag, key)
+                factory = ColorPreferenceBinding if key.endswith('color') else None
+                pref = '{}.{}'.format(pref_id, key)
+                bind_preference(self.canvas, key, pref, factory=factory)
+
+            # bind_preference(self.canvas, '{}crosshairs_line_width', '{}.{}crosshairs_line_width'.format(pref_id))
+            # bind_preference(self.canvas, 'crosshairs_color',
+            #                 '{}.crosshairs_color'.format(pref_id),
+            #                 factory=ColorPreferenceBinding)
+            # bind_preference(self.canvas, 'crosshairs_radius', '{}.crosshairs_radius'.format(pref_id))
+            # bind_preference(self.canvas, 'crosshairs_offsetx', '{}.crosshairs_offsetx'.format(pref_id))
+            # bind_preference(self.canvas, 'crosshairs_offsety', '{}.crosshairs_offsety'.format(pref_id))
 
         bind_preference(self.canvas, 'show_hole_label', '{}.show_hole_label'.format(pref_id))
         bind_preference(self.canvas, 'hole_label_color', '{}.hole_label_color'.format(pref_id))

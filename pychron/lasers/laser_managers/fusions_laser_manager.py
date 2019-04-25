@@ -318,6 +318,8 @@ class FusionsLaserManager(LaserManager):
         if self.stage_manager is not None:
             self.stage_manager.set_stage_map(mapname)
 
+    def get_pyrometer_temperature(self):
+        pass
     # ===============================================================================
     # pyscript interface
     # ===============================================================================

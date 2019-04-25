@@ -18,6 +18,8 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from __future__ import absolute_import
+
+from pychron.core.helpers.binpack import encode_blob
 from pychron.core.helpers.strtools import to_bool
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.tx.errors import EnableErrorCode
@@ -87,6 +89,7 @@ class LaserProtocol(ServiceProtocol):
                     ('GetAchievedOutput', '_get_achieved_output'),
                     ('GetResponseBlob', '_get_response_blob'),
                     ('GetOutputBlob', '_get_output_blob'),
+                    ('GetPyrometerTemperature', '_get_pyrometer_temperature'),
                     ('GoToNamedPosition', '_go_to_named_position'),
                     ('GoToPoint', '_go_to_point'),
                     # ('TracePath', '_trace_path'),
@@ -227,11 +230,13 @@ class LaserProtocol(ServiceProtocol):
         return self._manager.get_achieved_output()
 
     def _get_response_blob(self, data):
-        return self._manager.get_response_blob()
+        return encode_blob(self._manager.get_response_blob())
 
     def _get_output_blob(self, data):
-        return self._manager.get_output_blob()
+        return encode_blob(self._manager.get_output_blob())
 
+    def _get_pyrometer_temperature(self, data):
+        return self._manager.get_pyrometer_temperature()
     # ===============================================================================
     # Motors
     # ===============================================================================

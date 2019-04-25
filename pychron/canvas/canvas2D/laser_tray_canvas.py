@@ -102,6 +102,7 @@ class ImageOverlay(AbstractOverlay):
         self.request_redraw()
 
 
+
 class LaserTrayCanvas(StageCanvas):
     """
     """
@@ -128,6 +129,19 @@ class LaserTrayCanvas(StageCanvas):
     crosshairs_offsety = Float
     crosshairs_line_width = Float(1.0)
 
+    aux_show_laser_position = Bool(True)
+    aux_show_desired_position = False
+    aux_desired_position = None
+    aux_desired_position_color = None
+
+    aux_crosshairs_color = Color('red')
+    aux_crosshairs_kind = Enum('UserRadius')
+    aux_crosshairs_offset_color = Color('red')
+    aux_crosshairs_radius = Range(0.0, 10.0, 1.0)
+    aux_crosshairs_offsetx = Float
+    aux_crosshairs_offsety = Float
+    aux_crosshairs_line_width = Float(1.0)
+
     show_hole_label = Bool(True)
     hole_label_color = Color
     hole_label_size = Int
@@ -151,12 +165,45 @@ class LaserTrayCanvas(StageCanvas):
         super(LaserTrayCanvas, self).__init__(*args, **kw)
         self._add_bounds_rect()
         self._add_crosshairs()
+        self._add_aux_crosshairs()
         self.border_visible = False
 
-    def get_crosshairs_radius(self, screen=False):
-        if self.crosshairs_kind == 'UserRadius':
-            radius = self.crosshairs_radius
+    def get_show_laser_position(self, tag=None):
+        attr = 'show_laser_position'
+        if tag:
+            attr = '{}_{}'.format(tag, attr)
+
+        return getattr(self, attr)
+
+    def get_crosshairs_color(self, tag=None, offset=False):
+        if offset and not tag:
+            key = 'crosshairs_offset_color'
         else:
+            key = 'crosshairs_color'
+
+        if tag:
+            key = '{}_{}'.format(tag, key)
+
+        c = getattr(self, key)
+        return c
+
+    def get_desired_position(self, tag):
+        if tag:
+            s, p = getattr(self, '{}_show_desired_position'.format(tag)), \
+                   getattr(self, '{}_desired_position'.format(tag))
+        else:
+            s, p = self.show_desired_position, self.desired_position
+        return s, p
+
+    def get_crosshairs_radius(self, screen=False, tag=None):
+        if tag:
+            radius = getattr(self, '{}_crosshairs_radius'.format(tag))
+            kind = getattr(self, '{}_crosshairs_kind'.format(tag))
+        else:
+            radius = self.crosshairs_radius
+            kind = self.crosshairs_kind
+
+        if kind == 'BeamRadius':
             radius = self.beam_radius
 
         if screen:
@@ -360,10 +407,15 @@ class LaserTrayCanvas(StageCanvas):
         sx, sy = self.map_data(pos)
         return sx + self.crosshairs_offsetx, sy + self.crosshairs_offsety
 
-    def get_screen_offset(self):
-        (cx, cy), (ox, oy) = self.map_screen([(0, 0),
-                                              (self.crosshairs_offsetx,
-                                               self.crosshairs_offsety)])
+    def get_screen_offset(self, tag=None):
+        if tag:
+            x = getattr(self, '{}_crosshairs_offsetx'.format(tag))
+            y = getattr(self, '{}_crosshairs_offsety'.format(tag))
+            pt = x, y
+        else:
+            pt = self.crosshairs_offsetx, self.crosshairs_offsety
+
+        (cx, cy), (ox, oy) = self.map_screen([(0, 0), pt])
         return ox - cx, oy - cy
 
     def get_offset_stage_position(self):
@@ -463,18 +515,17 @@ class LaserTrayCanvas(StageCanvas):
         if self.show_bounds_rect:
             self.overlays.append(BoundsOverlay(component=self))
 
-    # def _add_crosshairs(self):
-    #     ch = CrosshairsOverlay(component=self,
-    #                            constrain='')
-    #     self.crosshairs_overlay = ch
-    #     self.overlays.append(ch)
+    def _add_aux_crosshairs(self):
+        ch = CrosshairsOverlay(component=self, circle_only=True, tag='aux')
+        self.aux_crosshairs = ch
+        self.overlays.append(ch)
 
     # ===============================================================================
     # handlers
     # ===============================================================================
     @on_trait_change('''show_laser_position, show_desired_position,
                          desired_position_color,
-                         crosshairs_+''')
+                         crosshairs_+, aux_crosshairs+''')
     def change_indicator_visibility(self, name, new):
         self.request_redraw()
 

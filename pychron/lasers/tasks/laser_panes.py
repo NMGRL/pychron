@@ -59,23 +59,38 @@ class StageControlPane(TraitsDockPane):
                 'object': self.model}
 
     def _get_tabs(self):
+
+        cg = VGroup(HGroup(Item('canvas.show_laser_position', label='Display Current'),
+                           UItem('canvas.crosshairs_color'),
+                           Item('canvas.crosshairs_line_width', label='Line Wt.')),
+                    Item('canvas.show_hole_label', label='Display Hole Label'),
+                    HGroup(Item('canvas.show_desired_position',
+                                label='Show Desired'),
+                           UItem('canvas.desired_position_color')),
+                    HGroup(Item('canvas.crosshairs_kind', label='Kind'),
+                           Item('canvas.crosshairs_radius', label='Radius')),
+                    HGroup(Item('canvas.crosshairs_offsetx', label='Offset (mm)'),
+                           UItem('canvas.crosshairs_offsety'),
+                           Item('canvas.crosshairs_offset_color')),
+                    label='Crosshairs',
+                    show_border=True)
+
+        acg = VGroup(HGroup(Item('canvas.aux_show_laser_position', label='Display Current'),
+                            UItem('canvas.aux_crosshairs_color'),
+                            Item('canvas.aux_crosshairs_line_width', label='Line Wt.')),
+
+                     HGroup(Item('canvas.aux_crosshairs_kind', label='Kind'),
+                            Item('canvas.aux_crosshairs_radius', label='Radius')),
+                     HGroup(Item('canvas.aux_crosshairs_offsetx', label='Offset (mm)'),
+                            UItem('canvas.aux_crosshairs_offsety'),
+                            # Item('canvas.aux_crosshairs_offset_color')
+                            ),
+                     label='Aux Crosshairs',
+                     show_border=True)
+
         canvas_grp = VGroup(Item('canvas.show_bounds_rect', label='Show Bounds Rectangle'),
                             Item('canvas.show_grids', label='Show Grids'),
-                            VGroup(HGroup(Item('canvas.show_laser_position', label='Display Current'),
-                                          UItem('canvas.crosshairs_color'),
-                                          Item('canvas.crosshairs_line_width', label='Line Wt.')),
-                                   Item('canvas.show_hole_label', label='Display Hole Label'),
-                                   HGroup(
-                                       Item('canvas.show_desired_position',
-                                            label='Show Desired'),
-                                       UItem('canvas.desired_position_color')),
-                                   Item('canvas.crosshairs_kind', label='Kind'),
-                                   Item('canvas.crosshairs_radius', label='Radius'),
-                                   HGroup(Item('canvas.crosshairs_offsetx', label='Offset (mm)'),
-                                          UItem('canvas.crosshairs_offsety')),
-                                   Item('canvas.crosshairs_offset_color', label='Offset Color'),
-                                   label='Crosshairs',
-                                   show_border=True),
+                            cg, acg,
                             label='Canvas')
 
         tabs = Group(UItem('stage_manager.stage_controller', style='custom',
@@ -85,10 +100,10 @@ class StageControlPane(TraitsDockPane):
 
         if self.model.stage_manager.__class__.__name__ == 'VideoStageManager':
             degasser_grp = VGroup(HGroup(VGroup(UItem('degas_test_button'),
-                                         show_border=True, label='Testing'),
-                                  VGroup(Item('degasser.threshold'),
-                                         show_border=True, label='Preprocess'),
-                                         icon_button_editor('degasser.edit_pid_button','cog'),
+                                                show_border=True, label='Testing'),
+                                         VGroup(Item('degasser.threshold'),
+                                                show_border=True, label='Preprocess'),
+                                         icon_button_editor('degasser.edit_pid_button', 'cog'),
                                          icon_button_editor('degasser.save_button', 'save'),
                                          VGroup(Item('degasser.pid.kp'),
                                                 Item('degasser.pid.ki'),

@@ -79,7 +79,6 @@ class SimpleCrosshairsOverlay(AbstractOverlay):
         if color:
             color = self.set_color(gc, color)
 
-
         mx, my = pt
         if self.constrain == 'x':
             sx, sy = component.map_screen([(0, 0)])[0]
@@ -116,6 +115,7 @@ class SimpleCrosshairsOverlay(AbstractOverlay):
 class CrosshairsOverlay(SimpleCrosshairsOverlay):
     circle_only = False
     font = KivaFont("modern 10")
+    tag = None
 
     def overlay(self, component, gc, *args, **kw):
         with gc:
@@ -127,12 +127,13 @@ class CrosshairsOverlay(SimpleCrosshairsOverlay):
             #     radius = component.beam_radius
             #
             # radius = component.get_wh(radius, 0)[0]
-            radius = component.get_crosshairs_radius(screen=True)
-            sdp = component.show_desired_position
-            dp = component.desired_position
-
+            radius = component.get_crosshairs_radius(screen=True, tag=self.tag)
+            # sdp = component.show_desired_position
+            # dp = component.desired_position
+            sdp, dp = component.get_desired_position(tag=self.tag)
             # get offset in screen space
-            ox, oy = component.get_screen_offset()
+            ox, oy = component.get_screen_offset(tag=self.tag)
+
             if sdp and dp is not None:
                 pos_off = dp[0] + ox, dp[1] + oy
                 self._draw_radius_ch(gc, component, pos_off, radius,
@@ -140,14 +141,20 @@ class CrosshairsOverlay(SimpleCrosshairsOverlay):
 
             mx = component.x + (component.x2 - component.x) / 2.0
             my = component.y + (component.y2 - component.y) / 2.0
-            if component.show_laser_position:
+
+            circle_only = bool(self.tag)
+            if component.get_show_laser_position(self.tag):
                 if ox or oy:
                     pos_off = mx + ox, my + oy
+                    color = component.get_crosshairs_color(self.tag, True)
                     self._draw_radius_ch(gc, component, pos_off, radius,
-                                         color=component.crosshairs_offset_color)
+                                         circle_only=circle_only,
+                                         color=color)
                 else:
+                    color = component.get_crosshairs_color(self.tag)
                     self._draw_radius_ch(gc, component, (mx, my), radius,
-                                         color=component.crosshairs_color)
+                                         circle_only=circle_only,
+                                         color=color)
 
             if component.show_hole_label:
                 h = component.get_current_hole()

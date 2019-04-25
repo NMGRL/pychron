@@ -162,9 +162,12 @@ class Video(Image):
                 if isinstance(identifier, str):
                     if identifier.startswith('pvs'):
                         self.cap = self._get_remote_device(identifier)
+                    elif identifier.startswith('basler_pylon'):
+                        _, i = identifier.split(':')
+                        self.cap = self._get_balser_pylon_device(i)
                     elif identifier.startswith('pylon'):
                         _, i = identifier.split(':')
-                        self.cap = self._get_pylon_device(int(i))
+                        self.cap = self._get_pylon_device(i)
                         # identifier is a url
                 else:
 
@@ -290,6 +293,12 @@ class Video(Image):
 
         if self._save_ok_event:
             self._save_ok_event.set()
+
+    def _get_balser_pylon_device(self, identifier):
+        from .basler_pylon_camera import BaslerPylonCamera
+        cam = BaslerPylonCamera(identifier)
+        if cam.open():
+            return cam
 
     def _get_pylon_device(self, identifier):
         from .pylon_camera import PylonCamera
