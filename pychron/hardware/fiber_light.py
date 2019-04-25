@@ -39,7 +39,7 @@ class FiberLight(AbstractDevice):
     # auto_onoff = Bool(False)
     name = 'fiber_light'
     timeout = Int(3000)
-    _timer = None
+    timer = None
 
     def load_additional_args(self, config):
         """
@@ -93,6 +93,7 @@ class FiberLight(AbstractDevice):
                     self.power_off()
 
                 self.timer = Timer(self.timeout, autooff)
+                self.timer.setDaemon(1)
                 self.timer.start()
 
     def power_off(self, *args):

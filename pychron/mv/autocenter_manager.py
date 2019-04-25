@@ -97,7 +97,7 @@ class AutoCenterManager(MachineVisionManager):
             return cx + mdx, cy + mdy
 
     # private
-    def _get_locator(self):
+    def _get_locator(self, *args, **kw):
         raise NotImplementedError
 
     # handlers
@@ -153,14 +153,14 @@ class AutoCenterManager(MachineVisionManager):
 
 class CO2AutocenterManager(AutoCenterManager):
     # private
-    def _get_locator(self):
+    def _get_locator(self, *args, **kw):
         from pychron.mv.co2_locator import CO2Locator
         return CO2Locator(pxpermm=self.pxpermm, pixel_depth=self.video.pixel_depth)
 
 
 class DiodeAutocenterManager(AutoCenterManager):
     # private
-    def _get_locator(self):
+    def _get_locator(self, *args, **kw):
         from pychron.mv.diode_locator import DiodeLocator
         return DiodeLocator(pxpermm=self.pxpermm, pixel_depth=self.video.pixel_depth)
 

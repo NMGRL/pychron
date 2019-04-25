@@ -291,14 +291,15 @@ class KerrStepMotor(KerrMotor):
     #        print 'calcualtes velocity', result
     #        return result
 
-    # def _moving(self, verbose=True):
-    #     status_byte = self.read_defined_status(verbose=verbose)
-    #
-    #     if status_byte == 'simulation':
-    #         status_byte = 'DFDF'
-    #
-    #     status_register = list(map(int, make_bitarray(int(status_byte[:2], 16))))
-    #     return status_register[7]
+    def _moving(self, verbose=True):
+        # status_byte = self.read_defined_status(verbose=verbose)
+        #
+        # if status_byte == 'simulation':
+        #     status_byte = 'DFDF'
+        #
+        # status_register = list(map(int, make_bitarray(int(status_byte[:2], 16))))
+        # return status_register[7]
+        return not super(KerrStepMotor, self)._moving(verbose=verbose)
 
     def control_view(self):
         v = View(

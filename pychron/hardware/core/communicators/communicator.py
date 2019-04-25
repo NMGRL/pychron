@@ -147,7 +147,7 @@ class Communicator(HeadlessConfigLoadable):
         if ncmd:
             cmd = ncmd
 
-        if len(re) > 100:
+        if re and len(re) > 100:
             re = '{}...'.format(re[:97])
 
         if info and info != '':
