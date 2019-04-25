@@ -260,7 +260,7 @@ class SwitchManager(Manager):
         """
         """
         if name and name != NULL_STR:
-            v = self._get_valve_by((a, name), ('description', 'name'))
+            v = self._get_valve_by((a, name), ('description', 'display_name'))
         else:
             v = self._get_valve_by(a, 'description')
         return v

@@ -34,6 +34,9 @@ class BaseSpectrometerManager(Manager):
         self.application = application
         super(BaseSpectrometerManager, self).__init__(*args, **kw)
 
+    def get_intensity(self,*args, **kw):
+        return self.spectrometer.get_intensity(*args, **kw)
+
     def read_trap_current(self):
         return self.spectrometer.source.read_trap_current()
 

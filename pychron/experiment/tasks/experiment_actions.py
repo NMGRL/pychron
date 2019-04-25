@@ -345,12 +345,15 @@ class ReleaseSpectrometerAction(RunnerAction):
 
 
 class MeltingPointCalibrationAction(Action):
+    name = 'Melting Point Calibration'
+    dname = 'Melting Point Calibration'
+
     def perform(self, event):
         from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
         app = event.task.window.application
         spec = app.get_service('pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager')
         laser = app.get_service(ILaserManager)
 
-        mpc = MeltingPointCalibrator(spectrometer=spec, laser=laser)
+        mpc = MeltingPointCalibrator(spectrometer_manager=spec, laser=laser)
         mpc.edit_traits()
 # ============= EOF ====================================

@@ -13,10 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-import time
 
 from traits.api import Instance, Float
-from traitsui.api import View, UItem, HGroup, VGroup
+from traitsui.api import View, UItem, HGroup, VGroup, ButtonEditor
+
+import time
 
 from pychron.execute_mixin import ExecuteMixin
 from pychron.graph.stream_graph import StreamStackedGraph
@@ -27,25 +28,33 @@ from pychron.paths import paths
 
 class MeltingPointCalibrator(Loggable, ExecuteMixin):
     graph = Instance(StreamStackedGraph)
-    setpoint = Float
+    setpoint = Float(enter_set=True, auto_set=False)
     record_data_manager = None
-    detector = 'H2'
+    detector = 'L2(CDD)'
 
     def setup(self):
         self.record_data_manager = CSVDataManager()
         self.record_data_manager.new_frame(directory=paths.device_scan_dir)
         self.graph = StreamStackedGraph()
+        self.graph.new_plot()
+        self.graph.new_series()
+        self.graph.new_plot()
+        self.graph.new_series(plotid=1)
+
+        dl = 1.8*600
+        self.graph.set_data_limits(dl)
+        self.graph.set_scan_widths(600)
 
     def _do_execute(self):
         self.setup()
-        self.laser.enable()
+        self.laser.enable_laser()
         period = 1
         st = time.time()
         while self.executing:
             self._iter(time.time() - st)
             time.sleep(period)
 
-        self.laser.disable()
+        self.laser.disable_laser()
         self.record_data_manager.close_file()
 
     # private
@@ -53,8 +62,8 @@ class MeltingPointCalibrator(Loggable, ExecuteMixin):
         self.laser.extract(new)
 
     def _iter(self, t):
-        intensity = self.spectrometer.get_intensity(self.detector)
-        temperature = self.laser.get_temperature()
+        intensity = self.spectrometer_manager.get_intensity(self.detector)
+        temperature = self.laser.get_pyrometer_temperature()
 
         self._record(t, intensity, temperature)
         self._graph(t, intensity, temperature)
@@ -67,9 +76,10 @@ class MeltingPointCalibrator(Loggable, ExecuteMixin):
         self.record_data_manager.write_to_frame((t, intensity, temperature))
 
     def traits_view(self):
-        tgrp = HGroup(UItem('execute'), UItem('setpoint'))
-        ggrp = VGroup(UItem('graph'))
+        tgrp = HGroup(UItem('execute', editor=ButtonEditor(label_value='execute_label')), UItem('setpoint'))
+        ggrp = VGroup(UItem('graph', style='custom'))
 
-        v = View(VGroup(tgrp, ggrp))
+        v = View(VGroup(tgrp, ggrp), resizable=True, title='Melting Point Calibration')
         return v
+
 # ============= EOF =============================================
