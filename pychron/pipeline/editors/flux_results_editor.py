@@ -16,7 +16,7 @@
 from operator import attrgetter
 
 # ============= enthought library imports =======================
-from numpy import average, array, diff, arctan, Inf, mean, std
+from numpy import average, array, diff, arctan, Inf
 from scipy.stats import mode
 from traits.api import HasTraits, Str, Int, Bool, Float, Property, List, Event, Button, on_trait_change
 from traitsui.api import View, UItem, TableEditor, VGroup, HGroup, Item, spring, Tabbed, Readonly, EnumEditor
@@ -26,12 +26,12 @@ from uncertainties import nominal_value, std_dev, ufloat
 
 from pychron.core.helpers.formatting import calc_percent_error, floatfmt
 from pychron.core.helpers.iterfuncs import groupby_key
-from pychron.core.stats import calculate_weighted_mean, calculate_mswd
+from pychron.core.regression.mean_regressor import MeanRegressor, WeightedMeanRegressor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.pipeline.editors.flux_visualization_editor import BaseFluxVisualizationEditor
 from pychron.pipeline.plot.plotter.arar_figure import SelectionFigure
 from pychron.processing.argon_calculations import calculate_flux
-from pychron.pychron_constants import MSEM, SD, LEAST_SQUARES_1D, WEIGHTED_MEAN_1D
+from pychron.pychron_constants import LEAST_SQUARES_1D, WEIGHTED_MEAN_1D
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 
@@ -42,44 +42,18 @@ def mean_j(ans, use_weights, error_kind, monitor_age, lambda_k):
     es = [std_dev(fi) for fi in js]
 
     if use_weights:
-        av, werr = calculate_weighted_mean(fs, es)
+        klass = WeightedMeanRegressor
     else:
-        av, werr = mean(fs), std(fs)
+        klass = MeanRegressor
 
-    mswd = None
-    if error_kind == SD:
-        n = len(fs)
-        werr = (sum((av - fs) ** 2) / (n - 1)) ** 0.5
-    elif error_kind == MSEM:
-        mswd = calculate_mswd(fs, es)
-        werr *= (mswd ** 0.5 if mswd > 1 else 1)
+    reg = klass(ys=fs, yserr=es, error_calc_type=error_kind)
+    reg.calculate()
+    av = reg.predict()
+    werr = reg.predict_error(1)
 
     j = ufloat(av, werr)
 
-    if mswd is None:
-        mswd = calculate_mswd(fs, es)
-
-    return j, mswd
-
-
-def omean_j(ans, error_kind, monitor_age, lambda_k):
-    fs = [nominal_value(ai.uF) for ai in ans]
-    es = [std_dev(ai.uF) for ai in ans]
-
-    av, werr = calculate_weighted_mean(fs, es)
-
-    if error_kind == SD:
-        n = len(fs)
-        werr = (sum((av - fs) ** 2) / (n - 1)) ** 0.5
-    elif error_kind == MSEM:
-        mswd = calculate_mswd(fs, es)
-        werr *= (mswd ** 0.5 if mswd > 1 else 1)
-
-    uf = (av, werr)
-    j = calculate_flux(uf, monitor_age, lambda_k=lambda_k)
-
-    mswd = calculate_mswd(fs, es)
-    return j, mswd
+    return j, reg.mswd
 
 
 def column(klass=ObjectColumn, editable=False, **kw):

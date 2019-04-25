@@ -158,7 +158,7 @@ sem={}
 
         if error_calc == SEM:
             e = self.sem
-        elif error_calc == MSEM:
+        elif error_calc in (MSEM, 'MSEM', 'msem'):
             e = self.sem * (self.mswd ** 0.5 if self.mswd > 1 else 1)
         else:
             e = self.std

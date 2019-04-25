@@ -41,7 +41,7 @@ from pychron.graph.tools.data_tool import DataTool, DataToolOverlay
 from pychron.options.layout import FigureLayout
 from pychron.pipeline.editors.irradiation_tray_overlay import IrradiationTrayOverlay
 from pychron.pychron_constants import LEAST_SQUARES_1D, MATCHING, BRACKETING, WEIGHTED_MEAN, BOWL, PLANE, \
-    WEIGHTED_MEAN_1D
+    WEIGHTED_MEAN_1D, MSEM
 
 
 def make_grid(r, n):
@@ -708,9 +708,19 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
                     iys = array([nominal_value(fi) for fi in fs])
                     ies = array([std_dev(fi) for fi in fs])
 
+                    if self.plotter_options.use_weighted_fit:
+                        fit = 'weighted mean'
+                    else:
+                        fit = 'average'
+
+                    ek = self.plotter_options.error_kind
+                    if ek == MSEM:
+                        ek = 'msem'
+
+                    fit = '{}_{}'.format(fit, ek)
+
                     p_, s, l_ = g.new_series(linspace(0, n - 1, n), iys, yerror=ies, type='scatter',
-                                             fit='weighted mean' if self.plotter_options.use_weighted_fit else
-                                             'average_sem',
+                                             fit=fit,
                                              add_point_inspector=False,
                                              add_inspector=False,
                                              marker='circle', marker_size=3)
