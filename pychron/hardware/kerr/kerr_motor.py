@@ -232,7 +232,6 @@ class KerrMotor(KerrDevice, BaseLinearDrive):
             if progress is not None:
                 progress.change_message('{} position= {}'.format(self.name, pos),
                                         auto_increment=False)
-                #                 do_after(25, progress.change_message, '{} position = {}'.format(self.name, pos))
             time.sleep(0.5)
 
     def set_homing_required(self, value):
@@ -251,14 +250,9 @@ class KerrMotor(KerrDevice, BaseLinearDrive):
                     (addr, self._build_io(), 100, 'configure io pins'),
                     (addr, self._build_gains(), 100, 'set gains'),
                     (addr, '1701', 100, 'turn on amp')]
-        # (addr, '00', 100, 'reset position'),
-        # (addr, '1201', 100, 'set status')
-        # (addr, '0b', 100, 'clear bits')]
         self._initialize_motor(commands, *args, **kw)
 
     def _initialize_motor(self, commands, *args, **kw):
-        # self.load_data_position()
-
         self._execute_hex_commands(commands)
 
         homing_required = self._get_homing_required()
@@ -321,7 +315,6 @@ class KerrMotor(KerrDevice, BaseLinearDrive):
         psteps = None
         while 1:
             steps = self.load_data_position(set_pos=False)
-            # invoke_in_main_thread(self.trait_set, homing_position=steps)
             self.homing_position = steps
             status = self.read_defined_status()
 
@@ -347,13 +340,18 @@ class KerrMotor(KerrDevice, BaseLinearDrive):
 
     def _test_status_byte(self, status, setbits):
         if status:
-            # status = binascii.hexlify(status).decode('utf-8')
             b = '{:08b}'.format(int.from_bytes(status[:1], 'little'))
             bb = [bool(int(b[7 - si])) for si in setbits]
 
             return all(bb)
 
     def _moving(self, verbose=True):
+        """
+        return True if motion is still in progress.
+
+        @param verbose:
+        @return:
+        """
         status_byte = self.read_defined_status(verbose=verbose)
 
         if status_byte in ('simulation', None):
@@ -431,7 +429,7 @@ class KerrMotor(KerrDevice, BaseLinearDrive):
         """
         """
 
-        if self._moving(verbose=True):
+        if self._moving(verbose=False):
             self.enabled = False
         else:
             time.sleep(0.5)
@@ -545,9 +543,6 @@ class KerrMotor(KerrDevice, BaseLinearDrive):
             ss.append(s)
 
         return ''.join(ss)
-
-        # hexfmt = lambda a: '{{:0{}x}}'.format(a[1]).format(a[0])
-        # return ''.join(map(hexfmt, hxlist))
 
     def _build_io(self):
         return '1800'

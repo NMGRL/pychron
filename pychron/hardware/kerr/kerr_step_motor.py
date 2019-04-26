@@ -49,8 +49,6 @@ class DiscretePosition(HasTraits):
 
 
 class KerrStepMotor(KerrMotor):
-    #    min = CInt
-    #    max = CInt
 
     run_current = CInt
     hold_current = CInt

@@ -197,6 +197,9 @@ class BaseWatlowEZZone(HasTraits):
         with open(self.config_path, 'w') as wfile:
             config.write(wfile)
 
+    def get_setpoint(self):
+        return getattr(self, '{}_loop_setpoint'.format(self.control_mode))
+
     def map_temperature(self, te, verbose=True):
         if self.use_calibrated_temperature:
             if self.calibration:

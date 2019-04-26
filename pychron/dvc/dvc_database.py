@@ -389,10 +389,9 @@ class DVCDatabase(DatabaseAdapter):
         sess = self.session
         q = sess.query(AnalysisTbl)
 
-        repository = None
-        if repository:
-            q = q.join(RepositoryAssociationTbl)
-            q = q.join(RepositoryTbl)
+        # if repository:
+        #     q = q.join(RepositoryAssociationTbl)
+        #     q = q.join(RepositoryTbl)
 
         if last:
             q = q.filter(AnalysisTbl.analysis_type == 'blank_{}'.format(kind))
@@ -405,8 +404,8 @@ class DVCDatabase(DatabaseAdapter):
         if ed and ed not in ('Extract Device', NULL_STR) and kind == 'unknown':
             q = q.filter(func.lower(AnalysisTbl.extract_device) == ed.lower())
 
-        if repository:
-            q = q.filter(RepositoryTbl.name == repository)
+        # if repository:
+        #     q = q.filter(RepositoryTbl.name == repository)
 
         q = q.order_by(AnalysisTbl.timestamp.desc())
         return self._query_one(q, verbose_query=True)

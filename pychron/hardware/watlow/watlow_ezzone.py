@@ -190,6 +190,9 @@ class WatlowEZZone(BaseWatlowEZZone, CoreDevice):
     def configure_view(self):
         return View(self.get_configure_group())
 
+    def _get_autotune_label(self):
+        return 'On' if self.autotuning else 'Off'
+
 
 if __name__ == '__main__':
     from pychron.core.helpers.logger_setup import logging_setup

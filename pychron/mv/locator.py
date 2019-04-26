@@ -171,6 +171,7 @@ class Locator(Loggable):
         if start is None:
             # n=20, w=10, start=None, step=2
             w = search.get('width', 10)
+            print('mediasd', median(src), src[100])
             start = int(median(src)) - search.get('start_offset_scalar', 3) * w
             # start = 2*w
             # start = 20
@@ -181,12 +182,12 @@ class Locator(Loggable):
         blocksize_step = search.get('blocksize_step', 5)
         seg = RegionSegmenter(use_adaptive_threshold=search.get('use_adaptive_threshold', False),
                               blocksize=search.get('blocksize', 20))
-        fa = self._get_filter_target_area(dim)
+        fa = self._get_filter_target_area(shape, dim)
         phigh, plow = None, None
 
         for j in range(n):
             ww = w * (j + 1)
-
+            print('start', start, ww)
             for i in range(n):
                 seg.threshold_low = max((0, start + i * step - ww))
                 seg.threshold_high = max((1, min((255, start + i * step + ww))))
@@ -200,10 +201,10 @@ class Locator(Loggable):
                 seg.blocksize += blocksize_step
 
                 nf = colorspace(nsrc)
-                # print(i, seg.threshold_high, seg.threshold_low)
+
                 # draw contours
                 targets = self._find_polygon_targets(nsrc, frame=nf)
-                # print('tasfdas', targets)
+                print('tasfdas', targets)
                 if set_image and image is not None:
                     image.set_frame(nf)
 
@@ -258,7 +259,7 @@ class Locator(Loggable):
         """
         ctest, centtest, atest = self._test_target(frame, target,
                                                    cthreshold, mi, ma)
-        # print('ctest', ctest, 'centtest', centtest, 'atereat', atest)
+        print('ctest', ctest, cthreshold, 'centtest', centtest, 'atereat', atest, mi, ma)
         result = ctest and atest and centtest
         if not ctest and (atest and centtest):
             target = self._segment_polygon(image, frame,
@@ -270,6 +271,7 @@ class Locator(Loggable):
         return target, result
 
     def _test_target(self, frame, ti, cthreshold, mi, ma):
+        print('converasdf', ti.convexity, 'ara', ti.area)
         ctest = ti.convexity > cthreshold
         centtest = self._near_center(ti.centroid, frame)
         atest = ma > ti.area > mi
@@ -358,7 +360,7 @@ class Locator(Loggable):
             3. stretch contrast
         """
         if len(frame.shape) != 2:
-            frm = grayspace(frame)
+            frm = grayspace(frame) * 255
         else:
             frm = frame / self.pixel_depth * 255
 
@@ -515,15 +517,20 @@ class Locator(Loggable):
         tol *= self.pxpermm
         return d < tol
 
-    def _get_filter_target_area(self, dim):
+    def _get_filter_target_area(self, shape, dim):
         """
             calculate min and max bounds of valid polygon areas
         """
+        if shape == 'circle':
+            miholedim = 0.5 * dim
+            maholedim = 1.25 * dim
+            mi = miholedim ** 2 * 3.1415
+            ma = maholedim ** 2 * 3.1415
+        else:
+            d = (2*dim)**2
+            mi = 0.5 * d
+            ma = 1.25 * d
 
-        miholedim = 0.5 * dim
-        maholedim = 1.25 * dim
-        mi = miholedim ** 2 * 3.1415
-        ma = maholedim ** 2 * 3.1415
         return mi, ma
 
     def _get_frame_center(self, src):

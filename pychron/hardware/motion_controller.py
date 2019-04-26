@@ -356,7 +356,7 @@ class MotionController(CoreDevice):
             event.clear()
 
         timer = self.timer
-        period = 0.1
+        period = 0.25
 
         if timer is not None:
             self.debug('using existing timer')

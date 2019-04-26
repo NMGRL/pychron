@@ -15,12 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 
-import yaml
+from traits.api import Bool, Any, Float, Tuple, Int, Str, HasTraits, Button
+# ============= standard library imports ========================
 from numpy import polyval, exp
-from traits.api import Float, Tuple, Int, Str, HasTraits
-
+import yaml
+# ============= local library imports  ==========================
 from pychron.config_loadable import ConfigLoadable
 from pychron.loggable import Loggable
 
@@ -34,9 +34,10 @@ class BaseCamera(HasTraits):
     pxpercm = Float
 
     focus_z = Float
-    zoom_coefficients = Str
+    # fps = Int
+    zoom_coefficients = Str('0,0,23')
     config_path = Str
-    zoom_fitfunc = 'polynominal'
+    zoom_fitfunc = Str('polynomial')
 
     def save_calibration(self):
         raise NotImplementedError
@@ -143,7 +144,7 @@ class Camera(ConfigLoadable, BaseCamera):
         """
         self.info('saving px per mm calibration to {}'.format(self.config_path))
         config = self.get_configuration(self.config_path)
-        if config:
+        if config is not None:
             if not config.has_section('Zoom'):
                 config.add_section('Zoom')
             config.set('Zoom', 'coefficients', self.zoom_coefficients)
