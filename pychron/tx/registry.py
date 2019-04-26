@@ -64,12 +64,12 @@ class RegisteredFunction(object):
                 if self.camel_case:
                     cmd = camel_case(cmd)
 
-            r = obj.ask(cmd)
+            r = obj.ask(cmd, verbose=True)
             if self.returntype:
                 try:
                     r = self.returntype(r)
-                except BaseException:
-                    pass
+                except BaseException as e:
+                    obj.critical('excpection running command {}. {}'.format(cmd, e))
 
             return r
 

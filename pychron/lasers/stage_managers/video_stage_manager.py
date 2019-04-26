@@ -15,25 +15,22 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
-import yaml
+from traits.api import Instance, String, Property, Button, Bool, Event, on_trait_change, Str, Float, Enum, Int
 from apptools.preferences.preference_binding import bind_preference
+
 from skimage.color import gray2rgb
 from skimage.draw import circle_perimeter, line
-from traits.api import Instance, String, Property, Button, Bool, Event, on_trait_change, Str, Float
-from pychron.core.ui.thread import Thread as UIThread, sleep
-import json
+import yaml
 import os
 import shutil
 import time
-from threading import Thread, Timer, Event as TEvent
 
-from numpy import copy, array
+from threading import Timer, Event as TEvent
+from numpy import copy
 
+from pychron.core.ui.thread import sleep
 from pychron.canvas.canvas2D.camera import Camera, YamlCamera, BaseCamera
-from pychron.core.helpers import binpack
-from pychron.core.helpers.binpack import pack, format_blob, encode_blob
+from pychron.core.helpers.binpack import pack, encode_blob
 from pychron.core.helpers.filetools import unique_path, unique_path_from_manifest
 from pychron.core.ui.stage_component_editor import VideoComponentEditor
 from pychron.image.video import Video, pil_save
@@ -78,6 +75,7 @@ class VideoStageManager(StageManager):
     #     'pychron.mv.zoom.zoom_calibration.ZoomCalibrationManager')
 
     snapshot_button = Button('Snapshot')
+    snapshot_mode = Enum('Single', '3 Burst', '10 Burst')
     auto_save_snapshot = Bool(True)
 
     record = Event
@@ -102,6 +100,7 @@ class VideoStageManager(StageManager):
     lumen_detector = Instance(LumenDetector)
 
     render_with_markup = Bool(False)
+    burst_delay = Int(250)
 
     _auto_correcting = False
     stop_timer = Event
@@ -143,6 +142,8 @@ class VideoStageManager(StageManager):
 
         bind_preference(self, 'render_with_markup',
                         '{}.render_with_markup'.format(pref_id))
+        bind_preference(self, 'burst_delay',
+                        '{}.burst_delay'.format(pref_id))
         bind_preference(self, 'auto_upload', '{}.auto_upload'.format(pref_id))
         bind_preference(self, 'use_media_storage', '{}.use_media_storage'.format(pref_id))
         bind_preference(self, 'keep_local_copy', '{}.keep_local_copy'.format(pref_id))
@@ -319,8 +320,8 @@ class VideoStageManager(StageManager):
     def autocenter(self, *args, **kw):
         return self._autocenter(*args, **kw)
 
-    def snapshot(self, path=None, name=None, auto=False,
-                 inform=True, return_blob=False, pic_format='.jpg'):
+    def snapshot(self, path=None, name=None, auto=False, inform=True, return_blob=False,
+                 pic_format='.jpg', include_raw=True):
         """
             path: abs path to use
             name: base name to use if auto saving in default dir
@@ -350,9 +351,16 @@ class VideoStageManager(StageManager):
             self.info('saving snapshot {}'.format(path))
             # play camera shutter sound
             # play_sound('shutter')
+            if include_raw:
+                frame = self.video.get_cached_frame()
+                head, _ = os.path.splitext(path)
+                raw_path = '{}.tif'.format(head)
+                pil_save(frame, raw_path)
 
             self._render_snapshot(path)
             if self.auto_upload:
+                if include_raw:
+                    self._upload(raw_path)
                 upath = self._upload(path, inform=inform)
                 if upath is None:
                     upath = ''
@@ -427,7 +435,8 @@ class VideoStageManager(StageManager):
     def get_brightness(self, **kw):
         ld = self.lumen_detector
         src = self._get_preprocessed_src()
-        return ld.get_value(src, **kw)
+        dim = self.stage_map.g_dimension
+        return ld.get_value(src, dim, **kw)
         # src = self.video.get_cached_frame()
         # csrc = copy(src)
         # src, v = ld.get_value(csrc, **kw)
@@ -602,7 +611,11 @@ class VideoStageManager(StageManager):
             ntries = 1 if autocentered_position else 3
 
             self._auto_correcting = True
-            self._autocenter(holenum=holenum, ntries=ntries, save=True)
+            try:
+                self._autocenter(holenum=holenum, ntries=ntries, save=True)
+            except BaseException as e:
+                self.critical('Autocentering failed. {}'.format(e))
+
             self._auto_correcting = False
 
     # def find_center(self):
@@ -630,10 +643,7 @@ class VideoStageManager(StageManager):
     #         src = self.autocenter_manager.crop(src)
     #         return self.lumen_detector.find_best_target(src)
 
-    def _autocenter(self, holenum=None, ntries=3, save=False,
-                    inform=False,
-                    alpha_enabled=True,
-                    auto_close_image=True):
+    def _autocenter(self, holenum=None, ntries=3, save=False, inform=False):
         self.debug('do autocenter')
         rpos = None
         interp = False
@@ -641,6 +651,15 @@ class VideoStageManager(StageManager):
         st = time.time()
         if self.autocenter_manager.use_autocenter:
             time.sleep(0.1)
+
+            dim = sm.g_dimension
+            shape = sm.g_shape
+            if holenum is not None:
+                hole = sm.get_hole(holenum)
+                if hole is not None:
+                    dim = hole.dimension
+                    shape = hole.shape
+
             ox, oy = self.canvas.get_screen_offset()
             for ti in range(max(1, ntries)):
                 # use machine vision to calculate positioning error
@@ -648,9 +667,8 @@ class VideoStageManager(StageManager):
                     self.stage_controller.x,
                     self.stage_controller.y,
                     ox, oy,
-                    dim=self.stage_map.g_dimension,
-                    alpha_enabled=alpha_enabled,
-                    auto_close_image=auto_close_image)
+                    dim=dim,
+                    shape=shape)
 
                 if rpos is not None:
                     self.linear_move(*rpos, block=True,
@@ -750,7 +768,19 @@ class VideoStageManager(StageManager):
     #             self.autocenter_manager.dump_detector()
 
     def _snapshot_button_fired(self):
-        self.snapshot()
+        n = 1
+        if self.snapshot_mode == '3 Burst':
+            n = 3
+        elif self.snapshot_mode == '10 Burst':
+            n = 10
+
+        bd = self.burst_delay * 0.001
+        delay = n > 1
+        for i in range(n):
+            st = time.time()
+            self.snapshot(inform=False)
+            if delay:
+                time.sleep(max(0, bd - time.time() + st))
 
     def _record_fired(self):
         #            time.sleep(4)

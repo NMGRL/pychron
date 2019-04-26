@@ -38,6 +38,7 @@ class FusionsLaserPreferences(LaserPreferences):
     use_media_storage = Bool
     keep_local_copy = Bool
     auto_upload = Bool
+    burst_delay = Int(250)
     # use_video_server = Bool(False)
     # video_server_port = Int(1084)
     # video_server_quality = Range(1, 75, 75)
@@ -175,6 +176,7 @@ class FusionsLaserPreferencesPane(PreferencesPane):
                               # Item('video_output_mode', label='Output Mode'),
                               # Item('ffmpeg_path', label='FFmpeg Location'),
                               Item('render_with_markup', label='Render Snapshot with markup'),
+                              Item('burst_delay', label='Burst Delay (ms)', tooltip='delay between snapshots in burst mode'),
                               recgrp,
                               archivergrp,
                               media_storage_grp,

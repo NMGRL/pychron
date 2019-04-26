@@ -44,4 +44,14 @@ def okcancel_view(*args, **kw):
         kw['buttons'] = ['OK', 'Cancel']
 
     return View(*args, **kw)
+                **kw)
+
+
+def rfloatitem(*args, **kw):
+    kw['style'] = 'readonly'
+    return floatitem(*args, **kw)
+
+
+def floatitem(name, sigfigs=3, **kw):
+    return Item(name, format_str='%0.{}f'.format(sigfigs), **kw)
 # ============= EOF =============================================

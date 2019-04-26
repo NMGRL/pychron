@@ -48,10 +48,6 @@ from pychron.core.geometry.geometry import approximate_polygon_center, \
     calc_length
 
 
-# from six.moves import range
-# from six.moves import zip
-
-
 def _coords_inside_image(rr, cc, shape):
     mask = (rr >= 0) & (rr < shape[0]) & (cc >= 0) & (cc < shape[1])
     return rr[mask], cc[mask]
@@ -72,7 +68,8 @@ def draw_circle_perimeter(frame, center_x, center_y, radius, color):
 class Locator(Loggable):
     pxpermm = Float
     use_histogram = False
-    use_circle_minimization = True
+    use_arc_approximation = True
+    use_square_approximation = True
     step_signal = None
     pixel_depth = 255
 
@@ -97,62 +94,7 @@ class Locator(Loggable):
                        'width={}, height={}, ox={}, oy={}'.format(x, y, cw_px, ch_px, w, h, ox, oy))
         return asarray(crop(src, x, y, cw_px, ch_px))
 
-    def find_circle(self, image, frame, dim, **kw):
-        dx, dy = None, None
-
-        pframe = self._preprocess(frame, blur=0)
-        edges = canny(pframe, sigma=3)
-        hough_radii = arange(dim * 0.9, dim * 1.1, 2)
-
-        hough_res = hough_circle(edges, hough_radii)
-
-        centers = []
-        accums = []
-        radii = []
-        for radius, h in zip(hough_radii, hough_res):
-            # For each radius, extract two circles
-            num_peaks = 2
-            peaks = peak_local_max(h, num_peaks=num_peaks)
-            centers.extend(peaks)
-            accums.extend(h[peaks[:, 0], peaks[:, 1]])
-            radii.extend([radius] * num_peaks)
-
-        # for idx in argsort(accums)[::-1][:1]:
-        try:
-            idx = argsort(accums)[::-1][0]
-        except IndexError:
-            return dx, dy
-
-        center_y, center_x = centers[idx]
-        radius = radii[idx]
-
-        draw_circle_perimeter(frame, center_x, center_y, radius, (220, 20, 20))
-        # cx, cy = circle_perimeter(int(center_x), int(center_y), int(radius))
-
-        # draw perimeter
-        # try:
-        #     frame[cy, cx] = (220, 20, 20)
-        # except IndexError:
-        #     pass
-
-        # draw center
-        # cx, cy = circle(int(center_x), int(center_y), int(2))
-        # frame[cy, cx] = (220, 20, 20)
-        draw_circle(frame, center_x, center_y, 2, (220, 20, 20))
-
-        h, w = frame.shape[:2]
-
-        ox, oy = w / 2, h / 2
-        dx = center_x - ox
-        dy = center_y - oy
-
-        cx, cy = circle(int(ox), int(oy), int(2))
-        frame[cy, cx] = (20, 220, 20)
-
-        image.set_frame(frame)
-        return float(dx), -float(dy)
-
-    def find(self, image, frame, dim, **kw):
+    def find(self, image, frame, dim, shape='circle', **kw):
         """
             image is a stand alone image
             dim = float. radius or half length of a square in pixels
@@ -167,7 +109,7 @@ class Locator(Loggable):
         """
         dx, dy = None, None
 
-        targets = self._find_targets(image, frame, dim, **kw)
+        targets = self._find_targets(image, frame, dim, shape, **kw)
 
         if targets:
             self.info('found {} potential targets'.format(len(targets)))
@@ -177,20 +119,25 @@ class Locator(Loggable):
             self._draw_center_indicator(src, size=2, shape='rect', radius=round(dim))
 
             # draw targets
-            self._draw_targets(src, targets, dim)
+            self._draw_targets(src, targets)
 
-            if self.use_circle_minimization:
-                # calculate circle_minimization position
-                dx, dy = self._circle_minimization(src, targets[0], dim)
+            if shape == 'circle':
+                if self.use_arc_approximation:
+                    # calculate circle_minimization position
+                    dx, dy = self._arc_approximation(src, targets[0], dim)
+                else:
+                    dx, dy = self._calculate_error(targets)
             else:
                 dx, dy = self._calculate_error(targets)
+                # if self.use_square_approximation:
+                #     dx, dy = self._square_approximation(src, targets[0], dim)
 
                 # image.set_frame(src[:])
 
         self.info('dx={}, dy={}'.format(dx, dy))
         return dx, dy
 
-    def _find_targets(self, image, frame, dim,
+    def _find_targets(self, image, frame, dim, shape='circle',
                       search=None, preprocess=True,
                       filter_targets=True,
                       convexity_filter=False,
@@ -464,7 +411,18 @@ class Locator(Loggable):
     # ===============================================================================
     # deviation calc
     # ===============================================================================
-    def _circle_minimization(self, src, target, dim):
+    # def _square_approximation(self, src, target, dim):
+    # tx, ty = self._get_frame_center(src)
+    # pts = target.poly_points
+    #
+    #
+    # cx, cy = dx + tx, dy + ty
+    # dy = -dy
+    # self._draw_indicator(src, (cx, cy), color=(255, 0, 128), shape='crosshairs')
+    #
+    # return dx, dy
+
+    def _arc_approximation(self, src, target, dim):
         """
             find cx,cy of a circle with r radius using the arc center method
 
@@ -474,7 +432,7 @@ class Locator(Loggable):
         """
         tol = 0.8
         if target.convexity > tol:
-            self.info('doing circle minimization radius={}'.format(dim))
+            self.info('doing arc approximation radius={}'.format(dim))
             tx, ty = self._get_frame_center(src)
             pts = target.poly_points
             pts[:, 1] = pts[:, 1] - ty
@@ -581,22 +539,22 @@ class Locator(Loggable):
     # ===============================================================================
     # draw
     # ===============================================================================
-    def _draw_targets(self, src, targets, dim):
+    def _draw_targets(self, src, targets):
         """
             draw a crosshairs indicator
         """
+        if targets:
+            for ta in targets:
+                pt = new_point(*ta.centroid)
+                self._draw_indicator(src, pt,
+                                     color=(0, 255, 0),
+                                     size=10,
+                                     shape='crosshairs')
+                # draw_circle(src, pt,
+                #             color=(0,255,0),
+                #             radius=int(dim))
 
-        for ta in targets:
-            pt = new_point(*ta.centroid)
-            self._draw_indicator(src, pt,
-                                 color=(0, 255, 0),
-                                 size=10,
-                                 shape='crosshairs')
-            # draw_circle(src, pt,
-            #             color=(0,255,0),
-            #             radius=int(dim))
-
-            draw_polygons(src, [ta.poly_points], color=(255, 255, 255))
+                draw_polygons(src, [ta.poly_points], color=(255, 255, 255))
 
     def _draw_center_indicator(self, src, color=(0, 0, 255), shape='crosshairs',
                                size=10, radius=1):
@@ -811,3 +769,57 @@ class Locator(Loggable):
 #    plt.subplots_adjust(hspace=0.01, wspace=0.01, top=1, bottom=0, left=0,
 #                    right=1)
 #    plt.show()
+#     def find_circle(self, image, frame, dim, **kw):
+#         dx, dy = None, None
+#
+#         pframe = self._preprocess(frame, blur=0)
+#         edges = canny(pframe, sigma=3)
+#         hough_radii = arange(dim * 0.9, dim * 1.1, 2)
+#
+#         hough_res = hough_circle(edges, hough_radii)
+#
+#         centers = []
+#         accums = []
+#         radii = []
+#         for radius, h in zip(hough_radii, hough_res):
+#             # For each radius, extract two circles
+#             num_peaks = 2
+#             peaks = peak_local_max(h, num_peaks=num_peaks)
+#             centers.extend(peaks)
+#             accums.extend(h[peaks[:, 0], peaks[:, 1]])
+#             radii.extend([radius] * num_peaks)
+#
+#         # for idx in argsort(accums)[::-1][:1]:
+#         try:
+#             idx = argsort(accums)[::-1][0]
+#         except IndexError:
+#             return dx, dy
+#
+#         center_y, center_x = centers[idx]
+#         radius = radii[idx]
+#
+#         draw_circle_perimeter(frame, center_x, center_y, radius, (220, 20, 20))
+#         # cx, cy = circle_perimeter(int(center_x), int(center_y), int(radius))
+#
+#         # draw perimeter
+#         # try:
+#         #     frame[cy, cx] = (220, 20, 20)
+#         # except IndexError:
+#         #     pass
+#
+#         # draw center
+#         # cx, cy = circle(int(center_x), int(center_y), int(2))
+#         # frame[cy, cx] = (220, 20, 20)
+#         draw_circle(frame, center_x, center_y, 2, (220, 20, 20))
+#
+#         h, w = frame.shape[:2]
+#
+#         ox, oy = w / 2, h / 2
+#         dx = center_x - ox
+#         dy = center_y - oy
+#
+#         cx, cy = circle(int(ox), int(oy), int(2))
+#         frame[cy, cx] = (20, 220, 20)
+#
+#         image.set_frame(frame)
+#         return float(dx), -float(dy)

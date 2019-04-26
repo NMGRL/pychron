@@ -91,7 +91,10 @@ class PychronApplication(BaseTasksApplication):
         import threading
         self.debug('------------------- Alive Threads -------------------')
         for t in threading.enumerate():
-            self.debug(str(t))
+            try:
+                self.debug(str(t))
+            except AssertionError:
+                continue
         self.debug('-----------------------------------------------------')
 
         return super(BaseTasksApplication, self).stop()

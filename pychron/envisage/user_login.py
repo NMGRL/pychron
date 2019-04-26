@@ -111,7 +111,8 @@ class Login(HasTraits):
         if not isfile or not self.users:
             self.user = 'root'
             self.user_enabled = False
-            self.message = 'Auto Login as "root". Quit Pychron to populate users from database'
+            if os.environ.get('PYCHRON_APPNAME') in ('pyexperiment', 'pyview'):
+                self.message = 'Auto Login as "root". Quit Pychron to populate users from database'
 
     def dump(self):
         dump_user_file(self.users, self.user)

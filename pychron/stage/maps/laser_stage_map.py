@@ -55,7 +55,8 @@ class LaserStageMap(BaseStageMap):
 
         previous.append('{},{}\n'.format(x, y))
         with open(p, 'wb') as wfile:
-            wfile.writelines(previous)
+            for lin in previous:
+                wfile.write(lin.encode('utf-8'))
 
     def load_correction_file(self):
         self.debug('load correction file')

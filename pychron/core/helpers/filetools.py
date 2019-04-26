@@ -301,11 +301,12 @@ def unique_path_from_manifest(root, base, extension='.txt'):
         with open(mp, 'r') as rfile:
             yd = yaml.load(rfile)
 
-        v = yd.get(base, None)
-        if v:
-            cnt = v + 1
-            p = os.path.join(root, '{}-{:03d}{}'.format(base, cnt, extension))
-            yd[base] = cnt
+        if yd:
+            v = yd.get(base, None)
+            if v:
+                cnt = v + 1
+                p = os.path.join(root, '{}-{:03d}{}'.format(base, cnt, extension))
+                yd[base] = cnt
 
     if not p:
         p, cnt = unique_path2(root, base, extension=extension)
