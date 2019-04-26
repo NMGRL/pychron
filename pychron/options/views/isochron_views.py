@@ -59,7 +59,8 @@ class InverseIsochronMainOptions(SubOptions):
                                                  label='SigFigs'),
                                     BorderVGroup(Item('include_4036_mse', label='Ar40/Ar36'),
                                                  Item('include_age_mse', label='Age'),
-                                                 label='MSE')))
+                                                 Item('include_percent_error', label='%Error'),
+                                                 label='Include')))
 
         ellipse_grp = BorderHGroup(Item('fill_ellipses', label='fill'),
                                    Item('ellipse_kind', label='Kind'),

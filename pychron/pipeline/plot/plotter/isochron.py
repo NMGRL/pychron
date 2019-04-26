@@ -394,7 +394,7 @@ class InverseIsochron(Isochron):
         ag = self.analysis_group
 
         age = ag.isochron_age
-        a = ag.isochron_4036
+        a = ag.isochron_3640
 
         n = ag.nanalyses
         mswd = ag.isochron_regressor.mswd
@@ -417,7 +417,11 @@ class InverseIsochron(Isochron):
         if self.options.include_4036_mse:
             mse_text = ' MSE= {}'.format(mse)
 
-        ratio_line = '<sup>40</sup>Ar/<sup>36</sup>Ar= {} {}{} ({}%){}'.format(v, PLUSMINUS, e, p, mse_text)
+        ptext = ''
+        if self.options.include_percent_error:
+           ptext = ' ({}%)'.format(p)
+
+        ratio_line = '<sup>40</sup>Ar/<sup>36</sup>Ar= {} {}{}{}{}'.format(v, PLUSMINUS, e, ptext, mse_text)
 
         v = nominal_value(age)
         e = std_dev(age) * self.options.nsigma

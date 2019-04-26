@@ -243,7 +243,7 @@ class MDDFigureEditor(BaseTraitsEditor):
                                                        # padding=[10, 10, 40, 10],
                                                        shape=(r, c)))
             ps = opt.panels()
-            graph.new_graph(n, bgcolor=opt.plot_bgcolor, padding=opt.paddings())
+            graph.new_graph(n, bgcolor=opt.plot_bgcolor, padding=opt.get_paddings())
             opt = self.editor_options
             for root in self.roots:
                 for i, tags in ps:

@@ -22,7 +22,7 @@ from chaco.tools.broadcaster import BroadcasterTool
 from chaco.tools.data_label_tool import DataLabelTool
 from numpy import Inf, vstack, zeros_like, ma
 from traits.api import HasTraits, Any, Int, Str, Property, \
-    Event, cached_property, List, Float, Instance
+    Event, cached_property, List, Float, Instance, TraitError
 from uncertainties import std_dev, nominal_value, ufloat
 
 from pychron.core.filtering import filter_ufloats, sigma_filter
@@ -132,7 +132,7 @@ class BaseArArFigure(SelectionFigure):
             if self.xtitle:
                 kw['xtitle'] = self.xtitle
 
-            kw['padding'] = self.options.paddings()
+            kw['padding'] = self.options.get_paddings()
             p = graph.new_plot(**kw)
             if i == (len(plots) - 1):
                 p.title_font = self.options.title_font
@@ -191,15 +191,26 @@ class BaseArArFigure(SelectionFigure):
 
     def _apply_aux_plot_options(self, pp, po):
         options = self.options
-        pp.x_axis.title_font = options.xtitle_font
-        pp.x_axis.tick_label_font = options.xtick_font
-        pp.x_axis.tick_in = options.xtick_in
-        pp.x_axis.tick_out = options.xtick_out
 
-        pp.y_axis.title_font = options.ytitle_font
-        pp.y_axis.tick_label_font = options.ytick_font
-        pp.y_axis.tick_in = options.ytick_in
-        pp.y_axis.tick_out = options.ytick_out
+        for k, axis in (('x', pp.x_axis), ('y', pp.y_axis)):
+            for attr in ('title_font', 'tick_in', 'tick_out', 'tick_label_formatter'):
+                value = getattr(options, '{}{}'.format(k, attr))
+                try:
+                    setattr(axis, attr, value)
+                except TraitError:
+                    pass
+
+            axis.tick_label_font = getattr(options, '{}tick_font'.format(k))
+
+        # pp.x_axis.title_font = options.xtitle_font
+        # pp.x_axis.tick_label_font = options.xtick_font
+        # pp.x_axis.tick_in = options.xtick_in
+        # pp.x_axis.tick_out = options.xtick_out
+        #
+        # pp.y_axis.title_font = options.ytitle_font
+        # pp.y_axis.tick_label_font = options.ytick_font
+        # pp.y_axis.tick_in = options.ytick_in
+        # pp.y_axis.tick_out = options.ytick_out
 
         pp.bgcolor = options.plot_bgcolor
         pp.x_grid.visible = options.use_xgrid

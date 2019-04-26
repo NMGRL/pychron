@@ -610,7 +610,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         return scatter, si
 
     def _add_filter_bounds_overlay(self, line):
-        o = ErrorEnvelopeOverlay(component=line, use_region=True)
+        o = ErrorEnvelopeOverlay(component=line, use_region=True, color=(1))
         line.underlays.append(o)
         line.filter_bounds = o
         o.visible = False

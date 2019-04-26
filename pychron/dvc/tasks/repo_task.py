@@ -74,7 +74,7 @@ class RepoItem(HasTraits):
 
 
 class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
-    name = 'Experiment Repositories'
+    name = 'Repositories'
 
     filter_repository_value = Str
     filter_origin_value = Str

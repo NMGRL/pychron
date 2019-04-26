@@ -76,6 +76,9 @@ class ExperimentEditorHandler(TabularEditorHandler):
     def show_evolutions_w_eq(self, info, obj):
         obj.show_evolutions(show_equilibration=True)
 
+    def configure_table(self, info, obj):
+        obj.show_table_configurer()
+
     def __getattr__(self, item):
         if item.startswith('show_evolution_'):
             key = item.split('_')[-1]

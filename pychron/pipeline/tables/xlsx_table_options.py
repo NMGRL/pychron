@@ -75,6 +75,8 @@ class XLSXAnalysisTableWriterOptions(BasePersistenceOptions, JErrorMixin):
     include_blanks = dumpable(Bool(True))
     include_intercepts = dumpable(Bool(True))
     include_percent_ar39 = dumpable(Bool(True))
+    include_icfactors = dumpable(Bool(True))
+    include_discrimination = dumpable(Bool(True))
     # use_weighted_kca = dumpable(Bool(True))
     # kca_error_kind = dumpable(Enum(*ERROR_TYPES))
     repeat_header = dumpable(Bool(False))
@@ -325,6 +327,8 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                                  iinc('rundate', 'Analysis RunDate'),
                                  iinc('blanks', 'Applied Blank'),
                                  iinc('intercepts', 'Intercepts'),
+                                 iinc('icfactors', 'ICFactors'),
+                                 iinc('discrimination', 'Discrimination'),
                                  label='General')
         columns_grp = HGroup(general_col_grp, arar_col_grp,
                              label='Columns', show_border=True)

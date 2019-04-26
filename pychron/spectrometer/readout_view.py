@@ -97,6 +97,7 @@ class Readout(BaseReadout):
 
     min_value = Float(0)
     max_value = Float(100)
+    tolerance = Float(0.01)
 
     def traits_view(self):
         v = View(HGroup(Item('value', style='readonly', label=self.name)))
@@ -173,6 +174,7 @@ class ReadoutView(Loggable):
                                      name=rd['name'],
                                      min_value=rd.get('min', 0),
                                      max_value=rd.get('max', 1),
+                                     tolerance=rd.get('tolerance', 0.01),
                                      compare=rd.get('compare', True))
                         self.readouts.append(rr)
 
@@ -233,7 +235,6 @@ class ReadoutView(Loggable):
         # compare to configuration values
         ne = []
         nd = []
-        tol = 0.001
 
         spec = self.spectrometer
 
@@ -245,10 +246,12 @@ class ReadoutView(Loggable):
 
                     name = r.name
                     rv = r.value
+                    tol = r.tolerance
                     cv = spec.get_configuration_value(name)
                     if abs(rv - cv) > tol:
                         nn.append((r.name, rv, cv))
-                        self.debug('{} does not match. Current:{:0.3f}, Config: {:0.3f}'.format(name, rv, cv))
+                        self.debug('{} does not match. Current:{:0.3f}, '
+                                   'Config: {:0.3f}, tol.: {}'.format(name, rv, cv, tol))
 
             ns = ''
             if ne:

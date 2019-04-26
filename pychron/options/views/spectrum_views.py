@@ -192,6 +192,7 @@ class SpectrumMainOptions(MainOptions):
         v = View(VGroup(HGroup(Item('name', editor=EnumEditor(name='names')),
                                Item('scale', editor=EnumEditor(values=['linear', 'log']))),
                         Item('height'),
+                        self._get_yticks_grp(),
                         HGroup(Item('ymin', label='Min'),
                                Item('ymax', label='Max'),
                                show_border=True,

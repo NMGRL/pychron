@@ -221,6 +221,15 @@ FLUX_CONSTANTS = {'FC Min': {'lambda_ec': [5.80e-11, 0], 'lambda_b': [4.883e-10,
                   'FC SJ': {'lambda_ec': [5.81e-11, 0], 'lambda_b': [4.962e-10, 0],
                             'monitor_age': 28.02}}
 
+LEAST_SQUARES_1D = 'LeastSquares1D'
+WEIGHTED_MEAN_1D = 'WeightedMean1D'
+MATCHING = 'Matching'
+BRACKETING = 'Bracketing'
+PLANE = 'Plane'
+BOWL = 'Bowl'
+FLUX_MODEL_KINDS = PLANE, BOWL, WEIGHTED_MEAN, MATCHING, BRACKETING, LEAST_SQUARES_1D, WEIGHTED_MEAN_1D
+
+
 if paths.setup_dir:
     flux_constants = os.path.join(paths.setup_dir, 'flux_constants.yaml')
     if os.path.isfile(flux_constants):

@@ -30,9 +30,11 @@ from traits.api import Str, String, on_trait_change, Float, \
 
 from pychron import json
 # ============= local library imports  ==========================
+from pychron.core.helpers.binpack import format_blob
 from pychron.core.helpers.strtools import to_bool, csv_to_floats
 from pychron.envisage.view_util import open_view
 from pychron.globals import globalv
+from pychron.hardware import get_float
 from pychron.lasers.laser_managers.ethernet_laser_manager import EthernetLaserManager
 from pychron.paths import paths
 
@@ -167,21 +169,33 @@ class PychronLaserManager(EthernetLaserManager):
         return blobs
 
     def get_response_blob(self):
-        return self._ask('GetResponseBlob', verbose=True)
+        resp = self._ask('GetResponseBlob', verbose=True)
+        if resp:
+            resp = format_blob(resp)
+        else:
+            resp = b''
+        return resp
 
     def get_output_blob(self):
-        return self._ask('GetOutputBlob')
+        """
+        needs to return bytes. GetOutputBlob sends a b64encoded string
 
+        :return:
+        """
+        resp = self._ask('GetOutputBlob')
+        if resp:
+            resp = format_blob(resp)
+        else:
+            resp = b''
+        return resp
+
+    @get_float(default=0)
     def get_achieved_output(self):
-        rv = 0
-        v = self._ask('GetAchievedOutput')
-        if v is not None:
-            try:
-                rv = float(v)
-            except ValueError:
-                pass
-        return rv
+        return self._ask('GetAchievedOutput')
 
+    @get_float(default=0)
+    def get_pyrometer_temperature(self):
+        return self._ask('GetPyrometerTemperature')
     # def do_machine_vision_degas(self, lumens, duration):
     #     if lumens and duration:
     #         self.info('Doing machine vision degas. lumens={}'.format(lumens))

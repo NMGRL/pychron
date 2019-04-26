@@ -18,6 +18,7 @@
 import os
 
 import yaml
+from chaco.axis import DEFAULT_TICK_FORMATTER
 from chaco.axis_view import float_or_auto
 from enable.markers import marker_names
 from traits.api import HasTraits, Str, Int, Bool, Float, Property, Enum, List, Range, \
@@ -362,6 +363,8 @@ class FigureOptions(BaseOptions):
     xtick_fontname = Enum(*FONTS)
     xtick_in = Int(1)
     xtick_out = Int(5)
+    xtick_label_formatter = Property
+    xtick_label_format_str = Str
 
     xtitle_font = Property
     xtitle_fontsize = Enum(*SIZES)
@@ -372,6 +375,8 @@ class FigureOptions(BaseOptions):
     ytick_fontname = Enum(*FONTS)
     ytick_in = Int(1)
     ytick_out = Int(5)
+    ytick_label_formatter = Property
+    ytick_label_format_str = Str
 
     ytitle_font = Property
     ytitle_fontsize = Enum(*SIZES)
@@ -396,7 +401,7 @@ class FigureOptions(BaseOptions):
         if not self.groups:
             self.groups = self._groups_default()
 
-    def paddings(self):
+    def get_paddings(self):
         return self.padding_left, self.padding_right, self.padding_top, self.padding_bottom
 
     def get_group_colors(self):
@@ -487,6 +492,12 @@ class FigureOptions(BaseOptions):
     # ===============================================================================
     # property get/set
     # ===============================================================================
+    def _get_xtick_label_formatter(self):
+        return self._get_tick_label_formatter(self.xtick_label_format_str)
+
+    def _get_ytick_label_formatter(self):
+        return self._get_tick_label_formatter(self.ytick_label_format_str)
+
     def _get_title_font(self):
         return self._get_font('title', default_size=12)
 
@@ -501,6 +512,17 @@ class FigureOptions(BaseOptions):
 
     def _get_ytitle_font(self):
         return self._get_font('ytitle', default_size=12)
+
+    def _get_tick_label_formatter(self, f):
+        func = DEFAULT_TICK_FORMATTER
+
+        if f.isdigit():
+            f = '{{:0.{}f}}'.format(f)
+
+            def func(x):
+                return f.format(x)
+
+        return func
 
     def _get_font(self, name, default_size=10):
         xn = getattr(self, '{}_fontname'.format(name))

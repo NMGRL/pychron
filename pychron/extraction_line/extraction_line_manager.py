@@ -569,8 +569,8 @@ class ExtractionLineManager(Manager, Consoleable):
             if address:
                 name = vm.get_name_by_address(address)
 
-            if description and description != '---':
-                name = vm.get_name_by_description(description)
+            if description and description != NULL_STR:
+                name = vm.get_name_by_description(description, name=name)
 
             if not name:
                 self.warning('Invalid valve name={}, description={}'.format(oname, description))
@@ -593,8 +593,8 @@ class ExtractionLineManager(Manager, Consoleable):
             if address:
                 name = vm.get_name_by_address(address)
 
-            if description and description != '---':
-                name = vm.get_name_by_description(description)
+            if description and description != NULL_STR:
+                name = vm.get_name_by_description(description, name)
 
             # check if specified valve is in the valves.xml file
             if not name:

@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.api import HasTraits, List, Any, Instance, Bool, Set, Event, Int
+from traits.api import List, Any, Instance, Bool, Set, Int
 from traitsui.api import TabularEditor, View, Item, UItem, HGroup, VGroup
 from traitsui.tabular_adapter import TabularAdapter
 
@@ -23,7 +23,8 @@ from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 
 class AuditAdapter(TabularAdapter):
     columns = [('RunID', 'record_id'),
-               ('Date', 'rundate'),
+               ('UUID', 'uuid'),
+               ('RunDate', 'rundate'),
                ]
     font = '10'
     width = Int(70)
@@ -96,7 +97,9 @@ class AuditEditor(BaseTraitsEditor):
         if new:
             isos = [iso for iso in self.isotopes if
                     not all(a.get_isotope(iso).reviewed for ans in (self.unknowns, self.references) for a in ans)]
-            dets = self.detectors
+            dets = [det for det in self.detectors if
+                    not all(a.get_isotope(detector=det).ic_factor_reviewed for ans in (self.unknowns, self.references)
+                            for a in ans)]
         else:
             isos = self.isotopes
             dets = self.detectors

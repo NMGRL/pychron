@@ -379,7 +379,9 @@ class DVCAnalysis(Analysis):
                      n=i.n, fn=i.fn,
                      reviewed=reviewed,
                      include_baseline_error=i.include_baseline_error,
-                     filter_outliers_dict=i.filter_outliers_dict)
+                     filter_outliers_dict=i.filter_outliers_dict,
+                     user_excluded=i.user_excluded,
+                     outlier_excluded=i.outlier_excluded)
 
         # save intercepts
         if isoks:
@@ -387,11 +389,13 @@ class DVCAnalysis(Analysis):
             for k in isoks:
                 try:
                     iso = isos[k]
-                    siso = sisos[k]
-                    if siso:
-                        update(iso, siso)
                 except KeyError:
-                    pass
+                    iso = {}
+                    isos[k] = iso
+
+                siso = sisos[k]
+                if siso:
+                    update(iso, siso)
 
             self._dump(isos, path)
 
@@ -528,6 +532,7 @@ class DVCAnalysis(Analysis):
                 if fod:
                     i.set_filter_outliers_dict(**fod)
                 i.set_fit(v['fit'], notify=False)
+                i.set_user_excluded(v.get('user_excluded'))
                 i.reviewed = v.get('reviewed', False)
 
     def _load_value_error(self, item, obj):

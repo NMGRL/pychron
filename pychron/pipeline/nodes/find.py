@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
-from traits.api import Float, Str, List, Property, cached_property, Button, Bool
+from traits.api import Float, Str, List, Property, cached_property, Button, Bool, Event
 from traitsui.api import Item, EnumEditor, UItem, VGroup, HGroup
 
 from pychron.core.helpers.iterfuncs import partition, groupby_group_id
@@ -44,9 +44,10 @@ class BaseFindFluxNode(FindNode):
     irradiation = Str
     irradiations = Property
     samples = Property(depends_on='irradiation, level')
-    levels = Property(depends_on='irradiation')
+    levels = Property(depends_on='irradiation, dirty')
     level = Str
     monitor_sample_name = Str(DEFAULT_MONITOR_NAME)
+    dirty = Event
 
     def load(self, nodedict):
         self.irradiation = nodedict.get('irradiation', '')
@@ -75,7 +76,10 @@ class BaseFindFluxNode(FindNode):
     def _get_levels(self):
         if self.irradiation and self.dvc:
             irrad = self.dvc.get_irradiation(self.irradiation)
-            return sorted([l.name for l in irrad.levels])
+            if irrad:
+                return sorted([l.name for l in irrad.levels])
+            else:
+                return []
         else:
             return []
 
@@ -232,6 +236,8 @@ class FindFluxMonitorsNode(BaseFindFluxNode):
 
     def _load_hook(self, nodedict):
         self.level = nodedict.get('level', '')
+        if self.level and self.level not in self.levels:
+            self.dirty = True
 
     def _to_template(self, d):
         super(FindFluxMonitorsNode, self)._to_template(d)

@@ -34,7 +34,7 @@ from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.mass_spec.mass_spec_recaller import MassSpecRecaller
 from pychron.paths import paths
-from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
+from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, NULL_STR
 
 DIFF_TOLERANCE_PERCENT = 0.01
 
@@ -157,7 +157,7 @@ class ValueTabularAdapter(TabularAdapter):
         if isinstance(v, float):
             v = floatfmt(v, n=8, use_scientific=True)
         elif isinstance(v, bool):
-            v = '---' if v else ''
+            v = NULL_STR if v else ''
 
         return v
 

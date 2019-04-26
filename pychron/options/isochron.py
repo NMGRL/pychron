@@ -74,6 +74,7 @@ class InverseIsochronOptions(IsochronOptions):
     include_4036_mse = Bool
     include_age_mse = Bool
     include_error_envelope = Bool(True)
+    include_percent_error = Bool
 
     marker_size = Float(2)
     marker = MarkerTrait()

@@ -886,7 +886,7 @@ class AutomatedRunPersister(BasePersister):
             return
 
         user = spec.username
-        user = user if user else '---'
+        user = user if user else NULL_STR
 
         funchist = getattr(db, 'add_{}_history'.format(name))
         self.info('{} adding {} history for {}-{}'.format(user, name,

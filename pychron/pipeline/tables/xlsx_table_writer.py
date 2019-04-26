@@ -136,6 +136,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         ubit = name in ('Unknowns', 'Monitor')
         bkbit = ubit and options.include_blanks
         ibit = options.include_intercepts
+        icbit = options.include_icfactors
+        dbit = options.include_discrimination
 
         kcabit = ubit and options.include_kca
         age_units = '({})'.format(options.age_units)
@@ -184,7 +186,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 c.sigformat = c.attr
 
         self._signal_columns(columns, ibit, bkbit)
-        self._intercalibration_columns(columns, detectors)
+        self._intercalibration_columns(columns, detectors, ic_visible=icbit, disc_visible=dbit)
         self._run_columns(columns, ubit)
         self._flux_columns(columns)
 
@@ -237,15 +239,21 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                         VColumn(visible=ubit, label=('<sup>37</sup>', 'Ar Decay'),
                                 attr='ar37decayfactor', sigformat='decay')])
 
-    def _intercalibration_columns(self, columns, detectors):
-        disc = [VColumn(label='Disc', attr='discrimination', sigformat='disc'),
-                EColumn(attr='discrimination', sigformat='disc')]
+    def _intercalibration_columns(self, columns, detectors, ic_visible=True, disc_visible=True):
+        disc = [VColumn(label='Disc', attr='discrimination', sigformat='disc',
+                        visible=disc_visible),
+                EColumn(attr='discrimination', sigformat='disc',
+                        visible=disc_visible)]
         columns.extend(disc)
 
         for det in detectors:
             tag = '{}_ic_factor'.format(det)
-            columns.extend([Column(label=('IC', '<sup>{}</sup>'.format(det)), attr=tag, func=icf_value, sigformat='ic'),
-                            EColumn(attr=tag, func=icf_error, sigformat='ic')])
+            columns.extend([Column(label=('IC', '<sup>{}</sup>'.format(det)),
+                                   visible=ic_visible,
+                                   attr=tag, func=icf_value, sigformat='ic'),
+                            EColumn(attr=tag,
+                                    visible=ic_visible,
+                                    func=icf_error, sigformat='ic')])
 
     def _signal_columns(self, columns, ibit, bkbit):
         isos = (('Ar', 40), ('Ar', 39), ('Ar', 38), ('Ar', 37), ('Ar', 36))
@@ -424,6 +432,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 EColumn(attr='arith_age'),
                 VColumn(label='IsochronAge', attr='isochron_age'),
                 EColumn(attr='isochron_age'),
+                VColumn(label='Isochron4036', attr='isochron_4036'),
+                EColumn(attr='isochron_4036'),
                 VColumn(label='PlateauAge', attr='plateau_age'),
                 VColumn(attr='plateau_age'),
                 VColumn(label='IntegratedAge', attr='integrated_age'),
@@ -944,7 +954,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
             mt = group.isochron_mswd()
             try:
-                trapped = 1 / group.isochron_4036
+                trapped = group.isochron_4036
                 trapped_value, trapped_error = nominal_value(trapped), std_dev(trapped)
             except ZeroDivisionError:
                 trapped_value, trapped_error = 'NaN', 'NaN'

@@ -32,7 +32,7 @@ from pychron.experiment.tasks.experiment_actions import NewExperimentQueueAction
     QueueConditionalsAction, ConfigureEditorTableAction, SystemConditionalsAction, \
     OpenExperimentHistoryAction, LastAnalysisRecoveryAction, OpenCurrentExperimentQueueAction, \
     SaveAsCurrentExperimentAction, SyncQueueAction, AcquireSpectrometerAction, ReleaseSpectrometerAction, \
-    RunHistoryAction
+    RunHistoryAction, MeltingPointCalibrationAction
 from pychron.experiment.tasks.experiment_preferences import ExperimentPreferencesPane, ConsolePreferencesPane, \
     UserNotifierPreferencesPane, HumanErrorCheckerPreferencesPane
 from pychron.experiment.tasks.experiment_task import ExperimentEditorTask
@@ -148,6 +148,8 @@ class ExperimentPlugin(BaseTaskPlugin):
                   SchemaAddition(id='pychron.experiment.last_analysis_recovery', factory=LastAnalysisRecoveryAction,
                                  path='MenuBar/tools.menu'),
                   SchemaAddition(id='pychron.experiment.run_history_view', factory=RunHistoryAction,
+                                 path='MenuBar/tools.menu'),
+                  SchemaAddition(id='pychron.experiment.melting_point_calibrator', factory=MeltingPointCalibrationAction,
                                  path='MenuBar/tools.menu'),
                   SchemaAddition(id='pychron.experiment.new_pattern', factory=NewPatternAction,
                                  path='MenuBar/file.menu/New'),

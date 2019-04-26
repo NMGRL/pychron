@@ -18,8 +18,9 @@
 from chaco.default_colormaps import color_map_name_dict
 from traitsui.api import Item, HGroup, VGroup, Readonly, EnumEditor
 
+from pychron.core.pychron_traits import BorderVGroup
 from pychron.options.options import SubOptions, AppearanceSubOptions
-from pychron.pychron_constants import MAIN, APPEARANCE
+from pychron.pychron_constants import MAIN, APPEARANCE, LEAST_SQUARES_1D, WEIGHTED_MEAN_1D
 
 
 class FluxSubOptions(SubOptions):
@@ -28,14 +29,21 @@ class FluxSubOptions(SubOptions):
                           Readonly('lambda_k', label=u'Total \u03BB K'),
                           Readonly('monitor_age'),
 
-                          Item('model_kind'),
-                          Item('error_kind', label='Mean J Error'),
-                          Item('predicted_j_error_type', label='Predicted J Error'),
-                          Item('use_weighted_fit', visible_when='model_kind!="Matching"'),
+                          BorderVGroup(Item('model_kind', label='Kind'),
+                                       Item('error_kind', label='Mean J Error'),
+                                       Item('predicted_j_error_type', label='Predicted J Error'),
+
+                                       Item('use_weighted_fit'),
+                                       Item('least_squares_fit',
+                                            visible_when='model_kind=="{}"'.format(LEAST_SQUARES_1D)),
+                                       Item('one_d_axis', label='Axis',
+                                            visible_when='model_kind in ("{}","{}")'.format(LEAST_SQUARES_1D,
+                                                                                            WEIGHTED_MEAN_1D)),
+                                       label='Model'),
 
                           VGroup(HGroup(Item('use_monte_carlo', label='Use'),
-                                 Item('monte_carlo_ntrials', label='N. Trials',
-                                      tooltip='Number of trials to perform monte carlo simulation')),
+                                        Item('monte_carlo_ntrials', label='N. Trials',
+                                             tooltip='Number of trials to perform monte carlo simulation')),
                                  Item('position_error', label='Position Error (Beta)',
                                       tooltip='Set this value to the radius (same units as hole XY positions) of the '
                                               'irradiation hole. '

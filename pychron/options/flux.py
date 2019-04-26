@@ -19,7 +19,7 @@ from traits.api import Str, Int, Enum, Property, Bool, Float
 
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.options import FigureOptions
-from pychron.pychron_constants import FLUX_CONSTANTS, ERROR_TYPES, MAIN, APPEARANCE
+from pychron.pychron_constants import FLUX_CONSTANTS, ERROR_TYPES, MAIN, APPEARANCE, FLUX_MODEL_KINDS
 
 
 class BaseFluxOptions(FigureOptions):
@@ -40,8 +40,11 @@ class FluxOptions(BaseFluxOptions):
     selected_decay = Enum(list(FLUX_CONSTANTS.keys()))
     lambda_k = Property(depends_on='selected_decay')
     monitor_age = Property(depends_on='selected_decay')
-    model_kind = Enum('Plane', 'Bowl', 'Weighted Mean', 'Matching', 'Bracketing')
+    model_kind = Enum(FLUX_MODEL_KINDS)
     flux_scalar = Float(1000)
+
+    least_squares_fit = Enum('Linear', 'Parabolic', 'Cubic', 'Quartic')
+    one_d_axis = Enum('X', 'Y')
 
     monitor_sample_name = Str
 

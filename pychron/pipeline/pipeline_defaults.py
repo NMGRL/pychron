@@ -246,8 +246,8 @@ FLUX = """
 required:
 nodes:
   - klass: FindFluxMonitorsNode
-    # irradiation: NM-299
-    # level: A
+#    irradiation: NM-300
+#    level: E
   - klass: FluxMonitorsNode
   - klass: FitFluxNode
   - klass: ReviewNode

@@ -212,6 +212,24 @@ class IsotopicMeasurement(BaseMeasurement):
     def fn(self, v):
         self._fn = v
 
+    @property
+    def user_excluded(self):
+        if self._regressor:
+            return [int(i) for i in self._regressor.user_excluded]
+
+    @property
+    def outlier_excluded(self):
+        if self._regressor:
+            return [int(i) for i in self._regressor.outlier_excluded]
+
+    def set_user_excluded(self, ue):
+        if ue:
+            reg = self._regressor
+            if not reg:
+                reg = self.regressor
+
+            reg.user_excluded = ue
+
     def set_filtering(self, d):
         self.filter_outliers_dict = d.copy()
         if self._regressor:
