@@ -41,6 +41,8 @@ class AutomatedRunSpec(HasTraits):
         an AutomatedRun. the AutomatedRun does the actual work. ie extraction and measurement
     """
     run_klass = 'pychron.experiment.automated_run.automated_run.AutomatedRun'
+    spectrometer_manager = Instance('pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager')
+
     result = Instance(AutomatedRunResult, ())
     state = Enum('not run', 'extraction',
                  'measurement', 'success',
@@ -339,6 +341,7 @@ class AutomatedRunSpec(HasTraits):
 
         run.spec = self
         run.runid = self.runid
+        run.spectrometer_manager = self.spectrometer_manager
 
         return run
 

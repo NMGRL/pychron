@@ -1937,8 +1937,8 @@ anaylsis_type={}
             # analyze the equilibration
             try:
                 self._analyze_equilibration()
-            except TypeError as e:
-                self.debug('AutomatedRun._equilibrate _analyze_equilibration error. TypeError={}'.format(e))
+            except BaseException as e:
+                self.debug('AutomatedRun._equilibrate _analyze_equilibration error. Exception={}'.format(e))
 
             self.heading('Equilibration Finished')
             if elm and inlet and close_inlet:
