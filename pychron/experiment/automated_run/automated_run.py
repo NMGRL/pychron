@@ -49,7 +49,7 @@ from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR, MEASUREMENT_COLOR, \
-    EXTRACTION_COLOR, SCRIPT_KEYS, AR_AR
+    EXTRACTION_COLOR, SCRIPT_KEYS, AR_AR, NO_BLANK_CORRECT
 from pychron.spectrometer.base_spectrometer import NoIntensityChange
 
 DEBUG = False
@@ -1756,11 +1756,7 @@ anaylsis_type={}
         self.isotope_group.clear_error_components()
         self.isotope_group.clear_blanks()
 
-        cb = False
-        if (not self.spec.analysis_type.startswith('blank')
-            and not self.spec.analysis_type.startswith('background')):
-            cb = True
-
+        cb = False if any(self.spec.analysis_type.startswith(at) for at in NO_BLANK_CORRECT) else True
         for d in self._active_detectors:
             self.debug('setting isotope det={}, iso={}'.format(d.name, d.isotope))
             self.isotope_group.set_isotope(d.isotope, d.name, (0, 0), correct_for_blank=cb)

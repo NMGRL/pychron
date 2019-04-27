@@ -33,7 +33,8 @@ from pychron.experiment.utilities.environmentals import set_environmentals
 from pychron.experiment.utilities.identifier import make_aliquot_step, make_step
 from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.isotope import Isotope
-from pychron.pychron_constants import INTERFERENCE_KEYS, NULL_STR, ARAR_MAPPING, EXTRACTION_ATTRS, META_ATTRS
+from pychron.pychron_constants import INTERFERENCE_KEYS, NULL_STR, ARAR_MAPPING, EXTRACTION_ATTRS, META_ATTRS, \
+    NO_BLANK_CORRECT
 
 
 class Blank:
@@ -588,12 +589,14 @@ class DVCAnalysis(Analysis):
         if not isos:
             return
 
+        cb = False if any(self.analysis_type.startswith(at) for at in NO_BLANK_CORRECT) else True
+
         def factory(name, detector, v):
             i = Isotope(name, detector)
             i.set_units(v.get('units', 'fA'))
             i.set_time_zero(time_zero_offset)
             i.set_detector_serial_id(v.get('serial_id', ''))
-
+            i.correct_for_blank = cb
             return i
 
         try:
