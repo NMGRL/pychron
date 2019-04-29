@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.timer.do_later import do_later
 from traits.api import List, Event
 from traitsui.api import View, UItem, Group, VSplit
 # ============= standard library imports ========================
@@ -67,7 +68,9 @@ class SeriesEditor(FigureEditor):
 
             else:
                 g.on_trait_change(self._handle_reg, 'regression_results', remove=True)
-        self.statistics = ss
+
+        do_later(self.trait_set, statistics=ss)
+        # self.statistics = ss
 
     def _handle_reg(self, new):
         self.update_needed = True

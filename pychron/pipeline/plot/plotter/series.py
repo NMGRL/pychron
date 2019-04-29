@@ -297,9 +297,9 @@ class Series(BaseSeries):
                 ec = self.options.end_caps
                 self._add_error_bars(scatter, yerr, 'y', s, ec, visible=True)
 
-            if set_ylimits:
-                mi, mx = min(ys - 2 * yerr), max(ys + 2 * yerr)
-                graph.set_y_limits(min_=mi, max_=mx, pad='0.1', plotid=pid)
+            # if set_ylimits and not po.has_ylimits():
+            #     mi, mx = min(ys - 2 * yerr), max(ys + 2 * yerr)
+            #     graph.set_y_limits(min_=mi, max_=mx, pad='0.1', plotid=pid)
 
         except (KeyError, ZeroDivisionError, AttributeError) as e:
             import traceback
