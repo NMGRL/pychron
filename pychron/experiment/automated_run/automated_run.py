@@ -1568,12 +1568,12 @@ anaylsis_type={}
         else:
             self.heading('Post Equilibration Finished unsuccessfully')
 
-    def _generate_ic_mftable(self, detectors, refiso, peak_center_config, update_existing):
+    def _generate_ic_mftable(self, detectors, refiso, peak_center_config):
         ret = True
         from pychron.experiment.ic_mftable_generator import ICMFTableGenerator
 
         e = ICMFTableGenerator()
-        if not e.make_mftable(self, detectors, refiso, peak_center_config, update_existing):
+        if not e.make_mftable(self, detectors, refiso, peak_center_config):
             ret = False
         return ret
 

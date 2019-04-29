@@ -183,7 +183,9 @@ class BasePeakCenter(HasTraits):
         spec.magnet.set_dac(start)
         time.sleep(spec.integration_time)
 
-        tol = min(0, cur_intensity * (1 - self.percent / 100.))
+        # tol = min(0, cur_intensity * (1 - self.percent / 100.))
+        tol = cur_intensity * (1 - self.percent / 100.)
+
         timeout = 1 if spec.simulation else 10
         self.info('Wait until signal near baseline. tol= {}. timeout= {}'.format(tol, timeout))
 

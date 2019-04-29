@@ -27,7 +27,7 @@ ARGON_IC_MFTABLE = True
 
 
 class ICMFTableGenerator(Loggable):
-    def make_mftable(self, arun, detectors, refiso, peak_center_config='ic_peakhop', update_existing=True):
+    def make_mftable(self, arun, detectors, refiso, peak_center_config='ic_peakhop'):
         """
             peak center `refiso` for each detector in detectors
         :return:
@@ -67,38 +67,42 @@ class ICMFTableGenerator(Loggable):
                 else:
                     return False
 
-        if update_existing:
-            self._update_table(arun, refiso, results)
-        else:
-            self._write_table(detectors, refiso, results)
-        return True
-
-    def _update_table(self, arun, refiso, results):
         magnet = arun.ion_optics_manager.spectrometer.magnet
+        magnet.set_mftable('ic_mftable')
+
         for det, apc in results:
             magnet.update_field_table(det, refiso, apc, 'ic_generator', update_others=False)
 
-    def _write_table(self, detectors, refiso, results):
-        p = paths.ic_mftable
-        self.info('Writing new IC MFTable to {}'.format(p))
-        with open(p, 'w') as wfile:
-            w = csv.writer(wfile)
+        arun.ion_optics_manager.set_mftable()
+        return True
 
-            w.writerow(['parabolic' if ARGON_IC_MFTABLE else 'discrete'])
-            header = ['iso'] + list(detectors)
-            w.writerow(header)
-            w.writerow([refiso] + results)
+    # def _update_table(self, arun, refiso, results):
+    #     magnet = arun.ion_optics_manager.spectrometer.magnet
+    #     for det, apc in results:
+    #         magnet.update_field_table(det, refiso, apc, 'ic_generator', update_others=False)
 
-            # temporary hack to full write the ic mf table
-            if ARGON_IC_MFTABLE and refiso == 'Ar40' and detectors[0] in ('H1', 'H2'):
-                row = ['Ar39', results[0] - 0.1]
-                row.extend(results[1:])
-
-                w.writerow(row)
-
-                row = ['Ar36', results[0] - 0.4]
-                row.extend(results[1:])
-
-                w.writerow(row)
+    # def _write_table(self, detectors, refiso, results):
+    #     p = paths.ic_mftable
+    #     results = [r[1] for r in results]
+    #     self.info('Writing new IC MFTable to {}'.format(p))
+    #     with open(p, 'w') as wfile:
+    #         w = csv.writer(wfile)
+    #
+    #         w.writerow(['parabolic' if ARGON_IC_MFTABLE else 'discrete'])
+    #         header = ['iso'] + list(detectors)
+    #         w.writerow(header)
+    #         w.writerow([refiso] + results)
+    #
+    #         # temporary hack to full write the ic mf table
+    #         if ARGON_IC_MFTABLE and refiso == 'Ar40' and detectors[0] in ('H1', 'H2'):
+    #             row = ['Ar39', results[0] - 0.1]
+    #             row.extend(results[1:])
+    #
+    #             w.writerow(row)
+    #
+    #             row = ['Ar36', results[0] - 0.4]
+    #             row.extend(results[1:])
+    #
+    #             w.writerow(row)
 
 # ============= EOF =============================================
