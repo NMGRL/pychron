@@ -164,7 +164,7 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
         if scale_to_equilibration:
             ypad = None
             r = (yma - ymi) * 0.02
-            ymi = yma - r
+            # ymi = yma - r
 
             fit = iso.fit
             if fit != 'average':
@@ -179,7 +179,7 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
                 elif fy < ymi:
                     ymi = fy - r
 
-            yma += r
+            # yma += r
 
         g.set_x_limits(min_=xmi, max_=xma, pad=xpad)
         g.set_y_limits(min_=ymi, max_=yma, pad=ypad, plotid=i)
