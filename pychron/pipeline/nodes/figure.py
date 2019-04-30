@@ -20,6 +20,7 @@ from apptools.preferences.preference_binding import bind_preference
 from traits.api import Any, Bool, Instance, Dict
 from traitsui.api import View
 
+from pychron.core.helpers.isotope_utils import sort_detectors
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.helpers.strtools import ratio
 from pychron.core.progress import progress_iterator
@@ -245,12 +246,17 @@ class SeriesNode(FigureNode):
 
                 if unk.analysis_type in (DETECTOR_IC,):
                     isotopes = unk.isotopes
-                    for vi in isotopes.values():
-                        for vj in isotopes.values():
-                            if vi == vj:
+                    dets = sort_detectors(list({i.detector for i in isotopes.values()}))
+
+                    for i, di in enumerate(dets):
+                        for j, dj in enumerate(dets):
+                            if j < i:
                                 continue
 
-                            names.append('{}/{} DetIC'.format(vj.detector, vi.detector))
+                            if di == dj:
+                                continue
+
+                            names.append('{}/{} DetIC'.format(di, dj))
 
             names.extend([PEAK_CENTER, ANALYSIS_TYPE, LAB_TEMP, LAB_HUM, EXTRACT_VALUE, EXTRACT_DURATION, CLEANUP])
 
