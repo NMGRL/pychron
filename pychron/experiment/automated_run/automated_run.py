@@ -310,9 +310,12 @@ class AutomatedRun(Loggable):
                 try:
                     fi = fits[iso.name]
                 except KeyError:
-                    fi = 'linear'
-                    self.warning('No fit for "{}". defaulting to {}. '
-                                 'check the measurement script "{}"'.format(k, fi, self.measurement_script.name))
+                    try:
+                        fi = fits['{}{}'.format(iso.name, iso.detector)]
+                    except KeyError:
+                        fi = 'linear'
+                        self.warning('No fit for "{}". defaulting to {}. '
+                                     'check the measurement script "{}"'.format(k, fi, self.measurement_script.name))
 
             iso.set_fit_blocks(fi)
             self.debug('set "{}" to "{}"'.format(k, fi))
