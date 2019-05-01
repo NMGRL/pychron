@@ -19,7 +19,7 @@ from enable.component_editor import ComponentEditor
 from pyface.action.menu_manager import MenuManager
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
-from traits.api import Instance, Int
+from traits.api import Instance, Int, Button
 from traitsui.api import View, Item, TabularEditor, VGroup, HGroup, \
     EnumEditor, UItem, Label, VSplit, TextEditor, Readonly
 from traitsui.menu import Action
@@ -32,6 +32,7 @@ from pychron.entry.irradiated_position import IrradiatedPositionAdapter
 from pychron.envisage.browser.adapters import SampleAdapter, BrowserAdapter
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.pane_helpers import spacer
+from pychron.git_archive.views import CommitAdapter
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 
@@ -54,6 +55,21 @@ class LevelInfoPane(TraitsDockPane):
                  Readonly('monitor_decay_constant', label='LambdaK Total'),
                  VGroup(UItem('level_note', style='custom', editor=TextEditor(read_only=True)),
                         show_border=True, label='Note'))
+        return v
+
+
+class FluxHistoryPane(TraitsDockPane):
+    id='pychron.entry.flux_history'
+    name = 'Flux History'
+    load_history_button = Button('Load')
+
+    def _load_history_button_fired(self):
+        self.model.load_history()
+
+    def traits_view(self):
+        v = View(VGroup(UItem('pane.load_history_button'),
+                        UItem('flux_commits', editor=TabularEditor(adapter=CommitAdapter()))
+                        ))
         return v
 
 

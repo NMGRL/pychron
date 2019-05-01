@@ -223,8 +223,8 @@ class FluxPersistNode(DVCPersistNode):
                                   threshold=1)
 
                 p = self.dvc.meta_repo.get_level_path(state.irradiation, state.level)
-                self.dvc.meta_repo.add(p)
-                self.dvc.meta_commit('fit flux for {}'.format(state.irradiation, state.level))
+                self.dvc.meta_repo.add(p, commit=False)
+                self.dvc.meta_commit('fit flux for {}{}'.format(state.irradiation, state.level))
 
                 if confirmation_dialog('Would you like to share your changes?'):
                     self.dvc.meta_repo.smart_pull()

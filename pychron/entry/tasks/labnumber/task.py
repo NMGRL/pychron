@@ -27,7 +27,7 @@ from pychron.entry.labnumber_entry import LabnumberEntry
 from pychron.entry.tasks.actions import SavePDFAction, DatabaseSaveAction, PreviewGenerateIdentifiersAction, \
     GenerateIdentifiersAction, ClearSelectionAction, RecoverAction, SyncMetaDataAction
 from pychron.entry.tasks.labnumber.panes import LabnumbersPane, \
-    IrradiationPane, IrradiationEditorPane, IrradiationCanvasPane, LevelInfoPane, ChronologyPane
+    IrradiationPane, IrradiationEditorPane, IrradiationCanvasPane, LevelInfoPane, ChronologyPane, FluxHistoryPane
 from pychron.envisage.browser.base_browser_model import BaseBrowserModel
 from pychron.envisage.browser.record_views import SampleRecordView
 from pychron.envisage.tasks.base_task import BaseManagerTask
@@ -329,6 +329,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
                 PaneItem('pychron.entry.level'),
                 PaneItem('pychron.entry.chronology'),
                 PaneItem('pychron.entry.irradiation_canvas'),
+                PaneItem('pychron.entry.flux_history'),
                 orientation='vertical'))
 
     def create_central_pane(self):
@@ -341,6 +342,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
             IrradiationPane(model=self.manager),
             ChronologyPane(model=self.manager),
             LevelInfoPane(model=self.manager),
+            FluxHistoryPane(model=self.manager),
             # ImporterPane(model=self.importer),
             iep,
             IrradiationCanvasPane(model=self.manager)]

@@ -118,6 +118,8 @@ class LabnumberEntry(DVCIrradiationable):
     use_consecutive_identifiers = Bool
     lab_name = Str
 
+    flux_commits = List
+
     _level_editor = None
     _irradiation_editor = None
 
@@ -421,6 +423,15 @@ class LabnumberEntry(DVCIrradiationable):
                 self.irradiated_positions = [IrradiatedPosition(**pos) for pos in yaml.load(rfile)]
         else:
             self.information_dialog('No recover file for {}'.format(irradiation, level))
+
+    def load_history(self):
+        repo = self.dvc.meta_repo
+
+        greps = ['fit flux for {}{}'.format(self.irradiation, self.level),
+                 'fit flux for {}'.format(self.irradiation)]
+
+        cs = repo.get_commits_from_log(greps)
+        self.flux_commits = cs
 
     # private
     def _backup(self):
