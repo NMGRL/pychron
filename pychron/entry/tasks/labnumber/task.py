@@ -84,7 +84,7 @@ class ClearSelectionView(HasTraits):
 
 
 class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
-    name = 'Labnumber'
+    name = 'Irradiation'
     id = 'pychron.entry.irradiation.task'
 
     clear_sample_button = Button

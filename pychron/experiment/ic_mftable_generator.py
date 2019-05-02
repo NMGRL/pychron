@@ -16,18 +16,17 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-import csv
+
 import time
 from contextlib import contextmanager
 
 from pychron.loggable import Loggable
-from pychron.paths import paths
 
 ARGON_IC_MFTABLE = True
 
 
 class ICMFTableGenerator(Loggable):
-    def make_mftable(self, arun, detectors, refiso, peak_center_config='ic_peakhop'):
+    def make_mftable(self, arun, detectors, refiso, peak_center_config='ic_peakhop', n=1):
         """
             peak center `refiso` for each detector in detectors
         :return:
@@ -45,33 +44,34 @@ class ICMFTableGenerator(Loggable):
             yield
             arun.on_trait_change(func, '_alive', remove=True)
 
-        with listen():
-            self.info('Making IC MFTable')
-            results = []
-            for di in detectors:
-                if not arun.is_alive():
-                    return False
+        for i in range(n):
+            with listen():
+                self.info('Making IC MFTable')
+                results = []
+                for di in detectors:
+                    if not arun.is_alive():
+                        return False
 
-                self.info('Peak centering {}@{}'.format(di, refiso))
-                ion.setup_peak_center(detector=[di], isotope=refiso,
-                                      config_name=peak_center_config,
-                                      plot_panel=plot_panel, show_label=True, use_configuration_dac=False)
+                    self.info('Peak centering {}@{}'.format(di, refiso))
+                    ion.setup_peak_center(detector=[di], isotope=refiso,
+                                          config_name=peak_center_config,
+                                          plot_panel=plot_panel, show_label=True, use_configuration_dac=False)
 
-                arun.peak_center = ion.peak_center
-                ion.do_peak_center(new_thread=False, save=False, warn=False)
-                apc = ion.adjusted_peak_center_result
-                if apc:
-                    self.info('Peak Center {}@{}={:0.6f}'.format(di, refiso, apc))
-                    results.append((di, apc))
-                    time.sleep(0.25)
-                else:
-                    return False
+                    arun.peak_center = ion.peak_center
+                    ion.do_peak_center(new_thread=False, save=False, warn=False)
+                    apc = ion.adjusted_peak_center_result
+                    if apc:
+                        self.info('Peak Center {}@{}={:0.6f}'.format(di, refiso, apc))
+                        results.append((di, apc))
+                        time.sleep(0.25)
+                    else:
+                        return False
 
-        magnet = arun.ion_optics_manager.spectrometer.magnet
-        magnet.set_mftable('ic_mftable')
+            magnet = arun.ion_optics_manager.spectrometer.magnet
+            magnet.set_mftable('ic_mftable')
 
-        for det, apc in results:
-            magnet.update_field_table(det, refiso, apc, 'ic_generator', update_others=False)
+            for det, apc in results:
+                magnet.update_field_table(det, refiso, apc, 'ic_generator', update_others=False)
 
         arun.ion_optics_manager.set_mftable()
         return True
