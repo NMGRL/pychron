@@ -144,6 +144,7 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
                          truncate=iso.truncate,
                          filter_outliers_dict=iso.filter_outliers_dict,
                          color='black')
+            g.set_regressor(iso.regressor, i)
 
             xmi, xma = min_max(xmi, xma, iso.offset_xs)
             if not scale_to_equilibration:

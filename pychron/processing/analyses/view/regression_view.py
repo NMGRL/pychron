@@ -58,6 +58,7 @@ class RegressionView(HasTraits):
                               filter_outliers_dict=baseline.filter_outliers_dict,
                               display_filter_bounds=True,
                               color='red', type='scatter', fit=baseline.efit)
+                bg.set_regressor(baseline.regressor, i)
                 bg.set_y_limits(pad='0.1', plotid=i)
                 bg.set_x_limits(pad='0.025', plotid=i)
 
@@ -72,6 +73,7 @@ class RegressionView(HasTraits):
                               display_filter_bounds=True,
                               filter_outliers_dict=iso.filter_outliers_dict,
                               color='blue', type='scatter', fit=iso.efit)
+                ig.set_regressor(iso.regressor, i)
                 ig.set_y_limits(pad='0.1', plotid=i)
                 ig.set_x_limits(min_=0, max_=max(iso.offset_xs)*1.05, plotid=i)
 
