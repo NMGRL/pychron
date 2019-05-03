@@ -774,7 +774,14 @@ available holder positions {}'.format(pn, ipn))
                 ir.j = nominal_value(j)
                 ir.j_err = std_dev(j)
 
-            ir.note = dbpos.note.decode('utf-8') if dbpos.note else ''
+            note = dbpos.note
+            if note is None:
+                note = ''
+
+            if isinstance(note, bytes):
+                note = note.decode('utf-8')
+
+            ir.note = note
             ir.weight = dbpos.weight or 0
             ir.nanalyses = dbpos.analysis_count
             ir.analyzed = dbpos.analyzed
