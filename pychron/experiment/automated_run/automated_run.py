@@ -562,36 +562,35 @@ class AutomatedRun(Loggable):
         #
         # self.plot_panel.analysis_view.load(self)
 
-    def py_peak_hop(self, cycles, counts, hops, mftable, starttime, starttime_offset,
-                    series=0, fit_series=0, group='signal'):
+    def py_peak_hop(self, cycles, counts, hops, mftable, starttime, starttime_offset, series=0, fit_series=0,
+                    group='signal'):
 
         if not self._alive:
             return
 
-        self.ion_optics_manager.set_mftable(mftable)
+        with self.ion_optics_manager.mftable_ctx(mftable):
 
-        is_baseline = False
-        self.peak_hop_collector.is_baseline = is_baseline
-        self.peak_hop_collector.fit_series_idx = fit_series
+            is_baseline = False
+            self.peak_hop_collector.is_baseline = is_baseline
+            self.peak_hop_collector.fit_series_idx = fit_series
 
-        if self.plot_panel:
-            self.plot_panel.trait_set(is_baseline=is_baseline, _ncycles=cycles, hops=hops)
-            self.plot_panel.show_isotope_graph()
+            if self.plot_panel:
+                self.plot_panel.trait_set(is_baseline=is_baseline, _ncycles=cycles, hops=hops)
+                self.plot_panel.show_isotope_graph()
 
-        # required for mass spec
-        self.persister.save_as_peak_hop = True
+            # required for mass spec
+            self.persister.save_as_peak_hop = True
 
-        self.is_peak_hop = True
+            self.is_peak_hop = True
 
-        check_conditionals = True
-        self._add_conditionals()
+            check_conditionals = True
+            self._add_conditionals()
 
-        ret = self._peak_hop(cycles, counts, hops, group,
-                             starttime, starttime_offset, series,
-                             check_conditionals)
+            ret = self._peak_hop(cycles, counts, hops, group,
+                                 starttime, starttime_offset, series,
+                                 check_conditionals)
 
-        self.is_peak_hop = False
-        self.ion_optics_manager.set_mftable()
+            self.is_peak_hop = False
 
         return ret
 
@@ -2027,8 +2026,7 @@ anaylsis_type={}
 
         self._load_previous()
 
-    def _set_hv_position(self, pos, detector, update_detectors=True,
-                         update_labels=True, update_isotopes=True):
+    def _set_hv_position(self, pos, detector, update_detectors=True, update_labels=True, update_isotopes=True):
         ion = self.ion_optics_manager
         if ion is not None:
             change = ion.hv_position(pos, detector, update_isotopes=update_isotopes)
@@ -2390,8 +2388,8 @@ anaylsis_type={}
                     graph.set_regressor(iso.regressor, idx)
 
         scnt, fcnt = (2, 1) if regressing else (1, 0)
-        self.debug(
-            '"{}" increment series count="{}" fit count="{}" regressing="{}"'.format(grpname, scnt, fcnt, regressing))
+        self.debug('"{}" increment series count="{}" '
+                   'fit count="{}" regressing="{}"'.format(grpname, scnt, fcnt, regressing))
 
         self.measurement_script.increment_series_counts(scnt, fcnt)
 

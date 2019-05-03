@@ -49,28 +49,32 @@ class ThermoMagnet(BaseMagnet):
         # if not self._wait_lock(2):
         #     self.debug('Unabled to obtain set_dac lock. Another thread is moving the magnet')
         #     return
-
-        self.debug('setting magnet DAC')
-        self.debug('current  : {:0.6f}'.format(self._dac))
-        self.debug('requested: {:0.6f}'.format(v))
+        if verbose:
+            self.debug('setting magnet DAC')
+            self.debug('current  : {:0.6f}'.format(self._dac))
+            self.debug('requested: {:0.6f}'.format(v))
 
         dv = abs(self._dac - v)
-        self.debug('Delta Dac: {:0.6f}'.format(dv))
+        if verbose:
+            self.debug('Delta Dac: {:0.6f}'.format(dv))
 
         unprotect = []
         unblank = False
 
         if self.use_detector_protection:
-
-            self.debug('Checking detector protection. dv={:0.5f}'.format(dv))
+            if verbose:
+                self.debug('Checking detector protection. dv={:0.5f}'.format(dv))
             for pd in self.protected_detectors:
                 det = self.spectrometer.get_detector(pd)
-                self.debug('Checking detector "{}". Protection Threshold: {} (V)'.format(pd, det.protection_threshold))
+                if verbose:
+                    self.debug('Checking detector "{}". '
+                               'Protection Threshold: {} (V)'.format(pd, det.protection_threshold))
                 if det.protection_threshold and dv > det.protection_threshold:
                     self.ask('ProtectDetector {},On'.format(pd), verbose=verbose)
                     resp = self.ask('GetDeflection {}'.format(pd), verbose=verbose)
                     unprotect.append(pd)
-                    self.debug('Protected = {}'.format(resp))
+                    if verbose:
+                        self.debug('Protected = {}'.format(resp))
 
         if self.use_beam_blank:
             if dv > self.beam_blank_threshold:
@@ -79,46 +83,54 @@ class ThermoMagnet(BaseMagnet):
 
         if self.use_af_demagnetization and use_af_demag:
             if dv > self.af_demag_threshold or use_af_demag == 'force':
-                self.debug('Do AF Demag. UseAFDemag={}, delta_volts={}, threshold={}'.format(use_af_demag,
-                                                                                             dv,
-                                                                                             self.af_demag_threshold))
+                if verbose:
+                    self.debug('Do AF Demag. UseAFDemag={}, '
+                               'delta_volts={}, threshold={}'.format(use_af_demag, dv, self.af_demag_threshold))
                 self.ask('BlankBeam True', verbose=verbose)
+                unblank = True
                 self._do_af_demagnetization(v, lambda dd: self.ask('SetMagnetDAC {}'.format(dd)))
         else:
-            self.debug('AF Demag not enabled. self.use_af_demag={}, use_af_demag={}'.format(self.use_af_demagnetization,
-                                                                                            use_af_demag))
+            if verbose:
+                self.debug('AF Demag not enabled. '
+                           'self.use_af_demag={}, use_af_demag={}'.format(self.use_af_demagnetization, use_af_demag))
         self.ask('SetMagnetDAC {}'.format(v), verbose=verbose)
 
         change = dv > 1e-7
         if change:
             if settling_time is None:
                 settling_time = self.settling_time
-
-            self.debug('Magnet settling time: {:0.3f} {:0.3f}'.format(settling_time, self.settling_time))
+            if verbose:
+                self.debug('Magnet settling time: {:0.3f} {:0.3f}'.format(settling_time, self.settling_time))
             if settling_time > 0:
                 time.sleep(settling_time)
-                self.debug('Magnet settling complete')
+                if verbose:
+                    self.debug('Magnet settling complete')
 
             if unprotect or unblank:
-                self.debug('Wait for magnet to stop moving')
+                if verbose:
+                    self.debug('Wait for magnet to stop moving')
                 for i in range(50):
                     if not to_bool(self.ask('GetMagnetMoving', verbose=verbose)):
                         break
                     time.sleep(0.25)
-                self.debug('Magnet move complete')
+                if verbose:
+                    self.debug('Magnet move complete')
 
                 if unprotect:
-                    self.debug('Unprotect detectors')
+                    if verbose:
+                        self.debug('Unprotect detectors')
                     for d in unprotect:
                         self.ask('ProtectDetector {},Off'.format(d), verbose=verbose)
                         self.ask('GetDeflection {}'.format(d), verbose=verbose)
 
                 if unblank:
-                    self.debug('Unblank beam')
+                    if verbose:
+                        self.debug('Unblank beam')
                     self.ask('BlankBeam False', verbose=verbose)
 
         self._dac = v
-        self.debug('set_dac. change={}'.format(change))
+        if verbose:
+            self.debug('set_dac. change={}'.format(change))
         # self._wait_release()
         if use_dac_changed and change:
             self.dac_changed = True

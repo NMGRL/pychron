@@ -37,6 +37,19 @@ from pychron.spectrometer.jobs.coincidence import Coincidence
 from pychron.spectrometer.jobs.peak_center import PeakCenter, AccelVoltagePeakCenter
 
 
+class MFTableCTX(object):
+    def __init__(self, manager, mftable):
+        self._manager = manager
+        self._opath = manager.spectrometer.magnet.get_field_table_path()
+        self._mftable = mftable
+
+    def __enter__(self):
+        self._manager.set_mftable(self._mftable)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._manager.set_mftable(self._opath)
+
+
 class IonOpticsManager(Manager):
     reference_detector = Instance(BaseDetector)
     reference_isotope = Any
@@ -74,6 +87,9 @@ class IonOpticsManager(Manager):
         molweights = spec.molecular_weights
         return molweights[isotope_key]
 
+    def mftable_ctx(self, mftable):
+        return MFTableCTX(self, mftable)
+
     def set_mftable(self, name=None):
         """
             if mt is None set to the default mftable located at setupfiles/spectrometer/mftable.csv
@@ -97,7 +113,7 @@ class IonOpticsManager(Manager):
         self.info('positioning {} ({}) on {}'.format(pos, av, detector))
         return av
 
-    def position(self, pos, detector, use_af_demag=False, *args, **kw):
+    def position(self, pos, detector, use_af_demag=True, *args, **kw):
         dac = self._get_position(pos, detector, *args, **kw)
         mag = self.spectrometer.magnet
 
