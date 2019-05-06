@@ -130,7 +130,10 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
 
     def randomize_all(self):
         from random import shuffle
-        shuffle(self.automated_runs)
+        aruns = self.automated_runs[:]
+        shuffle(aruns)
+        self.automated_runs = aruns
+        self.refresh_table_needed = True
 
     def randomize_unknowns(self):
         """
@@ -142,7 +145,7 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
         :return:
         """
 
-        aruns = self.automated_runs
+        aruns = self.automated_runs[:]
 
         def predicate(x):
             return not x.skip
@@ -167,6 +170,7 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
             unks.insert(i, r)
 
         self.automated_runs = unks
+        self.refresh_table_needed = True
 
     def group_extractions2(self):
         """

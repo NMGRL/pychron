@@ -83,7 +83,7 @@ class ExperimentEditorHandler(TabularEditorHandler):
         obj.show_evolutions(show_equilibration=True)
 
     def configure_table(self, info, obj):
-        obj.show_table_configurer()
+        info.ui.context['editor'].show_table_configurer()
 
     def __getattr__(self, item):
         if item.startswith('show_evolution_'):
@@ -231,7 +231,7 @@ class ExperimentEditor(BaseTraitsEditor):
         """ Use the model object for the Traits UI context, if appropriate.
         """
         if self.queue:
-            return {'object': self.queue}
+            return {'object': self.queue, 'editor': self}
         return super(ExperimentEditor, self).trait_context()
 
     # ===============================================================================
