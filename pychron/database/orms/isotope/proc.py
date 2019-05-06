@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 from __future__ import absolute_import
+
 from sqlalchemy import Column, Integer, String, \
     BLOB, Float, Boolean, DateTime, TIMESTAMP, ForeignKey
 from sqlalchemy.ext.declarative import declared_attr
@@ -410,6 +411,8 @@ class proc_FitTable(Base, BaseMixin):
     filter_outlier_std_devs = Column(Integer, default=1)
     include_baseline_error = Column(Boolean)
     time_zero_offset = Column(Float)
+    use_standard_deviation_filtering = False
+    truncate = False
 
     @property
     def isotope_label(self):

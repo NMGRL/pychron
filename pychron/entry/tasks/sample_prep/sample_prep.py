@@ -15,14 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
 
 import os
 import socket
 from datetime import datetime
 
-import paramiko
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
 from traits.api import HasTraits, Str, Bool, Property, Button, on_trait_change, List, cached_property, \
@@ -42,6 +39,7 @@ DEBUG = False
 
 
 def get_sftp_client(host, user, password):
+    import paramiko
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     print(host, user, password)
