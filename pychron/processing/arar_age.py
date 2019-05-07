@@ -22,11 +22,12 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 from copy import copy
-from operator import itemgetter
+from operator import itemgetter, attrgetter
 
 from uncertainties import ufloat, std_dev, nominal_value
 
 from pychron.core.helpers.isotope_utils import sort_detectors
+from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.processing.arar_constants import ArArConstants
 from pychron.processing.argon_calculations import calculate_f, abundance_sensitivity_correction, age_equation, \
     calculate_flux, calculate_arar_decay_factors
@@ -270,14 +271,17 @@ class ArArAge(IsotopeGroup):
             r = ufloat(0, 0)
             ratio = attr.split(' ')[0]
             numkey, denkey = ratio.split('/')
-            num, den = None, None
-            for iso in self.isotopes.values():
-                if iso.detector == numkey:
-                    num = iso.get_non_detector_corrected_value()
-                elif iso.detector == denkey:
-                    den = iso.get_non_detector_corrected_value()
-            if num and den:
-                r = num / den
+
+            for name, isos in groupby_key(self.isotopes.values(), key=attrgetter('name')):
+                num, den = None, None
+                for iso in isos:
+                    if iso.detector == numkey:
+                        num = iso.get_non_detector_corrected_value()
+                    elif iso.detector == denkey:
+                        den = iso.get_non_detector_corrected_value()
+
+                    if num and den:
+                        return num / den
 
         elif attr in self.computed:
             r = self.computed[attr]

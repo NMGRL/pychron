@@ -23,6 +23,7 @@ from uncertainties import nominal_value, std_dev
 from pychron.core.helpers.formatting import uformat_percent_error, floatfmt, errorfmt
 from pychron.experiment.conditional.conditional import AutomatedRunConditional
 from pychron.processing.isotope_group import IsotopeGroup
+from pychron.pychron_constants import NULL_STR
 
 
 class AutomatedRunResult(HasTraits):
@@ -34,22 +35,24 @@ class AutomatedRunResult(HasTraits):
     centering_results = None
 
     def _get_summary(self):
+        lines = ['RunID= {}'.format(self.runid)]
+
         at = self.analysis_timestamp
         if at is not None:
-            at = at.strftime('%H:%M:%S %m-%d-%Y')
-        return '''RUNID= {} 
-RUN TIME= {}
-{}
-{}
-{}
-{}
-{}'''.format(self.runid,
-             at,
-             self._intensities(),
-             self._tripped_conditional(),
-             self._make_header('Summary'),
-             self._make_peak_statistics(),
-             self._make_summary())
+            lines.append('Run Time= {}'.format(at.strftime('%H:%M:%S %m-%d-%Y')))
+
+        funcs = [self._intensities, self._tripped_conditional,
+                 lambda: self._make_header('Summary'),
+                 self._make_peak_statistics,
+                 self._make_summary]
+
+        for func in funcs:
+            try:
+                lines.append(func())
+            except BaseException:
+                pass
+
+        return '\n'.join(lines)
 
     def _make_summary(self):
         return 'No Summary Available'
@@ -60,8 +63,9 @@ RUN TIME= {}
         def f(v):
             try:
                 v = '{:0.2f}'.format(v)
-            except ValueError:
-                pass
+            except (ValueError, TypeError):
+                v = NULL_STR
+
             return v
 
         if self.centering_results:
