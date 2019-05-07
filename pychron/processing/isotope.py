@@ -185,7 +185,7 @@ class IsotopicMeasurement(BaseMeasurement):
     @property
     def efit(self):
         fit = self.fit
-        if '_' not in fit:
+        if fit and '_' not in fit:
             fit = '{}_{}'.format(fit, self.error_type)
         return fit
 
