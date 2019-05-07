@@ -466,13 +466,11 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
     def _set_regressor(self, scatter, r):
 
         selection = scatter.index.metadata['selections']
-
         selection = set(selection) ^ set(r.outlier_excluded + r.truncate_excluded)
         x = scatter.index.get_data()
         y = scatter.value.get_data()
 
-        sel = list(selection ^ set(r.user_excluded))
-        # print sel
+        sel = list(selection)
         if hasattr(scatter, 'yerror'):
             yserr = scatter.yerror.get_data()
             r.trait_set(yserr=yserr)
