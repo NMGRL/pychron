@@ -31,6 +31,7 @@ from pychron.managers.manager import Manager
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR
 from pychron.spectrometer.base_detector import BaseDetector
+from pychron.spectrometer.base_spectrometer import NoIntensityChange
 from pychron.spectrometer.ion_optics.coincidence_config import CoincidenceConfig
 from pychron.spectrometer.ion_optics.peak_center_config import PeakCenterConfigurer
 from pychron.spectrometer.jobs.coincidence import Coincidence
@@ -393,7 +394,11 @@ class IonOpticsManager(Manager):
         ref = self.reference_detector
         isotope = self.reference_isotope
 
-        center_value = pc.get_peak_center()
+        try:
+            center_value = pc.get_peak_center()
+        except NoIntensityChange as e:
+            self.warning('Peak Centering failed. No Intensity change. {}'.format(e))
+            center_value = None
 
         self.peak_center_result = center_value
         if center_value:
