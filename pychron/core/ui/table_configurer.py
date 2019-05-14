@@ -61,7 +61,6 @@ class TableConfigurer(HasTraits):
     font = Enum(*SIZES)
     auto_set = Bool(False)
     fontsize_enabled = Bool(True)
-    # refresh_table_needed = Event
     title = Str('Configure Table')
     refresh_func = Callable
     show_all = Button('Show All')
