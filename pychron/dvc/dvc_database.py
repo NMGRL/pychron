@@ -1400,6 +1400,18 @@ class DVCDatabase(DatabaseAdapter):
     def get_identifier(self, identifier):
         return self._retrieve_item(IrradiationPositionTbl, identifier, key='identifier')
 
+    def get_irradiation_position_by_sample(self, name, material, grainsize, principal_investigator, project):
+        with self.session_ctx() as sess:
+            q = sess.query(IrradiationPositionTbl)
+            q = q.join(SampleTbl, MaterialTbl, ProjectTbl, PrincipalInvestigatorTbl)
+            q = q.filter(SampleTbl.name == name)
+            q = q.filter(MaterialTbl.name == material)
+            if grainsize:
+                q = q.filter(MaterialTbl.grainsize == grainsize)
+            q = q.filter(ProjectTbl.name == project)
+            q = principal_investigator_filter(q, principal_investigator)
+            return self._query_all(q, verbose_query=True)
+
     def get_irradiation_position(self, irrad, level, pos):
         with self.session_ctx() as sess:
             q = sess.query(IrradiationPositionTbl)

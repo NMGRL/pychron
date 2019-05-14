@@ -21,7 +21,7 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Instance, Int, Button
 from traitsui.api import View, Item, TabularEditor, VGroup, HGroup, \
-    EnumEditor, UItem, Label, VSplit, TextEditor, Readonly
+    EnumEditor, UItem, Label, VSplit, TextEditor, Readonly, Handler
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
@@ -59,7 +59,7 @@ class LevelInfoPane(TraitsDockPane):
 
 
 class FluxHistoryPane(TraitsDockPane):
-    id='pychron.entry.flux_history'
+    id = 'pychron.entry.flux_history'
     name = 'Flux History'
     load_history_button = Button('Load')
 
@@ -98,6 +98,18 @@ class ChronologyPane(TraitsDockPane):
         #                              editor=TabularEditor(editable=False,
         #                                                   adapter=ChronologyAdapter())))))
         # return v
+
+
+class IrradiationEditorHandler(Handler):
+    def find_associated_identifiers(self, info, obj):
+        obj.find_associated_identifiers()
+
+    def unselect_projects(self, info, obj):
+        print('asfsafdsad')
+        obj.selected_projects = []
+
+    def configure_sample_table(self, info, obj):
+        pass
 
 
 class IrradiationEditorPane(TraitsDockPane):
@@ -181,7 +193,7 @@ class IrradiationEditorPane(TraitsDockPane):
                            show_border=True, label='Packet'),
                     HGroup(jgrp, ngrp))
 
-        v = View(VSplit(g1, g2))
+        v = View(VSplit(g1, g2), handler=IrradiationEditorHandler())
         return v
 
 

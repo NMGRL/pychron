@@ -139,6 +139,12 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
                 self.load_principal_investigators()
                 self.load_projects(include_recent=False)
 
+    def find_associated_identifiers(self):
+        ns = [ni.name for ni in self.selected_samples]
+        self.info('find associated identifiers {}'.format(','.join(ns)))
+
+        self.manager.find_associated_identifiers(self.selected_samples)
+
     def sync_metadata(self):
         self.info('sync metadata')
         self.manager.sync_metadata()
@@ -337,7 +343,6 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
 
     def create_dock_panes(self):
         iep = IrradiationEditorPane(model=self)
-        self.labnumber_tabular_adapter = iep.sample_tabular_adapter
         return [
             IrradiationPane(model=self.manager),
             ChronologyPane(model=self.manager),
@@ -442,6 +447,8 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
             self.debug('selected projects={}'.format(names))
 
             self._load_associated_samples(names)
+        else:
+            self.samples = []
 
     def _prompt_for_save(self):
         self.manager.push_changes()

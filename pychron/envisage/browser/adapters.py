@@ -70,6 +70,11 @@ class SampleAdapter(BrowserAdapter):
     labnumber_width = Int(60)
     material_width = Int(75)
 
+    def get_menu(self, obj, trait, row, column):
+        return MenuManager(Action(name='Find Associated Identifiers', action='find_associated_identifiers'),
+                           Action(name='Configure', action='configure_sample_table'),
+                           )
+
 
 class SampleImageAdapter(BrowserAdapter):
     columns = [('Sample', 'name'),

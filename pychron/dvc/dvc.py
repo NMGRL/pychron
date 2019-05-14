@@ -104,6 +104,18 @@ class DVC(Loggable):
         if self.db.connect():
             return True
 
+    def find_associated_identifiers(self, samples):
+        from pychron.dvc.associated_identifiers import AssociatedIdentifiersView
+
+        av = AssociatedIdentifiersView()
+        for s in samples:
+            dbids = self.db.get_irradiation_position_by_sample(s.name, s.material, s.grainsize,
+                                                               s.principal_investigator,
+                                                    s.project)
+            av.add_items(dbids)
+
+        av.edit_traits(kind='modal')
+
     def open_meta_repo(self):
         mrepo = self.meta_repo
         if self.meta_repo_name:
@@ -944,6 +956,8 @@ class DVC(Loggable):
                 if sparrow.connect():
                     for p in ps:
                         sparrow.insert_ia(p)
+                else:
+                    self.warning('Connection failed. Cannot add IAs to Sparrow')
 
             self.repository_commit(rid, '<IA> added interpreted ages {}'.format(','.join(ialabels)))
             return True

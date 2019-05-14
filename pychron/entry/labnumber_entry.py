@@ -146,6 +146,9 @@ class LabnumberEntry(DVCIrradiationable):
     def activated(self):
         pass
 
+    def find_associated_identifiers(self,samples):
+        self.dvc.find_associated_identifiers(samples)
+
     def import_irradiation_load_xls(self, p):
         self.info('import irradiation file: {}'.format(p))
 
