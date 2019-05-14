@@ -27,7 +27,6 @@ from git import Repo
 from git.exc import GitCommandError
 from traits.api import Any, Str, List, Event
 
-from pychron.core.codetools.inspection import caller
 from pychron.core.helpers.filetools import fileiter
 from pychron.core.progress import open_progress
 from pychron.envisage.view_util import open_view
@@ -619,7 +618,6 @@ class GitRepoManager(Loggable):
     def get_branch_names(self):
         return [b.name for b in self._repo.branches]
 
-    @caller
     def pull(self, branch='master', remote='origin', handled=True, use_progress=True):
         """
             fetch and merge

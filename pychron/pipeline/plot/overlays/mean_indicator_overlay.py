@@ -30,6 +30,17 @@ class MovableMixin:
     current_screen_point = None
     altered_screen_point = None
     delta_screen_point = None
+    ox = None
+    oy = None
+    offset_x = 0
+    offset_y = 0
+
+    def update_offset(self, dx, dy):
+        if self.ox is None:
+            self.ox, self.oy = self.x, self.y
+
+        self.offset_x += dx
+        self.offset_y += dy
 
     def get_current_point(self):
         data_pt = self.altered_screen_point
@@ -124,6 +135,7 @@ def render_end_cap(gc, x, y, length=3):
         gc.line_to(x, y + l)
         # print x, y, y - l, y + l
         gc.draw_path()
+
 
 try:
     class MeanIndicatorOverlay(AbstractOverlay, MovableMixin):

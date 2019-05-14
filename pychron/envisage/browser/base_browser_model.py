@@ -26,7 +26,6 @@ from traits.trait_types import BaseStr
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.column_sorter_mixin import ColumnSorterMixin
-from pychron.core.codetools.inspection import caller
 from pychron.core.fuzzyfinder import fuzzyfinder
 from pychron.core.progress import progress_loader
 from pychron.core.ui.table_configurer import SampleTableConfigurer
@@ -377,7 +376,6 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         grps = self.get_analysis_groups(projects)
         self.analysis_groups = grps
 
-    @caller
     def _load_associated_labnumbers(self):
         """
         """
@@ -413,7 +411,6 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         sams = progress_loader(lns, func, step=25)
         return sams
 
-    @caller
     def _make_labnumbers(self):
         # dont query if analysis_types enabled but not analysis type specified
         if self.use_analysis_type_filtering and not self.analysis_include_types:

@@ -16,12 +16,14 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from chaco.plot_containers import GridPlotContainer, VPlotContainer
 from traits.api import HasTraits, Any, Int
+
+
 # from pychron.processing.plotters.graph_panel_info import GraphPanelInfo
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.codetools.inspection import caller
 
 
 class FigureContainer(HasTraits):
@@ -33,7 +35,6 @@ class FigureContainer(HasTraits):
     rows = Int
     cols = Int
 
-    @caller
     def refresh(self, clear=False):
         comp = self.component
         for i in range(self.rows):
