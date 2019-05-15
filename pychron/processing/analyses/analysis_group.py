@@ -662,6 +662,12 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     def _get_plateau_age(self):
         ans = self.analyses
         v, e = 0, 0
+        self.plateau_steps = None
+        self.plateau_steps_str = ''
+        self.nsteps = 0
+        self.plateau_mswd = 0
+        self.plateau_mswd_valid = False
+
         if all((not isinstance(ai, InterpretedAgeGroup) for ai in ans)):
             if ans:
                 ages = [ai.age for ai in ans]
