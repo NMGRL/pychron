@@ -456,6 +456,7 @@ class PatternExecutor(Patternable):
                 self.debug('Deviation too small dx={},dy={}'.format(dx, dy, move_threshold))
                 pattern.position_str = 'Deviation too small'
                 continue
+
             px += dx
             py -= dy
             self.debug('i: {}. point={},{}. '
@@ -463,8 +464,23 @@ class PatternExecutor(Patternable):
 
             if not pattern.validate(px, py):
                 self.debug('invalid position. {},{}'.format(px, py))
-                px, py = pattern.reduce_vector_magnitude(px, py, 0.85)
+
+                curx = px - dx
+                cury = py + dy
+
+                vx = curx - cx
+                vy = cury - cy
+
+                px = vx * aggressiveness + cx
+                py = vy * aggressiveness + cy
+
                 self.debug('reduced vector magnitude. new pos={},{}'.format(px, py))
+
+                # for safety validate this new position
+                # if above calculation is correct the new position should always be valid
+                if not pattern.validate(px, py):
+                    self.debug('vector calculations incorrect. moving to center position')
+                    px, py = cx, cy
 
             pattern.position_str = '{:0.5f},{:0.5f}'.format(px, py)
 
