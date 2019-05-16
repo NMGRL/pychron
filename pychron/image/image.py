@@ -61,10 +61,14 @@ class Image(HasTraits):
     #
     #     return img
     #
-    # def load(self, img, swap_rb=False, nchannels=3):
-    #
-    #     img = self.new_frame(img, swap_rb)
-    #     self.source_frame = img
+    def load(self, img, swap_rb=False, nchannels=3):
+
+        # img = self.new_frame(img, swap_rb)
+        # from imageio import imread
+        from cv2 import imread
+        img = imread(img)
+        print(type(img), img.dtype)
+        self.source_frame = img
 
     def update_bounds(self, obj, name, old, new):
         if new:

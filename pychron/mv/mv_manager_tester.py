@@ -16,8 +16,8 @@
 
 # ============= enthought library imports =======================
 
-from __future__ import absolute_import
-from __future__ import print_function
+from numpy import copy
+from pyface.timer.do_later import do_later
 from traits.api import Button, HasTraits
 from traitsui.api import View, UItem
 
@@ -27,18 +27,55 @@ from traitsui.api import View, UItem
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from traits.api import Instance
 from pychron.core.helpers.logger_setup import logging_setup
+from pychron.core.ui.image_editor import ImageEditor
+from pychron.core.ui.thread import Thread
+from pychron.image.standalone_image import FrameImage
 from pychron.image.video import Video
 from pychron.mv.autocenter_manager import CO2AutocenterManager
+from pychron.mv.lumen_detector import LumenDetector
 
 
 class TestAutocenter(HasTraits):
     test1_button = Button('Test1')
+    display_image = Instance(FrameImage)
+
+    def init(self):
+        a = CO2AutocenterManager(video=Video())
+        # a.search_width = 1
+        # a.search_n = 20
+        # a.stretch_intensity = False
+        # a.blur = True
+        # a.blocksize = 10
+        # a.blocksize_step = 5
+
+        self.display_image = a.display_image
+        self.manager = a
 
     def _test1(self):
         print('test1')
-        a = CO2AutocenterManager(video=Video())
-        a.calculate_new_center(0, 0, 0, 0, dim=1.0)
+        ld = LumenDetector()
+
+        def func():
+            src = copy(self.manager.video.get_cached_frame())
+            # dim = self.stage_map.g_dimension
+            ld.pxpermm = 31
+            dim = 1.5
+            mask_dim = dim * 1.05
+            offx, offy = 0, 0
+            cropdim = dim * 2.5
+            src = ld.crop(src, cropdim, cropdim, offx, offy, verbose=False)
+
+            ld.find_targets(self.display_image, src, dim, mask=mask_dim,
+                            search={'start_offset_scalar': 1,
+                                    # 'width': 2
+                                    })
+            # self.manager.calculate_new_center(0, 0, 0, 0, dim=1.25)
+
+        t = Thread(target=func)
+        t.start()
+        self.t = t
 
     def _set_test_image(self):
         from pychron.globals import globalv
@@ -46,6 +83,7 @@ class TestAutocenter(HasTraits):
         # p = '/Users/ross/Sandbox/pos_err/pos_err_200_0-002.jpg'
         p = '/Users/ross/Sandbox/poserror/pos_err_221_0-007.jpg'
         p = '/Users/ross/Sandbox/poserror/snapshot009.jpg'
+        p = '/Users/ross/Sandbox/graintest/image0269.png'
         # p = '/Users/argonlab3/Pychron_co2/data/snapshots/pos_err_220_0--001.jpg'
 
         globalv.video_test_path = p
@@ -57,10 +95,14 @@ class TestAutocenter(HasTraits):
 
 
 if __name__ == '__main__':
-
     logging_setup('mv', use_archiver=False, use_file=False)
     t = TestAutocenter()
-    t.configure_traits(view=View(UItem('test1_button')))
+    t.init()
+    t.configure_traits(view=View(UItem('test1_button'),
+                                 UItem('object.display_image.source_frame',
+                                       width=254, height=254,
+                                       editor=ImageEditor(refresh='object.display_image.refresh_needed')),
+                                 width=500, height=300))
 
 # ============= EOF =============================================
 

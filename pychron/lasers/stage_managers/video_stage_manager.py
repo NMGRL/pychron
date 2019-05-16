@@ -215,7 +215,7 @@ class VideoStageManager(StageManager):
                 src = self._get_preprocessed_src()
                 if src is not None:
                     targets = ld.find_targets(display_image, src, dim, mask=mask_dim,
-                                              search={'start_offset_scalar': 1.5})
+                                              search={'start_offset_scalar': 1})
                     if targets:
                         t = time.time()
                         targets = [(t, mask_dim_mm, ti.poly_points.tolist()) for ti in targets]

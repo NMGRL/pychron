@@ -223,8 +223,7 @@ def draw_contour_list(src, contours, hierarchy, external_color=(0, 255, 255),
     for i, _ in enumerate(contours):
         j = i + 1
         drawContours(src, contours, i,
-                     convert_color((j * 255 / n, j * 255 / n, 0)), -1
-                     )
+                     convert_color((j * 255 / n, j * 255 / n, 0)), -1)
 
 
 def get_centroid(pts):

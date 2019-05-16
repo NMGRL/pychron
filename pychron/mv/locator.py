@@ -14,28 +14,20 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
 
-import time
-from operator import attrgetter
-
-from skimage.measure import find_contours
 from traits.api import Float
 # ============= standard library imports ========================
+
 from numpy import array, histogram, argmax, zeros, asarray, ones_like, \
-    nonzero, max, arange, argsort, invert, median
-from skimage.feature import peak_local_max
-from skimage.transform import hough_circle
+    nonzero, max, arange, argsort, invert, median, mean
+from operator import attrgetter
 from skimage.morphology import watershed
 from skimage.draw import polygon, circle, circle_perimeter, circle_perimeter_aa
 from scipy import ndimage
 from skimage.exposure import rescale_intensity
 from skimage.filters import gaussian
 from skimage import feature
-from skimage.feature import canny
 # ============= local library imports  ==========================
-# from pychron.core.geometry.centroid.calculate_centroid import calculate_centroid
 from pychron.loggable import Loggable
 from pychron.mv.segment.region import RegionSegmenter
 from pychron.image.cv_wrapper import grayspace, draw_contour_list, contour, \
@@ -43,7 +35,6 @@ from pychron.image.cv_wrapper import grayspace, draw_contour_list, contour, \
     draw_lines, \
     draw_polygons, crop
 from pychron.mv.target import Target
-# from pychron.image.image import StandAloneImage
 from pychron.core.geometry.geometry import approximate_polygon_center, \
     calc_length
 
@@ -109,7 +100,7 @@ class Locator(Loggable):
         """
         dx, dy = None, None
 
-        targets = self._find_targets(image, frame, dim, shape, **kw)
+        targets = self._find_targets(image, frame, dim, shape=shape, **kw)
 
         if targets:
             self.info('found {} potential targets'.format(len(targets)))
@@ -169,11 +160,8 @@ class Locator(Loggable):
 
         start = search.get('start')
         if start is None:
-            # n=20, w=10, start=None, step=2
             w = search.get('width', 10)
-            start = int(median(src)) - search.get('start_offset_scalar', 3) * w
-            # start = 2*w
-            # start = 20
+            start = int(mean(src[src > 0])) - search.get('start_offset_scalar', 3) * w
 
         step = search.get('step', 2)
         n = search.get('n', 20)
@@ -188,8 +176,16 @@ class Locator(Loggable):
             ww = w * (j + 1)
 
             for i in range(n):
-                seg.threshold_low = max((0, start + i * step - ww))
-                seg.threshold_high = max((1, min((255, start + i * step + ww))))
+
+                low = max((0, start + i * step - ww))
+                high = max((1, min((255, start + i * step + ww))))
+                if inverted:
+                    low = 255-low
+                    high = 255-high
+
+                seg.threshold_low = low
+                seg.threshold_high = high
+
                 if seg.threshold_low == plow and seg.threshold_high == phigh:
                     break
 
@@ -358,7 +354,7 @@ class Locator(Loggable):
             3. stretch contrast
         """
         if len(frame.shape) != 2:
-            frm = grayspace(frame)
+            frm = grayspace(frame) * 255
         else:
             frm = frame / self.pixel_depth * 255
 

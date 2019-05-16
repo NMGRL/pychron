@@ -62,7 +62,6 @@ class AutoCenterManager(MachineVisionManager):
 
     def calculate_new_center(self, cx, cy, offx, offy, dim=1.0, shape='circle'):
         frame = self.new_image_frame()
-
         loc = self._get_locator(shape=shape)
 
         cropdim = ceil(dim * 2.55)
@@ -77,11 +76,10 @@ class AutoCenterManager(MachineVisionManager):
                    'blur': self.blur}
         search = dict(n=self.search_n,
                       step=self.search_step,
-                      w=self.search_width,
+                      width=self.search_width,
                       blocksize=self.blocksize,
                       blocksize_step=self.blocksize_step,
                       use_adaptive_threshold=self.use_adaptive_threshold)
-
         dx, dy = loc.find(im, frame, dim=dim, preprocess=preprop, search=search)
 
         if dx is None and dy is None:
