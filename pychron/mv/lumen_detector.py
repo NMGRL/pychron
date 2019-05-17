@@ -161,10 +161,15 @@ class LumenDetector(Locator):
             target = targets[0]
             px, py = target.centroid
             pt = px - w / 2, py - h / 2, 1
-            area = target.area
             self._draw_targets(src, targets)
+
+            ilum = src[target.mask].sum()
+            area = (target.area+target.pactual/2)
         else:
+            ilum = lum.sum()
             area = mask.sum()
+
+        sat = ilum/(area*3*pixel_depth)
 
         if pts.shape[0]:
             idx = tuple(pts.T)
@@ -181,7 +186,6 @@ class LumenDetector(Locator):
             except ZeroDivisionError:
                 pass
 
-        sat = lum.sum() / (area * pixel_depth)
         return pt, px, py, peak_img, sat, src
 
     def get_scores(self, lum, pixel_depth=None):

@@ -35,7 +35,6 @@ class RegionSegmenter(BaseSegmenter):
     def segment(self, image):
         """
         """
-        # image = src[:]
         if self.use_adaptive_threshold:
             bs = self.blocksize
             if not bs % 2:

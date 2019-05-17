@@ -14,12 +14,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import time
 
 from traits.api import Float
 # ============= standard library imports ========================
 
 from numpy import array, histogram, argmax, zeros, asarray, ones_like, \
-    nonzero, max, arange, argsort, invert, median, mean
+    nonzero, max, arange, argsort, invert, median, mean, zeros_like
 from operator import attrgetter
 from skimage.morphology import watershed
 from skimage.draw import polygon, circle, circle_perimeter, circle_perimeter_aa
@@ -199,7 +200,6 @@ class Locator(Loggable):
                 # print(i, seg.threshold_high, seg.threshold_low)
                 # draw contours
                 targets = self._find_polygon_targets(nsrc, frame=nf)
-                # print('tasfdas', targets)
                 if set_image and image is not None:
                     image.set_frame(nf)
 
@@ -478,8 +478,8 @@ class Locator(Loggable):
          convenience function for assembling target list
         """
         targets = []
-        for pi, ai, co, ci, pa, pch in pargs:
-            if len(pi) < 4:
+        for pi, ai, co, ci, pa, pch, mask in pargs:
+            if len(pi) < 5:
                 continue
 
             tr = Target()
@@ -491,7 +491,7 @@ class Locator(Loggable):
             tr.centroid = ci
             tr.pactual = pa
             tr.pconvex_hull = pch
-
+            tr.mask = mask
             targets.append(tr)
 
         return targets

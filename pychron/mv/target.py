@@ -39,6 +39,7 @@ class Target:
     min_enclose_area = 0
     pactual = 0
     pconvex_hull = 0
+    mask = None
 
     @property
     def dev_centroid(self):
@@ -57,31 +58,5 @@ class Target:
     @property
     def perimeter_convexity(self):
         return self.pconvex_hull / self.pactual
-
-        #        return self.
-        #        r = timethis(convex_hull_area, args=(self.poly_points,))
-
-        #        return self.area / convex_hull_area()
-        #        return self.area / convex_hull_area(self.poly_points)
-
-        #    @cached_property
-        #    def _get_centroid(self):
-        # #        pts = array([(pt.x, pt.y) for pt in self.poly_points], dtype=float)
-        # #        v = timethis(calculate_centroid, args=(self.poly_points,))
-        #        return calculate_centroid(self.poly_points)
-        # #        print v
-        #        return v
-
-        #    @property
-
-# def dev_br(self):
-#        return ((self.origin[0] - self.bounding_rect[0]),
-#                (self.origin[1] - self.bounding_rect[1]))
-#    @property
-#    def bounding_area(self):
-#        return self.bounding_rect[1] ** 2 * 3.1415
-#        print self.bounding_rect
-#        return 1
-#        return self.bounding_rect[2] * self.bounding_rect[3]
 
 # ============= EOF =============================================
