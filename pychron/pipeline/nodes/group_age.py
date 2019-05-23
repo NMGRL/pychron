@@ -13,16 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from apptools.preferences.preference_binding import bind_preference
 
-from pychron.pipeline.editors.group_age_editor import GroupAgeEditor
+from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.pipeline.nodes.data import BaseDVCNode
+from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
+from pychron.pychron_constants import UNKNOWN, BLANK_TYPES, AIR
 
 
 class GroupAgeNode(BaseDVCNode):
     name = 'Group Age'
     auto_configure = False
     configurable = False
-    editor_klass = GroupAgeEditor
     editor = None
 
     def run(self, state):
@@ -36,7 +38,32 @@ class GroupAgeNode(BaseDVCNode):
         self.set_groups(state)
 
     def set_groups(self, state):
-        pass
+            bind_preference(self, 'skip_meaning', 'pychron.pipeline.skip_meaning')
+
+            def factory(ans, tag='Human Table'):
+                if self.skip_meaning:
+                    if tag in self.skip_meaning:
+                        ans = (ai for ai in ans if ai.tag.lower() != 'skip')
+
+                g = InterpretedAgeGroup(analyses=list(ans))
+                return g
+
+            unknowns = list(a for a in state.unknowns if a.analysis_type == UNKNOWN)
+            blanks = (a for a in state.unknowns if a.analysis_type in BLANK_TYPES)
+            airs = (a for a in state.unknowns if a.analysis_type == AIR)
+
+            # unk_group = [factory(analyses) for _, analyses in groupby(sorted(unknowns, key=key), key=key)]
+            blank_group = [factory(analyses) for _, analyses in groupby_group_id(blanks)]
+            air_group = [factory(analyses) for _, analyses in groupby_group_id(airs)]
+            munk_group = [factory(analyses, 'Machine Table') for _, analyses in groupby_group_id(unknowns)]
+
+            groups = {
+                # 'unknowns': unk_group,
+                'blanks': blank_group,
+                'airs': air_group,
+                'machine_unknowns': munk_group}
+
+            state.run_groups = groups
 
     def resume(self, state):
         # key = attrgetter('group_id')

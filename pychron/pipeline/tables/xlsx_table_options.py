@@ -77,6 +77,10 @@ class XLSXAnalysisTableWriterOptions(BasePersistenceOptions, JErrorMixin):
     include_percent_ar39 = dumpable(Bool(True))
     include_icfactors = dumpable(Bool(True))
     include_discrimination = dumpable(Bool(True))
+    include_lambda_k = dumpable(Bool(True))
+    include_monitor_age = dumpable(Bool(True))
+    include_monitor_name = dumpable(Bool(True))
+    include_monitor_material = dumpable(Bool(True))
     # use_weighted_kca = dumpable(Bool(True))
     # kca_error_kind = dumpable(Enum(*ERROR_TYPES))
     repeat_header = dumpable(Bool(False))
@@ -254,7 +258,8 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                            Item('root_directory'),
                            Item('root_name', editor=ComboboxEditor(name='root_names'),
                                 enabled_when='not root_directory'),
-                           Item('auto_view', label='Open in Excel'))
+                           Item('auto_view', label='Open in Excel'),
+                           label='Save')
 
         units_grp = BorderVGroup(HGroup(Item('power_units', label='Power Units'),
                                         Item('age_units', label='Age Units')),
@@ -314,6 +319,12 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                               iinc('production_ratios', 'Production Ratios'),
                               iinc('isochron_ratios', 'Isochron Ratios'),
                               iinc('time_delta', 'Time since Irradiation'),
+                              VGroup(iinc('lambda_k', 'Lambda K'),
+                                     iinc('monitor_age', 'Age'),
+                                     iinc('monitor_name', 'Name'),
+                                     iinc('monitor_material', 'Material'),
+                                     label='Flux Monitor'),
+
                               VGroup(iinc('kca', 'Integrated K/Ca'),
                                      iinc('plateau_age', 'Plateau Age'),
                                      iinc('integrated_age', 'Total Integrated Age'),
@@ -332,9 +343,8 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                                  label='General')
         columns_grp = HGroup(general_col_grp, arar_col_grp,
                              label='Columns', show_border=True)
-
-        g1 = VGroup(HGroup(grp, appearence_grp),
-                    HGroup(columns_grp, sig_figs_grp), label='Main')
+        unk_columns_grp = HGroup(columns_grp, sig_figs_grp, label='Unk. Columns')
+        g1 = VGroup(HGroup(grp, appearence_grp), label='Main')
 
         def isum(k):
             return inc('summary_{}'.format(k))
@@ -367,7 +377,8 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
 
         calc_grp = VGroup(J_ERROR_GROUP, label='Calc.')
 
-        v = okcancel_view(Tabbed(g1, unknown_grp, calc_grp, blank_grp, air_grp, monitor_grp, summary_grp),
+        v = okcancel_view(Tabbed(g1, unknown_grp, unk_columns_grp, calc_grp, blank_grp, air_grp, monitor_grp,
+                                 summary_grp),
                           resizable=True,
                           width=775,
                           height=0.75,

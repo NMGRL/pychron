@@ -48,7 +48,7 @@ from pychron.pipeline.nodes.persist import DVCPersistNode, PDFFigureNode, \
 from pychron.pipeline.nodes.push import PushNode
 from pychron.pipeline.nodes.report import ReportNode
 from pychron.pipeline.nodes.review import ReviewNode
-from pychron.pipeline.nodes.table import AnalysisTableNode, InterpretedAgeTableNode
+from pychron.pipeline.nodes.table import InterpretedAgeTableNode, GroupAnalysisTableNode, SubGroupAnalysisTableNode
 
 
 class NodeFactory:

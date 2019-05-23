@@ -212,10 +212,12 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         return columns
 
     def _flux_columns(self, columns):
-        columns.extend([Column(visible=False, label='LambdaK', attr='lambda_k', func=value),
-                        Column(visible=False, label='MonitorAge', attr='monitor_age'),
-                        Column(visible=False, label='MonitorName', attr='monitor_name'),
-                        Column(visible=False, label='MonitorMaterial', attr='monitor_material')])
+        options = self._options
+        columns.extend([Column(visible=options.include_lambda_k, label='LambdaK', attr='lambda_k', func=value),
+                        Column(visible=options.include_monitor_age, label='MonitorAge', attr='monitor_age'),
+                        Column(visible=options.include_monitor_name, label='MonitorName', attr='monitor_name'),
+                        Column(visible=options.include_monitor_material, label='MonitorMaterial',
+                               attr='monitor_material')])
 
     def _run_columns(self, columns, ubit):
         options = self._options

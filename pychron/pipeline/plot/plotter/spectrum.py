@@ -425,8 +425,8 @@ class Spectrum(BaseArArFigure):
                                       mswd_args=(plateau_mswd, valid_mswd, nsteps),
                                       sig_figs=self.options.plateau_sig_figs)
 
-        sample = self.analysis_group.sample
-        identifier = self.analysis_group.identifier
+        sample = ag.sample
+        identifier = ag.identifier
         text = 'Plateau= {}'.format(text)
 
         if self.options.include_plateau_sample:

@@ -156,7 +156,17 @@ nodes:
   - klass: UnknownNode
   - klass: GroupingNode
   - klass: SubGroupingNode
-  - klass: AnalysisTableNode
+  - klass: SubGroupAnalysisTableNode
+  - klass: ReviewNode
+  - klass: XLSXAnalysisTablePersistNode
+"""
+
+SIMPLE_ANALYSIS_TABLE = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: GroupingNode
+  - klass: GroupAnalysisTableNode
   - klass: ReviewNode
   - klass: XLSXAnalysisTablePersistNode
 """
