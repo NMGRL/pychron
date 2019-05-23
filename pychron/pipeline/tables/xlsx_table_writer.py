@@ -176,13 +176,11 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                            label=('<sup>39</sup>', 'Ar/', '<sup>40</sup>', 'Ar'),
                            attr='isochron3940'),
                    EColumn(visible=ubit and options.include_isochron_ratios,
-                           label=('<sup>39</sup>', 'Ar/', '<sup>40</sup>', 'Ar'),
                            attr='isochron3940'),
                    VColumn(visible=ubit and options.include_isochron_ratios,
                            label=('<sup>36</sup>', 'Ar/', '<sup>40</sup>', 'Ar'),
                            attr='isochron3640'),
                    EColumn(visible=ubit and options.include_isochron_ratios,
-                           label=('<sup>36</sup>', 'Ar/', '<sup>40</sup>', 'Ar'),
                            attr='isochron3640'),
                    ]
 
