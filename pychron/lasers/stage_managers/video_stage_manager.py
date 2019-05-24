@@ -419,7 +419,7 @@ class VideoStageManager(StageManager):
         src = self._get_preprocessed_src()
         return ld.get_scores(src, **kw)
 
-    def find_lum_peak(self, min_distance, blur):
+    def find_lum_peak(self, min_distance, blur, **kw):
         ld = self.lumen_detector
         src = self._get_preprocessed_src()
 
@@ -429,7 +429,7 @@ class VideoStageManager(StageManager):
         if src is not None and src.ndim >= 2:
             return ld.find_lum_peak(src, dim, mask_dim,
                                     blur=blur,
-                                    min_distance=min_distance)
+                                    min_distance=min_distance, **kw)
 
     def get_brightness(self, **kw):
         ld = self.lumen_detector
@@ -454,6 +454,9 @@ class VideoStageManager(StageManager):
         self.debug('finish move to hole')
         # if user_entry and not self.keep_images_open:
         #     self.close_open_images()
+
+    def get_preprocessed_src(self):
+        return self._get_preprocessed_src()
 
     # private
     def _get_preprocessed_src(self):

@@ -74,8 +74,8 @@ class DragonFlyPeakPattern(SeekPattern):
         g = self.execution_graph
 
         def new_plot():
-            # peak location
-            imgplot = g.new_plot(padding_right=10)
+
+            imgplot = g.new_plot(padding_right=5, padding_left=5, padding_top=5, padding_bottom=5)
             imgplot.aspect_ratio = 1.0
             imgplot.x_axis.visible = False
             imgplot.y_axis.visible = False
@@ -87,11 +87,6 @@ class DragonFlyPeakPattern(SeekPattern):
             return imgplot
 
         return [new_plot() for _ in range(nplots)]
-
-        # img = new_plot()
-        # peaks = new_plot()
-
-        # return img, peaks
 
     def point_generator(self):
         if self.spiral_kind.lower() == 'square':
@@ -114,9 +109,12 @@ class DragonFlyPeakPattern(SeekPattern):
                  Item('perimeter_radius',
                       label='Perimeter Radius (mm)',
                       tooltip='Limit the search to a circular area with this radius (in mm)'),
+                 Item('spiral_kind',
+                      label='Search Shape',
+                      tooltip='Type of search to do when no target is identified'),
                  Item('base',
-                      label='Side (mm)',
-                      tooltip="Length (in mm) of the search triangle's side"),
+                      label='Search Side (mm)',
+                      tooltip="Base length (in mm) of the search side. Used when no target is identified"),
                  Item('min_distance', label='Minimum pixel peak radius'),
                  Item('saturation_threshold', label='Saturation Threshold',
                       tooltip='If the saturation score is greater than X then do not move'),

@@ -298,7 +298,7 @@ class BaseLaserManager(Manager):
         if self.enabled:
             s = 'Laser Enabled'
             if self._requested_power:
-                s = 'Laser ON {}{}'.format(self._requested_power, self.units)
+                s = 'Laser ON {:05.2f}{}'.format(self._requested_power, self.units)
 
         return s
 

@@ -105,7 +105,7 @@ class LumenDetector(Locator):
 
         if self._target:
             points = self._target.poly_points
-            pmaskrr,pmaskcc = polygon(points[:,0], points[:,1], gsrc.shape)
+            pmaskrr, pmaskcc = polygon(points[:, 0], points[:, 1], gsrc.shape)
             tsrc = gsrc[pmaskrr, pmaskcc]
         else:
             tsrc = gsrc[gsrc > tt]
@@ -148,45 +148,47 @@ class LumenDetector(Locator):
                 self.debug('found targets={}'.format(len(targets)))
 
         src = gaussian(lum, blur) * pixel_depth
-        mask = self._mask(lum)
+        # mask = self._mask(lum)
 
         h, w = lum.shape[:2]
 
-        pts = peak_local_max(src, min_distance=min_distance, num_peaks=10)
+        # pts = peak_local_max(src, min_distance=min_distance, num_peaks=10)
 
-        pt, px, py = None, None, None
+        # pt, px, py, sat = None, None, None, None
         peak_img = zeros((h, w), dtype=uint8)
 
         if targets:
             target = targets[0]
             px, py = target.centroid
-            pt = px - w / 2, py - h / 2, 1
             self._draw_targets(src, targets)
 
-            ilum = src[target.mask].sum()
-            area = (target.area+target.pactual/2)
-        else:
-            ilum = lum.sum()
-            area = mask.sum()
+            peak_img[circle(py, px, min_distance)] = 255
 
-        sat = ilum/(area*3*pixel_depth)
+            ilum = lum[target.mask].sum()
+            area = (target.area + target.pactual / 2)
+            # else:
+            #     ilum = lum.sum()
+            #     area = mask.sum()
 
-        if pts.shape[0]:
-            idx = tuple(pts.T)
-            intensities = src.flat[ravel_multi_index(idx, src.shape)]
+            sat = ilum / (area * pixel_depth)
+            pt = px - w / 2, py - h / 2, sat
 
-            try:
-                x, y = average(pts, axis=0, weights=intensities)
-                if pt is None:
-                    pt = x - w / 2, y - h / 2, sorted(intensities)[-1]
-                    px, py = x, y
+            # if pts.shape[0]:
+            #     idx = tuple(pts.T)
+            #     intensities = src.flat[ravel_multi_index(idx, src.shape)]
+            #
+            #     try:
+            #         x, y = average(pts, axis=0, weights=intensities)
+            #         if pt is None:
+            #             pt = x - w / 2, y - h / 2, sorted(intensities)[-1]
+            #             px, py = x, y
+            #
+            #         peak_img[circle(y, x, min_distance)] = 255
+            #
+            #     except ZeroDivisionError:
+            #         pass
 
-                peak_img[circle(y, x, min_distance)] = 255
-
-            except ZeroDivisionError:
-                pass
-
-        return pt, px, py, peak_img, sat, src
+            return pt, px, py, peak_img, sat, src
 
     def get_scores(self, lum, pixel_depth=None):
         if pixel_depth is None:
