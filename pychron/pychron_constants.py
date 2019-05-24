@@ -159,7 +159,7 @@ def alphas(idx):
     if idx < 26:
         return seeds[idx]
     else:
-        a = idx / 26 - 1
+        a = idx // 26 - 1
         b = idx % 26
         return '{}{}'.format(seeds[a], seeds[b])
 
