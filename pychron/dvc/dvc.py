@@ -183,8 +183,7 @@ class DVC(Loggable):
 
         with db.session_ctx():
             ans = db.get_repository_analyses(reponame)
-
-            groups = list(groupby_key(ans, 'identifier'))
+            groups = [(g[0], list(g[1])) for g in groupby_key(ans, 'identifier')]
             progress = open_progress(len(groups))
 
             for ln, ais in groups:
