@@ -17,8 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from __future__ import absolute_import
-from pychron.displays.display import ErrorDisplay, DisplayController
+from pychron.core.displays.display import ErrorDisplay, DisplayController
 from pychron.utils import get_display_size
 
 ds = get_display_size()

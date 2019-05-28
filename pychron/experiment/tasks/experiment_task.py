@@ -156,10 +156,6 @@ class ExperimentEditorTask(EditorTask):
                     self.manager.executor.executable = False
                 return True
 
-    def execute(self):
-        if not self.manager.executor.is_alive():
-            self._execute()
-
     def bind_preferences(self):
         # notifications
 

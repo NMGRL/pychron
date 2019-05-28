@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import os
 
 import numpy as np
@@ -23,19 +24,19 @@ from chaco.abstract_overlay import AbstractOverlay
 from chaco.tools.scatter_inspector import ScatterInspector
 from enable.markers import CircleMarker
 from kiva.constants import FILL_STROKE
+from six.moves import range
+from six.moves import zip
 from traits.api import HasTraits, Instance, on_trait_change, Str, List, Property
 from traitsui.api import View, Item, HGroup
 
+from pychron.core.displays.display import DisplayController
+from pychron.graph.graph import Graph
+from pychron.paths import paths
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.stage.maps.laser_stage_map import LaserStageMap
-from pychron.graph.graph import Graph
-from pychron.paths import paths
 # from pychron.displays.rich_text_display import RichTextDisplay
 from pychron.viewable import Viewable
-from pychron.displays.display import DisplayController
-from six.moves import range
-from six.moves import zip
 
 
 class MapItemSummary(HasTraits):

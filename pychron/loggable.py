@@ -102,7 +102,7 @@ class Loggable(HasTraits):
 
         if self.logger is not None:
             if globalv.use_warning_display:
-                from pychron.displays.gdisplays import gWarningDisplay
+                from pychron.core.displays.gdisplays import gWarningDisplay
 
                 if globalv.show_warnings:
                     gWarningDisplay.add_text(
@@ -116,7 +116,7 @@ class Loggable(HasTraits):
         """
         if self.logger is not None:
             if globalv.use_logger_display:
-                from pychron.displays.gdisplays import gLoggerDisplay
+                from pychron.core.displays.gdisplays import gLoggerDisplay
 
                 if globalv.show_infos:
                     args = ('{{:<{}s}} -- {{}}'.format(NAME_WIDTH).format(self.logger.name.strip(),
@@ -168,7 +168,7 @@ class Loggable(HasTraits):
         dlg.open()
 
     def message(self, msg):
-        from pychron.displays.gdisplays import gMessageDisplay
+        from pychron.core.displays.gdisplays import gMessageDisplay
 
         if not gMessageDisplay.opened and not gMessageDisplay.was_closed:
             gMessageDisplay.opened = True

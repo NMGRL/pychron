@@ -286,6 +286,9 @@ class BaseOptions(HasTraits):
     def setup(self):
         pass
 
+    def setup_groups(self):
+        pass
+
     def initialize(self):
         pass
 
@@ -397,9 +400,16 @@ class FigureOptions(BaseOptions):
 
     omit_by_tag = Bool(True)
 
-    def initialize(self):
-        if not self.groups:
-            self.groups = self._groups_default()
+    # def initialize(self):
+    #     if not self.groups:
+    #         self.groups = self._groups_default()
+    def setup(self):
+        if len(self.groups) < len(colornames):
+            start = len(self.groups)
+            new_groups = [self.group_options_klass(color=ci,
+                                                   line_color=ci,
+                                                   group_id=start+i) for i, ci in enumerate(colornames[start:])]
+            self.groups.extend(new_groups)
 
     def get_paddings(self):
         return self.padding_left, self.padding_right, self.padding_top, self.padding_bottom
@@ -562,6 +572,7 @@ class AuxPlotFigureOptions(FigureOptions):
     error_bar_nsigma = Enum(1, 2, 3)
 
     def setup(self):
+        super(AuxPlotFigureOptions, self).setup()
         while len(self.aux_plots) > self.naux_plots:
 
             p = next((pp for pp in self.aux_plots if not pp.name or not pp.plot_enabled), None)

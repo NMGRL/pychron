@@ -63,6 +63,11 @@ class ErrorComponentsView(HasTraits):
                 d = '{} bk'.format(k)
                 es.append(ErrorComponent(name=d,
                                          value=an.get_error_component(d, uage=age)))
+
+                d = '{} bs'.format(k)
+                es.append(ErrorComponent(name=d,
+                                         value=an.get_error_component(d, uage=age)))
+
             return es
 
         es = get_comp(an.uage_w_j_err)

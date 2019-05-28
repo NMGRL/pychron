@@ -339,8 +339,7 @@ class Ideogram(BaseArArFigure):
         else:
             name = ia
 
-        f = lambda i, x, y, ai: u'{}= {}'.format(name, ai.value_string(ia))
-        return f
+        return lambda i, x, y, ai: u'{}= {}'.format(name, ai.value_string(ia))
 
     def _plot_relative_probability(self, po, plot, pid):
         graph = self.graph

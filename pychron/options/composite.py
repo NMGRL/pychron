@@ -28,6 +28,7 @@ class CompositeOptions(FigureOptions):
     use_plotting = True
 
     def setup(self):
+        super(CompositeOptions, self).setup()
         if not self.spectrum_options:
             self.spectrum_options = SpectrumOptions()
         if not self.isochron_options:
