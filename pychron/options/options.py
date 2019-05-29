@@ -404,12 +404,13 @@ class FigureOptions(BaseOptions):
     #     if not self.groups:
     #         self.groups = self._groups_default()
     def setup(self):
-        if len(self.groups) < len(colornames):
-            start = len(self.groups)
-            new_groups = [self.group_options_klass(color=ci,
-                                                   line_color=ci,
-                                                   group_id=start+i) for i, ci in enumerate(colornames[start:])]
-            self.groups.extend(new_groups)
+        if self.group_options_klass:
+            if len(self.groups) < len(colornames):
+                start = len(self.groups)
+                new_groups = [self.group_options_klass(color=ci,
+                                                       line_color=ci,
+                                                       group_id=start+i) for i, ci in enumerate(colornames[start:])]
+                self.groups.extend(new_groups)
 
     def get_paddings(self):
         return self.padding_left, self.padding_right, self.padding_top, self.padding_bottom
