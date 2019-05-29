@@ -53,7 +53,7 @@ def calculate_weighted_mean(x, errs):
     x = asarray(x)
     errs = asarray(errs)
 
-    idx = where(errs.astype(bool))[0]
+    idx = errs.astype(bool)
 
     errs = errs[idx]
     x = x[idx]
@@ -66,6 +66,7 @@ def calculate_weighted_mean(x, errs):
         wmean = average(x)
         werr = 0
 
+    print('we', wmean, werr)
     return wmean, werr
 
 
