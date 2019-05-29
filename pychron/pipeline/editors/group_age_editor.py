@@ -182,7 +182,7 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
             ans = list(ans)
             if self.skip_meaning:
                 if 'Human Table' in self.skip_meaning:
-                    ans = (ai for ai in ans if ai.tag.lower() != 'skip')
+                    ans = [ai for ai in ans if ai.tag.lower() != 'skip']
 
             unks.extend(ans)
             gs.append(make_interpreted_age_group(ans, gid))
