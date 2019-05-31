@@ -282,7 +282,7 @@ class ReferencesSeries(BaseSeries):
             else:
                 bind_id = None
                 if self.options.link_plots:
-                    bind_id = hash(tuple(refs))
+                    bind_id = hash(tuple([r.uuid for r in refs]))
 
                 ffit = '{}_{}'.format(po.fit, po.error_type)
                 _, scatter, l = graph.new_series(r_xs, r_ys,

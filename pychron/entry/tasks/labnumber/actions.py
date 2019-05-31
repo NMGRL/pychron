@@ -18,12 +18,13 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from __future__ import absolute_import
+
 from traitsui.menu import Action
 
 
 class LabnumberEntryAction(Action):
-    name = 'Labnumber'
-    dname = 'Labnumber'
+    name = 'Irradiation'
+    dname = 'Irradiation'
     # accelerator = 'Ctrl+Shift+l'
     id = 'pychron.labnumber_entry'
 

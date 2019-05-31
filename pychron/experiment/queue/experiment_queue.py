@@ -26,7 +26,7 @@ from traits.trait_types import Date
 from traitsui.api import View, Item, UItem
 
 from pychron.core.helpers.ctx_managers import no_update
-from pychron.core.helpers.iterfuncs import groupby_key
+from pychron.core.helpers.iterfuncs import groupby_key, partition
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.select_same import SelectSameMixin
 from pychron.core.ui.gui import invoke_in_main_thread
@@ -126,6 +126,50 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
         self.debug('setting {} end_after to {}'.format(idx, si.end_after))
 
         self.selected = []
+        self.refresh_table_needed = True
+
+    def randomize_all(self):
+        from random import shuffle
+        aruns = self.automated_runs[:]
+        shuffle(aruns)
+        self.automated_runs = aruns
+        self.refresh_table_needed = True
+
+    def randomize_unknowns(self):
+        """
+        1. get indices of non unknowns
+        2. partition into two lists unks, non-unks
+        3. randomize unks
+        4. insert non-unks back in using original indices
+
+        :return:
+        """
+
+        aruns = self.automated_runs[:]
+
+        def predicate(x):
+            return not x.skip
+
+        skip_idx = [i for i, a in enumerate(aruns) if not predicate(a)]
+
+        aruns, skipped = partition(aruns, predicate=predicate)
+
+        def predicate(x):
+            return x.analysis_type == 'unknown'
+
+        idx = [i for i, a in enumerate(aruns) if not predicate(a)]
+
+        unks, refs = partition(aruns, predicate=predicate)
+
+        unks = list(unks)
+        refs = list(refs)
+        for i, r in list(zip(idx, refs)):
+            unks.insert(i, r)
+
+        for i, r in list(zip(skip_idx, skipped)):
+            unks.insert(i, r)
+
+        self.automated_runs = unks
         self.refresh_table_needed = True
 
     def group_extractions2(self):

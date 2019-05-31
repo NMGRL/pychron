@@ -120,8 +120,7 @@ class MeasurementPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def generate_ic_mftable(self, detectors, refiso='Ar40', peak_center_config='', update_existing=True,
-                            calc_time=False):
+    def generate_ic_mftable(self, detectors, refiso='Ar40', peak_center_config='', n=1, calc_time=False):
         """
         Generate an IC MFTable. Use this when doing a Detector Intercalibration.
         peak centers the ``refiso`` on a list of ``detectors``. MFTable saved as ic_mftable
@@ -135,11 +134,10 @@ class MeasurementPyScript(ValvePyScript):
         """
 
         if calc_time:
-            self._estimated_duration += len(detectors) * 30
+            self._estimated_duration += (len(detectors) * 30)*n
             return
 
-        if not self._automated_run_call('py_generate_ic_mftable', detectors, refiso, peak_center_config,
-                                        update_existing):
+        if not self._automated_run_call('py_generate_ic_mftable', detectors, refiso, peak_center_config, n):
             self.cancel()
 
     @verbose_skip

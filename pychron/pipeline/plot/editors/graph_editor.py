@@ -24,7 +24,6 @@ from enable.component_editor import ComponentEditor as EnableComponentEditor
 from traits.api import Property, Event, cached_property, Any
 from traitsui.api import View, UItem
 
-from pychron.core.codetools.inspection import caller
 from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.pipeline.plot.editors.base_editor import BaseEditor
 from pychron.pipeline.plot.figure_container import FigureContainer
@@ -45,7 +44,6 @@ class GraphEditor(BaseEditor):
     figure_container = Any
 
     @property
-    @caller
     def analyses(self):
         return self.items
 

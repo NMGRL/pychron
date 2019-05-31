@@ -118,6 +118,8 @@ class LabnumberEntry(DVCIrradiationable):
     use_consecutive_identifiers = Bool
     lab_name = Str
 
+    flux_commits = List
+
     _level_editor = None
     _irradiation_editor = None
 
@@ -143,6 +145,9 @@ class LabnumberEntry(DVCIrradiationable):
 
     def activated(self):
         pass
+
+    def find_associated_identifiers(self, samples):
+        self.dvc.find_associated_identifiers(samples)
 
     def import_irradiation_load_xls(self, p):
         self.info('import irradiation file: {}'.format(p))
@@ -360,6 +365,9 @@ class LabnumberEntry(DVCIrradiationable):
         if self.check_monitor_name():
             return
 
+        if self.check_human_error():
+            return
+
         ok = self.confirmation_dialog('Are you sure you want to generate the identifiers for this irradiation?')
         if ok:
             ret = self.confirmation_dialog('Overwrite existing identifiers?', return_retval=True, cancel=True)
@@ -393,6 +401,62 @@ class LabnumberEntry(DVCIrradiationable):
             lg.preview(self.irradiated_positions, self.level)
             self.refresh_table = True
 
+    def check_human_error(self):
+        """
+        check to make for monitor samples
+        check correct monitor sample is used
+
+
+        allow user to ignore these checks
+        :return:
+        """
+
+        def monitor_exists_test(l):
+            for dbpos in l.positions:
+                if dbpos.sample:
+                    if dbpos.sample.name == monitor_name:
+                        if dbpos.sample.material == monitor_material:
+                            return True
+
+        projectname = '{}{}'.format(self.irradiation_project_prefix, self.irradiation)
+
+        def correct_monitor_sample(l):
+            incorrect_monitors = []
+            for dbpos in l.positions:
+                if dbpos.sample:
+                    if dbpos.sample.project:
+                        if dbpos.sample.project.name != projectname:
+                            incorrect_monitors.append(str(dbpos.position))
+
+            return ','.join(incorrect_monitors)
+
+        error = ''
+        no_monitors = []
+        incorrect_monitor_sample = []
+
+        monitor_name = self.monitor_name.strip()
+        monitor_material = self.monitor_material.strip()
+
+        dbirrad = self.dvc.get_irradiation(self.irradiation)
+        for dblevel in dbirrad.levels:
+            if not monitor_exists_test(dblevel):
+                no_monitors.append(dblevel.name)
+
+            poss = correct_monitor_sample(dblevel)
+            if poss:
+                incorrect_monitor_sample.append('Level={}, Positions={}'.format(dblevel.name, poss))
+
+        if no_monitors:
+            error = 'No Monitors: {}\n'.format(','.join(no_monitors))
+        if incorrect_monitor_sample:
+            error = '{}Incorrect Monitor Sample: {}'.format(error, '\n'.join(incorrect_monitor_sample))
+
+        if error:
+            if not self.confirmation_dialog('There are issues with this irradiation.\n\n'
+                                            '{}\n\n'
+                                            'Are you sure you want to continue?'.format(error)):
+                return True
+
     def check_monitor_name(self):
 
         if self.use_consecutive_identifiers:
@@ -421,6 +485,15 @@ class LabnumberEntry(DVCIrradiationable):
                 self.irradiated_positions = [IrradiatedPosition(**pos) for pos in yaml.load(rfile)]
         else:
             self.information_dialog('No recover file for {}'.format(irradiation, level))
+
+    def load_history(self):
+        repo = self.dvc.meta_repo
+
+        greps = ['fit flux for {}{}'.format(self.irradiation, self.level),
+                 'fit flux for {}'.format(self.irradiation)]
+
+        cs = repo.get_commits_from_log(greps)
+        self.flux_commits = cs
 
     # private
     def _backup(self):
@@ -763,7 +836,14 @@ available holder positions {}'.format(pn, ipn))
                 ir.j = nominal_value(j)
                 ir.j_err = std_dev(j)
 
-            ir.note = dbpos.note.decode('utf-8') if dbpos.note else ''
+            note = dbpos.note
+            if note is None:
+                note = ''
+
+            if isinstance(note, bytes):
+                note = note.decode('utf-8')
+
+            ir.note = note
             ir.weight = dbpos.weight or 0
             ir.nanalyses = dbpos.analysis_count
             ir.analyzed = dbpos.analyzed

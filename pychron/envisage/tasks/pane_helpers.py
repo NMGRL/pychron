@@ -15,14 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traits.api import Instance
 from traitsui.api import Spring, View, UItem
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.displays.display import DisplayController
+from pychron.core.displays.display import DisplayController
 
 
 def spacer(width=-1, **kw):

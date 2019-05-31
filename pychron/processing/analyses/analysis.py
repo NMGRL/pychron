@@ -144,6 +144,7 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
                          truncate=iso.truncate,
                          filter_outliers_dict=iso.filter_outliers_dict,
                          color='black')
+            g.set_regressor(iso.regressor, i)
 
             xmi, xma = min_max(xmi, xma, iso.offset_xs)
             if not scale_to_equilibration:
@@ -164,7 +165,7 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
         if scale_to_equilibration:
             ypad = None
             r = (yma - ymi) * 0.02
-            ymi = yma - r
+            # ymi = yma - r
 
             fit = iso.fit
             if fit != 'average':
@@ -179,7 +180,7 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
                 elif fy < ymi:
                     ymi = fy - r
 
-            yma += r
+            # yma += r
 
         g.set_x_limits(min_=xmi, max_=xma, pad=xpad)
         g.set_y_limits(min_=ymi, max_=yma, pad=ypad, plotid=i)
@@ -541,7 +542,6 @@ class Analysis(ArArAge, IdeogramPlotable):
     @property
     def analysis_view(self):
         v = self._analysis_view
-        print('call analyis va', v)
         if v is None:
             mod, klass = self.analysis_view_klass
             mod = __import__(mod, fromlist=[klass, ])

@@ -176,14 +176,21 @@ class BasePeakCenter(HasTraits):
             return signals[idx]
 
         # get the reference detectors current intensity
+        # this is assuming the current intensity is on peak.
+        # but this is not always the case.
+        # jump to center dac position to get on peak then jump to start
+        spec.magnet.set_dac((end-start)/2.0+start)
+        time.sleep(spec.integration_time*2)
         cur_intensity = get_reference_intensity()
 
         # move to start position
         self.info('Moving to starting dac {}'.format(start))
         spec.magnet.set_dac(start)
-        time.sleep(spec.integration_time)
+        time.sleep(spec.integration_time*2)
 
-        tol = min(0, cur_intensity * (1 - self.percent / 100.))
+        # tol = min(0, cur_intensity * (1 - self.percent / 100.))
+        tol = cur_intensity * (1 - self.percent / 100.)/2.
+        # print('asfasdf', cur_intensity, 1-self.percent/100., tol)
         timeout = 1 if spec.simulation else 10
         self.info('Wait until signal near baseline. tol= {}. timeout= {}'.format(tol, timeout))
 

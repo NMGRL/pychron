@@ -124,16 +124,13 @@ class IdeogramEditor(InterpretedAgeEditor):
         tbl_grp = VGroup(listeditor('results_tables',
                                     height=130),
                          scrollable=True,
-                         visible_when='results_tables'
-                         )
+                         visible_when='results_tables')
 
         ttest_grp = VGroup(listeditor('ttest_tables', height=130),
-                           visible_when='ttest_tables'
-                           )
+                           visible_when='ttest_tables')
 
         v = View(VSplit(VGroup(self.get_component_view()),
-                        HGroup(tbl_grp, ttest_grp, visible_when='additional_visible')
-                        ),
+                        HGroup(tbl_grp, ttest_grp, visible_when='additional_visible')),
                  resizable=True)
         return v
 # ============= EOF =============================================

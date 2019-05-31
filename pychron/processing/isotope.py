@@ -90,7 +90,6 @@ class BaseMeasurement(object):
             xs, ys = self._unpack_blob(blob)
         except (ValueError, TypeError, IndexError, AttributeError) as e:
             self.unpack_error = e
-            print('unpack', self.name, e)
             return
 
         if n_only:
@@ -185,7 +184,10 @@ class IsotopicMeasurement(BaseMeasurement):
 
     @property
     def efit(self):
-        return '{}_{}'.format(self.fit, self.error_type)
+        fit = self.fit
+        if fit and '_' not in fit:
+            fit = '{}_{}'.format(fit, self.error_type)
+        return fit
 
     @property
     def rsquared(self):

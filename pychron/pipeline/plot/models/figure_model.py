@@ -21,7 +21,6 @@ from six.moves import zip
 from traits.api import HasTraits, List, Property, Any, Instance
 
 # from pychron.pipeline.plot.layout import FigureLayout
-from pychron.core.codetools.inspection import caller
 from pychron.core.helpers.iterfuncs import groupby_key
 
 
@@ -65,7 +64,6 @@ class FigureModel(HasTraits):
     # def _analyses_items_changed(self):
     #     self.refresh_panels()
 
-    @caller
     def refresh_panels(self):
         ps = self._make_panels()
         self.panels = ps

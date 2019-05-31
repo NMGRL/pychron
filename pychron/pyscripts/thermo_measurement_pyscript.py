@@ -17,12 +17,10 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 
-from pychron.pyscripts.measurement_pyscript import MeasurementPyScript
-from pychron.pyscripts.pyscript import verbose_skip, makeRegistry
+from pychron.pyscripts.measurement_pyscript import MeasurementPyScript, command_register
+from pychron.pyscripts.pyscript import verbose_skip
 
 ESTIMATED_DURATION_FF = 1.0
-
-command_register = makeRegistry()
 
 
 class ThermoMeasurementPyScript(MeasurementPyScript):

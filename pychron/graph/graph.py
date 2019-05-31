@@ -1170,7 +1170,8 @@ class Graph(ContextMenuMixin):
                         self._render_to_pic(path)
                         break
                 else:
-                    self._render_to_pic(os.path.join(path, DEFAULT_IMAGE_EXT))
+                    path = add_extension(path, DEFAULT_IMAGE_EXT)
+                    self._render_to_pic(path)
 
                     #                base, ext = os.path.splitext(path)
                     #

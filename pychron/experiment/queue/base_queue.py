@@ -20,7 +20,7 @@ import os
 # ============= standard library imports ========================
 import yaml
 # ============= enthought library imports =======================
-from traits.api import Instance, Str, Property, Event, Bool, String, List, CInt
+from traits.api import Instance, Str, Property, Event, Bool, String, List, CInt, on_trait_change
 
 from pychron.core.helpers.ctx_managers import no_update
 # ============= local library imports  ==========================
@@ -412,6 +412,11 @@ class BaseExperimentQueue(RunBlock):
         for ai in self.automated_runs:
             ai.mass_spectrometer = ms
 
+    @on_trait_change('automated_runs[]')
+    def _handle_automated_runs(self):
+        sm = self.application.get_service('pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager')
+        for a in self.automated_runs:
+            a.spectrometer_manager = sm
     # ===============================================================================
     # property get/set
     # ===============================================================================

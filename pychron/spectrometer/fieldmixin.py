@@ -21,6 +21,9 @@ from traits.api import Instance, HasTraits
 class FieldMixin(HasTraits):
     field_table = Instance('pychron.spectrometer.field_table.FieldTable', ())
 
+    def get_field_table_path(self):
+        return self.field_table.path
+
     def field_table_setup(self):
         if self.spectrometer:
             molweights = self.spectrometer.molecular_weights

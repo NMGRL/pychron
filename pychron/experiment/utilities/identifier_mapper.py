@@ -28,9 +28,11 @@ from pychron.paths import paths
 def default_mapping():
     j = {'c-01-j': 4358,
          'c-02-j': 4416,
-         'c-mc-j': 4418}
+         'c-mc-j': 4418,
+         'c-03-j': 4424}
     f = {'c-02-f': 4415,
-         'c-mc-f': 4417}
+         'c-mc-f': 4417,
+         'c-03-f': 4423}
 
     o = {'c-01-o': 4359}
     return {'MassSpec': {'felix': f, 'jan': j, 'obama': o}}

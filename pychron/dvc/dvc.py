@@ -25,6 +25,7 @@ from operator import itemgetter
 from apptools.preferences.preference_binding import bind_preference
 from git import Repo, GitCommandError
 from traits.api import Instance, Str, Set, List, provides, Bool, Int
+from uncertainties import ufloat
 
 from pychron import json
 from pychron.core.helpers.filetools import remove_extension, list_subdirectories, list_directory
@@ -104,6 +105,18 @@ class DVC(Loggable):
         if self.db.connect():
             return True
 
+    def find_associated_identifiers(self, samples):
+        from pychron.dvc.associated_identifiers import AssociatedIdentifiersView
+
+        av = AssociatedIdentifiersView()
+        for s in samples:
+            dbids = self.db.get_irradiation_position_by_sample(s.name, s.material, s.grainsize,
+                                                               s.principal_investigator,
+                                                               s.project)
+            av.add_items(dbids)
+
+        av.edit_traits(kind='modal')
+
     def open_meta_repo(self):
         mrepo = self.meta_repo
         if self.meta_repo_name:
@@ -170,8 +183,7 @@ class DVC(Loggable):
 
         with db.session_ctx():
             ans = db.get_repository_analyses(reponame)
-
-            groups = list(groupby_key(ans, 'identifier'))
+            groups = [(g[0], list(g[1])) for g in groupby_key(ans, 'identifier')]
             progress = open_progress(len(groups))
 
             for ln, ais in groups:
@@ -944,6 +956,8 @@ class DVC(Loggable):
                 if sparrow.connect():
                     for p in ps:
                         sparrow.insert_ia(p)
+                else:
+                    self.warning('Connection failed. Cannot add IAs to Sparrow')
 
             self.repository_commit(rid, '<IA> added interpreted ages {}'.format(','.join(ialabels)))
             return True
@@ -1331,10 +1345,12 @@ class DVC(Loggable):
 
                 elif a.irradiation:  # and a.irradiation not in ('NoIrradiation',):
                     if chronos:
-                        chronology = chronos[a.irradiation]
+                        chronology = chronos.get(a.irradiation, None)
                     else:
                         chronology = meta_repo.get_chronology(a.irradiation)
-                    a.set_chronology(chronology)
+
+                    if chronology:
+                        a.set_chronology(chronology)
 
                     pname, prod = None, None
 
@@ -1366,13 +1382,16 @@ class DVC(Loggable):
 
                     if not fd:
                         if fluxes:
-                            level_flux = fluxes[a.irradiation][a.irradiation_level]
-                            fd = meta_repo.get_flux_from_positions(a.irradiation_position, level_flux)
+                            try:
+                                level_flux = fluxes[a.irradiation][a.irradiation_level]
+                                fd = meta_repo.get_flux_from_positions(a.irradiation_position, level_flux)
+                            except KeyError:
+                                fd = {'j': ufloat(0, 0)}
                         else:
                             fd = meta_repo.get_flux(a.irradiation,
                                                     a.irradiation_level,
                                                     a.irradiation_position_position)
-                    a.j = fd['j']
+                    a.j = fd.get('j', ufloat(0, 0))
                     a.position_jerr = fd.get('position_jerr', 0)
 
                     j_options = fd.get('options')

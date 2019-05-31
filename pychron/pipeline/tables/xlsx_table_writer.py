@@ -175,9 +175,14 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                    VColumn(visible=ubit and options.include_isochron_ratios,
                            label=('<sup>39</sup>', 'Ar/', '<sup>40</sup>', 'Ar'),
                            attr='isochron3940'),
+                   EColumn(visible=ubit and options.include_isochron_ratios,
+                           attr='isochron3940'),
                    VColumn(visible=ubit and options.include_isochron_ratios,
                            label=('<sup>36</sup>', 'Ar/', '<sup>40</sup>', 'Ar'),
-                           attr='isochron3640')]
+                           attr='isochron3640'),
+                   EColumn(visible=ubit and options.include_isochron_ratios,
+                           attr='isochron3640'),
+                   ]
 
         # setup formats
         sigfigs = ('age', 'kca', 'radiogenic_yield', 'cumulative_ar39', 'uF')
@@ -212,10 +217,12 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         return columns
 
     def _flux_columns(self, columns):
-        columns.extend([Column(visible=False, label='LambdaK', attr='lambda_k', func=value),
-                        Column(visible=False, label='MonitorAge', attr='monitor_age'),
-                        Column(visible=False, label='MonitorName', attr='monitor_name'),
-                        Column(visible=False, label='MonitorMaterial', attr='monitor_material')])
+        options = self._options
+        columns.extend([Column(visible=options.include_lambda_k, label='LambdaK', attr='lambda_k', func=value),
+                        Column(visible=options.include_monitor_age, label='MonitorAge', attr='monitor_age'),
+                        Column(visible=options.include_monitor_name, label='MonitorName', attr='monitor_name'),
+                        Column(visible=options.include_monitor_material, label='MonitorMaterial',
+                               attr='monitor_material')])
 
     def _run_columns(self, columns, ubit):
         options = self._options
@@ -408,11 +415,11 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 Column(visible=opt.include_summary_percent_ar39, label=('%', '<sup>39</sup>', 'Ar'),
                        func=get_plateau_ar39),
                 Column(visible=opt.include_summary_mswd, label='MSWD', attr='mswd'),
-                Column(visible=opt.include_summary_kca, label='K/Ca', attr='weighted_kca', func=get_kca),
+                Column(visible=opt.include_summary_kca, label='K/Ca',
+                       func=get_kca),
 
                 Column(visible=opt.include_summary_kca,
                        label=PLUSMINUS_NSIGMA.format(opt.summary_kca_nsigma),
-                       attr='weighted_kca',
                        func=get_kca_error),
 
                 Column(visible=opt.include_summary_age,

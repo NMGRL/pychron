@@ -16,10 +16,13 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.trait_types import Bool, Instance, Event, Int
-from traits.traits import Color
+
 # ============= standard library imports ========================
 from datetime import datetime
+
+from traits.trait_types import Bool, Instance, Int
+from traits.traits import Color
+
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
 from pychron.pychron_constants import LIGHT_YELLOW
@@ -27,7 +30,7 @@ from pychron.pychron_constants import LIGHT_YELLOW
 
 class Consoleable(Loggable):
     use_message_colormapping = Bool
-    console_display = Instance('pychron.displays.display.DisplayController')
+    console_display = Instance('pychron.core.displays.display.DisplayController')
     # console_updated = Event
     console_bgcolor = LIGHT_YELLOW
     console_fontsize = Int(11)
@@ -93,7 +96,7 @@ class Consoleable(Loggable):
         self.info('')
 
     def _console_display_default(self):
-        from pychron.displays.display import DisplayController
+        from pychron.core.displays.display import DisplayController
         return DisplayController(
             bgcolor=self.console_bgcolor,
             font_size=self.console_fontsize,

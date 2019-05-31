@@ -185,21 +185,21 @@ class Series(BaseSeries):
             self._setup_plot(i, p, po, ytitle)
 
     def _setup_plot(self, pid, pp, po, ytitle):
-
-        match = RATIO_RE.match(ytitle)
-        if match:
-            ytitle = '<sup>{}</sup>{}/<sup>{}</sup>{}'.format(match.group('nd'),
-                                                              match.group('ni'),
-                                                              match.group('dd'),
-                                                              match.group('di'))
-            if match.group('rem'):
-                ytitle = '{}{}'.format(ytitle, match.group('rem'))
-        else:
-            match = ISOTOPE_RE.match(ytitle)
+        if not ytitle.endswith('DetIC'):
+            match = RATIO_RE.match(ytitle)
             if match:
-                ytitle = '<sup>{}</sup>{}'.format(match.group('nd'), match.group('ni'))
+                ytitle = '<sup>{}</sup>{}/<sup>{}</sup>{}'.format(match.group('nd'),
+                                                                  match.group('ni'),
+                                                                  match.group('dd'),
+                                                                  match.group('di'))
                 if match.group('rem'):
                     ytitle = '{}{}'.format(ytitle, match.group('rem'))
+            else:
+                match = ISOTOPE_RE.match(ytitle)
+                if match:
+                    ytitle = '<sup>{}</sup>{}'.format(match.group('nd'), match.group('ni'))
+                    if match.group('rem'):
+                        ytitle = '{}{}'.format(ytitle, match.group('rem'))
 
         super(Series, self)._setup_plot(pid, pp, po)
         # if '<sup>' in ytitle or '<sub>' in ytitle:
@@ -297,9 +297,9 @@ class Series(BaseSeries):
                 ec = self.options.end_caps
                 self._add_error_bars(scatter, yerr, 'y', s, ec, visible=True)
 
-            if set_ylimits:
-                mi, mx = min(ys - 2 * yerr), max(ys + 2 * yerr)
-                graph.set_y_limits(min_=mi, max_=mx, pad='0.1', plotid=pid)
+            # if set_ylimits and not po.has_ylimits():
+            #     mi, mx = min(ys - 2 * yerr), max(ys + 2 * yerr)
+            #     graph.set_y_limits(min_=mi, max_=mx, pad='0.1', plotid=pid)
 
         except (KeyError, ZeroDivisionError, AttributeError) as e:
             import traceback

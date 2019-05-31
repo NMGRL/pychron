@@ -27,7 +27,7 @@ from pychron.entry.labnumber_entry import LabnumberEntry
 from pychron.entry.tasks.actions import SavePDFAction, DatabaseSaveAction, PreviewGenerateIdentifiersAction, \
     GenerateIdentifiersAction, ClearSelectionAction, RecoverAction, SyncMetaDataAction
 from pychron.entry.tasks.labnumber.panes import LabnumbersPane, \
-    IrradiationPane, IrradiationEditorPane, IrradiationCanvasPane, LevelInfoPane, ChronologyPane
+    IrradiationPane, IrradiationEditorPane, IrradiationCanvasPane, LevelInfoPane, ChronologyPane, FluxHistoryPane
 from pychron.envisage.browser.base_browser_model import BaseBrowserModel
 from pychron.envisage.browser.record_views import SampleRecordView
 from pychron.envisage.tasks.base_task import BaseManagerTask
@@ -84,7 +84,7 @@ class ClearSelectionView(HasTraits):
 
 
 class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
-    name = 'Labnumber'
+    name = 'Irradiation'
     id = 'pychron.entry.irradiation.task'
 
     clear_sample_button = Button
@@ -138,6 +138,12 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
                 self.manager.activated()
                 self.load_principal_investigators()
                 self.load_projects(include_recent=False)
+
+    def find_associated_identifiers(self):
+        ns = [ni.name for ni in self.selected_samples]
+        self.info('find associated identifiers {}'.format(','.join(ns)))
+
+        self.manager.find_associated_identifiers(self.selected_samples)
 
     def sync_metadata(self):
         self.info('sync metadata')
@@ -329,6 +335,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
                 PaneItem('pychron.entry.level'),
                 PaneItem('pychron.entry.chronology'),
                 PaneItem('pychron.entry.irradiation_canvas'),
+                PaneItem('pychron.entry.flux_history'),
                 orientation='vertical'))
 
     def create_central_pane(self):
@@ -336,11 +343,11 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
 
     def create_dock_panes(self):
         iep = IrradiationEditorPane(model=self)
-        self.labnumber_tabular_adapter = iep.sample_tabular_adapter
         return [
             IrradiationPane(model=self.manager),
             ChronologyPane(model=self.manager),
             LevelInfoPane(model=self.manager),
+            FluxHistoryPane(model=self.manager),
             # ImporterPane(model=self.importer),
             iep,
             IrradiationCanvasPane(model=self.manager)]
@@ -440,6 +447,8 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
             self.debug('selected projects={}'.format(names))
 
             self._load_associated_samples(names)
+        else:
+            self.samples = []
 
     def _prompt_for_save(self):
         self.manager.push_changes()

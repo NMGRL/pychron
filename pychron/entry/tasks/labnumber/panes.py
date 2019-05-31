@@ -19,19 +19,21 @@ from enable.component_editor import ComponentEditor
 from pyface.action.menu_manager import MenuManager
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
-from traits.api import Instance, Int
+from traits.api import Instance, Int, Button, Event
 from traitsui.api import View, Item, TabularEditor, VGroup, HGroup, \
-    EnumEditor, UItem, Label, VSplit, TextEditor, Readonly
+    EnumEditor, UItem, Label, VSplit, TextEditor, Readonly, Handler
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.ui.enum_editor import myEnumEditor
 from pychron.core.ui.qt.tabular_editors import FilterTabularEditor
+from pychron.core.ui.table_configurer import TableConfigurer
 from pychron.entry.irradiated_position import IrradiatedPositionAdapter
 from pychron.envisage.browser.adapters import SampleAdapter, BrowserAdapter
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.pane_helpers import spacer
+from pychron.git_archive.views import CommitAdapter
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 
@@ -54,6 +56,21 @@ class LevelInfoPane(TraitsDockPane):
                  Readonly('monitor_decay_constant', label='LambdaK Total'),
                  VGroup(UItem('level_note', style='custom', editor=TextEditor(read_only=True)),
                         show_border=True, label='Note'))
+        return v
+
+
+class FluxHistoryPane(TraitsDockPane):
+    id = 'pychron.entry.flux_history'
+    name = 'Flux History'
+    load_history_button = Button('Load')
+
+    def _load_history_button_fired(self):
+        self.model.load_history()
+
+    def traits_view(self):
+        v = View(VGroup(UItem('pane.load_history_button'),
+                        UItem('flux_commits', editor=TabularEditor(adapter=CommitAdapter()))
+                        ))
         return v
 
 
@@ -84,18 +101,45 @@ class ChronologyPane(TraitsDockPane):
         # return v
 
 
+class IrradiationEditorHandler(Handler):
+    def find_associated_identifiers(self, info, obj):
+        obj.find_associated_identifiers()
+
+    def unselect_projects(self, info, obj):
+        obj.selected_projects = []
+
+    def configure_sample_table(self, info, obj):
+        info.ui.context['pane'].configure_sample_table()
+
+
+class SampleTableConfigurer(TableConfigurer):
+    id = 'irradiation.sample.configurer'
+
+
 class IrradiationEditorPane(TraitsDockPane):
     id = 'pychron.labnumber.editor'
     name = 'Editor'
     sample_tabular_adapter = Instance(SampleAdapter, ())
+    table_configurer = Instance(SampleTableConfigurer)
+    refresh_needed = Event
+
+    def __init__(self, *args, **kw):
+        super(IrradiationEditorPane, self).__init__(*args, **kw)
+        self.table_configurer.set_columns()
+
+    def refresh(self):
+        self.refresh_needed = True
+
+    def configure_sample_table(self):
+        self.table_configurer.edit_traits()
 
     def traits_view(self):
-        self.sample_tabular_adapter.columns = [('Sample', 'name'),
-                                               ('Material', 'material'),
-                                               ('Grainsize', 'grainsize'),
-                                               ('Project', 'project'),
-                                               ('PI', 'principal_investigator'),
-                                               ('Note', 'note')]
+        # self.sample_tabular_adapter.columns = [('Sample', 'name'),
+        #                                        ('Material', 'material'),
+        #                                        ('Grainsize', 'grainsize'),
+        #                                        ('Project', 'project'),
+        #                                        ('PI', 'principal_investigator'),
+        #                                        ('Note', 'note')]
 
         # tgrp = HGroup(icon_button_editor('clear_button', 'table_lightning',
         #                                  enabled_when='selected',
@@ -129,6 +173,7 @@ class IrradiationEditorPane(TraitsDockPane):
                             UItem('samples',
                                   editor=TabularEditor(adapter=self.sample_tabular_adapter,
                                                        editable=False,
+                                                       refresh='pane.refresh_needed',
                                                        selected='selected_samples',
                                                        dclicked='dclicked',
                                                        multi_select=True,
@@ -165,8 +210,14 @@ class IrradiationEditorPane(TraitsDockPane):
                            show_border=True, label='Packet'),
                     HGroup(jgrp, ngrp))
 
-        v = View(VSplit(g1, g2))
+        v = View(VSplit(g1, g2), handler=IrradiationEditorHandler())
         return v
+
+    def _table_configurer_default(self):
+        t = SampleTableConfigurer(auto_set=True,
+                                  refresh_func=self.refresh)
+        t.set_adapter(self.sample_tabular_adapter)
+        return t
 
 
 class LabnumbersPane(TraitsTaskPane):

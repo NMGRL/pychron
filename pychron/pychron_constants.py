@@ -122,6 +122,7 @@ DETECTOR_IC = 'detector_ic'
 PAUSE = 'pause'
 DEGAS = 'degas'
 AIR = 'air'
+BACKGROUND = 'background'
 
 BLANK_UNKNOWN = 'blank_unknown'
 BLANK_EXTRACTIONLINE = 'blank_extractionline'
@@ -135,6 +136,7 @@ WHIFF = 'whiff'
 EXTRACT_DEVICE = 'Extract Device'
 NO_EXTRACT_DEVICE = 'No Extract Device'
 
+NO_BLANK_CORRECT = (BLANK, DETECTOR_IC, BACKGROUND)
 seeds = string.ascii_uppercase
 ALPHAS = [a for a in seeds] + ['{}{}'.format(a, b)
                                for a in seeds
@@ -157,7 +159,7 @@ def alphas(idx):
     if idx < 26:
         return seeds[idx]
     else:
-        a = idx / 26 - 1
+        a = idx // 26 - 1
         b = idx % 26
         return '{}{}'.format(seeds[a], seeds[b])
 

@@ -368,9 +368,14 @@ class AnalysisGroup(IdeogramPlotable):
         vs = (ai.get_value(attr) for ai in self.clean_analyses())
         ans = [vi for vi in vs if vi is not None]
         if ans:
-            vs = [nominal_value(v) for v in ans]
-            es = [std_dev(v) for v in ans]
-            return array(vs), array(es)
+            vs = array([nominal_value(v) for v in ans])
+            es = array([std_dev(v) for v in ans])
+
+            idx = es.astype(bool)
+            vs = vs[idx]
+            es = es[idx]
+
+            return vs, es
 
     def _calculate_mean(self, attr, use_weights=True, error_kind=None):
         def sd(a, v, e):
@@ -662,6 +667,12 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     def _get_plateau_age(self):
         ans = self.analyses
         v, e = 0, 0
+        self.plateau_steps = None
+        self.plateau_steps_str = ''
+        self.nsteps = 0
+        self.plateau_mswd = 0
+        self.plateau_mswd_valid = False
+
         if all((not isinstance(ai, InterpretedAgeGroup) for ai in ans)):
             if ans:
                 ages = [ai.age for ai in ans]

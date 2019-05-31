@@ -28,7 +28,6 @@ from pyface.message_dialog import warning
 from traits.api import Array
 from uncertainties import nominal_value, std_dev
 
-from pychron.core.codetools.inspection import caller
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.stats.peak_detection import fast_find_peaks
 from pychron.core.stats.probability_curves import cumulative_probability, kernel_density
@@ -340,8 +339,7 @@ class Ideogram(BaseArArFigure):
         else:
             name = ia
 
-        f = lambda i, x, y, ai: u'{}= {}'.format(name, ai.value_string(ia))
-        return f
+        return lambda i, x, y, ai: u'{}= {}'.format(name, ai.value_string(ia))
 
     def _plot_relative_probability(self, po, plot, pid):
         graph = self.graph
@@ -569,11 +567,9 @@ class Ideogram(BaseArArFigure):
         h = d.max()
         return 0, h
 
-    @caller
     def replot(self):
         self._rebuild_ideo()
 
-    @caller
     def _rebuild_ideo(self, sel=None):
         graph = self.graph
         gid = self.group_id + 1

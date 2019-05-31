@@ -31,8 +31,8 @@ def connect(**kw):
     try:
         with psycopg2.connect(dsn) as conn:
             with conn.cursor() as cursor:
-                    cursor.execute('select * from public.sample')
-                    return True
+                cursor.execute('select * from vocabulary.method')
+                return True
     except BaseException as e:
         print(e)
 
@@ -51,8 +51,16 @@ class Sparrow(Loggable):
         if bind:
             self.bind_preferences()
 
-    def connect(self):
-        return connect(name=self.dbname, host=self.host, username=self.username, port=self.port, password=self.password)
+    def connect(self, inform=True):
+        result = connect(name=self.dbname, host=self.host, username=self.username, port=self.port,
+                         password=self.password)
+        if not result:
+            msg = 'Connection failed. Database={}, host={}, user={}, port={}'.format(self.dbname, self.host,
+                                                                                     self.username, self.port)
+            if inform:
+                self.warning_dialog(msg)
+            else:
+                self.warning(msg)
 
     def bind_preferences(self):
         prefid = 'pychron.sparrow'
@@ -88,37 +96,36 @@ class Sparrow(Loggable):
         authority = 'NMGRL'
         sql = '''insert into vocabulary.unit (id, authority)
         values (%s, %s)'''
-
-        self._insert(sql, ('dimensionless', authority))
-        self._insert(sql, ('fA', authority))
-        self._insert(sql, ('W', authority))
-        self._insert(sql, ('1/a', authority))
+        for attr in ('dimensionless', 'fA', 'W', '1/a', '%', 'Ma', 'ka'):
+            self._insert(sql, (attr, authority))
 
         sql = '''insert into vocabulary.parameter (id, description, authority)
         values (%s, %s, %s)'''
-        self._insert(sql, ('Extract_Value', '', authority))
-        self._insert(sql, ('Monitor_Age', '', authority))
-        self._insert(sql, ('K40_Lambda', '', authority))
-        self._insert(sql, ('Ar40_RGY', '', authority))
-        self._insert(sql, ('KCa', '', authority))
-        self._insert(sql, ('KCl', '', authority))
+        for attr in ('Extract_Value', 'Monitor_Age', 'K40_Lambda', 'Ar40_RGY',
+                     'KCa', 'KCl', 'Age', 'Ar40RG_Ar39K',
+                     'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36', 'MSWD', 'Ar40_Ar36'):
+            self._insert(sql, (attr, '', authority))
+
+        sql = '''insert into vocabulary.method (id, description, authority)
+                values (%s, %s, %s)'''
+        self._insert(sql, ('AR_AR', '', authority))
 
     def _insert_preferred(self, session_id, pf, sm):
         aid = self._insert_analysis(session_id, sm, is_interpreted=True)
         for obj, attrs in ((pf, (('age', 'Age', pf['display_age_units']),
                                  ('monitor_age', 'Monitor_Age', 'Ma'),
                                  ('mswd', 'MSWD', 'dimensionless'))),
-                           (pf['arar_constants']), (('lambda_k', 'K40_Lambda', '1/a'),
-                                                    ('atm4036', 'Ar40_Ar36', 'dimensionless'))):
+                           (pf['arar_constants'], (('lambda_k', 'K40_Lambda', '1/a'),
+                                                   ('atm4036', 'Ar40_Ar36', 'dimensionless')))):
             for attr, param, unit in attrs:
                 mtype = self._insert_datum_type(param, unit, is_interpreted=True)
-                self._insert_datum(aid, mtype, obj.get(attr), obj.get('{}_err'.format(attr)))
+                self._insert_datum(aid, mtype, obj.get(attr, 0), obj.get('{}_err'.format(attr, 0)))
 
     def _insert_analyses(self, session_id, ans, sm):
         types = (('age', 'Age', 'Ma'),
                  ('radiogenic_yield', 'Ar40_RGY', '%'),
                  ('f', 'Ar40RG_Ar39K', 'dimensionless'),
-                 ('kca', 'KCl', 'dimensionless'),
+                 ('kca', 'KCa', 'dimensionless'),
                  ('kcl', 'KCl', 'dimensionless'))
 
         types = {attr: self._insert_datum_type(param, unit) for attr, param, unit in types}
@@ -131,7 +138,7 @@ class Sparrow(Loggable):
             analysis_id = self._insert_analysis(session_id, sm, idx=i + 1, date=timestamp)
 
             ev_type = self._insert_datum_type('Extract_Value', a.get('extract_units', 'W'))
-            self._insert_datum_type(analysis_id, ev_type, a['extract_value'])
+            self._insert_datum(analysis_id, ev_type, a.get('extract_value', -1))
 
             is_bad = a.get('tag') != 'ok'
             for attr, dtype in types.items():
@@ -228,7 +235,7 @@ class Sparrow(Loggable):
         sql = 'select * from public.{} order by id desc'.format(table)
         return self._get_one(sql)
 
-    def _insert(self, sql, sm, verbose=False):
+    def _insert(self, sql, sm, verbose=True):
         with self._conn.cursor() as cursor:
             try:
                 cursor.execute(sql, sm)

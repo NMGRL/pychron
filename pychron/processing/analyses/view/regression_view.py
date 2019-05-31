@@ -40,42 +40,58 @@ class RegressionView(HasTraits):
         sg.plotcontainer.stack_order = 'top_to_bottom'
 
         isos = an.sorted_values(reverse=False)
-        for i, iso in enumerate(isos):
+        add_sniff = True
+
+        sisos = [iso for iso in isos if iso.sniff.offset_xs.shape[0]]
+        for i, iso in enumerate(sisos):
             sniff = iso.sniff
             sg.new_plot(ytitle=iso.name, xtitle='Time (s)', title='Equilibration')
-            if sniff.offset_xs.shape[0]:
-                sg.new_series(sniff.offset_xs, sniff.ys, marker='circle', type='scatter')
-                sg.set_y_limits(pad='0.1', plotid=i)
-                sg.set_x_limits(min_=0, max_=max(sniff.offset_xs)*1.05, plotid=i)
+            sg.new_series(sniff.offset_xs, sniff.ys, marker='circle', type='scatter')
+            sg.set_y_limits(pad='0.1', plotid=i)
+            sg.set_x_limits(min_=0, max_=max(sniff.offset_xs) * 1.05, plotid=i)
 
         bg = StackedRegressionGraph(container_dict=container_dict)
-
-        for i, iso in enumerate(isos):
-            baseline = iso.baseline
-            bg.new_plot(ytitle=baseline.detector, xtitle='Time (s)', title='Baseline')
-            if baseline.offset_xs.shape[0]:
-                bg.new_series(baseline.offset_xs, baseline.ys,
-                              filter_outliers_dict=baseline.filter_outliers_dict,
-                              display_filter_bounds=True,
-                              color='red', type='scatter', fit=baseline.efit)
-                bg.set_y_limits(pad='0.1', plotid=i)
-                bg.set_x_limits(pad='0.025', plotid=i)
-
-        bg.refresh()
+        add_baseline = True
 
         ig = StackedRegressionGraph(container_dict=container_dict)
 
-        for i, iso in enumerate(isos):
-            ig.new_plot(ytitle=iso.name, xtitle='Time (s)', title='Isotope')
-            if iso.offset_xs.shape[0]:
-                ig.new_series(iso.offset_xs, iso.ys,
-                              display_filter_bounds=True,
-                              filter_outliers_dict=iso.filter_outliers_dict,
-                              color='blue', type='scatter', fit=iso.efit)
-                ig.set_y_limits(pad='0.1', plotid=i)
-                ig.set_x_limits(min_=0, max_=max(iso.offset_xs)*1.05, plotid=i)
+        iisos = [iso for iso in isos if iso.offset_xs.shape[0]]
+        baselines = []
+        for i, iso in enumerate(iisos):
+            if iso.baseline.offset_xs.shape[0]:
+                baselines.append(iso.baseline)
+            ig.new_plot(ytitle='{}({})'.format(iso.name, iso.detector), xtitle='Time (s)', title='Isotope')
+            ig.new_series(iso.offset_xs, iso.ys,
+                          display_filter_bounds=True,
+                          filter_outliers_dict=iso.filter_outliers_dict,
+                          color='blue', type='scatter', fit=iso.efit)
+            ig.set_regressor(iso.regressor, i)
+            ig.set_y_limits(pad='0.1', plotid=i)
+            ig.set_x_limits(min_=0, max_=max(iso.offset_xs) * 1.05, plotid=i)
 
         ig.refresh()
+
+        # bisos = [iso for iso in isos if iso.baseline.offset_xs.shape[0]]
+        # plotted_baselines = []
+        # for i, iso in enumerate(bisos):
+            # baseline = iso.baseline
+            # if baseline.detector in plotted_baselines:
+            #     continue
+            # plotted_baselines.append(baseline.detector)
+
+        # for iso in bisos:
+        for i, baseline in enumerate(baselines):
+
+            bg.new_plot(ytitle=baseline.detector, xtitle='Time (s)', title='Baseline')
+            bg.new_series(baseline.offset_xs, baseline.ys,
+                          filter_outliers_dict=baseline.filter_outliers_dict,
+                          display_filter_bounds=True,
+                          color='red', type='scatter', fit=baseline.efit)
+            bg.set_regressor(baseline.regressor, i)
+            bg.set_y_limits(pad='0.1', plotid=i)
+            bg.set_x_limits(pad='0.025', plotid=i)
+
+        bg.refresh()
 
         container.add(sg.plotcontainer)
         container.add(ig.plotcontainer)

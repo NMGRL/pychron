@@ -36,7 +36,6 @@
 # ============= enthought library imports =======================
 from traits.api import String, Bool, Property, on_trait_change, Button, List, Str
 
-from pychron.core.codetools.inspection import caller
 from pychron.core.ui.preference_binding import bind_preference
 from pychron.envisage.browser.base_browser_model import BaseBrowserModel
 from pychron.envisage.browser.record_views import ProjectRecordView
@@ -377,7 +376,6 @@ class BrowserModel(BaseBrowserModel):
             self.projects = ps
             self.selected_projects = [p for p in ps if p.name in old_selection]
 
-    @caller
     def _load_projects_and_irradiations(self):
         self.debug('load_projects_and_irradiations')
         ms = None

@@ -34,7 +34,7 @@ from pychron.core.helpers.binpack import format_blob
 from pychron.core.helpers.strtools import to_bool, csv_to_floats
 from pychron.envisage.view_util import open_view
 from pychron.globals import globalv
-from pychron.hardware import get_float
+from pychron.hardware import get_float, get_blob
 from pychron.lasers.laser_managers.ethernet_laser_manager import EthernetLaserManager
 from pychron.paths import paths
 
@@ -168,26 +168,18 @@ class PychronLaserManager(EthernetLaserManager):
 
         return blobs
 
+    @get_blob()
     def get_response_blob(self):
-        resp = self._ask('GetResponseBlob', verbose=True)
-        if resp:
-            resp = format_blob(resp)
-        else:
-            resp = b''
-        return resp
+        return self._ask('GetResponseBlob', verbose=True)
 
+    @get_blob()
     def get_output_blob(self):
         """
         needs to return bytes. GetOutputBlob sends a b64encoded string
 
         :return:
         """
-        resp = self._ask('GetOutputBlob')
-        if resp:
-            resp = format_blob(resp)
-        else:
-            resp = b''
-        return resp
+        return self._ask('GetOutputBlob')
 
     @get_float(default=0)
     def get_achieved_output(self):

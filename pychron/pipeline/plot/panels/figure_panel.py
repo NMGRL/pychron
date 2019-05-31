@@ -21,7 +21,6 @@ from chaco.legend import Legend
 from numpy import inf
 from traits.api import HasTraits, Any, List, Str
 
-from pychron.core.codetools.inspection import caller
 from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.processing.analysis_graph import AnalysisStackedGraph
 
@@ -76,7 +75,6 @@ class FigurePanel(HasTraits):
             fig.suppress_ylimits_update = state
             fig.suppress_xlimits_update = state
 
-    @caller
     def make_graph(self):
 
         po = self.plot_options
