@@ -415,11 +415,11 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 Column(visible=opt.include_summary_percent_ar39, label=('%', '<sup>39</sup>', 'Ar'),
                        func=get_plateau_ar39),
                 Column(visible=opt.include_summary_mswd, label='MSWD', attr='mswd'),
-                Column(visible=opt.include_summary_kca, label='K/Ca', attr='weighted_kca', func=get_kca),
+                Column(visible=opt.include_summary_kca, label='K/Ca',
+                       func=get_kca),
 
                 Column(visible=opt.include_summary_kca,
                        label=PLUSMINUS_NSIGMA.format(opt.summary_kca_nsigma),
-                       attr='weighted_kca',
                        func=get_kca_error),
 
                 Column(visible=opt.include_summary_age,
