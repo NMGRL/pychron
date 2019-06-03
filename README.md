@@ -1,11 +1,6 @@
 Pychron
 ========
 
-[![Build Status](https://travis-ci.org/NMGRL/pychron.png?branch=develop)](https://travis-ci.org/NMGRL/pychron)
-[![Requirements Status](https://requires.io/github/NMGRL/pychron/requirements.png?branch=develop)](https://requires.io/github/NMGRL/pychron/requirements/?branch=develop)
-[![Issue Stats](http://issuestats.com/github/nmgrl/pychron/badge/issue)](http://issuestats.com/github/nmgrl/pychron)
-![Gratipay](http://img.shields.io/gratipay/jirhiker.svg)
-[![codecov](https://codecov.io/gh/NMGRL/pychron/branch/develop/graph/badge.svg)](https://codecov.io/gh/NMGRL/pychron)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3237834.svg)](https://doi.org/10.5281/zenodo.3237834)
 
 [Changes](CHANGELOG.md)
