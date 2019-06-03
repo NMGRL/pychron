@@ -43,7 +43,8 @@ class BlanksFitAuxPlot(SeriesFitAuxPlot, FilterFit):
         return {'filter_outliers': self.filter_outliers,
                 'iterations': self.filter_outlier_iterations,
                 'std_devs': self.filter_outlier_std_devs,
-                'use_standard_deviation_filtering': self.use_standard_deviation_filtering}
+                'use_standard_deviation_filtering': self.use_standard_deviation_filtering,
+                'use_iqr_filtering': self.use_iqr_filtering}
 
 
 class BlanksOptions(SeriesOptions):

@@ -535,6 +535,7 @@ class DVCAnalysis(Analysis):
                 i.set_fit(v['fit'], notify=False)
                 i.set_user_excluded(v.get('user_excluded'))
                 i.reviewed = v.get('reviewed', False)
+                i.include_baseline_error = v.get('include_baseline_error', False)
 
     def _load_value_error(self, item, obj):
         item.use_manual_value = obj.get('use_manual_value', False)

@@ -139,6 +139,7 @@ class IsoEvoMainOptions(MainOptions):
                 object_column(name='filter_outlier_iterations', label='Iter.'),
                 object_column(name='filter_outlier_std_devs', label='NSigma'),
                 checkbox_column(name='use_standard_deviation_filtering', label='Use SD'),
+                checkbox_column(name='use_iqr_filtering', label='Use IQR'),
                 object_column(name='truncate', label='Trunc.'),
                 checkbox_column(name='include_baseline_error', label='Inc. BsErr')]
         return cols

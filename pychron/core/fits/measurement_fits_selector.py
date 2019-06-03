@@ -162,6 +162,7 @@ class MeasurementFitsSelectorView(Controller):
                 ObjectColumn(name='filter_iterations', label='Iter.'),
                 ObjectColumn(name='filter_std_devs', label='NSigma'),
                 CheckboxColumn(name='use_standard_deviation_filtering', label='Use SD'),
+                CheckboxColumn(name='use_iqr_filtering', label='Use IQR')
                 ]
 
         editor = myTableEditor(columns=cols,

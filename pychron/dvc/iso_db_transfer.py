@@ -68,7 +68,7 @@ class IsoDBTransfer(Loggable):
 
     def init(self):
         conn = dict(host=os.environ.get('ARGONSERVER_HOST'),
-                    username='jross',#os.environ.get('ARGONSERVER_DB_USER'),
+                    username='jross',  # os.environ.get('ARGONSERVER_DB_USER'),
                     password=os.environ.get('ARGONSERVER_DB_PWD'),
                     kind='mysql')
 
@@ -96,7 +96,7 @@ class IsoDBTransfer(Loggable):
             return
 
         self.dvc.meta_repo.smart_pull(quiet=self.quiet)
-        self.persister = DVCPersister(dvc=self.dvc, stage_files=False)
+        self.persister = DVCPersister(dvc=self.dvc, stage_files=False, bind=False)
 
         proc = IsotopeDatabaseManager(bind=False, connect=False)
 
@@ -259,7 +259,7 @@ class IsoDBTransfer(Loggable):
                 with src.session_ctx():
                     runs = src.get_analyses_date_range(low, high,
                                                        # labnumber=(63630, 63632, 63634, 63636, 63638, 63646, 63648),
-                                                       projects=('REFERENCES', ),
+                                                       projects=('REFERENCES',),
                                                        # projects=('REFERENCES', source_name),
                                                        mass_spectrometers=(ms,))
 
@@ -267,7 +267,7 @@ class IsoDBTransfer(Loggable):
                         for ai in runs:
                             oruns.append(ai.record_id)
                             print(ai.measurement.mass_spectrometer.name, ai.record_id, ai.labnumber.sample.name, \
-                                ai.analysis_timestamp)
+                                  ai.analysis_timestamp)
                     else:
                         self.debug('================= Do Export i: {} low: {} high: {}'.format(i, low, high))
                         self.debug('N runs: {}'.format(len(runs)))
@@ -316,6 +316,29 @@ class IsoDBTransfer(Loggable):
 
             ais = [ai.record_id for ai in runs]
         self.do_export(ais, repository_identifier, creator)
+
+    def do_export_runlist(self):
+        path = '/Users/ross/Downloads/Nabro_data_2.csv'
+        with open(path, 'r') as rfile:
+            next(rfile)
+            runs = [line.split(',')[:2] for line in rfile]
+
+        runs = sorted(runs, key=lambda x: x[1] if x[1] in ('Blank', 'air', 'cocktail', 'FC-2') else '0')
+        for sample, rs in groupby(runs, key=lambda x: x[1] if x[1] in ('Blank', 'air', 'cocktail', 'FC-2') else '0'):
+            rs = [r[0] for r in rs]
+            if sample in ('cocktail',):
+                # for ri in rs:
+                #     print('asd', ri)
+
+                self.do_export(rs, 'Nabro', 'Iverson,N')
+
+            # if sample in ('Blank', 'cocktail'):
+            #     self.do_export([r[0] for r in rs], 'Nabro', 'Iverson,N')
+            # elif sample == 'FC-2':
+            # if sample == 'FC-2':
+            #     self.do_export([r[0] for r in rs], 'Irradiation-NM-257', 'NMGRL')
+
+        # self.do_export(runs, '')
 
     def do_export(self, runs, repository_identifier, creator, create_repo=False, monitor_mapping=None):
 
@@ -392,7 +415,7 @@ class IsoDBTransfer(Loggable):
 
     def _transfer_meta(self, dest, dban, monitor_mapping):
 
-        pi = 'Mcintosh,W'
+        pi = 'Iverson,N'
 
         self.debug('transfer meta {}'.format(monitor_mapping))
 
@@ -492,13 +515,13 @@ class IsoDBTransfer(Loggable):
             # meta_repo.commit('added irradiation {}'.format(irradname))
 
         # save production name to db
-        if not dest.get_production(prodname):
-            self.debug('Add production {}'.format(prodname))
-            dest.add_production(prodname)
-            dest.flush()
+        # if not dest.get_production(prodname):
+        #     self.debug('Add production {}'.format(prodname))
+        #     dest.add_production(prodname)
+        #     dest.flush()
 
-            # meta_repo.add_production(irradname, prodname, prod, add=False)
-            # meta_repo.commit('added production {}'.format(prodname))
+        # meta_repo.add_production(irradname, prodname, prod, add=False)
+        # meta_repo.commit('added production {}'.format(prodname))
 
         # save db level
         if not dest.get_irradiation_level(irradname, levelname):
@@ -507,8 +530,8 @@ class IsoDBTransfer(Loggable):
             dest.flush()
 
             # meta_repo.add_irradiation_holder(holder, geom, add=False)
-            meta_repo.add_level(irradname, levelname, add=False)
-            meta_repo.update_level_production(irradname, levelname, prodname)
+            # meta_repo.add_level(irradname, levelname, add=False)
+            # meta_repo.update_level_production(irradname, levelname, prodname)
 
             # meta_repo.commit('added empty level {}{}'.format(irradname, levelname))
 
@@ -534,7 +557,7 @@ class IsoDBTransfer(Loggable):
 
             ps = yd['positions']
             ps.append({'j': j, 'j_err': e, 'position': pos, 'analyses': [],
-                       'identifier': idn,  'decay_constants': {}})
+                       'identifier': idn, 'decay_constants': {}})
             yd['positions'] = ps
             dvc_dump(yd, p)
 
@@ -724,6 +747,8 @@ if __name__ == '__main__':
     e.quiet = True
     e.init()
 
+    e.do_export_runlist()
+
     # e.bulk_import_project('Streck2015', 'Mcintosh,W', source_name='Streck', dry=False)
     #
     # e.bulk_import_project('FootPrint', 'Mcintosh,W', dry=False)
@@ -736,7 +761,7 @@ if __name__ == '__main__':
     #     project = 'Irradiation-{}'.format(i)
     #     create_repo_for_existing_local(project, paths.repository_dataset_dir)
     #     commit_initial_import(project, paths.repository_dataset_dir)
-    e.bulk_import_irradiation('NM-276', 'NMGRL', dry=False)
+    # e.bulk_import_irradiation('NM-276', 'NMGRL', dry=False)
 
     # e.bulk_import_project('Cascades', 'Templeton', dry=False)
     # fix_a_steps(e.dvc.db, 'Toba', paths.repository_dataset_dir)
@@ -773,8 +798,8 @@ if __name__ == '__main__':
     # for p in ps:
     #     fix_import_commit(p, paths.repository_dataset_dir)
 
-        #
-        # e.find_project_overlaps(ps)
+    #
+    # e.find_project_overlaps(ps)
 
     # for project in ps:
     # print 'project={}'.format(project)

@@ -14,10 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
+import time
 from queue import Queue
 from threading import Event, Thread
 
-import time
 # ============= enthought library imports =======================
 from traits.api import Any, List, CInt, Int, Bool, Enum, Str, Instance
 
@@ -156,7 +156,9 @@ class DataCollector(Consoleable):
                 if not self._pre_trigger_hook():
                     break
 
-                self.trigger()
+                if self.trigger:
+                    self.trigger()
+
                 evt.wait(period)
                 self.automated_run.plot_panel.counts = i
                 if not self._iter_hook(i):
@@ -249,7 +251,7 @@ class DataCollector(Consoleable):
 
         if data:
             if detectors:
-                data = list(zip(*[d for d in zip(*data) if d[0] in detectors]))
+                data = list(zip(*(d for d in zip(*data) if d[0] in detectors)))
             self._data = data
             return data
 
@@ -309,7 +311,8 @@ class DataCollector(Consoleable):
             else:
                 print('no detector obj for {}'.format(dn), [d.name for d in self.detectors])
 
-        self.plot_panel.update()
+        if not cnt % 5:
+            self.plot_panel.update()
 
     def _set_plot_data(self, cnt, iso, det, x, signal):
 
@@ -368,6 +371,31 @@ class DataCollector(Consoleable):
                 self.err_message = m
                 return ti
 
+    def _modification_func(self, tr):
+        queue = self.automated_run.experiment_executor.experiment_queue
+        tr.do_modifications(queue, self.automated_run)
+
+        self.measurement_script.abbreviated_count_ratio = tr.abbreviated_count_ratio
+        if tr.use_truncation:
+            return self._set_truncated()
+        elif tr.use_termination:
+            return 'terminate'
+
+    def _truncation_func(self, tr):
+        self.measurement_script.abbreviated_count_ratio = tr.abbreviated_count_ratio
+        return self._set_truncated()
+
+    def _action_func(self, tr):
+        tr.perform(self.measurement_script)
+        if not tr.resume:
+            return 'break'
+
+    def _set_truncated(self):
+        self.state = 'truncated'
+        self.automated_run.truncated = True
+        self.automated_run.spec.state = 'truncated'
+        return 'break'
+
     def _check_iteration(self, i):
         if self._temp_conds:
             ti = self._check_conditionals(self._temp_conds, i)
@@ -385,12 +413,6 @@ class DataCollector(Consoleable):
         #                                                                          script_counts,
         #                                                                          original_counts))
 
-        def set_truncated():
-            self.state = 'truncated'
-            self.automated_run.truncated = True
-            self.automated_run.spec.state = 'truncated'
-            return 'break'
-
         if not self._alive:
             self.info('measurement iteration executed {}/{} counts'.format(*count_args))
             return 'cancel'
@@ -399,12 +421,12 @@ class DataCollector(Consoleable):
             if i > user_counts:
                 self.info('user termination. measurement iteration executed {}/{} counts'.format(*count_args))
                 self.plot_panel.total_counts -= (original_counts - i)
-                return set_truncated()
+                return self._set_truncated()
 
         elif script_counts != original_counts:
             if i > script_counts:
                 self.info('script termination. measurement iteration executed {}/{} counts'.format(*count_args))
-                return set_truncated()
+                return self._set_truncated()
 
         elif i > original_counts:
             return 'break'
@@ -412,31 +434,12 @@ class DataCollector(Consoleable):
         if self._truncate_signal:
             self.info('measurement iteration executed {}/{} counts'.format(*count_args))
             self._truncate_signal = False
-            return set_truncated()
+            return self._set_truncated()
 
         if self.check_conditionals:
-            def modification_func(tr):
-                queue = self.automated_run.experiment_executor.experiment_queue
-                tr.do_modifications(queue, self.automated_run)
-
-                self.measurement_script.abbreviated_count_ratio = tr.abbreviated_count_ratio
-                if tr.use_truncation:
-                    return set_truncated()
-                elif tr.use_termination:
-                    return 'terminate'
-
-            def truncation_func(tr):
-                self.measurement_script.abbreviated_count_ratio = tr.abbreviated_count_ratio
-                return set_truncated()
-
-            def action_func(tr):
-                tr.perform(self.measurement_script)
-                if not tr.resume:
-                    return 'break'
-
-            for tag, func, conditionals in (('modification', modification_func, self.modification_conditionals),
-                                            ('truncation', truncation_func, self.truncation_conditionals),
-                                            ('action', action_func, self.action_conditionals),
+            for tag, func, conditionals in (('modification', self._modification_func, self.modification_conditionals),
+                                            ('truncation', self._truncation_func, self.truncation_conditionals),
+                                            ('action', self._action_func, self.action_conditionals),
                                             ('termination', lambda x: 'terminate', self.termination_conditionals),
                                             ('cancelation', lambda x: 'cancel', self.cancelation_conditionals)):
 

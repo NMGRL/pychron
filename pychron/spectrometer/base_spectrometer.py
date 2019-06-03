@@ -320,9 +320,6 @@ class BaseSpectrometer(SpectrometerDevice):
         """
         self._send_configuration(**kw)
 
-    def trigger_acq(self):
-        pass
-
     def _send_configuration(self, **kw):
         raise NotImplementedError
 

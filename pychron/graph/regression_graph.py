@@ -284,7 +284,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                 f = f.split('_')[0]
             scatter.fit = '{}_{}'.format(f, fi)
 
-    def set_fit(self, fi, plotid=0, series=0, redraw=True):
+    def set_fit(self, fi, plotid=0, series=0):
 
         fi = fi.lower()
         plot = self.plots[plotid]
@@ -466,17 +466,18 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
     def _set_regressor(self, scatter, r):
 
         selection = scatter.index.metadata['selections']
-        selection = set(selection) ^ set(r.outlier_excluded + r.truncate_excluded)
+
+        selection = (set(selection) - set(r.outlier_excluded + r.truncate_excluded))
+
         x = scatter.index.get_data()
         y = scatter.value.get_data()
-
         sel = list(selection)
         if hasattr(scatter, 'yerror'):
             yserr = scatter.yerror.get_data()
             r.trait_set(yserr=yserr)
 
         r.trait_set(xs=x, ys=y,
-                    user_excluded=sel ,
+                    user_excluded=sel,
                     filter_outliers_dict=scatter.filter_outliers_dict)
         r.dirty = True
 

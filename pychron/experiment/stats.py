@@ -15,18 +15,18 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 import time
 from datetime import datetime, timedelta
 
-from traits.api import Property, String, Float, Any, Int, List, Instance, Bool
+from traits.api import Property, String, Float, Any, Int, List, Instance
 
 from pychron.core.helpers.timer import Timer
-from pychron.core.ui.pie_clock import PieClockModel
 from pychron.experiment.duration_tracker import AutomatedRunDurationTracker
 from pychron.loggable import Loggable
-from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR, NULL_STR
+from pychron.pychron_constants import NULL_STR
+
+
+# from pychron.core.ui.pie_clock import PieClockModel
 
 
 class ExperimentStats(Loggable):
@@ -57,8 +57,8 @@ class ExperimentStats(Loggable):
     # _start_time = None
     _post = None
 
-    use_clock = Bool(False)
-    clock = Instance(PieClockModel, ())
+    # use_clock = Bool(False)
+    # clock = Instance(PieClockModel, ())
     duration_tracker = Instance(AutomatedRunDurationTracker, ())
     _run_start = 0
 
@@ -95,7 +95,7 @@ class ExperimentStats(Loggable):
             self.trait_set(**d)
 
         self._timer = Timer(1000, update_time)
-        self._timer.start()
+        # self._timer.start()
 
     def stop_timer(self):
         self.debug('Stop timer. self._timer: {}'.format(self._timer))
@@ -120,7 +120,7 @@ class ExperimentStats(Loggable):
 
     def start_run(self, run):
         self._run_start = time.time()
-        self.setup_run_clock(run)
+        # self.setup_run_clock(run)
 
         self.current_run_duration = self.get_run_duration(run.spec, as_str=True)
 
@@ -142,31 +142,33 @@ class ExperimentStats(Loggable):
         self._run_start = 0
         self.nruns_finished += 1
         self.debug('finish run. runs completed={}'.format(self.nruns_finished))
-        if self.clock:
-            self.clock.stop()
+        # if self.clock:
+        #     self.clock.stop()
 
     def continue_run(self):
-        if self.clock:
-            self.clock.finish_slice()
+        pass
 
-    def setup_run_clock(self, run):
-        if self.use_clock:
-            ctx = run.spec.make_script_context()
-            extraction_slice = run.extraction_script.calculate_estimated_duration(ctx)
-            measurement_slice = run.measurement_script.calculate_estimated_duration(ctx)
+        # if self.clock:
+        #     self.clock.finish_slice()
 
-            def convert_hexcolor_to_int(c):
-                c = c[1:]
-                # func = lambda i: int(c[i:i + 2], 16)
-                # return list(map(func, (0, 2, 4)))
-                return [int(c[i:i + 2], 16) for i in (0, 2, 4)]
-
-            # ec, mc = list(map(convert_hexcolor_to_int,
-            #                   (EXTRACTION_COLOR, MEASUREMENT_COLOR)))
-            ec, mc = convert_hexcolor_to_int(EXTRACTION_COLOR), convert_hexcolor_to_int(MEASUREMENT_COLOR)
-            self.clock.set_slices([extraction_slice, measurement_slice],
-                                  [ec, mc])
-            self.clock.start()
+    # def setup_run_clock(self, run):
+    #     if self.use_clock:
+    #         ctx = run.spec.make_script_context()
+    #         extraction_slice = run.extraction_script.calculate_estimated_duration(ctx)
+    #         measurement_slice = run.measurement_script.calculate_estimated_duration(ctx)
+    #
+    #         def convert_hexcolor_to_int(c):
+    #             c = c[1:]
+    #             # func = lambda i: int(c[i:i + 2], 16)
+    #             # return list(map(func, (0, 2, 4)))
+    #             return [int(c[i:i + 2], 16) for i in (0, 2, 4)]
+    #
+    #         # ec, mc = list(map(convert_hexcolor_to_int,
+    #         #                   (EXTRACTION_COLOR, MEASUREMENT_COLOR)))
+    #         ec, mc = convert_hexcolor_to_int(EXTRACTION_COLOR), convert_hexcolor_to_int(MEASUREMENT_COLOR)
+    #         self.clock.set_slices([extraction_slice, measurement_slice],
+    #                               [ec, mc])
+    #         self.clock.start()
 
     # private
     def _calculate_duration(self, runs):
