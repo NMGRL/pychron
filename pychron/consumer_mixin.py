@@ -40,7 +40,7 @@ class ConsumerMixin:
     #
     #     self.setup_consumer(func, buftime, auto_start, main, timeout, delay)
 
-    def setup_consumer(self, func=None, buftime=None, auto_start=True, main=False, timeout=None, delay=1):
+    def setup_consumer(self, func=None, buftime=None, auto_start=True, main=False, timeout=None, delay=500):
         self._delay = delay  # ms
         self._consume_func = func
         self._main = main

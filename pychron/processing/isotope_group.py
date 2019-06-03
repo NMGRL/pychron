@@ -235,7 +235,7 @@ class IsotopeGroup(HasTraits):
             if kind in ('sniff', 'baseline', 'whiff'):
                 if kind == 'sniff':
                     isotope._value = signal
-                    isotope.dirty = True
+                    # isotope.dirty = True
 
                 isotope = getattr(isotope, kind)
 
@@ -244,10 +244,8 @@ class IsotopeGroup(HasTraits):
 
             xs = npappend(isotope.xs, x)
             ys = npappend(isotope.ys, signal)
-            isotope.xs = xs
-            isotope.ys = ys
-
-            isotope.dirty = True
+            isotope.trait_set(xs=xs, ys=ys)
+            # isotope.dirty = True
 
         isotopes = self.isotopes
         if kind == 'baseline':

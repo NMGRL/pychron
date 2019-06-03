@@ -73,6 +73,7 @@ class FilterFit(Fit):
     filter_outlier_iterations = Int
     filter_outlier_std_devs = Int
     use_standard_deviation_filtering = Bool
+    use_iqr_filtering = Bool
 
     truncate = Str
     include_baseline_error = Bool

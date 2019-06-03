@@ -68,16 +68,11 @@ class WaitControl(Loggable):
         if evt is None:
             evt = self.end_evt
 
-        # time.sleep(0.25)
+        # evt.wait(0.25)
+        # while not evt.wait(timeout=0.25):
+        #     time.sleep(0.25)
 
-        evt.wait(0.25)
-
-        # while not self.end_evt.is_set():
-        while not evt.wait(timeout=0.1):
-            pass
-        # while not evt.is_set():
-        #     # time.sleep(0.005)
-        #     evt.wait(0.005)
+        evt.wait(self.duration)
 
         self.debug('Join finished')
 

@@ -2096,6 +2096,13 @@ anaylsis_type={}
                     k, s = spec.get_intensities(tagged=True)
                 except NoIntensityChange:
                     self.warning('Canceling Run. Intensity from mass spectrometer not changing')
+
+                    try:
+                        self.info('Saving run. Analysis did not complete successfully')
+                        self.save()
+                    except BaseException:
+                        self.warning('Failed to save run')
+
                     self.cancel_run(state='failed')
                     yield None
 
@@ -2103,6 +2110,13 @@ anaylsis_type={}
                     cnt += 1
                     self.info('Failed getting intensity from mass spectrometer {}/{}'.format(cnt, fcnt))
                     if cnt >= fcnt:
+
+                        try:
+                            self.info('Saving run. Analysis did not complete successfully')
+                            self.save()
+                        except BaseException:
+                            self.warning('Failed to save run')
+
                         self.warning('Canceling Run. Failed getting intensity from mass spectrometer')
 
                         # do we need to cancel the experiment or will the subsequent pre run
@@ -2230,10 +2244,12 @@ anaylsis_type={}
                     period_ms=period * 1000,
                     data_generator=get_data,
                     data_writer=data_writer,
-                    trigger=self.spectrometer_manager.spectrometer.trigger_acq,
                     starttime=starttime,
                     experiment_type=self.experiment_type,
                     refresh_age=self.spec.analysis_type in ('unknown', 'cocktail'))
+
+        if hasattr(self.spectrometer_manager.spectrometer, 'trigger_acq'):
+            m.trait_set(trigger=self.spectrometer_manager.spectrometer.trigger_acq)
 
         if self.plot_panel:
             self.plot_panel.integration_time = period
@@ -2276,7 +2292,7 @@ anaylsis_type={}
         if starttime_offset > mi:
             min_ = -starttime_offset
 
-        graph.set_x_limits(min_=min_, max_=max_ * 1.1)
+        graph.set_x_limits(min_=min_, max_=max_ * 1.25)
         series = 0
         # for k, iso in se:
         for det in self._active_detectors:

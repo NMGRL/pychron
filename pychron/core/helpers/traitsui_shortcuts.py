@@ -44,7 +44,6 @@ def okcancel_view(*args, **kw):
         kw['buttons'] = ['OK', 'Cancel']
 
     return View(*args, **kw)
-                **kw)
 
 
 def rfloatitem(*args, **kw):

@@ -193,12 +193,12 @@ class FitSelector(HasTraits):
             pf.filter_iterations = fod.get('iterations', 0)
             pf.filter_std_devs = fod.get('std_devs', 0)
             pf.use_standard_deviation_filtering = fod.get('use_standard_deviation_filtering', False)
+            pf.use_iqr_filtering = fod.get('use_iqr_filtering', False)
             pf.error_type = et
 
             nfs.append(pf)
 
         self.fits = nfs
-
 
     # def load_baseline_fits(self, keys):
     # fits = self.fits

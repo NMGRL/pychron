@@ -47,7 +47,7 @@ from pychron.pipeline.pipeline_defaults import ISOEVO, BLANKS, ICFACTOR, IDEO, S
     CSV_IDEO, XY_SCATTER, INTERPRETED_AGE_IDEOGRAM, ANALYSIS_TABLE, INTERPRETED_AGE_TABLE, REPORT, \
     REGRESSION_SERIES, VERTICAL_FLUX, \
     CSV_ANALYSES_EXPORT, BULK_EDIT, HISTORY_IDEOGRAM, HISTORY_SPECTRUM, AUDIT, SUBGROUP_IDEOGRAM, HYBRID_IDEOGRAM, \
-    ANALYSIS_TABLE_W_IA, MASSSPEC_REDUCED, DEFINE_EQUILIBRATION, CA_CORRECTION_FACTORS, K_CORRECTION_FACTORS, \
+    MASSSPEC_REDUCED, DEFINE_EQUILIBRATION, CA_CORRECTION_FACTORS, K_CORRECTION_FACTORS, \
     FLUX_VISUALIZATION, CSV_RAW_DATA_EXPORT, COMPOSITE, SIMPLE_ANALYSIS_TABLE
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
@@ -847,7 +847,6 @@ class PipelineEngine(Loggable):
                              ('Vertical Flux', VERTICAL_FLUX))),
                    ('Table', (('SubGrouped Analyses', ANALYSIS_TABLE),
                               ('Grouped Analyses', SIMPLE_ANALYSIS_TABLE),
-                              ('Analyses w/Set IA', ANALYSIS_TABLE_W_IA),
                               ('Interpreted Age', INTERPRETED_AGE_TABLE),
                               ('Report', REPORT))),
                    ('History', (('Ideogram', HISTORY_IDEOGRAM),
