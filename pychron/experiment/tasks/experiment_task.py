@@ -565,7 +565,7 @@ class ExperimentEditorTask(EditorTask):
             lm.load_name = new
             lm.suppress_update = False
 
-            lm.load_load_by_name(new, group_labnumbers=False)
+            lm.load_load_by_name(new)
             lm.canvas.editable = False
 
     @on_trait_change('active_editor:queue:refresh_blocks_needed')

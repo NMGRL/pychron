@@ -33,6 +33,7 @@ from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.ui.qt.tabular_editor import MoveToRow
 from pychron.envisage.view_util import open_view
 from pychron.experiment.queue.base_queue import BaseExperimentQueue
+from pychron.experiment.queue.value_editor import ValueEditor
 from pychron.experiment.utilities.human_error_checker import HumanErrorChecker
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.experiment.utilities.uv_human_error_checker import UVHumanErrorChecker
