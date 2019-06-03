@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traits.api import Color, Instance, DelegatesTo, List, Any, Property, Button, Event
 from traitsui.api import View, Item, UItem, VGroup, HGroup, spring, \
@@ -179,7 +177,8 @@ class ExperimentFactoryPane(TraitsDockPane):
         v = View(VGroup(button_bar,
                         button_bar2,
                         UItem('pane.info_label', style='readonly'),
-                        edit_grp),
+                        edit_grp,
+                        enabled_when='edit_enabled'),
                  kind='live',
                  width=225)
         return v
@@ -522,7 +521,6 @@ class IsotopeEvolutionPane(TraitsDockPane):
         return v
 
 
-
 class LoggerPane(TraitsDockPane):
     loggers = List
     selected = Any
@@ -531,7 +529,7 @@ class LoggerPane(TraitsDockPane):
 
     def __init__(self, *args, **kw):
         super(LoggerPane, self).__init__(*args, **kw)
-        from pychron.displays.gdisplays import gWarningDisplay, gLoggerDisplay
+        from pychron.core.displays.gdisplays import gWarningDisplay, gLoggerDisplay
 
         self.loggers = [gLoggerDisplay, gWarningDisplay]
 

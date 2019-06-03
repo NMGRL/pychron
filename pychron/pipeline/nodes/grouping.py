@@ -19,9 +19,10 @@ from operator import attrgetter
 from numpy import array, array_split
 # ============= enthought library imports =======================
 from traits.api import Str, Enum
-from traitsui.api import View, UItem, EnumEditor, VGroup
+from traitsui.api import UItem, EnumEditor, VGroup
 
 from pychron.core.helpers.datetime_tools import bin_timestamps
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.pipeline.grouping import group_analyses_by_key
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.subgrouping import apply_subgrouping, compress_groups
@@ -97,11 +98,10 @@ class GroupingNode(BaseNode):
                             tooltip='Group=Display all groups on a single graph\n'
                                     'Graph=Display groups on separate graphs\n'
                                     'Tab=Display groups on separate tabs'), label='To Group', show_border=True)
-        v = View(VGroup(agrp, kgrp),
-                 width=300,
-                 title=self.title,
-                 buttons=['OK', 'Cancel'],
-                 kind='livemodal')
+        v = okcancel_view(VGroup(agrp, kgrp),
+                          width=300,
+                          title=self.title,
+                          )
         return v
 
 
@@ -168,17 +168,15 @@ class SubGroupingNode(GroupingNode, Preferred):
 
     def traits_view(self):
 
-        v = View(VGroup(VGroup(UItem('by_key',
-                                     style='custom',
-                                     editor=EnumEditor(name='keys')),
-                               show_border=True, label='Grouping'),
+        v = okcancel_view(VGroup(VGroup(UItem('by_key',
+                                              style='custom',
+                                              editor=EnumEditor(name='keys')),
+                                        show_border=True, label='Grouping'),
 
-                        get_preferred_grp(label='Types', show_border=True)),
-                 width=500,
-                 resizable=True,
-                 title=self.title,
-                 buttons=['OK', 'Cancel'],
-                 kind='livemodal')
+                                 get_preferred_grp(label='Types', show_border=True)),
+                          width=500,
+                          resizable=True,
+                          title=self.title)
         return v
 
 

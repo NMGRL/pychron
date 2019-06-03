@@ -19,10 +19,11 @@ from traits.api import HasTraits, Str, Any
 from traits.trait_types import Int
 from traits.traits import Property
 from traitsui.api import View, UItem, TextEditor, Item, VGroup
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
+
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 
 
 class StatusView(HasTraits):
@@ -41,13 +42,11 @@ class NewTagView(HasTraits):
     name = Str
 
     def traits_view(self):
-        v = View(VGroup(Item('name'),
-                        VGroup(UItem('message', style='custom'),
-                               show_border=True, label='Message')),
-                 kind='livemodal',
-                 buttons=['OK', 'Cancel'],
-                 width=400,
-                 title='New Tag')
+        v = okcancel_view(VGroup(Item('name'),
+                                 VGroup(UItem('message', style='custom'),
+                                        show_border=True, label='Message')),
+                          width=400,
+                          title='New Tag')
 
         return v
 
@@ -58,11 +57,9 @@ class NewBranchView(HasTraits):
     _name = Str
 
     def traits_view(self):
-        v = View(UItem('name'),
-                 kind='livemodal',
-                 buttons=['OK', 'Cancel'],
-                 width=200,
-                 title='New Branch')
+        v = okcancel_view(UItem('name'),
+                          width=200,
+                          title='New Branch')
         return v
 
     def _get_name(self):

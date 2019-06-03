@@ -20,17 +20,18 @@ from apptools.preferences.preference_binding import bind_preference
 from traits.api import Any, Bool, Instance, Dict
 from traitsui.api import View
 
+from pychron.core.helpers.isotope_utils import sort_detectors
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.helpers.strtools import ratio
 from pychron.core.progress import progress_iterator
 from pychron.options.options_manager import IdeogramOptionsManager, OptionsController, SeriesOptionsManager, \
     SpectrumOptionsManager, InverseIsochronOptionsManager, VerticalFluxOptionsManager, XYScatterOptionsManager, \
-    RadialOptionsManager, RegressionSeriesOptionsManager, FluxVisualizationOptionsManager
+    RadialOptionsManager, RegressionSeriesOptionsManager, FluxVisualizationOptionsManager, CompositeOptionsManager
 from pychron.options.views.views import view
 from pychron.pipeline.editors.flux_visualization_editor import FluxVisualizationEditor
 from pychron.pipeline.nodes.base import SortableNode
 from pychron.pipeline.plot.plotter.series import RADIOGENIC_YIELD, PEAK_CENTER, \
-    ANALYSIS_TYPE, AGE, LAB_TEMP, LAB_HUM
+    ANALYSIS_TYPE, AGE, LAB_TEMP, LAB_HUM, EXTRACT_VALUE, EXTRACT_DURATION, CLEANUP
 from pychron.pychron_constants import COCKTAIL, UNKNOWN, DETECTOR_IC
 
 
@@ -58,6 +59,7 @@ class FigureNode(SortableNode):
 
     def refresh(self):
         for e in self.editors.values():
+            print('figure not refresh needed')
             e.refresh_needed = True
 
     def run(self, state):
@@ -92,8 +94,6 @@ class FigureNode(SortableNode):
 
                     editor.set_items(list(unks))
                     editor.refresh_needed = True
-                    # if hasattr(editor, 'component'):
-                    #     editor.component.invalidate_and_redraw()
 
         for name, es in groupby_key(state.editors, 'name'):
             for i, ei in enumerate(es):
@@ -243,14 +243,19 @@ class SeriesNode(FigureNode):
 
                 if unk.analysis_type in (DETECTOR_IC,):
                     isotopes = unk.isotopes
-                    for vi in isotopes.values():
-                        for vj in isotopes.values():
-                            if vi == vj:
+                    dets = sort_detectors(list({i.detector for i in isotopes.values()}))
+
+                    for i, di in enumerate(dets):
+                        for j, dj in enumerate(dets):
+                            if j < i:
                                 continue
 
-                            names.append('{}/{} DetIC'.format(vj.detector, vi.detector))
+                            if di == dj:
+                                continue
 
-            names.extend([PEAK_CENTER, ANALYSIS_TYPE, LAB_TEMP, LAB_HUM])
+                            names.append('{}/{} DetIC'.format(di, dj))
+
+            names.extend([PEAK_CENTER, ANALYSIS_TYPE, LAB_TEMP, LAB_HUM, EXTRACT_VALUE, EXTRACT_DURATION, CLEANUP])
 
             pom.set_names(names)
 
@@ -296,4 +301,11 @@ class RadialNode(FigureNode):
     editor_klass = 'pychron.pipeline.plot.editors.radial_editor,RadialEditor'
     plotter_options_manager_klass = RadialOptionsManager
 
+
+class CompositeNode(FigureNode):
+    name = 'Spectrum/Isochron'
+    editor_klass = 'pychron.pipeline.plot.editors.composite_editor,CompositeEditor'
+    plotter_options_manager_klass = CompositeOptionsManager
+    # configurable = False
+    # skip_configure = True
 # ============= EOF =============================================

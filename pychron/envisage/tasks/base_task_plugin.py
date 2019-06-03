@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import os
 
 from envisage.service_offer import ServiceOffer
@@ -26,7 +27,6 @@ from traits.api import List
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import add_extension
 from pychron.envisage.tasks.base_plugin import BasePlugin
-from pychron.globals import globalv
 from pychron.paths import paths
 
 
@@ -47,8 +47,6 @@ class BaseTaskPlugin(BasePlugin):
 
     managers = List(contributes_to='pychron.hardware.managers')
 
-    _tests = None
-
     def _preferences_factory(self, *names):
         ps = []
         for ni in names:
@@ -66,10 +64,10 @@ class BaseTaskPlugin(BasePlugin):
     def service_offer_factory(self, **kw):
         return ServiceOffer(**kw)
 
-    def startup_test(self):
-        if globalv.use_startup_tests:
-            self.debug('doing start up tests')
-            self.application.startup_tester.test_plugin(self)
+    # def startup_test(self):
+    #     if globalv.use_startup_tests:
+    #         self.debug('doing start up tests')
+    #         self.application.startup_tester.test_plugin(self)
 
     # def set_preference_defaults(self):
     #     """
@@ -79,8 +77,8 @@ class BaseTaskPlugin(BasePlugin):
     #     """
     #     pass
 
-    def start(self):
-        self.startup_test()
+    # def start(self):
+    #     self.startup_test()
         # try:
         #     self.set_preference_defaults()
         # except AttributeError, e:

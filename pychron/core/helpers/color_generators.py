@@ -51,10 +51,31 @@ for color in colors8i:
     c = colors8i[color]
     colors1f[color] = c[0] / 255., c[1] / 255., c[2] / 255.
 
-colornames = ['black', 'limegreen', 'blue', 'violet', 'maroon',
-              'red', 'gray', 'green', 'aquamarine',
-              'silver', 'navy', 'plum', 'purple',
-              'blue violet', 'brown', 'firebrick', 'greenyellow',
+colornames = ['black',
+              'limegreen',
+              'blue',
+              'violet',
+              'maroon',
+              'red',
+              'gray',
+              'green',
+              'aquamarine',
+              'silver',
+              'navy',
+              'plum',
+              'purple',
+              'blue violet',
+              'brown',
+              'firebrick',
+              'greenyellow',
+              'coral',
+              'brown',
+              'cyan',
+              'azure',
+              'darkgrey',
+              'darkgreen',
+              'aqua',
+              'beige'
               ]
 
 allcolornames = ['aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure',

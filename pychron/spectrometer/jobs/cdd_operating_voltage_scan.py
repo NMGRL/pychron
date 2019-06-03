@@ -16,18 +16,22 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import Float
-from traitsui.api import View, Item
+
 # ============= standard library imports ========================
 import time
+
 import numpy as np
 from six.moves.configparser import ConfigParser
+from traits.api import Float
+from traitsui.api import Item
+
 # ============= local library imports  ==========================
-from pychron.spectrometer.jobs.spectrometer_task import SpectrometerTask
-from pychron.graph.graph import Graph
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.time_series.time_series import smooth
 from pychron.globals import globalv
+from pychron.graph.graph import Graph
 from pychron.spectrometer import get_spectrometer_config_path
+from pychron.spectrometer.jobs.spectrometer_task import SpectrometerTask
 
 
 def scan_generator(start, stop, n):
@@ -41,11 +45,13 @@ def scan_generator(start, stop, n):
         yield ys[i]
         i += 1
 
+
 class CDDOperatingVoltageScan(SpectrometerTask):
     start_v = Float(0)
     end_v = Float(1500)
     step_v = Float(1)
     title = 'CDD Operating Voltage Scan'
+
     def _execute(self):
         spec = self.spectrometer
         graph = self.graph
@@ -116,34 +122,29 @@ class CDDOperatingVoltageScan(SpectrometerTask):
 
         return cp
 
-
     def _graph_factory(self):
         graph = Graph(container_dict=dict(padding=5,
                                           bgcolor='lightgray'))
 
         graph.new_plot(
-                       padding=[50, 5, 5, 50],
-#                       title='{}'.format(self.title),
-                       xtitle='CDD Operating Voltage (V)',
-                       ytitle='Intensity (fA)',
-                       )
+            padding=[50, 5, 5, 50],
+            #                       title='{}'.format(self.title),
+            xtitle='CDD Operating Voltage (V)',
+            ytitle='Intensity (fA)',
+        )
         graph.new_series(type='scatter',
                          marker='pixel')
         return graph
 
     def traits_view(self):
-        v = View(Item('start_v', label='Start Voltage'),
-                   Item('end_v', label='Stop Voltage'),
-                   Item('step_v', label='Step Voltage'),
-                   title=self.title,
-                   buttons=['OK', 'Cancel']
-                  )
+        v = okcancel_view(Item('start_v', label='Start Voltage'),
+                          Item('end_v', label='Stop Voltage'),
+                          Item('step_v', label='Step Voltage'),
+                          title=self.title)
         return v
 
 
-
 if __name__ == '__main__':
-
     xs = np.linspace(0, 100, 200)
     ys = xs[:50]
     b = ys[-1]
@@ -154,6 +155,6 @@ if __name__ == '__main__':
     c = CDDOperatingVoltageScan()
     v = c._calculate_optimal_operating_voltage(xs, ys)
 
-    assert(abs(v - 49.4974874372) < 0.001)
+    assert (abs(v - 49.4974874372) < 0.001)
 
 # ============= EOF =============================================

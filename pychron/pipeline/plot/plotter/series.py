@@ -39,13 +39,19 @@ LAB_TEMP = 'Lab Temperature'
 LAB_HUM = 'Lab Humidity'
 LAB_AIRPRESSUE = 'Lab Air Pressure'
 AGE = 'Age'
+EXTRACT_VALUE = 'Extract Value'
+EXTRACT_DURATION = 'Extract Duration'
+CLEANUP = 'Cleanup'
 
 ATTR_MAPPING = {PEAK_CENTER: 'peak_center',
                 AGE: 'uage',
-                RADIOGENIC_YIELD: 'rad40_percent',
+                RADIOGENIC_YIELD: 'radiogenic_yield',
                 LAB_TEMP: 'lab_temperature',
                 LAB_HUM: 'lab_humidity',
-                LAB_AIRPRESSUE: 'lab_airpressure'}
+                LAB_AIRPRESSUE: 'lab_airpressure',
+                EXTRACT_VALUE: 'extract_value',
+                EXTRACT_DURATION: 'extract_duration',
+                CLEANUP: 'cleanup'}
 
 AR4039 = 'Ar40/Ar39'
 UAR4039 = 'uAr40/Ar39'
@@ -75,6 +81,10 @@ UAR4036 = 'uAr40/Ar36'
 class BaseSeries(BaseArArFigure):
     xs = Array
 
+    def get_data_x(self):
+        vs = [ai.timestamp for ai in self.sorted_analyses]
+        return min(vs), max(vs)
+
     def max_x(self, *args):
         if len(self.xs):
             return max(self.xs)
@@ -90,8 +100,16 @@ class BaseSeries(BaseArArFigure):
             return self.xs.mean()
         return 0
 
-    def _get_xs(self, plots, ans, tzero=None):
+    def normalize(self, tzero):
+        xs = array([ai.timestamp for ai in self.sorted_analyses])
 
+        xs -= tzero
+        xs /= 3600.
+        for p in self.graph.plots:
+            p.data.set_data('x{}'.format(self.group_id*2), xs)
+        return xs
+
+    def _get_xs(self, plots, ans, tzero=None):
         if self.options.use_time_axis:
             xs = array([ai.timestamp for ai in ans])
             px = plots[0]
@@ -106,9 +124,9 @@ class BaseSeries(BaseArArFigure):
                 xs /= 3600.
             else:
                 self.graph.convert_index_func = lambda x: '{:0.2f} hrs'.format(x / 3600.)
+
         else:
             xs = arange(len(ans))
-
         return xs
 
     def _handle_limits(self):
@@ -129,7 +147,6 @@ class Series(BaseSeries):
     #             ai = self.sorted_analyses[0]
     #             a = bool(ai.get_value(name))
     #     return a
-
     def build(self, plots):
 
         graph = self.graph
@@ -142,7 +159,7 @@ class Series(BaseSeries):
             elif po.use_percent_dev:
                 ytitle = '{} Dev %'.format(ytitle)
 
-            kw = {'padding': self.options.paddings(),
+            kw = {'padding': self.options.get_paddings(),
                   'ytitle': ytitle}
 
             if self.options.use_time_axis:
@@ -168,27 +185,27 @@ class Series(BaseSeries):
             self._setup_plot(i, p, po, ytitle)
 
     def _setup_plot(self, pid, pp, po, ytitle):
-
-        match = RATIO_RE.match(ytitle)
-        if match:
-            ytitle = '<sup>{}</sup>{}/<sup>{}</sup>{}'.format(match.group('nd'),
-                                                              match.group('ni'),
-                                                              match.group('dd'),
-                                                              match.group('di'))
-            if match.group('rem'):
-                ytitle = '{}{}'.format(ytitle, match.group('rem'))
-        else:
-            match = ISOTOPE_RE.match(ytitle)
+        if not ytitle.endswith('DetIC'):
+            match = RATIO_RE.match(ytitle)
             if match:
-                ytitle = '<sup>{}</sup>{}'.format(match.group('nd'), match.group('ni'))
+                ytitle = '<sup>{}</sup>{}/<sup>{}</sup>{}'.format(match.group('nd'),
+                                                                  match.group('ni'),
+                                                                  match.group('dd'),
+                                                                  match.group('di'))
                 if match.group('rem'):
                     ytitle = '{}{}'.format(ytitle, match.group('rem'))
+            else:
+                match = ISOTOPE_RE.match(ytitle)
+                if match:
+                    ytitle = '<sup>{}</sup>{}'.format(match.group('nd'), match.group('ni'))
+                    if match.group('rem'):
+                        ytitle = '{}{}'.format(ytitle, match.group('rem'))
 
         super(Series, self)._setup_plot(pid, pp, po)
-        if '<sup>' in ytitle or '<sub>' in ytitle:
-            self._set_ml_title(ytitle, pid, 'y')
-        else:
-            self.graph.set_y_title(ytitle, plotid=pid)
+        # if '<sup>' in ytitle or '<sub>' in ytitle:
+        #     self._set_ml_title(ytitle, pid, 'y')
+        # else:
+        self.graph.set_y_title(ytitle, plotid=pid)
 
     def plot(self, plots, legend=None):
         """
@@ -208,7 +225,6 @@ class Series(BaseSeries):
                 self._plot_series(po, i, omits)
 
             self.xmi, self.xma = self.min_x(), self.max_x()
-            self.xpad = '0.1'
 
     def _plot_series(self, po, pid, omits):
         graph = self.graph
@@ -258,7 +274,7 @@ class Series(BaseSeries):
                 p, scatter, l = args
 
                 if self.options.show_statistics:
-                    graph.add_statistics(plotid=pid)
+                    graph.add_statistics(plotid=pid, options=self.options.get_statistics_options())
 
             sel = scatter.index.metadata.get('selections', [])
             sel += omits
@@ -281,9 +297,9 @@ class Series(BaseSeries):
                 ec = self.options.end_caps
                 self._add_error_bars(scatter, yerr, 'y', s, ec, visible=True)
 
-            if set_ylimits:
-                mi, mx = min(ys - 2 * yerr), max(ys + 2 * yerr)
-                graph.set_y_limits(min_=mi, max_=mx, pad='0.1', plotid=pid)
+            # if set_ylimits and not po.has_ylimits():
+            #     mi, mx = min(ys - 2 * yerr), max(ys + 2 * yerr)
+            #     graph.set_y_limits(min_=mi, max_=mx, pad='0.1', plotid=pid)
 
         except (KeyError, ZeroDivisionError, AttributeError) as e:
             import traceback

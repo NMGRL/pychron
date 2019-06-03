@@ -34,6 +34,7 @@ class Globals(object):
     # force display flags
     show_warnings = True
     show_infos = True
+    show_startup_results = True
 
     # using ipc_dgram is currently not working
     ipc_dgram = False
@@ -120,6 +121,7 @@ class Globals(object):
                            ('ignore_initialization_required', to_bool),
                            ('ignore_initialization_questions', to_bool),
                            ('ignore_shareable', to_bool),
+                           ('show_startup_results', to_bool),
                            ('show_infos', to_bool),
                            ('show_warnings', to_bool),
                            ('open_logger_on_launch', to_bool),

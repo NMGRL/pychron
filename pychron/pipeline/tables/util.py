@@ -98,7 +98,8 @@ def age_value(target_units='Ma'):
     def wrapper(x, k):
         v = value(x, k)
         if v and target_units != x.arar_constants.age_units:
-            v /= x.arar_constants.ma_age_scalar
+            v = x.arar_constants.scale_age(v, target_units)
+            # v /= x.arar_constants.ma_age_scalar
         return v
     return wrapper
 

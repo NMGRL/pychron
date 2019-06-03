@@ -39,7 +39,8 @@ from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import GenericSaveAction, GenericSaveAsAction, \
     GenericFindAction, RaiseAction, RaiseUIAction, ResetLayoutAction, \
     MinimizeAction, PositionAction, IssueAction, CloseAction, CloseOthersAction, AboutAction, OpenAdditionalWindow, \
-    NoteAction, RestartAction, DocumentationAction, CopyPreferencesAction, ChangeLogAction, StartupTestsAction
+    NoteAction, RestartAction, DocumentationAction, ChangeLogAction, StartupTestsAction, \
+    ShareSettingsAction, ApplySettingsAction
 from pychron.loggable import Loggable
 from pychron.paths import paths
 
@@ -132,9 +133,12 @@ class TaskGroup(Group):
 
 
 class BaseTask(Task, Loggable, PreferenceMixin):
-    # application = DelegatesTo('window')
 
     _full_window = False
+
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
+        self.init_logger()
 
     def _activate_task(self, tid):
         if self.window:
@@ -196,7 +200,7 @@ class BaseTask(Task, Loggable, PreferenceMixin):
             menus = []
 
         edit_menu = SMenu(GenericFindAction(),
-                          id='Edit', name='&Edit')
+                          id='edit.menu', name='&Edit')
 
         # entry_menu = SMenu(
         #     id='entry.menu',
@@ -213,7 +217,9 @@ class BaseTask(Task, Loggable, PreferenceMixin):
             id='file.menu', name='File')
 
         tools_menu = SMenu(
-            CopyPreferencesAction(),
+            ShareSettingsAction(),
+            ApplySettingsAction(),
+            # CopyPreferencesAction(),
             id='tools.menu', name='Tools')
 
         window_menu = SMenu(

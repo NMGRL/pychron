@@ -27,6 +27,7 @@ from pychron.core.helpers.formatting import floatfmt
 from pychron.core.regression.base_regressor import BaseRegressor
 from pychron.core.regression.interpolation_regressor import InterpolationRegressor
 from pychron.graph.explicit_legend import ExplicitLegend
+from pychron.graph.offset_plot_label import OffsetPlotLabel
 from pychron.pipeline.plot.plotter.series import BaseSeries
 from pychron.pychron_constants import PLUSMINUS
 
@@ -50,7 +51,7 @@ class ReferencesSeries(BaseSeries):
     show_current = True
     rxs = Array
     references_name = 'References'
-
+    xtitle = 'Time (hrs)'
     _normalization_factor = 3600.
 
     def set_interpolated_values(self, iso, reg, fit):
@@ -81,9 +82,12 @@ class ReferencesSeries(BaseSeries):
 
             self.xs = self._get_xs(plots, self.sorted_analyses, tzero=mx)
             self.rxs = self._get_xs(plots, self.sorted_references, tzero=mx)
-
+            graph = self.graph
             for i, p in enumerate(plots):
                 self._new_fit_series(i, p)
+                self._add_plot_label(i, p)
+                if self.options.show_statistics:
+                    graph.add_statistics(plotid=i)
 
             mi, ma = self._get_min_max()
             self.xmi, self.xma = (mi - ma) / 3600., 0
@@ -115,6 +119,19 @@ class ReferencesSeries(BaseSeries):
 
     def _calc_limits(self, ys, ye):
         return calc_limits(ys, ye, self.options.nsigma)
+
+    def _add_plot_label(self, pid, po,  overlay_position='inside top', hjustify='left', **kw):
+        txt = self._get_plot_label_text(po)
+        if txt:
+            comp = self.graph.plots[pid]
+            pl = OffsetPlotLabel(txt,
+                                 component=comp,
+                                 overlay_position=overlay_position, hjustify=hjustify,
+                                 **kw)
+            comp.overlays.append(pl)
+
+    def _get_plot_label_text(self, po):
+        pass
 
     def _new_fit_series(self, pid, po):
         ymi, yma = self._plot_unknowns_current(pid, po)
@@ -250,7 +267,7 @@ class ReferencesSeries(BaseSeries):
                       marker_size=po.marker_size, )
 
             update_meta_func = None
-            if efit in ['preceding', 'bracketing interpolate', 'bracketing average']:
+            if efit in ['preceding', 'bracketing interpolate', 'bracketing average', 'succeeding']:
                 reg = InterpolationRegressor(xs=r_xs, ys=r_ys, yserr=r_es, kind=efit)
                 kw['add_tools'] = False
                 scatter, _p = graph.new_series(r_xs, r_ys, yerror=r_es, type='scatter', fit=False,
@@ -263,11 +280,15 @@ class ReferencesSeries(BaseSeries):
 
                 ffit = po.fit
             else:
+                bind_id = None
+                if self.options.link_plots:
+                    bind_id = hash(tuple([r.uuid for r in refs]))
+
                 ffit = '{}_{}'.format(po.fit, po.error_type)
                 _, scatter, l = graph.new_series(r_xs, r_ys,
                                                  yerror=ArrayDataSource(data=r_es),
                                                  fit=ffit,
-                                                 bind_id=hash(tuple(refs)),
+                                                 bind_id=bind_id,
                                                  **kw)
                 if hasattr(l, 'regressor'):
                     reg = l.regressor

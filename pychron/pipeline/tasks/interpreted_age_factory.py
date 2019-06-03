@@ -15,15 +15,20 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
-from traits.api import List, HasTraits
-from traitsui.api import View, Item, TableEditor, EnumEditor, Controller, UItem, VGroup, TextEditor, HGroup
+from pyface.confirmation_dialog import confirm
+from pyface.constant import YES
+from pyface.message_dialog import information
+from traits.api import List, HasTraits, Button, Any, on_trait_change
+from traitsui.api import View, Item, TableEditor, EnumEditor, Controller, VGroup, TextEditor, HGroup, UItem
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.iterfuncs import groupby_key
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+from pychron.entry.providers.macrostrat import get_lithology_values
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
 from pychron.processing.analyses.preferred import preferred_item
 
@@ -36,18 +41,23 @@ class UObjectColumn(BaseColumn):
     editable = False
 
 
-lithology_grp = VGroup(UItem('lithology_class', editor=EnumEditor(name='lithology_classes')),
-                       UItem('lithology_group', editor=EnumEditor(name='lithology_groups')),
-                       UItem('lithology_type', editor=EnumEditor(name='lithology_types')),
-                       UItem('lithology', editor=EnumEditor(name='lithologies')),
+lithology_grp = VGroup(Item('lithology', editor=EnumEditor(name='lithologies')),
+                       Item('lithology_class', label='Class', editor=EnumEditor(name='lithology_classes')),
+                       Item('lithology_group', label='Group', editor=EnumEditor(name='lithology_groups')),
+                       Item('lithology_type', label='Type', editor=EnumEditor(name='lithology_types')),
                        show_border=True, label='Lithology')
 
-macrostrat_grp = VGroup(Item('reference'),
-                        Item('rlocation'),
-                        Item('lat_long'),
-                        lithology_grp,
-                        show_border=True,
-                        label='MacroChron')
+metadata_grp = VGroup(HGroup(Item('sample'), Item('igsn')),
+                      HGroup(Item('material'), UItem('grainsize', tooltip='Grainsize (optional)')),
+                      Item('project'),
+                      Item('reference', label='Reference',
+                           tooltip='Published reference/citation for this interpreted age'),
+                      Item('rlocation', label='Relative Location', tooltip='Relative location of the sample '
+                                                                           'within the unit'),
+                      HGroup(Item('latitude', label='Lat.'), Item('longitude', label='Lon.')),
+                      lithology_grp,
+                      show_border=True,
+                      label='MetaData')
 
 
 class TItem(Item):
@@ -56,7 +66,7 @@ class TItem(Item):
 
 
 EDIT_VIEW = View(HGroup(preferred_item,
-                        macrostrat_grp))
+                        metadata_grp))
 
 cols = [
     CheckboxColumn(name='use', label='Save', width=10),
@@ -65,33 +75,49 @@ cols = [
     BaseColumn(name='repository_identifier',
                width=50,
                editor=EnumEditor(name='controller.repository_identifiers')),
-    # BaseColumn(name='preferred_age_kind',
-    #            width=50,
-    #            label='Age Type',
-    #            editor=EnumEditor(name='preferred_ages')),
-    #
-    # BaseColumn(name='preferred_age_error_kind',
-    #            label='Age Error Type',
-    #            editor=EnumEditor(values=ERROR_TYPES)),
-    # UObjectColumn(name='preferred_age_value', format='%0.3f', label='Age',
-    #               width=70),
-    # UObjectColumn(name='preferred_age_error', format='%0.4f', label=PLUSMINUS_ONE_SIGMA,
-    #               width=70),
-    # UObjectColumn(name='preferred_mswd', format='%0.4f', label='MSWD')
-    ]
+]
 
 editor = TableEditor(columns=cols, orientation='vertical',
+                     selection_mode='rows',
+                     selected='selected',
                      sortable=False, edit_view=EDIT_VIEW)
-VIEW = View(Item('items', show_label=False, editor=editor),
-            resizable=True,
-            width=900,
-            title='Set Interpreted Age',
-            kind='livemodal',
-            buttons=['OK', 'Cancel'])
+
+VIEW = okcancel_view(HGroup(icon_button_editor('sync_metadata_button', 'database_link',
+                                               tooltip='Sync the Interpreted Age metadata with the database. This '
+                                                       'will supersede the metadata saved with the analyses. Use '
+                                                       'this option if the metadata is missing or if the metadata '
+                                                       'was modified after analysis')),
+                     Item('items', show_label=False, editor=editor),
+                     width=1200,
+                     title='Set Interpreted Age')
 
 
 class InterpretedAgeFactoryModel(HasTraits):
     items = List
+    sync_metadata_button = Button
+    dvc = Any
+    selected = List
+
+    _triggered = False
+
+    @on_trait_change('items:preferred_values:[kind, error_kind]')
+    def handle_change(self, obj, name, old, new):
+        # print('asdf', obj, new)
+        # print('saelect', self.selected)
+        if not self._triggered:
+            self._triggered = True
+
+            for s in self.selected:
+                s.set_preferred_kind(obj.attr, obj.kind, obj.error_kind)
+
+            self._triggered = False
+
+    def _sync_metadata_button_fired(self):
+        with self.dvc.session_ctx():
+            for it in self.items:
+                self.dvc.sync_ia_metadata(it)
+
+        information(None, 'Metadata sync complete')
 
 
 class InterpretedAgeFactoryView(Controller):
@@ -101,14 +127,48 @@ class InterpretedAgeFactoryView(Controller):
 
 def set_interpreted_age(dvc, ias):
     repos = dvc.get_local_repositories()
-    model = InterpretedAgeFactoryModel(items=ias)
+    liths, groups, classes, types = get_lithology_values()
+    for ia in ias:
+        ia.lithology_classes = classes
+        ia.lithology_groups = groups
+        ia.lithology_types = types
+        ia.lithologies = liths
+
+    model = InterpretedAgeFactoryModel(items=ias,
+                                       selected=ias[:1],
+                                       dvc=dvc)
     iaf = InterpretedAgeFactoryView(model=model,
                                     repository_identifiers=repos)
-    info = iaf.edit_traits()
-    if info.result:
-        for ia in ias:
-            if ia.use:
-                dvc.add_interpreted_age(ia)
+
+    while 1:
+        info = iaf.edit_traits()
+        if info.result:
+            no_lat_lon = []
+            ias = [ia for ia in ias if ia.use]
+            for ia in ias:
+                if not ia.latitude and not ia.longitude:
+                    no_lat_lon.append('{} ({})'.format(ia.name, ia.identifier))
+
+            if no_lat_lon:
+                n = ','.join(no_lat_lon)
+                if not confirm(None, 'No Lat/Lon. entered for {}. Are you sure you want to continue without setting a '
+                                     'Lat/Lon?'.format(n)) == YES:
+                    continue
+
+            ris = []
+            for rid, iass in groupby_key(ias, key='repository_identifier'):
+                if dvc.add_interpreted_ages(rid, iass):
+                    ris.append(rid)
+
+            if ris:
+                if confirm(None, 'Would you like to share changes to {}?'.format(','.join(ris))) == YES:
+                    for rid in ris:
+                        dvc.push_repository(rid)
+                    information(None, 'Sharing changes complete')
+
+            break
+        else:
+            break
 
 
 if __name__ == '__main__':

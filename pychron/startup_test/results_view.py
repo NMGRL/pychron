@@ -16,23 +16,24 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import time
 from threading import Thread
 
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
 from traits.api import Instance, Int, Property, String, Bool
-from traitsui.api import View, Controller, UItem, TabularEditor, VGroup, UReadonly
-
+from traitsui.api import Controller, UItem, TabularEditor, VGroup, UReadonly
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
+
 from pychron.core.helpers.formatting import floatfmt
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.resources import icon
 from pychron.pychron_constants import LIGHT_GREEN, LIGHT_RED, LIGHT_YELLOW
 from pychron.startup_test.tester import TestResult
-
 
 COLOR_MAP = {'Passed': LIGHT_GREEN,
              'Skipped': 'lightblue',
@@ -132,33 +133,28 @@ class ResultsView(Controller):
 
     def traits_view(self):
         if self.can_cancel:
-            buttons = ['OK','Cancel']
+            buttons = ['OK', 'Cancel']
         else:
             buttons = ['OK']
 
-        v = View(VGroup(UItem('results', editor=TabularEditor(adapter=ResultsAdapter(),
-                                                              editable=False,
-                                                              selected='controller.selected')),
-                        VGroup(UReadonly('controller.selected.description'),
-                               show_border=True,
-                               label='Description'),
-                        VGroup(UReadonly('controller.selected.error'),
-                               show_border=True,
-                               visible_when='controller.selected.error',
-                               label='Error'),
-                        VGroup(UReadonly('controller.help_str'),
-                               show_border=True,
-                               visible_when='controller.help_str')),
-                 title='Test Results',
+        v = okcancel_view(VGroup(UItem('results', editor=TabularEditor(adapter=ResultsAdapter(),
+                                                                       editable=False,
+                                                                       selected='controller.selected')),
+                                 VGroup(UReadonly('controller.selected.description'),
+                                        show_border=True,
+                                        label='Description'),
+                                 VGroup(UReadonly('controller.selected.error'),
+                                        show_border=True,
+                                        visible_when='controller.selected.error',
+                                        label='Error'),
+                                 VGroup(UReadonly('controller.help_str'),
+                                        show_border=True,
+                                        visible_when='controller.help_str')),
+                          title='Test Results',
 
-                 buttons=buttons,
-                 height=500,
-                 width=650,
-                 kind='livemodal',
-                 resizable=True)
+                          buttons=buttons,
+                          height=500,
+                          width=650)
         return v
 
 # ============= EOF =============================================
-
-
-

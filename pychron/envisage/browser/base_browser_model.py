@@ -26,7 +26,6 @@ from traits.trait_types import BaseStr
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.column_sorter_mixin import ColumnSorterMixin
-from pychron.core.codetools.inspection import caller
 from pychron.core.fuzzyfinder import fuzzyfinder
 from pychron.core.progress import progress_loader
 from pychron.core.ui.table_configurer import SampleTableConfigurer
@@ -377,7 +376,6 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         grps = self.get_analysis_groups(projects)
         self.analysis_groups = grps
 
-    @caller
     def _load_associated_labnumbers(self):
         """
         """
@@ -413,7 +411,6 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         sams = progress_loader(lns, func, step=25)
         return sams
 
-    @caller
     def _make_labnumbers(self):
         # dont query if analysis_types enabled but not analysis type specified
         if self.use_analysis_type_filtering and not self.analysis_include_types:
@@ -437,7 +434,6 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                            order='asc',
                            low_post=None,
                            high_post=None,
-                           exclude_identifiers=None,
                            exclude_uuids=None,
                            include_invalid=False,
                            mass_spectrometers=None,
@@ -457,7 +453,6 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                                                 low_post=low_post,
                                                 high_post=high_post,
                                                 limit=limit,
-                                                exclude_identifiers=exclude_identifiers,
                                                 exclude_uuids=exclude_uuids,
                                                 include_invalid=include_invalid,
                                                 mass_spectrometers=mass_spectrometers,
@@ -678,9 +673,11 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
             self._load_associated_labnumbers()
             self._load_associated_groups(new)
+        else:
+            names = None
 
-            self._selected_projects_change_hook(names)
-            self.dump_browser_selection()
+        self._selected_projects_change_hook(names)
+        self.dump_browser_selection()
 
     def _selected_projects_change_hook(self, names):
         pass
@@ -812,11 +809,6 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         else:
             db.on_trait_change(self._handle_source_change, 'data_source')
             return db
-
-    # persistence
-    @property
-    def persistence_path(self):
-        return os.path.join(paths.hidden_dir, self.persistence_name)
 
     @property
     def selection_persistence_path(self):

@@ -32,6 +32,7 @@ class Column(HasTraits):
     width = None
     calculated_width = None
     nsigfigs = Int
+    visible = Bool
 
     def calculate_width(self, txt):
         if self.calculated_width is None:
@@ -43,7 +44,7 @@ class Column(HasTraits):
             else:
                 txt = floatfmt(txt)
 
-        self.calculated_width = max(self.calculated_width, len(str(txt))+5)
+        self.calculated_width = max(self.calculated_width, len(str(txt)) + 5)
 
     def _calculate_label_width(self):
         label = self.label
@@ -56,7 +57,7 @@ class Column(HasTraits):
                 w += len(i)
         else:
             w = len(label)
-        return w+5
+        return w + 5
 
     def _label_default(self):
         return ''
@@ -65,6 +66,9 @@ class Column(HasTraits):
         return ''
 
     def _enabled_default(self):
+        return True
+
+    def _visible_default(self):
         return True
 
 

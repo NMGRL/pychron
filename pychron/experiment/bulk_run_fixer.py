@@ -14,9 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 from traits.api import Instance, Bool, Str, List, Float
-from traitsui.api import View, UItem, VGroup, Item, HGroup, EnumEditor
+from traitsui.api import UItem, VGroup, Item, HGroup, EnumEditor
 
 from pychron.core.helpers.iterfuncs import groupby_key
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.experiment.script.script import Script
 from pychron.loggable import Loggable
 
@@ -123,12 +124,10 @@ class BulkRunFixer(Loggable):
                          HGroup(UItem('enabled_ramp_duration'), Item('ramp_duration')),
                          visible_when='unknown_enabled',
                          show_border=True,
-                         label='Unknown',
-                         )
-        v = View(VGroup(unk_grp,
-                        script_grp),
-                 title=self.title,
-                 kind='livemodal', buttons=['OK', 'Cancel'])
+                         label='Unknown')
+        v = okcancel_view(VGroup(unk_grp,
+                                 script_grp),
+                          title=self.title)
         return v
 
     def _measurement_script_default(self):

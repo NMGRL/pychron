@@ -14,15 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-
-from __future__ import absolute_import
-
 import logging
 
 from envisage.core_plugin import CorePlugin
 from pyface.message_dialog import warning
 
-from pychron.displays.gdisplays import gTraceDisplay
+from pychron.core.displays.gdisplays import gTraceDisplay
 from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.envisage.key_bindings import update_key_bindings
 from pychron.envisage.tasks.base_plugin import BasePlugin
@@ -47,6 +44,7 @@ PACKAGE_DICT = dict(
     GitLabPlugin='pychron.git.tasks.gitlab_plugin',
     GitHubPlugin='pychron.git.tasks.github_plugin',
     PipelinePlugin='pychron.pipeline.tasks.plugin',
+    SparrowPlugin='pychron.sparrow.tasks.plugin',
 
     ClassifierPlugin='pychron.classifier.tasks.plugin',
     MDDPlugin='pychron.mdd.tasks.plugin',

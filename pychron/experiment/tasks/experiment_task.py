@@ -156,10 +156,6 @@ class ExperimentEditorTask(EditorTask):
                     self.manager.executor.executable = False
                 return True
 
-    def execute(self):
-        if not self.manager.executor.is_alive():
-            self._execute()
-
     def bind_preferences(self):
         # notifications
 
@@ -478,9 +474,12 @@ class ExperimentEditorTask(EditorTask):
     # ===============================================================================
     def _active_editor_changed(self):
         if self.active_editor:
+            self.manager.experiment_factory.edit_enabled = True
             self.manager.experiment_queue = self.active_editor.queue
             self.manager.executor.active_editor = self.active_editor
             self._show_pane(self.experiment_factory_pane)
+        else:
+            self.manager.experiment_factory.edit_enabled = False
 
     @on_trait_change('loading_manager:group_positions')
     def _update_group_positions(self, new):

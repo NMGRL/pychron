@@ -119,29 +119,43 @@ class ExtractionView(HasTraits):
     name = 'Extraction'
     refresh_needed = Event
 
-    def setup_graph(self, response_data, request_data):
-        self.graph = g = StackedGraph()
+    def setup_graph(self, response_data, request_data, setpoint_data):
+        self.graph = g = StackedGraph(container_dict={'spacing': 10})
         ret = False
+        pid = 0
         if response_data:
-            x, y = unpack(response_data, fmt='<ff', decode=True)
+            try:
+                x, y = unpack(response_data, fmt='<ff', decode=True)
+                if x[1:]:
+                    p = g.new_plot()
+                    p.value_range.tight_bounds = False
+                    g.set_x_title('Time (s)')
+                    g.set_y_title('Temp C')
+                    g.new_series(x[1:], y[1:])
+                    pid += 1
+                    ret = True
 
-            if x[1:]:
-                g.new_plot()
-                g.set_x_title('Time')
-                g.set_y_title('Temp C')
-                g.new_series(x[1:], y[1:])
-                g.set_x_limits()
-                ret = True
+                    if setpoint_data:
+                        x, y = unpack(setpoint_data, fmt='<ff', decode=True)
+                        if x[1:]:
+                            g.new_series(x[1:], y[1:])
+
+            except ValueError:
+                pass
 
         if request_data:
-            x, y = unpack(request_data, fmt='<ff', decode=True)
-            if x[1:]:
-                self.graph.new_plot()
-                g.set_x_title('Time')
-                g.set_y_title('% Power')
-                g.new_series(x[1:], y[1:])
-                g.set_x_limits()
-                ret = True
+            try:
+                x, y = unpack(request_data, fmt='<ff', decode=True)
+                if x[1:]:
+                    p = self.graph.new_plot()
+
+                    g.set_x_title('Time')
+                    g.set_y_title('% Power')
+                    g.new_series(x[1:], y[1:])
+                    g.set_y_limits(min_=0, max_=max(y) * 1.1, plotid=pid)
+                    ret = True
+            except ValueError:
+                pass
 
         return ret
 
@@ -157,12 +171,12 @@ class AnalysisView(HasTraits):
     analysis_id = Str
     selected_tab = Any
 
-    main_view = Instance(MainView)
+    main_view = Instance(MainView, ())
 
     experiment_view = Instance(ExperimentView)
     measurement_view = Instance(MeasurementView)
     extraction_view = Instance(ExtractionView)
-    isotope_view = Instance(IsotopeView)
+    isotope_view = Instance(IsotopeView, ())
 
     groups = List
 
@@ -189,15 +203,17 @@ class AnalysisView(HasTraits):
         analysis_id = an.record_id
         self.analysis_id = analysis_id
 
-        main_view = MainView(an, analysis_type=analysis_type, analysis_id=analysis_id)
-        self.main_view = main_view
+        # main_view = MainView(an, analysis_type=analysis_type, analysis_id=analysis_id)
+        self.main_view.trait_set(analysis_type=analysis_type, analysis_id=analysis_id)
+        self.main_view.load(an)
+        # self.main_view = main_view
 
-        self.groups.append(main_view)
+        self.groups.append(self.main_view)
 
         isos = [an.isotopes[k] for k in an.isotope_keys]
-        iso_view = IsotopeView(isotopes=isos)
-        self.isotope_view = iso_view
-        self.groups.append(iso_view)
+        # iso_view = IsotopeView(isotopes=isos)
+        self.isotope_view.isotopes = isos
+        self.groups.append(self.isotope_view)
         self._make_subviews(an)
 
     def refresh(self):
@@ -227,7 +243,7 @@ class AnalysisView(HasTraits):
         self.groups.append(view)
         if an.measured_response_stream:
             ev = ExtractionView()
-            if ev.setup_graph(an.measured_response_stream, an.requested_output_stream):
+            if ev.setup_graph(an.measured_response_stream, an.requested_output_stream, an.setpoint_stream):
                 self.groups.append(ev)
 
         if an.snapshots:

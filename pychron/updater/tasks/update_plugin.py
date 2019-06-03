@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from git.exc import InvalidGitRepositoryError
 from pyface.tasks.action.schema_addition import SchemaAddition
 
@@ -75,6 +76,9 @@ class UpdatePlugin(BaseTaskPlugin):
         try:
             if updater.check_on_startup:
                 updater.check_for_updates()
+            else:
+                updater.set_revisions()
+
             globalv.active_branch = updater.active_branch
         except (InvalidGitRepositoryError, AttributeError):
             pass

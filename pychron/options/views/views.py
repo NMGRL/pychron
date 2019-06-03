@@ -15,13 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from traits.api import Property
-from traitsui.api import View, UItem, Item, HGroup, VGroup, EnumEditor
+from traitsui.api import UItem, Item, HGroup, VGroup, EnumEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.editors import TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
+
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.envisage.icon_button_editor import icon_button_editor
 
 
@@ -53,25 +54,21 @@ def view(title):
                                      enabled_when='selected',
                                      tooltip='Apply factory defaults'))
 
-    # sgrp = VGroup(UItem('selected_subview',
-    #                     editor=ListStrEditor(name='subview_names')))
     sgrp = UItem('subview_names',
                  width=-120,
                  editor=TabularEditor(editable=False,
                                       adapter=SubviewAdapter(),
                                       selected='selected_subview'))
-    # sgrp = VGroup(UItem('selected_subview', editor=EnumEditor(name='subview_names')))
 
     ogrp = UItem('subview',
                  style='custom')
     bgrp = HGroup(sgrp, ogrp)
 
-    v = View(VGroup(agrp, bgrp),
-             width=750,
-             height=750,
-             resizable=True,
-             title=title,
-             buttons=['OK', 'Cancel'])
+    v = okcancel_view(VGroup(agrp, bgrp),
+                      width=800,
+                      height=750,
+                      resizable=True,
+                      title=title)
     return v
 
 # ============= EOF =============================================

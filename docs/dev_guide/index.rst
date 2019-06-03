@@ -17,9 +17,9 @@ Pychron Develop Guide
   :maxdepth: 1
 
   running_pychron
-  build
   hardware
   database
+  dvc/index
   database_analysis
   automated_analysis
   experiment_construction

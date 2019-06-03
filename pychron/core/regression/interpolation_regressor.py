@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= standard library imports ========================
-from __future__ import absolute_import
 from numpy import where, polyval, polyfit
 # ============= enthought library imports =======================
 from traits.api import Str
@@ -51,19 +50,36 @@ class InterpolationRegressor(BaseRegressor):
         # if preceding and no value found use the first following value e.g index 0
         return [xi for xi in xs if xi is not None]
 
-    def preceding_predictors(self, timestamp, exc, attr='value'):
+    def succeeding_predictors(self, *args, **kw):
+        return self._adjacent_predictors('after', *args, **kw)
+
+    def preceding_predictors(self, *args, **kw):
+        return self._adjacent_predictors('before', *args, **kw)
+
+    def _adjacent_predictors(self, direction, timestamp, exc, attr='value'):
         xs = self.xs
         ys = self.ys
         es = self.yserr
 
         if self._check_integrity(xs, ys) and self._check_integrity(ys, es):
-            try:
-                ti = where(xs <= timestamp)[0][-1]
-            except IndexError:
-                ti = 0
 
-            while ti in exc and ti > 0:
-                ti -= 1
+            if direction == 'before':
+                try:
+                    ti = where(xs <= timestamp)[0][-1]
+                except IndexError:
+                    ti = 0
+
+                while ti in exc and ti > 0:
+                    ti -= 1
+            else:
+                n = len(self.xs)
+                try:
+                    ti = where(xs >= timestamp)[0][0]
+                except IndexError:
+                    ti = n-1
+
+                while ti in exc and ti < n:
+                    ti += 1
 
             if attr == 'value':
                 v = ys[ti]
@@ -75,7 +91,11 @@ class InterpolationRegressor(BaseRegressor):
         try:
             pb, ab, _, _ = self._bracketing_predictors(tm, exc, attr)
 
-            v = (pb + ab) / 2.0
+            if attr == 'value':
+                v = (pb + ab) / 2.0
+            else:
+                v = ((pb**2 + ab**2)**0.5)/2.0
+
         except TypeError:
             if attr == 'value':
                 v = self.ys[0]

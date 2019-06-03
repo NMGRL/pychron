@@ -28,12 +28,20 @@ from pychron.processing.analyses.analysis import IdeogramPlotable
 from pychron.processing.analyses.preferred import Preferred
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
-from pychron.pychron_constants import ALPHAS, AGE_MA_SCALARS, MSEM, SD, SUBGROUPING_ATTRS, ERROR_TYPES, WEIGHTED_MEAN, \
-    DEFAULT_INTEGRATED, SUBGROUPINGS, ARITHMETIC_MEAN, PLATEAU_ELSE_WEIGHTED_MEAN, WEIGHTINGS
+from pychron.pychron_constants import ALPHAS, MSEM, SD, SUBGROUPING_ATTRS, ERROR_TYPES, WEIGHTED_MEAN, \
+    DEFAULT_INTEGRATED, SUBGROUPINGS, ARITHMETIC_MEAN, PLATEAU_ELSE_WEIGHTED_MEAN, WEIGHTINGS, FLECK, NULL_STR
 
 
 def AGProperty(*depends):
     d = 'dirty,analyses:[temp_status]'
+    if depends:
+        d = '{},{}'.format(','.join(depends), d)
+
+    return Property(depends_on=d)
+
+
+def MetaDataProperty(*depends):
+    d = 'metadata_refresh_needed'
     if depends:
         d = '{},{}'.format(','.join(depends), d)
 
@@ -49,7 +57,13 @@ class AnalysisGroup(IdeogramPlotable):
     weighted_age = AGProperty()
     arith_age = AGProperty()
     integrated_age = AGProperty()
+    isochron_age = AGProperty()
+    j_err = AGProperty()
+    j = AGProperty()
+    total_n = AGProperty()
+
     integrated_age_weighting = Enum(WEIGHTINGS)
+    include_j_error_in_integrated = Bool(False)
 
     age_error_kind = Enum(*ERROR_TYPES)
     kca_error_kind = Enum(*ERROR_TYPES)
@@ -60,52 +74,92 @@ class AnalysisGroup(IdeogramPlotable):
 
     mswd = Property
 
-    isochron_age = AGProperty()
     isochron_age_error_kind = Str
-    identifier = Property
 
-    repository_identifier = Property(depends_on='_repository_identifier')
-    _repository_identifier = Str
+    identifier = Any
+    aliquot = Any
+    repository_identifier = Any
+    irradiation = Any
+    irradiation_level = Any
+    irradiation_position = Any
+    sample = Any
+    project = Any
+    material = Any
+    igsn = Any
+    lithology = Any
+    lithology_type = Any
+    lithology_group = Any
+    lithology_class = Any
+    latitude = Any
+    longitude = Any
+    reference = Any
+    rlocation = Any
 
-    irradiation = Property
-    irradiation_label = Property
-    sample = Property
-    project = Property
-    aliquot = Property(depends_on='_aliquot')
-    _aliquot = Any
+    arar_constants = Any
+    production_ratios = Any
+    monitor_info = Any
+    monitor_age = Any
+    monitor_reference = Any
+    age_units = Any
+    grainsize = Any
 
-    material = Property
     unit = Str
     location = Str
 
-    _sample = Str
-    age_scalar = Property
-    age_units = Property
+    # age_scalar = Property
+    # age_units = AGProperty()
 
-    j_err = AGProperty()
-    j = AGProperty()
     include_j_error_in_mean = Bool(True)
     include_j_position_error = Bool(False)
 
     # percent_39Ar = AGProperty()
     dirty = Event
 
-    total_n = AGProperty()
-
-    arar_constants = AGProperty()
-    production_ratios = AGProperty()
-    monitor_info = AGProperty()
-
-    isochron_4036 = None
+    isochron_3640 = None
     isochron_regressor = None
-    _age_units = None
 
     def __init__(self, *args, **kw):
         super(AnalysisGroup, self).__init__(make_arar_constants=False, *args, **kw)
 
-    @property
-    def nratio(self):
-        return '{}/{}'.format(self.nanalyses, len(self.analyses))
+    def _analyses_changed(self, new):
+        if new:
+            a = new[0]
+            for attr in ('identifier',
+                         'aliquot',
+                         'repository_identifier',
+                         'igsn',
+                         'sample',
+                         'material',
+                         'grainsize',
+                         'project',
+                         'irradiation',
+                         'irradiation_position',
+                         'irradiation_level',
+                         'irradiation_label',
+                         'unit',
+                         'lithology',
+                         'lithology_type',
+                         'lithology_group',
+                         'lithology_class',
+                         'latitude',
+                         'longitude',
+                         'reference',
+                         'rlocation',
+                         'production_ratios',
+                         'arar_constants',
+                         'monitor_age',
+                         'monitor_reference'):
+                try:
+                    setattr(self, attr, getattr(a, attr))
+                except AttributeError:
+                    pass
+
+            try:
+                self.monitor_info = a.monitor_age, a.monitor_reference
+            except AttributeError:
+                pass
+
+            self.age_units = self.arar_constants.age_units
 
     def attr_stats(self, attr):
         w, sd, sem, (vs, es) = self._calculate_weighted_mean(attr, error_kind='both')
@@ -127,10 +181,6 @@ class AnalysisGroup(IdeogramPlotable):
         mswd = self.mswd
         valid_mswd = validate_mswd(mswd, self.nanalyses)
         return mswd, valid_mswd, self.nanalyses
-
-    def set_temporary_age_units(self, a):
-        self._age_units = a
-        self.dirty = True
 
     def set_j_error(self, individual, mean, dirty=False):
         self.include_j_position_error = individual
@@ -161,7 +211,7 @@ class AnalysisGroup(IdeogramPlotable):
         args = self.get_isochron_data()
         if args:
             age = args[0]
-            self.isochron_4036 = args[1]
+            self.isochron_3640 = args[1]
             reg = args[2]
             self.isochron_regressor = reg
             v, e = nominal_value(age), std_dev(age)
@@ -169,24 +219,34 @@ class AnalysisGroup(IdeogramPlotable):
 
             return ufloat(v, e)
 
+    def isochron_mswd(self):
+        if not self.isochron_3640:
+            self.calculate_isochron_age()
+        reg = self.isochron_regressor
+
+        return reg.mswd, reg.valid_mswd, reg.n
+
+    # properties
+    @property
+    def isochron_4036(self):
+        if self.isochron_3640:
+            v = 1 / self.isochron_3640
+        else:
+            v = ufloat(0, 0)
+        return v
+
+    @property
+    def nratio(self):
+        return '{}/{}'.format(self.nanalyses, len(self.analyses))
+
+    @property
+    def labnumber(self):
+        return self.identifier
+
     @property
     def age_attr(self):
         return 'uage_w_position_err' if self.include_j_position_error else 'uage'
 
-    def _get_age_units(self):
-        if self._age_units:
-            return self._age_units
-
-        return self.analyses[0].arar_constants.age_units
-
-    def _get_arar_constants(self):
-        return self.analyses[0].arar_constants
-
-    def _get_age_scalar(self):
-        au = self.age_units
-        return AGE_MA_SCALARS[au]
-
-    # @cached_property
     def _get_mswd(self):
         attr = self.attribute
         if attr.startswith('uage'):
@@ -195,16 +255,6 @@ class AnalysisGroup(IdeogramPlotable):
                 attr = 'uage_w_position_err'
 
         return self._calculate_mswd(attr)
-
-    def _calculate_mswd(self, attr, values=None):
-        m = 0
-        if values is None:
-            values = self._get_values(attr)
-        if values:
-            vs, es = values
-            m = calculate_mswd(vs, es)
-
-        return m
 
     @cached_property
     def _get_age_span(self):
@@ -237,69 +287,6 @@ class AnalysisGroup(IdeogramPlotable):
         return a
 
     @cached_property
-    def _get_aliquot(self):
-        a = self._aliquot
-        if not a:
-            a = self.analyses[0].aliquot
-        return a
-
-    def _set_aliquot(self, a):
-        self._aliquot = a
-
-    @property
-    def monitor_age(self):
-        return self.analyses[0].monitor_age
-
-    @property
-    def monitor_reference(self):
-        return self.analyses[0].monitor_reference
-
-    @cached_property
-    def _get_monitor_info(self):
-        a = self.analyses[0]
-        return a.monitor_age, a.monitor_reference
-
-    @cached_property
-    def _get_identifier(self):
-        return self.analyses[0].labnumber
-
-    @cached_property
-    def _get_repository_identifier(self):
-        if self._repository_identifier:
-            return self._repository_identifier
-        else:
-            return self.analyses[0].repository_identifier
-
-    def _set_repository_identifier(self, v):
-        self._repository_identifier = v
-
-    @cached_property
-    def _get_irradiation_label(self):
-        return self.analyses[0].irradiation_label
-
-    @cached_property
-    def _get_irradiation(self):
-        return self.analyses[0].irradiation
-
-    @cached_property
-    def _get_material(self):
-        return self.analyses[0].material
-
-    @cached_property
-    def _get_sample(self):
-        sam = self._sample
-        if not sam:
-            sam = self.analyses[0].sample
-        return sam
-
-    def _set_sample(self, s):
-        self._sample = s
-
-    @cached_property
-    def _get_project(self):
-        return self.analyses[0].project
-
-    @cached_property
     def _get_arith_age(self):
         v, e = self._calculate_arithmetic_mean(self.age_attr)
         e = self._modify_error(v, e, self.age_error_kind)
@@ -320,6 +307,25 @@ class AnalysisGroup(IdeogramPlotable):
 
         except AttributeError:
             return ufloat(0, 0)
+
+    @cached_property
+    def _get_total_n(self):
+        return len(self.analyses)
+
+    @cached_property
+    def _get_nanalyses(self):
+        return len(list(self.clean_analyses()))
+
+    # private functions
+    def _calculate_mswd(self, attr, values=None):
+        m = 0
+        if values is None:
+            values = self._get_values(attr)
+        if values:
+            vs, es = values
+            m = calculate_mswd(vs, es)
+
+        return m
 
     def _apply_j_err(self, wa, force=False):
         if self.include_j_error_in_mean or force:
@@ -358,29 +364,18 @@ class AnalysisGroup(IdeogramPlotable):
         e = self._modify_error(v, e, kind, mswd)
         return ufloat(v, e)
 
-    @cached_property
-    def _get_total_n(self):
-        return len(self.analyses)
-
-    @cached_property
-    def _get_nanalyses(self):
-        return len(list(self.clean_analyses()))
-
-    @cached_property
-    def _get_production_ratios(self):
-        ret = {}
-        if self.analyses:
-            ret = self.analyses[0].production_ratios
-
-        return ret
-
     def _get_values(self, attr):
         vs = (ai.get_value(attr) for ai in self.clean_analyses())
         ans = [vi for vi in vs if vi is not None]
         if ans:
-            vs = [nominal_value(v) for v in ans]
-            es = [std_dev(v) for v in ans]
-            return array(vs), array(es)
+            vs = array([nominal_value(v) for v in ans])
+            es = array([std_dev(v) for v in ans])
+
+            idx = es.astype(bool)
+            vs = vs[idx]
+            es = es[idx]
+
+            return vs, es
 
     def _calculate_mean(self, attr, use_weights=True, error_kind=None):
         def sd(a, v, e):
@@ -416,6 +411,32 @@ class AnalysisGroup(IdeogramPlotable):
         else:
             return av, werr
 
+    def _calculate_integrated_mean_error(self, weighting, ks, rs):
+        sks = ks.sum()
+        weights = None
+
+        fs = rs / ks
+        errors = array([std_dev(f) for f in fs])
+        values = array([nominal_value(f) for f in fs])
+        if weighting == 'Volume':
+            vpercent = ks / sks
+            weights = [nominal_value(wi) for wi in (vpercent * errors) ** 2]
+        elif weighting == 'Variance':
+            weights = 1 / errors ** 2
+
+        if weights is not None:
+            wmean, sum_weights = average(values, weights=weights, returned=True)
+            if weighting == 'Volume':
+                werr = sum_weights ** 0.5
+            else:
+                werr = sum_weights ** -0.5
+
+            f = ufloat(wmean, werr)
+        else:
+            f = rs.sum() / sks
+
+        return f
+
     def _calculate_integrated(self, attr, kind='total', weighting=None):
 
         uv = ufloat(0, 0)
@@ -438,57 +459,32 @@ class AnalysisGroup(IdeogramPlotable):
                     if not pr:
                         pr = 1.0
 
-                    pr = 1 / pr
+                    # pr = 1 / pr
 
                 v = r * pr
 
                 return v
 
-            if attr in ('kca', 'kcl'):
+            if attr in ('kca', 'kcl', 'signal_k39'):
                 ks = array([ai.get_computed_value('k39') for ai in ans])
-                sks = ks.sum()
 
                 if attr == 'kca':
                     cas = array([ai.get_non_ar_isotope('ca37') for ai in ans])
-                    weights = None
-                    if weighting == 'Volume':
-                        weights = ks / sks
-                    elif weighting == 'Variance':
-                        weights = [1/std_dev(k)**2 for k in ks]
+                    f = self._calculate_integrated_mean_error(weighting, ks, cas)
+                    uv = 1 / apply_pr(f, 'Ca_K')
 
-                    if weights is not None:
-                        wmean, sum_weights = average([nominal_value(fi) for fi in ks / cas], weights=weights,
-                                                     returned=True)
-                        werr = sum_weights ** -0.5
-                        f = ufloat(wmean, werr)
-                    else:
-                        f = sks / cas.sum()
-                    uv = apply_pr(f, 'Ca_K')
                 elif attr == 'kcl':
-
                     cls = array([ai.get_non_ar_isotope('cl38') for ai in ans])
-                    weights = None
-                    if weighting == 'Volume':
-                        weights = ks / sks
-                    elif weighting == 'Variance':
-                        weights = [1 / std_dev(k) ** 2 for k in ks]
-
-                    if weights is not None:
-                        wmean, sum_weights = average([nominal_value(fi) for fi in ks / cls], weights=weights,
-                                                     returned=True)
-                        werr = sum_weights ** -0.5
-                        f = ufloat(wmean, werr)
-                    else:
-                        f = sks / cls.sum()
-                    uv = apply_pr(f, 'Cl_K')
+                    f = self._calculate_integrated_mean_error(weighting, ks, cls)
+                    uv = 1 / apply_pr(f, 'Cl_K')
 
                 elif attr == 'signal_k39':
-                    uv = sks
+                    uv = ks.sum()
 
-            elif attr == 'rad40_percent':
+            elif attr == 'radiogenic_yield':
                 ns = [ai.rad40 for ai in ans]
                 ds = [ai.total40 for ai in ans]
-                uv = sum(ns)/sum(ds)*100
+                uv = sum(ns) / sum(ds) * 100
             elif attr == 'moles_k39':
                 uv = sum([ai.moles_k39 for ai in ans])
             elif attr == 'age':
@@ -505,48 +501,55 @@ class AnalysisGroup(IdeogramPlotable):
     def _calculate_weighted_mean(self, attr, error_kind=None):
         return self._calculate_mean(attr, use_weights=True, error_kind=error_kind)
 
-    def _calculate_integrated_age(self, ans, weighting):
+    def _calculate_integrated_age(self, ans, weighting=None):
         ret = ufloat(0, 0)
         if ans and all((not isinstance(a, InterpretedAgeGroup) for a in ans)):
 
             rs = array([a.get_computed_value('rad40') for a in ans])
             ks = array([a.get_computed_value('k39') for a in ans])
-            sks = ks.sum()
 
-            weights = None
-            if weighting == 'Volume':
-                weights = ks / sks
-            elif weighting == 'Variance':
-                weights = [1 / std_dev(k) ** 2 for k in rs/ks]
+            # sks = ks.sum()
+            # fs = rs / ks
+            if weighting is None:
+                weighting = self.integrated_age_weighting
 
-            if weights is not None:
-                wmean, sum_weights = average([nominal_value(fi) for fi in rs / ks], weights=weights, returned=True)
-                werr = sum_weights ** -0.5
-                f = ufloat(wmean, werr)
-            else:
-                f = rs.sum() / sks
+            # if weighting == 'Volume':
+            #     vpercent = array([nominal_value(v) for v in ks / sks])
+            #     errs = array([std_dev(f) for f in fs])
+            #     weights = (vpercent * errs) ** 2
+            #
+            # elif weighting == 'Variance':
+            #     weights = [std_dev(f) ** -2 for f in fs]
+            #
+            # if weights is not None:
+            #     wmean, sum_weights = average([nominal_value(fi) for fi in fs], weights=weights, returned=True)
+            #     if weighting == 'Volume':
+            #         werr = sum_weights ** 0.5
+            #     else:
+            #         werr = sum_weights ** -0.5
+            #
+            #     f = ufloat(wmean, werr)
+            # else:
+            #     f = rs.sum() / sks
+            f = self._calculate_integrated_mean_error(weighting, ks, rs)
 
-            a = ans[0]
-            j = a.j
+            j = self.j
+            if not self.include_j_error_in_integrated:
+                j = nominal_value(j)
+
             try:
-                ret = age_equation(f, j, a.arar_constants)  # / self.age_scalar
+                ret = age_equation(f, j, arar_constants=self.arar_constants)
             except ZeroDivisionError:
                 pass
 
         return ret
-
-    def isochron_mswd(self):
-        if not self.isochron_4036:
-            self.calculate_isochron_age()
-        reg = self.isochron_regressor
-
-        return reg.mswd, reg.valid_mswd, reg.n
 
 
 class StepHeatAnalysisGroup(AnalysisGroup):
     plateau_age = AGProperty()
     integrated_age = AGProperty()
 
+    integrated_include_omitted = Bool(False)
     include_j_error_in_plateau = Bool(True)
     plateau_steps_str = Str
     plateau_steps = None
@@ -561,6 +564,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     plateau_overlap_sigma = Int(2)
     plateau_mswd = Float
     plateau_mswd_valid = Bool
+    plateau_method = Str(FLECK)
 
     total_ar39 = AGProperty()
     total_k2o = AGProperty()
@@ -569,9 +573,9 @@ class StepHeatAnalysisGroup(AnalysisGroup):
         v = None
         if state:
             self.calculate_isochron_age()
-            v = 1/self.isochron_4036
+            v = self.isochron_4036
             if not include_error:
-                v = nominal_value(v)
+                v = ufloat(nominal_value(v), std_dev=0)
 
         for a in self.analyses:
             a.arar_constants.trapped_atm4036 = v
@@ -590,10 +594,6 @@ class StepHeatAnalysisGroup(AnalysisGroup):
 
     def plateau_analyses(self):
         return [a for a in self.clean_analyses() if self.get_is_plateau_step(a)]
-
-    @property
-    def labnumber(self):
-        return self.identifier
 
     @cached_property
     def _get_total_k2o(self):
@@ -645,8 +645,11 @@ class StepHeatAnalysisGroup(AnalysisGroup):
 
     @cached_property
     def _get_integrated_age(self):
-        ans = list(self.clean_analyses())
-        return self._calculate_integrated_age(ans, self.integrated_age_weighting)
+        if self.integrated_include_omitted:
+            ans = self.analyses
+        else:
+            ans = list(self.clean_analyses())
+        return self._calculate_integrated_age(ans)
 
     @property
     def fixed_steps(self):
@@ -664,6 +667,12 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     def _get_plateau_age(self):
         ans = self.analyses
         v, e = 0, 0
+        self.plateau_steps = None
+        self.plateau_steps_str = ''
+        self.nsteps = 0
+        self.plateau_mswd = 0
+        self.plateau_mswd_valid = False
+
         if all((not isinstance(ai, InterpretedAgeGroup) for ai in ans)):
             if ans:
                 ages = [ai.age for ai in ans]
@@ -677,7 +686,8 @@ class StepHeatAnalysisGroup(AnalysisGroup):
                            'fixed_steps': self.fixed_steps}
 
                 excludes = [i for i, ai in enumerate(ans) if ai.is_omitted()]
-                args = calculate_plateau_age(ages, errors, k39, options=options, excludes=excludes)
+                args = calculate_plateau_age(ages, errors, k39, method=self.plateau_method,
+                                             options=options, excludes=excludes)
 
                 if args:
                     v, e, pidx = args
@@ -720,21 +730,10 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
     name = Str
     use = Bool
 
-    lithology_class = Str
     lithology_classes = List
-
-    lithology_group = Str
     lithology_groups = List
-
-    lithology_type = Str
     lithology_types = List
-
-    lithology = Str
     lithologies = List
-
-    reference = Str
-    lat_long = Str
-    rlocation = Str
 
     comments = Str
     preferred_age = Property
@@ -748,33 +747,14 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
     def __init__(self, *args, **kw):
         super(InterpretedAgeGroup, self).__init__(*args, **kw)
         super(Preferred, self).__init__()
-        self.has_subgroups(self.analyses)
-
-    def __getattr__(self, item):
-        return ''
+        if self.analyses:
+            self.has_subgroups(self.analyses)
 
     def set_preferred_age(self, pk, ek):
         pv = self._get_pv('age')
         pv.error_kind = ek
         pv.kind = pk
         pv.dirty = True
-
-    @on_trait_change('analyses')
-    def has_subgroups(self, new):
-        hs = any((isinstance(a, InterpretedAgeGroup) for a in new))
-        for pv in self.preferred_values:
-            if pv.attr == 'age':
-                continue
-
-            if hs:
-                if pv.attr in ('kca', 'kcl', 'moles_k39', 'signal_k39'):
-                    pv.kind = ARITHMETIC_MEAN
-                else:
-                    pv.kind = WEIGHTED_MEAN
-
-                pv.kinds = [WEIGHTED_MEAN, ARITHMETIC_MEAN]
-            else:
-                pv.kinds = SUBGROUPINGS
 
     def ages(self, asfloat=True):
         vs = {k: getattr(self, k) for k in ('weighted_age', 'plateau_age', 'isochron_age', 'integrated_age')}
@@ -814,8 +794,8 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
         return pv.uvalue
 
     @property
-    def rad40_percent(self):
-        pv = self._get_pv('rad40_percent')
+    def radiogenic_yield(self):
+        pv = self._get_pv('radiogenic_yield')
         return pv.uvalue
 
     @property
@@ -832,15 +812,6 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
         pv = self._get_pv('signal_k39')
         return pv.uvalue
 
-    def _value_string(self, t):
-        try:
-            v = getattr(self, t)
-            a, e = nominal_value(v), std_dev(v)
-        except AttributeError:
-            a, e = '---', '---'
-
-        return a, e
-
     def get_value(self, attr):
         if hasattr(self, attr):
             ret = getattr(self, attr)
@@ -848,24 +819,25 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
             ret = ufloat(0, 0)
         return ret
 
-    def _name_default(self):
-        name = ''
-        if self.analyses:
-            name = make_aliquot(self.analyses[0].aliquot)
-        return name
+    @on_trait_change('analyses')
+    def has_subgroups(self, new):
+        hs = any((isinstance(a, InterpretedAgeGroup) for a in new))
+        for pv in self.preferred_values:
+            if pv.attr == 'age':
+                continue
 
-    def _get_nanalyses(self):
-        pv = self._get_pv('age')
-        k = pv.computed_kind.lower()
+            if hs:
+                if pv.attr in ('kca', 'kcl', 'moles_k39', 'signal_k39'):
+                    pv.kind = ARITHMETIC_MEAN
+                else:
+                    pv.kind = WEIGHTED_MEAN
 
-        if k == 'plateau':
-            n = self.nsteps
-        else:
-            n = super(InterpretedAgeGroup, self)._get_nanalyses()
-        return n
+                pv.kinds = [WEIGHTED_MEAN, ARITHMETIC_MEAN]
+            else:
+                pv.kinds = SUBGROUPINGS
 
     @on_trait_change('preferred_values:[kind, error_kind, dirty, weighting]')
-    def _preferred_kind_changd(self, obj, name, old, new):
+    def handle_preferred_change(self, obj, name, old, new):
         if obj.attr == 'age':
             if 'Plateau' in obj.kind:
                 self.plateau_age_error_kind = obj.error_kind
@@ -888,9 +860,15 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
     def preferred_values_to_dict(self):
         return [pv.to_dict() for pv in self.preferred_values]
 
+    def get_preferred_age(self):
+        return self._get_preferred_age()
+
     def get_ma_scaled_age(self):
         a = self._get_preferred_age()
-        return a / self.age_scalar
+        return self.arar_constants.scale_age(a, 'Ma')
+
+    def scaled_age(self, a, units='Ma'):
+        return self.arar_constants.scale_age(a, units)
 
     def get_preferred_mswd(self):
         pv = self._get_pv('age')
@@ -1007,5 +985,32 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
             pa = ufloat(*pa)
         return pa, kind
 
+    def _name_default(self):
+        name = ''
+        if self.analyses:
+            name = make_aliquot(self.aliquot)
+        return name
+
+    def _get_nanalyses(self):
+        pv = self._get_pv('age')
+        k = pv.computed_kind.lower()
+
+        if k == 'plateau':
+            n = self.nsteps
+        else:
+            n = super(InterpretedAgeGroup, self)._get_nanalyses()
+        return n
+
+    def _value_string(self, t):
+        try:
+            v = getattr(self, t)
+            a, e = nominal_value(v), std_dev(v)
+        except AttributeError:
+            a, e = NULL_STR, NULL_STR
+
+        return a, e
+
+    def __getattr__(self, item):
+        return ''
 
 # ============= EOF =============================================

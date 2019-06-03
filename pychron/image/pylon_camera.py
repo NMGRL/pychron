@@ -16,26 +16,28 @@
 from __future__ import absolute_import
 from __future__ import print_function
 import os
+
 try:
     import pypylon
 except ImportError:
     print('failed importing pylon')
 
 import yaml
-import six
-
 
 from pychron.loggable import Loggable
 
 
 class PylonCamera(Loggable):
-
     def __init__(self, identifier, *args, **kw):
-        # Grep the first one and create a camera for it
+
+        available_cameras = pypylon.factory.find_devices()
+        self.debug('Available cameras {}'.format(available_cameras))
         try:
-            available_cameras = pypylon.factory.find_devices()
-            self.debug('Available cameras {}'.format(available_cameras))
-            cam = pypylon.factory.create_device(available_cameras[identifier])
+            try:
+                dev = available_cameras[int(identifier)]
+            except ValueError:
+                dev = next((c for c in available_cameras if c.user_defined_name == identifier), None)
+            cam = pypylon.factory.create_device(dev)
         except (IndexError, NameError):
             cam = None
         self._cam = cam
@@ -60,6 +62,8 @@ class PylonCamera(Loggable):
                     try:
                         self._cam.properties[k] = v
                         self.debug('Set {} to {}'.format(k, v))
+                    except ValueError as e:
+                        self.warning('Invalid Property value. k="{}",v={}. e={}'.format(k, v, e))
                     except KeyError:
                         self.warning('Invalid Camera Property "{}"'.format(k))
                     except RuntimeError as e:
@@ -71,19 +75,19 @@ class PylonCamera(Loggable):
     def read(self):
 
         if self._cam and not self._setting_config:
-            # img = self._cam.grab_one()
+            img = self._cam.grab_one()
+            return True, img
 
-            # return True, img
-            if self._grabber is None:
-                self._grabber = self._cam.grab_images(-1, 1)
-
-            try:
-                img = next(self._grabber)
-                return True, img
-            except (StopIteration, RuntimeError, ValueError) as e:
-                self._grabber = None
-                print('read', e)
-                return False, None
+            # if self._grabber is None:
+            #     self._grabber = self._cam.grab_images(-1, 1)
+            #
+            # try:
+            #     img = next(self._grabber)
+            #     return True, img
+            # except (StopIteration, RuntimeError, ValueError) as e:
+            #     self._grabber = None
+            #     print('read', e)
+            #     return False, None
 
     def release(self):
         self._cam.close()
@@ -99,4 +103,5 @@ class PylonCamera(Loggable):
                 yd = yaml.load(rfile)
                 self.load_configuration(yd)
         self._setting_config = False
+
 # ============= EOF =============================================

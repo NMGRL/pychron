@@ -41,7 +41,7 @@ def get_analysis_type(x):
     return REVERSE_ANALYSIS_MAPPING[math.floor(x)]
 
 
-def analysis_type_func(analyses, offset=True):
+def analysis_type_func(analyses, mapping, offset=True):
     """
     convert analysis type to number
 
@@ -67,7 +67,10 @@ def analysis_type_func(analyses, offset=True):
             __cache__[x] = c
             c /= counts[x]
 
-        return ANALYSIS_MAPPING_INTS[x] + c if x in ANALYSIS_MAPPING_INTS else -1
+        try:
+            return mapping[x] + c
+        except KeyError:
+            return -1
 
     return f
 
@@ -139,22 +142,32 @@ class SelectionGraph(Graph):
     scatter = None
     grouping_tool = None
 
-    def setup(self, x, y, ans):
-        from pychron.pipeline.plot.plotter.ticks import tick_formatter, StaticTickGenerator, TICKS
+    def setup(self, x, y, ans, atypes, mapping):
+        from pychron.pipeline.plot.plotter.ticks import StaticTickGenerator
+
+        def get_analysis_type(x):
+            x = int(math.floor(x))
+            return next((k for k, v in mapping.items() if v == x))
 
         p = self.new_plot()
-        p.padding_left = 60
-        p.y_axis.tick_label_formatter = tick_formatter
-        p.y_axis.tick_generator = StaticTickGenerator()
+        p.padding_left = 200
+
+        def tickformatter(x):
+            return atypes[int(x)]
+
+        p.y_axis.tick_label_rotate_angle = 60
+        p.y_axis.tick_label_formatter = tickformatter
+        p.y_axis.tick_generator = StaticTickGenerator(_nticks=len(atypes))
         p.y_axis.title = 'Analysis Type'
         p.y_axis.title_font = 'modern 18'
         p.y_axis.tick_label_font = 'modern 14'
 
-        # p.y_grid.line_style='solid'
-        # p.y_grid.line_color='green'
-        # p.y_grid.line_weight = 1.5
+        self.add_axis_tool(p, p.x_axis)
+        self.add_axis_tool(p, p.y_axis)
+        self.add_limit_tool(p, 'x')
+        self.add_limit_tool(p, 'y')
 
-        self.set_y_limits(min_=-1, max_=len(TICKS))
+        self.set_y_limits(min_=-1, max_=len(atypes))
 
         p.index_range.tight_bounds = False
         p.x_axis.tick_generator = ScalesTickGenerator(scale=CalendarScaleSystem())
@@ -195,10 +208,6 @@ class SelectionGraph(Graph):
         broadcaster.tools.append(rect_tool)
         broadcaster.tools.append(point_inspector)
 
-        # range_selector = RangeSelection(scatter, left_button_selects=True)
-        # broadcaster.tools.append(range_selector)
-
-        # scatter.overlays.append(RangeSelectionOverlay(component=scatter))
         scatter.overlays.append(pinspector_overlay)
         scatter.overlays.append(rect_overlay)
 
@@ -224,55 +233,42 @@ class GraphicalFilterModel(HasTraits):
     extract_device = Str
     gid = Int
 
-    # is_append = True
-    # use_all = False
-
     def setup(self, set_atypes=True):
         self.graph.clear()
-
-        f = analysis_type_func(self.analyses, offset=self.use_offset_analyses)
-        # ans = self._filter_projects(self.analyses)
-
         ans = self.analyses
+
+        atypes = list(sorted({a.analysis_type for a in ans}))
+        mapping = {a.lower(): idx for idx, a in enumerate(atypes)}
+
+        f = analysis_type_func(ans, mapping, offset=self.use_offset_analyses)
+
+        def ff(at):
+            return ' '.join((ai.capitalize() for ai in at.split('_')))
+
+        display_atypes = [ff(at) for at in atypes]
+
         if set_atypes:
-            def ff(at):
-                # return ' '.join(map(str.capitalize, at.split('_')))
-                return ' '.join((ai.capitalize() for ai in at.split('_')))
+            self.available_analysis_types = display_atypes
 
-            self.available_analysis_types = list({ff(ai.analysis_type) for ai in ans})
-            # if self.always_exclude_unknowns:
-            #     try:
-            #         self.available_analysis_types.remove('Unknown')
-            #     except IndexError:
-            #         pass
-            # if 'Unknown' in self.available_analysis_types:
-            #     self.analysis_types = ['Unknown']
-            # else:
-
-        # ans = self._filter_analysis_types(ans)
         if ans:
             ans = sorted(ans, key=lambda x: x.timestampf)
             self.analyses = ans
             # todo: CalendarScaleSystem off by 1 hour. add 3600 as a temp hack
             x, y = list(zip(*[(ai.timestampf + 3600, f(ai.analysis_type)) for ai in ans]))
-            # x, y = zip(*[(ai.timestamp, f(ai.analysis_type)) for ai in ans])
         else:
             x, y, ans = [], [], []
 
-        self.graph.setup(x, y, ans)
+        self.graph.setup(x, y, ans, display_atypes, mapping)
 
     def get_filtered_selection(self):
         selection = self.graph.scatter.index.metadata['selections']
         ans = self.analyses
-        # unks = [ai for ai in self.analyses if ai.analysis_type == 'unknown']
         if selection:
-            # unks = [ai for i, ai in enumerate(unks) if i not in selection]
             ans = [ai for i, ai in enumerate(self.analyses) if i not in selection]
 
         refs = self._filter_analysis_types(ans)
         self._calculate_groups(refs)
-        # self._calculate_groups(unks)
-        # return unks, refs
+
         return refs
 
     def search_backward(self):
@@ -350,8 +346,6 @@ class GraphicalFilterView(Controller):
     accept_button = Button('Accept')
 
     is_append = False
-    # append_button = Button('Append')
-    # replace_button = Button('Replace')
     help_str = Str('Select the analyses you want to EXCLUDE')
 
     search_backward = Button
@@ -363,37 +357,25 @@ class GraphicalFilterView(Controller):
     def controller_search_forward_changed(self, info):
         self.model.search_forward()
 
-    # def controller_append_button_changed(self, info):
-    #     self.is_append = True
-    #     self.info.ui.dispose(result=True)
-    #
-    # def controller_replace_button_changed(self, info):
-    #     self.is_append = False
-    #     self.info.ui.dispose(result=True)
-
     def controller_accept_button_changed(self, info):
         self.info.ui.dispose(result=True)
 
     def traits_view(self):
-        # egrp = HGroup(UItem('use_project_exclusion'),
-        #               Item('exclusion_pad',
-        #                    enabled_when='use_project_exclusion')),
-        # bgrp = HGroup(spring, UItem('controller.append_button'), UItem('controller.replace_button'))
-
-        ctrl_grp = VGroup(HGroup(Item('use_offset_analyses', label='Use Offset')))
-
-        bgrp = HGroup(spring, UItem('controller.accept_button'))
         tgrp = HGroup(UItem('controller.help_str', style='readonly'), show_border=True)
-        sgrp = HGroup(UItem('controller.search_backward'),
+        bgrp = HGroup(spring, UItem('controller.accept_button'))
+
+        sgrp = HGroup(Item('use_offset_analyses', label='Use Offset'),
+                      UItem('controller.search_backward'),
                       spring,
                       UItem('controller.search_forward'))
-        ggrp = VGroup(sgrp, UItem('graph', style='custom'))
-        v = View(VGroup(tgrp,
-                        HGroup(ctrl_grp, ggrp),
-                        bgrp),
+
+        ggrp = UItem('graph', style='custom')
+        v = View(VGroup(tgrp, sgrp, ggrp, bgrp),
                  title='Graphical Filter',
                  kind='livemodal',
+                 width=800,
                  resizable=True)
+
         return v
 
 # ============= EOF =============================================

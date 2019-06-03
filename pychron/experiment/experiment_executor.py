@@ -411,7 +411,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                'use_group_email': exp.use_group_email,
                'user_email': exp.email,
                'group_emails': self._get_group_emails(exp.email),
-               }
+               'mass_spectrometer': exp.mass_spectrometer}
         return ctx
 
     def _reset(self):
@@ -525,11 +525,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.stats.reset()
         self.stats.start_timer()
 
+        exp.start_timestamp = datetime.now()  # .strftime('%m-%d-%Y %H:%M:%S')
+
         self._do_event(events.START_QUEUE)
 
         # save experiment to database
         # self.info('saving experiment "{}" to database'.format(exp.name))
-        exp.start_timestamp = datetime.now()  # .strftime('%m-%d-%Y %H:%M:%S')
 
         exp.n_executed_display = int(self.application.preferences.get('pychron.experiment.n_executed_display', 5))
 
@@ -575,6 +576,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     self.debug('caught a skipped run {}'.format(spec.runid))
                     continue
 
+                if self._check_scheduled_stop(spec):
+                    self.info('Experiment scheduled to stop')
+                    break
+
                 if self._pre_run_check(spec):
                     self.warning('pre run check failed')
                     break
@@ -611,13 +616,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 delay_after_previous_analysis = run.spec.get_delay_after(exp.delay_between_analyses,
                                                                          exp.delay_after_blank,
                                                                          exp.delay_after_air)
-
-                self.debug(
-                    '$$$$$$$$$$$$$$ delay after dp={}, d={} da={} db={}, at={}'.format(delay_after_previous_analysis,
-                                                                                       run.spec.delay_after,
-                                                                                       exp.delay_between_analyses,
-                                                                                       exp.delay_after_blank,
-                                                                                       run.spec.analysis_type))
 
                 if not run.is_last and run.spec.analysis_type == 'unknown' and spec.overlap[0]:
                     self.debug('waiting for extracting_run to finish')
@@ -847,8 +845,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._close_cv()
 
         self._do_event(events.END_RUN,
-                       run=run,
-                       experiment_queue=self.experiment_queue)
+                       run=run)
 
         remove_root_handler(handler)
         run.post_finish()
@@ -1366,6 +1363,19 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     # ===============================================================================
     # checks
     # ===============================================================================
+    def _check_scheduled_stop(self, spec):
+        """
+        return True if the end time of the upcoming run is greater than the scheduled stop time
+        :param spec:
+        :return:
+        """
+
+        scheduled_stop = self.scheduler.stop_dt
+        if scheduled_stop is not None:
+            et = self.stats.get_endtime(spec)
+            self.debug('Scheduled stop check. Run End Time={}, Scheduled={}'.format(et, scheduled_stop))
+            return et > scheduled_stop
+
     def _check_for_email_plugin(self, inform):
         if any((eq.use_email or eq.use_group_email for eq in self.experiment_queues)):
             if not self.application.get_plugin('pychron.social.email.plugin'):

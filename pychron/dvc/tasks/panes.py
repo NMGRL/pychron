@@ -18,7 +18,7 @@
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Property
-from traitsui.api import View, UItem, VGroup, TabularEditor, EnumEditor, VSplit
+from traitsui.api import View, UItem, VGroup, TabularEditor, EnumEditor, VSplit, Item
 from traitsui.tabular_adapter import TabularAdapter
 
 # ============= standard library imports ========================
@@ -29,7 +29,8 @@ from pychron.git_archive.views import CommitAdapter, GitTagAdapter
 
 class RepoCentralPane(TraitsTaskPane):
     def traits_view(self):
-        commit_grp = VGroup(VGroup(UItem('commits',
+        commit_grp = VGroup(Item('ncommits', label='Limit'),
+                            VGroup(UItem('commits',
                                          editor=TabularEditor(adapter=CommitAdapter(),
                                                               selected='selected_commit')),
                                    show_border=True, label='Commits'))

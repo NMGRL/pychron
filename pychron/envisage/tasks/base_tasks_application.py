@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 import os
 import pickle
 
@@ -43,11 +41,20 @@ class BaseTasksApplication(TasksApplication, Loggable):
     uis = List
     available_task_extensions = ExtensionPoint(id='pychron.available_task_extensions')
 
-    def _started_fired(self):
-        st = self.startup_tester
-        if st.results:
-            v = ResultsView(model=st)
-            open_view(v)
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
+        self.init_logger()
+
+    def _application_initialized_fired(self):
+        if globalv.use_startup_tests:
+            st = StartupTester()
+            for plugin in iter(self.plugin_manager):
+                st.test_plugin(plugin)
+
+            if st.results:
+                if globalv.show_startup_results or not st.all_passed:
+                    v = ResultsView(model=st)
+                    open_view(v)
 
         if globalv.use_testbot:
             from pychron.testbot.testbot import TestBot
@@ -55,8 +62,8 @@ class BaseTasksApplication(TasksApplication, Loggable):
             testbot = TestBot(application=self)
             testbot.run()
 
-    def get_boolean_preference(self, pid):
-        return to_bool(self.preferences.get(pid))
+    def get_boolean_preference(self, pid, default=None):
+        return to_bool(self.preferences.get(pid, default))
 
     def get_task_extensions(self, pid):
         import yaml
@@ -77,16 +84,16 @@ class BaseTasksApplication(TasksApplication, Loggable):
     def about(self):
         self.about_dialog.open()
 
-    def start(self):
-        # if globalv.open_logger_on_launch:
-        #     self.debug('load_state')
-        #     self._load_state()
-        #     self.debug('open logger')
-        #     self.open_task('pychron.logger')
-
-        self.startup_tester = StartupTester()
-
-        return super(BaseTasksApplication, self).start()
+    # def start(self):
+    #     # if globalv.open_logger_on_launch:
+    #     #     self.debug('load_state')
+    #     #     self._load_state()
+    #     #     self.debug('open logger')
+    #     #     self.open_task('pychron.logger')
+    #
+    #     self.startup_tester = StartupTester()
+    #
+    #     return super(BaseTasksApplication, self).start()
 
     def get_open_task(self, tid):
         for win in self.windows:

@@ -15,26 +15,23 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
 
 import os
 import socket
 from datetime import datetime
 
-import paramiko
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
 from traits.api import HasTraits, Str, Bool, Property, Button, on_trait_change, List, cached_property, \
     Instance, Event, Date, Enum, Long, Any, Int
-from traitsui.api import View, UItem, Item, EnumEditor
+from traitsui.api import UItem, Item, EnumEditor
 
 from pychron.core.helpers.datetime_tools import get_date
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.dvc.dvc_irradiationable import DVCAble
 from pychron.entry.tasks.sample_prep.sample_locator import SampleLocator
 from pychron.image.camera import CameraViewer
 from pychron.image.viewer import ImageViewer
-from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceMixin
 from pychron.pychron_constants import SAMPLE_PREP_STEPS
 
@@ -42,6 +39,7 @@ DEBUG = False
 
 
 def get_sftp_client(host, user, password):
+    import paramiko
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     print(host, user, password)
@@ -134,11 +132,9 @@ class PrepStepRecord(HasTraits):
         setattr(self, attr, 'X' if new else '')
 
     def _edit_comment_button_fired(self):
-        v = View(UItem('comment', style='custom'),
-                 title='Edit Comment',
-                 resizable=True,
-                 kind='livemodal',
-                 buttons=['OK', 'Cancel', 'Revert'])
+        v = okcancel_view(UItem('comment', style='custom'),
+                          title='Edit Comment',
+                          buttons=['OK', 'Cancel', 'Revert'])
 
         self.edit_traits(view=v)
 
@@ -194,9 +190,7 @@ class SamplePrep(DVCAble, PersistenceMixin):
     camera = Any
     selected_image = Any
 
-    @property
-    def persistence_path(self):
-        return os.path.join(paths.hidden_dir, 'sample_prep')
+    persistence_name = 'sample_prep'
 
     def activated(self):
 
@@ -262,11 +256,9 @@ class SamplePrep(DVCAble, PersistenceMixin):
 
         self.move_to_sessions = [s for s in self.sessions if s != self.session]
 
-        v = View(Item('move_to_session_name',
-                      editor=EnumEditor(name='move_to_sessions')),
-                 title='Move to Session',
-                 buttons=['OK', 'Cancel'],
-                 resizable=True, kind='livemodal')
+        v = okcancel_view(Item('move_to_session_name',
+                               editor=EnumEditor(name='move_to_sessions')),
+                          title='Move to Session')
 
         info = self.edit_traits(v)
         if info.result:
@@ -371,7 +363,7 @@ class SamplePrep(DVCAble, PersistenceMixin):
             self._load_steps_for_sample(new)
 
     def _clear_step_button_fired(self):
-        for k in SAMPLE_PREP_STEPS+('status', 'comment'):
+        for k in SAMPLE_PREP_STEPS + ('status', 'comment'):
             setattr(self.prep_step, k, '')
 
     def _add_step_button_fired(self):

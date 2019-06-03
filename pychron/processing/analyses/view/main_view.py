@@ -30,7 +30,7 @@ from pychron.processing.analyses.view.values import ExtractionValue, ComputedVal
 #     def show_isotope_evolution(self, uiinfo, obj):
 #         isos = obj.selected
 #         obj.show_iso_evo_needed = isos
-from pychron.pychron_constants import PLUSMINUS, COCKTAIL, BLANK_TYPES, UNKNOWN, AIR
+from pychron.pychron_constants import PLUSMINUS, COCKTAIL, BLANK_TYPES, UNKNOWN, AIR, AR_AR
 
 
 class MainView(HasTraits):
@@ -58,6 +58,7 @@ class MainView(HasTraits):
     selected = Any
     show_iso_evo_needed = Event
     recall_options = None
+    experiment_type = AR_AR
 
     def __init__(self, analysis=None, *args, **kw):
         super(MainView, self).__init__(*args, **kw)
@@ -69,6 +70,7 @@ class MainView(HasTraits):
         self.load(an, True)
 
     def load(self, an, refresh=False):
+        self.experiment_type = an.experiment_type
         self._load(an)
         if refresh:
             self.refresh_needed = True
@@ -130,6 +132,8 @@ class MainView(HasTraits):
                                value=floatfmt(a39)),
               MeasurementValue(name='Ar37Decay',
                                value=floatfmt(a37)),
+              MeasurementValue(name='K3739 Mode',
+                               value=an.display_k3739_mode),
               MeasurementValue(name='Sens.',
                                value=floatfmt(an.sensitivity, use_scientific=True),
                                units=an.sensitivity_units)]
@@ -201,18 +205,21 @@ class MainView(HasTraits):
             self._load_unknown_computed(an, new_list)
             if self._corrected_enabled:
                 self._load_corrected_values(an, new_list)
-
         elif self.analysis_type == AIR or self.analysis_type in BLANK_TYPES:
             self._load_air_computed(an, new_list)
         elif self.analysis_type == COCKTAIL:
             self._load_cocktail_computed(an, new_list)
-
+            if self._corrected_enabled:
+                self._load_corrected_values(an, new_list)
     # def _get_isotope(self, name):
     #     return next((iso for iso in self.isotopes if iso.name == name), None)
 
     def _make_ratios(self, ratios):
         cv = []
         for name, nd, ref in ratios:
+            if nd is None:
+                continue
+
             n, d = nd.split('/')
             ns = [i for i in self.isotopes if i.name == n]
             ds = [i for i in self.isotopes if i.name == d]
@@ -233,7 +240,6 @@ class MainView(HasTraits):
                                        ref_ratio=ref,
                                        detectors=nd)
                     cv.append(dr)
-
         return cv
 
     def _get_non_corrected_ratio(self, niso, diso):
@@ -306,31 +312,42 @@ class MainView(HasTraits):
 
                 ci.trait_set(value=floatfmt(nominal_value(corrected)),
                              error=floatfmt(std_dev(corrected)),
+                             sig_figs=self.sig_figs,
                              noncorrected_value=nominal_value(noncorrected),
                              noncorrected_error=std_dev(noncorrected),
                              ic_factor=nominal_value(ic))
 
+    def _computed_value_factory(self, *args, **kw):
+        if 'sig_figs' not in kw:
+            kw['sig_figs'] = self.sig_figs
+
+        return ComputedValue(*args, **kw)
+
     def _load_air_computed(self, an, new_list):
-        if new_list:
-            c = an.arar_constants
-            ratios = [('40Ar/36Ar', 'Ar40/Ar36', nominal_value(c.atm4036)),
-                      ('40Ar/38Ar', 'Ar40/Ar38', nominal_value(c.atm4038))]
-            cv = self._make_ratios(ratios)
-            self.computed_values = cv
+        if self.experiment_type == AR_AR:
+            if new_list:
+                c = an.arar_constants
+                ratios = [('40Ar/36Ar', 'Ar40/Ar36', nominal_value(c.atm4036)),
+                          ('40Ar/38Ar', 'Ar40/Ar38', nominal_value(c.atm4038))]
+                cv = self._make_ratios(ratios)
+                self.computed_values = cv
 
-        self._update_ratios()
+            self._update_ratios()
 
-        try:
-            niso, diso = self._get_ratio('Ar40/Ar36')
-            if niso and diso:
-                noncorrected = self._get_non_corrected_ratio(niso, diso)
-                v, e = nominal_value(noncorrected), std_dev(noncorrected)
-                ref = 295.5
-                self.summary_str = u'Ar40/Ar36={} {}{}({}%) IC={:0.5f}'.format(floatfmt(v),
-                                                                               PLUSMINUS, floatfmt(e),
-                                                                               format_percent_error(v, e),
-                                                                               nominal_value(noncorrected / ref))
-        except:
+            try:
+                niso, diso = self._get_ratio('Ar40/Ar36')
+                if niso and diso:
+                    noncorrected = self._get_non_corrected_ratio(niso, diso)
+                    v, e = nominal_value(noncorrected), std_dev(noncorrected)
+                    ref = 295.5
+                    self.summary_str = u'Ar40/Ar36={} {}{}({}%) IC={:0.5f}'.format(floatfmt(v),
+                                                                                   PLUSMINUS, floatfmt(e),
+                                                                                   format_percent_error(v, e),
+                                                                                   nominal_value(noncorrected / ref))
+            except:
+                pass
+        else:
+            # todo add ratios for other isotopes. e.g Ne
             pass
 
     def _load_cocktail_computed(self, an, new_list):
@@ -347,14 +364,14 @@ class MainView(HasTraits):
             cv = self._make_ratios(ratios)
 
             an.calculate_age()
-            cv.append(ComputedValue(name='F', tag='uf',
-                                    uvalue=an.uF))
+            cv.append(self._computed_value_factory(name='F', tag='uf',
+                                                   uvalue=an.uF))
 
-            cv.append(ComputedValue(name='40Ar*', tag='rad40_percent',
-                                    uvalue=an.rad40_percent))
+            cv.append(self._computed_value_factory(name='40Ar*', tag='radiogenic_yield',
+                                                   uvalue=an.radiogenic_yield))
 
-            cv.append(ComputedValue(name='Age', tag='uage',
-                                    uvalue=an.uage))
+            cv.append(self._computed_value_factory(name='Age', tag='uage',
+                                                   uvalue=an.uage))
 
             self.computed_values = cv
             self._update_ratios()
@@ -387,11 +404,11 @@ class MainView(HasTraits):
                 else:
                     e = std_dev(value)
 
-                return ComputedValue(name=n,
-                                     tag=a,
-                                     value=nominal_value(value or 0),
-                                     display_value=display_value,
-                                     error=e or 0)
+                return self._computed_value_factory(name=n,
+                                                    tag=a,
+                                                    value=nominal_value(value or 0),
+                                                    display_value=display_value,
+                                                    error=e or 0)
 
             cv = [comp_factory(*args)
                   for args in attrs]
@@ -403,14 +420,21 @@ class MainView(HasTraits):
                 v = getattr(an, attr)
                 ci.value = nominal_value(v)
                 ci.error = std_dev(v)
+                ci.sig_figs = self.sig_figs
+
+    @property
+    def sig_figs(self):
+        sig_figs = 5
+        if self.recall_options:
+            sig_figs = self.recall_options.computed_sig_figs
+        return sig_figs
 
     def _load_unknown_computed(self, an, new_list):
         attrs = (('Age', 'uage_w_j_err'),
-                 # ('Age', 'age', None, None, 'age_err'),
                  ('w/o J', 'wo_j', '', 'uage', 'age_err_wo_j'),
                  ('K/Ca', 'kca'),
                  ('K/Cl', 'kcl'),
-                 ('40Ar*', 'rad40_percent'),
+                 ('40Ar*', 'radiogenic_yield'),
                  ('F', 'uF'),
                  ('w/o Irrad', 'wo_irrad', '', 'uF', 'F_err_wo_irrad'))
 
@@ -429,12 +453,12 @@ class MainView(HasTraits):
                 else:
                     e = std_dev(value)
 
-                return ComputedValue(name=n,
-                                     tag=a,
-                                     value=nominal_value(value) or 0,
-                                     value_tag=value_tag or '',
-                                     display_value=display_value,
-                                     error=e or 0)
+                return self._computed_value_factory(name=n,
+                                                    tag=a,
+                                                    value=nominal_value(value) or 0,
+                                                    value_tag=value_tag or '',
+                                                    display_value=display_value,
+                                                    error=e or 0)
 
             cv = [comp_factory(*args)
                   for args in attrs]
@@ -450,6 +474,7 @@ class MainView(HasTraits):
                 pass
 
             for ci in self.computed_values:
+                ci.sig_figs = self.sig_figs
                 attr = ci.tag
                 if attr == 'wo_j':
                     ci.error = an.age_err_wo_j or 0

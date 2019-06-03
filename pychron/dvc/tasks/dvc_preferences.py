@@ -19,7 +19,7 @@ from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Str, Bool, Int
 from traitsui.api import View, Item, HGroup, VGroup
 
-from pychron.core.helpers.strtools import to_bool, to_csv_str
+from pychron.core.helpers.strtools import to_bool
 from pychron.core.pychron_traits import BorderVGroup
 from pychron.database.tasks.connection_preferences import ConnectionPreferences, ConnectionPreferencesPane, \
     ConnectionFavoriteItem
@@ -30,6 +30,9 @@ class DVCConnectionItem(ConnectionFavoriteItem):
     organization = Str
     meta_repo_name = Str
     meta_repo_dir = Str
+    attributes = ('name', 'kind', 'username', 'host',
+                  'dbname', 'password', 'enabled', 'default', 'path',
+                  'organization', 'meta_repo_name', 'meta_repo_dir')
 
     def __init__(self, schema_identifier='', attrs=None, load_names=False):
         super(ConnectionFavoriteItem, self).__init__()
@@ -50,12 +53,6 @@ class DVCConnectionItem(ConnectionFavoriteItem):
             self.default = to_bool(default)
             if load_names:
                 self.load_names()
-
-    def to_string(self):
-        attrs = [getattr(self, attr) for attr in ('name', 'kind', 'username', 'host',
-                                                  'dbname', 'password', 'enabled', 'default', 'path',
-                                                  'organization', 'meta_repo_name', 'meta_repo_dir')]
-        return to_csv_str(attrs)
 
 
 class DVCConnectionPreferences(ConnectionPreferences):

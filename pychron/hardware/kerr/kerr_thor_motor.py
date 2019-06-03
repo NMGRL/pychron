@@ -25,8 +25,8 @@ class KerrThorMotor(KerrMotor):
     """
     """
 
-    def _build_io(self):
-        return '1800'
+    # def _build_io(self):
+    #     return '1800'
 
     def _build_gains(self):
         return 'F6B0042003F401B004FF006400010101'
@@ -35,9 +35,11 @@ class KerrThorMotor(KerrMotor):
         """
         thor motor does not have limit switches so cannot use HOME_IN_PROG bit of the Status Byte
 
-        Instead wait untill 4 successive read positions return the same value
+        Instead wait until 4 successive read positions return the same value
         """
-        self.block(4, progress=progress, homing=True)
 
+        self.block(6, progress=progress, homing=True, verbose=False)
+        # in an attempt to mitigate home false positives run the homing sequence twice
+        self.block(6, progress=progress, homing=True, verbose=False)
 
 # =============EOF-==============================================

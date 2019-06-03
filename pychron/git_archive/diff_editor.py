@@ -19,7 +19,6 @@ from itertools import groupby
 
 import six
 # ============= enthought library imports =======================
-from pyface.qt import QtCore
 from pyface.qt.QtGui import QTextEdit, QWidget, QHBoxLayout, QTextFormat, QColor, QPainter, QFrame, \
     QSizePolicy, QPainterPath
 from traits.trait_errors import TraitError
@@ -219,13 +218,15 @@ class _DiffEditor(Editor):
         self.control = self._create_control(parent)
 
     def _create_control(self, parent):
-        ctrl = QDiffEdit(parent)
-        QtCore.QObject.connect(ctrl.left,
-                               QtCore.SIGNAL('textChanged()'), self.update_left_object)
-        QtCore.QObject.connect(ctrl.right,
-                               QtCore.SIGNAL('textChanged()'), self.update_right_object)
+        control = QDiffEdit(parent)
+        # QtCore.QObject.connect(ctrl.left,
+        #                        QtCore.SIGNAL('textChanged()'), self.update_left_object)
+        # QtCore.QObject.connect(ctrl.right,
+        #                        QtCore.SIGNAL('textChanged()'), self.update_right_object)
+        control.left.textChanged.connect(self.update_left_object)
+        control.right.textChanged.connect(self.update_right_object)
 
-        return ctrl
+        return control
 
     def update_editor(self):
         if self.value:

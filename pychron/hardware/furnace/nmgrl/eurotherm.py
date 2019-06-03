@@ -15,14 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from traits.api import provides, Int
 # ============= standard library imports ========================
 import json
 import re
+
 # ============= local library imports  ==========================
-from pychron.furnace.furnace_controller import IFurnaceController
 from pychron.core.communication_helper import trim_bool
+from pychron.furnace.ifurnace_controller import IFurnaceController
 from pychron.hardware import get_float
 from pychron.hardware.core.core_device import CoreDevice
 
@@ -58,7 +58,7 @@ class NMGRLFurnaceEurotherm(CoreDevice):
 
     @trim_bool
     def get_water_flow_state(self, **kw):
-        d = json.dumps({'command': 'GetDIState', 'channel': self.water_flow_channel})
+        d = json.dumps({'command': 'GetDIState', 'name': self.water_flow_channel})
         return self.ask(d, **kw)
 
     def set_pid(self, pstr):
@@ -71,31 +71,22 @@ class NMGRLFurnaceEurotherm(CoreDevice):
 
     @get_float(default=0)
     def get_setpoint(self, **kw):
-        return self.ask('GetSetpoint')
+        return self.ask('GetSetpoint', **kw)
 
     read_setpoint = get_setpoint
 
+    @get_float
     def get_temperature(self, **kw):
-        resp = self.ask('GetTemperature', **kw)
-        try:
-            return float(resp)
-        except (TypeError, ValueError):
-            pass
+        return self.ask('GetTemperature', **kw)
 
     read_temperature = get_temperature
 
+    @get_float(default=0)
     def get_process_value(self, **kw):
-        resp = self.ask('GetProcessValue', **kw)
-        try:
-            return float(resp)
-        except (TypeError, ValueError):
-            pass
+        return self.ask('GetProcessValue', **kw)
 
-    def get_output(self):
-        resp = self.ask('GetPercentOutput')
-        try:
-            return float(resp)
-        except (TypeError, ValueError):
-            pass
+    @get_float(default=0)
+    def get_output(self, **kw):
+        return self.ask('GetPercentOutput', **kw)
 
 # ============= EOF =============================================

@@ -20,7 +20,6 @@ from __future__ import absolute_import
 
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
-from pyface.tasks.action.schema import SMenu
 from pyface.tasks.action.schema_addition import SchemaAddition
 from pyface.tasks.action.task_action import TaskAction
 
@@ -47,12 +46,8 @@ class PyScriptPlugin(BaseTaskPlugin):
         exts = [
             TaskExtension(
                 task_id='pychron.pyscript.task',
-                actions=[SchemaAddition(
-                    id='Edit',
-                    factory=lambda: SMenu(id='Edit', name='Edit'),
-                    path='MenuBar'),
-                         SchemaAddition(id='replace',
-                                        path='MenuBar/Edit',
+                actions=[SchemaAddition(id='replace',
+                                        path='MenuBar/edit.menu',
                                         factory=_replace_action)]),
             TaskExtension(
                 actions=[

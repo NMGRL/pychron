@@ -207,20 +207,26 @@ def ignored_exceptions(exctype, value, tb):
     """
         Do not open an Exception view for these exceptions
     """
-    # if exception was not generated from pychron. This should obviate the subsequent if statements
-    tb = traceback.extract_tb(tb)
-    sep = os.path.sep
-    if '{}pychron{}'.format(sep, sep) not in tb[0][0] and '{}pychron{}'.format(sep, sep) not in tb[-1][0]:
-        print('ignore exception')
-        return True
 
     if exctype in (RuntimeError, KeyboardInterrupt):
         return True
 
-    return str(value) in ("'NoneType' object has no attribute 'text'",
+    ret = str(value) in ("'NoneType' object has no attribute 'text'",
                           "'NoneType' object has no attribute 'size'",
                           "too many indices for array",
                           "unsupported operand type(s) for +=: 'NoneType' and 'list'")
+
+    if not ret:
+        # if exception was not generated from pychron. This should obviate the subsequent if statements
+        sep = os.path.sep
+        tb = traceback.extract_tb(tb)
+        for ti in tb:
+            if '{}pychron{}'.format(sep, sep) in ti[0]:
+                break
+        else:
+            ret = True
+
+    return ret
 
 
 def except_handler(exctype, value, tb):

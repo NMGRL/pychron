@@ -15,7 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str, Bool, Float, Property, Enum, Range
+from enable.markers import MarkerTrait
+from traits.api import Str, Bool, Float, Property, Enum, Range, Int
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -26,6 +27,8 @@ from pychron.pychron_constants import FIT_ERROR_TYPES, ELLIPSE_KINDS, FONTS, SIZ
 
 
 class IsochronOptions(AgeOptions):
+    age_sig_figs = Int(2)
+    yintercept_sig_figs = Int(2)
 
     def initialize(self):
         self.subview_names = [MAIN, APPEARANCE, GROUPS]
@@ -67,6 +70,14 @@ class InverseIsochronOptions(IsochronOptions):
     info_fontsize = Enum(*SIZES)
 
     results_info_spacing = Range(2, 20)
+
+    include_4036_mse = Bool
+    include_age_mse = Bool
+    include_error_envelope = Bool(True)
+    include_percent_error = Bool
+
+    marker_size = Float(2)
+    marker = MarkerTrait()
 
     def _get_results_font(self):
         return '{} {}'.format(self.results_fontname, self.results_fontsize)

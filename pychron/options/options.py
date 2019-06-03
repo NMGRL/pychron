@@ -15,17 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
-
 import os
 
 import yaml
+from chaco.axis import DEFAULT_TICK_FORMATTER
+from chaco.axis_view import float_or_auto
 from enable.markers import marker_names
 from traits.api import HasTraits, Str, Int, Bool, Float, Property, Enum, List, Range, \
     Color, Button, Instance
 from traitsui.api import View, Item, HGroup, VGroup, EnumEditor, Spring, Group, \
-    spring, UItem, ListEditor, InstanceEditor, CheckListEditor
+    spring, UItem, ListEditor, InstanceEditor, CheckListEditor, TextEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.handler import Controller
 from traitsui.table_column import ObjectColumn
@@ -33,6 +32,7 @@ from traitsui.table_column import ObjectColumn
 from pychron.core.helpers.color_generators import colornames
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.helpers.iterfuncs import groupby_group_id
+from pychron.core.pychron_traits import BorderHGroup, BorderVGroup
 from pychron.core.ui.table_editor import myTableEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.aux_plot import AuxPlot
@@ -68,14 +68,16 @@ class TitleSubOptions(SubOptions):
         return v
 
     def _get_title_group(self):
-        title_grp = HGroup(Item('auto_generate_title',
-                                tooltip='Auto generate a title based on the analysis list'),
-                           Item('title', springy=False,
-                                enabled_when='not auto_generate_title',
-                                tooltip='User specified plot title'),
-                           icon_button_editor('edit_title_format_button', 'cog',
-                                              enabled_when='auto_generate_title'),
-                           label='Title', show_border=True)
+        a = HGroup(UItem('title_fontname'), UItem('title_fontsize'))
+        b = HGroup(Item('auto_generate_title',
+                        tooltip='Auto generate a title based on the analysis list'),
+                   Item('title', springy=False,
+                        enabled_when='not auto_generate_title',
+                        tooltip='User specified plot title'),
+                   icon_button_editor('edit_title_format_button', 'cog',
+                                      enabled_when='auto_generate_title'))
+
+        title_grp = BorderVGroup(a, b, label='Title')
         return title_grp
 
 
@@ -94,17 +96,11 @@ class GroupSubOptions(SubOptions):
 
 
 class AppearanceSubOptions(SubOptions):
-    def _get_layout_group(self):
-        # rc_grp = VGroup(HGroup(Item('object.layout.rows',
-        #                             enabled_when='object.layout.row_enabled'),
-        #                        Item('object.layout.columns',
-        #                             enabled_when='object.layout.column_enabled'
-        #                             ),
-        #                        Item('object.layout.fixed')),
-        #                 label='Layout', show_border=True)
-        # return rc_grp
-        return VGroup(UItem('layout', style='custom'))
+    def _get_nominal_group(self):
+        return HGroup(self._get_bg_group(), self._get_grid_group())
 
+    def _get_layout_group(self):
+        return VGroup(UItem('layout', style='custom'))
 
     def _get_xfont_group(self):
         v = VGroup(self._create_axis_group('x', 'title'),
@@ -189,10 +185,19 @@ class MainOptions(SubOptions):
 
         return cols
 
+    def _get_yticks_grp(self):
+        g = BorderHGroup(Item('use_sparse_yticks', label='Sparse'),
+                         Item('sparse_yticks_step', label='Step', enabled_when='use_sparse_yticks'),
+                         Item('ytick_interval', label='Interval',
+                              editor=TextEditor(evaluate=float_or_auto)),
+                         label='Y Ticks'),
+        return g
+
     def _get_edit_view(self):
         v = View(VGroup(HGroup(Item('name', editor=EnumEditor(name='names')),
                                Item('scale', editor=EnumEditor(values=['linear', 'log']))),
                         Item('height'),
+                        self._get_yticks_grp(),
                         HGroup(UItem('marker', editor=EnumEditor(values=marker_names)),
                                Item('marker_size', label='Size'),
                                show_border=True, label='Marker'),
@@ -240,6 +245,19 @@ class BaseOptions(HasTraits):
     _main_options_klass = MainOptions
     subview_names = List(transient=True)
 
+    _subview_cache = None
+
+    def get_cached_subview(self, name):
+        if self._subview_cache is None:
+            self._subview_cache = {}
+
+        try:
+            return self._subview_cache[name]
+        except KeyError:
+            v = self.get_subview(name)
+            self._subview_cache[name] = v
+            return v
+
     def to_dict(self):
         keys = [trait for trait in self.traits() if
                 not trait.startswith('trait') and not trait.endswith('button') and self.to_dict_test(trait)]
@@ -265,6 +283,12 @@ class BaseOptions(HasTraits):
 
             self._load_factory_defaults(yd)
 
+    def setup(self):
+        pass
+
+    def setup_groups(self):
+        pass
+
     def initialize(self):
         pass
 
@@ -278,7 +302,6 @@ class BaseOptions(HasTraits):
         pass
 
     def _fontname_changed(self):
-        print('setting font name', self.fontname)
         self._set_fonts(self.fontname)
         for attr in self.traits():
             if attr.endswith('_fontname'):
@@ -331,6 +354,9 @@ class FigureOptions(BaseOptions):
     title_delimiter = Str(',')
     title_leading_text = Str
     title_trailing_text = Str
+    title_font = Property
+    title_fontsize = Enum(*SIZES)
+    title_fontname = Enum(*FONTS)
     edit_title_format_button = Button
 
     use_xgrid = Bool(True)
@@ -340,6 +366,8 @@ class FigureOptions(BaseOptions):
     xtick_fontname = Enum(*FONTS)
     xtick_in = Int(1)
     xtick_out = Int(5)
+    xtick_label_formatter = Property
+    xtick_label_format_str = Str
 
     xtitle_font = Property
     xtitle_fontsize = Enum(*SIZES)
@@ -350,6 +378,8 @@ class FigureOptions(BaseOptions):
     ytick_fontname = Enum(*FONTS)
     ytick_in = Int(1)
     ytick_out = Int(5)
+    ytick_label_formatter = Property
+    ytick_label_format_str = Str
 
     ytitle_font = Property
     ytitle_fontsize = Enum(*SIZES)
@@ -370,11 +400,19 @@ class FigureOptions(BaseOptions):
 
     omit_by_tag = Bool(True)
 
-    def initialize(self):
-        if not self.groups:
-            self.groups = self._groups_default()
+    # def initialize(self):
+    #     if not self.groups:
+    #         self.groups = self._groups_default()
+    def setup(self):
+        if self.group_options_klass:
+            if len(self.groups) < len(colornames):
+                start = len(self.groups)
+                new_groups = [self.group_options_klass(color=ci,
+                                                       line_color=ci,
+                                                       group_id=start+i) for i, ci in enumerate(colornames[start:])]
+                self.groups.extend(new_groups)
 
-    def paddings(self):
+    def get_paddings(self):
         return self.padding_left, self.padding_right, self.padding_top, self.padding_bottom
 
     def get_group_colors(self):
@@ -465,6 +503,15 @@ class FigureOptions(BaseOptions):
     # ===============================================================================
     # property get/set
     # ===============================================================================
+    def _get_xtick_label_formatter(self):
+        return self._get_tick_label_formatter(self.xtick_label_format_str)
+
+    def _get_ytick_label_formatter(self):
+        return self._get_tick_label_formatter(self.ytick_label_format_str)
+
+    def _get_title_font(self):
+        return self._get_font('title', default_size=12)
+
     def _get_xtick_font(self):
         return self._get_font('xtick', default_size=10)
 
@@ -476,6 +523,17 @@ class FigureOptions(BaseOptions):
 
     def _get_ytitle_font(self):
         return self._get_font('ytitle', default_size=12)
+
+    def _get_tick_label_formatter(self, f):
+        func = DEFAULT_TICK_FORMATTER
+
+        if f.isdigit():
+            f = '{{:0.{}f}}'.format(f)
+
+            def func(x):
+                return f.format(x)
+
+        return func
 
     def _get_font(self, name, default_size=10):
         xn = getattr(self, '{}_fontname'.format(name))
@@ -497,6 +555,9 @@ class FigureOptions(BaseOptions):
             return str(self.xpad) if self.xpad_as_percent else self.xpad
 
 
+NAUX_PLOTS = 15
+
+
 class AuxPlotFigureOptions(FigureOptions):
     aux_plots = List
     aux_plot_klass = AuxPlot
@@ -505,6 +566,28 @@ class AuxPlotFigureOptions(FigureOptions):
     error_info_font = Property
     error_info_fontname = Enum(*FONTS)
     error_info_fontsize = Enum(*SIZES)
+    naux_plots = Int(15)
+
+    x_end_caps = Bool(False)
+    y_end_caps = Bool(False)
+    error_bar_nsigma = Enum(1, 2, 3)
+
+    def setup(self):
+        super(AuxPlotFigureOptions, self).setup()
+        while len(self.aux_plots) > self.naux_plots:
+
+            p = next((pp for pp in self.aux_plots if not pp.name or not pp.plot_enabled), None)
+            if not p:
+                break
+
+            self.aux_plots.remove(p)
+
+        while 1:
+            if len(self.aux_plots) >= self.naux_plots:
+                break
+
+            aux = self.aux_plot_klass()
+            self.aux_plots.append(aux)
 
     def add_aux_plot(self, name, i=0, **kw):
         plt = self.aux_plot_klass(name=name, **kw)
@@ -530,7 +613,7 @@ class AuxPlotFigureOptions(FigureOptions):
         return '{} {}'.format(self.error_info_fontname, self.error_info_fontsize)
 
     def _aux_plots_default(self):
-        return [self.aux_plot_klass() for _ in range(12)]
+        return [self.aux_plot_klass() for _ in range(NAUX_PLOTS)]
 
 
 class AgeOptions(AuxPlotFigureOptions, JErrorMixin):
@@ -569,7 +652,5 @@ class AgeOptions(AuxPlotFigureOptions, JErrorMixin):
 
     def _get_label_font(self):
         return '{} {}'.format(self.label_fontname, self.label_fontsize)
-
-
 
 # ============= EOF =============================================

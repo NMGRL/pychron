@@ -61,6 +61,12 @@ class ExperimentEditorHandler(TabularEditorHandler):
     def toggle_skip(self, info, obj):
         obj.toggle_skip()
 
+    def randomize_all(self, info, obj):
+        obj.randomize_all()
+
+    def randomize_unknowns(self, info, obj):
+        obj.randomize_unknowns()
+
     def show_summary(self, info, obj):
         obj.show_summary()
 
@@ -75,6 +81,9 @@ class ExperimentEditorHandler(TabularEditorHandler):
 
     def show_evolutions_w_eq(self, info, obj):
         obj.show_evolutions(show_equilibration=True)
+
+    def configure_table(self, info, obj):
+        info.ui.context['editor'].show_table_configurer()
 
     def __getattr__(self, item):
         if item.startswith('show_evolution_'):
@@ -122,6 +131,11 @@ class ExperimentEditor(BaseTraitsEditor):
         self.queue.refresh_table_needed = True
 
     def setup_tabular_adapters(self, c, ec, colors, use_atype_colors, atype_colors):
+        if c is None:
+            c = 'white'
+        if ec is None:
+            ec = 'white'
+
         self.bgcolor = c
         self.tabular_adapter = self.tabular_adapter_klass()
         self.executed_tabular_adapter = self.executed_tabular_adapter_klass()
@@ -217,7 +231,7 @@ class ExperimentEditor(BaseTraitsEditor):
         """ Use the model object for the Traits UI context, if appropriate.
         """
         if self.queue:
-            return {'object': self.queue}
+            return {'object': self.queue, 'editor': self}
         return super(ExperimentEditor, self).trait_context()
 
     # ===============================================================================

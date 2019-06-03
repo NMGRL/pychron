@@ -33,6 +33,7 @@ class AutomatedRunAnalysisView(MainView):
 
     def load(self, automated_run):
         isotope_group = automated_run.isotope_group
+        self.experiment_type = automated_run.experiment_type
 
         self.isotopes = isotope_group.sorted_values()
         self._load_hook(automated_run, isotope_group)

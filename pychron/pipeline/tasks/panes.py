@@ -67,7 +67,7 @@ class PipelineHandlerMeta(MetaHasTraits):
         klass = MetaHasTraits.__new__(cls, *args, **kwargs)
         for t in ('review', 'pdf_figure', 'iso_evo_persist', 'data', 'filter', 'mswd_filter', 'ideogram', 'spectrum',
                   'series', 'isotope_evolution', 'blanks', 'detector_ic', 'flux', 'find_blanks', 'find_airs',
-                  'icfactor', 'push', 'inverse_isochron',
+                  'icfactor', 'push', 'audit', 'inverse_isochron',
                   'grouping', 'graph_grouping', 'subgrouping',
                   'set_interpreted_age', 'interpreted_ages'):
             name = 'add_{}'.format(t)
@@ -162,33 +162,43 @@ class PipelinePane(TraitsDockPane):
                                *actions)
 
         def add_menu_factory():
+            fig_menu = MenuManager(Action(name='Add Inverse Isochron',
+                                          action='add_inverse_isochron'),
+                                   Action(name='Add Ideogram',
+                                          action='add_ideogram'),
+                                   Action(name='Add Spectrum',
+                                          action='add_spectrum'),
+                                   Action(name='Add Series',
+                                          action='add_series'),
+                                   name='Figure',
+                                   )
+            grp_menu = MenuManager(Action(name='Add Grouping',
+                                          action='add_grouping'),
+                                   Action(name='Add Graph Grouping',
+                                          action='add_graph_grouping'),
+                                   Action(name='Add SubGrouping',
+                                          action='add_subgrouping'), name='Grouping')
+            filter_menu = MenuManager(Action(name='Add Filter',
+                                             action='add_filter'),
+                                      Action(name='Add MSWD Filter',
+                                             action='add_mswd_filter'),
+                                      name='Filter')
+
             return MenuManager(Action(name='Add Unknowns',
                                       action='add_data'),
                                Action(name='Add Interpreted Ages',
                                       action='add_interpreted_ages'),
-                               Action(name='Add Grouping',
-                                      action='add_grouping'),
-                               Action(name='Add Graph Grouping',
-                                      action='add_graph_grouping'),
-                               Action(name='Add SubGrouping',
-                                      action='add_subgrouping'),
-                               Action(name='Add Filter',
-                                      action='add_filter'),
-                               Action(name='Add MSWD Filter',
-                                      action='add_mswd_filter'),
-                               Action(name='Add Inverse Isochron',
-                                      action='add_inverse_isochron'),
-                               Action(name='Add Ideogram',
-                                      action='add_ideogram'),
-                               Action(name='Add Spectrum',
-                                      action='add_spectrum'),
-                               Action(name='Add Series',
-                                      action='add_series'),
+                               grp_menu,
+                               filter_menu,
+                               fig_menu,
                                Action(name='Add Set IA',
                                       action='add_set_interpreted_age'),
                                Action(name='Add Review',
                                       action='add_review'),
+                               Action(name='Add Audit',
+                                      action='add_audit'),
                                Action(name='Add Push'),
+
                                name='Add')
 
         def fit_menu_factory():
@@ -308,6 +318,7 @@ class PipelinePane(TraitsDockPane):
         teditor = TreeEditor(nodes=tnodes,
                              editable=False,
                              selected='selected_pipeline_template',
+                             dclick='dclicked_pipeline_template',
                              hide_root=True,
                              lines_mode='off')
 
@@ -357,6 +368,7 @@ class UnknownsAdapter(BaseAnalysesAdapter):
                    ('Run ID', 'record_id'),
                    ('Aliquot', 'aliquot'),
                    ('Step', 'step'),
+                   ('UUID', 'display_uuid'),
                    ('Sample', 'sample'),
                    ('Project', 'project'),
                    ('RepositoryID', 'repository_identifier'),
@@ -406,11 +418,11 @@ class UnknownsAdapter(BaseAnalysesAdapter):
                            grp)
 
     def _get_f_text(self):
-        r = floatfmt(self.item.F, n=4)
+        r = floatfmt(self.item.f, n=4)
         return r
 
     def _get_f_error_text(self):
-        r = floatfmt(self.item.F_err, n=4)
+        r = floatfmt(self.item.f_err, n=4)
         return r
 
     def _get_j_text(self):
@@ -461,6 +473,8 @@ class ReferencesAdapter(BaseAnalysesAdapter):
 
     all_columns = [('RunDate', 'rundate'),
                    ('Run ID', 'record_id'),
+                   ('Aliquot', 'aliquot'),
+                   ('UUID', 'display_uuid'),
                    ('Sample', 'sample'),
                    ('Project', 'project'),
                    ('RepositoryID', 'repository_identifier'),

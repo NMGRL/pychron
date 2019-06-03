@@ -40,10 +40,12 @@ class MeanRegressor(BaseRegressor):
             # prevent infinite recursion
             self.calculate_filtered_data()
 
-    def calculate_outliers(self, nsigma=2):
+    def calculate_outliers(self):
+        nsigma = self.filter_outliers_dict.get('std_devs', 2)
         res = abs(self.ys - self.mean)
         s = self.std
-        return where(res > (s * nsigma))[0]
+        self.filter_bound_value = s * nsigma
+        return where(res >= (s * nsigma))[0]
 
     def _calculate_coefficients(self):
         ys = self.clean_ys
@@ -156,7 +158,7 @@ sem={}
 
         if error_calc == SEM:
             e = self.sem
-        elif error_calc == MSEM:
+        elif error_calc in (MSEM, 'MSEM', 'msem'):
             e = self.sem * (self.mswd ** 0.5 if self.mswd > 1 else 1)
         else:
             e = self.std

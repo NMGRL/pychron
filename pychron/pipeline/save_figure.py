@@ -17,17 +17,19 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
+
+from six.moves import range
 from traits.api import HasTraits, Button, Instance
 from traitsui.api import View, Item, UItem, VGroup, InstanceEditor, Tabbed
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pdf.options import PDFLayoutView
 from pychron.core.pdf.save_pdf_dialog import FigurePDFOptions
 from pychron.core.save_model import SaveModel, SaveController
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.paths import paths
-from six.moves import range
 
 
 class SaveFigureModel(SaveModel):
@@ -63,11 +65,9 @@ class SaveFigureView(SaveController):
                                      editor=InstanceEditor(view=PDFLayoutView)),
                                label='Layout')
 
-        v = View(Tabbed(path_group, options_group),
-                 buttons=['OK', 'Cancel'],
-                 title='Save PDF Dialog',
-                 width=700,
-                 kind='livemodal')
+        v = okcancel_view(Tabbed(path_group, options_group),
+                          title='Save PDF Dialog',
+                          width=700)
         return v
 
 

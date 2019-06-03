@@ -29,8 +29,9 @@ from reportlab.platypus.frames import Frame
 from six.moves import range
 from traits.api import Bool
 from traits.api import Color as TraitsColor
-from traitsui.api import View, Item, VGroup
+from traitsui.api import Item, VGroup
 
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pdf.base_table_pdf_writer import BasePDFTableWriter
 # from chaco.pdf_graphics_context import PdfPlotGraphicsContext
 # ============= local library imports  ==========================
@@ -79,10 +80,9 @@ class LoadingPDFOptions(BasePDFOptions):
                           enabled_when='not show_colors'),
                      Item('alternating_background',
                           enabled_when='use_alternating_background'))
-        v = View(VGroup(layout_grp,
-                        grp),
-                 title='Configure PDF',
-                 kind='livemodal', buttons=['OK', 'Cancel'])
+        v = okcancel_view(VGroup(layout_grp,
+                                 grp),
+                          title='Configure PDF')
         return v
 
 

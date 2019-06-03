@@ -14,15 +14,16 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
-from traits.api import Any, Int, Str, Event
+import time
+
 # ============= standard library imports ========================
-from pyface.qt.QtCore import QTimer, SIGNAL
+from pyface.qt.QtCore import QTimer
+# ============= enthought library imports =======================
+from traits.api import Any, Int, Str, Event
+
 # ============= local library imports  ==========================
 from .stage_component_editor import _LaserComponentEditor, LaserComponentEditor
-import time
+
 
 class _VideoComponentEditor(_LaserComponentEditor):
     """
@@ -58,8 +59,8 @@ class _VideoComponentEditor(_LaserComponentEditor):
 
     # def _update_fps(self):
     #     pass
-        # if self.value.fps:
-        #     self.playTimer.setInterval(1000 / float(self.value.fps))
+    # if self.value.fps:
+    #     self.playTimer.setInterval(1000 / float(self.value.fps))
 
     def _get_interval(self):
         if self.value.fps:
@@ -83,7 +84,7 @@ class _VideoComponentEditor(_LaserComponentEditor):
             # print et
             #  = time.time()
             # self.value.invalidate_and_redraw()
-            QTimer.singleShot(max(1, self._get_interval()-et), lambda: self.update(pt))
+            QTimer.singleShot(max(1, self._get_interval() - et), lambda: self.update(pt))
 
     def _stop_timer_fired(self):
         print('VideoComponentEditor stopping playTimer')

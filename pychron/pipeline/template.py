@@ -21,8 +21,9 @@ import os
 import yaml
 from pyface.message_dialog import warning
 from traits.api import HasTraits, List, Str, Enum
-from traitsui.api import View, UItem
+from traitsui.api import UItem
 
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.strings import PascalCase
 from pychron.paths import paths
 from pychron.pipeline.nodes import MassSpecReducedNode
@@ -55,11 +56,9 @@ class PipelineTemplateSaveView(HasTraits):
             return os.path.join(root, self.name)
 
     def traits_view(self):
-        v = View(UItem('name'),
-                 UItem('group'),
-                 kind='livemodal', title='New Template Name',
-                 resizable=True,
-                 buttons=['OK', 'Cancel'])
+        v = okcancel_view(UItem('name'),
+                          UItem('group'),
+                          title='New Template Name')
         return v
 
 
@@ -73,7 +72,6 @@ class PipelineTemplateRoot(HasTraits):
             group = None
 
         for gi in self.groups:
-            print(name, group, gi.name)
             if group is None or group == gi.name:
                 for t in gi.templates:
                     if t.name == name:
@@ -124,7 +122,6 @@ class PipelineTemplate(HasTraits):
             exclude_klass = []
 
         for i, ni in enumerate(nodes):
-            # print i, ni
             klass = ni['klass']
             if klass in exclude_klass:
                 continue
@@ -173,9 +170,6 @@ class PipelineTemplate(HasTraits):
             node.trait_set(recaller=recaller)
             if isinstance(node, MassSpecReducedNode):
                 node.trait_set(dvc=dvc)
-        # elif isinstance(node, GeochronNode):
-        #     service = application.get_service('pychron.geochron.geochron_service.GeochronService')
-        #     node.trait_set(service=service)
         elif isinstance(node, EmailNode):
             emailer = application.get_service('pychron.social.email.emailer.Emailer')
             if emailer is None:

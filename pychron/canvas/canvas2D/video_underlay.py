@@ -35,29 +35,22 @@ class VideoUnderlay(AbstractOverlay):
             returns  ndarray
     """
     video = Any
+    _cached_image = None
 
     def overlay(self, component, gc, *args, **kw):
         """
         """
-        with gc:
-            gc.clip_to_rect(component.x, component.y,
-                            component.width, component.height)
-            gc.translate_ctm(component.x, component.y)
 
-            if self.video:
-                # img = self.video.get_image_data(size=(int(component.height),
-                #                                       int(component.width)))
+        if self.video:
+            with gc:
                 img = self.video.get_image_data()
                 if img is not None:
-
-                    # if len(img.shape) == 2:
-                    #     scalar = 255./self.video.pixel_depth
-                    #     img = gray2rgb(img*scalar)
-
+                    x, y, w, h = component.x, component.y, component.width, component.height
+                    gc.clip_to_rect(x, y, w, h)
+                    gc.translate_ctm(x, y)
                     try:
-                        img = asarray(resize(img, (int(component.height), int(component.width))),
-                                      dtype=uint8)
-                        gc.draw_image(img)
+                        gc.draw_image(asarray(resize(img, (int(h), int(w)), preserve_range=True),
+                                              dtype=uint8))
                     except IndexError:
                         pass
 

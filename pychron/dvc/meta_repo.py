@@ -21,21 +21,24 @@ from datetime import datetime
 from traits.api import Bool
 from uncertainties import ufloat
 
-from pychron.canvas.utils import iter_geom
 from pychron.core.helpers.datetime_tools import ISO_FORMAT_STR
 from pychron.core.helpers.filetools import glob_list_directory, add_extension, \
     list_directory
 from pychron.dvc import dvc_dump, dvc_load, repository_path, list_frozen_productions
-from pychron.dvc.meta_object import IrradiationHolder, Chronology, Production, cached, Gains, LoadHolder
+from pychron.dvc.meta_object import IrradiationGeometry, Chronology, Production, cached, Gains, LoadGeometry
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths, r_mkdir
 from pychron.pychron_constants import INTERFERENCE_KEYS, RATIO_KEYS, DEFAULT_MONITOR_NAME, DATE_FORMAT, NULL_STR
 
 
-def irradiation_holder_holes(name):
+def irradiation_geometry(name):
     p = os.path.join(paths.meta_root, 'irradiation_holders', add_extension(name))
-    holder = IrradiationHolder(p)
-    return holder.holes
+    return IrradiationGeometry(p)
+
+
+def irradiation_geometry_holes(name):
+    geom = irradiation_geometry(name)
+    return geom.holes
 
 
 def irradiation_chronology(name):
@@ -262,21 +265,46 @@ class MetaRepo(GitRepoManager):
         if add:
             self.add(p, commit=False)
 
-    def add_irradiation_holder(self, name, blob, commit=False, overwrite=False, add=True):
+    def add_irradiation_geometry_file(self, path):
+
+        try:
+            holder = IrradiationGeometry(path)
+            if not holder.holes:
+                raise BaseException
+        except BaseException:
+            self.warning_dialog('Invalid Irradiation Geometry file. Failed to import')
+            return
+
+        self.smart_pull()
         root = os.path.join(paths.meta_root, 'irradiation_holders')
         if not os.path.isdir(root):
             os.mkdir(root)
-        p = os.path.join(root, add_extension(name))
 
-        if not os.path.isfile(p) or overwrite:
-            with open(p, 'w') as wfile:
-                holes = list(iter_geom(blob))
-                n = len(holes)
-                wfile.write('{},0.0175\n'.format(n))
-                for idx, (x, y, r) in holes:
-                    wfile.write('{:0.4f},{:0.4f},{:0.4f}\n'.format(x, y, r))
-            if add:
-                self.add(p, commit=commit)
+        name = os.path.basename(path)
+        dest = os.path.join(root, name)
+        shutil.copyfile(path, dest)
+        self.add(dest, commit=False)
+        self.commit('added irradiation geometry file {}'.format(name))
+
+        self.push()
+        self.information_dialog('Irradiation Geometry "{}" added'.format(name))
+
+        # p = os.path.join(root, add_extension(name))
+    # def add_irradiation_holder(self, name, blob, commit=False, overwrite=False, add=True):
+    #     root = os.path.join(paths.meta_root, 'irradiation_holders')
+    #     if not os.path.isdir(root):
+    #         os.mkdir(root)
+    #     p = os.path.join(root, add_extension(name))
+    #
+    #     if not os.path.isfile(p) or overwrite:
+    #         with open(p, 'w') as wfile:
+    #             holes = list(iter_geom(blob))
+    #             n = len(holes)
+    #             wfile.write('{},0.0175\n'.format(n))
+    #             for idx, (x, y, r) in holes:
+    #                 wfile.write('{:0.4f},{:0.4f},{:0.4f}\n'.format(x, y, r))
+    #         if add:
+    #             self.add(p, commit=commit)
 
     def get_load_holders(self):
         p = os.path.join(paths.meta_root, 'load_holders')
@@ -370,7 +398,7 @@ class MetaRepo(GitRepoManager):
                 'options': options,
                 'analyses': [{'uuid': ai.uuid,
                               'record_id': ai.record_id,
-                              'status': ai.is_omitted()}
+                              'is_omitted': ai.is_omitted()}
                              for ai in analyses]}
         if positions:
             added = any((ji['position'] == pos for ji in positions))
@@ -525,16 +553,21 @@ class MetaRepo(GitRepoManager):
 
     # @cached('clear_cache')
     def get_chronology(self, name, **kw):
-        return irradiation_chronology(name)
+
+        chron = irradiation_chronology(name)
+
+        chron.use_irradiation_endtime = self.application.get_boolean_preference(
+            'pychron.arar.constants.use_irradiation_endtime', False)
+        return chron
 
     @cached('clear_cache')
     def get_irradiation_holder_holes(self, name, **kw):
-        return irradiation_holder_holes(name)
+        return irradiation_geometry_holes(name)
 
     @cached('clear_cache')
     def get_load_holder_holes(self, name, **kw):
         p = os.path.join(paths.meta_root, 'load_holders', add_extension(name))
-        holder = LoadHolder(p)
+        holder = LoadGeometry(p)
         return holder.holes
 
     @property

@@ -38,7 +38,7 @@ from pychron.pychron_constants import PLUSMINUS_NSIGMA, NULL_STR, DESCENDING, PL
 
 def format_mswd(t):
     m, v, _ = t
-    return 'mswd={}{:0.3f}'.format('' if v else '*', m)
+    return 'MSWD={}{:0.3f}'.format('' if v else '*', m)
 
 
 class XLSXAnalysisTableWriter(BaseTableWriter):
@@ -136,55 +136,62 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         ubit = name in ('Unknowns', 'Monitor')
         bkbit = ubit and options.include_blanks
         ibit = options.include_intercepts
+        icbit = options.include_icfactors
+        dbit = options.include_discrimination
 
         kcabit = ubit and options.include_kca
         age_units = '({})'.format(options.age_units)
         age_func = age_value(options.age_units)
 
-        columns = [Column(attr='status', width=2),
-                   Column(label='N', attr='aliquot_step_str'),
-                   Column(label='Tag', attr='tag'),
-                   Column(enabled=ubit, label='Power', units=options.power_units, attr='extract_value'),
-                   Column(enabled=ubit, label='Age', units=age_units, attr='age', func=age_func),
-                   EColumn(enabled=ubit, units=age_units, attr='age_err_wo_j', func=age_func,
+        columns = [Column(attr='status', width=2, enabled=options.status_enabled),
+                   Column(label='N', attr='aliquot_step_str', enabled=options.analysis_label_enabled),
+                   Column(label='Tag', attr='tag', enabled=options.tag_enabled),
+                   Column(visible=ubit, label='Power', units=options.power_units, attr='extract_value'),
+                   Column(visible=ubit, label='Age', units=age_units, attr='age', func=age_func),
+                   EColumn(visible=ubit, units=age_units, attr='age_err_wo_j', func=age_func,
                            sigformat='age'),
-                   VColumn(enabled=kcabit, label='K/Ca', attr='kca'),
-                   EColumn(enabled=ubit, attr='kca'),
-                   VColumn(enabled=ubit and options.include_percent_ar39,
+                   VColumn(visible=kcabit, label='K/Ca', attr='kca'),
+                   EColumn(visible=ubit, attr='kca'),
+                   VColumn(visible=ubit and options.include_percent_ar39,
                            label=('Cum. %', '<sup>39</sup>', 'Ar'),
                            units='(%)', attr='cumulative_ar39'),
-                   VColumn(enabled=ubit and options.include_radiogenic_yield,
+                   VColumn(visible=ubit and options.include_radiogenic_yield,
                            label=('%', '<sup>40</sup>', 'Ar'),
-                           units='(%)', attr='rad40_percent'),
-                   VColumn(enabled=ubit and options.include_F,
+                           units='(%)', attr='radiogenic_yield'),
+                   VColumn(visible=ubit and options.include_F,
                            label=('<sup>40</sup>', 'Ar*/', '<sup>39</sup>', 'Ar', '<sub>K</sub>'),
                            attr='uF'),
-                   VColumn(enabled=ubit and options.include_k2o,
+                   VColumn(visible=ubit and options.include_k2o,
                            label=('K', '<sub>2</sub>', 'O'),
                            sigformat='k2o',
                            units='(wt. %)', attr='display_k2o'),
-                   VColumn(enabled=options.include_sensitivity,
+                   VColumn(visible=options.include_sensitivity,
                            label='Sensitivity',
                            units=options.sensitivity_units,
                            attr='sensitivity',
                            use_scientific=True,
                            sigformat='sens'),
 
-                   VColumn(enabled=ubit and options.include_isochron_ratios,
+                   VColumn(visible=ubit and options.include_isochron_ratios,
                            label=('<sup>39</sup>', 'Ar/', '<sup>40</sup>', 'Ar'),
                            attr='isochron3940'),
-                   VColumn(enabled=ubit and options.include_isochron_ratios,
+                   EColumn(visible=ubit and options.include_isochron_ratios,
+                           attr='isochron3940'),
+                   VColumn(visible=ubit and options.include_isochron_ratios,
                            label=('<sup>36</sup>', 'Ar/', '<sup>40</sup>', 'Ar'),
-                           attr='isochron3640')]
+                           attr='isochron3640'),
+                   EColumn(visible=ubit and options.include_isochron_ratios,
+                           attr='isochron3640'),
+                   ]
 
         # setup formats
-        sigfigs = ('age', 'kca', 'rad40_percent', 'cumulative_ar39', 'uF')
+        sigfigs = ('age', 'kca', 'radiogenic_yield', 'cumulative_ar39', 'uF')
         for c in columns:
             if c.attr in sigfigs:
                 c.sigformat = c.attr
 
         self._signal_columns(columns, ibit, bkbit)
-        self._intercalibration_columns(columns, detectors)
+        self._intercalibration_columns(columns, detectors, ic_visible=icbit, disc_visible=dbit)
         self._run_columns(columns, ubit)
         self._flux_columns(columns)
 
@@ -192,7 +199,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             pr = self._get_irradiation_columns(ubit)
             columns.extend(pr)
         else:
-            irr = [Column(enabled=ubit, label='Irradiation', attr='irradiation_label')]
+            irr = [Column(visible=ubit, label='Irradiation', attr='irradiation_label')]
             columns.extend(irr)
 
         for c in columns:
@@ -204,13 +211,18 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
                 c.nsigfigs = sg
 
+        # remove non enabled columns
+        columns = [c for c in columns if c.enabled]
+
         return columns
 
     def _flux_columns(self, columns):
-        columns.extend([Column(enabled=False, label='LambdaK', attr='lambda_k', func=value),
-                        Column(enabled=False, label='MonitorAge', attr='monitor_age'),
-                        Column(enabled=False, label='MonitorName', attr='monitor_name'),
-                        Column(enabled=False, label='MonitorMaterial', attr='monitor_material')])
+        options = self._options
+        columns.extend([Column(visible=options.include_lambda_k, label='LambdaK', attr='lambda_k', func=value),
+                        Column(visible=options.include_monitor_age, label='MonitorAge', attr='monitor_age'),
+                        Column(visible=options.include_monitor_name, label='MonitorName', attr='monitor_name'),
+                        Column(visible=options.include_monitor_material, label='MonitorMaterial',
+                               attr='monitor_material')])
 
     def _run_columns(self, columns, ubit):
         options = self._options
@@ -219,41 +231,47 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         # datefmt = fmt.set_num_format('mm/dd/yy hh:mm')
         # dfmt = self._get_number_format('decay')
 
-        columns.extend([Column(enabled=options.include_rundate,
+        columns.extend([Column(visible=options.include_rundate,
                                label='RunDate', attr='rundate',
                                width=15,
                                fformat=[('set_num_format', ('mm/dd/yy hh:mm',))]),
-                        Column(enabled=options.include_time_delta,
+                        Column(visible=options.include_time_delta,
                                label=(u'\u0394t', '<sup>3</sup>'),
                                units='(days)',
                                attr='decay_days'),
-                        VColumn(enabled=ubit, label='J', attr='j', sigformat='j'),
-                        EColumn(enabled=ubit, attr='j'),
-                        VColumn(enabled=ubit, label=('<sup>39</sup>', 'Ar Decay'),
+                        VColumn(visible=ubit, label='J', attr='j', sigformat='j'),
+                        EColumn(visible=ubit, attr='j'),
+                        VColumn(visible=ubit, label=('<sup>39</sup>', 'Ar Decay'),
                                 attr='ar39decayfactor', sigformat='decay'),
-                        VColumn(enabled=ubit, label=('<sup>37</sup>', 'Ar Decay'),
+                        VColumn(visible=ubit, label=('<sup>37</sup>', 'Ar Decay'),
                                 attr='ar37decayfactor', sigformat='decay')])
 
-    def _intercalibration_columns(self, columns, detectors):
-        disc = [VColumn(label='Disc', attr='discrimination', sigformat='disc'),
-                EColumn(attr='discrimination', sigformat='disc')]
+    def _intercalibration_columns(self, columns, detectors, ic_visible=True, disc_visible=True):
+        disc = [VColumn(label='Disc', attr='discrimination', sigformat='disc',
+                        visible=disc_visible),
+                EColumn(attr='discrimination', sigformat='disc',
+                        visible=disc_visible)]
         columns.extend(disc)
 
         for det in detectors:
             tag = '{}_ic_factor'.format(det)
-            columns.extend([Column(label=('IC', '<sup>{}</sup>'.format(det)), attr=tag, func=icf_value, sigformat='ic'),
-                            EColumn(attr=tag, func=icf_error, sigformat='ic')])
+            columns.extend([Column(label=('IC', '<sup>{}</sup>'.format(det)),
+                                   visible=ic_visible,
+                                   attr=tag, func=icf_value, sigformat='ic'),
+                            EColumn(attr=tag,
+                                    visible=ic_visible,
+                                    func=icf_error, sigformat='ic')])
 
     def _signal_columns(self, columns, ibit, bkbit):
         isos = (('Ar', 40), ('Ar', 39), ('Ar', 38), ('Ar', 37), ('Ar', 36))
         for bit, tag in ((True, 'disc_ic_corrected'), (ibit, 'intercept'), (bkbit, 'blank')):
             cols = [c for iso, mass in isos
-                    for c in (Column(enabled=bit, attr='{}{}'.format(iso, mass),
+                    for c in (Column(visible=bit, attr='{}{}'.format(iso, mass),
                                      label=('<sup>{}</sup>'.format(mass), iso),
-                                     units='(fA)',
+                                     units='({})'.format(self._options.intensity_units),
                                      func=iso_value(tag),
                                      sigformat='signal'),
-                              EColumn(enabled=bit,
+                              EColumn(visible=bit,
                                       attr='{}{}'.format(iso, mass),
                                       func=iso_value(tag, ve='error'),
                                       sigformat='signal'))]
@@ -280,32 +298,32 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                    Column(label='Tag', attr='tag'),
 
                    Column(label='N', attr='aliquot_step_str'),
-                   Column(enabled=ubit, label='Power',
+                   Column(visible=ubit, label='Power',
                           units=options.power_units,
                           attr='extract_value'),
 
-                   Column(enabled=ubit, label='Age', units=age_units, attr='age', func=age_func),
-                   EColumn(enabled=ubit, units=age_units, attr='age_err_wo_j', func=age_func),
-                   VColumn(enabled=kcabit, label='K/Ca', attr='kca'),
-                   EColumn(enabled=ubit, attr='kca'),
-                   VColumn(enabled=ubit and options.include_radiogenic_yield,
+                   Column(visible=ubit, label='Age', units=age_units, attr='age', func=age_func),
+                   EColumn(visible=ubit, units=age_units, attr='age_err_wo_j', func=age_func),
+                   VColumn(visible=kcabit, label='K/Ca', attr='kca'),
+                   EColumn(visible=ubit, attr='kca'),
+                   VColumn(visible=ubit and options.include_radiogenic_yield,
                            label=('%', '<sup>40</sup>', 'Ar'),
-                           units='(%)', attr='rad40_percent'),
-                   VColumn(enabled=ubit and options.include_F,
+                           units='(%)', attr='radiogenic_yield'),
+                   VColumn(visible=ubit and options.include_F,
                            label=('<sup>40</sup>', 'Ar*/', '<sup>39</sup>', 'Ar', '<sub>K</sub>'),
                            attr='uF'),
-                   VColumn(enabled=ubit and options.include_k2o,
+                   VColumn(visible=ubit and options.include_k2o,
                            label=('K', '<sub>2</sub>', 'O'),
                            units='(wt. %)',
                            attr='k2o'),
-                   VColumn(enabled=options.include_sensitivity,
+                   VColumn(visible=options.include_sensitivity,
                            label='Sensitivity',
                            units=options.sensitivity_units,
                            attr='sensitivity'),
-                   VColumn(enabled=ubit and options.include_isochron_ratios,
+                   VColumn(visible=ubit and options.include_isochron_ratios,
                            label=('<sup>39</sup>', 'Ar/', '<sup>40</sup>', 'Ar'),
                            attr='isochron3940'),
-                   VColumn(enabled=ubit and options.include_isochron_ratios,
+                   VColumn(visible=ubit and options.include_isochron_ratios,
                            label=('<sup>36</sup>', 'Ar/', '<sup>40</sup>', 'Ar'),
                            attr='isochron3640')]
 
@@ -317,7 +335,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             pr = self._get_irradiation_columns(ubit)
             columns.extend(pr)
         else:
-            c = Column(enabled=ubit, label='Irradiation', attr='irradiation_label')
+            c = Column(visible=ubit, label='Irradiation', attr='irradiation_label')
             columns.append(c)
 
         return columns
@@ -348,7 +366,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                      EColumn(attr='Cl_K', sigformat=fmt)])
 
         for c in cols:
-            c.enabled = ubit
+            c.visible = ubit
             if isinstance(c, EColumn):
                 c.func = correction_value(ve='error')
             else:
@@ -359,6 +377,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
     def _get_summary_columns(self):
         opt = self._options
 
+        age_units = '({})'.format(opt.age_units)
+
         def get_kca(ag, *args):
             pv = ag.get_preferred_obj('kca')
             return pv.value
@@ -366,55 +386,51 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         def get_kca_error(ag, *args):
             pv = ag.get_preferred_obj('kca')
             return pv.error * opt.summary_kca_nsigma
-            # return std_dev(ag.get_weighted_mean('kca')) * opt.summary_kca_nsigma
 
         def get_preferred_age_kind(ag, *args):
             pv = ag.get_preferred_obj('age')
-            # _, label = ag.get_age()
-            # ret = label.capitalize()
             return pv.computed_kind.capitalize()
 
         def get_preferred_age(ag, *args):
             pv = ag.get_preferred_obj('age')
-            # a, _ = ag.get_age()
-            return pv.value
+            return ag.scaled_age(pv.value, opt.age_units)
 
         def get_preferred_age_error(ag, *args):
             pv = ag.get_preferred_obj('age')
-            # a, _ = ag.get_age()
-            return pv.error * opt.summary_age_nsigma
+            return ag.scaled_age(pv.error, opt.age_units) * opt.summary_age_nsigma
 
-        age_units = '({})'.format(opt.age_units)
+        def get_plateau_ar39(ag, *args):
+            return ag.plateau_total_ar39()
 
-        cols = [Column(enabled=opt.include_summary_sample, label='Sample', attr='sample'),
-                Column(enabled=opt.include_summary_identifier, label='Identifier', attr='identifier'),
-                Column(enabled=opt.include_summary_unit, label='Unit', attr='unit'),
-                Column(enabled=opt.include_summary_location, label='Location', attr='location'),
-                Column(enabled=opt.include_summary_irradiation, label='Irradiation', attr='irradiation_label'),
-                Column(enabled=opt.include_summary_material, label='Material', attr='material'),
+        cols = [Column(visible=opt.include_summary_sample, label='Sample', attr='sample'),
+                Column(visible=opt.include_summary_identifier, label='Identifier', attr='identifier'),
+                Column(visible=opt.include_summary_unit, label='Unit', attr='unit'),
+                Column(visible=opt.include_summary_location, label='Location', attr='location'),
+                Column(visible=opt.include_summary_irradiation, label='Irradiation', attr='irradiation_label'),
+                Column(visible=opt.include_summary_material, label='Material', attr='material'),
 
-                Column(enabled=opt.include_summary_age, label='Age Type', func=get_preferred_age_kind),
+                Column(visible=opt.include_summary_age, label='Age Type', func=get_preferred_age_kind),
 
-                Column(enabled=opt.include_summary_n, label='N', attr='nratio'),
-                Column(enabled=opt.include_summary_percent_ar39, label=('%', '<sup>39</sup>', 'Ar'),
-                       attr='percent_39Ar'),
-                Column(enabled=opt.include_summary_mswd, label='MSWD', attr='mswd'),
-                Column(enabled=opt.include_summary_kca, label='K/Ca', attr='weighted_kca', func=get_kca),
+                Column(visible=opt.include_summary_n, label='N', attr='nratio'),
+                Column(visible=opt.include_summary_percent_ar39, label=('%', '<sup>39</sup>', 'Ar'),
+                       func=get_plateau_ar39),
+                Column(visible=opt.include_summary_mswd, label='MSWD', attr='mswd'),
+                Column(visible=opt.include_summary_kca, label='K/Ca',
+                       func=get_kca),
 
-                Column(enabled=opt.include_summary_kca,
+                Column(visible=opt.include_summary_kca,
                        label=PLUSMINUS_NSIGMA.format(opt.summary_kca_nsigma),
-                       attr='weighted_kca',
                        func=get_kca_error),
 
-                Column(enabled=opt.include_summary_age,
+                Column(visible=opt.include_summary_age,
                        label='Age {}'.format(age_units),
                        func=get_preferred_age),
 
-                Column(enabled=opt.include_summary_age,
+                Column(visible=opt.include_summary_age,
                        label=PLUSMINUS_NSIGMA.format(opt.summary_age_nsigma),
                        func=get_preferred_age_error),
 
-                Column(enabled=opt.include_summary_comments, label='Comments', attr='comments'),
+                Column(visible=opt.include_summary_comments, label='Comments', attr='comments'),
 
                 # Hidden Cols
                 VColumn(label='WeightedMeanAge', attr='weighted_age'),
@@ -423,6 +439,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 EColumn(attr='arith_age'),
                 VColumn(label='IsochronAge', attr='isochron_age'),
                 EColumn(attr='isochron_age'),
+                VColumn(label='Isochron4036', attr='isochron_4036'),
+                EColumn(attr='isochron_4036'),
                 VColumn(label='PlateauAge', attr='plateau_age'),
                 VColumn(attr='plateau_age'),
                 VColumn(label='IntegratedAge', attr='integrated_age'),
@@ -451,7 +469,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         self._format_generic_worksheet(sh)
 
         cols = self._get_summary_columns()
-        cols = [c for c in cols if c.enabled]
+        cols = [c for c in cols if c.visible]
         self._make_title(sh, 'Summary', cols)
 
         fmt = self._workbook.add_format({'bottom': 1, 'align': 'center'})
@@ -475,12 +493,10 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         self._write_header(sh, cols, include_units=False)
         center = self._workbook.add_format({'align': 'center'})
         for ug in unks:
-            ug.set_temporary_age_units(self._options.age_units)
             for i, ci in enumerate(cols):
                 txt = self._get_txt(ug, ci)
                 sh.write(self._current_row, i, txt, center)
             self._current_row += 1
-            ug.set_temporary_age_units(None)
 
         self._make_notes(None, sh, len(cols), 'summary')
 
@@ -552,7 +568,6 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 continue
 
             group.set_j_error(options.include_j_position_error, options.include_j_error_in_mean)
-            group.set_temporary_age_units(options.age_units)
             self._make_meta(worksheet, group)
             if repeat_header or i == 0:
                 self._make_column_header(worksheet, cols, i)
@@ -568,7 +583,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
                     for ii, item in enumerate(items):
                         # ounits = item.arar_constants.age_units
-                        item.arar_constants.age_units = options.age_units
+
                         is_plateau_step = None
                         if label == 'plateau':
                             is_plateau_step = a.get_is_plateau_step(ii)
@@ -584,9 +599,13 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                     pv = group.get_preferred_obj('age')
                     label = pv.computed_kind.lower()
                     is_plateau_step = None
+                    cum = ''
                     if label == 'plateau':
                         is_plateau_step = group.get_is_plateau_step(j)
-                    self._make_analysis(worksheet, cols, a, is_last=j == n - 1, is_plateau_step=is_plateau_step)
+                        cum = group.cumulative_ar39(j)
+                    self._make_analysis(worksheet, cols, a,
+                                        cum=cum,
+                                        is_last=j == n - 1, is_plateau_step=is_plateau_step)
 
             if nsubgroups == 1 and isinstance(a, InterpretedAgeGroup):
                 ngroups.append(a)
@@ -596,7 +615,6 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 self._make_summary(worksheet, cols, group)
 
             self._current_row += 1
-            group.set_temporary_age_units(None)
 
         self._make_notes(groups, worksheet, len(cols), name)
         self._current_row = 1
@@ -644,7 +662,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
     def _hide_columns(self, sh, cols):
         for i, c in enumerate(cols):
-            if not c.enabled:
+            if not c.visible:
                 sh.set_column(i, i, options={'hidden': True})
 
     def _make_title(self, sh, name, cols):
@@ -655,10 +673,11 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
         fmt = self._workbook.add_format({'font_size': 14, 'bold': True,
                                          'bottom': 6 if not title else 0})
-        sh.write_rich_string(self._current_row, 0, 'Table X. {}'.format(name), fmt)
+
+        sh.write_string(self._current_row, 0, 'Table X. {}'.format(name), fmt)
         if title:
             self._current_row += 1
-            sh.write_rich_string(self._current_row, 0, title)
+            sh.write_string(self._current_row, 0, title)
 
         for i in range(1, len(cols)):
             sh.write_blank(self._current_row, i, '', cell_format=fmt)
@@ -709,29 +728,35 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                         args.append(center)
                     else:
                         args.append(border)
-                    sh.write_rich_string(row, i, *args)
+
+                    # sh.write_rich_string(row, i, *args)
+                    try:
+                        sh.write_string(row, i, *args)
+                    except TypeError:
+                        sh.write_rich_string(row, i, *args)
+
                 else:
                     if use_border:
                         # border.set_align('center')
-                        sh.write_rich_string(row, i, ci, border)
+                        sh.write_string(row, i, ci, border)
                     else:
-                        sh.write_rich_string(row, i, ci, center)
+                        sh.write_string(row, i, ci, center)
             self._current_row += 1
 
     def _make_meta(self, sh, group):
         fmt = self._bold
         row = self._current_row
-        sh.write_rich_string(row, 1, 'Sample:', fmt)
-        sh.write_rich_string(row, 2, group.sample, fmt)
+        sh.write_string(row, 1, 'Sample:', fmt)
+        sh.write_string(row, 2, group.sample, fmt)
 
-        sh.write_rich_string(row, 5, 'Identifier:', fmt)
-        sh.write_rich_string(row, 6, group.identifier, fmt)
+        sh.write_string(row, 5, 'Identifier:', fmt)
+        sh.write_string(row, 6, group.identifier, fmt)
 
         self._current_row += 1
 
         row = self._current_row
-        sh.write_rich_string(row, 1, 'Material:', fmt)
-        sh.write_rich_string(row, 2, group.material, fmt)
+        sh.write_string(row, 1, 'Material:', fmt)
+        sh.write_string(row, 2, group.material, fmt)
 
         self._current_row += 1
 
@@ -755,7 +780,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
         startcol = 1
         sh.write(row, startcol, '{:02n}'.format(ag.aliquot), fmt2)
-        sh.write_rich_string(row, startcol + 1, label, fmt2)
+        sh.write_string(row, startcol + 1, label, fmt2)
         cols[startcol + 1].calculate_width(label)
 
         age = ag.uage
@@ -807,6 +832,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         return fn
 
     def _make_analysis(self, sh, cols, item, is_last=False, is_plateau_step=None, cum=''):
+        # item.arar_constants.age_units = self._options.age_units
+
         row = self._current_row
 
         fmt = self._workbook.add_format()
@@ -868,13 +895,13 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             else:
                 label = kind.capitalize()
 
-            sh.write_rich_string(self._current_row, start_col,
-                                 u'{} K/Ca {}'.format(label, pmsigma),
-                                 fmt)
+            sh.write_string(self._current_row, start_col,
+                            u'{} K/Ca {}'.format(label, pmsigma),
+                            fmt)
 
             sh.write_number(self._current_row, idx, pv.value, nfmt)
             sh.write_number(self._current_row, idx + 1, pv.error * nsigma, nfmt)
-            sh.write_rich_string(self._current_row, idx + 2, pv.error_kind, fmt)
+            sh.write_string(self._current_row, idx + 2, pv.error_kind, fmt)
             self._current_row += 1
 
         nfmt = self._get_number_format('summary_age')
@@ -888,20 +915,21 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
         # a, label = group.get_age()
         # label = label.capitalize()
-        age = group.get_preferred_obj('age')
+        ageobj = group.get_preferred_obj('age')
+        age = group.scaled_age(ageobj.uvalue, self._options.age_units)
 
-        sh.write_rich_string(self._current_row, start_col, u'{} Age {}'.format(age.computed_kind.capitalize(), pmsigma),
-                             fmt)
-        sh.write_number(self._current_row, idx, age.value, nfmt)
-        sh.write_number(self._current_row, idx + 1, age.error * nsigma, nfmt)
+        sh.write_string(self._current_row, start_col, u'{} Age {}'.format(ageobj.computed_kind.capitalize(), pmsigma),
+                        fmt)
+        sh.write_number(self._current_row, idx, nominal_value(age), nfmt)
+        sh.write_number(self._current_row, idx + 1, std_dev(age) * nsigma, nfmt)
 
-        sh.write_rich_string(self._current_row, idx + 2, 'n={}/{}'.format(group.nanalyses,
-                                                                          group.total_n), fmt)
+        sh.write_string(self._current_row, idx + 2, 'n={}/{}'.format(group.nanalyses,
+                                                                     group.total_n), fmt)
 
         mt = group.get_preferred_mswd_tuple()
-        sh.write_rich_string(self._current_row, idx + 3, format_mswd(mt), fmt)
+        sh.write_string(self._current_row, idx + 3, format_mswd(mt), fmt)
 
-        if age.computed_kind == 'Plateau':
+        if ageobj.computed_kind == 'Plateau':
             if self._options.include_plateau_age and hasattr(group, 'plateau_age'):
                 sh.write(self._current_row, idx + 4, 'steps {}'.format(group.plateau_steps_str), fmt)
 
@@ -911,9 +939,11 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             self._current_row += 1
 
         if self._options.include_integrated_age and group.integrated_enabled:
-            sh.write_rich_string(self._current_row, start_col, u'Total Integrated Age {}'.format(pmsigma), fmt)
-            sh.write_number(self._current_row, idx, nominal_value(group.integrated_age), nfmt)
-            sh.write_number(self._current_row, idx + 1, std_dev(group.integrated_age) * nsigma, nfmt)
+            integrated_age = group.scaled_age(group.integrated_age, self._options.age_units)
+
+            sh.write_string(self._current_row, start_col, u'Total Integrated Age {}'.format(pmsigma), fmt)
+            sh.write_number(self._current_row, idx, nominal_value(integrated_age), nfmt)
+            sh.write_number(self._current_row, idx + 1, std_dev(integrated_age) * nsigma, nfmt)
 
             # write total k2o
             v = floatfmt(nominal_value(group.total_k2o), k2o_col.nsigfigs)
@@ -922,20 +952,21 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             self._current_row += 1
 
         if self._options.include_isochron_age:
-            sh.write_rich_string(self._current_row, start_col, u'Isochron Age {}'.format(pmsigma),
-                                 fmt)
-            iage = group.isochron_age
+            sh.write_string(self._current_row, start_col, u'Isochron Age {}'.format(pmsigma),
+                            fmt)
+
+            iage = group.scaled_age(group.isochron_age, self._options.age_units)
             sh.write_number(self._current_row, idx, nominal_value(iage), nfmt)
             sh.write_number(self._current_row, idx + 1, std_dev(iage) * nsigma, nfmt)
 
             mt = group.isochron_mswd()
             try:
-                trapped = 1/group.isochron_4036
+                trapped = group.isochron_4036
                 trapped_value, trapped_error = nominal_value(trapped), std_dev(trapped)
             except ZeroDivisionError:
                 trapped_value, trapped_error = 'NaN', 'NaN'
 
-            sh.write_rich_string(self._current_row, idx + 3, format_mswd(mt), fmt)
+            sh.write_string(self._current_row, idx + 3, format_mswd(mt), fmt)
             sh.write_rich_string(self._current_row, idx + 4,
                                  '(', self._superscript, '40',
                                  'Ar/',
@@ -944,17 +975,18 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             self._current_row += 1
 
     def _make_notes(self, groups, sh, ncols, name):
-        top = self._workbook.add_format({'top': 1})
-        sh.write_rich_string(self._current_row, 0, self._bold, 'Notes:', top)
+        top = self._workbook.add_format({'top': 1, 'bold': True})
+
+        sh.write_string(self._current_row, 0, 'Notes:', top)
         for i in range(1, ncols):
-            sh.write_blank(self._current_row, i, 'Notes:', cell_format=top)
+            sh.write_blank(self._current_row, i, '', cell_format=top)
         self._current_row += 1
 
         func = getattr(self, '_make_{}_notes'.format(name.lower()))
         func(groups, sh)
 
         for i in range(0, ncols):
-            sh.write_blank(self._current_row, i, 'Notes:', cell_format=top)
+            sh.write_blank(self._current_row, i, '', cell_format=top)
 
     def _make_summary_notes(self, groups, sh):
         notes = six.text_type(self._options.summary_notes)
@@ -1024,8 +1056,11 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         for line in notes.splitlines():
             line = interpolate_noteline(line, self._superscript, self._subscript,
                                         self._ital, self._bold)
+            try:
+                sh.write_string(self._current_row, 0, *line)
+            except TypeError:
+                sh.write_rich_string(self._current_row, 0, *line)
 
-            sh.write_rich_string(self._current_row, 0, *line)
             self._current_row += 1
 
     def _get_names_units(self, cols):
@@ -1125,7 +1160,7 @@ if __name__ == '__main__':
             self.interference_corrections = {}
             self.production_ratios = {'Ca_K': 1.312}
             self.uF = ufloat(frand(10, 10), frand(10))
-            self.rad40_percent = frand(3, 100)
+            self.radiogenic_yield = frand(3, 100)
             self.rundate = datetime.now()
             self.decay_days = frand(2, 200)
             self.k2o = frand(2)

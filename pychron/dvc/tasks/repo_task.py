@@ -34,7 +34,7 @@ from pychron.dvc import repository_path
 from pychron.dvc.tasks import list_local_repos
 from pychron.dvc.tasks.actions import CloneAction, AddBranchAction, CheckoutBranchAction, PushAction, PullAction, \
     FindChangesAction, LoadOriginAction, DeleteLocalChangesAction, ArchiveRepositoryAction, SyncSampleInfoAction, \
-    SyncRepoAction, RepoStatusAction, BookmarkAction, RebaseAction
+    SyncRepoAction, RepoStatusAction, BookmarkAction, RebaseAction, DeleteChangesAction
 from pychron.dvc.tasks.panes import RepoCentralPane, SelectionPane
 from pychron.envisage.tasks.base_task import BaseTask
 # from pychron.git_archive.history import from_gitlog
@@ -74,11 +74,12 @@ class RepoItem(HasTraits):
 
 
 class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
-    name = 'Experiment Repositories'
+    name = 'Repositories'
 
     filter_repository_value = Str
     filter_origin_value = Str
     selected_repository = Instance(RepoItem)
+    ncommits = Int(50, enter_set=True, auto_set=False)
 
     selected_local_repositories = List
     selected_local_repository_name = Property(depends_on='selected_local_repositories')#Instance(RepoItem)
@@ -97,6 +98,7 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
                           FindChangesAction(),
                           DeleteLocalChangesAction(),
                           ArchiveRepositoryAction(),
+                          DeleteChangesAction(),
                           RepoStatusAction(),
                           BookmarkAction()),
                  SToolBar(SyncSampleInfoAction())]
@@ -314,6 +316,14 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
                 else:
                     self.warning_dialog('A name is required to add a bookmark. Please try again')
 
+    def delete_commits(self):
+        selected = self._has_selected_local()
+        if selected and self.selected_commit:
+            hexsha = self.selected_commit.hexsha
+            msg = 'Are you sure you want to permanently delete your changes in "{}"'.format(selected.name)
+            if self.confirmation_dialog(msg):
+                self._repo.delete_commits(hexsha)
+
     # task
     def create_central_pane(self):
         return RepoCentralPane(model=self)
@@ -381,11 +391,17 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
                 self._refresh_branches()
                 self._refresh_tags()
 
-    def _branch_changed(self, new):
+    def _get_commits(self, new):
         if new:
-            self.commits = get_commits(self._repo.active_repo, new, None, '', limit=50)
+            self.commits = get_commits(self._repo.active_repo, new, None, '', limit=self.ncommits)
         else:
             self.commits = []
+
+    def _ncommits_changed(self):
+        self._get_commits(self.branch)
+
+    def _branch_changed(self, new):
+        self._get_commits(new)
 
     def _origin_column_clicked_changed(self, event):
         self._column_clicked_handled(event)

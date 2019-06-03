@@ -18,9 +18,10 @@ import os
 
 import apptools.sweet_pickle as pickle
 from traits.api import Str, List, Button, Instance, Tuple, Property, cached_property
-from traitsui.api import Controller, View, Item
+from traitsui.api import Controller, Item
 
 from pychron.core.helpers.filetools import glob_list_directory
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.file_defaults import SPECTRUM_PRESENTATION, RADIAL_SCREEN, REGRESSION_SERIES_SCREEN, \
     DEFINE_EQUILIBRATION_SCREEN
 from pychron.file_defaults import SPECTRUM_SCREEN, IDEOGRAM_SCREEN, IDEOGRAM_PRESENTATION, SERIES_SCREEN, BLANKS_SCREEN, \
@@ -29,6 +30,7 @@ from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.mdd.tasks.mdd_figure import MDDFigureOptions
 from pychron.options.blanks import BlanksOptions
+from pychron.options.composite import CompositeOptions
 from pychron.options.define_equilibration import DefineEquilibrationOptions
 from pychron.options.flux import FluxOptions, VerticalFluxOptions, FluxVisualizationOptions
 from pychron.options.icfactor import ICFactorOptions
@@ -250,6 +252,8 @@ class OptionsManager(Loggable):
                 obj = self.options_klass()
 
             obj.initialize()
+            obj.setup()
+
             obj.name = new
             self.subview_names = obj.subview_names
             self.selected_options = obj
@@ -392,6 +396,11 @@ class MDDFigureOptionsManager(FigureOptionsManager):
     options_klass = MDDFigureOptions
 
 
+class CompositeOptionsManager(FigureOptionsManager):
+    id = 'composite'
+    options_klass = CompositeOptions
+
+
 class OptionsController(Controller):
     delete_options = Button
     add_options = Button
@@ -407,10 +416,8 @@ class OptionsController(Controller):
         self.model.delete_selected()
 
     def controller_add_options_changed(self, info):
-        info = self.edit_traits(view=View(Item('new_name', label='Name'),
-                                          title='New Options',
-                                          kind='livemodal',
-                                          buttons=['OK', 'Cancel']))
+        info = self.edit_traits(view=okcancel_view(Item('new_name', label='Name'),
+                                                   title='New Options'))
         if info.result:
             self.model.add(self.model.new_name)
 
@@ -418,10 +425,8 @@ class OptionsController(Controller):
         self.model.save()
 
     def controller_save_as_options_changed(self, info):
-        info = self.edit_traits(view=View(Item('new_name', label='Name'),
-                                          title='New Options',
-                                          kind='livemodal',
-                                          buttons=['OK', 'Cancel']))
+        info = self.edit_traits(view=okcancel_view(Item('new_name', label='Name'),
+                                                   title='New Options'))
         if info.result:
             self.model.save_selected_as()
 

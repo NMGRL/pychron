@@ -86,7 +86,8 @@ def compress_groups(items):
 
 
 def subgrouping_key(x):
-    return x.subgroup['name'] if x.subgroup else ''
+    if hasattr(x, 'subgroup'):
+        return x.subgroup['name'] if x.subgroup else ''
 
 
 def make_interpreted_age_group(ans, gid):

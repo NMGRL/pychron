@@ -15,10 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 import six
-from pyface.qt import QtGui, QtCore
+from pyface.qt import QtGui
 from pyface.qt.QtGui import QCompleter, QSizePolicy, QComboBox, QHBoxLayout, QPushButton, QWidget
 from traits.api import Str, Bool, Event, List
 from traits.trait_errors import TraitError
@@ -78,20 +76,23 @@ class _ComboboxEditor(SimpleEditor):
 
         control.addItems(self.names)
 
-        QtCore.QObject.connect(control,
-                               QtCore.SIGNAL('currentIndexChanged(QString)'),
-                               self.update_object)
+        # QtCore.QObject.connect(control,
+        #                        QtCore.SIGNAL('currentIndexChanged(QString)'),
+        #                        self.update_object)
+        control.currentIndexChanged[str].connect(self.update_object)
 
         if self.factory.evaluate is not None:
             control.setEditable(True)
             if self.factory.auto_set:
-                QtCore.QObject.connect(control,
-                                       QtCore.SIGNAL('editTextChanged(QString)'),
-                                       self.update_text_object)
+                control.editTextChanged.connect(self.update_text_object)
+                # QtCore.QObject.connect(control,
+                #                        QtCore.SIGNAL('editTextChanged(QString)'),
+                #                        self.update_text_object)
             else:
-                QtCore.QObject.connect(control.lineEdit(),
-                                       QtCore.SIGNAL('editingFinished()'),
-                                       self.update_autoset_text_object)
+                control.lineEdit().editingFinished().connect(self.update_text_object)
+                # QtCore.QObject.connect(control.lineEdit(),
+                #                        QtCore.SIGNAL('editingFinished()'),
+                #                        self.update_autoset_text_object)
             control.setInsertPolicy(QtGui.QComboBox.NoInsert)
 
         # self._no_enum_update = 0

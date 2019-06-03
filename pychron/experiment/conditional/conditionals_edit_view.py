@@ -20,12 +20,13 @@ import os
 import yaml
 from pyface.file_dialog import FileDialog
 from traits.api import HasTraits, List, Instance, Str
-from traitsui.api import View, UItem, \
+from traitsui.api import UItem, \
     VGroup, Handler, ListEditor
 from traitsui.menu import Action
 
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import get_path, add_extension
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.envisage.view_util import open_view
 from pychron.experiment.conditional.conditional import ActionConditional, TruncationConditional, \
     CancelationConditional, TerminationConditional, QueueModificationConditional
@@ -104,7 +105,7 @@ class ConditionalsEditView(ConditionalsViewable):
     # pre_run_terminations_group = Any
 
     def __init__(self, detectors=None, *args, **kw):
-        attrs = ['', 'age', 'kca', 'kcl', 'cak', 'clk', 'rad40_percent'] + list(ARGON_KEYS)
+        attrs = ['', 'age', 'kca', 'kcl', 'cak', 'clk', 'radiogenic_yield'] + list(ARGON_KEYS)
 
         ratio_matrix = ['{}/{}'.format(i, j) for i in ARGON_KEYS for j in ARGON_KEYS if i != j]
         attrs.extend(ratio_matrix)
@@ -177,15 +178,14 @@ class ConditionalsEditView(ConditionalsViewable):
                 yaml.dump(d, wfile, default_flow_style=False)
 
     def traits_view(self):
-        v = View(VGroup(self._view_tabs(),
-                        VGroup(UItem('help_str', style='readonly'),
-                               label='Description',
-                               show_border=True)),
-                 width=1200,
-                 resizable=True,
-                 handler=CEHandler(),
-                 buttons=['OK', 'Cancel', Action(name='Save As', action='save_as')],
-                 title=self.title)
+        v = okcancel_view(VGroup(self._view_tabs(),
+                                 VGroup(UItem('help_str', style='readonly'),
+                                        label='Description',
+                                        show_border=True)),
+                          width=1200,
+                          handler=CEHandler(),
+                          buttons=['OK', 'Cancel', Action(name='Save As', action='save_as')],
+                          title=self.title)
 
         return v
 

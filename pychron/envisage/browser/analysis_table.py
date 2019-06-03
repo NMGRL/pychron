@@ -24,6 +24,7 @@ from hashlib import md5
 # ============= enthought library imports =======================
 from operator import attrgetter
 
+from apptools.preferences.preference_binding import bind_preference
 from traits.api import List, Any, Str, Enum, Bool, Event, Property, cached_property, Instance, DelegatesTo, \
     CStr, Int, Button
 
@@ -77,9 +78,11 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
     default_attr = 'identifier'
     dvc = Instance('pychron.dvc.dvc.DVC')
 
+    one_selected_is_all = Bool(True)
+
     def __init__(self, *args, **kw):
         super(AnalysisTable, self).__init__(*args, **kw)
-
+        bind_preference(self, 'one_selected_is_all', 'pychron.browser.one_selected_is_all')
         self._analysis_sets = OrderedDict()
 
     def _sorted_hook(self, vs):
@@ -152,7 +155,7 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
 
         self._analysis_filter_changed(self.analysis_filter)
         self.selected = []
-        
+
     def remove_invalid(self):
         self.oanalyses = [ai for ai in self.oanalyses if ai.tag != 'invalid']
         self._analysis_filter_changed(self.analysis_filter)
@@ -213,6 +216,10 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
     def configure_table(self):
         self.table_configurer.edit_traits(kind='livemodal')
 
+    def remove_others(self):
+        self.set_analyses(self.selected)
+        # self.analyses = self.oanalyses = [self.selected]
+
     def group_selected(self):
         max_gid = max([si.group_id for si in self.analyses]) + 1
         for s in self.get_selected_analyses():
@@ -256,7 +263,7 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
 
     def get_analysis_records(self):
         records = self.selected
-        if not records:
+        if not records or (len(records) == 1 and self.one_selected_is_all):
             records = self.analyses
 
         return records

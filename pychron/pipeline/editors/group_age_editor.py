@@ -93,7 +93,7 @@ class AnalysesAdapter(SubGroupAdapter):
 
     def _get_subgroup_attr(self, attr):
         ret = ''
-        if self.item.subgroup:
+        if hasattr(self.item, 'subgroup') and self.item.subgroup:
             ret = self.item.subgroup[attr]
         return ret
 
@@ -166,13 +166,111 @@ def gchange(obj, gs):
 class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
     help_str = Str('Right-click to subgroup analyses and calculate an age')
     groups = List
-    subgroups = List
     selected_group = List
-    selected_subgroup = List
+
     selected_group_item = Property(depends_on='selected_group')
-    selected_subgroup_item = Property(depends_on='selected_subgroup')
     skip_meaning = Str
     unknowns = List
+
+    def make_groups(self, bind=True):
+        if bind:
+            bind_preference(self, 'skip_meaning', 'pychron.pipeline.skip_meaning')
+
+        gs = []
+        unks = []
+        for gid, ans in groupby_group_id(self.items):
+            ans = list(ans)
+            if self.skip_meaning:
+                if 'Human Table' in self.skip_meaning:
+                    ans = [ai for ai in ans if ai.tag.lower() != 'skip']
+
+            unks.extend(ans)
+            gs.append(make_interpreted_age_group(ans, gid))
+
+        self.groups = gs
+        self.unknowns = unks
+
+    # action handlers
+    def group_selected(self):
+        gid = max({a.group_id for a in self.items}) + 1
+        for a in self.selected:
+            a.group_id = gid
+
+        self.make_groups(False)
+
+    def clear_grouping(self):
+        for a in self.selected:
+            a.group_id = 0
+            a.subgroup = None
+
+        self.make_groups(False)
+
+    # private
+
+    @on_trait_change('selected_group_item:preferred_values:[+]')
+    def _group_change(self, obj, name, old, new):
+        gchange(obj, self.selected_group)
+
+    def _get_selected_group_item(self):
+        if self.selected_group:
+            ret = self.selected_group[0]
+            return ret
+
+    def get_analyses_group(self):
+        agrp = VGroup(
+            # HGroup(UItem('help_str', style='readonly'),
+            #        show_border=True, label='Info'),
+
+            UItem('items',
+                  editor=myTabularEditor(adapter=AnalysesAdapter(),
+                                         # col_widths='col_widths',
+                                         selected='selected',
+                                         multi_select=True,
+                                         auto_update=False,
+                                         refresh='refresh_needed',
+                                         operations=['delete', 'move'],
+                                         column_clicked='column_clicked')),
+            label='Analyses',
+            show_border=True)
+        return agrp
+
+    def get_groups_group(self):
+        ggrp = VGroup(UItem('groups',
+                            height=-100,
+                            style='custom', editor=myTabularEditor(adapter=GroupAdapter(),
+                                                                   multi_select=True,
+                                                                   editable=False,
+                                                                   selected='selected_group')),
+                      UItem('selected_group_item',
+                            style='custom', editor=InstanceEditor(view=View(get_preferred_grp()))),
+                      label='Groups',
+                      show_border=True)
+        return ggrp
+
+    def traits_view(self):
+        agrp = self.get_analyses_group()
+        ggrp = self.get_groups_group()
+        sgrp = VGroup(UItem('subgroups',
+                            height=-100,
+                            editor=myTabularEditor(adapter=SubGroupAdapter(),
+                                                   multi_select=True,
+                                                   editable=False,
+                                                   auto_update=True,
+                                                   selected='selected_subgroup')),
+                      UItem('selected_subgroup_item',
+                            style='custom', editor=InstanceEditor(view=View(get_preferred_grp()))),
+                      label='SubGroups',
+                      show_border=True)
+
+        v = View(VGroup(agrp, ggrp),
+                 handler=THandler())
+        return v
+
+
+class SubGroupAgeEditor(GroupAgeEditor):
+    subgroups = List
+    selected_subgroup = List
+    selected_subgroup_item = Property(depends_on='selected_subgroup')
 
     def make_groups(self, bind=True):
         if bind:
@@ -198,14 +296,6 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
         self.subgroups = sgs
         self.unknowns = unks
 
-    # action handlers
-    def group_selected(self):
-        gid = max({a.group_id for a in self.items}) + 1
-        for a in self.selected:
-            a.group_id = gid
-
-        self.make_groups(False)
-
     def subgroup_selected(self):
         r = self.selected[0]
         gid = r.group_id
@@ -216,50 +306,9 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
 
         self.make_groups(False)
 
-    def clear_grouping(self):
-        for a in self.selected:
-            a.group_id = 0
-            a.subgroup = None
-
-        self.make_groups(False)
-
-    # def group_sd(self):
-    #     self._group_error(SD)
-    #
-    # def group_sem(self):
-    #     self._group_error(SEM)
-    #
-    # def group_msem(self):
-    #     self._group_error(MSEM)
-    #
-    # def group(self, kind: object) -> object:
-    #     self._group(kind)
-    #     self.refresh_needed = True
-
-    # private
     @on_trait_change('selected_subgroup_item:preferred_values:[+]')
     def _group_change(self, obj, name, old, new):
         gchange(obj, self.selected_subgroup)
-
-    @on_trait_change('selected_group_item:preferred_values:[+]')
-    def _group_change(self, obj, name, old, new):
-        gchange(obj, self.selected_group)
-
-    # def _group_error(self, tag):
-    #     if self.selected:
-    #         set_subgrouping_error(tag, self.selected, self.items)
-    #         self.refresh_needed = True
-    #
-    # def _group(self, tag):
-    #     if self.selected:
-    #         d = {'age_kind': tag, 'age_error_kind': MSEM}
-    #         apply_subgrouping(d, self.selected, items=self.items)
-    #         self.refresh_needed = True
-
-    def _get_selected_group_item(self):
-        if self.selected_group:
-            ret = self.selected_group[0]
-            return ret
 
     def _get_selected_subgroup_item(self):
         if self.selected_subgroup:
@@ -267,22 +316,8 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
             return ret
 
     def traits_view(self):
-        agrp = VGroup(
-            # HGroup(UItem('help_str', style='readonly'),
-            #        show_border=True, label='Info'),
-
-            UItem('items',
-                  editor=myTabularEditor(adapter=AnalysesAdapter(),
-                                         # col_widths='col_widths',
-                                         selected='selected',
-                                         multi_select=True,
-                                         auto_update=False,
-                                         refresh='refresh_needed',
-                                         operations=['delete', 'move'],
-                                         column_clicked='column_clicked')),
-            label='Analyses',
-            show_border=True)
-
+        agrp = self.get_analyses_group()
+        ggrp = self.get_groups_group()
         sgrp = VGroup(UItem('subgroups',
                             height=-100,
                             editor=myTabularEditor(adapter=SubGroupAdapter(),
@@ -295,19 +330,7 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
                       label='SubGroups',
                       show_border=True)
 
-        ggrp = VGroup(UItem('groups',
-                            height=-100,
-                            style='custom', editor=myTabularEditor(adapter=GroupAdapter(),
-                                                                   multi_select=True,
-                                                                   editable=False,
-                                                                   selected='selected_group')),
-                      UItem('selected_group_item',
-                            style='custom', editor=InstanceEditor(view=View(get_preferred_grp()))),
-                      label='Groups',
-                      show_border=True)
-
         v = View(VGroup(agrp, sgrp, ggrp),
-
                  handler=THandler())
         return v
 

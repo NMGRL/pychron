@@ -221,7 +221,7 @@ class XMLAnalysis(Analysis):
 
         self.age_err_wo_j = 0
         self.kcl = ufloat(0, 0)
-        self.rad40_percent = ufloat(meas_elem.get('fraction40ArRadiogenic'), 0)
+        self.radiogenic_yield = ufloat(meas_elem.get('fraction40ArRadiogenic'), 0)
 
         self.F_err_wo_irrad = 0
         # self.Ar40/Ar39_decay_corrected=0

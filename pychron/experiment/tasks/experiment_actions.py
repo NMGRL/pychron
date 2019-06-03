@@ -24,6 +24,7 @@ from pychron.core.helpers.filetools import get_path
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import PAction as Action, PTaskAction as TaskAction
 from pychron.envisage.view_util import open_view
+from pychron.experiment.melting_point_calibrator import MeltingPointCalibrator
 from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
 from pychron.globals import globalv
 from pychron.paths import paths
@@ -342,4 +343,17 @@ class ReleaseSpectrometerAction(RunnerAction):
         if runner:
             runner.release(globalv.own_spectrometer)
 
+
+class MeltingPointCalibrationAction(Action):
+    name = 'Melting Point Calibration'
+    dname = 'Melting Point Calibration'
+
+    def perform(self, event):
+        from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
+        app = event.task.window.application
+        spec = app.get_service('pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager')
+        laser = app.get_service(ILaserManager)
+
+        mpc = MeltingPointCalibrator(spectrometer_manager=spec, laser=laser)
+        mpc.edit_traits()
 # ============= EOF ====================================

@@ -105,20 +105,23 @@ class ConnectionMixin(HasTraits):
         mod = __import__(mod, fromlist=[klass])
         return getattr(mod, klass)
 
+    def _test_connection(self, kw):
+        klass = self._get_adapter()
+        db = klass(**kw)
+        self._connected_label = ''
+        if self._test_func:
+            db.test_func = self._test_func
+
+        return db.connect(warn=False)
+
     def _test_connection_button_fired(self):
         kw = self._get_connection_dict()
         self._connected_label = 'Not Connected'
         self._connected_color = 'red'
 
         if kw is not None:
+            c = self._test_connection(kw)
 
-            klass = self._get_adapter()
-            db = klass(**kw)
-            self._connected_label = ''
-            if self._test_func:
-                db.test_func = self._test_func
-
-            c = db.connect(warn=False)
             if c:
                 self._connected_color = 'green'
                 self._connected_label = 'Connected'
@@ -131,7 +134,7 @@ class ConnectionFavoriteItem(HasTraits):
     name = Str
     dbname = Str
     host = HostStr
-    kind = Enum('mysql', 'sqlite', 'mssql', NULL_STR)
+    kind = Enum('mysql', 'sqlite', 'mssql', 'postgres', NULL_STR)
     username = Str
     names = List
     password = Password
@@ -139,9 +142,13 @@ class ConnectionFavoriteItem(HasTraits):
     path = File
     default = Bool
 
-    def __init__(self, schema_identifier='', attrs=None):
+    attributes = ('name', 'kind', 'username', 'host', 'dbname', 'password', 'enabled', 'default', 'path')
+
+    def __init__(self, schema_identifier='', attrs=None, kind=None):
         super(ConnectionFavoriteItem, self).__init__()
         self.schema_identifier = schema_identifier
+        if kind is not None:
+            self.kind = kind
 
         if attrs:
             attrs = attrs.split(',')
@@ -174,12 +181,16 @@ class ConnectionFavoriteItem(HasTraits):
                 self.names = names
 
     def to_string(self):
-        attrs = [getattr(self, attr) for attr in ('name', 'kind', 'username', 'host',
-                                                  'dbname', 'password', 'enabled', 'default', 'path')]
+        attrs = [getattr(self, attr) for attr in self.attributes]
         return to_csv_str(attrs)
 
-        # return ','.join([str(getattr(self, attr)) for attr in ('name', 'kind', 'username', 'host',
-        #                                                        'dbname', 'password', 'enabled', 'default', 'path')])
+    # def to_string(self):
+    #     attrs = [getattr(self, attr) for attr in ('name', 'kind', 'username', 'host',
+    #                                               'dbname', 'password', 'enabled', 'default', 'path')]
+    #     return to_csv_str(attrs)
+
+    # return ','.join([str(getattr(self, attr)) for attr in ('name', 'kind', 'username', 'host',
+    #                                                        'dbname', 'password', 'enabled', 'default', 'path')])
 
     def __repr__(self):
         return self.name
@@ -210,7 +221,6 @@ class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
         return f
 
     def _get_connection_dict(self):
-
         obj = self._selected
         if obj is not None:
             return dict(username=obj.username,
@@ -249,7 +259,7 @@ class ConnectionPreferencesPane(PreferencesPane):
     model_factory = ConnectionPreferences
     category = 'Database'
 
-    def get_fav_group(self, edit_view=None):
+    def get_columns(self):
         cols = [CheckboxColumn(name='enabled'),
                 CheckboxColumn(name='default'),
                 ObjectColumn(name='kind'),
@@ -263,7 +273,23 @@ class ConnectionPreferencesPane(PreferencesPane):
                              label='Database',
                              editor=EnumEditor(name='names')),
                 ObjectColumn(name='path', style='readonly')]
+        return cols
 
+    def get_buttons(self):
+        return HGroup(icon_button_editor('add_favorite', 'database_add',
+                                         tooltip='Add saved connection'),
+                      icon_button_editor('add_favorite_path', 'dbs_sqlite',
+                                         tooltip='Add sqlite database'),
+                      icon_button_editor('delete_favorite', 'delete',
+                                         tooltip='Delete saved connection'),
+                      icon_button_editor('test_connection_button', 'database_connect',
+                                         tooltip='Test connection'),
+                      icon_button_editor('load_names_button', 'arrow_refresh',
+                                         enabled_when='load_names_enabled',
+                                         tooltip='Load available database schemas on the selected server'))
+
+    def get_fav_group(self, edit_view=None):
+        cols = self.get_columns()
         editor = TableEditor(columns=cols,
                              selected='_selected',
                              sortable=False)
@@ -273,26 +299,15 @@ class ConnectionPreferencesPane(PreferencesPane):
         fav_grp = VGroup(UItem('_fav_items',
                                width=100,
                                editor=editor),
-                         HGroup(
-                             icon_button_editor('add_favorite', 'database_add',
-                                                tooltip='Add saved connection'),
-                             icon_button_editor('add_favorite_path', 'dbs_sqlite',
-                                                tooltip='Add sqlite database'),
-                             icon_button_editor('delete_favorite', 'delete',
-                                                tooltip='Delete saved connection'),
-                             icon_button_editor('test_connection_button', 'database_connect',
-                                                tooltip='Test connection'),
-                             icon_button_editor('load_names_button', 'arrow_refresh',
-                                                enabled_when='load_names_enabled',
-                                                tooltip='Load available database schemas on the selected server'),
-                             Spring(width=10, springy=False),
-                             Label('Status:'),
-                             CustomLabel('_connected_label',
-                                         label='Status',
-                                         weight='bold',
-                                         color_name='_connected_color'),
-                             spring,
-                             show_labels=False))
+                         HGroup(self.get_buttons(),
+                                Spring(width=10, springy=False),
+                                Label('Status:'),
+                                CustomLabel('_connected_label',
+                                            label='Status',
+                                            weight='bold',
+                                            color_name='_connected_color'),
+                                spring,
+                                show_labels=False))
         return fav_grp
 
     def traits_view(self):

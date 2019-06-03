@@ -15,39 +15,56 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from traits.api import Instance
+from traits.api import Instance, on_trait_change
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from zobs.options.plotter_options_manager import CompositeOptionsManager
-from pychron.pipeline.plot.models.composite_model import CompositeModel
-from pychron.pipeline.plot.figure_container import FigureContainer
+from pychron.options.options_manager import CompositeOptionsManager
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
+from pychron.pipeline.plot.models.composite_model import CompositeModel
 
 
 class CompositeEditor(FigureEditor):
     plotter_options_manager = Instance(CompositeOptionsManager, ())
+    figure_model_klass = CompositeModel
 
-    def get_component(self, ans, *args, **kw):
-        # if plotter_options is None:
-        # pom = IdeogramOptionsManager()
-        #     plotter_options = pom.plotter_options
+    @on_trait_change('figure_model:panels:figures:recalculate_event')
+    def _handle_recalculate(self, obj, name, old, new):
+        print('recalads')
 
-        model = self.figure_model
-        if not model:
-            model = CompositeModel()
-            # from pychron.processing.plotters.ideogram.ideogram_model import IdeogramModel
-            #
-            # model = IdeogramModel(plot_options=plotter_options,
-            #                       titles=self.titles)
+        for p in self.figure_model.panels:
+            for f in p.figures:
+                if obj != f:
+                    f.replot()
+        # for p in self.figure_model.panels:
+        #     p.make_figures()
 
-        model.trait_set(plot_options=self.plotter_options_manager.plotter_options,
-                        titles=self.titles,
-                        analyses=ans)
+        # self.figure_model.reset_panel_gen()
+        # self.figure_container.model_changed()
 
-        iv = FigureContainer(model=model)
-        component = iv.component
+        # self.figure_model.refresh()
+        # self._get_component_hook()
 
-        return model, component
+    # def get_component(self, ans, *args, **kw):
+    #     # if plotter_options is None:
+    #     # pom = IdeogramOptionsManager()
+    #     #     plotter_options = pom.plotter_options
+    #
+    #     model = self.figure_model
+    #     if not model:
+    #         model = CompositeModel()
+    #         # from pychron.processing.plotters.ideogram.ideogram_model import IdeogramModel
+    #         #
+    #         # model = IdeogramModel(plot_options=plotter_options,
+    #         #                       titles=self.titles)
+    #
+    #     model.trait_set(plot_options=self.plotter_options_manager.plotter_options,
+    #                     titles=self.titles,
+    #                     analyses=ans)
+    #
+    #     iv = FigureContainer(model=model)
+    #     component = iv.component
+    #
+    #     return model, component
 
 # ============= EOF =============================================

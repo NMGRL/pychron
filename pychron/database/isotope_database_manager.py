@@ -18,25 +18,27 @@
 
 from __future__ import absolute_import
 from __future__ import print_function
+
+import weakref
+# ============= standard library imports ========================
+from itertools import groupby
+
+import six
 from apptools.preferences.preference_binding import bind_preference
+from six.moves import map
 from traits.api import Property, Event, \
     cached_property, Any, Int, Str
 from traits.has_traits import provides
 
-# ============= standard library imports ========================
-from itertools import groupby
-import weakref
+from pychron.core.helpers.iterfuncs import partition
 # ============= local library imports  ==========================
 from pychron.core.i_datastore import IDatastore
 from pychron.core.progress import progress_loader, CancelLoadingError
 from pychron.database.adapters.isotope_adapter import IsotopeAdapter
-from pychron.core.helpers.iterfuncs import partition
-from pychron.loggable import Loggable
 from pychron.database.orms.isotope.meas import meas_AnalysisTable
 from pychron.experiment.utilities.identifier import make_runid
+from pychron.loggable import Loggable
 from pychron.processing.analyses.dbanalysis import DBAnalysis
-import six
-from six.moves import map
 
 ANALYSIS_CACHE = {}
 ANALYSIS_CACHE_COUNT = {}
@@ -253,7 +255,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                 if calculate_age:
                     ca.calculate_age()
                 elif calculate_F:
-                    ca.calculate_F()
+                    ca.calculate_f()
 
                 db_ans.append(ca)
         return db_ans, no_db_ans
@@ -518,7 +520,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
 
                 # synced = True
         if calculate_F:
-            ai.calculate_F()
+            ai.calculate_f()
 
         # if not synced:
         #     ai.sync(group, unpack=unpack, load_aux=load_aux)

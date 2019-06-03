@@ -76,8 +76,6 @@ Nodes
 .. autoclass:: pychron.pipeline.nodes.GainCalibrationNode
    :members:
 
-.. autoclass:: pychron.pipeline.nodes.GeochronNode
-   :members:
 
 .. autoclass:: pychron.pipeline.nodes.GroupingNode
    :members:
@@ -86,9 +84,6 @@ Nodes
    :members:
 
 .. autoclass:: pychron.pipeline.nodes.CSVAnalysesExportNode
-   :members:
-
-.. autoclass:: pychron.pipeline.nodes.InterpretedAgeTablePersistNode
    :members:
 
 .. autoclass:: pychron.pipeline.nodes.SetInterpretedAgeNode
@@ -112,16 +107,10 @@ Nodes
 .. autoclass:: pychron.pipeline.nodes.FluxPersistNode
    :members:
 
-.. autoclass:: pychron.pipeline.nodes.XLSXTablePersistNode
-   :members:
-
 .. autoclass:: pychron.pipeline.nodes.PushNode
    :members:
 
 .. autoclass:: pychron.pipeline.nodes.ReviewNode
-   :members:
-
-.. autoclass:: pychron.pipeline.nodes.XLSXAnalysisTableNode
    :members:
 
 .. autoclass:: pychron.pipeline.nodes.InterpretedAgeTableNode

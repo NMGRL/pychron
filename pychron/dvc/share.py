@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 import os
 import re
 import subprocess
@@ -27,6 +26,7 @@ from traitsui.handler import Controller
 from traitsui.table_column import ObjectColumn
 
 from pychron.core.helpers.filetools import ilist_gits
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.github import Organization
 from pychron.paths import paths
 
@@ -104,12 +104,10 @@ class PushExperimentsView(Controller):
                   VGroup(UItem('remote_name', label='Name'),
                          UItem('remote_url', label='URL')))
 
-        v = View(UItem('shareables',
-                       editor=TableEditor(columns=cols,
-                                          edit_view=ev)),
-                 title='Shareable Experiments',
-                 buttons=['OK', 'Cancel'],
-                 resizable=True)
+        v = okcancel_view(UItem('shareables',
+                                editor=TableEditor(columns=cols,
+                                                   edit_view=ev)),
+                          title='Shareable Experiments')
         return v
 
 

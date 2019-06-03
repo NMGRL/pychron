@@ -23,12 +23,15 @@ from pychron.core.pychron_traits import BorderVGroup
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.options import SubOptions, AppearanceSubOptions, GroupSubOptions, checkbox_column, object_column, \
     MainOptions, TitleSubOptions
-from pychron.pychron_constants import MAIN, APPEARANCE
+from pychron.pychron_constants import MAIN, APPEARANCE, FLECK_PLATEAU_DEFINITION, MAHON_PLATEAU_DEFINITION
 
 
 class SpectrumSubOptions(SubOptions):
     def traits_view(self):
-        integrated_grp = VGroup(Item('integrated_age_weighting', label='Integrated Age Weighting'))
+        integrated_grp = BorderVGroup(Item('integrated_age_weighting', label='Weighting'),
+                                      Item('integrated_include_omitted', label='Include Omitted'),
+                                      Item('include_j_error_in_integrated', label='Include J Error'),
+                                      label='Integrated Age')
         iso_grp = BorderVGroup(HGroup(Item('use_isochron_trapped', label='Use Isochron'),
                                       Item('include_isochron_trapped_error'), label='Include Uncertainty'),
                                label='Trapped Ar40/Ar36')
@@ -97,6 +100,7 @@ class DisplaySubOptions(TitleSubOptions):
                                       tooltip='Add the Identifier to the Plateau indicator',
                                       label='Identifier')),
                           Item('plateau_arrow_visible'),
+                          Item('dim_non_plateau', label='Dim Non Plateau'),
                           show_border=True,
                           label='Plateau')
 
@@ -132,12 +136,17 @@ class DisplaySubOptions(TitleSubOptions):
 
 class CalculationSubOptions(SubOptions):
     def traits_view(self):
-        lgrp = VGroup(Item('plateau_method', label='Method'),
+        lgrp = VGroup(Item('plateau_method',
+                           tooltip='Fleck 1977={}\n'
+                                   'Mahon 1996={}'.format(FLECK_PLATEAU_DEFINITION, MAHON_PLATEAU_DEFINITION),
+                           label='Method'),
                       # Item('nsigma'),
                       Item('plateau_age_error_kind',
                            width=-100,
                            label='Error Type'),
-                      Item('include_j_error_in_plateau', label='Include J Error'))
+                      Item('include_j_error_in_plateau',
+                           tooltip='Include J error in plateau age',
+                           label='Include J Error'))
         rgrp = VGroup(Item('extend_plateau_end_caps',
                            label='Extend End Caps'),
                       icon_button_editor('edit_plateau_criteria', 'cog',
@@ -156,9 +165,8 @@ class CalculationSubOptions(SubOptions):
                                        label='N. Sigma')),
                            show_border=True,
                            label='Error Envelope')
-        integrated_grp = VGroup(Item('integrated_age_weighting', label='Integrated Age Weighting'))
 
-        return self._make_view(VGroup(plat_grp, error_grp, integrated_grp))
+        return self._make_view(VGroup(plat_grp, error_grp))
 
 
 class SpectrumMainOptions(MainOptions):
@@ -184,6 +192,7 @@ class SpectrumMainOptions(MainOptions):
         v = View(VGroup(HGroup(Item('name', editor=EnumEditor(name='names')),
                                Item('scale', editor=EnumEditor(values=['linear', 'log']))),
                         Item('height'),
+                        self._get_yticks_grp(),
                         HGroup(Item('ymin', label='Min'),
                                Item('ymax', label='Max'),
                                show_border=True,

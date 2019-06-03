@@ -16,20 +16,21 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import Instance
-from traitsui.api import View, Item, UItem, VGroup, HGroup
-from traitsui.editors import TabularEditor
 
+from traits.api import Instance
+from traitsui.api import Item, UItem, VGroup, HGroup
+from traitsui.editors import TabularEditor
 from traitsui.handler import Controller
 from traitsui.tabular_adapter import TabularAdapter
 
-# ============= standard library imports ========================
-
-# ============= local library imports  ==========================
-
 # ============= EOF =============================================
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.pipeline.tagging.analysis_tags import AnalysisTagModel
 from pychron.pipeline.tagging.data_reduction_tags import DataReductionTagModel, SelectDataReductionTagModel
+
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 class DataReductionItemAdapter(TabularAdapter):
@@ -43,17 +44,14 @@ class SelectDataReductionTagView(Controller):
     model = Instance(SelectDataReductionTagModel)
 
     def traits_view(self):
-        v = View(HGroup(Item('name_filter', label='Name'),
-                        Item('user_filter', label='User')),
-                 UItem('tags',
-                       editor=TabularEditor(adapter=DataReductionItemAdapter(),
-                                            editable=False,
-                                            selected='selected')),
-                 buttons=['OK', 'Cancel'],
-                 width=500,
-                 kind='livemodal',
-                 resizable=True,
-                 title='Select Data Reduction Tag')
+        v = okcancel_view(HGroup(Item('name_filter', label='Name'),
+                                 Item('user_filter', label='User')),
+                          UItem('tags',
+                                editor=TabularEditor(adapter=DataReductionItemAdapter(),
+                                                     editable=False,
+                                                     selected='selected')),
+                          width=500,
+                          title='Select Data Reduction Tag')
         return v
 
 
@@ -74,12 +72,11 @@ class DataReductionTagView(Controller):
         tag = HGroup(Item('tagname', label='Tag'),
                      UItem('edit_comment_button'))
 
-        v = View(VGroup(tag, table),
-                 resizable=True,
-                 width=500,
-                 height=400,
-                 buttons=['OK', 'Cancel'],
-                 kind='livemodal', title='Data Reduction Tagging')
+        v = okcancel_view(VGroup(tag, table),
+                          resizable=True,
+                          width=500,
+                          height=400,
+                          title='Data Reduction Tagging')
         return v
 
 
@@ -90,20 +87,19 @@ class AnalysisTagView(Controller):
         note_grp = VGroup(UItem('note', style='custom'),
                           show_border=True, label='Note')
 
-        v = View(VGroup(Item('tag'),
-                        note_grp,
-                        UItem('items', editor=TabularEditor(adapter=ItemAdapter(),
-                                                            multi_select=True,
-                                                            selected='selected',
-                                                            operations=['delete'])),
-                        HGroup(Item('use_filter', label='Remove "Invalid" analyses from figure'),
-                               defined_when='items')),
-                 resizable=True,
-                 width=500,
-                 height=400,
-                 buttons=['OK', 'Cancel'],
-                 kind='livemodal',
-                 title='Tags')
+        v = okcancel_view(VGroup(Item('tag'),
+                                 note_grp,
+                                 UItem('items', editor=TabularEditor(adapter=ItemAdapter(),
+                                                                     multi_select=True,
+                                                                     selected='selected',
+                                                                     operations=['delete'])),
+                                 HGroup(Item('use_filter', label='Remove "Invalid" analyses from figure'),
+                                        defined_when='items')),
+                          resizable=True,
+                          width=500,
+                          height=400,
+
+                          title='Tags')
 
         return v
 

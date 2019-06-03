@@ -22,11 +22,10 @@ from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter
 # ============= enthought library imports =======================
 from traits.api import Instance, Bool, on_trait_change, Any
 
-from pychron.core.helpers.filetools import list_gits
 from pychron.core.pdf.save_pdf_dialog import save_pdf
 from pychron.dvc import dvc_dump
-from pychron.dvc.dvc import DVCInterpretedAge
 from pychron.dvc.func import repository_has_staged
+from pychron.dvc.util import DVCInterpretedAge
 from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.envisage.browser.recall_editor import RecallEditor
 from pychron.envisage.browser.view import BrowserView, InterpretedAgeBrowserView
@@ -42,10 +41,9 @@ from pychron.pipeline.state import EngineState
 from pychron.pipeline.tasks.actions import RunAction, ResumeAction, ResetAction, \
     ConfigureRecallAction, TagAction, SetInterpretedAgeAction, ClearAction, SavePDFAction, SetInvalidAction, \
     SetFilteringTagAction, \
-    EditAnalysisAction, RunFromAction, PipelineRecallAction, LoadReviewStatusAction, DiffViewAction
+    EditAnalysisAction, RunFromAction, PipelineRecallAction, LoadReviewStatusAction, DiffViewAction, SaveTableAction
 from pychron.pipeline.tasks.interpreted_age_factory import set_interpreted_age
 from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane, RepositoryPane, EditorOptionsPane
-from pychron.pipeline.tasks.select_repo import SelectExperimentIDView
 
 
 class DataMenu(SMenu):
@@ -53,20 +51,14 @@ class DataMenu(SMenu):
     name = 'Data'
 
 
-def select_experiment_repo():
-    a = list_gits(paths.repository_dataset_dir)
-    v = SelectExperimentIDView(available=a)
-    info = v.edit_traits()
-    if info.result:
-        return v.selected
-
-
 class PipelineTask(BaseBrowserTask):
     name = 'Pipeline Data Processing'
     engine = Instance(PipelineEngine)
 
     tool_bars = [SToolBar(PipelineRecallAction(),
-                          ConfigureRecallAction()),
+                          ConfigureRecallAction(),
+                          name='Recall'
+                          ),
                  SToolBar(RunAction(),
                           ResumeAction(),
                           RunFromAction(),
@@ -86,6 +78,7 @@ class PipelineTask(BaseBrowserTask):
                           SetInvalidAction(),
                           SetFilteringTagAction(),
                           SetInterpretedAgeAction(),
+                          SaveTableAction(),
                           name='Misc')]
 
     state = Instance(EngineState)
@@ -288,6 +281,29 @@ class PipelineTask(BaseBrowserTask):
         obj = self._make_save_figure_object(ed)
         dvc_dump(obj, path)
 
+    def save_table(self):
+        self.debug('save table')
+        if not self.has_active_editor():
+            return
+
+        ed = self.active_editor
+        if isinstance(ed, FigureEditor):
+            from pychron.pipeline.tables.xlsx_table_options import XLSXAnalysisTableWriterOptions
+            from pychron.pipeline.tables.xlsx_table_writer import XLSXAnalysisTableWriter
+
+            options = XLSXAnalysisTableWriterOptions()
+            ri = tuple({ai.repository_identifier for ai in ed.analyses})
+            options.root_name = ri[0]
+            info = options.edit_traits(kind='modal')
+            if info.result:
+                writer = XLSXAnalysisTableWriter()
+                # from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
+                # groups = [InterpretedAgeGroup(analyses=ed.analyses)]
+
+                gs = ed.get_analysis_groups()
+                run_groups = {'unknowns': gs, 'machine_unknowns': gs}
+                writer.build(run_groups, options=options)
+
     def save_figure_pdf(self):
         self.debug('save figure pdf')
         if not self.has_active_editor():
@@ -317,12 +333,6 @@ class PipelineTask(BaseBrowserTask):
     def set_interpreted_age(self):
         ias = self.active_editor.get_interpreted_ages()
         set_interpreted_age(self.dvc, ias)
-
-    def git_rollback(self):
-        # select experiment
-        expid = select_experiment_repo()
-        if expid:
-            self.dvc.rollback_repository(expid)
 
     def clear(self):
         self.reset()

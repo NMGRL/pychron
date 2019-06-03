@@ -37,8 +37,8 @@ def caller(func):
                                                               cstack[0].f_back.f_locals['self'],
                                                               ''.join(map(str.strip, rstack[4])))
 
-            logger.debug(msg)
-        except BaseException:
+            print(msg)
+        except BaseException as e:
             pass
         return func(*args, **kw)
 

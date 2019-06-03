@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
 import os
 import sys
 
@@ -29,9 +27,6 @@ from pyface.tasks.task_window_layout import TaskWindowLayout
 from traits.api import Any, List
 
 from pychron.envisage.resources import icon
-
-
-# from pychron.processing.tasks.actions.processing_actions import myTaskAction
 
 
 # ===============================================================================
@@ -241,6 +236,60 @@ class IssueAction(WebAction):
 
         url = 'https://github.com/{}/pychron/issues/new'.format(name)
         self._open_url(url)
+
+
+class SettingsAction(Action):
+    def perform(self, event):
+
+        app = event.task.window.application
+        name = app.preferences.get('pychron.general.remote')
+        if not name:
+            information(event.task.window.control, 'Please set an "Laboratory Repo" in General Preferences')
+            return
+
+        from pychron.envisage.settings_repo import SettingsRepoManager
+        from pychron.paths import paths
+        root = os.path.join(paths.root_dir, '.lab')
+        exists = os.path.isdir(os.path.join(root, '.git'))
+        if exists:
+            repo = SettingsRepoManager()
+            repo.path = root
+            repo.open_repo(root)
+            repo.pull()
+        else:
+            url = 'https://github.com/{}'.format(name)
+            repo = SettingsRepoManager.clone_from(url, root)
+
+        self._perform(repo)
+
+    def _perform(self, repo):
+        raise NotImplementedError
+
+
+class ApplySettingsAction(SettingsAction):
+    name = 'Apply Settings...'
+
+    def _perform(self, repo):
+        """
+        select and apply settings from the laboratory's repository
+
+        :param repo:
+        :return:
+        """
+        repo.apply_settings()
+
+
+class ShareSettingsAction(SettingsAction):
+    name = 'Share Settings...'
+
+    def _perform(self, repo):
+        """
+        save current settings to the laboratory's repository
+
+        :param repo:
+        :return:
+        """
+        repo.share_settings()
 
 
 class NoteAction(WebAction):

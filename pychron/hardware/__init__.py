@@ -17,6 +17,7 @@
 #
 # ureg = UnitRegistry()
 # Q_ = ureg.Quantity
+from pychron.core.helpers.binpack import format_blob
 
 HW_PACKAGE_MAP = {
     'CommandProcessor': 'pychron.messaging.command_processor',
@@ -57,7 +58,8 @@ HW_PACKAGE_MAP = {
     'NMGRLMagnetDumper': 'pychron.furnace.magnet_dumper',
     'LamontFurnaceControl': 'pychron.hardware.labjack.ldeo_furnace',
 
-    'Model335TemperatureController': 'pychron.hardware.lakeshore.model335'
+    'Model335TemperatureController': 'pychron.hardware.lakeshore.model335',
+    'Model336TemperatureController': 'pychron.hardware.lakeshore.model336'
     # 'ControlModule': 'pychron.hardware.fusions.vue_diode_control_module'
 }
 
@@ -83,6 +85,23 @@ def get_float(default=None):
             try:
                 return float(t)
             except (TypeError, ValueError):
+                return default
+
+        return wrapper
+
+    return dec
+
+
+def get_blob(default=b''):
+    def dec(func):
+        def wrapper(*args, **kw):
+            t = func(*args, **kw)
+            if t:
+                try:
+                    return format_blob(t)
+                except BaseException:
+                    return default
+            else:
                 return default
 
         return wrapper

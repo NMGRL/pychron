@@ -18,6 +18,13 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from __future__ import absolute_import
+
+import os
+
+from pyface.constant import OK
+from pyface.file_dialog import FileDialog
+
+from pychron.entry.edit_irradiation_geometry import EditIrradiationGeometry
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import PAction as Action, PTaskAction as TaskAction
 from pychron.pychron_constants import DVC_PROTOCOL
@@ -126,6 +133,7 @@ class PreviewGenerateIdentifiersAction(TaskAction):
 class ImportIrradiationAction(TaskAction):
     name = 'Import Irradiation...'
     dname = 'Import Irradiation'
+
     # method = 'import_irradiation'
 
     def perform(self, event):
@@ -260,19 +268,28 @@ class GenerateIrradiationTableAction(TaskAction):
             warning(None, 'DVC Plugin is required. Please enable')
 
 
-class ImportIrradiationHolderAction(Action):
-    name = 'Import Irradiation Holder'
-    dname = 'Import Irradiation Holder'
+class ImportIrradiationGeometryAction(Action):
+    name = 'Import Irradiation Geometry'
+    dname = 'Import Irradiation Geometry'
 
     def perform(self, event):
-        from pychron.entry.irradiation_holder_loader import IrradiationHolderLoader
-        from pychron.database.isotope_database_manager import IsotopeDatabaseManager
+        dvc = event.task.application.get_service(DVC_PROTOCOL)
+        if dvc is not None:
+            dialog = FileDialog(action='open', default_directory=os.path.join(os.path.expanduser('~'), 'Desktop'))
+            if dialog.open() == OK:
+                if dialog.path:
+                    dvc.meta_repo.add_irradiation_geometry_file(dialog.path)
 
-        man = IsotopeDatabaseManager()
-        db = man.db
-        if db.connect():
-            a = IrradiationHolderLoader()
-            a.do_import(db)
+
+class EditIrradiationGeometryAction(Action):
+    name = 'Edit Irradiation Geometry'
+    dname = 'Edit Irradiation Geometry'
+
+    def perform(self, event):
+        dvc = event.task.application.get_service(DVC_PROTOCOL)
+        if dvc is not None:
+            eiv = EditIrradiationGeometry(dvc=dvc)
+            eiv.edit_traits()
 
 
 class TransferJAction(TaskAction):

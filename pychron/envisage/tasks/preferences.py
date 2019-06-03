@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Directory, Bool, String, Float, Int, Str, Property
 from traits.traits import Color
@@ -41,6 +42,7 @@ class GeneralPreferences(GitRepoPreferencesHelper):
 
     organization = String(enter_set=True, auto_set=False)
     default_principal_investigator = String
+    lab_name = String
 
     def _get__usernames(self):
         return get_usernames()
@@ -78,6 +80,7 @@ class GeneralPreferencesPane(PreferencesPane):
                         Item('show_random_tip', label='Random Tip',
                              tooltip='Display a Random Tip whe the application starts'),
                         Item('default_principal_investigator', resizable=True, label='Default PI'),
+                        Item('lab_name', label='Laboratory Name'),
                         # Item('use_advanced_ui', label='Advanced UI',
                         #      tooltip='Display the advanced UI'),
                         # root_grp,
@@ -101,6 +104,7 @@ class BrowserPreferences(BasePreferencesHelper):
     blank_color = Color
     air_color = Color
     use_analysis_colors = Bool
+    one_selected_is_all = Bool
 
 
 class BrowserPreferencesPane(PreferencesPane):
@@ -110,18 +114,31 @@ class BrowserPreferencesPane(PreferencesPane):
     def traits_view(self):
         acgrp = VGroup(Item('use_analysis_colors', label='Use Analysis Colors',
                             tooltip='Color analyses based on type in the Browser window'),
-                       VGroup(Item('unknown_color'),
-                              Item('blank_color'),
-                              Item('air_color'), enabled_when='use_analysis_colors'),
+                       VGroup(Item('unknown_color', label='Unknown',
+                                   tooltip='Color for unknown and monitor analyses'),
+                              Item('blank_color', label='Blank',
+                                   tooltip='Color for all blank analysis types, e.g. blank_unknown, blank_air, etc'),
+                              Item('air_color', label='Air',
+                                   tooltip='Color for air analyses'),
+                              enabled_when='use_analysis_colors'),
                        show_border=True, label='Analysis Colors')
-        load_grp = VGroup(Item('auto_load_database'),
-                          Item('load_selection_enabled'),
+        load_grp = VGroup(Item('auto_load_database', label='Auto Load',
+                               tooltip='Load the browser search boxes, e.g. project, principal_investigator etc, '
+                                       'ever time the browser is opened. Disable this option for speed and/or '
+                                       'testing.'),
+                          Item('load_selection_enabled', label='Load Selection',
+                               tooltip='Load the prior selection, e.g. select the previously selected project, '
+                                       'principal_investigator etc, when the browser is opened.'),
                           show_border=True, label='Browser Loading')
         v = View(Item('reference_hours_padding',
                       label='References Padding (hrs)',
-                      tooltip='Padding in hours when finding associated references'),
+                      tooltip='Number of hours used when finding Reference analyses (airs, blanks, etc) associated '
+                              'with a set of analyses. e.g if References Padding = 10 then pychron will get '
+                              'references between oldest_analysis_time - 10 and youngest_analysis_time+10'),
                  Item('max_history', label='Max. Analysis Sets',
                       tooltip='Maximum number of analysis sets to maintain'),
+                 Item('one_selected_is_all', tooltip='If enabled and only one analysis is selected pychron assumes '
+                                                     'you actually want the entire dataset'),
                  acgrp, load_grp)
         return v
 

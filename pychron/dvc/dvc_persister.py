@@ -32,8 +32,8 @@ from pychron.dvc import dvc_dump, analysis_path, repository_path, NPATH_MODIFIER
 from pychron.experiment.automated_run.persistence import BasePersister
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths
-from pychron.processing.analyses.analysis import EXTRACTION_ATTRS, META_ATTRS
-from pychron.pychron_constants import DVC_PROTOCOL, LINE_STR, NULL_STR, ARGON_KEYS, ARAR_MAPPING
+from pychron.pychron_constants import DVC_PROTOCOL, LINE_STR, NULL_STR, ARGON_KEYS, ARAR_MAPPING, EXTRACTION_ATTRS, \
+    META_ATTRS
 
 
 def format_repository_identifier(project):
@@ -63,9 +63,11 @@ class DVCPersister(BasePersister):
     save_log_enabled = Bool(False)
     arar_mapping = None
 
-    def __init__(self, *args, **kw):
+    def __init__(self, bind=True, *args, **kw):
         super(DVCPersister, self).__init__(*args, **kw)
-        bind_preference(self, 'use_uuid_path_name', 'pychron.experiment.use_uuid_path_name')
+        if bind:
+            bind_preference(self, 'use_uuid_path_name', 'pychron.experiment.use_uuid_path_name')
+
         self._load_arar_mapping()
 
     def per_spec_save(self, pr, repository_identifier=None, commit=False, commit_tag=None, push=True):
@@ -118,20 +120,24 @@ class DVCPersister(BasePersister):
         rblob = per_spec.response_blob  # time vs measured response
         oblob = per_spec.output_blob  # time vs %output
         sblob = per_spec.setpoint_blob  # time vs requested
+        gp = per_spec.grain_polygons
 
-        if rblob:
+        if rblob is not None:
             rblob = encode_blob(rblob)
-        if oblob:
+        if oblob is not None:
             oblob = encode_blob(oblob)
-        if sblob:
+        if sblob is not None:
             sblob = encode_blob(sblob)
 
-        obj = {'measured_response': rblob,  # time vs
+        if gp:
+            gp = [encode_blob(g) for g in gp]
+
+        obj = {'measured_response': rblob,
                'requested_output': oblob,
                'setpoint_stream': sblob,
                'snapshots': per_spec.snapshots,
                'videos': per_spec.videos,
-               'grain_polygon_blob': per_spec.grain_polygon_blob}
+               'grain_polygons': gp}
 
         pid = per_spec.pid
         if pid:
@@ -464,7 +470,6 @@ class DVCPersister(BasePersister):
             isos[key] = isod
 
             if iso.detector not in dets:
-                # bblob = base64.b64encode(iso.baseline.pack(endianness, as_hex=False))
                 bblob = encode_blob(iso.baseline.pack(endianness, as_hex=False))
                 baselines.append({'detector': iso.detector, 'blob': bblob})
                 dets[iso.detector] = {'deflection': per_spec.defl_dict.get(iso.detector),
@@ -608,7 +613,8 @@ class DVCPersister(BasePersister):
             fmt = '>ff'
             obj = {'reference_detector': pc.reference_detector.name,
                    'reference_isotope': pc.reference_isotope,
-                   'fmt': fmt}
+                   'fmt': fmt,
+                   'interpolation': pc.interpolation_kind if pc.use_interpolation else ''}
 
             results = pc.get_results()
             if results:
@@ -621,6 +627,9 @@ class DVCPersister(BasePersister):
                                             'low_signal': result.low_signal,
                                             'center_signal': result.center_signal,
                                             'high_signal': result.high_signal,
+                                            'resolution': result.resolution,
+                                            'low_resolving_power': result.low_resolving_power,
+                                            'high_resolving_power': result.high_resolving_power,
                                             'points': points}
 
             dvc_dump(obj, p)

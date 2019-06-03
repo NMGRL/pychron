@@ -38,6 +38,7 @@ class FusionsLaserPreferences(LaserPreferences):
     use_media_storage = Bool
     keep_local_copy = Bool
     auto_upload = Bool
+    burst_delay = Int(250)
     # use_video_server = Bool(False)
     # video_server_port = Int(1084)
     # video_server_quality = Range(1, 75, 75)
@@ -70,6 +71,12 @@ class FusionsLaserPreferences(LaserPreferences):
     crosshairs_offsety = Float(0)
     crosshairs_offset_color = Color('blue')
     crosshairs_line_width = Float(1.0)
+
+    aux_crosshairs_radius = Range(0.0, 10.0, 1.0)
+    aux_crosshairs_offsetx = Float(0)
+    aux_crosshairs_offsety = Float(0)
+    aux_crosshairs_color = Color('red')
+    aux_crosshairs_line_width = Float(1.0)
 
     show_hole_label = Bool
     hole_label_color = Color
@@ -175,6 +182,7 @@ class FusionsLaserPreferencesPane(PreferencesPane):
                               # Item('video_output_mode', label='Output Mode'),
                               # Item('ffmpeg_path', label='FFmpeg Location'),
                               Item('render_with_markup', label='Render Snapshot with markup'),
+                              Item('burst_delay', label='Burst Delay (ms)', tooltip='delay between snapshots in burst mode'),
                               recgrp,
                               archivergrp,
                               media_storage_grp,

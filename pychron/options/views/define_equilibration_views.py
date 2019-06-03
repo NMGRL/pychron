@@ -13,9 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traitsui.api import View, VGroup, HGroup, Item, EnumEditor
+from traitsui.api import View, VGroup, HGroup, Item, EnumEditor, RangeEditor
 
-from pychron.options.options import MainOptions, object_column, checkbox_column
+from pychron.core.pychron_traits import BorderVGroup
+from pychron.options.options import MainOptions, object_column, checkbox_column, SubOptions
 
 
 class DefineEquilibrationMainOptions(MainOptions):
@@ -35,5 +36,14 @@ class DefineEquilibrationMainOptions(MainOptions):
         return v
 
 
-VIEWS = {'main': DefineEquilibrationMainOptions}
+class DefineEquilibrationSubOptions(SubOptions):
+    def traits_view(self):
+        v = View(BorderVGroup(Item('show_statistics'),
+                              Item('ncols',
+                                   editor=RangeEditor(mode='text'), label='N. Columns')))
+        return v
+
+
+VIEWS = {'main': DefineEquilibrationMainOptions,
+         'display': DefineEquilibrationSubOptions}
 # ============= EOF =============================================

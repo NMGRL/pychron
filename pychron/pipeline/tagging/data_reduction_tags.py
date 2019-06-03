@@ -16,11 +16,13 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traits.api import Str, Button, HasTraits, List, Long
-from traitsui.api import View, UItem
+from traitsui.api import UItem
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.pipeline.tagging.base_tags import BaseTagModel
 
 
@@ -41,7 +43,7 @@ class SelectDataReductionTagModel(HasTraits):
     name_filter = Str
 
     def _user_filter_changed(self, new):
-        tags =self._filter('name', self.name_filter, self.otags)
+        tags = self._filter('name', self.name_filter, self.otags)
         self.tags = self._filter('user', new, tags)
 
     def _name_filter_changed(self, new):
@@ -55,11 +57,12 @@ class SelectDataReductionTagModel(HasTraits):
         def g():
             for di in dbtags:
                 d = DataReductionTag(name=di.name,
-                                     id = di.id,
+                                     id=di.id,
                                      create_date=di.create_date.strftime('%m-%d-%Y'),
                                      user=di.user.name,
                                      comment=di.comment or '')
                 yield d
+
         self.otags = self.tags = list(g())
 
 
@@ -72,11 +75,8 @@ class DataReductionTagModel(BaseTagModel):
         self.edit_traits(view='edit_comment_view')
 
     def edit_comment_view(self):
-        v = View(UItem('comment', style='custom'),
-                 kind='livemodal', buttons=['OK', 'Cancel'],
-                 title='Comment')
+        v = okcancel_view(UItem('comment', style='custom'),
+                          title='Comment')
         return v
 
-
 # ============= EOF =============================================
-

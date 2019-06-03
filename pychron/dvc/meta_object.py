@@ -60,6 +60,7 @@ class Gains(MetaObject):
 class Chronology(MetaObject):
     _doses = None
     duration = 0
+    use_irradiation_endtime = False
 
     def __init__(self, *args, **kw):
         self._doses = []
@@ -236,7 +237,7 @@ class Production(MetaObject):
         dvc_dump(obj, path)
 
 
-class BaseHolder(MetaObject):
+class BaseGeometry(MetaObject):
     holes = None
 
     def _load_hook(self, path, rfile):
@@ -267,11 +268,11 @@ class BaseHolder(MetaObject):
         self.holes = holes
 
 
-class LoadHolder(BaseHolder):
+class LoadGeometry(BaseGeometry):
     pass
 
 
-class IrradiationHolder(BaseHolder):
+class IrradiationGeometry(BaseGeometry):
     pass
 
 

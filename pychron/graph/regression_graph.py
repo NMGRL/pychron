@@ -30,7 +30,15 @@ from pychron.graph.tools.point_inspector import PointInspector, \
 from pychron.graph.tools.rect_selection_tool import RectSelectionTool, \
     RectSelectionOverlay
 from pychron.graph.tools.regression_inspector import RegressionInspectorTool, \
-    RegressionInspectorOverlay, make_statistics
+    RegressionInspectorOverlay, make_statistics, make_correlation_statistics
+
+
+class StatisticsTextBoxOverlay(TextBoxOverlay):
+    pass
+
+
+class CorrelationTextBoxOverlay(TextBoxOverlay):
+    pass
 
 
 class NoRegressionCTX(object):
@@ -68,6 +76,23 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
     # ===============================================================================
     # context menu handlers
     # ===============================================================================
+    def cm_toggle_filter_bounds_all(self):
+        for plot in self.plots:
+            self.cm_toggle_filter_bounds(plot, redraw=False)
+        self.redraw()
+
+    def cm_toggle_filter_bounds(self, plot=None, redraw=True):
+        if plot is None:
+            plot = self.plots[self.selected_plotid]
+
+        for k, v in plot.plots.items():
+            if k.startswith('fit'):
+                pp = v[0]
+                pp.filter_bounds.visible = not pp.filter_bounds.visible
+
+        if redraw:
+            self.redraw()
+
     def cm_linear(self):
         self.set_fit('linear', plotid=self.selected_plotid)
         self._update_graph()
@@ -119,6 +144,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                    ux=None, uy=None, lx=None, ly=None,
                    fx=None, fy=None,
                    fit='linear',
+                   display_filter_bounds=False,
                    filter_outliers_dict=None,
                    use_error_envelope=True,
                    truncate='',
@@ -165,6 +191,10 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         if use_error_envelope:
             self._add_error_envelope_overlay(line)
 
+        o = self._add_filter_bounds_overlay(line)
+        if filter_outliers_dict and display_filter_bounds:
+            o.visible = True
+
         if x is not None and y is not None:
             if not self.suppress_regression:
                 self._regress(plot, scatter, line)
@@ -207,16 +237,29 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
             scatter.overlays.append(rect_overlay)
             scatter.tools.append(rect_tool)
 
-    def add_statistics(self, plotid=0):
+    def add_correlation_statistics(self, plotid=0):
         plot = self.plots[plotid]
         for k, v in plot.plots.items():
             if k.startswith('fit'):
                 pp = v[0]
-                text = '\n'.join(make_statistics(pp.regressor))
-                label = TextBoxOverlay(text=text,
-                                       border_color='black')
+                text = '\n'.join(make_correlation_statistics(pp.regressor))
+                label = CorrelationTextBoxOverlay(text=text,
+                                                  border_color='black')
                 pp.overlays.append(label)
                 break
+
+    def add_statistics(self, plotid=0, options=None):
+        plot = self.plots[plotid]
+        for k, v in plot.plots.items():
+            if k.startswith('fit'):
+                pp = v[0]
+                if hasattr(pp, 'regressor'):
+                    pp.statistics_options = options
+                    text = '\n'.join(make_statistics(pp.regressor, options=options))
+                    label = StatisticsTextBoxOverlay(text=text,
+                                                     border_color='black')
+                    pp.overlays.append(label)
+                    break
 
     def set_filter_outliers(self, fi, plotid=0, series=0):
         plot = self.plots[plotid]
@@ -241,7 +284,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                 f = f.split('_')[0]
             scatter.fit = '{}_{}'.format(f, fi)
 
-    def set_fit(self, fi, plotid=0, series=0, redraw=True):
+    def set_fit(self, fi, plotid=0, series=0):
 
         fi = fi.lower()
         plot = self.plots[plotid]
@@ -352,7 +395,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
     def _regress(self, plot, scatter, line):
         fit, err = convert_fit(scatter.fit)
         if fit is None:
-            print('fit is none, {}'.format(scatter.fit))
             return
 
         r = None
@@ -408,18 +450,28 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                     line.error_envelope.upper = uy
                     line.error_envelope.invalidate()
 
+                if hasattr(line, 'filter_bounds'):
+                    ci = r.calculate_filter_bounds(fy)
+                    if ci is not None:
+                        ly, uy = ci
+                    else:
+                        ly, uy = fy, fy
+
+                    line.filter_bounds.lower = ly
+                    line.filter_bounds.upper = uy
+                    line.filter_bounds.invalidate()
+
         return r
 
     def _set_regressor(self, scatter, r):
 
         selection = scatter.index.metadata['selections']
 
-        selection = set(selection) ^ set(r.outlier_excluded + r.truncate_excluded)
+        selection = (set(selection) - set(r.outlier_excluded + r.truncate_excluded))
+
         x = scatter.index.get_data()
         y = scatter.value.get_data()
-
         sel = list(selection)
-        # print sel
         if hasattr(scatter, 'yerror'):
             yserr = scatter.yerror.get_data()
             r.trait_set(yserr=yserr)
@@ -441,7 +493,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
     def _poly_regress(self, scatter, r, fit):
         from pychron.core.regression.ols_regressor import PolynomialRegressor
         from pychron.core.regression.wls_regressor import WeightedPolynomialRegressor
-        if hasattr(scatter, 'yerror'):
+        if hasattr(scatter, 'yerror') and any(scatter.yerror.get_data()):
             if r is None or not isinstance(r, WeightedPolynomialRegressor):
                 r = WeightedPolynomialRegressor()
         else:
@@ -556,6 +608,13 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
         return scatter, si
 
+    def _add_filter_bounds_overlay(self, line):
+        o = ErrorEnvelopeOverlay(component=line, use_region=True, color=(1))
+        line.underlays.append(o)
+        line.filter_bounds = o
+        o.visible = False
+        return o
+
     def _add_error_envelope_overlay(self, line):
         o = ErrorEnvelopeOverlay(component=line)
         line.underlays.append(o)
@@ -566,9 +625,15 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
             for k, v in plot.plots.items():
                 if k.startswith('fit'):
                     pp = v[0]
-                    o = next((oo for oo in pp.overlays if isinstance(oo, TextBoxOverlay)), None)
+                    o = next((oo for oo in pp.overlays if isinstance(oo, StatisticsTextBoxOverlay)), None)
                     if o:
-                        o.text = '\n'.join(make_statistics(pp.regressor))
+                        o.text = '\n'.join(make_statistics(pp.regressor, options=pp.statistics_options))
                         o.request_redraw()
-                    break
+                        break
+
+                    o = next((oo for oo in pp.overlays if isinstance(oo, CorrelationTextBoxOverlay)), None)
+                    if o:
+                        o.text = '\n'.join(make_correlation_statistics(pp.regressor))
+                        o.request_redraw()
+                        break
 # ============= EOF =============================================

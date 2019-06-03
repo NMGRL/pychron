@@ -107,6 +107,7 @@ INVERSE_ISOCHRON = """
 required:
 nodes:
   - klass: UnknownNode
+  - klass: GroupingNode
   - klass: InverseIsochronNode
 """
 
@@ -116,6 +117,14 @@ nodes:
   - klass: UnknownNode
   - klass: GroupingNode
   - klass: SpectrumNode
+"""
+
+COMPOSITE = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: GroupingNode
+  - klass: CompositeNode
 """
 
 FLUX_VISUALIZATION = """
@@ -147,7 +156,17 @@ nodes:
   - klass: UnknownNode
   - klass: GroupingNode
   - klass: SubGroupingNode
-  - klass: AnalysisTableNode
+  - klass: SubGroupAnalysisTableNode
+  - klass: ReviewNode
+  - klass: XLSXAnalysisTablePersistNode
+"""
+
+SIMPLE_ANALYSIS_TABLE = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: GroupingNode
+  - klass: GroupAnalysisTableNode
   - klass: ReviewNode
   - klass: XLSXAnalysisTablePersistNode
 """
@@ -237,8 +256,8 @@ FLUX = """
 required:
 nodes:
   - klass: FindFluxMonitorsNode
-    # irradiation: NM-299
-    # level: A
+#    irradiation: NM-300
+#    level: E
   - klass: FluxMonitorsNode
   - klass: FitFluxNode
   - klass: ReviewNode
@@ -250,6 +269,13 @@ required:
 nodes:
   - klass: UnknownNode
   - klass: CSVAnalysesExportNode
+"""
+
+CSV_RAW_DATA_EXPORT = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: CSVRawDataExportNode
 """
 
 CA_CORRECTION_FACTORS = """

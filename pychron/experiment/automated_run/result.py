@@ -23,6 +23,7 @@ from uncertainties import nominal_value, std_dev
 from pychron.core.helpers.formatting import uformat_percent_error, floatfmt, errorfmt
 from pychron.experiment.conditional.conditional import AutomatedRunConditional
 from pychron.processing.isotope_group import IsotopeGroup
+from pychron.pychron_constants import NULL_STR
 
 
 class AutomatedRunResult(HasTraits):
@@ -31,27 +32,53 @@ class AutomatedRunResult(HasTraits):
     isotope_group = Instance(IsotopeGroup)
     summary = Property
     tripped_conditional = Instance(AutomatedRunConditional)
+    centering_results = None
 
     def _get_summary(self):
+        lines = ['RunID= {}'.format(self.runid)]
+
         at = self.analysis_timestamp
         if at is not None:
-            at = at.strftime('%H:%M:%S %m-%d-%Y')
+            lines.append('Run Time= {}'.format(at.strftime('%H:%M:%S %m-%d-%Y')))
 
-        summary = self._make_header('Summary')
-        return '''RUNID= {} 
-RUN TIME= {}
-{}
-{}
-{}
-{}'''.format(self.runid,
-             at,
-             self._intensities(),
-             self._tripped_conditional(),
-             summary,
-             self._make_summary())
+        funcs = [self._intensities, self._tripped_conditional,
+                 lambda: self._make_header('Summary'),
+                 self._make_peak_statistics,
+                 self._make_summary]
+
+        for func in funcs:
+            try:
+                lines.append(func())
+            except BaseException:
+                pass
+
+        return '\n'.join(lines)
 
     def _make_summary(self):
         return 'No Summary Available'
+
+    def _make_peak_statistics(self):
+        ret = ''
+
+        def f(v):
+            try:
+                v = '{:0.2f}'.format(v)
+            except (ValueError, TypeError):
+                v = NULL_STR
+
+            return v
+
+        if self.centering_results:
+            fmt = '{:<10s} {:<10s} {:<10s} {:<10s}'
+            s = [fmt.format('Det', 'Res.', 'Low RP', 'High RP')]
+            for r in self.centering_results:
+                s.append(fmt.format(r.detector,
+                                    f(r.resolution),
+                                    f(r.low_resolving_power),
+                                    f(r.high_resolving_power)))
+
+            ret = '\n'.join(s)
+        return ret
 
     def _intensities(self):
         lines = []

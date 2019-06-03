@@ -99,22 +99,27 @@ class BaseLinearDrive(ConsumerMixin):
             low_step=int(self.min_steps),
             high_step=int(self.steps))
 
-    def block(self, n=3, tolerance=1, progress=None, homing=False):
+    def block(self, n=3, tolerance=1, progress=None, homing=False, verbose=False):
         """
         """
         fail_cnt = 0
         pos_buffer = []
+        success_cnt = 0
 
         while 1:
-            if not self.is_simulation():
+            if self.is_simulation():
                 break
 
             steps = self.load_data_position(set_pos=False)
+
             if steps is None:
                 fail_cnt += 1
                 if fail_cnt > 5:
+                    self.warning('blocking complete because of failure to get position')
                     break
                 continue
+
+            fail_cnt = 0
 
             if homing:
                 self.homing_position = steps
@@ -125,16 +130,21 @@ class BaseLinearDrive(ConsumerMixin):
                                         auto_increment=False)
 
             pos_buffer.append(steps)
+            if verbose:
+                self.debug('position buffer={}'.format(pos_buffer))
             if len(pos_buffer) == n:
+                if verbose:
+                    self.debug('asdf {} {}'.format(abs(float(sum(pos_buffer)) / n - steps), tolerance))
                 if abs(float(sum(pos_buffer)) / n - steps) < tolerance:
-                    break
+                    if success_cnt > 2:
+                        break
+                    success_cnt += 1
                 else:
-                    pos_buffer.pop(0)
+                    success_cnt = 0
+
+                pos_buffer.pop(0)
 
             time.sleep(0.1)
-
-        if fail_cnt > 5:
-            self.warning('Problem Communicating')
 
     def load_data_position(self, set_pos=True):
         """

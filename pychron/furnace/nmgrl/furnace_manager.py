@@ -31,6 +31,7 @@ from pychron.experiment import ExtractionException
 from pychron.furnace.base_furnace_manager import BaseFurnaceManager
 from pychron.furnace.configure_dump import ConfigureDump
 from pychron.furnace.ifurnace_manager import IFurnaceManager
+from pychron.furnace.nmgrl.furnace_controller import NMGRLFurnaceController
 from pychron.furnace.nmgrl.loader_logic import LoaderLogic
 from pychron.furnace.nmgrl.magnet_dumper import NMGRLRotaryDumper, BaseDumper
 from pychron.furnace.nmgrl.stage_manager import NMGRLFurnaceStageManager
@@ -46,6 +47,7 @@ class Funnel(LinearAxis):
 
 @provides(IFurnaceManager)
 class NMGRLFurnaceManager(BaseFurnaceManager):
+    controller_klass = NMGRLFurnaceController
     funnel = Instance(Funnel)
     loader_logic = Instance(LoaderLogic)
     dumper = Instance(BaseDumper)
@@ -106,17 +108,17 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         if self.camera:
             ret = self.camera.get_image_data() is not None
         return ret, err
-
-    def test_furnace_api(self):
-        self.info('testing furnace api')
-        ret, err = False, ''
-        if self.controller:
-            ret = self.controller.test_connection()
-        return ret, err
-
-    def test_connection(self):
-        self.info('testing connection')
-        return self.test_furnace_api()
+    #
+    # def test_furnace_api(self):
+    #     self.info('testing furnace api')
+    #     ret, err = False, ''
+    #     if self.controller:
+    #         ret = self.controller.test_connection()
+    #     return ret, err
+    #
+    # def test_connection(self):
+    #     self.info('testing connection')
+    #     return self.test_furnace_api()
 
     def clear_sample_states(self):
         self._clear_sample_states()
@@ -144,6 +146,11 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self.loader_logic.manager = None
         if self.timer:
             self.timer.stop()
+
+    def get_setpoint_blob(self):
+        self.debug('get setpoint blob')
+        blob = self.response_recorder.get_setpoint_blob()
+        return blob
 
     def get_response_blob(self):
         self.debug('get response blob')
@@ -481,6 +488,30 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         return self.loader_logic.close(name)
 
     def _update_scan(self):
+        state = self.controller.get_water_flow_state(verbose=False)
+        if state in (0, 1):
+            # self.water_flow_led.state = 2 if state else 0
+            self.water_flow_state = 2 if state else 0
+        else:
+            self.water_flow_state = 1
+
+        write_water_state = self._recorded_flow_state is None or self._recorded_flow_state != self.water_flow_state
+
+        if write_water_state:
+            with open(os.path.join(paths.data_dir, 'furnace_water.txt'), 'a') as wfile:
+                wfile.write('{},{}\n'.format(time.time(), state))
+                self._recorded_flow_state = self.water_flow_state
+
+        response = self.controller.get_process_value(verbose=False)
+        self.temperature_readback = response or 0
+
+        output = self.controller.get_output(verbose=False)
+        self.output_percent_readback = output or 0
+
+        setpoint = self.controller.get_setpoint(verbose=False)
+        self._update_scan_graph(response, output, setpoint or 0)
+
+    def _update_scan_old(self):
         d = self.controller.get_summary(verbose=self.verbose_scan)
         if d:
             state = d.get('h2o_state')

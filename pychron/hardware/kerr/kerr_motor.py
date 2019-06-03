@@ -14,8 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 
-import binascii
 # =============standard library imports ========================
+import binascii
 import struct
 import time
 
@@ -24,15 +24,14 @@ from traits.api import Float, Property, Bool, Int, CInt, Button
 from traitsui.api import View, Item, HGroup, VGroup, EnumEditor, RangeEditor, \
     spring
 
+# =============local library imports  ==========================
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.ui.qt.progress_editor import ProgressEditor
 from pychron.globals import globalv
 from pychron.hardware.base_linear_drive import BaseLinearDrive
 from pychron.hardware.core.data_helper import make_bitarray
-# =============local library imports  ==========================
 from .kerr_device import KerrDevice
 
-# from pyface.timer.api import Timer
 
 SIGN = ['negative', 'positive']
 
@@ -206,6 +205,9 @@ class KerrMotor(KerrDevice, BaseLinearDrive):
                                nbytes=2,
                                info='get defined status',
                                verbose=verbose)
+
+        status_register = make_bitarray(int.from_bytes(status_byte[:1], 'little'))
+        self.debug('Defined Status Byte={}'.format(status_register))
         return status_byte
 
     def read_home_position(self):
@@ -230,7 +232,6 @@ class KerrMotor(KerrDevice, BaseLinearDrive):
             if progress is not None:
                 progress.change_message('{} position= {}'.format(self.name, pos),
                                         auto_increment=False)
-                #                 do_after(25, progress.change_message, '{} position = {}'.format(self.name, pos))
             time.sleep(0.5)
 
     def set_homing_required(self, value):
@@ -249,14 +250,9 @@ class KerrMotor(KerrDevice, BaseLinearDrive):
                     (addr, self._build_io(), 100, 'configure io pins'),
                     (addr, self._build_gains(), 100, 'set gains'),
                     (addr, '1701', 100, 'turn on amp')]
-        # (addr, '00', 100, 'reset position'),
-        # (addr, '1201', 100, 'set status')
-        # (addr, '0b', 100, 'clear bits')]
         self._initialize_motor(commands, *args, **kw)
 
     def _initialize_motor(self, commands, *args, **kw):
-        # self.load_data_position()
-
         self._execute_hex_commands(commands)
 
         homing_required = self._get_homing_required()
@@ -319,7 +315,6 @@ class KerrMotor(KerrDevice, BaseLinearDrive):
         psteps = None
         while 1:
             steps = self.load_data_position(set_pos=False)
-            # invoke_in_main_thread(self.trait_set, homing_position=steps)
             self.homing_position = steps
             status = self.read_defined_status()
 
@@ -345,20 +340,28 @@ class KerrMotor(KerrDevice, BaseLinearDrive):
 
     def _test_status_byte(self, status, setbits):
         if status:
-            # status = binascii.hexlify(status).decode('utf-8')
             b = '{:08b}'.format(int.from_bytes(status[:1], 'little'))
             bb = [bool(int(b[7 - si])) for si in setbits]
 
             return all(bb)
 
     def _moving(self, verbose=True):
+        """
+        return True if motion is still in progress.
+
+        @param verbose:
+        @return:
+        """
         status_byte = self.read_defined_status(verbose=verbose)
 
         if status_byte in ('simulation', None):
-            status_byte = 'DFDF'
+            status_byte = b'\xdf\xdf'
+            # else:
+            # status_byte = binascii.hexlify(status_byte).decode('utf-8')
 
-        status_register = [int(bi) for bi in make_bitarray(int.from_bytes(status_byte[:1], 'little'))]
-
+        # status_register = list(map(int, make_bitarray(int.from_bytes(status_byte[:1], 'little'))))
+        status_register = [int(i) for i in make_bitarray(int.from_bytes(status_byte[:1], 'little'))]
+        # status_register = list(map(int, make_bitarray(int.from_bytes(status_byte[:1], sys.byteorder))))
         return not status_register[7]
 
     def _clear_bits(self):
@@ -426,26 +429,31 @@ class KerrMotor(KerrDevice, BaseLinearDrive):
         """
         """
 
-        if self._moving(verbose=True):
+        if self._moving(verbose=False):
             self.enabled = False
         else:
-            if self.hysteresis_value and \
-                    not self.doing_hysteresis_correction and \
-                    self.do_hysteresis:
-                # move to original desired position at half velocity
-                self._set_motor_position(
-                    self._desired_position,
-                    velocity=self.velocity / 2)
-                self.doing_hysteresis_correction = True
+            time.sleep(0.5)
+            # do another moving query just to make sure
+            if self._moving(verbose=True):
+                self.enabled = False
             else:
-                self.enabled = True
-                if self.timer is not None:
-                    self.timer.Stop()
-                    #                     self.update_position = self._data_position
-                    time.sleep(0.25)
+                if self.hysteresis_value and \
+                        not self.doing_hysteresis_correction and \
+                        self.do_hysteresis:
+                    # move to original desired position at half velocity
+                    self._set_motor_position(
+                        self._desired_position,
+                        velocity=self.velocity / 2)
+                    self.doing_hysteresis_correction = True
+                else:
+                    self.enabled = True
+                    if self.timer is not None:
+                        self.timer.Stop()
+                        #                     self.update_position = self._data_position
+                        time.sleep(0.25)
 
-                steps = self.load_data_position(set_pos=False)
-                self._set_last_known_position(steps)
+                    steps = self.load_data_position(set_pos=False)
+                    self._set_last_known_position(steps)
 
         if not self.enabled:
             self.load_data_position(set_pos=False)
@@ -536,9 +544,6 @@ class KerrMotor(KerrDevice, BaseLinearDrive):
 
         return ''.join(ss)
 
-        # hexfmt = lambda a: '{{:0{}x}}'.format(a[1]).format(a[0])
-        # return ''.join(map(hexfmt, hxlist))
-
     def _build_io(self):
         return '1800'
 
@@ -600,8 +605,6 @@ class KerrMotor(KerrDevice, BaseLinearDrive):
 
     def _get_display_name(self):
         return self.name.capitalize()
-
-
 
     # view
     def control_view(self):

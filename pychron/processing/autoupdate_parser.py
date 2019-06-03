@@ -17,13 +17,17 @@
 # =============enthought library imports=======================
 from __future__ import absolute_import
 from __future__ import print_function
-from traits.api import HasTraits, List, Dict
-# from traitsui.api import View, Item
 
 # ============= standard library imports ========================
 import csv
+
+from traits.api import HasTraits, List, Dict
+
 from pychron.loggable import Loggable
 from pychron.pychron_constants import IRRADIATION_KEYS, DECAY_KEYS
+
+
+# from traitsui.api import View, Item
 
 
 # ============= local library imports  ==========================
@@ -120,8 +124,8 @@ class AutoupdateParser(Loggable):
 
                 params['k_ca_err'] = get_value('Ca_Over_K_Er')
 
-                params['rad40_percent'] = get_value('PctAr40Rad')
-                params['rad40_percent_err'] = get_value('PctAr40Rad_Er')
+                params['radiogenic_yield'] = get_value('PctAr40Rad')
+                params['radiogenic_yield_err'] = get_value('PctAr40Rad_Er')
                 params['rad40'] = get_value('Ar40Rad_Over_Ar39')
                 params['rad40_err'] = get_value('Ar40Rad_Over_Ar39_Er')
 

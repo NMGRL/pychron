@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 
 from traits.api import HasTraits, Str, Int, Bool, Any, Float, \
-    Dict, Instance, List, Date, Time, Long
+    Dict, Instance, List, Date, Time, Long, Bytes
 
 
 # ============= standard library imports ========================
@@ -85,25 +85,25 @@ class PersistenceSpec(HasTraits):
     intensity_scalar = 1.0
 
     pid = Str
-    response_blob = Str
-    output_blob = Str
-    setpoint_blob = Str
+    response_blob = Bytes
+    output_blob = Bytes
+    setpoint_blob = Bytes
     snapshots = List
     videos = List
 
     conditionals = List
     tripped_conditional = None
 
-    grain_polygon_blob = List
+    grain_polygons = List
 
     power_achieved = Float
     lab_temperatures = List
     lab_humiditys = List
     lab_pneumatics = List
 
-    lithographic_unit = Str
-    lat_long = Str
-    rock_type = Str
-    reference = Str
+    # lithographic_unit = Str
+    # lat_long = Str
+    # rock_type = Str
+    # reference = Str
 
 # ============= EOF =============================================

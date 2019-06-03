@@ -38,7 +38,7 @@ class ErrorBarOverlay(AbstractOverlay):
     index = None
     value = None
     error = None
-    data_orientation = 'y'
+    data_orientation = 'x'
 
     def _get_cached_points(self):
         pts = self._cached_points
@@ -130,9 +130,6 @@ class ErrorBarOverlay(AbstractOverlay):
 
     @on_trait_change('component:[bounds, _layout_needed, index_mapper:updated, value_mapper:updated]')
     def _handle_component_change(self, obj, name, new):
-        self.invalidate()
-
-    def invalidate(self):
         self._cache_valid = False
-        self.invalidate_and_redraw()
+
 # ============= EOF =====================================

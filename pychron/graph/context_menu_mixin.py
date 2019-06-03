@@ -144,8 +144,12 @@ class RegressionContextMenuMixin(ContextMenuMixin):
         emenu = MenuManager(*[self.action_factory(name, func) for name, func in actions],
                             name='Error')
 
+        fmenu = MenuManager(self.action_factory('Show/Hide Filter Region', 'cm_toggle_filter_bounds'),
+                            self.action_factory('Show/Hide All Filter Region', 'cm_toggle_filter_bounds_all'),
+                            name='Filtering')
         contents.append(menu)
         contents.append(emenu)
+        contents.append(fmenu)
         return contents
 
 # ============= EOF =============================================

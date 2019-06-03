@@ -35,7 +35,7 @@ class IdeogramAuxPlot(AuxPlot):
 
 
 class IdeogramOptions(AgeOptions):
-
+    naux_plots = 8
     aux_plot_klass = IdeogramAuxPlot
 
     edit_label_format_button = Button
@@ -74,9 +74,6 @@ class IdeogramOptions(AgeOptions):
     # asymptotic_width = Float)
     asymptotic_height_percent = Float
 
-    x_end_caps = Bool(False)
-    y_end_caps = Bool(False)
-    error_bar_nsigma = Enum(1, 2, 3)
     analysis_number_sorting = Enum('Oldest @Top', 'Youngest @Top')
 
     mean_indicator_font = Property
@@ -88,6 +85,7 @@ class IdeogramOptions(AgeOptions):
     cmap_analysis_number = Enum(list(color_map_name_dict.keys()))
     use_latest_overlay = Bool(False)
     show_results_table = Bool(False)
+    show_ttest_table = Bool(False)
 
     group_options_klass = IdeogramGroupOptions
 

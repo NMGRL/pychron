@@ -20,6 +20,7 @@ from pychron.pipeline.nodes.base import BaseNode
 class AuditNode(BaseNode):
     auto_configure = False
     name = 'Audit'
+    configurable = False
 
     def run(self, state):
         editor = AuditEditor()

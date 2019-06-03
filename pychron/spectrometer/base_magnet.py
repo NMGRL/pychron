@@ -76,16 +76,17 @@ class BaseMagnet(SpectrometerDevice, FieldMixin):
         read DAC from device
         :return:
         """
-        if self.spectrometer:
-            molweights = self.spectrometer.molecular_weights
-            name = self.spectrometer.name
-        else:
-            from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS as molweights
-
-            name = ''
-
-        self.field_table.initialize(molweights)
-        self.field_table.spectrometer_name = name.lower()
+        # if self.spectrometer:
+        #     molweights = self.spectrometer.molecular_weights
+        #     name = self.spectrometer.name
+        # else:
+        #     from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS as molweights
+        #
+        #     name = ''
+        #
+        # self.field_table.initialize(molweights)
+        # self.field_table.spectrometer_name = name.lower()
+        self.field_table_setup()
 
         d = self.read_dac()
         if d is not None:

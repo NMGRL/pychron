@@ -22,13 +22,14 @@ import six
 from pyface.qt import QtCore, QtGui
 from pyface.qt.QtGui import QHeaderView, QApplication
 from traits.api import Bool, Str, List, Any, Instance, Property, Int, HasTraits, Color, Either, Callable
-from traitsui.api import View, Item, TabularEditor, Handler
+from traitsui.api import Item, TabularEditor, Handler
 from traitsui.mimedata import PyMimeData
 from traitsui.qt4.tabular_editor import TabularEditor as qtTabularEditor, \
     _TableView as TableView, HeaderEventFilter, _ItemDelegate
 from traitsui.qt4.tabular_model import TabularModel, tabular_mime_type
 
 from pychron.core.helpers.ctx_managers import no_update
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 
 
 class myTabularEditor(TabularEditor):
@@ -75,11 +76,9 @@ class MoveToRow(HasTraits):
         self._row = v
 
     def traits_view(self):
-        v = View(Item('row'),
-                 buttons=['OK', 'Cancel'],
-                 width=300,
-                 title='Move Selected to Row',
-                 kind='livemodal')
+        v = okcancel_view(Item('row'),
+                          width=300,
+                          title='Move Selected to Row')
         return v
 
 
@@ -343,7 +342,7 @@ class _TableView(TableView):
             items = md.instance()
         except AttributeError:
             return
-        
+
         if items is not None:
             editor = self._editor
             model = editor.model
@@ -395,7 +394,7 @@ class _TableView(TableView):
         # Note that setting 'EditKeyPressed' as an edit trigger does not work on
         # most platforms, which is why we do this here.
         if (event.key() in (QtCore.Qt.Key_Enter, QtCore.Qt.Key_Return) and
-                    self.state() != QtGui.QAbstractItemView.EditingState and
+                self.state() != QtGui.QAbstractItemView.EditingState and
                 factory.editable and 'edit' in factory.operations):
             if factory.multi_select:
                 rows = editor.multi_selected_rows
@@ -408,7 +407,7 @@ class _TableView(TableView):
                 self.edit(editor.model.index(row, 0))
 
         elif (event.key() in (QtCore.Qt.Key_Backspace, QtCore.Qt.Key_Delete) and
-                  factory.editable and 'delete' in factory.operations):
+              factory.editable and 'delete' in factory.operations):
             event.accept()
             '''
                 sets _no_update and update_needed on the editor.object e.g
@@ -426,7 +425,7 @@ class _TableView(TableView):
                     editor.model.removeRow(editor.selected_row)
 
         elif (event.key() == QtCore.Qt.Key_Insert and
-                  factory.editable and 'insert' in factory.operations):
+              factory.editable and 'insert' in factory.operations):
             event.accept()
 
             if factory.multi_select:
@@ -525,9 +524,11 @@ class _TabularEditor(qtTabularEditor):
         else:
             slot = self._on_row_selection
 
-        signal = 'selectionChanged(QItemSelection,QItemSelection)'
-        QtCore.QObject.connect(self.control.selectionModel(),
-                               QtCore.SIGNAL(signal), slot)
+        # signal = 'selectionChanged(QItemSelection,QItemSelection)'
+        # QtCore.QObject.connect(self.control.selectionModel(),
+        #                        QtCore.SIGNAL(signal), slot)
+
+        control.selectionModel().selectionChanged.connect(slot)
 
         # Synchronize other interesting traits as necessary:
         self.sync_value(factory.update, 'update', 'from')
@@ -543,20 +544,30 @@ class _TabularEditor(qtTabularEditor):
         self.sync_value(factory.scroll_to_row, 'scroll_to_row', 'from')
 
         # Connect other signals as necessary
-        signal = QtCore.SIGNAL('activated(QModelIndex)')
-        QtCore.QObject.connect(control, signal, self._on_activate)
-        signal = QtCore.SIGNAL('clicked(QModelIndex)')
-        QtCore.QObject.connect(control, signal, self._on_click)
-        signal = QtCore.SIGNAL('clicked(QModelIndex)')
-        QtCore.QObject.connect(control, signal, self._on_right_click)
-        signal = QtCore.SIGNAL('doubleClicked(QModelIndex)')
-        QtCore.QObject.connect(control, signal, self._on_dclick)
-        signal = QtCore.SIGNAL('sectionClicked(int)')
-        QtCore.QObject.connect(control.horizontalHeader(), signal, self._on_column_click)
+        # signal = QtCore.SIGNAL('activated(QModelIndex)')
+        # QtCore.QObject.connect(control, signal, self._on_activate)
+        control.activated.connect(self._on_activate)
+
+        # signal = QtCore.SIGNAL('clicked(QModelIndex)')
+        # QtCore.QObject.connect(control, signal, self._on_click)
+        control.clicked.connect(self._on_click)
+
+        # signal = QtCore.SIGNAL('clicked(QModelIndex)')
+        # QtCore.QObject.connect(control, signal, self._on_right_click)
+        control.clicked.connect(self._on_right_click)
+
+        # signal = QtCore.SIGNAL('doubleClicked(QModelIndex)')
+        # QtCore.QObject.connect(control, signal, self._on_dclick)
+        control.doubleClicked.connect(self._on_dclick)
+
+        # signal = QtCore.SIGNAL('sectionClicked(int)')
+        # QtCore.QObject.connect(control.horizontalHeader(), signal, self._on_column_click)
+        control.horizontalHeader().sectionClicked.connect(self._on_column_click)
 
         control.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        signal = QtCore.SIGNAL('customContextMenuRequested(QPoint)')
-        QtCore.QObject.connect(control, signal, self._on_context_menu)
+        # signal = QtCore.SIGNAL('customContextMenuRequested(QPoint)')
+        # QtCore.QObject.connect(control, signal, self._on_context_menu)
+        control.customContextMenuRequested.connect(self._on_context_menu)
 
         self.header_event_filter = HeaderEventFilter(self)
         control.horizontalHeader().installEventFilter(self.header_event_filter)
@@ -611,10 +622,10 @@ class _TabularEditor(qtTabularEditor):
 
         # control.link_copyable = factory.link_copyable
         control.pastable = factory.pastable
-        signal = QtCore.SIGNAL('sectionResized(int,int,int)')
-
-        QtCore.QObject.connect(control.horizontalHeader(), signal,
-                               self._on_column_resize)
+        # signal = QtCore.SIGNAL('sectionResized(int,int,int)')
+        # QtCore.QObject.connect(control.horizontalHeader(), signal,
+        #                        self._on_column_resize)
+        control.horizontalHeader().sectionResized.connect(self._on_column_resize)
 
     def refresh_editor(self):
         if self.control:

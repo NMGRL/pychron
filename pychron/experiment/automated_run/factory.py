@@ -176,7 +176,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                         'age.std',
                         'kca.std',
                         'kcl.std',
-                        'rad40_percent',
+                        'radiogenic_yield',
                         'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36'])
     trunc_comp = Enum('>', '<', '>=', '<=', '=')
     trunc_crit = Float(5000, enter_set=True, auto_set=False)
@@ -228,13 +228,14 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
     edit_mode = Bool(False)
     edit_mode_label = Property(depends_on='edit_mode')
-    edit_enabled = Bool(False)
+    edit_enabled = Bool(True)
 
     mass_spectrometer = String
     extract_device = Str
     username = Str
     laboratory = Str
 
+    persistence_name = 'run_factory'
     pattributes = ('collection_time_zero_offset',
                    'selected_irradiation', 'selected_level',
                    'extract_value', 'extract_units', 'cleanup',
@@ -717,8 +718,6 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             v, e = self._flux, self._flux_error
             if self.dvc:
                 self.dvc.save_flux(self.labnumber, v, e)
-            elif self.iso_db_man:
-                self.iso_db_man.save_flux(self.labnumber, v, e)
 
     # ===============================================================================
     #
@@ -1573,9 +1572,5 @@ post_equilibration_script:name''')
     @property
     def run_block_enabled(self):
         return self.run_block not in ('RunBlock', LINE_STR)
-
-    @property
-    def persistence_path(self):
-        return os.path.join(paths.hidden_dir, 'run_factory')
 
 # ============= EOF =============================================

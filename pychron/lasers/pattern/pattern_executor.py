@@ -16,24 +16,25 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from threading import current_thread, Event
 
-from skimage.draw import circle
-from traits.api import Any, Bool, List
-
-from io import StringIO
 import os
 import time
-# from threading import Thread, current_thread, Event
-from pychron.core.ui.thread import Thread, currentThreadName, sleep
+from io import StringIO
+from threading import Event
+
 from numpy import polyfit, array, average, uint8
 from skimage.color import gray2rgb
+from skimage.draw import circle
+from traits.api import Any, Bool
 
 from pychron.core.ui.gui import invoke_in_main_thread
+# from threading import Thread, current_thread, Event
+from pychron.core.ui.thread import Thread, sleep
 from pychron.envisage.view_util import open_view
 from pychron.hardware.motion_controller import PositionError, TargetPositionError
 from pychron.lasers.pattern.patternable import Patternable
 from pychron.paths import paths
+from pychron.pychron_constants import NULL_STR
 
 
 class PatternExecutor(Patternable):
@@ -410,7 +411,7 @@ class PatternExecutor(Patternable):
 
             self.debug('iteration {} finished, npts={}'.format(cnt, len(pts)))
 
-            pattern.position_str = '---'
+            pattern.position_str = NULL_STR
 
             if pts:
                 w = array(sats)

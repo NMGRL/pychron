@@ -50,6 +50,8 @@ class BaseMeasurement(object):
     use_manual_error = False
     units = 'fA'
     _n = None
+    detector = None
+    detector_serial_id = None
 
     @property
     def n(self):
@@ -88,7 +90,6 @@ class BaseMeasurement(object):
             xs, ys = self._unpack_blob(blob)
         except (ValueError, TypeError, IndexError, AttributeError) as e:
             self.unpack_error = e
-            print('unpack', self.name, e)
             return
 
         if n_only:
@@ -182,6 +183,13 @@ class IsotopicMeasurement(BaseMeasurement):
             return self._regressor.get_xsquared_coefficient()
 
     @property
+    def efit(self):
+        fit = self.fit
+        if fit and '_' not in fit:
+            fit = '{}_{}'.format(fit, self.error_type)
+        return fit
+
+    @property
     def rsquared(self):
         if self._regressor:
             return self._regressor.rsquared
@@ -205,6 +213,24 @@ class IsotopicMeasurement(BaseMeasurement):
     @fn.setter
     def fn(self, v):
         self._fn = v
+
+    @property
+    def user_excluded(self):
+        if self._regressor:
+            return [int(i) for i in self._regressor.user_excluded]
+
+    @property
+    def outlier_excluded(self):
+        if self._regressor:
+            return [int(i) for i in self._regressor.outlier_excluded]
+
+    def set_user_excluded(self, ue):
+        if ue:
+            reg = self._regressor
+            if not reg:
+                reg = self.regressor
+
+            reg.ouser_excluded = ue
 
     def set_filtering(self, d):
         self.filter_outliers_dict = d.copy()
@@ -263,10 +289,15 @@ class IsotopicMeasurement(BaseMeasurement):
                     if s < cnt < e:
                         return f
 
-    def set_filter_outliers_dict(self, filter_outliers=True, iterations=1, std_devs=2, notify=True):
+    def set_filter_outliers_dict(self, filter_outliers=True, iterations=1, std_devs=2,
+                                 use_standard_deviation_filtering=False,
+                                 use_iqr_filtering=False):
+
         self.filter_outliers_dict = {'filter_outliers': filter_outliers,
                                      'iterations': iterations,
-                                     'std_devs': std_devs}
+                                     'std_devs': std_devs,
+                                     'use_standard_deviation_filtering': use_standard_deviation_filtering,
+                                     'use_iqr_filtering': use_iqr_filtering}
 
         self._fn = None
         if self._regressor:
@@ -301,7 +332,9 @@ class IsotopicMeasurement(BaseMeasurement):
 
                 self.set_filter_outliers_dict(filter_outliers=bool(fit.filter_outliers),
                                               iterations=int(fit.filter_outlier_iterations or 0),
-                                              std_devs=int(fit.filter_outlier_std_devs or 0))
+                                              std_devs=int(fit.filter_outlier_std_devs or 0),
+                                              use_standard_deviation_filtering=fit.use_standard_deviation_filtering,
+                                              use_iqr_filtering=fit.use_iqr_filtering)
                 self.truncate = fit.truncate
 
     def set_uvalue(self, v):
@@ -577,6 +610,12 @@ class Isotope(BaseIsotope):
         self.background = Background('{} bg'.format(name), detector)
         self.whiff = Whiff(name, detector)
 
+    def set_detector_serial_id(self, sid):
+        self.detector_serial_id = sid
+        self.blank.detector_serial_id = sid
+        self.sniff.detector_serial_id = sid
+        self.baseline.detector_serial_id = sid
+
     def set_time_zero(self, time_zero_offset):
         self.time_zero_offset = time_zero_offset
         self.blank.time_zero_offset = time_zero_offset
@@ -597,11 +636,18 @@ class Isotope(BaseIsotope):
         self.baseline._revert_user_defined()
         self._revert_user_defined()
 
+    def get_ic_decay_corrected_value(self):
+        if self.decay_corrected is not None:
+            return self.decay_corrected
+        else:
+            return self.get_ic_corrected_value()
+
     def get_decay_corrected_value(self):
         if self.decay_corrected is not None:
             return self.decay_corrected
         else:
-            return self.get_interference_corrected_value()
+            return self.get_non_detector_corrected_value()
+            # return self.get_interference_corrected_value()
 
     def get_interference_corrected_value(self):
         if self.interference_corrected_value is not None:

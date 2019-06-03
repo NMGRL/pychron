@@ -17,15 +17,17 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
+from threading import current_thread
+
 from traits.api import HasTraits, Any, String
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.confirmation import confirmation_dialog
-from pychron.globals import globalv
 from pychron.core.helpers.color_generators import colorname_generator
 from pychron.core.helpers.logger_setup import new_logger
-from threading import current_thread
+from pychron.globals import globalv
 
 # from pychron.core.ui.dialogs import myConfirmationDialog, myMessageDialog
 # from pychron.core.ui.gui import invoke_in_main_thread
@@ -60,7 +62,7 @@ class Loggable(HasTraits):
     """
     """
     application = Any
-    logger = Any  # (transient=True)
+    logger = None  # (transient=True)
     name = String
     logger_name = String
     # use_logger_display = True
@@ -68,10 +70,11 @@ class Loggable(HasTraits):
     logcolor = 'black'
     shared_logger = False
 
-    # logger_display = None
     def __init__(self, *args, **kw):
-        super(Loggable, self).__init__(*args, **kw)
+        super().__init__(*args, **kw)
+        self.init_logger()
 
+    def init_logger(self):
         t = str(type(self))
         if self.shared_logger and t in __gloggers__:
             self.logger = __gloggers__[t]
@@ -99,7 +102,7 @@ class Loggable(HasTraits):
 
         if self.logger is not None:
             if globalv.use_warning_display:
-                from pychron.displays.gdisplays import gWarningDisplay
+                from pychron.core.displays.gdisplays import gWarningDisplay
 
                 if globalv.show_warnings:
                     gWarningDisplay.add_text(
@@ -113,7 +116,7 @@ class Loggable(HasTraits):
         """
         if self.logger is not None:
             if globalv.use_logger_display:
-                from pychron.displays.gdisplays import gLoggerDisplay
+                from pychron.core.displays.gdisplays import gLoggerDisplay
 
                 if globalv.show_infos:
                     args = ('{{:<{}s}} -- {{}}'.format(NAME_WIDTH).format(self.logger.name.strip(),
@@ -134,7 +137,7 @@ class Loggable(HasTraits):
         self._log_('debug', msg)
 
     # dialogs
-    def warning_dialog(self, msg, sound=None, title='Warning'):
+    def warning_dialog(self, msg, sound=None, title='Warning', **kw):
         self.warning(msg)
 
         from pychron.core.ui.dialogs import myMessageDialog
@@ -142,7 +145,7 @@ class Loggable(HasTraits):
         dialog = myMessageDialog(
             parent=None, message=str(msg),
             title=title,
-            severity='warning')
+            severity='warning', **kw)
         #         if sound:
         #             from pychron.core.helpers.media import loop_sound
         #             evt = loop_sound(sound)
@@ -155,16 +158,17 @@ class Loggable(HasTraits):
     def confirmation_dialog(self, *args, **kw):
         return confirmation_dialog(*args, **kw)
 
-    def information_dialog(self, msg, title='Information'):
+    def information_dialog(self, msg, title='Information', **kw):
         from pychron.core.ui.dialogs import myMessageDialog
 
+        self.info(msg)
         dlg = myMessageDialog(parent=None, message=msg,
                               title=title,
-                              severity='information')
+                              severity='information', **kw)
         dlg.open()
 
     def message(self, msg):
-        from pychron.displays.gdisplays import gMessageDisplay
+        from pychron.core.displays.gdisplays import gMessageDisplay
 
         if not gMessageDisplay.opened and not gMessageDisplay.was_closed:
             gMessageDisplay.opened = True
@@ -181,7 +185,6 @@ class Loggable(HasTraits):
         """
 
         """
-
         if self.logger_name:
             name = self.logger_name
         elif self.name:
@@ -230,5 +233,11 @@ class Loggable(HasTraits):
 
     def _logger_name_changed(self):
         self._add_logger()
+
+
+# class Loggable(HasTraits, Loggable):
+#     def __init__(self, *args, **kw):
+#         super().__init__(*args, **kw)
+#         self.init_logger()
 
 # ============= EOF =============================================

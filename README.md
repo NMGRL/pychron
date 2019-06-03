@@ -1,13 +1,7 @@
 Pychron
 ========
 
-[![Build Status](https://travis-ci.org/NMGRL/pychron.png?branch=develop)](https://travis-ci.org/NMGRL/pychron)
-[![Requirements Status](https://requires.io/github/NMGRL/pychron/requirements.png?branch=develop)](https://requires.io/github/NMGRL/pychron/requirements/?branch=develop)
-[![Issue Stats](http://issuestats.com/github/nmgrl/pychron/badge/issue)](http://issuestats.com/github/nmgrl/pychron)
-![Gratipay](http://img.shields.io/gratipay/jirhiker.svg)
-[![codecov](https://codecov.io/gh/NMGRL/pychron/branch/develop/graph/badge.svg)](https://codecov.io/gh/NMGRL/pychron)
-[![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.9884.png)](https://zenodo.org/record/9884#.U3Tp8V4rjfM)
-[![Stories in Ready](https://badge.waffle.io/NMGRL/pychron.png?label=ready&title=Ready)](http://waffle.io/NMGRL/pychron)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3237834.svg)](https://doi.org/10.5281/zenodo.3237834)
 
 [Changes](CHANGELOG.md)
 
@@ -67,9 +61,9 @@ furPi
 -------
 Furnace firmware running on a networked RaspberryPi. RPC interface via Twisted for remote control
 
-Mac OSX 10.9
+Mac OSX 10.9 and Later
 --------------------
-Mac OSX 10.9 (Mavericks) includes a memory management tool called App Nap. It is necessary to 
+Mac OSX and macOS operating systems later than 10.9 (Mavericks) include a memory management tool called App Nap. It is necessary to 
 turn off App Nap for pychron. 
 To turn off App Nap system wide use
 

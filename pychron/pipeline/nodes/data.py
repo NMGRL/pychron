@@ -20,14 +20,15 @@ import os
 import time
 from datetime import datetime, timedelta
 
-from pyface.constant import OK
-from pyface.file_dialog import FileDialog
-from pyface.message_dialog import warning, information
+from pyface.message_dialog import warning
 from pyface.timer.do_later import do_after
 from traits.api import Instance, Bool, Int, Str, List, Enum, Float, Time
-from traitsui.api import View, Item, EnumEditor, CheckListEditor
+from traitsui.api import Item, EnumEditor, CheckListEditor
 
+from pychron.core.helpers.iterfuncs import groupby_idx
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.globals import globalv
+from pychron.pipeline.csv_dataset_factory import CSVDataSetFactory
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pychron_constants import ANALYSIS_TYPES
 
@@ -103,12 +104,14 @@ class InterpretedAgeNode(DVCNode):
 
             if records:
                 interpreted_ages = self.dvc.make_interpreted_ages(records)
+                ias = self.interpreted_ages
+                ias.extend(interpreted_ages)
 
-                if browser_view.is_append:
-                    ias = self.interpreted_ages
-                    ias.extend(interpreted_ages)
-                else:
-                    self.interpreted_ages = interpreted_ages
+                # if browser_view.is_append:
+                #     ias = self.interpreted_ages
+                #     ias.extend(interpreted_ages)
+                # else:
+                #     self.interpreted_ages = interpreted_ages
 
             return True
 
@@ -133,7 +136,7 @@ class DataNode(DVCNode):
         return self.set_browser_analyses()
 
 
-class CSVNode(BaseNode):
+class CSVNode(BaseDVCNode):
     path = Str
     name = 'CSV Data'
 
@@ -146,26 +149,39 @@ class CSVNode(BaseNode):
             self._manual_configured = True
 
         if not self.path or not os.path.isfile(self.path):
-            msg = '''CSV File Format
-Create/select a file with a column header as the first line. 
-The following columns are required:
+            dsf = CSVDataSetFactory(dvc=self.dvc)
+            dsf.load()
+            info = dsf.edit_traits()
+            if info.result:
+                if dsf.data_path:
+                    self.path = dsf.data_path
 
-runid, age, age_err
-
-Optional columns are:
-
-group, aliquot
-
-e.x.
-runid, age, age_error
-SampleA, 10, 0.24
-SampleB, 11, 0.32
-SampleC, 10, 0.40'''
-            information(None, msg)
-
-            dlg = FileDialog()
-            if dlg.open() == OK:
-                self.path = dlg.path
+            # if confirm(None, 'Would you like to create a new CSV dataset?'):
+            #     # open a table editor to enter all the information
+            #     pass
+            # else:
+            #     # select a file from DVC or native finder
+            #     pass
+        #             msg = '''CSV File Format
+        # Create/select a file with a column header as the first line.
+        # The following columns are required:
+        #
+        # runid, age, age_err
+        #
+        # Optional columns are:
+        #
+        # group, aliquot, sample
+        #
+        # e.x.
+        # runid, age, age_error
+        # Run1, 10, 0.24
+        # Run2, 11, 0.32
+        # Run3, 10, 0.40'''
+        #             information(None, msg)
+        #
+        #             dlg = FileDialog()
+        #             if dlg.open() == OK:
+        #                 self.path = dlg.path
 
         return bool(self.path)
 
@@ -195,23 +211,20 @@ SampleC, 10, 0.40'''
 
     def _get_items_from_file(self, parser):
         from pychron.processing.analyses.file_analysis import FileAnalysis
-
-        def gen():
-            for d in parser.values():
-                try:
-                    f = FileAnalysis(age=float(d['age']),
-                                     age_err=float(d['age_err']),
-                                     record_id=d['runid'],
-                                     sample=d.get('sample', ''),
-                                     aliquot=int(d.get('aliquot', 0)),
-                                     group_id=int(d.get('group', 0)))
-                    yield f
-                except TypeError:
-                    pass
-
         try:
-            return tuple(gen())
-        except ValueError as e:
+            ans = [(d.get('group', 0), FileAnalysis(age=float(d['age']),
+                                                    age_err=float(d['age_err']),
+                                                    record_id=d['runid'],
+                                                    sample=d.get('sample', ''),
+                                                    aliquot=int(d.get('aliquot', 0)))) for d in parser.values()]
+            items = []
+            for i, (gid, aa) in enumerate(groupby_idx(ans, 0)):
+                for _, ai in aa:
+                    ai.group_id = i
+                    items.append(ai)
+            return items
+
+        except (TypeError, ValueError) as e:
             warning(None, 'Invalid values in the import file. Error="{}"'.format(e))
 
 
@@ -302,20 +315,19 @@ class BaseAutoUnknownNode(UnknownNode):
         return BaseNode.configure(self, pre_run=pre_run, *args, **kw)
 
     def traits_view(self):
-        v = View(Item('mode', tooltip='Normal: get analyses between now and start of pipeline - hours\n'
-                                      'Window: get analyses between now and now - hours'),
-                 Item('hours'),
-                 Item('period', label='Update Period (s)',
-                      tooltip='Default time (s) to delay between "check for new analyses"'),
-                 Item('mass_spectrometer', label='Mass Spectrometer',
-                      editor=EnumEditor(name='available_spectrometers')),
-                 Item('analysis_types', style='custom',
-                      editor=CheckListEditor(name='available_analysis_types', cols=len(self.available_analysis_types))),
-                 Item('post_analysis_delay', label='Post Analysis Found Delay',
-                      tooltip='Time (min) to delay before next "check for new analyses"'),
-                 Item('verbose'),
-                 kind='livemodal',
-                 buttons=['OK', 'Cancel'])
+        v = okcancel_view(Item('mode', tooltip='Normal: get analyses between now and start of pipeline - hours\n'
+                                               'Window: get analyses between now and now - hours'),
+                          Item('hours'),
+                          Item('period', label='Update Period (s)',
+                               tooltip='Default time (s) to delay between "check for new analyses"'),
+                          Item('mass_spectrometer', label='Mass Spectrometer',
+                               editor=EnumEditor(name='available_spectrometers')),
+                          Item('analysis_types', style='custom',
+                               editor=CheckListEditor(name='available_analysis_types',
+                                                      cols=len(self.available_analysis_types))),
+                          Item('post_analysis_delay', label='Post Analysis Found Delay',
+                               tooltip='Time (min) to delay before next "check for new analyses"'),
+                          Item('verbose'))
         return v
 
     def post_run(self, engine, state):
@@ -441,21 +453,21 @@ class ListenUnknownNode(BaseAutoUnknownNode):
         engine.pipeline.active = True
 
     def traits_view(self):
-        v = View(Item('mode', tooltip='Normal: get analyses between now and start of pipeline - hours\n'
-                                      'Window: get analyses between now and now - hours'),
-                 Item('hours'),
-                 Item('period', label='Update Period (s)',
-                      tooltip='Default time (s) to delay between "check for new analyses"'),
-                 Item('mass_spectrometer', label='Mass Spectrometer',
-                      editor=EnumEditor(name='available_spectrometers')),
-                 Item('analysis_types', style='custom',
-                      editor=CheckListEditor(name='available_analysis_types', cols=len(self.available_analysis_types))),
-                 Item('post_analysis_delay', label='Post Analysis Found Delay',
-                      tooltip='Time (min) to delay before next "check for new analyses"'),
-                 Item('verbose'),
-                 title='Configure',
-                 kind='livemodal',
-                 buttons=['OK', 'Cancel'])
+        v = okcancel_view(Item('mode', tooltip='Normal: get analyses between now and start of pipeline - hours\n'
+                                               'Window: get analyses between now and now - hours'),
+                          Item('hours'),
+                          Item('period', label='Update Period (s)',
+                               tooltip='Default time (s) to delay between "check for new analyses"'),
+                          Item('mass_spectrometer', label='Mass Spectrometer',
+                               editor=EnumEditor(name='available_spectrometers')),
+                          Item('analysis_types', style='custom',
+                               editor=CheckListEditor(name='available_analysis_types',
+                                                      cols=len(self.available_analysis_types))),
+                          Item('post_analysis_delay', label='Post Analysis Found Delay',
+                               tooltip='Time (min) to delay before next "check for new analyses"'),
+                          Item('verbose'),
+                          title='Configure',
+                          )
         return v
 
     def run(self, state):
@@ -565,18 +577,17 @@ class CalendarUnknownNode(BaseAutoUnknownNode):
         do_after(1000 * period, self._iter)
 
     def traits_view(self):
-        v = View(Item('run_time'),
-                 Item('hours'),
-                 # Item('period', label='Update Period (s)',
-                 #      tooltip='Defauly time (s) to delay between "check for new analyses"'),
-                 Item('mass_spectrometer', label='Mass Spectrometer',
-                      editor=EnumEditor(name='available_spectrometers')),
-                 Item('analysis_types', style='custom',
-                      editor=CheckListEditor(name='available_analysis_types', cols=len(self.available_analysis_types))),
-                 # Item('post_analysis_delay', label='Post Analysis Found Delay',
-                 #      tooltip='Time (min) to delay before next "check for new analyses"'),
-                 Item('verbose'),
-                 kind='livemodal',
-                 buttons=['OK', 'Cancel'])
+        v = okcancel_view(Item('run_time'),
+                          Item('hours'),
+                          # Item('period', label='Update Period (s)',
+                          #      tooltip='Defauly time (s) to delay between "check for new analyses"'),
+                          Item('mass_spectrometer', label='Mass Spectrometer',
+                               editor=EnumEditor(name='available_spectrometers')),
+                          Item('analysis_types', style='custom',
+                               editor=CheckListEditor(name='available_analysis_types',
+                                                      cols=len(self.available_analysis_types))),
+                          # Item('post_analysis_delay', label='Post Analysis Found Delay',
+                          #      tooltip='Time (min) to delay before next "check for new analyses"'),
+                          Item('verbose'))
         return v
 # ============= EOF =============================================

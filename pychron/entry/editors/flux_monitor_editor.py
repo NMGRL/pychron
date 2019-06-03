@@ -23,6 +23,7 @@ from traits.api import HasTraits, Float, Str, List, Instance, Property, Button, 
 from traitsui.api import View, Item, HGroup, VGroup, UItem, ListStrEditor, VSplit
 
 # ============= local library imports  ==========================
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.loggable import Loggable
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
@@ -134,18 +135,16 @@ class FluxMonitorEditor(Loggable):
                 self.warning('Error when trying to delete "{}".\n\n{}'.format(name, e))
 
     def traits_view(self):
-        v = View(VSplit(
-            VGroup(HGroup(icon_button_editor('add_button', 'database_add',
-                                             tooltip='Add flux monitor to database'),
-                          icon_button_editor('delete_button', 'database_delete',
-                                             enabled_when='selected_monitor_name',
-                                             tooltip='Delete selected flux monitor')),
-                   UItem('monitor_names', editor=ListStrEditor(selected='selected_monitor_name',
-                                                               editable=False))),
-            UItem('selected_monitor', style='custom')),
-            buttons=['OK', 'Cancel'],
-            kind='livemodal',
-            title='Edit Flux Monitor')
+        v = okcancel_view(VSplit(VGroup(HGroup(icon_button_editor('add_button', 'database_add',
+                                                                  tooltip='Add flux monitor to database'),
+                                               icon_button_editor('delete_button', 'database_delete',
+                                                                  enabled_when='selected_monitor_name',
+                                                                  tooltip='Delete selected flux monitor')),
+                                        UItem('monitor_names', editor=ListStrEditor(selected='selected_monitor_name',
+                                                                                    editable=False))),
+                                 UItem('selected_monitor', style='custom')),
+
+                          title='Edit Flux Monitor')
         return v
 
 # ============= EOF =============================================

@@ -240,6 +240,13 @@ class AnalysisTbl(Base, IDMixin):
         if self.repository_associations and len(self.repository_associations) == 1:
             return self.repository_associations[0].repository
 
+    @property
+    def display_uuid(self):
+        u = self.uuid
+        if not u:
+            u = ''
+        return u[:8]
+
     def get_load_name(self):
         ln = ''
         if self.measured_positions:
@@ -259,7 +266,9 @@ class AnalysisTbl(Base, IDMixin):
         self.load_holder = self.get_load_holder()
 
         # force binding of irradiation_position
-        # self.irradiation_position
+        self.irradiation_position
+        self.irradiation_level
+        self.irradiation
 
 
 class AnalysisIntensitiesTbl(Base, IDMixin):
@@ -310,6 +319,9 @@ class MaterialTbl(Base, NameMixin):
     def gname(self):
         return '{} ({})'.format(self.name, self.grainsize) if self.grainsize else self.name
 
+    def __repr__(self):
+        return '{}<{}>'.format(self.__class__.__name__, self.gname)
+
 
 class SampleTbl(Base, NameMixin):
     materialID = Column(Integer, ForeignKey('MaterialTbl.id'))
@@ -321,6 +333,11 @@ class SampleTbl(Base, NameMixin):
 
     storage_location = deferred(stringcolumn(140))
     lithology = deferred(stringcolumn(140))
+    unit = deferred(stringcolumn(80))
+    lithology_class = deferred(stringcolumn(140))
+    lithology_type = deferred(stringcolumn(140))
+    lithology_group = deferred(stringcolumn(140))
+
     location = deferred(stringcolumn(140))
     approximate_age = deferred(Column(Float))
     elevation = deferred(Column(Float))

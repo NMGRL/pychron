@@ -48,9 +48,15 @@ class PfeifferMaxiGaugeController(BaseGaugeController, CoreDevice):
         r = self.ask(cmd, verbose=verbose)
         if chr(6) in r:
             cmd = '\x05'
+            oterminator = self.communicator.write_terminator
+            self.communicator.write_terminator = None
             r = self.ask(cmd, verbose=verbose)
+            self.communicator.write_terminator = oterminator
             # pressure = r.split(',')[1].rstrip('\r\n')
-            pressure = r.split(',')[1].rstrip()
+            try:
+                pressure = r.split(',')[1].rstrip()
+            except IndexError:
+                pressure = 'err'
         else:
             pressure = 'err'
         return pressure

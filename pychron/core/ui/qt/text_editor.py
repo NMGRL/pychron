@@ -17,15 +17,15 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
-from pyface.qt import QtCore, QtGui
+
+import six
+from pyface.qt import QtGui
 from traits.api import Bool, Int, Color, Str
 from traits.trait_errors import TraitError
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
-import six
 
 
 class _TextEditor(Editor):
@@ -36,51 +36,54 @@ class _TextEditor(Editor):
             widget.
         """
         if self.factory.multiline:
-            ctrl = QtGui.QPlainTextEdit(self.str_value)
+            control = QtGui.QPlainTextEdit(self.str_value)
             if not self.factory.wrap:
-                ctrl.setLineWrapMode(QtGui.QPlainTextEdit.NoWrap)
+                control.setLineWrapMode(QtGui.QPlainTextEdit.NoWrap)
         else:
-            ctrl = QtGui.QLineEdit(self.str_value)
+            control = QtGui.QLineEdit(self.str_value)
 
         if self.factory.auto_set:
-            if isinstance(ctrl, QtGui.QPlainTextEdit):
-                QtCore.QObject.connect(ctrl,
-                                       QtCore.SIGNAL('textChanged()'), self.update_object)
+            if isinstance(control, QtGui.QPlainTextEdit):
+                control.textChanged.connect(self.update_object)
+                # QtCore.QObject.connect(ctrl,
+                #                        QtCore.SIGNAL('textChanged()'), self.update_object)
             else:
-                QtCore.QObject.connect(ctrl,
-                                       QtCore.SIGNAL('textEdited(QString)'), self.update_object)
+                # QtCore.QObject.connect(ctrl,
+                #                        QtCore.SIGNAL('textEdited(QString)'), self.update_object)
+                control.textEdited.connect(self.update_object)
         else:
-            QtCore.QObject.connect(ctrl,
-                               QtCore.SIGNAL('editingFinished()'), self.update_object)
+            # QtCore.QObject.connect(ctrl,
+            #                    QtCore.SIGNAL('editingFinished()'), self.update_object)
+            control.editingFinished.connect(self.update_object)
 
         if not self.factory.editable:
-            ctrl.setReadOnly(True)
+            control.setReadOnly(True)
 
         if self.factory.bgcolor:
-            p = ctrl.palette()
+            p = control.palette()
 
             p.setColor(QtGui.QPalette.Base, self.factory.bgcolor)
-            ctrl.setPalette(p)
+            control.setPalette(p)
 
         if self.factory.fontsize:
-            f = ctrl.font()
+            f = control.font()
             f.setPointSize(self.factory.fontsize)
             f.setFamily(self.factory.fontname)
 
-            ctrl.setFont(f)
+            control.setFont(f)
 
         if self.factory.tab_width:
-            f = ctrl.font()
+            f = control.font()
             metrics = QtGui.QFontMetrics(f)
-            ctrl.setTabStopWidth(self.factory.tab_width * metrics.width(' '))
+            control.setTabStopWidth(self.factory.tab_width * metrics.width(' '))
 
         if self.factory.placeholder:
-            ctrl.setPlaceholderText(self.factory.placeholder)
+            control.setPlaceholderText(self.factory.placeholder)
 
         self.sync_value(self.factory.fontsize_name, 'fontsize', mode='from')
         self.set_tooltip()
 
-        self.control = ctrl
+        self.control = control
 
     # ---------------------------------------------------------------------------
     #  Handles the user changing the contents of the edit control:

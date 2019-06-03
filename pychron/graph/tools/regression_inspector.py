@@ -23,8 +23,17 @@ from pychron.core.regression.mean_regressor import MeanRegressor
 from pychron.graph.tools.info_inspector import InfoInspector, InfoOverlay
 from pychron.pychron_constants import PLUSMINUS
 
+def make_correlation_statistics(reg):
+    lines = ['R\u00b2={}, R\u00b2-Adj.={}'.format(floatfmt(reg.rsquared), floatfmt(reg.rsquared_adj))]
+    return lines
 
-def make_statistics(reg, x=None):
+
+def make_statistics(reg, x=None, options=None):
+    if options is None:
+        options = {}
+
+    display_min_max = options.get('display_min_max', True)
+
     v, e = reg.predict(0), reg.predict_error(0)
 
     lines = [reg.make_equation(),
@@ -41,16 +50,23 @@ def make_statistics(reg, x=None):
 
     if reg.mswd not in ('NaN', None):
         valid = '' if reg.valid_mswd else '*'
-        lines.append('MSWD= {}{}, N={}'.format(valid,
+        lines.append('Fit MSWD= {}{}, N={}'.format(valid,
                                                floatfmt(reg.mswd, n=3), reg.n))
 
-    mi, ma = reg.min, reg.max
-    lines.append('Min={}, Max={}, Dev={}%'.format(floatfmt(mi),
-                                                  floatfmt(ma),
-                                                  floatfmt((ma - mi) / ma * 100, n=2)))
+    if display_min_max:
+        mi, ma = reg.min, reg.max
+        lines.append('Min={}, Max={}, Dev={}%'.format(floatfmt(mi),
+                                                      floatfmt(ma),
+                                                      floatfmt((ma - mi) / ma * 100, n=2)))
 
     lines.append('Mean={}, SD={}, SEM={}, N={}'.format(floatfmt(reg.mean), floatfmt(reg.std),
                                                        floatfmt(reg.sem), reg.n))
+
+    mean_mswd = reg.mean_mswd
+    if mean_mswd is not None:
+        valid = '' if reg.valid_mean_mswd else '*'
+        lines.append('Mean MSWD= {}{}'.format(valid, floatfmt(reg.mean_mswd, n=3)))
+
     if not isinstance(reg, MeanRegressor):
         lines.append('R\u00b2={}, R\u00b2-Adj.={}'.format(floatfmt(reg.rsquared), floatfmt(reg.rsquared_adj)))
         lines.extend([l.strip() for l in reg.tostring().split(',')])

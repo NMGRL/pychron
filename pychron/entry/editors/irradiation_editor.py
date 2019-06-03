@@ -19,10 +19,11 @@ import json
 import os
 
 from traits.api import Instance, Dict, List, Str
-from traitsui.api import View, Item, UItem, Group, VGroup, HGroup, EnumEditor
+from traitsui.api import Item, UItem, Group, VGroup, HGroup, EnumEditor
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.entry.editors.base_editor import ModelView
 from pychron.entry.editors.chronology import IrradiationChronology
 from pychron.entry.editors.production import IrradiationProduction
@@ -32,29 +33,23 @@ from pychron.paths import paths
 
 class AddView(ModelView):
     def traits_view(self):
-        v = View(VGroup(Item('name'),
-                        Group(UItem('chronology', style='custom'),
-                              label='Chronology', show_border=True)),
-                 HGroup(UItem('selected_reactor_name', editor=EnumEditor(name='reactor_names')),
-                        label='Reactor', show_border=True),
-                 title='Add Irradiation',
-                 kind='livemodal',
-                 buttons=['OK', 'Cancel'],
-                 width=500,
-                 resizable=True)
+        v = okcancel_view(VGroup(Item('name'),
+                                 Group(UItem('chronology', style='custom'),
+                                       label='Chronology', show_border=True)),
+                          HGroup(UItem('selected_reactor_name', editor=EnumEditor(name='reactor_names')),
+                                 label='Reactor', show_border=True),
+                          title='Add Irradiation',
+                          width=500)
         return v
 
 
 class EditView(ModelView):
     def traits_view(self):
-        v = View(VGroup(Item('name', style='readonly'),
-                        Group(UItem('chronology', style='custom'),
-                              label='Chronology', show_border=True)),
-                 title='Edit Irradiation',
-                 kind='livemodal',
-                 buttons=['OK', 'Cancel'],
-                 width=500,
-                 resizable=True)
+        v = okcancel_view(VGroup(Item('name', style='readonly'),
+                                 Group(UItem('chronology', style='custom'),
+                                       label='Chronology', show_border=True)),
+                          title='Edit Irradiation',
+                          width=500)
         return v
 
 

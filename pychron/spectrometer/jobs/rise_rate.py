@@ -15,25 +15,39 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from numpy import polyfit, linspace
-from traits.api import HasTraits, Float, Any, Button, Bool, List, Color
+from traits.api import HasTraits, Float, Any, Button, Bool, List, Color, Property
 from traitsui.api import View, Item, spring, ButtonEditor, HGroup, \
     VGroup, UItem
 from traitsui.tabular_adapter import TabularAdapter
 
+from pychron.core.helpers.formatting import floatfmt
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.graph.guide_overlay import GuideOverlay
 from .spectrometer_task import SpectrometerTask
 
 
 class ResultsAdapter(TabularAdapter):
-    columns = [('N', 'cnt'), ('Endpoints', 'endpoints'), ('Linear', 'linear')]
+    columns = [('N', 'cnt'), ('Endpoints', 'endpoints'), ('Linear', 'linear'), ('Duration (m)', 'duration')]
+
+    endpoints_text = Property
+    linear_text = Property
+    duration_text = Property
+
+    def _get_endpoints_text(self):
+        return floatfmt(self.item.endpoints, n=3)
+
+    def _get_linear_text(self):
+        return floatfmt(self.item.linear, n=3)
+
+    def _get_duration_text(self):
+        return floatfmt(self.item.duration, n=2)
 
 
 class Result(HasTraits):
     linear = Float
     endpoints = Float
+    duration = Float
 
     def calculate(self, xs, ys, rise, starttime):
         ti = xs[-1]
@@ -41,6 +55,7 @@ class Result(HasTraits):
         rrendpoints = rise / run
 
         rrfit = polyfit(linspace(0, run, len(ys)), ys, 1)[0]
+        self.duration = run
         self.endpoints = rrendpoints
         self.linear = rrfit
         return rrendpoints, rrfit, ti, run

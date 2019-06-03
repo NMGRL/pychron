@@ -33,7 +33,13 @@ class InterpretedAgeEditor(FigureEditor):
         if isinstance(po, SpectrumOptions):
             ek = po.plateau_age_error_kind
             pk = 'Plateau'
+
             additional['include_j_error_in_plateau'] = po.include_j_error_in_plateau
+            additional['include_j_error_in_integrated'] = po.include_j_error_in_integrated
+            additional['plateau_nsteps'] = po.pc_nsteps
+            additional['plateau_gas_fraction'] = po.pc_gas_fraction
+            additional['plateau_method'] = po.plateau_method
+
         elif isinstance(po, InverseIsochronOptions):
             pk = 'Isochron'
             ek = po.error_calc_method

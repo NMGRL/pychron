@@ -22,6 +22,7 @@ from traitsui.tabular_adapter import TabularAdapter
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.tabular_editor import myTabularEditor
 
 
@@ -41,6 +42,7 @@ class SensitivityAdapter(TabularAdapter):
     #     placeholder_width = Int(2)
 
     font = 'arial 11'
+
     #    mass_spectrometer_width = Int(40)
     # def _set_create_date_text(self, v):
     #     pass
@@ -63,28 +65,24 @@ class SensitivityPane(TraitsTaskPane):
     id = 'pychron.entry.sensitivity'
 
     def traits_view(self):
-        v = View(VGroup(UItem('records',
-                              editor=myTabularEditor(adapter=SensitivityAdapter(),
-                                                     editable=False,
-                                                     auto_update=True,
-                                                     selected='selected')),
-                        UItem('selected', style='custom', editor=InstanceEditor(view=SVIEW))),
-                 buttons=['OK', 'Cancel'],
-                 width=600,
-                 resizable=True,
-                 title='Sensitivity')
+        v = okcancel_view(VGroup(UItem('records',
+                                       editor=myTabularEditor(adapter=SensitivityAdapter(),
+                                                              editable=False,
+                                                              auto_update=True,
+                                                              selected='selected')),
+                                 UItem('selected', style='custom', editor=InstanceEditor(view=SVIEW))),
+                          width=600,
+                          title='Sensitivity')
         return v
 
     def readonly_view(self):
-        v = View(Item('records',
-                      editor=myTabularEditor(adapter=SensitivityAdapter(),
-                                             editable=False,
-                                             selected='selected'),
-                      show_label=False),
-                 buttons=['OK', 'Cancel'],
-                 width=600,
-                 resizable=True,
-                 title='Sensitivity')
+        v = okcancel_view(Item('records',
+                               editor=myTabularEditor(adapter=SensitivityAdapter(),
+                                                      editable=False,
+                                                      selected='selected'),
+                               show_label=False),
+                          width=600,
+                          title='Sensitivity')
         return v
 
 # ============= EOF =============================================

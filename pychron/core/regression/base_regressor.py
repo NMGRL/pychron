@@ -18,7 +18,7 @@ import logging
 import math
 import re
 
-from numpy import where, delete, polyfit
+from numpy import where, delete, polyfit, percentile
 # ============= enthought library imports =======================
 from traits.api import Array, List, Event, Property, Any, \
     Dict, Str, Bool, cached_property, HasTraits
@@ -50,14 +50,16 @@ class BaseRegressor(HasTraits):
     n = Property(depends_on='dirty, xs, ys')
 
     user_excluded = List
+    ouser_excluded = List
+
     outlier_excluded = List
     truncate_excluded = List
 
     filter_outliers_dict = Dict
     truncate = Str
 
-    filter_xs = Array
-    filter_ys = Array
+    # filter_xs = Array
+    # filter_ys = Array
     # _filtering = Bool(False)
 
     error_calc_type = 'CI'
@@ -76,6 +78,7 @@ class BaseRegressor(HasTraits):
 
     degrees_of_freedom = Property
     integrity_warning = False
+    filter_bound_value = 0
 
     @property
     def min(self):
@@ -90,12 +93,27 @@ class BaseRegressor(HasTraits):
         return self.clean_ys.mean()
 
     @property
+    def mean_mswd(self):
+        if len(self.clean_yserr):
+            return calculate_mswd(self.clean_ys, self.clean_yserr)
+
+    @property
+    def valid_mean_mswd(self):
+        m = self.mean_mswd
+        if m is not None:
+            return validate_mswd(m, self.n)
+
+    @property
     def std(self):
         return self.clean_ys.std()
 
     @property
     def sem(self):
         return self.std / self.n ** 0.5
+
+    @property
+    def dev(self):
+        return self.max - self.min
 
     @property
     def rsquared(self):
@@ -127,7 +145,7 @@ class BaseRegressor(HasTraits):
                 self.calculate(filtering=True)
 
                 self.dirty = True
-                outliers = self.calculate_outliers(nsigma=fod.get('std_devs', 2))
+                outliers = self.calculate_outliers()
 
                 self.outlier_excluded = list(set(self.outlier_excluded + list(outliers)))
                 self.dirty = True
@@ -136,7 +154,7 @@ class BaseRegressor(HasTraits):
         return self.clean_xs, self.clean_ys
 
     def get_excluded(self):
-        return list(set(self.user_excluded + self.outlier_excluded + self.truncate_excluded))
+        return list(set(self.user_excluded + self.outlier_excluded + self.truncate_excluded + self.ouser_excluded))
 
     def set_truncate(self, trunc):
         self.truncate = trunc or ''
@@ -179,13 +197,45 @@ class BaseRegressor(HasTraits):
         r = i_n * sum(A * B)
         return r
 
-    def calculate_outliers(self, nsigma=2):
-        s = self.calculate_standard_error_fit()
+    def calculate_filter_bounds(self, model=None, bound=None):
+        if bound is None:
+            bound = self.filter_bound_value
+            if not bound:
+                if self.filter_outliers_dict.get('use_standard_deviation_filtering'):
+                    bound = self.std
+                else:
+                    bound = self.calculate_standard_error_fit()
 
-        # calculate residuals for every point not just cleaned arrays
-        residuals = abs(self.ys - self.predict(self.xs))
+                bound *= self.filter_outliers_dict.get('std_devs', 2)
 
-        return where(residuals >= (s * nsigma))[0]
+        if model is None:
+            model = self.predict(self.xs)
+
+        lower = model - bound
+        upper = model + bound
+        return lower, upper
+
+    def calculate_outliers(self):
+        if self.filter_outliers_dict.get('use_iqr_filtering'):
+            q1 = percentile(self.ys, 25)
+            q3 = percentile(self.ys, 75)
+            iqr = q3 - q1
+            os = where(self.ys < (q1 - 1.5 * iqr) | self.ys > (q3 + 1.5 * iqr))[0]
+        else:
+            if self.filter_outliers_dict.get('use_standard_deviation_filtering'):
+                s = self.std
+            else:
+                s = self.calculate_standard_error_fit()
+
+            nsigma = self.filter_outliers_dict.get('std_devs', 2)
+
+            # calculate residuals for every point not just cleaned arrays
+            residuals = abs(self.ys - self.predict(self.xs))
+
+            self.filter_bound_value = s * nsigma
+            os = where(residuals >= (s * nsigma))[0]
+
+        return os
 
     def calculate_standard_error_fit(self, residuals=None):
         """
@@ -228,15 +278,14 @@ class BaseRegressor(HasTraits):
         es = self.predict_error(rx, error_calc=error_calc)
         if es is None:
             es = 0
-
-        return rmodel-es, rmodel+es
+        return rmodel - es, rmodel + es
 
     def calculate_mc_error(self, rx):
         if isinstance(rx, (float, int)):
             rx = [rx]
 
         estimator = RegressionEstimator(10000, self)
-        _,es = estimator.estimate(rx)
+        _, es = estimator.estimate(rx)
         return es
 
     def calculate_ci_error(self, rx):

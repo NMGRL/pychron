@@ -38,6 +38,7 @@ from pychron.hardware.switch import Switch, ManualSwitch
 from pychron.hardware.valve import HardwareValve
 from pychron.managers.manager import Manager
 from pychron.paths import paths
+from pychron.pychron_constants import NULL_STR
 from .switch_parser import SwitchParser
 
 
@@ -255,10 +256,14 @@ class SwitchManager(Manager):
         """
         return self._get_valve_by(a, 'address')
 
-    def get_valve_by_description(self, a):
+    def get_valve_by_description(self, a, name=None):
         """
         """
-        return self._get_valve_by(a, 'description')
+        if name and name != NULL_STR:
+            v = self._get_valve_by((a, name), ('description', 'display_name'))
+        else:
+            v = self._get_valve_by(a, 'description')
+        return v
 
     def get_switch_by_name(self, n):
         """
@@ -276,10 +281,11 @@ class SwitchManager(Manager):
         if v is not None:
             return v.name
 
-    def get_name_by_description(self, d):
-        v = self.get_valve_by_description(d)
+    def get_name_by_description(self, d, name=None):
+        v = self.get_valve_by_description(d, name=name)
         if v is not None:
-            return v.name.split('-')[-1]
+            valve_name = v.name.split('-')[-1]
+            return valve_name
 
     def get_evalve_by_name(self, n):
         """
@@ -512,7 +518,12 @@ class SwitchManager(Manager):
         return state
 
     def _get_valve_by(self, a, attr):
-        return next((valve for valve in self.switches.values() if getattr(valve, attr) == a), None)
+        if isinstance(a, tuple):
+            for vi in self.switches.values():
+                if all((getattr(vi, attri) == ai for ai, attri in zip(a, attr))):
+                    return vi
+        else:
+            return next((valve for valve in self.switches.values() if getattr(valve, attr) == a), None)
 
     def _validate_checksum(self, word):
         if word is not None:

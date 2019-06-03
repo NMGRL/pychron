@@ -50,7 +50,7 @@ class RegressionSeries(BaseArArFigure):
             if self.xtitle:
                 kw['xtitle'] = self.xtitle
 
-            kw['padding'] = self.options.paddings()
+            kw['padding'] = self.options.get_paddings()
 
             p = graph.new_plot(**kw)
             # set a tag for easy identification

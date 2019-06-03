@@ -21,27 +21,23 @@ from chaco.legend import Legend
 from numpy import inf
 from traits.api import HasTraits, Any, List, Str
 
-from pychron.core.codetools.inspection import caller
 from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.processing.analysis_graph import AnalysisStackedGraph
 
 
 class FigurePanel(HasTraits):
     figures = List
-    # graph = Any
     analyses = Any
     plot_options = Any
-    _index_attr = ''
     equi_stack = False
 
+    _index_attr = ''
     _graph_klass = AnalysisStackedGraph
     _figure_klass = Any
 
-    # plot_spacing = Int(0)
     meta = Any
     title = Str
     use_previous_limits = True
-
     track_value = True
 
     # @on_trait_change('analyses[]')
@@ -79,7 +75,6 @@ class FigurePanel(HasTraits):
             fig.suppress_ylimits_update = state
             fig.suppress_xlimits_update = state
 
-    @caller
     def make_graph(self):
 
         po = self.plot_options
@@ -169,11 +164,13 @@ class FigurePanel(HasTraits):
                 g.set_x_limits(mi, ma, pad=xpad or self.plot_options.xpadding)
 
             self.figures[-1].post_make()
+            self.figures[-1].post_plot(plots)
+
             for fig in self.figures:
                 for i in range(len(plots)):
                     fig.update_options_limits(i)
 
-        self._make_graph_hook(g)
+            self._make_graph_hook(g)
 
         return g.plotcontainer
 

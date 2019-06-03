@@ -16,13 +16,12 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-import time
+
 from threading import Event
 
 from traits.api import Instance, Property, List, on_trait_change, Bool, \
-    Str, CInt, Tuple, Color, HasTraits, Any, Int, Button
+    Str, CInt, Tuple, Color, HasTraits, Any, Int
 from traitsui.api import View, UItem, VGroup, HGroup, spring, ListEditor
-from uncertainties import std_dev, nominal_value
 
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.gui import invoke_in_main_thread
@@ -31,11 +30,6 @@ from pychron.graph.graph import Graph
 from pychron.graph.stacked_graph import StackedGraph
 from pychron.graph.stacked_regression_graph import StackedRegressionGraph
 from pychron.loggable import Loggable
-from pychron.options.ideogram import IdeogramOptions
-from pychron.options.spectrum import SpectrumOptions
-from pychron.pipeline.plot.plotter.ideogram import Ideogram
-from pychron.pipeline.plot.plotter.spectrum import Spectrum
-from pychron.processing.arar_age import ArArAge
 from pychron.processing.isotope_group import IsotopeGroup
 from pychron.pychron_constants import PLUSMINUS, AR_AR
 
@@ -197,18 +191,18 @@ class PlotPanel(Loggable):
         else:
             self.isotope_graph.refresh()
 
-        if self.figure and isinstance(self.isotope_group, ArArAge):
-            age = self.isotope_group.uage
-            k39 = self.isotope_group.get_computed_value('k39')
-            v, e = nominal_value(age), std_dev(age)
-
-            self.debug('update figure age={} +/- {}. k39={}'.format(v, e, nominal_value(k39)))
-
-            a = self.figure.analyses[-1]
-            a.uage = age
-            a.k39 = k39
-
-            self.figure.replot()
+        # if self.figure and isinstance(self.isotope_group, ArArAge):
+        #     age = self.isotope_group.uage
+        #     k39 = self.isotope_group.get_computed_value('k39')
+        #     v, e = nominal_value(age), std_dev(age)
+        #
+        #     self.debug('update figure age={} +/- {}. k39={}'.format(v, e, nominal_value(k39)))
+        #
+        #     a = self.figure.analyses[-1]
+        #     a.uage = age
+        #     a.k39 = k39
+        #
+        #     self.figure.replot()
 
     def new_isotope_plot(self, **kw):
         plots = self._new_plot(isotope_only=True, **kw)
@@ -231,38 +225,38 @@ class PlotPanel(Loggable):
         self.isotope_graph = g
         self.selected_graph = g
 
-    def add_figure_graph(self, spec, analyses):
-        self.debug('add figure graph. runid={}, nanalyses={}'.format(spec.runid, len(analyses)))
-        ans = [ai for ai in analyses if ai.labnumber == spec.labnumber]
-        if spec.is_step_heat():
-            f = Spectrum
-            opt = SpectrumOptions()
-
-            opt.add_aux_plot('Age Spectrum')
-            f.options = opt
-
-            name = 'Spec.'
-            ans = [ai for ai in ans if ai.aliquot == spec.aliquot]
-
-        else:
-            name = 'Ideo.'
-            f = Ideogram()
-            opt = IdeogramOptions()
-            opt.add_aux_plot('Ideogram')
-
-        ans.append(spec)
-
-        f.analyses = ans
-
-        plots = opt.get_plotable_aux_plots()
-        f.build(plots)
-        f.plot(plots)
-
-        self.figure = f
-        g = f.graph
-        g.page_name = name
-        self.graphs.append(g)
-        self.selected_graph = g
+    # def add_figure_graph(self, spec, analyses):
+    #     self.debug('add figure graph. runid={}, nanalyses={}'.format(spec.runid, len(analyses)))
+    #     ans = [ai for ai in analyses if ai.labnumber == spec.labnumber]
+    #     if spec.is_step_heat():
+    #         f = Spectrum
+    #         opt = SpectrumOptions()
+    #
+    #         opt.add_aux_plot('Age Spectrum')
+    #         f.options = opt
+    #
+    #         name = 'Spec.'
+    #         ans = [ai for ai in ans if ai.aliquot == spec.aliquot]
+    #
+    #     else:
+    #         name = 'Ideo.'
+    #         f = Ideogram()
+    #         opt = IdeogramOptions()
+    #         opt.add_aux_plot('Ideogram')
+    #
+    #     ans.append(spec)
+    #
+    #     f.analyses = ans
+    #
+    #     plots = opt.get_plotable_aux_plots()
+    #     f.build(plots)
+    #     f.plot(plots)
+    #
+    #     self.figure = f
+    #     g = f.graph
+    #     g.page_name = name
+    #     self.graphs.append(g)
+    #     self.selected_graph = g
 
     # private
     def _new_plot(self, isotope_only=False, **kw):
@@ -316,6 +310,9 @@ class PlotPanel(Loggable):
         xmi, xma = self.isotope_graph.get_x_limits()
         xm = max(xma, xma + (v - o) * self.integration_time)
         self.isotope_graph.set_x_limits(max_=xm)
+
+        xmi, xma = self.baseline_graph.get_x_limits()
+        xm = max(xma, xma + (v - o) * self.integration_time)
         self.baseline_graph.set_x_limits(max_=xm)
 
     def _get_ncycles(self):

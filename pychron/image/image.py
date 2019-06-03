@@ -14,11 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-from numpy import asarray, flipud, fliplr
+# =============enthought library imports=======================
+from traits.api import HasTraits, Any, List, Int, Bool, Float
+
+from numpy import asarray, flipud, ndarray, fliplr
 from skimage.color import rgb2gray, gray2rgb
 from skimage.transform import resize, rotate as trotate
 # =============enthought library imports=======================
-from traits.api import HasTraits, Any, List, Int, Bool, Float
+from scipy.ndimage.interpolation import rotate as srotate
 
 
 class Image(HasTraits):
@@ -82,10 +85,14 @@ class Image(HasTraits):
         frame = self._get_frame(**kw)
         frame = self.modify_frame(frame, **kw)
 
-        self._cached_frame = frame
-        if len(frame.shape) == 2:
-            scalar = 255./self.pixel_depth
-            frame = gray2rgb(frame*scalar)
+        if frame is not None:
+            if len(frame.shape) == 2:
+                scalar = 255./self.pixel_depth
+                frame = gray2rgb(frame*scalar)
+
+            self._cached_frame = frame
+        else:
+            frame = self._cached_frame
 
         return frame
 
@@ -142,9 +149,10 @@ class Image(HasTraits):
 
             rotate = _get_param(rotate, 'rotate')
             if rotate:
-                frame = trotate(frame, rotate, preserve_range=True)
+                frame = srotate(frame, rotate)
+                # frame = trotate(frame, rotate, preserve_range=True)
 
-        return asarray(frame)
+            return asarray(frame)
 
     def crop(self, src, ox, oy, cw, ch):
         h, w = src.shape[:2]

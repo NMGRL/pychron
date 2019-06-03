@@ -16,11 +16,10 @@
 
 # ============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
-from enable.colors import black_color_trait
-from traits.api import Array
-
+from enable.colors import black_color_trait, ColorTrait
 # ============= standard library imports ========================
 from numpy import array, zeros
+from traits.api import Array
 
 
 # ============= local library imports  ==========================
@@ -33,7 +32,8 @@ class ErrorEnvelopeOverlay(AbstractOverlay):
     lower = Array
     use_downsampling = False
     line_color = black_color_trait
-
+    region_color = ColorTrait((0.5, 0.5, 0.5, 0.5))
+    use_region = False
     xs = None
 
     def invalidate(self):
@@ -73,10 +73,33 @@ class ErrorEnvelopeOverlay(AbstractOverlay):
         with gc:
             gc.clip_to_rect(0, 0, other_component.width, other_component.height)
             upts, lpts = self.get_screen_points()
-            gc.set_line_dash((5, 5))
-            gc.set_stroke_color(self.line_color_)
-            self._render_line(gc, upts)
-            self._render_line(gc, lpts)
+            if self.use_region:
+                upts = upts[0]
+                lpts = lpts[0]
+
+                uxs, uys = upts.T
+                lxs, lys = lpts.T
+
+                x1 = x4 = uxs.min()
+                x2 = x3 = uxs.max()
+                y1 = uys[0]
+                y2 = uys[-1]
+                y3 = lys[-1]
+                y4 = lys[0]
+
+                gc.move_to(x1, y1)
+                gc.line_to(x2, y2)
+                gc.line_to(x3, y3)
+                gc.line_to(x4, y4)
+                # gc.set_fill_color((1, 0.4, 0.1, 0.5))
+                gc.set_fill_color(self.region_color_)
+                gc.fill_path()
+
+            else:
+                gc.set_line_dash((5, 5))
+                gc.set_stroke_color(self.line_color_)
+                self._render_line(gc, upts)
+                self._render_line(gc, lpts)
 
     def _render_line(self, gc, points):
         for ary in points:

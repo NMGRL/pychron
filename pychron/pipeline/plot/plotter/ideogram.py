@@ -15,9 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
-
 import math
 
 from chaco.abstract_overlay import AbstractOverlay
@@ -31,12 +28,10 @@ from pyface.message_dialog import warning
 from traits.api import Array
 from uncertainties import nominal_value, std_dev
 
-from pychron.core.codetools.inspection import caller
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.stats.peak_detection import fast_find_peaks
 from pychron.core.stats.probability_curves import cumulative_probability, kernel_density
 from pychron.graph.ticks import IntTickGenerator
-from pychron.pipeline.plot.flow_label import FlowPlotLabel
 from pychron.pipeline.plot.overlays.ideogram_inset_overlay import IdeogramInset, IdeogramPointsInset
 from pychron.pipeline.plot.overlays.mean_indicator_overlay import MeanIndicatorOverlay
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
@@ -121,11 +116,6 @@ class Ideogram(BaseArArFigure):
     ytitle = 'Relative Probability'
     subgroup_id = 0
     subgroup = None
-
-    # xlimits_updated = Event
-    # ylimits_updated = Event
-
-    # _omit_key = 'omit_ideo'
 
     def plot(self, plots, legend=None):
         """
@@ -349,8 +339,7 @@ class Ideogram(BaseArArFigure):
         else:
             name = ia
 
-        f = lambda i, x, y, ai: u'{}= {}'.format(name, ai.value_string(ia))
-        return f
+        return lambda i, x, y, ai: u'{}= {}'.format(name, ai.value_string(ia))
 
     def _plot_relative_probability(self, po, plot, pid):
         graph = self.graph
@@ -492,15 +481,10 @@ class Ideogram(BaseArArFigure):
                     es = self.options.error_bar_nsigma
                     ts.append(u'Mean: {} {}{}{} Data: {}{}{}'.format(m, PLUSMINUS, s, SIGMA, PLUSMINUS, es, SIGMA))
                 if self.options.show_error_type_info:
-                    ts.append('Error Type: {}'.format(self.options.error_calc_method))
+                    ts.append(u'Error Type: {}'.format(self.options.error_calc_method))
 
                 if ts:
-                    pl = FlowPlotLabel(text='\n'.join(ts),
-                                       overlay_position='inside top',
-                                       hjustify='left',
-                                       font=self.options.error_info_font,
-                                       component=plot)
-                    plot.overlays.append(pl)
+                    self._add_info_label(plot, ts)
 
     def _add_mean_indicator(self, g, line, po, bins, probs, pid):
         wm, we, mswd, valid_mswd, n = self._calculate_stats(bins, probs)
@@ -508,7 +492,6 @@ class Ideogram(BaseArArFigure):
         gid = ogid + 1
 
         opt = self.options
-        we = opt.nsigma
         text = ''
         if opt.display_mean:
             total_n = self.xs.shape[0]
@@ -523,16 +506,13 @@ class Ideogram(BaseArArFigure):
             text = self._make_mean_label(wm, we * opt.nsigma, n, total_n, mswd_args,
                                          display_n=opt.display_mean_n)
 
-        # group = self.options.get_group(self.group_id)
-        # color = group.color
-
         plotkw = opt.get_plot_dict(ogid, self.subgroup_id)
 
         m = MeanIndicatorOverlay(component=line,
                                  x=wm,
                                  y=20 * gid,
                                  error=we,
-                                 nsgima=opt.nsigma,
+                                 nsigma=opt.nsigma,
                                  color=plotkw['color'],
                                  visible=opt.display_mean_indicator,
                                  id='mean_{}'.format(self.group_id))
@@ -567,10 +547,15 @@ class Ideogram(BaseArArFigure):
         #     self.update_graph_metadata(None, name, old, new)
 
     def update_graph_metadata(self, obj, name, old, new):
+        if hasattr(obj, 'suppress_update') and obj.suppress_update:
+            return
+
         ans = self.sorted_analyses
         sel = obj.metadata.get('selections', [])
         self._set_selected(ans, sel)
+
         self._rebuild_ideo(sel)
+        self.recalculate_event = True
 
         # self._filter_metadata_changes(obj, sorted_ans, self._rebuild_ideo)
 
@@ -582,11 +567,9 @@ class Ideogram(BaseArArFigure):
         h = d.max()
         return 0, h
 
-    @caller
     def replot(self):
         self._rebuild_ideo()
 
-    @caller
     def _rebuild_ideo(self, sel=None):
         graph = self.graph
         gid = self.group_id + 1
@@ -719,10 +702,10 @@ class Ideogram(BaseArArFigure):
         if not po.ytitle_visible:
             title = ''
 
-        if '<sup>' in title or '<sub>' in title:
-            self._set_ml_title(title, pid, 'y')
-        else:
-            graph.set_y_title(title, plotid=pid)
+        # if '<sup>' in title or '<sub>' in title:
+        #     self._set_ml_title(title, pid, 'y')
+        # else:
+        graph.set_y_title(title, plotid=pid)
         graph.set_series_label('{}-{}'.format(title, self.group_id + 1),
                                plotid=pid)
         s.history_id = self.group_id

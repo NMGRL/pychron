@@ -138,27 +138,17 @@ class Experimentor(DVCIrradiationable):
 
                 # is run in cache
                 if ln not in cache:
-                    info = db.get_analysis_info(ln)
+                    info = db.get_identifier_info(ln)
                     self.debug('Info for {}={}'.format(ln, info))
                     if not info:
                         cache[ln] = dict(identifier_error=True)
                     else:
-                        project, pi, sample, material, irrad, level, pos = info
-
-                        cache[ln] = dict(project=project or '',
-                                         principal_investigator=pi or '',
-                                         sample=sample or '',
-                                         material=material or '',
-                                         irradiation=irrad or '',
-                                         irradiation_level=level or '',
-                                         irradiation_position=pos or '',
-                                         identifier_error=False)
+                        info['identifier_error'] = False
+                        cache[ln] = info
 
                 ai.trait_set(**cache[ln])
 
     def execute_queues(self, queues):
-        self.debug('<{}> setup executor'.format(id(self)))
-
         names = ','.join([e.name for e in queues])
         self.debug('queues: n={}, names={}'.format(len(queues), names))
 
@@ -222,6 +212,9 @@ class Experimentor(DVCIrradiationable):
         if eq:
             self.experiment_factory.queue = eq
             self.experiment_factory.sync_queue_meta()
+            self.experiment_factory.edit_enabled = True
+        else:
+            self.experiment_factory.edit_enabled = False
 
     @on_trait_change('executor:experiment_queue')
     def _activate_editor(self, eq):
@@ -318,7 +311,6 @@ class Experimentor(DVCIrradiationable):
 
         e = ExperimentFactory(application=self.application,
                               dvc=self.dvc,
-                              iso_db_man=self.iso_db_man,
                               default_mass_spectrometer=dms)
         return e
 

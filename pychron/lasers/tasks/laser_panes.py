@@ -15,15 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from enable.component_editor import ComponentEditor
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Property
 from traitsui.api import View, UItem, Group, InstanceEditor, HGroup, \
     EnumEditor, Item, spring, Spring, ButtonEditor, VGroup, RangeEditor, \
-    ListStrEditor, Handler
+    Handler
 
+from pychron.core.helpers.traitsui_shortcuts import rfloatitem
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.image_editor import ImageEditor
 from pychron.core.ui.led_editor import LEDEditor
@@ -59,23 +59,38 @@ class StageControlPane(TraitsDockPane):
                 'object': self.model}
 
     def _get_tabs(self):
+
+        cg = VGroup(HGroup(Item('canvas.show_laser_position', label='Display Current'),
+                           UItem('canvas.crosshairs_color'),
+                           Item('canvas.crosshairs_line_width', label='Line Wt.')),
+                    Item('canvas.show_hole_label', label='Display Hole Label'),
+                    HGroup(Item('canvas.show_desired_position',
+                                label='Show Desired'),
+                           UItem('canvas.desired_position_color')),
+                    HGroup(Item('canvas.crosshairs_kind', label='Kind'),
+                           Item('canvas.crosshairs_radius', label='Radius')),
+                    HGroup(Item('canvas.crosshairs_offsetx', label='Offset (mm)'),
+                           UItem('canvas.crosshairs_offsety'),
+                           Item('canvas.crosshairs_offset_color')),
+                    label='Crosshairs',
+                    show_border=True)
+
+        acg = VGroup(HGroup(Item('canvas.aux_show_laser_position', label='Display Current'),
+                            UItem('canvas.aux_crosshairs_color'),
+                            Item('canvas.aux_crosshairs_line_width', label='Line Wt.')),
+
+                     HGroup(Item('canvas.aux_crosshairs_kind', label='Kind'),
+                            Item('canvas.aux_crosshairs_radius', label='Radius')),
+                     HGroup(Item('canvas.aux_crosshairs_offsetx', label='Offset (mm)'),
+                            UItem('canvas.aux_crosshairs_offsety'),
+                            # Item('canvas.aux_crosshairs_offset_color')
+                            ),
+                     label='Aux Crosshairs',
+                     show_border=True)
+
         canvas_grp = VGroup(Item('canvas.show_bounds_rect', label='Show Bounds Rectangle'),
                             Item('canvas.show_grids', label='Show Grids'),
-                            VGroup(HGroup(Item('canvas.show_laser_position', label='Display Current'),
-                                          UItem('canvas.crosshairs_color'),
-                                          Item('canvas.crosshairs_line_width', label='Line Wt.')),
-                                   Item('canvas.show_hole_label', label='Display Hole Label'),
-                                   HGroup(
-                                       Item('canvas.show_desired_position',
-                                            label='Show Desired'),
-                                       UItem('canvas.desired_position_color')),
-                                   Item('canvas.crosshairs_kind', label='Kind'),
-                                   Item('canvas.crosshairs_radius', label='Radius'),
-                                   HGroup(Item('canvas.crosshairs_offsetx', label='Offset (mm)'),
-                                          UItem('canvas.crosshairs_offsety')),
-                                   Item('canvas.crosshairs_offset_color', label='Offset Color'),
-                                   label='Crosshairs',
-                                   show_border=True),
+                            cg, acg,
                             label='Canvas')
 
         tabs = Group(UItem('stage_manager.stage_controller', style='custom',
@@ -85,10 +100,10 @@ class StageControlPane(TraitsDockPane):
 
         if self.model.stage_manager.__class__.__name__ == 'VideoStageManager':
             degasser_grp = VGroup(HGroup(VGroup(UItem('degas_test_button'),
-                                         show_border=True, label='Testing'),
-                                  VGroup(Item('degasser.threshold'),
-                                         show_border=True, label='Preprocess'),
-                                         icon_button_editor('degasser.edit_pid_button','cog'),
+                                                show_border=True, label='Testing'),
+                                         VGroup(Item('degasser.threshold'),
+                                                show_border=True, label='Preprocess'),
+                                         icon_button_editor('degasser.edit_pid_button', 'cog'),
                                          icon_button_editor('degasser.save_button', 'save'),
                                          VGroup(Item('degasser.pid.kp'),
                                                 Item('degasser.pid.ki'),
@@ -106,6 +121,7 @@ class StageControlPane(TraitsDockPane):
             recgrp = VGroup(HGroup(icon_button_editor('stage_manager.snapshot_button',
                                                       'camera',
                                                       tooltip='Take a snapshot'),
+                                   Item('stage_manager.snapshot_mode', label='Mode'),
                                    icon_button_editor('stage_manager.record',
                                                       'media-record',
                                                       tooltip='Record video'),
@@ -139,25 +155,21 @@ class StageControlPane(TraitsDockPane):
             cal_help_grp = VGroup(CustomLabel('tray_calibration.calibration_help',
                                               color='green'),
                                   label='Help', show_border=True)
-            cal_results_grp = VGroup(HGroup(Item('tray_calibration.x',
-                                                 format_str='%0.3f',
-                                                 style='readonly'),
-                                            Item('tray_calibration.y',
-                                                 format_str='%0.3f',
-                                                 style='readonly')),
-                                     Item('tray_calibration.rotation',
-                                          format_str='%0.3f', style='readonly'),
-                                     Item('tray_calibration.scale', format_str='%0.4f',
-                                          style='readonly'),
-                                     Item('tray_calibration.error', format_str='%0.2f',
-                                          style='readonly'),
+
+            cal_results_grp = VGroup(HGroup(rfloatitem('tray_calibration.cx'),
+                                            rfloatitem('tray_calibration.cy')),
+                                     rfloatitem('tray_calibration.rotation'),
+                                     rfloatitem('tray_calibration.scale', sigfigs=4),
+                                     rfloatitem('tray_calibration.error', sigfigs=2),
                                      label='Results', show_border=True)
-            holes_grp = VGroup(HGroup(UItem('tray_calibration.add_holes_button',
-                                            tooltip='Add Holes'),
-                                      UItem('tray_calibration.reset_holes_button',
-                                            tooltip='Reset Holes')),
-                               UItem('tray_calibration.holes_list',
-                                     editor=ListStrEditor()))
+
+            # holes_grp = VGroup(HGroup(UItem('tray_calibration.add_holes_button',
+            #                                 tooltip='Add Holes'),
+            #                           UItem('tray_calibration.reset_holes_button',
+            #                                 tooltip='Reset Holes')),
+            #                    UItem('tray_calibration.holes_list',
+            #                          editor=ListStrEditor()))
+
             cal_grp = HGroup(UItem('tray_calibration.style',
                                    enabled_when='not tray_calibration.isCalibrating()'),
                              UItem('stage_manager.stage_map_name',
@@ -170,7 +182,6 @@ class StageControlPane(TraitsDockPane):
                                    enabled_when='tray_calibration.isCalibrating()'),
                              UItem('tray_calibration.set_center_button'))
             tc_grp = VGroup(cal_grp,
-                            # holes_grp,
                             HGroup(cal_results_grp, cal_help_grp),
                             label='Calibration')
 
@@ -184,6 +195,9 @@ class StageControlPane(TraitsDockPane):
                       icon_button_editor('stage_manager.autocenter_button', 'find',
                                          tooltip='Do an autocenter at the current location',
                                          enabled_when='stage_manager.autocenter_manager.use_autocenter'),
+                      icon_button_editor('stage_manager.manual_override_position_button', 'edit-move',
+                                         tooltip='Manual define the X,Y coordinates for current position',
+                                         enabled_when='stage_manager.calibrated_position_entry'),
                       label='Calibrated Position',
                       show_border=True)
         hgrp = HGroup(UItem('stage_manager.stop_button'),

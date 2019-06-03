@@ -16,9 +16,9 @@
 
 # ============= enthought library imports =======================
 from traits.api import Any, Str, List, Bool, Int, CInt, Instance
-from traitsui.api import View
-from traitsui.item import Item
+from traitsui.api import Item, VGroup
 
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.progress import open_progress
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.loggable import Loggable
@@ -60,6 +60,7 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
     # default_j_err = Float(1e-7)
 
     monitor_name = Str
+    use_consecutive_identifiers = Bool
 
     irradiation_positions = List
     irradiation = Str
@@ -73,38 +74,46 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
     unk_start = CInt(1000)
 
     pattributes = ('level_offset', 'offset')
-    persistence_path = 'identifier_generator'
+    persistence_name = 'identifier_generator.p'
     mon_maxs = List
     unk_maxs = List
 
     def setup(self):
         self.load()
-        monlns = self.db.get_last_identifiers(self.monitor_name)
-        unklns = self.db.get_last_identifiers(excludes=(self.monitor_name,))
+        if not self.use_consecutive_identifiers:
+            monlns = self.db.get_last_identifiers(self.monitor_name)
+            unklns = self.db.get_last_identifiers(excludes=(self.monitor_name,))
 
-        if monlns:
-            self.mon_maxs = list(map(str, get_maxs(monlns)))
-        if unklns:
-            self.unk_maxs = list(map(str, get_maxs(unklns)))
+            if monlns:
+                self.mon_maxs = list(map(str, get_maxs(monlns)))
+            if unklns:
+                self.unk_maxs = list(map(str, get_maxs(unklns)))
 
-        self.mon_start = self.mon_maxs[0] if self.mon_maxs else 0
-        self.unk_start = self.unk_maxs[0] if self.unk_maxs else 0
+            self.mon_start = self.mon_maxs[0] if self.mon_maxs else 0
+            self.unk_start = self.unk_maxs[0] if self.unk_maxs else 0
+        else:
+            unklns = self.db.get_last_identifiers()
+            if unklns:
+                self.unk_maxs = list(map(str, get_maxs(unklns)))
+            self.unk_start = self.unk_maxs[0] if self.unk_maxs else 0
 
-        info = self.edit_traits(view=View(Item('offset'), Item('level_offset'),
-                                          Item('mon_start', label='Starting Monitor L#',
-                                               editor=ComboboxEditor(name='mon_maxs')),
-                                          Item('unk_start', label='Starting Unknown L#',
-                                               editor=ComboboxEditor(name='unk_maxs')),
-                                          kind='livemodal',
-                                          title='Configure Identifier Generation',
-                                          buttons=['OK', 'Cancel']), )
+        start_grp = VGroup(Item('mon_start', label='Starting Monitor Identifier',
+                                editor=ComboboxEditor(name='mon_maxs'), defined_when='not use_consecutive_identifiers'),
+                           Item('unk_start', label='Starting Unknown Identifier',
+                                editor=ComboboxEditor(name='unk_maxs'), defined_when='not use_consecutive_identifiers'),
+                           Item('unk_start', label='Starting Identifier',
+                                editor=ComboboxEditor(name='unk_maxs'),
+                                defined_when='use_consecutive_identifiers'))
+
+        info = self.edit_traits(view=okcancel_view(Item('offset'), Item('level_offset'),
+                                                   start_grp,
+                                                   title='Configure Identifier Generation'))
         if info.result:
             self.dump()
             return True
 
-    def preview(self, positions, irradiation, level):
+    def preview(self, positions, level):
         self.irradiation_positions = positions
-        self.irradiation = irradiation
         self.level = level
         self.is_preview = True
 
@@ -191,32 +200,47 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
         """
         db = self.db
         irradiation = self.irradiation
-        if not self.mon_start:
-            last_mon_ln = db.get_last_identifier(self.monitor_name)
-            if last_mon_ln:
-                last_mon_ln = int(last_mon_ln.identifier)
-            else:
-                last_mon_ln = 0
-        else:
-            last_mon_ln = self.mon_start
-
-        if not self.unk_start:
-            last_unk_ln = db.get_last_identifier()
-            if last_unk_ln:
-                last_unk_ln = int(last_unk_ln.identifier)
-            else:
-                last_unk_ln = 0
-        else:
-            last_unk_ln = self.unk_start
-
         irrad = db.get_irradiation(irradiation)
         levels = irrad.levels
         overwrite = self.overwrite
-        args = (irradiation, levels, overwrite, offset, level_offset)
-        mons = self._identifier_generator(last_mon_ln, True, *args)
-        unks = self._identifier_generator(last_unk_ln, False, *args)
         n = sum([len([p for p in li.positions
                       if overwrite or (p.sample and not p.identifier)]) for li in levels])
+        args = (irradiation, levels, overwrite, offset, level_offset)
+
+        if self.use_consecutive_identifiers:
+            if not self.unk_start:
+                last_unk_ln = db.get_last_identifier()
+                if last_unk_ln:
+                    last_unk_ln = int(last_unk_ln.identifier)
+                else:
+                    last_unk_ln = 0
+            else:
+                last_unk_ln = self.unk_start
+
+            unks = self._identifier_generator(last_unk_ln, False, *args)
+            mons = []
+
+        else:
+            if not self.mon_start:
+                last_mon_ln = db.get_last_identifier(self.monitor_name)
+                if last_mon_ln:
+                    last_mon_ln = int(last_mon_ln.identifier)
+                else:
+                    last_mon_ln = 0
+            else:
+                last_mon_ln = self.mon_start
+
+            if not self.unk_start:
+                last_unk_ln = db.get_last_identifier()
+                if last_unk_ln:
+                    last_unk_ln = int(last_unk_ln.identifier)
+                else:
+                    last_unk_ln = 0
+            else:
+                last_unk_ln = self.unk_start
+
+            mons = self._identifier_generator(last_mon_ln, True, *args)
+            unks = self._identifier_generator(last_unk_ln, False, *args)
 
         return mons, unks, n
 
@@ -235,23 +259,30 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
         level_offset = max(1, level_offset)
         sln = start + offset
 
-        def monkey(invert=False):
-            def _monkey(x):
-                r = None
-                if self.is_preview:
-                    r = self._get_position_is_monitor(x)
-                else:
-                    # print('dsaf', x.sample.name, self.monitor_name, x.sample.name == self.monitor_name)
-                    try:
-                        r = x.sample.name == self.monitor_name
-                    except AttributeError as e:
-                        pass
+        if self.use_consecutive_identifiers:
+            def monkey(*args, **kw):
+                def _monkey(*args, **kw):
+                    return True
+                return _monkey
 
-                if invert:
-                    r = not r
-                return r
+        else:
+            def monkey(invert=False):
+                def _monkey(x):
+                    r = None
+                    if self.is_preview:
+                        r = self._get_position_is_monitor(x)
+                    else:
+                        # print('dsaf', x.sample.name, self.monitor_name, x.sample.name == self.monitor_name)
+                        try:
+                            r = x.sample.name == self.monitor_name
+                        except AttributeError as e:
+                            pass
 
-            return _monkey
+                    if invert:
+                        r = not r
+                    return r
+
+                return _monkey
 
         def has_sample(x):
             r = None
@@ -395,6 +426,4 @@ if __name__ == '__main__':
            63186]
     print(get_maxs(lns))
 
-
 # ============= EOF =============================================
-

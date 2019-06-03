@@ -23,13 +23,14 @@ from numpy import linspace
 from traits.api import HasTraits, cached_property, List, Str, Instance, \
     Property, Int, Any, Bool, Button, Float, on_trait_change, Enum, \
     RGBColor
-from traitsui.api import View, Item, EnumEditor, UItem, ListStrEditor
+from traitsui.api import Item, EnumEditor, UItem, ListStrEditor
 
 from pychron.canvas.canvas2D.loading_canvas import LoadingCanvas, group_position
 from pychron.canvas.canvas2D.scene.primitives.primitives import LoadIndicator
 from pychron.canvas.utils import load_holder_canvas
 from pychron.core.helpers.filetools import view_file
 from pychron.core.helpers.iterfuncs import groupby_key
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pdf.pdf_graphics_context import PdfPlotGraphicsContext
 from pychron.dvc.dvc_irradiationable import DVCIrradiationable
 from pychron.dvc.meta_object import MetaObjectException
@@ -63,13 +64,11 @@ class LoadSelection(HasTraits):
     selected = List
 
     def traits_view(self):
-        v = View(UItem('loads', editor=ListStrEditor(selected='selected',
-                                                     multi_select=True,
-                                                     editable=False)),
-                 kind='livemodal',
-                 width=300,
-                 buttons=['OK', 'Cancel'],
-                 title='Select Loads to Archive')
+        v = okcancel_view(UItem('loads', editor=ListStrEditor(selected='selected',
+                                                              multi_select=True,
+                                                              editable=False)),
+                          width=300,
+                          title='Select Loads to Archive')
         return v
 
 
@@ -283,17 +282,17 @@ class LoadingManager(DVCIrradiationable):
                     item.nxtals = pi.nxtals
                     item.weight = pi.weight
 
-                p = LoadPosition(identifier=ln,
-                                 sample=sample,
-                                 material=material,
-                                 weight=pi.weight or 0.0,
-                                 nxtals=pi.nxtals or 0,
-                                 project=project,
-                                 irradiation=irrad,
-                                 level=level,
-                                 irrad_position=int(irradpos),
-                                 position=pi.position)
-                pos.append(p)
+                    p = LoadPosition(identifier=ln,
+                                     sample=sample,
+                                     material=material,
+                                     weight=pi.weight or 0.0,
+                                     nxtals=pi.nxtals or 0,
+                                     project=project,
+                                     irradiation=irrad,
+                                     level=level,
+                                     irrad_position=int(irradpos),
+                                     position=pi.position)
+                    pos.append(p)
 
         self.positions = pos
         self._set_group_colors()
@@ -637,12 +636,10 @@ class LoadingManager(DVCIrradiationable):
         db.commit()
 
     def _new_load_view(self):
-        v = View(Item('new_load_name', label='Name'),
-                 Item('tray', editor=EnumEditor(name='trays')),
-                 kind='livemodal',
-                 title='New Load Name',
-                 width=300,
-                 buttons=['OK', 'Cancel'])
+        v = okcancel_view(Item('new_load_name', label='Name'),
+                          Item('tray', editor=EnumEditor(name='trays')),
+                          title='New Load Name',
+                          width=300)
         return v
 
     def _refresh_loads(self):

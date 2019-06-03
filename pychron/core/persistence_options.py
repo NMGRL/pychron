@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from __future__ import absolute_import
 import os
 
 from traits.api import HasTraits
@@ -21,10 +20,13 @@ from traits.api import HasTraits
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceMixin
 
-
-class BasePersistenceOptions(HasTraits, PersistenceMixin):
-    def __init__(self, *args, **kw):
-        self.persistence_path = os.path.join(paths.hidden_dir, self._persistence_name)
-        self.load()
-
+try:
+    class BasePersistenceOptions(HasTraits, PersistenceMixin):
+        def __init__(self, *args, **kw):
+            self.persistence_path = os.path.join(paths.hidden_dir, self._persistence_name)
+            self.load()
+except TypeError:
+    # documentation auto doc hack
+    class BasePersistenceOptions:
+        pass
 # ============= EOF =============================================

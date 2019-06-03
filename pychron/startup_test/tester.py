@@ -16,11 +16,14 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import HasTraits, Str, Float, Enum, List
+
 # ============= standard library imports ========================
 import os
 import time
+
 import yaml
+from traits.api import HasTraits, Str, Float, Enum, List
+
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
 from pychron.paths import paths
@@ -111,6 +114,9 @@ class StartupTester(Loggable):
 
     def _get_tests(self, name):
         if self._tests:
+            # for ti in self._tests:
+            #     print(ti['plugin'].lower() , name.lower())
+
             ts = next((ti['tests'] for ti in self._tests if ti['plugin'].lower() == name.lower()), None)
             if ts is None:
                 self.debug('------------ Plugin "{}" not in startup_tests.yaml'.format(name))

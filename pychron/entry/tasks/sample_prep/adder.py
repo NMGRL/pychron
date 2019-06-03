@@ -16,13 +16,16 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traits.api import HasTraits, Str
 from traits.trait_types import BaseStr
-from traitsui.api import View, UItem, Item, VGroup
-
+from traitsui.api import UItem, Item, VGroup
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+
+
 class LenStr(BaseStr):
     def validate(self, obj, name, value):
         if value and len(value) > self.n:
@@ -45,17 +48,14 @@ class AddWorker(HasTraits):
     comment = lenstr(140)
 
     def traits_view(self):
-        v = View(VGroup(Item('name'),
-                        Item('fullname'),
-                        Item('phone'),
-                        Item('email'),
-                        VGroup(UItem('comment', style='custom'),
-                               show_border=True,
-                               label='Comment')),
-                 title='Add New Worker',
-                 kind='livemodal',
-                 resizable=True,
-                 buttons=['OK', 'Cancel'])
+        v = okcancel_view(VGroup(Item('name'),
+                                 Item('fullname'),
+                                 Item('phone'),
+                                 Item('email'),
+                                 VGroup(UItem('comment', style='custom'),
+                                        show_border=True,
+                                        label='Comment')),
+                          title='Add New Worker')
         return v
 
 
@@ -65,14 +65,11 @@ class AddSession(HasTraits):
     title = Str('Add New Session')
 
     def traits_view(self):
-        v = View(VGroup(Item('name', label='SessionName'),
-                        VGroup(UItem('comment', style='custom'),
-                               show_border=True,
-                               label='Comment')),
-                 title=self.title,
-                 kind='livemodal',
-                 resizable=True,
-                 buttons=['OK', 'Cancel'])
+        v = okcancel_view(VGroup(Item('name', label='SessionName'),
+                                 VGroup(UItem('comment', style='custom'),
+                                        show_border=True,
+                                        label='Comment')),
+                          title=self.title)
         return v
 
 # ============= EOF =============================================

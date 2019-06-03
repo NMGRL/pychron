@@ -40,7 +40,6 @@ class Timer(QThread):
         self._delay = delay / 1000.0
         self._args = args
         self._kwargs = kw
-
         self.start()
 
     def run(self):
