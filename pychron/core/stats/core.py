@@ -18,7 +18,8 @@
 
 # ============= standard library imports ========================
 from __future__ import absolute_import
-from numpy import asarray, average, vectorize, ones_like, count_nonzero, where
+
+from numpy import asarray, average, vectorize
 
 
 # ============= local library imports  ==========================
@@ -66,7 +67,6 @@ def calculate_weighted_mean(x, errs):
         wmean = average(x)
         werr = 0
 
-    print('we', wmean, werr)
     return wmean, werr
 
 

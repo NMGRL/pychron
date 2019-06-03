@@ -128,6 +128,10 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
         self.selected = []
         self.refresh_table_needed = True
 
+    def open_value_editor(self):
+        ve = ValueEditor(self)
+        open_view(ve)
+
     def randomize_all(self):
         from random import shuffle
         aruns = self.automated_runs[:]
