@@ -21,8 +21,8 @@ from traitsui.api import HGroup, UItem, EnumEditor, Item, TextEditor
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.loggable import Loggable
 
-REPLACE_REGEX = re.compile(r'\d[.\d]*')
-AUGEMENT_REGEX = re.compile(r'(?P<operand>[\+\*\-])\=(?P<value>\d[.\d]*)')
+REPLACE_REGEX = re.compile(r'\d+\.?\d?')
+AUGEMENT_REGEX = re.compile(r'(?P<operand>[\+\*\-])\=(?P<value>\d+\.?\d?)')
 
 
 class ValueStr(BaseStr):
@@ -92,7 +92,7 @@ class ValueEditor(Loggable):
                                       tooltip='''1. Enter a number to modify all values to entered number. e.g 10
 2. Use +=N to add N to all values. e.g +=10 adds 10 to all values. -= and *= also valid''')),
                           title='Value Editor',
-                          buttons=['OK',],
+                          buttons=['OK', ],
                           default_button=None)
         return v
 
