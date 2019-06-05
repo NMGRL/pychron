@@ -77,6 +77,7 @@ randomize = MenuManager(Action(name='Unknowns', action='randomize_unknowns'),
 
 EDIT_MENU = MenuManager(move, copy, jump, blocks, selects, group_e,
                         randomize,
+                        Action(name='Value Editor', action='open_value_editor'),
                         Action(name='Configure', action='configure_table'),
                         Action(name='Unselect', action='unselect'),
                         Action(name='Toggle End After', action='toggle_end_after'),

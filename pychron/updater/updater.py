@@ -29,9 +29,6 @@ from pychron.paths import r_mkdir
 from pychron.pychron_constants import STARTUP_MESSAGE_POSITION
 from pychron.updater.commit_view import CommitView, UpdateGitHistory
 
-CONDA_DISTRO = 'miniconda2'
-CONDA_ENV = 'pychron_env'
-
 
 class Updater(Loggable):
     check_on_startup = Bool
@@ -91,16 +88,19 @@ class Updater(Loggable):
                             self.debug('pulling changes from {} to {}'.format(origin.url, branch))
 
                             self._repo.git.pull(origin, hexsha)
-                            conda_env = os.environ.get('CONDA_ENV', CONDA_ENV)
-                            conda_distro = os.environ.get('CONDA_DISTRO', CONDA_DISTRO)
-                            try:
-                                self._install_dependencies(conda_distro, conda_env)
-                            except BaseException as e:
-                                self.debug('Install dependencies exception={}'.format(e))
-                                self.debug('CONDA_DISTRO={}'.format(conda_distro))
-                                self.debug('CONDA_ENV={}'.format(conda_env))
-                                self.warning_dialog('Automatic installation of dependencies failed. Manual updates '
-                                                    'may be required. ')
+                            conda_env = os.environ.get('CONDA_ENV')
+                            conda_distro = os.environ.get('CONDA_DISTRO')
+
+                            if conda_env is not None and conda_distro is not None:
+                                try:
+                                    self._install_dependencies(conda_distro, conda_env)
+                                except BaseException as e:
+                                    self.debug('Install dependencies exception={}'.format(e))
+                                    self.debug('CONDA_DISTRO={}'.format(conda_distro))
+                                    self.debug('CONDA_ENV={}'.format(conda_env))
+                                    self.warning_dialog('Automatic installation of dependencies failed. Manual updates '
+                                                        'may be required. Set CONDA_ENV and CONDA_DISTRO environment '
+                                                        'variables to resolve this issue')
 
                             if self.confirmation_dialog('Restart?'):
                                 os.execl(sys.executable, *([sys.executable] + sys.argv))

@@ -61,6 +61,9 @@ class ExperimentEditorHandler(TabularEditorHandler):
     def toggle_skip(self, info, obj):
         obj.toggle_skip()
 
+    def open_value_editor(self, info, obj):
+        obj.open_value_editor()
+
     def randomize_all(self, info, obj):
         obj.randomize_all()
 

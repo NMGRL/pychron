@@ -15,20 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 
 import os
 import time
-from io import StringIO
 from threading import Event
-
-from numpy import polyfit, array, average, uint8
+from io import StringIO
+from numpy import polyfit, array, average, uint8, zeros_like
 from skimage.color import gray2rgb
 from skimage.draw import circle
 from traits.api import Any, Bool
 
 from pychron.core.ui.gui import invoke_in_main_thread
-# from threading import Thread, current_thread, Event
 from pychron.core.ui.thread import Thread, sleep
 from pychron.envisage.view_util import open_view
 from pychron.hardware.motion_controller import PositionError, TargetPositionError
@@ -357,8 +354,11 @@ class PatternExecutor(Patternable):
         linear_move = controller.linear_move
         in_motion = controller.in_motion
         find_lum_peak = sm.find_lum_peak
+        pxpermm = sm.pxpermm
+
         set_data = imgplot.data.set_data
         set_data2 = imgplot2.data.set_data
+        # set_data3 = imgplot3.data.set_data
 
         duration = pattern.duration
         sat_threshold = pattern.saturation_threshold
@@ -369,10 +369,21 @@ class PatternExecutor(Patternable):
         move_threshold = pattern.move_threshold
         blur = pattern.blur
         px, py = cx, cy
+        ncx, ncy = cx, cy
 
         point_gen = None
         cnt = 0
-        peak = None
+        # peak = None
+        oimg = sm.get_preprocessed_src()
+        pos_img = zeros_like(oimg, dtype='int16')
+        per_img = zeros_like(oimg, dtype='int16')
+
+        img_h, img_w = pos_img.shape
+        perimeter_circle = circle(img_h / 2, img_w / 2, pattern.perimeter_radius * pxpermm)
+
+        color = 2**15-1
+        per_img[perimeter_circle] = 50
+        set_data('imagedata', gray2rgb(per_img.astype(uint8)))
 
         while time.time() - st < total_duration:
             if not self._alive:
@@ -385,29 +396,32 @@ class PatternExecutor(Patternable):
             self.debug('starting iteration={}, in_motion={}'.format(cnt, in_motion()))
             while time.time() - ist < duration or in_motion():
                 args = find_lum_peak(min_distance, blur)
+
                 if args is None:
+                    sleep(update_period/5)
                     continue
+
+                sleep(update_period)
 
                 pt, peakcol, peakrow, peak_img, sat, src = args
 
                 sats.append(sat)
-                if peak is None:
-                    peak = peak_img
-                else:
-                    peak = ((peak.astype('int16') - 2) + peak_img).clip(0, 255)
+                # if peak is None:
+                #     peak = peak_img
+                # else:
+                #     peak = ((peak.astype('int16') - 2) + peak_img).clip(0, 255)
 
-                img = gray2rgb(peak).astype(uint8)
+                # img = gray2rgb(peak).astype(uint8)
                 src = gray2rgb(src).astype(uint8)
                 if pt:
                     pts.append(pt)
-                    c = circle(peakrow, peakcol, min_distance / 2)
-                    img[c] = (255, 0, 0)
+                    c = circle(peakrow, peakcol, 2)
+                    # img[c] = (255, 0, 0)
                     src[c] = (255, 0, 0)
 
                 # set_data('imagedata', src)
                 set_data2('imagedata', src)
-                set_data('imagedata', img)
-                sleep(update_period)
+                # set_data('imagedata', img)
 
             self.debug('iteration {} finished, npts={}'.format(cnt, len(pts)))
 
@@ -419,8 +433,8 @@ class PatternExecutor(Patternable):
                 self.debug('Average Saturation: {} threshold={}'.format(avg_sat_score, sat_threshold))
                 pattern.average_saturation = avg_sat_score
                 if avg_sat_score < sat_threshold:
-                    pts = array(pts)
-                    x, y, w = pts.T
+                    # pts = array(pts)
+                    x, y, w = array(pts).T
                     ws = w.sum()
                     nx = (x * w).sum() / ws
                     ny = (y * w).sum() / ws
@@ -429,45 +443,69 @@ class PatternExecutor(Patternable):
                 else:
                     continue
 
-            # if npt is None:
-            #     if not point_gen:
-            #         point_gen = pattern.point_generator()
-            #     # wait = False
-            #     npt = next(point_gen)
-            #     self.debug('generating new point={}'.format(npt))
-            #
-            # else:
-            #     point_gen = None
-            # wait = True
             if npt is None:
-                block = total_duration - (time.time() - st) < duration
-                linear_move(cx, cy, source='recenter_dragonfly{}'.format(cnt), block=block, velocity=pattern.velocity,
-                            use_calibration=False)
-                pattern.position_str = 'Return to Center'
-                px, py = cx, cy
-                continue
+                if not point_gen:
+                    point_gen = pattern.point_generator()
+                # wait = False
+                x, y = next(point_gen)
+                px, py = ncx + x, ncy + y
+                self.debug('generating new point={},{} ---- {},{}'.format(x, y, px, py))
 
-            try:
-                scalar = npt[2]
-            except IndexError:
-                scalar = 1
+            else:
 
-            ascalar = scalar * aggressiveness
-            dx = npt[0] / sm.pxpermm * ascalar
-            dy = npt[1] / sm.pxpermm * ascalar
-            if abs(dx) < move_threshold or abs(dy) < move_threshold:
-                self.debug('Deviation too small dx={},dy={}'.format(dx, dy, move_threshold))
-                pattern.position_str = 'Deviation too small'
-                continue
-            px += dx
-            py -= dy
-            self.debug('i: {}. point={},{}. '
-                       'Intensitiy Scalar={}, Modified Scalar={}'.format(cnt, px, py, scalar, ascalar))
+                point_gen = None
+
+                # wait = True
+                if npt is None:
+                    block = total_duration - (time.time() - st) < duration
+                    linear_move(cx, cy, source='recenter_dragonfly{}'.format(cnt), block=block,
+                                velocity=pattern.velocity,
+                                use_calibration=False)
+                    pattern.position_str = 'Return to Center'
+                    px, py = cx, cy
+                    continue
+
+                try:
+                    scalar = npt[2]
+                except IndexError:
+                    scalar = 1
+
+                ascalar = scalar * aggressiveness
+                dx = npt[0] / pxpermm * ascalar
+                dy = npt[1] / pxpermm * ascalar
+                if abs(dx) < move_threshold or abs(dy) < move_threshold:
+                    self.debug('Deviation too small dx={},dy={}'.format(dx, dy, move_threshold))
+                    pattern.position_str = 'Deviation too small'
+                    continue
+
+                px += dx
+                py -= dy
+                self.debug('i: {}. point={},{}. '
+                           'Intensitiy Scalar={}, Modified Scalar={}'.format(cnt, px, py, scalar, ascalar))
+
+                ncx, ncy = px, py
 
             if not pattern.validate(px, py):
                 self.debug('invalid position. {},{}'.format(px, py))
-                px, py = pattern.reduce_vector_magnitude(px, py, 0.85)
+
+                curx = px - dx
+                cury = py + dy
+
+                vx = curx - cx
+                vy = cury - cy
+
+                px = vx * aggressiveness + cx
+                py = vy * aggressiveness + cy
+
                 self.debug('reduced vector magnitude. new pos={},{}'.format(px, py))
+
+                # for safety validate this new position
+                # if above calculation is correct the new position should always be valid
+                if not pattern.validate(px, py):
+                    self.debug('vector calculations incorrect. moving to center position')
+                    px, py = cx, cy
+
+                ncx, ncy = px, py
 
             pattern.position_str = '{:0.5f},{:0.5f}'.format(px, py)
 
@@ -477,15 +515,22 @@ class PatternExecutor(Patternable):
             linear_move(px, py, source='dragonfly{}'.format(cnt), block=block, velocity=pattern.velocity,
                         use_calibration=False)
 
-            # if wait:
-            #     et = time.time() - ist
-            #     d = duration - et
-            #     if d > 0:
-            #         time.sleep(d)
+            ay, ax = py - cy, px - cx
+            # self.debug('position mm ax={},ay={}'.format(ax, ay))
+            ay, ax = int(-ay * pxpermm) + img_h / 2, int(ax * pxpermm) + img_w / 2
+            # self.debug('position pixel ax={},ay={}'.format(ax, ay))
+
+            pos_img -= 5
+            pos_img = pos_img.clip(0, color)
+
+            c = circle(ay, ax, 2)
+            pos_img[c] = color - 60
+            nimg = ((pos_img + per_img).astype(uint8))
+
+            set_data('imagedata', gray2rgb(nimg))
 
             cnt += 1
 
-        # time.sleep(1)
         self.debug('dragonfly complete')
         controller.block()
 

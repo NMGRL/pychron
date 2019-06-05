@@ -19,12 +19,12 @@
 
 from __future__ import absolute_import
 from __future__ import print_function
+
 import sys
 import time
 
 from pyface.qt import QtGui
 from pyface.qt.QtCore import Qt
-from pyface.qt.QtGui import QLabel, QDialogButtonBox
 from pyface.ui.qt4.progress_dialog import ProgressDialog
 from traits.api import Property, Bool, Int
 
@@ -131,7 +131,6 @@ class myProgressDialog(ProgressDialog):
         return self._user_accepted
 
     def change_message(self, message, auto_increment=True):
-        print('asdf', message)
         try:
             # self.message_control.setText(message)
             self.message = message

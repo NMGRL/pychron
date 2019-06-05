@@ -69,6 +69,7 @@ class FrameImage(Viewable):
             im0, im1 = self.overlays
             self._overlay(im0, im1, self.alpha)
 
+
 class StandAloneImage(FrameImage):
     def traits_view(self):
         img = UItem('source_frame', editor=ImageEditor(refresh='refresh'))

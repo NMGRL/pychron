@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pyface.timer.do_later import do_later
+from pyface.timer.do_later import do_after
 from traits.api import List, Event
 from traitsui.api import View, UItem, Group, VSplit
 # ============= standard library imports ========================
@@ -28,7 +28,8 @@ from pychron.pipeline.plot.models.series_model import SeriesModel
 
 
 class SeriesStatsTabularAdapter(TabularAdapter):
-    columns = [('Mean', 'mean'),
+    columns = [('Label', 'label'),
+               ('Mean', 'mean'),
                ('StdDev', 'std'),
                ('Mean MSWD', 'mean_mswd'),
                ('Min', 'min'),
@@ -37,7 +38,8 @@ class SeriesStatsTabularAdapter(TabularAdapter):
 
 
 class SeriesStatistics:
-    def __init__(self, reg):
+    def __init__(self, label, reg):
+        self.label = label
         self._reg = reg
 
     def __getattr__(self, attr):
@@ -61,16 +63,20 @@ class SeriesEditor(FigureEditor):
             g = p.figures[-1].graph
             if self.plotter_options.show_statistics_as_table:
                 g.on_trait_change(self._handle_reg, 'regression_results')
-                for plot in g.plots:
+                for plot in reversed(g.plots):
                     for k, v in plot.plots.items():
-                        if k.startswith('fit'):
-                            ss.append(SeriesStatistics(v[0].regressor))
+                        if k.startswith('fit') and hasattr(v[0], 'regressor'):
+                                label = plot.y_axis.title
+                                for tag in ('sub', 'sup'):
+                                    label = label.replace('<{}>'.format(tag), '')
+                                    label = label.replace('</{}>'.format(tag), '')
+
+                                ss.append(SeriesStatistics(label, v[0].regressor))
 
             else:
                 g.on_trait_change(self._handle_reg, 'regression_results', remove=True)
 
-        do_later(self.trait_set, statistics=ss)
-        # self.statistics = ss
+        do_after(1, self.trait_set, statistics=ss)
 
     def _handle_reg(self, new):
         self.update_needed = True
