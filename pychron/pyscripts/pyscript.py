@@ -856,7 +856,7 @@ class PyScript(Loggable):
                 # with self._block_lock:
                 wd = self._setup_wait_control()
 
-            msg = 'WaitControl setup for {:03n}  {}'.format(timeout, message)
+            msg = 'WaitControl setup for {:03d}  {}'.format(int(timeout), message)
 
             self.debug(msg)
             wd.start(duration=timeout, message=msg)
