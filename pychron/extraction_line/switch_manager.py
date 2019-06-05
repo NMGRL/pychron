@@ -238,7 +238,7 @@ class SwitchManager(Manager):
 
             keys.append(k)
 
-            states.append('{}{}'.format(k, int(v.state if v.state is not None else 0)))
+            states.append('{}{}'.format(k, int(bool(v.state))))
             if time.time() - st > timeout:
                 self.debug('get states timeout. timeout={}'.format(timeout))
                 break
