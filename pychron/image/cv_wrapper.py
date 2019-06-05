@@ -18,7 +18,7 @@
 # ============= standard library imports ========================
 from collections import namedtuple
 
-from numpy import array, asarray, ndarray
+from numpy import array, asarray, ndarray, zeros_like
 from numpy.lib.function_base import percentile
 from scipy.ndimage.filters import laplace
 
@@ -79,7 +79,6 @@ def colorspace(src, cs=None):
     return gray2rgb(src)
 
 
-#
 def grayspace(src):
     from skimage.color.colorconv import rgb2gray
     dst = rgb2gray(src)
@@ -224,8 +223,7 @@ def draw_contour_list(src, contours, hierarchy, external_color=(0, 255, 255),
     for i, _ in enumerate(contours):
         j = i + 1
         drawContours(src, contours, i,
-                     convert_color((j * 255 / n, j * 255 / n, 0)), -1
-                     )
+                     convert_color((j * 255 / n, j * 255 / n, 0)), -1)
 
 
 def get_centroid(pts):
@@ -242,7 +240,7 @@ def contour(src):
 def get_polygons(src,
                  contours, hierarchy,
                  convextest=False,
-                 nsides=5,
+                 nsides=3,
                  min_area=100,
                  perimeter_smooth_factor=0.001,
                  **kw):
@@ -252,8 +250,9 @@ def get_polygons(src,
     min_enclose = []
     pactuals = []
     pconvex_hulls = []
-
-    for cont in contours:
+    masks = []
+    color = convert_color((255,255,255))
+    for i, cont in enumerate(contours):
         pactual = arcLength(cont, True)
         result = approxPolyDP(cont, pactual * perimeter_smooth_factor, True)
 
@@ -279,12 +278,19 @@ def get_polygons(src,
 
         pconvex_hull = arcLength(convexHull(result), True)
 
+        mask = colorspace(zeros_like(src))
+
+        drawContours(mask, contours, i, color, -1)
+
+        mask = grayspace(mask).astype(bool)
+
         min_enclose.append(ca[1] ** 2 * 3.1415)
         areas.append(area)
         centroids.append(cent)
         pactuals.append(pactual)
         pconvex_hulls.append(pconvex_hull)
+        masks.append(mask)
 
-    return list(zip(polygons, areas, min_enclose, centroids, pactuals, pconvex_hulls))
+    return list(zip(polygons, areas, min_enclose, centroids, pactuals, pconvex_hulls, masks))
 
 # ============= EOF =============================================

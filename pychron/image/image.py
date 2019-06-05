@@ -20,7 +20,6 @@ from traits.api import HasTraits, Any, List, Int, Bool, Float
 from numpy import asarray, flipud, ndarray, fliplr
 from skimage.color import rgb2gray, gray2rgb
 from skimage.transform import resize, rotate as trotate
-# =============enthought library imports=======================
 from scipy.ndimage.interpolation import rotate as srotate
 
 
@@ -56,10 +55,10 @@ class Image(HasTraits):
     #
     #     return img
     #
-    # def load(self, img, swap_rb=False, nchannels=3):
-    #
-    #     img = self.new_frame(img, swap_rb)
-    #     self.source_frame = img
+    def load(self, img, swap_rb=False, nchannels=3):
+        from cv2 import imread
+        img = imread(img)
+        self.source_frame = img
 
     def update_bounds(self, obj, name, old, new):
         if new:
