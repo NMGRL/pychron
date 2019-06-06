@@ -307,11 +307,13 @@ RATIO_CHANGE_DETECTION = '''
 #   nominal_ratio: 300
 #   nanalyses: 5
 #   threshold: 1
+##  nsigma: 3 
 #   analysis_type: air
 # - ratio: Ar40/Ar39
 #   nominal_ratio: 12
 #   nanalyses: 5
 #   threshold: 1
+##  nsigma: 3
 #   analysis_type: cocktail
 '''
 

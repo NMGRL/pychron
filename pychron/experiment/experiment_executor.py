@@ -1396,8 +1396,14 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         mainstore = self.datahub.mainstore
         if atype == analysis_type:
             ratio_name = check['ratio']
-            threshold = check['threshold']
-            nanalyses = check['nanalyses']
+            threshold = check.get('threshold', 0)
+            nsigma = check.get('nsigma', 0)
+
+            if not threshold and not nsigma:
+                self.warning('invalid ratio change check. need to specify either threshold or nsigma')
+                return
+
+            nanalyses = check['nanalyses'] + 1
 
             ratios = self._ratios.get(atype, [])
             nn = max(nanalyses - len(ratios), 1)
@@ -1405,22 +1411,27 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             ans = mainstore.get_last_n_analyses(nn, mass_spectrometer=ms, analysis_types=atype)
             ans = mainstore.make_analyses(ans)
 
-            rs = (ai.get_ratio(ratio_name) for ai in ans)
-            ratios += [ri for ri in rs if ri is not None]
+            rs = ((ai.runid, ai.get_ratio(ratio_name)) for ai in ans)
+            ratios += [ri for ri in rs if ri[1] is not None]
 
             ratios = ratios[-nanalyses:]
             self._ratios[atype] = ratios
 
-            if len(ratios) > 1:
-                xs = [nominal_value(ri) for ri in ratios]
-                es = [std_dev(ri) for ri in ratios]
+            n = len(ratios)
+            self.debug('n={}, RunIDs={}'.format(n, ','.join([ri[0] for ri in ratios])))
+            if n == nanalyses:
+                xs = [nominal_value(ri[1]) for ri in ratios[:-1]]
+                es = [std_dev(ri[1]) for ri in ratios[:-1]]
                 wm, werr = calculate_weighted_mean(xs, es)
 
-                cur = ratios[-1]
+                cur = ratios[-1][1]
                 dev = abs(wm - cur)
-                if dev > threshold and dev > 2 * werr:
+                if not threshold:
+                    threshold = nsigma * werr
+
+                if dev > threshold:
                     msg = 'Ratio change detected. ' \
-                          'wm={}+/-{} (2s), cur={}, dev={}, threshold={}'.format(wm, 2 * werr, cur, threshold)
+                          'wm={}+/-{} (2s), cur={}, dev={}, threshold={}'.format(wm, werr, cur, dev, threshold)
                     self.debug(msg)
                     self._err_message = msg
                     return True
