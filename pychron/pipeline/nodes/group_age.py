@@ -16,6 +16,7 @@
 from apptools.preferences.preference_binding import bind_preference
 
 from pychron.core.helpers.iterfuncs import groupby_group_id
+from pychron.pipeline.editors.group_age_editor import SubGroupAgeEditor
 from pychron.pipeline.nodes.data import BaseDVCNode
 from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
 from pychron.pychron_constants import UNKNOWN, BLANK_TYPES, AIR
@@ -26,6 +27,7 @@ class GroupAgeNode(BaseDVCNode):
     auto_configure = False
     configurable = False
     editor = None
+    editor_klass = SubGroupAgeEditor
 
     def run(self, state):
         unknowns = list(a for a in state.unknowns if a.analysis_type == 'unknown')
