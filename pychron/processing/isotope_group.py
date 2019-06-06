@@ -193,7 +193,7 @@ class IsotopeGroup(HasTraits):
             return ufloat(0, 0, tag=iso)
 
     def get_intensity(self, iso):
-        viso = next((i for i in self.itervalues() if i.isotope == iso), None)
+        viso = next((i for i in self.itervalues() if i.name == iso), None)
         if viso is not None:
             return viso.get_intensity()
         else:

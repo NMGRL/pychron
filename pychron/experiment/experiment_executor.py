@@ -1381,11 +1381,14 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 atype = spec.analysis_type
                 ms = self.experiment_queue.mass_spectrometer
                 try:
-                    checks = yaml.load(p)
-                    for ci in checks:
-                        if self._check_ratio_change(ms, atype, ci):
-                            return True
+                    with open(p, 'r') as rfile:
+                        checks = yaml.load(rfile)
+                        for ci in checks:
+                            if self._check_ratio_change(ms, atype, ci):
+                                return True
                 except BaseException as e:
+                    import traceback
+                    traceback.print_exc()
                     self.debug('Invalid Ratio Change Detection file at {}. Error={}'.format(p, e))
 
             else:
@@ -1395,6 +1398,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         analysis_type = check['analysis_type']
         mainstore = self.datahub.mainstore
         if atype == analysis_type:
+
             ratio_name = check['ratio']
             threshold = check.get('threshold', 0)
             nsigma = check.get('nsigma', 0)
@@ -1403,16 +1407,18 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 self.warning('invalid ratio change check. need to specify either threshold or nsigma')
                 return
 
+            self.debug('checking ratio change for {}. Ratio={}'.format(analysis_type, ratio_name))
             nanalyses = check['nanalyses'] + 1
 
             ratios = self._ratios.get(atype, [])
             nn = max(nanalyses - len(ratios), 1)
 
-            ans = mainstore.get_last_n_analyses(nn, mass_spectrometer=ms, analysis_types=atype)
+            ans = mainstore.get_last_n_analyses(nn, mass_spectrometer=ms, analysis_types=atype,
+                                                verbose=False)
             ans = mainstore.make_analyses(ans)
 
-            rs = ((ai.runid, ai.get_ratio(ratio_name)) for ai in ans)
-            ratios += [ri for ri in rs if ri[1] is not None]
+            rs = ((ai.record_id, ai.get_ratio(ratio_name)) for ai in ans)
+            ratios += reversed([ri for ri in rs if ri[1] is not None])
 
             ratios = ratios[-nanalyses:]
             self._ratios[atype] = ratios
@@ -1424,15 +1430,15 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 es = [std_dev(ri[1]) for ri in ratios[:-1]]
                 wm, werr = calculate_weighted_mean(xs, es)
 
-                cur = ratios[-1][1]
+                cur = nominal_value(ratios[-1][1])
                 dev = abs(wm - cur)
                 if not threshold:
                     threshold = nsigma * werr
 
+                msg = 'wm={}+/-{}, cur={}, dev={}, threshold={}'.format(wm, werr, cur, dev, threshold)
+                self.debug(msg)
                 if dev > threshold:
-                    msg = 'Ratio change detected. ' \
-                          'wm={}+/-{} (2s), cur={}, dev={}, threshold={}'.format(wm, werr, cur, dev, threshold)
-                    self.debug(msg)
+                    msg = 'Ratio change detected. {}'.format(msg)
                     self._err_message = msg
                     return True
 
