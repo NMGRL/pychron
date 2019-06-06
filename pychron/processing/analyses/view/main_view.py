@@ -153,8 +153,12 @@ class MainView(HasTraits):
                               units=an.load_holder),
               ExtractionValue(name='Position',
                               value=an.position),
+              ExtractionValue(name='Weight',
+                              value=an.weight,
+                              units='mg'),
               ExtractionValue(name='XYZ',
-                              value=an.xyz_position),
+                              value=an.xyz_position,
+                              conditional_visible=True),
               ExtractionValue(name='Extract Value',
                               value=an.extract_value,
                               units=an.extract_units, ),
@@ -197,6 +201,8 @@ class MainView(HasTraits):
                                      units='1/s')]
 
         ev.extend(extra)
+
+        ev = [ei for ei in ev if not (ei.conditional_visible and not ei.value)]
 
         self.extraction_values = ev
 

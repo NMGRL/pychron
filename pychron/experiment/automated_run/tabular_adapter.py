@@ -112,6 +112,7 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
         ('Post Meas.', 'post_measurement_script'),
         ('Options', 'script_options'),
         ('Comment', 'comment'),
+        ('Weight', 'weight'),
         ('Delay After', 'delay_after')]
 
     columns = [('Labnumber', 'labnumber'),
@@ -162,6 +163,7 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
 
     aliquot_text = Property
     overlap_text = Property
+    weight_text = Property
 
     # ===========================================================================
     # non cell editable
@@ -292,6 +294,9 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
 
     def _get_cleanup_text(self):
         return self._get_number('cleanup')
+
+    def _get_weight_text(self):
+        return self._get_number('weight')
 
     def _get_use_cdd_warming_text(self):
         return 'Yes' if self.item.use_cdd_warming else 'No'
