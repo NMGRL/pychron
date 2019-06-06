@@ -265,7 +265,7 @@ class Paths(object):
     furnace_firmware = None
 
     af_demagnetization = None
-
+    ratio_change_detection = None
     # plot_factory_defaults = (('ideogram_defaults', 'IDEOGRAM_DEFAULTS', True),
     #                          ('spectrum_defaults', 'SPECTRUM_DEFAULTS', True))
 
@@ -482,6 +482,8 @@ class Paths(object):
         self.valid_pi_names = join(self.setup_dir, 'valid_pi_names.yaml')
 
         self.af_demagnetization = join(paths.spectrometer_dir, 'af_demagnetization.yaml')
+
+        self.ratio_change_detection = join(paths.setup_dir, 'ratio_change_detection.yaml')
 
         build_directories()
 

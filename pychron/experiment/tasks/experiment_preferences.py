@@ -104,6 +104,7 @@ class ExperimentPreferences(BasePreferencesHelper):
 
     n_executed_display = Int
     failed_intensity_count_threshold = Int(3)
+    ratio_change_detection_enabled = Bool(False)
 
     def _get_memory_threshold(self):
         return self._memory_threshold
@@ -246,6 +247,11 @@ class ExperimentPreferencesPane(PreferencesPane):
                                           label='N. Failed Intensity',
                                           tooltip='Cancel Experiment if pychron fails to get intensities from '
                                                   'mass spectrometer more than "N. Failed Intensity" times'),
+                                     Item('ratio_change_detection_enabled',
+                                          label='Ratio Change Detection',
+                                          tooltip='Cancel experiment if significant changes in configured '
+                                                  'isotopic ratios are detected. '
+                                                  'Configured via "setupfiles/ratio_change_detection.yaml"'),
                                      pc_grp,
                                      persist_grp,
                                      monitor_grp, overlap_grp),
