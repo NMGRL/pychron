@@ -20,7 +20,7 @@ from traitsui.api import View, Item, HGroup, VGroup, Group, UItem, RangeEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.pychron_traits import BorderHGroup, BorderVGroup
-from pychron.options.options import SubOptions, AppearanceSubOptions, GroupSubOptions
+from pychron.options.options import SubOptions, AppearanceSubOptions, GroupSubOptions, TitleSubOptions
 
 
 class IsochronMainOptions(SubOptions):
@@ -33,7 +33,7 @@ class IsochronAppearance(AppearanceSubOptions):
     pass
 
 
-class InverseIsochronMainOptions(SubOptions):
+class InverseIsochronMainOptions(TitleSubOptions):
     def traits_view(self):
         g = Group(Item('error_calc_method',
                        width=-150,
@@ -75,7 +75,8 @@ class InverseIsochronMainOptions(SubOptions):
         marker_grp = BorderHGroup(Item('marker_size', label='Size'),
                                   Item('marker', label='Marker'),
                                   label='Marker')
-        g2 = Group(BorderVGroup(info_grp,
+        g2 = Group(self._get_title_group(),
+                   BorderVGroup(info_grp,
                                 results_grp,
                                 label='Info'),
                    Item('include_error_envelope'),
