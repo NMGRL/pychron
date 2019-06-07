@@ -132,4 +132,7 @@ class ErrorBarOverlay(AbstractOverlay):
     def _handle_component_change(self, obj, name, new):
         self._cache_valid = False
 
+    def invalidate(self):
+        self._cache_valid = False
+        self.invalidate_and_redraw()
 # ============= EOF =====================================
