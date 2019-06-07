@@ -51,13 +51,17 @@ class AnalysisStackedRegressionGraph(AnalysisGraph, StackedRegressionGraph):
 
 
 class SpectrumGraph(AnalysisStackedGraph):
-    make_ideogram_event = Event
+    make_alternate_figure_event = Event
 
     def get_child_context_menu_actions(self):
-        return [self.action_factory('Ideogram...', 'make_ideogram')]
+        return [self.action_factory('Ideogram...', 'make_ideogram'),
+                self.action_factory('Inverse Isochron...', 'make_inverse_isochron')]
 
     def make_ideogram(self):
-        self.make_ideogram_event = True
+        self.make_alternate_figure_event = 'Ideogram'
+
+    def make_inverse_isochron(self):
+        self.make_alternate_figure_event = 'InverseIsochron'
 
 
 class IdeogramGraph(AnalysisStackedGraph):

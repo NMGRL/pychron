@@ -54,7 +54,7 @@ class DetectorRatio(ComputedValue):
 
 
 class ExtractionValue(NamedValue):
-    pass
+    conditional_visible = Bool(False)
 
 
 class MeasurementValue(NamedValue):

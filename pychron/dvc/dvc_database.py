@@ -108,7 +108,7 @@ def principal_investigator_filter(q, principal_investigator):
 
 
 def make_at_filter(analysis_types):
-    if hasattr(analysis_types, '__iter__'):
+    if isinstance(analysis_types, (tuple, list)):
         analysis_types = [at.lower() for at in analysis_types]
     else:
         analysis_types = (analysis_types.lower(),)
@@ -816,7 +816,7 @@ class DVCDatabase(DatabaseAdapter):
             else:
                 return ans
 
-    def get_last_n_analyses(self, n, mass_spectrometer=None):
+    def get_last_n_analyses(self, n, mass_spectrometer=None, analysis_types=None, verbose=False):
         with self.session_ctx() as sess:
             q = sess.query(AnalysisTbl)
 
@@ -825,9 +825,12 @@ class DVCDatabase(DatabaseAdapter):
             else:
                 q = q.order_by(AnalysisTbl.mass_spectrometer)
 
+            if analysis_types:
+                q = analysis_type_filter(q, analysis_types)
+
             q = q.order_by(AnalysisTbl.timestamp.desc())
             q = q.limit(n)
-            return self._query_all(q)
+            return self._query_all(q, verbose_query=verbose)
 
     def get_last_analysis(self, ln=None, aliquot=None, spectrometer=None,
                           hours_limit=None,

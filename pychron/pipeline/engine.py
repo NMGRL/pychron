@@ -20,6 +20,7 @@ from operator import attrgetter, itemgetter
 
 import yaml
 # ============= enthought library imports =======================
+from pyface.timer.do_later import do_later
 from traits.api import HasTraits, Str, Instance, List, Event, on_trait_change, Any, Bool
 
 from pychron.core.confirmation import remember_confirmation_dialog
@@ -951,6 +952,7 @@ class PipelineEngine(Loggable):
         self.refresh_table_needed = True
 
     def _set_template(self, name, clear=True, exclude_klass=None):
+        print('ffff', name)
         if isinstance(name, (str, tuple)):
             pt = self.pipeline_template_root.get_template(name)
         else:
@@ -1013,6 +1015,14 @@ class PipelineEngine(Loggable):
                 node = self.pipeline.nodes[idx]
         return node
 
+    def _make_alternate_figure(self, evt):
+        self.add_pipeline = True
+        name, groups = evt
+        self._set_template(name)
+
+        self.pipeline.nodes[0].unknowns = [ai for gi in groups for ai in gi.analyses]
+        do_later(self.trait_set, run_needed=True)
+
     # handlers
     @on_trait_change('active_editor')
     def _handle_active_editor(self, obj, name, old, new):
@@ -1022,15 +1032,18 @@ class PipelineEngine(Loggable):
         if old:
             if hasattr(old, 'figure_model'):
                 old.on_trait_change(refresh, 'figure_model:panels:figures:refresh_unknowns_table', remove=True)
+                old.on_trait_change(self._make_alternate_figure, 'figure_model:panels:make_alternate_figure_event',
+                                    remove=True)
 
         if new:
             if hasattr(new, 'figure_model'):
                 new.on_trait_change(refresh, 'figure_model:panels:figures:refresh_unknowns_table')
+                new.on_trait_change(self._make_alternate_figure, 'figure_model:panels:make_alternate_figure_event')
 
     def _add_pipeline_fired(self):
         p = self.pipeline_group.add()
         self.pipeline = p
-        self.selected_pipeline_template = ''
+        self.trait_setq(selected_pipeline_template='')
 
     def _dclicked_unknowns_changed(self):
         if self.selected_unknowns:

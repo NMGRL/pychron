@@ -96,7 +96,7 @@ class DVC(Loggable):
         try:
             self.open_meta_repo()
         except BaseException as e:
-            self.warning('Error opening meta repo'.format(e))
+            self.warning('Error opening meta repo {}'.format(e))
             return
 
         # update meta repo.

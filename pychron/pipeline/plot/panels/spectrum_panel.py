@@ -27,15 +27,15 @@ from pychron.processing.analysis_graph import SpectrumGraph
 class SpectrumPanel(FigurePanel):
     _graph_klass = SpectrumGraph
     _figure_klass = Spectrum
-    make_ideogram_event = Event
+    make_alternate_figure_event = Event
 
-    def _handle_make_ideogram(self):
-        self.make_ideogram_event = [f.analysis_group for f in self.figures]
+    def _handle_make_alternate_figure(self, new):
+        self.make_alternate_figure_event = (new, [f.analysis_group for f in self.figures])
 
     def _get_init_xlimits(self):
         return None, 0, 100
 
     def _make_graph_hook(self, g):
-        g.on_trait_change(self._handle_make_ideogram, 'make_ideogram_event')
+        g.on_trait_change(self._handle_make_alternate_figure, 'make_alternate_figure_event')
 
 # ============= EOF =============================================

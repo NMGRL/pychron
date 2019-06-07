@@ -87,7 +87,8 @@ class ExperimentPlugin(BaseTaskPlugin):
                 HumanErrorCheckerPreferencesPane]
 
     def _file_defaults_default(self):
-        return [('experiment_defaults', 'EXPERIMENT_DEFAULTS', False)]
+        return [('experiment_defaults', 'EXPERIMENT_DEFAULTS', False),
+                ('ratio_change_detection', 'RATIO_CHANGE_DETECTION', False)]
 
     def _actions_default(self):
         return [('pychron.open_experiment', 'Ctrl+O', 'Open Experiment'),

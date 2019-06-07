@@ -555,9 +555,9 @@ class MetaRepo(GitRepoManager):
     def get_chronology(self, name, **kw):
 
         chron = irradiation_chronology(name)
-
-        chron.use_irradiation_endtime = self.application.get_boolean_preference(
-            'pychron.arar.constants.use_irradiation_endtime', False)
+        if self.application:
+            chron.use_irradiation_endtime = self.application.get_boolean_preference(
+                'pychron.arar.constants.use_irradiation_endtime', False)
         return chron
 
     @cached('clear_cache')

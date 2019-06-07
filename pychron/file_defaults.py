@@ -302,6 +302,20 @@ columns:
   - Comment
 '''
 
+RATIO_CHANGE_DETECTION = '''
+# - ratio: Ar40/Ar36
+#   nominal_ratio: 300
+#   nanalyses: 5
+#   threshold: 1
+##  nsigma: 3 
+#   analysis_type: air
+# - ratio: Ar40/Ar39
+#   nominal_ratio: 12
+#   nanalyses: 5
+#   threshold: 1
+##  nsigma: 3
+#   analysis_type: cocktail
+'''
 
 def make_screen(**kw):
     obj = {'padding_left': 100,
@@ -424,5 +438,7 @@ REACTORS_DEFAULT = '''{
             }
 }
 '''
+
+
 # ============= EOF =============================================
 

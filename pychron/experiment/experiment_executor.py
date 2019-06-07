@@ -29,6 +29,7 @@ from pyface.timer.do_later import do_after
 from traits.api import Event, String, Bool, Enum, Property, Instance, Int, List, Any, Color, Dict, \
     on_trait_change, Long, Float, Str
 from traits.trait_errors import TraitError
+from uncertainties import nominal_value, std_dev
 
 from pychron.consumer_mixin import consumable
 from pychron.core.codetools.memory_usage import mem_available
@@ -36,6 +37,7 @@ from pychron.core.helpers.filetools import add_extension, get_path, unique_path2
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.helpers.logger_setup import add_root_handler, remove_root_handler
 from pychron.core.progress import open_progress
+from pychron.core.stats import calculate_weighted_mean
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.consoleable import Consoleable
 from pychron.envisage.preference_mixin import PreferenceMixin
@@ -164,6 +166,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     use_xls_persistence = Bool(False)
     use_db_persistence = Bool(True)
 
+    ratio_change_detection_enabled = Bool(False)
+
     # dvc
     use_dvc_persistence = Bool(False)
     default_principal_investigator = Str
@@ -185,6 +189,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     _prev_blank_runid = String
     _err_message = String
     _prev_blank_id = Long
+    _ratios = Dict
 
     _cv_info = None
     _cached_runs = List
@@ -237,7 +242,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                  'use_xls_persistence',
                  'use_db_persistence',
                  'experiment_type',
-                 'laboratory')
+                 'laboratory',
+                 'ratio_change_detection_enabled')
         self._preference_binder(prefid, attrs)
 
         # dvc
@@ -645,6 +651,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 is_first_analysis = False
                 if self.end_at_run_completion:
                     self.debug('end at run completion')
+                    break
+
+                if self._ratio_change_detection(spec):
+                    self.warning('Ratio Change Detected')
                     break
 
             self.debug('run loop exited. end at completion:{}'.format(self.end_at_run_completion))
@@ -1363,6 +1373,75 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     # ===============================================================================
     # checks
     # ===============================================================================
+    def _ratio_change_detection(self, spec):
+        if self.ratio_change_detection_enabled:
+            self.debug('check for significant changes in isotopic ratios')
+            p = paths.ratio_change_detection
+            if os.path.isfile(p):
+                atype = spec.analysis_type
+                ms = self.experiment_queue.mass_spectrometer
+                try:
+                    with open(p, 'r') as rfile:
+                        checks = yaml.load(rfile)
+                        for ci in checks:
+                            if self._check_ratio_change(ms, atype, ci):
+                                return True
+                except BaseException as e:
+                    import traceback
+                    traceback.print_exc()
+                    self.debug('Invalid Ratio Change Detection file at {}. Error={}'.format(p, e))
+
+            else:
+                self.warning('Ratio Change Detection enabled but no configuration file located at {}'.format(p))
+
+    def _check_ratio_change(self, ms, atype, check):
+        analysis_type = check['analysis_type']
+        mainstore = self.datahub.mainstore
+        if atype == analysis_type:
+
+            ratio_name = check['ratio']
+            threshold = check.get('threshold', 0)
+            nsigma = check.get('nsigma', 0)
+
+            if not threshold and not nsigma:
+                self.warning('invalid ratio change check. need to specify either threshold or nsigma')
+                return
+
+            self.debug('checking ratio change for {}. Ratio={}'.format(analysis_type, ratio_name))
+            nanalyses = check['nanalyses'] + 1
+
+            ratios = self._ratios.get(atype, [])
+            nn = max(nanalyses - len(ratios), 1)
+
+            ans = mainstore.get_last_n_analyses(nn, mass_spectrometer=ms, analysis_types=atype,
+                                                verbose=False)
+            ans = mainstore.make_analyses(ans)
+
+            rs = ((ai.record_id, ai.get_ratio(ratio_name)) for ai in ans)
+            ratios += reversed([ri for ri in rs if ri[1] is not None])
+
+            ratios = ratios[-nanalyses:]
+            self._ratios[atype] = ratios
+
+            n = len(ratios)
+            self.debug('n={}, RunIDs={}'.format(n, ','.join([ri[0] for ri in ratios])))
+            if n == nanalyses:
+                xs = [nominal_value(ri[1]) for ri in ratios[:-1]]
+                es = [std_dev(ri[1]) for ri in ratios[:-1]]
+                wm, werr = calculate_weighted_mean(xs, es)
+
+                cur = nominal_value(ratios[-1][1])
+                dev = abs(wm - cur)
+                if not threshold:
+                    threshold = nsigma * werr
+
+                msg = 'wm={}+/-{}, cur={}, dev={}, threshold={}'.format(wm, werr, cur, dev, threshold)
+                self.debug(msg)
+                if dev > threshold:
+                    msg = 'Ratio change detected. {}'.format(msg)
+                    self._err_message = msg
+                    return True
+
     def _check_scheduled_stop(self, spec):
         """
         return True if the end time of the upcoming run is greater than the scheduled stop time
