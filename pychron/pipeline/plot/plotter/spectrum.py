@@ -155,9 +155,9 @@ class Spectrum(BaseArArFigure):
         ag.dirty = True
 
         if grp.calculate_fixed_plateau:
-            ag.calculate_fixed_plateau_steps = grp.calculate_fixed_plateau_start, grp.calculate_fixed_plateau_end
+            ag.fixed_step_low, ag.fixed_step_high = grp.calculate_fixed_plateau_start, grp.calculate_fixed_plateau_end
         else:
-            ag.calculate_fixed_plateau_steps = tuple()
+            ag.fixed_step_low, ag.fixed_step_high = ('', '')
 
         pma = None
         plateau_age = ag.plateau_age
