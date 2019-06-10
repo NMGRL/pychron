@@ -44,7 +44,8 @@ from pychron.envisage.browser.record_views import ProjectRecordView
 class BrowserModel(BaseBrowserModel):
     filter_focus = Bool(True)
     use_focus_switching = Bool(True)
-    fuzzy_search_entry = String(auto_set=False, enter_set=True)
+    fuzzy_search_entry = String #(auto_set=False, enter_set=True)
+    execute_fuzzy_search = Button
 
     irradiation_visible = Property(depends_on='filter_focus')
     analysis_types_visible = Property(depends_on='filter_focus')
@@ -134,17 +135,17 @@ class BrowserModel(BaseBrowserModel):
     #             break
 
     # handlers
-    def _fuzzy_search_entry_changed(self, new):
-        if new:
-            if len(new) < 2:
+    def _execute_fuzzy_search_fired(self):
+        if self.fuzzy_search_entry:
+            if len(self.fuzzy_search_entry) < 2:
                 self.warning_dialog('At least two (2) characters are required for "Search"')
                 return
 
             db = self.db
             with db.session_ctx():
-                ps1 = db.get_fuzzy_projects(new)
+                ps1 = db.get_fuzzy_projects(self.fuzzy_search_entry)
 
-                ss, ps2 = db.get_fuzzy_labnumbers(new)
+                ss, ps2 = db.get_fuzzy_labnumbers(self.fuzzy_search_entry)
                 sams = self._load_sample_record_views(ss)
 
                 ps = set(ps1 + ps2)
@@ -154,6 +155,11 @@ class BrowserModel(BaseBrowserModel):
                 ad = self._make_project_records(ps, include_recent=False)
                 self.projects = ad
                 self.oprojects = ad
+
+        # self._fuzzy_search_entry_changed(self.fuzzy_search_entry)
+
+    # def _fuzzy_search_entry_changed(self, new):
+
 
     def _irradiation_enabled_changed(self, new):
         if not new:

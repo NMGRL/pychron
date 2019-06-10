@@ -218,7 +218,10 @@ class BaseBrowserSampleView(PaneModelView):
 
         pi_grp = self._get_pi_group()
         load_grp = self._get_load_group()
-        s_grp = HGroup(UItem('fuzzy_search_entry', tooltip='Enter a simple search, Pychron will do the rest.'),
+        s_grp = HGroup(UItem('fuzzy_search_entry', tooltip='Enter a simple search, Pychron will do the rest. Must '
+                                                           'enter at least 3 characters'),
+                       icon_button_editor('execute_fuzzy_search', 'eye',
+                                          tooltip='Execute Fuzzy Search', enabled_when='len(fuzzy_search_entry)>2'),
                        label='Search',
                        show_border=True)
 
