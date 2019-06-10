@@ -816,7 +816,9 @@ class DVCDatabase(DatabaseAdapter):
             else:
                 return ans
 
-    def get_last_n_analyses(self, n, mass_spectrometer=None, analysis_types=None, verbose=False):
+    def get_last_n_analyses(self, n, mass_spectrometer=None, analysis_types=None,
+                            excluded_uuids=None, verbose=False):
+
         with self.session_ctx() as sess:
             q = sess.query(AnalysisTbl)
 
@@ -827,6 +829,9 @@ class DVCDatabase(DatabaseAdapter):
 
             if analysis_types:
                 q = analysis_type_filter(q, analysis_types)
+
+            if excluded_uuids:
+                q = q.filter(not_(AnalysisTbl.uuid.in_(excluded_uuids)))
 
             q = q.order_by(AnalysisTbl.timestamp.desc())
             q = q.limit(n)

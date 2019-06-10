@@ -952,7 +952,6 @@ class PipelineEngine(Loggable):
         self.refresh_table_needed = True
 
     def _set_template(self, name, clear=True, exclude_klass=None):
-        print('ffff', name)
         if isinstance(name, (str, tuple)):
             pt = self.pipeline_template_root.get_template(name)
         else:

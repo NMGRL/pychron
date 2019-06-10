@@ -190,6 +190,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     _err_message = String
     _prev_blank_id = Long
     _ratios = Dict
+    _failure_counts = Dict
+    _excluded_uuids = Dict
 
     _cv_info = None
     _cached_runs = List
@@ -1402,6 +1404,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             ratio_name = check['ratio']
             threshold = check.get('threshold', 0)
             nsigma = check.get('nsigma', 0)
+            failure_cnt = check.get('failure_count', 1)
+            consecutive_failure = check.get('consecutive_failure', True)
 
             if not threshold and not nsigma:
                 self.warning('invalid ratio change check. need to specify either threshold or nsigma')
@@ -1413,24 +1417,26 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             ratios = self._ratios.get(atype, [])
             nn = max(nanalyses - len(ratios), 1)
 
+            excluded = self._excluded_uuids.get(atype, [])
             ans = mainstore.get_last_n_analyses(nn, mass_spectrometer=ms, analysis_types=atype,
+                                                excluded_uuids=excluded,
                                                 verbose=False)
             ans = mainstore.make_analyses(ans)
 
-            rs = ((ai.record_id, ai.get_ratio(ratio_name)) for ai in ans)
-            ratios += reversed([ri for ri in rs if ri[1] is not None])
+            rs = ((ai.uuid, ai.record_id, ai.get_ratio(ratio_name)) for ai in ans)
+            ratios += reversed([ri for ri in rs if ri[2] is not None])
 
             ratios = ratios[-nanalyses:]
             self._ratios[atype] = ratios
 
             n = len(ratios)
-            self.debug('n={}, RunIDs={}'.format(n, ','.join([ri[0] for ri in ratios])))
+            self.debug('n={}, RunIDs={}'.format(n, ','.join([ri[1] for ri in ratios])))
             if n == nanalyses:
-                xs = [nominal_value(ri[1]) for ri in ratios[:-1]]
-                es = [std_dev(ri[1]) for ri in ratios[:-1]]
+                xs = [nominal_value(ri[2]) for ri in ratios[:-1]]
+                es = [std_dev(ri[2]) for ri in ratios[:-1]]
                 wm, werr = calculate_weighted_mean(xs, es)
 
-                cur = nominal_value(ratios[-1][1])
+                cur = nominal_value(ratios[-1][2])
                 dev = abs(wm - cur)
                 if not threshold:
                     threshold = nsigma * werr
@@ -1438,9 +1444,17 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 msg = 'wm={}+/-{}, cur={}, dev={}, threshold={}'.format(wm, werr, cur, dev, threshold)
                 self.debug(msg)
                 if dev > threshold:
-                    msg = 'Ratio change detected. {}'.format(msg)
-                    self._err_message = msg
-                    return True
+                    excluded.append(ratios[-1][0])
+                    self._excluded_uuids[atype] = excluded
+                    fc = self._failure_cnts.get(atype, 0)+1
+                    self._failure_cnts[atype] = fc
+                    msg = 'Ratio change detected. {}, Total failures={}/{}'.format(msg, fc, failure_cnt)
+                    if self._failure_cnt > failure_cnt:
+                        self._err_message = msg
+                        return True
+                else:
+                    if consecutive_failure:
+                        self._failure_cnt[atype] = 0
 
     def _check_scheduled_stop(self, spec):
         """

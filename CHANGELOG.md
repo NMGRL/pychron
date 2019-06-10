@@ -1,5 +1,19 @@
 CHANGELOG
 =========
+
+
+6/7/2019
+--------
+### Features ###
+* added ratio change detection to data collection
+* added ability to make an isochron or ideogram from a spectrum
+* display weight in experiment table and recall
+
+### Bug fixes ###
+* fixed calculated a "fixed/forced" plateau
+* added title option to isochron
+
+
 2.6
 ---
 ### Features ###
