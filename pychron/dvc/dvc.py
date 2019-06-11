@@ -587,7 +587,7 @@ class DVC(Loggable):
         if a:
             return a[0]
 
-    def make_analyses(self, records, calculate_f_only=False, reload=False, quick=False):
+    def make_analyses(self, records, calculate_f_only=False, reload=False, quick=False, use_progress=True):
         if not records:
             return []
 
@@ -634,7 +634,12 @@ class DVC(Loggable):
                 return []
 
         exps = {r.repository_identifier for r in records}
-        progress_iterator(exps, func, threshold=1)
+
+        if use_progress:
+            progress_iterator(exps, func, threshold=1)
+        else:
+            for ei in exps:
+                self.sync_repo(ei, use_progress=False)
 
         branches = {ei: get_repository_branch(repository_path(ei)) for ei in exps}
 
@@ -694,7 +699,11 @@ class DVC(Loggable):
                 self.debug('make analysis exception')
                 self.debug_exception()
 
-        ret = progress_loader(records, func, threshold=1, step=25)
+        if use_progress:
+            ret = progress_loader(records, func, threshold=1, step=25)
+        else:
+            ret = [func(r, None, 0, 0) for r in records]
+
         et = time.time() - st
 
         n = len(ret)

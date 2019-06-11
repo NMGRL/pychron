@@ -244,7 +244,8 @@ class IsotopeGroup(HasTraits):
 
             xs = npappend(isotope.xs, x)
             ys = npappend(isotope.ys, signal)
-            isotope.trait_set(xs=xs, ys=ys)
+            isotope.xs = xs
+            isotope.ys = ys
             # isotope.dirty = True
 
         isotopes = self.isotopes

@@ -1418,10 +1418,13 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             nn = max(nanalyses - len(ratios), 1)
 
             excluded = self._excluded_uuids.get(atype, [])
-            ans = mainstore.get_last_n_analyses(nn, mass_spectrometer=ms, analysis_types=atype,
-                                                excluded_uuids=excluded,
-                                                verbose=False)
-            ans = mainstore.make_analyses(ans)
+            with mainstore.session_ctx(use_parent_session=True):
+                ans = mainstore.get_last_n_analyses(nn, mass_spectrometer=ms, analysis_types=atype,
+                                                    excluded_uuids=excluded,
+                                                    verbose=False)
+                ans = mainstore.make_analyses(ans, use_progress=False)
+
+            self.debug('retrieved analyses')
 
             rs = ((ai.uuid, ai.record_id, ai.get_ratio(ratio_name)) for ai in ans)
             ratios += reversed([ri for ri in rs if ri[2] is not None])
@@ -1446,15 +1449,16 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 if dev > threshold:
                     excluded.append(ratios[-1][0])
                     self._excluded_uuids[atype] = excluded
-                    fc = self._failure_cnts.get(atype, 0)+1
-                    self._failure_cnts[atype] = fc
+                    fc = self._failure_counts.get(atype, 0)+1
+                    self._failure_counts[atype] = fc
                     msg = 'Ratio change detected. {}, Total failures={}/{}'.format(msg, fc, failure_cnt)
-                    if self._failure_cnt > failure_cnt:
+                    self.debug(msg)
+                    if fc >= failure_cnt:
                         self._err_message = msg
                         return True
                 else:
                     if consecutive_failure:
-                        self._failure_cnt[atype] = 0
+                        self._failure_counts[atype] = 0
 
     def _check_scheduled_stop(self, spec):
         """

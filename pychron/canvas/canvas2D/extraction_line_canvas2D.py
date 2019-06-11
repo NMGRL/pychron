@@ -292,9 +292,9 @@ class ExtractionLineCanvas2D(SceneCanvas):
     def _get_switch_by_name(self, name):
         if self.scene and self.scene.valves:
             s = next((i for i in self.iter_valves() if i.name == name), None)
-            if s is None:
-                names = [i.name for i in self.iter_valves()]
-                print('No switch with name "{}". Names={}'.format(name, names))
+            # if s is None:
+            #     names = [i.name for i in self.iter_valves()]
+            #     print('No switch with name "{}". Names={}'.format(name, names))
 
             return s
 

@@ -105,6 +105,7 @@ class ExperimentPreferences(BasePreferencesHelper):
     n_executed_display = Int
     failed_intensity_count_threshold = Int(3)
     ratio_change_detection_enabled = Bool(False)
+    plot_panel_update_period = Int(1)
 
     def _get_memory_threshold(self):
         return self._memory_threshold
@@ -252,6 +253,8 @@ class ExperimentPreferencesPane(PreferencesPane):
                                           tooltip='Cancel experiment if significant changes in configured '
                                                   'isotopic ratios are detected. '
                                                   'Configured via "setupfiles/ratio_change_detection.yaml"'),
+                                     Item('plot_panel_update_period', label='Regression Update Period',
+                                          tooltip='update the isotope regression graph every N counts'),
                                      pc_grp,
                                      persist_grp,
                                      monitor_grp, overlap_grp),
