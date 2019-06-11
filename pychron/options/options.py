@@ -38,7 +38,8 @@ from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.layout import FigureLayout
 from pychron.processing.j_error_mixin import JErrorMixin
-from pychron.pychron_constants import NULL_STR, ERROR_TYPES, FONTS, SIZES, ALPHAS
+from pychron.pychron_constants import NULL_STR, ERROR_TYPES, FONTS, SIZES
+from pychron.utils import alphas
 
 
 def _table_column(klass, *args, **kw):
@@ -436,7 +437,7 @@ class FigureOptions(BaseOptions):
             d = {}
             for ai in attrs:
                 if ai == 'alphacounter':
-                    v = ALPHAS[n]
+                    v = alphas(n)
                 elif ai == 'numericcounter':
                     v = n
                 elif ai == '<space>':

@@ -40,8 +40,9 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
     SamplePrepStepTbl, SamplePrepImageTbl, RestrictedNameTbl, AnalysisGroupTbl, AnalysisGroupSetTbl, \
     AnalysisIntensitiesTbl, SimpleIdentifierTbl, SamplePrepChoicesTbl
 from pychron.globals import globalv
-from pychron.pychron_constants import ALPHAS, alpha_to_int, NULL_STR, EXTRACT_DEVICE, NO_EXTRACT_DEVICE, \
+from pychron.pychron_constants import NULL_STR, EXTRACT_DEVICE, NO_EXTRACT_DEVICE, \
     SAMPLE_PREP_STEPS, SAMPLE_METADATA
+from pychron.utils import alpha_to_int
 
 
 def listify(obj):
@@ -999,7 +1000,7 @@ class DVCDatabase(DatabaseAdapter):
             q = q.join(IrradiationPositionTbl)
             if step:
                 if isinstance(step, (str, six.text_type)):
-                    step = ALPHAS.index(step)
+                    step = alpha_to_int(step)
 
                 q = q.filter(AnalysisTbl.increment == step)
             if aliquot:

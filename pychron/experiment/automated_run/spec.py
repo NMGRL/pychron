@@ -30,7 +30,8 @@ from pychron.experiment.utilities.identifier import get_analysis_type, make_rid,
     convert_extract_device
 from pychron.experiment.utilities.position_regex import XY_REGEX
 from pychron.experiment.utilities.repository_identifier import make_references_repository_identifier
-from pychron.pychron_constants import SCRIPT_KEYS, SCRIPT_NAMES, ALPHAS, DETECTOR_IC
+from pychron.pychron_constants import SCRIPT_KEYS, SCRIPT_NAMES, DETECTOR_IC
+from pychron.utils import alphas, alpha_to_int
 
 logger = new_logger('AutomatedRunSpec')
 
@@ -488,17 +489,12 @@ post_equilibration_script, extraction_script, script_options, position, duration
 
     def _set_step(self, v):
         if isinstance(v, str):
-            v = v.upper()
-            if v in ALPHAS:
-                self._step = ALPHAS.index(v)
+            self._step = alpha_to_int(v)
         else:
             self._step = v
 
     def _get_step(self):
-        if self._step < 0:
-            return ''
-        else:
-            return ALPHAS[self._step]
+        return alphas(self._step)
 
     def _set_executable(self, v):
         self._executable = v

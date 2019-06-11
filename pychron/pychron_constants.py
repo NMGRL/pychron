@@ -18,7 +18,6 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 import os
-import string
 
 import yaml
 
@@ -137,31 +136,11 @@ EXTRACT_DEVICE = 'Extract Device'
 NO_EXTRACT_DEVICE = 'No Extract Device'
 
 NO_BLANK_CORRECT = (BLANK, DETECTOR_IC, BACKGROUND)
-seeds = string.ascii_uppercase
-ALPHAS = [a for a in seeds] + ['{}{}'.format(a, b)
-                               for a in seeds
-                               for b in seeds]
 
 MAIN = 'Main'
 APPEARANCE = 'Appearance'
 DISPLAY = 'Display'
 GROUPS = 'Groups'
-
-
-def alpha_to_int(s):
-    return ALPHAS.index(s)
-
-
-def alphas(idx):
-    """
-        idx should be 0-base ie. idx=0 ==>A
-    """
-    if idx < 26:
-        return seeds[idx]
-    else:
-        a = idx // 26 - 1
-        b = idx % 26
-        return '{}{}'.format(seeds[a], seeds[b])
 
 
 INTERFERENCE_KEYS = ('K4039', 'K3839', 'K3739', 'Ca3937', 'Ca3837', 'Ca3637', 'Cl3638')

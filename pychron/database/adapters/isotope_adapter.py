@@ -65,7 +65,8 @@ from pychron.database.orms.isotope.proc import proc_DetectorIntercalibrationHist
     proc_BlanksSetValueTable, proc_ActionTable, proc_BlanksSetTable
 # spec_
 from pychron.database.orms.isotope.spec import spec_MassCalHistoryTable, spec_MassCalScanTable, spec_MFTableTable
-from pychron.pychron_constants import ALPHAS, alpha_to_int, NULL_STR
+from pychron.pychron_constants import NULL_STR
+from pychron.utils import alpha_to_int
 
 
 def binfunc(ds, hours):
@@ -1580,7 +1581,7 @@ class IsotopeAdapter(DatabaseAdapter):
                 result = self._query_one(q)
                 if result:
                     step = result[0]
-                    return ALPHAS.index(step) if step else -1
+                    return alpha_to_int(step) if step else -1
 
     def get_last_analysis(self, ln=None, aliquot=None, spectrometer=None,
                           hours_limit=None,

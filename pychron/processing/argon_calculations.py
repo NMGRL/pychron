@@ -25,7 +25,8 @@ from uncertainties import ufloat, umath, nominal_value, std_dev
 
 from pychron.core.stats.core import calculate_weighted_mean
 from pychron.processing.arar_constants import ArArConstants
-from pychron.pychron_constants import ALPHAS, FLECK
+from pychron.pychron_constants import FLECK
+from pychron.utils import alpha_to_int
 
 
 def extract_isochron_xy(analyses):
@@ -130,13 +131,13 @@ def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method=FLE
         if not sstep:
             sidx = 0
         else:
-            sidx = ALPHAS.index(sstep)
+            sidx = alpha_to_int(sstep)
 
         n = ages.shape[0] - 1
         if not estep:
             eidx = n
         else:
-            eidx = ALPHAS.index(estep)
+            eidx = alpha_to_int(estep)
 
         sidx, eidx = min(sidx, eidx), min(max(sidx, eidx), n)
         pidx = (sidx, eidx) if sidx < n else None

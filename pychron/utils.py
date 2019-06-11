@@ -31,3 +31,26 @@ def get_display_size():
     w, h = rect.width(), rect.height()
 
     return size(w, h)
+
+
+# adapted from https://codereview.stackexchange.com/questions/182733/base-26-letters-and-base-10-using-recursion
+
+BASE = 26
+A_UPPERCASE = ord('A')
+
+
+def alphas(n):
+    a = ''
+    if n is not None and n >= 0:
+        def decompose(n):
+            while n:
+                n, rem = divmod(n, BASE)
+                yield rem
+
+        digits = reversed([chr(A_UPPERCASE + part) for part in decompose(n)])
+        a = ''.join(digits)
+    return a
+
+
+def alpha_to_int(l):
+    return sum((ord(li) - A_UPPERCASE) * BASE ** i for i, li in enumerate(reversed(l.upper())))

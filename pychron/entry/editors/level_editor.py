@@ -38,7 +38,7 @@ from pychron.entry.editors.production import IrradiationProduction
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.loggable import Loggable
 from pychron.paths import paths
-from pychron.pychron_constants import ALPHAS
+from pychron.utils import alphas, alpha_to_int
 
 
 def prep_prname(prname):
@@ -301,7 +301,6 @@ class LevelEditor(Loggable):
         db = self.db
 
         irrad = db.get_irradiation(irrad)
-        nind = 0
         if irrad.levels:
             level = irrad.levels[-1]
 
@@ -310,14 +309,8 @@ class LevelEditor(Loggable):
             if level.holder:
                 self.selected_tray = next((t for t in self.trays if t == level.holder), '')
 
-            if level.name in ALPHAS:
-                nind = ALPHAS.index(level.name) + 1
-
-        try:
-            self.name = ALPHAS[nind]
-        except IndexError:
-            self.warning_dialog('Too many levels max level={}'.format(ALPHAS[-1]))
-            return
+            nind = alpha_to_int(level.name) + 1
+            self.name = alphas(nind)
 
         av = AddView(model=self)
         info = av.edit_traits()

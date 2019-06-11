@@ -34,7 +34,7 @@ from pychron.experiment.utilities.identifier_mapper import IdentifierMapper
 from pychron.experiment.utilities.info_blob import encode_infoblob
 from pychron.loggable import Loggable
 from pychron.mass_spec.database.massspec_database_adapter import MassSpecDatabaseAdapter
-from pychron.pychron_constants import ALPHAS
+from pychron.utils import alpha_to_int
 
 mkeys = ['l2 value', 'l1 value', 'ax value', 'h1 value', 'h2 value']
 
@@ -87,10 +87,12 @@ class MassSpecDatabaseImporter(Loggable):
                 ret = self.db.get_latest_analysis(identifier, aliquot)
                 if ret:
                     _, s = ret
-                    if s is not None and s in ALPHAS:
-                        ret = ALPHAS.index(s)  # if s is not None else -1
-                    else:
-                        ret = -1
+
+                    ret = alpha_to_int(s)
+                    # if s is not None and s in ALPHAS:
+                    #     ret = ALPHAS.index(s)  # if s is not None else -1
+                    # else:
+                    #     ret = -1
         return ret
 
     def get_greatest_aliquot(self, identifier):

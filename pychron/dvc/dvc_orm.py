@@ -27,7 +27,7 @@ from pychron.core.helpers.datetime_tools import make_timef
 from pychron.database.orms import stringcolumn, primary_key
 # from pychron.database.records.isotope_record import DVCIsotopeRecordView
 from pychron.experiment.utilities.identifier import make_runid
-from pychron.pychron_constants import ALPHAS
+from pychron.utils import alphas
 
 Base = declarative_base()
 
@@ -135,11 +135,7 @@ class AnalysisTbl(Base, IDMixin):
 
     @property
     def step(self):
-        if self.increment is not None and self.increment >= 0:
-            step = ALPHAS[self.increment]
-        else:
-            step = ''
-        return step
+        return alphas(self.increment)
 
     @property
     def position(self):
