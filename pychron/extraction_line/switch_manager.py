@@ -152,7 +152,7 @@ class SwitchManager(Manager):
     def calculate_checksum(self, vkeys):
         vs = self.switches
 
-        val = b''.join((vs[k].state_str().encode('utf-8') for k in vkeys))
+        val = b''.join((vs[k].state_str().encode('utf-8') for k in vkeys if k in vs))
         return binascii.crc32(val)
 
     def get_valve_names(self):

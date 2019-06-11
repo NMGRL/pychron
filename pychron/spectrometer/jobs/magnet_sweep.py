@@ -78,7 +78,10 @@ class MagnetSweep(BaseSweep):
                                          settling_time=0,
                                          # settling_time=self.integration_time * 2,
                                          use_dac_changed=False)
-        self.spectrometer.trigger_acq()
+
+        if hasattr(self.spectrometer, 'trigger_acq'):
+            self.spectrometer.trigger_acq()
+
         self.spectrometer.settle()
 
     def _do_sweep(self, sm, em, stm, directions=None, map_mass=True):

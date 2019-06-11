@@ -304,17 +304,19 @@ columns:
 
 RATIO_CHANGE_DETECTION = '''
 # - ratio: Ar40/Ar36
-#   nominal_ratio: 300
 #   nanalyses: 5
 #   threshold: 1
 ##  nsigma: 3 
 #   analysis_type: air
+#   failure_count: 2
+#   consecutive_failure: True
 # - ratio: Ar40/Ar39
-#   nominal_ratio: 12
 #   nanalyses: 5
 #   threshold: 1
 ##  nsigma: 3
 #   analysis_type: cocktail
+#   failure_count: 2
+#   consecutive_failure: True
 '''
 
 def make_screen(**kw):
