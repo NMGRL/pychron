@@ -32,7 +32,7 @@ from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.experiment.utilities.save_dialog import IncrementalHeatTemplateSaveDialog
 from pychron.paths import paths
-from pychron.pychron_constants import alphas
+from pychron.utils import alphas
 from pychron.viewable import Viewable
 
 

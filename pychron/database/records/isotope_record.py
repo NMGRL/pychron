@@ -24,7 +24,7 @@ import six
 # import re
 # ============= local library imports  ==========================
 from pychron.experiment.utilities.identifier import make_runid
-from pychron.pychron_constants import ALPHAS
+from pychron.utils import alphas
 
 
 def get_flux_fit_status(item):
@@ -244,7 +244,7 @@ class IsotopeRecordView(object):
     def increment(self, v):
         if v >= 0:
             self._increment = v
-            self.step = ALPHAS[v]
+            self.step = alphas(v)
         else:
             self._increment = -1
             self.step = ''

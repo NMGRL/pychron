@@ -28,8 +28,9 @@ from pychron.processing.analyses.analysis import IdeogramPlotable
 from pychron.processing.analyses.preferred import Preferred
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
-from pychron.pychron_constants import ALPHAS, MSEM, SD, SUBGROUPING_ATTRS, ERROR_TYPES, WEIGHTED_MEAN, \
+from pychron.pychron_constants import MSEM, SD, SUBGROUPING_ATTRS, ERROR_TYPES, WEIGHTED_MEAN, \
     DEFAULT_INTEGRATED, SUBGROUPINGS, ARITHMETIC_MEAN, PLATEAU_ELSE_WEIGHTED_MEAN, WEIGHTINGS, FLECK, NULL_STR
+from pychron.utils import alphas
 
 
 def AGProperty(*depends):
@@ -694,8 +695,8 @@ class StepHeatAnalysisGroup(AnalysisGroup):
                     if pidx[0] == pidx[1]:
                         return
                     self.plateau_steps = pidx
-                    self.plateau_steps_str = '{}-{}'.format(ALPHAS[pidx[0]],
-                                                            ALPHAS[pidx[1]])
+                    self.plateau_steps_str = '{}-{}'.format(alphas(pidx[0]),
+                                                            alphas(pidx[1]))
 
                     step_idxs = [i for i in range(pidx[0], pidx[1] + 1) if not ans[i].is_omitted()]
                     self.nsteps = len(step_idxs)

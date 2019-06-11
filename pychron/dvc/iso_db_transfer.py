@@ -43,7 +43,8 @@ from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.github import Organization
 from pychron.loggable import Loggable
 from pychron.paths import paths
-from pychron.pychron_constants import ALPHAS, QTEGRA_SOURCE_KEYS
+from pychron.pychron_constants import QTEGRA_SOURCE_KEYS
+from pychron.utils import alpha_to_int
 
 ORG = 'NMGRLData'
 
@@ -648,7 +649,7 @@ class IsoDBTransfer(Loggable):
         if step is None:
             inc = -1
         else:
-            inc = ALPHAS.index(step)
+            inc = alpha_to_int(step)
 
         username = ''
         if dban.user:

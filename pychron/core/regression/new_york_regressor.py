@@ -15,10 +15,11 @@
 # ===============================================================================
 from __future__ import absolute_import
 from __future__ import print_function
-from traits.api import Array, Property, Float
+
 # ============= enthought library imports =======================
 from numpy import linspace, Inf, identity
 from scipy.optimize import fsolve
+from traits.api import Array, Property, Float
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from uncertainties import std_dev
@@ -137,7 +138,11 @@ class YorkRegressor(OLSRegressor):
         return self._intercept
 
     def get_intercept_error(self):
-        return self.get_intercept_variance() ** 0.5
+        if self.error_calc_type == 'CI':
+            e = self.calculate_ci_error(0)[0]
+        else:
+            e = self.get_intercept_variance() ** 0.5
+        return e
 
     def get_slope_error(self):
         return self.get_slope_variance() ** 0.5
