@@ -117,14 +117,9 @@ class Updater(Loggable):
         import subprocess
         root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 
-        if conda_env:
-            conda_distro = os.path.join(conda_distro, 'envs', conda_env)
-
-        binroot = os.path.join(os.path.expanduser('~'), conda_distro, 'bin')
-        if not os.path.isdir(binroot):
-            binroot = os.path.join(os.path.sep, conda_distro, 'bin')
-
+        binroot = os.path.join(conda_distro, 'bin')
         conda = os.path.join(binroot, 'conda')
+
         cp = os.path.join(root, 'app_utils', 'requirements', 'conda_requirements.txt')
 
         args = [conda, 'update', '-y', '--file={}'.format(cp)]
@@ -181,9 +176,8 @@ class Updater(Loggable):
             return True
 
     def _validate_origin(self, name):
+        cmd = 'https://github.com/{}'.format(name)
         try:
-            cmd = 'https://github.com/{}'.format(name)
-            # six.moves.urllib.request.urlopen(cmd)
             requests.get(cmd)
             return True
         except BaseException as e:
