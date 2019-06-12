@@ -34,6 +34,7 @@ from pychron.graph.error_envelope_overlay import ErrorEnvelopeOverlay
 from pychron.graph.ml_label import tokenize
 from pychron.pipeline.plot.overlays.isochron_inset import InverseIsochronPointsInset, InverseIsochronLineInset
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
+from pychron.processing.analyses.analysis_group import StepHeatAnalysisGroup
 from pychron.pychron_constants import PLUSMINUS, SIGMA
 
 
@@ -56,9 +57,9 @@ class MLTextLabel(Label):
 
             # Rotate label about center of bounding box
             width, height = self._bounding_box
-            gc.translate_ctm(bb_width/2.0, bb_height/2.0)
-            gc.rotate_ctm(pi/180.0*self.rotate_angle)
-            gc.translate_ctm(-width/2.0, -height/2.0)
+            gc.translate_ctm(bb_width / 2.0, bb_height / 2.0)
+            gc.rotate_ctm(pi / 180.0 * self.rotate_angle)
+            gc.translate_ctm(-width / 2.0, -height / 2.0)
 
             # Draw border and fill background
             if self.bgcolor != "transparent":
@@ -67,9 +68,9 @@ class MLTextLabel(Label):
             if self.border_visible and self.border_width > 0:
                 gc.set_stroke_color(self.border_color_)
                 gc.set_line_width(self.border_width)
-                border_offset = (self.border_width-1)/2.0
+                border_offset = (self.border_width - 1) / 2.0
                 gc.rect(border_offset, border_offset,
-                        width-2*border_offset, height-2*border_offset)
+                        width - 2 * border_offset, height - 2 * border_offset)
                 gc.stroke_path()
 
             gc.set_fill_color(self.color_)
@@ -179,6 +180,7 @@ class Isochron(BaseArArFigure):
 class InverseIsochron(Isochron):
     _plot_label = None
     xpad = None
+    _analysis_group_klass = StepHeatAnalysisGroup
 
     def post_make(self):
         g = self.graph
@@ -194,6 +196,15 @@ class InverseIsochron(Isochron):
             plot data on plots
         """
         graph = self.graph
+
+        if self.options.omit_non_plateau:
+
+
+
+            self.analysis_group.calculate_plateau()
+            for a in self.analyses:
+                if not self.analysis_group.get_is_plateau_step(a):
+                    a.temp_status = 'omit'
 
         for pid, (plotobj, po) in enumerate(zip(graph.plots, plots)):
             getattr(self, '_plot_{}'.format(po.plot_name))(po, plotobj, pid)
@@ -419,7 +430,7 @@ class InverseIsochron(Isochron):
 
         ptext = ''
         if self.options.include_percent_error:
-           ptext = ' ({}%)'.format(p)
+            ptext = ' ({}%)'.format(p)
 
         ratio_line = '<sup>40</sup>Ar/<sup>36</sup>Ar= {} {}{}{}{}'.format(v, PLUSMINUS, e, ptext, mse_text)
 
@@ -442,8 +453,8 @@ class InverseIsochron(Isochron):
             mse_text = ' MSE= {}'.format(floatfmt(mse_age, s=3))
 
         age_line = u'Age= {} {}{} ({}%) {}{}'.format(floatfmt(v, n=af),
-                                                            PLUSMINUS,
-                                                            floatfmt(e, n=af, s=3), p, ag.age_units, mse_text)
+                                                     PLUSMINUS,
+                                                     floatfmt(e, n=af, s=3), p, ag.age_units, mse_text)
         mswd_line = 'N= {} MSWD= {}'.format(n, mswd)
         if label is None:
             th = 0
@@ -470,7 +481,8 @@ class InverseIsochron(Isochron):
 
     def replot(self):
         sel = self._get_omitted_by_tag(self.analyses)
-        self._rebuild_iso(sel)
+        if len(sel) < self.analysis_group.nanalyses:
+            self._rebuild_iso(sel)
 
     def _rebuild_iso(self, sel=None):
         if not self.graph:

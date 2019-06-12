@@ -427,7 +427,13 @@ class Spectrum(BaseArArFigure):
 
         sample = ag.sample
         identifier = ag.identifier
-        text = 'Plateau= {}'.format(text)
+        fixed = ''
+        fixed_steps = ag.fixed_steps
+        if fixed_steps:
+            if fixed_steps[0] and fixed_steps[1]:
+                fixed = 'Fixed ({}-{})'.format(*fixed_steps)
+
+        text = '{}Plateau= {}'.format(fixed, text)
 
         if self.options.include_plateau_sample:
             if self.options.include_plateau_identifier:

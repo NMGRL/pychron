@@ -21,12 +21,12 @@ from traits.api import Str, Bool, Float, Property, Enum, Range, Int
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.options.group.inverse_isochron_group_options import InverseIsochronGroupOptions
-from pychron.options.options import AgeOptions
+from pychron.options.spectrum import PlateauOptions
 from pychron.options.views.isochron_views import INVERSE_ISOCHRON_VIEWS, ISOCHRON_VIEWS
 from pychron.pychron_constants import FIT_ERROR_TYPES, ELLIPSE_KINDS, FONTS, SIZES, MAIN, APPEARANCE, GROUPS
 
 
-class IsochronOptions(AgeOptions):
+class IsochronOptions(PlateauOptions):
     age_sig_figs = Int(2)
     yintercept_sig_figs = Int(2)
 
@@ -78,6 +78,9 @@ class InverseIsochronOptions(IsochronOptions):
 
     marker_size = Float(2)
     marker = MarkerTrait()
+
+    omit_non_plateau = Bool(False)
+    exclude_non_plateau = Bool(False)
 
     def _get_results_font(self):
         return '{} {}'.format(self.results_fontname, self.results_fontsize)
