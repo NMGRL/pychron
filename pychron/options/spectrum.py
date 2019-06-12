@@ -36,20 +36,30 @@ class SpectrumAuxPlot(AuxPlot):
                         'kca', 'kcl', 'moles_ar40', 'moles_ar36', 'moles_k39', 'age_spectrum'])
 
 
-class SpectrumOptions(AgeOptions):
-    naux_plots = 8
-    aux_plot_klass = SpectrumAuxPlot
-    edit_plateau_criteria = Button
-
+class PlateauOptions(AgeOptions):
+    plateau_method = Enum(FLECK, MAHON)
     step_nsigma = Int(2)
     pc_nsteps = Int(3)
     pc_gas_fraction = Float(50)
+    plateau_age_error_kind = Enum(*ERROR_TYPES)
+    edit_plateau_criteria = Button
+
+    def _edit_plateau_criteria_fired(self):
+        v = okcancel_view(Item('pc_nsteps', label='Num. Steps', tooltip='Number of contiguous steps'),
+                          Item('pc_gas_fraction', label='Min. Gas%',
+                               tooltip='Plateau must represent at least Min. Gas% release'),
+                          title='Edit Plateau Criteria')
+        self.edit_traits(v)
+
+
+class SpectrumOptions(PlateauOptions):
+    naux_plots = 8
+    aux_plot_klass = SpectrumAuxPlot
 
     integrated_age_weighting = Enum(WEIGHTINGS)
 
     include_j_error_in_integrated = Bool(False)
     include_j_error_in_plateau = Bool(True)
-    plateau_age_error_kind = Enum(*ERROR_TYPES)
     weighted_age_error_kind = Enum(*ERROR_TYPES)
     integrated_age_error_kind = Enum(*ERROR_TYPES)
 
@@ -84,7 +94,6 @@ class SpectrumOptions(AgeOptions):
     # plateau_line_color = Color
     # user_plateau_line_color = Bool
 
-    plateau_method = Enum(FLECK, MAHON)
     error_calc_method = Property
     use_error_envelope_fill = Bool
 
@@ -114,13 +123,6 @@ class SpectrumOptions(AgeOptions):
     #     info = eg.edit_traits()
     #     if info.result:
     #         self.refresh_plot_needed = True
-
-    def _edit_plateau_criteria_fired(self):
-        v = okcancel_view(Item('pc_nsteps', label='Num. Steps', tooltip='Number of contiguous steps'),
-                          Item('pc_gas_fraction', label='Min. Gas%',
-                               tooltip='Plateau must represent at least Min. Gas% release'),
-                          title='Edit Plateau Criteria')
-        self.edit_traits(v)
 
     def _get_error_calc_method(self):
         return self.plateau_age_error_kind

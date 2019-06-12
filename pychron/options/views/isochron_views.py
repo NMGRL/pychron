@@ -20,7 +20,9 @@ from traitsui.api import View, Item, HGroup, VGroup, Group, UItem, RangeEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.pychron_traits import BorderHGroup, BorderVGroup
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.options import SubOptions, AppearanceSubOptions, GroupSubOptions, TitleSubOptions
+from pychron.pychron_constants import FLECK_PLATEAU_DEFINITION, MAHON_PLATEAU_DEFINITION
 
 
 class IsochronMainOptions(SubOptions):
@@ -35,10 +37,25 @@ class IsochronAppearance(AppearanceSubOptions):
 
 class InverseIsochronMainOptions(TitleSubOptions):
     def traits_view(self):
+        plat_grp = BorderHGroup(Item('omit_non_plateau', label='Omit Non Plateau Steps'),
+                                HGroup(Item('plateau_method',
+                                            tooltip='Fleck 1977={}\n'
+                                                    'Mahon 1996={}'.format(FLECK_PLATEAU_DEFINITION,
+                                                                           MAHON_PLATEAU_DEFINITION),
+                                            label='Method'),
+                                       icon_button_editor('edit_plateau_criteria', 'cog',
+                                                          tooltip='Edit Plateau Criteria'),
+                                       visible_when='omit_non_plateau'),
+                                label='Plateau')
+
         g = Group(Item('error_calc_method',
                        width=-150,
                        label='Error Calculation Method'),
                   Item('regressor_kind', label='Method'),
+
+                  plat_grp,
+
+                  # Item('exclude_non_plateau', label='Exclude Non Plateau Steps'),
                   show_border=True,
                   label='Calculations')
 

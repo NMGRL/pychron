@@ -2,6 +2,16 @@ CHANGELOG
 =========
 
 
+6/12/2019
+--------
+### Features ###
+* added ability to automatically omit non plateau steps from isochron plot
+* added "Fixed (X-Y)" to Plateau label
+
+### Bug fixes ###
+* removed "Save Table" toolbar action 
+
+
 6/7/2019
 --------
 ### Features ###

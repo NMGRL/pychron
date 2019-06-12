@@ -41,7 +41,7 @@ from pychron.pipeline.state import EngineState
 from pychron.pipeline.tasks.actions import RunAction, ResumeAction, ResetAction, \
     ConfigureRecallAction, TagAction, SetInterpretedAgeAction, ClearAction, SavePDFAction, SetInvalidAction, \
     SetFilteringTagAction, \
-    EditAnalysisAction, RunFromAction, PipelineRecallAction, LoadReviewStatusAction, DiffViewAction, SaveTableAction
+    EditAnalysisAction, RunFromAction, PipelineRecallAction, LoadReviewStatusAction, DiffViewAction
 from pychron.pipeline.tasks.interpreted_age_factory import set_interpreted_age
 from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane, RepositoryPane, EditorOptionsPane
 
@@ -78,7 +78,7 @@ class PipelineTask(BaseBrowserTask):
                           SetInvalidAction(),
                           SetFilteringTagAction(),
                           SetInterpretedAgeAction(),
-                          SaveTableAction(),
+                          # SaveTableAction(),
                           name='Misc')]
 
     state = Instance(EngineState)
@@ -281,28 +281,28 @@ class PipelineTask(BaseBrowserTask):
         obj = self._make_save_figure_object(ed)
         dvc_dump(obj, path)
 
-    def save_table(self):
-        self.debug('save table')
-        if not self.has_active_editor():
-            return
-
-        ed = self.active_editor
-        if isinstance(ed, FigureEditor):
-            from pychron.pipeline.tables.xlsx_table_options import XLSXAnalysisTableWriterOptions
-            from pychron.pipeline.tables.xlsx_table_writer import XLSXAnalysisTableWriter
-
-            options = XLSXAnalysisTableWriterOptions()
-            ri = tuple({ai.repository_identifier for ai in ed.analyses})
-            options.root_name = ri[0]
-            info = options.edit_traits(kind='modal')
-            if info.result:
-                writer = XLSXAnalysisTableWriter()
-                # from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
-                # groups = [InterpretedAgeGroup(analyses=ed.analyses)]
-
-                gs = ed.get_analysis_groups()
-                run_groups = {'unknowns': gs, 'machine_unknowns': gs}
-                writer.build(run_groups, options=options)
+    # def save_table(self):
+    #     self.debug('save table')
+    #     if not self.has_active_editor():
+    #         return
+    #
+    #     ed = self.active_editor
+    #     if isinstance(ed, FigureEditor):
+    #         from pychron.pipeline.tables.xlsx_table_options import XLSXAnalysisTableWriterOptions
+    #         from pychron.pipeline.tables.xlsx_table_writer import XLSXAnalysisTableWriter
+    #
+    #         options = XLSXAnalysisTableWriterOptions()
+    #         ri = tuple({ai.repository_identifier for ai in ed.analyses})
+    #         options.root_name = ri[0]
+    #         info = options.edit_traits(kind='modal')
+    #         if info.result:
+    #             writer = XLSXAnalysisTableWriter()
+    #             # from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
+    #             # groups = [InterpretedAgeGroup(analyses=ed.analyses)]
+    #
+    #             gs = ed.get_analysis_groups()
+    #             run_groups = {'unknowns': gs, 'machine_unknowns': gs}
+    #             writer.build(run_groups, options=options)
 
     def save_figure_pdf(self):
         self.debug('save figure pdf')
