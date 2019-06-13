@@ -20,18 +20,16 @@ from traits.api import Instance, on_trait_change
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.options.options_manager import CompositeOptionsManager
-from pychron.pipeline.plot.editors.figure_editor import FigureEditor
+from pychron.pipeline.plot.editors.interpreted_age_editor import InterpretedAgeEditor
 from pychron.pipeline.plot.models.composite_model import CompositeModel
 
 
-class CompositeEditor(FigureEditor):
+class CompositeEditor(InterpretedAgeEditor):
     plotter_options_manager = Instance(CompositeOptionsManager, ())
     figure_model_klass = CompositeModel
 
     @on_trait_change('figure_model:panels:figures:recalculate_event')
     def _handle_recalculate(self, obj, name, old, new):
-        print('recalads')
-
         for p in self.figure_model.panels:
             for f in p.figures:
                 if obj != f:

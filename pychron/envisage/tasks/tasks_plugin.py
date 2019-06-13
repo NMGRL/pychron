@@ -14,14 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
-
 import hashlib
 import random
 from threading import Thread
 
+# ============= enthought library imports =======================
 from envisage.extension_point import ExtensionPoint
 from envisage.ui.tasks.action.exit_action import ExitAction
 from envisage.ui.tasks.action.preferences_action import PreferencesAction
@@ -57,13 +54,6 @@ class PychronTasksPlugin(BasePlugin):
     my_tips = List(contributes_to='pychron.plugin.help_tips')
     background_processes = ExtensionPoint(List, id='pychron.background_processes')
 
-    # def _application_changed(self):
-    #     # defaults = (('use_advanced_ui', False), ('show_random_tip', True))
-    #     defaults = (('show_random_tip', True),)
-    #     try:
-    #         self._set_preference_defaults(defaults, 'pychron.general')
-    #     except AttributeError, e:
-    #         print 'exception', e
     def start(self):
         self.info('Writing plugin file defaults')
         paths.write_file_defaults(self.file_defaults)
@@ -77,9 +67,7 @@ class PychronTasksPlugin(BasePlugin):
         self.info('starting background processes disabled')
         return
 
-        print(self.background_processes)
         for i, p in enumerate(self.background_processes):
-            print(i, p)
             if isinstance(p, tuple):
                 name, func = p
             else:
@@ -87,7 +75,6 @@ class PychronTasksPlugin(BasePlugin):
                 name = 'Background{:02n}'.format(i)
 
             if hasattr(func, '__call__'):
-                print('asdfas', func, name)
                 t = Thread(target=func, name=name)
                 t.setDaemon(True)
                 t.start()
@@ -111,7 +98,7 @@ class PychronTasksPlugin(BasePlugin):
                 '<b>2.</b> Set the flag <i>random_tip_enabled</i> to False in the initialization file',
                 'Use <b>Window/Reset Layout</b> to change the current window back to its default "Look"',
                 'Submit bugs or issues to the developers manually using <b>Help/Add Request/Report Bug</b>',
-                'The current version of Pychron contains over 154K lines of code',
+                'The current version of Pychron contains over 156K lines of code in 1676 files',
                 'If menu actions are missing first check that the desired "Plugin" is enabled using <b>Help/Edit '
                 'Initialization</b>. If "Plugin" is enabled, check that the desired action is enabled using '
                 '<b>Help/Edit UI</b>.']
@@ -159,10 +146,6 @@ class mExitAction(ExitAction):
                 if ret == NO:
                     return
         app.exit(force=True)
-        # try:
-        # except RuntimeError:
-        #     import os
-        #     os._exit(0)
 
 
 class myTasksPlugin(TasksPlugin):

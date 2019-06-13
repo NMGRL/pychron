@@ -9,6 +9,7 @@ CHANGELOG
 ### Bug fixes ###
 * fixed "Dim non plateau" option when using "fixed steps" 
 * fixed `alphas` 
+* enabled "Set Interpreted Age" toolbar action when using a CompositeEditor e.g. Spectrum/Isochron
 
 6/12/2019
 --------
