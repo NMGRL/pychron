@@ -696,7 +696,9 @@ class DVC(Loggable):
                                          quick=quick,
                                          reload=reload, *args)
             except BaseException:
-                self.debug('make analysis exception')
+                record = args[0]
+                self.debug('make analysis exception: repo={}, record_id={}'.format(record.repository_identifier,
+                                                                          record.record_id))
                 self.debug_exception()
 
         if use_progress:

@@ -37,7 +37,8 @@ class IsochronAppearance(AppearanceSubOptions):
 
 class InverseIsochronMainOptions(TitleSubOptions):
     def traits_view(self):
-        plat_grp = BorderHGroup(Item('omit_non_plateau', label='Omit Non Plateau Steps'),
+        plat_grp = BorderHGroup(VGroup(Item('omit_non_plateau', label='Omit Non Plateau Steps'),
+                                       Item('exclude_non_plateau', label='Exclude Non Plateau Steps')),
                                 HGroup(Item('plateau_method',
                                             tooltip='Fleck 1977={}\n'
                                                     'Mahon 1996={}'.format(FLECK_PLATEAU_DEFINITION,
@@ -54,8 +55,6 @@ class InverseIsochronMainOptions(TitleSubOptions):
                   Item('regressor_kind', label='Method'),
 
                   plat_grp,
-
-                  # Item('exclude_non_plateau', label='Exclude Non Plateau Steps'),
                   show_border=True,
                   label='Calculations')
 

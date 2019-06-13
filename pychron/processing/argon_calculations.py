@@ -24,9 +24,9 @@ from numpy import asarray, average, array
 from uncertainties import ufloat, umath, nominal_value, std_dev
 
 from pychron.core.stats.core import calculate_weighted_mean
+from pychron.core.utils import alpha_to_int
 from pychron.processing.arar_constants import ArArConstants
 from pychron.pychron_constants import FLECK
-from pychron.utils import alpha_to_int
 
 
 def extract_isochron_xy(analyses):

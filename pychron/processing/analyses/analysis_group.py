@@ -23,14 +23,14 @@ from traits.api import List, Property, cached_property, Str, Bool, Int, Event, F
 from uncertainties import ufloat, nominal_value, std_dev
 
 from pychron.core.stats.core import calculate_mswd, calculate_weighted_mean, validate_mswd
+from pychron.core.utils import alphas
 from pychron.experiment.utilities.identifier import make_aliquot
 from pychron.processing.analyses.analysis import IdeogramPlotable
 from pychron.processing.analyses.preferred import Preferred
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
 from pychron.pychron_constants import MSEM, SD, SUBGROUPING_ATTRS, ERROR_TYPES, WEIGHTED_MEAN, \
-    DEFAULT_INTEGRATED, SUBGROUPINGS, ARITHMETIC_MEAN, PLATEAU_ELSE_WEIGHTED_MEAN, WEIGHTINGS, FLECK, NULL_STR
-from pychron.utils import alphas
+    DEFAULT_INTEGRATED, SUBGROUPINGS, ARITHMETIC_MEAN, PLATEAU_ELSE_WEIGHTED_MEAN, WEIGHTINGS, FLECK, NULL_STR, ISOCHRON
 
 
 def AGProperty(*depends):
@@ -202,14 +202,24 @@ class AnalysisGroup(IdeogramPlotable):
     def clean_analyses(self):
         return (ai for ai in self.analyses if not ai.is_omitted())
 
-    def get_isochron_data(self):
+    def get_isochron_data(self, exclude_non_plateau=False):
         ans = [a for a in self.analyses if isinstance(a, ArArAge)]
-        exclude = [i for i, x in enumerate(ans) if x.is_omitted()]
+
+        if exclude_non_plateau and hasattr(self, 'get_is_plateau_step'):
+            def test(ai):
+                a = ai.is_omitted()
+                b = not self.get_is_plateau_step(ai)
+                return a or b
+        else:
+            def test(ai):
+                return ai.is_omitted()
+
+        exclude = [i for i, x in enumerate(ans) if test(x)]
         if ans:
             return calculate_isochron(ans, self.isochron_age_error_kind, exclude=exclude)
 
-    def calculate_isochron_age(self):
-        args = self.get_isochron_data()
+    def calculate_isochron_age(self, exclude_non_plateau=False):
+        args = self.get_isochron_data(exclude_non_plateau)
         if args:
             age = args[0]
             self.isochron_3640 = args[1]
@@ -940,6 +950,13 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
             pa = self.arith_age
         elif pak == 'isochron':
             pa = self.isochron_age
+        elif pak == 'isochron_of_plateau_steps':
+            self.calculate_plateau()
+            if not self.plateau_steps:
+                pa = self.isochron_age
+                pv.computed_kind = ISOCHRON
+            else:
+                pa = self.calculate_isochron_age(exclude_non_plateau=True)
         elif pak == 'integrated':
             pa = self._calculate_integrated('age', 'valid', pv.weighting)
         elif pak == 'plateau':

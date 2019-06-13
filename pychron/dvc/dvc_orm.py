@@ -24,10 +24,10 @@ from sqlalchemy.orm import object_session, deferred
 from sqlalchemy.orm import relationship
 
 from pychron.core.helpers.datetime_tools import make_timef
+from pychron.core.utils import alphas
 from pychron.database.orms import stringcolumn, primary_key
 # from pychron.database.records.isotope_record import DVCIsotopeRecordView
 from pychron.experiment.utilities.identifier import make_runid
-from pychron.utils import alphas
 
 Base = declarative_base()
 
@@ -135,6 +135,7 @@ class AnalysisTbl(Base, IDMixin):
 
     @property
     def step(self):
+        print(self.increment, alphas(self.increment))
         return alphas(self.increment)
 
     @property

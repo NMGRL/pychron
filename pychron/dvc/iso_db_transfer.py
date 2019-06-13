@@ -29,6 +29,7 @@ from six.moves import filter
 from traits.api import Instance
 
 from pychron.core.helpers.datetime_tools import get_datetime
+from pychron.core.utils import alpha_to_int
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.dvc import dvc_dump
@@ -44,7 +45,6 @@ from pychron.github import Organization
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pychron_constants import QTEGRA_SOURCE_KEYS
-from pychron.utils import alpha_to_int
 
 ORG = 'NMGRLData'
 

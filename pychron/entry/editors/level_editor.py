@@ -31,6 +31,7 @@ from pychron.canvas.utils import load_holder_canvas
 from pychron.core.helpers.logger_setup import logging_setup
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.combobox_editor import ComboboxEditor
+from pychron.core.utils import alphas, alpha_to_int
 from pychron.database.core.defaults import parse_irradiation_tray_map, load_irradiation_map
 from pychron.dvc.meta_repo import MetaRepo
 from pychron.entry.editors.base_editor import ModelView
@@ -38,7 +39,6 @@ from pychron.entry.editors.production import IrradiationProduction
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.loggable import Loggable
 from pychron.paths import paths
-from pychron.utils import alphas, alpha_to_int
 
 
 def prep_prname(prname):

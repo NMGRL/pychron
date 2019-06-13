@@ -42,13 +42,16 @@ A_UPPERCASE = ord('A')
 def alphas(n):
     a = ''
     if n is not None and n >= 0:
-        def decompose(n):
-            while n:
-                n, rem = divmod(n, BASE)
-                yield rem
+        if n>0:
+            def decompose(n):
+                while n:
+                    n, rem = divmod(n, BASE)
+                    yield rem
 
-        digits = reversed([chr(A_UPPERCASE + part) for part in decompose(n)])
-        a = ''.join(digits)
+            digits = reversed([chr(A_UPPERCASE + part) for part in decompose(n)])
+            a = ''.join(digits)
+        else:
+            a = 'A'
     return a
 
 

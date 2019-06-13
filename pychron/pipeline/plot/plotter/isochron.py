@@ -222,7 +222,7 @@ class InverseIsochron(Isochron):
     def _plot_inverse_isochron(self, po, plot, pid):
         opt = self.options
         self.analysis_group.isochron_age_error_kind = opt.error_calc_method
-        _, _, reg = self.analysis_group.get_isochron_data()
+        _, _, reg = self.analysis_group.get_isochron_data(exclude_non_plateau=opt.exclude_non_plateau)
 
         graph = self.graph
 

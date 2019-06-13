@@ -29,10 +29,10 @@ from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.helpers.strtools import to_csv_str
 from pychron.core.ui.enum_editor import myEnumEditor
 from pychron.core.ui.tabular_editor import myTabularEditor
+from pychron.core.utils import alphas
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.experiment.utilities.save_dialog import IncrementalHeatTemplateSaveDialog
 from pychron.paths import paths
-from pychron.utils import alphas
 from pychron.viewable import Viewable
 
 

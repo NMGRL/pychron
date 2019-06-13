@@ -221,6 +221,7 @@ class PipelineEngine(Loggable):
     refresh_all_needed = Event
     update_needed = Event
     refresh_table_needed = Event
+    tag_event = Event
 
     repositories = List
     selected_repositories = List
@@ -1014,9 +1015,16 @@ class PipelineEngine(Loggable):
                 node = self.pipeline.nodes[idx]
         return node
 
+    def _handle_figure_event(self, evt):
+        kind = evt[0]
+        if kind == 'alternate_figure':
+            self._make_alternate_figure(evt)
+        elif kind == 'tag':
+            self.tag_event = evt[1]
+
     def _make_alternate_figure(self, evt):
         self.add_pipeline = True
-        name, groups = evt
+        _, name, groups = evt
         self._set_template(name)
 
         self.pipeline.nodes[0].unknowns = [ai for gi in groups for ai in gi.analyses]
@@ -1031,13 +1039,13 @@ class PipelineEngine(Loggable):
         if old:
             if hasattr(old, 'figure_model'):
                 old.on_trait_change(refresh, 'figure_model:panels:figures:refresh_unknowns_table', remove=True)
-                old.on_trait_change(self._make_alternate_figure, 'figure_model:panels:make_alternate_figure_event',
+                old.on_trait_change(self._handle_figure_event, 'figure_model:panels:figure_event',
                                     remove=True)
 
         if new:
             if hasattr(new, 'figure_model'):
                 new.on_trait_change(refresh, 'figure_model:panels:figures:refresh_unknowns_table')
-                new.on_trait_change(self._make_alternate_figure, 'figure_model:panels:make_alternate_figure_event')
+                new.on_trait_change(self._handle_figure_event, 'figure_model:panels:figure_event')
 
     def _add_pipeline_fired(self):
         p = self.pipeline_group.add()

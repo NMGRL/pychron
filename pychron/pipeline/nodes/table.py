@@ -21,6 +21,8 @@ from traitsui.api import UItem, Item, TableEditor, ObjectColumn, VGroup
 from traitsui.extras.checkbox_column import CheckboxColumn
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+# ============= enthought library imports =======================
+from pychron.core.utils import autodoc_helper
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceMixin
 from pychron.pipeline.editors.group_age_editor import SubGroupAgeEditor, GroupAgeEditor
@@ -28,8 +30,6 @@ from pychron.pipeline.editors.interpreted_age_table_editor import InterpretedAge
 from pychron.pipeline.nodes.data import BaseDVCNode
 from pychron.pipeline.nodes.group_age import GroupAgeNode
 from pychron.pychron_constants import PLUSMINUS_NSIGMA
-# ============= enthought library imports =======================
-from pychron.utils import autodoc_helper
 
 
 class TableNode(BaseDVCNode):

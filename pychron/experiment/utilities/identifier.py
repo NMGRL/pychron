@@ -22,11 +22,11 @@ import re
 
 import yaml
 
+from pychron.core.utils import alphas, alpha_to_int
 # ============= local library imports  ==========================
 from pychron.file_defaults import IDENTIFIERS_DEFAULT
 from pychron.paths import paths
 from pychron.pychron_constants import LINE_STR, SPECIAL_IDENTIFIER
-from pychron.utils import alphas, alpha_to_int
 
 IDENTIFIER_REGEX = re.compile(r'(?P<identifier>\d+)-(?P<aliquot>\d+)(?P<step>\w*)')
 SPECIAL_IDENTIFIER_REGEX = re.compile(r'(?P<identifier>\w{1,2}-[\d\w]+-\w)-(?P<aliquot>\d+)')

@@ -18,7 +18,7 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.displays.display import ErrorDisplay, DisplayController
-from pychron.utils import get_display_size
+from pychron.core.utils import get_display_size
 
 ds = get_display_size()
 

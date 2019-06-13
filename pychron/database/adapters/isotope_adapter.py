@@ -26,6 +26,7 @@ from sqlalchemy.sql.functions import count
 # ============= enthought library imports =======================
 from traits.api import provides
 
+from pychron.core.utils import alpha_to_int
 from pychron.database.core.database_adapter import DatabaseAdapter
 # ============= local library imports  ==========================
 from pychron.database.core.functions import delete_one
@@ -66,7 +67,6 @@ from pychron.database.orms.isotope.proc import proc_DetectorIntercalibrationHist
 # spec_
 from pychron.database.orms.isotope.spec import spec_MassCalHistoryTable, spec_MassCalScanTable, spec_MFTableTable
 from pychron.pychron_constants import NULL_STR
-from pychron.utils import alpha_to_int
 
 
 def binfunc(ds, hours):

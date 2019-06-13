@@ -28,6 +28,7 @@ from traitsui.api import Item
 from pychron.core.helpers.datetime_tools import bin_datetimes
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.spell_correct import correct
+from pychron.core.utils import alpha_to_int
 from pychron.database.core.database_adapter import DatabaseAdapter, binfunc
 from pychron.database.core.query import compile_query, in_func
 from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
@@ -42,7 +43,6 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
 from pychron.globals import globalv
 from pychron.pychron_constants import NULL_STR, EXTRACT_DEVICE, NO_EXTRACT_DEVICE, \
     SAMPLE_PREP_STEPS, SAMPLE_METADATA
-from pychron.utils import alpha_to_int
 
 
 def listify(obj):

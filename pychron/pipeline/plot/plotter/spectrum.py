@@ -136,14 +136,6 @@ class Spectrum(BaseArArFigure):
 
         grp = opt.get_group(self.group_id)
 
-        spec = self._add_plot(xs, ys, es, pid, po)
-        ls = grp.center_line_style
-        if not ls == 'No Line':
-            spec.line_style = ls
-            spec.line_width = grp.center_line_width
-        else:
-            spec.line_width = 0
-
         ag = self.analysis_group
         ag.integrated_include_omitted = opt.integrated_include_omitted
         ag.include_j_error_in_plateau = opt.include_j_error_in_plateau
@@ -152,16 +144,26 @@ class Spectrum(BaseArArFigure):
         ag.plateau_gas_fraction = opt.pc_gas_fraction
         ag.age_error_kind = opt.weighted_age_error_kind
         ag.integrated_age_weighting = opt.integrated_age_weighting
-        ag.dirty = True
 
         if grp.calculate_fixed_plateau:
             ag.fixed_step_low, ag.fixed_step_high = grp.calculate_fixed_plateau_start, grp.calculate_fixed_plateau_end
         else:
             ag.fixed_step_low, ag.fixed_step_high = ('', '')
 
+        ag.dirty = True
+
         pma = None
         plateau_age = ag.plateau_age
         selections = self._get_omitted_by_tag(self.sorted_analyses)
+
+        spec = self._add_plot(xs, ys, es, pid, po)
+        ls = grp.center_line_style
+        if not ls == 'No Line':
+            spec.line_style = ls
+            spec.line_width = grp.center_line_width
+        else:
+            spec.line_width = 0
+
         if plateau_age:
             platbounds = ag.plateau_steps
 
@@ -430,7 +432,7 @@ class Spectrum(BaseArArFigure):
         fixed = ''
         fixed_steps = ag.fixed_steps
         if fixed_steps:
-            if fixed_steps[0] and fixed_steps[1]:
+            if fixed_steps[0] or fixed_steps[1]:
                 fixed = 'Fixed ({}-{})'.format(*fixed_steps)
 
         text = '{}Plateau= {}'.format(fixed, text)

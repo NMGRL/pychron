@@ -1,6 +1,14 @@
 CHANGELOG
 =========
+6/13/2019
+### Features ###
+* added exclude non plateau steps from isochron plot
+* added "Isochron of Plateau Steps" as a preferred kind
+* added "Tag Non Plateau" context menu action to Spectrum
 
+### Bug fixes ###
+* fixed "Dim non plateau" option when using "fixed steps" 
+* fixed `alphas` 
 
 6/12/2019
 --------

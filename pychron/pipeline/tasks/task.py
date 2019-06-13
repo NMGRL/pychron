@@ -596,6 +596,10 @@ class PipelineTask(BaseBrowserTask):
                     self.engine.selected_editor = editor
                     self.engine.active_editor = editor
 
+    @on_trait_change('engine:tag_event')
+    def _handle_engine_tag(self, new):
+        self.set_tag(items=new)
+
     def _handle_tag(self, name, new):
         self.set_tag(items=new)
 
