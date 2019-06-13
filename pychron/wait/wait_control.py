@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= standard library imports ========================
+import time
 from threading import Event
 
 # ============= enthought library imports =======================
@@ -68,11 +69,11 @@ class WaitControl(Loggable):
         if evt is None:
             evt = self.end_evt
 
-        # evt.wait(0.25)
-        # while not evt.wait(timeout=0.25):
-        #     time.sleep(0.25)
+        if self.duration > 1:
+            evt.wait(self.duration - 1)
 
-        evt.wait(self.duration)
+        while not evt.wait(timeout=0.25):
+            time.sleep(0.25)
 
         self.debug('Join finished')
 
