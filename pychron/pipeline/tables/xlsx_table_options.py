@@ -144,6 +144,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
 
     asummary_kca_nsigma = dumpable(Enum(1, 2, 3))
     asummary_age_nsigma = dumpable(Enum(1, 2, 3))
+    asummary_trapped_ratio_nsigma = dumpable(Enum(1, 2, 3))
 
     plateau_nsteps = dumpable(Int(3))
     plateau_gas_fraction = dumpable(Float(50))
@@ -267,7 +268,9 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                                         Item('sensitivity_units', label='Sensitivity Units')),
                                  label='Units')
         sigma_grp = BorderHGroup(Item('asummary_kca_nsigma', label='K/Ca'),
-                                 Item('asummary_age_nsigma', label='Age'), label='N. Sigma')
+                                 Item('asummary_age_nsigma', label='Age'),
+                                 Item('asummary_trapped_ratio_nsigma', label='Trapped'),
+                                 label='N. Sigma')
         sort_grp = BorderVGroup(HGroup(Item('group_age_sorting', label='Group'),
                                        Item('subgroup_age_sorting', label='SubGroup')),
                                 Item('individual_age_sorting', label='Individual'),

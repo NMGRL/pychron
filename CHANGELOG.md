@@ -1,5 +1,13 @@
 CHANGELOG
 =========
+
+6/14/2019
+### Features ###
+* moved trapped ratio to separate line in analysis table, added control over trapped nsigma
+
+### Bug fixes ###
+
+
 6/13/2019
 ### Features ###
 * added exclude non plateau steps from isochron plot
