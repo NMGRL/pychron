@@ -69,10 +69,11 @@ ERROR_TYPES = [MSEM, SEM, SD]
 SIG_FIGS = range(0, 15)
 
 WEIGHTED_MEAN = 'Weighted Mean'
+PLATEAU = 'Plateau'
 INTEGRATED = 'Total Integrated'
-DEFAULT_INTEGRATED = 'Plateau else Valid Integrated'
+DEFAULT_INTEGRATED = '{} else Valid Integrated'.format(PLATEAU)
 VALID_INTEGRATED = 'Valid Integrated'
-PLATEAU_INTEGRATED = 'Plateau Integrated'
+PLATEAU_INTEGRATED = '{} Integrated'.format(PLATEAU)
 
 FIT_TYPES = ['Linear', 'Parabolic', 'Cubic',
              'Average', 'Exponential', WEIGHTED_MEAN]
@@ -87,11 +88,11 @@ FIT_TYPES_INTERPOLATE = FIT_TYPES + INTERPOLATE_TYPES
 ARITHMETIC_MEAN = 'Arithmetic Mean'
 PLATEAU_ELSE_WEIGHTED_MEAN = 'Plateau else Weighted Mean'
 ISOCHRON = 'Isochron'
-ISOCHRON_PLATEAU = 'Isochron of Plateau Steps'
+ISOCHRON_PLATEAU = '{} of {} Steps'.format(ISOCHRON, PLATEAU)
 
 AGE_SUBGROUPINGS = (PLATEAU_ELSE_WEIGHTED_MEAN, WEIGHTED_MEAN,
                     INTEGRATED, VALID_INTEGRATED, PLATEAU_INTEGRATED, DEFAULT_INTEGRATED,
-                    ARITHMETIC_MEAN, 'Plateau', ISOCHRON, ISOCHRON_PLATEAU)
+                    ARITHMETIC_MEAN, PLATEAU, ISOCHRON, ISOCHRON_PLATEAU)
 SUBGROUPINGS = [WEIGHTED_MEAN,
                 INTEGRATED, VALID_INTEGRATED, PLATEAU_INTEGRATED, DEFAULT_INTEGRATED,
                 ARITHMETIC_MEAN]

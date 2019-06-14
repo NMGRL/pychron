@@ -972,11 +972,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             sh.write_string(self._current_row, idx + 3, format_mswd(mt), fmt)
 
             self._current_row += 1
-            # sh.write_rich_string(self._current_row, idx,
-            #                      '(', self._superscript, '40',
-            #                      'Ar/',
-            #                      self._superscript, '36', 'Ar', ')', self._subscript, 'trapped',
-            #                      '={:0.3f}{}{:0.3f}'.format(trapped_value, PLUSMINUS, trapped_error), fmt)
+
+        if self._options.include_trapped_ratio:
             nsigma = self._options.asummary_trapped_ratio_nsigma
 
             sh.write_rich_string(self._current_row, start_col,
@@ -1011,18 +1008,6 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
     def _make_summary_notes(self, groups, sh):
         notes = six.text_type(self._options.summary_notes)
         self._write_notes(sh, notes)
-        # sh.write(self._current_row, 0, 'Plateau Criteria:')
-        # self._current_row += 1
-        #
-        # sh.write(self._current_row, 0, '\t\tN Steps= {}'.format(self._options.plateau_nsteps))
-        # self._current_row += 1
-        #
-        # sh.write(self._current_row, 0, '\t\tGas Fraction= {}'.format(self._options.plateau_gas_fraction))
-        # self._current_row += 1
-        # if self._options.fixed_step_low or self._options.fixed_step_high:
-        #     sh.write(self._current_row, 0, '\t\tFixed Steps= {},{}'.format(self._options.fixed_step_low,
-        #                                                                    self.fixed_step_high))
-        #     self._current_row += 1
 
     def _make_unknowns_notes(self, groups, sh):
 

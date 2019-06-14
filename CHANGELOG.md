@@ -6,6 +6,7 @@ CHANGELOG
 * moved trapped ratio to separate line in analysis table, added control over trapped nsigma
 
 ### Bug fixes ###
+* fixed "Save Table" toolbar action
 
 
 6/13/2019
