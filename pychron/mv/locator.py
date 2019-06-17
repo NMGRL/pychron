@@ -175,7 +175,7 @@ class Locator(Loggable):
 
         for j in range(n):
             ww = w * (j + 1)
-            print('start', start, ww)
+            self.debug('start intensity={}, width={}'.format(start, ww))
             for i in range(n):
 
                 low = max((0, start + i * step - ww))
@@ -254,7 +254,7 @@ class Locator(Loggable):
         """
         ctest, centtest, atest = self._test_target(frame, target,
                                                    cthreshold, mi, ma)
-        print('ctest', ctest, cthreshold, 'centtest', centtest, 'atereat', atest, mi, ma)
+        # print('ctest', ctest, cthreshold, 'centtest', centtest, 'atereat', atest, mi, ma)
         result = ctest and atest and centtest
         if not ctest and (atest and centtest):
             target = self._segment_polygon(image, frame,
@@ -266,7 +266,7 @@ class Locator(Loggable):
         return target, result
 
     def _test_target(self, frame, ti, cthreshold, mi, ma):
-        print('converasdf', ti.convexity, 'ara', ti.area)
+        # print('converasdf', ti.convexity, 'ara', ti.area)
         ctest = ti.convexity > cthreshold
         centtest = self._near_center(ti.centroid, frame)
         atest = ma > ti.area > mi
