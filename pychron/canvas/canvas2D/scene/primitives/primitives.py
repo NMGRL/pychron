@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 import time
 
 from PIL import Image as PImage
@@ -317,10 +315,10 @@ class LoadIndicator(Circle):
     degas_indicator = False
     measured_indicator = False
     monitor_indicator = False
-    degas_color= Color('orange')
+    degas_color = Color('orange')
     measured_color = Color('purple')
     default_color = 'black'
-    fill_color = Color('lightblue')
+    fill_color = Color('white')
     identifier_label = None
     sample_label = None
     weight_label = None
@@ -435,9 +433,10 @@ class LoadIndicator(Circle):
 
         if self.measured_indicator:
             with gc:
-                gc.set_fill_color(self._convert_color(self.measured_color))
-                gc.arc(x, y - 2 * nr, nr, 0, 360)
-                gc.fill_path()
+                gc.set_line_width(2)
+                gc.set_stroke_color(self._convert_color(self.measured_color))
+                gc.arc(x, y, r+1, 0, 360)
+                gc.stroke_path()
 
         for pm in self.primitives:
             pm.x, pm.y = self.x, self.y
