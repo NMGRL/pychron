@@ -201,6 +201,7 @@ class ExtractionPyScript(ValvePyScript):
                            ramp_duration=0,
                            duration=0,
                            cleanup=0,
+                           lighting=0,
                            beam_diameter=None,
                            load_identifier='default_load',
                            run_identifier='default_runid', **kw)
@@ -938,6 +939,9 @@ class ExtractionPyScript(ValvePyScript):
     def load_identifier(self):
         return self._get_property('load_identifier')
 
+    @property
+    def lighting(self):
+        return self._get_property('lighting')
     # ===============================================================================
     # private
     # ===============================================================================

@@ -67,6 +67,7 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
     tray = Str
     trays = Property
     note = Str
+    default_lighting = Int(0)
 
     load_name = Str
 
@@ -82,6 +83,7 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
                    'delay_before_analyses',
                    'delay_after_blank',
                    'delay_after_air',
+                   'default_lighting',
                    'queue_conditionals_name')
 
     def activate(self, load_persistence):

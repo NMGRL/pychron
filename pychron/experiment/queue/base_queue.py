@@ -54,6 +54,7 @@ delay_between_analyses: {delay_between_analyses:}
 delay_after_blank: {delay_after_blank:}
 delay_after_air: {delay_after_air:}
 extract_device: {extract_device:}
+default_lighting: {default_lighting:}
 tray: {tray:}
 load: {load:}
 note: {note:}
@@ -78,6 +79,8 @@ class BaseExperimentQueue(RunBlock):
     delay_between_analyses = CInt(30)
     delay_after_blank = CInt(15)
     delay_after_air = CInt(10)
+
+    default_lighting = CInt(0)
 
     queue_conditionals_name = Str
 
@@ -263,6 +266,7 @@ class BaseExperimentQueue(RunBlock):
 
     def _add_queue_meta(self, params):
         for attr in ('extract_device', 'tray', 'username',
+                     'default_lighting',
                      # 'email',
                      # 'use_group_email',
                      'queue_conditionals_name'):
@@ -299,6 +303,7 @@ class BaseExperimentQueue(RunBlock):
         self._set_meta_param('load_name', meta, default, metaname='load')
         self._set_meta_param('queue_conditionals_name', meta, default)
         self._set_meta_param('repository_identifier', meta, default)
+        self._set_meta_param('default_lighting', meta, default)
 
         # # load sample map
         # self._load_map()
@@ -346,6 +351,7 @@ class BaseExperimentQueue(RunBlock):
                'duration', 'cleanup', 'overlap',
                ('beam_diam', 'beam_diameter'),
                'pattern',
+               'lighting',
                ('extraction', 'extraction_script'),
                ('ramp', 'ramp_duration'),
                ('t_o', 'collection_time_zero_offset'),
@@ -389,6 +395,7 @@ class BaseExperimentQueue(RunBlock):
             delay_after_blank=self.delay_after_blank,
             delay_after_air=self.delay_after_air,
             extract_device=self.extract_device,
+            default_lighting = self.default_lighting,
             tray=self.tray or '',
             load=self.load_name or '',
             note=self.note)

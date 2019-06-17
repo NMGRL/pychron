@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
+
 from pyface.timer.do_later import do_later
 from traits.api import Instance, Button, Bool, Property, \
     DelegatesTo, List, Str
@@ -94,6 +95,7 @@ class ExperimentFactory(DVCAble): #, ConsumerMixin):
                   'delay_after_blank',
                   'delay_between_analyses',
                   'delay_after_air',
+                  'default_lighting',
                   'queue_conditionals_name', 'note'):
 
             if not self._sync_queue_to_factory(eq, qf, a):
