@@ -332,19 +332,23 @@ class Spectrum(BaseArArFigure):
         for sp in self.spectrum_overlays:
             sp.selections = sel
 
-        if self.plateau_overlay:
-            self.plateau_overlay.selections = sel
-
         ag = self.analysis_group
-        # ag.dirty = True
+        ag.dirty = True
 
         if self.age_label:
             # text = self._build_integrated_age_label(ag.integrated_age, ag.nanalyses)
             text = self._build_age_text()
             self.age_label.text = text
 
-        if ag.plateau_age and self.plateau_overlay:
-            text = self._make_plateau_text()
+        if self.plateau_overlay:
+            self.plateau_overlay.selections = sel
+            if ag.plateau_age:
+                self.plateau_overlay.plateau_bounds = ag.plateau_steps
+                text = self._make_plateau_text()
+            else:
+                self.plateau_overlay.plateau_bounds = [0, len(self.analyses)-1]
+                text = self._make_weighted_mean_text()
+
             self.plateau_overlay.info_txt = text
 
         self.graph.plotcontainer.invalidate_and_redraw()

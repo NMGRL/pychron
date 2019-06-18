@@ -33,10 +33,7 @@ class IdeogramPanel(FigurePanel):
     _figure_klass = Ideogram
     _graph_klass = IdeogramGraph
 
-    def _handle_make_correlation_event(self, evt):
-
-        idx, ytitle = evt
-
+    def _make_correlation(self, idx, ytitle):
         fi = self.figures[0]
         plots = list(fi.options.get_plotable_aux_plots())
         tag = plots[idx].plot_name
@@ -62,8 +59,23 @@ class IdeogramPanel(FigurePanel):
 
         open_view(g)
 
+    def _handle_figure_event(self, evt):
+        kind, args = evt
+        if kind == 'correlation':
+            self._make_correlation(*args)
+        elif kind == 'identify_peaks':
+            ps =[]
+            for fi in self.figures:
+                print('peaks', fi.peaks)
+                if fi.peaks is not None:
+                    ps.extend(fi.peaks)
+
+            from pychron.pipeline.identify_peak_view import IdentifyPeakView
+            ipv = IdentifyPeakView(ps)
+            open_view(ipv)
+
     def _make_graph_hook(self, g):
-        g.on_trait_change(self._handle_make_correlation_event, 'make_correlation_event')
+        g.on_trait_change(self._handle_figure_event, 'figure_event')
 
     def _handle_rescale(self, obj, name, new):
         if new == 'y':
