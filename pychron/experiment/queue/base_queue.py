@@ -283,6 +283,7 @@ class BaseExperimentQueue(RunBlock):
 
     def _load_meta(self, meta):
         # default = lambda x: str(x) if x else ' '
+        default_int_zero = lambda x: x if x is not None else 0
         default_int = lambda x: x if x is not None else 1
         key_default = lambda k: lambda x: str(x) if x else k
         bool_default = lambda x: bool(x) if x else False
@@ -303,7 +304,7 @@ class BaseExperimentQueue(RunBlock):
         self._set_meta_param('load_name', meta, default, metaname='load')
         self._set_meta_param('queue_conditionals_name', meta, default)
         self._set_meta_param('repository_identifier', meta, default)
-        self._set_meta_param('default_lighting', meta, default)
+        self._set_meta_param('default_lighting', meta, default_int_zero)
 
         # # load sample map
         # self._load_map()
@@ -351,7 +352,7 @@ class BaseExperimentQueue(RunBlock):
                'duration', 'cleanup', 'overlap',
                ('beam_diam', 'beam_diameter'),
                'pattern',
-               'lighting',
+               'light_value',
                ('extraction', 'extraction_script'),
                ('ramp', 'ramp_duration'),
                ('t_o', 'collection_time_zero_offset'),

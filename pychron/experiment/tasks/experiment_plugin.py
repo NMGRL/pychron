@@ -138,7 +138,7 @@ class ExperimentPlugin(BaseTaskPlugin):
                   SchemaAddition(id='pychron.experiment.open_last_experiment', factory=OpenLastExperimentQueueAction,
                                  path='MenuBar/file.menu/Open'),
                   SchemaAddition(id='pychron.experiment.launch_history', factory=OpenExperimentHistoryAction,
-                                 path='MenuBar/file.menu/Open'),
+                                 path='MenuBar/tools.menu'),
                   SchemaAddition(id='pychron.experiment.new_experiment', factory=NewExperimentQueueAction,
                                  path='MenuBar/file.menu/New'),
                   SchemaAddition(id='pychron.experiment.signal_calculator', factory=SignalCalculatorAction,

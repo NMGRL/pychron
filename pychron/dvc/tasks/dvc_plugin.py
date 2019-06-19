@@ -136,7 +136,7 @@ class DVCPlugin(BaseTaskPlugin):
                 DVCRepositoryPreferencesPane]
 
     def _tasks_default(self):
-        return [TaskFactory(id='pychron.experiment_repo.task',
+        return [TaskFactory(id='pychron.repo.task',
                             name='Repositories',
                             factory=self._repo_factory,
                             image='repo')]

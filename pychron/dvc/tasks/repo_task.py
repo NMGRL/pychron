@@ -74,6 +74,7 @@ class RepoItem(HasTraits):
 
 
 class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
+    id = 'pychron.repo.task'
     name = 'Repositories'
 
     filter_repository_value = Str

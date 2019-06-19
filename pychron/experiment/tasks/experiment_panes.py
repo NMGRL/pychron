@@ -133,7 +133,7 @@ class ExperimentFactoryPane(TraitsDockPane):
                                                             editor=myEnumEditor(
                                                                 name=queue_factory_name('extract_devices')))),
                                  lgrp,
-                                 Item('default_lighting'),
+                                 queue_factory_item('default_lighting'),
                                  label='Spectrometer/Extract Device')
 
         name = queue_factory_name('available_conditionals')

@@ -74,7 +74,7 @@ class FactoryView(HasTraits):
                      tooltip='Set the number of seconds to run the extraction device.'),
                 Item('cleanup', label='Cleanup (s)',
                      tooltip='Set the number of seconds to getter the sample gas')),
-            HGroup(Item('beam_diameter'),Item('lighting')),
+            HGroup(Item('beam_diameter'),Item('light_value', label='Lighting')),
             self._position_group(),
             label='Extract',
             show_border=True)

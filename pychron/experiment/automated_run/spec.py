@@ -96,7 +96,7 @@ class AutomatedRunSpec(HasTraits):
     extract_units = Str
     position = Str
     xyz_position = Str
-    lighting = None
+    light_value = None
 
     duration = Float
     cleanup = Float
@@ -303,7 +303,7 @@ class AutomatedRunSpec(HasTraits):
                    analysis_type=an,
                    ramp_rate=self.ramp_rate,
                    pattern=self.pattern,
-                   lighting=self.lighting,
+                   light_value=self.light_value,
                    beam_diameter=self.beam_diameter,
                    ramp_duration=self.ramp_duration)
         return ctx
@@ -370,8 +370,8 @@ class AutomatedRunSpec(HasTraits):
             if hasattr(self, k):
                 setattr(self, k, v)
 
-        if self.lighting is None:
-            self.lighting = params.get('default_lighting', 0)
+        if self.light_value is None:
+            self.light_value = params.get('default_lighting', 0)
 
         self._changed = False
 

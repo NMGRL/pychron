@@ -22,7 +22,7 @@ import os
 
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
-from pyface.tasks.action.schema import SMenu
+from pyface.tasks.action.schema import SMenu, SGroup
 from pyface.tasks.action.schema_addition import SchemaAddition
 from traits.api import List, Str
 
@@ -51,10 +51,14 @@ def pattern_action(name, application, manager_name, lase=False):
     return factory
 
 
+class CoreClientLaserPlugin(BaseTaskPlugin):
+    pass
+
+
 class CoreLaserPlugin(BaseTaskPlugin):
     def _task_extensions_default(self):
         actions = [SchemaAddition(factory=OpenPowerMapAction,
-                           path='MenuBar/file.menu/Open'),
+                                  path='MenuBar/file.menu/Open'),
                    SchemaAddition(id='Open Pattern',
                                   factory=OpenPatternAction,
                                   path='MenuBar/file.menu/Open'),
@@ -69,7 +73,7 @@ class BaseLaserPlugin(BaseTaskPlugin):
     managers = List(contributes_to='pychron.hardware.managers')
     klass = None
 
-    # name = None
+    mode = None
 
     def _service_offers_default(self):
         """
@@ -77,9 +81,7 @@ class BaseLaserPlugin(BaseTaskPlugin):
         if self.klass is None:
             raise NotImplementedError
 
-        so = self.service_offer_factory(
-            protocol=ILaserManager,
-            factory=self._manager_factory)
+        so = self.service_offer_factory(protocol=ILaserManager, factory=self._manager_factory)
         return [so]
 
     def _manager_factory(self):
@@ -89,7 +91,7 @@ class BaseLaserPlugin(BaseTaskPlugin):
         ip = InitializationParser()
         plugin = ip.get_plugin(self.klass[1].replace('Manager', ''), category='hardware')
         mode = ip.get_parameter(plugin, 'mode')
-
+        self.mode = mode
         klass = ip.get_parameter(plugin, 'klass')
         if klass is None and mode == 'client':
             klass = 'PychronLaserManager'
@@ -186,16 +188,20 @@ class BaseLaserPlugin(BaseTaskPlugin):
             self.warning('no patterns scripts located in "{}"'.format(paths.pattern_dir))
 
     def _create_task_extensions(self):
-        def efactory():
-            return SMenu(id='laser.menu', name='Laser')
 
-        actions = [SchemaAddition(id='Laser',
-                                  factory=efactory,
-                                  path='MenuBar',
-                                  before='tools.menu',
-                                  after='view.menu')]
+        exts = []
+        if self.mode != 'client':
+            def efactory():
+                return SMenu(id='laser.menu', name='Laser')
 
-        exts = [TaskExtension(actions=actions)]
+            actions = [SchemaAddition(id='Laser',
+                                      factory=efactory,
+                                      path='MenuBar',
+                                      before='tools.menu',
+                                      after='view.menu')]
+
+            exts = [TaskExtension(actions=actions)]
+
         return exts
 
 
@@ -233,11 +239,13 @@ class FusionsPlugin(BaseLaserPlugin):
 
     def _task_extensions_default(self):
         exts = self._create_task_extensions()
-        actions = [SchemaAddition(factory=ShowMotionConfigureAction,
-                                  path='MenuBar/laser.menu'),
-                   SchemaAddition(factory=LaserScriptExecuteAction,
-                                  path='MenuBar/laser.menu')]
-        self._setup_pattern_extensions(exts, actions)
+
+        if self.mode != 'client':
+            actions = [SchemaAddition(factory=ShowMotionConfigureAction,
+                                      path='MenuBar/laser.menu'),
+                       SchemaAddition(factory=LaserScriptExecuteAction,
+                                      path='MenuBar/laser.menu')]
+            self._setup_pattern_extensions(exts, actions)
 
         return exts
 

@@ -180,13 +180,21 @@ def get_user_plugins():
     """
 
     plugins = []
-    ps = InitializationParser().get_plugins()
+    ip = InitializationParser()
+    ps = ip.get_plugins()
 
     core_added = False
     for p in ps:
         # if laser plugin add CoreLaserPlugin
         if p in ('FusionsCO2', 'FusionsDiode', 'ChromiumCO2'):
-            plugin = get_plugin('CoreLaserPlugin')
+
+            plugint = ip.get_plugin(p, category='hardware')
+            mode = ip.get_parameter(plugint, 'mode')
+            if mode == 'client':
+                plugin = get_plugin('CoreClientLaserPlugin')
+            else:
+                plugin = get_plugin('CoreLaserPlugin')
+
             if plugin and not core_added:
                 core_added = True
                 plugins.append(plugin)

@@ -15,6 +15,7 @@
 # ===============================================================================
 
 import os
+from operator import attrgetter
 
 from envisage.ui.tasks.action.task_window_launch_group import TaskWindowLaunchAction
 from pyface.action.api import ActionItem, Group
@@ -204,7 +205,7 @@ class BaseTask(Task, Loggable, PreferenceMixin):
                               GenericSaveAsAction(),
                               GenericSaveAction(),
                               id='Save'),
-                          SGroup(),
+                          # SGroup(),
                           id='file.menu', name='File')
 
         tools_menu = SMenu(ShareSettingsAction(),
@@ -271,7 +272,7 @@ class BaseTask(Task, Loggable, PreferenceMixin):
         groups = []
         for _, factories in groupby_key(application.task_factories, groupfunc):
             items = []
-            for factory in factories:
+            for factory in sorted(factories, key=attrgetter('id')):
                 for win in application.windows:
                     if win.active_task:
                         if win.active_task.id == factory.id:
