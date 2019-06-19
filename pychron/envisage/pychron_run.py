@@ -15,6 +15,7 @@
 # ===============================================================================
 # ============= enthought library imports =======================
 import logging
+from operator import attrgetter
 
 from envisage.core_plugin import CorePlugin
 from pyface.message_dialog import warning
@@ -194,7 +195,7 @@ def get_user_plugins():
         if plugin:
             plugins.append(plugin)
 
-    return plugins
+    return sorted(plugins, key=attrgetter('name'))
 
 
 def app_factory(klass):

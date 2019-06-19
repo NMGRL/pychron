@@ -60,8 +60,6 @@ class ExperimentPlugin(BaseTaskPlugin):
         rh = RunHistoryView(model=rhm)
 
         return rh
-    # def _image_browser_factory(self, *args, **kw):
-    #     return ImageBrowser(application=self.application)
 
     def _tasks_default(self):
         return [TaskFactory(id='pychron.experiment.task',
@@ -90,11 +88,11 @@ class ExperimentPlugin(BaseTaskPlugin):
         return [('experiment_defaults', 'EXPERIMENT_DEFAULTS', False),
                 ('ratio_change_detection', 'RATIO_CHANGE_DETECTION', False)]
 
-    def _actions_default(self):
-        return [('pychron.open_experiment', 'Ctrl+O', 'Open Experiment'),
-                ('pychron.new_experiment', 'Ctrl+N', 'New Experiment'),
-                ('pychron.deselect', 'Ctrl+Shift+D', 'Deselect'),
-                ('pychron.open_last_experiment', 'Alt+Ctrl+O', 'Open Last Experiment')]
+    # def _actions_default(self):
+    #     return [('pychron.open_experiment', 'Ctrl+O', 'Open Experiment'),
+    #             ('pychron.new_experiment', 'Ctrl+N', 'New Experiment'),
+    #             ('pychron.deselect', 'Ctrl+Shift+D', 'Deselect'),
+    #             ('pychron.open_last_experiment', 'Alt+Ctrl+O', 'Open Last Experiment')]
 
     def _help_tips_default(self):
         return ['You can set the Analysis State colors in Preferences>Experiment',
@@ -103,12 +101,11 @@ class ExperimentPlugin(BaseTaskPlugin):
 
     def _task_extensions_default(self):
         extensions = [TaskExtension(actions=actions, task_id=eid) for eid, actions in self._get_extensions()]
-        # print 'a', len(extensions)
+
         additions = []
 
         eflag = False
         for eid, actions in self._get_extensions():
-            # print 'b', eid, len(actions)
             for ai in actions:
                 if not eflag and ai.id.startswith('pychron.experiment.edit'):
                     eflag = True
