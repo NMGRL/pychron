@@ -205,6 +205,13 @@ class DVCDatabase(DatabaseAdapter):
                     if not self.get_users():
                         self.add_user('root')
 
+    def modify_aliquot_step(self, uuid, aliquot, increment):
+        with self.session_ctx() as sess:
+            a = self.get_analysis_uuid(uuid)
+            a.aliquot = aliquot
+            a.increment = increment
+            sess.commit()
+
     def sync_ia_metadata(self, ia):
         identifier = ia.identifier
         info = self.get_identifier_info(identifier)

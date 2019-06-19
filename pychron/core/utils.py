@@ -56,4 +56,6 @@ def alphas(n):
 
 
 def alpha_to_int(l):
+    if not l:
+        return
     return sum((ord(li) - A_UPPERCASE) * BASE ** i for i, li in enumerate(reversed(l.upper())))

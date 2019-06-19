@@ -16,18 +16,21 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import Str, Bool, Enum, Int
+
+from traits.api import Bool, Enum, Int
 from traitsui.api import View, UItem, Item, HGroup, VGroup
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.pychron_traits import StepStr
 from pychron.options.group.base_group_options import BaseGroupOptions
 
 
 class SpectrumGroupOptions(BaseGroupOptions):
 
     calculate_fixed_plateau = Bool(False)
-    calculate_fixed_plateau_start = Str
-    calculate_fixed_plateau_end = Str
+    calculate_fixed_plateau_start = StepStr
+    calculate_fixed_plateau_end = StepStr
     center_line_style = Enum('No Line', 'solid', 'dash', 'dot dash', 'dot', 'long dash')
     center_line_width = Int(1)
 

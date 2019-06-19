@@ -366,6 +366,9 @@ class PipelineTask(BaseBrowserTask):
         self.engine.save_pipeline_template()
 
     # action handlers
+    def edit_runid(self):
+        self._set_action_template('Edit RunID')
+
     def mass_spec_reduced_transfer(self):
         self._set_action_template('Mass Spec Reduced')
 

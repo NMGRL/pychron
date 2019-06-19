@@ -364,6 +364,7 @@ class Analysis(ArArAge, IdeogramPlotable):
     setpoint_stream = None
     load_name = ''
     load_holder = ''
+    light_value = ''
 
     experiment_queue_name = ''
 

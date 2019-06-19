@@ -240,7 +240,7 @@ ELLIPSE_KIND_SCALE_FACTORS = dict(zip(ELLIPSE_KINDS, (1, 2, 2.4477)))
 
 DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
 
-DEFAULT_PIPELINE_ROOTS = ('Fit', 'Plot', 'Table', 'History', 'Share', 'Transfer', 'MDD', 'User')
+DEFAULT_PIPELINE_ROOTS = ('Fit', 'Edit', 'Plot', 'Table', 'History', 'Share', 'Transfer', 'MDD', 'User')
 
 # SAMPLE PREP ===================================================
 INITIAL_STEPS = ('crush', 'sieve', 'wash')
@@ -273,6 +273,7 @@ EXTRACTION_ATTRS = ('weight', 'extract_device', 'tray',
                     'load_holder',
                     'extract_duration',
                     'cleanup_duration',
+                    'light_value',
                     'pattern', 'beam_diameter', 'ramp_duration', 'ramp_rate')
 
 META_ATTRS = ('analysis_type', 'uuid', 'identifier', 'aliquot', 'increment',
