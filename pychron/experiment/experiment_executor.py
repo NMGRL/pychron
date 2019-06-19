@@ -1455,6 +1455,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     self.debug(msg)
                     if fc >= failure_cnt:
                         self._err_message = msg
+                        invoke_in_main_thread(self.warning_dialog, msg)
                         return True
                 else:
                     if consecutive_failure:
