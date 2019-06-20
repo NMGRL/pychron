@@ -278,7 +278,6 @@ class EditExtensionsView(HasTraits):
         self.update()
 
     def _selected_changed(self, new):
-        print(new)
         try:
             self.description = new.description
         except AttributeError:

@@ -15,17 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from traitsui.menu import Action
 
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.envisage.ui_actions import UIAction
 
 
-class SamplePrepAction(Action):
+class SamplePrepAction(UIAction):
     name = 'Sample Prep'
-    dname = 'Sample Prep'
     id = 'pychron.sample_prep'
 
     def perform(self, event):

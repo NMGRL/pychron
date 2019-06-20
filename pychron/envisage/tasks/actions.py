@@ -27,6 +27,7 @@ from pyface.tasks.task_window_layout import TaskWindowLayout
 from traits.api import Any, List
 
 from pychron.envisage.resources import icon
+from pychron.envisage.ui_actions import UIAction, UITaskAction
 
 
 # ===============================================================================
@@ -80,14 +81,14 @@ class myTaskAction(TaskAction):
             self.enabled = bool(self.object)
 
 
-class PAction(Action):
+class PAction(UIAction):
     def __init__(self, *args, **kw):
         super(PAction, self).__init__(*args, **kw)
         acc = get_key_binding(self.id)
         self.accelerator = acc or self.accelerator
 
 
-class PTaskAction(TaskAction):
+class PTaskAction(UITaskAction):
     def __init__(self, *args, **kw):
         super(PTaskAction, self).__init__(*args, **kw)
         acc = get_key_binding(self.id)

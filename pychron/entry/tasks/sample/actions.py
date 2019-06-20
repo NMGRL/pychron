@@ -16,11 +16,11 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from pyface.tasks.action.task_action import TaskAction
-from traitsui.menu import Action
 
 from pychron.envisage.resources import icon
-from pychron.pychron_constants import DVC_PROTOCOL
+from pychron.envisage.ui_actions import UIAction
 
 
 # class SampleEditAction(Action):
@@ -39,9 +39,8 @@ from pychron.pychron_constants import DVC_PROTOCOL
 #         sev.edit_traits()
 
 
-class SampleEntryAction(Action):
+class SampleEntryAction(UIAction):
     name = 'Sample'
-    dname = 'Sample'
     id = 'pychron.sample_entry'
 
     def perform(self, event):

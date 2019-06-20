@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2016 Jake Ross
+# Copyright 2019 ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,21 +13,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
-# ============= enthought library imports =======================
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-from pychron.envisage.ui_actions import UIAction
+from pyface.tasks.action.task_action import TaskAction
+from traits.has_traits import MetaHasTraits
+from traitsui.menu import Action
 
 
-class LabnumberEntryAction(UIAction):
-    name = 'Irradiation'
-    # accelerator = 'Ctrl+Shift+l'
-    id = 'pychron.labnumber_entry'
+class NameMeta(MetaHasTraits):
+    def __new__(cls, name, bases, d):
+        if 'name' in d:
+            name = d['name']
+            if name.endswith('...'):
+                name = name[:-3]
+            d['dname'] = name
 
-    def perform(self, event):
-        pid = 'pychron.entry.irradiation.task'
-        app = event.task.window.application
-        app.get_task(pid)
+        if 'description' in d:
+            d['ddescription'] = d['description']
 
+        return super().__new__(cls, name, bases, d)
+
+
+class UIAction(Action, metaclass=NameMeta):
+    pass
+
+
+class UITaskAction(TaskAction, metaclass=NameMeta):
+    pass
 # ============= EOF =============================================
