@@ -44,7 +44,7 @@ class ConfigMixin:
                    default=None):
 
         if cast is not None:
-            func = getattr(config, 'get%s' % cast)
+            func = getattr(config, 'get{}'.format(cast))
         else:
             func = config.get
 
