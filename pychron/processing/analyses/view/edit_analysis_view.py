@@ -154,12 +154,12 @@ class FluxItem(BaseEditItem):
         if self._suppress_update:
             return
 
-        self.item.j = ufloat(self.value, self.error, tag='j')
+        self.item.j = ufloat(self.value, self.error, tag='J')
         self.recalculate_needed = True
 
     def revert(self):
         item = self.item
-        item.j = ufloat(self.ovalue, self.oerror, tag='j')
+        item.j = ufloat(self.ovalue, self.oerror, tag='J')
         self._suppress_update = True
         self.trait_set(value=self.ovalue, error=self.oerror)
         self._suppress_update = False
