@@ -325,10 +325,10 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         return self._retrieve_item(IrradiationPositionTable, value,
                                    key='IrradPosition', )
 
-    def get_irradiation_level(self, name, level):
-        return self._retrieve_item(IrradiationLevelTable,
-                                   value=(name, level),
-                                   key=('IrradBaseID', 'Level'))
+    # def get_irradiation_level(self, name, level):
+    #     return self._retrieve_item(IrradiationLevelTable,
+    #                                value=(name, level),
+    #                                key=('IrradBaseID', 'Level'))
 
     def get_sample(self, value):
         return self._retrieve_item(SampleTable, value, key='Sample')

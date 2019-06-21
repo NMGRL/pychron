@@ -46,6 +46,9 @@ class ErrorComponentsView(HasTraits):
         super(ErrorComponentsView, self).__init__(*args, **kw)
         self._load(an)
 
+    def load(self, an):
+        self._load(an)
+
     def _load(self, an):
 
         keys = [k for k in an.arar_mapping.values() if k in an.isotopes]

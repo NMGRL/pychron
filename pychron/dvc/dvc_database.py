@@ -1794,7 +1794,8 @@ class DVCDatabase(DatabaseAdapter):
 
         return names
 
-    def get_irradiations(self, names=None, project_names=None, order_func='desc', mass_spectrometers=None, **kw):
+    def get_irradiations(self, names=None, project_names=None, order_func='desc', mass_spectrometers=None,
+                         exclude_name=None, **kw):
 
         if names is not None:
             if hasattr(names, '__call__'):
@@ -1813,6 +1814,9 @@ class DVCDatabase(DatabaseAdapter):
         if mass_spectrometers:
             kw = self._append_filters(AnalysisTbl.mass_spectrometer.name.in_(mass_spectrometers), kw)
             kw = self._append_joins((LevelTbl, IrradiationPositionTbl, AnalysisTbl), kw)
+
+        if exclude_name:
+            kw = self._append_filters(IrradiationTbl.name.notlike(exclude_name), kw)
 
         order = None
         if order_func:

@@ -49,7 +49,7 @@ from pychron.pipeline.pipeline_defaults import ISOEVO, BLANKS, ICFACTOR, IDEO, S
     REGRESSION_SERIES, VERTICAL_FLUX, \
     CSV_ANALYSES_EXPORT, BULK_EDIT, HISTORY_IDEOGRAM, HISTORY_SPECTRUM, AUDIT, SUBGROUP_IDEOGRAM, HYBRID_IDEOGRAM, \
     MASSSPEC_REDUCED, DEFINE_EQUILIBRATION, CA_CORRECTION_FACTORS, K_CORRECTION_FACTORS, \
-    FLUX_VISUALIZATION, CSV_RAW_DATA_EXPORT, COMPOSITE, SIMPLE_ANALYSIS_TABLE
+    FLUX_VISUALIZATION, CSV_RAW_DATA_EXPORT, COMPOSITE, SIMPLE_ANALYSIS_TABLE, MASS_SPEC_FLUX
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
 from pychron.pipeline.plot.editors.spectrum_editor import SpectrumEditor
@@ -855,7 +855,8 @@ class PipelineEngine(Loggable):
                                 ('Spectrum', HISTORY_SPECTRUM))),
                    ('Share', (('CSV Analyses Export', CSV_ANALYSES_EXPORT),
                               ('CSV Raw Data Export', CSV_RAW_DATA_EXPORT))),
-                   ('Transfer', (('Mass Spec Reduced', MASSSPEC_REDUCED),))]
+                   ('Transfer', (('Mass Spec Reduced', MASSSPEC_REDUCED),
+                                 ('Mass Spec Flux', MASS_SPEC_FLUX)))]
 
         # predefined_templates contributed to by other plugins
         for name, gs in groupby_key(default + self.predefined_templates, key=itemgetter(0)):

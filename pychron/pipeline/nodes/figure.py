@@ -161,9 +161,15 @@ class VerticalFluxNode(FigureNode):
     plotter_options_manager_klass = VerticalFluxOptionsManager
 
     def run(self, state):
-        editor = super(VerticalFluxNode, self).run(state)
+        editor = self._editor_factory()
+        state.editors.append(editor)
+
+        editor.items = state.levels
         editor.irradiation = state.irradiation
-        editor.levels = state.levels
+        editor.set_items(state.levels)
+        editor.name = 'VerticalFlux {}'.format(state.irradiation)
+        self.editor = editor
+
 
 
 class FluxVisualizationNode(FigureNode):

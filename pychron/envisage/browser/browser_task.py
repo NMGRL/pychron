@@ -99,13 +99,13 @@ class BaseBrowserTask(BaseEditorTask):
             self.warning_dialog('Active tab must be a Recall tab')
             return
 
-        if hasattr(editor, 'edit_view') and editor.edit_view:
+        if hasattr(editor, 'edit_view') and editor.edit_view and editor.edit_view.control:
             editor.edit_view.show()
         else:
 
             e = AnalysisEditView(editor, dvc=self.dvc)
-
             info = open_view(e)
+            # info = e.edit_traits()
             e.control = info.control
             editor.edit_view = e
 

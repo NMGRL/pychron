@@ -15,16 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 
 from traits.api import HasTraits, List, on_trait_change, Bool, Event, Float, Str, Instance
-from traitsui.api import UItem, TableEditor, HGroup, spring, Handler, VGroup, Group, Label
+from traitsui.api import UItem, TableEditor, HGroup, spring, Handler, VGroup, Group, Label, View
 from traitsui.table_column import ObjectColumn
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from uncertainties import std_dev, nominal_value, ufloat
 
-from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.pychron_constants import PLUSMINUS
 
@@ -403,12 +401,13 @@ class AnalysisEditView(HasTraits):
                           label='Flux (J)',
                           defined_when='object.flux',
                           show_border=True)
-        v = okcancel_view(VGroup(Group(iso_grp, baseline_grp,
+        v = View(VGroup(Group(iso_grp, baseline_grp,
                                        icgrp,
                                        layout='tabbed'),
                                  blank_grp,
                                  flux_grp,
                                  bgrp),
+                 buttons=['OK', 'Cancel'],
                           handler=AnalysisEditViewHandler(),
                           title=self.title,
                           x=0.05,

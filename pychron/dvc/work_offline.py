@@ -35,7 +35,7 @@ from pychron.paths import paths
 
 
 def database_path():
-    return os.path.join(paths.dvc_dir, 'index.sqlite3')
+    return os.path.join(paths.offline_db_dir, 'index.sqlite3')
 
 
 def switch_to_offline_database(preferences):

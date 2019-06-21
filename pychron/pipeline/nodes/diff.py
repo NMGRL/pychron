@@ -15,19 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from traits.api import Any
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.editors.diff_editor import DiffEditor
+from pychron.pipeline.nodes.mass_spec import BaseMassSpecNode
 
 
-class DiffNode(BaseNode):
+class DiffNode(BaseMassSpecNode):
     name = 'Diff'
 
+    configurable = False
     auto_configure = False
-    recaller = Any
 
     def run(self, state):
         if state.unknowns:

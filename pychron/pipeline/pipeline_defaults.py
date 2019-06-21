@@ -322,4 +322,11 @@ nodes:
   - klass: MassSpecReducedNode
 """
 
+MASS_SPEC_FLUX = """
+required:
+nodes:
+  - klass: TransferFluxMonitorMeansNode
+  - klass: MassSpecFluxNode
+"""
+
 # ============= EOF =============================================

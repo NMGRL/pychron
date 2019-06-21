@@ -33,14 +33,14 @@ from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, SeriesNode
     CompositeNode
 from pychron.pipeline.nodes.filter import FilterNode, MSWDFilterNode
 from pychron.pipeline.nodes.find import FindReferencesNode, FindFluxMonitorsNode, FindVerticalFluxNode, \
-    FindBlanksNode, FindRepositoryAnalysesNode, FindFluxMonitorMeansNode
+    FindBlanksNode, FindRepositoryAnalysesNode, FindFluxMonitorMeansNode, TransferFluxMonitorMeansNode
 from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode, \
     FitFluxNode, DefineEquilibrationNode
 from pychron.pipeline.nodes.gain import GainCalibrationNode
 from pychron.pipeline.nodes.group_age import GroupAgeNode
 from pychron.pipeline.nodes.grouping import GroupingNode, GraphGroupingNode, SubGroupingNode
 from pychron.pipeline.nodes.ia import SetInterpretedAgeNode
-from pychron.pipeline.nodes.mass_spec_reduced import MassSpecReducedNode
+from pychron.pipeline.nodes.mass_spec_reduced import MassSpecReducedNode, MassSpecFluxNode
 from pychron.pipeline.nodes.ml import MLDataNode, MLRegressionNode
 from pychron.pipeline.nodes.persist import DVCPersistNode, PDFFigureNode, \
     BlanksPersistNode, IsotopeEvolutionPersistNode, ICFactorPersistNode, FluxPersistNode, \

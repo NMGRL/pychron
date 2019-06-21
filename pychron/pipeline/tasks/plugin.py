@@ -118,15 +118,16 @@ class PipelinePlugin(BaseTaskPlugin):
                         ('recall', recall_group, 'MenuBar/data.menu')):
 
             for eid, actions in exts:
-                added = False
+                # added = False
                 for ai in actions:
                     if ai.id.startswith('pychron.pipeline.{}'.format(s)):
+                        print('adding', ai.id, f, p)
                         additions.append(SchemaAddition(factory=f, path=p))
-                        added = True
+                        # added = True
                         break
 
-                if added:
-                    break
+                # if added:
+                #     break
 
         extensions.append(TaskExtension(actions=additions))
         return extensions
@@ -169,6 +170,7 @@ class PipelinePlugin(BaseTaskPlugin):
                                                path=pg))
 
         recall_actions = [SchemaAddition(factory=ConfigureRecallAction,
+                                         id='pychron.pipeline.recall.configure',
                                          path='MenuBar/edit.menu')]
 
         for f, t in ((RecallAction, 'recall'),
@@ -186,7 +188,7 @@ class PipelinePlugin(BaseTaskPlugin):
                                  path='MenuBar/help.menu')]),
                 ('{}.plot'.format(self.id), '', 'Plot', plot_actions),
                 ('{}.fit'.format(self.id), '', 'Fit', fit_actions),
-                ('{}.recall'.format(self.id), 'pychron.pipeline.task', 'Recall', recall_actions),
+                ('{}.recall'.format(self.id), '', 'Recall', recall_actions),
                 ]
 
     def _tasks_default(self):

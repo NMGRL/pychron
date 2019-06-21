@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2013 Jake Ross
+# Copyright 2019 ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,25 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from traits.api import Instance
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
-
-from traits.api import Str, List
-
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-from pychron.pipeline.plot.panels.figure_panel import FigurePanel
-from pychron.pipeline.plot.plotter.vertical_flux import VerticalFlux
+from pychron.mass_spec.mass_spec_recaller import MassSpecRecaller
+from pychron.pipeline.nodes.data import BaseDVCNode
 
 
-class VerticalFluxPanel(FigurePanel):
-    _figure_klass = VerticalFlux
-    irradiation = Str
-    items = List
-
-    def _make_figures(self):
-        return [self._figure_klass(irradiation=self.irradiation,
-                                   items=self.items)]
-
+class BaseMassSpecNode(BaseDVCNode):
+    recaller = Instance(MassSpecRecaller)
 # ============= EOF =============================================
