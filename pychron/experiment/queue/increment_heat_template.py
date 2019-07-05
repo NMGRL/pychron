@@ -387,9 +387,9 @@ class LaserIncrementalHeatTemplate(BaseIncrementalHeatTemplate):
 if __name__ == '__main__':
     paths.build('_dev')
     im = LaserIncrementalHeatTemplate()
-    im.load(os.path.join(paths.incremental_heat_template_dir,
-                         'a.txt'
-                         ))
+    # im.load(os.path.join(paths.incremental_heat_template_dir,
+    #                      'a.txt'
+    #                      ))
 
     #    for i in range(10):
     #        im.steps.append(IncrementalHeatStep(step_id=i + 1))
