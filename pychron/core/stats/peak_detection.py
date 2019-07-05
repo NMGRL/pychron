@@ -300,8 +300,8 @@ def fast_find_peaks(ys, xs, **kw):
 
         return peaks_x, ys[idx]
     except IndexError:
-        from pyface.message_dialog import warning
-        warning(None, 'There was an issue finding the peaks')
+        # from pyface.message_dialog import warning
+        # warning(None, 'There was an issue finding the peaks')
         return [], []
 
 

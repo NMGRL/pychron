@@ -271,7 +271,12 @@ class AnalysisGroup(IdeogramPlotable):
     def _get_age_span(self):
         ans = self.clean_analyses()
         ages = [nominal_value(a.age) for a in ans]
-        return max(ages) - min(ages)
+
+        ret = 0
+        if ages:
+            ret = max(ages) - min(ages)
+
+        return ret
 
     @cached_property
     def _get_j_err(self):
