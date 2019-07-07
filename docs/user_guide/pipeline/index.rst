@@ -14,3 +14,4 @@ The Pipeline (aka Pipeline task) is your go to location for reducing your and pr
   fit/index
   plot/index
   tagging
+  sharing
