@@ -48,7 +48,7 @@ class FigurePanel(HasTraits):
         self.figures = self._make_figures()
 
     def _figure_factory(self, *args, **kw):
-        return self._figure_klass(*args, **kw)
+        return self._figure_klass(options=self.plot_options, *args, **kw)
 
     def _make_figures(self, **kw):
         gs = [self._figure_factory(analyses=list(ais), group_id=gid, **kw)
@@ -107,7 +107,7 @@ class FigurePanel(HasTraits):
                 fig.trait_set(xma=ma, xmi=mi,
                               ymas=ymas, ymis=ymis,
                               center=center,
-                              options=po,
+                              # options=po,
                               graph=g,
                               title=self.title,
                               **update_dict)

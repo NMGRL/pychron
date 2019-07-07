@@ -118,16 +118,10 @@ class PipelinePlugin(BaseTaskPlugin):
                         ('recall', recall_group, 'MenuBar/data.menu')):
 
             for eid, actions in exts:
-                # added = False
                 for ai in actions:
                     if ai.id.startswith('pychron.pipeline.{}'.format(s)):
-                        print('adding', ai.id, f, p)
                         additions.append(SchemaAddition(factory=f, path=p))
-                        # added = True
                         break
-
-                # if added:
-                #     break
 
         extensions.append(TaskExtension(actions=additions))
         return extensions

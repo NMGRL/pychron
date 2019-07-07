@@ -15,9 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
-from six.moves import zip
 from traits.api import HasTraits, List, Property, Any, Instance
 
 # from pychron.pipeline.plot.layout import FigureLayout
@@ -82,8 +79,8 @@ class FigureModel(HasTraits):
                   enumerate(self.analysis_groups)]
         else:
             gs = [self._panel_factory(analyses=list(ais),
-                                    plot_options=self.plot_options,
-                                    graph_id=gid)
+                                      plot_options=self.plot_options,
+                                      graph_id=gid)
                   for gid, ais in groupby_key(self.analyses, 'graph_id')]
             # if hasattr(self, 'references'):
             gg = groupby_key(self.references, 'graph_id')
