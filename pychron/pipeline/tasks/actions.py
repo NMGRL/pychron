@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-
-
 import os
 
 from pyface.confirmation_dialog import confirm
@@ -26,6 +24,7 @@ from pyface.tasks.action.task_action import TaskAction
 from traitsui.menu import Action
 
 from pychron.envisage.resources import icon
+from pychron.envisage.ui_actions import UIAction, UITaskAction
 
 
 class SavePipelineTemplateAction(TaskAction):
@@ -72,9 +71,8 @@ class SwitchToBrowserAction(TaskAction):
     image = icon('start')
 
 
-class ConfigureRecallAction(TaskAction):
+class ConfigureRecallAction(UITaskAction):
     name = 'Recall Configuration...'
-    dname = 'Recall Configuration...'
     method = 'configure_recall'
     image = icon('cog')
 
@@ -118,7 +116,7 @@ class TabularViewAction(TaskAction):
     image = icon('table')
 
 
-class PipelineAction(Action):
+class PipelineAction(UIAction):
     def perform(self, event):
         app = event.task.window.application
         task = app.get_task('pychron.pipeline.task')
@@ -161,43 +159,36 @@ class ReductionAction(PipelineAction):
 
 class IsoEvolutionAction(PipelineAction):
     name = 'Isotope Evolutions'
-    dname = 'Isotope Evolutions'
     action = 'set_isotope_evolutions_template'
 
 
 class BlanksAction(PipelineAction):
     name = 'Blanks'
-    dname = 'Blanks'
     action = 'set_blanks_template'
 
 
 class ICFactorAction(PipelineAction):
     name = 'ICFactor'
-    dname = 'ICFactor'
     action = 'set_icfactor_template'
 
 
 class FluxAction(PipelineAction):
     name = 'Flux'
-    dname = 'Flux'
     action = 'set_flux_template'
 
 
 class FreezeProductionRatios(PipelineAction):
     name = 'Freeze Production Ratios'
-    dname = 'Freeze Production Ratios'
     action = 'freeze_production_ratios'
 
 
 class FreezeFlux(PipelineAction):
     name = 'Freeze Flux'
-    dname = 'Freeze Flux'
     action = 'freeze_flux'
 
 
 class AnalysisTableAction(PipelineAction):
     name = 'Analysis Table'
-    dname = 'Analysis Table'
     action = 'set_analysis_table_template'
 
 
@@ -206,7 +197,7 @@ class PipelineRecallAction(TaskAction):
     method = 'pipeline_recall'
 
 
-class ClearAnalysisSetsAction(Action):
+class ClearAnalysisSetsAction(UIAction):
     name = 'Clear Analysis Sets'
 
     def perform(self, event):
@@ -220,7 +211,7 @@ class ClearAnalysisSetsAction(Action):
 
 
 # ============= Plotting Actions =============================================
-class ResetFactoryDefaultsAction(Action):
+class ResetFactoryDefaultsAction(UIAction):
     name = 'Reset Factory Defaults'
 
     def perform(self, event):
@@ -278,7 +269,6 @@ class InverseIsochronAction(PlotAction):
 
 class SeriesAction(PlotAction):
     name = 'Series'
-    dname = 'Series'
     action = 'set_series_template'
     id = 'pychron.series'
 
@@ -288,7 +278,7 @@ class VerticalFluxAction(PipelineAction):
     action = 'set_vertical_flux_template'
 
 
-class ExtractionAction(Action):
+class ExtractionAction(UIAction):
     name = 'Extraction Results...'
 
     def perform(self, event):
@@ -304,7 +294,6 @@ class ExtractionAction(Action):
 
 class MassSpecReducedAction(PipelineAction):
     name = 'Mass Spec Reduced Transfer'
-    dname = 'Mass Spec Reduced Transfer'
     action = 'mass_spec_reduced_transfer'
 
 

@@ -25,13 +25,13 @@ from traits.api import Str, Int, Bool, Float, Property, \
 from pychron.core.helpers.filetools import remove_extension
 from pychron.core.helpers.logger_setup import new_logger
 from pychron.core.helpers.strtools import csv_to_ints, to_csv_str
+from pychron.core.utils import alphas, alpha_to_int
 from pychron.experiment.automated_run.result import AutomatedRunResult, AirResult, UnknownResult, BlankResult
 from pychron.experiment.utilities.identifier import get_analysis_type, make_rid, make_runid, is_special, \
     convert_extract_device
 from pychron.experiment.utilities.position_regex import XY_REGEX
 from pychron.experiment.utilities.repository_identifier import make_references_repository_identifier
 from pychron.pychron_constants import SCRIPT_KEYS, SCRIPT_NAMES, DETECTOR_IC
-from pychron.utils import alphas, alpha_to_int
 
 logger = new_logger('AutomatedRunSpec')
 
@@ -96,6 +96,7 @@ class AutomatedRunSpec(HasTraits):
     extract_units = Str
     position = Str
     xyz_position = Str
+    light_value = None
 
     duration = Float
     cleanup = Float
@@ -302,6 +303,7 @@ class AutomatedRunSpec(HasTraits):
                    analysis_type=an,
                    ramp_rate=self.ramp_rate,
                    pattern=self.pattern,
+                   light_value=self.light_value,
                    beam_diameter=self.beam_diameter,
                    ramp_duration=self.ramp_duration)
         return ctx
@@ -365,9 +367,11 @@ class AutomatedRunSpec(HasTraits):
             setattr(self, k, v)
 
         for k, v in params.items():
-            # print 'load', hasattr(self, k), k, v
             if hasattr(self, k):
                 setattr(self, k, v)
+
+        if self.light_value is None:
+            self.light_value = params.get('default_lighting', 0)
 
         self._changed = False
 

@@ -26,8 +26,8 @@ from traits.api import Array, List, Event, Property, Any, \
 from pychron.core.regression.tinv import tinv
 from pychron.core.stats.core import calculate_mswd, validate_mswd
 from pychron.core.stats.monte_carlo import RegressionEstimator
+from pychron.core.utils import alphas
 from pychron.pychron_constants import PLUSMINUS
-from pychron.utils import alphas
 
 logger = logging.getLogger('BaseRegressor')
 
@@ -314,7 +314,7 @@ class BaseRegressor(HasTraits):
         ce = self.coefficient_errors[::-1]
 
         coeffs = []
-        for i, ci, ei in enumerate(cs, ce):
+        for i, (ci, ei) in enumerate(zip(cs, ce)):
             pp = '({})'.format(self.format_percent_error(ci, ei))
             fmt = '{{:0.{}e}}' if abs(ci) < math.pow(10, -sig_figs) else '{{:0.{}f}}'
             ci = fmt.format(sig_figs).format(ci)

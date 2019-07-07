@@ -69,10 +69,11 @@ ERROR_TYPES = [MSEM, SEM, SD]
 SIG_FIGS = range(0, 15)
 
 WEIGHTED_MEAN = 'Weighted Mean'
+PLATEAU = 'Plateau'
 INTEGRATED = 'Total Integrated'
-DEFAULT_INTEGRATED = 'Plateau else Valid Integrated'
+DEFAULT_INTEGRATED = '{} else Valid Integrated'.format(PLATEAU)
 VALID_INTEGRATED = 'Valid Integrated'
-PLATEAU_INTEGRATED = 'Plateau Integrated'
+PLATEAU_INTEGRATED = '{} Integrated'.format(PLATEAU)
 
 FIT_TYPES = ['Linear', 'Parabolic', 'Cubic',
              'Average', 'Exponential', WEIGHTED_MEAN]
@@ -86,10 +87,12 @@ FIT_TYPES_INTERPOLATE = FIT_TYPES + INTERPOLATE_TYPES
 
 ARITHMETIC_MEAN = 'Arithmetic Mean'
 PLATEAU_ELSE_WEIGHTED_MEAN = 'Plateau else Weighted Mean'
+ISOCHRON = 'Isochron'
+ISOCHRON_PLATEAU = '{} of {} Steps'.format(ISOCHRON, PLATEAU)
 
 AGE_SUBGROUPINGS = (PLATEAU_ELSE_WEIGHTED_MEAN, WEIGHTED_MEAN,
                     INTEGRATED, VALID_INTEGRATED, PLATEAU_INTEGRATED, DEFAULT_INTEGRATED,
-                    ARITHMETIC_MEAN, 'Plateau', 'Isochron')
+                    ARITHMETIC_MEAN, PLATEAU, ISOCHRON, ISOCHRON_PLATEAU)
 SUBGROUPINGS = [WEIGHTED_MEAN,
                 INTEGRATED, VALID_INTEGRATED, PLATEAU_INTEGRATED, DEFAULT_INTEGRATED,
                 ARITHMETIC_MEAN]
@@ -237,7 +240,7 @@ ELLIPSE_KIND_SCALE_FACTORS = dict(zip(ELLIPSE_KINDS, (1, 2, 2.4477)))
 
 DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
 
-DEFAULT_PIPELINE_ROOTS = ('Fit', 'Plot', 'Table', 'History', 'Share', 'Transfer', 'MDD', 'User')
+DEFAULT_PIPELINE_ROOTS = ('Fit', 'Edit', 'Plot', 'Table', 'History', 'Share', 'Transfer', 'MDD', 'User')
 
 # SAMPLE PREP ===================================================
 INITIAL_STEPS = ('crush', 'sieve', 'wash')
@@ -270,6 +273,7 @@ EXTRACTION_ATTRS = ('weight', 'extract_device', 'tray',
                     'load_holder',
                     'extract_duration',
                     'cleanup_duration',
+                    'light_value',
                     'pattern', 'beam_diameter', 'ramp_duration', 'ramp_rate')
 
 META_ATTRS = ('analysis_type', 'uuid', 'identifier', 'aliquot', 'increment',

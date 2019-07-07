@@ -15,23 +15,61 @@
 # ===============================================================================
 import os
 
-from traits.api import Instance, Str, Bool
+from traits.api import Str, Bool
 from traitsui.api import UItem, Item, VGroup
 
 from pychron.core.helpers.iterfuncs import groupby_repo, groupby_key
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.progress import progress_loader
 from pychron.dvc import dvc_dump, dvc_load, MASS_SPEC_REDUCED
-from pychron.dvc.dvc import DVC
-from pychron.mass_spec.mass_spec_recaller import MassSpecRecaller
 from pychron.paths import paths
-from pychron.pipeline.nodes.base import BaseNode
+from pychron.pipeline.nodes.mass_spec import BaseMassSpecNode
 
 
-class MassSpecReducedNode(BaseNode):
+class MassSpecFluxNode(BaseMassSpecNode):
+    name = 'Mass Spec Flux'
+    configurable = False
+
+    def run(self, state):
+        recaller = self.recaller
+        if recaller.connect():
+            dvc = self.dvc
+
+            dvc.meta_pull(accept_our=True)
+
+            meta_repo = dvc.meta_repo
+            irradiation = state.irradiation
+
+            # create dummy irradiation
+            new_irradiation = '{}_MST'.format(irradiation)
+            dvc.add_irradiation(new_irradiation)
+
+            dvc.add_production_to_irradiation(new_irradiation, 'PlaceHolder', {})
+
+            with recaller.db.session_ctx():
+                for level in state.levels:
+                    dblevel = recaller.db.get_irradiation_level(irradiation, level)
+                    dvc.add_irradiation_level(level, new_irradiation, dblevel.SampleHolder, 'PlaceHolder')
+                for level in state.levels:
+                    positions = []
+                    for ip in recaller.db.get_irradiation_positions(irradiation, level):
+                        positions.append({'identifier': str(ip.IrradPosition),
+                                          'position': ip.HoleNumber,
+                                          'sample': ip.sample.Sample,
+                                          'j': ip.J,
+                                          'mean_j': ip.J,
+                                          'mean_j_err': ip.JEr,
+                                          'j_err': ip.JEr})
+
+                    # todo: need to add the positions to IrradiationPositionTbl also
+                    meta_repo.new_flux_positions(new_irradiation, level, positions)
+
+                dvc.meta_commit('<MASS_SPEC_FLUX_TRANSFER> '
+                                'transferred mass spec fluxes for {}, {}'.format(irradiation, ','.join(state.levels)))
+
+
+class MassSpecReducedNode(BaseMassSpecNode):
     name = 'Mass Spec Reduced'
-    recaller = Instance(MassSpecRecaller)
-    dvc = Instance(DVC)
 
     message = Str
     share_changes = Bool
@@ -40,8 +78,8 @@ class MassSpecReducedNode(BaseNode):
 
     def traits_view(self):
         v = okcancel_view(VGroup(VGroup(UItem('message', style='custom'), label='Message', show_border=True),
-                        Item('share_changes', label='Share Changes')),
-                 title='Configure Mass Spec Reduced')
+                                 Item('share_changes', label='Share Changes')),
+                          title='Configure Mass Spec Reduced')
         return v
 
     def run(self, state):
@@ -49,7 +87,6 @@ class MassSpecReducedNode(BaseNode):
 
             self.dvc.create_session()
             for repo, unks in groupby_repo(state.unknowns):
-
                 self.dvc.pull_repository(repo)
                 self._paths = []
 
@@ -167,4 +204,5 @@ class MassSpecReducedNode(BaseNode):
                 dvc.push_repository(repo)
 
         dvc.commit()
+
 # ============= EOF =============================================

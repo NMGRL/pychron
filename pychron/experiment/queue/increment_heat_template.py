@@ -29,10 +29,10 @@ from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.helpers.strtools import to_csv_str
 from pychron.core.ui.enum_editor import myEnumEditor
 from pychron.core.ui.tabular_editor import myTabularEditor
+from pychron.core.utils import alphas
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.experiment.utilities.save_dialog import IncrementalHeatTemplateSaveDialog
 from pychron.paths import paths
-from pychron.utils import alphas
 from pychron.viewable import Viewable
 
 
@@ -387,9 +387,9 @@ class LaserIncrementalHeatTemplate(BaseIncrementalHeatTemplate):
 if __name__ == '__main__':
     paths.build('_dev')
     im = LaserIncrementalHeatTemplate()
-    im.load(os.path.join(paths.incremental_heat_template_dir,
-                         'a.txt'
-                         ))
+    # im.load(os.path.join(paths.incremental_heat_template_dir,
+    #                      'a.txt'
+    #                      ))
 
     #    for i in range(10):
     #        im.steps.append(IncrementalHeatStep(step_id=i + 1))

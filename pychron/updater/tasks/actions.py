@@ -17,15 +17,12 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from __future__ import absolute_import
-from traitsui.menu import Action
-
 from pychron.envisage.resources import icon
+from pychron.envisage.ui_actions import UIAction
 
 
-class BuildApplicationAction(Action):
+class BuildApplicationAction(UIAction):
     name = 'Build'
-    dname = 'Build'
     image = icon('bricks')
 
     def perform(self, event):
@@ -34,12 +31,11 @@ class BuildApplicationAction(Action):
         up.build()
 
 
-class CheckForUpdatesAction(Action):
+class CheckForUpdatesAction(UIAction):
     name = 'Check For Updates'
     image = icon('update-product')
 
-    dname = 'Check For Updates'
-    ddescription = 'Check for updates to Pychron by examining the public Github.'
+    description = 'Check for updates to Pychron by examining the public Github.'
 
     def perform(self, event):
         app = event.task.window.application
@@ -47,9 +43,8 @@ class CheckForUpdatesAction(Action):
         up.check_for_updates(inform=True)
 
 
-class ManageVersionAction(Action):
+class ManageVersionAction(UIAction):
     name = 'Manage Version'
-    dname = 'Manage Version'
     image = icon('update-product')
     accelerator = 'Ctrl+;'
 
@@ -59,9 +54,8 @@ class ManageVersionAction(Action):
         up.manage_version()
 
 
-class ManageBranchAction(Action):
+class ManageBranchAction(UIAction):
     name = 'Manage Branch'
-    dname = 'Manage Branch'
     image = icon('update-product')
     accelerator = 'Ctrl+.'
 

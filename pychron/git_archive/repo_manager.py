@@ -151,6 +151,9 @@ class GitRepoManager(Loggable):
         self._repo.git.reset('--hard', hexsha)
         self._repo.git.push(remote, branch, '--force')
 
+    def add_paths_explicit(self, apaths):
+        self.index.add(apaths)
+
     def add_paths(self, apaths):
         if not isinstance(apaths, (list, tuple)):
             apaths = (apaths,)

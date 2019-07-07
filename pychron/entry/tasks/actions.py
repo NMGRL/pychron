@@ -17,8 +17,6 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from __future__ import absolute_import
-
 import os
 
 from pyface.constant import OK
@@ -32,7 +30,6 @@ from pychron.pychron_constants import DVC_PROTOCOL
 
 class AddMolecularWeightAction(Action):
     name = 'Add/Edit Molecular Weight'
-    dname = 'Add/Edit Molecular Weight'
 
     def perform(self, event):
         app = event.task.window.application
@@ -42,7 +39,6 @@ class AddMolecularWeightAction(Action):
 
 class AddFluxMonitorAction(Action):
     name = 'Add/Edit Flux Monitors'
-    dname = 'Add/Edit Flux Monitors'
 
     def perform(self, event):
         app = event.task.window.application
@@ -52,7 +48,6 @@ class AddFluxMonitorAction(Action):
 
 class SensitivityEntryAction(Action):
     name = 'Sensitivity'
-    dname = 'Sensitivity'
     # accelerator = 'Ctrl+Shift+\\'
     id = 'pychron.sensitivity'
 
@@ -64,21 +59,18 @@ class SensitivityEntryAction(Action):
 
 class SaveSensitivityAction(TaskAction):
     name = 'Save'
-    dname = 'Save'
     image = icon('database_save')
     method = 'save'
 
 
 class AddSensitivityAction(TaskAction):
     name = 'Add'
-    dname = 'Add'
     image = icon('database_add')
     method = 'add'
 
 
 class DatabaseSaveAction(TaskAction):
     name = 'Database Save'
-    dname = 'Database Save'
     description = 'Save current changes to the database'
     method = 'save_to_db'
     image = icon('database_save')
@@ -97,7 +89,6 @@ class RecoverAction(TaskAction):
 
 class SavePDFAction(TaskAction):
     name = 'Save PDF'
-    dname = 'Save PDF'
     image = icon('file_pdf')
 
     method = 'save_pdf'
@@ -105,7 +96,6 @@ class SavePDFAction(TaskAction):
 
 class MakeIrradiationBookPDFAction(TaskAction):
     name = 'Make Irradiation Book'
-    dname = 'Make Irradiation Book'
     image = icon('file_pdf')
 
     method = 'make_irradiation_book_pdf'
@@ -113,18 +103,16 @@ class MakeIrradiationBookPDFAction(TaskAction):
 
 class GenerateIdentifiersAction(TaskAction):
     name = 'Generate Identifiers'
-    # dname = 'Generate Labnumbers'
     image = icon('table_lightning')
 
     method = 'generate_identifiers'
 
-    ddescription = 'Automatically generate labnumbers (aka identifiers) for each irradiation position in the ' \
-                   'currently selected irradiation.'
+    description = 'Automatically generate labnumbers (aka identifiers) for each irradiation position in the ' \
+                  'currently selected irradiation.'
 
 
 class PreviewGenerateIdentifiersAction(TaskAction):
     name = 'Preview Generate Identifiers'
-    # dname = 'Preview Generate Labnumbers'
     image = icon('table_lightning')
 
     method = 'preview_generate_identifiers'
@@ -132,9 +120,6 @@ class PreviewGenerateIdentifiersAction(TaskAction):
 
 class ImportIrradiationAction(TaskAction):
     name = 'Import Irradiation...'
-    dname = 'Import Irradiation'
-
-    # method = 'import_irradiation'
 
     def perform(self, event):
         app = event.task.window.application
@@ -154,9 +139,6 @@ class ImportIrradiationAction(TaskAction):
 
 class ImportAnalysesAction(Action):
     name = 'Import Analyses...'
-    dname = 'Import Analyses'
-
-    # method = 'import_analyses'
 
     def perform(self, event):
         app = event.task.window.application
@@ -176,29 +158,26 @@ class ImportAnalysesAction(Action):
 
 class GenerateTrayAction(TaskAction):
     name = 'Generate Tray'
-    dname = 'Generate Tray'
     image = icon('table_lightning')
 
     method = 'generate_tray'
-    ddescription = 'Make a irradiation tray image from an irradiation tray text file.'
+    description = 'Make a irradiation tray image from an irradiation tray text file.'
 
 
 class ImportIrradiationFileAction(TaskAction):
     name = 'Import Irradiation File'
-    dname = 'Import Irradiation File'
     image = icon('file_xls')
 
     method = 'import_irradiation_load_xls'
-    ddescription = 'Import irradiation information from an Excel file. Use "Irradiation Template" ' \
-                   'to generate a boilerplate irradiation template'
+    description = 'Import irradiation information from an Excel file. Use "Irradiation Template" ' \
+                  'to generate a boilerplate irradiation template'
 
 
 class MakeIrradiationTemplateAction(Action):
     name = 'Irradiation Template'
-    dname = 'Irradiation Template'
     image = icon('file_xls')
 
-    ddescription = 'Make an Excel irradiation template that can be used to import irradiation information.'
+    description = 'Make an Excel irradiation template that can be used to import irradiation information.'
 
     def perform(self, event):
         from pyface.file_dialog import FileDialog
@@ -227,25 +206,21 @@ class MakeIrradiationTemplateAction(Action):
 
 class ImportSamplesAction(TaskAction):
     name = 'Import Sample File'
-    dname = 'Import Sample File'
     method = 'import_sample_from_file'
 
 
 class ImportSampleMetadataAction(TaskAction):
     name = 'Import Sample Metadata...'
-    dname = 'Import Sample Metadata'
     method = 'import_sample_metadata'
 
 
 class ExportIrradiationAction(TaskAction):
     name = 'Export Irradiation...'
-    dname = 'Export Irradiation'
     method = 'export_irradiation'
 
 
 class GenerateIrradiationTableAction(TaskAction):
     name = 'Generate Irradiation Table'
-    dname = 'Generate Irradiation Table'
     accelerator = 'Ctrl+0'
 
     # ddescription = 'Do not use!'
@@ -270,7 +245,6 @@ class GenerateIrradiationTableAction(TaskAction):
 
 class ImportIrradiationGeometryAction(Action):
     name = 'Import Irradiation Geometry'
-    dname = 'Import Irradiation Geometry'
 
     def perform(self, event):
         dvc = event.task.application.get_service(DVC_PROTOCOL)
@@ -283,7 +257,6 @@ class ImportIrradiationGeometryAction(Action):
 
 class EditIrradiationGeometryAction(Action):
     name = 'Edit Irradiation Geometry'
-    dname = 'Edit Irradiation Geometry'
 
     def perform(self, event):
         dvc = event.task.application.get_service(DVC_PROTOCOL)
@@ -294,19 +267,16 @@ class EditIrradiationGeometryAction(Action):
 
 class TransferJAction(TaskAction):
     name = 'Transfer J Data...'
-    dname = 'Transfer J Data'
     method = 'transfer_j'
 
 
 class GetIGSNAction(TaskAction):
     name = 'Get IGSNs'
-    dname = 'Get IGSNs'
     method = 'get_igsns'
 
 
 class GenerateStatusReportAction(TaskAction):
     name = 'Status Report...'
-    dname = 'Status Report...'
     method = 'generate_status_report'
 
 

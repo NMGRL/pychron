@@ -30,7 +30,8 @@ class ChromiumStageManager(StageManager):
             v = config.get('Signs', a)
             setattr(self, '{}_sign'.format(a), int(v))
 
-        self.set_attribute(config, 'use_sign_position_correction', 'Signs', 'use_sign_position_correction')
+        self.set_attribute(config, 'use_sign_position_correction', 'Signs', 'use_sign_position_correction',
+                           cast='boolean')
 
         return super(ChromiumStageManager, self).load()
 

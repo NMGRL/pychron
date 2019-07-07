@@ -221,7 +221,6 @@ class EditExtensionsView(HasTraits):
         self._dump()
 
     def add_additions(self, tid, task_id, name, a):
-        print(tid, task_id)
         adds = []
         for ai in a:
             d = ''
@@ -279,7 +278,6 @@ class EditExtensionsView(HasTraits):
         self.update()
 
     def _selected_changed(self, new):
-        print(new)
         try:
             self.description = new.description
         except AttributeError:

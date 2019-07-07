@@ -148,6 +148,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     overlap = EKlass(String)
     duration = EKlass(Float)
     cleanup = EKlass(Float)
+    light_value = EKlass(Float)
     beam_diameter = Property(EKlass(String), depends_on='_beam_diameter')
     _beam_diameter = String
 
@@ -238,7 +239,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     persistence_name = 'run_factory'
     pattributes = ('collection_time_zero_offset',
                    'selected_irradiation', 'selected_level',
-                   'extract_value', 'extract_units', 'cleanup',
+                   'extract_value', 'extract_units', 'cleanup', 'light_value',
                    'duration', 'beam_diameter', 'ramp_duration', 'overlap',
                    'pattern', 'labnumber', 'position',
                    'weight', 'comment', 'template',
@@ -491,7 +492,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
     def _get_run_attr(self):
         return ['position',
-                'extract_value', 'extract_units', 'cleanup', 'duration',
+                'extract_value', 'extract_units', 'cleanup', 'duration', 'light_value',
                 'use_cdd_warming',
                 'conditionals_str',
                 'collection_time_zero_offset',
@@ -555,7 +556,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             excludes.append('comment')
 
         for attr in ('labnumber',
-                     'extract_value', 'extract_units', 'cleanup', 'duration',
+                     'extract_value', 'extract_units', 'cleanup', 'duration', 'light_value',
                      'pattern', 'beam_diameter',
                      'position',
                      'collection_time_zero_offset',
@@ -725,7 +726,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     def _load_defaults(self, ln, attrs=None, overwrite=True):
         if attrs is None:
             attrs = ('extract_value', 'extract_units',
-                     'cleanup', 'duration', 'beam_diameter')
+                     'cleanup', 'duration', 'beam_diameter', 'light_value')
 
         self.debug('loading defaults for {}. ed={} attrs={}'.format(ln, self.extract_device, attrs))
         defaults = self._load_default_file()
@@ -1361,7 +1362,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             t = self.conditionals_str
             self._set_conditionals(t)
 
-    @on_trait_change('''cleanup, duration, extract_value,ramp_duration,
+    @on_trait_change('''cleanup, duration, extract_value, ramp_duration, light_value,
 collection_time_zero_offset,
 use_cdd_warming,
 extract_units,

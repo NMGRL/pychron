@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 try:
     from kiva import JOIN_ROUND
 except ImportError:
@@ -29,6 +28,7 @@ from pychron.canvas.canvas2D.scene.scene import Scene
 class SceneCanvas(BaseDataCanvas):
     scene = Instance(Scene)
     scene_klass = Scene
+    legend = None
 
     def __init__(self, *args, **kw):
         super(SceneCanvas, self).__init__(*args, **kw)
@@ -66,6 +66,9 @@ class SceneCanvas(BaseDataCanvas):
         super(SceneCanvas, self)._draw_overlay(gc, *args, **kw)
         if self.scene:
             self.scene.render_overlays(gc, self)
+
+        if self.legend:
+            self.legend.draw(self, gc)
 
     def _draw_inset_border(self, gc, view_bounds=None, mode="default"):
         if not self.border_visible:

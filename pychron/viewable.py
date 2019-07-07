@@ -24,7 +24,7 @@ from traitsui.api import View
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-# from pychron.utils import IsQt
+# from pychron.core.utils import IsQt
 from pychron.loggable import Loggable
 
 

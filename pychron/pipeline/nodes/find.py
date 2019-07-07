@@ -40,6 +40,23 @@ class FindNode(DVCNode):
     pass
 
 
+class FindRepositoryAnalysesNode(FindNode):
+    repositories = List
+
+    def run(self, state):
+        dvc = self.dvc
+        rs = []
+        for ri in self.repositories:
+            ans = dvc.get_repoository_analyses(ri)
+            rs.extend(ans)
+
+        unks, refs = partition(rs, predicate=lambda x: x.analysis_type == 'unknown')
+        state.unknowns = unks
+        state.references = refs
+        self.unknowns = unks
+        self.references = refs
+
+
 class BaseFindFluxNode(FindNode):
     irradiation = Str
     irradiations = Property
@@ -48,6 +65,7 @@ class BaseFindFluxNode(FindNode):
     level = Str
     monitor_sample_name = Str(DEFAULT_MONITOR_NAME)
     dirty = Event
+    exclude = '%_MST'
 
     def load(self, nodedict):
         self.irradiation = nodedict.get('irradiation', '')
@@ -86,7 +104,7 @@ class BaseFindFluxNode(FindNode):
     @cached_property
     def _get_irradiations(self):
         if self.dvc:
-            irrads = self.dvc.get_irradiations()
+            irrads = self.dvc.get_irradiations(exclude_name=self.exclude)
             return [i.name for i in irrads]
         else:
             return []
@@ -94,7 +112,6 @@ class BaseFindFluxNode(FindNode):
     def _fp_factory(self, geom, irradiation, level, identifier, sample, hole_id, fluxes):
 
         pp = next((p for p in fluxes if p['identifier'] == identifier))
-
         j, j_err, mean_j, mean_j_err, model_kind = 0, 0, 0, 0, ''
         if pp:
             j = pp.get('j', 0)
@@ -120,48 +137,50 @@ class BaseFindFluxNode(FindNode):
         return fp
 
 
-class FindVerticalFluxNode(BaseFindFluxNode):
+class FindIrradiationNode(BaseFindFluxNode):
     select_all_button = Button('Select All')
     selected_levels = List
 
     def run(self, state):
-        state.levels = self.selected_levels
-        state.irradiation = self.irradiation
+        if not self.irradiation or not self.level:
+            self.configure()
+
+        if not self.irradiation or not self.level:
+            state.veto = self
+        else:
+            state.levels = self.selected_levels
+            state.irradiation = self.irradiation
 
     def _select_all_button_fired(self):
         self.selected_levels = self.levels
 
     def traits_view(self):
         v = self._view_factory(Item('irradiation', editor=EnumEditor(name='irradiations')),
-                               UItem('select_all_button'),
-                               UItem('selected_levels',
-                                     style='custom',
-                                     editor=CheckListEditor(name='levels')),
+                               UItem('select_all_button', enabled_when='irradiation'),
+                               BorderVGroup(UItem('selected_levels',
+                                                  style='custom',
+                                                  editor=CheckListEditor(name='levels', cols=3)),
+                                            visible_when='irradiation',
+                                            label='Levels'),
                                width=300,
+                               height=300,
                                title='Select Irradiation and Level',
                                resizable=True)
         return v
 
 
-class FindRepositoryAnalysesNode(FindNode):
-    repositories = List
+class FindVerticalFluxNode(FindIrradiationNode):
+    name = 'Find Vertical Flux'
+    exclude = None
 
-    def run(self, state):
-        dvc = self.dvc
-        rs = []
-        for ri in self.repositories:
-            ans = dvc.get_repoository_analyses(ri)
-            rs.extend(ans)
 
-        unks, refs = partition(rs, predicate=lambda x: x.analysis_type == 'unknown')
-        state.unknowns = unks
-        state.references = refs
-        self.unknowns = unks
-        self.references = refs
+class TransferFluxMonitorMeansNode(FindIrradiationNode):
+    name = 'Transfer Flux Monitor Means'
 
 
 class FindFluxMonitorMeansNode(BaseFindFluxNode):
-    name = 'Find Flux Monitors Means'
+    name = 'Find Flux Monitor Means'
+    exclude = None
 
     def _load_hook(self, nodedict):
         self.level = nodedict.get('level', '')
@@ -181,12 +200,22 @@ class FindFluxMonitorMeansNode(BaseFindFluxNode):
                 state.geometry = geom
                 state.holder = holder
 
-            ips = dvc.get_flux_monitors(self.irradiation, self.level, self.monitor_sample_name)
+            msn = self.monitor_sample_name
+            if not msn:
+                msn = 'FC-2'
 
             fluxes = dvc.get_flux_positions(self.irradiation, self.level)
-            state.monitor_positions = [self._fp_factory(state.geometry, self.irradiation, self.level,
-                                                        ip.identifier, ip.sample.name, ip.position, fluxes)
-                                       for ip in ips if ip.identifier]
+            if self.irradiation.endswith('_MST'):
+                monitor_positions = [self._fp_factory(state.geometry, self.irradiation, self.level,
+                                                      ip['identifier'], ip['sample'], ip['position'], fluxes)
+                                     for ip in fluxes if ip['sample'] == msn]
+            else:
+                ips = dvc.get_flux_monitors(self.irradiation, self.level, msn)
+                monitor_positions = [self._fp_factory(state.geometry, self.irradiation, self.level,
+                                                      ip.identifier, ip.sample.name, ip.position, fluxes)
+                                     for ip in ips if ip.identifier]
+
+            state.monitor_positions = monitor_positions
 
     def traits_view(self):
         v = self._view_factory(Item('irradiation', editor=EnumEditor(name='irradiations')),

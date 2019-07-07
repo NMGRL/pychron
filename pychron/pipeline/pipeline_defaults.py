@@ -48,7 +48,7 @@ nodes:
     threshold: 10
     analysis_types: 
       - Air
-    name: Find Airs
+    name: Find References
   - klass: ReferenceNode
   - klass: FitICFactorNode
   - klass: ReviewNode
@@ -320,6 +320,13 @@ required:
 nodes:
   - klass: UnknownNode
   - klass: MassSpecReducedNode
+"""
+
+MASS_SPEC_FLUX = """
+required:
+nodes:
+  - klass: TransferFluxMonitorMeansNode
+  - klass: MassSpecFluxNode
 """
 
 # ============= EOF =============================================

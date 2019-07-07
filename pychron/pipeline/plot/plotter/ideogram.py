@@ -116,6 +116,7 @@ class Ideogram(BaseArArFigure):
     ytitle = 'Relative Probability'
     subgroup_id = 0
     subgroup = None
+    peaks = None
 
     def plot(self, plots, legend=None):
         """
@@ -450,12 +451,15 @@ class Ideogram(BaseArArFigure):
 
     def _add_peak_labels(self, line):
         opt = self.options
-        if opt.label_all_peaks:
-            xs = line.index.get_data()
-            ys = line.value.get_data()
-            if xs.shape[0]:
-                xp, yp = fast_find_peaks(ys, xs)
 
+        xs = line.index.get_data()
+        ys = line.value.get_data()
+        if xs.shape[0]:
+            xp, yp = fast_find_peaks(ys, xs)
+
+            self.peaks = xp
+
+            if opt.label_all_peaks:
                 border = opt.peak_label_border
                 border_color = opt.peak_label_border_color
 

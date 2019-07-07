@@ -221,6 +221,10 @@ class AnalysisView(HasTraits):
         self.main_view.load_computed(self.model, new_list=False)
         self.main_view.refresh_needed = True
 
+        for g in self.groups:
+            if isinstance(g, ErrorComponentsView):
+                g.load(self.model)
+
     @on_trait_change('isotope_view:updated')
     def show_iso_evo(self, new):
         self.show_iso_evolutions(**new)

@@ -25,7 +25,15 @@ from traits.api import BaseStr, Int, String
 from traitsui.group import VGroup, HGroup
 
 from pychron.core.filtering import validate_filter_predicate
-from pychron.regex import IPREGEX, PACKETREGEX
+from pychron.regex import IPREGEX, PACKETREGEX, STEPREGEX
+
+
+class StepStr(BaseStr):
+    def validate(self, obj, name, value):
+        if not value or STEPREGEX.match(value):
+            return value
+        else:
+            self.error(obj, name, value)
 
 
 class PacketStr(BaseStr):

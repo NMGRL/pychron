@@ -20,11 +20,11 @@ import time
 
 import six
 
+from pychron.core.utils import alphas
 # ============= standard library imports ========================
 # import re
 # ============= local library imports  ==========================
 from pychron.experiment.utilities.identifier import make_runid
-from pychron.utils import alphas
 
 
 def get_flux_fit_status(item):

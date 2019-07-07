@@ -210,6 +210,8 @@ class Paths(object):
 
     index_db = None
     sample_dir = None
+
+    offline_db_dir = None
     # vcs_dir = None
     # initialization_dir = None
     # device_creator_dir = None
@@ -431,6 +433,7 @@ class Paths(object):
         self.meta_root = join(self.dvc_dir, 'MetaData')
         self.sample_dir = join(self.data_dir, 'sample_entry')
         self.media_storage_dir = join(self.data_dir, 'media')
+        self.offline_db_dir = join(self.data_dir, 'offline_db')
         # ==============================================================================
         # processing
         # ==============================================================================

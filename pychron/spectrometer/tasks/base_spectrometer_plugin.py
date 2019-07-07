@@ -68,11 +68,11 @@ class BaseSpectrometerPlugin(BaseTaskPlugin):
 
         return ret
 
-    def _inspector_task_factory(self):
-        from pychron.spectrometer.tasks.inspector.scan_inspector_task import ScanInspectorTask
-
-        t = ScanInspectorTask()
-        return t
+    # def _inspector_task_factory(self):
+    #     from pychron.spectrometer.tasks.inspector.scan_inspector_task import ScanInspectorTask
+    #
+    #     t = ScanInspectorTask()
+    #     return t
 
     def _mass_cal_task_factory(self):
         from pychron.spectrometer.tasks.mass_cal.mass_calibration_task import MassCalibrationTask
@@ -106,9 +106,10 @@ class BaseSpectrometerPlugin(BaseTaskPlugin):
                           factory=self._mass_cal_task_factory,
                           name='Mass Calibration',
                           accelerator='Ctrl+Shift+M'),
-              TaskFactory(id='pychron.spectrometer.scan_inspector',
-                          factory=self._inspector_task_factory,
-                          name='Scan Inspector')]
+              # TaskFactory(id='pychron.spectrometer.scan_inspector',
+              #             factory=self._inspector_task_factory,
+              #             name='Scan Inspector')
+              ]
         return ts
 
     def _service_offers_default(self):

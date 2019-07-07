@@ -853,6 +853,8 @@ available holder positions {}'.format(pn, ipn))
             if dbsam:
                 ir.sample = v = dbsam.name
 
+                item.measured_indicator = ir.analyzed
+
                 if v == self.monitor_name:
                     item.monitor_indicator = True
 

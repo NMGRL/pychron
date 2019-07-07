@@ -33,7 +33,7 @@ from pychron.pipeline.tables.util import iso_value, icf_value, icf_error, correc
     subreg, interpolate_noteline, value
 from pychron.pipeline.tables.xlsx_table_options import XLSXAnalysisTableWriterOptions
 from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
-from pychron.pychron_constants import PLUSMINUS_NSIGMA, NULL_STR, DESCENDING, PLUSMINUS
+from pychron.pychron_constants import PLUSMINUS_NSIGMA, NULL_STR, DESCENDING
 
 
 def format_mswd(t):
@@ -69,6 +69,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         self._bold = self._workbook.add_format({'bold': True})
         self._superscript = self._workbook.add_format({'font_script': 1})
         self._subscript = self._workbook.add_format({'font_script': 2})
+        self._bsuperscript = self._workbook.add_format({'font_script': 1, 'bold':True})
+        self._bsubscript = self._workbook.add_format({'font_script': 2, 'bold': True})
         self._ital = self._workbook.add_format({'italic': True})
 
         unknowns = groups.get('unknowns')
@@ -813,17 +815,18 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             sh.write_number(row, cum_idx, ag.valid_total_ar39(), fmt)
         self._current_row += 1
 
-    def _get_number_format(self, kind=None, use_scientific=False):
-        try:
-            sf = getattr(self._options, '{}_sig_figs'.format(kind))
-        except AttributeError as e:
-            sf = self._options.sig_figs
+    def _get_number_format(self, kind=None, use_scientific=False, sig_figs=2):
+        if kind:
+            try:
+                sig_figs = getattr(self._options, '{}_sig_figs'.format(kind))
+            except AttributeError as e:
+                sig_figs = self._options.sig_figs
 
         fn = self._workbook.add_format()
         if use_scientific:
             fmt = '0.0E+00'
         else:
-            fmt = '0.{}'.format('0' * sf)
+            fmt = '0.{}'.format('0' * sig_figs)
 
         if not self._options.ensure_trailing_zeros:
             fmt = '{}#'.format(fmt)
@@ -967,11 +970,25 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 trapped_value, trapped_error = 'NaN', 'NaN'
 
             sh.write_string(self._current_row, idx + 3, format_mswd(mt), fmt)
-            sh.write_rich_string(self._current_row, idx + 4,
-                                 '(', self._superscript, '40',
-                                 'Ar/',
-                                 self._superscript, '36', 'Ar', ')', self._subscript, 'trapped',
-                                 '={:0.3f}{}{:0.3f}'.format(trapped_value, PLUSMINUS, trapped_error), fmt)
+
+            self._current_row += 1
+
+        if self._options.include_trapped_ratio:
+            nsigma = self._options.asummary_trapped_ratio_nsigma
+
+            sh.write_rich_string(self._current_row, start_col,
+                                 self._bold, '(',
+                                 self._bsuperscript, '40',
+                                 self._bold, 'Ar/',
+                                 self._bsuperscript, '36',
+                                 self._bold, 'Ar)',
+                                 self._bsubscript, 'trapped',
+                                 self._bold, ' {}'.format(PLUSMINUS_NSIGMA.format(nsigma)))
+            nfmt = self._get_number_format()
+            nfmt.set_bold(True)
+            sh.write_number(self._current_row, idx, trapped_value, nfmt)
+            sh.write_number(self._current_row, idx+1, trapped_error*nsigma, nfmt)
+
             self._current_row += 1
 
     def _make_notes(self, groups, sh, ncols, name):
@@ -991,18 +1008,6 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
     def _make_summary_notes(self, groups, sh):
         notes = six.text_type(self._options.summary_notes)
         self._write_notes(sh, notes)
-        # sh.write(self._current_row, 0, 'Plateau Criteria:')
-        # self._current_row += 1
-        #
-        # sh.write(self._current_row, 0, '\t\tN Steps= {}'.format(self._options.plateau_nsteps))
-        # self._current_row += 1
-        #
-        # sh.write(self._current_row, 0, '\t\tGas Fraction= {}'.format(self._options.plateau_gas_fraction))
-        # self._current_row += 1
-        # if self._options.fixed_step_low or self._options.fixed_step_high:
-        #     sh.write(self._current_row, 0, '\t\tFixed Steps= {},{}'.format(self._options.fixed_step_low,
-        #                                                                    self.fixed_step_high))
-        #     self._current_row += 1
 
     def _make_unknowns_notes(self, groups, sh):
 

@@ -34,12 +34,12 @@ from pychron.core.helpers.formatting import floatfmt
 from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.core.pychron_traits import BorderHGroup, BorderVGroup
 from pychron.core.ui.table_editor import myTableEditor
+from pychron.core.utils import alphas
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.layout import FigureLayout
 from pychron.processing.j_error_mixin import JErrorMixin
 from pychron.pychron_constants import NULL_STR, ERROR_TYPES, FONTS, SIZES
-from pychron.utils import alphas
 
 
 def _table_column(klass, *args, **kw):

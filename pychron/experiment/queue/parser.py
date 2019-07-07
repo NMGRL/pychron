@@ -99,6 +99,7 @@ class RunParser(Loggable):
                      ('time_zero_offset', 't_o'),
                      ('extract_value', 'e_value'),
                      ('beam_diameter', 'beam_diam'),
+                     'light_value',
                      'frequency_group', ]:
 
             v = self._get_attr_value(header, args, attr, cast=float)

@@ -28,6 +28,7 @@ from pychron.graph.stacked_regression_graph import StackedRegressionGraph
 
 class AnalysisGraph(Graph):
     rescale_event = Event
+    figure_event = Event
 
     def get_rescale_actions(self):
         return [('Valid Analyses', 'rescale_to_valid', {})]
@@ -51,36 +52,42 @@ class AnalysisStackedRegressionGraph(AnalysisGraph, StackedRegressionGraph):
 
 
 class SpectrumGraph(AnalysisStackedGraph):
-    make_alternate_figure_event = Event
+    # make_alternate_figure_event = Event
 
     def get_child_context_menu_actions(self):
         return [self.action_factory('Ideogram...', 'make_ideogram'),
-                self.action_factory('Inverse Isochron...', 'make_inverse_isochron')]
+                self.action_factory('Inverse Isochron...', 'make_inverse_isochron'),
+                self.action_factory('Tag Non Plateau...', 'tag_non_plateau')]
+
+    def tag_non_plateau(self):
+        self.figure_event = ('tag', 'tag_non_plateau')
 
     def make_ideogram(self):
-        self.make_alternate_figure_event = 'Ideogram'
+        self.figure_event = 'alternate_figure', 'Ideogram'
 
     def make_inverse_isochron(self):
-        self.make_alternate_figure_event = 'InverseIsochron'
+        self.figure_event = 'alternate_figure', 'InverseIsochron'
 
 
 class IdeogramGraph(AnalysisStackedGraph):
-    make_correlation_event = Event
 
     def get_child_context_menu_actions(self):
-        return [self.action_factory('Correlation...', 'make_correlation')]
+        return [self.action_factory('Correlation...', 'make_correlation'),
+                self.action_factory('Identify Peaks', 'identify_peaks')]
 
     def make_correlation(self):
-        self.make_correlation_event = self.selected_plotid, self.selected_plot.y_axis.title
+        self.figure_event = ('correlation', (self.selected_plotid, self.selected_plot.y_axis.title))
+
+    def identify_peaks(self):
+        self.figure_event = ('identify_peaks', None)
 
 
 class ReferencesGraph(AnalysisStackedRegressionGraph):
-    make_correlation_event = Event
 
     def get_child_context_menu_actions(self):
         return [self.action_factory('Correlation...', 'make_correlation')]
 
     def make_correlation(self):
-        self.make_correlation_event = self.selected_plot, self.selected_plot.y_axis.title
+        self.figure_event = ('correlation', (self.selected_plot, self.selected_plot.y_axis.title))
 
 # ============= EOF =============================================

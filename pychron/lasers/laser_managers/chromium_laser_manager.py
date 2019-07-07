@@ -159,11 +159,12 @@ class ChromiumLaserManager(EthernetLaserManager):
         self.update_position()
 
     def _move_to_position(self, pos, block=True, *args, **kw):
+        sm = self.stage_manager
         if isinstance(pos, tuple):
             x, y = pos
 
         else:
-            x, y = self.stage_manager.get_hole_xy(pos)
+            x, y = sm.get_hole_xy(pos)
 
         z = self._z
         xs = 5000
@@ -172,14 +173,20 @@ class ChromiumLaserManager(EthernetLaserManager):
 
         self._alive = True
         self.debug('pos={}, x={}, y={}'.format(pos, x, y))
-        xm, ym, zm = self.stage_manager.x_sign * x * 1000, \
-                     self.stage_manager.y_sign * y * 1000, \
-                     self.stage_manager.z_sign * z * 1000
+
+        xm = x * 1000
+        ym = y * 1000
+        zm = z * 1000
+        if sm.use_sign_position_correction:
+            xm *= sm.x_sign
+            ym *= sm.y_sign
+            zm *= sm.z_sign
 
         cmd = 'stage.moveto {:0.0f},{:0.0f},{:0.0f},{:0.0f},{:0.0f},{:0.0f}'.format(xm, ym, zm, xs, ys, zs)
         self.info('sending {}'.format(cmd))
         self.ask(cmd)
 
+        time.sleep(1)
         return self._moving(xm, ym, zm, block)
 
     def _moving(self, xm, ym, zm, block=True):

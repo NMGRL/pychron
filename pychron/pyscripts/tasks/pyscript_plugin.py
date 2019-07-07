@@ -32,6 +32,7 @@ from pychron.pyscripts.tasks.visual_el_programmer.actions import OpenVisualELScr
 
 
 class PyScriptPlugin(BaseTaskPlugin):
+    name = 'PyScript'
     id = 'pychron.pyscript.plugin'
 
     def _actions_default(self):

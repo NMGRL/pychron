@@ -26,12 +26,11 @@ from traitsui.api import UItem
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.strings import PascalCase
 from pychron.paths import paths
-from pychron.pipeline.nodes import MassSpecReducedNode
 from pychron.pipeline.nodes.data import DataNode, UnknownNode, DVCNode, InterpretedAgeNode, ListenUnknownNode, \
     BaseDVCNode
-from pychron.pipeline.nodes.diff import DiffNode
 from pychron.pipeline.nodes.email_node import EmailNode
 from pychron.pipeline.nodes.find import FindNode
+from pychron.pipeline.nodes.mass_spec_reduced import BaseMassSpecNode
 from pychron.pychron_constants import DEFAULT_PIPELINE_ROOTS
 
 
@@ -160,16 +159,9 @@ class PipelineTemplate(HasTraits):
         node.pre_load(ni)
         node.load(ni)
         if isinstance(node, InterpretedAgeNode):
-            node.trait_set(browser_model=iabmodel, dvc=dvc)
+            node.trait_set(browser_model=iabmodel)
         elif isinstance(node, (DVCNode, FindNode)):
-            node.trait_set(browser_model=bmodel, dvc=dvc)
-        elif isinstance(node, BaseDVCNode):
-            node.trait_set(dvc=dvc)
-        elif isinstance(node, (DiffNode, MassSpecReducedNode)):
-            recaller = application.get_service('pychron.mass_spec.mass_spec_recaller.MassSpecRecaller')
-            node.trait_set(recaller=recaller)
-            if isinstance(node, MassSpecReducedNode):
-                node.trait_set(dvc=dvc)
+            node.trait_set(browser_model=bmodel)
         elif isinstance(node, EmailNode):
             emailer = application.get_service('pychron.social.email.emailer.Emailer')
             if emailer is None:
@@ -178,6 +170,12 @@ class PipelineTemplate(HasTraits):
 
             node.trait_set(emailer=emailer)
 
+        if isinstance(node, BaseDVCNode):
+            node.trait_set(dvc=dvc)
+
+        if isinstance(node, BaseMassSpecNode):
+            recaller = application.get_service('pychron.mass_spec.mass_spec_recaller.MassSpecRecaller')
+            node.trait_set(recaller=recaller)
         return node
 
 # ============= EOF =============================================

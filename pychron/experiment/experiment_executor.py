@@ -655,9 +655,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     self.debug('end at run completion')
                     break
 
-                if self._ratio_change_detection(spec):
-                    self.warning('Ratio Change Detected')
-                    break
+                if spec.state in ('success', 'truncated'):
+                    if self._ratio_change_detection(spec):
+                        self.warning('Ratio Change Detected')
+                        break
 
             self.debug('run loop exited. end at completion:{}'.format(self.end_at_run_completion))
             if self.end_at_run_completion:
@@ -1455,6 +1456,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     self.debug(msg)
                     if fc >= failure_cnt:
                         self._err_message = msg
+                        invoke_in_main_thread(self.warning_dialog, msg)
                         return True
                 else:
                     if consecutive_failure:

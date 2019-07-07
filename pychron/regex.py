@@ -43,4 +43,6 @@ GITREFREGEX = re.compile(r'^[\w]{40}')
 MDD_PARAM_REGEX = re.compile(r'E= {3}(?P<E>\d+.\d+) {7}\+\- {4}(?P<Eerr>\d+.\d+) '
                              r'{11}Ordinate= {3}(?P<O>\d+.\d+) {7}\+\- {2}(?P<Oerr>\d+.\d+)')
 
+
+STEPREGEX = re.compile(r'^[A-Z]+$')
 # ============= EOF =============================================

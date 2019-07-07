@@ -1,6 +1,24 @@
 CHANGELOG
 =========
 
+6/14/2019
+### Features ###
+* moved trapped ratio to separate line in analysis table, added control over trapped nsigma
+
+### Bug fixes ###
+* fixed "Save Table" toolbar action
+
+
+6/13/2019
+### Features ###
+* added exclude non plateau steps from isochron plot
+* added "Isochron of Plateau Steps" as a preferred kind
+* added "Tag Non Plateau" context menu action to Spectrum
+
+### Bug fixes ###
+* fixed "Dim non plateau" option when using "fixed steps" 
+* fixed `alphas` 
+* enabled "Set Interpreted Age" toolbar action when using a CompositeEditor e.g. Spectrum/Isochron
 
 6/12/2019
 --------

@@ -21,7 +21,7 @@ import os
 
 from six.moves.configparser import ConfigParser
 from traits.api import Str, Property, cached_property, Int, \
-    Any, String, Event, Bool, Dict, List, Button
+    Any, String, Event, Bool, Dict, List, Button, CInt
 
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import glob_list_directory
@@ -67,6 +67,7 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
     tray = Str
     trays = Property
     note = Str
+    default_lighting = CInt(0)
 
     load_name = Str
 
@@ -82,6 +83,7 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
                    'delay_before_analyses',
                    'delay_after_blank',
                    'delay_after_air',
+                   'default_lighting',
                    'queue_conditionals_name')
 
     def activate(self, load_persistence):

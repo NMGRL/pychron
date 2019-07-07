@@ -41,9 +41,10 @@ from pychron.pipeline.state import EngineState
 from pychron.pipeline.tasks.actions import RunAction, ResumeAction, ResetAction, \
     ConfigureRecallAction, TagAction, SetInterpretedAgeAction, ClearAction, SavePDFAction, SetInvalidAction, \
     SetFilteringTagAction, \
-    EditAnalysisAction, RunFromAction, PipelineRecallAction, LoadReviewStatusAction, DiffViewAction
+    EditAnalysisAction, RunFromAction, PipelineRecallAction, LoadReviewStatusAction, DiffViewAction, SaveTableAction
 from pychron.pipeline.tasks.interpreted_age_factory import set_interpreted_age
 from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane, RepositoryPane, EditorOptionsPane
+from pychron.pychron_constants import PLATEAU, ISOCHRON, WEIGHTED_MEAN, MSEM
 
 
 class DataMenu(SMenu):
@@ -78,7 +79,7 @@ class PipelineTask(BaseBrowserTask):
                           SetInvalidAction(),
                           SetFilteringTagAction(),
                           SetInterpretedAgeAction(),
-                          # SaveTableAction(),
+                          SaveTableAction(),
                           name='Misc')]
 
     state = Instance(EngineState)
@@ -281,28 +282,45 @@ class PipelineTask(BaseBrowserTask):
         obj = self._make_save_figure_object(ed)
         dvc_dump(obj, path)
 
-    # def save_table(self):
-    #     self.debug('save table')
-    #     if not self.has_active_editor():
-    #         return
-    #
-    #     ed = self.active_editor
-    #     if isinstance(ed, FigureEditor):
-    #         from pychron.pipeline.tables.xlsx_table_options import XLSXAnalysisTableWriterOptions
-    #         from pychron.pipeline.tables.xlsx_table_writer import XLSXAnalysisTableWriter
-    #
-    #         options = XLSXAnalysisTableWriterOptions()
-    #         ri = tuple({ai.repository_identifier for ai in ed.analyses})
-    #         options.root_name = ri[0]
-    #         info = options.edit_traits(kind='modal')
-    #         if info.result:
-    #             writer = XLSXAnalysisTableWriter()
-    #             # from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
-    #             # groups = [InterpretedAgeGroup(analyses=ed.analyses)]
-    #
-    #             gs = ed.get_analysis_groups()
-    #             run_groups = {'unknowns': gs, 'machine_unknowns': gs}
-    #             writer.build(run_groups, options=options)
+    def save_table(self):
+        self.debug('save table')
+        if not self.has_active_editor():
+            return
+
+        ed = self.active_editor
+        if isinstance(ed, FigureEditor):
+            from pychron.pipeline.tables.xlsx_table_options import XLSXAnalysisTableWriterOptions
+            from pychron.pipeline.tables.xlsx_table_writer import XLSXAnalysisTableWriter
+
+            from pychron.pipeline.plot.editors.isochron_editor import InverseIsochronEditor
+            from pychron.pipeline.plot.editors.spectrum_editor import SpectrumEditor
+
+            ek = ed.plotter_options.error_calc_method
+            pk = WEIGHTED_MEAN
+            if isinstance(ed, SpectrumEditor):
+                pk = PLATEAU
+            elif isinstance(ed, InverseIsochronEditor):
+                pk = ISOCHRON
+
+            options = XLSXAnalysisTableWriterOptions()
+            ri = tuple({ai.repository_identifier for ai in ed.analyses})
+            options.root_name = ri[0]
+            info = options.edit_traits(kind='modal')
+            if info.result:
+                writer = XLSXAnalysisTableWriter()
+                gs = ed.get_analysis_groups()
+
+                # convert each group to an InterpretedAgeGroup
+                from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
+                ggs = []
+                for gi in gs:
+                    gg = InterpretedAgeGroup(analyses=gi.analyses)
+                    gg.set_preferred_age(pk, ek)
+                    gg.set_preferred_kind('kca', WEIGHTED_MEAN, MSEM)
+                    ggs.append(gg)
+
+                run_groups = {'unknowns': ggs, 'machine_unknowns': ggs}
+                writer.build(run_groups, options=options)
 
     def save_figure_pdf(self):
         self.debug('save figure pdf')
@@ -348,6 +366,9 @@ class PipelineTask(BaseBrowserTask):
         self.engine.save_pipeline_template()
 
     # action handlers
+    def edit_runid(self):
+        self._set_action_template('Edit RunID')
+
     def mass_spec_reduced_transfer(self):
         self._set_action_template('Mass Spec Reduced')
 
@@ -595,6 +616,10 @@ class PipelineTask(BaseBrowserTask):
                     editor = new.editor
                     self.engine.selected_editor = editor
                     self.engine.active_editor = editor
+
+    @on_trait_change('engine:tag_event')
+    def _handle_engine_tag(self, new):
+        self.set_tag(items=new)
 
     def _handle_tag(self, name, new):
         self.set_tag(items=new)

@@ -133,7 +133,7 @@ class ExperimentFactoryPane(TraitsDockPane):
                                                             editor=myEnumEditor(
                                                                 name=queue_factory_name('extract_devices')))),
                                  lgrp,
-
+                                 queue_factory_item('default_lighting'),
                                  label='Spectrometer/Extract Device')
 
         name = queue_factory_name('available_conditionals')
@@ -328,9 +328,14 @@ class ConnectionStatusPane(TraitsDockPane):
 class StatsPane(TraitsDockPane):
     id = 'pychron.experiment.stats'
     name = 'Stats'
+    recalculate_button = Button('Recalculate')
+
+    def _recalculate_button_fired(self):
+        self.model.reset()
 
     def traits_view(self):
-        gen_grp = BorderVGroup(HGroup(Readonly('nruns', width=150, label='Total Runs'),
+        gen_grp = BorderVGroup(HGroup(UItem('pane.recalculate_button')),
+                               HGroup(Readonly('nruns', width=150, label='Total Runs'),
                                       UReadonly('total_time')),
                                HGroup(Readonly('nruns_finished', width=150, label='Completed'),
                                       UReadonly('elapsed')),

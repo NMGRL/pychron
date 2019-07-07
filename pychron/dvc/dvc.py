@@ -388,10 +388,13 @@ class DVC(Loggable):
 
         return mod_repositories
 
-    def update_analyses(self, ans, modifier, msg):
+    def update_analyses(self, ans, modifiers, msg):
+        if not isinstance(modifiers, (list, tuple)):
+            modifiers = (modifiers,)
+
         mod_repositories = []
         for expid, ais in groupby_repo(ans):
-            ps = [analysis_path(x, x.repository_identifier, modifier=modifier) for x in ais]
+            ps = [analysis_path(x, x.repository_identifier, modifier=modifier) for x in ais for modifier in modifiers]
             if self.repository_add_paths(expid, ps):
                 self.repository_commit(expid, msg)
                 mod_repositories.append(expid)
@@ -696,7 +699,9 @@ class DVC(Loggable):
                                          quick=quick,
                                          reload=reload, *args)
             except BaseException:
-                self.debug('make analysis exception')
+                record = args[0]
+                self.debug('make analysis exception: repo={}, record_id={}'.format(record.repository_identifier,
+                                                                                   record.record_id))
                 self.debug_exception()
 
         if use_progress:

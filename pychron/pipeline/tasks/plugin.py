@@ -44,6 +44,9 @@ class PipelinePlugin(BaseTaskPlugin):
     node_factories = ExtensionPoint(List, id='pychron.pipeline.node_factories')
     predefined_templates = ExtensionPoint(List, id='pychron.pipeline.predefined_templates')
 
+    def _help_tips_default(self):
+        return []
+
     def _file_defaults_default(self):
         files = [('flux_constants', 'FLUX_CONSTANTS_DEFAULT', False)]
         return files
@@ -90,12 +93,7 @@ class PipelinePlugin(BaseTaskPlugin):
             return SMenu(id='data.menu', name='Data')
 
         def ideogram_menu():
-            return SMenu(IdeogramAction(),
-                         SubgroupIdeogramAction(),
-                         HybridIdeogramAction(),
-                         HistoryIdeogramAction(),
-
-                         id='ideogram.menu', name='Ideogram')
+            return SMenu(id='ideogram.menu', name='Ideogram')
 
         def plot_group():
             return SGroup(id='plot.group')
@@ -103,84 +101,89 @@ class PipelinePlugin(BaseTaskPlugin):
         def reduction_group():
             return SGroup(id='reduction.group')
 
-        def quick_series_group():
-            return SGroup(id='quick_series.group')
-
         def recall_group():
             return SGroup(id='recall.group')
 
+        exts = self._get_extensions()
+        extensions = [TaskExtension(actions=actions, task_id=eid) for eid, actions in exts]
+
+        additions = [SchemaAddition(factory=data_menu,
+                                    path='MenuBar',
+                                    before='tools.menu',
+                                    after='view.menu', )]
+
+        for s, f, p in (('ideogram', ideogram_menu, 'MenuBar/data.menu/plot.group'),
+                        ('plot', plot_group, 'MenuBar/data.menu'),
+                        ('fit', reduction_group, 'MenuBar/data.menu'),
+                        ('recall', recall_group, 'MenuBar/data.menu')):
+
+            for eid, actions in exts:
+                for ai in actions:
+                    if ai.id.startswith('pychron.pipeline.{}'.format(s)):
+                        additions.append(SchemaAddition(factory=f, path=p))
+                        break
+
+        extensions.append(TaskExtension(actions=additions))
+        return extensions
+
+    def _available_task_extensions_default(self):
+        def idformat(tag):
+            return 'pychron.pipeline.{}'.format(tag)
+
         pg = 'MenuBar/data.menu/plot.group'
         rg = 'MenuBar/data.menu/reduction.group'
+        ig = 'MenuBar/data.menu/plot.group/ideogram.menu'
         reg = 'MenuBar/data.menu/recall.group'
-        qsg = 'MenuBar/data.menu/quick_series.group'
 
-        recall_actions = [SchemaAddition(factory=recall_group,
-                                         path='MenuBar/data.menu'),
-                          SchemaAddition(factory=RecallAction,
-                                         path=reg),
-                          SchemaAddition(factory=InterpretedAgeRecallAction,
-                                         path=reg),
-                          # SchemaAddition(factory=TimeViewBrowserAction,
-                          #                path=reg)
-                          ]
+        fit_actions = []
+        for f, t in ((IsoEvolutionAction, 'iso_evo'),
+                     (BlanksAction, 'blanks'),
+                     (ICFactorAction, 'icfactor'),
+                     (FluxAction, 'flux'),
+                     (AnalysisTableAction, 'analysis_table'),
+                     (FreezeProductionRatios, 'freeze_production'),
+                     (MassSpecReducedAction, 'mass_spec_reduced')):
+            fit_actions.append(SchemaAddition(factory=f,
+                                              id='pychron.pipeline.fit.{}'.format(t),
+                                              path=rg))
+        plot_actions = []
+        for f, t in ((IdeogramAction, 'ideogram'),
+                     (SubgroupIdeogramAction, 'subgroup_ideogram'),
+                     (HybridIdeogramAction, 'hybrid_ideogram'),
+                     (HistoryIdeogramAction, 'history_ideogram')):
+            plot_actions.append(SchemaAddition(factory=f,
+                                               id='pychron.pipeline.ideogram.{}'.format(t),
+                                               path=ig))
 
-        plotting_actions = [SchemaAddition(factory=data_menu,
-                                           path='MenuBar',
-                                           before='tools.menu',
-                                           after='view.menu', ),
-                            SchemaAddition(factory=plot_group,
-                                           path='MenuBar/data.menu'),
+        for f, t in ((SpectrumAction, 'spectrum'),
+                     (InverseIsochronAction, 'inverse_isochron'),
+                     (SeriesAction, 'series'),
+                     (ExtractionAction, 'extraction')):
+            plot_actions.append(SchemaAddition(factory=f,
+                                               id='pychron.pipeline.plot.{}'.format(t),
+                                               path=pg))
 
-                            SchemaAddition(factory=ideogram_menu,
-                                           path=pg),
+        recall_actions = [SchemaAddition(factory=ConfigureRecallAction,
+                                         id='pychron.pipeline.recall.configure',
+                                         path='MenuBar/edit.menu')]
 
-                            SchemaAddition(factory=SpectrumAction,
-                                           path=pg),
-                            # SchemaAddition(factory=IsochronAction,
-                            #                path=pg),
-                            SchemaAddition(factory=InverseIsochronAction,
-                                           path=pg),
-                            SchemaAddition(factory=SeriesAction,
-                                           path=pg),
-                            # SchemaAddition(factory=VerticalFluxAction,
-                            #                path=pg),
-                            SchemaAddition(factory=ExtractionAction,
-                                           path=pg)]
+        for f, t in ((RecallAction, 'recall'),
+                     (InterpretedAgeRecallAction, 'interpreted_age_recall')):
+            recall_actions.append(SchemaAddition(factory=f,
+                                                 id='pychron.pipeline.recall.{}'.format(t),
+                                                 path=reg))
 
-        reduction_actions = [SchemaAddition(factory=reduction_group,
-                                            path='MenuBar/data.menu'),
-                             SchemaAddition(factory=IsoEvolutionAction,
-                                            path=rg),
-                             SchemaAddition(factory=BlanksAction,
-                                            path=rg),
-                             SchemaAddition(factory=ICFactorAction,
-                                            path=rg),
-                             SchemaAddition(factory=FluxAction,
-                                            path=rg),
-                             SchemaAddition(factory=AnalysisTableAction,
-                                            path=rg),
-                             SchemaAddition(factory=FreezeProductionRatios,
-                                            path=rg),
-                             SchemaAddition(factory=MassSpecReducedAction,
-                                            path=rg),
-                             ]
-
-        help_actions = [SchemaAddition(factory=ResetFactoryDefaultsAction,
-                                       path='MenuBar/help.menu'),
-                        SchemaAddition(factory=ClearAnalysisSetsAction,
-                                       path='MenuBar/help.menu')]
-        configure_recall = SchemaAddition(factory=ConfigureRecallAction,
-                                          path='MenuBar/edit.menu')
-
-        actions = recall_actions
-        actions.extend(plotting_actions)
-        actions.extend(reduction_actions)
-        actions.extend(help_actions)
-        # actions.extend(quick_series_actions)
-
-        return [TaskExtension(task_id='pychron.pipeline.task',
-                              actions=[configure_recall]),
-                TaskExtension(actions=actions)]
+        return [(self.id, '', 'Pipeline Tools',
+                 [SchemaAddition(id=idformat('reset_factory_defaults'),
+                                 factory=ResetFactoryDefaultsAction,
+                                 path='MenuBar/help.menu'),
+                  SchemaAddition(id=idformat('clear_analysis_sets'),
+                                 factory=ClearAnalysisSetsAction,
+                                 path='MenuBar/help.menu')]),
+                ('{}.plot'.format(self.id), '', 'Plot', plot_actions),
+                ('{}.fit'.format(self.id), '', 'Fit', fit_actions),
+                ('{}.recall'.format(self.id), '', 'Recall', recall_actions),
+                ]
 
     def _tasks_default(self):
         return [TaskFactory(id='pychron.pipeline.task',

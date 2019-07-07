@@ -290,6 +290,7 @@ class MetaRepo(GitRepoManager):
         self.information_dialog('Irradiation Geometry "{}" added'.format(name))
 
         # p = os.path.join(root, add_extension(name))
+
     # def add_irradiation_holder(self, name, blob, commit=False, overwrite=False, add=True):
     #     root = os.path.join(paths.meta_root, 'irradiation_holders')
     #     if not os.path.isdir(root):
@@ -349,6 +350,13 @@ class MetaRepo(GitRepoManager):
             npositions = [ji for ji in positions if not ji['position'] == hole]
             obj = {'z': z, 'positions': npositions}
             dvc_dump(obj, p)
+            self.add(p, commit=False)
+
+    def new_flux_positions(self, irradiation, level, positions, add=True):
+        p = self.get_level_path(irradiation, level)
+        obj = {'positions': positions, 'z': 0}
+        dvc_dump(obj, p)
+        if add:
             self.add(p, commit=False)
 
     def update_fluxes(self, irradiation, level, j, e, add=True):

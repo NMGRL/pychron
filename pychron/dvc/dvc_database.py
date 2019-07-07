@@ -28,6 +28,7 @@ from traitsui.api import Item
 from pychron.core.helpers.datetime_tools import bin_datetimes
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.spell_correct import correct
+from pychron.core.utils import alpha_to_int
 from pychron.database.core.database_adapter import DatabaseAdapter, binfunc
 from pychron.database.core.query import compile_query, in_func
 from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
@@ -42,7 +43,6 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
 from pychron.globals import globalv
 from pychron.pychron_constants import NULL_STR, EXTRACT_DEVICE, NO_EXTRACT_DEVICE, \
     SAMPLE_PREP_STEPS, SAMPLE_METADATA
-from pychron.utils import alpha_to_int
 
 
 def listify(obj):
@@ -204,6 +204,13 @@ class DVCDatabase(DatabaseAdapter):
 
                     if not self.get_users():
                         self.add_user('root')
+
+    def modify_aliquot_step(self, uuid, aliquot, increment):
+        with self.session_ctx() as sess:
+            a = self.get_analysis_uuid(uuid)
+            a.aliquot = aliquot
+            a.increment = increment
+            sess.commit()
 
     def sync_ia_metadata(self, ia):
         identifier = ia.identifier
@@ -1787,7 +1794,8 @@ class DVCDatabase(DatabaseAdapter):
 
         return names
 
-    def get_irradiations(self, names=None, project_names=None, order_func='desc', mass_spectrometers=None, **kw):
+    def get_irradiations(self, names=None, project_names=None, order_func='desc', mass_spectrometers=None,
+                         exclude_name=None, **kw):
 
         if names is not None:
             if hasattr(names, '__call__'):
@@ -1806,6 +1814,9 @@ class DVCDatabase(DatabaseAdapter):
         if mass_spectrometers:
             kw = self._append_filters(AnalysisTbl.mass_spectrometer.name.in_(mass_spectrometers), kw)
             kw = self._append_joins((LevelTbl, IrradiationPositionTbl, AnalysisTbl), kw)
+
+        if exclude_name:
+            kw = self._append_filters(IrradiationTbl.name.notlike(exclude_name), kw)
 
         order = None
         if order_func:

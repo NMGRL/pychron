@@ -28,6 +28,7 @@ def suite():
     from pychron.core.xml.tests.xml_parser import XMLParserTestCase
     from pychron.core.regression.tests.regression import OLSRegressionTest, MeanRegressionTest, \
         FilterOLSRegressionTest, OLSRegressionTest2, TruncateRegressionTest, ExpoRegressionTest, ExpoRegressionTest2
+    from pychron.core.tests.alpha_tests import AlphaTestCase
 
     # DataMapper
     from pychron.data_mapper.tests.usgs_vsc_file_source import USGSVSCFileSourceUnittest, \
@@ -75,6 +76,7 @@ def suite():
         CalibrationObjectTestCase,
 
         # Core
+        AlphaTestCase,
         SpellCorrectTestCase,
         FilteringTestCase,
         MultiPeakDetectionTestCase,

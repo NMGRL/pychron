@@ -31,8 +31,7 @@ class ReferencesPanel(FigurePanel):
     references = List
     _graph_klass = ReferencesGraph
 
-    def _handle_make_correlation_event(self, evt):
-        refplot, xtitle = evt
+    def _make_correlation(self, refplot, xtitle):
 
         fi = self.figures[0]
 
@@ -62,8 +61,13 @@ class ReferencesPanel(FigurePanel):
 
         open_view(g)
 
+    def _handle_figure_event(self, evt):
+        kind, args = evt
+        if kind == 'correlation':
+            self._make_correlation(*args)
+
     def _make_graph_hook(self, g):
-        g.on_trait_change(self._handle_make_correlation_event, 'make_correlation_event')
+        g.on_trait_change(self._handle_figure_event, 'figure_event')
 
     def _make_figures(self):
         gs = super(ReferencesPanel, self)._make_figures()
