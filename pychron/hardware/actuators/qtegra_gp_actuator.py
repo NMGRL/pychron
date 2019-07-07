@@ -17,7 +17,8 @@
 #========== standard library imports ==========
 
 #========== local library imports =============
-from gp_actuator import GPActuator
+from __future__ import absolute_import
+from .gp_actuator import GPActuator
 from pychron.globals import globalv
 
 
@@ -42,8 +43,8 @@ class QtegraGPActuator(GPActuator):
                 return True
             else:
                 return False
-        else:
-            return False
+        # else:
+        #     return False
 
     def close_channel(self, obj):
         """

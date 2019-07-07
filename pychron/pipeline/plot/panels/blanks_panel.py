@@ -17,14 +17,13 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
+
 from pychron.pipeline.plot.panels.references_panel import ReferencesPanel
 from pychron.pipeline.plot.plotter.blanks import Blanks
-
-from pychron.processing.analysis_graph import AnalysisStackedRegressionGraph
 
 
 class BlanksPanel(ReferencesPanel):
     _figure_klass = Blanks
-    _graph_klass = AnalysisStackedRegressionGraph
 
 # ============= EOF =============================================

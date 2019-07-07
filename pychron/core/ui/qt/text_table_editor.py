@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Event, Color, Str, Any, Int
 from traitsui.qt4.editor import Editor
 # ============= standard library imports ========================

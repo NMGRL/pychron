@@ -15,15 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.has_traits import HasTraits
+from __future__ import absolute_import
+from __future__ import print_function
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 import time
-from Queue import Queue, Empty
+from queue import Queue, Empty
 from threading import Thread
 
 
-class ConsumerMixin(HasTraits):
+class ConsumerMixin:
     _consumer_queue = None
     _should_consume = False
     _consume_func = None
@@ -38,7 +40,7 @@ class ConsumerMixin(HasTraits):
     #
     #     self.setup_consumer(func, buftime, auto_start, main, timeout, delay)
 
-    def setup_consumer(self, func=None, buftime=None, auto_start=True, main=False, timeout=None, delay=1):
+    def setup_consumer(self, func=None, buftime=None, auto_start=True, main=False, timeout=None, delay=500):
         self._delay = delay  # ms
         self._consume_func = func
         self._main = main
@@ -105,7 +107,7 @@ class ConsumerMixin(HasTraits):
             def get_func():
                 try:
                     if self._consumer_queue is None:
-                        print self
+                        print(self)
                     return self._consumer_queue.get(timeout=1)
                 except Empty:
                     return
@@ -121,7 +123,7 @@ class ConsumerMixin(HasTraits):
                 if time.time() - st > timeout:
                     self._should_consume = False
                     self._consumer_queue = None
-                    print 'consumer time out'
+                    print('consumer time out')
                     break
 
             try:
@@ -150,7 +152,7 @@ class ConsumerMixin(HasTraits):
                             invoke_in_main_thread(func, *args, **kw)
                         else:
                             func(*args)
-            except Exception, e:
+            except Exception as e:
                 import traceback
 
                 traceback.print_exc()
@@ -166,8 +168,8 @@ class consumable(object):
         self._main = main
 
     def __enter__(self):
-        self._consumer = c = ConsumerMixin(auto_start=False)
-        c.setup_consumer(func=self._func, main=self._main)
+        self._consumer = c = ConsumerMixin()
+        c.setup_consumer(func=self._func, main=self._main, auto_start=False)
         return c
 
     def __exit__(self, *args, **kw):

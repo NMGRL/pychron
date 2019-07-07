@@ -21,11 +21,10 @@ from numpy import loadtxt, polyfit, polyval, poly1d
 from scipy import optimize
 # ============= enthought library imports =======================
 from traits.api import Float, Property, Int
-from traitsui.api import View, Item, HGroup, \
-    spring
+from traitsui.api import View, Item, HGroup, spring
 
-from pychron.paths import paths
 # ============= local library imports  ==========================
+from pychron.paths import paths
 from pychron.spectrometer.base_detector import BaseDetector
 from pychron.spectrometer.spectrometer_device import SpectrometerDevice
 
@@ -43,7 +42,6 @@ class ThermoDetector(BaseDetector, SpectrometerDevice):
 
     def load(self):
         self.read_deflection()
-
 
     def load_deflection_coefficients(self):
         if self.use_deflection:
@@ -69,7 +67,7 @@ class ThermoDetector(BaseDetector, SpectrometerDevice):
                 else:
                     self._deflection = float(r)
 
-            except (ValueError, TypeError), e:
+            except (ValueError, TypeError) as e:
                 self.warning('Failed reading {} deflection. Error={}. '
                              'Using previous value {}'.format(self.name, e,
                                                               self._deflection))
@@ -101,7 +99,7 @@ class ThermoDetector(BaseDetector, SpectrometerDevice):
         self.ask('SetGain {},{}'.format(self.name, self.gain))
 
     def _read_gain(self):
-        v = self.ask('GetGain {}'.format(self.name))
+        return self.ask('GetGain {}'.format(self.name))
 
     def _set_deflection(self, v):
         if self.use_deflection:

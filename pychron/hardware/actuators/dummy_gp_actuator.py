@@ -1,5 +1,6 @@
 
-from gp_actuator import GPActuator
+from __future__ import absolute_import
+from .gp_actuator import GPActuator
 
 
 class DummyGPActuator(GPActuator):

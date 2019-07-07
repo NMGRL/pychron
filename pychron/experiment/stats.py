@@ -18,13 +18,15 @@
 import time
 from datetime import datetime, timedelta
 
-from traits.api import Property, String, Float, Any, Int, List, Instance, Bool
+from traits.api import Property, String, Float, Any, Int, List, Instance
 
 from pychron.core.helpers.timer import Timer
-from pychron.core.ui.pie_clock import PieClockModel
 from pychron.experiment.duration_tracker import AutomatedRunDurationTracker
 from pychron.loggable import Loggable
-from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR, NULL_STR
+from pychron.pychron_constants import NULL_STR
+
+
+# from pychron.core.ui.pie_clock import PieClockModel
 
 
 class ExperimentStats(Loggable):
@@ -55,8 +57,8 @@ class ExperimentStats(Loggable):
     # _start_time = None
     _post = None
 
-    use_clock = Bool(False)
-    clock = Instance(PieClockModel, ())
+    # use_clock = Bool(False)
+    # clock = Instance(PieClockModel, ())
     duration_tracker = Instance(AutomatedRunDurationTracker, ())
     _run_start = 0
 
@@ -93,7 +95,7 @@ class ExperimentStats(Loggable):
             self.trait_set(**d)
 
         self._timer = Timer(1000, update_time)
-        self._timer.start()
+        # self._timer.start()
 
     def stop_timer(self):
         self.debug('Stop timer. self._timer: {}'.format(self._timer))
@@ -118,7 +120,7 @@ class ExperimentStats(Loggable):
 
     def start_run(self, run):
         self._run_start = time.time()
-        self.setup_run_clock(run)
+        # self.setup_run_clock(run)
 
         self.current_run_duration = self.get_run_duration(run.spec, as_str=True)
 
@@ -140,30 +142,33 @@ class ExperimentStats(Loggable):
         self._run_start = 0
         self.nruns_finished += 1
         self.debug('finish run. runs completed={}'.format(self.nruns_finished))
-        if self.clock:
-            self.clock.stop()
+        # if self.clock:
+        #     self.clock.stop()
 
     def continue_run(self):
-        if self.clock:
-            self.clock.finish_slice()
+        pass
 
-    def setup_run_clock(self, run):
-        if self.use_clock:
-            ctx = run.spec.make_script_context()
-            extraction_slice = run.extraction_script.calculate_estimated_duration(ctx)
-            measurement_slice = run.measurement_script.calculate_estimated_duration(ctx)
+        # if self.clock:
+        #     self.clock.finish_slice()
 
-            def convert_hexcolor_to_int(c):
-                c = c[1:]
-                func = lambda i: int(c[i:i + 2], 16)
-                return map(func, (0, 2, 4))
-
-            ec, mc = map(convert_hexcolor_to_int,
-                         (EXTRACTION_COLOR, MEASUREMENT_COLOR))
-
-            self.clock.set_slices([extraction_slice, measurement_slice],
-                                  [ec, mc])
-            self.clock.start()
+    # def setup_run_clock(self, run):
+    #     if self.use_clock:
+    #         ctx = run.spec.make_script_context()
+    #         extraction_slice = run.extraction_script.calculate_estimated_duration(ctx)
+    #         measurement_slice = run.measurement_script.calculate_estimated_duration(ctx)
+    #
+    #         def convert_hexcolor_to_int(c):
+    #             c = c[1:]
+    #             # func = lambda i: int(c[i:i + 2], 16)
+    #             # return list(map(func, (0, 2, 4)))
+    #             return [int(c[i:i + 2], 16) for i in (0, 2, 4)]
+    #
+    #         # ec, mc = list(map(convert_hexcolor_to_int,
+    #         #                   (EXTRACTION_COLOR, MEASUREMENT_COLOR)))
+    #         ec, mc = convert_hexcolor_to_int(EXTRACTION_COLOR), convert_hexcolor_to_int(MEASUREMENT_COLOR)
+    #         self.clock.set_slices([extraction_slice, measurement_slice],
+    #                               [ec, mc])
+    #         self.clock.start()
 
     # private
     def _calculate_duration(self, runs):
@@ -181,11 +186,12 @@ class ExperimentStats(Loggable):
                 sh = a.script_hash
 
                 if sh in self.duration_tracker:
-                    t = a.make_truncated_script_hash()
-                    if a.has_conditionals() and t in self.duration_tracker:
-                        run_dur += self.duration_tracker.probability_model(sh, t)
-                    else:
-                        run_dur += self.duration_tracker[sh]
+                    # t = a.make_truncated_script_hash()
+                    # if a.has_conditionals() and t in self.duration_tracker:
+                    #     run_dur += self.duration_tracker.probability_model(sh, t)
+                    # else:
+                    #     run_dur += self.duration_tracker[sh]
+                    run_dur += self.duration_tracker[sh]
                 else:
                     run_dur += a.get_estimated_duration(script_ctx, warned, True)
                 d = a.get_delay_after(self.delay_between_analyses, self.delay_after_blank, self.delay_after_air)
@@ -223,7 +229,8 @@ class StatsGroup(ExperimentStats):
 
     # @caller
     def reset(self):
-        self.nruns = sum([len(ei.cleaned_automated_runs) for ei in self.experiment_queues])
+        # self.debug('resetting experiment stats. nruns={}, '
+        #            'nqueues={}'.format(self.nruns, len(self.experiment_queues)))
         self.calculate(force=True)
         super(StatsGroup, self).reset()
 
@@ -234,6 +241,8 @@ class StatsGroup(ExperimentStats):
         """
 
         if force or not self._total_time:
+            self.nruns = sum([len(ei.cleaned_automated_runs) for ei in self.experiment_queues])
+
             self.debug('calculating experiment stats')
             tt = sum([ei.stats.calculate_duration(ei.cleaned_automated_runs)
                       for ei in self.experiment_queues])
@@ -254,6 +263,22 @@ class StatsGroup(ExperimentStats):
             calculate the time at which a selected run will execute
         """
         self.debug('calculating time of run {}'.format(sel.runid))
+        st, et = self._calculate_at(sel)
+
+        if at_times:
+            self.end_at = self.format_duration(et)
+            if st:
+                self.start_at = self.format_duration(st)
+
+    def get_endtime(self, sel):
+        st, et = self._calculate_at(sel)
+        return et
+
+    def get_starttime(self, sel):
+        st, et = self._calculate_at(sel)
+        return st
+
+    def _calculate_at(self, sel):
         et = 0
         st = 0
         for ei in self.experiment_queues:
@@ -273,11 +298,7 @@ class StatsGroup(ExperimentStats):
                 break
             else:
                 et += ei.stats.calculate_duration()
-
-        if at_times:
-            self.end_at = self.format_duration(et)
-            if st:
-                self.start_at = self.format_duration(st)
+        return st, et
 
     @property
     def etf_iso(self):

@@ -15,23 +15,22 @@
 # ===============================================================================
 
 
-
 # =============enthought library imports=======================
 # =============standard library imports =======================
 import binascii
 import struct
 
+from pychron.hardware.core.checksum_helper import computeCRC
 # =============local library imports  =========================
 from pychron.hardware.core.exceptions import CRCError
-from serial_communicator import SerialCommunicator
-from pychron.hardware.core.checksum_helper import computeCRC
+from .serial_communicator import SerialCommunicator
 
 
 class ModbusCommunicator(SerialCommunicator):
-    '''
+    """
         modbus message syntax
         [Device address][function code][data][error check]
-    '''
+    """
 
     slave_address = '01'
     device_word_order = 'low_high'
@@ -41,8 +40,8 @@ class ModbusCommunicator(SerialCommunicator):
     #    scheduler = None
 
     def load(self, config, path):
-        '''
-        '''
+        """
+        """
         super(ModbusCommunicator, self).load(config, path)
         #        SerialCommunicator.load(self, config, path)
         self.set_attribute(config, 'slave_address',
@@ -50,8 +49,8 @@ class ModbusCommunicator(SerialCommunicator):
 
     def write(self, register, value, nregisters=1,
               response_type='register_write', **kw):
-        '''
-        '''
+        """
+        """
         if nregisters == 1:
             return self.set_single_register(register, value,
                                             response_type, **kw)
@@ -63,9 +62,9 @@ class ModbusCommunicator(SerialCommunicator):
         return self.write(*args, **kw)
 
     def read(self, register, response_type='float', nregisters=1, **kw):
-        '''
-        '''
-        if not kw.has_key('nbytes'):
+        """
+        """
+        if 'nbytes' not in kw:
             if response_type == 'int':
                 kw['nbytes'] = 7
             elif response_type == 'float':
@@ -75,8 +74,8 @@ class ModbusCommunicator(SerialCommunicator):
                                           nregisters, response_type, **kw)
 
     def _execute_request(self, args, response_type, **kw):
-        '''
-        '''
+        """
+        """
         cmd = ''.join([self.slave_address] + args)
 
         # convert hex string into list of ints
@@ -91,49 +90,78 @@ class ModbusCommunicator(SerialCommunicator):
         if self.scheduler is not None:
             resp = self.scheduler.schedule(self.ask, args=(cmd,),
                                            kwargs=kw
-            )
+                                           )
         else:
             resp = self.ask(cmd, **kw)
 
         return self._parse_response(cmd, resp, response_type)
 
     def _parse_hexstr(self, hexstr, return_type='hex'):
-        '''
-        '''
-        gen = range(0, len(hexstr), 2)
-        if return_type == 'int':
-            return [int(hexstr[i:i + 2], 16) for i in gen]
+        """
+        """
+
+        if isinstance(hexstr, bytes):
+            if return_type == 'int':
+                def func(b):
+                    return int.from_bytes([b], 'big')
+            else:
+                def func(b):
+                    return b
+
+            return [func(b) for b in hexstr]
         else:
-            return [hexstr[i:i + 2] for i in gen]
+            gen = range(0, len(hexstr), 2)
+            if return_type == 'int':
+                return [int(hexstr[i:i + 2], 16) for i in gen]
+            else:
+                return [hexstr[i:i + 2] for i in gen]
+
+                # if return_type == 'int':
+                #     def func(b):
+                #         return int(b, 16)
+                # else:
+                #     def func(b):
+                #         return b
+                #
+                # return [func(b) for b in hexstr]
 
     def _parse_response(self, cmd, resp, response_type):
-        '''
-        '''
+        """
+        """
+        # self.debug('asdf {} {}'.format(cmd, resp))
         if resp is not None and resp is not 'simulation':
 
             args = self._parse_hexstr(resp)
             if args:
-                if args[0] != cmd[:2]:
-                    self.warning('{} != {}     {} >> {}'.format(cmd[:2],
-                                                                args[0], cmd, resp))
+                # self.debug('args={}'.format(args))
+                if bytes(args[:2]) != bytes.fromhex(cmd[:4]):
+                    self.warning('{} != {}     {} >> {}'.format(cmd[:4],
+                                                                args[:2], cmd, resp))
                     return
             else:
                 return
 
             # check the crc
-            cargs = self._parse_hexstr(resp, return_type='int')
+            # cargs = self._parse_hexstr(resp, return_type='int')
+            # self.debug('cargs {}'.format(cargs))
+            # self.debug('args {}'.format(args))
 
-            crc = ''.join(args[-2:])
-            calc_crc = computeCRC(cargs[:-2])
-            if not crc.upper() == calc_crc.upper():
-                msg='Returned CRC ({}) does not match calculated ({})'.format(crc, calc_crc)
+            # crc = ''.join([str(bytes([a]) for a in args[-2:]])
+            # self.debug('asdf {}'.format(args[-2:]))
+            # crc = bytes(args[-2:])
+            # calc_crc = computeCRC(args[:-2])
+            crc = args[-2:]
+            calc_crc = computeCRC(args[:-2])
+            calc_crc = [int(calc_crc[:2], 16), int(calc_crc[2:], 16)]
+            if not crc == calc_crc:
+                msg = 'Returned CRC ({}) does not match calculated ({})'.format(crc, calc_crc)
                 self.warning(msg)
                 raise CRCError('{} {}'.format(cmd, msg))
             else:
                 if response_type == 'register_write':
                     return True
-                ndata = int(args[2], 16)
-
+                # ndata = int(args[2], 16)
+                ndata = int.from_bytes([args[2]], 'big')
                 dataargs = args[3:3 + ndata]
                 if len(dataargs) < ndata:
                     ndata = 4
@@ -141,10 +169,12 @@ class ModbusCommunicator(SerialCommunicator):
 
                 if ndata > 2:
                     data = []
-                    for i in range(ndata / 4):
+                    for i in range(ndata // 4):
                         s = 4 * i
-                        low_word = ''.join(dataargs[s:s + 2])
-                        high_word = ''.join(dataargs[s + 2:s + 4])
+                        low_word = ''.join(['{:02X}'.format(d) for d in dataargs[s:s+2]])
+                        high_word = ''.join(['{:02X}'.format(d) for d in dataargs[s+2:s+4]])
+                        # low_word = ''.join(dataargs[s:s + 2])
+                        # high_word = ''.join(dataargs[s + 2:s + 4])
 
                         if self.device_word_order == 'low_high':
                             '''
@@ -161,10 +191,9 @@ class ModbusCommunicator(SerialCommunicator):
                     data = ''.join(data)
 
                 if response_type == 'float':
-                    fmt_str = '!' + 'f' * (ndata / 4)
-                    resp = struct.unpack(fmt_str, data.decode('hex'))
+                    fmt_str = '!' + 'f' * (ndata//4)
+                    resp = struct.unpack(fmt_str, bytes.fromhex(data))
                     # return a single value
-
                     if ndata == 4:
                         return resp[0]
                     else:
@@ -172,13 +201,14 @@ class ModbusCommunicator(SerialCommunicator):
                         return resp
 
                 else:
-                    data = ''.join(args[3:3 + ndata])
-                    return int(data, 16)
+                    data = args[3:3 + ndata]
+                    return int.from_bytes(data, 'big')
+                    # return int(data, 16)
 
     def set_multiple_registers(self, startid,
                                nregisters, value, response_type, **kw):
-        '''
-        '''
+        """
+        """
 
         func_code = '10'
         data_address = '{:04X}'.format(int(startid))
@@ -186,7 +216,7 @@ class ModbusCommunicator(SerialCommunicator):
         nbytes = '{:02X}'.format(int(nregisters * 2))
 
         if isinstance(value, tuple):
-            value = ''.join(map('{:04X}'.format, value))
+            value = ''.join(['{:04X}'.format(vi) for vi in value])
         else:
             # convert decimal value to 32-bit float
             binstr = struct.pack('!f', value)
@@ -198,9 +228,11 @@ class ModbusCommunicator(SerialCommunicator):
                 low = hexstr[4:]
 
                 # flip order of words
-                value = ''.join([low, high])
+                # value = ''.join([low, high])
+                value = low + high
             else:
                 value = hexstr
+            value = value.decode('utf8')
 
         return self._execute_request([func_code, data_address, n,
                                       nbytes, value],
@@ -208,23 +240,23 @@ class ModbusCommunicator(SerialCommunicator):
 
     def set_single_register(self, rid, value,
                             response_type, func_code='06', **kw):
-        '''
-        '''
+        """
+        """
         register_addr = '{:04X}'.format(int(rid))
         value = '{:04X}'.format(int(value))
         return self._execute_request([func_code, register_addr, value],
                                      response_type, **kw)
 
     def read_holding_register(self, holdid, nregisters, response_type, **kw):
-        '''
-        '''
+        """
+        """
         func_code = '03'
         data_address = '{:04X}'.format(holdid)
         n = '{:04X}'.format(nregisters)
         return self._execute_request([func_code, data_address, n],
                                      response_type, **kw)
 
-#    def read_input_status(self, inputid, ninputs):
+# def read_input_status(self, inputid, ninputs):
 #        '''
 #        '''
 #        func_code = '02'

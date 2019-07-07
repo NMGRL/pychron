@@ -16,41 +16,32 @@
 
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Property, Int, Callable, Any, Str
+from __future__ import absolute_import
+from pyface.qt.QtCore import Qt
+from pyface.qt.QtGui import QColor, QWidget, QLabel
+from pyface.qt.QtGui import QGraphicsView, QGraphicsScene, QBrush, \
+    QPen, QRadialGradient, QVBoxLayout
+from traits.api import HasTraits, Int, Callable, Str, List
 from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
 
 # ============= standard library imports ========================
-from pyface.qt.QtGui import QColor, QFont, QWidget, QLabel
 
 # ============= local library imports  ==========================
-# ============= views ===================================
+
+
 COLORS = ['red', 'yellow', 'green', 'black']
 QT_COLORS = [QColor(ci) for ci in COLORS]
 
 
-# QT_COLORS = [
-#             QColor(220, 10, 10),
-#             QColor(250, 200, 0),
-#             QColor(10, 220, 10),
-#             QColor(0, 0, 0),
-#             ]
-
 class LED(HasTraits):
-    shape = 'circle'
-    state = Property(depends_on='_state')
-    _state = Int
+    state = Int
 
-    def _set_state(self, v):
+    def set_state(self, v):
         if isinstance(v, str):
-            self._state = COLORS.index(v)
-        elif isinstance(v, int):
-            self._state = v
-
-        self.trait_property_changed('state', 0)
-
-    def _get_state(self):
-        return self._state
+            self.state = COLORS.index(v)
+        elif isinstance(v, (bool, int)):
+            self.state = v
 
 
 class ButtonLED(LED):
@@ -62,10 +53,99 @@ class ButtonLED(LED):
 
 def change_intensity(color, fac):
     rgb = [color.red(), color.green(), color.blue()]
-    for i, intensity in enumerate(rgb):
-        rgb[i] = min(int(round(intensity * fac, 0)), 255)
-
+    rgb = [min(int(round(c * fac, 0)), 255) for c in rgb]
     return QColor(*rgb)
+
+
+def get_gradient(c, cx, cy, rad):
+    gradient = QRadialGradient(cx, cy, rad)  # (10, 10, 10, 10)
+    gradient.setColorAt(0, Qt.white)
+    gradient.setColorAt(1, c)
+    brush = QBrush(gradient)
+    return brush
+
+
+class LEDGraphicsView(QGraphicsView):
+    def __init__(self, rad, scene, *args, **kw):
+        super(LEDGraphicsView, self).__init__(*args, **kw)
+        self.setStyleSheet("border: 0px")
+        self.setMaximumWidth(rad + 15)
+        self.setMaximumHeight(rad + 15)
+        self.setScene(scene)
+
+
+DIAMETER_SCALAR = 1.75
+
+
+class _LEDEditor(Editor):
+    colors = List
+
+    def __init__(self, *args, **kw):
+        super(_LEDEditor, self).__init__(*args, **kw)
+        self._led_ellipse = None
+
+    def init(self, parent):
+        """
+        """
+        rad = self.factory.radius
+
+        if not rad:
+            rad = 20
+
+        if self.control is None:
+
+            scene = QGraphicsScene()
+
+            # system background color
+            scene.setBackgroundBrush(QBrush(QColor(237, 237, 237)))
+
+            x, y = 10, 10
+            cx = x + rad / DIAMETER_SCALAR
+            cy = y + rad / DIAMETER_SCALAR
+
+            self.colors = [QColor(ci) for ci in self.factory.colors]
+            brush = get_gradient(self.colors[self.value], cx, cy, rad / 2)
+            pen = QPen()
+            pen.setWidth(0)
+            self._led_ellipse = scene.addEllipse(x, y, rad, rad, pen=pen, brush=brush)
+
+            ctrl = LEDGraphicsView(rad, scene)
+
+            layout = QVBoxLayout()
+            layout.addWidget(ctrl)
+            layout.setAlignment(ctrl, Qt.AlignHCenter)
+
+            if self.factory.label:
+                txt = QLabel(self.factory.label)
+                layout.addWidget(txt)
+                layout.setAlignment(txt, Qt.AlignHCenter)
+
+            self.control = QWidget()
+            self.control.setLayout(layout)
+
+    def update_editor(self):
+        """
+        """
+        if self.control is not None:
+            rect = self._led_ellipse.rect()
+            x = rect.x()
+            y = rect.y()
+            r = rect.width()
+            x += r / DIAMETER_SCALAR
+            y += r / DIAMETER_SCALAR
+
+            self._led_ellipse.setBrush(get_gradient(self.colors[self.value], x, y, r / 2))
+
+
+class LEDEditor(BasicEditorFactory):
+    """
+    """
+    klass = _LEDEditor
+    radius = Int(20)
+    label = Str
+    colors = List(['red', 'yellow', 'green', 'black'])
+
+# ============= EOF ====================================
 
 
 # class qtLED(QLabel):
@@ -213,126 +293,3 @@ def change_intensity(color, fac):
 #             color2 = change_intensity(base_color, 0.5)
 #
 #         self._set_image(color1, color2)
-
-from pyface.qt.QtGui import QGraphicsView, QGraphicsScene, QBrush, \
-    QPen, QRadialGradient, QVBoxLayout
-from pyface.qt.QtCore import Qt
-
-
-class qtLED(QGraphicsView):
-    pass
-
-
-class _LEDEditor(Editor):
-    led = Any
-
-    def _get_color(self, state):
-        if isinstance(state, str):
-            c = QColor(state)
-        else:
-            c = QT_COLORS[state]
-        return c
-
-    def get_color(self, state, cx, cy, rad):
-        c = self._get_color(state)
-
-        gradient = QRadialGradient(cx, cy, rad)  # (10, 10, 10, 10)
-        gradient.setColorAt(0, Qt.white)
-        gradient.setColorAt(1, c)
-        brush = QBrush(gradient)
-        return brush
-
-    def init(self, parent):
-        """
-        """
-        rad = self.factory.radius
-        if not rad:
-            rad = 20
-
-        if self.control is None:
-
-            ctrl = qtLED()
-            layout = QVBoxLayout()
-
-            layout.addWidget(ctrl)
-
-            scene = QGraphicsScene()
-            #             ctrl.setStyleSheet("qtLED { border-style: none; }");
-            #             ctrl.setAutoFillBackground(True)
-
-            # system background color
-            scene.setBackgroundBrush(QBrush(QColor(237, 237, 237)))
-            ctrl.setStyleSheet("border: 0px")
-            ctrl.setMaximumWidth(rad + 15)
-            ctrl.setMaximumHeight(rad + 15)
-
-            x, y = 10, 10
-            cx = x + rad / 1.75
-            cy = y + rad / 1.75
-
-            brush = self.get_color(self.value.state, cx, cy, rad / 2)
-            pen = QPen()
-            pen.setWidth(0)
-            self.led = scene.addEllipse(x, y, rad, rad,
-                                        pen=pen,
-                                        brush=brush)
-
-            if self.factory.label:
-                txt = QLabel(self.factory.label)
-                layout.addWidget(txt)
-                layout.setAlignment(txt, Qt.AlignHCenter)
-                # txt = scene.addText(self.factory.label, QFont('arial 6'))
-                # txt.setPos(cx, 10)
-
-            ctrl.setScene(scene)
-
-            layout.setAlignment(ctrl, Qt.AlignHCenter)
-
-            self.value.on_trait_change(self.update_object, 'state')
-
-            self.control = QWidget()
-            self.control.setLayout(layout)
-
-    def update_object(self, obj, name, new):
-        """
-        """
-        if name == 'state':
-            if self.control is not None:
-                rect = self.led.rect()
-                x = rect.x()
-                y = rect.y()
-                r = rect.width()
-                x += r / 1.75
-                y += r / 1.75
-                #                 g = br.gradient()
-                #                 print self._get_color(new)
-                #                 g.setColorAt(1, self._get_color(new))
-                #                 x, y, r = 75, 75, 40
-                self.led.setBrush(self.get_color(new, x, y, r / 2))
-                #                 self.control.set_state(new)
-
-    def update_editor(self, *args, **kw):
-        """
-        """
-        if self.control:
-            pass
-
-
-# self.control = self._create_control(None)
-#        self.value.on_trait_change(self.update_object, 'state')
-
-#    def _create_control(self, parent):
-#        '''
-#
-#        '''
-#        panel = qtLED(parent, self.value, self.value.state)
-#        return panel
-
-class LEDEditor(BasicEditorFactory):
-    """
-    """
-    klass = _LEDEditor
-    radius = Int(20)
-    label = Str
-
-# ============= EOF ====================================

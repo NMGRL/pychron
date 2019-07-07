@@ -15,11 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Int
 # ============= standard library imports ========================
 import time
 # ============= local library imports  ==========================
 from pychron.hardware.core.core_device import CoreDevice
+from six.moves import range
 
 
 class AgilentUnit(CoreDevice):

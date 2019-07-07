@@ -19,6 +19,9 @@
 # ============= local library imports  ==========================
 
 
+from __future__ import absolute_import
+from __future__ import print_function
+import six
 class Processor(object):
     def __init__(self, func):
         self._func = func
@@ -39,7 +42,7 @@ class MapProcessor(MappingProcessor):
 
 class ReverseMapProcessor(MappingProcessor):
     def __call__(self, value):
-        return next((k for k, v in self.values.iteritems() if v == value), None)
+        return next((k for k, v in six.iteritems(self.values) if v == value), None)
 
 
 class DeviceProperty(object):
@@ -86,7 +89,7 @@ class DeviceProperty(object):
 
         try:
             value = self.fget(instance)
-        except BaseException, e:
+        except BaseException as e:
             instance.critical(e)
             raise e
 
@@ -98,7 +101,7 @@ class DeviceProperty(object):
 
         try:
             value = self.post_get(value, instance)
-        except BaseException, e:
+        except BaseException as e:
             instance.critical(e)
 
         self.set_cache(instance, value)
@@ -138,11 +141,11 @@ if __name__ == '__main__':
             return '10.34'
 
         def critical(self, msg):
-            print msg
+            print(msg)
 
     a = A()
-    print 'voltage_onoff {} type={}'.format(a.voltage_onoff, type(a.voltage_onoff))
-    print 'ambtemp {} type={}'.format(a.ambtemp, type(a.ambtemp))
+    print('voltage_onoff {} type={}'.format(a.voltage_onoff, type(a.voltage_onoff)))
+    print('ambtemp {} type={}'.format(a.ambtemp, type(a.ambtemp)))
 
     # print a.voltage_in, type(a.voltage_in)
 # ============= EOF =============================================

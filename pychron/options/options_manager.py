@@ -17,23 +17,29 @@
 import os
 
 import apptools.sweet_pickle as pickle
-from traits.api import Str, List, Button, Instance, Tuple, Property
-from traitsui.api import Controller, View, Item
+from traits.api import Str, List, Button, Instance, Tuple, Property, cached_property
+from traitsui.api import Controller, Item
 
-from pychron.core.helpers.filetools import list_directory2
-from pychron.file_defaults import SPECTRUM_PRESENTATION, RADIAL_SCREEN
+from pychron.core.helpers.filetools import glob_list_directory
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+from pychron.file_defaults import SPECTRUM_PRESENTATION, RADIAL_SCREEN, REGRESSION_SERIES_SCREEN, \
+    DEFINE_EQUILIBRATION_SCREEN
 from pychron.file_defaults import SPECTRUM_SCREEN, IDEOGRAM_SCREEN, IDEOGRAM_PRESENTATION, SERIES_SCREEN, BLANKS_SCREEN, \
     ICFACTOR_SCREEN, INVERSE_ISOCHRON_SCREEN, INVERSE_ISOCHRON_PRESENTATION, ISO_EVO_SCREEN, BLANKS_PRESENTATION
 from pychron.globals import globalv
 from pychron.loggable import Loggable
+from pychron.mdd.tasks.mdd_figure import MDDFigureOptions
 from pychron.options.blanks import BlanksOptions
-from pychron.options.flux import FluxOptions, VerticalFluxOptions
+from pychron.options.composite import CompositeOptions
+from pychron.options.define_equilibration import DefineEquilibrationOptions
+from pychron.options.flux import FluxOptions, VerticalFluxOptions, FluxVisualizationOptions
 from pychron.options.icfactor import ICFactorOptions
 from pychron.options.ideogram import IdeogramOptions
 from pychron.options.iso_evo import IsotopeEvolutionOptions
 from pychron.options.isochron import InverseIsochronOptions
 from pychron.options.options import BaseOptions, SubOptions
 from pychron.options.radial import RadialOptions
+from pychron.options.regression_series import RegressionSeriesOptions
 from pychron.options.series import SeriesOptions
 from pychron.options.spectrum import SpectrumOptions
 from pychron.options.xy_scatter import XYScatterOptions
@@ -42,6 +48,7 @@ from pychron.paths import paths
 
 class OptionsManager(Loggable):
     selected = Str
+    delete_enabled = Property(depends_on='names')
     names = List
     subview_names = Tuple
     subview = Instance(SubOptions)
@@ -56,12 +63,17 @@ class OptionsManager(Loggable):
 
     _cached_names = List
     _cached_detectors = List
+    _cached_atypes = List
     _default_options_txt = None
 
     def __init__(self, *args, **kw):
         super(OptionsManager, self).__init__(*args, **kw)
         self._populate()
         self._initialize()
+
+    @cached_property
+    def _get_delete_enabled(self):
+        return len(self.names) > 1
 
     def _get_new_name(self):
         return self._new_name
@@ -70,11 +82,11 @@ class OptionsManager(Loggable):
         self._new_name = v
 
     def _validate_new_name(self, v):
-        if v not in self.names:
-            return v
+        if all((a not in v) for a in ('\\', ' ', '/')):
+            if v not in self.names:
+                return v
 
     def set_detectors(self, dets):
-        print 'setdetcot', dets
         self._cached_detectors = dets
         if self.selected_options:
             self.selected_options.set_detectors(dets)
@@ -87,21 +99,42 @@ class OptionsManager(Loggable):
             # for p in self.plotter_options_list:
             #     p.set_names(names)
 
+    def set_analysis_types(self, atypes):
+        self._cached_atypes = atypes
+        if self.selected_options:
+            self.selected_options.set_analysis_types(atypes)
+
+    def set_reference_types(self, atypes):
+        if self.selected_options:
+            self.selected_options.set_reference_types(atypes)
+
     def _selected_options_changed(self, new):
         if new:
             if self._cached_names:
                 new.set_names(self._cached_names)
 
-            print 'selecae change', self._cached_detectors
             if self._cached_detectors:
                 new.set_detectors(self._cached_detectors)
+
+            if self._cached_atypes:
+                new.set_analysis_types(self._cached_atypes)
 
     def set_selected(self, obj):
         for name in self.names:
             if obj.name == name:
                 self.selected_options = obj
 
-    def save_selection(self):
+    def delete_selected(self):
+        if self.confirmation_dialog('Are you sure you want to delete "{}"'.format(self.selected)):
+            p = os.path.join(self.persistence_root, '{}.p'.format(self.selected))
+            os.remove(p)
+            self.refresh()
+
+    def refresh(self):
+        self._load_names()
+        self._initialize()
+
+    def save_selected(self):
         if not os.path.isdir(self.persistence_root):
             try:
                 os.mkdir(self.persistence_root)
@@ -110,19 +143,29 @@ class OptionsManager(Loggable):
                 os.mkdir(self.persistence_root)
 
         if self.selected:
-            with open(self.selected_options_path, 'w') as wfile:
+            with open(self.selected_options_path, 'wb') as wfile:
                 pickle.dump(self.selected, wfile)
+
+    def save_selected_as(self):
+        name = self.new_name
+
+        with open(os.path.join(self.persistence_root, '{}.p'.format(name)), 'wb') as wfile:
+            pickle.dump(self.selected_options, wfile)
+
+        self.refresh()
+        self.selected = name
+        self.save_selected()
 
     def save(self, name=None, obj=None):
         # dump the default plotter options
-        self.save_selection()
+        self.save_selected()
 
         if name is None:
             if self.selected:
                 obj = self.selected_options
                 name = self.selected
 
-        with open(os.path.join(self.persistence_root, '{}.p'.format(name)), 'w') as wfile:
+        with open(os.path.join(self.persistence_root, '{}.p'.format(name)), 'wb') as wfile:
             pickle.dump(obj, wfile)
 
     def add(self, name):
@@ -131,8 +174,6 @@ class OptionsManager(Loggable):
         self.save(name, p)
         self._load_names()
 
-        # print self.names
-        # print self.name
         self.selected = name
 
     def factory_default(self):
@@ -152,13 +193,12 @@ class OptionsManager(Loggable):
 
                     self.selected = name
                     break
+            else:
+                self.information_dialog('Factory Defaults not available for "{}". '
+                                        'Not a factory provided options set'.format(options_name))
 
-                    # warning(None, 'Factory defaults temporarily disabled')
-
-                    # print  os.path.isfile(self._defaults_path), self._defaults_path
-                    # if os.path.isfile(self._defaults_path):
-                    #     self.debug('load factory defaults {}'.format(self._defaults_path))
-                    #     self.selected_options.load_factory_defaults(self._defaults_path)
+        else:
+            self.information_dialog('Not Factory Defaults available')
 
     def _initialize(self):
         selected = self._load_selected_po()
@@ -168,7 +208,7 @@ class OptionsManager(Loggable):
         p = self.selected_options_path
         n = 'Default'
         if os.path.isfile(p):
-            with open(p, 'r') as rfile:
+            with open(p, 'rb') as rfile:
                 try:
                     n = pickle.load(rfile)
                 except (pickle.PickleError, EOFError):
@@ -188,9 +228,9 @@ class OptionsManager(Loggable):
         self._load_names()
 
     def _load_names(self):
-        self.names = [n for n in list_directory2(self.persistence_root,
-                                                 extension='.p',
-                                                 remove_extension=True) if n != 'selected']
+        self.names = [n for n in glob_list_directory(self.persistence_root,
+                                                     extension='.p',
+                                                     remove_extension=True) if n != 'selected']
 
     def _selected_subview_changed(self, new):
         if new:
@@ -203,7 +243,7 @@ class OptionsManager(Loggable):
             p = os.path.join(self.persistence_root, '{}.p'.format(new.lower()))
             if os.path.isfile(p):
                 try:
-                    with open(p, 'r') as rfile:
+                    with open(p, 'rb') as rfile:
                         obj = pickle.load(rfile)
                 except BaseException:
                     pass
@@ -212,6 +252,8 @@ class OptionsManager(Loggable):
                 obj = self.options_klass()
 
             obj.initialize()
+            obj.setup()
+
             obj.name = new
             self.subview_names = obj.subview_names
             self.selected_options = obj
@@ -263,6 +305,12 @@ class IsotopeEvolutionOptionsManager(FigureOptionsManager):
     _default_options_txt = ISO_EVO_SCREEN
 
 
+class DefineEquilibrationOptionsManager(FigureOptionsManager):
+    id = 'define_equilibration'
+    options_klass = DefineEquilibrationOptions
+    _default_options_txt = DEFINE_EQUILIBRATION_SCREEN
+
+
 class FluxOptionsManager(FigureOptionsManager):
     id = 'flux'
     options_klass = FluxOptions
@@ -271,6 +319,11 @@ class FluxOptionsManager(FigureOptionsManager):
 class VerticalFluxOptionsManager(FigureOptionsManager):
     id = 'vertical_flux'
     options_klass = VerticalFluxOptions
+
+
+class FluxVisualizationOptionsManager(FigureOptionsManager):
+    id = 'flux_visualization'
+    options_klass = FluxVisualizationOptions
 
 
 class XYScatterOptionsManager(FigureOptionsManager):
@@ -324,6 +377,13 @@ class InverseIsochronOptionsManager(FigureOptionsManager):
     _default_options_txt = INVERSE_ISOCHRON_SCREEN
 
 
+class RegressionSeriesOptionsManager(FigureOptionsManager):
+    id = 'regression_series'
+    options_klass = RegressionSeriesOptions
+    _defaults = (('screen', REGRESSION_SERIES_SCREEN),)
+    _default_options_txt = REGRESSION_SERIES_SCREEN
+
+
 class RadialOptionsManager(FigureOptionsManager):
     id = 'radial'
     options_klass = RadialOptions
@@ -331,33 +391,47 @@ class RadialOptionsManager(FigureOptionsManager):
     _default_options_txt = RADIAL_SCREEN
 
 
+class MDDFigureOptionsManager(FigureOptionsManager):
+    id = 'mdd'
+    options_klass = MDDFigureOptions
+
+
+class CompositeOptionsManager(FigureOptionsManager):
+    id = 'composite'
+    options_klass = CompositeOptions
+
+
 class OptionsController(Controller):
     delete_options = Button
     add_options = Button
     save_options = Button
+    save_as_options = Button
     factory_default = Button
 
     def closed(self, info, is_ok):
         if is_ok:
-            self.model.save_selection()
+            self.model.save_selected()
 
     def controller_delete_options_changed(self, info):
-        print 'delete'
+        self.model.delete_selected()
 
     def controller_add_options_changed(self, info):
-        info = self.edit_traits(view=View(Item('new_name', label='Name'),
-                                          title='New Options',
-                                          kind='livemodal',
-                                          buttons=['OK', 'Cancel']))
+        info = self.edit_traits(view=okcancel_view(Item('new_name', label='Name'),
+                                                   title='New Options'))
         if info.result:
             self.model.add(self.model.new_name)
 
     def controller_save_options_changed(self, info):
         self.model.save()
 
+    def controller_save_as_options_changed(self, info):
+        info = self.edit_traits(view=okcancel_view(Item('new_name', label='Name'),
+                                                   title='New Options'))
+        if info.result:
+            self.model.save_selected_as()
+
     def controller_factory_default_changed(self, info):
         self.model.factory_default()
-
 
 # if __name__ == '__main__':
 #     paths.build('_dev')

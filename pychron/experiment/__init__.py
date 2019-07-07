@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-__version__ = '0.2'
+__version__ = '1.0'
 
 
 class ExtractionException(BaseException):
@@ -38,3 +38,13 @@ class PreExtractionCheckException(CheckException):
 
 class PreExecuteCheckException(CheckException):
     tag = 'PreExecute'
+
+    def __init__(self, msg, error=None):
+        self._error = error
+        super(PreExecuteCheckException, self).__init__(msg)
+
+    def __str__(self):
+        r = super(PreExecuteCheckException, self).__str__()
+        if r:
+            r = '{} {}'.format(r, self._error)
+        return r

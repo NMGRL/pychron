@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 
+from __future__ import absolute_import
 from apptools.preferences.preference_binding import bind_preference
 
 from pychron.envisage.view_util import open_view
@@ -49,36 +50,12 @@ class ThermoSpectrometerManager(BaseSpectrometerManager):
         v = SpectrometerParametersView(model=p)
         v.edit_traits()
 
-    def make_gains_dict(self):
-        spec = self.spectrometer
-        return {di.name: di.get_gain() for di in spec.detectors}
-
     def set_gains(self, *args, **kw):
         spec = self.spectrometer
 
         diff = any([di.gain_outdated for di in spec.detectors])
         if diff:
             return spec.set_gains(*args, **kw)
-
-    def make_parameters_dict(self):
-        spec = self.spectrometer
-        d = dict()
-        for attr, cmd in [('extraction_lens', 'ExtractionLens'),
-                          ('ysymmetry', 'YSymmetry'),
-                          ('zsymmetry', 'ZSymmetry'),
-                          ('zfocus', 'ZFocus')]:
-            v = spec.get_parameter('Get{}'.format(cmd))
-            if v is not None:
-                d[attr] = v
-
-        return d
-
-    def make_deflections_dict(self):
-        spec = self.spectrometer
-        d = dict()
-        for di in spec.detectors:
-            d[di.name] = di.read_deflection()
-        return d
 
     def bind_preferences(self):
         pref_id = 'pychron.spectrometer'
@@ -115,8 +92,6 @@ class ThermoSpectrometerManager(BaseSpectrometerManager):
     def _factory(self, klass):
         ion = self.application.get_service('pychron.spectrometer.ion_optics_manager.IonOpticsManager')
         return klass(spectrometer=self.spectrometer, ion_optics_manager=ion)
-
-
 
 
 # ============= EOF =============================================

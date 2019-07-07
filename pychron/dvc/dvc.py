@@ -13,101 +13,43 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-# ============= enthought library imports =======================
-import json
+
 import os
 import shutil
 import time
 from datetime import datetime
 from itertools import groupby
-from math import isnan
+from operator import itemgetter
 
+# ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
-from git import Repo
-from traits.api import Instance, Str, Set, List, provides
-from uncertainties import nominal_value, std_dev, ufloat
+from git import Repo, GitCommandError
+from traits.api import Instance, Str, Set, List, provides, Bool, Int
+from uncertainties import ufloat
 
-from pychron.core.helpers.filetools import remove_extension, list_subdirectories
+from pychron import json
+from pychron.core.helpers.filetools import remove_extension, list_subdirectories, list_directory
+from pychron.core.helpers.iterfuncs import groupby_key, groupby_repo
 from pychron.core.i_datastore import IDatastore
-from pychron.core.progress import progress_loader, progress_iterator
-from pychron.database.interpreted_age import InterpretedAge
-from pychron.dvc import dvc_dump, dvc_load, analysis_path, repository_path, AnalysisNotAnvailableError
+from pychron.core.progress import progress_loader, progress_iterator, open_progress
+from pychron.dvc import dvc_dump, dvc_load, analysis_path, repository_path, AnalysisNotAnvailableError, PATH_MODIFIERS
+from pychron.dvc.cache import DVCCache
 from pychron.dvc.defaults import TRIGA, HOLDER_24_SPOKES, LASER221, LASER65
-from pychron.dvc.dvc_analysis import DVCAnalysis, PATH_MODIFIERS
+from pychron.dvc.dvc_analysis import DVCAnalysis
 from pychron.dvc.dvc_database import DVCDatabase
-from pychron.dvc.func import find_interpreted_age_path, GitSessionCTX, push_repositories
-from pychron.dvc.meta_repo import MetaRepo, Production
+from pychron.dvc.func import find_interpreted_age_path, GitSessionCTX, push_repositories, make_interpreted_age_dict
+from pychron.dvc.meta_repo import MetaRepo, get_frozen_flux, get_frozen_productions
+from pychron.dvc.tasks.dvc_preferences import DVCConnectionItem
+from pychron.dvc.util import Tag, DVCInterpretedAge
 from pychron.envisage.browser.record_views import InterpretedAgeRecordView
 from pychron.git.hosts import IGitHost, CredentialException
 from pychron.git_archive.repo_manager import GitRepoManager, format_date, get_repository_branch
+from pychron.git_archive.views import StatusView
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.paths import paths, r_mkdir
-from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS, NULL_STR
-
-TESTSTR = {'blanks': 'auto update blanks', 'iso_evo': 'auto update iso_evo'}
-
-
-class DVCException(BaseException):
-    def __init__(self, attr):
-        self._attr = attr
-
-    def __repr__(self):
-        return 'DVCException: neither DVCDatabase or MetaRepo have {}'.format(self._attr)
-
-    def __str__(self):
-        return self.__repr__()
-
-
-class Tag(object):
-    name = None
-    path = None
-
-    @classmethod
-    def from_analysis(cls, an):
-        tag = cls()
-        tag.name = an.tag
-        tag.record_id = an.record_id
-        tag.repository_identifier = an.repository_identifier
-        print an.record_id, an.repository_identifier
-        tag.path = analysis_path(an.record_id, an.repository_identifier, modifier='tags')
-
-        return tag
-
-    def dump(self):
-        obj = {'name': self.name}
-        if not self.path:
-            self.path = analysis_path(self.record_id, self.repository_identifier, modifier='tags', mode='w')
-
-        # with open(self.path, 'w') as wfile:
-        #     json.dump(obj, wfile, indent=4)
-        dvc_dump(obj, self.path)
-
-
-class DVCInterpretedAge(InterpretedAge):
-    labnumber = None
-    isotopes = None
-    repository_identifier = None
-
-    def load_tag(self, obj):
-        self.tag = obj.get('name', '')
-
-    def from_json(self, obj):
-        for a in ('age', 'age_err', 'kca', 'kca_err', 'age_kind', 'kca_kind', 'mswd',
-                  'sample', 'material', 'identifier', 'nanalyses', 'irradiation', 'name',
-                  'uuid'):
-            setattr(self, a, obj.get(a, NULL_STR))
-
-        self.labnumber = self.identifier
-        self.uage = ufloat(self.age, self.age_err)
-        self._record_id = '{} {}'.format(self.identifier, self.name)
-
-    def get_value(self, attr):
-        return getattr(self, attr)
-
-    @property
-    def status(self):
-        return 'X' if self.is_omitted() else ''
+from pychron.processing.interpreted_age import InterpretedAge
+from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS, STARTUP_MESSAGE_POSITION
 
 
 @provides(IDatastore)
@@ -120,6 +62,7 @@ class DVC(Loggable):
     meta_repo = Instance('pychron.dvc.meta_repo.MetaRepo')
 
     meta_repo_name = Str
+    meta_repo_dirname = Str
     organization = Str
     default_team = Str
 
@@ -128,42 +71,70 @@ class DVC(Loggable):
     pulled_repositories = Set
     selected_repositories = List
 
+    data_sources = List
+    data_source = Instance(DVCConnectionItem)
+    favorites = List
+
+    use_cocktail_irradiation = Str
+    use_cache = Bool
+    max_cache_size = Int
+    _cache = None
+
     def __init__(self, bind=True, *args, **kw):
         super(DVC, self).__init__(*args, **kw)
 
         if bind:
             self._bind_preferences()
-            # self.synchronize()
-            # self._defaults()
 
     def initialize(self, inform=False):
         self.debug('Initialize DVC')
 
         if not self.meta_repo_name:
-            self.warning_dialog('Need to specify Meta Repository name in Preferences')
+            self.warning_dialog('Need to specify Meta Repository name in Preferences',
+                                position=STARTUP_MESSAGE_POSITION)
             return
-
-        self.open_meta_repo()
+        try:
+            self.open_meta_repo()
+        except BaseException as e:
+            self.warning('Error opening meta repo {}'.format(e))
+            return
 
         # update meta repo.
         self.meta_pull()
 
         if self.db.connect():
-            # self._defaults()
             return True
+
+    def find_associated_identifiers(self, samples):
+        from pychron.dvc.associated_identifiers import AssociatedIdentifiersView
+
+        av = AssociatedIdentifiersView()
+        for s in samples:
+            dbids = self.db.get_irradiation_position_by_sample(s.name, s.material, s.grainsize,
+                                                               s.principal_investigator,
+                                                               s.project)
+            av.add_items(dbids)
+
+        av.edit_traits(kind='modal')
 
     def open_meta_repo(self):
         mrepo = self.meta_repo
-        root = os.path.join(paths.dvc_dir, self.meta_repo_name)
-        self.debug('open meta repo {}'.format(root))
-        if os.path.isdir(os.path.join(root, '.git')):
-            self.debug('Opening Meta Repo')
-            mrepo.open_repo(root)
-        else:
-            url = self.make_url(self.meta_repo_name)
-            self.debug('cloning meta repo url={}'.format(url))
-            path = os.path.join(paths.dvc_dir, self.meta_repo_name)
-            self.meta_repo.clone(url, path)
+        if self.meta_repo_name:
+            name = self.meta_repo_name
+            if self.meta_repo_dirname:
+                name = self.meta_repo_dirname
+
+            root = os.path.join(paths.dvc_dir, name)
+            self.debug('open meta repo {}'.format(root))
+            if os.path.isdir(os.path.join(root, '.git')):
+                self.debug('Opening Meta Repo')
+                mrepo.open_repo(root)
+            else:
+                url = self.make_url(self.meta_repo_name)
+                self.debug('cloning meta repo url={}'.format(url))
+                path = os.path.join(paths.dvc_dir, name)
+                self.meta_repo.clone(url, path)
+            return True
 
     def synchronize(self, pull=True):
         """
@@ -203,41 +174,67 @@ class DVC(Loggable):
                                     timestamp=now)
         return True
 
-    def repository_db_sync(self, reponame):
+    def repository_db_sync(self, reponame, dry_run=False):
+        self.info('sync db with repo={} dry_run={}'.format(reponame, dry_run))
         repo = self._get_repository(reponame, as_current=False)
         ps = []
-        ans = self.db.repository_analyses(reponame)
-        for ai in ans:
-            p = analysis_path(ai.record_id, reponame)
-            obj = dvc_load(p)
+        db = self.db
+        repo.pull()
 
-            sample = None
-            project = None
-            material = None
-            changed = False
-            for attr, v in (('sample', sample),
-                            ('project', project),
-                            ('material', material)):
-                if obj.get(attr) != v:
-                    obj[attr] = v
-                    changed = True
+        with db.session_ctx():
+            ans = db.get_repository_analyses(reponame)
+            groups = [(g[0], list(g[1])) for g in groupby_key(ans, 'identifier')]
+            progress = open_progress(len(groups))
 
-            if changed:
-                ps.append(p)
-                dvc_dump(obj, p)
+            for ln, ais in groups:
+                progress.change_message('Syncing identifier: {}'.format(ln))
+                ip = db.get_identifier(ln)
+                dblevel = ip.level
+                irrad = dblevel.irradiation.name
+                level = dblevel.name
+                pos = ip.position
+                for ai in ais:
+                    p = analysis_path(ai, reponame)
 
-        if ps:
-            repo.pull()
+                    try:
+                        obj = dvc_load(p)
+                    except ValueError:
+                        print('skipping {}'.format(p))
+
+                    sample = ip.sample.name
+                    project = ip.sample.project.name
+                    material = ip.sample.material.name
+                    changed = False
+                    for attr, v in (('sample', sample),
+                                    ('project', project),
+                                    ('material', material),
+                                    ('irradiation', irrad),
+                                    ('irradiation_level', level),
+                                    ('irradiation_position', pos)):
+                        ov = obj.get(attr)
+                        if ov != v:
+                            self.info('{:<20s} repo={} db={}'.format(attr, ov, v))
+                            obj[attr] = v
+                            changed = True
+
+                    if changed:
+                        self.debug('{}'.format(p))
+                        ps.append(p)
+                        if not dry_run:
+                            dvc_dump(obj, p)
+            progress.close()
+
+        if ps and not dry_run:
+            # repo.pull()
             repo.add_paths(ps)
-            repo.commit('Synced repository with database {}'.format(self.db.datasource_url))
+            repo.commit('<SYNC> Synced repository with database {}'.format(self.db.datasource_url))
             repo.push()
+        self.info('finished db-repo sync for {}'.format(reponame))
 
     def repository_transfer(self, ans, dest):
-        def key(x):
-            return x.repository_identifier
 
         destrepo = self._get_repository(dest, as_current=False)
-        for src, ais in groupby(sorted(ans, key=key), key=key):
+        for src, ais in groupby_repo(ans):
             repo = self._get_repository(src, as_current=False)
             for ai in ais:
                 ops, nps = self._transfer_analysis_to(dest, src, ai.runid)
@@ -254,29 +251,6 @@ class DVC(Loggable):
             repo.commit('Transferred analyses to {}'.format(dest))
             dest.commit('Transferred analyses from {}'.format(src))
 
-    def _transfer_analysis_to(self, dest, src, rid):
-        p = analysis_path(rid, src)
-        np = analysis_path(rid, dest)
-
-        obj = dvc_load(p)
-        obj['repository_identifier'] = dest
-        dvc_dump(obj, p)
-
-        ops = [p]
-        nps = [np]
-
-        shutil.move(p, np)
-
-        for modifier in ('baselines', 'blanks', 'extraction',
-                         'intercepts', 'icfactors', 'peakcenter', '.data'):
-            p = analysis_path(rid, src, modifier=modifier)
-            np = analysis_path(rid, dest, modifier=modifier)
-            shutil.move(p, np)
-            ops.append(p)
-            nps.append(np)
-
-        return ops, nps
-
     def get_flux(self, irrad, level, pos):
         fd = self.meta_repo.get_flux(irrad, level, pos)
         return fd['j']
@@ -285,12 +259,8 @@ class DVC(Loggable):
         self.info('freeze flux')
 
         def ai_gen():
-            key = lambda x: x.irradiation
-            lkey = lambda x: x.level
-            rkey = lambda x: x.repository_identifier
-
-            for irrad, ais in groupby(sorted(ans, key=key), key=key):
-                for level, ais in groupby(sorted(ais, key=lkey), key=lkey):
+            for irrad, ais in groupby_key(ans, 'irradiation'):
+                for level, ais in groupby_key(ais, 'level'):
                     p = self.get_level_path(irrad, level)
                     obj = dvc_load(p)
                     if isinstance(obj, list):
@@ -298,7 +268,7 @@ class DVC(Loggable):
                     else:
                         positions = obj['positions']
 
-                    for repo, ais in groupby(sorted(ais, key=rkey), key=rkey):
+                    for repo, ais in groupby_repo(ais):
                         yield repo, irrad, level, {ai.irradiation_position: positions[ai.irradiation_position] for ai in
                                                    ais}
 
@@ -309,7 +279,7 @@ class DVC(Loggable):
             if prog:
                 prog.change_message('Freezing Flux {}{} Repository={}'.format(irrad, level, repo))
 
-            root = os.path.join(paths.repository_dataset_dir, repo, 'flux', irrad)
+            root = repository_path(repo, 'flux', irrad)
             r_mkdir(root)
 
             p = os.path.join(root, level)
@@ -328,10 +298,8 @@ class DVC(Loggable):
         self.info('freeze production ratios')
 
         def ai_gen():
-            key = lambda x: x.irradiation
-            lkey = lambda x: x.level
-            for irrad, ais in groupby(sorted(ans, key=key), key=key):
-                for level, ais in groupby(sorted(ais, key=lkey), key=lkey):
+            for irrad, ais in groupby_key(ans, 'irradiation'):
+                for level, ais in groupby_key(ais, 'level'):
                     pr = self.meta_repo.get_production(irrad, level)
                     for ai in ais:
                         yield pr, ai
@@ -343,63 +311,39 @@ class DVC(Loggable):
             if prog:
                 prog.change_message('Freezing Production {}'.format(ai.runid))
 
-            p = analysis_path(ai.runid, ai.repository_identifier, 'productions', mode='w')
+            p = analysis_path(ai, ai.repository_identifier, 'productions', mode='w')
             pr.dump(path=p)
             added.append((ai.repository_identifier, p))
 
         progress_loader(ai_gen(), func, threshold=1)
         self._commit_freeze(added, '<PR_FREEZE>')
 
-    def _commit_freeze(self, added, msg):
-        key = lambda x: x[0]
-        rr = sorted(added, key=key)
-        for repo, ps in groupby(rr, key=key):
-            rm = GitRepoManager()
-            rm.open_repo(repo, paths.repository_dataset_dir)
-            rm.add_paths(ps)
-            rm.smart_pull()
-            rm.commit(msg)
-
-    # database
-    # analysis manual edit
-    # def manual_intercepts(self, runid, experiment_identifier, values, errors):
-    #     return self._manual_edit(runid, experiment_identifier, values, errors, 'intercepts')
-    #
-    # def manual_blanks(self, runid, experiment_identifier, values, errors):
-    #     return self._manual_edit(runid, experiment_identifier, values, errors, 'blanks')
-    #
-    # def manual_baselines(self, runid, experiment_identifier, values, errors):
-    #     return self._manual_edit(runid, experiment_identifier, values, errors, 'baselines')
-    #
-    # def manual_baselines(self, runid, experiment_identifier, values, errors):
-    #     return self._manual_edit(runid, experiment_identifier, values, errors, 'baselines')
-
     def manual_edit(self, runid, repository_identifier, values, errors, modifier):
         self.debug('manual edit {} {} {}'.format(runid, repository_identifier, modifier))
         self.debug('values {}'.format(values))
         self.debug('errors {}'.format(errors))
         path = analysis_path(runid, repository_identifier, modifier=modifier)
-        with open(path, 'r') as rfile:
-            obj = json.load(rfile)
-            for k, v in values.iteritems():
-                o = obj[k]
-                o['manual_value'] = v
-                o['use_manual_value'] = True
-            for k, v in errors.iteritems():
-                o = obj[k]
-                o['manual_error'] = v
-                o['use_manual_error'] = True
+        obj = dvc_load(path)
+
+        for k, v in values.items():
+            o = obj[k]
+            o['manual_value'] = v
+            o['use_manual_value'] = True
+        for k, v in errors.items():
+            o = obj[k]
+            o['manual_error'] = v
+            o['use_manual_error'] = True
 
         dvc_dump(obj, path)
         return path
 
-    def revert_manual_edits(self, runid, repository_identifier):
+    def revert_manual_edits(self, analysis, repository_identifier):
         ps = []
         for mod in ('intercepts', 'blanks', 'baselines', 'icfactors'):
-            path = analysis_path(runid, repository_identifier, modifier=mod)
+            path = analysis_path(analysis, repository_identifier, modifier=mod)
             with open(path, 'r') as rfile:
                 obj = json.load(rfile)
-                for item in obj.itervalues():
+                for item in obj.values():
                     if isinstance(item, dict):
                         item['use_manual_value'] = False
                         item['use_manual_error'] = False
@@ -413,58 +357,103 @@ class DVC(Loggable):
         if self.repository_add_paths(repository_identifier, ps):
             self.repository_commit(repository_identifier, msg)
 
-    # analysis processing
-    def analysis_has_review(self, ai, attr):
-        return True
-        # test_str = TESTSTR[attr]
-        # repo = self._get_experiment_repo(ai.experiment_id)
-        # for l in repo.get_log():
-        #     if l.message.startswith(test_str):
-        #         self.debug('{} {} reviewed'.format(ai, attr))
-        #         return True
-        # else:
-        #     self.debug('{} {} not reviewed'.format(ai, attr))
+    def status_view(self, repo):
+        repo = self._get_repository(repo, as_current=False)
+        v = StatusView(status=repo.status())
+        v.edit_traits()
 
-    def update_analyses(self, ans, modifier, msg):
-        key = lambda x: x.repository_identifier
-        ans = sorted(ans, key=key)
+    def add_bookmark(self, repo, name, message=None, hexsha=None):
+        if not message:
+            message = 'No message provided'
+        repo = self._get_repository(repo, as_current=False)
+        repo.add_tag(name, message, hexsha)
+
+    def update_analysis_paths(self, items, msg):
+        """
+        items is a list of (analysis, path) tuples
+        :param items:
+        :param msg:
+        :return:
+        """
         mod_repositories = []
-        for expid, ais in groupby(ans, key=key):
-            paths = map(lambda x: analysis_path(x.record_id, x.repository_identifier, modifier=modifier), ais)
-            # print expid, modifier, paths
-            if self.repository_add_paths(expid, paths):
+
+        def key(x):
+            return x[0].repository_identifier
+
+        for expid, ais in groupby(sorted(items, key=key), key=key):
+            ps = [p for _, p in ais]
+            if self.repository_add_paths(expid, ps):
                 self.repository_commit(expid, msg)
                 mod_repositories.append(expid)
 
-        # ais = map(analysis_path, ais)
-        #     if self.experiment_add_analyses(exp, ais):
-        #         self.experiment_commit(exp, msg)
-        #         mod_experiments.append(exp)
         return mod_repositories
 
-    def update_tag(self, an):
-        tag = Tag.from_analysis(an)
+    def update_analyses(self, ans, modifiers, msg):
+        if not isinstance(modifiers, (list, tuple)):
+            modifiers = (modifiers,)
+
+        mod_repositories = []
+        for expid, ais in groupby_repo(ans):
+            ps = [analysis_path(x, x.repository_identifier, modifier=modifier) for x in ais for modifier in modifiers]
+            if self.repository_add_paths(expid, ps):
+                self.repository_commit(expid, msg)
+                mod_repositories.append(expid)
+        return mod_repositories
+
+    def update_tag(self, an, add=True, **kw):
+        tag = Tag.from_analysis(an, **kw)
         tag.dump()
 
         expid = an.repository_identifier
-        return self.repository_add_paths(expid, tag.path)
+        if add:
+            return self.repository_add_paths(expid, tag.path)
+        else:
+            return tag.path
+
+    def delete_existing_icfactors(self, ai, dets):
+        # remove all icfactors not in dets
+        if dets:
+            self.info('Delete existing icfactors for {}'.format(ai))
+            ai.delete_icfactors(dets)
+            if self._cache:
+                self._cache.remove(ai.uiid)
 
     def save_icfactors(self, ai, dets, fits, refs):
         if fits and dets:
             self.info('Saving icfactors for {}'.format(ai))
             ai.dump_icfactors(dets, fits, refs, reviewed=True)
+            if self._cache:
+                self._cache.remove(ai.uiid)
 
     def save_blanks(self, ai, keys, refs):
         if keys:
             self.info('Saving blanks for {}'.format(ai))
             ai.dump_blanks(keys, refs, reviewed=True)
+            if self._cache:
+                self._cache.remove(ai.uiid)
+
+    def save_defined_equilibration(self, ai, keys):
+        if keys:
+            self.info('Saving equilibration for {}'.format(ai))
+            if self._cache:
+                self._cache.remove(ai.uiid)
+            return ai.dump_equilibration(keys, reviewed=True)
 
     def save_fits(self, ai, keys):
         if keys:
             self.info('Saving fits for {}'.format(ai))
             ai.dump_fits(keys, reviewed=True)
+            if self._cache:
+                self._cache.remove(ai.uiid)
 
     def save_flux(self, identifier, j, e):
+        """
+        user manually edit flux via the automated run factory
+        :param identifier:
+        :param j:
+        :param e:
+        :return:
+        """
         self.meta_pull()
 
         with self.session_ctx(use_parent_session=False):
@@ -472,20 +461,48 @@ class DVC(Loggable):
             if irp:
                 level = irp.level
                 irradiation = level.irradiation
+                self._save_j(irradiation.name, level.name, irp.position, identifier,
+                             j, e, 0, 0, 0, None, None, None, False)
 
-                self.save_j(irradiation.name, level.name, irp.position, identifier, j, e, 0, 0, None, None)
                 self.meta_commit('User manual edited flux')
         self.meta_push()
 
-    def save_j(self, irradiation, level, pos, identifier, j, e, mj, me, decay, analyses, add=True):
-        self.info('Saving j for {}{}:{} {}, j={} +/-{}'.format(irradiation, level,
-                                                               pos, identifier, j, e))
-        self.meta_repo.update_flux(irradiation, level, pos, identifier, j, e, mj, me, decay, analyses, add)
+    def save_flux_position(self, flux_position, options, decay_constants, add=False):
+        """
+        save flux called from FluxPersistNode
 
-        with self.session_ctx(use_parent_session=False):
-            ip = self.get_identifier(identifier)
-            ip.j = j
-            ip.j_err = e
+        :param flux_position:
+        :param options:
+        :param decay_constants:
+        :param add:
+        :return:
+        """
+
+        irradiation = flux_position.irradiation
+        level = flux_position.level
+        pos = flux_position.hole_id
+        identifier = flux_position.identifier
+        j = flux_position.j
+        e = flux_position.jerr
+        mj = flux_position.mean_j
+        me = flux_position.mean_jerr
+        analyses = flux_position.analyses
+        position_jerr = flux_position.position_jerr
+
+        self._save_j(irradiation, level, pos, identifier, j, e, mj, me, position_jerr, decay_constants, analyses,
+                     options, add)
+
+    def save_csv_dataset(self, name, repository, lines):
+
+        repo = self.get_repository(repository)
+        root = os.path.join(repo.path, 'csv')
+        if not os.path.isdir(root):
+            os.mkdir(root)
+
+        p = os.path.join(root, '{}.csv'.format(name))
+        with open(p, 'w') as wfile:
+            wfile.writelines(lines)
+        return p
 
     def remove_irradiation_position(self, irradiation, level, hole):
         db = self.db
@@ -497,31 +514,63 @@ class DVC(Loggable):
         self.meta_repo.remove_irradiation_position(irradiation, level, hole)
 
     def find_interpreted_ages(self, identifiers, repositories):
+        self.debug('find interpreted ages {}, {}'.format(identifiers, repositories))
         ias = [InterpretedAgeRecordView(idn, path, dvc_load(path))
                for idn in identifiers
                for path in find_interpreted_age_path(idn, repositories)]
 
         return ias
 
-    def find_references(self, ans, atypes, hours, exclude=None, make_records=True, **kw):
-        records = self.db.find_references(ans, atypes, hours, exclude=exclude, **kw)
+    def find_flux_monitors(self, irradiation, level, sample, make_records=True):
+        db = self.db
+        with db.session_ctx():
+            ans = db.get_flux_monitor_analyses(irradiation, level, sample)
+            for a in ans:
+                a.bind()
+
+            if make_records:
+                ans = self.make_analyses(ans)
+            return ans
+
+    def find_references_by_load(self, load, atypes, make_records=True, **kw):
+        records = self.db.find_references_by_load(load, atypes, **kw)
+        if records:
+
+            for r in records:
+                r.bind()
+
+            if make_records:
+                records = self.make_analyses(records)
+            return records
+
+    def find_references(self, times, atypes, hours, exclude=None, make_records=True, **kw):
+        records = self.db.find_references(times, atypes, hours, exclude=exclude, **kw)
 
         if records:
+            for r in records:
+                r.bind()
+
             if make_records:
                 records = self.make_analyses(records)
             return records
 
     def make_interpreted_ages(self, ias):
+        self.debug('making interpreted ages {}'.format(ias))
+        if not isinstance(ias, (tuple, list)):
+            ias = (ias,)
+
         def func(x, prog, i, n):
             if prog:
                 prog.change_message('Making Interpreted age {}'.format(x.name))
+
             obj = dvc_load(x.path)
+            print('asdfasdf', x.path, obj)
             ia = DVCInterpretedAge()
             ia.repository_identifier = os.path.basename(os.path.dirname(os.path.dirname(os.path.dirname(x.path))))
             ia.from_json(obj)
 
             try:
-                ta = analysis_path(ia.record_id, ia.repository_identifier, modifier='tags')
+                ta = analysis_path(ia, ia.repository_identifier, modifier='tags')
                 if ta is not None:
                     ia.load_tag(dvc_load(ta))
             except AnalysisNotAnvailableError:
@@ -534,14 +583,14 @@ class DVC(Loggable):
     def get_analysis(self, uuid):
         an = self.db.get_analysis_uuid(uuid)
         if an:
-            return self.make_analyses(an.record_views)
+            return self.make_analysis(an)
 
     def make_analysis(self, record, *args, **kw):
         a = self.make_analyses((record,), *args, **kw)
         if a:
             return a[0]
 
-    def make_analyses(self, records, calculate_f_only=False):
+    def make_analyses(self, records, calculate_f_only=False, reload=False, quick=False, use_progress=True):
         if not records:
             return []
 
@@ -550,42 +599,173 @@ class DVC(Loggable):
         # load repositories
         st = time.time()
 
+        if self.use_cache:
+            cached_records = []
+            nrecords = []
+            cache = self._cache
+
+            # get items from the cache
+            for ri in records:
+                r = cache.get(ri.uuid)
+                if r is not None:
+                    cached_records.append(r)
+                else:
+                    nrecords.append(ri)
+
+            records = nrecords
+
         def func(xi, prog, i, n):
             if prog:
                 prog.change_message('Syncing repository= {}'.format(xi))
-            self.sync_repo(xi, use_progress=False)
+            try:
+                self.sync_repo(xi, use_progress=False)
+            except BaseException:
+                pass
+
+        bad_records = [r for r in records if r.repository_identifier is None]
+        if bad_records:
+            self.warning_dialog('Missing Repository Associations. Contact an expert!'
+                                'Cannot load analyses "{}"'.format(','.join([r.record_id for r in
+                                                                             bad_records])))
+            records = [r for r in records if r.repository_identifier is not None]
+
+        if not records:
+            if self.use_cache:
+                cache.clean()
+                return cached_records
+            else:
+                return []
 
         exps = {r.repository_identifier for r in records}
-        progress_iterator(exps, func, threshold=1)
-        # for ei in exps:
 
-        make_record = self._make_record
+        if use_progress:
+            progress_iterator(exps, func, threshold=1)
+        else:
+            for ei in exps:
+                self.sync_repo(ei, use_progress=False)
+
+        branches = {ei: get_repository_branch(repository_path(ei)) for ei in exps}
+
+        fluxes = {}
+        productions = {}
+        chronos = {}
+        sens = {}
+        frozen_fluxes = {}
+        frozen_productions = {}
+        meta_repo = self.meta_repo
+        use_cocktail_irradiation = self.use_cocktail_irradiation
+        if not quick:
+            for exp in exps:
+                ps = get_frozen_productions(exp)
+                frozen_productions.update(ps)
+
+            for r in records:
+                irrad = r.irradiation
+                if irrad != 'NoIrradiation':
+                    if irrad not in frozen_fluxes:
+                        frozen_fluxes[irrad] = get_frozen_flux(r.repository_identifier, r.irradiation)
+
+                    level = r.irradiation_level
+                    if irrad in fluxes:
+                        flux_levels = fluxes[irrad]
+                        prod_levels = productions[irrad]
+                    else:
+                        flux_levels = {}
+                        prod_levels = {}
+
+                    if level not in flux_levels:
+                        flux_levels[level] = meta_repo.get_flux_positions(irrad, level)
+                        prod_levels[level] = meta_repo.get_production(irrad, level)
+
+                    if irrad not in chronos:
+                        chronos[irrad] = meta_repo.get_chronology(irrad)
+
+                    if irrad not in fluxes:
+                        fluxes[irrad] = flux_levels
+                        productions[irrad] = prod_levels
+
+                if use_cocktail_irradiation and r.analysis_type == 'cocktail' and 'cocktail' not in chronos:
+                    cirr = meta_repo.get_cocktail_irradiation()
+                    chronos['cocktail'] = cirr.get('chronology')
+                    fluxes['cocktail'] = cirr.get('flux')
+
+            sens = meta_repo.get_sensitivities()
 
         def func(*args):
-            # t = time.time()
             try:
-                r = make_record(calculate_f_only=calculate_f_only, *args)
-                # print 'make time {}'.format(time.time()-t)
-                return r
+                return self._make_record(branches=branches, chronos=chronos, productions=productions,
+                                         fluxes=fluxes, calculate_f_only=calculate_f_only, sens=sens,
+                                         frozen_fluxes=frozen_fluxes, frozen_productions=frozen_productions,
+                                         quick=quick,
+                                         reload=reload, *args)
             except BaseException:
-                self.debug('make analysis exception')
+                record = args[0]
+                self.debug('make analysis exception: repo={}, record_id={}'.format(record.repository_identifier,
+                                                                                   record.record_id))
                 self.debug_exception()
 
-        ret = progress_loader(records, func, threshold=1, step=25)
+        if use_progress:
+            ret = progress_loader(records, func, threshold=1, step=25)
+        else:
+            ret = [func(r, None, 0, 0) for r in records]
+
         et = time.time() - st
 
-        n = len(records)
+        n = len(ret)
+        if n:
+            self.debug('Make analysis time, total: {}, n: {}, average: {}'.format(et, n, et / float(n)))
 
-        self.debug('Make analysis time, total: {}, n: {}, average: {}'.format(et, n, et / float(n)))
+        if self.use_cache:
+            cache.clean()
+            ret = cached_records + ret
+
         return ret
 
     # repositories
+    def find_changes(self, names, remote, branch):
+        gs = self.application.get_services(IGitHost)
+        for gi in gs:
+            gi.new_session()
+
+        def func(item, prog, i, n):
+            name = item.name
+            if prog:
+                prog.change_message('Examining: {}({}/{})'.format(name, i, n))
+            self.debug('examining {}'.format(name))
+
+            r = Repo(repository_path(name))
+            lc = r.commit(branch).hexsha
+
+            for gi in gs:
+                outdated, sha = gi.up_to_date(self.organization, name, lc, branch)
+                if outdated:
+                    try:
+                        fsha = r.commit('FETCH_HEAD').hexsha
+                    except BaseException:
+                        fsha = None
+
+                    try:
+                        if fsha != sha:
+                            self.debug('fetching {}'.format(name))
+                            r.git.fetch()
+
+                        item.dirty = True
+                        item.update(fetch=False)
+                    except GitCommandError as e:
+                        self.warning('error examining {}. {}'.format(name, e))
+                else:
+                    item.update(fetch=False)
+
+        progress_loader(names, func, threshold=1)
+        for gi in gs:
+            gi.close_session()
+
     def repository_add_paths(self, repository_identifier, paths):
         repo = self._get_repository(repository_identifier)
         return repo.add_paths(paths)
 
     def repository_commit(self, repository, msg):
-        self.debug('Experiment commit: {} msg: {}'.format(repository, msg))
+        self.debug('Repository commit: {} msg: {}'.format(repository, msg))
         repo = self._get_repository(repository)
         repo.commit(msg)
 
@@ -605,6 +785,7 @@ class DVC(Loggable):
         gs = self.application.get_services(IGitHost)
         if gs:
             for gi in gs:
+                self.debug('load repositories from {}'.format(self.organization))
                 ri = gi.get_repository_names(self.organization)
                 rs.extend(ri)
         else:
@@ -627,7 +808,7 @@ class DVC(Loggable):
         pull or clone an repo
 
         """
-        root = os.path.join(paths.repository_dataset_dir, name)
+        root = repository_path(name)
         exists = os.path.isdir(os.path.join(root, '.git'))
         self.debug('sync repository {}. exists={}'.format(name, exists))
 
@@ -669,7 +850,15 @@ class DVC(Loggable):
                                    head.message)
         self.information_dialog(msg)
 
+    def pull_repository(self, repo):
+        repo = self._get_repository(repo)
+        self.debug('pull repository {}'.format(repo))
+        for gi in self.application.get_services(IGitHost):
+            self.debug('pull to remote={}, url={}'.format(gi.default_remote_name, gi.remote_url))
+            repo.smart_pull(remote=gi.default_remote_name)
+
     def push_repository(self, repo):
+        repo = self._get_repository(repo)
         self.debug('push repository {}'.format(repo))
         for gi in self.application.get_services(IGitHost):
             self.debug('pushing to remote={}, url={}'.format(gi.default_remote_name, gi.remote_url))
@@ -678,6 +867,10 @@ class DVC(Loggable):
     def push_repositories(self, changes):
         for gi in self.application.get_services(IGitHost):
             push_repositories(changes, gi.default_remote_name, quiet=False)
+
+    def delete_local_commits(self, repo, **kw):
+        r = self._get_repository(repo)
+        r.delete_local_commits(**kw)
 
     # IDatastore
     def get_greatest_aliquot(self, identifier):
@@ -696,8 +889,18 @@ class DVC(Loggable):
     def update_flux(self, *args, **kw):
         self.meta_repo.update_flux(*args, **kw)
 
-    def set_identifier(self, *args):
-        self.meta_repo.set_identifier(*args)
+    def set_identifier(self, irradiation, level, position, identifier):
+
+        dbpos = self.db.get_irradiation_position(irradiation, level, position)
+        if dbpos:
+            dbpos.identifier = identifier
+            self.db.commit()
+
+        self.meta_repo.set_identifier(irradiation, level, position, identifier)
+
+    def add_production_to_irradiation(self, irrad, reactor, params):
+        self.meta_repo.add_production_to_irradiation(irrad, reactor, params)
+        self.meta_commit('updated default production. {}'.format(reactor))
 
     def update_chronology(self, name, doses):
         self.meta_repo.update_chronology(name, doses)
@@ -716,7 +919,7 @@ class DVC(Loggable):
         changes = self.meta_repo.has_staged()
         if changes:
             self.debug('meta repo has changes: {}'.format(changes))
-            self.meta_repo.report_status()
+            self.meta_repo.report_local_changes()
             self.meta_repo.commit(msg)
             self.meta_repo.clear_cache = True
         else:
@@ -729,6 +932,10 @@ class DVC(Loggable):
         return self.meta_repo.get_production(irrad, name)
 
     # get
+    def get_csv_datasets(self, repo):
+        repo = self.get_repository(repo)
+        return list_directory(os.path.join(repo.path, 'csv'), extension='.csv', remove_extension=True)
+
     def get_local_repositories(self):
         return list_subdirectories(paths.repository_dataset_dir)
 
@@ -740,36 +947,41 @@ class DVC(Loggable):
 
     def get_irradiation_geometry(self, irrad, level):
         dblevel = self.db.get_irradiation_level(irrad, level)
-        return self.meta_repo.get_irradiation_holder_holes(dblevel.holder)
+
+        return self.meta_repo.get_irradiation_holder_holes(dblevel.holder), dblevel.holder
 
     def get_irradiation_names(self):
         irrads = self.db.get_irradiations()
         return [i.name for i in irrads]
 
     # add
+    def add_interpreted_ages(self, rid, iass):
+        ps = []
+        ialabels = []
+        for ia in iass:
+            d = make_interpreted_age_dict(ia)
+            rid, p = self._add_interpreted_age(ia, d)
+            ps.append(p)
+            ialabels.append('{} {} {}'.format(ia.name, ia.identifier, ia.sample))
+
+        if self.repository_add_paths(rid, ps):
+            sparrow = self.application.get_service('pychron.sparrow.sparrow.Sparrow')
+            if sparrow:
+                if sparrow.connect():
+                    for p in ps:
+                        sparrow.insert_ia(p)
+                else:
+                    self.warning('Connection failed. Cannot add IAs to Sparrow')
+
+            self.repository_commit(rid, '<IA> added interpreted ages {}'.format(','.join(ialabels)))
+            return True
+
     def add_interpreted_age(self, ia):
-
-        a = ia.get_ma_scaled_age()
-        mswd = ia.preferred_mswd
-
-        if isnan(mswd):
-            mswd = 0
-        d = {attr: getattr(ia, attr) for attr in ('sample', 'material', 'identifier', 'nanalyses', 'irradiation',
-                                                  'name', 'uuid', 'include_j_error_in_mean',
-                                                  'include_j_error_in_plateau',
-                                                  'include_j_error_in_individual_analyses')}
-        d.update(age=float(nominal_value(a)),
-                 age_err=float(std_dev(a)),
-                 display_age_units=ia.age_units,
-                 age_kind=ia.preferred_age_kind,
-                 kca_kind=ia.preferred_kca_kind,
-                 kca=float(ia.preferred_kca_value),
-                 kca_err=float(ia.preferred_kca_error),
-                 mswd=float(mswd),
-                 analyses=[dict(uuid=ai.uuid, tag=ai.tag, plateau_step=ia.get_is_plateau_step(ai)) for ai in
-                           ia.all_analyses])
-
-        self._add_interpreted_age(ia, d)
+        d = make_interpreted_age_dict(ia)
+        rid, p = self._add_interpreted_age(ia, d)
+        if self.repository_add_paths(rid, p):
+            self.repository_commit(rid, '<IA> added interpreted age '
+                                        '{} identifier={} sample={}'.format(ia.name, ia.identifier, ia.sample))
 
     def add_repository_association(self, expid, runspec):
         db = self.db
@@ -786,8 +998,8 @@ class DVC(Loggable):
                 repo = self._get_repository(expid)
 
                 for m in PATH_MODIFIERS:
-                    src = analysis_path(runspec.record_id, src_expid, modifier=m)
-                    dest = analysis_path(runspec.record_id, expid, modifier=m, mode='w')
+                    src = analysis_path(runspec, src_expid, modifier=m)
+                    dest = analysis_path(runspec, expid, modifier=m, mode='w')
 
                     shutil.copyfile(src, dest)
                     repo.add(dest, commit=False)
@@ -804,27 +1016,27 @@ class DVC(Loggable):
 
         return added
 
-    def add_project(self, name, pi=None, **kw):
+    def add_project(self, name, principal_investigator=None, **kw):
         added = False
         db = self.db
-        if not db.get_project(name, pi):
+        if not db.get_project(name, principal_investigator):
             added = True
-            db.add_project(name, pi, **kw)
+            db.add_project(name, principal_investigator, **kw)
         return added
 
-    def add_sample(self, name, project, pi, material, grainsize=None, note=None):
+    def add_sample(self, name, project, pi, material, grainsize=None, note=None, **kw):
         added = False
         db = self.db
         if not db.get_sample(name, project, pi, material, grainsize):
             added = True
-            db.add_sample(name, project, pi, material, grainsize, note=note)
+            db.add_sample(name, project, pi, material, grainsize, note=note, **kw)
         return added
 
-    def add_principal_investigator(self, name):
+    def add_principal_investigator(self, name, **kw):
         added = False
         db = self.db
         if not db.get_principal_investigator(name):
-            db.add_principal_investigator(name)
+            db.add_principal_investigator(name, **kw)
             added = True
         return added
 
@@ -849,7 +1061,7 @@ class DVC(Loggable):
         return added
 
     def clone_repository(self, identifier):
-        root = os.path.join(paths.repository_dataset_dir, identifier)
+        root = repository_path(identifier)
         if not os.path.isdir(root):
             self.debug('cloning {}'.format(root))
             url = self.make_url(identifier)
@@ -857,12 +1069,21 @@ class DVC(Loggable):
         else:
             self.debug('{} already exists'.format(identifier))
 
+    def check_remote_repository_exists(self, name):
+        gs = self.application.get_services(IGitHost)
+        for gi in gs:
+            if gi.remote_exists(self.organization, name):
+                return True
+
     def add_repository(self, identifier, principal_investigator, inform=True):
         self.debug('trying to add repository identifier={}, pi={}'.format(identifier, principal_investigator))
 
-        root = os.path.join(paths.repository_dataset_dir, identifier)
+        root = repository_path(identifier)
         if os.path.isdir(root):
+            self.db.add_repository(identifier, principal_investigator)
             self.debug('already a directory {}'.format(identifier))
+            if inform:
+                self.warning_dialog('{} already exists.'.format(root))
             return True
 
         names = self.remote_repository_names()
@@ -885,7 +1106,7 @@ class DVC(Loggable):
                 for i, gi in enumerate(gs):
                     self.info('Creating repository at {}. {}'.format(gi.name, identifier))
 
-                    if gi.create_repo(identifier, organization=self.organization, auto_init=True):
+                    if gi.create_repo(identifier, organization=self.organization):
                         ret = True
                         if self.default_team:
                             gi.set_team(self.default_team, self.organization, identifier,
@@ -895,7 +1116,7 @@ class DVC(Loggable):
                         if i == 0:
                             try:
                                 repo = Repo.clone_from(url, root)
-                            except BaseException, e:
+                            except BaseException as e:
                                 self.debug('failed cloning repo. {}'.format(e))
                                 ret = False
 
@@ -905,9 +1126,10 @@ class DVC(Loggable):
 
                 return ret
 
-    def add_irradiation(self, name, doses=None, add_repo=False, principal_investigator=None):
+    def add_irradiation(self, name, doses=None, verbose=True):
         if self.db.get_irradiation(name):
-            self.warning('irradiation {} already exists'.format(name))
+            if verbose:
+                self.warning('irradiation {} already exists'.format(name))
             return
 
         self.db.add_irradiation(name)
@@ -919,11 +1141,11 @@ class DVC(Loggable):
         p = os.path.join(root, 'productions')
         if not os.path.isdir(p):
             os.mkdir(p)
-        with open(os.path.join(root, 'productions.json'), 'w') as wfile:
-            json.dump({}, wfile)
 
-        if add_repo and principal_investigator:
-            self.add_repository('Irradiation-{}'.format(name), principal_investigator)
+        p = os.path.join(root, 'productions.json')
+        with open(p, 'w') as wfile:
+            json.dump({}, wfile)
+        self.meta_repo.add(p, commit=False)
 
         return True
 
@@ -945,27 +1167,132 @@ class DVC(Loggable):
                 obj[attr] = [getattr(pr, attr), getattr(pr, '{}_err'.format(attr))]
             dvc_dump(obj, path)
 
+    # def save_tag_subgroup_items(self, items):
+    #
+    #     for expid, ans in groupby_repo(items):
+    #         self.sync_repo(expid)
+    #         ps = []
+    #         for it in ans:
+    #             tag = Tag.from_analysis(it)
+    #             tag.dump()
+    #
+    #             ps.append(tag.path)
+    #
+    #         if self.repository_add_paths(expid, ps):
+    #             self._commit_tags(ans, expid, '<SUBGROUP>', refresh=False)
+
+    def tag_items(self, tag, items, note=''):
+        self.debug('tag items with "{}"'.format(tag))
+        with self.db.session_ctx() as sess:
+            for expid, ans in groupby_repo(items):
+                self.sync_repo(expid)
+
+                cs = []
+                ps = []
+                for it in ans:
+                    if not isinstance(it, (InterpretedAge, DVCAnalysis)):
+                        it = self.make_analysis(it, quick=True)
+
+                    self.debug('setting {} tag= {}'.format(it.record_id, tag))
+                    if not isinstance(it, InterpretedAge):
+                        self.set_analysis_tag(it, tag)
+
+                    it.set_tag({'name': tag, 'note': note or ''})
+
+                    path = self.update_tag(it, add=False)
+                    ps.append(path)
+                    cs.append(it)
+
+                sess.commit()
+                if self.repository_add_paths(expid, ps):
+                    self._commit_tags(cs, expid, '<TAG> {:<6s}'.format(tag))
+
+    def get_repository(self, repo):
+        return self._get_repository(repo, as_current=False)
+
+    def clear_cache(self):
+        if self.use_cache:
+            self._cache.clear()
+
     # private
+    def _transfer_analysis_to(self, dest, src, rid):
+        p = analysis_path(rid, src)
+        np = analysis_path(rid, dest)
+
+        obj = dvc_load(p)
+        obj['repository_identifier'] = dest
+        dvc_dump(obj, p)
+
+        ops = [p]
+        nps = [np]
+
+        shutil.move(p, np)
+
+        for modifier in PATH_MODIFIERS:
+            if modifier:
+                p = analysis_path(rid, src, modifier=modifier)
+                np = analysis_path(rid, dest, modifier=modifier)
+                shutil.move(p, np)
+                ops.append(p)
+                nps.append(np)
+
+        return ops, nps
+
+    def _commit_freeze(self, added, msg):
+        for repo, ps in groupby_key(added, key=itemgetter(0)):
+            rm = GitRepoManager()
+            rm.open_repo(repo, paths.repository_dataset_dir)
+            rm.add_paths(ps)
+            rm.smart_pull()
+            rm.commit(msg)
+
+    def _commit_tags(self, cs, expid, msg, refresh=True):
+        if cs:
+            cc = [c.record_id for c in cs]
+            if len(cc) > 1:
+                cstr = '{} - {}'.format(cc[0], cc[-1])
+            else:
+                cstr = cc[0]
+
+            self.repository_commit(expid, '{} {}'.format(msg, cstr))
+            if refresh:
+                for ci in cs:
+                    ci.refresh_view()
+
+    def _save_j(self, irradiation, level, pos, identifier, j, e, mj, me, position_jerr, decay_constants, analyses,
+                options, add):
+        self.info('Saving j for {}{}:{} {}, j={} +/-{}'.format(irradiation, level,
+                                                               pos, identifier, j, e))
+        self.meta_repo.update_flux(irradiation, level, pos, identifier, j, e, mj, me,
+                                   decay=decay_constants,
+                                   analyses=analyses,
+                                   options=options, add=add,
+                                   position_jerr=position_jerr)
+
     def _add_interpreted_age(self, ia, d):
         rid = ia.repository_identifier
-        p = analysis_path(ia.identifier, rid, modifier='ia', mode='w')
+
+        ia_path_name = ia.identifier.replace(':', '_')
 
         i = 0
-        while os.path.isfile(p):
-            p = analysis_path('{}_{:05d}'.format(ia.identifier, i), rid, modifier='ia', mode='w')
+        while 1:
+            p = analysis_path('{}_{:05d}'.format(ia_path_name, i), rid, modifier='ia', mode='w')
             i += 1
+            if not os.path.isfile(p):
+                break
 
         self.debug('saving interpreted age. {}'.format(p))
         dvc_dump(d, p)
-        if self.repository_add_paths(rid, p):
-            self.repository_commit(rid, '<IA> added interpreted age {}'.format(ia.name))
+        return rid, p
 
     def _load_repository(self, expid, prog, i, n):
         if prog:
             prog.change_message('Loading repository {}. {}/{}'.format(expid, i, n))
         self.sync_repo(expid)
 
-    def _make_record(self, record, prog, i, n, calculate_f_only=False):
+    def _make_record(self, record, prog, i, n, productions=None, chronos=None, branches=None, fluxes=None, sens=None,
+                     frozen_fluxes=None, frozen_productions=None,
+                     calculate_f_only=False, reload=False, quick=False):
         meta_repo = self.meta_repo
         if prog:
             # this accounts for ~85% of the time!!!
@@ -988,104 +1315,217 @@ class DVC(Loggable):
             if expid is None:
                 expid = self._get_requested_experiment_id(exps)
 
-        if isinstance(record, DVCAnalysis):
+        if isinstance(record, DVCAnalysis) and not reload:
             a = record
         else:
             # self.debug('use_repo_suffix={} record_id={}'.format(record.use_repository_suffix, record.record_id))
+            rid = record.record_id
+            uuid = record.uuid
+            # if record.use_repository_suffix:
+            #     rid = '-'.join(rid.split('-')[:-1])
             try:
-                rid = record.record_id
-                if record.use_repository_suffix:
-                    rid = '-'.join(rid.split('-')[:-1])
-
-                a = DVCAnalysis(rid, expid)
-                a.group_id = record.group_id
+                a = DVCAnalysis(uuid, rid, expid)
             except AnalysisNotAnvailableError:
                 self.info('Analysis {} not available. Trying to clone repository "{}"'.format(rid, expid))
                 try:
                     self.sync_repo(expid)
-                except CredentialException:
+                except (CredentialException, BaseException):
                     self.warning_dialog('Invalid credentials for GitHub/GitLab')
                     return
 
                 try:
-                    a = DVCAnalysis(rid, expid)
+                    a = DVCAnalysis(uuid, rid, expid)
+
                 except AnalysisNotAnvailableError:
                     self.warning_dialog('Analysis {} not in repository {}'.format(rid, expid))
                     return
 
-            # get repository branch
-            a.branch = get_repository_branch(os.path.join(paths.repository_dataset_dir, expid))
-            # a.set_tag(record.tag)
-            # load irradiation
-            if a.irradiation and a.irradiation not in ('NoIrradiation',):
-                # self.debug('Irradiation {}'.format(a.irradiation))
-                chronology = meta_repo.get_chronology(a.irradiation)
-                a.set_chronology(chronology)
+            a.group_id = record.group_id
 
-                frozen_production = self._get_frozen_production(rid, a.repository_identifier)
-                if frozen_production:
-                    pname, prod = frozen_production.name, frozen_production
-                else:
-                    pname, prod = meta_repo.get_production(a.irradiation, a.irradiation_level)
-                a.set_production(pname, prod)
+            if not quick:
+                a.load_name = record.load_name
+                a.load_holder = record.load_holder
+                # get repository branch
+                a.branch = branches.get(expid, '')
 
-                fd = meta_repo.get_flux(record.irradiation,
-                                        record.irradiation_level,
-                                        record.irradiation_position_position)
-                a.j = fd['j']
-                if fd['lambda_k']:
-                    a.arar_constants.lambda_k = fd['lambda_k']
+                # load irradiation
+                if sens:
+                    sens = sens.get(a.mass_spectrometer.lower(), [])
+                    a.set_sensitivity(sens)
 
-                a.standard_age = fd['standard_age']
-                a.standard_name = fd['standard_name']
-                a.standard_material = fd['standard_material']
+                if a.analysis_type == 'cocktail' and 'cocktail' in chronos:
+                    a.set_chronology(chronos['cocktail'])
+                    a.j = fluxes['cocktail']
+
+                elif a.irradiation:  # and a.irradiation not in ('NoIrradiation',):
+                    if chronos:
+                        chronology = chronos.get(a.irradiation, None)
+                    else:
+                        chronology = meta_repo.get_chronology(a.irradiation)
+
+                    if chronology:
+                        a.set_chronology(chronology)
+
+                    pname, prod = None, None
+
+                    if frozen_productions:
+                        try:
+                            prod = frozen_productions['{}.{}'.format(a.irradiation, a.irradiation_level)]
+                            pname = prod.name
+                        except KeyError:
+                            pass
+
+                    if not prod:
+                        try:
+                            pname, prod = productions[a.irradiation][a.irradiation_level]
+                        except KeyError:
+                            pname, prod = meta_repo.get_production(a.irradiation, a.irradiation_level)
+                            self.warning('production key error name={} '
+                                         'irrad={}, level={}, productions={}'.format(pname,
+                                                                                     a.irradiation,
+                                                                                     a.irradiation_level,
+                                                                                     productions))
+
+                    a.set_production(pname, prod)
+                    fd = None
+                    if frozen_fluxes:
+                        try:
+                            fd = frozen_fluxes[a.irradiation][a.identifier]
+                        except KeyError:
+                            pass
+
+                    if not fd:
+                        if fluxes:
+                            try:
+                                level_flux = fluxes[a.irradiation][a.irradiation_level]
+                                fd = meta_repo.get_flux_from_positions(a.irradiation_position, level_flux)
+                            except KeyError:
+                                fd = {'j': ufloat(0, 0)}
+                        else:
+                            fd = meta_repo.get_flux(a.irradiation,
+                                                    a.irradiation_level,
+                                                    a.irradiation_position_position)
+                    a.j = fd.get('j', ufloat(0, 0))
+                    a.position_jerr = fd.get('position_jerr', 0)
+
+                    j_options = fd.get('options')
+                    if j_options:
+                        a.model_j_kind = fd.get('model_kind')
+
+                    lk = fd.get('lambda_k')
+                    if lk:
+                        a.arar_constants.lambda_k = lk
+
+                    for attr in ('age', 'name', 'material', 'reference'):
+                        skey = 'monitor_{}'.format(attr)
+                        try:
+                            setattr(a, skey, fd[skey])
+                        except KeyError as e:
+                            try:
+                                key = 'standard_{}'.format(attr)
+                                setattr(a, skey, fd[key])
+                            except KeyError:
+                                pass
 
                 if calculate_f_only:
-                    a.calculate_F()
+                    a.calculate_f()
                 else:
                     a.calculate_age()
+
+        if self._cache:
+            self._cache.update(record.uuid, a)
         return a
 
-    def _get_frozen_production(self, rid, repo):
-        path = analysis_path(rid, repo, 'productions')
-        if path:
-            return Production(path)
-
     def _get_repository(self, repository_identifier, as_current=True):
-        repo = None
-        if as_current:
-            repo = self.current_repository
-
-        path = repository_path(repository_identifier)
-
-        if repo is None or repo.path != path:
-            self.debug('make new repomanager for {}'.format(path))
-            repo = GitRepoManager()
-            repo.path = path
-            repo.open_repo(path)
+        if isinstance(repository_identifier, GitRepoManager):
+            repo = repository_identifier
+        else:
+            repo = None
             if as_current:
-                self.current_repository = repo
+                repo = self.current_repository
+            path = repository_path(repository_identifier)
+
+            if repo is None or repo.path != path:
+                self.debug('make new repomanager for {}'.format(path))
+                repo = GitRepoManager()
+                repo.path = path
+                repo.open_repo(path)
+
+        if as_current:
+            self.current_repository = repo
 
         return repo
 
     def _bind_preferences(self):
+        prefid = 'pychron.dvc.connection'
+        bind_preference(self, 'favorites', '{}.favorites'.format(prefid))
+        self._favorites_changed(self.favorites)
+        self._set_meta_repo_name()
 
         prefid = 'pychron.dvc'
-        for attr in ('meta_repo_name', 'organization', 'default_team'):
-            bind_preference(self, attr, '{}.{}'.format(prefid, attr))
+        bind_preference(self, 'use_cocktail_irradiation', '{}.use_cocktail_irradiation'.format(prefid))
+        bind_preference(self, 'use_cache', '{}.use_cache'.format(prefid))
+        bind_preference(self, 'max_cache_size', '{}.max_cache_size'.format(prefid))
 
-        prefid = 'pychron.dvc.db'
-        for attr in ('username', 'password', 'name', 'host', 'kind', 'path'):
-            bind_preference(self.db, attr, '{}.{}'.format(prefid, attr))
+        if self.use_cache:
+            self._use_cache_changed()
 
-        self._meta_repo_name_changed()
+    def _max_cache_size_changed(self, new):
+        if new:
+            if self._cache:
+                self._cache.max_size = self.max_cache_size
+            else:
+                self._use_cache_changed()
+        else:
+            self.use_cache = False
+
+    def _use_cache_changed(self):
+        if self.use_cache:
+            self._cache = DVCCache(max_size=self.max_cache_size)
+        else:
+            self._cache = None
+
+    def _favorites_changed(self, items):
+        try:
+            ds = [DVCConnectionItem(attrs=f, load_names=False) for f in items]
+            self.data_sources = [d for d in ds if d.enabled]
+
+        except BaseException:
+            pass
+
+        if self.data_sources:
+            self.data_source = next((d for d in self.data_sources if d.default and d.enabled), None)
+
+    def _data_source_changed(self, old, new):
+        self.debug('data source changed. {}, db={}'.format(new, id(self.db)))
+        if new is not None:
+            for attr in ('username', 'password', 'host', 'kind', 'path'):
+                setattr(self.db, attr, getattr(new, attr))
+
+            self.db.name = new.dbname
+            self.organization = new.organization
+            self.meta_repo_name = new.meta_repo_name
+            self.meta_repo_dirname = new.meta_repo_dir
+            self.db.reset_connection()
+            if old:
+                self.db.connect()
+                self.db.create_session()
+
+    def _meta_repo_dirname_changed(self):
+        self._set_meta_repo_name()
 
     def _meta_repo_name_changed(self):
-        paths.meta_root = os.path.join(paths.dvc_dir, self.meta_repo_name)
+        self._set_meta_repo_name()
+
+    def _set_meta_repo_name(self):
+        name = self.meta_repo_name
+        if self.meta_repo_dirname:
+            name = self.meta_repo_dirname
+
+        paths.meta_root = os.path.join(paths.dvc_dir, name)
 
     def _defaults(self):
         self.debug('writing defaults')
-        # self.db.create_all(Base.metadata)
         self.db.add_save_user()
         for tag, func in (('irradiation holders', self._add_default_irradiation_holders),
                           ('productions', self._add_default_irradiation_productions),
@@ -1136,8 +1576,8 @@ class DVC(Loggable):
         except AttributeError:
             try:
                 return getattr(self.meta_repo, item)
-            except AttributeError, e:
-                print e, item
+            except AttributeError as e:
+                print(e, item)
                 # raise DVCException(item)
 
     # defaults
@@ -1149,14 +1589,14 @@ class DVC(Loggable):
                            name='pychronmeta')
 
     def _meta_repo_default(self):
-        return MetaRepo()
+        return MetaRepo(application=self.application)
 
 
 if __name__ == '__main__':
     paths.build('_dev')
     idn = '24138'
     exps = ['Irradiation-NM-272']
-    print find_interpreted_age_path(idn, exps)
+    print(find_interpreted_age_path(idn, exps))
     # d = DVC(bind=False)
     # with open('/Users/ross/Programming/githubauth.txt') as rfile:
     #     usr = rfile.readline().strip()

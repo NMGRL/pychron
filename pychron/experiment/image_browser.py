@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from chaco.api import ArrayPlotData, Plot, HPlotContainer
 from chaco.tools.api import ZoomTool, PanTool
 from chaco.tools.image_inspector_tool import ImageInspectorOverlay, \
@@ -30,7 +32,7 @@ from traitsui.api import View, Item, ListStrEditor, HGroup, VGroup, \
 import Image
 from numpy import array
 import os
-import httplib
+import six.moves.http_client
 # ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
@@ -88,7 +90,7 @@ class ImageEditor(HasTraits):
 
     def _save_db_fired(self):
         db = self.db
-        print db
+        print(db)
 
     def traits_view(self):
         v = View(
@@ -157,7 +159,7 @@ class ImageBrowser(IsotopeDatabaseManager):
         if reset or self._conn is None:
             host, port = 'localhost', 8081
             url = '{}:{}'.format(host, port)
-            conn = httplib.HTTPConnection(url)
+            conn = six.moves.http_client.HTTPConnection(url)
         else:
             conn = self._conn
 

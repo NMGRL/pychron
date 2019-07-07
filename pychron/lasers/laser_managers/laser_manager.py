@@ -15,12 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Instance, Bool, Str
 # import apptools.sweet_pickle as pickle
-import cPickle as pickle
 # ============= standard library imports ========================
+from threading import Event, Thread
+import six.moves.cPickle as pickle
 import os
 # ============= local library imports  ==========================
+from pychron.core.pid import PID
+
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.monitors.laser_monitor import LaserMonitor
 from pychron.lasers.laser_managers.pulse import Pulse
@@ -50,6 +54,7 @@ class LaserManager(BaseLaserManager):
     pulse = Instance(Pulse)
 
     auxilary_graph = Instance(Component)
+
     # ===============================================================================
     # public interface
     # ===============================================================================
@@ -129,15 +134,16 @@ class LaserManager(BaseLaserManager):
         """
         self.set_laser_power(*args, **kw)
 
-    def set_laser_power(self, power,
-                        verbose=True,
-                        units=None,
-                        *args, **kw):
+    def set_laser_power(self, power, verbose=True, units=None, *args, **kw):
         """
         """
 
         if units == 'percent':
             p = power
+        elif units == 'lumens':
+            self._luminosity_hook(power)
+            return
+
         else:
             try:
                 p = self._get_calibrated_power(power, verbose=verbose, **kw)
@@ -182,8 +188,9 @@ class LaserManager(BaseLaserManager):
         if reason is not None:
             self.warning('EMERGENCY SHUTOFF reason: {}'.format(reason))
 
-            from pychron.remote_hardware.errors.laser_errors import LaserMonitorErrorCode
+            # from pychron.remote_hardware.errors.laser_errors import LaserMonitorErrorCode
 
+            from pychron.tx.errors import LaserMonitorErrorCode
             self.error_code = LaserMonitorErrorCode(reason)
 
             invoke_in_main_thread(self.warning_dialog, reason, title='AUTOMATIC LASER SHUTOFF')
@@ -203,8 +210,8 @@ class LaserManager(BaseLaserManager):
     # ===============================================================================
     # manager interface
     # ===============================================================================
-    def finish_loading(self):
-        self.enabled_led.state = 'red' if not self.enabled else 'green'
+    # def finish_loading(self):
+    #     self.enabled_led.state = 'red' if not self.enabled else 'green'
 
     def dispose_optional_windows(self):
         #        if self.use_video:
@@ -217,6 +224,47 @@ class LaserManager(BaseLaserManager):
         self._dump_pulse()
         if self.stage_manager:
             self.stage_manager.shutdown()
+
+    # private
+    # def _luminosity(self):
+    #     v = self._luminosity_value
+    #     evt = self._lum_evt
+    #     self._requested_power = v
+    #     set_laser_power = self._set_laser_power_hook
+    #     self.degas_pid = pid = PID()
+    # #
+    # #     def update(c, e, o, cs, ss):
+    # #         g.record(c, plotid=0)
+    # #         g.record(e, plotid=1)
+    # #         g.record(o, plotid=2)
+    # #
+    # #         img.set_image(cs, 0)
+    # #         img.set_image(ss, 1)
+    #
+    #     # while not evt.is_set():
+    # #
+    # #         if duration and time.time() - st > duration:
+    # #             break
+    # #
+    #         # with PeriodCTX(dt):
+    # #             csrc, src, cl = sm.get_brightness()
+    # #
+    # #             err = lumens - cl
+    # #             out = pid.get_value(err, dt)
+    # #             lm.set_laser_power(out)
+    # #             invoke_in_main_thread(update, (cl, err, out, csrc, src))
+    #
+    #     get_brightness = self.stage_manager.get_peak_brightness
+    #     dt = 1
+    #     while not evt.is_set():
+    #         p = get_brightness()
+    #
+    #         err = v - p
+    #         out = pid.get_value(err, dt)
+    #
+    #         self._calibrated_power = out
+    #         set_laser_power(out)
+    #         evt.wait(dt)
 
     # ===============================================================================
     # handlers
@@ -235,9 +283,11 @@ class LaserManager(BaseLaserManager):
 
             self.disable_laser()
 
-        # ===============================================================================
-        # hooks
-        # ===============================================================================
+    # ===============================================================================
+    # hooks
+    # ===============================================================================
+    def _luminosity_hook(self, power):
+        pass
 
     def _dispose_optional_windows_hook(self):
         pass
@@ -255,6 +305,9 @@ class LaserManager(BaseLaserManager):
 
     def _set_laser_power_hook(self, *args, **kw):
         pass
+
+    def set_laser_power_hook(self, *args, **kw):
+        self._set_laser_power_hook(*args, **kw)
 
     # ===============================================================================
     # factories
@@ -283,7 +336,7 @@ class LaserManager(BaseLaserManager):
                 pul = pickle.load(f)
                 pul.manager = self
                 return pul
-            except Exception, e:
+            except Exception as e:
                 self.debug('load pulse problem {} {}'.format(p, e))
 
     def _pulse_default(self):

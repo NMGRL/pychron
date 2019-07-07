@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
+from __future__ import print_function
 import yaml
 from mako.template import Template
 from traitsui.handler import Controller
@@ -41,9 +43,9 @@ class DeviceModel(HasTraits):
         p = '/Users/ross/Sandbox/device_creator.yaml'
         with open(p, 'r') as rfile:
             yd = yaml.load(rfile)
-            print yd
+            print(yd)
 
-        print tmp.render(**yd)
+        print(tmp.render(**yd))
 
     def get_template(self):
         tmp = Template(filename='./device_template.txt')

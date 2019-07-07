@@ -15,12 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface.qt.QtGui import QSizePolicy
 from traits.api import Property, Enum, Range, Str, Trait, Bool
 from traitsui.api import View
 from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.button_editor import CustomEditor
 from traitsui.ui_traits import AView, Image
+import six
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -93,7 +95,7 @@ class ButtonEditor(BasicEditorFactory):
 
     def _set_value(self, value):
         self._value = value
-        if isinstance(value, basestring):
+        if isinstance(value, six.string_types):
             try:
                 self._value = int(value)
             except:

@@ -14,12 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Int, Bool, Float, Property, \
-    Color, Array
-
 # ============= standard library imports ========================
 from numpy import array, hstack
+# ============= enthought library imports =======================
+from traits.api import HasTraits, Str, Int, Bool, Float, Property, Color, Array
 
 
 # ============= local library imports  ==========================
@@ -28,21 +26,24 @@ from numpy import array, hstack
 class BaseDetector(HasTraits):
     name = Str
     kind = Str
-
+    serial_id = Str
     intensity = Str
     std = Str
     intensities = Array
     nstd = Int(10)
     active = Bool(True)
     gain = Float
+    software_gain = Float(1.0)
 
     color = Color
     series_id = Int
     isotope = Str
+    mass = Float
 
     isotopes = Property
 
     index = Float
+    ypadding = Str
 
     def set_intensity(self, v):
         if v is not None:
@@ -63,12 +64,15 @@ class BaseDetector(HasTraits):
         try:
             v = float(v)
         except (TypeError, ValueError):
-            v = 0
+            v = 1
         self.gain = v
         return v
 
     def set_gain(self):
         self._set_gain()
+
+    def get_deflection_correction(self, *args, **kw):
+        return 0
 
     # private
     def _set_gain(self):

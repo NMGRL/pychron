@@ -15,12 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
+
 import os
 import pickle
 
-from traits.api import Bool, Float, Property, Instance, Event, Button, Enum
 # ============= standard library imports ========================
 from numpy import Inf
+from traits.api import Bool, Float, Property, Instance, Event, Button, Enum
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.timer import Timer
 from pychron.graph.graph import Graph
@@ -59,7 +63,7 @@ class StreamGraphManager(Manager):
     record_data_manager = Instance(CSVDataManager)
 
     timer = None
-    update_period = 1
+    update_period = 2
     _signal_failed_cnt = 0
 
     def reset_scan_timer(self, func=None):
@@ -92,9 +96,10 @@ class StreamGraphManager(Manager):
         if os.path.isfile(p):
             with open(p, 'rb') as f:
                 try:
-                    return pickle.load(f)
-                except (pickle.PickleError, EOFError):
+                    return pickle.load(f, encoding='utf-8')
+                except (pickle.PickleError, EOFError, UnicodeDecodeError) as e:
                     self.warning('Failed unpickling scan settings file {}'.format(p))
+                    self.debug(e)
                     return
         else:
             self.warning('No scan settings file {}'.format(p))
@@ -102,7 +107,7 @@ class StreamGraphManager(Manager):
     # private
     def _get_graph_y_min_max(self, plotid=0):
         mi, ma = Inf, -Inf
-        for k, plot in self.graph.plots[plotid].plots.iteritems():
+        for k, plot in self.graph.plots[plotid].plots.items():
             plot = plot[0]
             if plot.visible:
                 ys = plot.value.get_data()
@@ -245,8 +250,8 @@ class StreamGraphManager(Manager):
         for pi in self.graph_attr_keys:
             try:
                 setattr(self, pi, params[pi])
-            except KeyError, e:
-                print 'sm load settings', pi, e
+            except KeyError as e:
+                print('sm load settings', pi, e)
 
     # ===============================================================================
     # defaults

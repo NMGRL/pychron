@@ -16,12 +16,15 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
+from __future__ import print_function
+
 import ast
 import os
 import time
-from ConfigParser import ConfigParser
 
 import yaml
+from six.moves.configparser import ConfigParser
 
 from pychron.core.helpers.filetools import fileiter
 from pychron.paths import paths
@@ -84,7 +87,7 @@ class MeasurementPyScript(ValvePyScript):
 
     def get_command_register(self):
         cs = super(MeasurementPyScript, self).get_command_register()
-        return cs + command_register.commands.items()
+        return cs + list(command_register.commands.items())
 
     def truncate(self, style=None):
         if style == 'quick':
@@ -117,8 +120,7 @@ class MeasurementPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def generate_ic_mftable(self, detectors, refiso='Ar40', peak_center_config='', update_existing=True,
-                            calc_time=False):
+    def generate_ic_mftable(self, detectors, refiso='Ar40', peak_center_config='', n=1, calc_time=False):
         """
         Generate an IC MFTable. Use this when doing a Detector Intercalibration.
         peak centers the ``refiso`` on a list of ``detectors``. MFTable saved as ic_mftable
@@ -132,11 +134,10 @@ class MeasurementPyScript(ValvePyScript):
         """
 
         if calc_time:
-            self._estimated_duration += len(detectors) * 30
+            self._estimated_duration += (len(detectors) * 30)*n
             return
 
-        if not self._automated_run_call('py_generate_ic_mftable', detectors, refiso, peak_center_config,
-                                        update_existing):
+        if not self._automated_run_call('py_generate_ic_mftable', detectors, refiso, peak_center_config, n):
             self.cancel()
 
     @verbose_skip
@@ -147,8 +148,12 @@ class MeasurementPyScript(ValvePyScript):
 
     @count_verbose_skip
     @command_register
-    def sniff(self, ncounts=0, calc_time=False,
-              integration_time=1.04, block=True):
+    def measure_equilibration(self, *args, **kw):
+        self.sniff(*args, **kw)
+
+    @count_verbose_skip
+    @command_register
+    def sniff(self, ncounts=0, calc_time=False, integration_time=1.04, block=True):
         """
         collect a sniff measurement. Sniffs are the measurement of the equilibration gas.
 
@@ -168,7 +173,6 @@ class MeasurementPyScript(ValvePyScript):
                                         self._time_zero, self._time_zero_offset,
                                         series=self._series_count, block=block):
             self.cancel()
-            # self._series_count += 1
 
     @count_verbose_skip
     @command_register
@@ -195,7 +199,8 @@ class MeasurementPyScript(ValvePyScript):
                                         self._time_zero,
                                         self._time_zero_offset,
                                         fit_series=self._fit_series_count,
-                                        series=self._series_count):
+                                        series=self._series_count,
+                                        integration_time=integration_time):
             self.cancel()
 
     @count_verbose_skip
@@ -244,7 +249,8 @@ class MeasurementPyScript(ValvePyScript):
                                         use_dac=use_dac,
                                         fit_series=self._fit_series_count,
                                         settling_time=settling_time,
-                                        series=series):
+                                        series=series,
+                                        integration_time=integration_time):
             self.cancel()
         self._baseline_series = series
         # self._series_count += 2
@@ -496,7 +502,12 @@ class MeasurementPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def position_magnet(self, pos, detector='AX', use_dac=False):
+    def position_hv(self, pos, detector='AX'):
+        self._automated_run_call('py_position_hv', pos, detector)
+
+    @verbose_skip
+    @command_register
+    def position_magnet(self, pos, detector='AX', use_dac=False, for_collection=True):
         """
 
         :param pos: location to set magnetic field
@@ -513,7 +524,7 @@ class MeasurementPyScript(ValvePyScript):
             position_magnet('Ar40', detector='AX') #Ar40 will be converted to 39.962 use mole weight dict
 
         """
-        self._automated_run_call('py_position_magnet', pos, detector, use_dac=use_dac)
+        self._automated_run_call('py_position_magnet', pos, detector, use_dac=use_dac, for_collection=for_collection)
 
     @verbose_skip
     @command_register
@@ -609,8 +620,8 @@ class MeasurementPyScript(ValvePyScript):
         try:
             ncounts = int(ncounts)
             self.ncounts = ncounts
-        except Exception, e:
-            print 'set_ncounts', e
+        except Exception as e:
+            print('set_ncounts', e)
 
     @verbose_skip
     @command_register
@@ -641,144 +652,8 @@ class MeasurementPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def set_ysymmetry(self, v):
-        """
-        Set YSymmetry to v
-
-        :param v: ysymmetry value
-        :type v: int, float
-
-        """
-        self._set_spectrometer_parameter('SetYSymmetry', v)
-
-    @verbose_skip
-    @command_register
-    def set_zsymmetry(self, v):
-        """
-        Set ZSymmetry to v
-
-        :param v: zsymmetry value
-        :type v: int, float
-        """
-        self._set_spectrometer_parameter('SetZSymmetry', v)
-
-    @verbose_skip
-    @command_register
-    def set_zfocus(self, v):
-        """
-        Set ZFocus to v
-
-        :param v: zfocus value
-        :type v: int, float
-        """
-        self._set_spectrometer_parameter('SetZFocus', v)
-
-    @verbose_skip
-    @command_register
-    def set_extraction_lens(self, v):
-        """
-        Set Extraction Lens to v
-
-        :param v: extraction lens value
-        :type v: int, float
-        """
-        self._set_spectrometer_parameter('SetExtractionLens', v)
-
-    @verbose_skip
-    @command_register
-    def set_deflection(self, detname, v=''):
-        """
-        if v is an empty str (default) then get the deflection value from
-        the configuration file.
-
-        :param detname: name of detector
-        :type detname: str
-        :param v: deflection value or an empty string
-        :type v: '', int, float
-
-        """
-        if v == '':
-            v = self._get_deflection_from_file(detname)
-
-        if v is not None:
-            v = '{},{}'.format(detname, v)
-            self._set_spectrometer_parameter('SetDeflection', v)
-        else:
-            self.debug('no deflection value for {} supplied or in the config file'.format(detname))
-
-    @verbose_skip
-    @command_register
-    def get_deflection(self, detname):
-        """
-        Read the deflection from the spectrometer
-
-        :param detname: name of detector
-        :type detname: str
-        :return: float
-        """
-        return self._get_spectrometer_parameter('GetDeflection', detname)
-
-    @verbose_skip
-    @command_register
-    def set_cdd_operating_voltage(self, v=''):
-        """
-        if v is '' (default) use value from file
-
-        :param v: cdd operating voltage
-        :type v: '', int, float
-        """
-        if self.automated_run is None:
-            return
-
-        if v == '':
-            config = self._get_config()
-            v = config.getfloat('CDDParameters', 'OperatingVoltage')
-
-        self._set_spectrometer_parameter('SetIonCounterVoltage', v)
-
-    @verbose_skip
-    @command_register
-    def set_source_optics(self, **kw):
-        """
-        example ::
-
-            # set all source parameters to values stored in config.cfg
-            set_source_optics()
-
-            # set ysymmetry to 10.
-            # set all other values using config.cfg
-            set_source_optics(YSymmetry=10.0)
-
-        """
-        attrs = ['YSymmetry', 'ZSymmetry', 'ZFocus', 'ExtractionLens']
-        self._set_from_file(attrs, 'SourceOptics', **kw)
-
-    @verbose_skip
-    @command_register
-    def set_source_parameters(self, **kw):
-        attrs = ['IonRepeller', 'ElectronVolts']
-        self._set_from_file(attrs, 'SourceParameters', **kw)
-
-    @verbose_skip
-    @command_register
-    def set_accelerating_voltage(self, v=''):
-        self._set_spectrometer_parameter('SetHV', v)
-
-    @verbose_skip
-    @command_register
-    def set_deflections(self):
-        """
-        Set deflections to values stored in config.cfg
-        """
-        func = self._set_spectrometer_parameter
-
-        config = self._get_config()
-        section = 'Deflections'
-        dets = config.options(section)
-        for dn in dets:
-            v = config.getfloat(section, dn)
-            if v is not None:
-                func('SetDeflection', '{},{}'.format(dn, v))
+    def raw_spectrometer_command(self, command):
+        self._automated_run_call('py_raw_spectrometer_command', command)
 
     @verbose_skip
     @command_register
@@ -807,15 +682,16 @@ class MeasurementPyScript(ValvePyScript):
 
         :return: float, int
         """
+        r = 20
         if self.automated_run:
-            return self.automated_run.eqtime
-            # return self._automated_run_call(lambda: self.automated_run.eqtime)
-        else:
-            r = 15
-            cg = self._get_config()
-            if cg.has_option('Default', 'eqtime'):
-                r = cg.getfloat('Default', 'eqtime', )
-            return r
+            r = self.automated_run.eqtime
+
+            if r == -1:
+                r = 20
+                cg = self._get_config()
+                if cg.has_option('Default', 'eqtime'):
+                    r = cg.getfloat('Default', 'eqtime', )
+        return r
 
     @property
     def time_zero_offset(self):
@@ -904,7 +780,7 @@ class MeasurementPyScript(ValvePyScript):
                     mx.create(yd)
                     self._ctx['mx'] = mx
 
-            except yaml.YAMLError, e:
+            except yaml.YAMLError as e:
                 self.debug('failed loading docstring context. {}'.format(e))
         except AttributeError:
             pass
@@ -917,5 +793,6 @@ class MeasurementPyScript(ValvePyScript):
 
         self.abbreviated_count_ratio = None
         self.ncounts = 0
+
 
 # ============= EOF =============================================

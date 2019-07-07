@@ -15,10 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
 from traits.api import HasTraits, Str, Int, Bool, Any, Button, Instance, List, Dict
 
 from pychron.core.fuzzyfinder import fuzzyfinder
+from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.progress import open_progress
+from pychron.dvc.dvc_persister import DVCPersister
+from pychron.entry.entry_views.repository_entry import RepositoryIdentifierEntry
 from pychron.loggable import Loggable
 
 
@@ -77,12 +82,16 @@ class Mapper:
         return p
 
 
-class DVCImporterModel(Loggable):
+class BaseDVCImporterModel(Loggable):
     dvc = Instance('pychron.dvc.dvc.DVC')
     sources = Dict
 
     source = Any
+    repository_identifier = Str
+    repository_identifiers = List
 
+
+class DVCIrradiationImporterModel(BaseDVCImporterModel):
     irradiations = List
     available_irradiations = List
 
@@ -94,21 +103,26 @@ class DVCImporterModel(Loggable):
     clear_filter_button = Button
 
     def __init__(self, *args, **kw):
-        super(DVCImporterModel, self).__init__(*args, **kw)
+        super(DVCIrradiationImporterModel, self).__init__(*args, **kw)
         self.mapper = Mapper()
 
-    def do_import_irradiation(self):
+    def do_import(self):
         self.debug('doing import')
 
-        if not self.selected:
-            self.information_dialog('Please select an Irradiation to import')
-            return
+        if self.source.selectable:
+            if not self.selected:
+                self.information_dialog('Please select an Irradiation to import')
+                return
 
-        self.debug('Selected Irradiations')
-        for irrad in self.selected:
-            self.debug(irrad.name)
+            self.debug('Selected Irradiations')
+            for irrad in self.selected:
+                self.debug(irrad.name)
 
-        specs = [(i.name, self.source.irradiation_get_import_spec(i.name)) for i in self.selected]
+            specs = [(i.name, self.source.get_irradiation_import_spec(i.name)) for i in self.selected]
+        else:
+            spec = self.source.get_irradiation_import_spec()
+            specs = [(spec.irradiation.name, spec)]
+
         prog = self._open_progress(specs)
 
         for irradname, spec in specs:
@@ -158,30 +172,31 @@ class DVCImporterModel(Loggable):
         dvc = self.dvc
         db = dvc.db
         sam = p.sample
+        dbsam = None
+        if sam:
+            material = self.mapper.material(sam.material)
+            added = dvc.add_material(material)
+            if added:
+                self._active_import.nmaterials += 1
+            db.commit()
 
-        material = self.mapper.material(sam.material)
-        added = dvc.add_material(material)
-        if added:
-            self._active_import.nmaterials += 1
-        db.commit()
+            principal_investigator = self.mapper.principal_investigator(sam.project.principal_investigator)
+            added = dvc.add_principal_investigator(principal_investigator)
+            if added:
+                self._active_import.nprincipal_investigators += 1
+            db.commit()
 
-        principal_investigator = self.mapper.principal_investigator(sam.project.principal_investigator)
-        added = dvc.add_principal_investigator(principal_investigator)
-        if added:
-            self._active_import.nprincipal_investigators += 1
-        db.commit()
+            project = self.mapper.project(sam.project.name)
+            added = dvc.add_project(project, principal_investigator)
+            if added:
+                self._active_import.nprojects += 1
+            db.commit()
 
-        project = self.mapper.project(sam.project.name)
-        added = dvc.add_project(project, principal_investigator)
-        if added:
-            self._active_import.nprojects += 1
-        db.commit()
-
-        added = dvc.add_sample(sam.name, project, material)
-        if added:
-            self._active_import.nsamples += 1
-        db.commit()
-        dbsam = db.get_sample(sam.name, project, material)
+            added = dvc.add_sample(sam.name, project, material)
+            if added:
+                self._active_import.nsamples += 1
+            db.commit()
+            dbsam = db.get_sample(sam.name, project, material)
 
         added = dvc.add_irradiation_position(irradname, level.name, p.position,
                                              identifier=p.identifier,
@@ -190,7 +205,7 @@ class DVCImporterModel(Loggable):
                                              weight=p.weight)
         if added:
             self._active_import.npositions += 1
-        dvc.update_flux(irradname, level.name, p.position, p.identifier, p.j, p.j_err)
+        dvc.update_flux(irradname, level.name, p.position, p.identifier, p.j, p.j_err, 0, 0)
 
     def _open_progress(self, specs):
         n = len(specs)
@@ -214,12 +229,147 @@ class DVCImporterModel(Loggable):
 
         self.available_irradiations = items
 
-    def _source_changed(self):
-        if self.source.connect():
-            self.available_irradiations = [IrradiationItem(name=i) for i in self.source.get_irradiation_names()]
-        else:
-            self.available_irradiations = []
+    # def _source_changed(self):
+    #     if self.source.connect():
+    #         self.available_irradiations = [IrradiationItem(name=i) for i in self.source.get_irradiation_names()]
+    #     else:
+    #         self.available_irradiations = []
+    #
+    #     self.oavailable_irradiations = self.available_irradiations
 
-        self.oavailable_irradiations = self.available_irradiations
+
+class DVCAnalysisImporterModel(BaseDVCImporterModel):
+    mass_spectrometer = Str
+    extract_device = Str
+    principal_investigator = Str
+
+    def __init__(self, *args, **kw):
+        super(DVCAnalysisImporterModel, self).__init__(*args, **kw)
+        self.refresh_repository_identifiers()
+
+    def refresh_repository_identifiers(self):
+        self.repository_identifiers = self.dvc.get_repository_identifiers()
+
+    def add_repository(self):
+        dest = self.dvc
+        a = RepositoryIdentifierEntry(dvc=dest)
+
+        with dest.session_ctx(use_parent_session=False):
+            a.available = self.repository_identifiers
+            a.principal_investigators = dest.get_principal_investigator_names()
+
+        if a.do():
+            self.refresh_repository_identifiers()
+
+    def do_import(self):
+        self.debug('doing import')
+
+        aspecs = self.source.get_analysis_import_specs()
+        dest = self.dvc
+        persister = DVCPersister(dvc=dest)
+        persister.initialize(self.repository_identifier)
+
+        def key(s):
+            return s.run_spec.irradiation
+
+        for irrad, iaspec in groupby_key(aspecs, key):
+            if not dest.get_irradiation(irrad):
+                self.warning_dialog('No Irradiation "{}". Please import the irradiation'.format(irrad))
+                continue
+
+            for aspec in iaspec:
+                rspec = aspec.run_spec
+
+                rspec.repository_identifier = self.repository_identifier
+                rspec.mass_spectrometer = self.mass_spectrometer
+                rspec.principal_investigator = self.principal_investigator
+
+                if dest.get_analysis_runid(rspec.identifier, rspec.aliquot, rspec.step):
+                    self.warning('{} already exists'.format(rspec.runid))
+                    continue
+
+                self._add_mass_spectrometer(aspec)
+                self._add_extract_device(aspec)
+                self._add_principal_investigator(aspec)
+                self._add_material(aspec)
+                self._add_project(aspec)
+                self._add_sample(aspec)
+                self._add_position(aspec)
+
+                persister.per_spec_save(aspec, commit=True,
+                                        commit_tag='Transfer:{}'.format(self.source.url()),
+                                        push=False)
+
+            persister.push()
+
+    def _add_position(self, spec):
+        rspec = spec.run_spec
+        dest = self.dvc
+        idn = rspec.identifier
+        if not dest.get_identifier(idn):
+            with dest.session_ctx():
+                irrad = rspec.irradiation
+                level = rspec.irradiation_level
+                pos = rspec.irradiation_position
+
+                ip = dest.db.add_irradiation_position(irrad, level, pos, idn)
+                sample = dest.get_sample(rspec.sample, rspec.project, rspec.principal_investigator, rspec.material)
+                ip.sample = sample
+
+                dest.update_flux(irrad, level, pos, idn, spec.j, spec.j_err, 0, 0)
+                dest.commit()
+
+    def _add_sample(self, spec):
+        spec = spec.run_spec
+        dest = self.dvc
+        if not dest.get_sample(spec.sample, spec.project, spec.principal_investigator,
+                               spec.material):
+            self.debug('adding sample {}'.format(spec.sample))
+            dest.add_sample(spec.sample, spec.project, spec.principal_investigator,
+                            spec.material)
+            dest.commit()
+
+    def _add_project(self, spec):
+        spec = spec.run_spec
+        dest = self.dvc
+        if not dest.get_project(spec.project, spec.principal_investigator):
+            self.debug('adding project {},{}'.format(spec.project, spec.principal_investigator))
+            dest.add_project(spec.project, spec.principal_investigator)
+            dest.commit()
+
+    def _add_material(self, spec):
+        dest = self.dvc
+        mat = spec.run_spec.material
+        if not dest.get_material(mat):
+            self.debug('adding material {}'.format(mat))
+            dest.add_material(mat)
+            dest.commit()
+
+    def _add_principal_investigator(self, spec):
+        dest = self.dvc
+        pi = spec.run_spec.principal_investigator
+        if not dest.get_principal_investigator(pi):
+            self.debug('adding principal investigator {}'.format(pi))
+            dest.add_principal_investigator(pi)
+            dest.commit()
+
+    def _add_mass_spectrometer(self, spec):
+        dest = self.dvc
+        ms = spec.run_spec.mass_spectrometer
+        if not dest.get_mass_spectrometer(ms):
+            self.debug('adding mass spectrometer {}'.format(ms))
+            dest.add_mass_spectrometer(ms)
+            dest.commit()
+
+    def _add_extract_device(self, spec):
+        ed = spec.run_spec.extract_device
+        if not ed:
+            ed = 'No Extract Device'
+
+        dest = self.dvc
+        if not dest.get_extraction_device(ed):
+            self.debug('adding extract device {}'.format(ed))
+            dest.add_extraction_device(ed)
+            dest.commit()
 
 # ============= EOF =============================================

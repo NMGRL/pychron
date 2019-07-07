@@ -17,6 +17,12 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+import os
+
+from pyface.constant import OK
+from pyface.file_dialog import FileDialog
+
+from pychron.entry.edit_irradiation_geometry import EditIrradiationGeometry
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import PAction as Action, PTaskAction as TaskAction
 from pychron.pychron_constants import DVC_PROTOCOL
@@ -24,7 +30,6 @@ from pychron.pychron_constants import DVC_PROTOCOL
 
 class AddMolecularWeightAction(Action):
     name = 'Add/Edit Molecular Weight'
-    dname = 'Add/Edit Molecular Weight'
 
     def perform(self, event):
         app = event.task.window.application
@@ -34,7 +39,6 @@ class AddMolecularWeightAction(Action):
 
 class AddFluxMonitorAction(Action):
     name = 'Add/Edit Flux Monitors'
-    dname = 'Add/Edit Flux Monitors'
 
     def perform(self, event):
         app = event.task.window.application
@@ -44,7 +48,6 @@ class AddFluxMonitorAction(Action):
 
 class SensitivityEntryAction(Action):
     name = 'Sensitivity'
-    dname = 'Sensitivity'
     # accelerator = 'Ctrl+Shift+\\'
     id = 'pychron.sensitivity'
 
@@ -56,21 +59,18 @@ class SensitivityEntryAction(Action):
 
 class SaveSensitivityAction(TaskAction):
     name = 'Save'
-    dname = 'Save'
     image = icon('database_save')
     method = 'save'
 
 
 class AddSensitivityAction(TaskAction):
     name = 'Add'
-    dname = 'Add'
     image = icon('database_add')
     method = 'add'
 
 
 class DatabaseSaveAction(TaskAction):
     name = 'Database Save'
-    dname = 'Database Save'
     description = 'Save current changes to the database'
     method = 'save_to_db'
     image = icon('database_save')
@@ -89,7 +89,6 @@ class RecoverAction(TaskAction):
 
 class SavePDFAction(TaskAction):
     name = 'Save PDF'
-    dname = 'Save PDF'
     image = icon('file_pdf')
 
     method = 'save_pdf'
@@ -97,7 +96,6 @@ class SavePDFAction(TaskAction):
 
 class MakeIrradiationBookPDFAction(TaskAction):
     name = 'Make Irradiation Book'
-    dname = 'Make Irradiation Book'
     image = icon('file_pdf')
 
     method = 'make_irradiation_book_pdf'
@@ -105,18 +103,16 @@ class MakeIrradiationBookPDFAction(TaskAction):
 
 class GenerateIdentifiersAction(TaskAction):
     name = 'Generate Identifiers'
-    # dname = 'Generate Labnumbers'
     image = icon('table_lightning')
 
     method = 'generate_identifiers'
 
-    ddescription = 'Automatically generate labnumbers (aka identifiers) for each irradiation position in the ' \
-                   'currently selected irradiation.'
+    description = 'Automatically generate labnumbers (aka identifiers) for each irradiation position in the ' \
+                  'currently selected irradiation.'
 
 
 class PreviewGenerateIdentifiersAction(TaskAction):
     name = 'Preview Generate Identifiers'
-    # dname = 'Preview Generate Labnumbers'
     image = icon('table_lightning')
 
     method = 'preview_generate_identifiers'
@@ -124,35 +120,64 @@ class PreviewGenerateIdentifiersAction(TaskAction):
 
 class ImportIrradiationAction(TaskAction):
     name = 'Import Irradiation...'
-    dname = 'Import Irradiation'
-    method = 'import_irradiation'
+
+    def perform(self, event):
+        app = event.task.window.application
+
+        mdb = 'pychron.mass_spec.database.massspec_database_adapter.MassSpecDatabaseAdapter'
+        mssource = app.get_service(mdb)
+        mssource.bind_preferences()
+
+        from pychron.data_mapper import do_import_irradiation
+        dvc = app.get_service('pychron.dvc.dvc.DVC')
+        plugin = app.get_plugin('pychron.entry.plugin')
+
+        sources = {obj: name for name, obj in plugin.data_sources}
+        sources['Mass Spec'] = mssource
+        do_import_irradiation(dvc=dvc, sources=sources, default_source='Mass Spec')
+
+
+class ImportAnalysesAction(Action):
+    name = 'Import Analyses...'
+
+    def perform(self, event):
+        app = event.task.window.application
+        dvc = app.get_service('pychron.dvc.dvc.DVC')
+
+        from pychron.data_mapper import do_import_analyses
+
+        # sources = {}
+        # usgsvsc = app.get_service('pychron.data_mapper.sources.usgs_vsc_source.ViewUSGSVSCSource')
+        # sources[usgsvsc] = 'USGS VSC'
+
+        plugin = app.get_plugin('pychron.entry.plugin')
+        sources = {obj: name for name, obj in plugin.data_sources}
+
+        do_import_analyses(dvc, sources)
 
 
 class GenerateTrayAction(TaskAction):
     name = 'Generate Tray'
-    dname = 'Generate Tray'
     image = icon('table_lightning')
 
     method = 'generate_tray'
-    ddescription = 'Make a irradiation tray image from an irradiation tray text file.'
+    description = 'Make a irradiation tray image from an irradiation tray text file.'
 
 
 class ImportIrradiationFileAction(TaskAction):
     name = 'Import Irradiation File'
-    dname = 'Import Irradiation File'
     image = icon('file_xls')
 
     method = 'import_irradiation_load_xls'
-    ddescription = 'Import irradiation information from an Excel file. Use "Irradiation Template" ' \
-                   'to generate a boilerplate irradiation template'
+    description = 'Import irradiation information from an Excel file. Use "Irradiation Template" ' \
+                  'to generate a boilerplate irradiation template'
 
 
 class MakeIrradiationTemplateAction(Action):
     name = 'Irradiation Template'
-    dname = 'Irradiation Template'
     image = icon('file_xls')
 
-    ddescription = 'Make an Excel irradiation template that can be used to import irradiation information.'
+    description = 'Make an Excel irradiation template that can be used to import irradiation information.'
 
     def perform(self, event):
         from pyface.file_dialog import FileDialog
@@ -181,25 +206,21 @@ class MakeIrradiationTemplateAction(Action):
 
 class ImportSamplesAction(TaskAction):
     name = 'Import Sample File'
-    dname = 'Import Sample File'
     method = 'import_sample_from_file'
 
 
 class ImportSampleMetadataAction(TaskAction):
     name = 'Import Sample Metadata...'
-    dname = 'Import Sample Metadata'
     method = 'import_sample_metadata'
 
 
 class ExportIrradiationAction(TaskAction):
     name = 'Export Irradiation...'
-    dname = 'Export Irradiation'
     method = 'export_irradiation'
 
 
 class GenerateIrradiationTableAction(TaskAction):
     name = 'Generate Irradiation Table'
-    dname = 'Generate Irradiation Table'
     accelerator = 'Ctrl+0'
 
     # ddescription = 'Do not use!'
@@ -222,35 +243,53 @@ class GenerateIrradiationTableAction(TaskAction):
             warning(None, 'DVC Plugin is required. Please enable')
 
 
-class ImportIrradiationHolderAction(Action):
-    name = 'Import Irradiation Holder'
-    dname = 'Import Irradiation Holder'
+class ImportIrradiationGeometryAction(Action):
+    name = 'Import Irradiation Geometry'
 
     def perform(self, event):
-        from pychron.entry.loaders.irradiation_holder_loader import IrradiationHolderLoader
-        from pychron.database.isotope_database_manager import IsotopeDatabaseManager
+        dvc = event.task.application.get_service(DVC_PROTOCOL)
+        if dvc is not None:
+            dialog = FileDialog(action='open', default_directory=os.path.join(os.path.expanduser('~'), 'Desktop'))
+            if dialog.open() == OK:
+                if dialog.path:
+                    dvc.meta_repo.add_irradiation_geometry_file(dialog.path)
 
-        man = IsotopeDatabaseManager()
-        db = man.db
-        if db.connect():
-            a = IrradiationHolderLoader()
-            a.do_import(db)
+
+class EditIrradiationGeometryAction(Action):
+    name = 'Edit Irradiation Geometry'
+
+    def perform(self, event):
+        dvc = event.task.application.get_service(DVC_PROTOCOL)
+        if dvc is not None:
+            eiv = EditIrradiationGeometry(dvc=dvc)
+            eiv.edit_traits()
 
 
 class TransferJAction(TaskAction):
     name = 'Transfer J Data...'
-    dname = 'Transfer J Data'
     method = 'transfer_j'
 
 
 class GetIGSNAction(TaskAction):
     name = 'Get IGSNs'
-    dname = 'Get IGSNs'
     method = 'get_igsns'
 
 
 class GenerateStatusReportAction(TaskAction):
     name = 'Status Report...'
-    dname = 'Status Report...'
     method = 'generate_status_report'
+
+
+class SyncMetaDataAction(TaskAction):
+    name = 'Sync Repo/DB Metadata'
+    method = 'sync_metadata'
+
+    # def perform(self, event):
+    #     app = event.task.window.application
+    #     app.information_dialog('Sync Repo disabled')
+    #     return
+    #
+    #     dvc = app.get_service('pychron.dvc.dvc.DVC')
+    #     if dvc:
+    #         dvc.repository_db_sync('IR986', dry_run=False)
 # ============= EOF =============================================

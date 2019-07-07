@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import HasTraits, Any, File, String, Int, Enum, Instance, Dict, \
@@ -104,7 +106,7 @@ class BaseVideoPane(HasTraits):
 
     @on_trait_change('video:fps')
     def _update_fps(self):
-        print 'set component fps', self.video.fps
+        print('set component fps', self.video.fps)
         self.component.fps = self.video.fps
 
     def _video_changed(self):

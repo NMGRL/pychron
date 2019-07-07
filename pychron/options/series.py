@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import List, Bool, Enum
+from traits.api import Bool, Enum, cached_property
 
 from pychron.options.fit import FitAuxPlot, FitOptions
 from pychron.options.views.series_views import VIEWS
+from pychron.pychron_constants import MAIN, APPEARANCE, SERIES_FIT_TYPES
 
 
 class SeriesFitAuxPlot(FitAuxPlot):
@@ -39,13 +40,30 @@ class SeriesFitAuxPlot(FitAuxPlot):
     def filter_outliers_dict(self):
         return {}
 
+    @cached_property
+    def _get_fit_types(self):
+        return SERIES_FIT_TYPES
+
 
 class SeriesOptions(FitOptions):
     aux_plot_klass = SeriesFitAuxPlot
-    subview_names = List(['Main', 'Series', 'Appearance'])
     error_bar_nsigma = Enum(1, 2, 3)
     end_caps = Bool(False)
     show_info = Bool(True)
+    link_plots = Bool(True)
+
+    show_statistics = Bool(False)
+    show_statistics_as_table = Bool(False)
+    use_group_statistics = Bool(True)
+
+    display_min_max = Bool(False)
+
+    def get_statistics_options(self):
+        return {k: getattr(self, k) for k in ('show_statistics_as_table', 'display_min_max', )}
+
+    # use_restricted_references = Bool
+    def initialize(self):
+        self.subview_names = [MAIN, 'Series', APPEARANCE]
 
     def _get_subview(self, name):
         return VIEWS[name]

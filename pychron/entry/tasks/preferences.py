@@ -16,10 +16,26 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import Str, Float, Password
-from traitsui.api import View, Item, Group, VGroup, HGroup, UItem
+from traits.api import Str, Float, Password, Bool
+from traitsui.api import View, Item, Group, VGroup, HGroup
 
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
+
+
+class SampleEntryPreferences(BasePreferencesHelper):
+    preferences_path = 'pychron.entry.sample'
+    auto_add_project_repository = Bool
+
+
+class SampleEntryPreferencesPane(PreferencesPane):
+    model_factory = SampleEntryPreferences
+    category = 'Entry'
+
+    def traits_view(self):
+        v = View(Item('auto_add_project_repository',
+                      label='Auto Add Project Repo.',
+                      tooltip='Automatically add a repository with the same name as the project'))
+        return v
 
 
 class IrradiationEntryPreferences(BasePreferencesHelper):
@@ -29,6 +45,9 @@ class IrradiationEntryPreferences(BasePreferencesHelper):
     monitor_material = Str
     j_multiplier = Float
     irradiation_project_prefix = Str
+    allow_multiple_null_identifiers = Bool
+    use_packet_for_default_identifier = Bool
+    use_consecutive_identifiers = Bool
 
 
 class LabnumberEntryPreferencesPane(PreferencesPane):
@@ -39,14 +58,22 @@ class LabnumberEntryPreferencesPane(PreferencesPane):
         irradiation_grp = Group(Item('irradiation_prefix',
                                      label='Irradiation Prefix',
                                      tooltip='Irradiation Prefix e.g., NM-'),
-                                HGroup(UItem('monitor_name', label='Name'),
-                                       UItem('monitor_material', label='Material'),
+                                HGroup(Item('monitor_name', label='Name'),
+                                       Item('monitor_material', label='Material'),
                                        show_border=True, label='Monitor'),
                                 Item('j_multiplier', label='J Multiplier',
                                      tooltip='J units per hour'),
                                 Item('irradiation_project_prefix',
                                      tooltip='Project Prefix for Irradiations e.g., Irradiation-',
                                      label='Irradiation Project Prefix'),
+                                Item('allow_multiple_null_identifiers',
+                                     label='Allow Multiple Null Identifiers',
+                                     tooltip='If not selected a placeholder identifier '
+                                             'is automatically generated. <IRRAD>:<LEVEL><POSITION>'),
+                                Item('use_packet_for_default_identifier',
+                                     label='Use Packet for Default Identifier',
+                                     tooltip='Use packet# when generating default Identifiers instead of the hole#'),
+                                Item('use_consecutive_identifiers'),
                                 show_border=True,
                                 label='Irradiations')
         v = View(irradiation_grp)

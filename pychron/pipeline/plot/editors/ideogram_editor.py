@@ -17,13 +17,18 @@
 # ============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.label import Label
-from traits.api import Instance
+from pyface.timer.do_later import do_later
+from traits.api import Instance, List, Property, on_trait_change
+from traitsui.api import View, VSplit, VGroup, HGroup
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.traitsui_shortcuts import listeditor
+from pychron.pipeline.plot.editors.ideogram_results_table import IdeogramResultsTable
 from pychron.pipeline.plot.editors.interpreted_age_editor import InterpretedAgeEditor
-from pychron.processing.analyses.file_analysis import InterpretedAgeAnalysis
+from pychron.pipeline.plot.editors.ttest_table import TTestTable
 from pychron.pipeline.plot.models.ideogram_model import IdeogramModel
+from pychron.processing.analyses.file_analysis import InterpretedAgeAnalysis
 
 
 class Caption(AbstractOverlay):
@@ -34,24 +39,64 @@ class Caption(AbstractOverlay):
         self.label.text = text
 
     def _draw_component(self, gc, view_bounds=None, mode="normal"):
-        print 'casdcasd'
+        print('casdcasd')
 
     def _draw_overlay(self, gc, view_bounds=None, mode="normal"):
-        print 'asdfasdfasdf'
+        print('asdfasdfasdf')
 
     def _draw_underlay(self, gc, view_bounds=None, mode="normal"):
-        print 'unasdf'
+        print('unasdf')
 
     def draw(self, gc, view_bounds=None, mode="default"):
-        print 'dafasfasfd'
+        print('dafasfasfd')
         with gc:
             self.label.draw()
 
 
 class IdeogramEditor(InterpretedAgeEditor):
-    # plotter_options_manager = Instance(IdeogramOptionsManager, ())
     figure_model_klass = IdeogramModel
     basename = 'ideo'
+    results_tables = List
+    ttest_tables = List
+
+    # @on_trait_change('figure_model:panels:correlation_event')
+    # def handle_correlation_event(self, evt):
+    #     print('asdf', evt)
+    additional_visible = Property
+
+    def _get_additional_visible(self):
+        return self.ttest_tables or self.results_tables
+
+    @on_trait_change('figure_model:panels:figures:recalculate_event')
+    def _handle_recalculate(self):
+        self._get_component_hook()
+
+    def _get_component_hook(self, model=None):
+        if model is None:
+            model = self.figure_model
+
+        rs = []
+        ts = []
+
+        for p in model.panels:
+            ags = []
+            for pp in p.figures:
+                ag = pp.analysis_group
+                group = pp.options.get_group(pp.group_id)
+                color = group.color
+                ag.color = color
+                ags.append(ag)
+
+            # ags = [pp.analysis_group for pp in p.figures]
+            if self.plotter_options.show_results_table:
+                r = IdeogramResultsTable(ags, self.plotter_options.nsigma)
+                rs.append(r)
+
+            if self.plotter_options.show_ttest_table and len(ags) > 1:
+                t = TTestTable(ags)
+                ts.append(t)
+
+        do_later(self.trait_set, results_tables=rs, ttest_tables=ts)
 
     def plot_interpreted_ages(self, iages):
         def construct(a):
@@ -64,7 +109,7 @@ class IdeogramEditor(InterpretedAgeEditor):
         self.disable_aux_plots()
 
         ans = [construct(ia) for ia in iages]
-        self.analyses = ans
+        self.items = ans
         self._update_analyses()
         self.dump_tool()
 
@@ -75,90 +120,20 @@ class IdeogramEditor(InterpretedAgeEditor):
                 ap.use = False
                 ap.enabled = False
 
-    # def get_component(self, ans, plotter_options):
-    # if plotter_options is None:
-    #         pom = IdeogramOptionsManager()
-    #         plotter_options = pom.plotter_options
-    #
-    #     from pychron.processing.plotters.ideogram.ideogram_model import IdeogramModel
-    #
-    #     model, component = self._make_component(IdeogramModel, ans, plotter_options)
-    #     return model, component
+    def traits_view(self):
+        tbl_grp = VGroup(listeditor('results_tables',
+                                    height=0.2),
+                         scrollable=True,
+                         visible_when='results_tables')
 
-    # def get_component(self, ans, plotter_options):
-    # # meta = None
-    # # if self.figure_model:
-    #     #     meta = self.figure_model.dump_metadata()
-    #
-    #     if plotter_options is None:
-    #         pom = IdeogramOptionsManager()
-    #         plotter_options = pom.plotter_options
-    #
-    #     model = self.figure_model
-    #     container = self.figure_container
-    #     if not model:
-    #         from pychron.processing.plotters.ideogram.ideogram_model import IdeogramModel
-    #
-    #         model = IdeogramModel(plot_options=plotter_options,
-    #                               titles=self.titles)
-    #
-    #         self.figure_model = model
-    #
-    #     model.trait_set(plot_options=plotter_options,
-    #                     titles=self.titles,
-    #                     analyses=ans)
-    #
-    #     if not container:
-    #         container = FigureContainer(model=model)
-    #         self.figure_container = container
-    #
-    #     container.refresh()
-    #     component = container.component
-    #     # print self.figure_container
-    #     # print self.figure_model
-    #     # po = plotter_options
-    #     # m = po.mean_calculation_kind
-    #     # s = po.nsigma
-    #     # es = po.error_bar_nsigma
-    #     # ecm = po.error_calc_method
-    #     # captext = u'Mean: {} +/-{}\u03c3 Data: +/-{}\u03c3. ' \
-    #     #           u'Error Type:{}. Analyses omitted from calculation \n' \
-    #     #           u'indicated by open squares. Dashed line represents ' \
-    #     #           u'cumulative probability for all analyses'.format(m, s, es, ecm)
-    #     #
-    #     # self._add_caption(component, plotter_options, default_captext=captext)
-    #
-    #     # if meta:
-    #     #     model.load_metadata(meta)
-    #
-    #     return model, component
+        ttest_grp = VGroup(listeditor('ttest_tables', height=0.2),
+                           visible_when='ttest_tables')
 
-                # def _get_items_from_file(self, parser):
-                #     # ans = []
-                #     def gen():
-                #         for d in parser.itervalues():
-                #             if d['age'] is not None:
-                #                 f = FileAnalysis(age=float(d['age']),
-                #                                  age_err=float(d['age_err']),
-                #                                  record_id=d['runid'],
-                #                                  sample=d.get('sample', ''),
-                #                                  aliquot=int(d.get('aliquot', 0)),
-                #                                  group_id=int(d.get('group', 0)))
-                #                 yield f
-                #
-                #     ans = list(gen())
-                #     # ans.append(f)
-                #
-                #     # ans = [construct(args)
-                #     #        for args in par.itervalues()]
-                #
-                #     po = self.plotter_options_manager.plotter_options
-                #     for ap in po.aux_plots:
-                #         if ap.name.lower() not in ('ideogram', 'analysis number', 'analysis number nonsorted'):
-                #             ap.use = False
-                #             ap.enabled = False
-                #         else:
-                #             ap.enabled = True
-                #     return ans
+        g = self.get_component_view()
+        g.height = 0.8
 
+        v = View(VSplit(g,
+                        HGroup(tbl_grp, ttest_grp, visible_when='additional_visible')),
+                 resizable=True)
+        return v
 # ============= EOF =============================================

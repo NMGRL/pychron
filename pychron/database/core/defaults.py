@@ -13,12 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import traceback
 
 from pychron.canvas.utils import make_geom
 from pychron.paths import paths
 from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS
+import six
+from six.moves import map
 
 
 def iterdir(d, exclude=None):
@@ -51,7 +55,7 @@ def populate_isotopes(db):
 
 
 def load_isotopedb_defaults(db):
-    for name, mass in MOLECULAR_WEIGHTS.iteritems():
+    for name, mass in six.iteritems(MOLECULAR_WEIGHTS):
         db.add_molecular_weight(name, mass)
 
     populate_isotopes(db)
@@ -97,7 +101,7 @@ def load_isotopedb_defaults(db):
         try:
             _load_tray_map(db, p, name)
         except BaseException:
-            print 'failed loading tray map "{}", "{}"'.format(p, name)
+            print('failed loading tray map "{}", "{}"'.format(p, name))
 
     for t in ('ok', 'invalid'):
         db.add_tag(t, user='default')
@@ -125,11 +129,11 @@ def parse_irradiation_tray_map(p):
     try:
         with open(p, 'r') as rfile:
             h = rfile.readline()
-            _, diam = map(str.strip, h.split(','))
+            _, diam = list(map(str.strip, h.split(',')))
             holes = []
             for i, l in enumerate(rfile):
                 try:
-                    args = map(float, l.strip().split(','))
+                    args = list(map(float, l.strip().split(',')))
                     if len(args) == 2:
                         r = diam
                     else:
@@ -141,7 +145,7 @@ def parse_irradiation_tray_map(p):
                     break
 
             return holes
-    except Exception, e:
+    except Exception as e:
         traceback.print_exc()
         return
 
@@ -157,6 +161,6 @@ def load_irradiation_map(db, p, name, overwrite_geometry=False):
             h = db.add_irradiation_holder(name)
             if overwrite_geometry or not h.geometry:
                 h.geometry = blob
-        except Exception, e:
-            print 'load irradiation map', p, name, e
+        except Exception as e:
+            print('load irradiation map', p, name, e)
             db.session.rollback()

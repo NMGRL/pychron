@@ -16,26 +16,33 @@
 # =============enthought library imports=======================
 
 # =============standard library imports ========================
+from __future__ import absolute_import
+from __future__ import print_function
+
+import codecs
 import glob
 import os
 import sys
-import time
 
 import serial
+import time
+from six.moves import range
+
 # =============local library imports  ==========================
-from communicator import Communicator, process_response, prep_str, remove_eol_func
+from .communicator import Communicator, process_response, prep_str, remove_eol_func
 
 
 def get_ports():
     usb = glob.glob('/dev/tty.usb*')
     furpi = glob.glob('/dev/furpi.*')
     pychron = glob.glob('/dev/pychron.*')
+    slab = glob.glob('/dev/tty.SLAB*')
     if sys.platform == 'darwin':
         keyspan = glob.glob('/dev/tty.U*')
     else:
         keyspan = glob.glob('/dev/ttyU*')
 
-    return keyspan + usb + furpi + pychron
+    return keyspan + usb + furpi + pychron + slab
 
 
 class SerialCommunicator(Communicator):
@@ -141,6 +148,15 @@ class SerialCommunicator(Communicator):
         self.set_attribute(config, 'read_terminator_position', 'Communications', 'terminator_position',
                            optional=True, default=None, cast='int')
 
+        self.set_attribute(config, 'write_terminator', 'Communications', 'write_terminator',
+                           optional=True, default=b'\r')
+
+        if self.write_terminator == 'CRLF':
+            self.write_terminator = b'\r\n'
+
+        if self.read_terminator == 'CRLF':
+            self.read_terminator = b'\r\n'
+
         if self.read_terminator == 'ETX':
             self.read_terminator = chr(3)
 
@@ -204,7 +220,10 @@ class SerialCommunicator(Communicator):
             if self.clear_output:
                 self.handle.flushInput()
                 self.handle.flushOutput()
-            self._write(cmd, is_hex=is_hex)
+
+            if self._write(cmd, is_hex=is_hex):
+                return
+
             if is_hex:
                 if nbytes is None:
                     nbytes = 8
@@ -217,12 +236,15 @@ class SerialCommunicator(Communicator):
                 re = self._read_terminator(delay=delay,
                                            terminator=read_terminator,
                                            terminator_position=terminator_position)
-        if remove_eol:
+        if remove_eol and not is_hex:
             re = remove_eol_func(re)
 
         if verbose:
-            pre = process_response(re, replace)
+            pre = process_response(re, replace, remove_eol=not is_hex)
             self.log_response(cmd, pre, info)
+
+        # if is_hex:
+        #     re = binascii.hexlify(re).decode('utf-8')
 
         return re
 
@@ -359,31 +381,34 @@ class SerialCommunicator(Communicator):
     def _write(self, cmd, is_hex=False):
         """
             use the serial handle to write the cmd to the serial buffer
+            return True if there is an exception writing cmd
 
         """
 
-        def write(cmd_str):
-            try:
-                self.handle.write(cmd_str)
-            except (serial.serialutil.SerialException, OSError, IOError, ValueError), e:
-                self.warning(e)
-
         if not self.simulation:
-
+            cmd = bytes(cmd, 'utf-8')
             if is_hex:
-                cmd = cmd.decode('hex')
+                cmd = codecs.decode(cmd, 'hex')
+                # cmd = cmd.decode('hex')
             else:
-                if self.write_terminator is not None:
-                    cmd += self.write_terminator
+                wt = self.write_terminator
+                if wt is not None:
+                    if isinstance(wt, str):
+                        wt = bytes(wt, 'utf-8')
+                    cmd += wt
 
-            write(cmd)
+            try:
+                self.handle.write(cmd)
+            except (serial.serialutil.SerialException, OSError, IOError, ValueError) as e:
+                self.warning('Serial Communicator write execption: {}'.format(e))
+                return True
 
     def _read_nchars(self, n, timeout=1, delay=None):
         func = lambda r: self._get_nchars(n, r)
         return self._read_loop(func, delay, timeout)
 
     def _read_hex(self, nbytes=8, timeout=1, delay=None):
-        func = lambda r: self._get_nbytes(nbytes * 2, r)
+        func = lambda r: self._get_nbytes(nbytes, r)
         return self._read_loop(func, delay, timeout)
 
     def _read_handshake(self, handshake, handshake_only, timeout=1, delay=None):
@@ -419,8 +444,12 @@ class SerialCommunicator(Communicator):
         handle = self.handle
         inw = handle.inWaiting()
         c = min(inw, nchars - len(r))
-        r += ''.join(map('{:02X}'.format, map(ord, handle.read(c))))
-
+        re = handle.read(c)
+        # print('inw', inw, 'c', c, re)
+        r += re
+        # print('r', r, len(r), nchars)
+        # r += b''.join(map('{:02X}'.format, map(ord, handle.read(c)))))
+        # print('r', r)
         return r[:nchars], len(r) >= nchars
 
     def _get_nchars(self, nchars, r):
@@ -443,9 +472,10 @@ class SerialCommunicator(Communicator):
         try:
             inw = self.handle.inWaiting()
             r += self.handle.read(inw)
+            # r += chrs.decode('utf-8')
             #            print 'inw', inw, r, terminator
             if terminator is None:
-                terminator = ('\n', '\r', '\r\x00')
+                terminator = (b'\r\x00', b'\r\n', b'\r', b'\n')
             if not isinstance(terminator, (list, tuple)):
                 terminator = (terminator,)
 
@@ -454,12 +484,16 @@ class SerialCommunicator(Communicator):
                     if pos:
                         t = r[pos] == ti
                     else:
+
+                        if isinstance(ti, str):
+                            ti = ti.encode()
+
                         t = r.endswith(ti)
 
                     if t:
                         terminated = True
                         break
-        except BaseException, e:
+        except BaseException as e:
             self.warning(e)
         return r, terminated
 
@@ -470,7 +504,7 @@ class SerialCommunicator(Communicator):
         elif self.read_delay:
             time.sleep(self.read_delay / 1000.)
 
-        r = ''
+        r = b''
         st = time.time()
 
         handle = self.handle
@@ -505,7 +539,7 @@ if __name__ == '__main__':
     s.tell('A', verbose=False)
 
     for i in range(10):
-        print 'dddd', s.ask('1', verbose=False)
+        print('dddd', s.ask('1', verbose=False))
         time.sleep(1)
 #    s.tell('ddd', verbose=False)
 #    print s.ask('ddd', verbose=False)

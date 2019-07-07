@@ -25,6 +25,13 @@ def format_blob(blob):
     return base64.b64decode(blob)
 
 
+def encode_blob(blob):
+    if isinstance(blob, str):
+        blob = blob.encode('utf-8')
+
+    return base64.b64encode(blob).decode('utf-8')
+
+
 def pack(fmt, data):
     """
     data should be something like [(x0,y0),(x1,y1), (xN,yN)]
@@ -32,10 +39,11 @@ def pack(fmt, data):
     @param data:
     @return:
     """
-
     # if len(args) > 1:
     #     args = zip(args)
-    return ''.join([struct.pack(fmt, *datum) for datum in data])
+    # b = b''
+
+    return b''.join([struct.pack(fmt, *datum) for datum in data])
 
 
 def unpack(blob, fmt='>ff', step=8, decode=False):
@@ -44,16 +52,16 @@ def unpack(blob, fmt='>ff', step=8, decode=False):
 
     if blob:
         try:
-            return zip(*[struct.unpack(fmt, blob[i:i + step]) for i in xrange(0, len(blob), step)])
+            return list(zip(*[struct.unpack(fmt, blob[i:i + step]) for i in range(0, len(blob), step)]))
         except struct.error:
             ret = []
-            for i in xrange(0, len(blob), step):
+            for i in range(0, len(blob), step):
                 try:
                     args = struct.unpack(fmt, blob[i:i+step])
                 except struct.error:
                     break
                 ret.append(args)
-            return zip(*ret)
+            return list(zip(*ret))
 
     else:
         return [[] for _ in fmt.count('f')]

@@ -15,6 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
+from functools import cmp_to_key
+
 from pyface import confirmation_dialog
 from pyface.constant import NO
 from pyface.qt import QtGui
@@ -26,6 +30,9 @@ from pyface.ui.qt4.tasks.editor_area_pane import EditorAreaDropFilter
 import sys
 from pyface.qt import QtCore
 from pyface.qt.QtGui import QAction, QCursor
+from six.moves import range
+
+
 # ============= local library imports  ==========================
 
 # class myEditorWidget(EditorWidget):
@@ -61,7 +68,7 @@ class myEditorAreaWidget(EditorAreaWidget):
     def contextMenuEvent(self, event):
         epos = event.pos()
 
-        if epos.y()>25:
+        if epos.y() > 25:
             return
 
         menu = QtGui.QMenu(self)
@@ -79,6 +86,35 @@ class myEditorAreaWidget(EditorAreaWidget):
         current = self._get_closest_editor()
         if current:
             current.editor.close()
+
+    def get_dock_widgets_ordered(self, visible_only=False):
+        """ Gets all dock widgets in left-to-right, top-to-bottom order.
+            """
+
+        def cmp(a, b):
+            return (a > b) - (a < b)
+
+        def compare(one, two):
+            y = cmp(one.pos().y(), two.pos().y())
+            return cmp(one.pos().x(), two.pos().x()) if y == 0 else y
+
+        children = []
+        for child in self.children():
+            if (child.isWidgetType() and child.isVisible() and
+                    ((isinstance(child, QtGui.QTabBar) and not visible_only) or
+                         (isinstance(child, QtGui.QDockWidget) and
+                              (visible_only or not self.tabifiedDockWidgets(child))))):
+                children.append(child)
+        children = sorted(children, key=cmp_to_key(compare))
+        # children.sort(cmp=compare)
+
+        widgets = []
+        for child in children:
+            if isinstance(child, QtGui.QTabBar):
+                widgets.extend(self.get_dock_widgets_for_bar(child))
+            else:
+                widgets.append(child)
+        return widgets
 
     def close_all_action(self):
         for di in self.get_dock_widgets():
@@ -100,7 +136,6 @@ class myEditorAreaWidget(EditorAreaWidget):
 
 
 class myAdvancedEditorAreaPane(AdvancedEditorAreaPane):
-
     # def add_editor(self, editor):
     #     """ Adds an editor to the pane.
     #     """
@@ -133,7 +168,7 @@ class myAdvancedEditorAreaPane(AdvancedEditorAreaPane):
         mod = 'Ctrl+' if sys.platform == 'darwin' else 'Alt+'
         mapper = QtCore.QSignalMapper(self.control)
         mapper.mapped.connect(self._activate_tab)
-        for i in xrange(1, 10):
+        for i in range(1, 10):
             sequence = QtGui.QKeySequence(mod + str(i))
             shortcut = QtGui.QShortcut(sequence, self.control)
             shortcut.activated.connect(mapper.map)
@@ -157,4 +192,3 @@ class myAdvancedEditorAreaPane(AdvancedEditorAreaPane):
             self.active_editor = None
 
 # ============= EOF =============================================
-

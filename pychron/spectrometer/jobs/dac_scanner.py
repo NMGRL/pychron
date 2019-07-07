@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 
+from __future__ import absolute_import
 from chaco.abstract_overlay import AbstractOverlay
 from enable.tools.drag_tool import DragTool
 from kiva.trait_defs.kiva_font_trait import KivaFont
@@ -26,6 +27,7 @@ from traits.api import Float, List, Button, Enum
 # ============= local library imports  ==========================
 from pychron.graph.tools.limits_tool import LimitsTool, LimitOverlay
 from pychron.spectrometer.jobs.base_scanner import BaseScanner
+from six.moves import zip
 
 
 class ScannerBoundsTool(DragTool):
@@ -230,7 +232,7 @@ class DACScanner(BaseScanner):
         plot.overlays.append(o)
 
     def _add_mftable_overlay(self, plot):
-        mft = self.spectrometer.magnet.mftable.get_table()
+        mft = self.spectrometer.magnet.field_table.get_table()
         isos, mws, dacs, coeffs = mft[self.spectrometer.reference_detector]
 
         d = (dacs[1] - dacs[0]) / (mws[1] - mws[0])
@@ -274,7 +276,7 @@ class DACScanner(BaseScanner):
     #     self.graph.redraw()
 
     def _use_mftable_limits_fired(self):
-        mft = self.spectrometer.magnet.mftable.get_table()
+        mft = self.spectrometer.magnet.field_table.get_table()
         try:
             isos, mws, dacs, coeffs = mft[self.spectrometer.reference_detector]
         except KeyError:

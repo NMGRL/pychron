@@ -24,11 +24,7 @@ from pyface.tasks.action.task_action import TaskAction
 from traitsui.menu import Action
 
 from pychron.envisage.resources import icon
-
-
-class GitRollbackAction(TaskAction):
-    name = 'Git Undo'
-    method = 'git_rollback'
+from pychron.envisage.ui_actions import UIAction, UITaskAction
 
 
 class SavePipelineTemplateAction(TaskAction):
@@ -40,15 +36,15 @@ class RunAction(TaskAction):
     name = 'Run'
     method = 'run'
     image = icon('start')
-    visible_name = 'run_enabled'
+    visible_name = 'engine.run_enabled'
     accelerator = 'Ctrl+R'
 
 
 class ResumeAction(TaskAction):
     name = 'Resume'
     method = 'resume'
-    image = icon('resume')
-    visible_name = 'resume_enabled'
+    image = icon('edit-redo-3')
+    visible_name = 'engine.resume_enabled'
 
 
 class RunFromAction(TaskAction):
@@ -75,25 +71,24 @@ class SwitchToBrowserAction(TaskAction):
     image = icon('start')
 
 
-class ConfigureRecallAction(TaskAction):
-    name = 'Configure Recall'
-    dname = 'Configure Recall'
+class ConfigureRecallAction(UITaskAction):
+    name = 'Recall Configuration...'
     method = 'configure_recall'
     image = icon('cog')
 
 
-class ConfigureAnalysesTableAction(TaskAction):
-    name = 'Configure Analyses Table'
-    dname = 'Configure Analyses Table'
-    method = 'configure_analyses_table'
-    image = icon('cog')
-
-
-class ConfigureSampleTableAction(TaskAction):
-    name = 'Configure Sample Table'
-    dname = 'Configure Sample Table'
-    method = 'configure_sample_table'
-    image = icon('cog')
+# class ConfigureAnalysesTableAction(TaskAction):
+#     name = 'Configure Analyses Table'
+#     dname = 'Configure Analyses Table'
+#     method = 'configure_analyses_table'
+#     image = icon('cog')
+#
+#
+# class ConfigureSampleTableAction(TaskAction):
+#     name = 'Configure Sample Table'
+#     dname = 'Configure Sample Table'
+#     method = 'configure_sample_table'
+#     image = icon('cog')
 
 
 class LoadReviewStatusAction(TaskAction):
@@ -121,7 +116,7 @@ class TabularViewAction(TaskAction):
     image = icon('table')
 
 
-class PipelineAction(Action):
+class PipelineAction(UIAction):
     def perform(self, event):
         app = event.task.window.application
         task = app.get_task('pychron.pipeline.task')
@@ -147,8 +142,10 @@ class RecallAction(PipelineAction):
     name = 'Recall...'
     action = 'pipeline_recall'
 
-    # def perform(self, event):
-    #     self._get_task(event)
+
+class InterpretedAgeRecallAction(PipelineAction):
+    name = 'Interpreted Age Recall...'
+    action = 'pipeline_interpreted_age_recall'
 
 
 class TimeViewBrowserAction(BrowserAction):
@@ -162,43 +159,36 @@ class ReductionAction(PipelineAction):
 
 class IsoEvolutionAction(PipelineAction):
     name = 'Isotope Evolutions'
-    dname = 'Isotope Evolutions'
     action = 'set_isotope_evolutions_template'
 
 
 class BlanksAction(PipelineAction):
     name = 'Blanks'
-    dname = 'Blanks'
     action = 'set_blanks_template'
 
 
 class ICFactorAction(PipelineAction):
     name = 'ICFactor'
-    dname = 'ICFactor'
     action = 'set_icfactor_template'
 
 
 class FluxAction(PipelineAction):
     name = 'Flux'
-    dname = 'Flux'
     action = 'set_flux_template'
 
 
 class FreezeProductionRatios(PipelineAction):
     name = 'Freeze Production Ratios'
-    dname = 'Freeze Production Ratios'
     action = 'freeze_production_ratios'
 
 
 class FreezeFlux(PipelineAction):
     name = 'Freeze Flux'
-    dname = 'Freeze Flux'
     action = 'freeze_flux'
 
 
 class AnalysisTableAction(PipelineAction):
     name = 'Analysis Table'
-    dname = 'Analysis Table'
     action = 'set_analysis_table_template'
 
 
@@ -207,7 +197,7 @@ class PipelineRecallAction(TaskAction):
     method = 'pipeline_recall'
 
 
-class ClearAnalysisSetsAction(Action):
+class ClearAnalysisSetsAction(UIAction):
     name = 'Clear Analysis Sets'
 
     def perform(self, event):
@@ -221,7 +211,7 @@ class ClearAnalysisSetsAction(Action):
 
 
 # ============= Plotting Actions =============================================
-class ResetFactoryDefaultsAction(Action):
+class ResetFactoryDefaultsAction(UIAction):
     name = 'Reset Factory Defaults'
 
     def perform(self, event):
@@ -239,6 +229,24 @@ class IdeogramAction(PlotAction):
     action = 'set_ideogram_template'
     image = icon('histogram')
     accelerator = 'Ctrl+i'
+
+
+class SubgroupIdeogramAction(PlotAction):
+    name = 'SubGroup Ideogram'
+    action = 'set_subgroup_ideogram_template'
+    image = icon('histogram')
+
+
+class HybridIdeogramAction(PlotAction):
+    name = 'Hybrid Ideogram'
+    action = 'set_hybrid_ideogram_template'
+    image = icon('histogram')
+
+
+class HistoryIdeogramAction(PlotAction):
+    name = 'History Ideogram'
+    action = 'set_history_ideogram_template'
+    image = icon('histogram')
 
 
 class SpectrumAction(PlotAction):
@@ -261,7 +269,6 @@ class InverseIsochronAction(PlotAction):
 
 class SeriesAction(PlotAction):
     name = 'Series'
-    dname = 'Series'
     action = 'set_series_template'
     id = 'pychron.series'
 
@@ -271,7 +278,7 @@ class VerticalFluxAction(PipelineAction):
     action = 'set_vertical_flux_template'
 
 
-class ExtractionAction(Action):
+class ExtractionAction(UIAction):
     name = 'Extraction Results...'
 
     def perform(self, event):
@@ -285,30 +292,35 @@ class ExtractionAction(Action):
                     break
 
 
+class MassSpecReducedAction(PipelineAction):
+    name = 'Mass Spec Reduced Transfer'
+    action = 'mass_spec_reduced_transfer'
+
+
 # ============= Quick Series ====================================
-class LastNAnalysesSeriesAction(PipelineAction):
-    name = 'Last N...'
-    action = 'set_last_n_analyses_template'
-
-
-class LastNHoursSeriesAction(PipelineAction):
-    name = 'Last N Hours...'
-    action = 'set_last_n_hours_template'
-
-
-class LastDaySeriesAction(PipelineAction):
-    name = 'Last Day'
-    action = 'set_last_day_template'
-
-
-class LastWeekSeriesAction(PipelineAction):
-    name = 'Last Week'
-    action = 'set_last_week_template'
-
-
-class LastMonthSeriesAction(PipelineAction):
-    name = 'Last Month'
-    action = 'set_last_month_template'
+# class LastNAnalysesSeriesAction(PipelineAction):
+#     name = 'Last N...'
+#     action = 'set_last_n_analyses_template'
+#
+#
+# class LastNHoursSeriesAction(PipelineAction):
+#     name = 'Last N Hours...'
+#     action = 'set_last_n_hours_template'
+#
+#
+# class LastDaySeriesAction(PipelineAction):
+#     name = 'Last Day'
+#     action = 'set_last_day_template'
+#
+#
+# class LastWeekSeriesAction(PipelineAction):
+#     name = 'Last Week'
+#     action = 'set_last_week_template'
+#
+#
+# class LastMonthSeriesAction(PipelineAction):
+#     name = 'Last Month'
+#     action = 'set_last_month_template'
 
 
 # ============= tag =============================================
@@ -348,4 +360,9 @@ class SaveFigureAction(TaskAction):
     name = 'Save Figure'
     method = 'save_figure'
 
+
+class SaveTableAction(TaskAction):
+    name = 'Save Table'
+    method = 'save_table'
+    image = icon('table_save')
 # ============= EOF =============================================

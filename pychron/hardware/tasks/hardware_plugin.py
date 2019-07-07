@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from envisage.extension_point import ExtensionPoint
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
@@ -112,6 +113,7 @@ class HardwarePlugin(BaseTaskPlugin):
                 node = self.application.preferences.node('pychron.hardware')
                 ports = eval(node.get('ports', '[]'))
                 factories = eval(node.get('factories', '[]'))
+
                 for protocol in eval(node.get('pnames', '[]')):
                     factory = import_klass(factories[protocol])
                     port = int(ports[protocol])

@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= standard library imports ========================
+from __future__ import absolute_import
 import os
 import unittest
 
@@ -32,7 +33,8 @@ class NMGRLLegacySourceUnittest(unittest.TestCase):
     def setUpClass(cls):
         cls.src = NMGRLLegacySource()
         p = os.path.join(fget_data_dir(), 'nmgrl_legacy.xls')
-        cls.spec = cls.src.get_analysis_import_spec(p)
+        cls.src.path = p
+        cls.spec = cls.src.get_analysis_import_spec()
 
     # def test_runid(self):
     #     self.assertEqual(self.spec.run_spec.runid, '16F0203A')

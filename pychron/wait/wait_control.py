@@ -14,15 +14,17 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from traits.api import Str, Color, Button, Float, Bool
 # ============= standard library imports ========================
-from threading import Event
 import time
+from threading import Event
+
+# ============= enthought library imports =======================
+from traits.api import Str, Color, Button, Float, Bool, Property, Int
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
-from pychron.loggable import Loggable
 from pychron.core.helpers.timer import Timer
+from pychron.loggable import Loggable
 
 
 class WaitControl(Loggable):
@@ -30,10 +32,11 @@ class WaitControl(Loggable):
     message = Str
     message_color = Color('black')
 
-    high = Float
+    high = Int
     duration = Float(10)
 
     current_time = Float
+    current_display_time = Property(depends_on='current_time')
 
     auto_start = Bool(False)
     timer = None
@@ -66,16 +69,11 @@ class WaitControl(Loggable):
         if evt is None:
             evt = self.end_evt
 
-        # time.sleep(0.25)
+        if self.duration > 1:
+            evt.wait(self.duration - 1)
 
-        evt.wait(0.25)
-
-        # while not self.end_evt.is_set():
-        while not evt.wait(timeout=0.1):
-            pass
-        # while not evt.is_set():
-        #     # time.sleep(0.005)
-        #     evt.wait(0.005)
+        while not evt.wait(timeout=0.25):
+            time.sleep(0.25)
 
         self.debug('Join finished')
 
@@ -120,7 +118,7 @@ class WaitControl(Loggable):
 
     def reset(self):
         with no_update(self, fire_update_needed=False):
-            self.high = self.duration
+            self.high = int(self.duration)
             self.current_time = self.duration
             self._paused = False
 
@@ -161,6 +159,9 @@ class WaitControl(Loggable):
                 # if self.current_time <= 0:
                 # self._end()
                 # self._canceled = False
+
+    def _get_current_display_time(self):
+        return '{:03d}'.format(int(self.current_time))
 
     # ===============================================================================
     # handlers

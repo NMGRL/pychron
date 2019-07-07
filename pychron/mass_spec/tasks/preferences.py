@@ -15,9 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Str, Bool, Password, List
 from traitsui.api import View, Item, HGroup, VGroup, Spring, Label, EnumEditor
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
@@ -44,7 +47,7 @@ class MassSpecConnectionPreferences(BasePreferencesHelper, ConnectionMixin):
     def _load_names(self):
         if self.username and self.password and self.host:
             if self.host:
-                self._names = show_databases(self.host, self.username, self.password, self._schema_identifier)
+                self._names = show_databases('mysql', self.host, self.username, self.password, self._schema_identifier)
 
     def _anytrait_changed(self, name, old, new):
         if name not in ('_connected_label', '_connected_color',
@@ -113,7 +116,7 @@ class MassSpecConnectionPane(PreferencesPane):
         massspec_grp = VGroup(Item('enabled', label='Use MassSpec'),
                               VGroup(Item('name', label='Database', editor=EnumEditor(name='_names')),
                                      Item('host', label='Host'),
-                                     Item('username', label='Name'),
+                                     Item('username', label='User'),
                                      Item('password', label='Password'),
                                      cgrp,
                                      enabled_when='enabled',

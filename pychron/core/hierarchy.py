@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import weakref
 
@@ -86,7 +88,7 @@ class Hierarchy(FilePath):
 
     def pwalk(self):
         for ci in self.children:
-            print self.name, ci.path, ci.__class__.__name__
+            print(self.name, ci.path, ci.__class__.__name__)
             if isinstance(ci, Hierarchy):
                 ci.pwalk()
 

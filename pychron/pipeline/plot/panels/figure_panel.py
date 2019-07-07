@@ -15,35 +15,29 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-
-import time
-from itertools import groupby
 from math import isinf
 
 from chaco.legend import Legend
 from numpy import inf
 from traits.api import HasTraits, Any, List, Str
 
-from pychron.core.codetools.inspection import caller
+from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.processing.analysis_graph import AnalysisStackedGraph
 
 
 class FigurePanel(HasTraits):
     figures = List
-    # graph = Any
     analyses = Any
     plot_options = Any
-    _index_attr = ''
     equi_stack = False
 
+    _index_attr = ''
     _graph_klass = AnalysisStackedGraph
     _figure_klass = Any
 
-    # plot_spacing = Int(0)
     meta = Any
     title = Str
     use_previous_limits = True
-
     track_value = True
 
     # @on_trait_change('analyses[]')
@@ -53,12 +47,12 @@ class FigurePanel(HasTraits):
     def make_figures(self):
         self.figures = self._make_figures()
 
-    def _make_figures(self):
-        key = lambda x: x.group_id
-        ans = sorted(self.analyses, key=key)
-        gs = [self._figure_klass(analyses=list(ais),
-                                 group_id=gid)
-              for gid, ais in groupby(ans, key=key)]
+    def _figure_factory(self, *args, **kw):
+        return self._figure_klass(options=self.plot_options, *args, **kw)
+
+    def _make_figures(self, **kw):
+        gs = [self._figure_factory(analyses=list(ais), group_id=gid, **kw)
+              for gid, ais in groupby_group_id(self.analyses)]
         return gs
 
     # def dump_metadata(self):
@@ -73,28 +67,33 @@ class FigurePanel(HasTraits):
     def _make_graph_hook(self, g):
         pass
 
-    @caller
+    def _handle_rescale(self, obj, name, new):
+        pass
+
+    def _suppress_limits(self, state):
+        for fig in self.figures:
+            fig.suppress_ylimits_update = state
+            fig.suppress_xlimits_update = state
+
     def make_graph(self):
 
-        st = time.time()
         po = self.plot_options
-
-        # bgcolor = po.get_formatting_value('bgcolor')
         g = self._graph_klass(panel_height=200,
                               equi_stack=self.equi_stack,
                               container_dict=dict(padding=0,
                                                   spacing=po.plot_spacing,
                                                   bgcolor=po.bgcolor))
 
+        g.on_trait_change(self._handle_rescale, 'rescale_event')
         center, mi, ma = self._get_init_xlimits()
 
         plots = list(po.get_plotable_aux_plots())
         if plots:
             xpad = None
 
-            if self.plot_options.include_legend:
+            if po.include_legend:
 
-                align = self.plot_options.legend_location
+                align = po.legend_location
                 a, b = align.split(' ')
                 align = '{}{}'.format(a[0].lower(), b[0].lower())
                 legend = Legend(align=align)
@@ -103,11 +102,12 @@ class FigurePanel(HasTraits):
 
             ymas, ymis = [], []
             update_dict = {}
+            self._suppress_limits(True)
             for i, fig in enumerate(self.figures):
                 fig.trait_set(xma=ma, xmi=mi,
                               ymas=ymas, ymis=ymis,
                               center=center,
-                              options=po,
+                              # options=po,
                               graph=g,
                               title=self.title,
                               **update_dict)
@@ -115,16 +115,14 @@ class FigurePanel(HasTraits):
                 if i == 0:
                     fig.build(plots)
 
-                fig.suppress_ylimits_update = True
-                fig.suppress_xlimits_update = True
                 fig.plot(plots, legend)
-                fig.suppress_ylimits_update = False
-                fig.suppress_xlimits_update = False
+
                 ma, mi = max(fig.xma, ma), min(fig.xmi, mi)
                 ymas, ymis = fig.ymas, fig.ymis
                 xpad = fig.xpad
 
                 update_dict = fig.get_update_dict()
+            self._suppress_limits(False)
 
             if legend:
                 g.plots[0].overlays.append(legend)
@@ -136,42 +134,44 @@ class FigurePanel(HasTraits):
                     p.value_range.high_setting = h
 
             if self.use_previous_limits:
-                if plots[0].has_xlimits():
-                    tmi, tma = plots[0].xlimits
-                    if tmi != -inf and tma != inf:
-                        mi, ma = tmi, tma
+                for p in plots:
+                    if p.has_xlimits():
+                        tmi, tma = p.xlimits
+                        # print('previous xllimits', tmi, tma)
+                        if tmi != -inf and tma != inf:
+                            mi, ma = tmi, tma
 
             for i, p in enumerate(plots):
                 g.plots[i].value_scale = p.scale
-                print 'seting ylimits', i
-
                 if p.ymin or p.ymax:
-                    print 'has ymin max set', p.ymin, p.ymax
+                    # print('has ymin max set', p.ymin, p.ymax)
                     ymi, yma = p.ymin, p.ymax
                     if p.ymin > p.ymax:
                         yma = None
                     g.set_y_limits(ymi, yma, plotid=i)
                 elif p.has_ylimits():
-                    print 'has ylimits', p.ylimits[0], p.ylimits[1]
+                    # print('has ylimits', i, p.ylimits[0], p.ylimits[1])
                     g.set_y_limits(p.ylimits[0], p.ylimits[1], plotid=i)
                 elif p.calculated_ymin or p.calculated_ymax:
-                    print 'has calculated', p.calculated_ymin, p.calculated_ymax
+                    # print('has calculated', p.calculated_ymin, p.calculated_ymax)
                     g.set_y_limits(p.calculated_ymin, p.calculated_ymax, plotid=i)
 
             if mi is None and ma is None:
                 mi, ma = 0, 100
 
             if not (isinf(mi) or isinf(ma)):
+                # print('setting xlimits', id(self), mi, ma, xpad, self.plot_options.xpadding)
                 g.set_x_limits(mi, ma, pad=xpad or self.plot_options.xpadding)
 
             self.figures[-1].post_make()
+            self.figures[-1].post_plot(plots)
+
             for fig in self.figures:
                 for i in range(len(plots)):
                     fig.update_options_limits(i)
 
-        self._make_graph_hook(g)
+            self._make_graph_hook(g)
 
-        # print '----------------------- make graph {}'.format(time.time() - st)
         return g.plotcontainer
 
         # ============= EOF =============================================

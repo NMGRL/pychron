@@ -1,12 +1,13 @@
+from __future__ import absolute_import
 import os
 import unittest
 
-from pychron.spectrometer.mftable import MagnetFieldTable
+from pychron.spectrometer.field_table import FieldTable
 
 
 class Argon2CDDMFTableTestCase(unittest.TestCase):
     def setUp(self):
-        self.mftable = MagnetFieldTable(bind=False)
+        self.mftable = FieldTable(bind=False)
         self.mftable.molweights = {'Ar40': 40, 'Ar39': 39, 'Ar36': 36, 'Ar38': 38, 'PHHCbs': 1}
 
         p = './data/argon_2CDD.csv'
@@ -14,7 +15,7 @@ class Argon2CDDMFTableTestCase(unittest.TestCase):
             p = 'spectrometer/tests/data/argon_2CDD.csv'
 
         self.mftable._test_path = p
-        self.mftable.load_mftable(path=p)
+        self.mftable.load_table(path=p)
 
     def test_update(self):
         self.mftable.update_field_table('L2(CDD)', 'Ar36', 3.76439824048, report=True, save=False)
@@ -29,7 +30,7 @@ class Argon2CDDMFTableTestCase(unittest.TestCase):
 
 class DiscreteMFTableTestCase(unittest.TestCase):
     def setUp(self):
-        self.mftable = MagnetFieldTable(bind=False)
+        self.mftable = FieldTable(bind=False)
         self.mftable.molweights = {'Ar40': 40, 'Ar39': 39, 'Ar36': 36, 'Foo': 1}
 
         p = './spectrometer/tests/data/discrete_mftable.csv'
@@ -37,7 +38,7 @@ class DiscreteMFTableTestCase(unittest.TestCase):
             p = 'pychron/spectrometer/tests/data/discrete_mftable.csv'
 
         self.mftable._test_path = p
-        self.mftable.load_mftable(path=p)
+        self.mftable.load_table(path=p)
 
     def test_mass_func(self):
         self.assertEqual(self.mftable.mass_cal_func, 'discrete')
@@ -53,7 +54,7 @@ class DiscreteMFTableTestCase(unittest.TestCase):
 
 class MFTableTestCase(unittest.TestCase):
     def setUp(self):
-        self.mftable = MagnetFieldTable(bind=False)
+        self.mftable = FieldTable(bind=False)
         self.mftable.molweights = {'Ar40': 40, 'Ar39': 39, 'Ar36': 36, 'Foo': 1}
 
         p = './spectrometer/tests/data/mftable.csv'
@@ -61,7 +62,7 @@ class MFTableTestCase(unittest.TestCase):
             p = 'pychron/spectrometer/tests/data/mftable.csv'
 
         self.mftable._test_path = p
-        self.mftable.load_mftable(path=p)
+        self.mftable.load_table(path=p)
 
     def test_mass_func(self):
         self.assertEqual(self.mftable.mass_cal_func, 'parabolic')

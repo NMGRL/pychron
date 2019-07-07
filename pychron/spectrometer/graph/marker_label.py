@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from chaco.label import Label
 from kiva import FILL
 from traits.trait_types import Bool, Float, Str

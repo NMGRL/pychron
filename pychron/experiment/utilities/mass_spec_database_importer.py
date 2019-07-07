@@ -15,23 +15,26 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
 import os
 import struct
 import time
 from datetime import datetime
 
 from numpy import array
+from six.moves import zip
 from traits.api import Instance, Int, Str, Bool, provides
 from uncertainties import nominal_value, std_dev
 
 from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.core.i_datastore import IDatastore
+from pychron.core.utils import alpha_to_int
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.experiment.utilities.identifier_mapper import IdentifierMapper
 from pychron.experiment.utilities.info_blob import encode_infoblob
 from pychron.loggable import Loggable
 from pychron.mass_spec.database.massspec_database_adapter import MassSpecDatabaseAdapter
-from pychron.pychron_constants import ALPHAS
 
 mkeys = ['l2 value', 'l1 value', 'ax value', 'h1 value', 'h2 value']
 
@@ -84,10 +87,12 @@ class MassSpecDatabaseImporter(Loggable):
                 ret = self.db.get_latest_analysis(identifier, aliquot)
                 if ret:
                     _, s = ret
-                    if s is not None and s in ALPHAS:
-                        ret = ALPHAS.index(s)  # if s is not None else -1
-                    else:
-                        ret = -1
+
+                    ret = alpha_to_int(s)
+                    # if s is not None and s in ALPHAS:
+                    #     ret = ALPHAS.index(s)  # if s is not None else -1
+                    # else:
+                    #     ret = -1
         return ret
 
     def get_greatest_aliquot(self, identifier):
@@ -190,7 +195,7 @@ class MassSpecDatabaseImporter(Loggable):
         return self.db.add_irradiation_production(name, prdict, ifdict)
 
     def add_irradiation_chronology(self, irrad, doses):
-        for pwr, st, et in doses:
+        for pwr, dur, dt, st, et in doses:
             self.db.add_irradiation_chronology_segment(irrad, st, et)
 
     def add_analysis(self, spec, commit=True):
@@ -222,7 +227,7 @@ class MassSpecDatabaseImporter(Loggable):
                 ret = self._add_analysis(session, spec, irradpos, rid, runtype)
                 db.commit()
                 return ret
-            except Exception, e:
+            except Exception as e:
                 import traceback
                 self.debug('Mass Spec save exception. {}'.format(e))
                 tb = traceback.format_exc()
@@ -247,7 +252,6 @@ class MassSpecDatabaseImporter(Loggable):
         spectrometer = spec.mass_spectrometer
         if spectrometer.lower() == 'argus':
             spectrometer = 'UM'
-
         tray = spec.tray
 
         pipetted_isotopes = self._make_pipetted_isotopes(runtype)
@@ -389,9 +393,12 @@ class MassSpecDatabaseImporter(Loggable):
             else:
                 dbdet = db.add_detector(det, Label=det)
 
-            ic = spec.isotopes[iso].ic_factor
-            dbdet.ICFactor = float(nominal_value(ic))
-            dbdet.ICFactorEr = float(std_dev(ic))
+            try:
+                ic = spec.isotopes[iso].ic_factor
+                dbdet.ICFactor = float(nominal_value(ic))
+                dbdet.ICFactorEr = float(std_dev(ic))
+            except KeyError:
+                pass
 
         db.flush()
         n = spec.get_ncounts(iso)
@@ -422,7 +429,7 @@ class MassSpecDatabaseImporter(Loggable):
         cvb = array(vb) - baseline.nominal_value
         blob1 = self._build_timeblob(tb, cvb)
 
-        blob2 = ''.join([struct.pack('>f', v) for v in vb])
+        blob2 = b''.join([struct.pack('>f', v) for v in vb])
         db.add_peaktimeblob(blob1, blob2, dbiso)
 
         # @todo: add filtered points blob
@@ -491,7 +498,7 @@ class MassSpecDatabaseImporter(Loggable):
     def _build_timeblob(self, t, v):
         """
         """
-        blob = ''
+        blob = b''
         for ti, vi in zip(t, v):
             blob += struct.pack('>ff', vi, ti)
         return blob

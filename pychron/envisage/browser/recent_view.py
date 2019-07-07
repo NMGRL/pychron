@@ -13,12 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-import os
+from __future__ import absolute_import
 
 from traits.api import HasTraits, Str, List, Float, Enum
-from traitsui.api import View, Item, EnumEditor, CheckListEditor
+from traitsui.api import Item, EnumEditor, CheckListEditor
 
-from pychron.paths import paths
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.persistence_loggable import PersistenceMixin
 from pychron.pychron_constants import ANALYSIS_TYPES
 
@@ -37,21 +37,17 @@ class RecentView(HasTraits, PersistenceMixin):
     analysis_types = List(ANALYSIS_TYPES, dump=True)
     available_analysis_types = List(ANALYSIS_TYPES)
 
-    @property
-    def persistence_path(self):
-        return os.path.join(paths.hidden_dir, 'recent_view')
-    
+    persistence_name = 'recent_view'
+
     def traits_view(self):
-        v = View(Item('presets', label='Presets'),
-                 Item('ndays', label='Days'),
-                 Item('nhours', label='Hours'),
-                 Item('mass_spectrometer', label='Mass Spectrometer',
-                      editor=EnumEditor(name='mass_spectrometers')),
-                 Item('analysis_types', style='custom',
-                      editor=CheckListEditor(name='available_analysis_types', cols=5)),
-                 title='Recent Analyses',
-                 kind='livemodal',
-                 buttons=['OK', 'Cancel'])
+        v = okcancel_view(Item('presets', label='Presets'),
+                          Item('ndays', label='Days'),
+                          Item('nhours', label='Hours'),
+                          Item('mass_spectrometer', label='Mass Spectrometer',
+                               editor=EnumEditor(name='mass_spectrometers')),
+                          Item('analysis_types', style='custom',
+                               editor=CheckListEditor(name='available_analysis_types', cols=5)),
+                          title='Recent Analyses')
         return v
 
     def _presets_changed(self, new):

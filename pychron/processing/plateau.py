@@ -15,10 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
 from numpy import argmax, array
+from six.moves import range
 from traits.api import HasTraits, List, Array
 
 from pychron.core.stats.core import validate_mswd, calculate_mswd
+from pychron.pychron_constants import MAHON
 
 
 def memoize(function):
@@ -45,7 +49,7 @@ class Plateau(HasTraits):
     ages = Array
     errors = Array
     signals = Array
-    exclude = List
+    excludes = List
 
     nsteps = 3
     overlap_sigma = 2
@@ -59,7 +63,7 @@ class Plateau(HasTraits):
         """
             method: str either fleck 1977 or mahon 1996
         """
-        if method.lower() == 'mahon 1996':
+        if method.lower() == MAHON:
             self.use_mswd = True
             self.use_overlap = False
         else:
@@ -67,8 +71,8 @@ class Plateau(HasTraits):
             self.use_overlap = True
 
         n = len(self.ages)
-        exclude = self.exclude
-        ss = [s for i, s in enumerate(self.signals) if not i in exclude]
+        excludes = self.excludes
+        ss = [s for i, s in enumerate(self.signals) if i not in excludes]
 
         self.total_signal = float(sum(ss))
         # log.info(self.total_signal)
@@ -78,9 +82,9 @@ class Plateau(HasTraits):
 
         overlap_func = memoize(self._overlap)
         for i in range(n):
-            if i in exclude:
+            if i in excludes:
                 continue
-            idx = self._find_plateaus(n, i, exclude, overlap_func)
+            idx = self._find_plateaus(n, i, excludes, overlap_func)
             if idx:
                 # log.debug('found {} {}'.format(*idx))
                 idxs.append(idx)
@@ -91,10 +95,10 @@ class Plateau(HasTraits):
 
         return idxs
 
-    def _find_plateaus(self, n, start, exclude, overlap_func):
+    def _find_plateaus(self, n, start, excludes, overlap_func):
         potential_end = None
         for i in range(start, n, 1):
-            if i in exclude:
+            if i in excludes:
                 continue
 
             if not self.check_nsteps(start, i):
@@ -119,7 +123,7 @@ class Plateau(HasTraits):
             return start, potential_end
 
     def check_percent_released(self, start, end):
-        ss = sum([(s if not i in self.exclude else 0)
+        ss = sum([(s if not i in self.excludes else 0)
                   for i, s in enumerate(self.signals)][start:end + 1])
 
         log.debug('percent {} {} {}'.format(start, end, ss / self.total_signal))
@@ -141,8 +145,14 @@ class Plateau(HasTraits):
             for j in range(start + c, end + 1, 1):
                 if i == j:
                     continue
-                if not overlap_func(i, j, overlap_sigma):
-                    return
+
+                try:
+                    if not overlap_func(i, j, overlap_sigma):
+                        return
+                except BaseException as e:
+                    import traceback
+                    log.debug('Overlap exception: {}'.format(e, traceback.format_exc()))
+                    continue
         else:
             return True
 

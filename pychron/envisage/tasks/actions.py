@@ -27,9 +27,7 @@ from pyface.tasks.task_window_layout import TaskWindowLayout
 from traits.api import Any, List
 
 from pychron.envisage.resources import icon
-
-
-# from pychron.processing.tasks.actions.processing_actions import myTaskAction
+from pychron.envisage.ui_actions import UIAction, UITaskAction
 
 
 # ===============================================================================
@@ -83,14 +81,14 @@ class myTaskAction(TaskAction):
             self.enabled = bool(self.object)
 
 
-class PAction(Action):
+class PAction(UIAction):
     def __init__(self, *args, **kw):
         super(PAction, self).__init__(*args, **kw)
         acc = get_key_binding(self.id)
         self.accelerator = acc or self.accelerator
 
 
-class PTaskAction(TaskAction):
+class PTaskAction(UITaskAction):
     def __init__(self, *args, **kw):
         super(PTaskAction, self).__init__(*args, **kw)
         acc = get_key_binding(self.id)
@@ -210,12 +208,12 @@ class WebAction(PAction):
     def _open_url(self, url):
 
         import webbrowser
-        import urllib2
+        import requests
 
         try:
-            urllib2.urlopen(url)
-        except (urllib2.HTTPError, urllib2.URLError), e:
-            print 'web action url:{} exception:{}'.format(url, e)
+            requests.get(url)
+        except BaseException as e:
+            print('web action url:{} exception:{}'.format(url, e))
             return
 
         webbrowser.open_new(url)
@@ -239,6 +237,60 @@ class IssueAction(WebAction):
 
         url = 'https://github.com/{}/pychron/issues/new'.format(name)
         self._open_url(url)
+
+
+class SettingsAction(Action):
+    def perform(self, event):
+
+        app = event.task.window.application
+        name = app.preferences.get('pychron.general.remote')
+        if not name:
+            information(event.task.window.control, 'Please set an "Laboratory Repo" in General Preferences')
+            return
+
+        from pychron.envisage.settings_repo import SettingsRepoManager
+        from pychron.paths import paths
+        root = os.path.join(paths.root_dir, '.lab')
+        exists = os.path.isdir(os.path.join(root, '.git'))
+        if exists:
+            repo = SettingsRepoManager()
+            repo.path = root
+            repo.open_repo(root)
+            repo.pull()
+        else:
+            url = 'https://github.com/{}'.format(name)
+            repo = SettingsRepoManager.clone_from(url, root)
+
+        self._perform(repo)
+
+    def _perform(self, repo):
+        raise NotImplementedError
+
+
+class ApplySettingsAction(SettingsAction):
+    name = 'Apply Settings...'
+
+    def _perform(self, repo):
+        """
+        select and apply settings from the laboratory's repository
+
+        :param repo:
+        :return:
+        """
+        repo.apply_settings()
+
+
+class ShareSettingsAction(SettingsAction):
+    name = 'Share Settings...'
+
+    def _perform(self, repo):
+        """
+        save current settings to the laboratory's repository
+
+        :param repo:
+        :return:
+        """
+        repo.share_settings()
 
 
 class NoteAction(WebAction):

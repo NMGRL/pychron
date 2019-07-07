@@ -15,11 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Float, Str, List, Instance, Property, Button, Bool, Event
-from traitsui.api import View, Item, HGroup, VGroup, UItem, ListStrEditor, VSplit
+from __future__ import absolute_import
+
 # ============= standard library imports ========================
 from sqlalchemy.exc import DBAPIError
+from traits.api import HasTraits, Float, Str, List, Instance, Property, Button, Bool, Event
+from traitsui.api import View, Item, HGroup, VGroup, UItem, ListStrEditor, VSplit
+
 # ============= local library imports  ==========================
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.loggable import Loggable
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
@@ -40,16 +44,13 @@ class FluxMonitor(HasTraits):
                     decay_constant_err=self.decay_constant_err)
 
     def traits_view(self):
-        v = View(VGroup(
-            HGroup(Item('name', enabled_when='added')),
-            HGroup(Item('age'), Item('age_err', label=PLUSMINUS_ONE_SIGMA)),
-            HGroup(Item('decay_constant'), Item('decay_constant_err', label=PLUSMINUS_ONE_SIGMA))))
+        v = View(VGroup(HGroup(Item('name', enabled_when='added')),
+                        HGroup(Item('age'), Item('age_err', label=PLUSMINUS_ONE_SIGMA)),
+                        HGroup(Item('decay_constant'), Item('decay_constant_err', label=PLUSMINUS_ONE_SIGMA))))
         return v
 
 
 class FluxMonitorEditor(Loggable):
-    # dbname = Str
-    # names = List
     monitors = List
     monitor_names = Property(depends_on='name_update_needed,monitors[]')
     selected_monitor_name = Str
@@ -85,7 +86,7 @@ class FluxMonitorEditor(Loggable):
         if self.selected_monitor:
             dbmon = db.get_flux_monitor(self.selected_monitor.name)
             if dbmon:
-                for k, v in self.selected_monitor.to_dict().iteritems():
+                for k, v in self.selected_monitor.to_dict().items():
                     setattr(dbmon, k, v)
 
         self.information_dialog('Changes saved to database')
@@ -106,7 +107,6 @@ class FluxMonitorEditor(Loggable):
         if new:
             m = next((mi for mi in self.monitors if mi.name == new))
             self.trait_set(selected_monitor=m)
-            # self.selected_monitor=
 
     def _add_button_fired(self):
 
@@ -118,10 +118,6 @@ class FluxMonitorEditor(Loggable):
         self.selected_monitor = fm
         self.selected_monitor_name = fm.name
 
-    #     name=self.selected_monitor.name
-    #     db=self.db
-    #     with db.session_ctx():
-    #         if db.get_flux_monitor(name):
     def _handle_name_change(self):
         self.name_update_needed = True
 
@@ -135,22 +131,20 @@ class FluxMonitorEditor(Loggable):
             try:
                 db.commit()
                 self.monitors.remove(self.selected_monitor)
-            except DBAPIError, e:
+            except DBAPIError as e:
                 self.warning('Error when trying to delete "{}".\n\n{}'.format(name, e))
 
     def traits_view(self):
-        v = View(VSplit(
-            VGroup(HGroup(icon_button_editor('add_button', 'database_add',
-                                             tooltip='Add flux monitor to database'),
-                          icon_button_editor('delete_button', 'database_delete',
-                                             enabled_when='selected_monitor_name',
-                                             tooltip='Delete selected flux monitor')),
-                   UItem('monitor_names', editor=ListStrEditor(selected='selected_monitor_name',
-                                                               editable=False))),
-            UItem('selected_monitor', style='custom')),
-            buttons=['OK', 'Cancel'],
-            kind='livemodal',
-            title='Edit Flux Monitor')
+        v = okcancel_view(VSplit(VGroup(HGroup(icon_button_editor('add_button', 'database_add',
+                                                                  tooltip='Add flux monitor to database'),
+                                               icon_button_editor('delete_button', 'database_delete',
+                                                                  enabled_when='selected_monitor_name',
+                                                                  tooltip='Delete selected flux monitor')),
+                                        UItem('monitor_names', editor=ListStrEditor(selected='selected_monitor_name',
+                                                                                    editable=False))),
+                                 UItem('selected_monitor', style='custom')),
+
+                          title='Edit Flux Monitor')
         return v
 
-        # ============= EOF =============================================
+# ============= EOF =============================================

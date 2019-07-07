@@ -17,6 +17,7 @@
 
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import List, Instance, on_trait_change
 from traitsui.api import View, Item, Group, HGroup, VGroup, \
     ListEditor, TableEditor, InstanceEditor
@@ -24,7 +25,7 @@ from traitsui.table_column import ObjectColumn
 
 # ============= standard library imports ========================
 import os
-import ConfigParser
+import six.moves.configparser
 # ============= local library imports  ==========================
 from pychron.messaging.command_repeater import CommandRepeater
 from pychron.messaging.remote_command_server import RemoteCommandServer
@@ -105,7 +106,7 @@ class RemoteHardwareServerManager(Manager):
 #        names = ip.get_servers()
 #        return names
 
-        config = ConfigParser.ConfigParser()
+        config = six.moves.configparser.ConfigParser()
         # print paths.setup_dir
 
         path = os.path.join(paths.root, 'rhs.cfg')

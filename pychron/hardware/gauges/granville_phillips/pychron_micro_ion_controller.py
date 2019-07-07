@@ -16,23 +16,28 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
+import time
 # ============= local library imports  ==========================
 from pychron.hardware.gauges.granville_phillips.micro_ion_controller import MicroIonController
 
 
 class PychronMicroIonController(MicroIonController):
+    def delay_ask(self, *args, **kw):
+        time.sleep(0.25)
+        return self.ask(*args, **kw)
 
     def get_pressure(self, name, **kw):
-        return self.ask('Get Pressure {} {}'.format(self.name, name), **kw)
+        return self.delay_ask('GetPressure {},{}'.format(self.name, name), **kw)
 
     def get_ion_pressure(self, **kw):
-        return self.ask('Get Pressure {} IG'.format(self.name))
+        return self.delay_ask('GetPressure {},IG'.format(self.name))
 
     def get_convectron_a_pressure(self, **kw):
-        return self.ask('GetPressure {} CG1'.format(self.name))
+        return self.delay_ask('GetPressure {},CG1'.format(self.name))
 
     def get_convectron_b_pressure(self, **kw):
-        return self.ask('GetPressure {} CG2'.format(self.name))
+        return self.delay_ask('GetPressure {},CG2'.format(self.name))
 
 
 class QtegraMicroIonController(MicroIonController):

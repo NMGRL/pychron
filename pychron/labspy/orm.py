@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, func, Boolean
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import relationship
@@ -79,14 +80,16 @@ class Version(Base):
 
 
 # Experiment klasses
-class Analysis(Base, BaseMixin):
-    experiment_id = Column(Integer, ForeignKey('Experiment.id'))
-    runid = stringcolumn()
+class Analysis(Base, StatusMixin):
+    experiment_id = Column(Integer, ForeignKey('status_experiment.id'))
+    identifier = stringcolumn()
+    increment = Column(Integer)
+    aliquot = Column(Integer)
     start_time = Column(DateTime)
     analysis_type = stringcolumn()
 
 
-class Experiment(Base, BaseMixin):
+class Experiment(Base, StatusMixin):
     name = stringcolumn()
     system = stringcolumn()
     user = stringcolumn()
@@ -100,7 +103,7 @@ class Experiment(Base, BaseMixin):
     # LastUpdate = Column(DateTime, default=func.now())
     # User = stringcolumn()
 
-    # HashID = stringcolumn()
+    hashid = stringcolumn()
     analyses = relationship('Analysis', backref='experiment')
 
 #

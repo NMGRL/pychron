@@ -15,13 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, List, on_trait_change, Bool, Event, Float, Str, Instance
-from traitsui.api import View, UItem, TableEditor, HGroup, spring, Handler, VGroup, Group, Label
-from traitsui.table_column import ObjectColumn
 
+from traits.api import HasTraits, List, on_trait_change, Bool, Event, Float, Str, Instance
+from traitsui.api import UItem, TableEditor, HGroup, spring, Handler, VGroup, Group, Label, View
+from traitsui.table_column import ObjectColumn
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from uncertainties import std_dev, nominal_value, ufloat
+
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.pychron_constants import PLUSMINUS
 
@@ -113,6 +114,20 @@ class ICFactorEditItem(DetectorEditItem):
                         detector=item.detector,
                         name=item.name, edit_name=item.detector)
 
+    def _value_changed(self, new):
+        if self._suppress_update:
+            return
+
+        self.item.ic_factor = ufloat(new, self.error, tag='ic_factor')
+        self.recalculate_needed = True
+
+    def _error_changed(self, new):
+        if self._suppress_update:
+            return
+
+        self.item.ic_factor = ufloat(self.value, new, tag='ic_factor')
+        self.recalculate_needed = True
+
     def revert(self):
         item = self.item
         item.ic_factor = ufloat(self.ovalue, self.oerror, tag='ic_factor')
@@ -139,12 +154,12 @@ class FluxItem(BaseEditItem):
         if self._suppress_update:
             return
 
-        self.item.j = ufloat(self.value, self.error, tag='j')
+        self.item.j = ufloat(self.value, self.error, tag='J')
         self.recalculate_needed = True
 
     def revert(self):
         item = self.item
-        item.j = ufloat(self.ovalue, self.oerror, tag='j')
+        item.j = ufloat(self.ovalue, self.oerror, tag='J')
         self._suppress_update = True
         self.trait_set(value=self.ovalue, error=self.oerror)
         self._suppress_update = False
@@ -194,7 +209,7 @@ class AnalysisEditView(HasTraits):
         for ic in self.ic_factors:
             if ic.dirty:
                 v = ufloat(ic.ovalue, ic.oerror, tag='{} IC'.format(ic.name))
-                self._set_ic_factor(ic.name, v)
+                self._set_ic_factor(ic.detector, v)
                 ic.value = ic.ovalue
                 ic.error = ic.oerror
                 ic.dirty = False
@@ -243,7 +258,7 @@ class AnalysisEditView(HasTraits):
 
     def _set_ic_factor(self, det, v):
         isos = self.editor.analysis.isotopes
-        for iso in isos.itervalues():
+        for iso in isos.values():
             if iso.detector == det:
                 iso.ic_factor = v
 
@@ -254,7 +269,7 @@ class AnalysisEditView(HasTraits):
     def _update_model(self, refresh_history=False):
         model = self.editor.analysis
         model.calculate_age(force=True)
-        model.analysis_view.main_view.refresh_needed = True
+        model.analysis_view.refresh()
 
         if refresh_history:
             self._refresh_history()
@@ -266,8 +281,6 @@ class AnalysisEditView(HasTraits):
     # handlers
     def _save_button_fired(self):
         model = self.editor.analysis
-
-        runid = model.record_id
         repository_identifier = model.repository_identifier
 
         dvc = self.dvc
@@ -290,7 +303,7 @@ class AnalysisEditView(HasTraits):
                         edited_items.append('{}.{}_error'.format(name, tag))
 
             if updated_errors or updated_values:
-                p = dvc.manual_edit(runid, repository_identifier,
+                p = dvc.manual_edit(model, repository_identifier,
                                     updated_values, updated_errors, modifier)
                 ps.append(p)
 
@@ -302,8 +315,7 @@ class AnalysisEditView(HasTraits):
     def _revert_original_button_fired(self):
         analysis = self.editor.analysis
         repository_identifier = analysis.repository_identifier
-        runid = analysis.record_id
-        self.dvc.revert_manual_edits(runid, repository_identifier)
+        self.dvc.revert_manual_edits(analysis, repository_identifier)
 
         tags = ('intercepts', 'baselines', 'blanks', 'icfactors')
         analysis.load_paths(tags)
@@ -313,7 +325,7 @@ class AnalysisEditView(HasTraits):
     def _revert_button_fired(self):
         self.revert()
 
-    @on_trait_change('[isotopes,blanks,baselines,flux]:recalculate_needed')
+    @on_trait_change('[isotopes,blanks,baselines,flux,ic_factors]:recalculate_needed')
     def _handle_change(self, obj, name, old, new):
         # self.dirty = True
         # obj.dirty = True
@@ -323,18 +335,19 @@ class AnalysisEditView(HasTraits):
         self._set_dirty(obj)
         self._update_model()
 
-    @on_trait_change('ic_factors:[value, error]')
-    def _handle_ic_change(self, obj, name, old, new):
-        print obj, name, old, new
-        if obj.ovalue == obj.value and obj.oerror == obj.error:
-            return
-
-        self._set_dirty(obj)
-
-        v = ufloat(obj.value, obj.error, tag='{} IC'.format(obj.name))
-        self._set_ic_factor(obj.name, v)
-
-        self._update_model()
+    # @on_trait_change('ic_factors:[value, error]')
+    # def _handle_ic_change(self, obj, name, old, new):
+    #     print obj, name, old, new
+    #     if obj.ovalue == obj.value and obj.oerror == obj.error:
+    #         return
+    #
+    #     self._set_dirty(obj)
+    #
+    #     v = ufloat(obj.value, obj.error, tag='{} IC'.format(obj.name))
+    #     print 'ffff', v, obj.name
+    #     # self._set_ic_factor(obj.detector, v)
+    #
+    #     self._update_model()
 
     def traits_view(self):
         cols = [ObjectColumn(name='name', editable=False),
@@ -389,17 +402,16 @@ class AnalysisEditView(HasTraits):
                           defined_when='object.flux',
                           show_border=True)
         v = View(VGroup(Group(iso_grp, baseline_grp,
-                              icgrp,
-                              layout='tabbed'),
-                        blank_grp,
-                        flux_grp,
-                        bgrp),
+                                       icgrp,
+                                       layout='tabbed'),
+                                 blank_grp,
+                                 flux_grp,
+                                 bgrp),
                  buttons=['OK', 'Cancel'],
-                 handler=AnalysisEditViewHandler(),
-                 resizable=True,
-                 title=self.title,
-                 x=0.05,
-                 y=0.05)
+                          handler=AnalysisEditViewHandler(),
+                          title=self.title,
+                          x=0.05,
+                          y=0.05)
 
         return v
 

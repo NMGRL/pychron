@@ -18,10 +18,10 @@
 # =============standard library imports ========================
 # =============local library imports  ==========================
 from pychron.config_loadable import ConfigLoadable
+from pychron.core.utils import autodoc_helper
 from pychron.hardware.core.base_core_device import BaseCoreDevice
 from pychron.hardware.core.scanable_device import ScanableDevice
 
+CoreDevice = autodoc_helper('CoreDevice', (BaseCoreDevice, ConfigLoadable, ScanableDevice))
 
-class CoreDevice(BaseCoreDevice, ConfigLoadable, ScanableDevice):
-    pass
 # ========================= EOF ============================================

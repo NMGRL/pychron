@@ -14,14 +14,16 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from traits.api import HasTraits, Property, List, String, Bool
 # ============= standard library imports ========================
 from numpy import poly1d, polyval
 from scipy import optimize
-from pychron.core.helpers.formatting import floatfmt
+# ============= enthought library imports =======================
+from traits.api import HasTraits, Property, List, String, Bool
 
+from pychron.core.helpers.formatting import floatfmt
 # ============= local library imports  ==========================
+from pychron.core.helpers.strtools import csv_to_floats, to_csv_str
+
 
 class MeterCalibration(HasTraits):
     coeff_string = Property(String(enter_set=True, auto_set=False))
@@ -32,6 +34,7 @@ class MeterCalibration(HasTraits):
     output_high = 100
 
     normal_mapping = Bool(False)
+
     # this flag determines if the coefficients are defined as X==Response, Y==Input
     # or X==Input and Y==Response
     # for example if mapping from watts to percent
@@ -51,7 +54,7 @@ class MeterCalibration(HasTraits):
 
     def _parse_coeff_string(self, coeffs):
         try:
-            return map(float, coeffs.split(','))
+            return csv_to_floats(coeffs)
         except:
             pass
 
@@ -65,12 +68,11 @@ class MeterCalibration(HasTraits):
     def _get_coeff_string(self):
         c = ''
         if self.coefficients:
-
-            c = ', '.join(map(lambda x: floatfmt(x, 3), self.coefficients))
+            c = ', '.join([floatfmt(x, 3) for x in self.coefficients])
         return c
 
     def dump_coeffs(self):
-        return ','.join(map(str, self.coefficients))
+        return to_csv_str(self.coefficients)
 
     def get_input(self, response):
         """
@@ -105,8 +107,7 @@ class MeterCalibration(HasTraits):
 
             if c is not None and len(c):
                 c[-1] -= response
-                power = optimize.brentq(poly1d(c), self.output_low,
-                                                   self.output_high)
+                power = optimize.brentq(poly1d(c), self.output_low, self.output_high)
                 c[-1] += response
             else:
                 power = response

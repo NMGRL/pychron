@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
 from traits.api import HasTraits, Instance
 from traitsui.api import View, Item, VGroup, Spring, HGroup, ButtonEditor
 
@@ -72,7 +74,7 @@ class FactoryView(HasTraits):
                      tooltip='Set the number of seconds to run the extraction device.'),
                 Item('cleanup', label='Cleanup (s)',
                      tooltip='Set the number of seconds to getter the sample gas')),
-            Item('beam_diameter'),
+            HGroup(Item('beam_diameter'),Item('light_value', label='Lighting')),
             self._position_group(),
             label='Extract',
             show_border=True)

@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 
 from pychron.core.helpers.filetools import add_extension
@@ -39,6 +41,7 @@ def get_mftable_name():
 def set_spectrometer_config_name(name):
     ppath = os.path.join(paths.hidden_dir, 'spectrometer_config_name')
     name = add_extension(name, '.cfg')
+    print('setting configureation name', name)
     with open(ppath, 'w') as wfile:
         wfile.write(name)
 

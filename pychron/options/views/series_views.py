@@ -15,25 +15,37 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traitsui.api import View, UItem, VGroup, EnumEditor, Item
+from traitsui.api import View, UItem, VGroup, EnumEditor, Item, HGroup
 
+from pychron.core.pychron_traits import BorderVGroup
 from pychron.options.options import SubOptions, AppearanceSubOptions, MainOptions, object_column, checkbox_column
+
+SHOW_STATISTICS_GROUP = BorderVGroup(Item('show_statistics'),
+                                     Item('show_statistics_as_table'),
+                                     Item('use_group_statistics'),
+                                     Item('display_min_max'),
+                                     label='Statistics Display')
 
 
 class SeriesSubOptions(SubOptions):
     def traits_view(self):
-        v = View('use_time_axis',
-                 Item('error_bar_nsigma'),
-                 Item('end_caps'),
-                 Item('show_info'))
+        v = View(VGroup(BorderVGroup('use_time_axis',
+                                     Item('error_bar_nsigma'),
+                                     Item('end_caps'),
+                                     Item('show_info')),
+                        SHOW_STATISTICS_GROUP))
         return v
 
 
 class SeriesAppearance(AppearanceSubOptions):
     def traits_view(self):
+        ee = HGroup(Item('error_info_fontname', label='Error Info'),
+                    Item('error_info_fontsize', show_label=False))
+
         fgrp = VGroup(UItem('fontname'),
                       self._get_xfont_group(),
                       self._get_yfont_group(),
+                      ee,
                       label='Fonts', show_border=True)
 
         g = VGroup(self._get_bg_group(),
@@ -48,6 +60,7 @@ class SeriesMainOptions(MainOptions):
                               width=130,
                               editor=EnumEditor(name='names')),
                 object_column(name='scale'),
+                object_column(name='fit', editor=EnumEditor(name='fit_types')),
                 object_column(name='height',
                               format_func=lambda x: str(x) if x else ''),
                 checkbox_column(name='show_labels', label='Labels'),
@@ -61,6 +74,8 @@ class SeriesMainOptions(MainOptions):
                 ]
 
         return cols
+
+
 # ===============================================================
 # ===============================================================
 VIEWS = {'main': SeriesMainOptions,

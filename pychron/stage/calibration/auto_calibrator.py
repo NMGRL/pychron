@@ -14,15 +14,16 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
 import os
 import time
 from threading import Thread
 
 from numpy import array, hstack, average
+# ============= enthought library imports =======================
 from traits.api import Instance, HasTraits, Str, Bool, Float
 
 from pychron.core.helpers.filetools import pathtolist
+from pychron.core.helpers.strtools import csv_to_floats
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.view_util import open_view
 from pychron.lasers.stage_managers.stage_visualizer import StageVisualizer
@@ -110,7 +111,7 @@ class SemiAutoCalibrator(TrayCalibrator):
                 center = smap.get_calibration_hole('center')
                 if center is not None:
                     self.debug('walk out to locate east')
-                    for hid in xrange(int(center.id) + 1, int(east.id), 2):
+                    for hid in range(int(center.id) + 1, int(east.id), 2):
                         if not self._alive:
                             break
                         hole = smap.get_hole(hid)
@@ -274,9 +275,7 @@ class SemiAutoCalibrator(TrayCalibrator):
         time.sleep(0.5)
         # autocenter
         npt, corrected, interp = sm.autocenter(holenum=hi.id, save=True,
-                                               inform=False,
-                                               alpha_enabled=False,
-                                               auto_close_image=False)
+                                               inform=False)
         return npt, corrected
 
     def _check_auto_calibration(self):
@@ -343,8 +342,8 @@ class AutoCalibrator(SemiAutoCalibrator):
         if os.path.isfile(path):
             try:
                 guess = pathtolist(path)
-                return map(float, guess[0].split(','))
-            except BaseException, e:
+                return csv_to_floats(guess[0])
+            except BaseException as e:
                 self.debug('Failed parsing center guess file {}. error={}'.format(path, e))
 
 # ============= EOF =============================================

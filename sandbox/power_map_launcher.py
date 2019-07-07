@@ -23,6 +23,7 @@ import os
 
 # ============= local library imports  ==========================
 from pychron.data_processing.power_mapping.power_map_viewer import PowerMapViewer
+
 from pychron.paths import paths
 
 if __name__ == '__main__':

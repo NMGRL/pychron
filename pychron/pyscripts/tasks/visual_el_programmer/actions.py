@@ -16,9 +16,20 @@
 
 # ============= enthought library imports =======================
 
+from traitsui.menu import Action
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.actions import FileOpenAction, NewAction
+
+
+class SwitchRenamerAction(Action):
+    name = 'Switch Renamer...'
+
+    def perform(self, event):
+        from pychron.pyscripts.switch_renamer import SwitchRenamer
+        sr = SwitchRenamer()
+        sr.edit_traits()
 
 
 class OpenVisualELScriptAction(FileOpenAction):
@@ -31,4 +42,3 @@ class NewVisualELScriptAction(NewAction):
     name = 'New Visual PyScript'
 
 # ============= EOF =============================================
-

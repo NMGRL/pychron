@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 import time
 
-from Image import Image as PImage
+from PIL import Image as PImage
 from chaco.data_range_1d import DataRange1D
 from chaco.default_colormaps import color_map_name_dict
 from kiva.agg.agg import GraphicsContextArray
@@ -238,8 +238,7 @@ class Circle(QPrimitive):
             gc.arc(x, y, r, 0, 360)
             gc.fill_path()
 
-        self._render_name(gc, x + self.name_offsetx, y + self.name_offsety,
-                          r / 4., r / 2.)
+        self._render_name(gc, x + self.name_offsetx, y + self.name_offsety, 0, 0)
 
     def is_in(self, sx, sy):
         x, y = self.get_xy()
@@ -315,32 +314,48 @@ class Span(Line):
 class LoadIndicator(Circle):
     degas_indicator = False
     measured_indicator = False
+    monitor_indicator = False
     degas_color = Color('orange')
     measured_color = Color('purple')
     default_color = 'black'
-    fill_color = Color('lightblue')
-    labnumber_label = None
+    fill_color = Color('white')
+    identifier_label = None
+    sample_label = None
     weight_label = None
+    nxtals_label = None
     weight = None
     sample = ''
     irradiation = ''
     note = ''
 
     def clear_text(self):
-        if self.labnumber_label:
-            self.primitives.remove(self.labnumber_label)
-            self.labnumber_label = None
-
+        if self.identifier_label:
+            self.primitives.remove(self.identifier_label)
+            self.identifier_label = None
+        if self.sample_label:
+            self.primitives.remove(self.sample_label)
+            self.sample_label = None
         if self.weight_label:
             self.primitives.remove(self.weight_label)
             self.weight_label = None
 
-    def add_labnumber_label(self, *args, **kw):
-        if self.labnumber_label:
-            self.primitives.remove(self.labnumber_label)
+        if self.nxtals_label:
+            self.primitives.remove(self.nxtals_label)
+            self.nxtals_label = None
+
+    def add_identifier_label(self, *args, **kw):
+        if self.identifier_label:
+            self.primitives.remove(self.identifier_label)
 
         lb = self.add_text(*args, **kw)
-        self.labnumber_label = lb
+        self.identifier_label = lb
+
+    def add_sample_label(self, *args, **kw):
+        if self.sample_label:
+            self.primitives.remove(self.sample_label)
+
+        lb = self.add_text(*args, **kw)
+        self.sample_label = lb
 
     def add_weight_label(self, *args, **kw):
         if self.weight_label:
@@ -348,6 +363,13 @@ class LoadIndicator(Circle):
 
         lb = self.add_text(*args, **kw)
         self.weight_label = lb
+
+    def add_nxtals_label(self, *args, **kw):
+        if self.nxtals_label:
+            self.primitives.remove(self.nxtals_label)
+
+        lb = self.add_text(*args, **kw)
+        self.nxtals_label = lb
 
     def add_text(self, t, ox=0, oy=0, **kw):
         # x, y = self.get_xy()
@@ -378,8 +400,9 @@ class LoadIndicator(Circle):
         if self.space == 'data':
             r = self.map_dimension(r)
 
-        self.name_offsetx = r
-        self.name_offsety = r
+        f = 2 ** 0.5 / 2
+        self.name_offsetx = (r*f)+8
+        self.name_offsety = (r*f)+8
 
         if self.state:
             with gc:
@@ -391,15 +414,29 @@ class LoadIndicator(Circle):
         nr = r * 0.25
 
         super(LoadIndicator, self)._render(gc)
+        if self.monitor_indicator:
+            with gc:
+                gc.set_line_width(1)
+                gc.move_to(x, y - r)
+                gc.line_to(x, y + r)
+                gc.stroke_path()
+
+                gc.move_to(x - r, y)
+                gc.line_to(x + r, y)
+                gc.stroke_path()
+
         if self.degas_indicator:
-            gc.set_fill_color(self._convert_color(self.degas_color))
-            gc.arc(x, y + 2 * nr, nr, 0, 360)
-            gc.fill_path()
+            with gc:
+                gc.set_fill_color(self._convert_color(self.degas_color))
+                gc.arc(x, y + 2 * nr, nr, 0, 360)
+                gc.fill_path()
 
         if self.measured_indicator:
-            gc.set_fill_color(self._convert_color(self.measured_color))
-            gc.arc(x, y - 2 * nr, nr, 0, 360)
-            gc.fill_path()
+            with gc:
+                gc.set_line_width(2)
+                gc.set_stroke_color(self._convert_color(self.measured_color))
+                gc.arc(x, y, r+1, 0, 360)
+                gc.stroke_path()
 
         for pm in self.primitives:
             pm.x, pm.y = self.x, self.y

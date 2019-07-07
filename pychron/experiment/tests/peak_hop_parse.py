@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import yaml
 
 __author__ = 'ross'
@@ -260,42 +261,42 @@ class PeakHopTxtCase(unittest.TestCase):
         #     # self.gen = parse_hops(HOPS)
 
     def test_parse_hop1(self):
-        hop = self.gen.next()
+        hop = next(self.gen)
         self.assertEqual(hop[0], False)
         # self.assertEqual(hop[1], 'Ar40')
         # self.assertEqual(hop[2], 'H1')
 
     def test_parse_baseline(self):
-        hop = self.gen.next()
-        hop = self.gen.next()
-        hop = self.gen.next()
+        hop = next(self.gen)
+        hop = next(self.gen)
+        hop = next(self.gen)
         self.assertEqual(hop[0], True)
         self.assertEqual(hop[1], '39.5')
         self.assertEqual(hop[2], 'H1')
 
     def test_generate_hops(self):
         g = generate_hops(HOPS)
-        h1 = g.next()
+        h1 = next(g)
         # print h1
-        h1 = g.next()
+        h1 = next(g)
         # print h1
         self.assertEqual(h1['is_baselines'], (False, False))
 
-        h1 = g.next()
+        h1 = next(g)
         # print h1
         self.assertEqual(h1['is_baselines'], (True,))
 
-        h1 = g.next()
+        h1 = next(g)
         # print h1
-        h1 = g.next()
+        h1 = next(g)
         # print h1
         self.assertEqual(h1['is_baselines'], (False,))
-        h1 = g.next()
+        h1 = next(g)
         # print h1
-        h1 = g.next()
+        h1 = next(g)
         # print h1
         self.assertEqual(h1['is_baselines'], (False, False))
-        h1 = g.next()
+        h1 = next(g)
         # print h1
         self.assertEqual(h1['is_baselines'], (True,))
 

@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
 from traits.api import Instance
 
 # ============= standard library imports ========================
@@ -24,47 +26,33 @@ from pychron.envisage.browser.interpreted_age_table import InterpretedAgeTable
 
 
 class InterpretedAgeBrowserModel(BrowserModel):
-    interpreted_age_table = Instance(InterpretedAgeTable)
+    table = Instance(InterpretedAgeTable)
     persistence_name = 'ia_browser_options'
     selection_persistence_name = 'ia_browser_selection'
 
     def get_interpreted_age_records(self):
-        records = self.interpreted_age_table.selected
+        records = self.table.selected
         if not records:
-            records = self.interpreted_age_table.interpreted_ages
+            records = self.table.interpreted_ages
         return records
 
     def _selected_samples_changed_hook(self, new):
-        self.interpreted_age_table.selected = []
+        self.table.selected = []
 
         ias = []
         if new:
             ias = self._retrieve_interpreted_ages(new)
-            # uuids = [ai.uuid for ai in self.analysis_table.analyses]
-            #
-            # kw = dict(limit=lim,
-            #           include_invalid=not at.omit_invalid,
-            #           mass_spectrometers=self._recent_mass_spectrometers,
-            #           exclude_uuids=uuids,
-            #           experiments=[e.name for e in self.selected_experiments] if self.selected_experiments else None)
-            #
-            # lp, hp = self.low_post, self.high_post
-            # ans = self._retrieve_sample_analyses(new,
-            #                                      low_post=lp,
-            #                                      high_post=hp,
-            #                                      **kw)
-            #
-            # self.debug('selected samples changed. loading analyses. '
-            #            'low={}, high={}, limit={} n={}'.format(lp, hp, lim, len(ans)))
 
-        # self.analysis_table.set_analyses(ans, selected_identifiers={ai.identifier for ai in new})
-        self.interpreted_age_table.set_interpreted_ages(ias)
+        self.table.set_interpreted_ages(ias)
 
     def _retrieve_interpreted_ages(self, identifiers):
         # ses = self.selected_repositories
         # if not ses:
         #     ses = self.repositories
         ses = self.repositories
+        if not ses:
+            self.load_repositories()
+            ses = self.repositories
 
         idns = [idn.identifier for idn in identifiers]
         # repos = {idn.repository_identifier for idn in identifiers}
@@ -73,7 +61,7 @@ class InterpretedAgeBrowserModel(BrowserModel):
 
         return ias
 
-    def _interpreted_age_table_default(self):
-        return InterpretedAgeTable()
+    def _table_default(self):
+        return InterpretedAgeTable(dvc=self.dvc)
 
 # ============= EOF =============================================

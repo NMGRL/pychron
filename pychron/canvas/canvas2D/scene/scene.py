@@ -15,12 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits, List, on_trait_change, Any, Event
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.scene.primitives.primitives import Primitive
 from pychron.canvas.canvas2D.scene.layer import Layer
-from canvas_parser import CanvasParser
+from .canvas_parser import CanvasParser
 
 
 class Scene(HasTraits):
@@ -212,7 +213,7 @@ class Scene(HasTraits):
                 ci.render(gc)
 
     def _get_floats(self, elem, name):
-        return map(float, elem.find(name).text.split(','))
+        return list(map(float, elem.find(name).text.split(',')))
 
     def _get_translation(self, cp, elem, name='translation'):
         x, y = elem.find(name).text.split(',')
@@ -246,7 +247,7 @@ class Scene(HasTraits):
 
     def _make_color(self, c):
         if not isinstance(c, str):
-            c = ','.join(map(str, map(int, c)))
+            c = ','.join(map(str, list(map(int, c))))
             c = '({})'.format(c)
         return c
 
@@ -267,11 +268,11 @@ class Scene(HasTraits):
         if tree:
             elm = tree.find('xview')
             if elm is not None:
-                xv = map(float, elm.text.split(','))
+                xv = list(map(float, elm.text.split(',')))
 
             elm = tree.find('yview')
             if elm is not None:
-                yv = map(float, elm.text.split(','))
+                yv = list(map(float, elm.text.split(',')))
 
         return xv, yv
 

@@ -17,6 +17,8 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 
 from traits.etsconfig.etsconfig import ETSConfig
@@ -53,7 +55,7 @@ def set_application_home(appname, env=None):
 
     if env:
         p = os.path.join(env, '.appdata', appname)
-        print 'setting application home to {}'.format(p)
+        print('setting application home to {}'.format(p))
         ETSConfig.application_home = p
 
         if not os.path.exists(ETSConfig.application_home):

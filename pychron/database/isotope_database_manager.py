@@ -16,22 +16,28 @@
 
 # ============= enthought library imports =======================
 
+from __future__ import absolute_import
+from __future__ import print_function
+
+import weakref
+# ============= standard library imports ========================
+from itertools import groupby
+
+import six
 from apptools.preferences.preference_binding import bind_preference
+from six.moves import map
 from traits.api import Property, Event, \
     cached_property, Any, Int, Str
 from traits.has_traits import provides
 
-# ============= standard library imports ========================
-from itertools import groupby
-import weakref
+from pychron.core.helpers.iterfuncs import partition
 # ============= local library imports  ==========================
 from pychron.core.i_datastore import IDatastore
 from pychron.core.progress import progress_loader, CancelLoadingError
 from pychron.database.adapters.isotope_adapter import IsotopeAdapter
-from pychron.core.helpers.iterfuncs import partition
-from pychron.loggable import Loggable
 from pychron.database.orms.isotope.meas import meas_AnalysisTable
 from pychron.experiment.utilities.identifier import make_runid
+from pychron.loggable import Loggable
 from pychron.processing.analyses.dbanalysis import DBAnalysis
 
 ANALYSIS_CACHE = {}
@@ -174,7 +180,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
         if not isinstance(exclude, (list, tuple)):
             exclude = (exclude,)
 
-        return filter(lambda x: x.tag not in exclude, ans)
+        return [x for x in ans if x.tag not in exclude]
 
     def load_raw_data(self, ai):
         if not ai.has_raw_data:
@@ -243,13 +249,13 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
         db_ans = []
         for ca in ans:
             if not ca.has_raw_data:
-                print ca.record_id, 'no rawasffas'
+                print(ca.record_id, 'no rawasffas')
                 no_db_ans.append(ca)
             else:
                 if calculate_age:
                     ca.calculate_age()
                 elif calculate_F:
-                    ca.calculate_F()
+                    ca.calculate_f()
 
                 db_ans.append(ca)
         return db_ans, no_db_ans
@@ -304,7 +310,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
         db = self.db
         with db.session_ctx():
             # partition into DBAnalysis vs IsotopeRecordView
-            db_ans, no_db_ans = map(list, partition(ans, lambda x: isinstance(x, DBAnalysis)))
+            db_ans, no_db_ans = list(map(list, partition(ans, lambda x: isinstance(x, DBAnalysis))))
             self._calculate_cached_ages(db_ans, calculate_age, calculate_F)
             if unpack:
                 for di in db_ans:
@@ -429,7 +435,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
         dbrecords = groupby(ms, key=key)
 
         def func(x, prog, i, n):
-            _, gi = dbrecords.next()
+            _, gi = next(dbrecords)
             self.debug('constructing {}/{} {} {}'.format(i + 1, n, x.record_id, x.uuid))
             a = construct(x, gi, prog, unpack=unpack,
                           calculate_age=calculate_age,
@@ -514,7 +520,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
 
                 # synced = True
         if calculate_F:
-            ai.calculate_F()
+            ai.calculate_f()
 
         # if not synced:
         #     ai.sync(group, unpack=unpack, load_aux=load_aux)
@@ -534,7 +540,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
 
         # remove items from cached based on frequency of use
         if len(ANALYSIS_CACHE) > CACHE_LIMIT:
-            s = sorted(ANALYSIS_CACHE_COUNT.iteritems(), key=lambda x: x[1])
+            s = sorted(six.iteritems(ANALYSIS_CACHE_COUNT), key=lambda x: x[1])
             k, v = s[0]
             ANALYSIS_CACHE.pop(k)
             ANALYSIS_CACHE_COUNT.pop(k)

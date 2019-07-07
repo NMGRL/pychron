@@ -17,6 +17,8 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
+
 import os
 
 from pychron.core.helpers.strtools import to_bool
@@ -32,7 +34,7 @@ DESCRIPTION_MAP = {'Experiment': 'Execute sets of automated runs',
                    # 'Processing': 'Ar/Ar Processing plugin',
                    'Classifier': 'Use Machine learning to classify analyses',
                    'Entry': 'Enter/Edit irradiation data',
-                   'Workspace': 'Git-enabled workspace repository',
+                   # 'Workspace': 'Git-enabled workspace repository',
                    'DVC': "Pychron's custom Data Version Control system",
                    'GitLab': 'Private git repository hosting',
                    'GitHub': 'Public git repository hosting at GitHub.com',
@@ -83,13 +85,19 @@ DEFAULT_PLUGINS = (('General', ('Experiment',
                                 'Pipeline',
                                 'Entry',
                                 'Classifier',
+                                'SimpleIdentifier',
                                 'DashboardServer',
                                 'DashboardClient',
                                 'LabspyClient',
-                                'Workspace',
+                                # 'Workspace',
                                 'LabBook',
                                 'MediaStorage',
+                                'MDD',
+                                'Auto',
                                 'Update')),
+                   ('Data', ('USGSVSCData',
+                             'WiscArData',
+                             'Sparrow')),
                    ('Hardware', ('ArgusSpectrometer',
                                  'HelixSpectrometer',
                                  'NGXSpectrometer',
@@ -98,14 +106,16 @@ DEFAULT_PLUGINS = (('General', ('Experiment',
                                  'NMGRLFurnace',
                                  'NMGRLFurnaceControl',
                                  'ChromiumCO2',
+                                 'ChromiumDiode',
                                  'FusionsCO2',
                                  'FusionsDiode',
                                  'FusionsUV',
                                  'ExternalPipette')),
-                   ('Social', ('Email', 'GoogleCalendar')))
+                   ('Social', ('Email',
+                               'GoogleCalendar')))
 
 DEFAULT_GLOBALS = (('Use IPC', 'use_ipc'),
-                   ('Pipeline Debug', 'pipeline_debug'),
+                   # ('Pipeline Debug', 'pipeline_debug'),
                    ('Use Startup Tests', 'use_startup_tests'),
                    ('Ignore Initialization Warnings', 'ignore_initialization_warnings'),
                    ('Ignore Initialization Questions', 'ignore_initialization_questions'),

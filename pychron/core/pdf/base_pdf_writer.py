@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
 from reportlab.lib.pagesizes import landscape, letter
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch
@@ -130,7 +132,7 @@ class BasePDFWriter(Loggable):
             klass = Paragraph
 
         style = getSampleStyleSheet()[s]
-        for k, v in skw.iteritems():
+        for k, v in skw.items():
             setattr(style, k, v)
 
         p = klass(t, style)

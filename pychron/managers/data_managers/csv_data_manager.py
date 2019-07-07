@@ -17,7 +17,8 @@
 
 
 # ============= enthought library imports =======================
-from data_manager import DataManager
+from __future__ import absolute_import
+from .data_manager import DataManager
 
 # ============= standard library imports ========================
 import csv
@@ -26,6 +27,8 @@ from numpy import loadtxt
 # import time
 # from matplotlib.dates import num2date
 import os
+from six.moves import map
+from six.moves import zip
 # ============= local library imports  ==========================
 class CSVDataManager(DataManager):
     '''
@@ -77,7 +80,7 @@ class CSVDataManager(DataManager):
                 writer.writerows(datum)
             else:
                 try:
-                    datum = map(self.format_str.format, datum)
+                    datum = list(map(self.format_str.format, datum))
 #                    datum = [self.format_str.format(d) for d in datum]
                 except Exception:
                     pass
@@ -98,7 +101,7 @@ class CSVDataManager(DataManager):
             reader = csv.reader(f)
 
             data = [row for row in reader]
-            return zip(*data)
+            return list(zip(*data))
 
 
 #    @property

@@ -15,12 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
 from datetime import datetime, timedelta
 
 from apptools.preferences.preference_binding import bind_preference
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from sqlalchemy import and_
+from sqlalchemy import or_
 from sqlalchemy.exc import SQLAlchemyError
 
 from pychron.database.core.database_adapter import DatabaseAdapter
@@ -51,8 +54,8 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
         #         at = self.add_analysis_type(analysis_type)
 
         an = Analysis(**rd)
-        if at:
-            an.analysis_type = at
+        # if at:
+        #     an.analysis_type = at
 
         an.experiment = dbexp
         return self._add_item(an)
@@ -60,13 +63,14 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
     def set_connection(self, ts, appname, username, devname, com, addr, status):
         try:
             conn = self.get_connection(appname, devname)
-        except SQLAlchemyError, e:
+        except SQLAlchemyError as e:
             self.warning('Error getting connection {}.{} exception: {}'.format(appname, devname, e))
             return
 
+        add = False
         if conn is None:
             conn = Connections()
-            self._add_item(conn)
+            add = True
 
         conn.appname = appname
         conn.username = username
@@ -75,6 +79,9 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
         conn.address = addr
         conn.status = bool(status)
         conn.timestamp = ts
+
+        if add:
+            self._add_item(conn)
 
     def get_connection(self, appname, devname):
         q = self.session.query(Connections)
@@ -124,8 +131,11 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
     # def get_analysis_type(self, name):
     #     return self._retrieve_item(AnalysisType, name, key='Name')
     #
-    # def get_experiment(self, hid):
-    #     return self._retrieve_item(Experiment, hid, key='HashID')
+    def get_experiment(self, hid):
+        q = self.session.query(Experiment)
+        q = q.filter(Experiment.hashid == hid)
+        return q.first()
+        # return self._retrieve_item(Experiment, hid, key='HashID')
     #
     # def get_status(self):
     #     with self.session_ctx() as sess:
@@ -149,10 +159,10 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
         return self._query_one(q)
 
     def get_latest_lab_temperatures(self):
-        return self._get_latest('Temp.')
+        return self._get_latest(('Temp',))
 
     def get_latest_lab_humiditys(self):
-        return self._get_latest('Hum.')
+        return self._get_latest(('Hum',))
 
     def get_latest_lab_pneumatics(self):
         return self._get_latest('Pressure')
@@ -161,16 +171,21 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
         values = []
         with self.session_ctx(use_parent_session=False) as sess:
             q = sess.query(ProcessInfo)
-            q = q.filter(ProcessInfo.name.contains(tag))
-            ps = self._query_all(q)
+            if not isinstance(tag, tuple):
+                tag = (tag, )
 
+            q = q.filter(or_(*[ProcessInfo.name.like('%{}%'.format(t)) for t in tag]))
+
+            ps = self._query_all(q, verbose_query=True)
+            self.debug('get latest {}, ps={}'.format(tag, len(ps)))
+            min_date = datetime.now() - timedelta(hours=24)
             for p in ps:
                 q = sess.query(Measurement)
                 q = q.filter(Measurement.process_info_id == p.id)
-                q = q.filter(Measurement.pub_date > datetime.now() - timedelta(hours=24))
+                q = q.filter(Measurement.pub_date > min_date)
                 q = q.order_by(Measurement.pub_date.desc())
 
-                record = self._query_first(q)
+                record = self._query_first(q, verbose_query=True)
                 if record:
                     values.append({'name': p.name,
                                    'title': p.graph_title,

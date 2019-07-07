@@ -17,12 +17,12 @@
 # ============= enthought library imports =======================
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
-from traits.api import Any
-from traitsui.api import View, UItem, InstanceEditor, ListEditor
-
+from traits.api import Any, Int
+from traitsui.api import View, UItem, InstanceEditor, ListEditor, TabularEditor
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from traitsui.tabular_adapter import TabularAdapter
 
 
 class CanvasPane(TraitsTaskPane):
@@ -55,6 +55,18 @@ class CanvasDockPane(TraitsDockPane):
         return v
 
 
+class CryoPane(TraitsDockPane):
+    name = 'Cryo'
+    id = 'pychron.extraction_line.cryo'
+
+    def traits_view(self):
+        v = View(UItem('cryo_manager',
+                       editor=InstanceEditor(),
+                       style='custom',
+                       defined_when='cryo_manager'))
+        return v
+
+
 class GaugePane(TraitsDockPane):
     name = 'Gauges'
     id = 'pychron.extraction_line.gauges'
@@ -75,6 +87,29 @@ class ExplanationPane(TraitsDockPane):
     def traits_view(self):
         v = View(UItem('explanation',
                        style='custom'))
+        return v
+
+
+class ReadbackAdapter(TabularAdapter):
+    columns = [('Name', 'name'),
+               ('Cmd', 'last_command'),
+               ('Value', 'last_response'),
+               ('Timestamp', 'timestamp')]
+    font = 'arial 10'
+    name_width = Int(75)
+    cmd_width = Int(50)
+    value_width = Int(100)
+
+
+class ReadbackPane(TraitsDockPane):
+    name = 'Readback'
+    id = 'pychron.extraction_line.readback'
+
+    def traits_view(self):
+        v = View(UItem('devices',
+                       editor=TabularEditor(adapter=ReadbackAdapter(),
+                                            auto_update=True,
+                                            editable=False)))
         return v
 
 # ============= EOF =============================================

@@ -15,12 +15,20 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
 from pyface.tasks.traits_task_pane import TraitsTaskPane
-from traitsui.api import View, TableEditor, UItem, HGroup
+from traitsui.api import View, TableEditor, UItem, HGroup, Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
+
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+
+NewUserView = okcancel_view(Item('new_user_name', label='Name'),
+                            Item('new_user_email', label='Email'),
+                            title='New User')
 
 
 class UsersPane(TraitsTaskPane):
@@ -30,11 +38,8 @@ class UsersPane(TraitsTaskPane):
                 CheckboxColumn(name='enabled')]
 
         v = View(HGroup(UItem('filter_attribute'),
-                        UItem('filter_str')),
+                        UItem('filter_str'), show_border=True, label='Filter'),
                  UItem('users', editor=TableEditor(columns=cols)))
         return v
 
 # ============= EOF =============================================
-
-
-

@@ -16,6 +16,7 @@
 
 # =============enthought library imports=======================
 # =============standard library imports ========================
+from __future__ import absolute_import
 import logging
 import os
 import shutil
@@ -42,7 +43,7 @@ def get_log_text(n):
     root = logging.getLogger()
     for h in root.handlers:
         if isinstance(h, RotatingFileHandler):
-            with open(h.baseFilename) as rfile:
+            with open(h.baseFilename, 'rb') as rfile:
                 return tail(rfile, n)
 
 
@@ -60,7 +61,7 @@ def tail(f, lines=20):
     blocks = []  # blocks of size BLOCK_SIZE, in reverse order starting
     # from the end of the file
     while lines_to_go > 0 and block_end_byte > 0:
-        if (block_end_byte - BLOCK_SIZE > 0):
+        if block_end_byte - BLOCK_SIZE > 0:
             # read the last block we haven't yet read
             f.seek(block_number * BLOCK_SIZE, 2)
             blocks.append(f.read(BLOCK_SIZE))
@@ -69,12 +70,12 @@ def tail(f, lines=20):
             f.seek(0, 0)
             # only read what was not read
             blocks.append(f.read(block_end_byte))
-        lines_found = blocks[-1].count('\n')
+        lines_found = blocks[-1].count(b'\n')
         lines_to_go -= lines_found
         block_end_byte -= BLOCK_SIZE
         block_number -= 1
-    all_read_text = ''.join(reversed(blocks))
-    return '\n'.join(all_read_text.splitlines()[-total_lines_wanted:])
+    all_read_text = b''.join(reversed(blocks))
+    return b'\n'.join(all_read_text.splitlines()[-total_lines_wanted:]).decode('utf-8')
 
 
 # def anomaly_setup(name):
@@ -189,7 +190,7 @@ def wrap(items, width=40, indent=90, delimiter=','):
 
     while 1:
         try:
-            c = gcols.next()
+            c = next(gcols)
             t += 1 + len(c)
             if t < width:
                 r.append(c)

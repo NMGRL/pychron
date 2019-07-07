@@ -15,9 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str, Any, Bool, Property, Float, List
+from __future__ import absolute_import
+
 # ============= standard library imports ========================
 import time
+
+from traits.api import Str, Any, Bool, Property, Float, List
+
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
 
@@ -26,8 +30,9 @@ class BaseSwitch(Loggable):
     display_name = Str
     description = Str
     prefix_name = 'BASE_SWITCH'
-    state = Bool(False)
+    state = False
     software_lock = Bool(False)
+    ignore_lock_warning = Bool(False)
     enabled = Bool(True)
     owner = Str
 
@@ -66,7 +71,7 @@ class ManualSwitch(BaseSwitch):
     prefix_name = 'MANUAL_SWITCH'
 
     def state_str(self):
-        return '{}{}{}'.format(self.name, self.state)
+        return '{}{}'.format(self.name, self.state)
 
     def set_open(self, *args, **kw):
         self.state = True
@@ -97,31 +102,29 @@ class Switch(BaseSwitch):
 
     def get_hardware_indicator_state(self, verbose=True):
         result = None
+        msg = 'Get hardware indicator state err'
         if self.actuator is not None:
-            action = 'closed'
-            result = self.actuator.get_indicator_state(self, action, verbose=verbose)
-            # self.debug('Switch indicator state {}, {}'.format(result, 'Open' if result else 'Closed'))
-            if isinstance(result, bool):
-                self.set_state(result)
-            else:
-                self.debug('Get hardware indicator state err: {}'.format(result))
-                result = False
-
+            result = self.actuator.get_indicator_state(self, 'closed', verbose=verbose)
+        s = result
+        if not isinstance(result, bool):
+            self.debug('{}: {}'.format(msg, result))
+            s = None
+        self.set_state(s)
         return result
 
     def get_hardware_state(self, verbose=True):
         """
         """
         result = None
+        msg = 'Get hardware state err'
         if self.actuator is not None:
             result = self.actuator.get_channel_state(self, verbose=verbose)
-            # self.debug('Switch state {}, {}'.format(result, 'Open' if result else 'Closed'))
-            if isinstance(result, bool):
-                self.set_state(result)
-            else:
-                self.debug('Get hardware state err: {}'.format(result))
-                result = False
 
+        s = result
+        if not isinstance(result, bool):
+            self.warning('{}: {}'.format(msg, result))
+            s = None
+        self.set_state(s)
         return result
 
     def get_lock_state(self):

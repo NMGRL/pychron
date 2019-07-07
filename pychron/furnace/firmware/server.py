@@ -15,12 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
 from traits.api import Instance
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ServerEndpoint
-from twisted.internet.protocol import Factory, Protocol
+from twisted.internet.protocol import Factory
 
 from pychron.headless_loggable import HeadlessLoggable
 from pychron.tx.protocols.service import ServiceProtocol
@@ -43,7 +45,7 @@ class FurnaceFirmwareProtocol(ServiceProtocol):
         controller_services = (('GetTemperature', manager.get_temperature),
                                ('GetSetpoint', manager.get_setpoint),
                                ('SetSetpoint', manager.set_setpoint),
-                               ('GetProcessValue', manager.get_process_value),
+                               ('GetProcessValue', manager.get_temperature),
                                ('GetPercentOutput', manager.get_percent_output),
                                ('GetFurnaceSummary', manager.get_furnace_summary),
                                ('SetPID', manager.set_pid))
@@ -51,7 +53,7 @@ class FurnaceFirmwareProtocol(ServiceProtocol):
         valve_services = (('Open', manager.open_switch),
                           ('Close', manager.close_switch),
                           ('GetIndicatorState', manager.get_indicator_state),
-                          ('GetChannelDOState', manager.get_channel_do_state),
+                          # ('GetChannelDOState', manager.get_channel_do_state),
                           ('GetChannelState', manager.get_channel_state),
                           ('GetIndicatorComponentStates', manager.get_indicator_component_states))
 
@@ -61,6 +63,7 @@ class FurnaceFirmwareProtocol(ServiceProtocol):
                          ('InDownPosition', manager.is_funnel_down),
                          ('EnergizeMagnets', manager.energize_magnets),
                          ('IsEnergized', manager.is_energized),
+                         ('RotaryDumperMoving', manager.rotary_dumper_moving),
                          ('DenergizeMagnets', manager.denergize_magnets),
                          ('MoveAbsolute', manager.move_absolute),
                          ('MoveRelative', manager.move_relative),
@@ -73,9 +76,11 @@ class FurnaceFirmwareProtocol(ServiceProtocol):
                          ('StartJitter', manager.start_jitter),
                          ('StopJitter', manager.stop_jitter))
 
-        bakeout_services = (('GetSetpoint', manager.get_bakeout_setpoint),
-                            ('SetSetpoint', manager.set_bakeout_setpoint),
-                            ('GetTempPower', manager.get_bakeout_temp_and_power))
+        bakeout_services = (('GetBakeoutSetpoint', manager.get_bakeout_setpoint),
+                            ('SetBakeoutControlMode', manager.set_bakeout_control_mode),
+                            ('GetBakeoutTemperature', manager.get_bakeout_temperature),
+                            ('SetBakeoutClosedLoopSetpoint', manager.set_bakeout_setpoint),
+                            ('GetBakeoutTempPower', manager.get_bakeout_temp_and_power))
 
         gauge_services = (('GetPressure', manager.get_gauge_pressure),)
         for s in (misc_services, controller_services, valve_services, dump_services,

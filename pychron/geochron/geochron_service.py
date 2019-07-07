@@ -16,6 +16,9 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
+from __future__ import print_function
+
 import os
 
 from lxml import etree
@@ -32,7 +35,7 @@ class GeochronService(Loggable):
         p = os.path.join(paths.data_dir, 'geochron_arar_schema.xsd')
         self._schema = etree.XMLSchema(file=p)
 
-        print self._schema
+        print(self._schema)
 
     def assemble_xml(self, analysis_group):
         root = etree.Element('ArArModel', nsmap=NSMAP)
@@ -170,8 +173,8 @@ class GeochronService(Loggable):
             if val is not None:
                 irradiation_elem.attrib[attr] = val
 
-        segments = analysis.chron_dosages
-        for i, (pwr, start, end) in enumerate(segments):
+        segments = analysis.chron_segments
+        for i, (pwr, dur, dt, start, end) in enumerate(segments):
             seg_elem = etree.SubElement(irradiation_elem, 'Segment')
             seg_elem.attrib['segmentNumber'] = str(i)
             seg_elem.attrib['segmentDuration'] = str((end - start).total_seconds() / 3600.)
@@ -186,7 +189,7 @@ class GeochronService(Loggable):
         val = None
         try:
             val = str(getattr(obj, iattr))
-        except AttributeError, e:
+        except AttributeError as e:
             if required:
                 self.warning_dialog('Required attribute "{}" not supplied. Contact developer'.format(attr))
         self.debug('get value {:<38s} {:<38s}={}'.format(attr, iattr, val))

@@ -15,18 +15,20 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.pipeline.editors.gain_calibration_editor import GainCalibrationEditor
 from pychron.pipeline.nodes.base import BaseNode
+from pychron.pipeline.nodes.data import BaseDVCNode
 
 
 class GainCalibrationOption(HasTraits):
     pass
 
 
-class GainCalibrationNode(BaseNode):
+class GainCalibrationNode(BaseDVCNode):
     options_klass = GainCalibrationOption
     name = 'Gain Calibration'
     # def configure(self):

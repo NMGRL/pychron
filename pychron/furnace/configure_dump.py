@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
 from traitsui.api import Controller, View, Item
 class ConfigureDump(Controller):
     def traits_view(self):

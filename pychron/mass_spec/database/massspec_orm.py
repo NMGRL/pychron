@@ -18,11 +18,10 @@
 # =============enthought library imports=======================
 
 # =============standard library imports ========================
-
 import os
 
 from sqlalchemy import Column, Integer, Float, String, \
-    ForeignKey, DateTime, Date, BLOB, Enum, TIMESTAMP
+    ForeignKey, DateTime, Date, TEXT, Enum, TIMESTAMP
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relation, relationship
 from sqlalchemy.sql.expression import func
@@ -79,7 +78,7 @@ class AnalysesTable(Base):
     PwrAchieved_Max = Column(Float, default=0)
     TotDurHeating = Column(Integer)
     TotDurHeatingAtReqPwr = Column(Integer)
-
+    Emissivity = Column(Float, default=0)
     FirstStageDly = Column(Integer)
     SecondStageDly = Column(Integer)
 
@@ -107,7 +106,7 @@ class AnalysesTable(Base):
 
     RefDetID = Column(Integer, ForeignKey('DetectorTable.DetectorID'))
 
-    PipettedIsotopes = Column(BLOB)
+    PipettedIsotopes = Column(TEXT)
 
     isotopes = relationship('IsotopeTable', backref='AnalysesTable')
     araranalyses = relationship('ArArAnalysisTable', order_by='asc(ArArAnalysisTable.LastSaved)')
@@ -175,8 +174,8 @@ class BaselinesChangeableItemsTable(Base):
     LastSaved = Column(TIMESTAMP)
     Fit = Column(Integer, ForeignKey('FitTypeTable.Fit'))
     DataReductionSessionID = Column(Integer)
-    InfoBlob = Column(BLOB)
-    PDPBlob = Column(BLOB)
+    InfoBlob = Column(TEXT)
+    PDPBlob = Column(TEXT)
 
 
 class BaselinesTable(Base):
@@ -184,7 +183,7 @@ class BaselinesTable(Base):
     BslnID = Column(Integer, primary_key=True)
     Label = Column(String(40))
     NumCnts = Column(Integer)
-    PeakTimeBlob = Column(BLOB, nullable=True)
+    PeakTimeBlob = Column(TEXT, nullable=True)
     isotope = relationship('IsotopeTable', backref='baseline', uselist=False)
 
 
@@ -292,6 +291,10 @@ class IrradiationProductionTable(Base):
     @property
     def Cl3638(self):
         return self.P36Cl38Cl
+
+    @property
+    def Cl3638Er(self):
+        return self.P36Cl38ClEr
 
 
 class IrradiationChronologyTable(Base):
@@ -406,21 +409,21 @@ class PDPTable(Base):
     __tablename__ = 'PDPTable'
     IsotopeID = Column(Integer, primary_key=True)
     LastSaved = Column(TIMESTAMP)
-    PDPBlob = Column(BLOB)
+    PDPBlob = Column(TEXT)
 
 
 class PeakTimeTable(Base):
     __tablename__ = 'PeakTimeTable'
     Counter = Column(Integer, primary_key=True)
-    PeakTimeBlob = Column(BLOB)
+    PeakTimeBlob = Column(TEXT)
     IsotopeID = Column(Integer, ForeignKey('IsotopeTable.IsotopeID'))
-    PeakNeverBslnCorBlob = Column(BLOB)
+    PeakNeverBslnCorBlob = Column(TEXT)
 
 
 class PreferencesTable(Base):
     __tablename__ = 'PreferencesTable'
     PreferencesSetID = Column(Integer, primary_key=True)
-    DelOutliersAfterFit = Column(Enum)
+    DelOutliersAfterFit = Column(Enum('false','true'))
     NFilterIter = Column(Integer)
     OutlierSigmaFactor = Column(Float)
 
@@ -450,8 +453,8 @@ class RunScriptTable(Base):
     __tablename__ = 'RunScriptTable'
     RunScriptID = Column(Integer, primary_key=True)
     Label = Column(String(40))
-    TheText = Column(BLOB)
-    Note = Column(BLOB, default='')
+    TheText = Column(TEXT)
+    Note = Column(TEXT, default='')
 
 
 class SampleTable(Base):
@@ -465,7 +468,7 @@ class SampleTable(Base):
     Note = Column(String(40), default='NULL')
     AlternateUserID = Column(String(40), default='NULL')
     CollectionDateTime = Column(DateTime, default=func.now())
-    # Coordinates = Column(BLOB, default='NULL')
+    # Coordinates = Column(TEXT, default='NULL')
     Latitude = Column(String(40), default='NULL')
     Longitude = Column(String(40), default='NULL')
     Salinity = Column(Float, default=0)

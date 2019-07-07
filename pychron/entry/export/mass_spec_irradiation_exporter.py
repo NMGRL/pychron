@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import binascii
 import struct
 
@@ -23,6 +24,7 @@ from uncertainties import std_dev, nominal_value
 
 from pychron.entry.export.base_irradiation_exporter import BaseIrradiationExporter
 from pychron.mass_spec.database.massspec_database_adapter import MassSpecDatabaseAdapter, PR_KEYS
+from six.moves import zip
 
 SRC_PR_KEYS = ('Ca3637', 'Ca3637_err',
                'Ca3937', 'Ca3937_err',
@@ -42,7 +44,7 @@ def generate_production_ratios_id(vs):
     :param vs:
     :return:
     """
-    txt = ''.join([struct.pack('>f', vi) for vi in vs])
+    txt = b''.join([struct.pack('>f', vi) for vi in vs])
     return binascii.crc32(txt)
 
 

@@ -18,13 +18,24 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 # from pychron.pipeline.plot. import ReferencesSeries
+from __future__ import absolute_import
+
+from six.moves import zip
+from uncertainties import ufloat
+
 from pychron.pipeline.plot.plotter.references_series import ReferencesSeries
 
 
 class Blanks(ReferencesSeries):
+    references_name = 'Blanks'
+
     def _get_interpolated_value(self, po, analysis):
-        iso = analysis.isotopes[po.name]
-        return iso.temporary_blank.value, iso.temporary_blank.error
+        v, e = 0, 0
+        iso = self._get_isotope(po, analysis)
+        if iso:
+            if iso.temporary_blank is not None:
+                v, e = iso.temporary_blank.value, iso.temporary_blank.error
+        return v, e
 
     def _set_interpolated_values(self, iso, fit, ans, p_uys, p_ues):
         for ui, v, e in zip(ans, p_uys, p_ues):
@@ -32,12 +43,22 @@ class Blanks(ReferencesSeries):
                 ui.set_temporary_blank(iso, v, e, fit)
 
     def _get_reference_data(self, po):
-        name = po.name
-        ys = [ai.isotopes[name].get_baseline_corrected_value() for ai in self.sorted_references]
-        return ys
+        _, mx = self._get_min_max()
+        ans = self.sorted_references
+
+        atypes = po.analysis_types
+        if atypes:
+            ans = [ai for ai in ans if ai.analysis_type in atypes]
+
+        xs = self._get_xs([po], ans, tzero=mx)
+
+        ys = [self._get_isotope(po, ai) for ai in ans]
+        ys = [yi.get_baseline_corrected_value() if yi else ufloat(0, 0) for yi in ys]
+
+        return ans, xs, ys
 
     def _get_current_data(self, po):
-        name = po.name
-        return [ai.isotopes[name].blank.uvalue for ai in self.sorted_analyses]
+        isos = [self._get_isotope(po, ai) for ai in self.sorted_analyses]
+        return [iso.blank.uvalue if iso else ufloat(0, 0) for iso in isos]
 
 # ============= EOF =============================================

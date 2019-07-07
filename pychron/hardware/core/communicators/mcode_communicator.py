@@ -17,7 +17,6 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 import time
-
 import serial
 # ============= local library imports  ==========================
 from pychron.hardware.core.communicators.communicator import Communicator

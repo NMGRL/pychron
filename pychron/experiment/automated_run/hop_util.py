@@ -25,13 +25,14 @@ def parse_hop(args):
         counts = args['counts']
         settle = args['settle']
         cc = args['cup_configuration']
-        isos = [ci['isotope'] for ci in cc if ci['active']]
+        isos = [ci['isotope'] for ci in cc if ci.get('active', False)]
         dets = [ci['detector'] for ci in cc]
         defls = [ci.get('deflection') for ci in cc]
-        pdets = [ci['detector'] for ci in cc if ci['protect']]
+        pdets = [ci['detector'] for ci in cc if ci.get('protect', False)]
         is_baselines = [ci['is_baseline'] for ci in cc]
-        active_detectors = [ci['detector'] for ci in cc if ci['active']]
+        active_detectors = [ci['detector'] for ci in cc if ci.get('active', False)]
         pos = args['positioning']
+
     else:
         if len(args) == 3:
             hopstr, counts, settle = args
@@ -39,7 +40,7 @@ def parse_hop(args):
         else:
             hopstr, counts, settle, pdets = args
             # for hopstr, counts, settle, pdets in hops:
-        is_baselines, isos, dets, defls = zip(*split_hopstr(hopstr))
+        is_baselines, isos, dets, defls = list(zip(*split_hopstr(hopstr)))
         active_detectors = dets
         pos = {'detector': active_detectors[0], 'isotope': isos[0]}
 
@@ -68,7 +69,7 @@ def generate_hops(hops):
                 yield d
                 # yield c, is_baselines, dets, isos, defls, settle, counts
             else:
-                for i in xrange(int(d['counts'])):
+                for i in range(int(d['counts'])):
                     d['count'] = i
                     yield d
                     # yield c, is_baselines, dets, isos, defls, settle, i, pdets
@@ -106,7 +107,7 @@ def parse_hops(hops, ret=None):
 
 def split_hopstr(hop):
     for hi in hop.split(','):
-        args = map(str.strip, hi.split(':'))
+        args = [hh.strip() for hh in hi.split(':')]
         defl = None
         is_baseline = False
         if len(args) == 4:

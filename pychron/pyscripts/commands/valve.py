@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Str, Property, cached_property
 from traitsui.api import Item, EnumEditor, VGroup
 # ============= standard library imports ========================
@@ -24,6 +25,7 @@ import re
 from pychron.pyscripts.commands.core import Command
 from pychron.paths import paths
 from pychron.extraction_line.switch_parser import SwitchParser
+import six
 
 
 name_re=re.compile(r'''name\s*=\s*["']+\w+["']''')
@@ -46,7 +48,7 @@ class ValveCommand(Command):
         m = desc_re.match(txt)
         if m:
             a = self._extract_attr(m)
-            v = next((k for k, v in self.valve_name_dict.iteritems() if v == a), None)
+            v = next((k for k, v in six.iteritems(self.valve_name_dict) if v == a), None)
             if v:
                 self.valve = v
                 return

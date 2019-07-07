@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
+from __future__ import absolute_import
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Property
 from traitsui.api import View, UItem, HGroup, VGroup, EnumEditor, VSplit, spring, Item
@@ -42,7 +43,10 @@ class ProjectAdapter(TabularAdapter):
 
 class ProjectPane(TraitsTaskPane):
     def traits_view(self):
-        fgrp = HGroup(UItem('filter_attr', editor=EnumEditor(name='filter_attrs')), UItem('filter_str'))
+        fgrp = HGroup(UItem('filter_attr', editor=EnumEditor(name='filter_attrs')), UItem('filter_str'),
+                      show_border=True,
+                      label='Filter')
+
         tgrp = VGroup(UItem('items', height=600, editor=myTabularEditor(adapter=ProjectAdapter(),
                                                                         editable=False,
                                                                         selected='selected',

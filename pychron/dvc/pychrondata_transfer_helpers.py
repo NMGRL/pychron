@@ -16,7 +16,9 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-import json
+
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 from datetime import timedelta
 from itertools import groupby
@@ -29,6 +31,7 @@ from pychron.dvc import dvc_dump, dvc_load, analysis_path
 from pychron.dvc.dvc_persister import spectrometer_sha
 from pychron.github import Organization
 from pychron.pychron_constants import QTEGRA_SOURCE_KEYS
+from pychron import json
 
 """
 http://stackoverflow.com/questions/6944165/mysql-update-with-where-select-subquery-error
@@ -90,7 +93,7 @@ def import_j(src, dest, meta, repo_identifier):
                             j, e = flux.j, flux.j_err
                             meta.update_flux(irradname, levelname, pos, idn, j, e, decay, [], add=False)
                     else:
-                        print 'no irradiation position {} {} {} {}'.format(idn, irradname, levelname, pos)
+                        print('no irradiation position {} {} {} {}'.format(idn, irradname, levelname, pos))
 
 
 
@@ -105,9 +108,9 @@ def fix_import_commit(repo_identifier, root):
     rm.open_repo(proot)
 
     repo = rm._repo
-    print '========= {} ======'.format(repo_identifier)
+    print('========= {} ======'.format(repo_identifier))
     txt = repo.git.log('--pretty=oneline')
-    print txt
+    print(txt)
     # first_commit = txt.split('\n')[0]
     # # print first_commit, 'initial import' in first_commit
     # if 'initial import' in first_commit:
@@ -126,10 +129,10 @@ def fix_meta(dest, repo_identifier, root):
             p = analysis_path(an.record_id, repo_identifier)
             obj = dvc_load(p)
             if not obj:
-                print '********************** {} not found in repo'.format(an.record_id)
+                print('********************** {} not found in repo'.format(an.record_id))
                 continue
 
-            print an.record_id, p
+            print(an.record_id, p)
             if not obj['irradiation']:
                 obj['irradiation'] = an.irradiation
                 lchanged = True
@@ -157,7 +160,7 @@ def fix_meta(dest, repo_identifier, root):
                 changed = True
 
             if lchanged:
-                print '{} changed'.format(an.record_id)
+                print('{} changed'.format(an.record_id))
                 dvc_dump(obj, p)
 
     if changed:
@@ -190,7 +193,7 @@ def fix_a_steps(dest, repo_identifier, root):
             key = lambda xi: xi[1]
             for aliquot, ais in groupby(ais, key=key):
                 ais = sorted(ais, key=lambda ai: ai[2])
-                print identifier, aliquot, ais
+                print(identifier, aliquot, ais)
                 # if the first increment for a given aliquot is 1
                 # and the increment for the first analysis of the aliquot is None
                 if len(ais) == 1:
@@ -198,7 +201,7 @@ def fix_a_steps(dest, repo_identifier, root):
 
                 if ais[0][2] is None and ais[1][2] == 1:
                     an = dest.get_analysis(ais[0][4])
-                    print 'fix', ais[0], an, an.record_id
+                    print('fix', ais[0], an, an.record_id)
                     original_record_id = str(an.record_id)
                     path = analysis_path(an.record_id, repo_identifier)
                     obj = dvc_load(path)
@@ -263,7 +266,7 @@ def set_spectrometer_files(src, dest, repo_identifier, root):
     with src.session_ctx():
         for an in analyses:
             dban = src.get_analysis_uuid(an)
-            print 'set spectrometer file for {}'.format(dban.record_id)
+            print('set spectrometer file for {}'.format(dban.record_id))
             set_spectrometer_file(dban, root)
 
 
@@ -333,7 +336,7 @@ def get_project_bins(project):
             low = get_datetime(ais[0]) - timedelta(hours=tol_hrs / 2.)
             high = get_datetime(ais[-1]) + timedelta(hours=tol_hrs / 2.)
 
-            print ms, low, high
+            print(ms, low, high)
 
 
 def get_project_timestamps(src, project, mass_spectrometer, tol_hrs):
@@ -391,7 +394,7 @@ def experiment_id_modifier(root, expid):
             # cnt+=1
             p = os.path.join(r, fi)
             # if os.path.basename(os.path.dirname(p)) =
-            print p
+            print(p)
             write = False
             with open(p, 'r') as rfile:
                 jd = json.load(rfile)
@@ -407,12 +410,12 @@ def runlist_load(path):
     with open(path, 'r') as rfile:
         runs = [li.strip() for li in rfile]
         # runs = [line.strip() for line in rfile if line.strip()]
-        return filter(None, runs)
+        return [_f for _f in runs if _f]
 
 
 def runlist_loads(txt):
     runs = [li.strip() for li in txt.striplines()]
-    return filter(None, runs)
+    return [_f for _f in runs if _f]
 
 
 def load_path():

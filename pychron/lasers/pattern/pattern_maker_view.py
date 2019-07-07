@@ -15,16 +15,20 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
+import os
+
+import six.moves.cPickle as pickle
 from traits.api import Property, Enum, Str, on_trait_change, List
 from traitsui.api import View, Item, InstanceEditor, Handler, ListStrEditor, EnumEditor, VGroup, UItem, HGroup
+
 # ============= standard library imports ========================
-from pychron.core.helpers.filetools import add_extension, list_directory2
-import cPickle as pickle
-import os
+from pychron.core.helpers.filetools import add_extension, glob_list_directory
 # ============= local library imports  ==========================
 from pychron.lasers.pattern.patternable import Patternable
-from pychron.saveable import Saveable, SaveableButtons
 from pychron.paths import paths
+from pychron.saveable import Saveable, SaveableButtons
 from pychron.stage.stage_manager import get_stage_map_names
 
 
@@ -48,7 +52,7 @@ class PatternMakerView(Saveable, Patternable):
                          'Random',
                          'CircularContour', 'Trough',
                          'Rubberband', 'RasterRubberband',
-                         'Seek', 'DragonFly'),
+                         'Seek', 'DragonFlyPeak'),
                     depends_on='_kind')
     _kind = Str('Polygon')
 
@@ -62,14 +66,15 @@ class PatternMakerView(Saveable, Patternable):
 
     def load_pattern(self, path=None):
         if path is None:
-            return
+            path = self.open_file_dialog(default_directory=paths.pattern_dir)
+            if path is None:
+                return
 
-        # path = self.open_file_dialog(default_directory=paths.pattern_dir)
         if not os.path.isfile(path):
             path = os.path.join(paths.pattern_dir, path)
 
         if path and os.path.isfile(path):
-            with open(path, 'r') as rfile:
+            with open(path, 'rb') as rfile:
                 pattern = self._load_pattern(rfile, path)
                 if pattern:
                     self._kind = pattern.__class__.__name__.replace('Pattern', '')
@@ -115,7 +120,6 @@ class PatternMakerView(Saveable, Patternable):
         return '{}-{}'.format(self.pattern.generate_name(), self.tray_name).lower()
 
     def _selected_pattern_name_changed(self, new):
-        print new
         if not new:
             return
 
@@ -127,7 +131,7 @@ class PatternMakerView(Saveable, Patternable):
             self.load_pattern(p)
 
     def _load_pattern_names(self):
-        self.patterns = list_directory2(paths.pattern_dir, extension='.lp', remove_extension=True)
+        self.patterns = glob_list_directory(paths.pattern_dir, extension='.lp', remove_extension=True)
 
     def _save_as_view(self):
         v = View(Item('tray_name', editor=EnumEditor(name='trays')),
@@ -171,6 +175,7 @@ class PatternMakerView(Saveable, Patternable):
 
     def _get_new_name(self):
         return self._generate_name()
+
     # ===============================================================================
     # factories
     # ===============================================================================
@@ -179,12 +184,13 @@ class PatternMakerView(Saveable, Patternable):
         name = '{}Pattern'.format(kind)
         for pkg in ('pychron.lasers.pattern.patterns',
                     'pychron.lasers.pattern.seek_pattern',
+                    'pychron.lasers.pattern.dragonfly_pattern',
                     'pychron.lasers.pattern.degas_pattern'):
             try:
                 factory = __import__(pkg, fromlist=[name])
                 pattern = getattr(factory, name)()
                 break
-            except (ImportError, AttributeError), e:
+            except (ImportError, AttributeError) as e:
                 pass
 
                 #

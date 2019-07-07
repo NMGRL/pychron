@@ -15,13 +15,15 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
 from traits.api import Any, Str
 
 # =============standard library imports ========================
-import ConfigParser
+import six.moves.configparser
 import time
 # =============local library imports  ==========================
 from pychron.config_loadable import ConfigLoadable
+from six.moves import range
 
 
 class KerrDevice(ConfigLoadable):
@@ -47,7 +49,7 @@ class KerrDevice(ConfigLoadable):
         """
         """
 
-        config = ConfigParser.ConfigParser()
+        config = six.moves.configparser.ConfigParser()
         config.read(path)
 
         self.set_attribute(config, 'address', 'General', 'address')
@@ -106,13 +108,11 @@ class KerrDevice(ConfigLoadable):
     def _calc_checksum(self, cmd):
         """
         """
-        s = 0
-        for i in range(0, len(cmd), 2):
-            bit = cmd[i:i + 2]
-            s += int(bit, 16)
-
-        r = '%02X' % s
+        s = sum([int(cmd[i:i+2], 16) for i in range(0, len(cmd), 2)])
+        r = '{:02X}'.format(s)
         return r[-2:]
+        # r = '%02X' % s
+        # return r[-2:]
 
     def _check_bits(self, bits):
         """

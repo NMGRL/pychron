@@ -13,7 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
+
 from pychron.options.options import MainOptions, SubOptions, AppearanceSubOptions, TitleSubOptions, GroupSubOptions
+from pychron.pychron_constants import APPEARANCE, MAIN
 
 
 class RadialMainOptions(MainOptions):
@@ -36,14 +39,11 @@ class DisplaySubOptions(TitleSubOptions):
     pass
 
 
-
-
-VIEWS = {}
-VIEWS['main'] = RadialMainOptions
-VIEWS['radial'] = RadialSubOptions
-VIEWS['appearance'] = RadialAppearance
-VIEWS['calculations'] = CalculationSubOptions
-VIEWS['display'] = DisplaySubOptions
-VIEWS['groups'] = GroupSubOptions
+VIEWS = {MAIN.lower(): RadialMainOptions,
+         'radial': RadialSubOptions,
+         APPEARANCE.lower(): RadialAppearance,
+         'calculations': CalculationSubOptions,
+         'display': DisplaySubOptions,
+         'groups': GroupSubOptions}
 
 # ============= EOF =============================================

@@ -16,9 +16,11 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from numpy import exp, ones, log, std, mean
 from numpy.random.mtrand import randn
 from uncertainties import ufloat, nominal_value, std_dev, umath
+import six
 
 
 class AgeConverter(object):
@@ -46,7 +48,7 @@ class AgeConverter(object):
         self._original_total_decay_constant = total_decay
 
     def set_constants(self, **kw):
-        for k, v in kw.iteritems():
+        for k, v in six.iteritems(kw):
             setattr(self, '_{}'.format(k), v)
 
     def convert(self, age, error):

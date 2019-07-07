@@ -78,10 +78,10 @@ class _CustomLabelEditor(Editor):
 
         control.setStyleSheet(css)
 
-    def update_editor(self):
-        if self.control:
-            if isinstance(self.value, (str, int, float, long, unicode)):
-                self.control.setText(str(self.value))
+    # def update_editor(self):
+    #     if self.control:
+    #         if isinstance(self.value, (str, int, float, int, six.text_type)):
+    #             self.control.setText(self.str_value)
 
     def _create_control(self, parent):
         control = QLabel()

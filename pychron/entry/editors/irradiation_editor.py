@@ -15,40 +15,41 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pyface.constant import YES, NO
-from traits.api import Instance
-from traitsui.api import View, Item, UItem, Group, VGroup
+import json
+import os
+
+from traits.api import Instance, Dict, List, Str
+from traitsui.api import Item, UItem, Group, VGroup, HGroup, EnumEditor
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.entry.editors.base_editor import ModelView
 from pychron.entry.editors.chronology import IrradiationChronology
+from pychron.entry.editors.production import IrradiationProduction
 from pychron.loggable import Loggable
+from pychron.paths import paths
 
 
 class AddView(ModelView):
     def traits_view(self):
-        v = View(VGroup(Item('name'),
-                        Group(UItem('chronology', style='custom'),
-                              label='Chronology', show_border=True)),
-                 title='Add Irradiation',
-                 kind='livemodal',
-                 buttons=['OK', 'Cancel'],
-                 width=500,
-                 resizable=True)
+        v = okcancel_view(VGroup(Item('name'),
+                                 Group(UItem('chronology', style='custom'),
+                                       label='Chronology', show_border=True)),
+                          HGroup(UItem('selected_reactor_name', editor=EnumEditor(name='reactor_names')),
+                                 label='Reactor', show_border=True),
+                          title='Add Irradiation',
+                          width=500)
         return v
 
 
 class EditView(ModelView):
     def traits_view(self):
-        v = View(VGroup(Item('name'),
-                        Group(UItem('chronology', style='custom'),
-                              label='Chronology', show_border=True)),
-                 title='Edit Irradiation',
-                 kind='livemodal',
-                 buttons=['OK', 'Cancel'],
-                 width=500,
-                 resizable=True)
+        v = okcancel_view(VGroup(Item('name', style='readonly'),
+                                 Group(UItem('chronology', style='custom'),
+                                       label='Chronology', show_border=True)),
+                          title='Edit Irradiation',
+                          width=500)
         return v
 
 
@@ -60,7 +61,14 @@ class IrradiationEditor(Loggable):
     chronology = Instance(IrradiationChronology, ())
     dvc = Instance('pychron.dvc.dvc.DVC')
 
+    reactors = Dict
+    reactor_names = List
+    selected_reactor_name = Str
+
     def add(self):
+
+        self._load_reactors()
+
         v = AddView(model=self)
         info = v.edit_traits()
 
@@ -75,12 +83,17 @@ class IrradiationEditor(Loggable):
                         break
 
                 if not self.dvc.get_irradiation(name):
+                    if not self.selected_reactor_name:
+                        self.information_dialog('Please select a reactor')
+                        info = v.edit_traits()
+                        continue
+
                     self._add_irradiation()
                     return name
 
                 else:
-                    if self.confirmation_dialog(
-                            'Irradiation "{}" already exists. Would you like to try again ?'.format(name)):
+                    if self.confirmation_dialog('Irradiation "{}" already exists. '
+                                                'Would you like to try again ?'.format(name)):
                         info = v.edit_traits()
                         continue
                     else:
@@ -89,53 +102,42 @@ class IrradiationEditor(Loggable):
                 break
 
     def edit(self):
-        original_name = self.name
-        # db = self.dvc.db
-        # with db.session_ctx():
-        # irrad = db.get_irradiation(original_name)
-        # print irrad, original_name
+        self._load_reactors()
 
-        # chronology = DVCChronology(self.name)
         chronology = self.dvc.get_chronology(self.name)
         self.chronology.set_dosages(chronology.get_doses())
         v = EditView(model=self)
         info = v.edit_traits()
         if info.result:
-            if original_name != self.name:
-                ret = self.confirmation_dialog('You have changed the irradiation name.\n\n'
-                                               'Would you like to rename "{}" to "{}" (Yes) '
-                                               'or make a new irradiation "{}" (No)'.format(original_name,
-                                                                                            self.name, self.name),
-                                               return_retval=True,
-                                               cancel=True)
-                if ret == YES:
-                    print 'asdfadfasd'
-                    # irrad.name = self.name
-                elif ret == NO:
-                    self._add_irradiation()
-                else:
-                    return
+            self._add_irradiation()
+            if self.selected_reactor_name:
+                self.dvc.add_production_to_irradiation(self.name, self.reactor.name, self.reactor.get_params())
 
-            # irrad.chronology.chronology = self.chronology.make_blob()
-            # print self.chronology.get_doses()
             self.dvc.update_chronology(self.name, self.chronology.get_doses())
-            # self.dvc.meta_repo.clear_cache = True
-            # self.dvc.meta_commit('updated chronology')
 
         return self.name
 
     def _add_irradiation(self):
         self.debug('add irradiation={}'.format(self.name))
+        self.dvc.add_irradiation(self.name, self.chronology.get_doses(), verbose=False)
+        if self.selected_reactor_name:
+            self.dvc.add_production_to_irradiation(self.name, self.reactor.name, self.reactor.get_params())
 
-        self.dvc.add_irradiation(self.name, self.chronology.get_doses())
+    def _load_reactors(self):
 
-        # db = self.db
-        #     with db.session_ctx():
-        #         # dbchron = db.add_irradiation_chronology(self.chronology.make_blob())
-        #         # db.add_irradiation(self.name, dbchron)
-        #         db.add_irradiation(self.name)
-        #
-        #     self.repo.add_irradiation(self.name)
-        #     self.repo.add_chronology(self.name, self.chronology)
+        p = os.path.join(paths.meta_root, 'reactors.json')
+        reactors = {}
+        if os.path.isfile(p):
+            with open(p, 'r') as rfile:
+                reactors = json.load(rfile)
+                for k, v in reactors.items():
+                    reactors[k] = IrradiationProduction(k, v)
+
+        self.reactors = reactors
+        self.reactor_names = list(reactors.keys())
+
+    @property
+    def reactor(self):
+        return self.reactors[self.selected_reactor_name]
 
 # ============= EOF =============================================

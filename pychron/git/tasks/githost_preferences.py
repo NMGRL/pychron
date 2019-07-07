@@ -40,25 +40,26 @@ class GitHostPreferences(BasePreferencesHelper):
         self._remote_status_color = 'red'
         self._remote_status = 'Invalid'
         try:
-            header = authorization(self.username, self.password, self._token)
+            kw = {'verify': globalv.cert_file}
 
-            resp = requests.get(self._url,
-                                headers=header,
-                                verify=globalv.cert_file)
+            if self._token:
+                header = authorization('', '', self._token)
+                kw['headers'] = header
+            else:
+                kw['auth'] = (self.username, self.password)
 
+            resp = requests.get(self._url, **kw)
             if resp.status_code == 200:
                 self._remote_status = 'Valid'
                 self._remote_status_color = 'green'
-        except BaseException, e:
-            print 'exception', e, self._url
+        except BaseException as e:
+            print('exception', e, self._url)
 
 
 class GitHubPreferences(GitHostPreferences):
     preferences_path = 'pychron.github'
 
-    @property
-    def _url(self):
-        return 'https://api.github.com/'
+    _url = 'https://api.github.com/user'
 
     @property
     def _token(self):
@@ -85,7 +86,8 @@ class GitHostPreferencesPane(PreferencesPane):
         g = VGroup(VGroup(Item('username'),
                           Item('password'),
                           show_border=True, label='Basic'),
-                   VGroup(Item('oauth_token', label='Token'),
+                   VGroup(Item('oauth_token',
+                               resizable=True, label='Token'),
                           show_border=True, label='OAuth'),
                    HGroup(test_connection_item(),
                           CustomLabel('_remote_status',

@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 # from traits.api import HasTraits
+from __future__ import absolute_import
 from pychron.core.ui import set_toolkit
 set_toolkit('qt4')
 # ============= standard library imports ========================

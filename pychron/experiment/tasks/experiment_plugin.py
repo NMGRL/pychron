@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
 from envisage.extension_point import ExtensionPoint
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
@@ -28,12 +27,12 @@ from pychron.experiment.run_history_view import RunHistoryView, RunHistoryModel
 from pychron.experiment.signal_calculator import SignalCalculator
 from pychron.experiment.tasks.experiment_actions import NewExperimentQueueAction, \
     OpenExperimentQueueAction, SignalCalculatorAction, \
-    DeselectAction, SendTestNotificationAction, \
+    DeselectAction, \
     NewPatternAction, OpenPatternAction, ResetQueuesAction, OpenLastExperimentQueueAction, UndoAction, \
-    QueueConditionalsAction, ConfigureEditorTableAction, SystemConditionalsAction, ResetSystemHealthAction, \
+    QueueConditionalsAction, ConfigureEditorTableAction, SystemConditionalsAction, \
     OpenExperimentHistoryAction, LastAnalysisRecoveryAction, OpenCurrentExperimentQueueAction, \
     SaveAsCurrentExperimentAction, SyncQueueAction, AcquireSpectrometerAction, ReleaseSpectrometerAction, \
-    RunHistoryAction
+    RunHistoryAction, MeltingPointCalibrationAction
 from pychron.experiment.tasks.experiment_preferences import ExperimentPreferencesPane, ConsolePreferencesPane, \
     UserNotifierPreferencesPane, HumanErrorCheckerPreferencesPane
 from pychron.experiment.tasks.experiment_task import ExperimentEditorTask
@@ -61,8 +60,6 @@ class ExperimentPlugin(BaseTaskPlugin):
         rh = RunHistoryView(model=rhm)
 
         return rh
-    # def _image_browser_factory(self, *args, **kw):
-    #     return ImageBrowser(application=self.application)
 
     def _tasks_default(self):
         return [TaskFactory(id='pychron.experiment.task',
@@ -88,34 +85,37 @@ class ExperimentPlugin(BaseTaskPlugin):
                 HumanErrorCheckerPreferencesPane]
 
     def _file_defaults_default(self):
-        return [('experiment_defaults', 'EXPERIMENT_DEFAULTS', False)]
+        return [('experiment_defaults', 'EXPERIMENT_DEFAULTS', False),
+                ('ratio_change_detection', 'RATIO_CHANGE_DETECTION', False)]
 
-    def _actions_default(self):
-        return [('pychron.open_experiment', 'Ctrl+O', 'Open Experiment'),
-                ('pychron.new_experiment', 'Ctrl+N', 'New Experiment'),
-                ('pychron.deselect', 'Ctrl+Shift+D', 'Deselect'),
-                ('pychron.open_last_experiment', 'Alt+Ctrl+O', 'Open Last Experiment')]
+    # def _actions_default(self):
+    #     return [('pychron.open_experiment', 'Ctrl+O', 'Open Experiment'),
+    #             ('pychron.new_experiment', 'Ctrl+N', 'New Experiment'),
+    #             ('pychron.deselect', 'Ctrl+Shift+D', 'Deselect'),
+    #             ('pychron.open_last_experiment', 'Alt+Ctrl+O', 'Open Last Experiment')]
 
     def _help_tips_default(self):
         return ['You can set the Analysis State colors in Preferences>Experiment',
                 'You can set the color for Sniff, Signal, and Baseline datapoints in Preferences>Experiment',
-                'The current version of Pychron contains over 147K lines of code',
                 'If the last analysis fails to save you can recover it using Tools/Recover Last Analysis']
 
     def _task_extensions_default(self):
-        extensions = [TaskExtension(actions=actions, task_id=eid) for eid, actions in self._get_extensions()]
-        # print 'a', len(extensions)
+        exts = self._get_extensions()
+        extensions = [TaskExtension(actions=actions, task_id=eid) for eid, actions in exts]
+
         additions = []
 
-        eflag = False
-        for eid, actions in self._get_extensions():
-            # print 'b', eid, len(actions)
+        # eflag = False
+        for eid, actions in exts:
             for ai in actions:
-                if not eflag and ai.id.startswith('pychron.experiment.edit'):
-                    eflag = True
+                # if not eflag and ai.id.startswith('pychron.experiment.edit'):
+                if ai.id.startswith('pychron.experiment.edit'):
+                    # eflag = True
                     additions.append(SchemaAddition(id='experiment.edit',
                                                     factory=lambda: SGroup(id='experiment.group'),
-                                                    path='MenuBar/Edit'), )
+                                                    path='MenuBar/edit.menu'), )
+                    break
+
         if additions:
             extensions.append(TaskExtension(actions=additions, task_id=''))
 
@@ -129,50 +129,48 @@ class ExperimentPlugin(BaseTaskPlugin):
         return extensions
 
     def _available_task_extensions_default(self):
-        return [(self.id, '', 'Experiment',
-                 [SchemaAddition(id='pychron.experiment.reset_system_health', factory=ResetSystemHealthAction,
-                                 path='MenuBar/file.menu'),
-                  SchemaAddition(id='pychron.experiment.open_queue_conditionals', factory=QueueConditionalsAction,
-                                 path='MenuBar/Edit'),
-                  SchemaAddition(id='pychron.experiment.open_system_conditionals', factory=SystemConditionalsAction,
-                                 path='MenuBar/Edit'),
-                  SchemaAddition(id='pychron.experiment.open_experiment', factory=OpenExperimentQueueAction,
-                                 path='MenuBar/file.menu/Open'),
-                  SchemaAddition(id='pychron.experiment.open_current_experiment',
-                                 factory=OpenCurrentExperimentQueueAction,
-                                 path='MenuBar/file.menu/Open'),
-                  SchemaAddition(id='pychron.experiment.open_last_experiment', factory=OpenLastExperimentQueueAction,
-                                 path='MenuBar/file.menu/Open'),
-                  SchemaAddition(id='pychron.experiment.launch_history', factory=OpenExperimentHistoryAction,
-                                 path='MenuBar/file.menu/Open'),
-                  SchemaAddition(id='pychron.experiment.test_notify', factory=SendTestNotificationAction,
-                                 path='MenuBar/file.menu'),
-                  SchemaAddition(id='pychron.experiment.new_experiment', factory=NewExperimentQueueAction,
-                                 path='MenuBar/file.menu/New'),
-                  SchemaAddition(id='pychron.experiment.signal_calculator', factory=SignalCalculatorAction,
-                                 path='MenuBar/tools.menu'),
-                  SchemaAddition(id='pychron.experiment.last_analysis_recovery', factory=LastAnalysisRecoveryAction,
-                                 path='MenuBar/tools.menu'),
-                  SchemaAddition(id='pychron.experiment.run_history_view', factory=RunHistoryAction,
-                                 path='MenuBar/tools.menu'),
-                  SchemaAddition(id='pychron.experiment.new_pattern', factory=NewPatternAction,
-                                 path='MenuBar/file.menu/New'),
-                  SchemaAddition(id='pychron.experiment.open_pattern', factory=OpenPatternAction,
-                                 path='MenuBar/file.menu/Open')]),
-                ('{}.edit'.format(self.id), 'pychron.experiment.task', 'ExperimentEdit',
-                 [SchemaAddition(id='pychron.experiment.edit.deselect', factory=DeselectAction,
-                                 path='MenuBar/Edit/experiment.group'),
-                  SchemaAddition(id='pychron.experiment.edit.reset', factory=ResetQueuesAction,
-                                 path='MenuBar/Edit/experiment.group'),
-                  SchemaAddition(id='pychron.experiment.edit.sync', factory=SyncQueueAction,
-                                 path='MenuBar/Edit/experiment.group'),
-                  SchemaAddition(id='pychron.experiment.edit.undo', factory=UndoAction,
-                                 path='MenuBar/Edit/experiment.group'),
-                  SchemaAddition(id='pychron.experiment.edit.configure', factory=ConfigureEditorTableAction,
-                                 path='MenuBar/Edit/experiment.group'),
-                  SchemaAddition(id='pychron.experiment.save_as_current_experiment',
-                                 factory=SaveAsCurrentExperimentAction,
-                                 path='MenuBar/file.menu/Save')])]
+
+        def idformat(t):
+            return 'pychron.experiment.{}'.format(t)
+
+        def eidformat(t):
+            return 'pychron.experiment.edit.{}'.format(t)
+
+        actions = []
+        for path, fs in (('edit.menu', ((QueueConditionalsAction, 'open_queue_conditionals'),
+                                        (SystemConditionalsAction, 'open_system_conditionals'))),
+                         ('file.menu/Open', ((OpenExperimentQueueAction, 'open_experiment'),
+                                             (OpenCurrentExperimentQueueAction, 'open_current_experiment'),
+                                             (OpenLastExperimentQueueAction, 'open_last_experiment'),
+                                             (OpenPatternAction, 'open_pattern'))),
+                         ('file.menu/New', ((NewExperimentQueueAction, 'new_experiment'),
+                                            (NewPatternAction, 'new_pattern'))),
+                         ('tools.menu', ((OpenExperimentHistoryAction, 'launch_history'),
+                                         (SignalCalculatorAction, 'signal_calculator'),
+                                         (LastAnalysisRecoveryAction, 'last_analysis_recovery'),
+                                         (RunHistoryAction, 'run_history_view'),
+                                         (MeltingPointCalibrationAction, 'melting_point_calibrator')))):
+
+            path = 'MenuBar/{}'.format(path)
+            for f, t in fs:
+                actions.append(SchemaAddition(id=idformat(t),
+                                              factory=f,
+                                              path=path))
+
+        eactions = []
+        for path, fs in (('edit.menu/experiment.group', ((DeselectAction, 'deselect'),
+                                                         (ResetQueuesAction, 'reset'),
+                                                         (SyncQueueAction, 'sync'),
+                                                         (UndoAction, 'undo'),
+                                                         (ConfigureEditorTableAction, 'configure'))),
+                         ('file.menu/Save', ((SaveAsCurrentExperimentAction, 'save_as_current_experiment'),))):
+            for f, t in fs:
+                eactions.append(SchemaAddition(id=eidformat(t),
+                                               factory=f,
+                                               path=path))
+
+        return [(self.id, '', 'Experiment', actions),
+                ('{}.edit'.format(self.id), 'pychron.experiment.task', 'Experiment Edit', eactions)]
 
     def _service_offers_default(self):
         so_signal_calculator = self.service_offer_factory(

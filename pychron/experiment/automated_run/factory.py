@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
+
 import os
 import pickle
 
@@ -42,7 +42,6 @@ from pychron.experiment.queue.increment_heat_template import LaserIncrementalHea
 from pychron.experiment.queue.run_block import RunBlock
 from pychron.experiment.script.script import Script, ScriptOptions
 from pychron.experiment.utilities.frequency_edit_view import FrequencyModel
-from pychron.experiment.utilities.human_error_checker import HumanErrorChecker
 from pychron.experiment.utilities.identifier import convert_special_name, ANALYSIS_MAPPING, NON_EXTRACTABLE, \
     make_special_identifier, make_standard_identifier, SPECIAL_KEYS
 from pychron.experiment.utilities.position_regex import SLICE_REGEX, PSLICE_REGEX, \
@@ -50,7 +49,8 @@ from pychron.experiment.utilities.position_regex import SLICE_REGEX, PSLICE_REGE
 from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceLoggable
-from pychron.pychron_constants import NULL_STR, SCRIPT_KEYS, SCRIPT_NAMES, LINE_STR, DVC_PROTOCOL
+from pychron.pychron_constants import NULL_STR, SCRIPT_KEYS, SCRIPT_NAMES, LINE_STR, DVC_PROTOCOL, SPECIAL_IDENTIFIER, \
+    BLANK_UNKNOWN, BLANK_EXTRACTIONLINE, UNKNOWN, PAUSE, DEGAS
 
 
 class AutomatedRunFactory(DVCAble, PersistenceLoggable):
@@ -70,8 +70,12 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     default_fits_button = Button
     default_fits_enabled = Bool
     # ===================================
+    simple_identifier_manager = Instance('pychron.entry.simple_identifier_manager.SimpleIdentifierManager')
+    # selected_project = Any
+    # selected_sample = Any
+    # projects = List
+    # samples = List
 
-    human_error_checker = Instance(HumanErrorChecker, ())
     factory_view = Instance(FactoryView)
     factory_view_klass = FactoryView
 
@@ -79,16 +83,16 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     set_position = True
 
     delay_after = Float
-    labnumber = String(enter_set=True, auto_set=False)
-    update_labnumber = Event
+    labnumber = Str
 
     aliquot = EKlass(Int)
-    special_labnumber = Str('Special Labnumber')
+    special_labnumber = Str(SPECIAL_IDENTIFIER)
 
     db_refresh_needed = Event
     auto_save_needed = Event
 
-    labnumbers = Property(depends_on='project, selected_level')
+    labnumbers = Property(depends_on='project, selected_level, _identifiers')
+    _identifiers = List
 
     use_project_based_repository_identifier = Bool(True)
     repository_identifier = Str
@@ -117,14 +121,13 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     _end_after = Bool(False)
 
     weight = Float
-    comment = String(auto_set=False, enter_set=True)
+    comment = String(auto_set=False, enter_set=True, maxlen=200)
     auto_fill_comment = Bool
-    comment_template = Str
-    comment_templates = List
     edit_comment_template = Button
+    _comment_templater = None
 
     position = Property(depends_on='_position')
-    _position = String
+    _position = EKlass(String)
 
     # ===========================================================================
     # measurement
@@ -137,7 +140,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     # ===========================================================================
     extract_value = EKlass(Float)
     extract_units = Str(NULL_STR)
-    extract_units_names = List(['', 'watts', 'temp', 'percent'])
+    extract_units_names = List(['', 'watts', 'temp', 'percent', 'lumens'])
     _default_extract_units = 'watts'
 
     ramp_duration = EKlass(Float)
@@ -145,6 +148,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     overlap = EKlass(String)
     duration = EKlass(Float)
     cleanup = EKlass(Float)
+    light_value = EKlass(Float)
     beam_diameter = Property(EKlass(String), depends_on='_beam_diameter')
     _beam_diameter = String
 
@@ -173,7 +177,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                         'age.std',
                         'kca.std',
                         'kcl.std',
-                        'rad40_percent',
+                        'radiogenic_yield',
                         'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36'])
     trunc_comp = Enum('>', '<', '>=', '<=', '=')
     trunc_crit = Float(5000, enter_set=True, auto_set=False)
@@ -186,6 +190,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     clear_conditionals = Button
     edit_conditionals_button = Button
     new_conditionals_button = Button
+    apply_conditionals_button = Button
 
     # ===========================================================================
     # blocks
@@ -224,16 +229,17 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
     edit_mode = Bool(False)
     edit_mode_label = Property(depends_on='edit_mode')
-    edit_enabled = Bool(False)
+    edit_enabled = Bool(True)
 
     mass_spectrometer = String
     extract_device = Str
     username = Str
     laboratory = Str
 
+    persistence_name = 'run_factory'
     pattributes = ('collection_time_zero_offset',
                    'selected_irradiation', 'selected_level',
-                   'extract_value', 'extract_units', 'cleanup',
+                   'extract_value', 'extract_units', 'cleanup', 'light_value',
                    'duration', 'beam_diameter', 'ramp_duration', 'overlap',
                    'pattern', 'labnumber', 'position',
                    'weight', 'comment', 'template',
@@ -263,9 +269,12 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         bind_preference(self, 'irradiation_project_prefix', 'pychron.entry.irradiation_project_prefix')
 
         if not self.irradiation_project_prefix:
-            self.warning_dialog('Please Set "Irradiation Project Prefix in Preferences/Entry')
+            self.warning_dialog('Please Set "Irradiation Project Prefix" in Preferences/Entry')
 
         super(AutomatedRunFactory, self).__init__(*args, **kw)
+
+    def set_identifiers(self, v):
+        self._identifiers = v
 
     def setup_files(self):
         self.load_templates()
@@ -289,21 +298,21 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     def update_selected_ctx(self):
         return UpdateSelectedCTX(self)
 
-    def check_run_addition(self, runs, load_name):
-        """
-            check if its ok to add runs to the queue.
-            ie. do they have any missing values.
-                does the labnumber match the loading
-
-            return True if ok to add runs else False
-        """
-        hec = self.human_error_checker
-        ret = hec.check_runs(runs, test_all=True)
-        if ret:
-            hec.report_errors(ret)
-            return False
-
-        return True
+    # def check_run_addition(self, runs, load_name):
+    #     """
+    #         check if its ok to add runs to the queue.
+    #         ie. do they have any missing values.
+    #             does the labnumber match the loading
+    #
+    #         return True if ok to add runs else False
+    #     """
+    #     hec = self.human_error_checker
+    #     ret = hec.check_runs(runs, test_all=True)
+    #     if ret:
+    #         hec.report_errors(ret)
+    #         return False
+    #
+    #     return True
 
     def load_run_blocks(self):
         self.run_blocks = get_run_blocks()
@@ -354,6 +363,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
     def set_mass_spectrometer(self, new):
         new = new.lower()
+        self.debug('setting mass spec to={}'.format(new))
         self.mass_spectrometer = new
         for s in self._iter_scripts():
             s.mass_spectrometer = new
@@ -380,8 +390,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
         if auto_increment_id:
             v = increment_value(self.labnumber)
-            # invoke_in_main_thread(self.trait_set, _labnumber=v)
-            invoke_in_main_thread(self.trait_set, labnumber=v)
+            self.debug('auto increment labnumber: prev={}, new={}'.format(self.labnumber, v))
+            self.labnumber = v
 
         if auto_increment_position:
             pos = self.position
@@ -464,17 +474,16 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     def _new_run(self, excludes=None, **kw):
 
         # need to set the labnumber now because analysis_type depends on it
-        arv = self._spec_klass(laboratory=self.laboratory,
-                               labnumber=self.labnumber, **kw)
+        arv = self._spec_klass(labnumber=self.labnumber, **kw)
 
         if excludes is None:
             excludes = []
 
-        if arv.analysis_type in ('blank_unknown', 'pause', 'blank_extractionline'):
+        if arv.analysis_type in (BLANK_UNKNOWN, PAUSE, BLANK_EXTRACTIONLINE):
             excludes.extend(('extract_value', 'extract_units', 'pattern', 'beam_diameter'))
-            if arv.analysis_type == 'pause':
+            if arv.analysis_type == PAUSE:
                 excludes.extend(('cleanup', 'position'))
-        elif arv.analysis_type not in ('unknown', 'degas'):
+        elif arv.analysis_type not in (UNKNOWN, DEGAS):
             excludes.extend(('position', 'extract_value', 'extract_units', 'pattern',
                              'cleanup', 'duration', 'beam_diameter'))
 
@@ -483,13 +492,13 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
     def _get_run_attr(self):
         return ['position',
-                'extract_value', 'extract_units', 'cleanup', 'duration',
+                'extract_value', 'extract_units', 'cleanup', 'duration', 'light_value',
                 'use_cdd_warming',
                 'conditionals_str',
                 'collection_time_zero_offset',
                 'pattern', 'beam_diameter',
                 'weight', 'comment',
-                'sample','project','material', 'username',
+                'sample', 'project', 'material', 'username',
                 'ramp_duration',
                 'skip', 'mass_spectrometer', 'extract_device', 'repository_identifier',
                 'delay_after']
@@ -543,9 +552,11 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             excludes.append('labnumber')
         if not set_position:
             excludes.append('position')
+        if self.auto_fill_comment:
+            excludes.append('comment')
 
         for attr in ('labnumber',
-                     'extract_value', 'extract_units', 'cleanup', 'duration',
+                     'extract_value', 'extract_units', 'cleanup', 'duration', 'light_value',
                      'pattern', 'beam_diameter',
                      'position',
                      'collection_time_zero_offset',
@@ -558,7 +569,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 v = getattr(run, attr)
                 # self.debug('setting {}={}'.format(attr, v))
                 setattr(self, attr, v)
-            except TraitError, e:
+            except TraitError as e:
                 self.debug(e)
 
         for si in SCRIPT_KEYS:
@@ -624,13 +635,13 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
         ucounts = {}
         if os.path.isfile(p):
-            with open(p, 'r') as rfile:
+            with open(p, 'rb') as rfile:
                 ucounts = pickle.load(rfile)
 
         c = ucounts.get(temp, 0) + 1
         ucounts[temp] = c
         self.debug('incrementing users step_heat template count for {}. count= {}'.format(temp, c))
-        with open(p, 'w') as wfile:
+        with open(p, 'wb') as wfile:
             pickle.dump(ucounts, wfile)
 
     def _make_short_labnumber(self, labnumber=None):
@@ -648,13 +659,11 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
         if '##' in self.labnumber:
             mod = script.get_parameter('modifier')
-            print 'masodfasdf', mod, script
             if mod is not None:
                 if isinstance(mod, int):
                     mod = '{:02d}'.format(mod)
 
                 self.labnumber = self.labnumber.replace('##', str(mod))
-                print 'asdfasfasf', self.labnumber
 
     def _clear_labnumber(self):
         self.debug('clear labnumber')
@@ -662,9 +671,9 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             self.labnumber = ''
             self.display_irradiation = ''
             self.sample = ''
-            self._suppress_special_labnumber_change=True
-            self.special_labnumber = 'Special Labnumber'
-            self._suppress_special_labnumber_change=False
+            self._suppress_special_labnumber_change = True
+            self.special_labnumber = SPECIAL_IDENTIFIER
+            self._suppress_special_labnumber_change = False
 
     def _template_closed(self, obj, name, new):
         self.template = obj.name
@@ -710,8 +719,6 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             v, e = self._flux, self._flux_error
             if self.dvc:
                 self.dvc.save_flux(self.labnumber, v, e)
-            elif self.iso_db_man:
-                self.iso_db_man.save_flux(self.labnumber, v, e)
 
     # ===============================================================================
     #
@@ -719,7 +726,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     def _load_defaults(self, ln, attrs=None, overwrite=True):
         if attrs is None:
             attrs = ('extract_value', 'extract_units',
-                     'cleanup', 'duration', 'beam_diameter')
+                     'cleanup', 'duration', 'beam_diameter', 'light_value')
 
         self.debug('loading defaults for {}. ed={} attrs={}'.format(ln, self.extract_device, attrs))
         defaults = self._load_default_file()
@@ -807,6 +814,11 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                                 e = self.extract_device.split(' ')[1].lower()
                                 if skey == 'extraction':
                                     new_script_name = e
+                                    try:
+                                        d = default_scripts[self.extract_device.replace(' ', '')]
+                                        new_script_name = d['extraction']
+                                    except KeyError:
+                                        pass
                                 elif skey == 'post_equilibration':
                                     new_script_name = default_scripts.get(skey, 'pump_{}'.format(e))
 
@@ -828,7 +840,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             defaults = yaml.load(rfile)
 
         # convert keys to lowercase
-        defaults = dict([(k.lower(), v) for k, v in defaults.iteritems()])
+        defaults = dict([(k.lower(), v) for k, v in defaults.items()])
         return defaults
 
     def _load_labnumber_meta(self, labnumber):
@@ -841,20 +853,19 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         if labnumber in self._meta_cache:
             self.debug('using cached meta values for {}'.format(labnumber))
             d = self._meta_cache[labnumber]
-            for attr in ('sample', 'comment', 'repository_identifier'):
+            for attr in ('sample', 'comment', 'repository_identifier', 'display_irradiation'):
                 setattr(self, attr, d[attr])
 
             self.selected_irradiation = d['irradiation']
             self.selected_level = d['irradiation_level']
             self.irrad_hole = d['irradiation_position']
-            self.display_irradiation = d['display_irradiation']
 
             if self.use_project_based_repository_identifier:
                 ipp = self.irradiation_project_prefix
                 project_name = d['project']
                 if ipp and project_name.startswith(ipp):
                     repo = project_name
-                    if repo=='REFERENCES':
+                    if repo == 'REFERENCES':
                         repo = ''
                 else:
                     repo = camel_case(project_name)
@@ -882,7 +893,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                         try:
                             pi_name = project.principal_investigator.name
                         except (AttributeError, TypeError):
-                            print 'project has pi issue. {}'.format(project_name)
+                            print('project has pi issue. {}'.format(project_name))
                             pass
 
                         ipp = self.irradiation_project_prefix
@@ -901,7 +912,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                                 self.debug('setting repository to {}'.format(repo))
 
                                 self.repository_identifier = repo
-                                if not db.get_repository(repo):
+                                if not self.dvc.check_remote_repository_exists(repo):
                                     self.repository_identifier = ''
                                     if self.confirmation_dialog('Repository Identifier "{}" does not exist. Would you '
                                                                 'like to add it?'.format(repo)):
@@ -914,8 +925,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                                             self.warning_dialog('Failed to add {}.'
                                                                 '\nResolve issue before proceeding!!'.format(m))
 
-                    except AttributeError, e:
-                        print e
+                    except AttributeError as e:
+                        print(e)
 
                     d['repository_identifier'] = self.repository_identifier
 
@@ -969,7 +980,9 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         ids = ['']
         if db and db.connect():
             with db.session_ctx(use_parent_session=False):
-                ids.extend(db.get_repository_identifiers())
+                repoids = db.get_repository_identifiers()
+                if repoids:
+                    ids.extend(repoids)
         return ids
 
     @cached_property
@@ -1000,14 +1013,17 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
     @cached_property
     def _get_labnumbers(self):
-        lns = []
-        db = self.get_database()
-        if db is None or not db.connect():
-            return []
+        if self._identifiers:
+            lns = self._identifiers
+        else:
+            lns = []
+            db = self.get_database()
+            if db is None or not db.connect():
+                return []
 
-        if self.selected_level and self.selected_level not in ('Level', LINE_STR):
-            with db.session_ctx(use_parent_session=False):
-                lns = db.get_level_identifiers(self.selected_irradiation, self.selected_level)
+            if self.selected_level and self.selected_level not in ('Level', LINE_STR):
+                with db.session_ctx(use_parent_session=False):
+                    lns = db.get_level_identifiers(self.selected_irradiation, self.selected_level)
 
         return lns
 
@@ -1083,7 +1099,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         """
         p = os.path.join(paths.hidden_dir, 'iht_counts.{}'.format(self.username))
         if os.path.isfile(p):
-            with open(p, 'r') as rfile:
+            with open(p, 'rb') as rfile:
                 ucounts = pickle.load(rfile)
 
             cs = [(ti, ucounts.get(ti, 0)) for ti in temps]
@@ -1144,14 +1160,9 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
         identifier = self.labnumber
 
-        print attr, identifier, self.suppress_meta, self.irrad_hole
         if not (self.suppress_meta or '-##-' in identifier):
             if identifier and self.irrad_hole:
-
-                print identifier, self.selected_irradiation, self.selected_level, self.irrad_hole
-
                 j = self.dvc.get_flux(self.selected_irradiation, self.selected_level, int(self.irrad_hole)) or 0
-                print j
                 if attr == 'err':
                     j = std_dev(j)
                 else:
@@ -1175,10 +1186,13 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         self._end_after = v
 
     def _set_auto_comment(self, temp=None):
-        if not temp:
-            from pychron.experiment.utilities.comment_template import CommentTemplater
+        if temp is None:
+            temp = self._comment_templater
 
+        if temp is None:
+            from pychron.experiment.utilities.comment_template import CommentTemplater
             temp = CommentTemplater()
+            self._comment_templater = temp
 
         c = temp.render(self)
         self.debug('Comment template rendered = {}'.format(c))
@@ -1266,7 +1280,9 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         from pychron.experiment.utilities.comment_template import CommentTemplater
         from pychron.experiment.utilities.template_view import CommentTemplateView
 
-        ct = CommentTemplater()
+        if self._comment_templater is None:
+            ct = CommentTemplater()
+            self._comment_templater = ct
 
         ctv = CommentTemplateView(model=ct)
         info = ctv.edit_traits()
@@ -1299,14 +1315,17 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             self._load_default_scripts(self.labnumber)
 
     def _default_fits_button_fired(self):
-        from pychron.experiment.automated_run.measurement_fits_selector import MeasurementFitsSelector, \
-            MeasurementFitsSelectorView
+        # from pychron.experiment.fits.measurement_fits_selector import MeasurementFitsSelector, \
+        #     MeasurementFitsSelectorView
         from pychron.pyscripts.tasks.pyscript_editor import PyScriptEdit
         from pychron.pyscripts.context_editors.measurement_context_editor import MeasurementContextEditor
+        from pychron.core.fits.measurement_fits_selector import MeasurementFitsSelector
+        from pychron.core.fits.measurement_fits_selector import MeasurementFitsSelectorView
 
         m = MeasurementFitsSelector()
         sp = self.measurement_script.script_path()
         m.open(sp)
+
         f = MeasurementFitsSelectorView(model=m)
         info = f.edit_traits(kind='livemodal')
         if info.result:
@@ -1319,7 +1338,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
     def _new_conditionals_button_fired(self):
         name = edit_conditionals(self.conditionals_path,
-                                 app=self.application, root=paths.conditionals_dir,
+                                 root=paths.conditionals_dir,
                                  save_as=True,
                                  title='Edit Run Conditionals',
                                  kinds=('actions', 'cancelations', 'terminations', 'truncations'))
@@ -1329,25 +1348,21 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
     def _edit_conditionals_button_fired(self):
         edit_conditionals(self.conditionals_path,
-                          app=self.application, root=paths.conditionals_dir,
+                          root=paths.conditionals_dir,
                           title='Edit Run Conditionals',
                           kinds=('actions', 'cancelations', 'terminations', 'truncations'))
         self.load_conditionals()
 
-    @on_trait_change('trunc_+, conditionals_path')
+    @on_trait_change('trunc_+, conditionals_path, apply_conditionals_button')
     def _handle_conditionals(self, obj, name, old, new):
         if self.edit_mode and \
                 self._selected_runs and \
                 not self.suppress_update:
-            # if name == 'truncation_path':
-            #     t = new
-            # t = add_extension(new, '.yaml') if new else None
-            # else:
             self._auto_save()
             t = self.conditionals_str
             self._set_conditionals(t)
 
-    @on_trait_change('''cleanup, duration, extract_value,ramp_duration,
+    @on_trait_change('''cleanup, duration, extract_value, ramp_duration, light_value,
 collection_time_zero_offset,
 use_cdd_warming,
 extract_units,
@@ -1402,10 +1417,10 @@ post_equilibration_script:name''')
                 special = True
 
             if not special:
-                sname = 'Special Labnumber'
+                sname = SPECIAL_IDENTIFIER
             else:
                 tag = new.split('-')[0]
-                sname = ANALYSIS_MAPPING.get(tag, 'Special Labnumber')
+                sname = ANALYSIS_MAPPING.get(tag, SPECIAL_IDENTIFIER)
 
             self._suppress_special_labnumber_change = True
             self.special_labnumber = sname
@@ -1432,20 +1447,19 @@ post_equilibration_script:name''')
         if self._suppress_special_labnumber_change:
             return
 
-        if self.special_labnumber not in ('Special Labnumber', LINE_STR, ''):
+        if self.special_labnumber not in (SPECIAL_IDENTIFIER, LINE_STR, ''):
             ln = convert_special_name(self.special_labnumber)
             self.debug('special ln changed {}, {}'.format(self.special_labnumber, ln))
             if ln:
                 if ln not in ('dg', 'pa'):
                     msname = self.mass_spectrometer[0].capitalize()
-
                     if ln in SPECIAL_KEYS and not ln.startswith('bu'):
                         ln = make_standard_identifier(ln, '##', msname)
                     else:
                         edname = ''
                         ed = self.extract_device
                         if ed not in ('Extract Device', LINE_STR):
-                            edname = ''.join(map(lambda x: x[0].capitalize(), ed.split(' ')))
+                            edname = ''.join([x[0].capitalize() for x in ed.split(' ')])
                         ln = make_special_identifier(ln, edname, msname)
 
                 self.labnumber = ln
@@ -1548,12 +1562,16 @@ post_equilibration_script:name''')
         dh.bind_preferences()
         return dh
 
+    def _simple_identifier_manager_default(self):
+        sm = self.application.get_service('pychron.entry.simple_identifier_manager.SimpleIdentifierManager')
+        if sm is not None:
+            sm.activated()
+            sm.factory = self
+
+        return sm
+
     @property
     def run_block_enabled(self):
         return self.run_block not in ('RunBlock', LINE_STR)
-
-    @property
-    def persistence_path(self):
-        return os.path.join(paths.hidden_dir, 'run_factory')
 
 # ============= EOF =============================================

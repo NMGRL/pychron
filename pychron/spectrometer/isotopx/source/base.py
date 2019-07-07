@@ -13,9 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
+from traitsui.api import View, Item
 from pychron.spectrometer.base_source import BaseSource
 
 
 class IsotopxSource(BaseSource):
-    pass
+    def traits_view(self):
+        v = View(Item('nominal_hv', format_str='%0.4f'),
+                 Item('current_hv', format_str='%0.4f', style='readonly'))
+        return v
+
 # ============= EOF =============================================

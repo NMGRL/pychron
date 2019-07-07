@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # =============standard library imports ========================
-from Image import Image
+from __future__ import absolute_import
 from PIL import Image as PILImage
 from pyface.image_resource import ImageResource
 # =============enthought library imports=======================
@@ -30,10 +30,10 @@ from traitsui.ui_traits import convert_bitmap as traitsui_convert_bitmap
 from pychron.core.ui.gui import invoke_in_main_thread
 
 
-def convert_bitmap(image, width=None, height=None):
+def convert_bitmap(image, width=0, height=0):
     if isinstance(image, ImageResource):
         pix = traitsui_convert_bitmap(image)
-    elif isinstance(image, (Image, PILImage.Image)):
+    elif isinstance(image, (PILImage.Image,)):
         try:
             data = image.tostring('raw', 'RGBA')
         except NotImplementedError:
@@ -68,6 +68,7 @@ class _ImageEditor(Editor):
     refresh = Event
 
     def init(self, parent):
+
         image = self.factory.image
         if image is None:
             image = self.value
@@ -75,6 +76,11 @@ class _ImageEditor(Editor):
         image_ctrl = myQLabel()
 
         if image is not None:
+            from pychron.image.standalone_image import FrameImage
+
+            if isinstance(image, FrameImage):
+                image = image.source_frame
+
             image_ctrl.setPixmap(convert_bitmap(image))
         self.image_ctrl = image_ctrl
         self.image_ctrl.setScaledContents(True)
@@ -113,6 +119,11 @@ class _ImageEditor(Editor):
 
     def set_pixmap(self, image, w):
         if image is not None:
+            from pychron.image.standalone_image import FrameImage
+
+            if isinstance(image, FrameImage):
+                image = image.source_frame
+
             im = convert_bitmap(image, w)
             if im:
                 self.image_ctrl.setPixmap(im)

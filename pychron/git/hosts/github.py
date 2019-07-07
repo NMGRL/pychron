@@ -17,6 +17,8 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
+
 from requests.exceptions import SSLError
 
 from pychron.git.hosts import GitHostService
@@ -32,11 +34,36 @@ class GitHubService(GitHostService):
     def remote_url(self):
         return paths.github_url
 
+    def up_to_date(self, organization, name, sha, branch='master'):
+        cmd = '{}/repos/{}/{}/commits/{}'.format(paths.github_api_url, organization, name, branch)
+        close_at_end = False
+        if not self._session:
+            self.new_session()
+            close_at_end = True
+
+        self._session.headers.update(ETag=sha, Accept='application/vnd.github.VERSION.sha')
+
+        r = self._session.get(cmd)
+        rsha = r.text
+        ret = rsha != sha
+
+        if close_at_end:
+            self.close_session()
+        return ret, rsha
+
+    def get_repo(self, organization, name):
+        cmd = '{}/repos/{}/{}'.format(paths.github_api_url, organization, name)
+        resp = self._get(cmd)
+        try:
+            return resp[0]
+        except IndexError:
+            pass
+
     def test_api(self):
         ret, err = True, ''
         try:
             self._get(paths.github_api_url)
-        except BaseException, e:
+        except BaseException as e:
             ret = False
             err = e
 
@@ -65,8 +92,9 @@ class GitHubService(GitHostService):
                 resp = self._post(cmd, name=name, **kw)
                 if resp:
                     self.debug('Create repo response {}'.format(resp.status_code))
+                    self._clear_cached_repo_names = True
                     return resp.status_code == 201
-            except SSLError, e:
+            except SSLError as e:
                 self.warning('SSL Error. {}'.format(e))
                 self._has_access = False
         else:
@@ -81,7 +109,7 @@ class GitHubService(GitHostService):
             try:
                 cmd = '{}/orgs/{}/repos'.format(paths.github_api_url, organization)
                 return self._get(cmd)
-            except SSLError, e:
+            except SSLError as e:
                 self.warning('SSL Error. {}'.format(e))
                 self._has_access = False
                 return []

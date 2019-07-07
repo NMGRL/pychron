@@ -13,7 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-import StringIO
+from __future__ import absolute_import
+from io import StringIO
 import os
 from zipfile import ZipFile
 
@@ -181,7 +182,7 @@ class ImageViewer(HasTraits):
     def _get_image_buf(self, path):
         # path = next((p.path for p in self.records if p.name == path), None)
         if path:
-            buf = StringIO.StringIO()
+            buf = StringIO()
             self.image_getter.get(path, buf)
             buf.seek(0)
             return buf

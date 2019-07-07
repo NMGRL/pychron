@@ -15,7 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from chaco.api import AbstractOverlay
+from numpy import uint8, asarray
+from skimage.color import gray2rgb
+from skimage.transform import resize
 from traits.api import Any
 
 
@@ -31,21 +35,22 @@ class VideoUnderlay(AbstractOverlay):
             returns  ndarray
     """
     video = Any
+    _cached_image = None
 
     def overlay(self, component, gc, *args, **kw):
         """
         """
-        with gc:
-            gc.clip_to_rect(component.x, component.y,
-                            component.width, component.height)
-            gc.translate_ctm(component.x, component.y)
 
-            if self.video:
-                img = self.video.get_image_data(size=(component.width,
-                                                      component.height))
+        if self.video:
+            with gc:
+                img = self.video.get_image_data()
                 if img is not None:
+                    x, y, w, h = component.x, component.y, component.width, component.height
+                    gc.clip_to_rect(x, y, w, h)
+                    gc.translate_ctm(x, y)
                     try:
-                        gc.draw_image(img)
+                        gc.draw_image(asarray(resize(img, (int(h), int(w)), preserve_range=True),
+                                              dtype=uint8))
                     except IndexError:
                         pass
 

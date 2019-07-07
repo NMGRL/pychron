@@ -15,16 +15,21 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import shutil
 import time
 from threading import Thread, Lock, Event
 
+import yaml
 from PIL import Image as PImage
-from numpy import asarray
-from traits.api import Any, Bool, Float, List, Str, Int
+from numpy import asarray, uint16
+from skimage.color import gray2rgb
+from skimage.io import imsave
+from traits.api import Any, Bool, Float, List, Str, Int, Enum
 
-from cv_wrapper import get_capture_device
+from .cv_wrapper import get_capture_device
 from pychron.core.helpers.filetools import add_extension
 from pychron.globals import globalv
 from pychron.image.image import Image
@@ -54,13 +59,30 @@ def convert_to_video(path, fps, name_filter='snapshot%03d.jpg',
     if ffmpeg is None or not os.path.isfile(ffmpeg):
         ffmpeg = '/usr/local/bin/ffmpeg'
 
-    subprocess.call([ffmpeg, '-r', frame_rate, '-i', path, output])
+    # print 'calling {}, frame_rate={} '.format(ffmpeg, frame_rate)
+    call_args = [ffmpeg, '-r', frame_rate, '-i', path, output]
+    subprocess.call(call_args)
 
 
-def pil_save(src, p, ext='.jpg'):
-    im = PImage.fromarray(src)
-    p = add_extension(p, ext=ext)
-    im.save(p)
+BIT_8 = 2 ** 8 - 1
+BIT_16 = 2 ** 16 - 1
+
+
+def pil_save(src, p):
+    head, ext = os.path.splitext(p)
+    if src.dtype == uint16:
+        # assume its a pylon mono12 frame
+        # for tiff need to rescale image to 16bit
+        # for jpg need to rescale to 8bit and change dtype
+        src = src / 4095
+
+        if ext == '.jpg':
+            src = (src * BIT_8).astype('uint8')
+
+        else:
+            src = (src * BIT_16).astype('uint16')
+
+    imsave(p, src)
 
 
 class Video(Image):
@@ -82,9 +104,18 @@ class Video(Image):
     _last_get = None
 
     output_path = Str
-    output_mode = Str('MPEG')
+    output_pic_mode = Enum('jpg', 'tif')
     ffmpeg_path = Str
     fps = Int
+    identifier = 0
+    max_recording_duration = Float
+
+    @property
+    def pixel_depth(self):
+        pd = 255
+        if hasattr(self.cap, 'pixel_depth'):
+            pd = self.cap.pixel_depth
+        return pd
 
     def is_recording(self):
         return self._recording
@@ -92,7 +123,29 @@ class Video(Image):
     def is_open(self):
         return self.cap is not None
 
-    def open(self, user=None, identifier=0, force=False):
+    def load_configuration(self, p):
+        if os.path.isfile(p):
+            with open(p, 'r') as rfile:
+                cfg = yaml.load(rfile)
+
+                gen = cfg.get('General')
+                if gen:
+                    self.swap_rb = gen.get('swap_rb', False)
+                    self.hflip = gen.get('hflip', False)
+                    self.vflip = gen.get('vflip', False)
+                    self.rotate = gen.get('rotate', False)
+
+                vid = cfg.get('Video')
+                if vid:
+                    self.output_pic_mode = vid.get('output_pic_mode', 'jpg')
+                    self.ffmpeg_path = vid.get('ffmpeg_path', '')
+                    self.fps = vid.get('fps')
+                    self.max_recording_duration = vid.get('max_recording_duration', 30)
+
+                if hasattr(self.cap, 'load_configuration'):
+                    self.cap.load_configuration(cfg)
+
+    def open(self, user=None, identifier=None, force=False):
         """
         get a camera/capture device
 
@@ -105,17 +158,27 @@ class Video(Image):
             if globalv.video_test:
                 self.cap = 1
             else:
+                if identifier is None:
+                    identifier = self.identifier
 
-                if isinstance(identifier, str) and identifier.startswith('pvs'):
-                    self.cap = self._get_remote_device(identifier)
-                    # identifier is a url
+                if isinstance(identifier, str):
+                    if identifier.startswith('pvs'):
+                        self.cap = self._get_remote_device(identifier)
+                    elif identifier.startswith('basler_pylon'):
+                        _, i = identifier.split(':')
+                        self.cap = self._get_balser_pylon_device(i)
+                    elif identifier.startswith('pylon'):
+                        _, i = identifier.split(':')
+                        self.cap = self._get_pylon_device(i)
+                        # identifier is a url
                 else:
+
                     # ideally an identifier is passed in
                     try:
                         self.cap = get_capture_device()
                         self.cap.open(int(identifier) if identifier else 0)
-                    except Exception, e:
-                        print 'video.open', e
+                    except Exception as e:
+                        print('video.open', e)
                         self.cap = None
 
         if user not in self.users:
@@ -142,8 +205,8 @@ class Video(Image):
                 self.cap = None
 
     def get_image_data(self, cmap=None, **kw):
-        frame = self.get_frame(**kw)
-        return asarray(frame)
+        return self.get_frame(**kw)
+        # return asarray(frame)
         # if frame is not None:
         #     return asarray(frame[:, :])
 
@@ -151,15 +214,13 @@ class Video(Image):
         self._stop_recording_event = Event()
         self.output_path = path
 
-        fps = 12
         if self.cap is None:
             self.open()
 
         if self.cap is not None:
             self._recording = True
 
-            t = Thread(target=self._ffmpeg_record, args=(path, self._stop_recording_event,
-                                                         fps, renderer))
+            t = Thread(target=self._ffmpeg_record, args=(path, self._stop_recording_event, renderer))
             t.start()
 
     def stop_recording(self, wait=False):
@@ -187,17 +248,18 @@ class Video(Image):
             st = time.time()
             while not self._save_ok_event.is_set():
                 time.sleep(0.5)
-                if timeout and time.time()-st>timeout:
+                if timeout and time.time() - st > timeout:
                     return
 
             return True
 
-    def _ffmpeg_record(self, path, stop, fps, renderer=None):
+    def _ffmpeg_record(self, path, stop, renderer=None):
         """
             use ffmpeg to stitch a directory of jpegs into a video
 
+            max_duration: recording will stop after max_duration minutes
+
         """
-        remove_images = False
         root = os.path.dirname(path)
         name = os.path.basename(path)
         name, _ext = os.path.splitext(name)
@@ -218,36 +280,37 @@ class Video(Image):
                 if frame is not None:
                     pil_save(frame, p)
 
-                    # self.save(p, frame)
-        # else:
-        #     save = lambda x: renderer(x)
+        fps_1 = 1 / self.fps
 
-        fps_1 = 1 / float(fps)
-        # with consumable(func=save) as con:
-        #     while not stop.is_set():
-        #         st = time.time()
-        #         pn = os.path.join(image_dir, 'image_{:05d}.jpg'.format(cnt))
-        #         con.add_consumable(pn)
-        #         cnt += 1
-        #         dur = time.time() - st
-        #         time.sleep(max(0, fps_1 - dur))
+        ext = self.output_pic_mode
+        max_duration = self.max_recording_duration * 60
+        start = time.time()
         while not stop.is_set():
             st = time.time()
-            pn = os.path.join(image_dir, 'image_{:05d}.jpg'.format(cnt))
 
-            renderer(pn)
-            # con.add_consumable(pn)
+            if max_duration and st - start > max_duration:
+                break
+
+            renderer(os.path.join(image_dir, 'image_{:05d}.{}'.format(cnt, ext)))
             cnt += 1
-            dur = time.time() - st
-            time.sleep(max(0, fps_1 - dur))
+            time.sleep(max(0, fps_1 - (time.time() - st)))
 
-        self._convert_to_video(image_dir, fps, name_filter='image_%05d.jpg', output=path)
-
-        if remove_images:
-            shutil.rmtree(image_dir)
+        self._convert_to_video(image_dir, name_filter='image_%05d.{}'.format(ext), output=path)
 
         if self._save_ok_event:
             self._save_ok_event.set()
+
+    def _get_balser_pylon_device(self, identifier):
+        from .basler_pylon_camera import BaslerPylonCamera
+        cam = BaslerPylonCamera(identifier)
+        if cam.open():
+            return cam
+
+    def _get_pylon_device(self, identifier):
+        from .pylon_camera import PylonCamera
+        cam = PylonCamera(identifier)
+        if cam.open():
+            return cam
 
     def _get_remote_device(self, url):
         from pychron.image.video_source import VideoSource
@@ -258,7 +321,6 @@ class Video(Image):
         return vs
 
     def _update_fps(self, fps):
-        print 'update fps', fps
         self.fps = fps
 
     def _get_frame(self, lock=True, **kw):
@@ -275,10 +337,8 @@ class Video(Image):
             if s:
                 return img
 
-    def _convert_to_video(self, path, fps, name_filter='snapshot%03d.jpg', output=None):
-        print 'convert to video. FFmpeg={}'.format(self.ffmpeg_path)
-
+    def _convert_to_video(self, path, name_filter='snapshot%03d.jpg', output=None):
         ffmpeg = self.ffmpeg_path
-        convert_to_video(path, fps, name_filter, ffmpeg, output)
+        convert_to_video(path, self.fps, name_filter, ffmpeg, output)
 
 # =================== EOF =================================================

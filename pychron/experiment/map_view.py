@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
 import os
 
 import numpy as np
@@ -22,17 +24,19 @@ from chaco.abstract_overlay import AbstractOverlay
 from chaco.tools.scatter_inspector import ScatterInspector
 from enable.markers import CircleMarker
 from kiva.constants import FILL_STROKE
+from six.moves import range
+from six.moves import zip
 from traits.api import HasTraits, Instance, on_trait_change, Str, List, Property
 from traitsui.api import View, Item, HGroup
 
+from pychron.core.displays.display import DisplayController
+from pychron.graph.graph import Graph
+from pychron.paths import paths
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.stage.maps.laser_stage_map import LaserStageMap
-from pychron.graph.graph import Graph
-from pychron.paths import paths
 # from pychron.displays.rich_text_display import RichTextDisplay
 from pychron.viewable import Viewable
-from pychron.displays.display import DisplayController
 
 
 class MapItemSummary(HasTraits):
@@ -62,7 +66,7 @@ class MapOverlay(AbstractOverlay):
         p1, p2 = c.map_screen(np.array([(0, 0), (self.radius, 0)]))
         size = abs(p1[0] - p2[0])
 
-        data = c.map_screen(np.array(zip(xs, ys)))
+        data = c.map_screen(np.array(list(zip(xs, ys))))
 
         gc.set_stroke_color((0, 0, 0))
         for k, color in [(-1, (0, 0, 0)), (-1.1, (1, 1, 1)), (-1.2, (0, 1, 0))]:
@@ -99,10 +103,10 @@ class MapView(Viewable):
             if not self.stage_map.sample_holes:
                 return
 
-            xs, ys, states, labns = zip(*[(h.x, h.y, -1, '') for h in self.stage_map.sample_holes])
+            xs, ys, states, labns = list(zip(*[(h.x, h.y, -1, '') for h in self.stage_map.sample_holes]))
             g = self.graph
             states = list(states)
-            states[len(states) / 2] = -1.2
+            states[len(states) // 2] = -1.2
             s, _p = g.new_series(xs, ys,
                                  colors=states,
                                  type='cmap_scatter',

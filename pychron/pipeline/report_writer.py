@@ -13,11 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
+
 from reportlab.lib import colors
 from traits.api import Bool, List, Instance
-from traitsui.api import View, UItem, Item, VGroup, InstanceEditor, Tabbed
+from traitsui.api import UItem, Item, VGroup, InstanceEditor, Tabbed
 
 from pychron.core.helpers.filetools import unique_path
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pdf.base_table_pdf_writer import BasePDFTableWriter
 from pychron.core.pdf.items import Row
 from pychron.core.pdf.options import BasePDFOptions
@@ -156,10 +159,7 @@ class ReportOptions(BasePDFOptions):
         layout_grp = self._get_layout_group()
         grps.append(layout_grp)
 
-        v = View(Tabbed(*grps),
-                 resizable=True,
-                 title='Configure Report',
-                 buttons=['OK', 'Cancel'])
+        v = okcancel_view(Tabbed(*grps), title='Configure Report')
         return v
 
     def _blank_unknowns_series_options_controller_default(self):

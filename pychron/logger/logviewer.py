@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits, Str, Bool, List, Event, Int
 from traitsui.api import View, UItem, Item, HGroup, VGroup, TabularEditor, Controller
 # ============= standard library imports ========================
@@ -25,6 +26,8 @@ from traitsui.editors.check_list_editor import CheckListEditor
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.pychron_constants import LIGHT_GREEN
+from six.moves import map
+import six
 
 
 class LogAdapter(TabularAdapter):
@@ -93,7 +96,7 @@ class LogModel(HasTraits):
 
 def tostr(vv):
     if isinstance(vv, (list, tuple)):
-        vv = [str(vi) if isinstance(vi, unicode) else vi for vi in vv]
+        vv = [str(vi) if isinstance(vi, six.text_type) else vi for vi in vv]
     else:
         vv = str(vv)
     return vv
@@ -174,7 +177,7 @@ class LogViewer(Controller):
             self.model.items = items
         else:
             if self.use_filter:
-                self.model.items = filter(lambda x: regex.search(x.message), items)
+                self.model.items = [x for x in items if regex.search(x.message)]
             else:
                 for i in items:
                     if regex.search(i.message):

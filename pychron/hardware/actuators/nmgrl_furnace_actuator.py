@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import json
 import time
 
-from gp_actuator import GPActuator
+from .gp_actuator import GPActuator
 from pychron.core.communication_helper import trim_bool
 from pychron.core.helpers.strtools import to_bool
 from pychron.hardware.actuators import get_valve_address
@@ -56,14 +57,14 @@ class NMGRLFurnaceActuator(GPActuator):
     #     return self.ask(cmd, verbose=verbose)
 
     @trim_bool
-    def get_channel_state(self, obj, verbose=True):
+    def get_channel_state(self, obj, verbose=False):
         """
             Query the hardware for the channel state
         """
         cmd = 'GetChannelState {}'.format(get_valve_address(obj))
         return self.ask(cmd, verbose=verbose)
 
-    def get_indicator_state(self, obj, action='open', verbose=True):
+    def get_indicator_state(self, obj, action='open', verbose=False):
         """
         returns True if open and False if closed.
 
@@ -75,7 +76,7 @@ class NMGRLFurnaceActuator(GPActuator):
         cmd = json.dumps({'command': 'GetIndicatorState',
                           'name': get_valve_address(obj),
                           'action': action})
-        resp = self.ask(cmd, verbose=True)
+        resp = self.ask(cmd, verbose=verbose)
 
         # if action == 'open':
         # print 'aa', resp, action

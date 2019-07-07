@@ -15,21 +15,20 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import os
-import random
+from __future__ import absolute_import
+
 import time
 
 from numpy import array, argmin
 from traits.api import Int, Property, List, \
-    Enum, Str, DelegatesTo, Bool
+    Str, DelegatesTo, Bool, Float
 
+from pychron.core.helpers.strtools import csv_to_floats
 from pychron.core.progress import open_progress
 from pychron.core.ramper import StepRamper
-from pychron.globals import globalv
 from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES, \
     QTEGRA_DEFAULT_INTEGRATION_TIME
-from pychron.spectrometer import get_spectrometer_config_path, \
-    set_spectrometer_config_name
+from pychron.spectrometer import get_spectrometer_config_path
 from pychron.spectrometer.base_spectrometer import BaseSpectrometer
 
 
@@ -53,9 +52,8 @@ def calculate_radius(m_e, hv, mfield):
 
 
 class ThermoSpectrometer(BaseSpectrometer):
-
-    integration_time = Enum(QTEGRA_INTEGRATION_TIMES)
-
+    integration_time = Float
+    integration_times = List(QTEGRA_INTEGRATION_TIMES)
     magnet_dac = DelegatesTo('magnet', prefix='dac')
 
     magnet_dacmin = DelegatesTo('magnet', prefix='dacmin')
@@ -76,16 +74,25 @@ class ThermoSpectrometer(BaseSpectrometer):
     dc_npeak_centers = Int(3)
 
     send_config_on_startup = Bool
-    use_deflection_correction = Bool(True)
+
     max_deflection = Int(500)
 
-    _config = None
     _debug_values = None
 
     _test_connect_command = 'GetIntegrationTime'
 
-    def reload_mftable(self):
-        self.magnet.reload_mftable()
+    def make_deflection_dict(self):
+        names = self.detector_names
+        values = self.read_deflection_word(names)
+        return dict(list(zip(names, values)))
+
+    def make_configuration_dict(self):
+        keys = list(self.get_command_map().values())
+        values = self.get_parameter_word(keys)
+        return dict(list(zip(keys, values)))
+
+    def make_gains_dict(self):
+        return {di.name: di.get_gain() for di in self.detectors}
 
     def get_detector_active(self, dname):
         """
@@ -164,13 +171,11 @@ class ThermoSpectrometer(BaseSpectrometer):
             self.set_parameter(name, it)
             self.trait_setq(integration_time=it)
 
-        return it
+            # this is a hail mary to potential make qtegra happier post setting integration time
+            self.debug('sleeping 2 seconds after setting integration time')
+            time.sleep(2)
 
-    def send_configuration(self, **kw):
-        """
-            send the configuration values to the device
-        """
-        self._send_configuration(**kw)
+        return it
 
     def set_parameter(self, name, v):
         cmd = '{} {}'.format(name, v)
@@ -205,40 +210,41 @@ class ThermoSpectrometer(BaseSpectrometer):
 
         return deflection
 
-    def get_deflection_word(self, keys):
-        if self.simulation:
-            x = [random.random() for i in keys]
-        else:
-            x = self.ask('GetDeflections {}'.format(','.join(keys)),
-                         verbose=False)
-            x = self._parse_word(x)
+    def read_deflection_word(self, keys):
+        x = self.ask('GetDeflections {}'.format(','.join(keys)), verbose=False, quiet=True)
+        x = self._parse_word(x)
         return x
 
     def read_parameter_word(self, keys):
-        x = self.ask('GetParameters {}'.format(','.join(keys)),
-                     verbose=False)
+        x = self.ask('GetParameters {}'.format(','.join(keys)), verbose=False, quiet=True)
         x = self._parse_word(x)
         return x
 
     def get_configuration_value(self, key):
-
-        for d in self._get_cached_config():
-            try:
-                return d[key]
-            except KeyError:
+        values = self._get_cached_config()
+        if values is not None:
+            for d in values:
                 try:
-                    return d[key.lower()]
+                    return d[key]
                 except KeyError:
-                    pass
+                    try:
+                        return d[key.lower()]
+                    except KeyError:
+                        pass
+            else:
+                return 0
         else:
             return 0
 
     def set_debug_configuration_values(self):
         if self.simulation:
-            d, _, _ = self._get_cached_config()
-            keys = ('ElectronEnergy', 'YSymmetry', 'ZSymmetry', 'ZFocus', 'IonRepeller', 'ExtractionLens')
-            ds = [0] + [d[k.lower()] for k in keys]
-            self._debug_values = ds
+
+            ret = self._get_cached_config()
+            if ret is not None:
+                d = ret[0]
+                keys = ('ElectronEnergy', 'YSymmetry', 'ZSymmetry', 'ZFocus', 'IonRepeller', 'ExtractionLens')
+                ds = [0] + [d[k.lower()] for k in keys]
+                self._debug_values = ds
 
     # ===============================================================================
     # load
@@ -312,10 +318,13 @@ class ThermoSpectrometer(BaseSpectrometer):
         if self.send_config_on_startup:
             self.send_configuration(use_ramp=True)
 
+    def settle(self):
+        time.sleep(self.integration_time*2)
+
     # ===============================================================================
     # signals
     # ===============================================================================
-    def read_intensities(self,tagged=True):
+    def read_intensities(self, tagged=True, *args, **kw):
         keys = []
         signals = []
 
@@ -330,18 +339,7 @@ class ThermoSpectrometer(BaseSpectrometer):
                     keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
                     signals = data
 
-            signals = map(float, signals)
-
-        # if not keys and globalv.communication_simulation:
-        #     keys, signals = self._get_simulation_data()
-
-        # for k, v in zip(keys, signals):
-        #     det = self.get_detector(k)
-        #     det.set_intensity(v)
-
-        # signals = array(signals)
-
-        # self._check_intensity_no_change(signals)
+            signals = [float(s) for s in signals]
 
         return keys, signals
 
@@ -363,77 +361,6 @@ class ThermoSpectrometer(BaseSpectrometer):
             else:
                 return func(dkeys)
                 # return signals[keys.index(dkeys)] if dkeys in keys else 0
-
-    def get_hv_correction(self, dac, uncorrect=False, current=False):
-        """
-        ion optics correction::
-
-            r=M*v_o/(q*B_o)
-            r=M*v_c/(q*B_c)
-
-            E=m*v^2/2
-            v=(2*E/m)^0.5
-
-            v_o/B_o = v_c/B_c
-            B_c = B_o*v_c/v_o
-
-            B_c = B_o*(E_c/E_o)^0.5
-
-            B_o = B_c*(E_o/E_c)^0.5
-
-            E_o = nominal hv
-            E_c = current hv
-            B_o = nominal dac
-            B_c = corrected dac
-
-        """
-        source = self.source
-        cur = source.current_hv
-        if current:
-            cur = source.read_hv()
-
-        if cur is None:
-            cor = 1
-        else:
-            try:
-                # cor = source.nominal_hv / cur
-                if uncorrect:
-                    cor = source.nominal_hv / cur
-                else:
-                    cor = cur / source.nominal_hv
-
-                cor **= 0.5
-
-            except ZeroDivisionError:
-                cor = 1
-
-        dac *= cor
-        return dac
-
-    def correct_dac(self, det, dac, current=True):
-        """
-            correct for deflection
-            correct for hv
-        """
-        # correct for deflection
-        if self.use_deflection_correction:
-            dev = det.get_deflection_correction(current=current)
-            dac += dev
-
-        # correct for hv
-        # dac *= self.get_hv_correction(current=current)
-        dac = self.get_hv_correction(dac, current=current)
-        return dac
-
-    def uncorrect_dac(self, det, dac, current=True):
-        """
-                inverse of correct_dac
-        """
-
-        ndac = self.get_hv_correction(dac, uncorrect=True, current=current)
-        if self.use_deflection_correction:
-            ndac -= det.get_deflection_correction(current=current)
-        return ndac
 
     def clear_cached_config(self):
         self._config = None
@@ -457,112 +384,67 @@ class ThermoSpectrometer(BaseSpectrometer):
     # ===============================================================================
     # private
     # ===============================================================================
-    def _spectrometer_configuration_changed(self, new):
-        if new:
-            set_spectrometer_config_name(new)
-
     def _parse_word(self, word):
         try:
-            x = [float(v) for v in word.split(',')]
+            x = csv_to_floats(word)
         except (AttributeError, ValueError):
             x = []
         return x
 
-    def _get_cached_config(self):
-        if self._config is None:
-            p = get_spectrometer_config_path()
-            if not os.path.isfile(p):
-                self.warning('Spectrometer configuration file {} not found'.format(p))
-                return
-
-            self.debug('caching configuration from {}'.format(p))
-            config = self.get_configuration_writer(p)
-            d = {}
-            defl = {}
-            trap = {}
-            for section in config.sections():
-                if section in ('Default', 'Protection', 'General', 'Trap', 'Magnet'):
-                    continue
-
-                for attr in config.options(section):
-                    v = config.getfloat(section, attr)
-                    if v is not None:
-                        if section == 'Deflections':
-                            defl[attr.upper()] = v
-                        else:
-                            d[attr] = v
-
-            section = 'Trap'
-            if config.has_section(section):
-                for attr in ('current', 'ramp_step', 'ramp_period', 'ramp_tolerance'):
-                    if config.has_option(section, attr):
-                        trap[attr] = config.getfloat(section, attr)
-
-            section = 'Magnet'
-            magnet = {}
-            if config.has_section(section):
-                for attr in ('mftable',):
-                    if config.has_option(section, attr):
-                        magnet[attr] = config.get(section, attr)
-
-            if 'hv' in d:
-                self.source.nominal_hv = d['hv']
-
-            self._config = (d, defl, trap, magnet)
-
-        return self._config
-
     def _get_simulation_data(self):
-        signals = [1, 100, 3, 0.01, 0.01, 0.01]  # + random(6)
-        keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
+        signals = [1, 100, 3, 0.01, 0.01, 0.01, 38, 38.5]  # + random(6)
+        keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD', 'L2(CDD)', 'AX(CDD)']
         return keys, signals
 
     def _send_configuration(self, use_ramp=True):
         self.debug('======== Sending configuration ========')
-        command_map = dict(ionrepeller='IonRepeller',
-                           electronenergy='ElectronEnergy',
-                           ysymmetry='YSymmetry',
-                           zsymmetry='ZSymmetry',
-                           zfocus='ZFocus',
-                           extractionlens='ExtractionLens',
-                           ioncountervoltage='IonCounterVoltage',
-                           hv='HV')
+        command_map = self.get_command_map()
 
         if self.microcontroller:
-            specparams, defl, trap, magnet = self._get_cached_config()
-            for k, v in defl.items():
-                cmd = 'SetDeflection'
-                v = '{},{}'.format(k, v)
-                self.set_parameter(cmd, v)
-
-            for k, v in specparams.items():
-                try:
-                    cmd = 'Set{}'.format(command_map[k])
+            ret = self._get_cached_config()
+            if ret is not None:
+                specparams, defl, trap, magnet = ret
+                for k, v in defl.items():
+                    cmd = 'SetDeflection'
+                    v = '{},{}'.format(k, v)
                     self.set_parameter(cmd, v)
-                except KeyError:
-                    self.debug(
-                        '$$$$$$$$$$ Not setting {}. Not in command_map'.format(
-                            k))
 
-            # set the trap current
-            v = trap.get('current')
-            self.debug('send trap current {}'.format(v))
-            if v is not None:
-                step = trap.get('ramp_step', 1)
-                period = trap.get('ramp_period', 1)
-                tol = trap.get('ramp_tolerance', 10)
-                if not self._ramp_trap_current(v, step, period, use_ramp, tol):
-                    self.set_parameter('SetParameter',
-                                       'Trap Current Set,{}'.format(v))
-            # set the mftable
-            mftable_name = magnet.get('mftable')
-            if mftable_name:
-                self.debug('updating mftable name {}'.format(mftable_name))
-                self.magnet.mftable.path = mftable_name
-                self.magnet.mftable.load_mftable(load_items=True)
+                for k, v in specparams.items():
+                    try:
+                        cmd = 'Set{}'.format(command_map[k])
+                        self.set_parameter(cmd, v)
+                    except KeyError:
+                        self.debug(
+                            '$$$$$$$$$$ Not setting {}. Not in command_map'.format(
+                                k))
 
-            self.debug('======== Configuration Finished ========')
-            self.source.sync_parameters()
+                # set trap voltage
+                v = trap.get('voltage')
+                self.debug('send trap voltage {}'.format(v))
+                if v is not None:
+                    self.source.trap_voltage = v
+
+                # set the trap current
+                v = trap.get('current')
+                self.debug('send trap current {}'.format(v))
+                if v is not None:
+                    step = trap.get('ramp_step', 1)
+                    period = trap.get('ramp_period', 1)
+                    tol = trap.get('ramp_tolerance', 10)
+                    if not self._ramp_trap_current(v, step, period, use_ramp, tol):
+                        self.source.trap_current = v
+                        # self.set_parameter('SetParameter',
+                        #                    'Trap Current Set,{}'.format(v))
+                # set the mftable
+                mftable_name = magnet.get('mftable')
+                if mftable_name:
+                    self.debug('updating mftable name {}'.format(mftable_name))
+
+                    self.magnet.field_table.path = mftable_name
+                    self.magnet.field_table.load_table(load_items=True)
+
+                self.debug('======== Configuration Finished ========')
+                self.source.sync_parameters()
 
     def _ramp_trap_current(self, v, step, period, use_ramp=False, tol=10):
         if use_ramp:
@@ -577,9 +459,8 @@ class ThermoSpectrometer(BaseSpectrometer):
                     prog = open_progress(1)
 
                     def func(x):
-                        cmd = 'SetParameter Trap Current Set,{:0.5f}'.format(x)
-                        prog.change_message(cmd)
-                        self.ask(cmd)
+                        prog.change_message('Set Trap Current {}'.format(x))
+                        self.source.trap_current = x
                         if not prog.accepted and not prog.canceled:
                             return True
 
@@ -607,8 +488,6 @@ class ThermoSpectrometer(BaseSpectrometer):
     def _set_sub_cup_configuration(self, v):
         self._sub_cup_configuration = v
         self.ask('SetSubCupConfiguration {}'.format(v))
-
-
 
 # if __name__ == '__main__':
 # s = Spectrometer()

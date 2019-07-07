@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface.qt.QtCore import Qt
 from pyface.qt.QtGui import QFont, QFontMetrics
 from traits.api import Event, Callable, Bool
@@ -72,5 +73,7 @@ class myTableEditor(TableEditor):
         if self.on_command_key:
             self.on_command_key(new)
 
+    def _get_custom_editor_class(self):
+        return self.simple_editor_class
 
 # ============= EOF =============================================

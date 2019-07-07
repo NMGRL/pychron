@@ -15,18 +15,23 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import hashlib
 import os
 
 import yaml
+from pyface.tasks.action.schema import SToolBar
+from pyface.tasks.action.task_action import TaskAction
 from pyface.tasks.task_layout import TaskLayout
 from traits.api import HasTraits, List, Str, Bool, Enum, on_trait_change
 from traits.api import Instance
 
+from pychron.core.pychron_traits import EmailStr
+from pychron.envisage.resources import icon
 from pychron.envisage.tasks.base_task import BaseTask
 from pychron.paths import paths
 from pychron.pychron_constants import DVC_PROTOCOL
-from pychron.user.tasks.panes import UsersPane
+from pychron.user.tasks.panes import UsersPane, NewUserView
 
 
 class User(HasTraits):
@@ -41,6 +46,12 @@ class User(HasTraits):
         self.email = dbrecord.email or ''
 
 
+class NewUserAction(TaskAction):
+    name = 'New'
+    image = icon('user-new-2')
+    method = 'new_user'
+
+
 class UsersTask(BaseTask):
     name = 'Users'
     users = List
@@ -48,25 +59,21 @@ class UsersTask(BaseTask):
     filter_attribute = Enum('name', 'email')
     filter_str = Str
 
+    new_user_name = Str
+    new_user_email = EmailStr
+
+    tool_bars = [SToolBar(NewUserAction())]
     db = Instance('pychron.dvc.dvc_database.DVCDatabase')
     id = 'pychron.users'
     _hash = None
     auto_save = False
 
-    def _db_default(self):
-        app = self.application
-        d = app.get_service(DVC_PROTOCOL)
-        d.db.create_session()
-        return d.db
-
     def prepare_destroy(self):
-        self.db.close_session()
-    # @cached_property
-    # def _get_db(self):
-    #     app = self.application
-    #     man = app.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
-    #     if man:
-    #         return man.db
+        self.auto_save = False
+
+    def create_central_pane(self):
+        up = UsersPane(model=self)
+        return up
 
     def activated(self):
         db = self.db
@@ -74,12 +81,24 @@ class UsersTask(BaseTask):
             if not db.connect():
                 return
 
-            users = [User(user) for user in db.get_users()]
-            self._sync(users)
-            self._hash = self._generate_hash(users)
+            self.load_users()
 
-            self.users = users
-            self.ousers = self.users[:]
+    def load_users(self):
+        users = [User(user) for user in self.db.get_users()]
+        self._sync(users)
+        self._hash = self._generate_hash(users)
+
+        self.users = users
+        self.ousers = self.users[:]
+
+    def new_user(self):
+        info = self.edit_traits(view=NewUserView, kind='livemodal')
+        if info.result:
+            if not self.db.get_user(self.new_user_name):
+                self.db.add_user(self.new_user_name, email=self.new_user_email)
+                self.load_users()
+            else:
+                self.information_dialog('User "{}" already exists'.format(self.new_user_name))
 
     def _sync(self, users):
         path = os.path.join(paths.setup_dir, 'users.yaml')
@@ -95,15 +114,8 @@ class UsersTask(BaseTask):
         md5 = hashlib.md5()
         for u in users:
             for k in User.keys:
-                md5.update(str(getattr(u, k)))
+                md5.update(str(getattr(u, k)).encode('utf-8'))
         return md5.hexdigest()
-
-    def prepare_destroy(self):
-        self.auto_save = False
-
-    def create_central_pane(self):
-        up = UsersPane(model=self)
-        return up
 
     def _save(self):
         db = self.db
@@ -144,4 +156,9 @@ class UsersTask(BaseTask):
     def _default_layout_default(self):
         return TaskLayout()
 
+    def _db_default(self):
+        app = self.application
+        d = app.get_service(DVC_PROTOCOL)
+        d.db.create_session()
+        return d.db
 # ============= EOF =============================================

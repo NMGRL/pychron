@@ -16,8 +16,10 @@
 
 # ============= enthought library imports =======================
 from traits.api import Float, Tuple
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.strtools import csv_to_ints
 from pychron.hardware.axis import Axis
 
 MAPPING = dict(acceleration='HA',
@@ -63,16 +65,16 @@ class NewportGroup(Axis):
             self.set_attribute(config, attr, 'General', attr, cast='float')
 
         self.set_attribute(config, 'id', 'General', 'id', cast='int')
-        self.axes = tuple(
-                map(int, self.config_get(config, 'General', 'axes').split(',')))
 
+        axes = self.config_get(config, 'General', 'axes')
+        self.axes = tuple(csv_to_ints(axes))
         self.nominal_velocity = self.velocity
         self.nominal_acceleration = self.acceleration
         self.nominal_deceleration = self.deceleration
 
     def build_command(self, new_group):
         cmds = []
-        for key, value in MAPPING.iteritems():
+        for key, value in MAPPING.items():
             if key is not 'axes':
                 cmds.append(
                         '{}{}{:0.5f}'.format(self.id, value,

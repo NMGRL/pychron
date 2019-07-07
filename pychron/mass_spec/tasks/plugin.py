@@ -15,8 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from traits.api import List
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.data_mapper.sources.mass_spec_source import MassSpecDBSource
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.mass_spec.database.massspec_database_adapter import MassSpecDatabaseAdapter
 from pychron.mass_spec.mass_spec_recaller import MassSpecRecaller
@@ -26,12 +29,16 @@ from pychron.mass_spec.tasks.preferences import MassSpecConnectionPane, MassSpec
 class MassSpecPlugin(BaseTaskPlugin):
     id = 'pychron.mass_spec.plugin'
     name = 'MassSpec'
+    sources = List(contributes_to='pychron.entry.data_sources')
+
+    def _sources_default(self):
+        db = self._db_factory()
+        return [('Mass Spec', MassSpecDBSource(db=db)), ]
 
     def test_database(self):
         ret, err = 'Skipped', ''
-        db = self.application.get_service(MassSpecDatabaseAdapter)
+        db = self._db_factory()
         if db:
-            db.bind_preferences()
             connected = db.connect(warn=False)
             ret = 'Passed'
             if not connected:
@@ -43,14 +50,19 @@ class MassSpecPlugin(BaseTaskPlugin):
         return [MassSpecConnectionPane, MassSpecConfigPane]
 
     def _recaller_factory(self):
-        db = self.application.get_service(MassSpecDatabaseAdapter)
-        db.bind_preferences()
+        db = self._db_factory()
         recaller = MassSpecRecaller(db=db)
         return recaller
 
     def _get_pref(self, name):
         prefs = self.application.preferences
         return prefs.get('pychron.massspec.database.{}'.format(name))
+
+    def _db_factory(self):
+        db = self.application.get_service(MassSpecDatabaseAdapter)
+        if db:
+            db.bind_preferences()
+        return db
 
     def _service_offers_default(self):
         sos = []

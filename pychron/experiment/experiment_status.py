@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import time
 from threading import Thread
 
@@ -50,7 +51,7 @@ class ExperimentStatus(HasTraits):
 
     def reset(self):
         self.end()
-        self.label = ''
+        invoke_in_main_thread(self.trait_set, label='')
 
     def set_state(self, state, flash, color, period=1):
         label = state.upper()

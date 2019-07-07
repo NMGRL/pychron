@@ -14,15 +14,18 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
 import os
 import time
 
 from pyface.timer.do_later import do_later
 from traits.api import HasTraits, Str, Int, List, Event, Instance
-from traitsui.api import View, UItem, Handler
+from traitsui.api import UItem, Handler
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.core.helpers.datetime_tools import get_datetime
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.paths import paths
 
@@ -41,7 +44,7 @@ def update_launch_history(path):
                         t += 1
                         l = time.time()
                         exists = True
-                    out.append((l, t, p))
+                    out.append((float(l), t, p))
 
     if not exists:
         out.append((time.time(), 1, path))
@@ -93,15 +96,13 @@ class ExperimentLaunchHistory(HasTraits):
             self.items = sorted((i for i in items if i), key=lambda x: x.last_run_time, reverse=True)
 
     def traits_view(self):
-        v = View(UItem('items', editor=myTabularEditor(adapter=ELHAdapter(),
-                                                       selected='selected',
-                                                       dclicked='dclicked',
-                                                       editable=False)),
-                 handler=ELHHandler(),
-                 width=700,
-                 title='Experiment Launch History',
-                 buttons=['OK', 'Cancel'],
-                 resizable=True, kind='livemodal')
+        v = okcancel_view(UItem('items', editor=myTabularEditor(adapter=ELHAdapter(),
+                                                                selected='selected',
+                                                                dclicked='dclicked',
+                                                                editable=False)),
+                          handler=ELHHandler(),
+                          width=700,
+                          title='Experiment Launch History')
         return v
 
 

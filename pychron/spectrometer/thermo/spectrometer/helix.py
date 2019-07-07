@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.hardware.thermo_spectrometer_controller import HelixController
 from pychron.spectrometer.thermo.detector.helix import HelixDetector
 from pychron.spectrometer.thermo.magnet.helix import HelixMagnet
@@ -29,6 +30,17 @@ class HelixSpectrometer(ThermoSpectrometer):
     source_klass = HelixSource
     detector_klass = HelixDetector
     microcontroller_klass = HelixController
+
+    def get_command_map(self):
+        command_map = dict(ionrepeller='IonRepeller',
+                           electronenergy='ElectronEnergy',
+                           ysymmetry='YSymmetry',
+                           extractionfocus='ExtractionFocus',
+                           extractionsymmetry='ExtractionSymmetry',
+                           extractionlens='ExtractionLens',
+                           ioncountervoltage='IonCounterVoltage',
+                           hv='HV')
+        return command_map
 
 
 class HelixPlusSpectrometer(HelixSpectrometer):

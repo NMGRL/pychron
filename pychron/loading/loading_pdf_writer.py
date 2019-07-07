@@ -15,33 +15,37 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Bool
-from traits.api import Color as TraitsColor
-from traitsui.api import View, Item, VGroup
+from __future__ import absolute_import
+
+from reportlab.lib import colors
 # ============= standard library imports ========================
 # from reportlab.platypus.flowables import PageBreak, Flowable
 from reportlab.lib.colors import Color
-from reportlab.platypus.doctemplate import FrameBreak
 # from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import mm
-from reportlab.lib import colors
+from reportlab.platypus.doctemplate import FrameBreak
+from reportlab.platypus.flowables import Spacer
 from reportlab.platypus.frames import Frame
+from six.moves import range
+from traits.api import Bool
+from traits.api import Color as TraitsColor
+from traitsui.api import Item, VGroup
 
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+from pychron.core.pdf.base_table_pdf_writer import BasePDFTableWriter
 # from chaco.pdf_graphics_context import PdfPlotGraphicsContext
 # ============= local library imports  ==========================
 from pychron.core.pdf.items import Row, RowItem
 from pychron.core.pdf.options import BasePDFOptions, dumpable
 from pychron.loading.component_flowable import ComponentFlowable
-from pychron.canvas.canvas2D.scene.primitives.primitives import LoadIndicator
-from reportlab.platypus.flowables import Spacer
-from pychron.core.pdf.base_table_pdf_writer import BasePDFTableWriter
 
 
 class LoadingPDFOptions(BasePDFOptions):
     _persistence_name = 'load_pdf_options'
 
     show_colors = dumpable(Bool)
-    show_labnumbers = dumpable(Bool)
+    show_identifiers = dumpable(Bool)
+    show_samples = dumpable(Bool)
     show_weights = dumpable(Bool)
     show_hole_numbers = dumpable(Bool)
     view_pdf = dumpable(Bool)
@@ -55,7 +59,7 @@ class LoadingPDFOptions(BasePDFOptions):
     def get_alternating_background(self):
         color = self.alternating_background
         t = color.red(), color.green(), color.blue()
-        return map(lambda x: x / 255., t)
+        return [x / 255. for x in t]
 
     def traits_view(self):
         layout_grp = VGroup(Item('orientation'),
@@ -67,7 +71,8 @@ class LoadingPDFOptions(BasePDFOptions):
                             show_border=True,
                             label='layout')
         grp = VGroup(Item('view_pdf'),
-                     Item('show_labnumbers'),
+                     Item('show_identifiers'),
+                     Item('show_samples'),
                      Item('show_weights'),
                      Item('show_hole_numbers'),
                      Item('show_colors'),
@@ -75,29 +80,32 @@ class LoadingPDFOptions(BasePDFOptions):
                           enabled_when='not show_colors'),
                      Item('alternating_background',
                           enabled_when='use_alternating_background'))
-        v = View(VGroup(layout_grp,
-                        grp),
-                 title='Configure PDF',
-                 kind='livemodal', buttons=['OK', 'Cancel'])
+        v = okcancel_view(VGroup(layout_grp,
+                                 grp),
+                          title='Configure PDF')
         return v
 
 
 class LoadingPDFWriter(BasePDFTableWriter):
     _options_klass = LoadingPDFOptions
 
-    def _build(self, doc, positions, component, meta):
+    def _build(self, doc, positions, grouped_positions, component, meta):
 
-        n = len(positions)
-        idx = int(round(n / 2.))
+        n = len(grouped_positions)
+        if n > 5:
+            idx = int(round(n / 2.))
+            p1 = grouped_positions[:idx]
+            p2 = grouped_positions[idx:]
+        else:
+            p1 = grouped_positions
+            p2 = []
 
-        p1 = positions[:idx]
-        p2 = positions[idx:]
         #
         meta = self._make_meta_table(meta)
         t1 = self._make_table(p1)
         t2 = self._make_table(p2)
 
-        t3 = self._make_notes_table(component)
+        t3 = self._make_notes_table(positions)
 
         flowables = [meta, Spacer(0, 5 * mm),
                      ComponentFlowable(component=component),
@@ -146,12 +154,13 @@ class LoadingPDFWriter(BasePDFTableWriter):
 
         return table
 
-    def _make_notes_table(self, canvas):
+    def _make_notes_table(self, positions):
         data = [Row(items=[RowItem('L#'),
                            RowItem('Irradiation'),
                            RowItem('Sample'),
                            RowItem('Hole'),
                            RowItem('Weight'),
+                           RowItem('N. Xtals'),
                            RowItem('Note')]), ]
 
         ts = self._new_style()
@@ -161,34 +170,27 @@ class LoadingPDFWriter(BasePDFTableWriter):
         # ts.add('VALIGN', (-3, 1), (-1, -1), 'MIDDLE')
 
         idx = 0
-        prev_irrad = None
-        for pi in sorted(canvas.scene.get_items(LoadIndicator),
-                         key=lambda x: int(x.name)):
-            if pi.irradiation:
-                if pi.irradiation == prev_irrad:
-                    items = (pi.labnumber_label.text,
-                             '', '',
-                             pi.name,
-                             pi.weight or '',
-                             pi.note or '')
-                else:
-                    items = (pi.labnumber_label.text,
-                             pi.irradiation,
-                             pi.sample,
-                             pi.name,
-                             pi.weight, pi.note)
+        prev_id = None
+        for pi in positions:
+            if pi.identifier == prev_id:
+                items = ('', '', '', pi.position, pi.weight, pi.nxtals, pi.note)
+            else:
+                items = (pi.identifier,
+                         pi.irradiation_str,
+                         pi.sample,
+                         pi.position,
+                         pi.weight, pi.note)
 
-                prev_irrad = pi.irradiation
+            prev_id = pi.identifier
+            data.append(Row(items=[RowItem(ri) for ri in items]))
+            if idx % 2 != 0:
+                ts.add('BACKGROUND', (0, idx + 1), (-1, idx + 1),
+                       colors.lightgrey)
+            idx += 1
 
-                data.append(Row(items=[RowItem(ri) for ri in items]))
-                if idx % 2 == 0:
-                    ts.add('BACKGROUND', (0, idx + 1), (-1, idx + 1),
-                           colors.lightgrey)
-                idx += 1
+        cw = [mm * x for x in [13, 30, 40, 15, 16, 17, 58]]
 
-        cw = map(lambda x: mm * x, [15, 22, 22, 22, 22, 80])
-
-        rh = [mm * 5 for _ in xrange(len(data))]
+        rh = [mm * 5 for _ in range(len(data))]
 
         t = self._new_table(ts, data,
                             colWidths=cw,
@@ -199,7 +201,7 @@ class LoadingPDFWriter(BasePDFTableWriter):
         data = [Row(items=[RowItem('L#'),
                            RowItem('Irradiation'),
                            RowItem('Sample'),
-                           RowItem('Positions')]),]
+                           RowItem('Positions')]), ]
 
         ts = self._new_style(header_line_idx=0)
 
@@ -207,10 +209,9 @@ class LoadingPDFWriter(BasePDFTableWriter):
         # ts.add('VALIGN', (-3, 1), (-1, -1), 'MIDDLE')
 
         for idx, pi in enumerate(positions):
-            # row = (pi.labnumber, pi.irradiation_str, pi.sample,
-            # pi.position_str)
 
-            items = [RowItem(i) for i in (pi.labnumber, pi.irradiation_str,
+            items = [RowItem(i) for i in (pi.identifier,
+                                          pi.level_str,
                                           pi.sample,
                                           pi.position_str)]
             row = Row(items=items)
@@ -234,9 +235,9 @@ class LoadingPDFWriter(BasePDFTableWriter):
 
             ts.add('BACKGROUND', (0, idx + 1), (-1, idx + 1), c)
 
-        cw = map(lambda x: mm * x, [13, 21, 22, 38])
+        cw = [mm * x for x in [13, 20, 40, 20]]
 
-        rh = [mm * 5 for _ in xrange(len(data))]
+        rh = [mm * 5 for _ in range(len(data))]
 
         t = self._new_table(ts, data, colWidths=cw, rowHeights=rh)
         return t

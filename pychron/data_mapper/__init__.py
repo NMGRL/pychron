@@ -19,16 +19,51 @@
 # ============= local library imports  ==========================
 # from pychron.entry.dvc_import.model import DVCImporterModel
 # from pychron.entry.dvc_import.view import DVCImporterView
-from pychron.data_mapper.model import DVCImporterModel
-from pychron.data_mapper.view import DVCImporterView
-from pychron.envisage.view_util import open_view
+
+
+from __future__ import absolute_import
+
+import os
+
+from pychron.data_mapper.sources.wiscar_source import WiscArNuSource
 
 
 def do_import_irradiation(dvc, sources, default_source=None):
-    model = DVCImporterModel(dvc=dvc, sources=sources)
+    from pychron.data_mapper.view import DVCIrradiationImporterView, DVCAnalysisImporterView
+    from pychron.data_mapper.model import DVCIrradiationImporterModel, DVCAnalysisImporterModel
+    from pychron.envisage.view_util import open_view
 
-    model.source = next((k for k, v in sources.iteritems() if v == default_source), None)
-    view = DVCImporterView(model=model)
+    model = DVCIrradiationImporterModel(dvc=dvc, sources=sources)
+    # model.source = next((k for k, v in sources.iteritems() if v == default_source), None)
+    view = DVCIrradiationImporterView(model=model)
+    info = open_view(view)
+    return info.result
+
+
+def do_import_analyses(dvc, sources):
+    from pychron.data_mapper.view import DVCIrradiationImporterView, DVCAnalysisImporterView
+    from pychron.data_mapper.model import DVCIrradiationImporterModel, DVCAnalysisImporterModel
+    from pychron.envisage.view_util import open_view
+
+    model = DVCAnalysisImporterModel(dvc=dvc, sources=sources)
+
+    # model.source = next((k for k, v in sources.iteritems() if v == default_source), None)
+    # model.source = sources.keys()[0]
+
+    model.repository_identifier = 'wiscartest'
+    model.extract_device = 'Laser'
+    model.mass_spectrometer = 'Noblesse'
+    model.principal_investigator = 'WiscAr'
+    for k,v in sources.items():
+        if isinstance(k, WiscArNuSource):
+            model.source = k
+            root = os.path.dirname(__file__)
+            k.directory = os.path.join(root, 'tests', 'data', 'wiscar')
+            k.nice_path = os.path.join(root, 'tests', 'data', 'wiscar.nice')
+            k.metadata_path = os.path.join(root, 'tests', 'data', 'WISCAR_test_metadata.txt')
+            break
+
+    view = DVCAnalysisImporterView(model=model)
     info = open_view(view)
     return info.result
 

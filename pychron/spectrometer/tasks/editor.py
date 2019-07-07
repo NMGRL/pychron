@@ -15,15 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+
 from pyface.tasks.traits_editor import TraitsEditor
-from traits.api import Button, Instance
+from traits.api import Button, Instance, Int
 from traitsui.api import View, UItem, InstanceEditor, VGroup, HGroup, TabularEditor, VSplit
 from traitsui.tabular_adapter import TabularAdapter
 
+from pychron.envisage.icon_button_editor import icon_button_editor
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-
-from pychron.envisage.icon_button_editor import icon_button_editor
 
 
 class ScanEditor(TraitsEditor):
@@ -39,16 +41,24 @@ class ScanEditor(TraitsEditor):
 
 
 class PeakCenterResultsAdapter(TabularAdapter):
-    columns = [('Detector', 'detector'), ('Center DAC (V)', 'center_dac')]
+    columns = [('Detector', 'detector'), ('Center DAC (V)', 'center_dac'),
+               ('Resolution', 'resolution'),
+               ('Low Mass Resolving Power', 'low_resolving_power'),
+               ('High Mass Resolving Power', 'high_resolving_power')]
+
+    detector_width = Int(100)
+    center_dac_width = Int(150)
+    resolution_width = Int(150)
+    low_resolving_power_width = Int(150)
 
 
 class PeakCenterEditor(ScanEditor):
     model = Instance('pychron.spectrometer.jobs.peak_center.PeakCenter')
 
     def traits_view(self):
-        v = View(VSplit(UItem('graph', style='custom', editor=InstanceEditor(),
-                              height=875),
+        v = View(VSplit(UItem('graph', style='custom', height=0.8, editor=InstanceEditor()),
                         UItem('results',
+                              height=0.2,
                               editor=TabularEditor(adapter=PeakCenterResultsAdapter()))))
         return v
 

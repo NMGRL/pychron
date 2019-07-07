@@ -26,6 +26,7 @@
 # from pychron.hardware.arduino.arduino_gp_actuator import ArduinoGPActuator
 # from argus_gp_actuator import ArgusGPActuator
 
+from __future__ import absolute_import
 import time
 
 from pychron.hardware.core.abstract_device import AbstractDevice
@@ -35,6 +36,7 @@ PACKAGES = dict(AgilentGPActuator='pychron.hardware.agilent.agilent_gp_actuator'
                 ArduinoGPActuator='pychron.hardware.arduino.arduino_gp_actuator',
                 QtegraGPActuator='pychron.hardware.actuators.qtegra_gp_actuator',
                 PychronGPActuator='pychron.hardware.actuators.pychron_gp_actuator',
+                NGXGPActuator='pychron.hardware.actuators.ngx_gp_actuator',
                 NMGRLFurnaceActuator='pychron.hardware.actuators.nmgrl_furnace_actuator',
                 DummyGPActuator='pychron.hardware.actuators.dummy_gp_actuator',
                 RPiGPIO='pychron.hardware.rpi_gpio')
@@ -69,6 +71,7 @@ class Actuator(AbstractDevice):
                 factory = self.get_factory(PACKAGES[klass], klass)
                 self.debug('constructing cdevice: name={}, klass={}'.format(name, klass))
                 self._cdevice = factory(name=name,
+                                        application=self.application,
                                         configuration_dir_name=self.configuration_dir_name)
                 return True
 

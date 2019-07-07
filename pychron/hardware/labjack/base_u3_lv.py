@@ -16,8 +16,10 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
 import u3
 from LabJackPython import NullHandleException
+import six
 # ============= local library imports  ==========================
 
 
@@ -53,7 +55,7 @@ class BaseU3LV:
 
     def initialize(self, *args, **kw):
 
-        chs = [v for v in self._dio_mapping.itervalues() if v not in (u3.CIO0, u3.CIO1, u3.CIO2, u3.CIO3)]
+        chs = [v for v in six.itervalues(self._dio_mapping) if v not in (u3.CIO0, u3.CIO1, u3.CIO2, u3.CIO3)]
         self._device.configDigital(*chs)
 
         return True

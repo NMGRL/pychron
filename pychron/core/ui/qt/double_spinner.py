@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Float, Str
 # ============= standard library imports ========================
 from pyface.qt.QtGui import QDoubleSpinBox

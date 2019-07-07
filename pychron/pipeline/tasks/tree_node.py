@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface.qt.QtCore import Qt
 from pyface.qt.QtGui import QColor
 from traitsui.tree_node import TreeNode
@@ -28,7 +29,9 @@ class PipelineGroupTreeNode(TreeNode):
     icon_name = ''
     label = 'name'
 
+
 ICON_MAP = {}
+
 
 class PipelineTreeNode(TreeNode):
     icon_name = ''
@@ -55,11 +58,13 @@ class PipelineTreeNode(TreeNode):
         c = QColor(Qt.white)
         if not isinstance(obj, Pipeline):
             c = QColor(Qt.lightGray)
-
-            if obj.visited:
+            if not obj.enabled:
+                c = QColor('lightblue')
+            elif obj.visited:
                 c = QColor(Qt.green)
             elif obj.active:
                 c = QColor('orange')
+
         # if obj.status == 'ran':
         #     c = QColor('green')
         # elif obj.status == 'paused':
@@ -81,10 +86,13 @@ class PipelineTreeNode(TreeNode):
 
         return i
 
-
         # def get_background(self, obj):
         #     # print 'get', obj, obj.visited
         #     return 'green' if obj.visited else 'white'
+
+
+class NodeGroupTreeNode(PipelineTreeNode):
+    icon_name = ''
 
 
 class DataTreeNode(PipelineTreeNode):

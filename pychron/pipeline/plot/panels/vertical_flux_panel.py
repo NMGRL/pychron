@@ -15,7 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
 from traits.api import Str, List
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.pipeline.plot.panels.figure_panel import FigurePanel
@@ -25,10 +28,10 @@ from pychron.pipeline.plot.plotter.vertical_flux import VerticalFlux
 class VerticalFluxPanel(FigurePanel):
     _figure_klass = VerticalFlux
     irradiation = Str
-    levels = List
+    items = List
 
     def _make_figures(self):
         return [self._figure_klass(irradiation=self.irradiation,
-                                   levels=self.levels)]
+                                   items=self.items)]
 
 # ============= EOF =============================================

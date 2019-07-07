@@ -15,11 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits, File, Str, Int
 # ============= standard library imports ========================
 import zmq
 from cStringIO import StringIO
-import Image as PILImage
+from . import Image as PILImage
 import os
 from numpy import asarray, array
 

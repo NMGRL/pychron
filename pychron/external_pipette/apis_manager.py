@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Instance, Button, Bool, Str, List, provides, Property
 
 # ============= standard library imports ========================
@@ -67,9 +68,9 @@ class SimpleApisManager(Manager):
         blanks = self.controller.get_available_blanks()
         airs = self.controller.get_available_airs()
         if blanks:
-            self.available_blanks = blanks.split('[13]')
+            self.available_blanks = blanks.split('\r')
         if airs:
-            self.available_pipettes = airs.split('[13]')
+            self.available_pipettes = airs.split('\r')
 
         #setup linking
             # v = self.controller.isolation_valve
@@ -124,7 +125,7 @@ class SimpleApisManager(Manager):
             raise NotImplementedError
 
         name = str(name)
-        if not name in av:
+        if name not in av:
             raise InvalidPipetteError(name, av)
 
         func = getattr(self.controller, func)

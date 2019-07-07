@@ -14,8 +14,6 @@
 # limitations under the License.
 # ===============================================================================
 
-
-
 # ============= enthought library imports =======================
 # from traits.api import HasTraits, on_trait_change, Str, Int, Float, Button
 # from traitsui.api import View, Item, Group, HGroup, VGroup
@@ -23,15 +21,41 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.hardware.core.communicators.communicator import Communicator
-
-# NI_PATH = '/Library/Frameworks/NI488.framework/NI488'
+from pychron.hardware.core.communicators.visa import resource_manager
 
 
 class GpibCommunicator(Communicator):
-    pass
+    """
+        uses PyVisa as main interface to GPIB. currently (8/27/14) need to use a 32bit python version.
+        The NI488.2 framework does not work with a 64bit distribution
+    """
 
+    primary_address = 0
+    secondary_address = 0
 
-#     address = 16
+    def open(self, *args, **kw):
+        self.debug('openning gpib communicator')
+        self.handle = resource_manager.get_instrument('GPIB{}::{}::INSTR'.format(self.primary_address,
+                                                                                 self.secondary_address))
+        if self.handle is not None:
+            self.simulation = False
+            return True
+
+    def load(self, config, path, **kw):
+        self.set_attribute(config, 'primary_address', 'Communications', 'primary_address')
+        self.set_attribute(config, 'secondary_address', 'Communications', 'secondary_address', optional=False)
+        return True
+
+    def trigger(self):
+        self.handle.trigger()
+
+    def ask(self, cmd):
+        return self.handle.ask(cmd)
+
+    def tell(self, cmd):
+        self.handle.write(cmd)
+
+# address = 16
 #
 #     def load(self, config, path):
 #         return True

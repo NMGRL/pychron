@@ -16,8 +16,11 @@
 
 # from traitsui.api import View, Item, spring, ButtonEditor, HGroup
 # ============= standard library imports ========================
+from __future__ import absolute_import
+from threading import Thread
+
 from numpy import linspace
-from pyface.qt.QtCore import QThread
+# from pyface.qt.QtCore import QThread
 # ============= enthought library imports =======================
 from traits.api import Any, Event, Property, Bool
 
@@ -55,7 +58,7 @@ class SpectrometerTask(Loggable):
     def execute(self):
         self.debug('execute {}'.format(self.__class__.__name__))
         self._alive = True
-        t = QThread(name=self.__class__.__name__, target=self._execute)
+        t = Thread(name=self.__class__.__name__, target=self._execute)
         t.start()
         self.execution_thread = t
         self.debug('execution thread. {}'.format(t))

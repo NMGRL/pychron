@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
 import io
 import os
 
@@ -37,7 +38,7 @@ class LaserFactory(Factory):
     def buildProtocol(self, addr):
         if self._name is None:
             raise NotImplementedError
-        return LaserProtocol(self._app, self._name, addr, self.logger)
+        return LaserProtocol(self._app, self._name, addr, None)
 
 
 class FusionsCO2Factory(LaserFactory):
@@ -50,6 +51,11 @@ class FusionsDiodeFactory(LaserFactory):
 
 class FusionsUVFactory(LaserFactory):
     _name = 'FusionsUV'
+
+from pychron.paths import paths
+path = os.path.join(paths.log_dir, 'pps.log.json')
+
+logger = Logger(observer=jsonFileLogObserver(io.open(path, 'w')))
 
 
 from pychron.paths import paths

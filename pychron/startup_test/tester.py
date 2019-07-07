@@ -68,13 +68,11 @@ class StartupTester(Loggable):
 
             self.info('Testing "{} - {}"'.format(pname, ti))
             st = time.time()
-
             try:
                 result, error = func()
-            except ValueError, e:
-                self.critical('Invalid function. Plugin name={} Test={}'.format(plugin.name, ti))
-                continue
-
+            except ValueError as e:
+                self.critical('Invalid function {} {}'.format(plugin.name, ti))
+                raise e
             self.info('Test result={}'.format(result))
             if isinstance(result, bool):
                 result = 'Passed' if result else 'Failed'

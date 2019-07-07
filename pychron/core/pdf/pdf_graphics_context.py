@@ -21,12 +21,13 @@
 # adapted from Chaco PdfPlotGraphicsContext
 
 # Major library imports
+from __future__ import absolute_import
 import warnings
 
 try:
     # PDF imports from reportlab
     from reportlab.pdfgen.canvas import Canvas
-    from reportlab.lib.pagesizes import letter, A4, landscape
+    from reportlab.lib.pagesizes import letter, A4, landscape, A2, A0
     from reportlab.lib.units import inch, cm, mm, pica
 
 except ImportError:
@@ -40,8 +41,12 @@ PAGE_DPI = 72.0
 PAGE_SIZE_MAP = {
     "letter": letter,
     "A4": A4,
+    "A2": A2,
+    "A0": A0,
     "landscape_letter": landscape(letter),
-    "landscape_A4": landscape(A4)
+    "landscape_A4": landscape(A4),
+    "landscape_A2": landscape(A2),
+    "landscape_A0": landscape(A0),
 }
 
 UNITS_MAP = {
@@ -150,7 +155,8 @@ if Canvas is not None:
             # Compute the correct scaling to fit the component into the
             # available canvas space while preserving aspect ratio.
             units = UNITS_MAP[self.dest_box_units]
-            pagesize = PAGE_SIZE_MAP[self.pagesize]
+            # pagesize = PAGE_SIZE_MAP[self.pagesize]
+            pagesize = self._get_pagesize()
 
             full_page_width = pagesize[0]
             full_page_height = pagesize[1]
@@ -218,16 +224,28 @@ if Canvas is not None:
                 self.gc = None
                 return
 
-            pagesize = PAGE_SIZE_MAP[self.pagesize]
+            # pagesize = PAGE_SIZE_MAP[self.pagesize]
+            pagesize = self._get_pagesize()
             gc = Canvas(filename=self.filename, pagesize=pagesize)
             self._initialize_page(gc)
 
             return gc
 
+        def _get_pagesize(self):
+            pagesize = self.pagesize
+            try:
+                pagesize = PAGE_SIZE_MAP[pagesize]
+            except KeyError:
+                pass
+
+            return pagesize
+
         def _get_bounding_box(self):
             """ Compute the bounding rect of a page.
             """
-            pagesize = PAGE_SIZE_MAP[self.pagesize]
+
+            # pagesize = PAGE_SIZE_MAP[self.pagesize]
+            pagesize = self._get_pagesize()
             units = UNITS_MAP[self.dest_box_units]
 
             x = self.dest_box[0] * units

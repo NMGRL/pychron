@@ -15,18 +15,24 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import List, HasTraits, Str, Bool, Float, Property
-from traitsui.api import View, UItem, TableEditor
+from __future__ import absolute_import
+from __future__ import print_function
+
 # ============= standard library imports ========================
 from random import random
-from ConfigParser import ConfigParser
-import time
+
+from six.moves.configparser import ConfigParser
+from traits.api import List, HasTraits, Str, Bool, Float, Property
+from traitsui.api import UItem, TableEditor
 # ============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
+
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.stats.peak_detection import PeakCenterError
-from pychron.spectrometer.jobs.peak_center import calculate_peak_center, BasePeakCenter
 from pychron.spectrometer import get_spectrometer_config_path
+from pychron.spectrometer.jobs.magnet_sweep import MagnetSweep
+from pychron.spectrometer.jobs.peak_center import calculate_peak_center, BasePeakCenter
 
 
 class ResultsView(HasTraits):
@@ -42,11 +48,9 @@ class ResultsView(HasTraits):
                 ObjectColumn(name='old_deflection'),
                 ObjectColumn(name='new_deflection')]
 
-        v = View(UItem('results', editor=TableEditor(columns=cols,
-                                                     sortable=False)),
-                 title='Deflection Results',
-                 buttons=['OK', 'Cancel'],
-                 kind='livemodal')
+        v = okcancel_view(UItem('results', editor=TableEditor(columns=cols,
+                                                              sortable=False)),
+                          title='Deflection Results')
         return v
 
 
@@ -63,7 +67,7 @@ class DeflectionResult(HasTraits):
         self.new_deflection = n
 
 
-class Coincidence(BasePeakCenter):
+class Coincidence(BasePeakCenter, MagnetSweep):
     title = 'Coincidence'
     inform = False
 
@@ -86,10 +90,11 @@ class Coincidence(BasePeakCenter):
         """
         graph = self.graph
         plot = graph.plots[0]
-        time.sleep(0.05)
+
+        # time.sleep(0.05)
 
         # wait for graph to fully update
-        time.sleep(0.1)
+        # time.sleep(0.1)
 
         # def get_peak_center(i, di):
         def get_peak_center(di):
@@ -114,7 +119,7 @@ class Coincidence(BasePeakCenter):
         spec = self.spectrometer
 
         centers = {d: get_peak_center(d) for d in self.active_detectors}
-        print centers
+        print(centers)
         ref = self.reference_detector
         post = centers[ref]
         if post is None:
@@ -174,9 +179,9 @@ class Coincidence(BasePeakCenter):
 # ============= EOF =============================================
 
 # class CoincidenceScan(MagnetScan):
-# start_mass = 39
-# stop_mass = 40
-# step_mass = 0.005
+# start_value = 39
+# stop_value = 40
+# step_value = 0.005
 # title = 'Coincidence Scan'
 # inform = True
 #

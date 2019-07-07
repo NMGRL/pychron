@@ -15,14 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
+import six
 from pyface.image_resource import ImageResource
+from pyface.qt import QtGui
 from traits.api import Int, Any, Instance, Bool, Str, Property
+from traitsui.qt4.editor import Editor
+
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-
-from pyface.qt import QtGui, QtCore
-from traitsui.qt4.editor import Editor
 
 
 class _ToggleButtonEditor(Editor):
@@ -52,8 +55,9 @@ class _ToggleButtonEditor(Editor):
         # else:
         #     control.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
 
-        QtCore.QObject.connect(control, QtCore.SIGNAL('clicked()'),
-                               self.update_object)
+        # QtCore.QObject.connect(control, QtCore.SIGNAL('clicked()'),
+        #                        self.update_object)
+        control.clicked.connect(self.update_object)
 
     def _toggle_button(self):
         self.toggle_state = not self.toggle_state
@@ -115,7 +119,7 @@ class ToggleButtonEditor(BasicEditorFactory):
 
     def _set_value(self, value):
         self._value = value
-        if isinstance(value, basestring):
+        if isinstance(value, six.string_types):
             try:
                 self._value = int(value)
             except:

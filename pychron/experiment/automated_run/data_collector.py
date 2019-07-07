@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
 import time
-from Queue import Queue
-from threading import Event, Thread, Timer
+from queue import Queue
+from threading import Event, Thread
 
-from traits.api import Any, List, CInt, Int, Bool, Enum, Str
+# ============= enthought library imports =======================
+from apptools.preferences.preference_binding import bind_preference
+from traits.api import Any, List, CInt, Int, Bool, Enum, Str, Instance
 
 from pychron.envisage.consoleable import Consoleable
-from pychron.globals import globalv
 from pychron.pychron_constants import AR_AR, SIGNAL, BASELINE, WHIFF, SNIFF
 
 
@@ -32,7 +32,7 @@ class DataCollector(Consoleable):
     """
 
     measurement_script = Any
-    automated_run = Any
+    automated_run = Instance('pychron.experiment.automated_run.automated_run.AutomatedRun')
     measurement_result = Str
 
     detectors = List
@@ -65,6 +65,12 @@ class DataCollector(Consoleable):
     err_message = Str
     no_intensity_threshold = 100
     not_intensity_count = 0
+    trigger = None
+    plot_panel_update_period = Int(1)
+
+    def __init__(self, *args, **kw):
+        super(DataCollector, self).__init__(*args, **kw)
+        bind_preference(self, 'plot_panel_update_period', 'pychron.experiment.plot_panel_update_period')
 
     def wait(self):
         st = time.time()
@@ -97,22 +103,20 @@ class DataCollector(Consoleable):
             self.starttime = st
 
         et = self.ncounts * self.period_ms * 0.001
-        evt = self._evt
-        if evt:
-            evt.set()
-            evt.wait(0.05)
-        else:
-            evt = Event()
+        # evt = self._evt
+        # if evt:
+        #     evt.set()
+        # else:
+        #     evt = Event()
 
-        self._evt = evt
-        evt.clear()
-
-        # wait for graphs to be fully constructed in the MainThread
-        evt.wait(0.05)
+        # self._evt = evt
+        # evt = Event()
+        # evt.clear()
+        # self._evt = evt
 
         self._alive = True
 
-        self._measure(evt)
+        self._measure()
 
         tt = time.time() - st
         self.debug('estimated time: {:0.3f} actual time: :{:0.3f}'.format(et, tt))
@@ -128,20 +132,22 @@ class DataCollector(Consoleable):
         self._temp_conds = None
 
     # private
-    def _measure(self, evt):
+    def _measure(self):
         self.debug('starting measurement')
 
         self._queue = q = Queue()
+        self._evt = Event()
+        evt = self._evt
 
         def writefunc():
             writer = self.data_writer
-            while not q.empty() or not evt.wait(1):
+            while not q.empty() or not evt.wait(10):
                 dets = self.detectors
                 while not q.empty():
                     x, keys, signals = q.get()
                     writer(dets, x, keys, signals)
 
-        # only write to file every 1 seconds and not on main thread
+        # only write to file every 10 seconds and not on main thread
         t = Thread(target=writefunc)
         # t.setDaemon(True)
         t.start()
@@ -149,14 +155,29 @@ class DataCollector(Consoleable):
         self.debug('measurement period (ms) = {}'.format(self.period_ms))
         period = self.period_ms * 0.001
         i = 1
+        # elapsed = 0
         while not evt.is_set():
-            st = time.time()
-            if not self._iter(i):
-                break
+            result = self._check_iteration(i)
+            if not result:
+                if not self._pre_trigger_hook():
+                    break
 
-            i += 1
-            evt.wait(max(0, period - time.time() + st))
-            # time.sleep(max(0, period - et))
+                if self.trigger:
+                    self.trigger()
+
+                evt.wait(period)
+                self.automated_run.plot_panel.counts = i
+                if not self._iter_hook(i):
+                    break
+
+                self._post_iter_hook(i)
+                i += 1
+            else:
+                if result == 'cancel':
+                    self.canceled = True
+                elif result == 'terminate':
+                    self.terminated = True
+                break
 
         evt.set()
         self.debug('waiting for write to finish')
@@ -164,69 +185,63 @@ class DataCollector(Consoleable):
 
         self.debug('measurement finished')
 
-    def _iter(self, i):
-        # st = time.time()
-        result = self._check_iteration(i)
-        # self.debug('check iteration duration={}'.format(time.time() - st))
+    def _pre_trigger_hook(self):
+        return True
 
-        if not result:
-            try:
-                if i <= 1:
-                    self.automated_run.plot_panel.counts = 1
-                else:
-                    self.automated_run.plot_panel.counts += 1
-            except AttributeError:
-                pass
-
-            if not self._iter_hook(i):
-                # evt.set()
-                return
-
-            self._post_iter_hook(i)
-            return True
-        else:
-            if result == 'cancel':
-                self.canceled = True
-            elif result == 'terminate':
-                self.terminated = True
-                # evt.set()
+    # def _iter(self, i):
+    #     # st = time.time()
+    #     result = self._check_iteration(i)
+    #     # self.debug('check iteration duration={}'.format(time.time() - st))
+    #
+    #     if not result:
+    #         try:
+    #             if i <= 1:
+    #                 self.automated_run.plot_panel.counts = 1
+    #             else:
+    #                 self.automated_run.plot_panel.counts += 1
+    #         except AttributeError:
+    #             pass
+    #
+    #         if not self._iter_hook(i):
+    #             # evt.set()
+    #             return
+    #
+    #         self._post_iter_hook(i)
+    #         return True
+    #     else:
+    #         if result == 'cancel':
+    #             self.canceled = True
+    #         elif result == 'terminate':
+    #             self.terminated = True
+    #             # evt.set()
 
     def _post_iter_hook(self, i):
         if self.experiment_type == AR_AR and self.refresh_age and not i % 5:
-            t = Timer(0.05, self.isotope_group.calculate_age, kwargs={'force': True})
-            t.start()
+            self.isotope_group.calculate_age(force=True)
+            # t = Timer(0.05, self.isotope_group.calculate_age, kwargs={'force': True})
+            # t.start()
+
+    def _pre_trigger_hook(self):
+        return True
 
     def _iter_hook(self, i):
-        return True
+        return self._iteration(i)
 
     def _iteration(self, i, detectors=None):
         try:
             data = self._get_data(detectors)
-            # self.no_intensity_count = 0
-        except (AttributeError, TypeError, ValueError), e:
+        except (AttributeError, TypeError, ValueError) as e:
             self.debug('failed getting data {}'.format(e))
             return
-        # except NoIntensityChange:
-        #     self.warning('No Intensity change. Something is wrong. cnt={}, threshold={}'.format(self.no_intensity_count,
-        #                                                                                         self.no_intensity_threshold))
-        #     if self.no_intensity_count > self.no_intensity_threshold:
-        #         return
-        #
-        #     self.no_intensity_count += 1
-        #     return True
 
         if not data:
             return
 
-        # data is tuple (keys[], signals[])
         k, s = data
         if k is not None and s is not None:
             x = self._get_time()
             self._save_data(x, k, s)
             self._plot_data(i, x, k, s)
-        # if k and s are both None that means failed to get intensity from spectrometer, but n failures is less than
-        # `pychron.experiment.failed_intensity_count_threshold`
-        # skip this iteration and try again next time
 
         return True
 
@@ -242,13 +257,11 @@ class DataCollector(Consoleable):
 
         if data:
             if detectors:
-                data = zip(*[d for d in zip(*data) if d[0] in detectors])
+                data = list(zip(*(d for d in zip(*data) if d[0] in detectors)))
             self._data = data
             return data
 
     def _save_data(self, x, keys, signals):
-        # self.data_writer(self.detectors, x, keys, signals)
-
         self._queue.put((x, keys, signals))
 
         # update arar_age
@@ -259,12 +272,12 @@ class DataCollector(Consoleable):
 
     def _update_baseline_peak_hop(self, x, keys, signals):
         ig = self.isotope_group
-        for iso in ig.isotopes.itervalues():
+        for iso in ig.itervalues():
             signal = self._get_signal(keys, signals, iso.detector)
             if signal is not None:
                 if not ig.append_data(iso.name, iso.detector, x, signal, 'baseline'):
-                    self.debug('baselines - failed appending data for {}. not a current isotope {}'.format(iso,
-                                                                                                           ig.isotope_keys))
+                    self.debug('baselines - failed appending data for {}. '
+                               'not a current isotope {}'.format(iso, ig.isotope_keys))
 
     def _update_isotopes(self, x, keys, signals):
         a = self.isotope_group
@@ -296,106 +309,47 @@ class DataCollector(Consoleable):
                       if di.name == d), None)
         return d
 
-    def _plot_baseline_for_peak_hop(self, i, x, keys, signals):
-        for k, v in self.isotope_group.isotopes.iteritems():
-            signal = signals[keys.index(v.detector)]
-            self._set_plot_data(i, None, v.detector, x, signal)
-
-    def _plot_data_(self, cnt, x, keys, signals):
-        # for i, dn in enumerate(keys):
-        #     dn = self._get_detector(dn)
-        #     if dn:
-        #         iso = dn.isotope
-        #         signal = signals[keys.index(dn.name)]
-        #         self._set_plot_data(cnt, iso, dn.name, x, signal)
-
+    def _plot_data(self, cnt, x, keys, signals):
         for dn, signal in zip(keys, signals):
             det = self._get_detector(dn)
             if det:
                 self._set_plot_data(cnt, det.isotope, det.name, x, signal)
 
-    def _get_fit(self, cnt, det, iso):
-
-        isotopes = self.isotope_group.isotopes
-        if self.is_baseline:
-            ix = isotopes[iso]
-            fit = ix.baseline.get_fit(cnt)
-            name = iso
-        else:
-            try:
-                name = iso
-                iso = isotopes[iso]
-            except KeyError:
-                name = '{}{}'.format(iso, det)
-                iso = isotopes[name]
-
-            fit = iso.get_fit(cnt)
-
-        return fit, name
+        if not cnt % self.plot_panel_update_period:
+            self.plot_panel.update()
 
     def _set_plot_data(self, cnt, iso, det, x, signal):
-        """
-            if is_baseline than use detector to get isotope
-        """
-        graph = self.plot_panel.isotope_graph
-        if iso is None:
-            pids = []
-            for isotope in self.isotope_group.isotopes.itervalues():
-                # print '{:<10s}{:<10s}{:<5s}'.format(isotope.name, isotope.detector, det)
-                if isotope.detector == det:
-                    pid = graph.get_plotid_by_ytitle(isotope.name)
-                    if pid is not None:
-                        try:
-                            fit, name = self._get_fit(cnt, det, isotope.name)
-                        except BaseException, e:
-                            self.debug('set_plot_data, is_baseline={} det={}, get_fit {}'.format(self.is_baseline,
-                                                                                                 det, e))
-                            continue
-                        pids.append((pid, fit))
-        else:
-            try:
-                # get fit and name
-                fit, name = self._get_fit(cnt, det, iso)
-            except AttributeError, e:
-                self.debug('set_plot_data, get_fit {}'.format(e))
 
-            pids = [(graph.get_plotid_by_ytitle(name), fit)]
+        if self.collection_kind == SNIFF:
+            gs = [(self.plot_panel.sniff_graph, iso, None, 0, 0),
+                  (self.plot_panel.isotope_graph, iso, None, 0, 0)]
 
-        # if self.is_baseline:
-        # print '{:<10s}{:<10s}{} series={} fit_series={}'.format(iso, det, pids, self.series_idx, self.fit_series_idx)
-
-        def update_graph(g, p, f, sidx, fidx):
-            g.add_datum((x, signal),
-                        series=sidx,
-                        plotid=p,
-                        update_y_limits=True,
-                        ypadding='0.1')
-            if f:
-                g.set_fit(f, plotid=p, series=fidx)
-
-        for pid, fit in pids:
-            if self.collection_kind == SNIFF:
-                update_graph(graph, pid, fit, self.series_idx, self.fit_series_idx)
-
-                sgraph = self.plot_panel.sniff_graph
-                update_graph(sgraph, pid, None, 0, 0)
-            elif self.collection_kind == BASELINE:
-                bgraph = self.plot_panel.baseline_graph
-                update_graph(bgraph, pid, fit, 0, 0)
-                update_graph(graph, pid, fit, self.series_idx, self.fit_series_idx)
+        elif self.collection_kind == BASELINE:
+            iso = self.isotope_group.get_isotope(detector=det, kind='baseline')
+            if iso is not None:
+                fit = iso.get_fit(cnt)
             else:
-                update_graph(graph, pid, fit, self.series_idx, self.fit_series_idx)
-
-    def _plot_data(self, i, x, keys, signals):
-        if globalv.experiment_debug:
-            x *= (self.period_ms * 0.001) ** -1
-
-        if self.is_baseline and self.for_peak_hop:
-            self._plot_baseline_for_peak_hop(i, x, keys, signals)
+                fit = 'average'
+            gs = [(self.plot_panel.baseline_graph, det, fit, 0, 0)]
         else:
-            self._plot_data_(i, x, keys, signals)
+            title = self.isotope_group.get_isotope_title(name=iso, detector=det)
+            iso = self.isotope_group.get_isotope(name=iso, detector=det)
+            fit = iso.get_fit(cnt)
+            gs = [(self.plot_panel.isotope_graph, title, fit, self.series_idx, self.fit_series_idx)]
 
-        self.plot_panel.update()
+        dd = self._get_detector(det)
+        ypadding = dd.ypadding
+
+        for g, name, fit, series, fit_series in gs:
+
+            pid = g.get_plotid_by_ytitle(name)
+            g.add_datum((x, signal),
+                        series=series,
+                        plotid=pid,
+                        update_y_limits=True,
+                        ypadding=ypadding)
+            if fit:
+                g.set_fit(fit, plotid=pid, series=fit_series)
 
     # ===============================================================================
     #
@@ -421,6 +375,31 @@ class DataCollector(Consoleable):
                 self.err_message = m
                 return ti
 
+    def _modification_func(self, tr):
+        queue = self.automated_run.experiment_executor.experiment_queue
+        tr.do_modifications(queue, self.automated_run)
+
+        self.measurement_script.abbreviated_count_ratio = tr.abbreviated_count_ratio
+        if tr.use_truncation:
+            return self._set_truncated()
+        elif tr.use_termination:
+            return 'terminate'
+
+    def _truncation_func(self, tr):
+        self.measurement_script.abbreviated_count_ratio = tr.abbreviated_count_ratio
+        return self._set_truncated()
+
+    def _action_func(self, tr):
+        tr.perform(self.measurement_script)
+        if not tr.resume:
+            return 'break'
+
+    def _set_truncated(self):
+        self.state = 'truncated'
+        self.automated_run.truncated = True
+        self.automated_run.spec.state = 'truncated'
+        return 'break'
+
     def _check_iteration(self, i):
         if self._temp_conds:
             ti = self._check_conditionals(self._temp_conds, i)
@@ -438,12 +417,6 @@ class DataCollector(Consoleable):
         #                                                                          script_counts,
         #                                                                          original_counts))
 
-        def set_truncated():
-            self.state = 'truncated'
-            self.automated_run.truncated = True
-            self.automated_run.spec.state = 'truncated'
-            return 'break'
-
         if not self._alive:
             self.info('measurement iteration executed {}/{} counts'.format(*count_args))
             return 'cancel'
@@ -452,12 +425,12 @@ class DataCollector(Consoleable):
             if i > user_counts:
                 self.info('user termination. measurement iteration executed {}/{} counts'.format(*count_args))
                 self.plot_panel.total_counts -= (original_counts - i)
-                return set_truncated()
+                return self._set_truncated()
 
         elif script_counts != original_counts:
             if i > script_counts:
                 self.info('script termination. measurement iteration executed {}/{} counts'.format(*count_args))
-                return set_truncated()
+                return self._set_truncated()
 
         elif i > original_counts:
             return 'break'
@@ -465,31 +438,12 @@ class DataCollector(Consoleable):
         if self._truncate_signal:
             self.info('measurement iteration executed {}/{} counts'.format(*count_args))
             self._truncate_signal = False
-            return set_truncated()
+            return self._set_truncated()
 
         if self.check_conditionals:
-            def modification_func(tr):
-                queue = self.automated_run.experiment_executor.experiment_queue
-                tr.do_modifications(queue, self.automated_run)
-
-                self.measurement_script.abbreviated_count_ratio = tr.abbreviated_count_ratio
-                if tr.use_truncation:
-                    return set_truncated()
-                elif tr.use_termination:
-                    return 'terminate'
-
-            def truncation_func(tr):
-                self.measurement_script.abbreviated_count_ratio = tr.abbreviated_count_ratio
-                return set_truncated()
-
-            def action_func(tr):
-                tr.perform(self.measurement_script)
-                if not tr.resume:
-                    return 'break'
-
-            for tag, func, conditionals in (('modification', modification_func, self.modification_conditionals),
-                                            ('truncation', truncation_func, self.truncation_conditionals),
-                                            ('action', action_func, self.action_conditionals),
+            for tag, func, conditionals in (('modification', self._modification_func, self.modification_conditionals),
+                                            ('truncation', self._truncation_func, self.truncation_conditionals),
+                                            ('action', self._action_func, self.action_conditionals),
                                             ('termination', lambda x: 'terminate', self.termination_conditionals),
                                             ('cancelation', lambda x: 'cancel', self.cancelation_conditionals)):
 
@@ -538,37 +492,4 @@ class DataCollector(Consoleable):
         if self.automated_run:
             return self.automated_run.cancelation_conditionals
 
-            # ============= EOF =============================================
-            # def _iter(self, con, evt, i, prev=0):
-            #
-            #     result = self._check_iteration(evt, i)
-            #
-            #     if not result:
-            #         try:
-            #             if i <= 1:
-            #                 self.automated_run.plot_panel.counts = 1
-            #             else:
-            #                 self.automated_run.plot_panel.counts += 1
-            #         except AttributeError:
-            #             pass
-            #
-            #         if not self._iter_hook(con, i):
-            #             evt.set()
-            #             return
-            #
-            #         ot = time.time()
-            #         p = self.period_ms * 0.001
-            #         t = Timer(max(0, p - prev), self._iter, args=(con, evt, i + 1,
-            #                                                       time.time() - ot))
-            #
-            #         t.name = 'iter_{}'.format(i + 1)
-            #         t.start()
-            #
-            #     else:
-            #         if result == 'cancel':
-            #             self.canceled = True
-            #         elif result == 'terminate':
-            #             self.terminated = True
-            #
-            #         # self.debug('no more iter')
-            #         evt.set()
+# ============= EOF =============================================

@@ -16,6 +16,7 @@
 
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
 from traits.api import Int, Bool
 from traitsui.api import View, Item, ListEditor, InstanceEditor
 # ============= standard library imports ========================
@@ -73,12 +74,11 @@ class GaugeManager(Manager):
         # sp = self.scan_period*1000
         sp = None
         if self.use_update:
-            sp = self.update_period
+            sp = self.update_period*1000
 
         sp = sp or None
         for k in self.devices:
             if k.is_scanable:
-
                 k.start_scan(sp)
                 # stagger starts to reduce collisions
                 time.sleep(0.25)

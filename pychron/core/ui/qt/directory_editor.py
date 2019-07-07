@@ -14,15 +14,18 @@
 # limitations under the License.
 # ===============================================================================
 
+# ============= standard library imports ========================
+import six
+from pyface.qt import QtCore, QtGui
 # ============= enthought library imports =======================
 from traits.api import Str, Bool, Int, File, Event
 from traitsui.api import View, Group
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.directory_editor import CustomEditor
 from traitsui.qt4.file_editor import _TreeView, filter_trait
-from pyface.qt import QtCore, QtGui
+
+
+# ============= local library imports  ==========================
 
 
 class _myTreeView(_TreeView):
@@ -35,8 +38,9 @@ class _myTreeView(_TreeView):
 
 class _DirectoryEditor(CustomEditor):
     selected = Event
+    _model = None
 
-    def init( self, parent ):
+    def init(self, parent):
         self.control = _myTreeView(self)
 
         self._model = model = QtGui.QFileSystemModel()
@@ -54,7 +58,7 @@ class _DirectoryEditor(CustomEditor):
 
         # Hide the labels at the top and only show the column for the file name
         self.control.header().hide()
-        for column in xrange(1, model.columnCount()):
+        for column in range(1, model.columnCount()):
             self.control.hideColumn(column)
 
         factory = self.factory
@@ -73,7 +77,7 @@ class _DirectoryEditor(CustomEditor):
         self.control.header().setStretchLastSection(False)
 
     def _on_select(self, idx):
-        self.selected = unicode(self._model.filePath(idx))
+        self.selected = six.text_type(self._model.filePath(idx))
 
 
 class myDirectoryEditor(BasicEditorFactory):
@@ -84,10 +88,10 @@ class myDirectoryEditor(BasicEditorFactory):
     filter_name = Str
 
     # Should file extension be truncated?
-    truncate_ext = Bool( False )
+    truncate_ext = Bool(False)
 
     # Can the user select directories as well as files?
-    allow_dir = Bool( False )
+    allow_dir = Bool(False)
 
     # Is user input set on every keystroke? (Overrides the default) ('simple'
     # style only):
@@ -98,7 +102,7 @@ class myDirectoryEditor(BasicEditorFactory):
     enter_set = True
 
     # The number of history entries to maintain:
-    entries = Int( 10 )
+    entries = Int(10)
 
     # The root path of the file tree view ('custom' style only, not supported
     # under wx). If not specified, the filesystem root is used.
@@ -120,18 +124,15 @@ class myDirectoryEditor(BasicEditorFactory):
     # Should be one of 'open' or 'save'
     dialog_style = Str('open')
 
-    #---------------------------------------------------------------------------
+    # ---------------------------------------------------------------------------
     #  Traits view definition:
-    #---------------------------------------------------------------------------
+    # ---------------------------------------------------------------------------
 
-    traits_view = View( [ [ '<options>',
-                        'truncate_ext{Automatically truncate file extension?}',
-                        '|options:[Options]>' ],
-                          [ 'filter', '|[Wildcard filters]<>' ] ] )
+    traits_view = View([['<options>',
+                         'truncate_ext{Automatically truncate file extension?}',
+                         '|options:[Options]>'],
+                        ['filter', '|[Wildcard filters]<>']])
 
     extras = Group()
 
 # ============= EOF =============================================
-
-
-

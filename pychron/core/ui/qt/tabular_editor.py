@@ -15,19 +15,21 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+
 from pickle import dumps
 
+import six
 from pyface.qt import QtCore, QtGui
-from pyface.qt.QtGui import QColor, QHeaderView, QApplication
+from pyface.qt.QtGui import QHeaderView, QApplication
 from traits.api import Bool, Str, List, Any, Instance, Property, Int, HasTraits, Color, Either, Callable
-from traits.trait_base import SequenceTypes
-from traitsui.api import View, Item, TabularEditor, Handler
+from traitsui.api import Item, TabularEditor, Handler
 from traitsui.mimedata import PyMimeData
 from traitsui.qt4.tabular_editor import TabularEditor as qtTabularEditor, \
     _TableView as TableView, HeaderEventFilter, _ItemDelegate
-from traitsui.qt4.tabular_model import TabularModel, alignment_map
+from traitsui.qt4.tabular_model import TabularModel, tabular_mime_type
 
 from pychron.core.helpers.ctx_managers import no_update
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 
 
 class myTabularEditor(TabularEditor):
@@ -74,11 +76,9 @@ class MoveToRow(HasTraits):
         self._row = v
 
     def traits_view(self):
-        v = View(Item('row'),
-                 buttons=['OK', 'Cancel'],
-                 width=300,
-                 title='Move Selected to Row',
-                 kind='livemodal')
+        v = okcancel_view(Item('row'),
+                          width=300,
+                          title='Move Selected to Row')
         return v
 
 
@@ -123,6 +123,13 @@ class TabularEditorHandler(UnselectTabularEditorHandler):
     def copy_to_end(self, info, obj):
         obj.copy_selected_last()
 
+    def move_down(self, info, obj):
+        obj.move(1)
+
+    def move_up(self, info, obj):
+        obj.move(-1)
+
+
 class ItemDelegate(_ItemDelegate):
     pass
     # def drawDecoration(self, painter, option, rect, pixmap):
@@ -163,7 +170,7 @@ class _TableView(TableView):
         if font is not None:
             fnt = QtGui.QFont(font)
             size = QtGui.QFontMetrics(fnt)
-            height = size.height() + 6
+            height = size.height() + 10
             vheader.setFont(fnt)
             hheader = self.horizontalHeader()
             hheader.setFont(fnt)
@@ -177,21 +184,24 @@ class _TableView(TableView):
             vheader.ResizeMode(QHeaderView.ResizeToContents)
 
     def set_bg_color(self, bgcolor):
-        if isinstance(bgcolor, tuple):
-            if len(bgcolor) == 3:
-                bgcolor = 'rgb({},{},{})'.format(*bgcolor)
-            elif len(bgcolor) == 4:
-                bgcolor = 'rgba({},{},{},{})'.format(*bgcolor)
-        elif isinstance(bgcolor, QColor):
-            bgcolor = 'rgba({},{},{},{})'.format(bgcolor.red(), bgcolor.green(), bgcolor.blue(), bgcolor.alpha())
-        self.setStyleSheet('QTableView {{background-color: {}}}'.format(bgcolor))
+        # if isinstance(bgcolor, tuple):
+        #     if len(bgcolor) == 3:
+        #         bgcolor = 'rgb({},{},{})'.format(*bgcolor)
+        #     elif len(bgcolor) == 4:
+        #         bgcolor = 'rgba({},{},{},{})'.format(*bgcolor)
+        # elif isinstance(bgcolor, QColor):
+        #     bgcolor = 'rgba({},{},{},{})'.format(bgcolor.red(), bgcolor.green(), bgcolor.blue(), bgcolor.alpha())
+        # self.setStyleSheet('QTableView {{background-color: {}}}'.format(bgcolor))
+        p = self.palette()
+        p.setColor(QtGui.QPalette.Base, bgcolor)
+        self.setPalette(p)
 
     def set_vertical_header_font(self, fnt):
         fnt = QtGui.QFont(fnt)
         vheader = self.verticalHeader()
         vheader.setFont(fnt)
         size = QtGui.QFontMetrics(fnt)
-        vheader.setDefaultSectionSize(size.height() + 6)
+        vheader.setDefaultSectionSize(size.height() + 10)
 
     def set_horizontal_header_font(self, fnt):
         fnt = QtGui.QFont(fnt)
@@ -289,10 +299,6 @@ class _TableView(TableView):
 
     def keyPressEvent(self, event):
         if event.matches(QtGui.QKeySequence.Copy):
-            # self._copy_cache = [self._editor.value[ci.row()] for ci in
-            # self.selectionModel().selectedRows()]
-            # self._copy_cache = self._get_selection()
-            # self._editor.copy_cache = self._copy_cache
             self._cut_indices = None
 
             # add the selected rows to the clipboard
@@ -300,10 +306,6 @@ class _TableView(TableView):
 
         elif event.matches(QtGui.QKeySequence.Cut):
             self._cut_indices = [ci.row() for ci in self.selectionModel().selectedRows()]
-
-            # self._copy_cache = [self._editor.value[ci] for ci in self._cut_indices]
-            # self._copy_cache = self._get_selection(self._cut_indices)
-            # self._editor.copy_cache = self._copy_cache
 
         elif event.matches(QtGui.QKeySequence.Paste):
             if self.pastable:
@@ -321,14 +323,14 @@ class _TableView(TableView):
         mt = self._editor.factory.mime_type
         try:
             pdata = dumps(copy_object)
-        except BaseException, e:
-            print 'tabular editor copy failed'
+        except BaseException as e:
+            print('tabular editor copy failed')
             self._editor.value[rows[0]].tocopy(verbose=True)
             return
 
         qmd = PyMimeData()
         qmd.MIME_TYPE = mt
-        qmd.setData(unicode(mt), dumps(copy_object.__class__) + pdata)
+        qmd.setData(six.text_type(mt), dumps(copy_object.__class__) + pdata)
 
         clipboard = QApplication.clipboard()
         clipboard.setMimeData(qmd)
@@ -336,7 +338,11 @@ class _TableView(TableView):
     def _paste(self):
         clipboard = QApplication.clipboard()
         md = clipboard.mimeData()
-        items = md.instance()
+        try:
+            items = md.instance()
+        except AttributeError:
+            return
+
         if items is not None:
             editor = self._editor
             model = editor.model
@@ -366,54 +372,6 @@ class _TableView(TableView):
             for ri, ci in reversed(items):
                 model.insertRow(idx, obj=ci)
 
-    # def _paste(self):
-    # selection = self.selectedIndexes()
-    # idx = None
-    #     if len(selection):
-    #         idx = selection[-1].row()
-    #
-    #     if self._cut_indices:
-    #         if not any((ci <= idx for ci in self._cut_indices)):
-    #             idx += len(self._cut_indices)
-    #
-    #         model = self._editor.model
-    #         for ci in self._cut_indices:
-    #             model.removeRow(ci)
-    #
-    #     self._cut_indices = None
-    #
-    #     items = None
-    #     if self.link_copyable:
-    #         items = self._linked_copy_cache
-    #
-    #     if not items:
-    #         items = self._copy_cache
-    #
-    #     if items:
-    #         insert_mode = 'after'
-    #         if idx is None:
-    #             if len(selection):
-    #                 offset = 1 if insert_mode == 'after' else 0
-    #                 idx = selection[-1].row() + offset
-    #             else:
-    #                 idx = len(self._editor.value)
-    #
-    #         paste_func = self.paste_func
-    #         if paste_func is None:
-    #             paste_func = lambda x: x.clone_traits()
-    #
-    #         editor = self._editor
-    #         # with no_update(editor.object):
-    #         model = editor.model
-    #         for ci in reversed(items):
-    #             model.insertRow(idx, obj=paste_func(ci))
-    #
-    #             # self._add(items, idx=idx)
-    #             # func = lambda a: self._add(a, idx=idx)
-    #             # self.add_consumable((self._add, (items,), {'idx':idx}))
-    #             # self.add_consumable((self._add, items))
-    #             # invoke_in_main_thread(self._add, items, idx=idx)
-
     def _get_selection(self, rows=None):
         if rows is None:
             rows = self._get_selection_indices()
@@ -436,7 +394,7 @@ class _TableView(TableView):
         # Note that setting 'EditKeyPressed' as an edit trigger does not work on
         # most platforms, which is why we do this here.
         if (event.key() in (QtCore.Qt.Key_Enter, QtCore.Qt.Key_Return) and
-                    self.state() != QtGui.QAbstractItemView.EditingState and
+                self.state() != QtGui.QAbstractItemView.EditingState and
                 factory.editable and 'edit' in factory.operations):
             if factory.multi_select:
                 rows = editor.multi_selected_rows
@@ -449,7 +407,7 @@ class _TableView(TableView):
                 self.edit(editor.model.index(row, 0))
 
         elif (event.key() in (QtCore.Qt.Key_Backspace, QtCore.Qt.Key_Delete) and
-                  factory.editable and 'delete' in factory.operations):
+              factory.editable and 'delete' in factory.operations):
             event.accept()
             '''
                 sets _no_update and update_needed on the editor.object e.g
@@ -467,7 +425,7 @@ class _TableView(TableView):
                     editor.model.removeRow(editor.selected_row)
 
         elif (event.key() == QtCore.Qt.Key_Insert and
-                  factory.editable and 'insert' in factory.operations):
+              factory.editable and 'insert' in factory.operations):
             event.accept()
 
             if factory.multi_select:
@@ -485,60 +443,50 @@ class _TableView(TableView):
 
 
 class _TabularModel(TabularModel):
+    def dropMimeData(self, mime_data, action, row, column, parent):
+        if action == QtCore.Qt.IgnoreAction:
+            return False
+
+        # this is a drag from a tabular model
+        data = mime_data.data(tabular_mime_type)
+        if not data.isNull() and action == QtCore.Qt.MoveAction:
+            id_and_rows = [int(di) for di in data.split(' ')]
+            table_id = id_and_rows[0]
+            # is it from ourself?
+            if table_id == id(self):
+                current_rows = id_and_rows[1:]
+                self.moveRows(current_rows, parent.row())
+                return True
+
+        # this is an external drag
+        data = PyMimeData.coerce(mime_data).instance()
+        if data is not None:
+            if not isinstance(data, list):
+                data = [data]
+            editor = self._editor
+            object = editor.object
+            name = editor.name
+            adapter = editor.adapter
+            if row == -1 and parent.isValid():
+                # find correct row number
+                row = parent.row()
+            if row == -1 and adapter.len(object, name) == 0:
+                # if empty list, target is after end of list
+                row = 0
+            if all(adapter.get_can_drop(object, name, row, item)
+                   for item in data):
+                for item in reversed(data):
+                    self.dropItem(item, row)
+                return True
+        return False
+
     def data(self, mi, role=None):
         """ Reimplemented to return the data.
         """
         if role is None:
             role = QtCore.Qt.DisplayRole
 
-        editor = self._editor
-        adapter = editor.adapter
-        obj, name = editor.object, editor.name
-        row, column = mi.row(), mi.column()
-
-        if role == QtCore.Qt.DisplayRole or role == QtCore.Qt.EditRole:
-            return adapter.get_text(obj, name, row, column)
-
-        elif role == QtCore.Qt.DecorationRole:
-            image = editor._get_image(adapter.get_image(obj, name, row, column))
-
-            if image is not None:
-                return image
-
-        elif role == QtCore.Qt.ToolTipRole:
-            tooltip = adapter.get_tooltip(obj, name, row, column)
-            if tooltip:
-                return tooltip
-
-        elif role == QtCore.Qt.FontRole:
-            font = adapter.get_font(obj, name, row, column)
-            if font is not None:
-                return QtGui.QFont(font)
-
-        elif role == QtCore.Qt.TextAlignmentRole:
-            string = adapter.get_alignment(obj, name, column)
-            alignment = alignment_map.get(string, QtCore.Qt.AlignLeft)
-            return int(alignment | QtCore.Qt.AlignVCenter)
-
-        elif role == QtCore.Qt.BackgroundRole:
-            color = adapter.get_bg_color(obj, name, row, column)
-            if color is not None:
-                if isinstance(color, SequenceTypes):
-                    q_color = QtGui.QColor(*color)
-                else:
-                    q_color = QtGui.QColor(color)
-                return QtGui.QBrush(q_color)
-
-        elif role == QtCore.Qt.ForegroundRole:
-            color = adapter.get_text_color(obj, name, row, column)
-            if color is not None:
-                if isinstance(color, SequenceTypes):
-                    q_color = QtGui.QColor(*color)
-                else:
-                    q_color = QtGui.QColor(color)
-                return QtGui.QBrush(q_color)
-
-        return None
+        return TabularModel.data(self, mi, role)
 
 
 class _TabularEditor(qtTabularEditor):
@@ -576,9 +524,11 @@ class _TabularEditor(qtTabularEditor):
         else:
             slot = self._on_row_selection
 
-        signal = 'selectionChanged(QItemSelection,QItemSelection)'
-        QtCore.QObject.connect(self.control.selectionModel(),
-                               QtCore.SIGNAL(signal), slot)
+        # signal = 'selectionChanged(QItemSelection,QItemSelection)'
+        # QtCore.QObject.connect(self.control.selectionModel(),
+        #                        QtCore.SIGNAL(signal), slot)
+
+        control.selectionModel().selectionChanged.connect(slot)
 
         # Synchronize other interesting traits as necessary:
         self.sync_value(factory.update, 'update', 'from')
@@ -594,20 +544,30 @@ class _TabularEditor(qtTabularEditor):
         self.sync_value(factory.scroll_to_row, 'scroll_to_row', 'from')
 
         # Connect other signals as necessary
-        signal = QtCore.SIGNAL('activated(QModelIndex)')
-        QtCore.QObject.connect(control, signal, self._on_activate)
-        signal = QtCore.SIGNAL('clicked(QModelIndex)')
-        QtCore.QObject.connect(control, signal, self._on_click)
-        signal = QtCore.SIGNAL('clicked(QModelIndex)')
-        QtCore.QObject.connect(control, signal, self._on_right_click)
-        signal = QtCore.SIGNAL('doubleClicked(QModelIndex)')
-        QtCore.QObject.connect(control, signal, self._on_dclick)
-        signal = QtCore.SIGNAL('sectionClicked(int)')
-        QtCore.QObject.connect(control.horizontalHeader(), signal, self._on_column_click)
+        # signal = QtCore.SIGNAL('activated(QModelIndex)')
+        # QtCore.QObject.connect(control, signal, self._on_activate)
+        control.activated.connect(self._on_activate)
+
+        # signal = QtCore.SIGNAL('clicked(QModelIndex)')
+        # QtCore.QObject.connect(control, signal, self._on_click)
+        control.clicked.connect(self._on_click)
+
+        # signal = QtCore.SIGNAL('clicked(QModelIndex)')
+        # QtCore.QObject.connect(control, signal, self._on_right_click)
+        control.clicked.connect(self._on_right_click)
+
+        # signal = QtCore.SIGNAL('doubleClicked(QModelIndex)')
+        # QtCore.QObject.connect(control, signal, self._on_dclick)
+        control.doubleClicked.connect(self._on_dclick)
+
+        # signal = QtCore.SIGNAL('sectionClicked(int)')
+        # QtCore.QObject.connect(control.horizontalHeader(), signal, self._on_column_click)
+        control.horizontalHeader().sectionClicked.connect(self._on_column_click)
 
         control.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        signal = QtCore.SIGNAL('customContextMenuRequested(QPoint)')
-        QtCore.QObject.connect(control, signal, self._on_context_menu)
+        # signal = QtCore.SIGNAL('customContextMenuRequested(QPoint)')
+        # QtCore.QObject.connect(control, signal, self._on_context_menu)
+        control.customContextMenuRequested.connect(self._on_context_menu)
 
         self.header_event_filter = HeaderEventFilter(self)
         control.horizontalHeader().installEventFilter(self.header_event_filter)
@@ -639,9 +599,6 @@ class _TabularEditor(qtTabularEditor):
         self.on_trait_change(self.update_editor, 'adapter.columns',
                              dispatch='ui')
 
-        self.my_init()
-
-    def my_init(self):
         factory = self.factory
         self.sync_value(factory.col_widths, 'col_widths', 'to')
         # self.sync_value(factory.copy_cache, 'copy_cache', 'both')
@@ -649,6 +606,7 @@ class _TabularEditor(qtTabularEditor):
 
         control = self.control
 
+        # somehow this was causing all the majority of the lagginess
         if factory.bgcolor:
             control.set_bg_color(factory.bgcolor)
 
@@ -664,14 +622,10 @@ class _TabularEditor(qtTabularEditor):
 
         # control.link_copyable = factory.link_copyable
         control.pastable = factory.pastable
-        signal = QtCore.SIGNAL('sectionResized(int,int,int)')
-
-        QtCore.QObject.connect(control.horizontalHeader(), signal,
-                               self._on_column_resize)
-
-    # def dispose(self):
-    #     # self.control._should_consume = False
-    #     super(_TabularEditor, self).dispose()
+        # signal = QtCore.SIGNAL('sectionResized(int,int,int)')
+        # QtCore.QObject.connect(control.horizontalHeader(), signal,
+        #                        self._on_column_resize)
+        control.horizontalHeader().sectionResized.connect(self._on_column_resize)
 
     def refresh_editor(self):
         if self.control:
@@ -696,9 +650,10 @@ class _TabularEditor(qtTabularEditor):
 
     def _on_column_resize(self, idx, old, new):
         control = self.control
-        header = control.horizontalHeader()
-        cs = [header.sectionSize(i) for i in xrange(header.count())]
-        self.col_widths = cs
+        if control:
+            header = control.horizontalHeader()
+            cs = [header.sectionSize(i) for i in range(header.count())]
+            self.col_widths = cs
 
     def _multi_selected_rows_changed(self, selected_rows):
         super(_TabularEditor, self)._multi_selected_rows_changed(selected_rows)
@@ -715,10 +670,56 @@ class _TabularEditor(qtTabularEditor):
                 row = self.value.index(row)
             self.scroll_to_row = row
 
-    def _scroll_to_row_changed(self, row):
-        row = min(row, self.model.rowCount(None)) - 1
-        super(_TabularEditor, self)._scroll_to_row_changed(0)
-        super(_TabularEditor, self)._scroll_to_row_changed(row)
-
+            # def _scroll_to_row_changed(self, row):
+            #     row = min(row, self.model.rowCount(None)) - 1
+            #     super(_TabularEditor, self)._scroll_to_row_changed(0)
+            #     super(_TabularEditor, self)._scroll_to_row_changed(row)
 
 # ============= EOF =============================================
+# def _paste(self):
+# selection = self.selectedIndexes()
+# idx = None
+#     if len(selection):
+#         idx = selection[-1].row()
+#
+#     if self._cut_indices:
+#         if not any((ci <= idx for ci in self._cut_indices)):
+#             idx += len(self._cut_indices)
+#
+#         model = self._editor.model
+#         for ci in self._cut_indices:
+#             model.removeRow(ci)
+#
+#     self._cut_indices = None
+#
+#     items = None
+#     if self.link_copyable:
+#         items = self._linked_copy_cache
+#
+#     if not items:
+#         items = self._copy_cache
+#
+#     if items:
+#         insert_mode = 'after'
+#         if idx is None:
+#             if len(selection):
+#                 offset = 1 if insert_mode == 'after' else 0
+#                 idx = selection[-1].row() + offset
+#             else:
+#                 idx = len(self._editor.value)
+#
+#         paste_func = self.paste_func
+#         if paste_func is None:
+#             paste_func = lambda x: x.clone_traits()
+#
+#         editor = self._editor
+#         # with no_update(editor.object):
+#         model = editor.model
+#         for ci in reversed(items):
+#             model.insertRow(idx, obj=paste_func(ci))
+#
+#             # self._add(items, idx=idx)
+#             # func = lambda a: self._add(a, idx=idx)
+#             # self.add_consumable((self._add, (items,), {'idx':idx}))
+#             # self.add_consumable((self._add, items))
+#             # invoke_in_main_thread(self._add, items, idx=idx)

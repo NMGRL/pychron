@@ -21,7 +21,8 @@
 # =============standard library imports ========================
 
 # =============local library imports  ==========================
-from kerr_device import KerrDevice
+from __future__ import absolute_import
+from .kerr_device import KerrDevice
 class KerrMicrocontroller(KerrDevice):
     """
         Provides access to a `Kerr Controller board <http://www.jrkerr.com/boards.html>`_.
@@ -36,20 +37,21 @@ class KerrMicrocontroller(KerrDevice):
         self.parent.tell('0' * 40, is_hex=True)
 
         cmd = self._build_command('FF', '0F')
-        self.tell(cmd)
+        self.ask(cmd, is_hex=True)
 
-        addr = self.address
-        commands = [(addr, '2101FF', 100, 'setting module 1 address'),
-                    (addr, '2102FF', 100, 'setting module 2 address'),
-                    (addr, '2103FF', 100, 'setting module 3 address')]
-        self._execute_hex_commands(commands, tell=True, delay=100)
+        # addr = self.address
+        commands = [('00', '2101FF', 100, 'setting module 1 address'),
+                    ('00', '2102FF', 100, 'setting module 2 address'),
+                    # ('00', '2103FF', 100, 'setting module 3 address')
+                    ]
+        self._execute_hex_commands(commands, delay=100)
 
         # verify number of modules found
-#        commands = [
-#                    (addr, '010E', 50, 'no op'),
-#                    (addr, '020E', 50, 'no op')
-#                    ]
-#        self._execute_hex_commands(commands)
+        commands = [
+                   ('01', '0E', 50, 'no op'),
+                   ('02', '0E', 50, 'no op')
+                   ]
+        self._execute_hex_commands(commands)
 
 #        addr = self.address
         #         cmd = '0E'

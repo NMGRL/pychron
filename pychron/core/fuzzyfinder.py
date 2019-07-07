@@ -16,6 +16,8 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
+from __future__ import print_function
 import re
 # ============= local library imports  ==========================
 """
@@ -34,19 +36,15 @@ def func(regex, item, attr):
 
 
 def fuzzyfinder(user_input, collection, attr=None):
-    # suggestions = []
     pattern = '.*'.join(user_input)  # Converts 'djm' to 'd.*?j.*?m'
     try:
-        regex = re.compile('%s' % pattern)  # Compiles a regex.
+        regex = re.compile(pattern, re.IGNORECASE)  # Compiles a regex.
     except re.error:
         return []
-    # for item in collection:
-    #     match = regex.search(item)   # Checks if the current item matches the regex.
-    #     if match:
-    #         suggestions.append((len(match.group()), match.start(), item))
 
-    suggestions = filter(lambda x: x is not None, map(lambda item: func(regex, item, attr), collection))
-    return [x for _, _, x in sorted(suggestions)]
+    suggestions = [x for x in [func(regex, item, attr) for item in collection] if x is not None]
+    return [x for _, _, x in suggestions]
+
 
 
 if __name__ == '__main__':
@@ -58,7 +56,7 @@ if __name__ == '__main__':
                   'user_group.doc',
                   'accounts.txt']
 
-    print fuzzyfinder('djm', collection)
-    print fuzzyfinder('mig', collection)
-    print fuzzyfinder('user', collection)
+    print(fuzzyfinder('djm', collection))
+    print(fuzzyfinder('mig', collection))
+    print(fuzzyfinder('user', collection))
 # ============= EOF =============================================

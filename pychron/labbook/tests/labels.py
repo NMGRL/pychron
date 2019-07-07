@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from pychron.labbook.labeler import Labeler
 
 __author__ = 'ross'

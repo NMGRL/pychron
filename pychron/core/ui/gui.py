@@ -15,11 +15,20 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pychron.core.ui.factory import toolkit_factory
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
-invoke_in_main_thread = toolkit_factory('gui', 'invoke_in_main_thread')
+# invoke_in_main_thread = toolkit_factory('gui', 'invoke_in_main_thread')
+
+def invoke_in_main_thread(fn, *args, **kw):
+    from pyface.gui import GUI
+    GUI.invoke_later(fn, *args, **kw)
+
+
 convert_color = toolkit_factory('gui', 'convert_color')
-wake_screen = toolkit_factory('gui','wake_screen')
+wake_screen = toolkit_factory('gui', 'wake_screen')
 # ============= EOF =============================================

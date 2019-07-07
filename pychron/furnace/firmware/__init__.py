@@ -26,6 +26,9 @@ PARAMETER_REGISTRY = {'furnace_env_humidity': '001',
 
                       'feeder_position': '021',
 
-                      'funnel_position': '031'}
+                      'funnel_position': '031',
+
+                      'switch_status': '041',
+                      }
 
 # ============= EOF =============================================

@@ -15,24 +15,40 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import cPickle as pickle
+from __future__ import absolute_import
+from __future__ import print_function
+
 import os
 
+import six.moves.cPickle as pickle
 from traits.api import Range, Instance, Bool, \
     Button, Any
 
 from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.core.ui.thread import Thread
-from pychron.envisage.view_util import open_view
 from pychron.graph.graph import Graph
 from pychron.managers.manager import Manager
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR
 from pychron.spectrometer.base_detector import BaseDetector
+from pychron.spectrometer.base_spectrometer import NoIntensityChange
 from pychron.spectrometer.ion_optics.coincidence_config import CoincidenceConfig
 from pychron.spectrometer.ion_optics.peak_center_config import PeakCenterConfigurer
 from pychron.spectrometer.jobs.coincidence import Coincidence
-from pychron.spectrometer.jobs.peak_center import PeakCenter
+from pychron.spectrometer.jobs.peak_center import PeakCenter, AccelVoltagePeakCenter
+
+
+class MFTableCTX(object):
+    def __init__(self, manager, mftable):
+        self._manager = manager
+        self._opath = manager.spectrometer.magnet.get_field_table_path()
+        self._mftable = mftable
+
+    def __enter__(self):
+        self._manager.set_mftable(self._mftable)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._manager.set_mftable(self._opath)
 
 
 class IonOpticsManager(Manager):
@@ -72,6 +88,9 @@ class IonOpticsManager(Manager):
         molweights = spec.molecular_weights
         return molweights[isotope_key]
 
+    def mftable_ctx(self, mftable):
+        return MFTableCTX(self, mftable)
+
     def set_mftable(self, name=None):
         """
             if mt is None set to the default mftable located at setupfiles/spectrometer/mftable.csv
@@ -89,12 +108,18 @@ class IonOpticsManager(Manager):
         kw['update_isotopes'] = False
         return self._get_position(*args, **kw)
 
-    def position(self, pos, detector, *args, **kw):
+    def av_position(self, pos, detector, *args, **kw):
+        av = self._get_av_position(pos, detector)
+        self.spectrometer.source.set_hv(av)
+        self.info('positioning {} ({}) on {}'.format(pos, av, detector))
+        return av
+
+    def position(self, pos, detector, use_af_demag=True, *args, **kw):
         dac = self._get_position(pos, detector, *args, **kw)
         mag = self.spectrometer.magnet
 
         self.info('positioning {} ({}) on {}'.format(pos, dac, detector))
-        return mag.set_dac(dac)
+        return mag.set_dac(dac, use_af_demag=use_af_demag)
 
     def do_coincidence_scan(self, new_thread=True):
 
@@ -169,19 +194,27 @@ class IonOpticsManager(Manager):
         else:
             self._peak_center(*args)
 
-    def setup_peak_center(self, detector=None, isotope=None,
+    def setup_peak_center(self, detector=None,
+                          isotope=None,
                           integration_time=1.04,
                           directions='Increase',
-                          center_dac=None, plot_panel=None, new=False,
-                          standalone_graph=True, name='', show_label=False,
-                          window=0.015, step_width=0.0005, min_peak_height=1.0, percent=80,
+                          center_dac=None,
+                          name='',
+                          show_label=False,
+                          window=0.015,
+                          step_width=0.0005,
+                          min_peak_height=1.0,
+                          percent=80,
                           deconvolve=None,
                           use_interpolation=False,
                           interpolation_kind='linear',
-                          dac_offset=None, calculate_all_peaks=False,
+                          dac_offset=None,
+                          calculate_all_peaks=False,
                           config_name=None,
                           use_configuration_dac=True,
-                          update_others=True):
+                          new=False,
+                          update_others=True,
+                          plot_panel=None):
 
         if deconvolve is None:
             n_peaks, select_peak = 1, 1
@@ -191,31 +224,34 @@ class IonOpticsManager(Manager):
             use_dac_offset = True
 
         spec = self.spectrometer
+        pcconfig = self.peak_center_config
 
         spec.save_integration()
         self.debug('setup peak center. detector={}, isotope={}'.format(detector, isotope))
 
-        self._setup_config()
-
         pcc = None
+        dataspace = 'dac'
+        use_accel_voltage = False
+        use_extend = False
+        self._setup_config()
+        if config_name:
+            pcconfig.load()
+            pcconfig.active_name = config_name
+            pcc = pcconfig.active_item
 
-        if detector is None or isotope is None:
+        elif detector is None or isotope is None:
             self.debug('ask user for peak center configuration')
 
-            self.peak_center_config.load()
+            pcconfig.load()
             if config_name:
-                self.peak_center_config.active_name = config_name
+                pcconfig.active_name = config_name
 
-            info = self.peak_center_config.edit_traits()
+            info = pcconfig.edit_traits()
 
             if not info.result:
                 return
             else:
-                pcc = self.peak_center_config.active_item
-        elif config_name:
-            self.peak_center_config.load()
-            self.peak_center_config.active_name = config_name
-            pcc = self.peak_center_config.active_item
+                pcc = pcconfig.active_item
 
         if pcc:
             if not detector:
@@ -227,11 +263,13 @@ class IonOpticsManager(Manager):
             directions = pcc.directions
             integration_time = pcc.integration_time
 
+            dataspace = pcc.dataspace
+            use_accel_voltage = pcc.use_accel_voltage
+            use_extend = pcc.use_extend
             window = pcc.window
             min_peak_height = pcc.min_peak_height
             step_width = pcc.step_width
             percent = pcc.percent
-
             use_interpolation = pcc.use_interpolation
             interpolation_kind = pcc.interpolation_kind
             n_peaks = pcc.n_peaks
@@ -249,13 +287,18 @@ class IonOpticsManager(Manager):
         if not isinstance(detector, (tuple, list)):
             detector = (detector,)
 
-        ref = detector[0]
-        ref = self.spectrometer.get_detector(ref)
-        self.reference_detector = ref
-        self.reference_isotope = isotope
+        ref = spec.get_detector(detector[0])
 
         if center_dac is None:
             center_dac = self.get_center_dac(ref, isotope)
+
+        # if mass:
+        #     mag = spec.magnet
+        #     center_dac = mag.map_mass_to_dac(mass, ref)
+        #     low = mag.map_mass_to_dac(mass - window / 2., ref)
+        #     high = mag.map_mass_to_dac(mass + window / 2., ref)
+        #     window = high - low
+        #     step_width = abs(mag.map_mass_to_dac(mass + step_width, ref) - center_dac)
 
         if len(detector) > 1:
             ad = detector[1:]
@@ -263,10 +306,14 @@ class IonOpticsManager(Manager):
             ad = []
 
         pc = self.peak_center
-        if not pc or new:
-            pc = PeakCenter()
+        klass = AccelVoltagePeakCenter if use_accel_voltage else PeakCenter
+        if not pc or new or (use_accel_voltage and not isinstance(pc, AccelVoltagePeakCenter)):
+            pc = klass()
 
         pc.trait_set(center_dac=center_dac,
+                     dataspace=dataspace,
+                     use_accel_voltage=use_accel_voltage,
+                     use_extend=use_extend,
                      period=period,
                      window=window,
                      percent=percent,
@@ -287,48 +334,45 @@ class IonOpticsManager(Manager):
                      calculate_all_peaks=calculate_all_peaks,
                      update_others=update_others)
 
-        self.peak_center = pc
         graph = pc.graph
         graph.name = name
         if plot_panel:
             plot_panel.set_peak_center_graph(graph)
-        else:
-            graph.close_func = self.close
-            if standalone_graph:
-                # set graph window attributes
-                graph.window_title = 'Peak Center {}({}) @ {:0.3f}'.format(ref, isotope, center_dac)
-                graph.window_width = 300
-                graph.window_height = 250
-                open_view(graph)
+
+        self.peak_center = pc
+        self.reference_detector = ref
+        self.reference_isotope = isotope
 
         return self.peak_center
 
     def backup_mftable(self):
-        self.spectrometer.magnet.mftable.backup()
+        self.spectrometer.magnet.field_table.backup()
 
     # private
     def _setup_config(self):
         config = self.peak_center_config
         config.detectors = self.spectrometer.detector_names
-        keys = self.spectrometer.molecular_weights.keys()
+        keys = list(self.spectrometer.molecular_weights.keys())
         config.isotopes = sort_isotopes(keys)
+        config.integration_times = self.spectrometer.integration_times
 
-    def _get_peak_center_config(self, config_name):
-        if config_name is None:
-            config_name = 'default'
-
-        config = self.peak_center_config.get(config_name)
-
-        config.detectors = self.spectrometer.detectors_names
-        if config.detector_name:
-            config.detector = next((di for di in config.detectors if di == config.detector_name), None)
-
-        if not config.detector:
-            config.detector = config.detectors[0]
-
-        keys = self.spectrometer.molecular_weights.keys()
-        config.isotopes = sort_isotopes(keys)
-        return config
+    # def _get_peak_center_config(self, config_name):
+    #     if config_name is None:
+    #         config_name = 'default'
+    #
+    #     config = self.peak_center_config.get(config_name)
+    #
+    #     config.detectors = self.spectrometer.detectors_names
+    #     if config.detector_name:
+    #         config.detector = next((di for di in config.detectors if di == config.detector_name), None)
+    #
+    #     if not config.detector:
+    #         config.detector = config.detectors[0]
+    #
+    #     keys = self.spectrometer.molecular_weights.keys()
+    #     config.isotopes = sort_isotopes(keys)
+    #     config.integration_times = self.spectrometer.integration_times
+    #     return config
 
     # def _timeout_func(self, timeout, evt):
     #     st = time.time()
@@ -350,32 +394,41 @@ class IonOpticsManager(Manager):
         ref = self.reference_detector
         isotope = self.reference_isotope
 
-        # if timeout:
-        #     evt = Event()
-        #     self.timeout_thread = Thread(target=self._timeout_func, args=(timeout, evt))
-        #     self.timeout_thread.start()
+        try:
+            center_value = pc.get_peak_center()
+        except NoIntensityChange as e:
+            self.warning('Peak Centering failed. No Intensity change. {}'.format(e))
+            center_value = None
 
-        dac_d = pc.get_peak_center()
-
-        self.peak_center_result = dac_d
-        if dac_d:
-            args = ref, isotope, dac_d
-            self.info('new center pos {} ({}) @ {}'.format(*args))
+        self.peak_center_result = center_value
+        if center_value:
 
             det = spec.get_detector(ref)
 
-            dac_a = spec.uncorrect_dac(det, dac_d)
-            self.info('dac uncorrected for HV and deflection {}'.format(dac_a))
-            self.adjusted_peak_center_result = dac_a
+            if pc.use_accel_voltage:
+                args = ref, isotope, center_value
+            else:
+                dac_a = spec.uncorrect_dac(det, center_value)
+                self.info('dac uncorrected for HV and deflection {}'.format(dac_a))
+                args = ref, isotope, dac_a
+                self.adjusted_peak_center_result = dac_a
+
+            self.info('new center pos {} ({}) @ {}'.format(*args))
             if save:
                 if confirm_save:
                     msg = 'Update Magnet Field Table with new peak center- {} ({}) @ RefDetUnits= {}'.format(*args)
+                    if pc.use_accel_voltage:
+                        msg = 'Update Accel Voltage Table with new peak center- {} ({}) @ RefDetUnits= {}'.format(*args)
+
                     save = self.confirmation_dialog(msg)
 
                 if save:
-                    spec.magnet.update_field_table(det, isotope, dac_a, message,
-                                                   update_others=pc.update_others)
-                    spec.magnet.set_dac(dac_d)
+                    if pc.use_accel_voltage:
+                        spec.source.update_field_table(det, isotope, center_value, message)
+                    else:
+                        spec.magnet.update_field_table(det, isotope, dac_a, message,
+                                                       update_others=pc.update_others)
+                        spec.magnet.set_dac(dac_a)
 
         elif not self.canceled:
             msg = 'centering failed'
@@ -393,10 +446,27 @@ class IonOpticsManager(Manager):
 
         self.trait_set(alive=False)
 
-        # if timeout:
-        #     evt.set()
-
         self.spectrometer.restore_integration()
+
+    def _get_av_position(self, pos, detector, update_isotopes=True):
+        self.debug('AV POSITION {} {}'.format(pos, detector))
+        spec = self.spectrometer
+        if not isinstance(detector, str):
+            detector = detector.name
+
+        if isinstance(pos, str):
+            try:
+                pos = float(pos)
+            except ValueError:
+                # pos is isotope
+                if update_isotopes:
+                    # if the pos is an isotope then update the detectors
+                    spec.update_isotopes(pos, detector)
+                pos = self.get_mass(pos)
+
+        # pos is mass i.e 39.962
+        av = spec.source.map_mass_to_hv(pos, detector)
+        return av
 
     def _get_position(self, pos, detector, use_dac=False, update_isotopes=True):
         """
@@ -435,6 +505,7 @@ class IonOpticsManager(Manager):
                 mag.mass_change(pos)
 
             # pos is mass i.e 39.962
+            print('det is',det)
             dac = mag.map_mass_to_dac(pos, det.name)
 
         dac = spec.correct_dac(det, dac)
@@ -458,15 +529,15 @@ class IonOpticsManager(Manager):
                     config.detectors = dets = self.spectrometer.detectors
                     config.detector = next((di for di in dets if di.name == config.detector_name), None)
 
-            except Exception, e:
-                print 'coincidence config', e
+            except Exception as e:
+                print('coincidence config', e)
 
         if config is None:
             config = CoincidenceConfig()
             config.detectors = self.spectrometer.detectors
             config.detector = config.detectors[0]
 
-        keys = self.spectrometer.molecular_weights.keys()
+        keys = list(self.spectrometer.molecular_weights.keys())
         config.isotopes = sort_isotopes(keys)
 
         return config

@@ -17,12 +17,11 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from traitsui.menu import Action
+from pychron.envisage.ui_actions import UIAction
 
 
-class LabnumberEntryAction(Action):
-    name = 'Labnumber'
-    dname = 'Labnumber'
+class LabnumberEntryAction(UIAction):
+    name = 'Irradiation'
     # accelerator = 'Ctrl+Shift+l'
     id = 'pychron.labnumber_entry'
 

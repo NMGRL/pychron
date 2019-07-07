@@ -15,13 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
 import os
-from itertools import groupby
 
 from traits.api import HasTraits, Str, CFloat, Float, Property, List, Enum
 
 from pychron.core.geometry.affine import transform_point, \
     itransform_point
+from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.loggable import Loggable
 
 
@@ -154,19 +156,19 @@ class BaseStageMap(Loggable):
     def mid_holes(self):
         for i, (g, ri) in enumerate(self._grouped_rows()):
             ri = list(ri)
-            yield ri[len(ri) / 2]
+            yield ri[len(ri) // 2]
 
     def get_calibration_hole(self, h):
         d = 'north', 'east', 'south', 'west', 'center'
         try:
             idx = d.index(h)
-        except IndexError, e:
+        except IndexError as e:
             self.debug('^^^^^^^^^^^^^^^^^^^ index error: {}, {}, {}'.format(d, h, e))
             return
 
         try:
             key = self.calibration_holes[idx]
-        except IndexError, e:
+        except IndexError as e:
             self.debug('^^^^^^^^^^^^^^^^^^^ index error: {}, {}'.format(idx, e))
             self.debug('calibration holes={}'.format(self.calibration_holes))
             return
@@ -233,11 +235,12 @@ Check that the file is UTF-8 and Unix (LF) linefeed'''.format(self.name,
 
     # private
     def _grouped_rows(self, reverse=True):
-        def func(x):
-            return x.y
+        # def func(x):
+        #     return x.y
 
-        holes = sorted(self.sample_holes, key=func, reverse=reverse)
-        return groupby(holes, key=func)
+        # holes = sorted(self.sample_holes, key=func, reverse=reverse)
+        # return groupby(holes, key=func)
+        return groupby_key(self.sample_holes, 'y', reverse=reverse)
 
     def _load_hook(self):
         pass

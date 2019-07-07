@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Bool, List, on_trait_change, String, Dict, Str, Int, HasTraits
 from traitsui.api import View, Item, VGroup, UItem, TableEditor
@@ -47,7 +48,7 @@ class HardwarePreferences(BasePreferencesHelper):
     system_lock_names = List
     system_lock_addresses = Dict
 
-    use_twisted = Bool
+    # use_twisted = Bool(True)
     pnames = List
     ports = Dict
     factories = Dict
@@ -93,7 +94,7 @@ class HardwarePreferencesPane(PreferencesPane):
 
         txgrp = VGroup(UItem('_protocols',
                              editor=TableEditor(columns=cols)),
-                       enabled_when='use_twisted and enable_hardware_server')
+                       enabled_when='enable_hardware_server')
 
         ehs_grp = VGroup(Item('enable_hardware_server', label='Enabled'),
                          txgrp,

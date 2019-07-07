@@ -22,6 +22,7 @@
 @license: Educational Community License 1.0
 '''
 # =============enthought library imports=======================
+from __future__ import absolute_import
 from traits.api import HasTraits, List
 from traitsui.api import View, Item, Group
 

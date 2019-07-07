@@ -22,6 +22,8 @@
 
 # ============= local library imports  ==========================
 
+from __future__ import absolute_import
+from __future__ import print_function
 from pychron.hardware.core.arduino_core_device import ArduinoCoreDevice
 '''
 Arduino Sketch fiberlightbox
@@ -39,22 +41,16 @@ FiberLight Protocol ver 0.2
 
 class ArduinoFiberLightModule(ArduinoCoreDevice):
     def power_on(self):
-        '''
-        '''
         cmd = 4
         cmd = self._build_command(cmd)
         self.ask(cmd)
 
     def power_off(self):
-        '''
-        '''
         cmd = 5
         cmd = self._build_command(cmd)
         self.ask(cmd)
 
     def set_intensity(self, v):
-        '''
-        '''
         cmd = 6
         cmd = self._build_command(cmd, int(v))
         self.ask(cmd)
@@ -82,8 +78,8 @@ class ArduinoFiberLightModule(ArduinoCoreDevice):
 
                 if cmd == '1':
                     return int(v)
-            except Exception, err:
-                print 'parse_response {}'.format(resp), err
+            except Exception as err:
+                print('parse_response {}'.format(resp), err)
 
     def _build_command(self, cmd, value=None):
         if value is not None:

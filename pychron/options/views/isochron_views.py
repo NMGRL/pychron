@@ -15,10 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traitsui.api import View, Item, HGroup, VGroup, Group
+from traitsui.api import View, Item, HGroup, VGroup, Group, UItem, RangeEditor
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.options.options import SubOptions, AppearanceSubOptions
+from pychron.core.pychron_traits import BorderHGroup, BorderVGroup
+from pychron.envisage.icon_button_editor import icon_button_editor
+from pychron.options.options import SubOptions, AppearanceSubOptions, GroupSubOptions, TitleSubOptions
+from pychron.pychron_constants import FLECK_PLATEAU_DEFINITION, MAHON_PLATEAU_DEFINITION
 
 
 class IsochronMainOptions(SubOptions):
@@ -31,33 +35,83 @@ class IsochronAppearance(AppearanceSubOptions):
     pass
 
 
-class InverseIsochronMainOptions(SubOptions):
+class InverseIsochronMainOptions(TitleSubOptions):
     def traits_view(self):
+        plat_grp = BorderHGroup(VGroup(Item('omit_non_plateau', label='Omit Non Plateau Steps'),
+                                       Item('exclude_non_plateau', label='Exclude Non Plateau Steps')),
+                                HGroup(Item('plateau_method',
+                                            tooltip='Fleck 1977={}\n'
+                                                    'Mahon 1996={}'.format(FLECK_PLATEAU_DEFINITION,
+                                                                           MAHON_PLATEAU_DEFINITION),
+                                            label='Method'),
+                                       icon_button_editor('edit_plateau_criteria', 'cog',
+                                                          tooltip='Edit Plateau Criteria'),
+                                       visible_when='omit_non_plateau'),
+                                label='Plateau')
+
         g = Group(Item('error_calc_method',
                        width=-150,
                        label='Error Calculation Method'),
+                  Item('regressor_kind', label='Method'),
+
+                  plat_grp,
                   show_border=True,
                   label='Calculations')
 
-        g2 = Group(HGroup(Item('show_info', label='Show'),
-                          label='Info'),
-                   HGroup(Item('fill_ellipses', ),
-                          Item('label_box'),
-                          show_border=True, label='Labels'),
-                   VGroup(Item('show_nominal_intercept'),
-                          HGroup(Item('nominal_intercept_label', label='Label', enabled_when='show_nominal_intercept'),
-                                 Item('_nominal_intercept_value', label='Value', enabled_when='show_nominal_intercept'),
-                                 Item('invert_nominal_intercept', label='Invert')),
-                          show_border=True,
-                          label='Nominal Intercept'),
-                   VGroup(Item('display_inset'),
-                          Item('inset_location'),
-                          HGroup(Item('inset_marker_size', label='Marker Size'),
-                                 Item('inset_marker_color', label='Color')),
-                          HGroup(Item('inset_width', label='Width'),
-                                 Item('inset_height', label='Height')),
-                          show_border=True,
-                          label='Inset'),
+        info_grp = HGroup(Item('show_info', label='Info'),
+                          BorderHGroup(UItem('info_fontname'),
+                                       UItem('info_fontsize')))
+
+        results_grp = HGroup(Item('show_results_info', label='Results'),
+                             VGroup(BorderVGroup(HGroup(Item('nsigma', label='NSigma'),
+                                                        Item('results_info_spacing',
+                                                             editor=RangeEditor(mode='spinner', low=2,
+                                                                                high=20, is_float=False),
+                                                             label='Spacing')),
+                                                 HGroup(UItem('results_fontname'),
+                                                        UItem('results_fontsize'))),
+                                    BorderHGroup(Item('age_sig_figs', label='Age'),
+                                                 Item('yintercept_sig_figs', label='Y-Int.'),
+                                                 label='SigFigs'),
+                                    BorderVGroup(Item('include_4036_mse', label='Ar40/Ar36'),
+                                                 Item('include_age_mse', label='Age'),
+                                                 Item('include_percent_error', label='%Error'),
+                                                 label='Include')))
+
+        ellipse_grp = BorderHGroup(Item('fill_ellipses', label='fill'),
+                                   Item('ellipse_kind', label='Kind'),
+                                   label='Error Ellipse')
+        label_grp = BorderVGroup(Item('show_labels'),
+                                 HGroup(Item('label_box'),
+                                        UItem('label_fontname'),
+                                        UItem('label_fontsize'),
+                                        enabled_when='show_labels'),
+                                 label='Labels')
+
+        marker_grp = BorderHGroup(Item('marker_size', label='Size'),
+                                  Item('marker', label='Marker'),
+                                  label='Marker')
+        g2 = Group(self._get_title_group(),
+                   BorderVGroup(info_grp,
+                                results_grp,
+                                label='Info'),
+                   Item('include_error_envelope'),
+                   marker_grp,
+                   ellipse_grp,
+                   label_grp,
+
+                   BorderVGroup(Item('show_nominal_intercept'),
+                                HGroup(Item('nominal_intercept_label', label='Label',
+                                            enabled_when='show_nominal_intercept'),
+                                       Item('nominal_intercept_value', label='Value',
+                                            enabled_when='show_nominal_intercept')),
+                                label='Nominal Intercept'),
+                   BorderVGroup(Item('display_inset'),
+                                Item('inset_location'),
+                                HGroup(Item('inset_marker_size', label='Marker Size')),
+                                HGroup(Item('inset_width', label='Width'),
+                                       Item('inset_height', label='Height')),
+                                label='Inset'),
                    show_border=True,
                    label='Display')
         return self._make_view(VGroup(g, g2))
@@ -70,7 +124,10 @@ class InverseIsochronAppearance(AppearanceSubOptions):
 # ===============================================================
 # ===============================================================
 
-ISOCHRON_VIEWS = {'main': IsochronMainOptions, 'appearance': IsochronAppearance}
-INVERSE_ISOCHRON_VIEWS = {'main': InverseIsochronMainOptions, 'appearance': InverseIsochronAppearance}
+ISOCHRON_VIEWS = {'main': IsochronMainOptions,
+                  'appearance': IsochronAppearance}
+INVERSE_ISOCHRON_VIEWS = {'main': InverseIsochronMainOptions,
+                          'appearance': InverseIsochronAppearance,
+                          'groups': GroupSubOptions}
 
 # ============= EOF =============================================

@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.tx.errors import InvalidValveErrorCode, InvalidArgumentsErrorCode, ValveSoftwareLockErrorCode, \
     ValveActuationErrorCode
 from pychron.tx.protocols.service import ServiceProtocol
@@ -125,11 +126,11 @@ class BaseValveProtocol(ServiceProtocol):
         if result is True:
             result = 'OK' if change else 'ok'
         elif result is None:
-            result = InvalidArgumentsErrorCode('Close', data, logger=self)
+            result = InvalidArgumentsErrorCode('Close', data)
         elif result == 'software lock enabled':
-            result = ValveSoftwareLockErrorCode(data, logger=self)
+            result = ValveSoftwareLockErrorCode(data)
         else:
-            result = ValveActuationErrorCode(data, 'close', logger=self)
+            result = ValveActuationErrorCode(data, 'close')
 
         return result
 

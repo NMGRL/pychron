@@ -15,6 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
+import six
+from sqlalchemy.exc import InternalError
 from traits.api import HasTraits, Str, Date, Long, Bool
 
 from pychron.experiment.utilities.identifier import get_analysis_type
@@ -38,9 +42,19 @@ class InterpretedAgeRecordView(object):
         self.identifier = idn
         self.name = obj.get('name')
         self.path = path
-        self.age = obj.get('age')
-        self.age_err = obj.get('age_err')
-        self.age_kind = obj.get('age_kind')
+
+        pf = obj.get('preferred')
+        self.age = pf.get('age')
+        self.age_err = pf.get('age_err')
+
+        kinds = pf.get('preferred_kinds')
+        for k in kinds:
+            if k['attr'] == 'age':
+                self.age_kind = k['kind']
+                self.age_error_kind = k['error_kind']
+
+        # self.age_kind = .get('age_kind')
+        # self.age_error_kind = obj.get('age_error_kind')
 
     @property
     def id(self):
@@ -71,8 +85,14 @@ class SampleRecordView(RecordView):
     identifier = ''
     principal_investigator = ''
     note = ''
+    id = None
+
+    def __str__(self):
+        return self.name
 
     def _create(self, dbrecord):
+        self.id = dbrecord.id
+
         if dbrecord.material:
             self.material = dbrecord.material.name
             self.grainsize = dbrecord.material.grainsize or ''
@@ -114,6 +134,7 @@ class LabnumberRecordView(RecordView):
     irradiation = ''
     irradiation_level = ''
     irradiation_pos = ''
+    packet = ''
 
     def _create(self, dbrecord):
         self.labnumber = dbrecord.identifier or ''
@@ -122,6 +143,7 @@ class LabnumberRecordView(RecordView):
         # pos = dbrecord.irradiation_position
         if pos:
             self.irradiation_pos = str(pos.position)
+            self.packet = str(pos.packet)
             level = pos.level
             if level:
                 irrad = level.irradiation
@@ -132,12 +154,12 @@ class LabnumberRecordView(RecordView):
         sample = dbrecord.sample
         if sample:
             if sample.material:
-                if isinstance(sample.material, (str, unicode)):
+                if isinstance(sample.material, (str, six.text_type)):
                     self.material = sample.material
                 else:
                     self.material = sample.material.name
             if sample.project:
-                if isinstance(sample.material, (str, unicode)):
+                if isinstance(sample.material, (str, six.text_type)):
                     self.project = sample.project
                 else:
                     self.project = sample.project.name
@@ -149,9 +171,13 @@ class LabnumberRecordView(RecordView):
             else:
                 dbattr = attr
             try:
-                v = getattr(sample, dbattr)
-                if v is not None:
-                    setattr(self, attr, v)
+                try:
+                    v = getattr(sample, dbattr)
+                    if v is not None:
+                        setattr(self, attr, v)
+                except InternalError:
+                    pass
+
             except AttributeError:
                 pass
 
@@ -188,6 +214,14 @@ class NameView(HasTraits):
     @property
     def id(self):
         return self.name
+
+
+class LoadRecordView(RecordView, NameView):
+    def _create(self, dbrecord):
+        if not isinstance(dbrecord, str):
+            self.name = dbrecord.name
+        else:
+            self.name = dbrecord
 
 
 class ProjectRecordView(RecordView, NameView):

@@ -48,7 +48,7 @@ class PieClockModel(HasTraits):
         return v
 
     def set_slices(self, slices, colors):
-        self.pie_clock.slices = zip(slices, colors)
+        self.pie_clock.slices = list(zip(slices, colors))
         self.update_slices_event = True
 
     def start(self):

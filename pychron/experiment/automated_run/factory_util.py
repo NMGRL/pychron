@@ -16,7 +16,8 @@
 
 from traits.trait_types import Event
 
-from pychron.core.helpers.filetools import list_directory2, list_directory
+from pychron.core.helpers.filetools import glob_list_directory, list_directory
+from pychron.core.helpers.strtools import csv_to_ints
 from pychron.experiment.utilities.position_regex import SLICE_REGEX, SSLICE_REGEX, PSLICE_REGEX, CSLICE_REGEX, \
     TRANSECT_REGEX
 from pychron.paths import paths
@@ -70,7 +71,7 @@ def increment_position(pos):
         if regex.match(pos):
             return ifunc(pos)
     else:
-        m = map(int, pos.split(','))
+        m = csv_to_ints(pos)
         ms = []
         offset = max(m) - min(m)
         inc = 1
@@ -94,7 +95,7 @@ def generate_positions(pos):
 
 def get_run_blocks():
     p = paths.run_block_dir
-    blocks = list_directory2(p, '.txt', remove_extension=True)
+    blocks = glob_list_directory(p, '.txt', remove_extension=True)
     return ['RunBlock', LINE_STR] + blocks
 
 

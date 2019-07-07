@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import unittest
 
 from pychron.loading.loading_manager import LoadingManager

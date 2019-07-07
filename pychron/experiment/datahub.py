@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Instance, Bool, Dict
 
@@ -23,6 +24,8 @@ from pychron.experiment.utilities.identifier import make_aliquot_step, make_step
 from pychron.loggable import Loggable
 from pychron.mass_spec.database.massspec_database_adapter import MissingAliquotPychronException
 from pychron.pychron_constants import DETECTOR_IC
+import six
+from six.moves import zip
 
 
 def check_list(lst):
@@ -220,15 +223,15 @@ class Datahub(Loggable):
             return (main.precedence,), (main.db.name,), (main.get_greatest_aliquot(identifier),)
         else:
 
-            return zip(*[(store.precedence, store.db.name,
+            return list(zip(*[(store.precedence, store.db.name,
                           store.get_greatest_aliquot(identifier) or 0 if store.is_connected() else 0)
-                         for store in self.sorted_stores])
+                         for store in self.sorted_stores]))
 
     def _get_greatest_steps(self, identifier, aliquot):
         f = lambda x: x if x is not None else -1
-        return zip(*[(store.precedence, store.db.name,
+        return list(zip(*[(store.precedence, store.db.name,
                       f(store.get_greatest_step(identifier, aliquot)) if store.is_connected() else -1)
-                     for store in self.sorted_stores])
+                     for store in self.sorted_stores]))
 
     def _datastores_default(self):
         return []
@@ -250,7 +253,7 @@ class Datahub(Loggable):
 
     @property
     def sorted_stores(self):
-        return sorted(self.stores.itervalues(), key=lambda x: x.precedence)
+        return sorted(self.stores.values(), key=lambda x: x.precedence)
 
         # if self._sorted_stores:
         #     return self._sorted_stores

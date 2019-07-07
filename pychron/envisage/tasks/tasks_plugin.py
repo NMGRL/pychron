@@ -14,10 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
 import hashlib
 import random
+from threading import Thread
 
+# ============= enthought library imports =======================
 from envisage.extension_point import ExtensionPoint
 from envisage.ui.tasks.action.exit_action import ExitAction
 from envisage.ui.tasks.action.preferences_action import PreferencesAction
@@ -30,7 +31,6 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 from traits.api import List, Tuple, HasTraits, Password
 from traitsui.api import View, Item
 
-from pychron.core.helpers.strtools import to_bool
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import ToggleFullWindowAction, EditInitializationAction, EditTaskExtensionsAction
 from pychron.envisage.tasks.base_plugin import BasePlugin
@@ -52,14 +52,7 @@ class PychronTasksPlugin(BasePlugin):
     available_task_extensions = ExtensionPoint(List, id='pychron.available_task_extensions')
 
     my_tips = List(contributes_to='pychron.plugin.help_tips')
-
-    # def _application_changed(self):
-    #     # defaults = (('use_advanced_ui', False), ('show_random_tip', True))
-    #     defaults = (('show_random_tip', True),)
-    #     try:
-    #         self._set_preference_defaults(defaults, 'pychron.general')
-    #     except AttributeError, e:
-    #         print 'exception', e
+    background_processes = ExtensionPoint(List, id='pychron.background_processes')
 
     def start(self):
         self.info('Writing plugin file defaults')
@@ -67,13 +60,31 @@ class PychronTasksPlugin(BasePlugin):
 
         self._set_user()
         self._random_tip()
+        self._start_background_processes()
+
+    def _start_background_processes(self):
+
+        self.info('starting background processes disabled')
+        return
+
+        for i, p in enumerate(self.background_processes):
+            if isinstance(p, tuple):
+                name, func = p
+            else:
+                func = p
+                name = 'Background{:02n}'.format(i)
+
+            if hasattr(func, '__call__'):
+                t = Thread(target=func, name=name)
+                t.setDaemon(True)
+                t.start()
 
     def _set_user(self):
         self.application.preferences.set('pychron.general.username', globalv.username)
         self.application.preferences.save()
 
     def _random_tip(self):
-        if globalv.random_tip_enabled and to_bool(self.application.preferences.get('pychron.general.show_random_tip')):
+        if globalv.random_tip_enabled and self.application.get_boolean_preference('pychron.general.show_random_tip'):
             from pychron.envisage.tasks.tip_view import TipView
 
             t = random.choice(self.help_tips)
@@ -87,6 +98,7 @@ class PychronTasksPlugin(BasePlugin):
                 '<b>2.</b> Set the flag <i>random_tip_enabled</i> to False in the initialization file',
                 'Use <b>Window/Reset Layout</b> to change the current window back to its default "Look"',
                 'Submit bugs or issues to the developers manually using <b>Help/Add Request/Report Bug</b>',
+                'The current version of Pychron contains over 156K lines of code in 1676 files',
                 'If menu actions are missing first check that the desired "Plugin" is enabled using <b>Help/Edit '
                 'Initialization</b>. If "Plugin" is enabled, check that the desired action is enabled using '
                 '<b>Help/Edit UI</b>.']
@@ -134,10 +146,6 @@ class mExitAction(ExitAction):
                 if ret == NO:
                     return
         app.exit(force=True)
-        # try:
-        # except RuntimeError:
-        #     import os
-        #     os._exit(0)
 
 
 class myTasksPlugin(TasksPlugin):
@@ -163,7 +171,7 @@ class myTasksPlugin(TasksPlugin):
         return [TaskExtension(actions=actions)]
 
     def _create_preferences_dialog_service(self):
-        from preferences_dialog import PreferencesDialog
+        from .preferences_dialog import PreferencesDialog
 
         dialog = PreferencesDialog(application=self.application)
         dialog.trait_set(categories=self.preferences_categories,

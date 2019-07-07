@@ -17,12 +17,14 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
+from __future__ import absolute_import
 import time
 
 # ============= local library imports  ==========================
-from aerotech_axis import AerotechAxis
+from .aerotech_axis import AerotechAxis
 from pychron.hardware.core.data_helper import make_bitarray
 from pychron.hardware.motion_controller import MotionController
+from six.moves import map
 
 ACK = chr(6)
 NAK = chr(15)
@@ -49,8 +51,8 @@ class AerotechMotionController(MotionController):
         return True
 
     def xy_swapped(self):
-        if self.axes.has_key('y'):
-            return self.axes.keys().index('y') == 0
+        if 'y' in self.axes:
+            return list(self.axes.keys()).index('y') == 0
 
     def linear_move(self, x, y, sign_correct=True, block=False, velocity=None,
                     set_stage=True,
@@ -79,12 +81,10 @@ class AerotechMotionController(MotionController):
             nx = self._sign_correct(nx, 'x', ratio=False)
             ny = self._sign_correct(ny, 'y', ratio=False)
 
-        x = self.axes['x']
-        y = self.axes['y']
-
         if velocity is not None:
-            xv = yv = velocity
+            xv = velocity
         else:
+            x = self.axes['x']
             xv = x.velocity
 
         if self.xy_swapped():
@@ -233,8 +233,8 @@ class AerotechMotionController(MotionController):
 
     def _get_axes_name_list(self, axes):
         if axes is None:
-            axes = self.axes.keys()
-        axes = map(str.upper, axes)
+            axes = list(self.axes.keys())
+        axes = list(map(str.upper, axes))
         return ' '.join(axes)
 
     #    def disable(self):

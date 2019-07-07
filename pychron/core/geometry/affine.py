@@ -13,9 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
+
 import math
 
-from numpy import array, identity, sin, cos, radians
+from numpy import array, identity, sin, cos, radians, ones_like, vstack
 from scipy import linalg
 
 
@@ -90,6 +92,12 @@ class AffineTransform(object):
         v = self.new_vector(px, py)
         T = self.A.dot(v)
         return T[0, 0], T[1, 0]
+
+    def transforms(self, xs, ys):
+        v = vstack((xs, ys, ones_like(xs)))
+        t = self.A.dot(v)
+
+        return t[0], t[1]
 
     def new_vector(self, x, y):
         return array([[x], [y], [1]])

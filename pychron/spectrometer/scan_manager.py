@@ -15,9 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+
 import os
 import time
-from Queue import Queue
+from queue import Queue
 from threading import Thread
 
 import yaml
@@ -49,6 +50,7 @@ class ScanManager(StreamGraphManager):
     readout_view = Instance(ReadoutView)
 
     integration_time = DelegatesTo('spectrometer')
+    integration_times = DelegatesTo('spectrometer')
     spectrometer_configurations = DelegatesTo('spectrometer')
     spectrometer_configuration = DelegatesTo('spectrometer')
     set_spectrometer_configuration = Button
@@ -106,6 +108,11 @@ class ScanManager(StreamGraphManager):
 
         self.mass_scanner.dump()
         self.dac_scanner.dump()
+
+    def position_magnet(self, iso, det):
+        self.isotope = iso
+        self._set_detector(det)
+        self._set_position()
 
     def stop(self):
         self.prepare_destroy()
@@ -318,8 +325,7 @@ class ScanManager(StreamGraphManager):
             self._signal_failed_cnt = 0
             # if self._check_intensity_no_change(signals):
             #     return
-
-            series, idxs = zip(*((i, keys.index(d.name)) for i, d in enumerate(self.detectors) if d.name in keys))
+            series, idxs = list(zip(*((i, keys.index(d.name)) for i, d in enumerate(self.detectors) if d.name in keys)))
             signals = [signals[idx] for idx in idxs]
 
             x = self.graph.record_multiple(signals,
@@ -345,7 +351,7 @@ class ScanManager(StreamGraphManager):
     def _update_scan_graph(self):
         if self.scan_enabled:
             try:
-                data = self.spectrometer.get_intensities()
+                data = self.spectrometer.get_intensities(trigger=True)
                 if data:
                     self._update(data)
 
@@ -429,7 +435,7 @@ class ScanManager(StreamGraphManager):
 
     @property
     def update_period(self):
-        return self.integration_time
+        return self.integration_time * 1.1
 
     # ===============================================================================
     # handlers
@@ -477,7 +483,7 @@ class ScanManager(StreamGraphManager):
             # self.scanner.detector = self.detector
             nominal_width = 1
             emphasize_width = 2
-            for name, plot in self.graph.plots[0].plots.iteritems():
+            for name, plot in self.graph.plots[0].plots.items():
                 plot = plot[0]
                 plot.line_width = emphasize_width if name == self.detector.name else nominal_width
 
@@ -549,24 +555,30 @@ class ScanManager(StreamGraphManager):
         if self.use_vertical_markers:
             bottom_pad = 120
 
-        plot = g.new_plot(padding=[55, 5, 5, bottom_pad],
+        plot = g.new_plot(padding=[70, 5, 5, bottom_pad],
                           data_limit=n,
-                          xtitle='Time',
-                          ytitle='Signal',
+                          # xtitle='Time',
+                          # ytitle='Signal',
                           scale=self.graph_scale,
                           bgcolor='lightgoldenrodyellow',
                           zoom=False)
+        plot.x_axis.title = 'Time'
+        plot.y_axis.title = 'Signal'
 
+        plot.x_axis.title_font = 'Arial 14'
+        plot.x_axis.tick_label_font = 'Arial 12'
+        plot.y_axis.title_font = 'Arial 14'
+        plot.y_axis.tick_label_font = 'Arial 12'
         plot.x_grid.visible = False
 
         for i, det in enumerate(self.detectors):
-            print 'adding det {} {}'.format(i, det.name)
             g.new_series(visible=det.active,
                          color=det.color)
             g.set_series_label(det.name)
             det.series_id = i
 
         if plot.plots:
+
             cp = plot.plots[det.name][0]
             dt = DataTool(plot=cp, component=plot,
                           normalize_time=True,

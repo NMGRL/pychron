@@ -15,10 +15,10 @@
 # ===============================================================================
 
 # ============= standard library imports ========================
-from traitsui.api import Controller, View, UItem, Item, HGroup, VGroup, EnumEditor
-
+from traitsui.api import Controller, UItem, Item, HGroup, VGroup, EnumEditor
 
 # ============= local library imports  ==========================
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 
 
 class ProjectOptionalsView(Controller):
@@ -36,10 +36,8 @@ class ProjectOptionalsView(Controller):
         c_grp = HGroup(UItem('lock_project_comment',
                              tooltip='Prevent Comment from being automatically cleared'),
                        VGroup(UItem('project_comment', style='custom'), label='Comment', show_border=True))
-        v = View(VGroup(lc_grp, i_grp, c_grp),
-                 buttons=['OK', 'Cancel'],
-                 resizable=True,
-                 title='Set Optional Project Values')
+        v = okcancel_view(VGroup(lc_grp, i_grp, c_grp),
+                          title='Set Optional Project Values')
         return v
 
 # ============= EOF =============================================

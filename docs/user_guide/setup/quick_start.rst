@@ -4,15 +4,76 @@ Quick Start (ish)
 Step 0. Downloads
 ==========================
 
-    A. Download and install the excellent python IDE, PyCharm. A free community edition is available at https://www.jetbrains.com/pycharm/
+    A. (Optional) Download and install the excellent python IDE, PyCharm. A free community edition is available at
+       https://www.jetbrains.com/pycharm/
     #. Install Git. https://git-scm.com/downloads
-    #. Download the Anaconda Python Distribution from https://store.continuum.io/cshop/anaconda/. This download includes the Python standard library and numerous open
+    #. Download the Anaconda Python 3.6 Distribution from https://store.continuum.io/cshop/anaconda/. This download
+       includes the Python standard library and numerous open
        source packages for science, engineering and application development. The excellent package manager ``conda`` is
        also included to install any additional dependencies
     #. Create an account at https://github.com. This free account will give you access to Pychron's source files, support files
        and even the source for this documentation.
 
     .. note:: For steps A-C you must open the downloaded package and run the installer.
+
+For Update Plugin
+==========================
+    #. Create hidden directory ``.pychron.<APPLLICATION_ID>`` in your Home folder. Replace ``<APPLICATION_ID>`` with
+       an integer. e.g. 0
+    #. Clone the pychron source. Replace ``<ORGANIZATION>`` with the appropriate fork e.g. NMGRL
+       ::
+
+         cd ~/.pychron.0
+         git clone https://github.com/<ORGANIZATION>/pychron.git updates
+
+
+Launcher Script
+==========================
+Create the file ``pychron_launcher.sh`` in a convenient place
+
+ ::
+
+    #!/bin/bash
+
+    export APPLICATION_ID=0
+
+    ROOT=~/.pychron.$APPLICATION_ID/updates
+
+    echo Using $ROOT as "ROOT" directory
+
+    ENTRY_POINT=$ROOT/launchers/launcher.py
+
+    export PYCHRON_APPNAME=pyexperiment
+    export PYTHONPATH=$ROOT
+
+    export GITHUB_USER=
+    export GITHUB_PASSWORD=
+    export GITHUB_ORGANIZATION=
+    export MassSpecDBVersion=16
+    export CONDA_DISTRO=~/anaconda3
+    export CONDA_ENV=pychron
+    export QT_API=pyqt
+
+    $CONDA_DISTRO/envs/$CONDA_ENV/bin/pythonw $ENTRY_POINT
+
+
+Setup Environment
+========================================
+Install command line developer tools
+::
+    xcode-select --install
+
+Setup the conda environment
+::
+
+    conda create -n pychron3 python=3.5 python.app
+    source activate pychron3
+    conda install pymysql gitpython sqlalchemy reportlab lxml pyyaml yaml
+    conda install envisage pyqt=4 statsmodels
+    conda install xlrd xlwrt xlsxwriter
+    conda install requests certifi
+    conda install swig cython
+    pip install chaco uncertainties peakutils qimage2ndarray
 
 Manual
 ===========================

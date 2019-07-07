@@ -27,6 +27,7 @@ http://eurotherm.com/document-library/?ignoreeveryonegroup=0&assetdetesctl139041
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.eurotherm.base import BaseEurotherm
 

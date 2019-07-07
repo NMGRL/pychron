@@ -14,9 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
 import os
-from itertools import groupby
+from operator import attrgetter
 
 from envisage.ui.tasks.action.task_window_launch_group import TaskWindowLaunchAction
 from pyface.action.api import ActionItem, Group
@@ -31,13 +30,15 @@ from pyface.timer.do_later import do_later, do_after
 from traits.api import Any, on_trait_change, List, Unicode, Instance
 
 from pychron.core.helpers.filetools import add_extension, view_file
+from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.preference_mixin import PreferenceMixin
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import GenericSaveAction, GenericSaveAsAction, \
     GenericFindAction, RaiseAction, RaiseUIAction, ResetLayoutAction, \
     MinimizeAction, PositionAction, IssueAction, CloseAction, CloseOthersAction, AboutAction, OpenAdditionalWindow, \
-    NoteAction, RestartAction, DocumentationAction, CopyPreferencesAction, ChangeLogAction, StartupTestsAction
+    NoteAction, RestartAction, DocumentationAction, ChangeLogAction, StartupTestsAction, \
+    ShareSettingsAction, ApplySettingsAction
 from pychron.loggable import Loggable
 from pychron.paths import paths
 
@@ -95,7 +96,7 @@ class WindowGroup(Group):
         self.manager.changed = True
 
 
-class myTaskWindowLaunchAction(TaskWindowLaunchAction):
+class MyTaskWindowLaunchAction(TaskWindowLaunchAction):
     """
         modified TaskWIndowLaunchAction default behaviour
 
@@ -130,9 +131,11 @@ class TaskGroup(Group):
 
 
 class BaseTask(Task, Loggable, PreferenceMixin):
-    # application = DelegatesTo('window')
-
     _full_window = False
+
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
+        self.init_logger()
 
     def _activate_task(self, tid):
         if self.window:
@@ -194,66 +197,56 @@ class BaseTask(Task, Loggable, PreferenceMixin):
             menus = []
 
         edit_menu = SMenu(GenericFindAction(),
-                          id='Edit', name='&Edit')
+                          id='edit.menu', name='&Edit')
 
-        # entry_menu = SMenu(
-        #     id='entry.menu',
-        #     name='&Entry')
+        file_menu = SMenu(SGroup(id='Open'),
+                          SGroup(id='New'),
+                          SGroup(
+                              GenericSaveAsAction(),
+                              GenericSaveAction(),
+                              id='Save'),
+                          # SGroup(),
+                          id='file.menu', name='File')
 
-        file_menu = SMenu(
-            SGroup(id='Open'),
-            SGroup(id='New'),
-            SGroup(
-                GenericSaveAsAction(),
-                GenericSaveAction(),
-                id='Save'),
-            SGroup(),
-            id='file.menu', name='File')
+        tools_menu = SMenu(ShareSettingsAction(),
+                           ApplySettingsAction(),
+                           id='tools.menu', name='Tools')
 
-        tools_menu = SMenu(
-            CopyPreferencesAction(),
-            id='tools.menu', name='Tools')
+        window_menu = SMenu(WindowGroup(),
+                            Group(CloseAction(),
+                                  CloseOthersAction(),
+                                  id='Close'),
+                            OpenAdditionalWindow(),
+                            Group(MinimizeAction(),
+                                  ResetLayoutAction(),
+                                  PositionAction()),
 
-        window_menu = SMenu(
-            WindowGroup(),
-            Group(
-                CloseAction(),
-                CloseOthersAction(),
-                id='Close'),
-            OpenAdditionalWindow(),
-            Group(MinimizeAction(),
-                  ResetLayoutAction(),
-                  PositionAction()),
+                            # SplitEditorAction(),
+                            id='window.menu',
+                            name='Window')
+        help_menu = SMenu(IssueAction(),
+                          NoteAction(),
+                          AboutAction(),
+                          DocumentationAction(),
+                          ChangeLogAction(),
+                          RestartAction(),
 
-            # SplitEditorAction(),
-            id='window.menu',
-            name='Window')
-        help_menu = SMenu(
-            IssueAction(),
-            NoteAction(),
-            AboutAction(),
-            DocumentationAction(),
-            ChangeLogAction(),
-            RestartAction(),
+                          # KeyBindingsAction(),
+                          # SwitchUserAction(),
 
-            # KeyBindingsAction(),
-            # SwitchUserAction(),
-
-            StartupTestsAction(),
-            # DemoAction(),
-            id='help.menu',
-            name='Help')
+                          StartupTestsAction(),
+                          id='help.menu',
+                          name='Help')
 
         grps = self._view_groups()
         view_menu = SMenu(*grps, id='view.menu', name='&View')
 
-        mb = SMenuBar(
-            file_menu,
-            edit_menu,
-            view_menu,
-            tools_menu,
-            window_menu,
-            help_menu)
+        mb = SMenuBar(file_menu,
+                      edit_menu,
+                      view_menu,
+                      tools_menu,
+                      window_menu,
+                      help_menu)
         if menus:
             for mi in reversed(menus):
                 mb.items.insert(4, mi)
@@ -277,11 +270,9 @@ class BaseTask(Task, Loggable, PreferenceMixin):
 
         application = self.window.application
         groups = []
-        for _, factories in groupby(sorted(application.task_factories,
-                                           key=groupfunc),
-                                    key=groupfunc):
+        for _, factories in groupby_key(application.task_factories, groupfunc):
             items = []
-            for factory in factories:
+            for factory in sorted(factories, key=attrgetter('id')):
                 for win in application.windows:
                     if win.active_task:
                         if win.active_task.id == factory.id:
@@ -290,10 +281,8 @@ class BaseTask(Task, Loggable, PreferenceMixin):
                 else:
                     checked = False
 
-                action = myTaskWindowLaunchAction(task_id=factory.id,
+                action = MyTaskWindowLaunchAction(task_id=factory.id,
                                                   checked=checked)
-                # if hasattr(factory, 'size'):
-                # action.size = factory.size
 
                 if hasattr(factory, 'accelerator'):
                     action.accelerator = factory.accelerator
@@ -310,7 +299,6 @@ class BaseTask(Task, Loggable, PreferenceMixin):
 
             groups.append(TaskGroup(items=items))
 
-        # groups.append(DockPaneToggleGroup())
         return groups
 
     def _confirmation(self, message='', title='Save Changes?'):
@@ -363,14 +351,11 @@ class BaseManagerTask(BaseTask):
     manager = Any
 
     def view_pdf(self, p):
-        # self.view_file(p, application='Adobe Reader')
         self.view_file(p, application='Preview')
 
     def view_xls(self, p):
         application = 'Microsoft Office 2011/Microsoft Excel'
         self.view_file(p, application)
-
-    #         self.view_file(p)
 
     def view_csv(self, p):
         application = 'TextWrangler'
@@ -378,15 +363,6 @@ class BaseManagerTask(BaseTask):
 
     def view_file(self, p, application='Preview'):
         view_file(p, application=application, logger=self)
-        # app_path = '/Applications/{}.app'.format(application)
-        # if not os.path.exists(app_path):
-        #     app_path = '/Applications/Preview.app'
-        #
-        # try:
-        #     subprocess.call(['open', '-a', app_path, p])
-        # except OSError:
-        #     self.debug('failed opening {} using {}'.format(p, app_path))
-        #     subprocess.call(['open', p])
 
     def open_directory_dialog(self, **kw):
         if 'default_directory' not in kw:
@@ -396,14 +372,9 @@ class BaseManagerTask(BaseTask):
             if self.wildcard:
                 kw['wildcard'] = self.wildcard
 
-        dialog = DirectoryDialog(
-            # parent=self.window.control,
-            action='open',
-            **kw)
+        dialog = DirectoryDialog(action='open', **kw)
         if dialog.open() == OK:
             r = dialog.path
-            # if action == 'open files':
-            #     r = dialog.paths
             return r
 
     def open_file_dialog(self, action=None, **kw):
@@ -427,8 +398,7 @@ class BaseManagerTask(BaseTask):
     def save_file_dialog(self, ext=None, **kw):
         if 'default_directory' not in kw:
             kw['default_directory'] = self.default_directory
-        dialog = FileDialog(parent=self.window.control, action='save as',
-                            **kw)
+        dialog = FileDialog(parent=self.window.control, action='save as', **kw)
         if dialog.open() == OK:
             path = dialog.path
             if path:
@@ -445,22 +415,12 @@ class BaseExtractionLineTask(BaseManagerTask):
         man = app.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
         return man
 
-    # def activated(self):
-    #     super(BaseExtractionLineTask, self).activated()
-    #
-    #     app = self.window.application
-    #     man = app.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
-    #     if man:
-    #         man.start_status_monitor()
-
     def prepare_destroy(self):
         man = self._get_el_manager()
         if man:
             man.deactivate()
 
     def _add_canvas_pane(self, panes):
-        # app = self.window.application
-        # man = app.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
         man = self._get_el_manager()
         if man:
             from pychron.extraction_line.tasks.extraction_line_pane import CanvasDockPane
@@ -476,7 +436,6 @@ class BaseExtractionLineTask(BaseManagerTask):
         man = self._get_el_manager()
         if man:
             do_after(1000, man.activate)
-            # man.activate()
 
 
 class BaseHardwareTask(BaseManagerTask):

@@ -15,16 +15,19 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
+
 import hashlib
 import inspect
 import os
 import sys
 import time
 import traceback
-from Queue import Empty, LifoQueue
 from threading import Event, Thread, Lock
 
 import yaml
+from six.moves.queue import Empty, LifoQueue
 from traits.api import Str, Any, Bool, Property, Int, Dict
 
 from pychron.globals import globalv
@@ -83,7 +86,7 @@ def verbose_skip(func):
             if obj.testing_syntax or obj.is_canceled() or obj.is_truncated() or obj.is_aborted():
                 return 0
 
-            obj.debug('{} {} {}'.format(fname, args, kw))
+            obj.debug('func_name={} args={} kw={}'.format(fname, args, kw))
 
             return func(obj, *args, **kw)
 
@@ -299,7 +302,8 @@ class PyScript(Loggable):
             if r is not None:
                 self.console_info('invalid syntax')
                 ee = PyscriptError(self.filename, r)
-                print 'invalid pyscript', self.text
+                print('invalid pyscript', self.text)
+                print('error', r)
                 raise ee
 
             elif not self._interval_stack.empty():
@@ -325,14 +329,14 @@ class PyScript(Loggable):
 
             try:
                 script = imp.load_source('script', snippet)
-            except Exception, e:
+            except Exception as e:
                 return e
             script.__dict__.update(safe_dict)
             try:
                 script.main(*argv)
             except TypeError:
                 script.main()
-            except AttributeError, e:
+            except AttributeError as e:
                 self.debug('{} {}'.format(e, traceback.format_exc()))
                 return MainError
 
@@ -340,15 +344,15 @@ class PyScript(Loggable):
 
             try:
                 code = compile(snippet, '<string>', 'exec')
-            except BaseException, e:
+            except BaseException as e:
                 self.debug(traceback.format_exc())
                 return e
 
             try:
-                exec code in safe_dict
+                exec(code, safe_dict)
                 func = safe_dict['main']
-            except KeyError, e:
-                print 'exception', e, safe_dict.keys()
+            except KeyError as e:
+                print('exception', e, list(safe_dict.keys()))
                 self.debug('{} {}'.format(e, traceback.format_exc()))
                 return MainError()
 
@@ -360,13 +364,13 @@ class PyScript(Loggable):
                 func(*argv)
                 self.debug('executed snippet estimated_duration={}, duration={}'.format(self._estimated_duration,
                                                                                         time.time() - st))
-            except Exception, e:
+            except Exception as e:
                 return traceback.format_exc()
 
     def syntax_ok(self, warn=True):
         try:
             self.test()
-        except PyscriptError, e:
+        except PyscriptError as e:
             if warn:
                 self.warning_dialog(traceback.format_exc())
             return False
@@ -436,7 +440,7 @@ class PyScript(Loggable):
         return []
 
     def get_commands(self):
-        cmds = self.get_command_register() + command_register.commands.items()
+        cmds = self.get_command_register() + list(command_register.commands.items())
         return cmds
 
     def get_command_register(self):
@@ -463,6 +467,7 @@ class PyScript(Loggable):
             self._wait_control.stop()
         self._abort_hook()
 
+    @command_register
     def cancel(self, **kw):
         self._cancel = True
         if self._gosub_script is not None:
@@ -492,7 +497,7 @@ class PyScript(Loggable):
     # ===============================================================================
     def load_interpolation_context(self):
         ctx = self._get_interpolation_context()
-        return ctx.keys()
+        return list(ctx.keys())
 
     # ==============================================================================
     # commands
@@ -668,9 +673,10 @@ class PyScript(Loggable):
                 if self.info_color:
                     self.manager.info(message, color=self.info_color, log=False)
                 else:
+                    print(self.manager)
                     self.manager.info(message, log=False)
 
-        except AttributeError, e:
+        except AttributeError as e:
             self.debug('m_info {}'.format(e))
 
     # ===============================================================================
@@ -745,7 +751,12 @@ class PyScript(Loggable):
             self.debug('no application available. self.manager = {}'.format(self.manager))
         return app
 
-    def _manager_action(self, func, name=None, protocol=None, protocols=None, *args, **kw):
+    def _manager_action(self, func, *args, **kw):
+        result = self._manager_actions([func], *args, **kw)
+        if result:
+            return result[0]
+
+    def _manager_actions(self, func, name=None, protocol=None, protocols=None, *args, **kw):
         man = self.manager
 
         app = self._get_application()
@@ -771,12 +782,23 @@ class PyScript(Loggable):
         if man is not None:
             if not isinstance(func, list):
                 func = [(func, args, kw)]
+
             rs = []
-            for f, a, k in func:
+            for params in func:
+                if len(params) == 1:
+                    f, a, k = params[0], (), {}
+                elif len(params) == 2:
+                    f, a = params
+                    k = None
+                else:
+                    f, a, k = params
 
                 r = None
+                self.debug('man={}, func={}, hasattr={}'.format(man, f, hasattr(man, f)))
                 if hasattr(man, f):
                     r = getattr(man, f)(*a, **k)
+                    self.debug('result={}'.format(r))
+
                 rs.append(r)
             return rs
             # return [getattr(man, f)(*a, **k) for f, a, k in func]
@@ -797,19 +819,22 @@ class PyScript(Loggable):
 
     def _setup_wait_control(self):
         from pychron.wait.wait_control import WaitControl
+        wd = self._wait_control
         if self.manager:
-            wd = self.manager.get_wait_control()
-        else:
-            wd = self._wait_control
+            if hasattr(self.manager, 'get_wait_control'):
+                wd = self.manager.get_wait_control()
 
         if wd is None:
             wd = WaitControl()
 
         self._wait_control = wd
         if self.manager:
-            if wd not in self.manager.wait_group.controls:
-                self.manager.wait_group.controls.append(wd)
-            self.manager.wait_group.active_control = wd
+            try:
+                if wd not in self.manager.wait_group.controls:
+                    self.manager.wait_group.controls.append(wd)
+                self.manager.wait_group.active_control = wd
+            except AttributeError:
+                pass
 
         return wd
 
@@ -831,14 +856,17 @@ class PyScript(Loggable):
                 # with self._block_lock:
                 wd = self._setup_wait_control()
 
-            msg = 'WaitControl setup for {:0.1f}  {}'.format(timeout, message)
+            msg = 'WaitControl setup for {:03d}  {}'.format(int(timeout), message)
 
             self.debug(msg)
             wd.start(duration=timeout, message=msg)
             # wd.join()
 
             if self.manager:
-                self.manager.wait_group.pop(wd)
+                try:
+                    self.manager.wait_group.pop(wd)
+                except AttributeError:
+                    pass
 
             if wd.is_canceled():
                 self.cancel()
@@ -871,7 +899,7 @@ class PyScript(Loggable):
                 try:
                     with open(self.interpolation_path, 'r') as rfile:
                         d = yaml.load(rfile)
-                except yaml.YAMLError, e:
+                except yaml.YAMLError as e:
                     self.debug(e)
             else:
                 self.debug('not a file. {}'.format(self.interpolation_path))
@@ -882,7 +910,7 @@ class PyScript(Loggable):
 
     def _tracer(self, frame, event, arg):
         if event == 'line':
-            print frame.f_code.co_filename, frame.f_lineno
+            print(frame.f_code.co_filename, frame.f_lineno)
 
         return self._tracer
 

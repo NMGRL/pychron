@@ -15,9 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
+
 import os
-from cStringIO import StringIO
 from datetime import datetime
+from io import StringIO
 
 import pytz
 import requests
@@ -25,6 +28,7 @@ from lxml import etree
 from traits.api import HasTraits, Str, Float, Enum, Property, Date, Time
 from traitsui.api import View, VGroup, Item, EnumEditor, Tabbed, UItem, HGroup, TextEditor
 
+from pychron.core.helpers.datetime_tools import ISO8601
 from pychron.core.ui.preference_binding import bind_preference
 from pychron.igsn.definitions import SAMPLE_ATTRS, SAMPLE_TYPES, ROCK_TYPES, SUB_ROCK_TYPES, ROCK_TYPE_DETAILS, LAT_TT, \
     ELEVATION_TT, LONG_TT, MATERIALS
@@ -146,7 +150,7 @@ class IGSNSampleModel(HasTraits):
             utc_dt = local_dt.astimezone(pytz.utc)
 
             # YYYY - MM - DDTHH:MM:SSZ
-            return utc_dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+            return utc_dt.strftime(ISO8601)
 
     def _get_rock_type_details(self):
         v = []
@@ -336,7 +340,7 @@ class IGSNService(Loggable):
                     igsns = igsns[0]
         else:
             error = tree.find('error')
-            print error.text
+            print(error.text)
             self.warning_dialog('Failed Getting a new IGSN.\nError={}'.format(error.text))
 
         return igsns
@@ -356,6 +360,6 @@ if __name__ == '__main__':
                        password=os.environ.get('GeoPassPassword'))
     name = 'foo'
     # material = 'Bar'
-    print igsn.get_new_igsn(name)
+    print(igsn.get_new_igsn(name))
     # print igsn._assemble_content(sample)
 # ============= EOF =============================================

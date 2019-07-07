@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Button, on_trait_change
 
 import os
@@ -49,12 +50,13 @@ class LaserStageMap(BaseStageMap):
         previous = []
         p = self.center_guess_path
         if os.path.isfile(p):
-            with open(p, 'r') as rfile:
+            with open(p, 'rb') as rfile:
                 previous = [l if l[0] == '#' else '#{}'.format(l) for l in rfile.readlines()]
 
         previous.append('{},{}\n'.format(x, y))
-        with open(p, 'w') as wfile:
-            wfile.writelines(previous)
+        with open(p, 'wb') as wfile:
+            for lin in previous:
+                wfile.write(lin.encode('utf-8'))
 
     def load_correction_file(self):
         self.debug('load correction file')
@@ -64,9 +66,9 @@ class LaserStageMap(BaseStageMap):
             with open(p, 'rb') as f:
                 try:
                     cors = pickle.load(f)
-                except (ValueError, pickle.PickleError), e:
+                except (ValueError, pickle.PickleError, EOFError) as e:
                     self.warning_dialog('Failed to load the correction file:\n{}\n'
-                                        'If you are relying on SemiAuto or Auto calibration a'
+                                        'If you are relying on SemiAuto or Auto calibration a '
                                         'recalibration is required'.format(p))
                     if self.confirmation_dialog('Would you like to delete the file:\n {}'.format(p)):
                         os.remove(p)
@@ -85,7 +87,7 @@ class LaserStageMap(BaseStageMap):
         idx = row.index(h)
         n = len(row)
         eidx = n - 1
-        midx = eidx / 2
+        midx = eidx // 2
         if idx < midx:
             a, b = row[0], row[midx]
             p = idx / float(midx)
@@ -204,7 +206,7 @@ class LaserStageMap(BaseStageMap):
             return holes[0][0]
 
     def traits_view(self):
-        from stage_map_view import StageMapView
+        from .stage_map_view import StageMapView
         return StageMapView(model=self).traits_view()
 
 

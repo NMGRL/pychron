@@ -21,9 +21,10 @@
 # from traitsui.api import View,Item,Group,HGroup,VGroup
 
 # ============= standard library imports ========================
+from __future__ import absolute_import
 import time
 
-from monitor import Monitor
+from .monitor import Monitor
 
 # from threading import Thread
 # ============= local library imports  ==========================

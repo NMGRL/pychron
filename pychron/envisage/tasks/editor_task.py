@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface.tasks.api import IEditor, IEditorAreaPane
 from pyface.tasks.task_layout import PaneItem, Splitter
 from traits.api import Property, Instance
@@ -68,7 +69,10 @@ class BaseEditorTask(BaseManagerTask):
         return (ei for ei in self.editor_area.editors if isinstance(ei, klass))
 
     def close_editor(self, editor):
-        self.editor_area.remove_editor(editor)
+        try:
+            self.editor_area.remove_editor(editor)
+        except AttributeError:
+            pass
 
     def activate_editor(self, editor):
         if self.editor_area:

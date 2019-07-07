@@ -21,21 +21,13 @@ os.environ['RTD'] = 'True'
 
 sys.path.insert(0, os.path.abspath('../'))
 
-# from mock import Mock as MagicMock
-#
-# class Mock(MagicMock):
-#     @classmethod
-#     def __getattr__(cls, name):
-#         return Mock()
-#
-#
-# MOCK_MODULES = ['numpy', 'scipy',
-#
-#                 'PySide',
-#                 'QtGui',
-#                 'QtCore',
-#                 'QApplication']
-# sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+autodoc_mock_imports = ['chaco',
+                        'traitsui', 'pyface',
+                        'traits',
+                        'pyvisa', 'serial', 'numpy', 'scipy', 'yaml',
+                        'git', 'apptools', 'xlwt', 'uncertainties', 'twisted',
+                        'enable', 'gitdb', 'kiva', 'statsmodels', 'envisage',
+                        'xlsxwriter', 'reportlab']
 
 # -- General configuration -----------------------------------------------------
 
@@ -49,7 +41,8 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.coverage',
               # 'sphinx.ext.pngmath',
               # 'sphinx.ext.mathjax',
-              'sphinx.ext.viewcode']
+              'sphinx.ext.viewcode',
+              ]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

@@ -14,10 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
+from __future__ import absolute_import
+from __future__ import print_function
+
 import math
-import time
 from datetime import datetime
 
+import time
 from numpy import ediff1d, asarray
 from numpy import where
 
@@ -104,3 +107,32 @@ def bin_timestamps(ts, tol_hrs=1):
     # print dts
     idxs = where(dts > tol)[0]
     return idxs
+
+
+def bin_datetimes(ts, delta):
+    low = ts[0] - delta
+    high = ts[0] + delta
+    for ti in ts:
+        if ti - delta > high:
+            yield low, high
+            low = ti - delta
+
+        high = ti + delta
+    yield low, high
+
+
+ISO8601 = '%Y-%m-%dT%H:%M:%SZ'
+
+
+def format_iso_datetime(v, as_str=True):
+    v = datetime.strptime(v, ISO8601)
+    if as_str:
+        v = v.strftime('%m-%d-%Y %H:%M')
+    return v
+
+
+if __name__ == '__main__':
+    times = [1, 2, 3, 4, 7, 20, 21, 22]
+
+    for l, h in bin_datetimes(times, 5):
+        print(l, h)

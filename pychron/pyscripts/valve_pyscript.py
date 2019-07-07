@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
 import time
 
 from traits.api import Any
@@ -36,7 +38,7 @@ class ValvePyScript(PyScript):
     retry_actuation = True
 
     def get_command_register(self):
-        return command_register.commands.items()
+        return list(command_register.commands.items())
 
     def gosub(self, *args, **kw):
         kw['runner'] = self.runner
@@ -49,13 +51,12 @@ class ValvePyScript(PyScript):
     @command_register
     def lock(self, name=None, description=''):
         if description is None:
-            description = '---'
+            description = NULL_STR
 
         self.console_info('locking {} ({})'.format(name, description))
         if self.allow_lock:
-            return self._manager_action([('lock_valve', (name,), dict(
-                mode='script',
-                description=description))], protocol=ELPROTOCOL)
+            return self._manager_actions([('lock_valve', (name,),
+                                           dict(mode='script', description=description))], protocol=ELPROTOCOL)
         else:
             self.warning('Valve locking not enabled for this script')
 
@@ -63,13 +64,12 @@ class ValvePyScript(PyScript):
     @command_register
     def unlock(self, name=None, description=''):
         if description is None:
-            description = '---'
+            description = NULL_STR
 
         self.console_info('unlocking {} ({})'.format(name, description))
         if self.allow_lock:
-            return self._manager_action([('unlock_valve', (name,), dict(
-                mode='script',
-                description=description))], protocol=ELPROTOCOL)
+            return self._manager_actions([('unlock_valve', (name,),
+                                           dict(mode='script', description=description))], protocol=ELPROTOCOL)
         else:
             self.warning('Valve locking not enabled for this script')
 
@@ -86,9 +86,8 @@ class ValvePyScript(PyScript):
     def _valve_actuation(self, action, name, description):
         self.console_info('{} name={} desc={}'.format(action, name or NULL_STR, description or NULL_STR))
 
-        result = self._manager_action([('{}_valve'.format(action), (name,), dict(
-            mode='script',
-            description=description))], protocol=ELPROTOCOL)
+        result = self._manager_actions([('{}_valve'.format(action), (name,),
+                                         dict(mode='script', description=description))], protocol=ELPROTOCOL)
 
         self.debug('-------------------------- {} {} ({}) result={}'.format(action, name, description, result))
         if result is not None:
@@ -130,12 +129,11 @@ class ValvePyScript(PyScript):
         :return: 
         """
         ok, changed = result[0]
-        if changed:
-            time.sleep(0.25)
+        # if changed:
+        #     time.sleep(0.25)
 
-        locked = self._manager_action([('get_software_lock', (name,), dict(
-            mode='script',
-            description=description))], protocol=ELPROTOCOL)
+        locked = self._manager_actions([('get_software_lock', (name,),
+                                         dict(mode='script', description=description))], protocol=ELPROTOCOL)
 
         # if action == 'close':
         # ok = not ok
@@ -151,9 +149,8 @@ class ValvePyScript(PyScript):
                                                                                               description or '')
                 self.console_info(msg)
 
-                result = self._manager_action([('{}_valve'.format(action), (name,), dict(
-                    mode='script',
-                    description=description))], protocol=ELPROTOCOL)
+                result = self._manager_actions([('{}_valve'.format(action), (name,),
+                                                 dict(mode='script', description=description))], protocol=ELPROTOCOL)
 
                 if result is not None:
                     change_ok = self._finish_valve_change(action, result, name, description, retry=retry + 1)
@@ -171,7 +168,7 @@ class ValvePyScript(PyScript):
         #     return True
 
     def _get_valve_state(self, name, description):
-        return self._manager_action([('get_valve_state', (name,), dict(
-            description=description))], protocol=ELPROTOCOL)
+        return self._manager_actions([('get_valve_state', (name,),
+                                       dict(description=description))], protocol=ELPROTOCOL)
 
 # ============= EOF =============================================

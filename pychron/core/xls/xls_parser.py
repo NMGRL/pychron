@@ -16,15 +16,16 @@
 
 # ============= enthought library imports =======================
 
+import six
 # ============= standard library imports ========================
-# ============= local library imports  ==========================
 import xlrd
 
 from pychron.core.csv.csv_parser import BaseColumnParser
 
 
+# ============= local library imports  ==========================
 
-# @provides(IColumnParser)
+
 class XLSParser(BaseColumnParser):
     # def load(self, p, header_idx=0):
     # wb = xlrd.open_workbook(p)
@@ -32,6 +33,9 @@ class XLSParser(BaseColumnParser):
     # self.sheet = sheet
     # self._header = map(str.strip, map(str, sheet.row_values(header_idx)))
     # self._header_offset=header_idx+1
+    sheet = None
+    _header = None
+
     def _load(self, p, header_idx, sheet=None):
         wb = xlrd.open_workbook(p)
         self.workbook = wb
@@ -47,10 +51,11 @@ class XLSParser(BaseColumnParser):
         wb = self.workbook
         if isinstance(sheet, int):
             sheet = wb.sheet_by_index(sheet)
-        elif isinstance(sheet, (str, unicode)):
+        elif isinstance(sheet, (str, six.text_type)):
             sheet = wb.sheet_by_name(sheet)
         self.sheet = sheet
-        self._header = map(str.strip, map(str, sheet.row_values(header_idx)))
+        self._header = [str(r).strip() for r in sheet.row_values(header_idx)]
+
     # def has_key(self, key):
     #     """
     #         if key is an int return true if key valid index
@@ -82,7 +87,7 @@ class XLSParser(BaseColumnParser):
 
     def iterblock(self, col, attr):
         ci = self._get_index(col)
-        for i in xrange(self.nrows):
+        for i in range(self.nrows):
             if self.get_value(i, ci) == attr:
                 yield self.sheet.row(i)
 

@@ -16,17 +16,18 @@
 
 # =============enthought library imports=======================
 
+from __future__ import absolute_import
 from threading import Timer
 
 from traits.api import Instance, Button, Bool, Float
 from traitsui.api import VGroup, Item, InstanceEditor
 
-from fusions_laser_manager import FusionsLaserManager
+from .fusions_laser_manager import FusionsLaserManager
 from pychron.hardware.fusions.fusions_diode_logic_board import FusionsDiodeLogicBoard
 from pychron.hardware.mikron_pyrometer import MikronGA140Pyrometer
 from pychron.hardware.pyrometer_temperature_monitor import PyrometerTemperatureMonitor
 from pychron.hardware.temperature_monitor import DPi32TemperatureMonitor
-from pychron.hardware.watlow_ezzone import WatlowEZZone
+from pychron.hardware.watlow.watlow_ezzone import WatlowEZZone
 from pychron.lasers.laser_managers.vue_metrix_manager import VueMetrixManager
 from pychron.monitors.fusions_diode_laser_monitor import FusionsDiodeLaserMonitor
 from pychron.response_recorder import ResponseRecorder
@@ -137,8 +138,6 @@ class FusionsDiodeManager(FusionsLaserManager):
 
     def _enable_hook(self, clear_setpoint=True):
         if super(FusionsDiodeManager, self)._enable_hook():  # logic board sucessfully enabled
-            if self.fiber_light.auto_onoff and self.fiber_light.state:
-                self.fiber_light.power_off()
 
             if clear_setpoint:
                 # disable the temperature_controller unit a value is set
@@ -150,12 +149,6 @@ class FusionsDiodeManager(FusionsLaserManager):
             return self.control_module_manager.enable()
 
     def _disable_hook(self):
-        if self.fiber_light.auto_onoff and not self.fiber_light.state:
-            if self._recording_power_state:
-                t = Timer(7, self.fiber_light.power_on)
-                t.start()
-            else:
-                self.fiber_light.power_on()
 
         self.response_recorder.stop()
         self.temperature_controller.disable()

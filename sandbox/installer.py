@@ -17,8 +17,9 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 import os
-import subprocess
 import shutil
+import subprocess
+
 # ============= local library imports  ==========================
 
 '''

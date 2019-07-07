@@ -13,11 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.api import Str, List
+from __future__ import absolute_import
+
+import os
+import re
+
 # ============= standard library imports ========================
 import yaml
-import re
-import os
+from traits.api import Str, List
+
 # ============= local library imports  ==========================
 from pychron.core.progress import progress_loader
 from pychron.dvc.dvc_database import DVCDatabase
@@ -105,7 +109,7 @@ class Searcher(Loggable):
             if prog:
                 # if prog and i % 25 == 0:
                 prog.change_message('Loading {}'.format(xi.record_id))
-            return xi.record_views
+            return xi
 
         return progress_loader(ans, func, threshold=25, step=25)
 

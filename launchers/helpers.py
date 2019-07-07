@@ -14,28 +14,22 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-from pyface.util.guisupport import get_app_qt4
+import logging
+import os
+import subprocess
+# ============= standard library imports ========================
+import sys
+import warnings
+
+import traits.has_traits
+from pyface.confirmation_dialog import confirm
+from pyface.message_dialog import warning
+from pyface.qt import QtGui, QtCore
 from traits.etsconfig.api import ETSConfig
+from traitsui.qt4.table_editor import TableDelegate
 from traitsui.qt4.ui_panel import heading_text
 
 from pychron.environment.util import set_application_home
-
-ETSConfig.toolkit = "qt4"
-
-from ConfigParser import NoSectionError
-
-from pyface.confirmation_dialog import confirm
-from pyface.message_dialog import warning
-
-from traitsui.qt4.table_editor import TableDelegate
-from pyface.qt import QtGui, QtCore
-import traits.has_traits
-# ============= standard library imports ========================
-import sys
-import logging
-import subprocess
-import warnings
-import os
 
 # ============= local library imports  ==========================
 
@@ -45,22 +39,22 @@ warnings.simplefilter("ignore")
 logger = logging.getLogger()
 
 
-def set_stylesheet(path):
-    app = get_app_qt4()
-    app.setStyle('plastique')
-
-    if path is None:
-        import shutil
-
-        force = True
-        default_css = 'darkorange.css'
-        from pychron.paths import paths
-        path = paths.hidden_path(default_css)
-        if not os.path.isfile(path) or force:
-            shutil.copyfile(default_css, path)
-
-    with open(path, 'r') as rfile:
-        app.setStyleSheet(rfile.read())
+# def set_stylesheet(path):
+#     app = get_app_qt4()
+#     app.setStyle('plastique')
+#
+#     if path is None:
+#         import shutil
+#
+#         force = True
+#         default_css = 'darkorange.css'
+#         from pychron.paths import paths
+#         path = paths.hidden_path(default_css)
+#         if not os.path.isfile(path) or force:
+#             shutil.copyfile(default_css, path)
+#
+#     with open(path, 'r') as rfile:
+#         app.setStyleSheet(rfile.read())
 
 
 def monkey_patch_preferences():
@@ -156,15 +150,6 @@ class myPanel(BasePanel):
             bar = parent.tabBar()
             if not isinstance(bar, myQTabBar):
                 parent.setTabBar(myQTabBar())
-
-        # p = parent
-        # while p is not None:
-        #     try:
-        #         bar = p.tabBar()
-        #     except AttributeError:
-        #         bar = None
-        #     print p, bar
-        #     p = p.parent()
         # =========================================
 
         # Panels must be widgets as it is only the TraitsUI PyQt code that can
@@ -321,18 +306,27 @@ def monkey_patch_checkbox_render():
     checkbox_renderer.CheckboxRenderer = CheckboxRenderer
 
 
-def entry_point(appname, klass, debug=False):
+KLASS_MAP = {'pyexperiment': 'PyExperiment',
+             'pyview': 'PyView',
+             'pyvalve': 'PyValve',
+             'pyco2': 'PyCO2',
+             'pydiode': 'PyDiode',
+             'pysampleprep': 'PySamplePrep'}
+
+
+def entry_point(appname, debug=False):
     """
         entry point
     """
+    klass = KLASS_MAP.get(appname)
 
     monkey_patch_preferences()
     monkey_patch_checkbox_render()
     monkey_patch_panel()
 
+    # set_stylesheet('darkorange.css')
     env = initialize_version(appname, debug)
     if env:
-
         # set_stylesheet(None)
 
         if debug:
@@ -472,7 +466,7 @@ def initialize_version(appname, debug):
     logger.debug('using Pychron environment: {}'.format(env))
     paths.build(env)
 
-    from ConfigParser import ConfigParser
+    from configparser import ConfigParser, NoSectionError
     cp = ConfigParser()
     pref_path = os.path.join(ETSConfig.application_home, 'preferences.ini')
     cp.read(pref_path)
@@ -502,9 +496,8 @@ def initialize_version(appname, debug):
     # setup logging. set a basename for log files and logging level
     logging_setup('pychron', level='DEBUG')
 
-    from pychron.core.helpers.exception_helper import set_exception_handler, report_issues
+    from pychron.core.helpers.exception_helper import set_exception_handler
     set_exception_handler()
-    report_issues()
 
     return env
 
@@ -528,13 +521,13 @@ def add_eggs(root):
             for egg_name in eggs:
                 # sys.path.insert(0, os.path.join(root, egg_name))
                 sys.path.append(os.path.join(root, egg_name))
-                print os.path.join(root, egg_name)
+                print(os.path.join(root, egg_name))
 
 
 def build_globals(user, debug):
     try:
         from pychron.envisage.initialization.initialization_parser import InitializationParser
-    except ImportError, e:
+    except ImportError as e:
         from pyface.message_dialog import warning
 
         warning(None, str(e))

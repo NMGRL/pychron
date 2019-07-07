@@ -15,9 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pychron.core.helpers.strtools import to_bool
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.strtools import to_bool
 from pychron.loggable import Loggable
 from pychron.regex import ALIQUOT_REGEX
 
@@ -28,7 +28,7 @@ class RunParser(Loggable):
         if not isinstance(line, list):
             line = line.split(delim)
 
-        args = map(str.strip, line)
+        args = [l.strip() for l in line]
         script_info = self._load_scripts(header, args)
         ln = args[header.index('labnumber')]
         if ALIQUOT_REGEX.match(ln):
@@ -72,7 +72,7 @@ class RunParser(Loggable):
                     v = args[idx]
                     if v.strip():
                         return hi, cast(v) if cast else v
-                except IndexError, e:
+                except IndexError as e:
                     pass
                     # print 'exception', e, attr, idx, args
 
@@ -99,6 +99,7 @@ class RunParser(Loggable):
                      ('time_zero_offset', 't_o'),
                      ('extract_value', 'e_value'),
                      ('beam_diameter', 'beam_diam'),
+                     'light_value',
                      'frequency_group', ]:
 
             v = self._get_attr_value(header, args, attr, cast=float)
@@ -134,14 +135,13 @@ class UVRunParser(RunParser):
         if not isinstance(line, list):
             line = line.split(delim)
 
-        args = map(str.strip, line)
-
+        args = [l.strip() for l in line]
         def _set(attr, cast):
             try:
                 idx = self._get_idx(header, attr)
                 v = args[idx]
                 params[attr] = cast(v)
-            except (IndexError, ValueError, TypeError), e:
+            except (IndexError, ValueError, TypeError) as e:
                 # print 'exception', e
                 pass
 

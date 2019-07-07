@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from difflib import ndiff
 
 from PySide import QtGui, QtCore
@@ -70,7 +71,7 @@ class DiffGutter(LineNumberWidget):
                                      self.fontMetrics().height(),
                                      QtCore.Qt.AlignRight, '...')
 
-            block = block.next()
+            block = next(block)
             top = bottom
             bottom = top + int(cw.blockBoundingRect(block).height())
             blocknum += 1

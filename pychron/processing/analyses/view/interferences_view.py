@@ -15,6 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
+from operator import itemgetter
+
 from traits.api import HasTraits, Str, Float, List, Property
 from traitsui.api import View, Item, UItem, TabularEditor, VGroup, HGroup
 from traitsui.tabular_adapter import TabularAdapter
@@ -49,10 +53,10 @@ class InterferenceAdapter(TabularAdapter):
     font = '10'
 
     def _get_value_text(self):
-        return floatfmt(self.item.value, n=5, use_scientific=True)
+        return floatfmt(self.item.value, n=7, use_scientific=True)
 
     def _get_error_text(self):
-        return floatfmt(self.item.error, n=5, use_scientific=True)
+        return floatfmt(self.item.error, n=7, use_scientific=True)
 
     def _get_percent_error_text(self):
         return format_percent_error(self.item.value, self.item.error)
@@ -74,7 +78,7 @@ class InterferencesView(HasTraits):
         self.pr_name = an.production_name
         a = []
 
-        for k, v in sorted(an.interference_corrections.iteritems(), key=lambda x: x[0]):
+        for k, v in sorted(an.interference_corrections.items(), key=itemgetter(0)):
             if k in MAPPING:
                 k = MAPPING[k]
 
@@ -83,7 +87,7 @@ class InterferencesView(HasTraits):
         self.interferences = a
 
         p = []
-        for k, v in an.production_ratios.iteritems():
+        for k, v in an.production_ratios.items():
             p.append(Interference(name=k.replace('_', '/'),
                                   value=nominal_value(v),
                                   error=std_dev(v)))

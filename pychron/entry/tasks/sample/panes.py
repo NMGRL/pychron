@@ -15,16 +15,18 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Int, Property
-from traitsui.api import View, UItem, HGroup, VGroup, TabularEditor, EnumEditor
+from traitsui.api import View, UItem, HGroup, VGroup, TabularEditor, EnumEditor, VSplit
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.resources import icon
+from pychron.pychron_constants import NULL_STR
 
 GREEN_BALL = icon('green_ball')
 
@@ -35,6 +37,7 @@ class BaseAdapter(TabularAdapter):
     added_image = Property
     added_text = Property
     added_width = Int(50)
+    name_width = Int(200)
 
     def _get_added_text(self):
         return ''
@@ -44,7 +47,9 @@ class BaseAdapter(TabularAdapter):
 
 
 class PIAdapter(BaseAdapter):
-    pass
+    columns = [('Added', 'added'), ('Name', 'name'), ('Affiliation', 'affiliation'), ('Email', 'email')]
+    email_width = Int(100)
+    affiliation_width = Int(200)
 
 
 class MaterialAdapter(BaseAdapter):
@@ -56,8 +61,65 @@ class ProjectAdapter(BaseAdapter):
                ('Contact', 'lab_contact'), ('Institution', 'institution'), ('Comment', 'comment')]
     principal_investigator_text = Property
 
+    lab_contact_width = Int(100)
+    institution_width = Int(100)
+    principal_investigator_width = Int(100)
+
     def _get_principal_investigator_text(self):
         return self.item.principal_investigator.name
+
+
+class DBSampleAdapter(TabularAdapter):
+    columns = [('Name', 'name'),
+               ('Project', 'project'),
+               ('Material', 'material'),
+               ('Grainsize', 'grainsize'),
+               ('PI', 'principal_investigator'),
+               ('Lat', 'lat'),
+               ('Lon', 'lon'),
+               ('Elevation', 'elevation'),
+               ('Lithology', 'lithology'),
+               ('Location', 'location')]
+    principal_investigator_text = Property
+    project_text = Property
+    material_text = Property
+    grainsize_text = Property
+
+    elevation_text = Property
+    lithology_text = Property
+    location_text = Property
+    storage_location_text = Property
+
+    def _get_elevation_text(self):
+        return self._get_value('elevation')
+
+    def _get_lithology_text(self):
+        return self._get_value('lithology')
+
+    def _get_location_text(self):
+        return self._get_value('location')
+
+    def _get_storage_location_text(self):
+        return self._get_value('storage_location')
+
+    def _get_value(self, attr):
+        v = getattr(self.item, attr)
+        return v if v is not None else NULL_STR
+
+    def get_width(self, object, trait, column):
+        return 100
+
+    def _get_material_text(self):
+        return self.item.material.name
+
+    def _get_grainsize_text(self):
+        return self.item.material.grainsize
+
+    def _get_project_text(self):
+        return self.item.project.name
+
+    def _get_principal_investigator_text(self):
+        return self.item.project.principal_investigator.name
 
 
 class SampleAdapter(ProjectAdapter):
@@ -66,6 +128,10 @@ class SampleAdapter(ProjectAdapter):
                ('Material', 'material'),
                ('Grainsize', 'grainsize'),
                ('PI', 'principal_investigator')]
+
+    project_width = Int(100)
+    material_width = Int(100)
+    grainsize_width = Int(100)
 
     project_text = Property
     material_text = Property
@@ -87,25 +153,45 @@ class SampleAdapter(ProjectAdapter):
 class SampleEntryPane(TraitsTaskPane):
     def traits_view(self):
         pis = VGroup(UItem('_principal_investigators', editor=TabularEditor(adapter=PIAdapter(),
+                                                                            multi_select=True,
+                                                                            selected='selected_principal_investigators',
                                                                             editable=False,
                                                                             refresh='refresh_table')),
                      show_border=True,
                      label='PrincipalInvestigators')
 
         ms = VGroup(UItem('_materials', editor=TabularEditor(adapter=MaterialAdapter(),
+                                                             multi_select=True,
+                                                             selected='selected_materials',
                                                              editable=False, refresh='refresh_table')),
                     show_border=True,
                     label='Materials')
 
         ps = VGroup(UItem('_projects', editor=TabularEditor(adapter=ProjectAdapter(),
+                                                            selected='selected_projects',
+                                                            multi_select=True,
                                                             editable=False, refresh='refresh_table')),
                     show_border=True,
                     label='Projects')
         ss = VGroup(UItem('_samples', editor=TabularEditor(adapter=SampleAdapter(),
+                                                           selected='selected_samples',
+                                                           multi_select=True,
                                                            editable=False, refresh='refresh_table')),
                     show_border=True,
                     label='Samples')
-        return View(VGroup(pis, ps, ms, ss))
+
+        entry = VGroup(pis, ps, ms, ss, label='Entry')
+
+        current = VGroup(HGroup(UItem('sample_filter_attr',
+                                      editor=EnumEditor(name='sample_filter_attrs')),
+                                UItem('sample_filter')),
+                         VSplit(UItem('db_samples', editor=TabularEditor(adapter=DBSampleAdapter(),
+                                                                         multi_select=True,
+                                                                         selected='selected_db_samples',
+                                                                         editable=False)),
+                                UItem('sample_edit_model', style='custom')),
+                         label='Samples')
+        return View(entry, current)
 
 
 class SampleEditorPane(TraitsDockPane):
@@ -130,15 +216,19 @@ class SampleEditorPane(TraitsDockPane):
         pigrp = HGroup(UItem('principal_investigator',
                              editor=ComboboxEditor(name='principal_investigators',
                                                    use_filter=False)),
+                       icon_button_editor('configure_pi_button', 'cog',
+                                          tooltip='Set optional values for Principal Investigator'),
+
                        icon_button_editor('add_principal_investigator_button', 'add',
                                           enabled_when='principal_investigator',
                                           tooltip='Add a principal investigator'),
+
                        label='PrincipalInvestigator',
                        show_border=True)
 
         prgrp = HGroup(UItem('project',
-                             editor=EnumEditor(name='projects')),
-                             # editor=ComboboxEditor(name='projects', use_filter=False)),
+                             # editor=EnumEditor(name='projects')),
+                             editor=ComboboxEditor(name='projects', use_filter=False)),
                        UItem('generate_project_button', tooltip='Generate a default name for this project'),
                        UItem('set_optionals_button', tooltip='Set optional values for current project'),
                        icon_button_editor('add_project_button', 'add',
@@ -150,18 +240,20 @@ class SampleEditorPane(TraitsDockPane):
 
         mgrp = HGroup(UItem('material',
                             editor=EnumEditor(name='materials')),
-                            # editor=ComboboxEditor(name='materials', use_filter=False)),
+                      # editor=ComboboxEditor(name='materials', use_filter=False)),
                       UItem('grainsize',
                             editor=ComboboxEditor(name='grainsizes', use_filter=False)),
-                      icon_button_editor('add_material_button', 'add',
-                                         enabled_when='material',
-                                         tooltip='Add a material'),
+                      # icon_button_editor('add_material_button', 'add',
+                      #                    enabled_when='material',
+                      #                    tooltip='Add a material'),
                       label='Material',
                       show_border=True)
 
         sgrp = VGroup(HGroup(UItem('sample'),
+                             icon_button_editor('configure_sample_button', 'cog', tooltip='Set additional sample '
+                                                                                          'attributes'),
                              icon_button_editor('add_sample_button', 'add',
-                                                enabled_when='sample',
+                                                enabled_when='add_sample_enabled',
                                                 tooltip='Add a sample')),
                       VGroup(UItem('note', style='custom'), label='Note', show_border=True),
                       enabled_when='sample_enabled',

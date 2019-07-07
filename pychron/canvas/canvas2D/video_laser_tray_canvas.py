@@ -17,7 +17,8 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from laser_tray_canvas import LaserTrayCanvas
+from __future__ import absolute_import
+from .laser_tray_canvas import LaserTrayCanvas
 from pychron.canvas.canvas2D.video_canvas import VideoCanvas
 
 
@@ -84,9 +85,9 @@ class VideoLaserTrayCanvas(LaserTrayCanvas, VideoCanvas):
             correct for sense of camera
         """
         if char in ('Left', 'Right'):
-            di = -1 if self.camera.hflip else 1
+            di = -1 if self.video.hflip else 1
         else:
-            di = -1 if self.camera.vflip else 1
+            di = -1 if self.video.vflip else 1
         return direction * di
 
 # ============= EOF ====================================

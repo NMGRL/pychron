@@ -13,15 +13,42 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
+from __future__ import print_function
+
 import re
 
-from traits.api import HasTraits, Instance, List, Str, Long
-from traitsui.api import View, UItem, Item, VGroup, TableEditor, EnumEditor, Controller
+from traits.api import HasTraits, Instance, List, Str, Long, Float, BaseFloat
+from traitsui.api import View, UItem, Item, VGroup, EnumEditor, HGroup
 from traitsui.menu import Action
-from traitsui.table_column import ObjectColumn
 
-EN = re.compile(r'(?P<a>\w*) \((?P<b>\w+, {0,1}\w+)\)')
+EN = re.compile(r'(?P<a>[\w\W]+) \((?P<b>[\w\W]+, ?[\w\W]+)\)')
 
+SAMPLE_ATTRS = ('lat', 'lon', 'igsn', 'storage_location',
+                'lithology', 'location', 'approximate_age', 'elevation',
+                'note')
+
+
+class LatFloat(BaseFloat):
+    def validate(self, obj, name, value):
+        if not isinstance(value, (float, int)):
+            return self.error(obj, name, value)
+        else:
+            if value > 90 or value < -90:
+                return self.error(obj, name, value)
+            else:
+                return value
+
+
+class LonFloat(BaseFloat):
+    def validate(self, obj, name, value):
+        if not isinstance(value, (float, int)):
+            return self.error(obj, name, value)
+        else:
+            if value > 180 or value < -180:
+                return self.error(obj, name, value)
+            else:
+                return value
 
 def extract_names(s):
     a = s
@@ -47,109 +74,137 @@ class SampleEditItem(HasTraits):
     id = Long
     note = Str
 
+    lat = LatFloat
+    lon = LonFloat
+    igsn = Str
+    lithology = Str
+    location = Str
+    storage_location = Str
+    approximate_age = Float
+    elevation = Float
+
     _projects = List
     _materials = List
 
     _project = Str
     _material = Str
+    _grainsize = Str
     _note = Str
+    _lat = LatFloat
+    _lon = LonFloat
+    _igsn = Str
+    _lithology = Str
+    _location = Str
+    _storage_location = Str
+    _approximate_age = Float
+    _elevation = Float
 
-    def __init__(self, rec, *args, **kw):
+    def __init__(self, rec=None, *args, **kw):
         super(SampleEditItem, self).__init__(*args, **kw)
-        self.id = rec.id
+        if rec:
+            self.id = rec.id
 
-        self.name = self._name = rec.name
-        self.note = self._note = rec.note or ''
+            self.name = self._name = rec.name
+            # self.note = self._note = rec.note or ''
 
-        self.project = self._project = rec.project.pname if rec.project else ''
-        self.material = self._material = rec.material.gname if rec.material else ''
+            self.project = self._project = rec.project.pname if rec.project else ''
+            self.material = self._material = rec.material.name if rec.material else ''
+            self.grainsize = self._grainsize = (rec.material.grainsize or '') if rec.material else ''
+            # self.project_name = rec.project.name
+            # self.principal_investigator = rec.project.principal_investigator
+            for attr in SAMPLE_ATTRS:
+                v = getattr(rec, attr)
+                if v is not None:
+                    try:
+                        setattr(self, attr, v)
+                        setattr(self, '_{}'.format(attr), v)
+                    except ValueError:
+                        pass
 
     @property
     def altered(self):
-        attrs = 'name', 'project', 'material', 'note'
-        return any((getattr(self, attr) != getattr(self, '_{}'.format(attr)) for attr in attrs))
+        attrs = ('name', 'project', 'material', 'grainsize') + SAMPLE_ATTRS
+        try:
+            return any((getattr(self, attr) != getattr(self, '_{}'.format(attr)) for attr in attrs))
+        except AttributeError:
+            return False
 
     @property
     def project_pi(self):
         proj, pi = extract_names(self.project)
         return proj, pi
 
-
-class SampleEditModel(HasTraits):
-    sample = Str
-    samples = List
-    _materials = List
-    _projects = List
-
-    def init(self):
-        self.dvc.create_session()
-        self._projects = self.dvc.get_project_pnames()
-        self._materials = self.dvc.get_material_gnames()
-
-    def closed(self):
-        self.dvc.close_session()
-
-    def save(self):
-        db = self.dvc
-        for si in self.samples:
-            if si.altered:
-                dbsam = db.get_sample_id(si.id)
-                dbsam.name = si.name
-                dbsam.note = si.note
-                print extract_names(si.project), si.project
-                dbproj = db.get_project(*extract_names(si.project))
-                if dbproj:
-                    dbsam.projectID = dbproj.id
-
-                dbmat = db.get_material(*extract_names(si.material))
-                # print dbmat, extract_names(si.material)
-                if dbmat:
-                    dbsam.materialID = dbmat.id
-            db.commit()
-
-    # handlers
-    def _sample_changed(self):
-        sams = []
-        if len(self.sample) > 2:
-            sams = self.dvc.get_samples_by_name(self.sample)
-            sams = [SampleEditItem(si, _projects=self._projects,
-                                   _materials=self._materials) for si in sams]
-
-        self.samples = sams
-
-
-class SampleEditView(Controller):
-    dvc = Instance('pychron.dvc.dvc.DVC')
-
-    def closed(self, info, is_ok):
-        self.model.closed()
-
-    def save(self, info):
-        self.model.save()
-
     def traits_view(self):
         vv = View(VGroup(Item('name', label='Sample Name'),
                          Item('project', editor=EnumEditor(name='_projects')),
                          Item('material', editor=EnumEditor(name='_materials')),
+                         Item('grainsize'),
+                         HGroup(VGroup(Item('lat', label='Latitude'),
+                                       Item('lon', label='Longitude'),
+                                       Item('location'),
+                                       Item('elevation'),
+                                       label='Location', show_border=True),
+                                VGroup(Item('lithology'),
+                                       Item('approximate_age', label='Approx. Age (Ma)'),
+                                       Item('storage_location'),
+                                       show_border=True)),
                          VGroup(UItem('note', style='custom'), show_border=True, label='Note')))
+        return vv
 
-        cols = [ObjectColumn(name='id', editable=False, text_font='arial 10'),
-                ObjectColumn(name='name', editable=False, text_font='arial 10'),
-                ObjectColumn(name='project', editable=False, text_font='arial 10'),
-                ObjectColumn(name='material', editable=False, text_font='arial 10'),
-                ObjectColumn(name='note', editable=False, text_font='arial 10')]
 
-        a = UItem('sample')
-        b = UItem('samples', editor=TableEditor(columns=cols,
-                                                orientation='vertical',
-                                                edit_view=vv))
-        v = View(VGroup(a, b),
-                 kind='livemodal',
-                 width=500,
-                 height=400,
-                 buttons=[SaveAction(), ],
-                 title='Edit Sample',
-                 resizable=True)
-        return v
+class SampleEditModel(HasTraits):
+    dvc = Instance('pychron.dvc.dvc.DVC')
+    sample = Str
+    samples = List
+    sample_records = List
+    _materials = List
+    _projects = List
+    sample_item = Instance(SampleEditItem, ())
+
+    def set_sample(self, rec):
+        self.sample_item = SampleEditItem(rec, _projects=self._projects, _materials=self._materials)
+
+    def init(self):
+        self._projects = self.dvc.get_project_pnames()
+        self._materials = self.dvc.get_material_names()
+
+    def save(self):
+        db = self.dvc
+        # for si in self.samples:
+        si = self.sample_item
+        if si.altered:
+            dbsam = db.get_sample_id(si.id)
+            dbsam.name = si.name
+            # dbsam.note = si.note
+            # dbsam.lat = si.lat
+            for attr in SAMPLE_ATTRS:
+                v = getattr(si, attr)
+                setattr(dbsam, attr, v)
+
+            dbproj = db.get_project(*si.project_pi)
+            if dbproj:
+                dbsam.projectID = dbproj.id
+
+            dbmat = db.get_material(si.material, si.grainsize)
+            if dbmat:
+                dbsam.materialID = dbmat.id
+
+            db.commit()
+            db.expire(dbsam)
+
+            return True
+
+    # handlers
+    def _sample_changed(self):
+        # sams = []
+        if len(self.sample) > 2:
+            sams = self.dvc.get_samples_by_name(self.sample)
+            # sams = [SampleEditItem(si, _projects=self._projects,
+            #                        _materials=self._materials) for si in sams]
+            self.sample_item = SampleEditItem(sams[0], _projects=self._projects, _materials=self._materials)
+        # self.samples = sams
+
+    def traits_view(self):
+        return View(UItem('sample_item', style='custom'))
 
 # ============= EOF =============================================

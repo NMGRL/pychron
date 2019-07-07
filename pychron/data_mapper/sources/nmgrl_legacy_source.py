@@ -13,11 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
 from pychron.data_mapper.sources.file_source import FileSource
 
 
 class NMGRLLegacySource(FileSource):
-    def get_analysis_import_spec(self, p):
+    def get_analysis_import_spec(self):
         pspec = self.new_persistence_spec()
         return pspec
 

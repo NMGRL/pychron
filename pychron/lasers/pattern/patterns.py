@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import math
 import os
 
@@ -26,11 +27,12 @@ from traits.api import Bool, Float, Button, Instance, Range, Str, Property, Enum
 from traits.has_traits import HasTraits
 from traitsui.api import View, Item, Group, HGroup, RangeEditor, spring, VGroup, Tabbed, UItem
 
-from pattern_generators import square_spiral_pattern, line_spiral_pattern, random_pattern, \
+from .pattern_generators import square_spiral_pattern, line_spiral_pattern, random_pattern, \
     polygon_pattern, arc_pattern, line_pattern, trough_pattern, rubberband_pattern, raster_rubberband_pattern
 from pychron.graph.graph import Graph
 from pychron.lasers.pattern.pattern_generators import circular_contour_pattern
 from pychron.pychron_constants import NULL_STR
+from six.moves import zip
 
 POLYGONS = ['triangle', 'diamond', 'pentagon', 'hexagon', 'heptagon', 'octogon', 'nonagon', 'decagon']
 
@@ -148,7 +150,7 @@ class OverlapOverlay(AbstractOverlay):
             pts = component.map_screen([(0, 0), (self.beam_radius, 0)])
             rad = abs(pts[0][0] - pts[1][0])
 
-            pts = component.map_screen(zip(xs, ys))
+            pts = component.map_screen(list(zip(xs, ys)))
 
             # for i, (xi, yi) in enumerate(pts):
             #     # gc.set_fill_color((0, 0, 1, 1.0 / (0.75 * i + 1) * 0.5))
@@ -200,6 +202,8 @@ class Pattern(HasTraits):
 
     z_duration = Float
     power_duration = Float
+
+    external_duration = Float
 
     z_period = Float(1)
     z_duty = Float
@@ -304,10 +308,13 @@ class Pattern(HasTraits):
 
     def clear_graph(self):
         graph = self.graph
-        graph.set_data([], series=1, axis=0)
-        graph.set_data([], series=1, axis=1)
-        graph.set_data([], series=2, axis=0)
-        graph.set_data([], series=2, axis=1)
+        try:
+            graph.set_data([], series=1, axis=0)
+            graph.set_data([], series=1, axis=1)
+            graph.set_data([], series=2, axis=0)
+            graph.set_data([], series=2, axis=1)
+        except IndexError:
+            pass
 
     def reset_graph(self, **kw):
         self.graph = self._graph_factory(**kw)

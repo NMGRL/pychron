@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import time
 from threading import Event, Thread
 
@@ -72,7 +73,9 @@ class StatusMonitor(Loggable):
             pass
 
         if not self._clients:
-            self._stop_evt.set()
+            if self._stop_evt:
+                self._stop_evt.set()
+
             self.debug('Status monitor stopped')
 
             if block:

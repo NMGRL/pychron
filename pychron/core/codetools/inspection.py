@@ -22,7 +22,8 @@ import inspect
 import logging
 import traceback
 
-logger=logging.getLogger('Inspection')
+logger = logging.getLogger('Inspection')
+
 
 def caller(func):
     def dec(*args, **kw):
@@ -32,16 +33,17 @@ def caller(func):
             cstack = stack[0]
             rstack = stack[1]
 
-            msg = '{} called by {}. parent call={} {}'.format(func.func_name, rstack[3],
+            msg = '{} called by {}. parent call={} {}'.format(func.__name__, rstack[3],
                                                               cstack[0].f_back.f_locals['self'],
                                                               ''.join(map(str.strip, rstack[4])))
 
-            logger.debug(msg)
-        except BaseException:
+            print(msg)
+        except BaseException as e:
             pass
         return func(*args, **kw)
 
     return dec
+
 
 def conditional_caller(func):
     def dec(*args, **kw):
@@ -52,9 +54,10 @@ def conditional_caller(func):
             cstack = stack[0]
             rstack = stack[1]
 
-            msg = '{} called by {}. parent call={} {}'.format(func.func_name, rstack[3],
+            v = ''.join([r.strip() for r in rstack[4]])
+            msg = '{} called by {}. parent call={} {}'.format(func.__name__, rstack[3],
                                                               cstack[0].f_back.f_locals['self'],
-                                                              ''.join(map(str.strip, rstack[4])))
+                                                              v)
 
             logger.debug(msg)
         return ret
@@ -69,12 +72,12 @@ def pcaller(func):
         cstack = stack[0]
         rstack = stack[1]
 
-        msg = '{} called by {}. parent call={} {}'.format(func.func_name, rstack[3],
+        msg = '{} called by {}. parent call={} {}'.format(func.__name__, rstack[3],
                                                           'aaa',
                                                           # cstack[0].f_back.f_locals['self'],
                                                           ''.join(map(str.strip, rstack[4])))
 
-        print msg
+        print(msg)
         return func(*args, **kw)
 
     return dec
@@ -84,10 +87,9 @@ def caller_stack(func):
     def dec(*args, **kw):
         stack = inspect.stack()
         traceback.print_stack()
-        print '{} called by {}'.format(func.func_name, stack[1][3])
+        print('{} called by {}'.format(func.__name__, stack[1][3]))
         return func(*args, **kw)
 
     return dec
-
 
 # ============= EOF =============================================

@@ -73,14 +73,8 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         bind_preference(self, 'password', '{}.password'.format(prefid))
         bind_preference(self, 'name', '{}.name'.format(prefid))
 
-    # @property
-    # def selector_klass(self):
-    # # lazy load selector klass.
-    #     from pychron.database.selectors.massspec_selector import MassSpecSelector
-    #
-    #     return MassSpecSelector
     def get_irradiation_import_spec(self, name):
-        from pychron.entry.import_spec import ImportSpec, Irradiation, Level, \
+        from pychron.data_mapper.import_spec import ImportSpec, Irradiation, Level, \
             Sample, Project, Position, Production
         spec = ImportSpec()
 
@@ -322,14 +316,19 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         return self._retrieve_item(AnalysesTable, value,
                                    key=key, **kw)
 
+    def get_flux(self, labnumber):
+        with self.session_ctx():
+            obj = self.get_irradiation_position(labnumber)
+            return obj.J, obj.JEr
+
     def get_irradiation_position(self, value):
         return self._retrieve_item(IrradiationPositionTable, value,
                                    key='IrradPosition', )
 
-    def get_irradiation_level(self, name, level):
-        return self._retrieve_item(IrradiationLevelTable,
-                                   value=(name, level),
-                                   key=('IrradBaseID', 'Level'))
+    # def get_irradiation_level(self, name, level):
+    #     return self._retrieve_item(IrradiationLevelTable,
+    #                                value=(name, level),
+    #                                key=('IrradBaseID', 'Level'))
 
     def get_sample(self, value):
         return self._retrieve_item(SampleTable, value, key='Sample')
@@ -461,7 +460,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
     def add_irradiation_production(self, name, pr, ifc):
         kw = {}
-        for k, v in ifc.iteritems():
+        for k, v in ifc.items():
             if k == 'cl3638':
                 k = 'P36Cl38Cl'
             else:
@@ -474,7 +473,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         kw['ClOverKMultiplierEr'] = 0
         kw['CaOverKMultiplier'] = pr['Ca_K']
         kw['CaOverKMultiplierEr'] = 0
-        v = binascii.crc32(''.join([str(v) for v in kw.itervalues()]))
+        v = binascii.crc32(''.join([str(v) for v in kw.values()]))
         q = self.session.query(IrradiationProductionTable)
         q = q.filter(IrradiationProductionTable.ProductionRatiosID == v)
         if not self._query_one(q):
@@ -729,7 +728,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
             uses a crc-32 of text as the RunScriptID
         """
-        crc = binascii.crc32(text)
+        crc = binascii.crc32(text.encode('utf-8'))
         rs = self.get_runscript(crc)
         if rs is None:
             rs = RunScriptTable(RunScriptID=crc, Label=label, TheText=text)

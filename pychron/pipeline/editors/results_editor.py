@@ -15,18 +15,29 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Int, Property, List, Instance, Event, Bool
+from __future__ import absolute_import
+from enable.component_editor import ComponentEditor
+from traits.api import Int, Property, List, Instance, Event, Bool, Button, List
 from traitsui.api import View, UItem, TabularEditor, VGroup, HGroup, Item
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.helpers.formatting import floatfmt
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor, grouped_name
+from pychron.options.options_manager import RegressionSeriesOptionsManager, OptionsController
+from pychron.options.views.views import view
+from pychron.pipeline.plot.figure_container import FigureContainer
+from pychron.pipeline.plot.models.regression_series_model import RegressionSeriesModel
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, LIGHT_RED
 
 
 class IsoEvolutionResultsAdapter(TabularAdapter):
-    columns = [('RunID', 'record_id'), ('Isotope', 'isotope'), ('Fit', 'fit'),
+    columns = [('RunID', 'record_id'),
+               ('UUID', 'display_uuid'),
+               ('Isotope', 'isotope'),
+               ('Fit', 'fit'),
+               ('N', 'nstr'),
                ('Intercept', 'intercept_value'),
                (PLUSMINUS_ONE_SIGMA, 'intercept_error'),
                ('%', 'percent_error'),
@@ -43,7 +54,7 @@ class IsoEvolutionResultsAdapter(TabularAdapter):
     intercept_error_text = Property
     percent_error_text = Property
 
-    def get_tooltip( self, obj, trait, row, column ):
+    def get_tooltip(self, obj, trait, row, column):
         item = getattr(obj, trait)[row]
 
         return item.tooltip
@@ -72,11 +83,14 @@ class IsoEvolutionResultsAdapter(TabularAdapter):
         return r
 
 
-class IsoEvolutionResultsEditor(BaseTraitsEditor):
+class IsoEvolutionResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
     results = List
     adapter = Instance(IsoEvolutionResultsAdapter, ())
     dclicked = Event
     display_only_bad = Bool
+    view_bad_button = Button('View Flagged')
+    view_selected_button = Button('View Selected')
+    selected = List
 
     def __init__(self, results, *args, **kw):
         super(IsoEvolutionResultsEditor, self).__init__(*args, **kw)
@@ -86,6 +100,39 @@ class IsoEvolutionResultsEditor(BaseTraitsEditor):
 
         self.oresults = self.results = results
         # self.results = sorted(results, key=lambda x: x.goodness)
+
+    def _view_selected_button_fired(self):
+        ans = list({r.analysis for r in self.selected})
+
+        self._show_results(ans)
+
+    def _view_bad_button_fired(self):
+        ans = list({r.analysis for r in self.oresults if not r.goodness})
+        self._show_results(ans)
+
+    def _show_results(self, ans):
+
+        c = FigureContainer()
+        pom = RegressionSeriesOptionsManager()
+        names = list({k for a in ans for k in a.isotope_keys})
+        pom.set_names(names)
+        pom.selected = 'multiregression'
+
+        info = OptionsController(model=pom).edit_traits(view=view('Regression Options'),
+                                                        kind='livemodal')
+        if info.result:
+
+            m = RegressionSeriesModel(analyses=ans, plot_options=pom.selected_options)
+            c.model = m
+            v = View(UItem('component',
+                           style='custom',
+                           editor=ComponentEditor()),
+                     title='Regression Results',
+                     width=0.90,
+                     height=0.75,
+                     resizable=True)
+
+            c.edit_traits(view=v)
 
     def _display_only_bad_changed(self, new):
         if new:
@@ -99,11 +146,16 @@ class IsoEvolutionResultsEditor(BaseTraitsEditor):
             result.analysis.show_isotope_evolutions((result.isotope,))
 
     def traits_view(self):
-        filter_grp = HGroup(Item('display_only_bad'))
+        filter_grp = HGroup(Item('display_only_bad', label='Show Flagged Only'),
+                            UItem('view_bad_button'),
+                            UItem('view_selected_button'))
         v = View(VGroup(filter_grp,
                         UItem('results', editor=TabularEditor(adapter=self.adapter,
-                                                       editable=False,
-                                                       dclicked='dclicked'))))
+                                                              editable=False,
+                                                              multi_select=True,
+                                                              selected='selected',
+                                                              column_clicked='column_clicked',
+                                                              dclicked='dclicked'))))
         return v
 
 # ============= EOF =============================================

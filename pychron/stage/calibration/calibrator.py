@@ -15,9 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Str, Float, Event, Bool
 # ============= standard library imports ========================
-import cPickle as pickle
+import six.moves.cPickle as pickle
 import os
 
 # ============= local library imports  ==========================
@@ -60,7 +61,7 @@ class BaseCalibrator(Loggable):
                 try:
                     obj = pickle.load(f)
                     return obj
-                except (pickle.PickleError, EOFError, AttributeError), e:
+                except (pickle.PickleError, EOFError, AttributeError, UnicodeDecodeError) as e:
                     pass
                     #                    cls.debug(e)
 

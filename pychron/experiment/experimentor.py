@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from itertools import groupby
+from __future__ import absolute_import
 
 from traits.api import Instance, List, on_trait_change, Bool, Event
 
@@ -23,7 +23,6 @@ from pychron.dvc.dvc_irradiationable import DVCIrradiationable
 from pychron.experiment.experiment_executor import ExperimentExecutor
 from pychron.experiment.factory import ExperimentFactory
 from pychron.experiment.queue.experiment_queue import ExperimentQueue
-from pychron.experiment.stats import StatsGroup
 
 
 class Experimentor(DVCIrradiationable):
@@ -31,7 +30,7 @@ class Experimentor(DVCIrradiationable):
     experiment_queue = Instance(ExperimentQueue)
     executor = Instance(ExperimentExecutor)
     experiment_queues = List
-    stats = Instance(StatsGroup, ())
+    # stats = Instance(StatsGroup, ())
 
     mode = None
     # unique_executor_db = False
@@ -49,7 +48,6 @@ class Experimentor(DVCIrradiationable):
     # ===========================================================================
     # task events
     # ===========================================================================
-    execute_event = Event
 
     activate_editor_event = Event
     save_event = Event
@@ -94,14 +92,6 @@ class Experimentor(DVCIrradiationable):
     # ===============================================================================
     # info update
     # ===============================================================================
-    def _get_all_runs(self, queues=None):
-        if queues is None:
-            queues = self.experiment_queues
-
-        return [ai for ei in queues
-                for ai in ei.executed_runs + ei.automated_runs
-                if ai.executable and not ai.skip]
-
     def _get_all_automated_runs(self, qs=None):
         if qs is None:
             qs = self.experiment_queues
@@ -121,36 +111,16 @@ class Experimentor(DVCIrradiationable):
             return
 
         self.debug('executor executable {}'.format(self.executor.executable))
-        self.debug('stats calculated')
+        self.debug('updating stats, ')
+        self.executor.stats.calculate()
 
-        # ans = self._get_all_runs(queues)
-        # self.stats.nruns = len(ans)
-        # self.debug('get all runs n={}'.format(len(ans)))
-
-        self.debug('updating stats')
-        self.stats.calculate()
         self.refresh_executable(queues)
-
-        # for qi in self.experiment_queues:
-        # aruns = self._get_all_automated_runs([qi])
-        # renumber_aliquots(aruns)
 
         self._set_analysis_metadata()
 
         self.debug('info updated')
         for qi in queues:
             qi.refresh_table_needed = True
-
-    def _group_analyses(self, ans, exclude=None):
-        """
-            sort, group and filter by labnumber
-        """
-        if exclude is None:
-            exclude = tuple()
-        key = lambda x: x.labnumber
-
-        return ((ln, group) for ln, group in groupby(sorted(ans, key=key), key)
-                if ln not in exclude)
 
     def _set_analysis_metadata(self):
         cache = dict()
@@ -168,32 +138,21 @@ class Experimentor(DVCIrradiationable):
 
                 # is run in cache
                 if ln not in cache:
-                    info = db.get_analysis_info(ln)
+                    info = db.get_identifier_info(ln)
                     self.debug('Info for {}={}'.format(ln, info))
                     if not info:
                         cache[ln] = dict(identifier_error=True)
                     else:
-                        project, sample, material, irrad, level, pos = info
-
-                        cache[ln] = dict(project=project or '', sample=sample or '',
-                                         material=material or '',
-                                         irradiation=irrad or '',
-                                         irradiation_level=level or '',
-                                         irradiation_position=pos or '',
-                                         identifier_error=False)
+                        info['identifier_error'] = False
+                        cache[ln] = info
 
                 ai.trait_set(**cache[ln])
 
     def execute_queues(self, queues):
-        self.debug('<{}> setup executor'.format(id(self)))
-
         names = ','.join([e.name for e in queues])
         self.debug('queues: n={}, names={}'.format(len(queues), names))
 
-        # ans = self._get_all_runs(queues)
-        # self.stats.nruns = len(ans)
-
-        self.executor.trait_set(experiment_queues=queues, experiment_queue=queues[0], stats=self.stats)
+        self.executor.trait_set(experiment_queues=queues, experiment_queue=queues[0])
 
         return self.executor.execute()
 
@@ -253,26 +212,18 @@ class Experimentor(DVCIrradiationable):
         if eq:
             self.experiment_factory.queue = eq
             self.experiment_factory.sync_queue_meta()
+            self.experiment_factory.edit_enabled = True
+        else:
+            self.experiment_factory.edit_enabled = False
 
     @on_trait_change('executor:experiment_queue')
     def _activate_editor(self, eq):
         self.activate_editor_event = id(eq)
 
-    @on_trait_change('executor:start_button')
-    def _execute(self):
-        """
-            trigger the experiment task to assemble current queues.
-            the queues are then passed back to execute_queues()
-        """
-        self.info('Start Executor')
-        if not self.executor.is_alive():
-            self.debug('execute_event fired')
-            self.execute_event = True
-
     @on_trait_change('experiment_queues[]')
     def _update_queues(self):
         qs = self.experiment_queues
-        self.stats.experiment_queues = qs
+        self.executor.stats.experiment_queues = qs
 
     @on_trait_change('experiment_factory:run_factory:changed')
     def _queue_dirty(self):
@@ -320,7 +271,7 @@ class Experimentor(DVCIrradiationable):
             # if self.executor.is_alive():
             a = new[-1]
             if not a.skip:
-                self.stats.calculate_at(a, at_times=self.executor.is_alive())
+                self.executor.stats.calculate_at(a, at_times=self.executor.is_alive())
                 # self.stats.calculate()
 
     @on_trait_change('experiment_factory:queue_factory:delay_between_analyses')
@@ -360,7 +311,6 @@ class Experimentor(DVCIrradiationable):
 
         e = ExperimentFactory(application=self.application,
                               dvc=self.dvc,
-                              iso_db_man=self.iso_db_man,
                               default_mass_spectrometer=dms)
         return e
 

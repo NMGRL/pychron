@@ -16,11 +16,10 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-import json
-import os
+from __future__ import absolute_import
+
 # ============= local library imports  ==========================
 from pychron.graph.ticks import IntTickGenerator
-from pychron.paths import paths
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 
 
@@ -37,9 +36,11 @@ class VerticalFlux(BaseArArFigure):
         g = self.graph
 
         js, es, zs = self._gather_data()
-        g.new_series(js, zs,
-                     marker='circle',
-                     type='scatter')
+        s, _ = g.new_series(js, zs,
+                            marker='circle',
+                            type='scatter')
+
+        self._add_error_bars(s, es, 'x', 2)
 
         g.set_y_limits(pad='0.1')
 
@@ -48,17 +49,27 @@ class VerticalFlux(BaseArArFigure):
         self.xpad = '0.1'
 
     def _gather_data(self):
-        js, es, zs = [], [], []
-        for i, level in enumerate(self.levels):
-            p = os.path.join(paths.meta_root, self.irradiation,
-                             '{}.json'.format(level))
-            with open(p, 'r') as rfile:
-                obj = json.load(rfile)
-                d = next((o for o in obj if o['position'] == 1), None)
-                if d:
-                    js.append(d['j'])
-                    es.append(d['j_err'])
-                    zs.append(d.get('z', i))
-        return js, es, zs
+
+        return zip(*[(i.j, i.j_err, i.z) for i in self.items])
+
+        # js, es, zs = [], [], []
+        # for i in self.items:
+        #     js.append(i.j)
+        #     es.append(i.j_err)
+        #     zs.append(i.z)
+        #
+        # # for i, level in enumerate(self.levels):
+        # #     p = os.path.join(paths.meta_root, self.irradiation,
+        # #                      '{}.json'.format(level))
+        # #     with open(p, 'r') as rfile:
+        # #         obj = json.load(rfile)
+        # #
+        # #         positions = obj['positions']
+        # #         d = next((o for o in positions if o['position'] == 1), None)
+        # #         if d:
+        # #             js.append(d['j'])
+        # #             es.append(d['j_err'])
+        # #             zs.append(obj.get('z', i))
+        # return js, es, zs
 
 # ============= EOF =============================================

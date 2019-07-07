@@ -15,7 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pyface.qt import QtGui, QtCore
+import six
+from pyface.qt import QtGui
 from pyface.qt.QtGui import QCompleter, QSizePolicy, QComboBox, QHBoxLayout, QPushButton, QWidget
 from traits.api import Str, Bool, Event, List
 from traits.trait_errors import TraitError
@@ -75,20 +76,23 @@ class _ComboboxEditor(SimpleEditor):
 
         control.addItems(self.names)
 
-        QtCore.QObject.connect(control,
-                               QtCore.SIGNAL('currentIndexChanged(QString)'),
-                               self.update_object)
+        # QtCore.QObject.connect(control,
+        #                        QtCore.SIGNAL('currentIndexChanged(QString)'),
+        #                        self.update_object)
+        control.currentIndexChanged[str].connect(self.update_object)
 
         if self.factory.evaluate is not None:
             control.setEditable(True)
             if self.factory.auto_set:
-                QtCore.QObject.connect(control,
-                                       QtCore.SIGNAL('editTextChanged(QString)'),
-                                       self.update_text_object)
+                control.editTextChanged.connect(self.update_text_object)
+                # QtCore.QObject.connect(control,
+                #                        QtCore.SIGNAL('editTextChanged(QString)'),
+                #                        self.update_text_object)
             else:
-                QtCore.QObject.connect(control.lineEdit(),
-                                       QtCore.SIGNAL('editingFinished()'),
-                                       self.update_autoset_text_object)
+                control.lineEdit().editingFinished().connect(self.update_text_object)
+                # QtCore.QObject.connect(control.lineEdit(),
+                #                        QtCore.SIGNAL('editingFinished()'),
+                #                        self.update_autoset_text_object)
             control.setInsertPolicy(QtGui.QComboBox.NoInsert)
 
         # self._no_enum_update = 0
@@ -123,20 +127,19 @@ class _ComboboxEditor(SimpleEditor):
         """ Handles the user typing text into the combo box text entry field.
         """
         if self._no_enum_update == 0:
-            value = unicode(text)
+            value = six.text_type(text)
             if self.factory.use_strict_values:
                 try:
                     value = self.mapping[value]
                 except:
                     try:
                         value = self.factory.evaluate(value)
-                    except Exception, excp:
+                    except Exception as excp:
                         self.error(excp)
                         return
 
             self._no_enum_update += 1
             try:
-
                 self.value = value
                 self._set_background(OKColor)
                 if self.factory.addable:
@@ -147,17 +150,21 @@ class _ComboboxEditor(SimpleEditor):
 
                     if value and value not in vv:
                         names = fuzzyfinder(value, vv)
+
+                        self.control.clear()
+                        self.control.addItems(names)
+                        self.control.showPopup()
                     else:
                         names = self.names
+                        self.control.clear()
+                        self.control.addItems(names)
 
-                    self.control.clear()
-                    self.control.addItems(names)
                     try:
                         self.control.setEditText(self.str_value)
                     except:
                         self.control.setEditText('')
 
-            except TraitError, excp:
+            except TraitError as excp:
                 if self.factory.addable:
                     self.control.button.setEnabled(False)
                 self._set_background(ErrorColor)
@@ -175,7 +182,7 @@ class _ComboboxEditor(SimpleEditor):
                     index = self.names.index(self.inverse_mapping[self.value])
 
                     self.control.setCurrentIndex(index)
-                except BaseException, e:
+                except BaseException as e:
                     self.control.setEditText(str(self.value))
             else:
                 try:

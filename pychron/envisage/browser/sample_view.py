@@ -15,19 +15,33 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.action.menu_manager import MenuManager
 from traits.api import Button
 from traitsui.api import View, UItem, VGroup, EnumEditor, \
-    HGroup, CheckListEditor, spring, Group, HSplit
+    HGroup, CheckListEditor, spring, Group, HSplit, Tabbed
+from traitsui.menu import Action
+from traitsui.tabular_adapter import TabularAdapter
 
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.ui.qt.tabular_editors import FilterTabularEditor
 from pychron.core.ui.tabular_editor import myTabularEditor
-from pychron.envisage.browser.adapters import ProjectAdapter, PrincipalInvestigatorAdapter
+from pychron.envisage.browser.adapters import ProjectAdapter, PrincipalInvestigatorAdapter, LoadAdapter
 from pychron.envisage.browser.pane_model_view import PaneModelView
 from pychron.envisage.icon_button_editor import icon_button_editor
 
 
-# from pychron.envisage.browser.tableview import TableView
+class AnalysisGroupsAdapter(TabularAdapter):
+    columns = [('Set', 'name'),
+               ('Date', 'create_date')]
+
+    font = 'Arial 10'
+
+    def get_menu(self, obj, trait, row, column):
+        actions = [Action(name='Delete', action='delete_analysis_group')]
+
+        return MenuManager(*actions)
+
 
 class BaseBrowserSampleView(PaneModelView):
     configure_date_filter_button = Button
@@ -35,28 +49,28 @@ class BaseBrowserSampleView(PaneModelView):
     configure_mass_spectrometer_filter_button = Button
 
     def _configure_date_filter_button_fired(self):
-        v = View(self._get_date_group(), resizable=True,
-                 height=150,
-                 kind='livemodal',
-                 buttons=['OK', 'Cancel'],
-                 title='Configure Date Filter')
-        self.edit_traits(view=v)
+        v = okcancel_view(self._get_date_group(),
+                          height=150,
+                          title='Configure Date Filter')
+        info = self.edit_traits(view=v)
+        if info.result:
+            self.model.refresh_samples()
 
     def _configure_analysis_type_filter_button_fired(self):
-        v = View(self._get_analysis_type_group(), resizable=True,
-                 height=150,
-                 kind='livemodal',
-                 buttons=['OK', 'Cancel'],
-                 title='Configure Analysis Type Filter')
-        self.edit_traits(view=v)
+        v = okcancel_view(self._get_analysis_type_group(),
+                          height=150,
+                          title='Configure Analysis Type Filter')
+        info = self.edit_traits(view=v)
+        if info.result:
+            self.model.refresh_samples()
 
     def _configure_mass_spectrometer_filter_button_fired(self):
-        v = View(self._get_mass_spectrometer_group(), resizable=True,
-                 height=150,
-                 kind='livemodal',
-                 buttons=['OK', 'Cancel'],
-                 title='Configure Mass Spectrometer Filter')
-        self.edit_traits(view=v)
+        v = okcancel_view(self._get_mass_spectrometer_group(),
+                          height=150,
+                          title='Configure Mass Spectrometer Filter')
+        info = self.edit_traits(view=v)
+        if info.result:
+            self.model.refresh_samples()
 
     def _get_irrad_group(self):
         irrad_grp = VGroup(
@@ -90,21 +104,6 @@ class BaseBrowserSampleView(PaneModelView):
                             label='Projects')
         return project_grp
 
-    # def _get_repositories_group(self):
-    #     exp_grp = Group(UItem('repositories',
-    #                           height=-150,
-    #                           editor=FilterTabularEditor(editable=False,
-    #                                                      use_fuzzy=True,
-    #                                                      enabled_cb='repository_enabled',
-    #                                                      refresh='refresh_needed',
-    #                                                      selected='selected_repositories',
-    #                                                      adapter=ProjectAdapter(),
-    #                                                      multi_select=True)),
-    #                     springy=False,
-    #                     visible_when='repository_visible',
-    #                     show_border=True,
-    #                     label='Repositories')
-    #     return exp_grp
     def _get_simple_analysis_type_group(self):
         grp = HGroup(UItem('use_analysis_type_filtering',
                            tooltip='Enable Analysis Type filter'),
@@ -116,7 +115,10 @@ class BaseBrowserSampleView(PaneModelView):
         return grp
 
     def _get_simple_date_group(self):
-        grp = HGroup(icon_button_editor('controller.configure_date_filter_button', 'cog',
+        grp = HGroup(UItem('date_enabled',
+                           tooltip='Enable Date Filtering'),
+                     icon_button_editor('controller.configure_date_filter_button', 'cog',
+                                        enabled_when='date_enabled',
                                         tooltip='Configure date filtering'), show_border=True,
                      label='Date')
         return grp
@@ -147,12 +149,11 @@ class BaseBrowserSampleView(PaneModelView):
 
     def _get_date_group(self):
         date_grp = HGroup(UItem('use_low_post'),
-                          UItem('low_post', enabled_when='use_low_post'),
+                          UItem('low_post', style='custom', enabled_when='use_low_post'),
                           UItem('use_high_post'),
-                          UItem('high_post', enabled_when='use_high_post'),
+                          UItem('high_post', style='custom', enabled_when='use_high_post'),
                           UItem('use_named_date_range'),
                           UItem('named_date_range'),
-                          icon_button_editor('date_configure_button', 'calendar'),
                           label='Date',
                           visible_when='date_visible',
                           show_border=True)
@@ -195,38 +196,38 @@ class BaseBrowserSampleView(PaneModelView):
         return pi_grp
 
     def _get_load_group(self):
-        load_grp = Group(UItem('selected_load'))
+        load_grp = Group(UItem('loads',
+                               editor=FilterTabularEditor(editable=False,
+                                                          use_fuzzy=True,
+                                                          enabled_cb='load_enabled',
+                                                          refresh='refresh_needed',
+                                                          selected='selected_loads',
+                                                          adapter=LoadAdapter(),
+                                                          multi_select=True)),
+                         show_border=True,
+                         label='Load')
         return load_grp
 
     def _get_sample_group(self):
         irrad_grp = self._get_irrad_group()
         project_grp = self._get_project_group()
 
-        # analysis_type_group = self._get_analysis_type_group()
-        # date_grp = self._get_date_group()
-        # ms_grp = self._get_mass_spectrometer_group()
-
         simple_analysis_type_grp = self._get_simple_analysis_type_group()
         simple_date_grp = self._get_simple_date_group()
         simple_mass_spectrometer_grp = self._get_simple_mass_spectrometer_group()
 
-        # ln_grp = self._get_identifier_group()
         pi_grp = self._get_pi_group()
         load_grp = self._get_load_group()
+        s_grp = HGroup(UItem('fuzzy_search_entry', tooltip='Enter a simple search, Pychron will do the rest. Must '
+                                                           'enter at least 3 characters'),
+                       icon_button_editor('execute_fuzzy_search', 'eye',
+                                          tooltip='Execute Fuzzy Search', enabled_when='len(fuzzy_search_entry)>2'),
+                       label='Search',
+                       show_border=True)
 
-        top_level_filter_grp = VGroup(
-            # CustomLabel('filter_label',
-            #             style='custom',
-            #             width=-1.0,
-            #             visible_when='not filter_focus'),
-            HGroup(UItem('fuzzy_search_entry', tooltip='Enter a simple search, Pychron will do the rest.'),
-                   label='Search',
-                   show_border=True),
-            # HGroup(simple_mass_spectrometer_grp, simple_analysis_type_grp, simple_date_grp, ln_grp),
-            HGroup(simple_mass_spectrometer_grp, simple_analysis_type_grp, simple_date_grp),
-            HGroup(pi_grp, project_grp, irrad_grp, load_grp))
-        # analysis_type_group,
-        # date_grp)
+        top_level_filter_grp = VGroup(HGroup(s_grp, simple_mass_spectrometer_grp,
+                                             simple_analysis_type_grp, simple_date_grp),
+                                      HGroup(VGroup(pi_grp, project_grp), VGroup(irrad_grp, load_grp)))
 
         sample_tools = HGroup(UItem('sample_filter_parameter',
                                     width=-90, editor=EnumEditor(name='sample_filter_parameters')),
@@ -236,6 +237,13 @@ class BaseBrowserSampleView(PaneModelView):
                               icon_button_editor('clear_sample_table',
                                                  'clear',
                                                  tooltip='Clear Sample Table'))
+
+        analysis_grp_table = UItem('analysis_groups',
+                                   editor=myTabularEditor(adapter=AnalysisGroupsAdapter(),
+                                                          multi_select=True,
+                                                          editable=False,
+                                                          selected='selected_analysis_groups'))
+
         sample_table = VGroup(sample_tools,
                               UItem('samples',
                                     editor=myTabularEditor(
@@ -245,11 +253,9 @@ class BaseBrowserSampleView(PaneModelView):
                                         multi_select=True,
                                         dclicked='dclicked_sample',
                                         column_clicked='column_clicked',
-                                        # update='update_sample_table',
-                                        # refresh='update_sample_table',
                                         stretch_last_section=False)),
                               show_border=True, label='Samples')
-        grp = VGroup(top_level_filter_grp, sample_table)
+        grp = VGroup(top_level_filter_grp, Tabbed(sample_table, analysis_grp_table))
         return grp
 
 
@@ -312,8 +318,26 @@ class BrowserSampleView(BaseBrowserSampleView):
     def review_status_details(self, info, obj):
         obj.review_status_details()
 
+    def clear_grouping(self, info, obj):
+        obj.clear_grouping()
+
+    def group_selected(self, info, obj):
+        obj.group_selected()
+
+    def remove_others(self, info, obj):
+        obj.remove_others()
+
+    def clear_selection(self, info, obj):
+        obj.clear_selection()
+
     def toggle_freeze(self, info, obj):
         obj.toggle_freeze()
+
+    def select_same_attr(self, info, obj):
+        obj.select_same_attr()
+
+    def select_same(self, info, obj):
+        obj.select_same()
 
     def load_review_status(self, info, obj):
         obj.load_review_status()
@@ -321,35 +345,49 @@ class BrowserSampleView(BaseBrowserSampleView):
     def load_chrono_view(self, info, obj):
         obj.load_chrono_view()
 
+    def delete_analysis_group(self, info, obj):
+        obj.delete_analysis_group()
+
+    def tag_ok(self, info, obj):
+        self._set_tags(info.object, 'ok')
+
+    def tag_omit(self, info, obj):
+        self._set_tags(info.object, 'omit')
+
+    def tag_invalid(self, info, obj):
+        self._set_tags(info.object, 'invalid')
+
+    def tag_skip(self, info, obj):
+        self._set_tags(info.object, 'skip')
+
+    def _set_tags(self, obj, tag):
+        items = obj.set_tags(tag)
+        if items:
+            obj.analysis_table.set_tags(tag, items)
+            obj.analysis_table.remove_invalid()
+            obj.analysis_table.refresh_needed = True
+
 
 class BrowserInterpretedAgeView(BaseBrowserSampleView):
-
     def delete(self, info, obj):
-        print 'asfdasfdasdfasdf', info, obj
-
+        obj.delete()
 
     def trait_context(self):
         ctx = super(BrowserInterpretedAgeView, self).trait_context()
-        ctx['interpreted_table'] = self.model.interpreted_age_table
+        ctx['table'] = self.model.table
         return ctx
 
     def _get_interpreted_age_group(self):
         grp = VGroup(
-            UItem('interpreted_table.interpreted_ages',
-                  # width=0.4,
+            UItem('table.interpreted_ages',
                   editor=myTabularEditor(
                       auto_resize=True,
-                      adapter=self.model.interpreted_age_table.tabular_adapter,
+                      adapter=self.model.table.tabular_adapter,
                       operations=['move', 'delete'],
-                      # column_clicked=make_name('column_clicked'),
-                      # refresh='interpreted_table.refresh_needed',
-                      selected='interpreted_table.selected',
-                      # dclicked='interpreted_table.dclicked',
+                      selected='table.selected',
+                      dclicked='table.dclicked',
                       multi_select=True,
-                      # drag_external=True,
-                      # scroll_to_row='interpreted_table.scroll_to_row',
                       stretch_last_section=False)),
-            # HGroup(spring, Item(make_name('omit_invalid'))),
             show_border=True,
             label='Interpreted Ages')
 

@@ -13,9 +13,40 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from pychron.core.helpers.strtools import csv_to_floats
 from pychron.spectrometer.isotopx.source.base import IsotopxSource
 
 
 class NGXSource(IsotopxSource):
-    pass
+    def __init__(self, *args, **kw):
+        super(NGXSource, self).__init__(*args, **kw)
+
+    def finish_loading(self):
+        super(NGXSource, self).finish_loading()
+        self.set_mftable('avftable')
+
+    def set_hv(self, new):
+        self.ask('SSO IE, {}'.format(new))
+
+    def read_hv(self):
+        resp = self.ask('GSO IE', verbose=True)
+        actual = 0
+        if ',' in resp:
+            setpoint, actual = csv_to_floats(resp)
+        return actual
+
+    def read_trap_current(self):
+        resp = self.ask('GSO TC')
+        actual = 0
+        if ',' in resp:
+            setpoint, actual = csv_to_floats(resp)
+        return actual
+
+    def read_emission(self):
+        resp = self.ask('GSO EC')
+        actual = 0
+        if ',' in resp:
+            setpoint, actual = csv_to_floats(resp)
+        return actual
+        # return self.ask('GSO ')
 # ============= EOF =============================================

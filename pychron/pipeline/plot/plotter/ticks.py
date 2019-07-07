@@ -16,7 +16,8 @@
 
 # ============= enthought library imports =======================
 from chaco.ticks import AbstractTickGenerator
-from numpy import array
+from numpy import array, arange
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.experiment.utilities.identifier import ANALYSIS_MAPPING_INTS, \
@@ -26,20 +27,24 @@ TICKS = array(sorted(ANALYSIS_MAPPING_INTS.values()))
 
 
 class StaticTickGenerator(AbstractTickGenerator):
+    _nticks = None
+
     def get_ticks(self, *args, **kw):
+        if self._nticks:
+            return arange(self._nticks)
         return TICKS
 
 
-KEYS = [v[0] for v in sorted(ANALYSIS_MAPPING_INTS.items(), key=lambda x: x[1])]
+KEYS = [v[0] for v in sorted(list(ANALYSIS_MAPPING_INTS.items()), key=lambda x: x[1])]
 TICK_KEYS = [ANALYSIS_MAPPING_UNDERSCORE_KEY[v] for v in KEYS]
 
 
-def tick_formatter(x):
-    try:
-        v = TICK_KEYS[int(x)]
-    except IndexError:
-        v = ''
-    return v
+# def tick_formatter(x):
+#     try:
+#         v = TICK_KEYS[int(x)]
+#     except IndexError:
+#         v = ''
+#     return v
 
 
 def analysis_type_formatter(x):

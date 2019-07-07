@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 
+from __future__ import absolute_import
 import time
 from pyface.timer.timer import Timer
 from traits.api import HasTraits, Button, Int, Bool, Property
@@ -46,6 +47,7 @@ class StopWatch(HasTraits):
 
     start_stop_label = Property(depends_on='_alive')
     _base_time = 0
+    _timer = None
 
     def destroy(self):
         if self._timer:

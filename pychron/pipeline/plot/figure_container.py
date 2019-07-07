@@ -15,8 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from chaco.plot_containers import GridPlotContainer
-from traits.api import HasTraits, Any
+from __future__ import absolute_import
+
+from chaco.plot_containers import GridPlotContainer, VPlotContainer
+from traits.api import HasTraits, Any, Int
 
 
 # from pychron.processing.plotters.graph_panel_info import GraphPanelInfo
@@ -27,10 +29,12 @@ from traits.api import HasTraits, Any
 class FigureContainer(HasTraits):
     component = Any
     model = Any
+
     # nrows = Int(1)
     # ncols = Int(2)
+    rows = Int
+    cols = Int
 
-    # @caller
     def refresh(self, clear=False):
         comp = self.component
         for i in range(self.rows):
@@ -46,8 +50,8 @@ class FigureContainer(HasTraits):
                         ap.clear_ylimits()
                         ap.clear_xlimits()
 
-    def _model_changed(self):
-        layout = self.model.layout
+    def model_changed(self, clear=True):
+        layout = self.model.plot_options.layout
         self.model.refresh_panels()
         n = self.model.npanels
 
@@ -55,21 +59,13 @@ class FigureContainer(HasTraits):
         self.component = comp
         self.rows, self.cols = r, c
 
-        self.refresh(clear=True)
+        self.refresh(clear=clear)
+
+    def _model_changed(self):
+        self.model_changed(True)
 
     def _component_factory(self, ngraphs, layout):
-
-        r = layout.rows
-        c = layout.columns
-
-        while ngraphs > r * c:
-            if layout.fixed == 'cols':
-                r += 1
-            else:
-                c += 1
-
-        if ngraphs == 1:
-            r = c = 1
+        r, c = layout.calculate(ngraphs)
 
         op = GridPlotContainer(shape=(r, c),
                                bgcolor='white',
@@ -77,5 +73,8 @@ class FigureContainer(HasTraits):
                                use_backbuffer=True,
                                padding_top=0)
         return op, r, c
+
+    def _component_default(self):
+        return VPlotContainer()
 
 # ============= EOF =============================================

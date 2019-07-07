@@ -15,26 +15,28 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import threading
 
+from __future__ import absolute_import
+from __future__ import print_function
+
+import logging
+import os
+import sys
+# ============= standard library imports ========================
+import threading
+import traceback
+
+import requests
 import traits.trait_notifiers
 from pyface.message_dialog import warning
 from traits.api import HasTraits, Str, List
 from traitsui.api import View, UItem, Item, HGroup, VGroup, CheckListEditor, Controller, TextEditor
 from traitsui.menu import Action
-# ============= standard library imports ========================
-import base64
-import json
-import requests
-import logging
-import traceback
-import sys
-import os
-import pickle
+
 # ============= local library imports  ==========================
+from pychron import json
 from pychron.github import GITHUB_API_URL
 from pychron.globals import globalv
-from pychron.paths import paths
 
 LABELS = ['Bug',
           'Enhancement',
@@ -81,33 +83,22 @@ class NoPasswordException(BaseException):
     pass
 
 
-def report_issues():
-    if not check_github_access():
-        return
-
-    p = os.path.join(paths.hidden_dir, 'issues.p')
-    if os.path.isfile(p):
-        nonreported = []
-        with open(p, 'r') as rfile:
-            issues = pickle.load(rfile)
-
-            for issue in issues:
-                result = create_issue(issue)
-
-                if not result:
-                    nonreported.append(issue)
-
-        if nonreported:
-            with open(p, 'w') as wfile:
-                pickle.dump(nonreported, wfile)
-        else:
-            os.remove(p)
+def create_card(card):
+    column_id = os.environ.get('GITHUB_BUG_CARD', 2279248)
+    cmd = '{}/projects/columns/{}/cards'.format(GITHUB_API_URL, column_id)
+    data = json.dumps(card)
+    return git_post(cmd, data=data, headers={'accept': 'application/vnd.github.inertia-preview+json'})
 
 
 def create_issue(issue):
     org = os.environ.get('GITHUB_ORGANIZATION', 'NMGRL')
     cmd = '{}/repos/{}/pychron/issues'.format(GITHUB_API_URL, org)
 
+    data = json.dumps(issue)
+    return git_post(cmd, data=data)
+
+
+def git_post(cmd, return_json=True, **kw):
     usr = os.environ.get('GITHUB_USER')
     pwd = os.environ.get('GITHUB_PASSWORD')
 
@@ -116,12 +107,7 @@ def create_issue(issue):
                       'Pychron will quit when this window is closed'.format(usr))
         sys.exit()
 
-    auth = base64.encodestring('{}:{}'.format(usr, pwd)).replace('\n', '')
-    headers = {"Authorization": "Basic {}".format(auth)}
-
-    kw = {'data': json.dumps(issue),
-          'headers': headers}
-
+    kw['auth'] = (usr, pwd)
     if globalv.cert_file:
         kw['verify'] = globalv.cert_file
 
@@ -129,8 +115,14 @@ def create_issue(issue):
 
     if r.status_code == 401:
         warning(None, 'Failed to submit issue. Username/Password incorrect.')
+    elif r.status_code == 403:
+        print('asf', r.json())
+    if r.status_code in (201, 422):
+        ret = True
+        if return_json:
+            ret = r.json()
 
-    return r.status_code in (201, 422)
+        return ret
 
 
 class ExceptionModel(HasTraits):
@@ -153,35 +145,30 @@ Enter a <b>Title</b>, select a few <b>Labels</b> and add a <b>Description</b> of
         if globalv.active_analyses:
             try:
                 ret = ','.join([ai.record_id for ai in globalv.active_analyses])
-            except AttributeError, e:
+            except AttributeError as e:
                 ret = '{}\n\n{}'.format(e, str(globalv.active_analyses))
         return ret
 
 
 class ExceptionHandler(Controller):
     def submit(self, info):
-        if not self.submit_issue_github():
-            self.submit_issue_offline()
+        if not self.model.title:
+            warning(None, 'Please enter a Title for this issue')
+            return
 
+        self.submit_issue_github()
         info.ui.dispose()
 
     def submit_issue_github(self):
-        issue = self._make_issue()
-        return create_issue(issue)
-
-    def submit_issue_offline(self):
-        p = os.path.join(paths.hidden_dir, 'issues.p')
-        if not os.path.isfile(p):
-            issues = []
-        else:
-            with open(p, 'r') as rfile:
-                issues = pickle.load(rfile)
 
         issue = self._make_issue()
+        issue_obj = create_issue(issue)
+        if issue_obj:
+            return True
 
-        issues.append(issue)
-        with open(p, 'w') as wfile:
-            pickle.dump(issues, wfile)
+    def _make_card(self, issue_obj):
+        card = {'content_id': issue_obj['id'], 'content_type': 'Issue'}
+        return card
 
     def _make_issue(self):
         m = self.model
@@ -192,9 +179,10 @@ class ExceptionHandler(Controller):
 
     def _make_body(self):
         m = self.model
-        return 'active branch={}\n\nactive analyses={}\n\n{}\n\n```\n{}\n```'.format(m.active_branch,
-                                                                                     m.active_analyses,
-                                                                                     m.description, m.exctext)
+        return 'active branch={}\n\nactive analyses={}\n' \
+               '\ndescription="{}"\n\nTraceback\n```\n{}\n```'.format(m.active_branch,
+                                                                      m.active_analyses,
+                                                                      m.description, m.exctext)
 
     def traits_view(self):
         v = View(VGroup(UItem('helpstr',
@@ -219,20 +207,26 @@ def ignored_exceptions(exctype, value, tb):
     """
         Do not open an Exception view for these exceptions
     """
-    # if exception was not generated from pychron. This should obviate the subsequent if statements
-    tb = traceback.extract_tb(tb)
-
-    if '/pychron/' not in tb[0][0] and '/pychron/' not in tb[-1][0]:
-        print 'ignore exception'
-        return True
 
     if exctype in (RuntimeError, KeyboardInterrupt):
         return True
 
-    if value in ("'NoneType' object has no attribute 'text'",
-                 "'NoneType' object has no attribute 'size'",
-                 "too many indices for array"):
-        return True
+    ret = str(value) in ("'NoneType' object has no attribute 'text'",
+                          "'NoneType' object has no attribute 'size'",
+                          "too many indices for array",
+                          "unsupported operand type(s) for +=: 'NoneType' and 'list'")
+
+    if not ret:
+        # if exception was not generated from pychron. This should obviate the subsequent if statements
+        sep = os.path.sep
+        tb = traceback.extract_tb(tb)
+        for ti in tb:
+            if '{}pychron{}'.format(sep, sep) in ti[0]:
+                break
+        else:
+            ret = True
+
+    return ret
 
 
 def except_handler(exctype, value, tb):
@@ -301,13 +295,4 @@ def set_exception_handler():
     traits.trait_notifiers.handle_exception = traits_except_handler
     set_thread_exception_handler()
 
-
-if __name__ == '__main__':
-    # em = ExceptionModel()
-    # e = ExceptionHandler(model=em)
-    # e.configure_traits()
-    # print check_github_access()
-    # print keyring.get_password('github', 'foo')
-    # print keyring.get_password('github', 'foob')
-    pass
 # ============= EOF =============================================

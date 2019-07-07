@@ -22,8 +22,10 @@ from pyface.tasks.task_window_layout import TaskWindowLayout
 
 from pychron.core.helpers.filetools import get_path
 from pychron.envisage.resources import icon
-from pychron.envisage.tasks.actions import PAction as Action, PTaskAction as TaskAction
+from pychron.envisage.tasks.actions import PTaskAction as TaskAction
+from pychron.envisage.ui_actions import UIAction, UITaskAction
 from pychron.envisage.view_util import open_view
+from pychron.experiment.melting_point_calibrator import MeltingPointCalibrator
 from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
 from pychron.globals import globalv
 from pychron.paths import paths
@@ -31,17 +33,7 @@ from pychron.paths import paths
 EXP_ID = 'pychron.experiment.task'
 
 
-class ResetSystemHealthAction(Action):
-    name = 'Reset System Health'
-    dname = 'Reset System Health'
-
-    def perform(self, event):
-        from pychron.experiment.health.series import reset_system_health_series
-
-        reset_system_health_series()
-
-
-class ExperimentAction(Action):
+class ExperimentAction(UIAction):
     task_id = EXP_ID
 
     # def _get_experimentor(self, event):
@@ -56,13 +48,12 @@ class ExperimentAction(Action):
         application.open_task(self.task_id)
 
 
-class ConfigureEditorTableAction(TaskAction):
+class ConfigureEditorTableAction(UITaskAction):
     name = 'Configure Experiment Table'
-    dname = 'Configure Experiment Table'
     method = 'configure_experiment_table'
 
 
-class BasePatternAction(TaskAction):
+class BasePatternAction(UITaskAction):
     _enabled = None
 
     def _task_changed(self):
@@ -96,41 +87,29 @@ class BasePatternAction(TaskAction):
 
 class OpenPatternAction(BasePatternAction):
     name = 'Open Pattern...'
-    dname = 'Open Pattern'
     method = 'open_pattern'
 
 
 class NewPatternAction(BasePatternAction):
     name = 'New Pattern...'
-    dname = 'New Pattern'
     method = 'new_pattern'
 
 
-class SendTestNotificationAction(TaskAction):
-    name = 'Send Test Notification'
-    dname = 'Send Test Notification'
-    method = 'send_test_notification'
-    # accelerator = 'Ctrl+Shift+N'
-
-
-class DeselectAction(TaskAction):
+class DeselectAction(UITaskAction):
     name = 'Deselect'
-    dname = 'Deselect'
     method = 'deselect'
     tooltip = 'Deselect the selected run(s)'
     id = 'pychron.deselect'
 
 
-class UndoAction(TaskAction):
+class UndoAction(UITaskAction):
     name = 'Undo'
-    dname = 'Undo'
     method = 'undo'
     accelerator = 'Ctrl+Z'
 
 
-class QueueConditionalsAction(Action):
+class QueueConditionalsAction(UIAction):
     name = 'Edit Queue Conditionals'
-    dname = 'Edit Queue Conditionals'
 
     def perform(self, event):
         task = event.task
@@ -147,12 +126,11 @@ class QueueConditionalsAction(Action):
             if spec:
                 dnames = spec.spectrometer.detector_names
 
-            edit_conditionals(None, detectors=dnames, app=task.application)
+            edit_conditionals(None, detectors=dnames)
 
 
-class SystemConditionalsAction(Action):
+class SystemConditionalsAction(UIAction):
     name = 'Edit System Conditionals'
-    dname = 'Edit System Conditionals'
 
     def perform(self, event):
         from pychron.experiment.conditional.conditionals_edit_view import edit_conditionals
@@ -166,7 +144,7 @@ class SystemConditionalsAction(Action):
 
         p = get_path(paths.spectrometer_dir, '.*conditionals', ('.yaml', '.yml'))
         if p:
-            edit_conditionals(p, detectors=dnames, app=task.application)
+            edit_conditionals(p, detectors=dnames)
         else:
             warning(None, 'No system conditionals file at {}'.format(p))
 
@@ -190,7 +168,6 @@ def open_experiment(event, path=None):
 class NewExperimentQueueAction(ExperimentAction):
     description = 'Create a new experiment queue'
     name = 'New Experiment'
-    dname = 'New Experiment'
     id = 'pychron.new_experiment'
 
     def perform(self, event):
@@ -204,9 +181,8 @@ class NewExperimentQueueAction(ExperimentAction):
                 win.open()
 
 
-class RunHistoryAction(Action):
+class RunHistoryAction(UIAction):
     name = 'Run History'
-    dname = 'Run History'
 
     def perform(self, event):
         app = event.task.window.application
@@ -214,9 +190,8 @@ class RunHistoryAction(Action):
         open_view(v)
 
 
-class OpenExperimentHistoryAction(Action):
+class OpenExperimentHistoryAction(UIAction):
     name = 'Experiment Launch History'
-    dname = 'Experiment Launch History'
 
     def perform(self, event):
         from pychron.experiment.experiment_launch_history import ExperimentLaunchHistory
@@ -232,7 +207,6 @@ class OpenExperimentHistoryAction(Action):
 class OpenLastExperimentQueueAction(ExperimentAction):
     description = 'Open last executed experiment'
     name = 'Open Last Experiment...'
-    dname = 'Open Last Experiment'
     id = 'pychron.open_last_experiment'
 
     def __init__(self, *args, **kw):
@@ -266,7 +240,6 @@ class OpenLastExperimentQueueAction(ExperimentAction):
 class OpenExperimentQueueAction(ExperimentAction):
     description = 'Open experiment'
     name = 'Open Experiment...'
-    dname = 'Open Experiment'
     image = icon('project-open')
     id = 'pychron.open_experiment'
 
@@ -277,7 +250,6 @@ class OpenExperimentQueueAction(ExperimentAction):
 class OpenCurrentExperimentQueueAction(ExperimentAction):
     description = 'Open Current Experiment'
     name = 'Open Current Experiment...'
-    dname = 'Open Current Experiment'
     image = icon('project-open')
     id = 'pychron.open_current_experiment'
 
@@ -290,10 +262,9 @@ class OpenCurrentExperimentQueueAction(ExperimentAction):
         open_experiment(event, path)
 
 
-class SaveAsCurrentExperimentAction(TaskAction):
+class SaveAsCurrentExperimentAction(UITaskAction):
     description = 'Save As Current Experiment'
     name = 'Save As Current Experiment...'
-    dname = 'Save As Current Experiment'
     image = icon('document-save-as')
     id = 'pychron.experiment.save_as_current_experiment'
     method = 'save_as_current_experiment'
@@ -305,28 +276,24 @@ class SaveAsCurrentExperimentAction(TaskAction):
 
 class SignalCalculatorAction(ExperimentAction):
     name = 'Signal Calculator'
-    dname = 'Signal Calculator'
 
     def perform(self, event):
         obj = self._get_service(event, 'pychron.experiment.signal_calculator.SignalCalculator')
         open_view(obj)
 
 
-class ResetQueuesAction(TaskAction):
+class ResetQueuesAction(UITaskAction):
     method = 'reset_queues'
     name = 'Reset Queues'
-    dname = 'Reset Queues'
 
 
-class SyncQueueAction(TaskAction):
+class SyncQueueAction(UITaskAction):
     method = 'sync_queue'
     name = 'Sync Queue'
-    dname = 'Sync Queue'
 
 
-class LastAnalysisRecoveryAction(Action):
+class LastAnalysisRecoveryAction(UIAction):
     name = 'Recover Last Analysis'
-    dname = 'Recover Last Analysis'
 
     def perform(self, event):
         from pychron.experiment.analysis_recovery import AnalysisRecoverer
@@ -358,4 +325,16 @@ class ReleaseSpectrometerAction(RunnerAction):
         if runner:
             runner.release(globalv.own_spectrometer)
 
+
+class MeltingPointCalibrationAction(UIAction):
+    name = 'Melting Point Calibration'
+
+    def perform(self, event):
+        from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
+        app = event.task.window.application
+        spec = app.get_service('pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager')
+        laser = app.get_service(ILaserManager)
+
+        mpc = MeltingPointCalibrator(spectrometer_manager=spec, laser=laser)
+        mpc.edit_traits()
 # ============= EOF ====================================

@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits
 # from traitsui.api import View, Item, TableEditor
 # ============= standard library imports ========================
@@ -27,6 +28,8 @@ from pychron.paths import paths
 from pychron.core.helpers.filetools import unique_dir
 from pychron.graph.graph import Graph
 from pychron.core.ui.gui import invoke_in_main_thread
+from six.moves import range
+from six.moves import zip
 class DeflectionCalibraiton(HasTraits):
     def do_calibration(self):
         self.info('Deflection Calibration')
@@ -109,7 +112,7 @@ class DeflectionCalibraiton(HasTraits):
 
                 if self.isAlive():
                     # write scan to file
-                    dm.write_to_frame(zip(graph.get_data(), graph.get_data(axis=1)))
+                    dm.write_to_frame(list(zip(graph.get_data(), graph.get_data(axis=1))))
 
                     if npeak_centers > 1:
                         if not self.simulation:

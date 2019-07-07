@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
 import weakref
 # ============= local library imports  ==========================
 from pychron.core.ui.gui import invoke_in_main_thread

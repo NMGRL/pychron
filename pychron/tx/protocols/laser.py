@@ -17,6 +17,9 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
+
+from pychron.core.helpers.binpack import encode_blob
 from pychron.core.helpers.strtools import to_bool
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.tx.errors import EnableErrorCode
@@ -34,7 +37,7 @@ class LaserProtocol(ServiceProtocol):
         self._addr = addr
 
         services = (('GetError', '_get_error'),
-                    ('MachineVisionDegas', '_machine_vision_degas'),
+                    # ('MachineVisionDegas', '_machine_vision_degas'),
                     ('StartVideoRecording', '_start_video_recording'),
                     ('StopVideoRecording', '_stop_video_recording'),
                     ('ReadLaserPower', '_read_laser_power'),
@@ -77,11 +80,16 @@ class LaserProtocol(ServiceProtocol):
                     ('GetMotorMoving', '_get_motor_moving'),
                     ('SetSampleHolder', '_set_sample_holder'),
                     ('GetSampleHolder', '_get_sample_holder'),
+                    ('StartMeasureGrainPolygon', '_start_measure_grain_polygon'),
+                    ('StopMeasureGrainPolygon', '_stop_measure_grain_polygon'),
+                    ('GetGrainPolygonBlob', '_get_grain_polygon_blob'),
+                    ('AcquireGrainPolygonBlob', '_get_grain_polygon'),
                     ('SetLaserPower', '_set_laser_power'),
                     ('SetLaserOutput', '_set_laser_output'),
                     ('GetAchievedOutput', '_get_achieved_output'),
                     ('GetResponseBlob', '_get_response_blob'),
                     ('GetOutputBlob', '_get_output_blob'),
+                    ('GetPyrometerTemperature', '_get_pyrometer_temperature'),
                     ('GoToNamedPosition', '_go_to_named_position'),
                     ('GoToPoint', '_go_to_point'),
                     # ('TracePath', '_trace_path'),
@@ -95,14 +103,14 @@ class LaserProtocol(ServiceProtocol):
     # ===============================================================================
     # Machine Vision
     # ===============================================================================
-    def _machine_vision_degas(self, data):
-        if isinstance(data, dict):
-            lumens, duration = data['lumens'], data['duration']
-        else:
-            lumens, duration = data
-
-        lumens, duration = float(lumens), float(duration)
-        self._manager.do_machine_vision_degas(lumens, duration, new_thread=True)
+    # def _machine_vision_degas(self, data):
+    #     if isinstance(data, dict):
+    #         lumens, duration = data['lumens'], data['duration']
+    #     else:
+    #         lumens, duration = data
+    #
+    #     lumens, duration = float(lumens), float(duration)
+    #     self._manager.do_machine_vision_degas(lumens, duration, new_thread=True)
 
     def _get_auto_correcting(self, data):
         return self._manager.stage_manager.is_auto_correcting()
@@ -111,10 +119,15 @@ class LaserProtocol(ServiceProtocol):
     # Video
     # ===============================================================================
     def _start_video_recording(self, data):
-        self._manager.start_video_recording(data)
+        if isinstance(data, dict):
+            name = data['name']
+        else:
+            name = data
+
+        return self._manager.start_video_recording(name)
 
     def _stop_video_recording(self, data):
-        self._manager.stop_video_recording()
+        return self._manager.stop_video_recording()
 
     def _snapshot(self, data):
         """
@@ -141,6 +154,17 @@ class LaserProtocol(ServiceProtocol):
                                             lpath, len(upath), upath, imageblob)
             return s
 
+    def _get_grain_polygon_blob(self, data):
+        return self._manager.get_grain_polygon_blob()
+
+    def _get_grain_polygon(self, data):
+        return self._manager.get_grain_polygon()
+
+    def _stop_measure_grain_polygon(self, data):
+        return self._manager.stop_measure_grain_polygon()
+
+    def _start_measure_grain_polygon(self, data):
+        return self._manager.start_measure_grain_polygon()
     # ===============================================================================
     # Laser
     # ===============================================================================
@@ -199,18 +223,20 @@ class LaserProtocol(ServiceProtocol):
         except:
             return InvalidArgumentsErrorCode('SetLaserOutput', value)
 
-        self._manager.set_laser_output(p, units)
+        self._manager.set_laser_output(p, units=units)
         return True
 
     def _get_achieved_output(self, data):
         return self._manager.get_achieved_output()
 
     def _get_response_blob(self, data):
-        return self._manager.get_response_blob()
+        return encode_blob(self._manager.get_response_blob())
 
     def _get_output_blob(self, data):
-        return self._manager.get_output_blob()
+        return encode_blob(self._manager.get_output_blob())
 
+    def _get_pyrometer_temperature(self, data):
+        return self._manager.get_pyrometer_temperature()
     # ===============================================================================
     # Motors
     # ===============================================================================
@@ -413,8 +439,14 @@ class LaserProtocol(ServiceProtocol):
 
         return ret
 
-    def _do_pattern(self, name):
-        return self._manager.execute_pattern(name) or 'OK'
+    def _do_pattern(self, data):
+        if isinstance(data, dict):
+            name = data['name']
+            duration = data['duration']
+        else:
+            name, duration = data
+
+        return self._manager.execute_pattern(name, duration) or 'OK'
 
     def _is_patterning(self, data):
         return self._manager.isPatterning()
@@ -439,7 +471,7 @@ class LaserProtocol(ServiceProtocol):
     def _set_axis(self, axis, value):
         try:
             d = float(value)
-        except (ValueError, TypeError), err:
+        except (ValueError, TypeError) as err:
             return InvalidArgumentsErrorCode('Set{}'.format(axis.upper()), err)
 
         err = self._manager.stage_manager.single_axis_move(axis, d)

@@ -15,10 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.plot_label import PlotLabel
 from kiva.trait_defs.kiva_font_trait import KivaFont
 from traits.api import List, Bool, Int, on_trait_change, Color
+from six.moves import zip
 
 
 # ============= standard library imports ========================
@@ -97,9 +99,9 @@ class SpectrumLabelOverlay(AbstractOverlay):
             ys = comp.value.get_data()
             es = comp.errors
             n = len(xs)
-            xs = xs.reshape(n / 2, 2)
-            ys = ys.reshape(n / 2, 2)
-            es = es.reshape(n / 2, 2)
+            xs = xs.reshape(n // 2, 2)
+            ys = ys.reshape(n // 2, 2)
+            es = es.reshape(n // 2, 2)
 
             if self.use_user_color:
                 color = self.user_color

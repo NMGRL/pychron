@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
 from traits.api import Property
 
@@ -126,6 +127,19 @@ class ChromiumCO2Task(FusionsTask):
         return []
 
 
+class ChromiumDiodeTask(FusionsTask):
+    id = 'pychron.chromium.diode'
+    name = 'Chromium Diode'
+
+    def create_central_pane(self):
+        from pychron.lasers.tasks.panes.chromium import ChromiumDiodeClientPane
+
+        return ChromiumDiodeClientPane(model=self.manager)
+
+    def create_dock_panes(self):
+        return []
+
+
 class FusionsCO2Task(FusionsTask):
     id = 'pychron.fusions.co2'
     name = 'Fusions CO2'
@@ -145,6 +159,7 @@ class FusionsCO2Task(FusionsTask):
         if self.manager.mode == 'client':
             return []
         else:
+            from pychron.lasers.tasks.panes.co2 import FusionsCO2SupplementalPane
             from pychron.lasers.tasks.panes.co2 import FusionsCO2StagePane
             from pychron.lasers.tasks.panes.co2 import FusionsCO2ControlPane
             from pychron.lasers.tasks.laser_panes import PulsePane
@@ -155,6 +170,7 @@ class FusionsCO2Task(FusionsTask):
                     FusionsCO2ControlPane(model=self.manager),
                     PulsePane(model=self.manager),
                     OpticsPane(model=self.manager),
+                    FusionsCO2SupplementalPane(model=self.manager),
                     AuxilaryGraphPane(model=self.manager)]
 
 

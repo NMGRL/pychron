@@ -15,14 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from threading import Thread
-
+from __future__ import absolute_import
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, VSplitter
 from pyface.ui.qt4.tasks.advanced_editor_area_pane import EditorWidget
 from traits.api import Any, Instance, on_trait_change
-
 # ============= standard library imports ========================
+from threading import Thread
+import time
 # ============= local library imports  ==========================
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.tasks.editor_task import EditorTask
@@ -38,6 +38,21 @@ class SpectrometerTask(EditorTask):
     id = 'pychron.spectrometer'
     _scan_editor = Instance(ScanEditor)
     tool_bars = [SToolBar(StopScanAction(), )]
+
+    def info(self, msg, *args, **kw):
+        super(SpectrometerTask, self).info(msg)
+
+    def spy_position_magnet(self, *args, **kw):
+        self.scan_manager.position_magnet(*args, **kw)
+
+    def spy_peak_center(self, name):
+        peak_kw = dict(confirm_save=False, warn=True,
+                       new_thread=False,
+                       message='spectrometer script peakcenter',
+                       on_end=self._on_peak_center_end)
+        setup_kw = dict(config_name=name)
+
+        return self._peak_center(setup_kw=setup_kw, peak_kw=peak_kw)
 
     def populate_mftable(self):
         sm = self.scan_manager
@@ -110,30 +125,10 @@ class SpectrometerTask(EditorTask):
             man.do_coincidence_scan()
 
     def do_peak_center(self):
-        # es = [int(e.name.split(' ')[-1])
-        #       for e in self.editor_area.editors
-        #       if isinstance(e, PeakCenterEditor)]
-        es = []
-        for e in self.editor_area.editors:
-            if isinstance(e, PeakCenterEditor):
-                try:
-                    es.append(int(e.name.split(' ')[-1]))
-                except ValueError:
-                    pass
-
-        i = max(es) + 1 if es else 1
-
-        man = self.scan_manager.ion_optics_manager
-        name = 'Peak Center {:02d}'.format(i)
-        if man.setup_peak_center(new=True, standalone_graph=False):
-            self._on_peak_center_start()
-
-            self._open_editor(PeakCenterEditor(model=man.peak_center,
-                                               name=name))
-
-            man.do_peak_center(confirm_save=True, warn=True,
-                               message='manual peakcenter',
-                               on_end=self._on_peak_center_end)
+        peak_kw = dict(confirm_save=True, warn=True,
+                       message='manual peakcenter',
+                       on_end=self._on_peak_center_end)
+        self._peak_center(peak_kw=peak_kw)
 
     def define_peak_center(self):
         from pychron.spectrometer.ion_optics.define_peak_center_view import DefinePeakCenterView
@@ -198,6 +193,48 @@ class SpectrometerTask(EditorTask):
     #             self._scan_factory()
     #         except AttributeError:
     #             pass
+
+    # private
+    def _peak_center(self, setup_kw=None, peak_kw=None):
+        if setup_kw is None:
+            setup_kw = {}
+
+        if peak_kw is None:
+            peak_kw = {}
+
+        es = []
+        for e in self.editor_area.editors:
+            if isinstance(e, PeakCenterEditor):
+                try:
+                    es.append(int(e.name.split(' ')[-1]))
+                except ValueError:
+                    pass
+
+        i = max(es) + 1 if es else 1
+
+        ret = -1
+        ion = self.scan_manager.ion_optics_manager
+
+        self._peak_center_start_hook()
+        time.sleep(2)
+        name = 'Peak Center {:02d}'.format(i)
+        if ion.setup_peak_center(new=True, **setup_kw):
+            self._on_peak_center_start()
+
+            invoke_in_main_thread(self._open_editor, PeakCenterEditor(model=ion.peak_center, name=name))
+
+            ion.do_peak_center(**peak_kw)
+
+            ret = ion.peak_center_result
+
+        self._peak_center_stop_hook()
+        return ret
+
+    def _peak_center_start_hook(self):
+        pass
+
+    def _peak_center_stop_hook(self):
+        pass
 
     def _scan_factory(self):
         sim = self.scan_manager.spectrometer.simulation

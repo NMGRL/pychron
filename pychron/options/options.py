@@ -16,23 +16,30 @@
 
 # ============= enthought library imports =======================
 import os
-from itertools import groupby
 
 import yaml
+from chaco.axis import DEFAULT_TICK_FORMATTER
+from chaco.axis_view import float_or_auto
 from enable.markers import marker_names
 from traits.api import HasTraits, Str, Int, Bool, Float, Property, Enum, List, Range, \
-    Color, Button
+    Color, Button, Instance
 from traitsui.api import View, Item, HGroup, VGroup, EnumEditor, Spring, Group, \
-    spring, UItem, ListEditor, InstanceEditor
+    spring, UItem, ListEditor, InstanceEditor, CheckListEditor, TextEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.handler import Controller
 from traitsui.table_column import ObjectColumn
 
 from pychron.core.helpers.color_generators import colornames
+from pychron.core.helpers.formatting import floatfmt
+from pychron.core.helpers.iterfuncs import groupby_group_id
+from pychron.core.pychron_traits import BorderHGroup, BorderVGroup
 from pychron.core.ui.table_editor import myTableEditor
+from pychron.core.utils import alphas
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.aux_plot import AuxPlot
-from pychron.pychron_constants import NULL_STR, ERROR_TYPES, FONTS, SIZES, ALPHAS
+from pychron.options.layout import FigureLayout
+from pychron.processing.j_error_mixin import JErrorMixin
+from pychron.pychron_constants import NULL_STR, ERROR_TYPES, FONTS, SIZES
 
 
 def _table_column(klass, *args, **kw):
@@ -57,15 +64,21 @@ class SubOptions(Controller):
 
 
 class TitleSubOptions(SubOptions):
+    def traits_view(self):
+        v = self._make_view(self._get_title_group())
+        return v
+
     def _get_title_group(self):
-        title_grp = HGroup(Item('auto_generate_title',
-                                tooltip='Auto generate a title based on the analysis list'),
-                           Item('title', springy=False,
-                                enabled_when='not auto_generate_title',
-                                tooltip='User specified plot title'),
-                           icon_button_editor('edit_title_format_button', 'cog',
-                                              enabled_when='auto_generate_title'),
-                           label='Title', show_border=True)
+        a = HGroup(UItem('title_fontname'), UItem('title_fontsize'))
+        b = HGroup(Item('auto_generate_title',
+                        tooltip='Auto generate a title based on the analysis list'),
+                   Item('title', springy=False,
+                        enabled_when='not auto_generate_title',
+                        tooltip='User specified plot title'),
+                   icon_button_editor('edit_title_format_button', 'cog',
+                                      enabled_when='auto_generate_title'))
+
+        title_grp = BorderVGroup(a, b, label='Title')
         return title_grp
 
 
@@ -84,6 +97,12 @@ class GroupSubOptions(SubOptions):
 
 
 class AppearanceSubOptions(SubOptions):
+    def _get_nominal_group(self):
+        return HGroup(self._get_bg_group(), self._get_grid_group())
+
+    def _get_layout_group(self):
+        return VGroup(UItem('layout', style='custom'))
+
     def _get_xfont_group(self):
         v = VGroup(self._create_axis_group('x', 'title'),
                    self._create_axis_group('x', 'tick'),
@@ -137,6 +156,7 @@ class AppearanceSubOptions(SubOptions):
                       label='Fonts', show_border=True)
 
         g = VGroup(self._get_bg_group(),
+                   self._get_layout_group(),
                    self._get_padding_group(),
                    self._get_grid_group())
 
@@ -157,16 +177,28 @@ class MainOptions(SubOptions):
                 checkbox_column(name='y_error', label='Y Err.'),
                 checkbox_column(name='ytick_visible', label='Y Tick'),
                 checkbox_column(name='ytitle_visible', label='Y Title'),
+                checkbox_column(name='y_axis_right', label='Y Right'),
+                object_column(name='scalar', label='Multiplier',
+                              format_func=lambda x: floatfmt(x, n=2, s=2, use_scientific=True)),
                 checkbox_column(name='has_filter', label='Filter', editable=False)
                 # object_column(name='filter_str', label='Filter')
                 ]
 
         return cols
 
+    def _get_yticks_grp(self):
+        g = BorderHGroup(Item('use_sparse_yticks', label='Sparse'),
+                         Item('sparse_yticks_step', label='Step', enabled_when='use_sparse_yticks'),
+                         Item('ytick_interval', label='Interval',
+                              editor=TextEditor(evaluate=float_or_auto)),
+                         label='Y Ticks'),
+        return g
+
     def _get_edit_view(self):
         v = View(VGroup(HGroup(Item('name', editor=EnumEditor(name='names')),
                                Item('scale', editor=EnumEditor(values=['linear', 'log']))),
                         Item('height'),
+                        self._get_yticks_grp(),
                         HGroup(UItem('marker', editor=EnumEditor(values=marker_names)),
                                Item('marker_size', label='Size'),
                                show_border=True, label='Marker'),
@@ -176,6 +208,10 @@ class MainOptions(SubOptions):
                                label='Y Limits'),
                         show_border=True))
         return v
+
+    def _get_analysis_group(self):
+        return HGroup(UItem('analysis_types', style='custom', editor=CheckListEditor(name='available_types')),
+                      show_border=True, label='Analysis Types')
 
     def _get_global_group(self):
         return
@@ -187,7 +223,7 @@ class MainOptions(SubOptions):
                              show_label=False,
                              editor=myTableEditor(columns=self._get_columns(),
                                                   sortable=False,
-                                                  deletable=True,
+                                                  # deletable=True,
                                                   clear_selection_on_dclicked=True,
                                                   orientation='vertical',
                                                   selected='selected',
@@ -208,6 +244,20 @@ class MainOptions(SubOptions):
 class BaseOptions(HasTraits):
     fontname = Enum(*FONTS)
     _main_options_klass = MainOptions
+    subview_names = List(transient=True)
+
+    _subview_cache = None
+
+    def get_cached_subview(self, name):
+        if self._subview_cache is None:
+            self._subview_cache = {}
+
+        try:
+            return self._subview_cache[name]
+        except KeyError:
+            v = self.get_subview(name)
+            self._subview_cache[name] = v
+            return v
 
     def to_dict(self):
         keys = [trait for trait in self.traits() if
@@ -225,13 +275,20 @@ class BaseOptions(HasTraits):
         return True
 
     def load_factory_defaults(self, path):
-        if not os.path.isfile(path):
-            yd = yaml.load(path)
-        else:
-            with open(path, 'r') as rfile:
-                yd = yaml.load(rfile)
+        if path:
+            if not os.path.isfile(path):
+                yd = yaml.load(path)
+            else:
+                with open(path, 'r') as rfile:
+                    yd = yaml.load(rfile)
 
-        self._load_factory_defaults(yd)
+            self._load_factory_defaults(yd)
+
+    def setup(self):
+        pass
+
+    def setup_groups(self):
+        pass
 
     def initialize(self):
         pass
@@ -242,8 +299,10 @@ class BaseOptions(HasTraits):
     def set_detectors(self, dets):
         pass
 
+    def set_analysis_types(self, atypes):
+        pass
+
     def _fontname_changed(self):
-        print 'setting font name', self.fontname
         self._set_fonts(self.fontname)
         for attr in self.traits():
             if attr.endswith('_fontname'):
@@ -296,6 +355,9 @@ class FigureOptions(BaseOptions):
     title_delimiter = Str(',')
     title_leading_text = Str
     title_trailing_text = Str
+    title_font = Property
+    title_fontsize = Enum(*SIZES)
+    title_fontname = Enum(*FONTS)
     edit_title_format_button = Button
 
     use_xgrid = Bool(True)
@@ -305,6 +367,8 @@ class FigureOptions(BaseOptions):
     xtick_fontname = Enum(*FONTS)
     xtick_in = Int(1)
     xtick_out = Int(5)
+    xtick_label_formatter = Property
+    xtick_label_format_str = Str
 
     xtitle_font = Property
     xtitle_fontsize = Enum(*SIZES)
@@ -315,10 +379,14 @@ class FigureOptions(BaseOptions):
     ytick_fontname = Enum(*FONTS)
     ytick_in = Int(1)
     ytick_out = Int(5)
+    ytick_label_formatter = Property
+    ytick_label_format_str = Str
 
     ytitle_font = Property
     ytitle_fontsize = Enum(*SIZES)
     ytitle_fontname = Enum(*FONTS)
+
+    layout = Instance(FigureLayout, ())
 
     groups = List
     # group = Property
@@ -333,11 +401,19 @@ class FigureOptions(BaseOptions):
 
     omit_by_tag = Bool(True)
 
-    def initialize(self):
-        if not self.groups:
-            self.groups = self._groups_default()
+    # def initialize(self):
+    #     if not self.groups:
+    #         self.groups = self._groups_default()
+    def setup(self):
+        if self.group_options_klass:
+            if len(self.groups) < len(colornames):
+                start = len(self.groups)
+                new_groups = [self.group_options_klass(color=ci,
+                                                       line_color=ci,
+                                                       group_id=start+i) for i, ci in enumerate(colornames[start:])]
+                self.groups.extend(new_groups)
 
-    def paddings(self):
+    def get_paddings(self):
         return self.padding_left, self.padding_right, self.padding_top, self.padding_bottom
 
     def get_group_colors(self):
@@ -356,14 +432,18 @@ class FigureOptions(BaseOptions):
                         'Plagioclase': 'Plag',
                         'Sanidine': 'San'}
 
-        for gid, ais in groupby(analyses, key=lambda x: x.group_id):
-            ref = ais.next()
+        for gid, ais in groupby_group_id(analyses):
+            ref = next(ais)
             d = {}
             for ai in attrs:
                 if ai == 'alphacounter':
-                    v = ALPHAS[n]
+                    v = alphas(n)
                 elif ai == 'numericcounter':
                     v = n
+                elif ai == '<space>':
+                    v = ' '
+                elif ai == 'runid':
+                    v = ref.record_id
                 else:
                     v = getattr(ref, ai)
                     if ai == 'material':
@@ -424,6 +504,15 @@ class FigureOptions(BaseOptions):
     # ===============================================================================
     # property get/set
     # ===============================================================================
+    def _get_xtick_label_formatter(self):
+        return self._get_tick_label_formatter(self.xtick_label_format_str)
+
+    def _get_ytick_label_formatter(self):
+        return self._get_tick_label_formatter(self.ytick_label_format_str)
+
+    def _get_title_font(self):
+        return self._get_font('title', default_size=12)
+
     def _get_xtick_font(self):
         return self._get_font('xtick', default_size=10)
 
@@ -435,6 +524,17 @@ class FigureOptions(BaseOptions):
 
     def _get_ytitle_font(self):
         return self._get_font('ytitle', default_size=12)
+
+    def _get_tick_label_formatter(self, f):
+        func = DEFAULT_TICK_FORMATTER
+
+        if f.isdigit():
+            f = '{{:0.{}f}}'.format(f)
+
+            def func(x):
+                return f.format(x)
+
+        return func
 
     def _get_font(self, name, default_size=10):
         xn = getattr(self, '{}_fontname'.format(name))
@@ -456,10 +556,39 @@ class FigureOptions(BaseOptions):
             return str(self.xpad) if self.xpad_as_percent else self.xpad
 
 
+NAUX_PLOTS = 15
+
+
 class AuxPlotFigureOptions(FigureOptions):
     aux_plots = List
     aux_plot_klass = AuxPlot
     selected = List
+
+    error_info_font = Property
+    error_info_fontname = Enum(*FONTS)
+    error_info_fontsize = Enum(*SIZES)
+    naux_plots = Int(15)
+
+    x_end_caps = Bool(False)
+    y_end_caps = Bool(False)
+    error_bar_nsigma = Enum(1, 2, 3)
+
+    def setup(self):
+        super(AuxPlotFigureOptions, self).setup()
+        while len(self.aux_plots) > self.naux_plots:
+
+            p = next((pp for pp in self.aux_plots if not pp.name or not pp.plot_enabled), None)
+            if not p:
+                break
+
+            self.aux_plots.remove(p)
+
+        while 1:
+            if len(self.aux_plots) >= self.naux_plots:
+                break
+
+            aux = self.aux_plot_klass()
+            self.aux_plots.append(aux)
 
     def add_aux_plot(self, name, i=0, **kw):
         plt = self.aux_plot_klass(name=name, **kw)
@@ -469,14 +598,11 @@ class AuxPlotFigureOptions(FigureOptions):
         except IndexError:
             self.aux_plots.append(plt)
 
-    def get_loadable_aux_plots(self):
-        return reversed([pi for pi in self.aux_plots
-                         if pi.name and pi.name != NULL_STR and (pi.save_enabled or pi.plot_enabled)])
+    # def get_loadable_aux_plots(self):
+    #     return reversed([pi for pi in self.aux_plots
+    #                      if pi.name and pi.name != NULL_STR and (pi.save_enabled or pi.plot_enabled)])
 
     def get_saveable_aux_plots(self):
-        # for a in self.aux_plots:
-        # print a.name, a.save_enabled
-
         return list(reversed([pi for pi in self.aux_plots
                               if pi.name and pi.name != NULL_STR and pi.save_enabled]))
 
@@ -484,14 +610,18 @@ class AuxPlotFigureOptions(FigureOptions):
         return list(reversed([pi for pi in self.aux_plots
                               if pi.name and pi.name != NULL_STR and pi.plot_enabled]))
 
+    def _get_error_info_font(self):
+        return '{} {}'.format(self.error_info_fontname, self.error_info_fontsize)
+
     def _aux_plots_default(self):
-        return [self.aux_plot_klass() for _ in range(12)]
+        return [self.aux_plot_klass() for _ in range(NAUX_PLOTS)]
 
 
-class AgeOptions(AuxPlotFigureOptions):
+class AgeOptions(AuxPlotFigureOptions, JErrorMixin):
     error_calc_method = Enum(*ERROR_TYPES)
-    include_j_error = Bool(False)
-    include_j_error_in_mean = Bool(True)
+    # include_j_error = Bool(False)
+    # include_j_error_in_mean = Bool(True)
+
     include_irradiation_error = Bool(True)
     include_decay_error = Bool(False)
 
@@ -505,10 +635,6 @@ class AgeOptions(AuxPlotFigureOptions):
 
     analysis_label_format = Str
     analysis_label_display = Str
-
-    error_info_font = Property
-    error_info_fontname = Enum(*FONTS)
-    error_info_fontsize = Enum(*SIZES)
 
     label_font = Property
     label_fontname = Enum(*FONTS)
@@ -525,15 +651,7 @@ class AgeOptions(AuxPlotFigureOptions):
             key = '{}({})'.format(sample, ident)
         return key
 
-    def _include_j_error_changed(self, new):
-        if new:
-            self.include_j_error_in_mean = False
-
     def _get_label_font(self):
         return '{} {}'.format(self.label_fontname, self.label_fontsize)
-
-    def _get_error_info_font(self):
-        return '{} {}'.format(self.error_info_fontname,
-                              self.error_info_fontsize)
 
 # ============= EOF =============================================

@@ -1,4 +1,8 @@
+from __future__ import absolute_import
+from __future__ import print_function
 from pylab import *
+from six.moves import map
+from six.moves import range
 def plot_mem(p, use_histogram=True):
     with open(p, 'r') as rfile:
         ms = []
@@ -7,7 +11,7 @@ def plot_mem(p, use_histogram=True):
         for line in rfile:
 
             # print line
-            msg, mem = map(str.strip, line.split(':'))
+            msg, mem = list(map(str.strip, line.split(':')))
             x = float(mem)
             mn = min(mn, x)
             mx = max(mx, x)
@@ -22,10 +26,10 @@ def plot_mem(p, use_histogram=True):
         if use_histogram:
             hist(ms, 30)
         else:
-            plot(range(len(ms)), ms)
+            plot(list(range(len(ms))), ms)
 
 
-        print mn, mx, len(ms), (mx - mn) / float(len(ms))
+        print(mn, mx, len(ms), (mx - mn) / float(len(ms)))
 
 #             try:
 #                 yi = float(mem)
@@ -61,7 +65,7 @@ def plot_file(p, normalize=False, stacked=False,
         for line in rfile:
 
             # print line
-            msg, mem = map(str.strip, line.split(':'))
+            msg, mem = list(map(str.strip, line.split(':')))
 #             print msg, mem
 #             if msg.startswith('exp start'):
 #                 continue
@@ -126,10 +130,10 @@ def plot_file(p, normalize=False, stacked=False,
 
         if memory:
             subplot(2, 1, 2)
-            print mxs
+            print(mxs)
             plot(mxs, mys)
 
-        print 'Min: {}  Max: {} avg: {} n: {}'.format(mi, ma, (ma - mi) / float(n), n)
+        print('Min: {}  Max: {} avg: {} n: {}'.format(mi, ma, (ma - mi) / float(n), n))
 #         print 'start: {} end: {}'.format(start_mem, end_mem)
 if __name__ == '__main__':
     import argparse
@@ -162,7 +166,7 @@ if __name__ == '__main__':
 
     parser.add_argument('paths', metavar='p', nargs='+')
     args = parser.parse_args()
-    print args
+    print(args)
 
     root = os.path.expanduser('~')
     d = os.path.join(root, 'Desktop', 'memtest')

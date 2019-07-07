@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import os
 
 from traits.api import Any, DelegatesTo, Property
@@ -29,21 +30,40 @@ class BaseSpectrometerManager(Manager):
     simulation = DelegatesTo('spectrometer')
     name = Property(depends_on='spectrometer')
 
+    def __init__(self, application, *args, **kw):
+        self.application = application
+        super(BaseSpectrometerManager, self).__init__(*args, **kw)
+
+    def get_intensity(self,*args, **kw):
+        return self.spectrometer.get_intensity(*args, **kw)
+
+    def read_trap_current(self):
+        return self.spectrometer.source.read_trap_current()
+
+    def read_emission(self):
+        return self.spectrometer.source.read_emission()
+
     def test_connection(self, **kw):
         return self.spectrometer.test_connection(**kw)
 
     def test_intensity(self, **kw):
         return self.spectrometer.test_intensity(**kw)
 
-    def _spectrometer_default(self):
-        return self.spectrometer_klass(application=self.application)
+    def make_gains_dict(self):
+        return self.spectrometer.make_gains_dict()
+
+    def make_configuration_dict(self):
+        return self.spectrometer.make_configuration_dict()
+
+    def make_deflections_dict(self):
+        return self.spectrometer.make_deflection_dict()
 
     def send_configuration(self):
         if self.spectrometer:
             self.spectrometer.send_configuration()
 
     def reload_mftable(self):
-        self.spectrometer.reload_mftable()
+        self.spectrometer.magnet.reload_field_table()
 
     def protect_detector(self, det, protect):
         pass
@@ -54,50 +74,10 @@ class BaseSpectrometerManager(Manager):
     def bind_preferences(self):
         pass
 
-    def load(self, db_mol_weights=True):
+    def load(self):
         spec = self.spectrometer
-        mftable = spec.magnet.mftable
-
         self.debug('******************************* LOAD Spec')
-        if db_mol_weights:
-            # get the molecular weights from the database
-            # dbm = IsotopeDatabaseManager(application=self.application,
-            #                              warn=False)
-            dbm = self.application.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
-            if dbm and dbm.is_connected():
-                self.info('loading molecular_weights from database')
-                mws = dbm.db.get_molecular_weights()
-                # convert to a dictionary
-                m = dict([(mi.name, mi.mass) for mi in mws])
-                spec.molecular_weights = m
-                mftable.db = dbm.db
-
-        if not spec.molecular_weights:
-            import csv
-            # load the molecular weights dictionary
-            p = os.path.join(paths.spectrometer_dir, 'molecular_weights.csv')
-            if os.path.isfile(p):
-                self.info('loading "molecular_weights.csv" file')
-                with open(p, 'U') as f:
-                    reader = csv.reader(f, delimiter='\t')
-                    args = [[l[0], float(l[1])] for l in reader]
-                    spec.molecular_weights = dict(args)
-            else:
-                self.info('writing a default "molecular_weights.csv" file')
-                # make a default molecular_weights.csv file
-                from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS as mw
-
-                with open(p, 'U' if os.path.isfile(p) else 'w') as f:
-                    writer = csv.writer(f, delimiter='\t')
-                    data = [a for a in mw.itervalues()]
-                    data = sorted(data, key=lambda x: x[1])
-                    for row in data:
-                        writer.writerow(row)
-                spec.molecular_weights = mw
-
-        self.spectrometer.load()
-        mftable.spectrometer_name = self.spectrometer.name
-
+        spec.load()
         return True
 
     def finish_loading(self):
@@ -131,12 +111,7 @@ class BaseSpectrometerManager(Manager):
                 r = self.spectrometer.microcontroller.name
         return r
 
-    def read_trap_current(self):
-        return self.spectrometer.source.read_trap_current()
+    def _spectrometer_default(self):
+        return self.spectrometer_klass(application=self.application)
 
-    def read_emission(self):
-        return self.spectrometer.source.read_emission()
 # ============= EOF =============================================
-
-
-

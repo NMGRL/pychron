@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Str, Int, \
     Bool, Password, Color, Property, Float, Enum
@@ -42,9 +44,10 @@ class ExperimentPreferences(BasePreferencesHelper):
     id = 'pychron.experiment.preferences_page'
 
     laboratory = Str
-    experiment_type = Enum('Ar/Ar', 'Generic')
+    experiment_type = Enum('Ar/Ar', 'Generic', 'He', 'Kr', 'Ne', 'Xe')
     instrument_name = Str
 
+    use_uuid_path_name = Bool
     use_notifications = Bool
     notifications_port = Int
     use_autoplot = Bool
@@ -61,8 +64,6 @@ class ExperimentPreferences(BasePreferencesHelper):
     even_bg_color = Color
 
     min_ms_pumptime = Int
-
-    use_system_health = Bool
 
     use_memory_check = Bool
     memory_threshold = Property(PositiveInteger,
@@ -91,6 +92,11 @@ class ExperimentPreferences(BasePreferencesHelper):
     end_after_color = Color
     invalid_color = Color
 
+    use_analysis_type_colors = Bool
+    blank_color = Color
+    air_color = Color
+    cocktail_color = Color
+
     use_peak_center_threshold = Bool
     # peak_center_threshold1 = Int(10)
     peak_center_threshold = Float(3)
@@ -98,6 +104,8 @@ class ExperimentPreferences(BasePreferencesHelper):
 
     n_executed_display = Int
     failed_intensity_count_threshold = Int(3)
+    ratio_change_detection_enabled = Bool(False)
+    plot_panel_update_period = Int(1)
 
     def _get_memory_threshold(self):
         return self._memory_threshold
@@ -158,16 +166,13 @@ class ExperimentPreferencesPane(PreferencesPane):
     category = 'Experiment'
 
     def traits_view(self):
-        system_health_grp = VGroup(Item('use_system_health'),
-                                   label='System Health')
-
-        notification_grp = VGroup(
-            Item('use_autoplot'),
-            Item('use_notifications'),
-            Item('notifications_port',
-                 enabled_when='use_notifications',
-                 label='Port'),
-            label='Notifications')
+        # notification_grp = VGroup(
+        #     Item('use_autoplot'),
+        #     Item('use_notifications'),
+        #     Item('notifications_port',
+        #          enabled_when='use_notifications',
+        #          label='Port'),
+        #     label='Notifications')
 
         editor_grp = VGroup(
             Item('automated_runs_editable',
@@ -198,27 +203,11 @@ class ExperimentPreferencesPane(PreferencesPane):
                                     Item('invalid_color', label='Invalid'),
                                     show_border=True,
                                     label='State Colors'),
+                             VGroup(Item('use_analysis_type_colors', label='Use Analysis Type Colors'),
+                                    Item('blank_color', label='Blank'),
+                                    Item('air_color', label='Air'),
+                                    Item('cocktail_color', label='Cocktail')),
                              label='Colors')
-        analysis_grouping_grp = Group(Item('use_analysis_grouping',
-                                           label='Auto group analyses',
-                                           tooltip=''),
-                                      Item('grouping_suffix',
-                                           label='Suffix',
-                                           tooltip='Append "Suffix" to the Project name. e.g. MinnaBluff-autogen '
-                                                   'where Suffix=autogen'),
-                                      Item('grouping_threshold',
-                                           label='Grouping Threshold (hrs)',
-                                           tooltip='Associate Reference analyses with the project of an analysis that '
-                                                   'is within X hours of the current run',
-                                           enabled_when='use_analysis_grouping'),
-                                      label='Analysis Grouping')
-
-        memory_grp = Group(Item('use_memory_check', label='Check Memory',
-                                tooltip='Ensure enough memory is available during experiment execution'),
-                           Item('memory_threshold', label='Threshold',
-                                enabled_when='use_memory_check',
-                                tooltip='Do not continue experiment if available memory less than "Threshold"'),
-                           label='Memory')
 
         monitor_grp = Group(Item('use_automated_run_monitor',
                                  label='Use AutomatedRun Monitor',
@@ -233,6 +222,7 @@ class ExperimentPreferencesPane(PreferencesPane):
 
         persist_grp = Group(Item('use_xls_persistence', label='Save analyses to Excel workbook'),
                             Item('use_db_persistence', label='Save analyses to Database'),
+                            Item('use_uuid_path_name', label='Use UUID Path Names'),
                             label='Persist', show_border=True)
 
         pc_grp = Group(Item('use_peak_center_threshold', label='Use Peak Center Threshold',
@@ -258,6 +248,13 @@ class ExperimentPreferencesPane(PreferencesPane):
                                           label='N. Failed Intensity',
                                           tooltip='Cancel Experiment if pychron fails to get intensities from '
                                                   'mass spectrometer more than "N. Failed Intensity" times'),
+                                     Item('ratio_change_detection_enabled',
+                                          label='Ratio Change Detection',
+                                          tooltip='Cancel experiment if significant changes in configured '
+                                                  'isotopic ratios are detected. '
+                                                  'Configured via "setupfiles/ratio_change_detection.yaml"'),
+                                     Item('plot_panel_update_period', label='Regression Update Period',
+                                          tooltip='update the isotope regression graph every N counts'),
                                      pc_grp,
                                      persist_grp,
                                      monitor_grp, overlap_grp),
@@ -265,9 +262,8 @@ class ExperimentPreferencesPane(PreferencesPane):
 
         return View(color_group,
                     automated_grp,
-                    notification_grp,
-                    editor_grp,
-                    analysis_grouping_grp, memory_grp, system_health_grp)
+                    # notification_grp,
+                    editor_grp)
 
 
 class UserNotifierPreferencesPane(PreferencesPane):

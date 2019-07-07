@@ -14,13 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-
 import logging
+from operator import attrgetter
 
 from envisage.core_plugin import CorePlugin
 from pyface.message_dialog import warning
 
-from pychron.displays.gdisplays import gTraceDisplay
+from pychron.core.displays.gdisplays import gTraceDisplay
 from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.envisage.key_bindings import update_key_bindings
 from pychron.envisage.tasks.base_plugin import BasePlugin
@@ -45,27 +45,38 @@ PACKAGE_DICT = dict(
     GitLabPlugin='pychron.git.tasks.gitlab_plugin',
     GitHubPlugin='pychron.git.tasks.github_plugin',
     PipelinePlugin='pychron.pipeline.tasks.plugin',
+    SparrowPlugin='pychron.sparrow.tasks.plugin',
 
     ClassifierPlugin='pychron.classifier.tasks.plugin',
+    MDDPlugin='pychron.mdd.tasks.plugin',
+    AutoPlugin='pychron.pipeline.tasks.auto_plugin',
+
+    # data mappers
+    USGSVSCDataPlugin='pychron.data_mapper.tasks.usgs_vsc.plugin',
+    WiscArDataPlugin='pychron.data_mapper.tasks.wiscar.plugin',
 
     # experiment
     EntryPlugin='pychron.entry.tasks.entry_plugin',
     ExperimentPlugin='pychron.experiment.tasks.experiment_plugin',
     PyScriptPlugin='pychron.pyscripts.tasks.pyscript_plugin',
+    SimpleIdentifierPlugin='pychron.entry.tasks.simple_identifier.plugin',
 
     # hardware
     ClientExtractionLinePlugin='pychron.extraction_line.tasks.client_extraction_line_plugin',
     ExternalPipettePlugin='pychron.external_pipette.tasks.external_pipette_plugin',
     ExtractionLinePlugin='pychron.extraction_line.tasks.extraction_line_plugin',
     ChromiumCO2Plugin='pychron.lasers.tasks.plugins.chromium_co2',
+    ChromiumDiodePlugin='pychron.lasers.tasks.plugins.chromium_diode',
     ChromiumUVPlugin='pychron.lasers.tasks.plugins.chromium_uv',
     FusionsDiodePlugin='pychron.lasers.tasks.plugins.diode',
     FusionsCO2Plugin='pychron.lasers.tasks.plugins.co2',
     FusionsUVPlugin='pychron.lasers.tasks.plugins.uv',
     LoadingPlugin='pychron.loading.tasks.loading_plugin',
     CoreLaserPlugin='pychron.lasers.tasks.plugins.laser_plugin',
-    NMGRLFurnacePlugin='pychron.furnace.tasks.furnace_plugin',
-    NMGRLFurnaceControlPlugin='pychron.furnace.tasks.furnace_control_plugin',
+    NMGRLFurnacePlugin='pychron.furnace.tasks.nmgrl.furnace_plugin',
+    NMGRLFurnaceControlPlugin='pychron.furnace.tasks.nmgrl.furnace_control_plugin',
+    LDEOFurnacePlugin='pychron.furnace.tasks.ldeo.furnace_plugin',
+    LDEOFurnaceControlPlugin='pychron.furnace.tasks.ldeo.furnace_control_plugin',
 
     # spectrometers
     ArgusSpectrometerPlugin='pychron.spectrometer.tasks.thermo.argus',
@@ -84,6 +95,7 @@ PACKAGE_DICT = dict(
     # social
     EmailPlugin='pychron.social.email.tasks.plugin',
     GoogleCalendarPlugin='pychron.social.google_calendar.tasks.plugin',
+    TwitterPlugin='pychron.social.twitter.plugin'
     # WorkspacePlugin='pychron.workspace.tasks.workspace_plugin',
 
     # LabBookPlugin='pychron.labbook.tasks.labbook_plugin',
@@ -122,10 +134,10 @@ def get_hardware_plugins():
 
 def get_klass(package, name):
     try:
-        m = __import__(package, globals(), locals(), [name], -1)
+        m = __import__(package, globals(), locals(), [name])
         klass = getattr(m, name)
 
-    except ImportError, e:
+    except ImportError as e:
         import traceback
 
         traceback.print_exc()
@@ -168,13 +180,21 @@ def get_user_plugins():
     """
 
     plugins = []
-    ps = InitializationParser().get_plugins()
+    ip = InitializationParser()
+    ps = ip.get_plugins()
 
     core_added = False
     for p in ps:
         # if laser plugin add CoreLaserPlugin
-        if p in ('FusionsCO2', 'FusionsDiode'):
-            plugin = get_plugin('CoreLaserPlugin')
+        if p in ('FusionsCO2', 'FusionsDiode', 'ChromiumCO2'):
+
+            plugint = ip.get_plugin(p, category='hardware')
+            mode = ip.get_parameter(plugint, 'mode')
+            if mode == 'client':
+                plugin = get_plugin('CoreClientLaserPlugin')
+            else:
+                plugin = get_plugin('CoreLaserPlugin')
+
             if plugin and not core_added:
                 core_added = True
                 plugins.append(plugin)
@@ -183,7 +203,7 @@ def get_user_plugins():
         if plugin:
             plugins.append(plugin)
 
-    return plugins
+    return sorted(plugins, key=attrgetter('name'))
 
 
 def app_factory(klass):

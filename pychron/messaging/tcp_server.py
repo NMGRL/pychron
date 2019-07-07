@@ -19,13 +19,14 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
+from __future__ import absolute_import
 import select
 import socket
-from SocketServer import ThreadingTCPServer
+from six.moves.socketserver import ThreadingTCPServer
 from threading import Thread
 
 # ============= local library imports  ==========================
-from messaging_server import MessagingServer
+from .messaging_server import MessagingServer
 from pychron.messaging.handlers.tcp_handler import TCPHandler
 
 # class TCPServer(_TCPServer, MessagingServer):
@@ -49,7 +50,7 @@ class TCPServer(ThreadingTCPServer, MessagingServer):
         try:
             args += (TCPHandler,)
             super(TCPServer, self).__init__(*args, **kw)
-        except socket.error, e:
+        except socket.error as e:
             self.warning(e)
             self.connected = False
 

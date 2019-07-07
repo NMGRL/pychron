@@ -14,6 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import time
 
 from traits.api import Event, Property, Any, Bool, Float, Str, Instance, List
@@ -30,6 +32,7 @@ from pychron.database.data_warehouse import DataWarehouse
 from pychron.managers.data_managers.csv_data_manager import CSVDataManager
 from pychron.core.helpers.datetime_tools import generate_datetimestamp
 from pychron.hardware.core.alarm import Alarm
+from six.moves import zip
 
 
 class ScanableDevice(ViewableDevice):
@@ -102,19 +105,22 @@ class ScanableDevice(ViewableDevice):
 
     def _scan_(self, *args):
         if self.scan_func:
+
             try:
                 v = getattr(self, self.scan_func)(verbose=False)
-            except AttributeError, e:
-                print 'exception', e
+            except AttributeError as e:
+                print('exception', e)
                 return
 
             if v is not None:
+                # self.debug('current scan value={}'.format(v))
                 self.current_scan_value = str(v)
 
                 # self.debug('current scan func={}, value ={}'.format(self.scan_func, v))
 
                 x = None
                 if self.graph_scan_data:
+                    self.debug('graphing scan data')
                     if isinstance(v, tuple):
                         x = self.graph.record_multiple(v)
                     elif isinstance(v, PlotRecord):
@@ -130,6 +136,7 @@ class ScanableDevice(ViewableDevice):
                         x = self.graph.record(v)
                         v = (v,)
                 if self.record_scan_data:
+                    self.debug('recording scan data')
                     if x is None:
                         x = time.time()
 
@@ -180,12 +187,17 @@ class ScanableDevice(ViewableDevice):
             self.timer.Stop()
             self.timer.wait_for_completion()
 
-        d = self.scan_width * 60 #* 1000/self.scan_period
-        # print self.scan_width, self.scan_period
-        self.graph.set_scan_width(d)
         self._scanning = True
         self.info('Starting scan')
+
+        d = self.scan_width * 60 #* 1000/self.scan_period
+        # print self.scan_width, self.scan_period
+        if self.graph_scan_data:
+            self.info('Graph recording enabled')
+            self.graph.set_scan_width(d)
+
         if self.record_scan_data:
+            self.info('Recording scan enabled')
             if self.dm_kind == 'h5':
                 from pychron.managers.data_managers.h5_data_manager import H5DataManager
 
@@ -216,9 +228,8 @@ class ScanableDevice(ViewableDevice):
             period = self.scan_period * self.time_dict[self.scan_units]
 
         from pychron.core.helpers.timer import Timer
-
         self.timer = Timer(period, self.scan)
-        self.info('Scan started')
+        self.info('Scan started {} period={}'.format(self.scan_func, period))
 
     def save_scan_to_db(self):
         from pychron.database.adapters.device_scan_adapter import DeviceScanAdapter

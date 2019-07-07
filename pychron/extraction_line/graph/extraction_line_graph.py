@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from traits.api import HasTraits, Dict, Bool
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -27,6 +29,7 @@ from pychron.canvas.canvas2D.scene.primitives.valves import Valve
 
 from pychron.canvas.canvas2D.scene.canvas_parser import CanvasParser, get_volume
 from pychron.extraction_line.graph.traverse import bft
+import six
 
 
 def split_graph(n):
@@ -225,7 +228,7 @@ class ExtractionLineGraph(HasTraits):
         vol = node.volume
         node.f_visited = True
         if debug:
-            print '=' * (k + 1), node.name, node.volume, vol
+            print('=' * (k + 1), node.name, node.volume, vol)
 
         for i, ei in enumerate(node.edges):
             # ns = ei.get_nodes(node)
@@ -235,20 +238,20 @@ class ExtractionLineGraph(HasTraits):
 
                 vol += ei.volume
                 if debug:
-                    print '-' * (k + i + 1), ei.name, ei.volume, vol
+                    print('-' * (k + i + 1), ei.name, ei.volume, vol)
 
                 if not n.f_visited:
                     n.f_visited = True
                     if n.state == 'closed':
                         vol += n.volume
                         if debug:
-                            print 'e' * (k + i + 1), n.name, n.volume, vol
+                            print('e' * (k + i + 1), n.name, n.volume, vol)
 
                     else:
                         v = self._calculate_volume(n, k=k + 1)
                         vol += v
                         if debug:
-                            print 'n' * (k + i + 1), n.name, v, vol
+                            print('n' * (k + i + 1), n.name, v, vol)
 
         return vol
 
@@ -324,11 +327,11 @@ class ExtractionLineGraph(HasTraits):
             obj.state = False
 
     def _clear_visited(self):
-        for ni in self.nodes.itervalues():
+        for ni in self.nodes.values():
             ni.visited = False
 
     def _clear_fvisited(self):
-        for ni in self.nodes.itervalues():
+        for ni in self.nodes.values():
             ni.f_visited = False
 
     def __getitem__(self, key):

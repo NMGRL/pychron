@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 
 from pyface.tasks.action.schema import SToolBar
@@ -190,8 +192,8 @@ class LabBookTask(BaseEditorTask):
         if new:
             try:
                 self.history_model.load_history(new.path)
-            except Exception, e:
-                print 'exception', e
+            except Exception as e:
+                print('exception', e)
                 self.debug('failed loading file history for {}'.format(new.path))
 
             labels = self.labeler.load_labels_for_path(os.path.relpath(new.path, paths.labbook_dir))

@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Instance, Button, Property, Bool, Int
 from traitsui.api import View, Item, ButtonEditor
 # ============= standard library imports ========================
@@ -95,7 +96,7 @@ class VideoServer(Loggable):
         stop = self._stop_signal
         video = self.video
         fps = 10
-        import Image
+        from . import Image
         from cStringIO import StringIO
         quality = self.quality
         while not stop.isSet():
@@ -126,7 +127,7 @@ class VideoServer(Loggable):
         video = self.video
         use_color = self.use_color
         fps = 10
-        import Image
+        from . import Image
         from cStringIO import StringIO
         while not stop.isSet():
 

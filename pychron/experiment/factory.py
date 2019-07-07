@@ -15,22 +15,25 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
+
 from pyface.timer.do_later import do_later
 from traits.api import Instance, Button, Bool, Property, \
-    on_trait_change, DelegatesTo, List, Str
+    DelegatesTo, List, Str
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.dvc.dvc_irradiationable import DVCAble
 from pychron.experiment.auto_gen_config import AutoGenConfig
-from pychron.experiment.automated_run.uv.factory import UVAutomatedRunFactory
 from pychron.experiment.automated_run.factory import AutomatedRunFactory
-from pychron.experiment.queue.factory import ExperimentQueueFactory
+from pychron.experiment.automated_run.uv.factory import UVAutomatedRunFactory
 from pychron.experiment.queue.experiment_queue import ExperimentQueue
+from pychron.experiment.queue.factory import ExperimentQueueFactory
 from pychron.experiment.undoer import ExperimentUndoer
-from pychron.pychron_constants import LINE_STR
 from pychron.experiment.utilities.identifier import convert_extract_device
-from pychron.consumer_mixin import ConsumerMixin
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
+from pychron.pychron_constants import LINE_STR
 
 
 class ExperimentFactory(DVCAble): #, ConsumerMixin):
@@ -88,11 +91,12 @@ class ExperimentFactory(DVCAble): #, ConsumerMixin):
         for a in ('username', 'mass_spectrometer', 'extract_device',
                   'email', 'use_email',
                   'use_group_email',
-                  'load_name',
+                  'load_name', 'tray',
                   'delay_after_blank',
                   'delay_between_analyses',
                   'delay_after_air',
-                  'queue_conditionals_name', 'username'):
+                  'default_lighting',
+                  'queue_conditionals_name', 'note'):
 
             if not self._sync_queue_to_factory(eq, qf, a):
                 self._sync_factory_to_queue(eq, qf, a)
@@ -250,8 +254,8 @@ class ExperimentFactory(DVCAble): #, ConsumerMixin):
             self.run_factory.set_mass_spectrometer(new)
 
         elif name == 'extract_device':
-            # self._set_extract_device(new)
-            do_later(self._set_extract_device, new)
+            self._set_extract_device(new)
+            # do_later(self._set_extract_device, new)
 
             # elif name == 'username':
             # self._username = new
@@ -264,16 +268,19 @@ class ExperimentFactory(DVCAble): #, ConsumerMixin):
     def _auto_save(self):
         self.queue.auto_save()
 
+    def get_patterns(self):
+        return self._get_patterns(self.extract_device)
+
     # ===============================================================================
     # private
     # ===============================================================================
     def _set_extract_device(self, ed):
         self.debug('setting extract dev="{}" mass spec="{}"'.format(ed, self.mass_spectrometer))
-        self.extract_device = ed
         self.run_factory = self._run_factory_factory()
 
-        self.run_factory.remote_patterns = self._get_patterns(ed)
+        self.run_factory.remote_patterns = patterns = self._get_patterns(ed)
         self.run_factory.setup_files()
+
         # self.run_factory.set_mass_spectrometer(self.mass_spectrometer)
 
         if self._load_persistence_flag:
@@ -283,6 +290,7 @@ class ExperimentFactory(DVCAble): #, ConsumerMixin):
             self.queue.set_extract_device(ed)
             self.queue.username = self.username
             self.queue.mass_spectrometer = self.mass_spectrometer
+            self.queue.patterns = patterns
 
     def _get_patterns(self, ed):
         ps = []
@@ -323,16 +331,15 @@ class ExperimentFactory(DVCAble): #, ConsumerMixin):
             klass = AutomatedRunFactory
 
         rf = klass(dvc=self.dvc,
-                   iso_db_man=self.iso_db_man,
                    application=self.application,
                    extract_device=self.extract_device,
-                   mass_spectrometer=self.default_mass_spectrometer)
+                   mass_spectrometer=self.mass_spectrometer)
 
         # rf.activate()
         # rf.on_trait_change(lambda x: self.trait_set(_labnumber=x), 'labnumber')
         rf.on_trait_change(self._update_end_after, 'end_after')
         rf.on_trait_change(self._auto_save, 'auto_save_needed')
-
+        print('making new factory', id(rf))
         return rf
 
     # handlers
@@ -442,7 +449,7 @@ class ExperimentFactory(DVCAble): #, ConsumerMixin):
         q.changed = True
         rf.update_info_needed = True
         rf.suppress_meta = False
-        print 'totaltime', time.time() - st
+        print('totaltime', time.time() - st)
         pd.close()
         rf.labnumber = ''
         rf.sample = ''
@@ -478,11 +485,10 @@ class ExperimentFactory(DVCAble): #, ConsumerMixin):
 
     def _queue_factory_default(self):
         eq = ExperimentQueueFactory(dvc=self.dvc,
-                                    iso_db_man=self.iso_db_man,
                                     application=self.application)
 
         eq.on_trait_change(self._update_queue, '''mass_spectrometer,
-extract_device, delay_+, tray, username, load_name,
+extract_device, delay_+, tray, username, load_name, note,
 email, use_email, use_group_email,
 queue_conditionals_name, repository_identifier''')
         # eq.activate()

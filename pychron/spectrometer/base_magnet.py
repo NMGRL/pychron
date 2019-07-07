@@ -22,13 +22,13 @@ from math import pi
 import yaml
 from numpy import arange, sin
 from traits.api import Property, Float, Event, Instance
-from traitsui.api import View, Item, VGroup, HGroup, Spring, RangeEditor
 
 from pychron.paths import paths
+from pychron.spectrometer.fieldmixin import FieldMixin
 from pychron.spectrometer.spectrometer_device import SpectrometerDevice
 
 
-class BaseMagnet(SpectrometerDevice):
+class BaseMagnet(SpectrometerDevice, FieldMixin):
     dac = Property(Float, depends_on='_dac')
     mass = Float(enter_set=True, auto_set=False)
 
@@ -46,7 +46,6 @@ class BaseMagnet(SpectrometerDevice):
 
     dac_changed = Event
 
-    mftable = Instance('pychron.spectrometer.mftable.MagnetFieldTable', ())
     confirmation_threshold_mass = Float
     use_deflection_correction = True
     use_af_demagnetization = False
@@ -58,20 +57,11 @@ class BaseMagnet(SpectrometerDevice):
     #     self._lock = threading.Lock()
     #     self._cond = threading.Condition((threading.Lock()))
 
-    def reload_mftable(self):
-        self.mftable.load_mftable()
-
     def read_dac(self):
         raise NotImplementedError
 
     def set_dac(self, *args, **kw):
         raise NotImplementedError
-
-    def set_mftable(self, name):
-        self.mftable.set_path_name(name)
-
-    def update_field_table(self, *args, **kw):
-        self.mftable.update_field_table(*args, **kw)
 
     # ===============================================================================
     # persistence
@@ -86,16 +76,17 @@ class BaseMagnet(SpectrometerDevice):
         read DAC from device
         :return:
         """
-        if self.spectrometer:
-            molweights = self.spectrometer.molecular_weights
-            name = self.spectrometer.name
-        else:
-            from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS as molweights
-
-            name = ''
-
-        self.mftable.initialize(molweights)
-        self.mftable.spectrometer_name = name.lower()
+        # if self.spectrometer:
+        #     molweights = self.spectrometer.molecular_weights
+        #     name = self.spectrometer.name
+        # else:
+        #     from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS as molweights
+        #
+        #     name = ''
+        #
+        # self.field_table.initialize(molweights)
+        # self.field_table.spectrometer_name = name.lower()
+        self.field_table_setup()
 
         d = self.read_dac()
         if d is not None:
@@ -116,7 +107,7 @@ class BaseMagnet(SpectrometerDevice):
         :param detname: str, name of a detector, e.g H1
         :return: float, mass
         """
-        return self.mftable.map_dac_to_mass(dac, detname)
+        return self.field_table.map_dac_to_mass(dac, detname)
 
     def map_mass_to_dac(self, mass, detname):
         """
@@ -127,7 +118,7 @@ class BaseMagnet(SpectrometerDevice):
         :return: float, dac voltage
         """
 
-        dac = self.mftable.map_mass_to_dac(mass, detname)
+        dac = self.field_table.map_mass_to_dac(mass, detname)
         self.debug('{} map mass to dac {} >> {}'.format(detname, mass, dac))
         if dac is None:
             self.warning('Could not map mass to dac. Returning current DAC {}'.format(self._dac))
@@ -200,7 +191,7 @@ class BaseMagnet(SpectrometerDevice):
             with open(p, 'r') as rfile:
                 try:
                     yd = yaml.load(rfile)
-                except BaseException, e:
+                except BaseException as e:
                     self.warning_dialog('AF Demagnetization unavailable. Syntax error in file. Error: {}'.format(e))
                     return
 
@@ -218,7 +209,7 @@ class BaseMagnet(SpectrometerDevice):
             with open(p, 'r') as rfile:
                 try:
                     yd = yaml.load(rfile)
-                except BaseException, e:
+                except BaseException as e:
                     self.warning('AF Demagnetization unavailable. Syntax error in file. Error: {}'.format(e))
                     return
 
@@ -337,14 +328,16 @@ class BaseMagnet(SpectrometerDevice):
     # views
     # ===============================================================================
     def traits_view(self):
+        from traitsui.api import View, Item, VGroup, HGroup, Spring, RangeEditor
+
         v = View(VGroup(VGroup(Item('dac', editor=RangeEditor(low_name='dacmin',
                                                               high_name='dacmax',
                                                               format='%0.5f')),
 
-                               Item('mass'),
-                                    # editor=RangeEditor(mode='slider', low_name='massmin',
-                                    #                            high_name='massmax',
-                                    #                            format='%0.3f')),
+                               Item('mass',
+                                    editor=RangeEditor(mode='slider', low_name='massmin',
+                                                       high_name='massmax',
+                                                       format='%0.3f')),
                                HGroup(Spring(springy=False,
                                              width=48),
                                       Item('massmin', width=-40), Spring(springy=False,

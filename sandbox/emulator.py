@@ -14,11 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-import SocketServer
-import shlex
-import sys
 import select
+import shlex
 import socket
+import sys
+
+import SocketServer
 
 
 class Server(object):

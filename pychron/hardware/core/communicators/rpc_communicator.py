@@ -22,6 +22,7 @@
 # pyro.configuration.HMAC_KEY = bytes(hmac.new('pychronjjj.rpc.hmac').digest())
 
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.hardware.core.communicators.communicator import Communicator
 
 # return to xml-rpc ?
@@ -49,7 +50,7 @@ class RpcCommunicator(Communicator):
             getattr(self.handle, self.test_func)()
             self.simulation = False
             return True
-        except Exception, err:
+        except Exception as err:
             self.warning(err)
 
     def config_get(self, config, section, option, **kw):

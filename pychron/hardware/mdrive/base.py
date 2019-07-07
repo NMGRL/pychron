@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Int, Bool, Float, CInt
 # ============= standard library imports ========================
 from threading import Thread, Event
@@ -305,7 +306,7 @@ class BaseMDrive(BaseLinearDrive):
         if as_int and resp is not None:
             try:
                 resp = int(resp)
-            except (TypeError, ValueError), e:
+            except (TypeError, ValueError) as e:
                 self.debug('invalid var={} response="{}", error={}'.format(c, resp, e))
                 resp = None
 
@@ -331,6 +332,7 @@ class BaseMDrive(BaseLinearDrive):
 
             cmd = 'MR' if relative else 'MA'
             self.tell('{} {}'.format(cmd, pos))
+            self._block()
 
         if block:
             func()

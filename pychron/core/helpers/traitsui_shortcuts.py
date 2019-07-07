@@ -15,15 +15,42 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traitsui.api import  Item, ListEditor, InstanceEditor
+from traitsui.api import Item, ListEditor, InstanceEditor, View
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from traitsui.menu import OKButton
+
+
 def instance_item(name, **kw):
     return Item(name, style='custom', show_label=False, **kw)
+
 
 def listeditor(name, **kw):
     return Item(name,
                 show_label=False,
                 editor=ListEditor(mutable=False, style='custom', editor=InstanceEditor()),
-                    **kw)
+                **kw)
+
+
+def okcancel_view(*args, **kw):
+    if 'kind' not in kw:
+        kw['kind'] = 'livemodal'
+    if 'default_button' not in kw:
+        kw['default_button'] = OKButton
+    if 'resizable' not in kw:
+        kw['resizable'] = True
+    if 'buttons' not in kw:
+        kw['buttons'] = ['OK', 'Cancel']
+
+    return View(*args, **kw)
+
+
+def rfloatitem(*args, **kw):
+    kw['style'] = 'readonly'
+    return floatitem(*args, **kw)
+
+
+def floatitem(name, sigfigs=3, **kw):
+    return Item(name, format_str='%0.{}f'.format(sigfigs), **kw)
 # ============= EOF =============================================
