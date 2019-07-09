@@ -69,7 +69,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         self._bold = self._workbook.add_format({'bold': True})
         self._superscript = self._workbook.add_format({'font_script': 1})
         self._subscript = self._workbook.add_format({'font_script': 2})
-        self._bsuperscript = self._workbook.add_format({'font_script': 1, 'bold':True})
+        self._bsuperscript = self._workbook.add_format({'font_script': 1, 'bold': True})
         self._bsubscript = self._workbook.add_format({'font_script': 2, 'bold': True})
         self._ital = self._workbook.add_format({'italic': True})
 
@@ -142,8 +142,14 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         dbit = options.include_discrimination
 
         kcabit = ubit and options.include_kca
+        kclbit = ubit and options.include_kcl
+        invert_kca_kcl = options.invert_kca_kcl
+
         age_units = '({})'.format(options.age_units)
         age_func = age_value(options.age_units)
+
+        kca_label, kca_attr = ('Ca/K', 'cak') if invert_kca_kcl else ('K/Ca', 'kca')
+        kcl_label, kcl_attr = ('Cl/K', 'clk') if invert_kca_kcl else ('K/Cl', 'kcl')
 
         columns = [Column(attr='status', width=2, enabled=options.status_enabled),
                    Column(label='N', attr='aliquot_step_str', enabled=options.analysis_label_enabled),
@@ -152,8 +158,12 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                    Column(visible=ubit, label='Age', units=age_units, attr='age', func=age_func),
                    EColumn(visible=ubit, units=age_units, attr='age_err_wo_j', func=age_func,
                            sigformat='age'),
-                   VColumn(visible=kcabit, label='K/Ca', attr='kca'),
-                   EColumn(visible=ubit, attr='kca'),
+
+                   VColumn(visible=kcabit, label=kca_label, attr=kca_attr),
+                   EColumn(visible=ubit, attr=kca_attr),
+                   VColumn(visible=kclbit, label=kcl_label, attr=kcl_attr),
+                   EColumn(visible=ubit, attr=kcl_attr),
+
                    VColumn(visible=ubit and options.include_percent_ar39,
                            label=('Cum. %', '<sup>39</sup>', 'Ar'),
                            units='(%)', attr='cumulative_ar39'),
@@ -883,10 +893,12 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
     def _make_summary(self, sh, cols, group):
         fmt = self._bold
         start_col = 0
-        if self._options.include_kca:
+        if self._options.include_summary_kca:
             nfmt = self._get_number_format('summary_kca')
             nfmt.set_bold(True)
-            idx = next((i for i, c in enumerate(cols) if c.label == 'K/Ca'))
+
+            kcalabel = 'Ca/K' if self._options.invert_kca_kcl else 'K/Ca'
+            idx = next((i for i, c in enumerate(cols) if c.label == kcalabel))
 
             nsigma = self._options.asummary_kca_nsigma
             pmsigma = PLUSMINUS_NSIGMA.format(nsigma)
@@ -899,11 +911,16 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 label = kind.capitalize()
 
             sh.write_string(self._current_row, start_col,
-                            u'{} K/Ca {}'.format(label, pmsigma),
+                            u'{} {} {}'.format(label, kcalabel, pmsigma),
                             fmt)
 
-            sh.write_number(self._current_row, idx, pv.value, nfmt)
-            sh.write_number(self._current_row, idx + 1, pv.error * nsigma, nfmt)
+            v, e = pv.value, pv.error
+            if self._options.invert_kca_kcl:
+                u = 1 / ufloat(v, e)
+                v, e = nominal_value(u), std_dev(u)
+
+            sh.write_number(self._current_row, idx, v, nfmt)
+            sh.write_number(self._current_row, idx + 1, e * nsigma, nfmt)
             sh.write_string(self._current_row, idx + 2, pv.error_kind, fmt)
             self._current_row += 1
 
@@ -987,7 +1004,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             nfmt = self._get_number_format()
             nfmt.set_bold(True)
             sh.write_number(self._current_row, idx, trapped_value, nfmt)
-            sh.write_number(self._current_row, idx+1, trapped_error*nsigma, nfmt)
+            sh.write_number(self._current_row, idx + 1, trapped_error * nsigma, nfmt)
 
             self._current_row += 1
 
