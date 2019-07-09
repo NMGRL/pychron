@@ -67,6 +67,8 @@ class XLSXAnalysisTableWriterOptions(BasePersistenceOptions, JErrorMixin):
     include_trapped_ratio = dumpable(Bool(True))
 
     include_kca = dumpable(Bool(True))
+    include_kcl = dumpable(Bool(True))
+    invert_kca_kcl = dumpable(Bool(False))
     include_rundate = dumpable(Bool(True))
     include_time_delta = dumpable(Bool(True))
     include_k2o = dumpable(Bool(True))
@@ -324,6 +326,9 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                               iinc('production_ratios', 'Production Ratios'),
                               iinc('isochron_ratios', 'Isochron Ratios'),
                               iinc('time_delta', 'Time since Irradiation'),
+                              iinc('kca', 'K/Ca'),
+                              iinc('kcl', 'K/Cl'),
+                              Item('invert_kca_kcl', label='Invert K/Ca,K/Cl'),
                               VGroup(iinc('lambda_k', 'Lambda K'),
                                      iinc('monitor_age', 'Age'),
                                      iinc('monitor_name', 'Name'),
@@ -341,7 +346,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                                  iinc('discrimination', 'Discrimination'),
                                  label='General')
 
-        summary_rows_grp = BorderVGroup(iinc('kca', 'Integrated K/Ca'),
+        summary_rows_grp = BorderVGroup(iinc('summary_kca', 'Integrated K/Ca'),
                                         iinc('plateau_age', 'Plateau Age'),
                                         iinc('integrated_age', 'Total Integrated Age'),
                                         iinc('isochron_age', 'Isochron Age'),

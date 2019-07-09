@@ -381,6 +381,7 @@ class ArArAge(IsotopeGroup):
 
         try:
             self.kca = k / ca * k_ca_pr
+            self.cak = 1/self.kca
         except ZeroDivisionError:
             self.kca = ufloat(0, 0)
             if not self._kca_warning:
@@ -401,6 +402,7 @@ class ArArAge(IsotopeGroup):
             k_cl_pr = 1 / clk
         try:
             self.kcl = k / cl * k_cl_pr
+            self.clk = 1/self.kcl
         except ZeroDivisionError:
             self.kcl = ufloat(0, 0)
             if not self._kcl_warning:
