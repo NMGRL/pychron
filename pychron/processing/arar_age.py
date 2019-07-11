@@ -243,7 +243,6 @@ class ArArAge(IsotopeGroup):
         return self.arar_mapping.get(k, k)
 
     def get_value(self, attr):
-
         attr = self.map_isotope_key(attr)
 
         r = ufloat(0, 0, tag=attr)

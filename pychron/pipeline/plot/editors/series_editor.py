@@ -60,21 +60,22 @@ class SeriesEditor(FigureEditor):
 
         ss = []
         for p in model.panels:
-            g = p.figures[-1].graph
-            if self.plotter_options.show_statistics_as_table:
-                g.on_trait_change(self._handle_reg, 'regression_results')
-                for plot in reversed(g.plots):
-                    for k, v in plot.plots.items():
-                        if k.startswith('fit') and hasattr(v[0], 'regressor'):
-                                label = plot.y_axis.title
-                                for tag in ('sub', 'sup'):
-                                    label = label.replace('<{}>'.format(tag), '')
-                                    label = label.replace('</{}>'.format(tag), '')
+            g = p.figures[0].graph
+            if g:
+                if self.plotter_options.show_statistics_as_table:
+                    g.on_trait_change(self._handle_reg, 'regression_results')
+                    for plot in reversed(g.plots):
+                        for k, v in plot.plots.items():
+                            if k.startswith('fit') and hasattr(v[0], 'regressor'):
+                                    label = plot.y_axis.title
+                                    for tag in ('sub', 'sup'):
+                                        label = label.replace('<{}>'.format(tag), '')
+                                        label = label.replace('</{}>'.format(tag), '')
 
-                                ss.append(SeriesStatistics(label, v[0].regressor))
+                                    ss.append(SeriesStatistics(label, v[0].regressor))
 
-            else:
-                g.on_trait_change(self._handle_reg, 'regression_results', remove=True)
+                else:
+                    g.on_trait_change(self._handle_reg, 'regression_results', remove=True)
 
         do_after(1, self.trait_set, statistics=ss)
 
