@@ -1,5 +1,6 @@
 Quick Start (ish)
 -----------------------------
+.. note:: The following information mostly accurate but this section is out of date (7/10/19)
 
 Step 0. Downloads
 ==========================

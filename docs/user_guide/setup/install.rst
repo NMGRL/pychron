@@ -1,5 +1,27 @@
-Easy Install
-=========================
+Installer Script
+=================
+
+Download the current installer script
+
+```
+$ wget https://raw.githubusercontent.com/NMGRL/pychron/develop/app_utils/install.py
+```
+or
+
+```
+$ curl -O https://raw.githubusercontent.com/NMGRL/pychron/develop/app_utils/install.py
+```
+
+run the script from the terminal
+```
+$ cd /path/to/install.py
+$ python install.py
+```
+
+
+
+.. note:: The following information is out of date (7/10/19)
+
 A simple bash script is provide to install pychron and its dependencies.
 
 Procedure

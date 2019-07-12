@@ -138,6 +138,11 @@ def ask_config():
     ask(config, 'conda_distro', 'Conda Distro Path', distro)
     ask(config, 'conda_env_name', 'Conda environment name', 'pychron3')
 
+    # echo config
+    print('------------ Config -------------')
+    for k, v in config.items():
+        print('{:<20s}: {}'.format(k, v))
+
     config['pip_requirements'] = '''uncertainties
 peakutils
 qimage2ndarray
@@ -170,7 +175,11 @@ swig
         creq = '{}\npython.app'.format(creq)
 
     config['conda_requirements'] = creq
-    return config
+
+    print()
+    print()
+    if input('Continue? [y]/n >> ') in ('', 'y', 'yes', 'Yes', 'YES'):
+        return config
 
 
 def install_src(cfg):
@@ -188,7 +197,7 @@ def install_src(cfg):
         shutil.rmtree(ppath)
 
     url = 'https://github.com/{}/pychron.git'.format(cfg['fork'])
-    subprocess.call(['clone', url,
+    subprocess.call(['git', 'clone', url,
                      '--branch={}'.format(cfg['branch']),
                      ppath])
 
@@ -215,6 +224,7 @@ def install_conda(cfg):
 
 
 def install_launcher_script(cfg):
+    info_header('Build launcher script')
     if IS_WINDOWS:
         lpath = 'pychron_launcher.bat'
         txt = '''
@@ -250,7 +260,7 @@ export QT_API={qt_bindings:}
 ROOT=${pychron_path:}
 export PYTHONPATH=$ROOT
 
-{conda_distro:}/envs/{conda_env:}/bin/pythonw $ROOT/launchers/launcher.py
+{conda_distro:}/envs/{conda_env_name:}/bin/pythonw $ROOT/launchers/launcher.py
 '''.format(**cfg)
 
     with open(lpath, 'w') as wfile:
@@ -260,6 +270,7 @@ export PYTHONPATH=$ROOT
 
 
 def install_app(cfg):
+    info_header('Install App')
     l = cfg['launcher']
     if cfg['mac_os_app']:
         d = os.path.join('{}.app'.format(cfg['app_name']), 'Contents', 'MacOS')
@@ -279,11 +290,16 @@ def main():
     pre_checks()
 
     cfg = ask_config()
+    if cfg:
+        install_src(cfg)
+        # install_conda(cfg)
+        install_launcher_script(cfg)
+        install_app(cfg)
 
-    install_src(cfg)
-    install_conda(cfg)
-    install_launcher_script(cfg)
-    install_app(cfg)
+        print()
+        print('Installation Complete!')
+    else:
+        print('Failed getting configuration. Exiting')
 
 
 if __name__ == '__main__':
