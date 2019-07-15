@@ -78,7 +78,7 @@ PLATEAU_INTEGRATED = '{} Integrated'.format(PLATEAU)
 FIT_TYPES = ['Linear', 'Parabolic', 'Cubic',
              'Average', 'Exponential', WEIGHTED_MEAN]
 
-FIT_ERROR_TYPES = [SD, SEM, 'CI', 'MonteCarlo']
+FIT_ERROR_TYPES = [SD, SEM, MSEM, 'CI', 'MonteCarlo']
 SERIES_FIT_TYPES = [NULL_STR] + FIT_TYPES
 
 INTERPOLATE_TYPES = ['Preceding', 'Bracketing Interpolate', 'Bracketing Average', 'Succeeding']

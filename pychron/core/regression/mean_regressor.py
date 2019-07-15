@@ -156,9 +156,11 @@ sem={}
             if not error_calc:
                 error_calc = 'SEM' if 'sem' in self.fit.lower() else 'SD'
 
-        if error_calc == SEM:
+        error_calc = error_calc.lower()
+
+        if error_calc == SEM.lower():
             e = self.sem
-        elif error_calc in (MSEM, 'MSEM', 'msem'):
+        elif error_calc in (MSEM.lower(), 'msem'):
             e = self.sem * (self.mswd ** 0.5 if self.mswd > 1 else 1)
         else:
             e = self.std

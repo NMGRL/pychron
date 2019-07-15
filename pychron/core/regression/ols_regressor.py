@@ -16,7 +16,7 @@
 # ============= enthought library imports =======================
 import logging
 
-from numpy import asarray, column_stack, matrix, sqrt, dot, linalg, zeros_like, hstack, ones_like
+from numpy import asarray, column_stack, sqrt, dot, linalg, zeros_like, hstack, ones_like
 from statsmodels.api import OLS
 from traits.api import Int, Property
 
@@ -212,17 +212,17 @@ class OLSRegressor(BaseRegressor):
 
         def calc_hat(xi):
             Xk = self._get_X(xi).T
-
-            covarM = matrix(self.var_covar)
+            covarM = self.var_covar
             varY_hat = (Xk.T * covarM * Xk)
 
             return varY_hat[0, 0]
 
-        if error_calc == SEM:
+        error_calc = error_calc.lower()
+        if error_calc == SEM.lower():
             def func(xi):
                 varY_hat = calc_hat(xi)
                 return sef * sqrt(varY_hat)
-        elif error_calc == MSEM:
+        elif error_calc == MSEM.lower():
             mswd = self.mswd
 
             def func(xi):
@@ -248,7 +248,7 @@ class OLSRegressor(BaseRegressor):
             only here for verification
 
         """
-        cov_varM = matrix(self.var_covar)
+        cov_varM = self.var_covar
         se = self.calculate_standard_error_fit()
 
         def predict_yi_err(xi):
