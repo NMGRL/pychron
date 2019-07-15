@@ -18,11 +18,13 @@
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Any, Int
-from traitsui.api import View, UItem, InstanceEditor, ListEditor, TabularEditor
-
+from traitsui.api import View, UItem, InstanceEditor, ListEditor, TabularEditor, VGroup, HGroup, Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
+
+from pychron.core.pychron_traits import BorderHGroup
+from pychron.envisage.icon_button_editor import icon_button_editor
 
 
 class CanvasPane(TraitsTaskPane):
@@ -112,4 +114,37 @@ class ReadbackPane(TraitsDockPane):
                                             editable=False)))
         return v
 
+
+class EditorPane(TraitsDockPane):
+    name = 'Editor'
+    id = 'pychron.extraction_line.editor'
+
+    def traits_view(self):
+        egrp = VGroup(HGroup(Item('ex'), Item('ey')),
+                      BorderHGroup(icon_button_editor('increment_down_x', 'arrow_left'),
+                                   icon_button_editor('increment_up_x', 'arrow_right'),
+                                   UItem('x_magnitude'),
+                                   label='X'),
+                      BorderHGroup(icon_button_editor('increment_up_y', 'arrow_up'),
+                                   icon_button_editor('increment_down_y', 'arrow_down'),
+                                   UItem('y_magnitude'),
+                                   label='Y'),
+                      BorderHGroup(UItem('width'),
+                                   icon_button_editor('width_increment_minus_button', 'delete'),
+                                   icon_button_editor('width_increment_plus_button', 'add'), label='Width'),
+                      BorderHGroup(UItem('height'),
+                                   icon_button_editor('height_increment_minus_button', 'delete'),
+                                   icon_button_editor('height_increment_plus_button', 'add'), label='Height'),
+
+
+                      UItem('save_button'))
+
+        g = VGroup(UItem('groups', style='custom',
+                         editor=ListEditor(use_notebook=True,
+                                           page_name='.name',
+                                           selected='selected_group',
+                                           editor=InstanceEditor())))
+
+        v = View(VGroup(g, egrp))
+        return v
 # ============= EOF =============================================
