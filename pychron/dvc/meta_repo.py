@@ -111,15 +111,6 @@ class MetaRepo(GitRepoManager):
 
         return str(age), str(decay)
 
-    def get_molecular_weights(self):
-        p = os.path.join(paths.meta_root, 'molecular_weights.json')
-        return dvc_load(p)
-
-    def update_molecular_weights(self, wts, commit=False):
-        p = os.path.join(paths.meta_root, 'molecular_weights.json')
-        dvc_dump(wts, p)
-        self.add(p, commit=commit)
-
     def add_unstaged(self, *args, **kw):
         super(MetaRepo, self).add_unstaged(self.path, **kw)
 

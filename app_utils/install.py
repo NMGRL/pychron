@@ -22,6 +22,11 @@ import sys
 IS_MAC = platform.system() == 'Darwin'
 IS_WINDOWS = platform.system() == 'Windows'
 
+if IS_WINDOWS:
+    GIT = 'C:\\Git\\bin\\git'
+else:
+    GIT = 'git'
+
 HOME = os.path.expanduser('~')
 
 
@@ -71,19 +76,19 @@ Hit "Enter" to continue'''
 
 def pre_checks():
     info_header('Pre Checks')
-    if which('git'):
-        print('Found: Git')
-    else:
-        critical('Git is Required. Please install manually')
-        sys.exit(1)
-
-    if which('conda'):
-        print('Found: Conda')
-    else:
-        critical('Conda is Required. Please install manually')
-        sys.exit(1)
-
     if IS_MAC:
+        if which('git'):
+            print('Found: Git')
+        else:
+            critical('Git is Required. Please install manually')
+            sys.exit(1)
+
+        if which('conda'):
+            print('Found: Conda')
+        else:
+            critical('Conda is Required. Please install manually')
+            sys.exit(1)
+
         if which('gcc'):
             print('Found: XCode Commandline tools')
         else:
@@ -122,6 +127,7 @@ def ask_config():
     ask(config, 'massspec_db_version', 'MassSpec Database Version', 16)
     ask(config, 'fork', 'Pychron Fork', 'NMGRL')
     ask(config, 'branch', 'Pychron Branch', 'develop')
+    ask(config, 'app_name', 'Pychron Style', 'pyexperiment')
     ask(config, 'qt_bindings', 'Qt Bindings', 'pyqt')
 
     config['mac_os_app'] = False
@@ -129,7 +135,7 @@ def ask_config():
         ask(config, 'mac_os_app', 'Make a Mac OS application', 'yes')
         if config['mac_os_app'] in ('y', 'yes'):
             config['mac_os_app'] = True
-            ask(config, 'app_name', 'Application name', 'Pychron')
+            ask(config, 'mac_app_name', 'Application name', 'Pychron')
 
     ask(config, 'app_id', 'Application ID', 0)
     ask(config, 'pychron_data_dir', 'Pychron Data directory', 'Pychron')
@@ -143,34 +149,10 @@ def ask_config():
     for k, v in config.items():
         print('{:<20s}: {}'.format(k, v))
 
-    config['pip_requirements'] = '''uncertainties
-peakutils
-qimage2ndarray
-chaco'''
-    creq = '''qt
-numpy
-statsmodels
-scikit-learn
-PyYAML
-yaml
-envisage
-sqlalchemy
-Reportlab
-lxml
-xlrd
-xlwt
-xlsxwriter
-requests
-keyring
-pillow
-gitpython
-cython
-pytables
-pymysql
-certifi
-jinja2
-swig
-{}'''.format(config['qt_bindings'])
+    config['pip_requirements'] = 'uncertainties peakutils qimage2ndarray chaco'
+    creq = 'qt numpy statsmodels scikit-learn PyYAML yaml traitsui=6.0.0 envisage sqlalchemy ' \
+           'Reportlab lxml xlrd xlwt xlsxwriter requests keyring pillow gitpython cython pytables ' \
+           'pymysql certifi jinja2 swig {}'.format(config['qt_bindings'])
     if IS_MAC:
         creq = '{}\npython.app'.format(creq)
 
@@ -178,9 +160,12 @@ swig
 
     print()
     print()
-    if input('Continue? [y]/n >> ') in ('', 'y', 'yes', 'Yes', 'YES'):
+    if yes('Continue? [y]/n >> '):
         return config
 
+
+def yes(msg):
+    return input(msg) in ('', 'y', 'yes', 'Yes', 'YES')
 
 def install_src(cfg):
     info_header('Install Pychron Source Code')
@@ -194,10 +179,15 @@ def install_src(cfg):
     cfg['pychron_path'] = ppath
 
     if os.path.isdir(ppath):
+        if not yes('Pychron source code already exists. Remove and re-clone'):
+            return
+
         shutil.rmtree(ppath)
 
     url = 'https://github.com/{}/pychron.git'.format(cfg['fork'])
-    subprocess.call(['git', 'clone', url,
+
+
+    subprocess.call([GIT, 'clone', url,
                      '--branch={}'.format(cfg['branch']),
                      ppath])
 
@@ -215,12 +205,11 @@ def install_conda(cfg):
 
     # install deps
     subprocess.call(['conda', 'install', '--yes',
-                     '--name', env_name,
-                     cfg['conda_requirements']])
+                     '--name', env_name] + cfg['conda_requirements'].split(' '))
 
     # install pip deps
     pip_path = os.path.join(cfg['conda_distro'], 'envs', env_name, 'bin', 'pip')
-    subprocess.call([pip_path, 'install', cfg['pip_requirements']])
+    subprocess.call([pip_path, 'install'] +cfg['pip_requirements'].split(' '))
 
 
 def install_launcher_script(cfg):
@@ -238,10 +227,10 @@ set PYCHRON_APPNAME={app_name:}
 set APPLICATION_ID={app_id:}
 set QT_API={qt_bindings:}
 
-ROOT=${pychron_path:}
-set PYTHONPATH=$ROOT
+ROOT=%{pychron_path:}%
+set PYTHONPATH=%ROOT%
 
-{conda_distro:}\\envs\\{conda_env:}\\bin\\pythonw $ROOT\\launchers\\launcher.py
+{conda_distro:}\\envs\\{conda_env:}\\python %ROOT%\\launchers\\launcher.py
 '''.format(**cfg)
 
     else:
@@ -273,9 +262,9 @@ def install_app(cfg):
     info_header('Install App')
     l = cfg['launcher']
     if cfg['mac_os_app']:
-        d = os.path.join('{}.app'.format(cfg['app_name']), 'Contents', 'MacOS')
+        d = os.path.join('{}.app'.format(cfg['mac_app_name']), 'Contents', 'MacOS')
         subprocess.call(['mkdir', '-p', d])
-        dst = os.path.join(d, cfg['app_name'])
+        dst = os.path.join(d, cfg['mac_app_name'])
         shutil.copy(l, dst)
         subprocess.call(['chmod', '+x', dst])
 
@@ -292,7 +281,7 @@ def main():
     cfg = ask_config()
     if cfg:
         install_src(cfg)
-        # install_conda(cfg)
+        install_conda(cfg)
         install_launcher_script(cfg)
         install_app(cfg)
 

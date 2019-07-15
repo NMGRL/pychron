@@ -81,6 +81,7 @@ PACKAGE_DICT = dict(
     # spectrometers
     ArgusSpectrometerPlugin='pychron.spectrometer.tasks.thermo.argus',
     HelixSpectrometerPlugin='pychron.spectrometer.tasks.thermo.helix',
+    HelixSFTSpectrometerPlugin='pychron.spectrometer.tasks.thermo.helix',
     MapSpectrometerPlugin='pychron.spectrometer.tasks.map_spectrometer_plugin',
     NGXSpectrometerPlugin='pychron.spectrometer.tasks.isotopx.ngx',
     # resources

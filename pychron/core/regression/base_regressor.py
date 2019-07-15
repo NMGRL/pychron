@@ -133,7 +133,11 @@ class BaseRegressor(HasTraits):
     def get_xsquared_coefficient(self):
         x = self.clean_xs
         y = self.clean_ys
-        a, b, c = polyfit(x, y, 2)
+        try:
+            a, b, c = polyfit(x, y, 2)
+        except TypeError:
+            b = 0
+
         return b
 
     def calculate_filtered_data(self):
