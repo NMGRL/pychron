@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 from envisage.extension_point import ExtensionPoint
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
@@ -25,9 +23,8 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 from traits.api import List
 
 from pychron.entry.editors.flux_monitor_editor import FluxMonitorEditor
-from pychron.entry.editors.molecular_weight_editor import MolecularWeightEditor
 from pychron.entry.tasks.actions import MakeIrradiationBookPDFAction, MakeIrradiationTemplateAction, \
-    SensitivityEntryAction, AddMolecularWeightAction, AddFluxMonitorAction, \
+    SensitivityEntryAction, AddFluxMonitorAction, \
     GenerateTrayAction, \
     ImportIrradiationGeometryAction, ExportIrradiationAction, ImportIrradiationAction, \
     TransferJAction, ImportSamplesAction, ImportIrradiationFileAction, GetIGSNAction, GenerateIrradiationTableAction, \
@@ -61,21 +58,14 @@ class EntryPlugin(BaseTaskPlugin):
                 ('pychron.sensitivity', 'Ctrl+Shift+\\', 'Open Sensistivity Window'), ]
 
     def _service_offers_default(self):
-        def factory():
-            dvc = self.application.get_service(DVC_PROTOCOL)
-            e = MolecularWeightEditor(dvc=dvc)
-            return e
-
         def factory2():
             dvc = self.application.get_service(DVC_PROTOCOL)
             e = FluxMonitorEditor(dvc=dvc)
             return e
 
-        so1 = self.service_offer_factory(factory=factory,
-                                         protocol=MolecularWeightEditor, )
         so2 = self.service_offer_factory(factory=factory2,
                                          protocol=FluxMonitorEditor)
-        return [so1, so2]
+        return [so2]
 
     def _task_extensions_default(self):
         extensions = [TaskExtension(actions=actions, task_id=eid) for eid, actions in self._get_extensions()]
@@ -146,8 +136,8 @@ class EntryPlugin(BaseTaskPlugin):
                                  path=gpath),
                   SchemaAddition(id='pychron.entry1.sensitivity_entry', factory=SensitivityEntryAction,
                                  path=gpath),
-                  SchemaAddition(id='pychron.entry1.molecular_weight_entry', factory=AddMolecularWeightAction,
-                                 path=gpath),
+                  # SchemaAddition(id='pychron.entry1.molecular_weight_entry', factory=AddMolecularWeightAction,
+                  #                path=gpath),
                   SchemaAddition(id='pychron.entry1.flux_monitor', factory=AddFluxMonitorAction,
                                  path=gpath)])]
 

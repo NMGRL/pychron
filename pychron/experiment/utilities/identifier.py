@@ -19,6 +19,7 @@
 
 import os
 import re
+from itertools import groupby
 
 import yaml
 
@@ -124,11 +125,18 @@ def get_analysis_type(idn):
         idn: str like 'a-...' or '43513'
     """
     idn = idn.lower()
-    for atype, tag in SPECIAL_MAPPING.items():
-        if idn.startswith(tag):
-            return atype
-    else:
-        return 'unknown'
+
+    items = SPECIAL_MAPPING.items()
+
+    def key(x):
+        return len(x[1])
+
+    for cnt, gitems in groupby(sorted(items, key=key, reverse=True), key=key):
+        for atype, tag in gitems:
+            if idn.startswith(tag):
+                return atype
+
+    return 'unknown'
 
 
 def make_runid(ln, a, s=''):

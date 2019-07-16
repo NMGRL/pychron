@@ -1,16 +1,45 @@
-Easy Install
-=========================
+Installer Script
+=================
+
+Download the current installer script
+
+.. code-block::
+
+    $ wget https://raw.githubusercontent.com/NMGRL/pychron/develop/app_utils/install.py
+
+or
+
+.. code-block::
+
+    $ curl -O https://raw.githubusercontent.com/NMGRL/pychron/develop/app_utils/install.py
+
+
+run the script from the terminal
+
+.. code-block::
+
+    $ cd /path/to/install.py
+    $ python install.py
+
+
+
+.. note:: The following information is out of date (7/10/19)
+
 A simple bash script is provide to install pychron and its dependencies.
 
 Procedure
 ------------------
 1. Download miniconda
-  a. Miniconda is used to manage the python dependencies
+
+    Miniconda is used to manage the python dependencies
+
 2. Conda is used to create a new environment
 3. Conda and pip are used to install the dependencies
 4. Pychron support directory is created and some boilerplate support files are written
 5. Pychron source code is downloaded from the available releases stored at github (i.e the source is not a git clone just a static directory)
-  a. Source code is stored in the Pychron support directory
+
+    Source code is stored in the Pychron support directory
+
 6. Launcher script is created and copied to the desktop
 
 Script

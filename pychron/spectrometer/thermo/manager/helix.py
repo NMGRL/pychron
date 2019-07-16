@@ -18,9 +18,14 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from __future__ import absolute_import
+
 from pychron.spectrometer.thermo.manager.base import ThermoSpectrometerManager
-from pychron.spectrometer.thermo.spectrometer.helix import HelixSpectrometer
+from pychron.spectrometer.thermo.spectrometer.helix import HelixSpectrometer, HelixSFTSpectrometer
 
 
 class HelixSpectrometerManager(ThermoSpectrometerManager):
     spectrometer_klass = HelixSpectrometer
+
+
+class HelixSFTSpectrometerManager(ThermoSpectrometerManager):
+    spectrometer_klass = HelixSFTSpectrometer

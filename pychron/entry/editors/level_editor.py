@@ -31,6 +31,7 @@ from pychron.canvas.utils import load_holder_canvas
 from pychron.core.helpers.logger_setup import logging_setup
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.combobox_editor import ComboboxEditor
+from pychron.core.ui.strings import SpacelessStr
 from pychron.core.utils import alphas, alpha_to_int
 from pychron.database.core.defaults import parse_irradiation_tray_map, load_irradiation_map
 from pychron.dvc.meta_repo import MetaRepo
@@ -141,7 +142,7 @@ class LevelEditor(Loggable):
     db = Any
 
     level_note = Str
-    name = Str
+    name = SpacelessStr
     selected_tray = Str
     z = Float
     selected_production = Instance(IrradiationProduction, ())

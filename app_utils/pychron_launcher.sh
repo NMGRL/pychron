@@ -1,17 +1,15 @@
 #!/bin/bash
+export GITHUB_ORGANIZATION=NMGRL
+export GITHUB_USER=nmgrluser
+export GITHUB_PASSWORD=
+export MassSpecDBVersion=16
+export CONDA_ENV=pychron3
+export CONDA_DISTRO=/Users/ross/anaconda3
+export PYCHRON_APPNAME=Pychron
+export APPLICATION_ID=1
+export QT_API=pyqt
 
-ROOT=~/.pychron/updates/pychron
-
-echo Using $ROOT as "ROOT" directory
-
-ENTRY_POINT=$ROOT/launchers/pyexperiment_debug.py
-
+ROOT=$/Users/ross/.pychron.1/pychron
 export PYTHONPATH=$ROOT
 
-GITHUB_USER=
-GITHUB_PASSWORD=
-GITHUB_ORGANIZATION=
-
-MassSpecDBVersion=16
-
-python $ENTRY_POINT
+/Users/ross/anaconda3/envs/pychron3/bin/pythonw $ROOT/launchers/launcher.py

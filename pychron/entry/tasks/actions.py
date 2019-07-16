@@ -28,15 +28,6 @@ from pychron.envisage.tasks.actions import PAction as Action, PTaskAction as Tas
 from pychron.pychron_constants import DVC_PROTOCOL
 
 
-class AddMolecularWeightAction(Action):
-    name = 'Add/Edit Molecular Weight'
-
-    def perform(self, event):
-        app = event.task.window.application
-        s = app.get_service('pychron.entry.editors.molecular_weight_editor.MolecularWeightEditor')
-        s.add_molecular_weight()
-
-
 class AddFluxMonitorAction(Action):
     name = 'Add/Edit Flux Monitors'
 

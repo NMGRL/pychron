@@ -18,6 +18,7 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from __future__ import absolute_import
+
 from pychron.hardware.thermo_spectrometer_controller import HelixController
 from pychron.spectrometer.thermo.detector.helix import HelixDetector
 from pychron.spectrometer.thermo.magnet.helix import HelixMagnet
@@ -44,6 +45,10 @@ class HelixSpectrometer(ThermoSpectrometer):
 
 
 class HelixPlusSpectrometer(HelixSpectrometer):
+    pass
+
+
+class HelixSFTSpectrometer(HelixSpectrometer):
     pass
 # ============= EOF =============================================
 

@@ -23,6 +23,7 @@ from apptools.preferences.preference_binding import bind_preference
 from pyface.timer.do_later import do_after
 from traits.api import Instance, List, Any, Bool, on_trait_change, Str, Int, Dict, File, Float
 
+from pychron.canvas.canvas_editor import CanvasEditor
 from pychron.core.file_listener import FileListener
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.consoleable import Consoleable
@@ -90,6 +91,8 @@ class ExtractionLineManager(Manager, Consoleable):
     _active = False
     _update_status_flag = None
     _monitoring_valve_status = False
+
+    canvas_editor = Instance(CanvasEditor, ())
 
     def set_extract_state(self, *args, **kw):
         pass
@@ -284,6 +287,7 @@ class ExtractionLineManager(Manager, Consoleable):
         self.info('reloading canvas scene')
         for c in self.canvases:
             c.load_canvas_file(self.canvas_path, self.canvas_config_path, self.valves_path)
+            self.canvas_editor.load(c.canvas2D, self.canvas_path)
             # c.load_canvas_file(c.config_name)
 
             if self.switch_manager:

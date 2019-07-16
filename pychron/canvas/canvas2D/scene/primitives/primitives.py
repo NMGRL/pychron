@@ -54,10 +54,10 @@ class Point(QPrimitive):
 
 
 class Rectangle(QPrimitive):
-    width = 0
-    height = 0
-    x = 0
-    y = 0
+    # width = 0
+    # height = 0
+    # x = 0
+    # y = 0
     fill = True
     use_border = True
 

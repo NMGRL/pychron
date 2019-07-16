@@ -37,7 +37,6 @@ def convert_fit(f):
     err = 'SEM'
     if isinstance(f, tuple):
         f, err = f
-
     if isinstance(f, (str, six.text_type)):
         f = f.lower()
 
