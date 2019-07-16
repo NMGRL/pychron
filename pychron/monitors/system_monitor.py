@@ -1,4 +1,3 @@
-
 # ===============================================================================
 # Copyright 2012 Jake Ross
 #
@@ -17,9 +16,13 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traits.api import HasTraits, Str, Float, Bool, List
+
 # from traitsui.api import View, Item
 from pychron.monitors.monitor import Monitor
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -31,8 +34,10 @@ class VacuumSection(HasTraits):
     pressure_reset = Float
     tripped = Bool
 
+
 class SystemMonitor(Monitor):
     analytical_sections = List
+
     def _load_hook(self, config):
         for section in config.sections():
             if section.startswith('VacuumSection'):
@@ -40,7 +45,8 @@ class SystemMonitor(Monitor):
                 if '.' in g:
                     gc, gn = g.split('.')
                 else:
-                    self.warning_dialog('Invalid Gauge identifier {}. Should be <GaugeController>.<GaugeName> e.g. Bone.IG'.format(g))
+                    self.warning_dialog(
+                        'Invalid Gauge identifier {}. Should be <GaugeController>.<GaugeName> e.g. Bone.IG'.format(g))
                     continue
 
                 ds = self.config_get(config, section, 'disable_valves', default='')
@@ -48,7 +54,8 @@ class SystemMonitor(Monitor):
                 p = self.config_get(config, section, 'pressure_trip', cast='float', default=10)
                 r = self.config_get(config, section, 'pressure_reset', cast='float', default=1e-10)
                 if r > p:
-                    self.warning_dialog('Invalid pressure_reset {}. Pressure_reset must be less than pressure_trip {}'.format(r, p))
+                    self.warning_dialog(
+                        'Invalid pressure_reset {}. Pressure_reset must be less than pressure_trip {}'.format(r, p))
                     continue
 
                 a = VacuumSection(name=section,
@@ -90,7 +97,6 @@ class SystemMonitor(Monitor):
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
 
 
 # '''

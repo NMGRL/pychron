@@ -22,6 +22,7 @@ import time
 from operator import itemgetter
 from pickle import PickleError
 
+import yaml
 from six.moves import range
 from six.moves import zip
 from traits.api import Any, Dict, List, Bool, Event, Str
@@ -29,7 +30,7 @@ from traits.api import Any, Dict, List, Bool, Event, Str
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.helpers.strtools import to_bool
-from pychron.extraction_line.explanation.explanable_item import ExplanableValve
+# from pychron.extraction_line.explanation.explanable_item import ExplanableValve
 from pychron.extraction_line.pipettes.tracking import PipetteTracker
 from pychron.globals import globalv
 from pychron.hardware.core.checksum_helper import computeCRC
@@ -72,6 +73,7 @@ class SwitchManager(Manager):
 
     use_explanation = True
 
+    refresh_explanation = Event
     refresh_state = Event
     refresh_lock_state = Event
     refresh_canvas_needed = Event
@@ -693,6 +695,12 @@ class SwitchManager(Manager):
             self.console_message = msg, 'red'
             self.warning(msg)
 
+        # update actuation tracker
+        if changed:
+            self.refresh_explanation = True
+            if v.track_actuation:
+                self._update_actuation_tracker(v)
+
         return result, changed
 
     def _load_valves_from_file(self, path):
@@ -701,7 +709,7 @@ class SwitchManager(Manager):
         def factory(v):
             name, hv = self._switch_factory(v)
             if self.use_explanation:
-                self._load_explanation_valve(hv)
+                hv.explain_enabled = True
             self.switches[name] = hv
             return hv
 
@@ -803,7 +811,14 @@ class SwitchManager(Manager):
         if st is not None:
             st = float(st.txt.strip())
 
+        track = v_elem.find('track')
+        if track is None:
+            track = True
+        else:
+            track = to_bool(track.text.strip())
+
         hv = klass(name,
+                   track_actuation= track,
                    address=address.text.strip() if address is not None else '',
                    parent=parent_name,
                    parent_inverted=parent_inverted,

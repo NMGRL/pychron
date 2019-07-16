@@ -820,9 +820,8 @@ class ExtractionLineManager(Manager, Consoleable):
     def _explanation_default(self):
         e = ExtractionLineExplanation()
         if self.switch_manager is not None:
-            e.load(self.switch_manager.explanable_items)
-            self.switch_manager.on_trait_change(e.load_item, 'explanable_items[]')
-
+            e.load(self.switch_manager.switches)
+            self.switch_manager.on_trait_change(e.refresh, 'refresh_explanation')
         return e
 
     def _canvas_default(self):
