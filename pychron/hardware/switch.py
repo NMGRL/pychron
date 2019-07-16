@@ -14,13 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
-
 # ============= standard library imports ========================
 import time
+# ============= enthought library imports =======================
+from datetime import datetime
 
-from traits.api import Str, Any, Bool, Property, Float, List
+from traits.api import Str, Any, Bool, Property, Float, List, Int
 
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
@@ -30,11 +29,15 @@ class BaseSwitch(Loggable):
     display_name = Str
     description = Str
     prefix_name = 'BASE_SWITCH'
-    state = False
+    state = Bool(False)
     software_lock = Bool(False)
     ignore_lock_warning = Bool(False)
     enabled = Bool(True)
     owner = Str
+    track_actuation = Bool(True)
+    actuations = Int
+    last_actuation = Str
+    explain_enabled = Bool(False)
 
     def __init__(self, name, *args, **kw):
         """
@@ -42,6 +45,9 @@ class BaseSwitch(Loggable):
         self.display_name = name
         kw['name'] = '{}-{}'.format(self.prefix_name, name)
         super(BaseSwitch, self).__init__(*args, **kw)
+
+    def _state_changed(self):
+        self.last_actuation = datetime.now().isoformat()
 
     def set_state(self, state):
         self.state = state
