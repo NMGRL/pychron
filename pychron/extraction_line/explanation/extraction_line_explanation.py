@@ -15,15 +15,9 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from __future__ import absolute_import
-import weakref
-
 from traits.api import HasTraits, Any, Event, List, Bool, Property, Int
 from traitsui.api import View, Item, Handler, TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
-
-# from traitsui.extras.checkbox_column import CheckboxColumn
-
 # =============standard library imports ========================
 
 # =============local library imports  ==========================
@@ -37,7 +31,9 @@ class ELEHandler(Handler):
 
 class ExplanationAdapter(TabularAdapter):
     columns = [('Name', 'name'), ('Description', 'description'),
-               ('State', 'state'), ('Lock', 'lock'), ('Last', 'last_actuation')]
+               ('State', 'state'), ('Lock', 'lock'),
+               ('Actuations', 'actuations'),
+               ('Last', 'last_actuation')]
 
     lock_text = Property
     state_text = Property

@@ -34,6 +34,10 @@ class BaseSwitch(Loggable):
     ignore_lock_warning = Bool(False)
     enabled = Bool(True)
     owner = Str
+    track_actuation = Bool(True)
+    actuations = Int
+    last_actuation = Str
+    explain_enabled = Bool(False)
 
     def __init__(self, name, *args, **kw):
         """

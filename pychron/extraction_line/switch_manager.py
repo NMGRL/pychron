@@ -289,10 +289,10 @@ class SwitchManager(Manager):
             valve_name = v.name.split('-')[-1]
             return valve_name
 
-    def get_evalve_by_name(self, n):
-        """
-        """
-        return next((item for item in self.explanable_items if item.name == n), None)
+    # def get_evalve_by_name(self, n):
+    #     """
+    #     """
+    #     return next((item for item in self.explanable_items if item.name == n), None)
 
     def get_indicator_state_by_name(self, n, force=False):
         v = self.get_switch_by_name(n)
@@ -703,11 +703,38 @@ class SwitchManager(Manager):
 
         return result, changed
 
+    def _update_actuation_tracker(self, v):
+        obj = self._load_actuation_tracker()
+
+        vobj = obj.get(v.name, {})
+
+        vobj['count'] = a = vobj.get('count', 0) + 1
+
+        v.actuations = a
+
+        vobj['timestamp'] = v.last_actuation
+        obj[v.name] = vobj
+
+        p = paths.actuation_tracker_file
+        with open(p, 'w') as wfile:
+            yaml.dump(obj, wfile)
+
+    def _load_actuation_tracker(self):
+        p = paths.actuation_tracker_file
+        obj = {}
+        if p and os.path.isfile(p):
+            with open(p, 'r') as rfile:
+                obj = yaml.load(rfile)
+
+        return obj
+
     def _load_valves_from_file(self, path):
         self.info('loading valve definitions file  {}'.format(path))
 
+        actuations = self._load_actuation_tracker()
+
         def factory(v):
-            name, hv = self._switch_factory(v)
+            name, hv = self._switch_factory(v, actuations)
             if self.use_explanation:
                 hv.explain_enabled = True
             self.switches[name] = hv
@@ -725,11 +752,11 @@ class SwitchManager(Manager):
                 factory(v)
 
             for s in parser.get_switches():
-                name, sw = self._switch_factory(s, klass=Switch)
+                name, sw = self._switch_factory(s, actuations, klass=Switch)
                 self.switches[name] = sw
 
             for mv in parser.get_manual_valves():
-                name, sw = self._switch_factory(mv, klass=ManualSwitch)
+                name, sw = self._switch_factory(mv, actuations, klass=ManualSwitch)
                 self.switches[name] = sw
 
             ps = []
@@ -753,7 +780,7 @@ class SwitchManager(Manager):
                     inner=innerk,
                     outer=outerk)
 
-    def _switch_factory(self, v_elem, klass=None):
+    def _switch_factory(self, v_elem, actuations, klass=None):
         if klass is None:
             klass = HardwareValve
 
@@ -831,16 +858,13 @@ class SwitchManager(Manager):
                    positive_interlocks=positive_interlocks,
                    interlocks=interlocks,
                    settling_time=st or 0)
+
+        ad = actuations.get(hv.name)
+        if ad is not None:
+            hv.actuations = ad.get('count', 0)
+            hv.last_actuation = ad.get('timestamp', '')
+
         return name, hv
-
-    def _load_explanation_valve(self, v):
-        name = v.name.split('-')[1]
-        ev = ExplanableValve(name=name,
-                             address=v.address,
-                             description=v.description)
-
-        v.evalve = ev
-        self.explanable_items.append(ev)
 
     def _get_simulation(self):
         return any([act.simulation for act in self.actuators])
