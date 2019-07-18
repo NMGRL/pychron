@@ -18,8 +18,9 @@
 
 import os
 import time
-from threading import Event
 from io import StringIO
+from threading import Event
+
 from numpy import polyfit, array, average, uint8, zeros_like
 from skimage.color import gray2rgb
 from skimage.draw import circle
@@ -249,7 +250,7 @@ class PatternExecutor(Patternable):
                     break
 
                 self.info('doing pattern iteration {}'.format(ni))
-                self._execute_iteration()
+                self._execute_iteration(ni)
 
             self.controller.linear_move(pat.cx, pat.cy, block=True, source='execute_xy_pattern')
             if pat.disable_at_end:
@@ -263,7 +264,7 @@ class PatternExecutor(Patternable):
             self.controller.stop()
             self.laser_manager.emergency_shutoff(str(e))
 
-    def _execute_iteration(self):
+    def _execute_iteration(self, iteration):
         controller = self.controller
         pattern = self.pattern
         if controller is not None:
@@ -276,16 +277,24 @@ class PatternExecutor(Patternable):
             elif kind in ('SeekPattern', 'DragonFlyPeakPattern'):
                 self._execute_seek(controller, pattern)
             else:
-                self._execute_points(controller, pattern, multipoint=False)
+                self._execute_points(controller, pattern, iteration, multipoint=False)
 
-    def _execute_points(self, controller, pattern, multipoint=False):
+    def _execute_points(self, controller, pattern, iteration, multipoint=False):
         pts = pattern.points_factory()
         if multipoint:
             controller.multiple_point_move(pts, velocity=pattern.velocity)
         else:
-            for x, y in pts:
+            for i, (x, y) in enumerate(pts):
+                self.debug('Pattern Point. {},{}'.format(iteration, i))
                 if not self.isPatterning():
                     break
+
+                # skip first point after first iteration
+                if iteration and not i:
+                    self.debug('skipping first point')
+                    continue
+
+                self.debug('Pattern Point. {},{}: {},{}'.format(iteration, i, x, y))
                 controller.linear_move(x, y, block=True,
                                        velocity=pattern.velocity)
 
@@ -334,6 +343,7 @@ class PatternExecutor(Patternable):
                 self._dragonfly_peak(st, pattern, lm, controller)
             except BaseException as e:
                 self.critical('Dragonfly exception. {}'.format(e))
+                self.debug_exception()
         else:
             self._hill_climber(st, controller, pattern)
 
@@ -381,7 +391,7 @@ class PatternExecutor(Patternable):
         img_h, img_w = pos_img.shape
         perimeter_circle = circle(img_h / 2, img_w / 2, pattern.perimeter_radius * pxpermm)
 
-        color = 2**15-1
+        color = 2 ** 15 - 1
         per_img[perimeter_circle] = 50
         set_data('imagedata', gray2rgb(per_img.astype(uint8)))
 
@@ -398,7 +408,7 @@ class PatternExecutor(Patternable):
                 args = find_lum_peak(min_distance, blur)
 
                 if args is None:
-                    sleep(update_period/5)
+                    sleep(update_period / 5)
                     continue
 
                 sleep(update_period)

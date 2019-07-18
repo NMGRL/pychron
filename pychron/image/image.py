@@ -84,14 +84,15 @@ class Image(HasTraits):
         frame = self._get_frame(**kw)
         frame = self.modify_frame(frame, **kw)
 
+        self._cached_frame = frame
         if frame is not None:
             if len(frame.shape) == 2:
                 scalar = 255./self.pixel_depth
                 frame = gray2rgb(frame*scalar)
 
-            self._cached_frame = frame
-        else:
-            frame = self._cached_frame
+        #     self._cached_frame = frame
+        # else:
+        #     frame = self._cached_frame
 
         return frame
 

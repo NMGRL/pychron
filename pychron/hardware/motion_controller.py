@@ -269,7 +269,7 @@ class MotionController(CoreDevice):
         self.z_progress = z
 
     def _check_moving(self, axis=None, verbose=True):
-        m = self._moving(axis=axis, verbose=verbose)
+        m = self._moving(axis=axis, verbose=False)
         if verbose:
             self.debug('is moving={}'.format(m))
 
@@ -279,7 +279,7 @@ class MotionController(CoreDevice):
         else:
             self._not_moving_count = 0
 
-        if self._not_moving_count > 2:
+        if self._not_moving_count > 1:
             if verbose:
                 self.debug('not moving cnt={}'.format(self._not_moving_count))
             self._not_moving_count = 0
@@ -303,27 +303,6 @@ class MotionController(CoreDevice):
                 self._validate_xy(*xy)
                 self.parent.canvas.set_stage_position(*xy)
 
-                # # self.debug('moving {}'.format(m))
-                # if not m:
-                #     self._not_moving_count += 1
-                # else:
-                #     self._not_moving_count = 0
-                #
-                # if self._not_moving_count > 1:
-                #     self.debug('not moving')
-                #     self._not_moving_count = 0
-                #     if self.timer:
-                #         self.timer.Stop()
-                #
-                #     self.parent.canvas.clear_desired_position()
-                #     self.update_axes()
-                # else:
-                #
-                #     xy = self.get_current_xy()
-                #     if xy:
-                #         self._validate_xy(*xy)
-                #         self.parent.canvas.set_stage_position(*xy)
-
     def _validate_xy(self, x, y):
         if self._homing:
             return
@@ -344,7 +323,6 @@ class MotionController(CoreDevice):
             r = 1
             if ratio:
                 r = axis.drive_ratio
-                #            self.info('using drive ratio {}={}'.format(key, r))
 
             return val * axis.sign * r
 
@@ -356,49 +334,44 @@ class MotionController(CoreDevice):
             event.clear()
 
         timer = self.timer
-        period = 0.25
 
         if timer is not None:
             self.debug('using existing timer')
+            period = 0.01
 
             def func():
                 return self.timer.isActive()
         else:
             self.debug('check moving={}'.format(axis))
+            period = 0.25
 
             def func():
                 return self._moving(axis=axis, verbose=False)
 
-        i = 0
         cnt = 0
-        threshold = 5
-        # fn = func.func_name
-        # n = 10
+        threshold = 0 if timer else 1
         while 1:
-            a = func()
-            # if i % n == 0:
-            #     self.debug('blocking {} {}'.format(fn, a))
+            st = time.time()
 
-            time.sleep(period)
-            if i > 100:
-                i = 0
+            a = func()
             if not a:
+                cnt += 1
                 if cnt > threshold:
                     break
-                cnt += 1
             else:
                 cnt = 0
-            i += 1
+
+            p = max(0, period - (time.time() - st))
+            time.sleep(p)
 
         self.debug('block finished')
 
         if event is not None:
             event.set()
 
-            # ===============================================================================
-            # property get/set
-            # ===============================================================================
-
+    # ===============================================================================
+    # property get/set
+    # ===============================================================================
     def _get_x(self):
         return self._x_position
 
