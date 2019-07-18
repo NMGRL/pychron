@@ -334,6 +334,7 @@ class PatternExecutor(Patternable):
                 self._dragonfly_peak(st, pattern, lm, controller)
             except BaseException as e:
                 self.critical('Dragonfly exception. {}'.format(e))
+                self.debug_exception()
         else:
             self._hill_climber(st, controller, pattern)
 
