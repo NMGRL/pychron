@@ -125,6 +125,8 @@ class BaseMeasurement(object):
                 ys = ys[-n:]
 
             return polyfit(xs, ys, 1)[0]
+        else:
+            return 0
 
     def get_curvature(self, x):
         ys = self._get_curvature_ys()
@@ -134,6 +136,8 @@ class BaseMeasurement(object):
                 x = self.xs.shape[0] * x
 
             return curvature_at(ys, x)
+        else:
+            return 0
 
     def _get_curvature_ys(self):
         return self.ys

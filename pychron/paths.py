@@ -268,6 +268,8 @@ class Paths(object):
 
     af_demagnetization = None
     ratio_change_detection = None
+    actuation_tracker_file = None
+
     # plot_factory_defaults = (('ideogram_defaults', 'IDEOGRAM_DEFAULTS', True),
     #                          ('spectrum_defaults', 'SPECTRUM_DEFAULTS', True))
 
@@ -367,6 +369,8 @@ class Paths(object):
         self.comment_templates_dir = join(self.appdata_dir, 'comment_templates')
 
         self.peak_center_config_dir = join(self.appdata_dir, 'peak_center_configs')
+
+        self.actuation_tracker_file = join(self.appdata_dir, 'actuation_tracker.yaml')
 
         # login
         self.login_file = join(self.appdata_dir, 'login')

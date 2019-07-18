@@ -146,7 +146,9 @@ class MassSpecReducedNode(BaseMassSpecNode):
 
     def _import_reduced(self, unks):
         def func(unk, prog, i, n):
-            prog.change_message('Transfering {} {}/{}'.format(unk.record_id, i, n))
+            if prog:
+                prog.change_message('Transfering {} {}/{}'.format(unk.record_id, i, n))
+
             ms_unk = self.recaller.find_analysis(unk.identifier, unk.aliquot, unk.step)
             keys = []
             fkeys = []

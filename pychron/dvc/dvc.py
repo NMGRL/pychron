@@ -898,9 +898,13 @@ class DVC(Loggable):
 
         self.meta_repo.set_identifier(irradiation, level, position, identifier)
 
-    def add_production_to_irradiation(self, irrad, reactor, params):
+    def add_production_to_irradiation(self, irrad, reactor, params, msg=None):
         self.meta_repo.add_production_to_irradiation(irrad, reactor, params)
-        self.meta_commit('updated default production. {}'.format(reactor))
+
+        if msg is None:
+            msg = 'updated default production. {}'.format(reactor)
+
+        self.meta_commit(msg)
 
     def update_chronology(self, name, doses):
         self.meta_repo.update_chronology(name, doses)

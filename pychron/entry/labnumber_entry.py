@@ -317,7 +317,7 @@ class LabnumberEntry(DVCIrradiationable):
         """
 
         db = self.dvc.db
-        irrads = db.get_irradiations(order_func='asc')
+        irrads = db.get_irradiations(order_by_date='desc')
         irrads = [irrad.name for irrad in irrads]
         table = IrradiationTableView(irradiations=irrads)
         info = table.edit_traits()

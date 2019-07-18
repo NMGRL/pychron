@@ -1794,7 +1794,9 @@ class DVCDatabase(DatabaseAdapter):
 
         return names
 
-    def get_irradiations(self, names=None, project_names=None, order_func='desc', mass_spectrometers=None,
+    def get_irradiations(self, names=None, project_names=None, order_func='desc',
+                         order_by_date=None,
+                         mass_spectrometers=None,
                          exclude_name=None, **kw):
 
         if names is not None:
@@ -1819,7 +1821,9 @@ class DVCDatabase(DatabaseAdapter):
             kw = self._append_filters(IrradiationTbl.name.notlike(exclude_name), kw)
 
         order = None
-        if order_func:
+        if order_by_date:
+            order = getattr(IrradiationTbl.create_date, order_by_date)()
+        elif order_func:
             order = getattr(IrradiationTbl.name, order_func)()
 
         return self._retrieve_items(IrradiationTbl, order=order, **kw)

@@ -379,6 +379,18 @@ class ExtractionLineManager(Manager, Consoleable):
             # hardware_update via _trigger_update
             return self.switch_manager.get_states(query=not self.use_hardware_update)
 
+    def get_state_word(self):
+        if self.switch_manager is not None:
+            # only query valve states if not already doing a
+            # hardware_update via _trigger_update
+            return self.switch_manager.get_states(query=not self.use_hardware_update, version=1)
+
+    def get_lock_word(self):
+        if self.switch_manager is not None:
+            # only query valve states if not already doing a
+            # hardware_update via _trigger_update
+            return self.switch_manager.get_software_locks(version=1)
+
     def get_valve_by_name(self, name):
         if self.switch_manager is not None:
             return self.switch_manager.get_switch_by_name(name)
@@ -820,9 +832,8 @@ class ExtractionLineManager(Manager, Consoleable):
     def _explanation_default(self):
         e = ExtractionLineExplanation()
         if self.switch_manager is not None:
-            e.load(self.switch_manager.explanable_items)
-            self.switch_manager.on_trait_change(e.load_item, 'explanable_items[]')
-
+            e.load(self.switch_manager.switches)
+            self.switch_manager.on_trait_change(e.refresh, 'refresh_explanation')
         return e
 
     def _canvas_default(self):

@@ -21,15 +21,14 @@ import pickle
 import time
 from operator import itemgetter
 from pickle import PickleError
+from string import digits
 
-from six.moves import range
-from six.moves import zip
+import yaml
 from traits.api import Any, Dict, List, Bool, Event, Str
 
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.helpers.strtools import to_bool
-from pychron.extraction_line.explanation.explanable_item import ExplanableValve
 from pychron.extraction_line.pipettes.tracking import PipetteTracker
 from pychron.globals import globalv
 from pychron.hardware.core.checksum_helper import computeCRC
@@ -72,6 +71,7 @@ class SwitchManager(Manager):
 
     use_explanation = True
 
+    refresh_explanation = Event
     refresh_state = Event
     refresh_lock_state = Event
     refresh_canvas_needed = Event
@@ -203,11 +203,67 @@ class SwitchManager(Manager):
         return [v.name for v in self.switches.values() if v.software_lock and not v.ignore_lock_warning]
 
     @add_checksum
-    def get_software_locks(self):
-        return ','.join(['{}{}'.format(k, int(v.software_lock)) for k, v in self.switches.items()])
+    def get_software_locks(self, version=0):
+        return self._make_word('software_lock', version=version)
+        # return ','.join(['{}{}'.format(k, int(v.software_lock)) for k, v in self.switches.items()])
+
+    def _make_word(self, attr, timeout=0.25, version=0):
+        word = 0x00
+        keys = []
+
+        if timeout:
+            prev_keys = []
+            st = time.time()
+            clear_prev_keys = False
+            if self._prev_keys:
+                clear_prev_keys = True
+                prev_keys = self._prev_keys
+
+        for k, v in self.switches.items():
+            '''
+                querying a lot of valves can add up hence timeout.
+
+                most valves are not queried by default which also helps shorten
+                execution time for get_states. 
+
+            '''
+            if timeout and k in prev_keys:
+                continue
+
+            s = bool(getattr(v, attr))
+            if version:
+                keys.append(k)
+                word = word << 0x01 | s
+            else:
+                keys.append('{}{}'.format(k, int(s)))
+
+            if timeout and time.time() - st > timeout:
+                self.debug('get states timeout. timeout={}'.format(timeout))
+                break
+        else:
+            # if loop completes before timeout dont save keys
+            clear_prev_keys = True
+
+        if version:
+            if any((i in digits for k in keys for i in k)):
+                skeys = [k if len(k) == 1 else '<{}>'.format(k) for k in keys]
+            else:
+                skeys = [k if len(k) == 1 else '{}{}'.format(len(k), k)]
+
+        if timeout:
+            if clear_prev_keys and len(keys) == len(self.switches):
+                keys = None
+
+            self._prev_keys = keys
+
+        if version:
+            r = '{}:{:X}'.format(','.join(skeys), word)
+        else:
+            r = ','.join(keys)
+        return r
 
     @add_checksum
-    def get_states(self, query=False, timeout=0.25):
+    def get_states(self, query=False, timeout=0.25, version=0):
         """
             get as many valves states before time expires
             remember last set of valves returned.
@@ -216,40 +272,7 @@ class SwitchManager(Manager):
             states for the remainder valves
 
         """
-        st = time.time()
-        states = []
-        keys = []
-        prev_keys = []
-        clear_prev_keys = False
-        if self._prev_keys:
-            clear_prev_keys = True
-            prev_keys = self._prev_keys
-
-        for k, v in self.switches.items():
-            '''
-                querying a lot of valves can add up hence timeout.
-                
-                most valves are not queried by default which also helps shorten
-                execution time for get_states. 
-                
-            '''
-            if k in prev_keys:
-                continue
-
-            keys.append(k)
-
-            states.append('{}{}'.format(k, int(bool(v.state))))
-            if time.time() - st > timeout:
-                self.debug('get states timeout. timeout={}'.format(timeout))
-                break
-        else:
-            # if loop completes before timeout dont save keys
-            clear_prev_keys = True
-
-        if clear_prev_keys:
-            keys = None
-        self._prev_keys = keys
-        return ','.join(states)
+        return self._make_word('state', timeout=timeout, version=version)
 
     def get_valve_by_address(self, a):
         """
@@ -287,10 +310,10 @@ class SwitchManager(Manager):
             valve_name = v.name.split('-')[-1]
             return valve_name
 
-    def get_evalve_by_name(self, n):
-        """
-        """
-        return next((item for item in self.explanable_items if item.name == n), None)
+    # def get_evalve_by_name(self, n):
+    #     """
+    #     """
+    #     return next((item for item in self.explanable_items if item.name == n), None)
 
     def get_indicator_state_by_name(self, n, force=False):
         v = self.get_switch_by_name(n)
@@ -538,10 +561,77 @@ class SwitchManager(Manager):
                 return True
 
     def _parse_word(self, word):
+        """
+        ABC<EA>D<FA>:ff
+
+        :param word:
+        :return:
+        """
+
+        def tokenize(keys):
+            buf = ''
+            add = False
+            if '<' in keys:
+
+                for k in keys:
+                    if add:
+                        if k == '>':
+                            add = False
+                            yield buf
+                            buf = ''
+                            continue
+
+                        buf += k
+                        continue
+
+                    if '<' == k:
+                        add = True
+                        continue
+
+                    yield k
+            else:
+                cnt = 0
+                c = 0
+                for k in keys:
+                    if add:
+                        cnt += 1
+                        if cnt > c:
+                            yield buf
+
+                            buf = ''
+                            cnt = 0
+                            if k in digits:
+                                c = int(k)
+                            else:
+                                add = False
+                                yield k
+
+                            continue
+
+                        buf += k
+                        continue
+
+                    if k in digits:
+                        c = int(k)
+                        add = True
+                        continue
+                    yield k
+
+                if buf:
+                    yield buf
+
         d = {}
         if word is not None:
             try:
-                if ',' in word:
+                if ':' in word:
+                    keys, states = word.split(':')
+                    states = int(states, 16)
+
+                    for k in tokenize(keys):
+                        d[k] = bool(states & 1)
+                        states = states >> 1
+
+                elif ',' in word:
                     packets = word.split(',')
                     n, nn = len(packets), len(self.switches)
                     if n < nn:
@@ -552,7 +642,6 @@ class SwitchManager(Manager):
                         key = packet[:-1]
                         state = packet[-1:].strip()
                         d[key] = bool(int(state))
-
                 else:
                     for i in range(0, len(word), 2):
                         packet = word[i:i + 2]
@@ -693,15 +782,48 @@ class SwitchManager(Manager):
             self.console_message = msg, 'red'
             self.warning(msg)
 
+        # update actuation tracker
+        if changed:
+            self.refresh_explanation = True
+            if v.track_actuation:
+                self._update_actuation_tracker(v)
+
         return result, changed
+
+    def _update_actuation_tracker(self, v):
+        obj = self._load_actuation_tracker()
+
+        vobj = obj.get(v.name, {})
+
+        vobj['count'] = a = vobj.get('count', 0) + 1
+
+        v.actuations = a
+
+        vobj['timestamp'] = v.last_actuation
+        obj[v.name] = vobj
+
+        p = paths.actuation_tracker_file
+        with open(p, 'w') as wfile:
+            yaml.dump(obj, wfile)
+
+    def _load_actuation_tracker(self):
+        p = paths.actuation_tracker_file
+        obj = {}
+        if p and os.path.isfile(p):
+            with open(p, 'r') as rfile:
+                obj = yaml.load(rfile)
+
+        return obj
 
     def _load_valves_from_file(self, path):
         self.info('loading valve definitions file  {}'.format(path))
 
+        actuations = self._load_actuation_tracker()
+
         def factory(v):
-            name, hv = self._switch_factory(v)
+            name, hv = self._switch_factory(v, actuations)
             if self.use_explanation:
-                self._load_explanation_valve(hv)
+                hv.explain_enabled = True
             self.switches[name] = hv
             return hv
 
@@ -717,11 +839,11 @@ class SwitchManager(Manager):
                 factory(v)
 
             for s in parser.get_switches():
-                name, sw = self._switch_factory(s, klass=Switch)
+                name, sw = self._switch_factory(s, actuations, klass=Switch)
                 self.switches[name] = sw
 
             for mv in parser.get_manual_valves():
-                name, sw = self._switch_factory(mv, klass=ManualSwitch)
+                name, sw = self._switch_factory(mv, actuations, klass=ManualSwitch)
                 self.switches[name] = sw
 
             ps = []
@@ -745,7 +867,7 @@ class SwitchManager(Manager):
                     inner=innerk,
                     outer=outerk)
 
-    def _switch_factory(self, v_elem, klass=None):
+    def _switch_factory(self, v_elem, actuations, klass=None):
         if klass is None:
             klass = HardwareValve
 
@@ -803,7 +925,14 @@ class SwitchManager(Manager):
         if st is not None:
             st = float(st.txt.strip())
 
+        track = v_elem.find('track')
+        if track is None:
+            track = True
+        else:
+            track = to_bool(track.text.strip())
+
         hv = klass(name,
+                   track_actuation=track,
                    address=address.text.strip() if address is not None else '',
                    parent=parent_name,
                    parent_inverted=parent_inverted,
@@ -816,16 +945,13 @@ class SwitchManager(Manager):
                    positive_interlocks=positive_interlocks,
                    interlocks=interlocks,
                    settling_time=st or 0)
+
+        ad = actuations.get(hv.name)
+        if ad is not None:
+            hv.actuations = ad.get('count', 0)
+            hv.last_actuation = ad.get('timestamp', '')
+
         return name, hv
-
-    def _load_explanation_valve(self, v):
-        name = v.name.split('-')[1]
-        ev = ExplanableValve(name=name,
-                             address=v.address,
-                             description=v.description)
-
-        v.evalve = ev
-        self.explanable_items.append(ev)
 
     def _get_simulation(self):
         return any([act.simulation for act in self.actuators])
