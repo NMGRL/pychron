@@ -150,10 +150,9 @@ class SubGroupingNode(GroupingNode, Preferred):
         grouping = {'{}_kind'.format(pv.attr): pv.kind for pv in self.preferred_values}
         grouping.update({'{}_error_kind'.format(pv.attr): pv.error_kind for pv in self.preferred_values})
 
-        apply_subgrouping(grouping, analyses, gid=gid)
+        return apply_subgrouping(grouping, analyses, gid=gid)
 
     def _pre_run_hook(self, state):
-        # unks = getattr(state, self.analysis_kind)
         self._run(state)
 
     def _by_key_changed(self):
