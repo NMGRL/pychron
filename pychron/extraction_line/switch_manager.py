@@ -21,16 +21,14 @@ import pickle
 import time
 from operator import itemgetter
 from pickle import PickleError
+from string import digits
 
 import yaml
-from six.moves import range
-from six.moves import zip
 from traits.api import Any, Dict, List, Bool, Event, Str
 
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.helpers.strtools import to_bool
-# from pychron.extraction_line.explanation.explanable_item import ExplanableValve
 from pychron.extraction_line.pipettes.tracking import PipetteTracker
 from pychron.globals import globalv
 from pychron.hardware.core.checksum_helper import computeCRC
@@ -205,11 +203,67 @@ class SwitchManager(Manager):
         return [v.name for v in self.switches.values() if v.software_lock and not v.ignore_lock_warning]
 
     @add_checksum
-    def get_software_locks(self):
-        return ','.join(['{}{}'.format(k, int(v.software_lock)) for k, v in self.switches.items()])
+    def get_software_locks(self, version=0):
+        return self._make_word('software_lock', version=version)
+        # return ','.join(['{}{}'.format(k, int(v.software_lock)) for k, v in self.switches.items()])
+
+    def _make_word(self, attr, timeout=0.25, version=0):
+        word = 0x00
+        keys = []
+
+        if timeout:
+            prev_keys = []
+            st = time.time()
+            clear_prev_keys = False
+            if self._prev_keys:
+                clear_prev_keys = True
+                prev_keys = self._prev_keys
+
+        for k, v in self.switches.items():
+            '''
+                querying a lot of valves can add up hence timeout.
+
+                most valves are not queried by default which also helps shorten
+                execution time for get_states. 
+
+            '''
+            if timeout and k in prev_keys:
+                continue
+
+            s = bool(getattr(v, attr))
+            if version:
+                keys.append(k)
+                word = word << 0x01 | s
+            else:
+                keys.append('{}{}'.format(k, int(s)))
+
+            if timeout and time.time() - st > timeout:
+                self.debug('get states timeout. timeout={}'.format(timeout))
+                break
+        else:
+            # if loop completes before timeout dont save keys
+            clear_prev_keys = True
+
+        if version:
+            if any((i in digits for k in keys for i in k)):
+                skeys = [k if len(k) == 1 else '<{}>'.format(k) for k in keys]
+            else:
+                skeys = [k if len(k) == 1 else '{}{}'.format(len(k), k)]
+
+        if timeout:
+            if clear_prev_keys and len(keys) == len(self.switches):
+                keys = None
+
+            self._prev_keys = keys
+
+        if version:
+            r = '{}:{:X}'.format(','.join(skeys), word)
+        else:
+            r = ','.join(keys)
+        return r
 
     @add_checksum
-    def get_states(self, query=False, timeout=0.25):
+    def get_states(self, query=False, timeout=0.25, version=0):
         """
             get as many valves states before time expires
             remember last set of valves returned.
@@ -218,40 +272,7 @@ class SwitchManager(Manager):
             states for the remainder valves
 
         """
-        st = time.time()
-        states = []
-        keys = []
-        prev_keys = []
-        clear_prev_keys = False
-        if self._prev_keys:
-            clear_prev_keys = True
-            prev_keys = self._prev_keys
-
-        for k, v in self.switches.items():
-            '''
-                querying a lot of valves can add up hence timeout.
-                
-                most valves are not queried by default which also helps shorten
-                execution time for get_states. 
-                
-            '''
-            if k in prev_keys:
-                continue
-
-            keys.append(k)
-
-            states.append('{}{}'.format(k, int(bool(v.state))))
-            if time.time() - st > timeout:
-                self.debug('get states timeout. timeout={}'.format(timeout))
-                break
-        else:
-            # if loop completes before timeout dont save keys
-            clear_prev_keys = True
-
-        if clear_prev_keys:
-            keys = None
-        self._prev_keys = keys
-        return ','.join(states)
+        return self._make_word('state', timeout=timeout, version=version)
 
     def get_valve_by_address(self, a):
         """
@@ -540,10 +561,77 @@ class SwitchManager(Manager):
                 return True
 
     def _parse_word(self, word):
+        """
+        ABC<EA>D<FA>:ff
+
+        :param word:
+        :return:
+        """
+
+        def tokenize(keys):
+            buf = ''
+            add = False
+            if '<' in keys:
+
+                for k in keys:
+                    if add:
+                        if k == '>':
+                            add = False
+                            yield buf
+                            buf = ''
+                            continue
+
+                        buf += k
+                        continue
+
+                    if '<' == k:
+                        add = True
+                        continue
+
+                    yield k
+            else:
+                cnt = 0
+                c = 0
+                for k in keys:
+                    if add:
+                        cnt += 1
+                        if cnt > c:
+                            yield buf
+
+                            buf = ''
+                            cnt = 0
+                            if k in digits:
+                                c = int(k)
+                            else:
+                                add = False
+                                yield k
+
+                            continue
+
+                        buf += k
+                        continue
+
+                    if k in digits:
+                        c = int(k)
+                        add = True
+                        continue
+                    yield k
+
+                if buf:
+                    yield buf
+
         d = {}
         if word is not None:
             try:
-                if ',' in word:
+                if ':' in word:
+                    keys, states = word.split(':')
+                    states = int(states, 16)
+
+                    for k in tokenize(keys):
+                        d[k] = bool(states & 1)
+                        states = states >> 1
+
+                elif ',' in word:
                     packets = word.split(',')
                     n, nn = len(packets), len(self.switches)
                     if n < nn:
@@ -554,7 +642,6 @@ class SwitchManager(Manager):
                         key = packet[:-1]
                         state = packet[-1:].strip()
                         d[key] = bool(int(state))
-
                 else:
                     for i in range(0, len(word), 2):
                         packet = word[i:i + 2]
@@ -845,7 +932,7 @@ class SwitchManager(Manager):
             track = to_bool(track.text.strip())
 
         hv = klass(name,
-                   track_actuation= track,
+                   track_actuation=track,
                    address=address.text.strip() if address is not None else '',
                    parent=parent_name,
                    parent_inverted=parent_inverted,

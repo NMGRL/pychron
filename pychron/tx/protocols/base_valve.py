@@ -18,6 +18,7 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from __future__ import absolute_import
+
 from pychron.tx.errors import InvalidValveErrorCode, InvalidArgumentsErrorCode, ValveSoftwareLockErrorCode, \
     ValveActuationErrorCode
 from pychron.tx.protocols.service import ServiceProtocol
@@ -54,6 +55,8 @@ class BaseValveProtocol(ServiceProtocol):
                     ('GetValveState', '_get_valve_state'),
                     ('GetStateChecksum', '_get_state_checksum'),
                     ('GetValveStates', '_get_valve_states'),
+                    ('GetStateWord', '_get_state_word'),
+                    ('GetLockWord', '_get_lock_word'),
                     ('GetValveLockStates', '_get_valve_lock_states'),
                     ('GetValveLockState', '_get_valve_lock_state'),
                     ('GetValveOwners', '_get_valve_owners'))
@@ -160,6 +163,12 @@ class BaseValveProtocol(ServiceProtocol):
         if result is None:
             result = InvalidValveErrorCode(data)
         return result
+
+    def _get_state_word(self, data):
+        return self._manager.get_state_word()
+
+    def _get_lock_word(self, data):
+        return self._manager.get_lock_word()
 
     def _get_valve_states(self, data):
         """

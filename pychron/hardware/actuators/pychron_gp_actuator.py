@@ -16,12 +16,13 @@
 
 # ========== standard library imports ==========
 from __future__ import absolute_import
+
 import time
 
+from pychron.core.communication_helper import trim, trim_bool
+from pychron.hardware.actuators import get_valve_name
 # ========== local library imports =============
 from .gp_actuator import GPActuator
-from pychron.hardware.actuators import get_valve_name
-from pychron.core.communication_helper import trim, trim_bool
 
 
 class PychronGPActuator(GPActuator):
@@ -47,12 +48,12 @@ class PychronGPActuator(GPActuator):
 
     @trim
     def get_state_word(self, verbose=False):
-        cmd = 'GetValveStates'
+        cmd = 'GetStateWord'
         return self.ask(cmd, verbose=verbose)
 
     @trim
     def get_lock_word(self, verbose=False):
-        cmd = 'GetValveLockStates'
+        cmd = 'GetLockWord'
         return self.ask(cmd, verbose=verbose)
 
     @trim_bool
