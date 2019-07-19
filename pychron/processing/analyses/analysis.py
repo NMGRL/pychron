@@ -297,6 +297,10 @@ class IdeogramPlotable(HasTraits):
         return self.temp_status.lower()
 
     @property
+    def identifier_aliquot_pair(self):
+        return '{}-{}'.format(self.identifier, self.aliquot)
+
+    @property
     def identifier(self):
         return self.labnumber
 

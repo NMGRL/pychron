@@ -54,8 +54,12 @@ class GroupingNode(BaseNode):
         d['key'] = self.by_key
 
     def _generate_key(self):
-        if self.by_key != 'No Grouping':
-            return attrgetter(self.by_key.lower())
+        key = self.by_key
+        if key != 'No Grouping':
+            if key == 'Aliquot':
+                key = 'identifier_aliquot_pair'
+
+            return attrgetter(key.lower())
 
     def run(self, state):
         self._run(state)
