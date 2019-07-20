@@ -971,6 +971,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
             self._current_row += 1
 
+        t = group.arar_constants.atm4036
+        trapped_value, trapped_error = nominal_value(t), std_dev(t)
         if self._options.include_isochron_age:
             sh.write_string(self._current_row, start_col, u'Isochron Age {}'.format(pmsigma),
                             fmt)
