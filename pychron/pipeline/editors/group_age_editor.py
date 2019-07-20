@@ -206,6 +206,10 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
         self.make_groups(False)
 
     # private
+    def _subgroup_subgroup_sort_key(self, x):
+        if hasattr(x, 'subgroup'):
+            if x.subgroup:
+                return x.subgroup.get('name')
 
     @on_trait_change('selected_group_item:preferred_values:[+]')
     def _group_change(self, obj, name, old, new):
