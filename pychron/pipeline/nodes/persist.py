@@ -272,15 +272,17 @@ class XLSXAnalysisTablePersistNode(BaseNode):
     options_klass = XLSXAnalysisTableWriterOptions
 
     def _pre_run_hook(self, state):
-        ri = tuple({ai.repository_identifier for ai in state.unknowns})
-        self.options.root_name = ri[0]
+        if state.unknowns:
+            ri = tuple({ai.repository_identifier for ai in state.unknowns})
+            self.options.root_name = ri[0]
 
     def _finish_configure(self):
         self.options.dump()
 
     def run(self, state):
-        writer = XLSXAnalysisTableWriter()
-        writer.build(state.run_groups, options=self.options)
+        if state.unknowns and state.run_groups:
+            writer = XLSXAnalysisTableWriter()
+            writer.build(state.run_groups, options=self.options)
 
 
 class InterpretedAgePersistNode(BaseDVCNode):
