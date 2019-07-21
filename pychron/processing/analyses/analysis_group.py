@@ -237,9 +237,13 @@ class AnalysisGroup(IdeogramPlotable):
     def isochron_mswd(self):
         if not self.isochron_3640:
             self.calculate_isochron_age()
-        reg = self.isochron_regressor
 
-        return reg.mswd, reg.valid_mswd, reg.n
+        mswd, v, n = 0, '', 0
+        reg = self.isochron_regressor
+        if reg:
+            mswd, v, n = reg.mswd, reg.valid_mswd, reg.n
+
+        return mswd, v, n
 
     # properties
     @property
