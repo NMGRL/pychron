@@ -153,6 +153,7 @@ class SubGroupingNode(GroupingNode, Preferred):
 
         grouping = {'{}_kind'.format(pv.attr): pv.kind for pv in self.preferred_values}
         grouping.update({'{}_error_kind'.format(pv.attr): pv.error_kind for pv in self.preferred_values})
+        grouping['nanalyses'] = len(analyses)
 
         return apply_subgrouping(grouping, analyses, gid=gid)
 

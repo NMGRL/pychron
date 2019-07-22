@@ -40,7 +40,7 @@ from pychron.graph.tools.data_tool import DataTool, DataToolOverlay
 from pychron.options.layout import FigureLayout
 from pychron.pipeline.editors.irradiation_tray_overlay import IrradiationTrayOverlay
 from pychron.pychron_constants import LEAST_SQUARES_1D, MATCHING, BRACKETING, WEIGHTED_MEAN, BOWL, PLANE, \
-    WEIGHTED_MEAN_1D, MSEM, NN
+    WEIGHTED_MEAN_1D, MSEM, NN, format_mswd
 
 
 def make_grid(r, n):
@@ -606,13 +606,13 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
                 l1.error_envelope.trait_set(xs=fxs, lower=l, upper=u)
                 l1.error_envelope.invalidate()
 
-
         self.max_j = fys.max()
         self.min_j = fys.min()
 
     def _additional_info(self, ind):
         fm = self.monitor_positions[ind]
-        return ['Pos: {}'.format(fm.hole_id),
+        return ['MSWD: {}'.format(format_mswd(fm.mean_j_mswd, fm.mean_j_valid_mswd)),
+                'Pos: {}'.format(fm.hole_id),
                 'Identifier: {}'.format(fm.identifier)]
 
     def _grid_additional_info(self, ind, y):

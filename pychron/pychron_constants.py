@@ -21,6 +21,7 @@ import os
 
 import yaml
 
+from pychron.core.helpers.formatting import floatfmt
 from pychron.paths import paths
 
 STARTUP_MESSAGE_POSITION = (100, 300)
@@ -84,7 +85,6 @@ SERIES_FIT_TYPES = [NULL_STR] + FIT_TYPES
 INTERPOLATE_TYPES = ['Preceding', 'Bracketing Interpolate', 'Bracketing Average', 'Succeeding']
 FIT_TYPES_INTERPOLATE = FIT_TYPES + INTERPOLATE_TYPES
 
-
 ARITHMETIC_MEAN = 'Arithmetic Mean'
 PLATEAU_ELSE_WEIGHTED_MEAN = 'Plateau else Weighted Mean'
 ISOCHRON = 'Isochron'
@@ -107,6 +107,13 @@ FLECK = 'Fleck 1977'
 MAHON = 'Mahon 1996'
 
 WEIGHTINGS = (NULL_STR, 'Volume', 'Variance')
+
+INVALID_MSWD_CHR = '*'
+
+
+def format_mswd(m, v, n=3):
+    return '{}{}'.format('' if v else INVALID_MSWD_CHR, floatfmt(m, n=n))
+
 
 DELIMITERS = {',': 'comma', '\t': 'tab', ' ': 'space'}
 
@@ -144,7 +151,6 @@ MAIN = 'Main'
 APPEARANCE = 'Appearance'
 DISPLAY = 'Display'
 GROUPS = 'Groups'
-
 
 INTERFERENCE_KEYS = ('K4039', 'K3839', 'K3739', 'Ca3937', 'Ca3837', 'Ca3637', 'Cl3638')
 RATIO_KEYS = ('Ca_K', 'Cl_K')
@@ -213,7 +219,6 @@ NN = 'Nearest Neighbors'
 PLANE = 'Plane'
 BOWL = 'Bowl'
 FLUX_MODEL_KINDS = PLANE, BOWL, WEIGHTED_MEAN, MATCHING, NN, BRACKETING, LEAST_SQUARES_1D, WEIGHTED_MEAN_1D
-
 
 if paths.setup_dir:
     flux_constants = os.path.join(paths.setup_dir, 'flux_constants.yaml')

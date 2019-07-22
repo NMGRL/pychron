@@ -57,6 +57,7 @@ class SubGroupAdapter(GroupAdapter):
                ('Group', 'group_id'),
                ('SubGroup', 'subgroup_id'),
                ('Label', 'label_name'),
+               ('N', 'nanalyses'),
                ('Age Kind', 'age_kind'),
                ('Error', 'age_error_kind')
                ]
@@ -98,17 +99,6 @@ class AnalysesAdapter(SubGroupAdapter):
         return ret
 
     def get_menu(self, obj, trait, row, column):
-        # age = MenuManager(Action(name='Calculate Wt. Mean', action='group_as_weighted_mean'),
-        #                   Action(name='Calculate Plateau', action='group_as_plateau'),
-        #                   Action(name='Calculate Plateau else Wt. Mean', action='group_as_plateau_else_weighted_mean'),
-        #                   Action(name='Calculate Isochron', action='group_as_isochron'),
-        #                   Action(name='Calculate Integrated', action='group_as_integrated'),
-        #                   name='Age')
-        #
-        # error = MenuManager(Action(name=SD, action='group_sd'),
-        #                     Action(name=SEM, action='group_sem'),
-        #                     Action(name=MSEM, action='group_msem'),
-        #                     name='Error')
         m = MenuManager(Action(name='Clear Grouping', action='clear_grouping'),
                         Action(name='Group Selected', action='group_selected'),
                         Action(name='SubGroup Selected', action='subgroup_selected'))
@@ -116,30 +106,6 @@ class AnalysesAdapter(SubGroupAdapter):
 
 
 class THandler(Handler):
-    # def group_as_plateau_else_weighted_mean(self, info, obj):
-    #     obj.group('Plateau else Weighted Mean')
-    #
-    # def group_as_weighted_mean(self, info, obj):
-    #     obj.group(WEIGHTED_MEAN)
-    #
-    # def group_as_plateau(self, info, obj):
-    #     obj.group('Plateau')
-    #
-    # def group_as_isochron(self, info, obj):
-    #     obj.group('Isochron')
-    #
-    # def group_as_integrated(self, info, obj):
-    #     obj.group(INTEGRATED)
-    #
-    # def group_sd(self, info, obj):
-    #     obj.group_sd()
-    #
-    # def group_sem(self, info, obj):
-    #     obj.group_sem()
-    #
-    # def group_msem(self, info, obj):
-    #     obj.group_msem()
-
     def group_selected(self, info, obj):
         obj.group_selected()
 
@@ -240,7 +206,7 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
 
     def get_groups_group(self):
         ggrp = VGroup(UItem('groups',
-                            height=-100,
+                            height=0.25,
                             style='custom', editor=myTabularEditor(adapter=GroupAdapter(),
                                                                    multi_select=True,
                                                                    editable=False,
@@ -254,17 +220,16 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
     def traits_view(self):
         agrp = self.get_analyses_group()
         ggrp = self.get_groups_group()
-        sgrp = VGroup(UItem('subgroups',
-                            height=-100,
-                            editor=myTabularEditor(adapter=SubGroupAdapter(),
-                                                   multi_select=True,
-                                                   editable=False,
-                                                   auto_update=True,
-                                                   selected='selected_subgroup')),
-                      UItem('selected_subgroup_item',
-                            style='custom', editor=InstanceEditor(view=View(get_preferred_grp()))),
-                      label='SubGroups',
-                      show_border=True)
+        # sgrp = VGroup(UItem('subgroups',
+        #                     editor=myTabularEditor(adapter=SubGroupAdapter(),
+        #                                            multi_select=True,
+        #                                            editable=False,
+        #                                            auto_update=True,
+        #                                            selected='selected_subgroup')),
+        #               UItem('selected_subgroup_item',
+        #                     style='custom', editor=InstanceEditor(view=View(get_preferred_grp()))),
+        #               label='SubGroups',
+        #               show_border=True)
 
         v = View(VGroup(agrp, ggrp),
                  handler=THandler())
@@ -323,7 +288,7 @@ class SubGroupAgeEditor(GroupAgeEditor):
         agrp = self.get_analyses_group()
         ggrp = self.get_groups_group()
         sgrp = VGroup(UItem('subgroups',
-                            height=-100,
+                            height=0.25,
                             editor=myTabularEditor(adapter=SubGroupAdapter(),
                                                    multi_select=True,
                                                    editable=False,

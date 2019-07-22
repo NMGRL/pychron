@@ -49,8 +49,7 @@ def make_statistics(reg, x=None, options=None):
                                                     format_percent_error(vv, ee)))
 
     if reg.mswd not in ('NaN', None):
-        valid = '' if reg.valid_mswd else '*'
-        lines.append('Fit MSWD= {}{}, N={}'.format(valid,
+        lines.append('Fit MSWD= {}{}, N={}'.format(reg.format_mswd(),
                                                floatfmt(reg.mswd, n=3), reg.n))
 
     if display_min_max:
@@ -64,8 +63,8 @@ def make_statistics(reg, x=None, options=None):
 
     mean_mswd = reg.mean_mswd
     if mean_mswd is not None:
-        valid = '' if reg.valid_mean_mswd else '*'
-        lines.append('Mean MSWD= {}{}'.format(valid, floatfmt(reg.mean_mswd, n=3)))
+        lines.append('Mean MSWD= {}'.format(reg.format_mswd(mean=True)))
+        # lines.append('Mean MSWD= {}{}'.format(valid, floatfmt(reg.mean_mswd, n=3)))
 
     if not isinstance(reg, MeanRegressor):
         lines.append('R\u00b2={}, R\u00b2-Adj.={}'.format(floatfmt(reg.rsquared), floatfmt(reg.rsquared_adj)))
