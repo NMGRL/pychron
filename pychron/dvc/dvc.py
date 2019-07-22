@@ -1195,21 +1195,26 @@ class DVC(Loggable):
                 ps = []
                 for it in ans:
                     if not isinstance(it, (InterpretedAge, DVCAnalysis)):
-                        it = self.make_analysis(it, quick=True)
+                        oit = self.make_analysis(it, quick=True)
+                        if oit is None:
+                            self.warning('Failed preparing analysis. Cannot tag: {}'.format(it))
+                        it = oit
 
-                    self.debug('setting {} tag= {}'.format(it.record_id, tag))
-                    if not isinstance(it, InterpretedAge):
-                        self.set_analysis_tag(it, tag)
+                    if it:
+                        self.debug('setting {} tag= {}'.format(it.record_id, tag))
+                        if not isinstance(it, InterpretedAge):
+                            self.set_analysis_tag(it, tag)
 
-                    it.set_tag({'name': tag, 'note': note or ''})
+                        it.set_tag({'name': tag, 'note': note or ''})
 
-                    path = self.update_tag(it, add=False)
-                    ps.append(path)
-                    cs.append(it)
+                        path = self.update_tag(it, add=False)
+                        ps.append(path)
+                        cs.append(it)
 
                 sess.commit()
-                if self.repository_add_paths(expid, ps):
-                    self._commit_tags(cs, expid, '<TAG> {:<6s}'.format(tag))
+                if ps:
+                    if self.repository_add_paths(expid, ps):
+                        self._commit_tags(cs, expid, '<TAG> {:<6s}'.format(tag))
 
     def get_repository(self, repo):
         return self._get_repository(repo, as_current=False)
