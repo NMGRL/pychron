@@ -42,6 +42,7 @@ class FluxOptions(BaseFluxOptions):
     monitor_age = Property(depends_on='selected_decay')
     model_kind = Enum(FLUX_MODEL_KINDS)
     flux_scalar = Float(1000)
+    n_neighbors = Int(2)
 
     least_squares_fit = Enum('Linear', 'Parabolic', 'Cubic', 'Quartic')
     one_d_axis = Enum('X', 'Y')

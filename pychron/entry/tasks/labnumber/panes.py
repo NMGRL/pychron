@@ -15,16 +15,20 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from datetime import datetime, timedelta
+
 from enable.component_editor import ComponentEditor
 from pyface.action.menu_manager import MenuManager
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
-from traits.api import Instance, Int, Button, Event
+from traits.api import Instance, Int, Button, Event, Date, HasTraits
 from traitsui.api import View, Item, TabularEditor, VGroup, HGroup, \
     EnumEditor, UItem, Label, VSplit, TextEditor, Readonly, Handler
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+from pychron.core.pychron_traits import PositiveInteger
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.ui.enum_editor import myEnumEditor
 from pychron.core.ui.qt.tabular_editors import FilterTabularEditor
@@ -59,18 +63,47 @@ class LevelInfoPane(TraitsDockPane):
         return v
 
 
+class FluxHistoryOptions(HasTraits):
+    after = Date
+    before = Date
+    max_count = PositiveInteger(1000)
+
+    def traits_view(self):
+        v = okcancel_view(Item('max_count',
+                               tooltip='Maximum number of changes to examine',
+                               label='Max. Count'),
+                          Item('after'),
+                          Item('before'),
+                          kind='modal')
+        return v
+
+
 class FluxHistoryPane(TraitsDockPane):
     id = 'pychron.entry.flux_history'
     name = 'Flux History'
-    load_history_button = Button('Load')
+    load_history_button = Button
+    flux_history_options = Instance(FluxHistoryOptions, ())
+
+    def _flux_history_options_default(self):
+        f = FluxHistoryOptions()
+        f.before = datetime.now()
+        f.after = f.before - timedelta(days=90)
+        return f
 
     def _load_history_button_fired(self):
-        self.model.load_history()
+        self.model.load_history(max_count=self.flux_history_options.max_count,
+                                after=self.flux_history_options.after,
+                                before=self.flux_history_options.before)
 
     def traits_view(self):
-        v = View(VGroup(UItem('pane.load_history_button'),
-                        UItem('flux_commits', editor=TabularEditor(adapter=CommitAdapter()))
-                        ))
+        t = HGroup(icon_button_editor('pane.load_history_button', 'arrow_refresh'),
+                   Item('pane.flux_history_options.max_count',
+                        tooltip='Maximum number of changes to examine',
+                        label='Max. Count'),
+                   Item('pane.flux_history_options.after'),
+                   Item('pane.flux_history_options.before'))
+
+        v = View(VGroup(t, UItem('flux_commits', editor=TabularEditor(adapter=CommitAdapter()))))
         return v
 
 

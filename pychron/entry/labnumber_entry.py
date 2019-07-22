@@ -489,14 +489,20 @@ class LabnumberEntry(DVCIrradiationable):
         else:
             self.information_dialog('No recover file for {}'.format(irradiation, level))
 
-    def load_history(self):
+    def load_history(self, **kw):
         repo = self.dvc.meta_repo
 
-        greps = ['fit flux for {}{}'.format(self.irradiation, self.level),
-                 'fit flux for {}'.format(self.irradiation)]
+        greps = ['fit flux for {}{}'.format(self.irradiation, self.level)]
 
-        cs = repo.get_commits_from_log(greps)
+        cs = repo.get_commits_from_log(greps, **kw)
         self.flux_commits = cs
+        if not cs:
+            irradlabel = '{}{}'.format(self.irradiation, self.level)
+            self.information_dialog('No changes found using current search criteria. \n'
+                                    'Irradiation={}\n'
+                                    'Max Count={max_count:}\n'
+                                    'After={after:}\n'
+                                    'Before={before:}'.format(irradlabel, **kw))
 
     # private
     def _backup(self):

@@ -54,8 +54,12 @@ class GroupingNode(BaseNode):
         d['key'] = self.by_key
 
     def _generate_key(self):
-        if self.by_key != 'No Grouping':
-            return attrgetter(self.by_key.lower())
+        key = self.by_key
+        if key != 'No Grouping':
+            if key == 'Aliquot':
+                key = 'identifier_aliquot_pair'
+
+            return attrgetter(key.lower())
 
     def run(self, state):
         self._run(state)
@@ -149,11 +153,11 @@ class SubGroupingNode(GroupingNode, Preferred):
 
         grouping = {'{}_kind'.format(pv.attr): pv.kind for pv in self.preferred_values}
         grouping.update({'{}_error_kind'.format(pv.attr): pv.error_kind for pv in self.preferred_values})
+        grouping['nanalyses'] = len(analyses)
 
-        apply_subgrouping(grouping, analyses, gid=gid)
+        return apply_subgrouping(grouping, analyses, gid=gid)
 
     def _pre_run_hook(self, state):
-        # unks = getattr(state, self.analysis_kind)
         self._run(state)
 
     def _by_key_changed(self):

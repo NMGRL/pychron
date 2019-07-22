@@ -36,11 +36,15 @@ def group_analyses_by_key(items, key, attr='group_id', id_func=None, sorting_ena
         parent_group = 'group_id'
 
     for _, gitems in groupby(items, attrgetter(parent_group)):
-        for k, analyses in groupby(gitems, key=keyfunc):
+        gitems = list(gitems)
+
+        for k, analyses in groupby(sorted(gitems,key=keyfunc), key=keyfunc):
+            analyses = list(analyses)
             gid = ids.index(k)
             if id_func:
-                gid = id_func(gid, analyses)
-            for it in analyses:
-                setattr(it, attr, gid)
+                id_func(gid, analyses)
+            else:
+                for it in analyses:
+                    setattr(it, attr, gid)
     return items
 # ============= EOF =============================================

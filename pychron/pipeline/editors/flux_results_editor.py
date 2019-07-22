@@ -27,6 +27,7 @@ from uncertainties import nominal_value, std_dev, ufloat
 from pychron.core.helpers.formatting import calc_percent_error, floatfmt
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.regression.mean_regressor import MeanRegressor, WeightedMeanRegressor
+from pychron.core.stats import validate_mswd
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.pipeline.editors.flux_visualization_editor import BaseFluxVisualizationEditor
 from pychron.pipeline.plot.plotter.arar_figure import SelectionFigure
@@ -130,6 +131,7 @@ class FluxPosition(HasTraits):
     mean_j = Float
     mean_jerr = Float
     mean_j_mswd = Float
+    mean_j_valid_mswd = Bool
 
     model_kind = Str
 
@@ -166,6 +168,7 @@ class FluxPosition(HasTraits):
             self.mean_j = nominal_value(j)
             self.mean_jerr = std_dev(j)
             self.mean_j_mswd = mswd
+            self.mean_j_valid_mswd = validate_mswd(mswd, len(ans))
 
         self.n = len(ans)
 

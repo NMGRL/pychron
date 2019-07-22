@@ -46,13 +46,6 @@ def apply_subgrouping(sg, selected, items=None, gid=None):
         gs = [int(gi) for gi in gs if gi]
         gid = max(gs) + 1 if gs else 0
 
-    # sha = hashlib.sha1()
-    # for s in selected:
-    #     sha.update(s.uuid.encode('utf-8'))
-    #
-    # sha_id = sha.hexdigest()
-    # sg = {'name':'{}:{}_{}'.format(sha_id, tag, gid),'error_kind': }
-    # sg = {'name': '{:02n}'.format(gid), 'kind': kind, 'error_kind': error_kind, 'sha_id': sha_id}
     sg['name'] = '{:02n}'.format(gid)
 
     for s in selected:
@@ -61,13 +54,12 @@ def apply_subgrouping(sg, selected, items=None, gid=None):
     if items:
         compress_groups(items)
 
+    return gid
+
 
 def compress_groups(items):
-    def key(x):
-        return x.subgroup['name'] if hasattr(x, 'subgroup') and x.subgroup else ''
-
     cnt = 0
-    for kind, ans in groupby(items, key=key):
+    for kind, ans in groupby(sorted(items, key=subgrouping_key), subgrouping_key):
         if kind:
             ans = list(ans)
             valid_ais = [a for a in ans if not a.is_omitted()]
@@ -99,7 +91,7 @@ def make_interpreted_age_group(ans, gid):
 def make_interpreted_age_groups(ans, group_id=0):
     groups = []
     analyses = []
-    for i, (subgroup, items) in enumerate(groupby(ans, key=subgrouping_key)):
+    for i, (subgroup, items) in enumerate(groupby(sorted(ans, key=subgrouping_key), key=subgrouping_key)):
         items = list(items)
         if subgroup:
             item = items[0]
