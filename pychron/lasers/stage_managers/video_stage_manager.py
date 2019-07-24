@@ -111,22 +111,7 @@ class VideoStageManager(StageManager):
     _measure_grain_evt = None
     grain_polygons = None
 
-    # test_button = Button
-    # _test_state = False
-
-    # def _test_button_fired(self):
-    #     if self._test_state:
-    #         # self.stop_measure_grain_polygon()
-    #         #
-    #         # time.sleep(2)
-    #         #
-    #         # d = self.get_grain_polygon_blob()
-    #         # print d
-    #         self.parent.disable_laser()
-    #     else:
-    #         self.parent.luminosity_degas_test()
-    #         # self.start_measure_grain_polygon()
-    #     self._test_state = not self._test_state
+    dimension_multiplier = Float(1)
 
     def motor_event_hook(self, name, value, *args, **kw):
         if name == 'zoom':
@@ -147,6 +132,7 @@ class VideoStageManager(StageManager):
         bind_preference(self, 'auto_upload', '{}.auto_upload'.format(pref_id))
         bind_preference(self, 'use_media_storage', '{}.use_media_storage'.format(pref_id))
         bind_preference(self, 'keep_local_copy', '{}.keep_local_copy'.format(pref_id))
+        bind_preference(self, 'dimension_multiplier', '{}.dimension_multiplier'.format(pref_id))
 
         bind_preference(self, 'use_video_archiver',
                         '{}.use_video_archiver'.format(pref_id))
@@ -201,15 +187,16 @@ class VideoStageManager(StageManager):
 
         def _measure_grain_polygon():
             ld = self.lumen_detector
-            dim = self.stage_map.g_dimension
+            dim = self.get_target_dimension()
             ld.pxpermm = self.pxpermm
 
             self.debug('Starting measure grain polygon')
             masks = []
             display_image = self.autocenter_manager.display_image
 
-            mask_dim = dim * 1.05
+            mask_dim = self.get_mask_dimension()
             mask_dim_mm = mask_dim * self.pxpermm
+
             ld.grain_measuring = True
             while not evt.is_set():
                 src = self._get_preprocessed_src()
@@ -424,7 +411,8 @@ class VideoStageManager(StageManager):
         ld = self.lumen_detector
         src = self._get_preprocessed_src()
 
-        dim = self.stage_map.g_dimension
+        dim = self.get_target_dimension()
+
         mask_dim = dim * 1.05
         # mask_dim_mm = mask_dim * self.pxpermm
         if src is not None and src.ndim >= 2:
@@ -435,7 +423,7 @@ class VideoStageManager(StageManager):
     def get_brightness(self, **kw):
         ld = self.lumen_detector
         src = self._get_preprocessed_src()
-        dim = self.stage_map.g_dimension
+        dim = self.get_target_dimension()
         return ld.get_value(src, dim, **kw)
         # src = self.video.get_cached_frame()
         # csrc = copy(src)
@@ -459,11 +447,23 @@ class VideoStageManager(StageManager):
     def get_preprocessed_src(self):
         return self._get_preprocessed_src()
 
+    def get_target_dimension(self, hole=None):
+        dim = self.stage_map.g_dimension
+        if hole:
+            if isinstance(hole, int):
+                hole = sm.get_hole(holenum)
+            dim = hole.dimension
+
+        return dim * self.dimension_multiplier
+
+    def get_mask_dimension(self):
+        return self.get_target_dimension() * 1.05
+
     # private
     def _get_preprocessed_src(self):
         ld = self.lumen_detector
         src = copy(self.video.get_cached_frame())
-        dim = self.stage_map.g_dimension
+        dim = self.get_target_dimension()
         ld.pxpermm = self.pxpermm
 
         offx, offy = self.canvas.get_screen_offset()
@@ -474,7 +474,7 @@ class VideoStageManager(StageManager):
                 return src
 
     def _stage_map_changed_hook(self):
-        self.lumen_detector.hole_radius = self.stage_map.g_dimension
+        self.lumen_detector.hole_radius = self.get_target_dimension()
 
     def _upload(self, src, inform=True):
         if not self.use_media_storage:
@@ -560,7 +560,7 @@ class VideoStageManager(StageManager):
         video = self.video
 
         crop_to_hole = True
-        dim = self.stage_map.g_dimension
+        dim = self.get_target_dimension()
         cropdim = dim * 8 * self.pxpermm
         color = self.canvas.crosshairs_color.getRgb()[:3]
 
@@ -655,12 +655,12 @@ class VideoStageManager(StageManager):
         if self.autocenter_manager.use_autocenter:
             time.sleep(0.1)
 
-            dim = sm.g_dimension
+            dim = self.get_target_dimension()
             shape = sm.g_shape
             if holenum is not None:
                 hole = sm.get_hole(holenum)
                 if hole is not None:
-                    dim = hole.dimension
+                    dim = self.get_target_dimension(holenum)
                     shape = hole.shape
 
             ox, oy = self.canvas.get_screen_offset()
