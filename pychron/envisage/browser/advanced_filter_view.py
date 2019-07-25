@@ -13,13 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from __future__ import absolute_import
-
 from traits.api import HasTraits, List, Button, Str, Enum, Bool, on_trait_change
-from traitsui.api import View, UItem, VGroup, InstanceEditor, ListEditor, EnumEditor, HGroup
+from traitsui.api import View, UItem, VGroup, InstanceEditor, ListEditor, EnumEditor, HGroup, CheckListEditor, Item
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+from pychron.core.pychron_traits import BorderVGroup
 from pychron.envisage.icon_button_editor import icon_button_editor
+from pychron.pychron_constants import ANALYSIS_TYPES
 
 
 class SQLFilter(HasTraits):
@@ -106,18 +106,23 @@ class SQLFilter(HasTraits):
 class AdvancedFilterView(HasTraits):
     filters = List
     add_filter_button = Button
-    attributes = List(['age', 'age_error'])
+    attributes = List
+    samples = List
+    apply_to_current_selection = Bool
+    apply_to_current_samples = Bool
 
     def demo(self):
         self.filters = [SQLFilter(comparator='<',
                                   attribute='Ar40',
                                   remove_visible=False,
                                   show_chain=False,
-                                  criterion='55'),
-                        SQLFilter(comparator='<',
-                                  attribute='Ar39',
-                                  chain='and',
-                                  criterion='55')]
+                                  criterion='100', attributes=self.attributes),
+                        # SQLFilter(comparator='<',
+                        #           attribute='Ar39',
+                        #           chain='and',
+                        #           criterion='55')
+                        #
+                        ]
 
     @on_trait_change('filters:remove_button')
     def _handle_remove(self, obj, name, old, new):
@@ -135,10 +140,15 @@ class AdvancedFilterView(HasTraits):
             fi.show_chain = i != 0
 
     def traits_view(self):
-        v = okcancel_view(VGroup(icon_button_editor('add_filter_button', 'add'),
-                                 UItem('filters', editor=ListEditor(mutable=False,
-                                                                    style='custom',
-                                                                    editor=InstanceEditor()))),
+        fgrp = BorderVGroup(icon_button_editor('add_filter_button', 'add'),
+                            UItem('filters', editor=ListEditor(mutable=False,
+                                                               style='custom',
+                                                               editor=InstanceEditor())),
+                            label='Filters')
+        ogrp = BorderVGroup(Item('apply_to_current_selection'),
+                            Item('apply_to_current_samples'),
+                            label='Options')
+        v = okcancel_view(VGroup(fgrp, ogrp),
                           title='Advanced Search',
                           width=700,
                           height=350)

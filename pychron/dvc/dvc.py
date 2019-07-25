@@ -25,11 +25,11 @@ from operator import itemgetter
 from apptools.preferences.preference_binding import bind_preference
 from git import Repo, GitCommandError
 from traits.api import Instance, Str, Set, List, provides, Bool, Int
-from uncertainties import ufloat
+from uncertainties import ufloat, std_dev, nominal_value
 
 from pychron import json
 from pychron.core.helpers.filetools import remove_extension, list_subdirectories, list_directory
-from pychron.core.helpers.iterfuncs import groupby_key, groupby_repo
+from pychron.core.helpers.iterfuncs import groupby_key, groupby_repo, partition
 from pychron.core.i_datastore import IDatastore
 from pychron.core.progress import progress_loader, progress_iterator, open_progress
 from pychron.dvc import dvc_dump, dvc_load, analysis_path, repository_path, AnalysisNotAnvailableError, PATH_MODIFIERS
@@ -74,6 +74,8 @@ class DVC(Loggable):
     data_sources = List
     data_source = Instance(DVCConnectionItem)
     favorites = List
+
+    update_currents_enabled = Bool
 
     use_cocktail_irradiation = Str
     use_cache = Bool
@@ -418,12 +420,16 @@ class DVC(Loggable):
             if self._cache:
                 self._cache.remove(ai.uiid)
 
+            self._update_current_age(ai)
+
     def save_icfactors(self, ai, dets, fits, refs):
         if fits and dets:
             self.info('Saving icfactors for {}'.format(ai))
             ai.dump_icfactors(dets, fits, refs, reviewed=True)
             if self._cache:
                 self._cache.remove(ai.uiid)
+
+            self._update_current_age(ai)
 
     def save_blanks(self, ai, keys, refs):
         if keys:
@@ -432,11 +438,15 @@ class DVC(Loggable):
             if self._cache:
                 self._cache.remove(ai.uiid)
 
+            self._update_current_blanks(ai, keys)
+
     def save_defined_equilibration(self, ai, keys):
         if keys:
             self.info('Saving equilibration for {}'.format(ai))
             if self._cache:
                 self._cache.remove(ai.uiid)
+
+            self._update_current(ai, keys)
             return ai.dump_equilibration(keys, reviewed=True)
 
     def save_fits(self, ai, keys):
@@ -445,6 +455,8 @@ class DVC(Loggable):
             ai.dump_fits(keys, reviewed=True)
             if self._cache:
                 self._cache.remove(ai.uiid)
+
+            self._update_current(ai, keys)
 
     def save_flux(self, identifier, j, e):
         """
@@ -1224,6 +1236,63 @@ class DVC(Loggable):
             self._cache.clear()
 
     # private
+    def _update_current_blanks(self, ai, keys):
+        if self.update_currents_enabled:
+            db = self.db
+            dban = db.get_analysis_uuid(ai.uuid)
+            if dban:
+                for k in keys:
+                    iso = ai.get_isotope(k)
+                    if iso:
+                        iso = iso.blank
+                        db.update_current(dban, '{}_blank'.format(k), iso.value, iso.error, iso.units)
+
+                self._update_current_age(ai, dban)
+                db.commit()
+            else:
+                self.warning('Failed to update current values. '
+                             'Could not located RunID={}, UUID={}'.format(ai.runid, ai.uuid))
+
+    def _update_current_age(self, ai, dban=None):
+        if self.update_currents_enabled:
+            if dban is None:
+                db = self.db
+                dban = db.get_analysis_uuid(ai.uuid)
+
+            if dban:
+                age_units = ai.arar_constants.age_units
+                self.db.update_current(dban, 'age', ai.age, ai.age_err, age_units)
+                self.db.update_current(dban, 'age_wo_j_error', ai.age, ai.age_err_wo_j, age_units)
+
+    def _update_current(self, ai, keys):
+        if self.update_currents_enabled:
+            db = self.db
+            dban = db.get_analysis_uuid(ai.uuid)
+            if dban:
+                for k in keys:
+                    iso = ai.get_isotope(k)
+                    if iso is None:
+                        iso = ai.get_isotope(detector=k)
+                        bs = iso.baseline
+                        db.update_current(dban, '{}_baseline'.format(k), bs.value, bs.error, bs.units)
+                    else:
+                        db.update_current(dban, '{}_intercept'.format(k), iso.value, iso.error, iso.units)
+
+                        v = iso.get_ic_corrected_value()
+                        db.update_current(dban, '{}_ic_corrected'.format(k), nominal_value(v), std_dev(v), iso.units)
+
+                        v = iso.get_baseline_corrected_value()
+                        db.update_current(dban, '{}_bs_corrected'.format(k), nominal_value(v), std_dev(v), iso.units)
+
+                        v = iso.get_non_detector_corrected_value()
+                        db.update_current(dban, k, nominal_value(v), std_dev(v), iso.units)
+
+                self._update_current_age(ai, dban)
+                db.commit()
+            else:
+                self.warning('Failed to update current values. '
+                             'Could not located RunID={}, UUID={}'.format(ai.runid, ai.uuid))
+
     def _transfer_analysis_to(self, dest, src, rid):
         p = analysis_path(rid, src)
         np = analysis_path(rid, dest)
@@ -1277,6 +1346,11 @@ class DVC(Loggable):
                                    analyses=analyses,
                                    options=options, add=add,
                                    position_jerr=position_jerr)
+
+        if self.update_currents_enabed:
+            ans = self.db.get_labnumber_analyses([identifier])
+            for ai in self.make_analyses(ans):
+                self._update_current_age(ai)
 
     def _add_interpreted_age(self, ia, d):
         rid = ia.repository_identifier
@@ -1476,6 +1550,7 @@ class DVC(Loggable):
         bind_preference(self, 'use_cocktail_irradiation', '{}.use_cocktail_irradiation'.format(prefid))
         bind_preference(self, 'use_cache', '{}.use_cache'.format(prefid))
         bind_preference(self, 'max_cache_size', '{}.max_cache_size'.format(prefid))
+        bind_preference(self, 'update_currents_enabled', '{}.update_currents_enabled'.format(prefid))
 
         if self.use_cache:
             self._use_cache_changed()
