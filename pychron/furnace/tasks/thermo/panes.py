@@ -13,9 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
-from __future__ import absolute_import
-
 from threading import Thread
 
 from enable.component_editor import ComponentEditor
@@ -33,94 +30,24 @@ from pychron.envisage.icon_button_editor import icon_button_editor
 
 class ControlPane(TraitsDockPane):
     name = 'Controls'
-    id = 'pychron.nmgrlfurnace.controls'
+    id = 'pychron.thermofurnace.controls'
 
     dump_sample_button = Button('Load')
-    fire_magnets_button = Button('Dump')
-    jitter_button = Button
-    jitter_label = Str('Start')
-    jittering = Bool
-    configure_jitter_button = Button
-    configure_dump_button = Button
 
     refresh_states_button = Button('Refresh')
 
-    funnel_up_button = Button
-    funnel_down_button = Button
-    force_funnel_up_button = Button
-    funnel_set_home_button = Button('Set Home')
-
-    feeder_set_home_button = Button('Set Home')
     toggle_advanced_view_button = Button
     _advanced_view_state = Bool(False)
 
     disable_button = Button
 
-    feeder_slew_positive = Button
-    feeder_slew_negative = Button
-    feeder_stop_button = Button
-
     clear_sample_states_button = Button('Clear Dumped Samples')
-
-    def _feeder_slew_positive_fired(self):
-        self.model.stage_manager.feeder_slew(1)
-
-    def _feeder_slew_negative_fired(self):
-        self.model.stage_manager.feeder_slew(-1)
-
-    def _feeder_stop_button_fired(self):
-        self.model.stage_manager.feeder_stop()
-
-    def _feeder_set_home_button_fired(self):
-        self.model.stage_manager.feeder.set_home()
 
     def _disable_button_fired(self):
         self.model.setpoint = 0
 
-    def _funnel_set_home_button_fired(self):
-        self.model.funnel.set_home()
-
-    def _force_funnel_up_fired(self):
-        def func():
-            self.model.raise_funnel(force=True)
-
-        t = Thread(target=func)
-        t.start()
-
-    def _funnel_up_button_fired(self):
-        def func():
-            self.model.raise_funnel()
-
-        t = Thread(target=func)
-        t.start()
-
-    def _funnel_down_button_fired(self):
-        def func():
-            self.model.lower_funnel()
-
-        t = Thread(target=func)
-        t.start()
-
     def _dump_sample_button_fired(self):
         self.model.dump_sample()
-
-    def _fire_magnets_button_fired(self):
-        self.model.fire_magnets()
-
-    def _jitter_button_fired(self):
-        if not self.jittering:
-            self.model.start_jitter_feeder()
-            self.jitter_label = 'Stop'
-        else:
-            self.model.stop_jitter_feeder()
-            self.jitter_label = 'Start'
-        self.jittering = not self.jittering
-
-    def _configure_dump_button_fired(self):
-        self.model.configure_dump()
-
-    def _configure_jitter_button_fired(self):
-        self.model.configure_jitter_feeder()
 
     def _toggle_advanced_view_button_fired(self):
         self._advanced_view_state = not self._advanced_view_state
@@ -153,7 +80,6 @@ class ControlPane(TraitsDockPane):
         #
         #                   show_border=True, label='Calibration')
         c_grp = VGroup(HGroup(Item('setpoint'),
-                              UItem('water_flow_state', editor=LEDEditor(label='H2O Flow')),
                               spring, icon_button_editor('pane.disable_button', 'cancel')),
                        VGroup(UItem('temperature_readback', editor=LCDEditor())),
                        icon_button_editor('start_record_button', 'media-record',
@@ -167,46 +93,24 @@ class ControlPane(TraitsDockPane):
 
         feeder_grp = VGroup(HGroup(Item('stage_manager.calibrated_position_entry', label='Hole'),
                                    icon_button_editor('pane.toggle_advanced_view_button', 'cog')),
-                            VGroup(Item('stage_manager.feeder.position', label='Position (units)'),
-                                   Item('stage_manager.feeder.velocity'),
-                                   Item('pane.feeder_set_home_button'),
-                                   HGroup(icon_button_editor('pane.feeder_slew_positive', 'arrow_left'),
-                                          icon_button_editor('pane.feeder_slew_negative', 'arrow_right'),
-                                          icon_button_editor('pane.feeder_stop_button', 'cancel')),
-                                   visible_when='pane._advanced_view_state'),
+                            # VGroup(Item('stage_manager.feeder.position', label='Position (units)'),
+                            #        Item('stage_manager.feeder.velocity'),
+                            #        Item('pane.feeder_set_home_button'),
+                            #        HGroup(icon_button_editor('pane.feeder_slew_positive', 'arrow_left'),
+                            #               icon_button_editor('pane.feeder_slew_negative', 'arrow_right'),
+                            #               icon_button_editor('pane.feeder_stop_button', 'cancel')),
+                            #        visible_when='pane._advanced_view_state'),
                             show_border=True, label='Position')
-
-        funnel_grp = VGroup(HGroup(icon_button_editor('pane.funnel_up_button', 'arrow_up',
-                                                      enabled_when='funnel_up_enabled', tooltip='Raise Funnel'),
-                                   UItem('pane.force_funnel_up_button', tooltip='Force funnel to raise'),
-                                   icon_button_editor('pane.funnel_down_button', 'arrow_down', tooltip='Lower Funnel',
-                                                      enabled_when='funnel_down_enabled')),
-                            UItem('pane.funnel_set_home_button'),
-                            show_border=True, label='Funnel')
-        jitter_grp = HGroup(UItem('pane.jitter_button', editor=ButtonEditor(label_value='pane.jitter_label')),
-                            icon_button_editor('pane.configure_jitter_button', 'cog', tooltip='Configure Jitter'),
-                            show_border=True, label='Jitter')
 
         dump_grp = HGroup(UItem('pane.dump_sample_button',
                                 enabled_when='dump_sample_enabled',
                                 tooltip='Execute the complete sample loading procedure'),
-                          UItem('pane.fire_magnets_button',
-                                enabled_when='not magnets_firing',
-                                tooltip='Execute the magnet sequence'),
-                          UItem('pane.clear_sample_states_button'),
-                          icon_button_editor('pane.configure_dump_button', 'cog', tooltip='Configure Dumping'),
                           show_border=True, label='Dump')
         status_grp = HGroup(CustomLabel('status_txt', size=14))
         d1 = VGroup(status_grp,
-                    feeder_grp, funnel_grp, jitter_grp, dump_grp)
-        d2 = VGroup(
-            # UItem('pane.refresh_states_button'),
-            UItem('dumper_canvas', editor=ComponentEditor()))
-        d_grp = HGroup(d1, d2, label='Dumper', show_border=True)
+                    feeder_grp, dump_grp)
 
-        # v_grp = VGroup(UItem('video_canvas', editor=VideoComponentEditor()),
-        #               visible_when='video_enabled',
-        #               label='Camera')
+        d_grp = HGroup(d1, label='Dumper', show_border=True)
 
         g_grp = VGroup(Item('graph_scan_width', label='Scan Width (mins)'),
                        HGroup(Item('graph_scale', label='Scale'),
@@ -230,7 +134,7 @@ class ControlPane(TraitsDockPane):
                               show_border=True, label='Snapshot', ),
                        label='Graph')
         v = View(VGroup(c_grp,
-                        HGroup(Tabbed(d_grp, g_grp))))
+                        HGroup(Tabbed(d_grp, g_grp))))  # HGroup(Tabbed(d_grp, v_grp, g_grp))))
         return v
 
 
@@ -261,7 +165,6 @@ class ExperimentFurnacePane(TraitsDockPane):
 
     def traits_view(self):
         c_grp = VGroup(HGroup(Item('setpoint'),
-                              UItem('water_flow_state', editor=LEDEditor(label='H2O Flow')),
                               spring, icon_button_editor('pane.disable_button', 'cancel'),
                               Item('verbose_scan', label='Verbose Logging')),
                        VGroup(UItem('temperature_readback', editor=LCDEditor(width=100, height=50))),
