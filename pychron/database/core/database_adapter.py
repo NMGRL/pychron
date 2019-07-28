@@ -207,6 +207,7 @@ class DatabaseAdapter(Loggable):
 
     autoflush = True
     autocommit = False
+    commit_on_add = True
 
     # name used when writing to database
     # save_username = Str
@@ -594,7 +595,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
                     self.modified = True
 
                 self._trying_to_add = True
-                if not self.autocommit:
+                if not self.autocommit and self.commit_on_add:
                     sess.commit()
 
                 return obj
@@ -746,7 +747,8 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
         try:
             return f()
         except NoResultFound:
-            self.info('no results found for query -- {}'.format(compile_query(q)))
+            if verbose_query:
+                self.info('no results found for query -- {}'.format(compile_query(q)))
         except SQLAlchemyError as e:
             if self.verbose:
                 self.debug('_query exception {}'.format(e))

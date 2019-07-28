@@ -13,13 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.api import HasTraits, List, Button, Str, Enum, Bool, on_trait_change
+from traits.api import HasTraits, List, Button, Str, Enum, Bool, on_trait_change, Int
 from traitsui.api import View, UItem, VGroup, InstanceEditor, ListEditor, EnumEditor, HGroup, CheckListEditor, Item
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pychron_traits import BorderVGroup
 from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.pychron_constants import ANALYSIS_TYPES
 
 
 class SQLFilter(HasTraits):
@@ -32,66 +31,6 @@ class SQLFilter(HasTraits):
     show_chain = Bool(True)
     remove_button = Button
     remove_visible = Bool(True)
-
-    # _eval_func = None
-
-    # def __init__(self, txt=None, *args, **kw):
-    #     super(PipelineFilter, self).__init__(*args, **kw)
-    #     if txt:
-    #         self.parse_string(txt)
-
-    # def generate_evaluate_func(self):
-    #     def func(edict):
-    #         attr = self.attribute
-    #         comp = self.comparator
-    #         crit = self.criterion
-    #
-    #         # val = self._get_value(item, attr)
-    #         # edict = {attr: val}
-    #
-    #         attr = attr.replace(' ', '_')
-    #
-    #         if comp == '=':
-    #             comp = '=='
-    #
-    #         if comp in ('between', 'not between'):
-    #
-    #             try:
-    #                 low, high = crit.split(',')
-    #             except ValueError:
-    #                 return
-    #
-    #             if comp == 'between':
-    #                 test = '{}<{}<{}'.format(low, attr, high)
-    #             else:
-    #                 test = '{}>{} or {}>{}'.format(low, attr, attr, high)
-    #         else:
-    #             test = '{}{}{}'.format(attr, comp, crit)
-    #
-    #         try:
-    #             result = eval(test, edict)
-    #         except (AttributeError, ValueError):
-    #             result = False
-    #
-    #         return result
-    #
-    #     self._eval_func = func
-    #
-    # def evaluate(self, item):
-    #     attr = self.attribute
-    #     val = self._get_value(item, attr)
-    #     attr = attr.replace(' ', '_')
-    #     edict = {attr: val}
-    #     return self._eval_func(edict)
-    #
-    # def _get_value(self, item, attr):
-    #     if attr in ('age', 'age error'):
-    #         val = getattr(item, 'uage')
-    #         val = nominal_value(val) if attr == 'age' else std_dev(val)
-    #     else:
-    #         val = getattr(item, attr)
-    #
-    #     return val
 
     def traits_view(self):
         v = View(HGroup(icon_button_editor('remove_button', 'delete', visible_when='remove_visible'),
@@ -110,6 +49,8 @@ class AdvancedFilterView(HasTraits):
     samples = List
     apply_to_current_selection = Bool
     apply_to_current_samples = Bool
+    limit = Int(500)
+    omit_invalid = Bool(True)
 
     def demo(self):
         self.filters = [SQLFilter(comparator='<',
@@ -147,6 +88,8 @@ class AdvancedFilterView(HasTraits):
                             label='Filters')
         ogrp = BorderVGroup(Item('apply_to_current_selection'),
                             Item('apply_to_current_samples'),
+                            Item('omit_invalid'),
+                            Item('limit'),
                             label='Options')
         v = okcancel_view(VGroup(fgrp, ogrp),
                           title='Advanced Search',

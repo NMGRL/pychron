@@ -217,6 +217,7 @@ class SampleBrowserModel(BrowserModel):
         info = m.edit_traits(kind='livemodal')
         if info.result:
             uuids = None
+            at = self.analysis_table
             if not m.apply_to_current_selection and not m.apply_to_current_samples:
                 lns = self.dvc.get_analyses_advanced(m, return_labnumbers=True)
                 sams = self._load_sample_record_views(lns)
@@ -231,7 +232,9 @@ class SampleBrowserModel(BrowserModel):
             if m.apply_to_current_samples:
                 identifiers = [si.identifier for si in self.samples]
 
-            ans = self.dvc.get_analyses_advanced(m, uuids=uuids, identifiers=identifiers)
+            ans = self.dvc.get_analyses_advanced(m, uuids=uuids, identifiers=identifiers,
+                                                 include_invalid=not m.omit_invalid,
+                                                 limit=m.limit)
             if m.apply_to_current_selection and not ans:
                 self.warning_dialog('No analyses match criteria')
                 return

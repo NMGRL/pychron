@@ -836,6 +836,13 @@ class DVCDatabase(DatabaseAdapter):
             ts = self._query_all(q)
             return list(binfunc(ts, hours))
 
+    def get_currents(self, ai):
+        with self.session_ctx() as sess:
+            q = sess.query(CurrentTbl)
+            q = q.join(AnalysisTbl)
+            q = q.filter(AnalysisTbl.uuid == ai.uuid)
+            return self._query_all(q)
+
     def get_parameter(self, name):
         with self.session_ctx() as sess:
             q = sess.query(ParameterTbl)
@@ -847,7 +854,48 @@ class DVCDatabase(DatabaseAdapter):
             q = sess.query(ParameterTbl.name)
             return self._query_all(q)
 
-    def get_analyses_advanced(self, advanced_filter, uuids=None, identifiers=None, return_labnumbers=False):
+    def get_analyses_no_current(self, reponame, verbose=False):
+        """
+        select * from AnalysisTbl
+        join RepositoryAssociationTbl on RepositoryAssociationTbl.analysisID = AnalysisTbl.id
+        join RepositoryTbl on RepositoryTbl.name = RepositoryAssociationTbl.repository
+        where RepositoryTbl.name = 'Aslan01105' and AnalysisTbl.id not in (
+        select AnalysisTbl.id from AnalysisTbl
+        join RepositoryAssociationTbl on RepositoryAssociationTbl.analysisID = AnalysisTbl.id
+        join RepositoryTbl on RepositoryTbl.name = RepositoryAssociationTbl.repository
+        join CurrentTbl on CurrentTbl.analysisID = AnalysisTbl.id
+        WHERE RepositoryTbl.name = 'Aslan01105')
+
+        :param reponame:
+        :return:
+        """
+        with self.session_ctx() as sess:
+            q = sess.query(AnalysisTbl.id)
+            q = q.join(RepositoryAssociationTbl)
+            q = q.join(RepositoryTbl)
+            q = q.join(CurrentTbl)
+            q = q.filter(RepositoryTbl.name == reponame)
+            q = q.group_by(AnalysisTbl.id)
+            sq = q.subquery('s')
+
+            q = sess.query(AnalysisTbl)
+            q = q.join(RepositoryAssociationTbl)
+            q = q.join(RepositoryTbl)
+            q = q.filter(RepositoryTbl.name == reponame)
+            q = q.filter(AnalysisTbl.id.notin_(sq))
+
+            return self._query_all(q, verbose_query=verbose)
+
+    def get_repository_analysis_count(self, reponame):
+        with self.session_ctx() as sess:
+            q = sess.query(AnalysisTbl)
+            q = q.join(RepositoryAssociationTbl)
+            q = q.join(RepositoryTbl)
+            q = q.filter(RepositoryTbl.name == reponame)
+            return q.count()
+
+    def get_analyses_advanced(self, advanced_filter, uuids=None, identifiers=None, return_labnumbers=False,
+                              include_invalid=False, limit=None):
         with self.session_ctx() as sess:
             if return_labnumbers:
                 q = sess.query(IrradiationPositionTbl)
@@ -856,6 +904,9 @@ class DVCDatabase(DatabaseAdapter):
                 q = sess.query(AnalysisTbl)
                 if identifiers:
                     q = q.join(IrradiationPositionTbl)
+
+                if not include_invalid:
+                    q = q.join(AnalysisChangeTbl)
 
             q = q.join(CurrentTbl)
             q = q.join(ParameterTbl)
@@ -878,6 +929,11 @@ class DVCDatabase(DatabaseAdapter):
                 q = q.filter(AnalysisTbl.uuid.in_(uuids))
             if identifiers:
                 q = q.filter(IrradiationPositionTbl.identifier.in_(identifiers))
+            if not include_invalid:
+                q = q.filter(AnalysisChangeTbl.tag != 'invalid')
+
+            if limit:
+                q = q.limit(limit)
 
             return self._query_all(q, verbose_query=True)
 
@@ -2059,15 +2115,18 @@ class DVCDatabase(DatabaseAdapter):
             for si in ss:
                 si.sessionID = session.id
 
-    def update_current(self, dban, parameter, value, error, units):
+    def update_current(self, dban, parameter, value, error, units, force=False):
 
         with self.session_ctx() as sess:
-            q = sess.query(CurrentTbl)
-            q = q.join(ParameterTbl)
-            q = q.join(AnalysisTbl)
-            q = q.filter(ParameterTbl.name == parameter)
-            q = q.filter(AnalysisTbl.id == dban.id)
-            c = self._query_one(q)
+            c = None
+            if not force:
+                q = sess.query(CurrentTbl)
+                q = q.join(ParameterTbl)
+                q = q.join(AnalysisTbl)
+                q = q.filter(ParameterTbl.name == parameter)
+                q = q.filter(AnalysisTbl.id == dban.id)
+                c = self._query_one(q)
+
             if c is None:
                 param = self.add_parameter(parameter)
                 c = CurrentTbl()
