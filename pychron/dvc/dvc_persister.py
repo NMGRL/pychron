@@ -377,9 +377,12 @@ class DVCPersister(BasePersister):
         db = self.dvc.db
         an = db.add_analysis(**d)
 
-        # save results
-        for iso in ps.isotope_group.isotopes.values():
-            db.add_analysis_result(an, iso)
+        # save currents
+        self._save_currents(an)
+
+        # for iso in ps.isotope_group.isotopes.values():
+        #     self.add_current(iso)
+        # db.add_analysis_result(an, iso)
 
         # save media
         if ps.snapshots:
@@ -426,6 +429,35 @@ class DVCPersister(BasePersister):
         an.change = change
 
         db.commit()
+
+    def _save_currents(self, dban):
+        dvc = self.dvc
+        if dvc.update_currents_enabled:
+
+            ps = self.per_spec
+            db = dvc.db
+
+            for key, iso in ps.isotope_group.isotopes.items():
+                param = db.add_parameter('{}_intercept'.format(key))
+                db.add_current(dban, iso.value, iso.error, param, iso.units)
+
+                param = db.add_parameter('{}_blank'.format(key), iso.blank.units)
+                db.add_current(dban, iso.blank.value, iso.blank.error, param, iso.blank.units)
+
+                param = db.add_parameter('{}_bs_corrected'.format(key))
+                v = iso.get_baseline_corrected_value()
+                db.add_current(dban, nominal_value(v), std_dev(v), param, iso.units)
+
+                param = db.add_parameter('{}_ic_corrected'.format(key))
+                v = iso.get_ic_corrected_value()
+                db.add_current(dban, nominal_value(v), std_dev(v), param, iso.units)
+
+                param = db.add_parameter(key)
+                v = iso.get_non_detector_corrected_value()
+                db.add_current(dban, nominal_value(v), std_dev(v), param, iso.units)
+
+                param = db.add_parameter(iso.baseline.name, iso.baseline.units)
+                db.add_current(dban, iso.baseline.value, iso.baseline.error, param, iso.baseline.units)
 
     def _save_analysis(self, timestamp):
 

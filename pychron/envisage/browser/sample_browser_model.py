@@ -30,16 +30,19 @@ from pychron.envisage.browser.util import get_pad
 
 
 class SampleBrowserModel(BrowserModel):
-    graphical_filter_button = Button
-    find_references_button = Button
-    find_references_enabled = Property(depends_on='analysis_table:analyses[]')
+    advanced_filter = Instance(AdvancedFilterView, ())
+    analysis_table = Instance(AnalysisTable)
+    time_view_model = Instance(TimeViewModel)
 
     load_recent_button = Button
     toggle_view = Button
-
+    graphical_filter_button = Button
+    find_references_button = Button
+    advanced_filter_button = Button
     add_analysis_group_button = Button
-    analysis_table = Instance(AnalysisTable)
-    time_view_model = Instance(TimeViewModel)
+
+    find_references_enabled = Property(depends_on='analysis_table:analyses[]')
+
     monitor_sample_name = Str
 
     def __init__(self, *args, **kw):
@@ -199,27 +202,43 @@ class SampleBrowserModel(BrowserModel):
         self.analysis_table.add_analysis_set()
 
     # handlers
-    _afilter = None
-
     def _advanced_filter_button_fired(self):
         self.debug('advanced filter')
-        if self._afilter is None:
-            attrs = self.dvc.get_search_attributes()
-            if attrs:
-                attrs = list(next(zip(*attrs)))
-            m = AdvancedFilterView(attributes=attrs)
-            # m.demo()
-            self._afilter = m
+        # self.warning_dialog('Advanced filtering currently disabled')
+        attrs = self.dvc.get_search_attributes()
+        if attrs:
+            # attrs = [b for a in attrs for b in (a[0], '{} Error'.format(a[0]))]
+            attrs = [a[0] for a in attrs]
+            attrs.extend(['{} Error'.format(a) for a in attrs])
 
-        m = self._afilter
+        m = self.advanced_filter
+        m.attributes = attrs
+        m.demo()
         info = m.edit_traits(kind='livemodal')
         if info.result:
-            lns = self.dvc.get_analyses_advanced(m.filters, return_labnumbers=True)
-            sams = self._load_sample_record_views(lns)
-            self.samples = sams
-            self.osamples = sams
+            uuids = None
+            at = self.analysis_table
+            if not m.apply_to_current_selection and not m.apply_to_current_samples:
+                lns = self.dvc.get_analyses_advanced(m, return_labnumbers=True)
+                sams = self._load_sample_record_views(lns)
+                self.samples = sams
+                self.osamples = sams
+            elif m.apply_to_current_selection:
+                ans = self.analysis_table.get_selected_analyses()
+                if ans:
+                    uuids = [ai.uuid for ai in ans]
 
-            ans = self.dvc.get_analyses_advanced(m.filters)
+            identifiers = None
+            if m.apply_to_current_samples:
+                identifiers = [si.identifier for si in self.samples]
+
+            ans = self.dvc.get_analyses_advanced(m, uuids=uuids, identifiers=identifiers,
+                                                 include_invalid=not m.omit_invalid,
+                                                 limit=m.limit)
+            if m.apply_to_current_selection and not ans:
+                self.warning_dialog('No analyses match criteria')
+                return
+
             ans = self._make_records(ans)
             self.analysis_table.set_analyses(ans)
 

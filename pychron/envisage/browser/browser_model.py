@@ -34,7 +34,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import String, Bool, Property, on_trait_change, Button, List, Str
+from traits.api import String, Bool, Property, on_trait_change, Button, List, Str, Instance
 
 from pychron.core.ui.preference_binding import bind_preference
 from pychron.envisage.browser.base_browser_model import BaseBrowserModel
@@ -44,7 +44,7 @@ from pychron.envisage.browser.record_views import ProjectRecordView
 class BrowserModel(BaseBrowserModel):
     filter_focus = Bool(True)
     use_focus_switching = Bool(True)
-    fuzzy_search_entry = String #(auto_set=False, enter_set=True)
+    fuzzy_search_entry = String
     execute_fuzzy_search = Button
 
     irradiation_visible = Property(depends_on='filter_focus')
@@ -56,7 +56,6 @@ class BrowserModel(BaseBrowserModel):
     principal_investigator_visible = Property(depends_on='filter_focus')
 
     filter_by_button = Button
-    advanced_filter_button = Button
     toggle_focus = Button
     load_view_button = Button
     refresh_selectors_button = Button
