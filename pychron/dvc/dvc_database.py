@@ -915,7 +915,7 @@ class DVCDatabase(DatabaseAdapter):
             return q.count()
 
     def get_analyses_advanced(self, advanced_filter, uuids=None, identifiers=None, return_labnumbers=False,
-                              include_invalid=False, limit=None):
+                              include_invalid=False, limit=None, verbose=False):
         with self.session_ctx() as sess:
             if return_labnumbers:
                 q = sess.query(IrradiationPositionTbl)
@@ -949,13 +949,14 @@ class DVCDatabase(DatabaseAdapter):
                 q = q.filter(AnalysisTbl.uuid.in_(uuids))
             if identifiers:
                 q = q.filter(IrradiationPositionTbl.identifier.in_(identifiers))
-            if not include_invalid:
+
+            if not include_invalid and not return_labnumbers:
                 q = q.filter(AnalysisChangeTbl.tag != 'invalid')
 
             if limit:
                 q = q.limit(limit)
 
-            return self._query_all(q, verbose_query=True)
+            return self._query_all(q, verbose_query=verbose)
 
     def get_flux_value(self, identifier, attr):
         j = 0
