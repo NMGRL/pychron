@@ -114,6 +114,7 @@ class CSVDataSetFactory(HasTraits):
     groups = List
 
     selected = List
+    add_record_button = Button('Add Row')
     test_button = Button('Load Test Data')
     save_button = Button('Save')
     save_as_button = Button('Save As')
@@ -149,6 +150,10 @@ class CSVDataSetFactory(HasTraits):
 
     # private
     # handlers
+    def _add_record_button_fired(self):
+        self.records.append(CSVRecord())
+        self._make_groups()
+
     def _name_filter_changed(self, new):
         if new:
             self.names = fuzzyfinder(new, self.onames)
@@ -211,10 +216,12 @@ class CSVDataSetFactory(HasTraits):
 
     def _clear_button_fired(self):
         self.records = self._records_default()
+        self._make_groups()
 
     @on_trait_change('records:[+]')
     def _handle_change(self):
         self.dirty = True
+        self._make_groups()
 
     @on_trait_change('records:group')
     def _handle_group_change(self):
@@ -246,7 +253,7 @@ class CSVDataSetFactory(HasTraits):
         self.onames = self.names
 
     def _records_default(self):
-        return [CSVRecord() for i in range(5)]
+        return [] #CSVRecord() for i in range(5)]
 
     def _group_selected(self, selection=None):
         if selection:
@@ -281,7 +288,8 @@ class CSVDataSetFactory(HasTraits):
                  ]
 
         button_grp = HGroup(UItem('save_button'), UItem('save_as_button'),
-                            UItem('clear_button'), UItem('open_via_finder_button'), UItem('test_button')),
+                            UItem('clear_button'), UItem('open_via_finder_button'),
+                            UItem('add_record_button')),
 
         repo_grp = VGroup(BorderVGroup(UItem('repo_filter'),
                                        UItem('repositories',

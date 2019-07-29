@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 import unittest
 
 from pychron.core.spell_correct import correct

@@ -29,7 +29,7 @@ from uncertainties import ufloat, std_dev, nominal_value
 
 from pychron import json
 from pychron.core.helpers.filetools import remove_extension, list_subdirectories, list_directory
-from pychron.core.helpers.iterfuncs import groupby_key, groupby_repo, partition
+from pychron.core.helpers.iterfuncs import groupby_key, groupby_repo
 from pychron.core.i_datastore import IDatastore
 from pychron.core.progress import progress_loader, progress_iterator, open_progress
 from pychron.dvc import dvc_dump, dvc_load, analysis_path, repository_path, AnalysisNotAnvailableError, PATH_MODIFIERS
@@ -262,13 +262,16 @@ class DVC(Loggable):
                                     timestamp=now)
         return True
 
+    def analyses_db_sync(self, ln, ais, reponame):
+        self.info('sync db with analyses')
+        return self._sync_info(ln, ais, reponame)
+
     def repository_db_sync(self, reponame, dry_run=False):
         self.info('sync db with repo={} dry_run={}'.format(reponame, dry_run))
         repo = self._get_repository(reponame, as_current=False)
-        ps = []
         db = self.db
         repo.pull()
-
+        ps = []
         with db.session_ctx():
             ans = db.get_repository_analyses(reponame)
             groups = [(g[0], list(g[1])) for g in groupby_key(ans, 'identifier')]
@@ -276,40 +279,9 @@ class DVC(Loggable):
 
             for ln, ais in groups:
                 progress.change_message('Syncing identifier: {}'.format(ln))
-                ip = db.get_identifier(ln)
-                dblevel = ip.level
-                irrad = dblevel.irradiation.name
-                level = dblevel.name
-                pos = ip.position
-                for ai in ais:
-                    p = analysis_path(ai, reponame)
+                pss = self._sync_info(ln, ais, reponame, dry_run)
+                ps.extend(pss)
 
-                    try:
-                        obj = dvc_load(p)
-                    except ValueError:
-                        print('skipping {}'.format(p))
-
-                    sample = ip.sample.name
-                    project = ip.sample.project.name
-                    material = ip.sample.material.name
-                    changed = False
-                    for attr, v in (('sample', sample),
-                                    ('project', project),
-                                    ('material', material),
-                                    ('irradiation', irrad),
-                                    ('irradiation_level', level),
-                                    ('irradiation_position', pos)):
-                        ov = obj.get(attr)
-                        if ov != v:
-                            self.info('{:<20s} repo={} db={}'.format(attr, ov, v))
-                            obj[attr] = v
-                            changed = True
-
-                    if changed:
-                        self.debug('{}'.format(p))
-                        ps.append(p)
-                        if not dry_run:
-                            dvc_dump(obj, p)
             progress.close()
 
         if ps and not dry_run:
@@ -318,6 +290,46 @@ class DVC(Loggable):
             repo.commit('<SYNC> Synced repository with database {}'.format(self.db.datasource_url))
             repo.push()
         self.info('finished db-repo sync for {}'.format(reponame))
+
+    def _sync_info(self, ln, ais, reponame, dry_run=False):
+        db = self.db
+        ip = db.get_identifier(ln)
+        dblevel = ip.level
+        irrad = dblevel.irradiation.name
+        level = dblevel.name
+        pos = ip.position
+        ps = []
+
+        for ai in ais:
+            p = analysis_path(ai, reponame)
+
+            try:
+                obj = dvc_load(p)
+            except ValueError:
+                print('skipping {}'.format(p))
+
+            sample = ip.sample.name
+            project = ip.sample.project.name
+            material = ip.sample.material.name
+            changed = False
+            for attr, v in (('sample', sample),
+                            ('project', project),
+                            ('material', material),
+                            ('irradiation', irrad),
+                            ('irradiation_level', level),
+                            ('irradiation_position', pos)):
+                ov = obj.get(attr)
+                if ov != v:
+                    self.info('{:<20s} repo={} db={}'.format(attr, ov, v))
+                    obj[attr] = v
+                    changed = True
+
+            if changed:
+                self.debug('{}'.format(p))
+                ps.append(p)
+                if not dry_run:
+                    dvc_dump(obj, p)
+        return ps
 
     def repository_transfer(self, ans, dest):
 

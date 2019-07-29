@@ -54,7 +54,7 @@ class DVCPersister(BasePersister):
     active_repository = Instance(GitRepoManager)
     dvc = Instance(DVC_PROTOCOL)
     use_isotope_classifier = Bool(False)
-    use_uuid_path_name = Bool(False)
+    use_uuid_path_name = Bool(True)
     # isotope_classifier = Instance(IsotopeClassifier, ())
     stage_files = Bool(True)
     default_principal_investigator = Str
