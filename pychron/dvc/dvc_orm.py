@@ -604,15 +604,21 @@ class SimpleIdentifierTbl(Base, BaseMixin):
 class CurrentTbl(Base, IDMixin):
     value = Column(Float(32))
     error = Column(Float(32))
-    unit = stringcolumn(40)
 
+    unitsID = Column(Integer, ForeignKey('UnitsTbl.id'))
     parameterID = Column(Integer, ForeignKey('ParameterTbl.id'))
     analysisID = Column(Integer, ForeignKey('AnalysisTbl.id'))
 
     parameter = relationship('ParameterTbl', uselist=False)
     analysis = relationship('AnalysisTbl', uselist=False)
+    units = relationship('UnitsTbl', uselist=False)
 
 
 class ParameterTbl(Base, IDMixin):
     name = stringcolumn(40)
+
+
+class UnitsTbl(Base, IDMixin):
+    name = stringcolumn(40)
+
 # ============= EOF =============================================

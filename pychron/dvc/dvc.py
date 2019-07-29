@@ -122,6 +122,40 @@ class DVC(Loggable):
         db.create_session()
         ocoa = db.commit_on_add
         db.commit_on_add = False
+
+        def chunks(l, n):
+            for i in range(0, len(l), n):
+                yield l[i:i + n]
+
+        def func(ai, prog, i, n):
+            if prog:
+                if not i % 10:
+                    prog.change_message('Updating Currents {} {}/{}'.format(ai.record_id, i, n))
+                else:
+                    prog.increment()
+
+            ai.load_raw_data()
+            dban = db.get_analysis_uuid(ai.uuid)
+            if ai.analysis_type in ('unknown', 'cocktail'):
+                try:
+                    self._update_current_age(ai, dban=dban, force=True)
+                except BaseException as e:
+                    self.warning('Failed making current age for {}: {}'.format(ai.record_id, e))
+
+            if not ai.analysis_type.lower().startswith('blank'):
+                try:
+                    self._update_current_blanks(ai, dban=dban, force=True, update_age=False, commit=False)
+                except BaseException as e:
+                    self.warning('Failed making current blanks for {}: {}'.format(ai.record_id, e))
+            try:
+                self._update_current(ai, dban=dban, force=True, update_age=False, commit=False)
+            except BaseException as e:
+                self.warning('Failed making intensities for {}: {}'.format(ai.record_id, e))
+
+            # if not i % 100:
+            #     db.commit()
+            #     db.flush()
+
         with db.session_ctx():
             for repo in db.get_repositories():
                 self.debug('Updating currents for {}'.format(repo.name))
@@ -140,40 +174,16 @@ class DVC(Loggable):
                             break
                         else:
                             continue
-                    ans = self.make_analyses(ans)
 
-                    def func(ai, prog, i, n):
-                        if prog:
-                            if not i % 10:
-                                prog.change_message('Updating Currents {} {}/{}'.format(ai.record_id, i, n))
-                            else:
-                                prog.increment()
+                    for chunk in chunks(ans, 200):
+                        chunk = self.make_analyses(chunk)
+                        if chunk:
+                            progress_iterator(chunk, func)
+                        db.commit()
+                        db.flush()
 
-                        dban = db.get_analysis_uuid(ai.uuid)
-                        if ai.analysis_type in ('unknown', 'cocktail'):
-                            try:
-                                self._update_current_age(ai, dban=dban, force=True)
-                            except BaseException as e:
-                                self.warning('Failed making current age for {}: {}'.format(ai.record_id, e))
-
-                        if not ai.analysis_type.lower().startswith('blank'):
-                            try:
-                                self._update_current_blanks(ai, dban=dban, force=True, update_age=False, commit=False)
-                            except BaseException as e:
-                                self.warning('Failed making current blanks for {}: {}'.format(ai.record_id, e))
-                        try:
-                            self._update_current(ai, dban=dban, force=True, update_age=False, commit=False)
-                        except BaseException:
-                            self.warning('Failed making intensities for {}: {}'.format(ai.record_id, e))
-
-                        if not i % 100:
-                            db.commit()
-                            db.flush()
-
-                    if ans:
-                        progress_iterator(ans, func)
-                    self.info(
-                        'Elapsed time {}: n={}, {:0.2f} min'.format(repo.name, len(ans), (time.time() - st)) / 60.)
+                    self.info('Elapsed time {}: n={}, '
+                              '{:0.2f} min'.format(repo.name, len(ans), (time.time() - st)) / 60.)
                     db.commit()
                     db.flush()
                 except BaseException as e:
@@ -1362,7 +1372,9 @@ class DVC(Loggable):
                         iso = ai.get_isotope(detector=k)
                         bs = iso.baseline
                         db.update_current(dban, '{}_baseline'.format(k), bs.value, bs.error, bs.units, force=force)
+                        db.update_current(dban, '{}_baseline_n'.format(k), bs.n, None, 'int', force=force)
                     else:
+                        db.update_current(dban, '{}_n'.format(k), iso.n, None, 'int', force=force)
                         db.update_current(dban, '{}_intercept'.format(k), iso.value, iso.error, iso.units, force=force)
 
                         v = iso.get_ic_corrected_value()

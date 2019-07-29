@@ -155,6 +155,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     use_automated_run_monitor = Bool(False)
     set_integration_time_on_start = Bool(False)
     send_config_before_run = Bool(False)
+    verify_spectrometer_configuration = Bool(False)
     default_integration_time = Float(DEFAULT_INTEGRATION_TIME)
     use_memory_check = Bool(True)
     memory_threshold = Int
@@ -240,6 +241,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                  'min_ms_pumptime',
                  'set_integration_time_on_start',
                  'send_config_before_run',
+                 'verify_spectrometer_configuration',
                  'default_integration_time',
                  'use_xls_persistence',
                  'use_db_persistence',
@@ -1129,6 +1131,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.info('Sending spectrometer configuration')
             man = self.spectrometer_manager
             man.send_configuration()
+            if self.verify_spectrometer_configuration:
+                if not man.verify_configuration():
+                    ret = self._failed_execution_step('Setting Spectrometer Configuration Failed')
+                    return ret
 
         ret = True
         self.measuring_run = ai

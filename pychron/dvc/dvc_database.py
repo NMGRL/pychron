@@ -39,7 +39,7 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
     RepositoryTbl, AnalysisChangeTbl, \
     PrincipalInvestigatorTbl, SamplePrepWorkerTbl, SamplePrepSessionTbl, \
     SamplePrepStepTbl, SamplePrepImageTbl, RestrictedNameTbl, AnalysisGroupTbl, AnalysisGroupSetTbl, \
-    SimpleIdentifierTbl, SamplePrepChoicesTbl, CurrentTbl, ParameterTbl
+    SimpleIdentifierTbl, SamplePrepChoicesTbl, CurrentTbl, ParameterTbl, UnitsTbl
 from pychron.globals import globalv
 from pychron.pychron_constants import NULL_STR, EXTRACT_DEVICE, NO_EXTRACT_DEVICE, \
     SAMPLE_PREP_STEPS, SAMPLE_METADATA
@@ -453,6 +453,14 @@ class DVCDatabase(DatabaseAdapter):
             self._add_item(param)
         return param
 
+    def add_units(self, name):
+        units = self.get_units(name)
+        if units is None:
+            units = UnitsTbl()
+            units.name = name
+            self._add_item(units)
+        return units
+
     def add_current(self, analysis, value, error, parameter, units):
         with self.session_ctx():
             c = CurrentTbl()
@@ -460,7 +468,13 @@ class DVCDatabase(DatabaseAdapter):
             c.error = float(error)
             c.analysis = analysis
             c.parameter = parameter
-            c.unit = units
+
+            if isinstance(units, str):
+                units = self.get_units(units)
+                if units is None:
+                    units = self.add_units(units)
+
+            c.units = units
             self._add_item(c)
 
     def add_analysis(self, **kw):
@@ -842,6 +856,12 @@ class DVCDatabase(DatabaseAdapter):
             q = q.join(AnalysisTbl)
             q = q.filter(AnalysisTbl.uuid == ai.uuid)
             return self._query_all(q)
+
+    def get_units(self, name):
+        with self.session_ctx() as sess:
+            q = sess.query(UnitsTbl)
+            q = q.filter(UnitsTbl.name == name)
+            return self._query_one(q)
 
     def get_parameter(self, name):
         with self.session_ctx() as sess:
@@ -2135,8 +2155,15 @@ class DVCDatabase(DatabaseAdapter):
                 self._add_item(c)
 
             c.value = float(value)
-            c.error = float(error)
-            c.unit = units
+            if error is not None:
+                c.error = float(error)
+
+            if isinstance(units, str):
+                name = units
+                units = self.get_units(name)
+                if units is None:
+                    units = self.add_units(name)
+            c.units = units
 
     # private
     def _get_date_range(self, q, asc=None, desc=None, hours=0):
