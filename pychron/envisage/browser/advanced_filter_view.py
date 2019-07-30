@@ -14,15 +14,20 @@
 # limitations under the License.
 # ===============================================================================
 from traits.api import HasTraits, List, Button, Str, Enum, Bool, on_trait_change, Int
-from traitsui.api import View, UItem, VGroup, InstanceEditor, ListEditor, EnumEditor, HGroup, CheckListEditor, Item
+from traitsui.api import View, UItem, VGroup, InstanceEditor, ListEditor, EnumEditor, HGroup, Item
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pychron_traits import BorderVGroup
 from pychron.envisage.icon_button_editor import icon_button_editor
+from pychron.pychron_constants import NULL_STR
+from pychron.regex import DETREGEX
 
 
 class SQLFilter(HasTraits):
-    attribute = Str
+    base_attribute = Str
+    attribute_modifier = Str
+    modifiers = List([NULL_STR, 'blank', 'ic_corrected', 'bs_corrected'])
+    attribute_is_error = Bool
     comparator = Enum('=', '<', '>', '<=', '>=', '!=', 'between', 'not between')
     criterion = Str
     attributes = List
@@ -32,11 +37,35 @@ class SQLFilter(HasTraits):
     remove_button = Button
     remove_visible = Bool(True)
 
+    def _base_attribute_changed(self):
+        print(self.base_attribute, DETREGEX.match(self.base_attribute))
+        if not DETREGEX.match(self.base_attribute) and self.base_attribute != 'age':
+            self.modifiers = [NULL_STR, 'blank', 'ic_corrected', 'bs_corrected']
+        else:
+            self.attribute_modifier = NULL_STR
+            self.modifiers = [NULL_STR]
+
+    @property
+    def attribute(self):
+        ba = self.base_attribute
+        ma = self.attribute_modifier
+
+        a = ba
+        if ma and ma != NULL_STR:
+            a = '{}_{}'.format(a, ma)
+
+        if self.attribute_is_error:
+            a = '{} error'.format(a)
+        return a
+
     def traits_view(self):
         v = View(HGroup(icon_button_editor('remove_button', 'delete', visible_when='remove_visible'),
                         UItem('chain_operator', visible_when='show_chain'),
-                        UItem('attribute',
+                        UItem('base_attribute',
                               editor=EnumEditor(name='attributes')),
+                        UItem('attribute_modifier',
+                              editor=EnumEditor(name='modifiers')),
+                        Item('attribute_is_error', label='Error'),
                         UItem('comparator'),
                         UItem('criterion')))
         return v
@@ -54,7 +83,7 @@ class AdvancedFilterView(HasTraits):
 
     def demo(self):
         self.filters = [SQLFilter(comparator='<',
-                                  attribute='Ar40',
+                                  base_attribute='Ar40',
                                   remove_visible=False,
                                   show_chain=False,
                                   criterion='100', attributes=self.attributes),

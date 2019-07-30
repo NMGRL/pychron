@@ -456,8 +456,14 @@ class DVCPersister(BasePersister):
                 v = iso.get_non_detector_corrected_value()
                 db.add_current(dban, nominal_value(v), std_dev(v), param, iso.units)
 
-                param = db.add_parameter(iso.baseline.name, iso.baseline.units)
+                param = db.add_parameter(iso.baseline.name)
                 db.add_current(dban, iso.baseline.value, iso.baseline.error, param, iso.baseline.units)
+
+                param = db.add_parameter('{}_n'.format(iso.baseline.name))
+                db.add_current(dban, iso.baseline.n, None, param, 'int')
+
+                param = db.add_parameter('{}_n'.format(iso.name))
+                db.add_current(dban, iso.n, None, param, 'int')
 
     def _save_analysis(self, timestamp):
 

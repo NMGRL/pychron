@@ -21,6 +21,7 @@ from operator import attrgetter
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Button, Instance, Str, Property
 
+from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.envisage.browser.advanced_filter_view import AdvancedFilterView
 from pychron.envisage.browser.analysis_table import AnalysisTable
 from pychron.envisage.browser.browser_model import BrowserModel
@@ -207,9 +208,7 @@ class SampleBrowserModel(BrowserModel):
         # self.warning_dialog('Advanced filtering currently disabled')
         attrs = self.dvc.get_search_attributes()
         if attrs:
-            # attrs = [b for a in attrs for b in (a[0], '{} Error'.format(a[0]))]
-            attrs = [a[0] for a in attrs]
-            attrs.extend(['{} Error'.format(a) for a in attrs])
+            attrs = sort_isotopes(list({a[0].split('_')[0] for a in attrs}))
 
         m = self.advanced_filter
         m.attributes = attrs

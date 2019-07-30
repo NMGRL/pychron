@@ -385,10 +385,10 @@ class ThermoSpectrometer(BaseSpectrometer):
 
     def verify_configuration(self, **kw):
         self.debug('========= Verifying configuration =========')
-        command_map = self.get_command_map()
 
         mismatch = False
         if self.microcontroller:
+            command_map = self.get_command_map()
             args = self._get_cached_config()
             if args is not None:
                 specparams, defl, trap, magnet = args

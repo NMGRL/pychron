@@ -13,8 +13,8 @@ Installation steps
 
 Setup Github Account
 ----------------------
-    1. Got to github.com and create an account `link <https://help.github.com/en/articles/creating-a-personal-access-token-for-the-command-line>`_
-    2. Setup a Personal Access Token
+    1. Go to github.com and create an account
+    2. Setup a `Personal Access Token <https://help.github.com/en/articles/creating-a-personal-access-token-for-the-command-line>`_
         a. Sign in to your account
         b. Go to your Settings ``github.com/settings/profile``
         c. Go to "Developer settings" ``github.com/settings/apps``
@@ -82,7 +82,7 @@ Setup Plugins
 
 The following plugins are the minimum requirements for data reduction. Additional plugins may be necessary or desired
 for enhanced functionality. Enabled/Disable Plugins by manually editing the ``initialization.xml`` file or
- ``MenuBar/Help/Edit Initialization``
+``MenuBar/Help/Edit Initialization``
 
     - DVC
     - GitHub
