@@ -26,11 +26,11 @@ from pyface.directory_dialog import DirectoryDialog
 from traits.api import HasTraits, List, Str, Bool, Button
 from traitsui.api import HGroup, UItem, Label, Handler, EnumEditor
 
+from pychron.core.helpers.strtools import to_bool
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.globals import globalv
 from pychron.paths import paths, users_file, environments_file, HOME
 
 
@@ -189,7 +189,7 @@ def get_user():
         current: str, current user. if supplied omit from available list
     """
     login = Login()
-    if globalv.use_login or not (login.user and login.environment):
+    if to_bool(os.getenv('PYCHRON_USE_LOGIN', True)) or not (login.user and login.environment):
         while 1:
             info = login.edit_traits()
             if info.result:

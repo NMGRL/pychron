@@ -72,6 +72,10 @@ class CSVRecordGroup(HasTraits):
     n = Int
     excluded = Int
     displayn = Str
+    min = Float
+    max = Float
+    dev = Float
+    percent_dev = Float
 
     def __init__(self, name, records, *args, **kw):
         super(CSVRecordGroup, self).__init__(*args, **kw)
@@ -83,7 +87,14 @@ class CSVRecordGroup(HasTraits):
     @on_trait_change('records:[age,age_err,status]')
     def calculate(self):
         total = len(self.records)
-        data = array([(a.age, a.age_err) for a in self.records if a.status])
+        if not total:
+            return
+
+        data = [(a.age, a.age_err) for a in self.records if a.status]
+        if not data:
+            return
+
+        data = array(data)
         x, errs = data.T
 
         self.mean = x.mean()
@@ -93,7 +104,15 @@ class CSVRecordGroup(HasTraits):
         self.weighted_mean, self.weighted_mean_err = calculate_weighted_mean(x, errs)
 
         self.mean = sum(x) / n
-        self.mswd = calculate_mswd(x, errs, self.weighted_mean)
+        self.mswd = calculate_mswd(x, errs, wm=self.weighted_mean)
+
+        self.min = min(x)
+        self.max = max(x)
+        self.dev = self.max - self.min
+        try:
+            self.percent_dev = self.dev/self.max*100
+        except ZeroDivisionError:
+            self.percent_dev = 0
 
         self.displayn = '{}'.format(n)
         if total > n:
@@ -284,7 +303,12 @@ class CSVDataSetFactory(HasTraits):
                               label='MSWD'),
                  ObjectColumn(name='displayn', label='N'),
                  ObjectColumn(name='mean', format='%0.6f', label='Mean'),
-                 ObjectColumn(name='std', format='%0.6f', label='Std')
+                 ObjectColumn(name='std', format='%0.6f', label='Std'),
+                 ObjectColumn(name='min', format='%0.6f', label='Min'),
+                 ObjectColumn(name='max', format='%0.6f', label='Max'),
+                 ObjectColumn(name='dev', format='%0.6f', label='Dev.'),
+                 ObjectColumn(name='percent_dev', format='%0.2f', label='% Dev.'),
+
                  ]
 
         button_grp = HGroup(UItem('save_button'), UItem('save_as_button'),

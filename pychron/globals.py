@@ -26,7 +26,6 @@ class Globals(object):
     dev_pwd = '6e06f5d370baef1a115ae2f134fae22fbfbe79dc'  # Argon
     # use_shared_memory = False
 
-    use_login = True
     use_debug_logger = False
     # use_debug_logger = True
 
@@ -114,9 +113,7 @@ class Globals(object):
     laser_version = 1
 
     def build(self, ip):
-
-        for attr, func in [('use_login', to_bool),
-                           ('use_ipc', to_bool),
+        for attr, func in [('use_ipc', to_bool),
                            ('ignore_initialization_warnings', to_bool),
                            ('ignore_connection_warnings', to_bool),
                            ('ignore_chiller_unavailable', to_bool),
