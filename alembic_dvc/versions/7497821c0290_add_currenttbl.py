@@ -28,7 +28,7 @@ def upgrade():
                               server_default=sa.text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP')),
                     sa.Column('parameterID', sa.Integer, sa.ForeignKey('ParameterTbl.id')),
                     sa.Column('analysisID', sa.Integer, sa.ForeignKey('AnalysisTbl.id')),
-                    sa.Column('unitID', sa.Integer, sa.ForeignKey('UnitsTbl.id')),
+                    sa.Column('unitsID', sa.Integer, sa.ForeignKey('UnitsTbl.id')),
                     sa.Column('value', sa.Float(32)),
                     sa.Column('error', sa.Float(32)))
 
