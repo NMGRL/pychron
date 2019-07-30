@@ -17,9 +17,11 @@
 # ============= standard library imports ========================
 from __future__ import absolute_import
 from __future__ import print_function
+
 import socket
 import time
 
+from six.moves import range
 # ============= enthought library imports =======================
 from traits.api import Float
 
@@ -27,7 +29,7 @@ from traits.api import Float
 from pychron.globals import globalv
 from pychron.hardware.core.checksum_helper import computeCRC
 from pychron.hardware.core.communicators.communicator import Communicator, process_response
-from six.moves import range
+from pychron.regex import IPREGEX
 
 
 class MessageFrame(object):
@@ -194,6 +196,13 @@ class EthernetCommunicator(Communicator):
         super(EthernetCommunicator, self).load(config, path)
 
         self.host = self.config_get(config, 'Communications', 'host')
+        if self.host != 'localhost' and not IPREGEX.match(self.host):
+            result = socket.getaddrinfo(self.host, 0, 0, 0, 0)
+            if result:
+                for family, kind, a, b, host in result:
+                    if family == socket.AF_INET and kind == socket.SOCK_STREAM:
+                        self.host = host[0]
+
         # self.host = 'localhost'
         self.port = self.config_get(config, 'Communications', 'port', cast='int')
         self.timeout = self.config_get(config, 'Communications', 'timeout', cast='float', optional=True, default=1.0)
