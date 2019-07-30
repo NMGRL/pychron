@@ -110,7 +110,7 @@ class CSVRecordGroup(HasTraits):
         self.max = max(x)
         self.dev = self.max - self.min
         try:
-            self.percent_dev = self.dev/self.max*100
+            self.percent_dev = self.dev / self.max * 100
         except ZeroDivisionError:
             self.percent_dev = 0
 
@@ -138,6 +138,7 @@ class CSVDataSetFactory(HasTraits):
     save_button = Button('Save')
     save_as_button = Button('Save As')
     clear_button = Button('Clear')
+    calculate_button = Button('Calculate')
     open_via_finder_button = Button('Use Finder')
 
     name = SpacelessStr
@@ -169,6 +170,10 @@ class CSVDataSetFactory(HasTraits):
 
     # private
     # handlers
+    def _calculate_button_fired(self):
+        for gi in self.groups:
+            gi.calculate()
+
     def _add_record_button_fired(self):
         self.records.append(CSVRecord())
         self._make_groups()
@@ -284,16 +289,14 @@ class CSVDataSetFactory(HasTraits):
                 si.group = gid
 
     def traits_view(self):
-        cols = [
-            CheckboxColumn(name='status'),
-            ObjectColumn(name='status'),
-            ObjectColumn(name='runid'),
-            ObjectColumn(name='age'),
-            ObjectColumn(name='age_err'),
-            ObjectColumn(name='group'),
-            ObjectColumn(name='aliquot'),
-            ObjectColumn(name='sample'),
-        ]
+        cols = [CheckboxColumn(name='status'),
+                ObjectColumn(name='status'),
+                ObjectColumn(name='runid'),
+                ObjectColumn(name='age'),
+                ObjectColumn(name='age_err', label=PLUSMINUS_ONE_SIGMA),
+                ObjectColumn(name='group'),
+                ObjectColumn(name='aliquot'),
+                ObjectColumn(name='sample')]
 
         gcols = [ObjectColumn(name='name'),
                  ObjectColumn(name='weighted_mean', label='Wtd. Mean',
@@ -310,13 +313,12 @@ class CSVDataSetFactory(HasTraits):
                  ObjectColumn(name='min', format='%0.6f', label='Min'),
                  ObjectColumn(name='max', format='%0.6f', label='Max'),
                  ObjectColumn(name='dev', format='%0.6f', label='Dev.'),
-                 ObjectColumn(name='percent_dev', format='%0.2f', label='% Dev.'),
-
-                 ]
+                 ObjectColumn(name='percent_dev', format='%0.2f', label='% Dev.')]
 
         button_grp = HGroup(UItem('save_button'), UItem('save_as_button'),
                             UItem('clear_button'), UItem('open_via_finder_button'),
-                            UItem('add_record_button')),
+                            UItem('add_record_button'),
+                            UItem('calculate_button')),
 
         repo_grp = VGroup(BorderVGroup(UItem('repo_filter'),
                                        UItem('repositories',
@@ -340,7 +342,7 @@ class CSVDataSetFactory(HasTraits):
         main_grp = HSplit(repo_grp, record_grp)
 
         v = okcancel_view(VGroup(button_grp, main_grp),
-                          width=800,
+                          width=900,
                           height=500,
                           title='CSV Dataset',
                           # handler=CSVDataSetFactoryHandler()

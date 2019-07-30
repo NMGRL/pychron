@@ -55,6 +55,22 @@ use ``Powershell.exe`` or equivalent
     $ cd /path/to/install.py
     $ python install.py
 
+
+.. note:: Currently on a PC not all the dependencies are automatically installed. You will need to do the following
+ before proceeding.
+
+1. Open Anaconda Bash and activate the pychron environment
+
+.. code-block:: powershell
+
+    $ conda activate pychron3
+
+2. Install the PIP dependencies
+
+.. code-block:: powershell
+
+    $ pip install uncertainties peakutils qimage2ndarray chaco
+
 Setup Environment
 ---------------------
 Launch Pychron and select your Pychron environment directory, typically ``/Users/<username>/Pychron`` or

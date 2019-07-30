@@ -150,7 +150,7 @@ def ask_config():
         print('{:<20s}: {}'.format(k, v))
 
     config['pip_requirements'] = 'uncertainties peakutils qimage2ndarray chaco'
-    creq = 'qt numpy statsmodels scikit-learn PyYAML yaml traitsui=6.0.0 envisage sqlalchemy ' \
+    creq = 'pip qt numpy statsmodels scikit-learn PyYAML yaml traitsui=6.0.0 envisage sqlalchemy ' \
            'Reportlab lxml xlrd xlwt xlsxwriter requests keyring pillow gitpython cython pytables ' \
            'pymysql certifi jinja2 swig {}'.format(config['qt_bindings'])
     if IS_MAC:
@@ -166,6 +166,7 @@ def ask_config():
 
 def yes(msg):
     return input(msg) in ('', 'y', 'yes', 'Yes', 'YES')
+
 
 def install_src(cfg):
     info_header('Install Pychron Source Code')
@@ -185,7 +186,6 @@ def install_src(cfg):
         shutil.rmtree(ppath)
 
     url = 'https://github.com/{}/pychron.git'.format(cfg['fork'])
-
 
     subprocess.call([GIT, 'clone', url,
                      '--branch={}'.format(cfg['branch']),
@@ -207,9 +207,13 @@ def install_conda(cfg):
     subprocess.call(['conda', 'install', '--yes',
                      '--name', env_name] + cfg['conda_requirements'].split(' '))
 
-    # install pip deps
-    pip_path = os.path.join(cfg['conda_distro'], 'envs', env_name, 'bin', 'pip')
-    subprocess.call([pip_path, 'install'] +cfg['pip_requirements'].split(' '))
+    if IS_MAC:
+        # install pip deps
+        pip_path = os.path.join(cfg['conda_distro'], 'envs', env_name, 'bin', 'pip')
+        subprocess.call([pip_path, 'install'] + cfg['pip_requirements'].split(' '))
+    else:
+        print('WARNING!!!! Installing PIP dependencies on Windows currently not available. Please consult Pychron '
+              'documentation or contact Pychron Labs for further instructions')
 
 
 def install_launcher_script(cfg):
