@@ -45,7 +45,7 @@ def make_line(vs, delimiter=','):
 
 
 class CSVRecord(HasTraits):
-    runid = Str
+    runid = Str('A')
     age = CFloat
     age_err = CFloat
     group = CInt
@@ -291,9 +291,10 @@ class CSVDataSetFactory(HasTraits):
     def traits_view(self):
         cols = [CheckboxColumn(name='status'),
                 ObjectColumn(name='status'),
-                ObjectColumn(name='runid'),
-                ObjectColumn(name='age'),
-                ObjectColumn(name='age_err', label=PLUSMINUS_ONE_SIGMA),
+                ObjectColumn(name='runid', width=50),
+                ObjectColumn(name='age', width=100),
+                ObjectColumn(name='age_err', width=100,
+                             label=PLUSMINUS_ONE_SIGMA),
                 ObjectColumn(name='group'),
                 ObjectColumn(name='aliquot'),
                 ObjectColumn(name='sample')]
@@ -342,7 +343,7 @@ class CSVDataSetFactory(HasTraits):
         main_grp = HSplit(repo_grp, record_grp)
 
         v = okcancel_view(VGroup(button_grp, main_grp),
-                          width=900,
+                          width=1100,
                           height=500,
                           title='CSV Dataset',
                           # handler=CSVDataSetFactoryHandler()
