@@ -275,7 +275,7 @@ class CSVDataSetFactory(HasTraits):
         self.onames = self.names
 
     def _records_default(self):
-        return [] #CSVRecord() for i in range(5)]
+        return []
 
     def _group_selected(self, selection=None):
         if selection:
