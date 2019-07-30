@@ -267,7 +267,10 @@ class CSVDataSetFactory(HasTraits):
     def _make_csv_data(self):
         return [make_line(HEADER)] + [ri.to_csv() for ri in self.records if ri.valid()]
 
-    def _load_names(self, repo):
+    def _load_names(self, repo=None):
+        if repo is None:
+            repo = self.repository
+
         self.names = self.dvc.get_csv_datasets(repo)
         self.onames = self.names
 
