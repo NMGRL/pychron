@@ -15,6 +15,7 @@
 # ===============================================================================
 
 import os
+import subprocess
 import sys
 
 import requests
@@ -61,6 +62,7 @@ class Updater(Loggable):
         self.debug('checking for updates')
         branch = self.branch
         remote = self.remote
+
         if self.use_tag:
             # check for new tags
             self._fetch(prune=True)
@@ -101,6 +103,8 @@ class Updater(Loggable):
                                     self.warning_dialog('Automatic installation of dependencies failed. Manual updates '
                                                         'may be required. Set CONDA_ENV and CONDA_DISTRO environment '
                                                         'variables to resolve this issue')
+                            if os.getenv('PYCHRON_UPDATE_DATABASE', False):
+                                self._update_database()
 
                             if self.confirmation_dialog('Restart?'):
                                 os.execl(sys.executable, *([sys.executable] + sys.argv))
@@ -112,9 +116,39 @@ class Updater(Loggable):
                 else:
                     self.warning_dialog('{} not a valid Github Repository. Unable to check for updates'.format(remote))
 
+    def _update_database(self):
+        url = os.getenv('PYCHRON_ALEMBIC_URL')
+        if not url:
+            self.warning_dialog('Please set "PYCHRON_ALEMBIC_URL" environment variable. eg. '
+                                'mysql+pymysql://<user>:<pwd>@<host>/<dbname>')
+            return
+
+        p = self.build_repo
+        try:
+            os.chdir(p)
+
+            with open('update_alembic.ini', 'w') as wfile:
+                with open('update_alembic.template', 'r') as rfile:
+                    temp = rfile.read()
+                wfile.write(temp.format(url))
+
+            out = subprocess.check_output(['alembic', '-c', 'update_alembic.ini', 'current'])
+            if b'(head)' in out:
+                self.info('database is up to date')
+            else:
+                if self.confirmation_dialog('Database is out of date. Would you like to attempt an update?'):
+                    try:
+                        subprocess.check_call(['alembic', '-c', 'update_alembic.ini', 'upgrade', 'head'])
+                    except subprocess.CalledProcessError:
+                        self.debug_exception()
+                        self.warning_dialog('Automatic database updates failed. Please consult Pychron Labs')
+
+        except subprocess.CalledProcessError as e:
+            self.warning_dialog('Automatic database updates not available. Please install alembic and check '
+                                'PYCHRON_ALEMBIC_URL is correct')
+
     def _install_dependencies(self, conda_distro, conda_env):
         # install dependencies
-        import subprocess
         root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 
         binroot = os.path.join(conda_distro, 'bin')

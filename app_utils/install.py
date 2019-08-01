@@ -144,6 +144,12 @@ def ask_config():
     ask(config, 'conda_distro', 'Conda Distro Path', distro)
     ask(config, 'conda_env_name', 'Conda environment name', 'pychron3')
 
+    ask(config, 'update_db', 'Update Database automatically', 0)
+    if config['update_db'] in ('y', 'yes', 'Y', 'Yes', 'YES'):
+        ask(config, 'alembic_url', 'Database URL', 'mysql+pymysql://<user>:<pwd>@<host>/<db>')
+    else:
+        config['alembic_url'] = ''
+
     # echo config
     print('------------ Config -------------')
     for k, v in config.items():
@@ -227,9 +233,12 @@ set GITHUB_PASSWORD={github_pwd:}
 set MassSpecDBVersion={massspec_db_version:}
 set CONDA_ENV={conda_env_name:}
 set CONDA_DISTRO={conda_distro:}
-set PYCHRON_APPNAME={app_name:}
 set APPLICATION_ID={app_id:}
 set QT_API={qt_bindings:}
+
+set PYCHRON_APPNAME={app_name:}
+set PYCHRON_DATABASE_UPDATE={update_db:}
+set PYCHRON_ALEMBIC_URL={alembic_url:}
 
 ROOT=%{pychron_path:}%
 set PYTHONPATH=%ROOT%
@@ -246,9 +255,12 @@ export GITHUB_PASSWORD={github_pwd:}
 export MassSpecDBVersion={massspec_db_version:}
 export CONDA_ENV={conda_env_name:}
 export CONDA_DISTRO={conda_distro:}
-export PYCHRON_APPNAME={app_name:}
 export APPLICATION_ID={app_id:}
 export QT_API={qt_bindings:}
+
+export PYCHRON_APPNAME={app_name:}
+export PYCHRON_DATABASE_UPDATE={update_db:}
+export PYCHRON_ALEMBIC_URL={alembic_url:}
 
 ROOT=${pychron_path:}
 export PYTHONPATH=$ROOT
