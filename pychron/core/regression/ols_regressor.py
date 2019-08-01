@@ -16,7 +16,7 @@
 # ============= enthought library imports =======================
 import logging
 
-from numpy import asarray, column_stack, matrix, sqrt, dot, linalg, zeros_like, hstack, ones_like
+from numpy import asarray, column_stack, sqrt, dot, linalg, zeros_like, hstack, ones_like, array
 from statsmodels.api import OLS
 from traits.api import Int, Property
 
@@ -210,19 +210,18 @@ class OLSRegressor(BaseRegressor):
         x = asarray(x)
         sef = self.calculate_standard_error_fit()
 
+        covarM = array(self.var_covar)
         def calc_hat(xi):
             Xk = self._get_X(xi).T
-
-            covarM = matrix(self.var_covar)
-            varY_hat = (Xk.T * covarM * Xk)
-
+            varY_hat = (Xk.T.dot(covarM).dot(Xk))
             return varY_hat[0, 0]
 
-        if error_calc == SEM:
+        error_calc = error_calc.lower()
+        if error_calc == SEM.lower():
             def func(xi):
                 varY_hat = calc_hat(xi)
                 return sef * sqrt(varY_hat)
-        elif error_calc == MSEM:
+        elif error_calc == MSEM.lower():
             mswd = self.mswd
 
             def func(xi):
@@ -248,7 +247,7 @@ class OLSRegressor(BaseRegressor):
             only here for verification
 
         """
-        cov_varM = matrix(self.var_covar)
+        cov_varM = array(self.var_covar)
         se = self.calculate_standard_error_fit()
 
         def predict_yi_err(xi):
@@ -256,7 +255,7 @@ class OLSRegressor(BaseRegressor):
                 bx= x**0,x**1,x**n where n= degree of fit linear=2, parabolic=3 etc
             """
             bx = asarray([pow(xi, i) for i in range(self.degree + 1)])
-            bx_covar = bx * cov_varM
+            bx_covar = bx.dot(cov_varM)
             bx_covar = asarray(bx_covar)[0]
             var = sum(bx * bx_covar)
             #            print var

@@ -116,7 +116,6 @@ class AnalysisTbl(Base, IDMixin):
     change = relationship('AnalysisChangeTbl', uselist=False, backref='analysis', lazy='joined')
     measured_positions = relationship('MeasuredPositionTbl', backref='analysis')
     media = relationship('MediaTbl', backref='analysis')
-    results = relationship('AnalysisIntensitiesTbl', backref='analysis')
     irradiation_position = relationship('IrradiationPositionTbl', backref='analysis', lazy='joined')
 
     _record_view = None
@@ -268,28 +267,28 @@ class AnalysisTbl(Base, IDMixin):
         self.irradiation
 
 
-class AnalysisIntensitiesTbl(Base, IDMixin):
-    analysisID = Column(Integer, ForeignKey('AnalysisTbl.id'))
-    value = Column(Float)
-    error = Column(Float)
-    n = Column(Integer)
-    fit = stringcolumn(32)
-    fit_error_type = stringcolumn(32)
-    baseline_value = Column(Float)
-    baseline_error = Column(Float)
-    baseline_n = Column(Integer)
-    baseline_fit = stringcolumn(32)
-    baseline_fit_error_type = stringcolumn(32)
-    blank_value = Column(Float)
-    blank_error = Column(Float)
-
-    # kca_value = Column(Float)
-    # kca_error = Column(Float)
-    # kcl_value = Column(Float)
-    # kcl_error = Column(Float)
-
-    isotope = stringcolumn(32)
-    detector = stringcolumn(32)
+# class AnalysisIntensitiesTbl(Base, IDMixin):
+#     analysisID = Column(Integer, ForeignKey('AnalysisTbl.id'))
+#     value = Column(Float)
+#     error = Column(Float)
+#     n = Column(Integer)
+#     fit = stringcolumn(32)
+#     fit_error_type = stringcolumn(32)
+#     baseline_value = Column(Float)
+#     baseline_error = Column(Float)
+#     baseline_n = Column(Integer)
+#     baseline_fit = stringcolumn(32)
+#     baseline_fit_error_type = stringcolumn(32)
+#     blank_value = Column(Float)
+#     blank_error = Column(Float)
+#
+#     # kca_value = Column(Float)
+#     # kca_error = Column(Float)
+#     # kcl_value = Column(Float)
+#     # kcl_error = Column(Float)
+#
+#     isotope = stringcolumn(32)
+#     detector = stringcolumn(32)
 
 
 class ProjectTbl(Base, NameMixin):
@@ -388,6 +387,7 @@ class IrradiationPositionTbl(Base, IDMixin):
     j = Column(Float)
     j_err = Column(Float)
     packet = stringcolumn(40)
+
     # analyses = relationship('AnalysisTbl', backref='irradiation_position')
 
     @property
@@ -556,7 +556,7 @@ class IRTbl(Base, BaseMixin):
 
 # ======================== Analysis Groups ========================
 class AnalysisGroupTbl(Base, IDMixin):
-    name = Column(String(140))
+    name = stringcolumn(140)
     create_date = Column(TIMESTAMP, default=func.now())
     projectID = Column(Integer, ForeignKey('ProjectTbl.id'))
     user = Column(String(140), ForeignKey('UserTbl.name'))
@@ -577,7 +577,7 @@ class MediaTbl(Base, IDMixin):
     create_date = Column(TIMESTAMP, default=func.now())
 
 
-# ======================= Simple Idenifier ================================
+# ======================= Simple Identifier ================================
 class SimpleIdentifierTbl(Base, BaseMixin):
     identifier = Column(Integer, primary_key=True)
     sampleID = Column(Integer, ForeignKey('SampleTbl.id'))
@@ -598,5 +598,27 @@ class SimpleIdentifierTbl(Base, BaseMixin):
     def principal_investigator_name(self):
         if self.sample and self.sample.project and self.sample.project.principal_investigator:
             return self.sample.project.principal_investigator.name
+
+
+# ======================= Current ================================
+class CurrentTbl(Base, IDMixin):
+    value = Column(Float(32))
+    error = Column(Float(32))
+
+    unitsID = Column(Integer, ForeignKey('UnitsTbl.id'))
+    parameterID = Column(Integer, ForeignKey('ParameterTbl.id'))
+    analysisID = Column(Integer, ForeignKey('AnalysisTbl.id'))
+
+    parameter = relationship('ParameterTbl', uselist=False)
+    analysis = relationship('AnalysisTbl', uselist=False)
+    units = relationship('UnitsTbl', uselist=False)
+
+
+class ParameterTbl(Base, IDMixin):
+    name = stringcolumn(40)
+
+
+class UnitsTbl(Base, IDMixin):
+    name = stringcolumn(40)
 
 # ============= EOF =============================================

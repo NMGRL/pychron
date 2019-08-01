@@ -199,7 +199,22 @@ def calculate_decay_time(dc, f):
     return math.log(f) / dc
 
 
-def calculate_arar_decay_factors(dc37, dc39, segments):
+def calculate_arar_decay_factors_dalrymple(dc37, dc39, segments):
+    df37 = 0
+    df39 = 0
+    try:
+        tpower = sum([pi * ti for pi, ti, _, _, _ in segments])
+        for pi, ti, ti_p, _, _ in segments:
+            pti = (pi * ti) / tpower
+            df37 += pti * (ti * dc37 * math.exp(dc37 * ti_p)) / (1 - math.exp(-dc37 * ti))
+            df39 += pti * (ti * dc39 * math.exp(dc39 * ti_p)) / (1 - math.exp(-dc39 * ti))
+    except ZeroDivisionError:
+        df37, df39 = 1.0, 1.0
+
+    return df37, df39
+
+
+def calculate_arar_decay_factors(dc37, dc39, segments, use_mh=True):
     """
         McDougall and Harrison
         p.75 equation 3.22
@@ -208,28 +223,37 @@ def calculate_arar_decay_factors(dc37, dc39, segments):
 
         mass spec uses ti==analysis_time-start of irradiation segment_i
 
-        using start seems more appropriate
+        using start seems more appropriate.
+
+        Note: 7/22/19
+        looking more carefully at Dalrymple etal 81 its clear that
+        using the end of the irradiation segment is actually the correct approach.
+        The decay that occurs during irradiation is handled by equation 39.
+        See page 34 Dalrymple etal 81
+
     """
     if segments is None:
-        return 1.0, 1.0
+        df37, df39 = 1.0, 1.0
     else:
-        a = sum([pi * ti for pi, ti, _, _, _ in segments])
+        tpower = sum([pi * ti for pi, ti, _, _, _ in segments])
+        if use_mh:
+            b = sum([pi * ((1 - math.exp(-dc37 * ti)) / (dc37 * math.exp(dc37 * dti)))
+                     for pi, ti, dti, _, _ in segments])
 
-        b = sum([pi * ((1 - math.exp(-dc37 * ti)) / (dc37 * math.exp(dc37 * dti)))
-                 for pi, ti, dti, _, _ in segments])
+            c = sum([pi * ((1 - math.exp(-dc39 * ti)) / (dc39 * math.exp(dc39 * dti)))
+                     for pi, ti, dti, _, _ in segments])
+            try:
+                df37 = tpower / b
+            except ZeroDivisionError:
+                df37 = 1.0
+            try:
+                df39 = tpower / c
+            except ZeroDivisionError:
+                df39 = 1.0
+        else:
+            df37, df39 = calculate_arar_decay_factors_dalrymple(dc37, dc39, segments)
 
-        c = sum([pi * ((1 - math.exp(-dc39 * ti)) / (dc39 * math.exp(dc39 * dti)))
-                 for pi, ti, dti, _, _ in segments])
-        try:
-            df37 = a / b
-        except ZeroDivisionError:
-            df37 = 1.0
-        try:
-            df39 = a / c
-        except ZeroDivisionError:
-            df39 = 1.0
-
-        return df37, df39
+    return df37, df39
 
 
 def abundance_sensitivity_correction(isos, abundance_sensitivity):
@@ -523,7 +547,7 @@ if __name__ == '__main__':
         # constant a
         a = 0.1
         for temp in (300, 400, 500, 600, 700):
-            ts = np.linspace(1,1000)
+            ts = np.linspace(1, 1000)
             fs = [calculate_fractional_loss(ti, temp, a) for ti in ts]
             # for t in ts:
 

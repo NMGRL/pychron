@@ -16,14 +16,44 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import Button, on_trait_change
 
 import os
 import pickle
+
 import yaml
+from traits.api import Button, on_trait_change
 
 from pychron.paths import paths
 from pychron.stage.maps.base_stage_map import BaseStageMap, SampleHole
+
+
+def get_interpolation_holes(idx, row):
+    n = len(row)
+    eidx = n - 1
+    midx = eidx // 2
+    if idx < midx:
+        a, b = row[0], row[midx]
+        p = idx / float(midx)
+        if not a.has_correction():
+            a = row[midx]
+            b = row[-1]
+            p = (idx - midx) / float(eidx - midx)
+        elif not b.has_correction():
+            b = row[-1]
+            p = idx / float(eidx)
+    else:
+        a, b = row[midx], row[-1]
+        p = (idx - midx) / float((eidx - midx))
+        if not a.has_correction():
+            a = row[0]
+            p = idx / float(eidx)
+        elif not b.has_correction():
+            a = row[0]
+            b = row[midx]
+            p = idx / float(midx)
+
+    if a.has_correction() and b.has_correction():
+        return a, b, p
 
 
 class LaserStageMap(BaseStageMap):
@@ -83,42 +113,6 @@ class LaserStageMap(BaseStageMap):
                             h.y_cor = y
                             h.corrected = True
 
-    def _get_interpolation_holes(self, h, row):
-        idx = row.index(h)
-        n = len(row)
-        eidx = n - 1
-        midx = eidx // 2
-        if idx < midx:
-            a, b = row[0], row[midx]
-            p = idx / float(midx)
-            if not a.has_correction():
-                a = row[midx]
-                b = row[-1]
-                p = (idx - midx) / float(eidx - midx)
-                if not a.has_correction() or not b.has_correction():
-                    return
-            elif not b.has_correction():
-                b = row[-1]
-                p = idx / float(eidx)
-                if not b.has_correction():
-                    return
-        else:
-            a, b = row[midx], row[-1]
-            p = (idx - midx) / float((eidx - midx))
-            if not a.has_correction():
-                a = row[0]
-                p = idx / float(eidx)
-                if not a.has_correction():
-                    return
-            elif not b.has_correction():
-                a = row[0]
-                b = row[midx]
-                p = idx / float(midx)
-                if not a.has_correction() or not b.has_correction():
-                    return
-
-        return a, b, p
-
     def generate_row_interpolated_corrections(self, dump_corrections=True):
         self.debug('generate row interpolated corrections')
         rowdict = self.row_dict()
@@ -128,7 +122,7 @@ class LaserStageMap(BaseStageMap):
             if not h.has_correction():
 
                 row = rowdict[h.y]
-                args = self._get_interpolation_holes(h, row)
+                args = get_interpolation_holes(row.index(h), row)
                 if args:
                     a, b, p = args
                     self.debug('interpolation holes a={}, b={}, p={}'.format(a.id, b.id, p))
@@ -196,13 +190,15 @@ class LaserStageMap(BaseStageMap):
         if tol is None:
             tol = self.g_dimension  # * 0.75
 
-        pythag = lambda hi, xi, yi: ((hi.x - xi) ** 2 + (hi.y - yi) ** 2) ** 0.5
+        def pythag(hi, xi, yi):
+            return ((hi.x - xi) ** 2 + (hi.y - yi) ** 2) ** 0.5
+
         holes = [(hole, pythag(hole, x, y)) for hole in self.sample_holes
                  if abs(getattr(hole, xkey) - x) < tol and abs(
                 getattr(hole, ykey) - y) < tol]
         if holes:
-            #            #sort holes by deviation
-            holes = sorted(holes, lambda a, b: cmp(a[1], b[1]))
+            # sort holes by deviation
+            holes = sorted(holes, lambda a, b: (a[1] > b[1]) - (a[1] < b[1]))
             return holes[0][0]
 
     def traits_view(self):

@@ -52,6 +52,8 @@ class BaseSpectrometer(SpectrometerDevice):
     spectrometer_configuration = Str
     spectrometer_configurations = List
 
+    force_send_configuration = Bool(True)
+
     use_deflection_correction = Bool(True)
     use_hv_correction = Bool(True)
     _connection_status = False
@@ -314,6 +316,9 @@ class BaseSpectrometer(SpectrometerDevice):
                     self.warning(
                         'Cannot update isotopes. isotope={}, detector={}. error:{}'.format(isotope, detector, e))
 
+    def verify_configuration(self, **kw):
+        return True
+
     def send_configuration(self, **kw):
         """
             send the configuration values to the device
@@ -390,25 +395,31 @@ class BaseSpectrometer(SpectrometerDevice):
 
         p = os.path.join(paths.spectrometer_dir, 'molecular_weights.csv')
         yp = os.path.join(paths.spectrometer_dir, 'molecular_weights.yaml')
+        mws = None
         if os.path.isfile(p):
             self.info('loading "molecular_weights.csv" file. {}'.format(p))
             with open(p, 'r') as f:
                 reader = csv.reader(f, delimiter='\t')
-                mws = {l[0]: float(l[1]) for l in reader}
+                try:
+                    mws = {l[0]: float(l[1]) for l in reader}
+                except BaseException:
+                    mws = None
         elif os.path.isfile(yp):
             self.info('loading "molecular_weights.yaml" file. {}'.format(yp))
             with open(yp, 'r') as f:
-                mws = yaml.load(f)
-        else:
+                try:
+                    mws = yaml.load(f)
+                except BaseException:
+                    mws = None
+
+        if mws is None:
             self.info('writing a default "molecular_weights.csv" file')
             # make a default molecular_weights.csv file
             from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS as mws
 
-            with open(p, 'U' if os.path.isfile(p) else 'w') as f:
+            with open(p, 'w') as f:
                 writer = csv.writer(f, delimiter='\t')
-                # data = [a for a in six.itervalues(mws)]
-                data = [a for a in mws.values()]
-                data = sorted(data, key=lambda x: x[1])
+                data = sorted(mws.items(), key=lambda x: x[1])
                 for row in data:
                     writer.writerow(row)
 

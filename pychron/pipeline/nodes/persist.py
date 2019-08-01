@@ -243,8 +243,9 @@ class FluxPersistNode(DVCPersistNode):
                        use_weighted_fit=po.use_weighted_fit,
                        monte_carlo_ntrials=po.monte_carlo_ntrials,
                        use_monte_carlo=po.use_monte_carlo,
-                       monitor_sample_name=po.monitor_sample_name,
+                       monitor_name=po.monitor_name,
                        monitor_age=po.monitor_age,
+                       monitor_material=po.monitor_name,
                        monitor_reference=po.selected_decay)
 
         self.dvc.save_flux_position(irp, options, decay_constants, add=False)
@@ -272,15 +273,17 @@ class XLSXAnalysisTablePersistNode(BaseNode):
     options_klass = XLSXAnalysisTableWriterOptions
 
     def _pre_run_hook(self, state):
-        ri = tuple({ai.repository_identifier for ai in state.unknowns})
-        self.options.root_name = ri[0]
+        if state.unknowns:
+            ri = tuple({ai.repository_identifier for ai in state.unknowns})
+            self.options.root_name = ri[0]
 
     def _finish_configure(self):
         self.options.dump()
 
     def run(self, state):
-        writer = XLSXAnalysisTableWriter()
-        writer.build(state.run_groups, options=self.options)
+        if state.unknowns and state.run_groups:
+            writer = XLSXAnalysisTableWriter()
+            writer.build(state.run_groups, options=self.options)
 
 
 class InterpretedAgePersistNode(BaseDVCNode):

@@ -12,4 +12,5 @@ Pychron Setup
   el_canvas
   startup_tests
   tray_map
+  ratio_change_detection
   dvc/index

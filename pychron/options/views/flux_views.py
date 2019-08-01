@@ -20,7 +20,7 @@ from traitsui.api import Item, HGroup, VGroup, Readonly, EnumEditor
 
 from pychron.core.pychron_traits import BorderVGroup
 from pychron.options.options import SubOptions, AppearanceSubOptions
-from pychron.pychron_constants import MAIN, APPEARANCE, LEAST_SQUARES_1D, WEIGHTED_MEAN_1D
+from pychron.pychron_constants import MAIN, APPEARANCE, LEAST_SQUARES_1D, WEIGHTED_MEAN_1D, BRACKETING, NN, MATCHING
 
 
 class FluxSubOptions(SubOptions):
@@ -39,6 +39,8 @@ class FluxSubOptions(SubOptions):
                                        Item('one_d_axis', label='Axis',
                                             visible_when='model_kind in ("{}","{}")'.format(LEAST_SQUARES_1D,
                                                                                             WEIGHTED_MEAN_1D)),
+                                       Item('n_neighbors', label='N. Neighbors',
+                                            visible_when = 'model_kind == "{}"'.format(NN)),
                                        label='Model'),
 
                           VGroup(HGroup(Item('use_monte_carlo', label='Use'),
@@ -49,7 +51,7 @@ class FluxSubOptions(SubOptions):
                                               'irradiation hole. '
                                               'This is to test "monte carloing" the irradiation geometry'),
                                  show_border=True,
-                                 visible_when='model_kind not in ("Matching", "Bracketing")',
+                                 visible_when='model_kind not in ("{}", "{}", "{}")'.format(MATCHING, BRACKETING, NN),
                                  label='Monte Carlo'),
                           show_border=True,
                           label='Calculations')

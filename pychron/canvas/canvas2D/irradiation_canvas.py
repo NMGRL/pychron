@@ -35,7 +35,7 @@ class Legend(HasTraits):
         r = 6
         gc.set_font(str_to_font('modern 10'))
         with gc:
-            gc.translate_ctm(20, component.height-50)
+            gc.translate_ctm(component.x+20, component.y2-50)
 
             # monitor
             with gc:

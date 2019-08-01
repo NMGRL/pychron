@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from kiva.fonttools import str_to_font
 from traits.api import HasTraits, Str, Any, Float, Property, on_trait_change, Color, List
 
@@ -64,8 +65,8 @@ class Primitive(HasTraits):
     primitives = List
     font = Str('modern 14')
 
-    width = 0
-    height = 0
+    width = Float
+    height = Float
     _initialized = False
 
     _cached_wh = None

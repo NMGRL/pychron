@@ -16,28 +16,39 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import Dict
+
 # ============= standard library imports ========================
 import os
+
 from numpy.core.numeric import Inf
+from traits.api import Dict
+
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.scene.canvas_parser import get_volume
 from pychron.canvas.canvas2D.scene.primitives.connections import Tee, Fork, Elbow
 from pychron.canvas.canvas2D.scene.primitives.lasers import Laser
-from pychron.canvas.canvas2D.scene.primitives.pumps import Turbo
-from pychron.canvas.canvas2D.scene.scene import Scene
 from pychron.canvas.canvas2D.scene.primitives.primitives import Label, BorderLine, Line, Image, ValueLabel
+from pychron.canvas.canvas2D.scene.primitives.pumps import Turbo
 from pychron.canvas.canvas2D.scene.primitives.rounded import RoundedRectangle
-from pychron.core.helpers.strtools import to_bool
 from pychron.canvas.canvas2D.scene.primitives.valves import RoughValve, Valve, Switch, ManualSwitch
+from pychron.canvas.canvas2D.scene.scene import Scene
+from pychron.core.helpers.strtools import to_bool
 from pychron.extraction_line.switch_parser import SwitchParser
 from pychron.paths import paths
 
 KLASS_MAP = {'turbo': Turbo, 'laser': Laser}
 
+RECT_TAGS = ('stage', 'laser', 'spectrometer',
+             'turbo', 'getter', 'tank',
+             'ionpump', 'gauge', 'rectangle')
+
+SWITCH_TAGS = ('switch', 'valve', 'rough_valve', 'manual_valve')
+
 
 class ExtractionLineScene(Scene):
     valves = Dict
+    rects = Dict
+
     valve_dimension = 2, 2
 
     def load(self, pathname, configpath, valvepath, canvas):
@@ -140,6 +151,9 @@ class ExtractionLineScene(Scene):
         if type_tag in ('turbo', 'laser'):
             self.overlays.append(rect)
             rect.scene_visible = False
+
+        if rect.name:
+            self.rects[rect.name] = rect
 
         self.add_item(rect, layer=layer)
 
@@ -439,9 +453,7 @@ class ExtractionLineScene(Scene):
             self._new_fork(Fork, conn)
 
     def _load_rects(self, cp, origin, color_dict):
-        for key in ('stage', 'laser', 'spectrometer',
-                    'turbo', 'getter', 'tank',
-                    'ionpump', 'gauge', 'rectangle'):
+        for key in RECT_TAGS:
             for b in cp.get_elements(key):
                 if key in color_dict:
                     c = color_dict[key]

@@ -177,9 +177,11 @@ class ThermoSpectrometer(BaseSpectrometer):
 
         return it
 
-    def set_parameter(self, name, v):
+    def set_parameter(self, name, v, post_delay=None):
         cmd = '{} {}'.format(name, v)
         self.ask(cmd)
+        if post_delay:
+            time.sleep(post_delay)
 
     def get_parameter(self, cmd):
         return self.ask(cmd)
@@ -319,7 +321,7 @@ class ThermoSpectrometer(BaseSpectrometer):
             self.send_configuration(use_ramp=True)
 
     def settle(self):
-        time.sleep(self.integration_time*2)
+        time.sleep(self.integration_time * 2)
 
     # ===============================================================================
     # signals
@@ -381,6 +383,38 @@ class ThermoSpectrometer(BaseSpectrometer):
 
         self.clear_cached_config()
 
+    def verify_configuration(self, **kw):
+        self.debug('========= Verifying configuration =========')
+
+        mismatch = False
+        if self.microcontroller:
+            command_map = self.get_command_map()
+            args = self._get_cached_config()
+            if args is not None:
+                specparams, defl, trap, magnet = args
+                for k, v in defl.items():
+                    d = self.get_deflection(k, current=True)
+                    if abs(d - v) / float(v) > 0.01:
+                        self.warning('verify failed {}. current={}, config={}'.format(k, d, v))
+                        mismatch = True
+
+                for k, v in specparams.items():
+                    cmd = 'Get{}'.format(command_map[k])
+                    current = self.get_parameter(cmd)
+                    if abs(v - current) / float(v) > 0.01:
+                        self.warning('verify failed {}. current={}, config={}'.format(k, current, v))
+                        mismatch = True
+
+                for tag in ('voltage', 'current'):
+                    v = trap.get(tag)
+                    if v is not None:
+                        current = getattr(self.source, 'trap_{}'.format(tag))
+                        if abs(v - current) / float(v) > 0.01:
+                            self.warning('verify failed trap {}. current={}, config={}'.format(tag, current, v))
+                            mismatch = True
+        self.debug('========= Verify complete ===========')
+        return not mismatch
+
     # ===============================================================================
     # private
     # ===============================================================================
@@ -398,25 +432,36 @@ class ThermoSpectrometer(BaseSpectrometer):
 
     def _send_configuration(self, use_ramp=True):
         self.debug('======== Sending configuration ========')
-        command_map = self.get_command_map()
 
         if self.microcontroller:
+            command_map = self.get_command_map()
             ret = self._get_cached_config()
             if ret is not None:
                 specparams, defl, trap, magnet = ret
                 for k, v in defl.items():
+                    if not self.force_send_configuration:
+                        d = self.get_deflection(k, current=True)
+                        if abs(d - v) / float(v) < 0.01:
+                            self.debug('Not setting deflection {}. current={}, config={}'.format(k, v, d))
+                            continue
+
                     cmd = 'SetDeflection'
                     v = '{},{}'.format(k, v)
-                    self.set_parameter(cmd, v)
+                    self.set_parameter(cmd, v, post_delay=0.05)
 
                 for k, v in specparams.items():
+                    if not self.force_send_configuration:
+                        cmd = 'Get{}'.format(command_map[k])
+                        current = self.get_parameter(cmd)
+                        if abs(v - current) / float(v) < 0.01:
+                            self.debug('Not setting {}. current={}, config={}'.format(k, v, current))
+                            continue
+
                     try:
                         cmd = 'Set{}'.format(command_map[k])
-                        self.set_parameter(cmd, v)
+                        self.set_parameter(cmd, v, post_delay=0.05)
                     except KeyError:
-                        self.debug(
-                            '$$$$$$$$$$ Not setting {}. Not in command_map'.format(
-                                k))
+                        self.debug('$$$$$$$$$$ Not setting {}. Not in command_map'.format(k))
 
                 # set trap voltage
                 v = trap.get('voltage')
@@ -433,8 +478,7 @@ class ThermoSpectrometer(BaseSpectrometer):
                     tol = trap.get('ramp_tolerance', 10)
                     if not self._ramp_trap_current(v, step, period, use_ramp, tol):
                         self.source.trap_current = v
-                        # self.set_parameter('SetParameter',
-                        #                    'Trap Current Set,{}'.format(v))
+
                 # set the mftable
                 mftable_name = magnet.get('mftable')
                 if mftable_name:

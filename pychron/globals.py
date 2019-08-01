@@ -113,7 +113,6 @@ class Globals(object):
     laser_version = 1
 
     def build(self, ip):
-
         for attr, func in [('use_ipc', to_bool),
                            ('ignore_initialization_warnings', to_bool),
                            ('ignore_connection_warnings', to_bool),

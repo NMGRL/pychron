@@ -23,6 +23,7 @@ from apptools.preferences.preference_binding import bind_preference
 from pyface.timer.do_later import do_after
 from traits.api import Instance, List, Any, Bool, on_trait_change, Str, Int, Dict, File, Float
 
+from pychron.canvas.canvas_editor import CanvasEditor
 from pychron.core.file_listener import FileListener
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.consoleable import Consoleable
@@ -90,6 +91,8 @@ class ExtractionLineManager(Manager, Consoleable):
     _active = False
     _update_status_flag = None
     _monitoring_valve_status = False
+
+    canvas_editor = Instance(CanvasEditor, ())
 
     def set_extract_state(self, *args, **kw):
         pass
@@ -284,6 +287,7 @@ class ExtractionLineManager(Manager, Consoleable):
         self.info('reloading canvas scene')
         for c in self.canvases:
             c.load_canvas_file(self.canvas_path, self.canvas_config_path, self.valves_path)
+            self.canvas_editor.load(c.canvas2D, self.canvas_path)
             # c.load_canvas_file(c.config_name)
 
             if self.switch_manager:
@@ -374,6 +378,18 @@ class ExtractionLineManager(Manager, Consoleable):
             # only query valve states if not already doing a
             # hardware_update via _trigger_update
             return self.switch_manager.get_states(query=not self.use_hardware_update)
+
+    def get_state_word(self):
+        if self.switch_manager is not None:
+            # only query valve states if not already doing a
+            # hardware_update via _trigger_update
+            return self.switch_manager.get_states(query=not self.use_hardware_update, version=1)
+
+    def get_lock_word(self):
+        if self.switch_manager is not None:
+            # only query valve states if not already doing a
+            # hardware_update via _trigger_update
+            return self.switch_manager.get_software_locks(version=1)
 
     def get_valve_by_name(self, name):
         if self.switch_manager is not None:
@@ -816,9 +832,8 @@ class ExtractionLineManager(Manager, Consoleable):
     def _explanation_default(self):
         e = ExtractionLineExplanation()
         if self.switch_manager is not None:
-            e.load(self.switch_manager.explanable_items)
-            self.switch_manager.on_trait_change(e.load_item, 'explanable_items[]')
-
+            e.load(self.switch_manager.switches)
+            self.switch_manager.on_trait_change(e.refresh, 'refresh_explanation')
         return e
 
     def _canvas_default(self):

@@ -15,12 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
+
+from traits.api import Str, Int, Bool, Float, Property, Instance, CInt, HasTraits
+# ============= standard library imports ========================
 import os
 import pickle
-
-from traits.api import Str, Int, Bool, Float, Property, Instance, CInt
-# ============= standard library imports ========================
 import time
 # ============= local library imports  ==========================
 from pychron.consumer_mixin import ConsumerMixin
@@ -29,7 +28,7 @@ from pychron.core.helpers.timer import Timer
 from pychron.paths import paths
 
 
-class BaseLinearDrive(ConsumerMixin):
+class BaseLinearDrive(HasTraits, ConsumerMixin):
     velocity = Property
     _velocity = Float
     acceleration = Float
@@ -93,11 +92,10 @@ class BaseLinearDrive(ConsumerMixin):
         if self.sign == -1:
             mi, ma = ma, mi
 
-        self.linear_mapper = LinearMapper(
-            low_data=mi,
-            high_data=ma,
-            low_step=int(self.min_steps),
-            high_step=int(self.steps))
+        self.linear_mapper = LinearMapper(low_data=mi,
+                                          high_data=ma,
+                                          low_step=self.min_steps,
+                                          high_step=self.steps)
 
     def block(self, n=3, tolerance=1, progress=None, homing=False, verbose=False):
         """

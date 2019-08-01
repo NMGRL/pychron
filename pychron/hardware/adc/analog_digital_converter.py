@@ -21,6 +21,7 @@
 # =============local library imports  ==========================
 # from pychron.core import Q_
 from __future__ import absolute_import
+
 from pychron.hardware.core.core_device import CoreDevice
 
 
@@ -90,11 +91,18 @@ class M1000(AnalogDigitalConverter):
 
 class KeithleyADC(M1000):
     """
+
+    M1131
+    https://download.tek.com/manual/61190A(M1000_2000).pdf
+
     """
 
 
 class OmegaADC(M1000):
     """
+
+    D5141
+
     """
     @property
     def read_block(self):

@@ -111,15 +111,6 @@ class MetaRepo(GitRepoManager):
 
         return str(age), str(decay)
 
-    def get_molecular_weights(self):
-        p = os.path.join(paths.meta_root, 'molecular_weights.json')
-        return dvc_load(p)
-
-    def update_molecular_weights(self, wts, commit=False):
-        p = os.path.join(paths.meta_root, 'molecular_weights.json')
-        dvc_dump(wts, p)
-        self.add(p, commit=commit)
-
     def add_unstaged(self, *args, **kw):
         super(MetaRepo, self).add_unstaged(self.path, **kw)
 
@@ -146,6 +137,23 @@ class MetaRepo(GitRepoManager):
             self.update_productions(irrad, name, prname, note=note)
         else:
             self.warning_dialog('Invalid production name'.format(prname))
+
+    def update_level_monitor(self, irradiation, level, monitor_name, monitor_material, monitor_age, lambda_k):
+        path = self.get_level_path(irradiation, level)
+        obj = dvc_load(path)
+        positions = self._get_level_positions(irradiation, level)
+
+        options = {'monitor_name': monitor_name,
+                   'monitor_material': monitor_material,
+                   'monitor_age': monitor_age}
+        decay_constants = {'lambda_k_total': lambda_k, 'lambda_k_total_error': 0}
+        for p in positions:
+            p['options'] = options
+            p['decay_constants'] = decay_constants
+
+        obj['positions'] = positions
+
+        dvc_dump(obj, path)
 
     def add_production_to_irradiation(self, irrad, name, params, add=True, commit=False):
         self.debug('adding production {} to irradiation={}'.format(name, irrad))

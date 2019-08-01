@@ -317,7 +317,7 @@ class LabnumberEntry(DVCIrradiationable):
         """
 
         db = self.dvc.db
-        irrads = db.get_irradiations(order_func='asc')
+        irrads = db.get_irradiations(order_by_date='desc')
         irrads = [irrad.name for irrad in irrads]
         table = IrradiationTableView(irradiations=irrads)
         info = table.edit_traits()
@@ -411,22 +411,25 @@ class LabnumberEntry(DVCIrradiationable):
         :return:
         """
 
+        def test_monitor_sample(dbpos):
+            if dbpos.sample:
+                if dbpos.sample.name == monitor_name:
+                    if dbpos.sample.material:
+                        return dbpos.sample.material.name == monitor_material
+
         def monitor_exists_test(l):
             for dbpos in l.positions:
-                if dbpos.sample:
-                    if dbpos.sample.name == monitor_name:
-                        if dbpos.sample.material == monitor_material:
-                            return True
+                if test_monitor_sample(dbpos):
+                    return True
 
-        projectname = '{}{}'.format(self.irradiation_project_prefix, self.irradiation)
+        projectname = '{}-{}'.format(self.irradiation_project_prefix, self.irradiation)
 
         def correct_monitor_sample(l):
             incorrect_monitors = []
             for dbpos in l.positions:
-                if dbpos.sample:
-                    if dbpos.sample.project:
-                        if dbpos.sample.project.name != projectname:
-                            incorrect_monitors.append(str(dbpos.position))
+                if test_monitor_sample(dbpos):
+                    if not dbpos.sample.project or dbpos.sample.project.name != projectname:
+                        incorrect_monitors.append(str(dbpos.position))
 
             return ','.join(incorrect_monitors)
 
@@ -486,14 +489,20 @@ class LabnumberEntry(DVCIrradiationable):
         else:
             self.information_dialog('No recover file for {}'.format(irradiation, level))
 
-    def load_history(self):
+    def load_history(self, **kw):
         repo = self.dvc.meta_repo
 
-        greps = ['fit flux for {}{}'.format(self.irradiation, self.level),
-                 'fit flux for {}'.format(self.irradiation)]
+        greps = ['fit flux for {}{}'.format(self.irradiation, self.level)]
 
-        cs = repo.get_commits_from_log(greps)
+        cs = repo.get_commits_from_log(greps, **kw)
         self.flux_commits = cs
+        if not cs:
+            irradlabel = '{}{}'.format(self.irradiation, self.level)
+            self.information_dialog('No changes found using current search criteria. \n'
+                                    'Irradiation={}\n'
+                                    'Max Count={max_count:}\n'
+                                    'After={after:}\n'
+                                    'Before={before:}'.format(irradlabel, **kw))
 
     # private
     def _backup(self):

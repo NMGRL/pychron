@@ -20,7 +20,7 @@ import os
 from enable.component_editor import ComponentEditor
 from pyface.constant import OK, YES, NO
 from pyface.file_dialog import FileDialog
-from traits.api import List, Instance, Str, Float, Any, Button, Property, HasTraits, Dict
+from traits.api import List, Instance, Str, Float, Any, Button, Property, HasTraits, Dict, Enum
 from traitsui.api import View, Item, TabularEditor, HGroup, UItem, Group, VGroup, \
     HSplit, EnumEditor
 from traitsui.tabular_adapter import TabularAdapter
@@ -30,7 +30,9 @@ from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
 from pychron.canvas.utils import load_holder_canvas
 from pychron.core.helpers.logger_setup import logging_setup
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+from pychron.core.pychron_traits import BorderHGroup, BorderVGroup
 from pychron.core.ui.combobox_editor import ComboboxEditor
+from pychron.core.ui.strings import SpacelessStr
 from pychron.core.utils import alphas, alpha_to_int
 from pychron.database.core.defaults import parse_irradiation_tray_map, load_irradiation_map
 from pychron.dvc.meta_repo import MetaRepo
@@ -39,6 +41,7 @@ from pychron.entry.editors.production import IrradiationProduction
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.loggable import Loggable
 from pychron.paths import paths
+from pychron.pychron_constants import FLUX_CONSTANTS
 
 
 def prep_prname(prname):
@@ -75,32 +78,35 @@ class EditView(ModelView):
     title = 'Edit Level'
 
     def traits_view(self):
-        pr_group = VGroup(HGroup(icon_button_editor('add_production_button', 'database_add',
-                                                    tooltip='Add a Production Ratio'),
-                                 icon_button_editor('edit_production_button', 'database_edit',
-                                                    enabled_when='selected_production',
-                                                    tooltip='Edit Production Ratio')),
+        rgrp = BorderHGroup(UItem('selected_reactor_name',
+                                  editor=EnumEditor(name='reactor_names')),
+                            icon_button_editor('add_reactor_button', 'add',
+                                               tooltip='Add Default Production for the selected '
+                                                       'Reactor to this Irradiation level'),
+                            icon_button_editor('update_reactor_default_button',
+                                               'arrow_up',
+                                               tooltip='Set current as the reactor default'),
+                            label='Available Default Productions')
+        mgrp = BorderVGroup(UItem('selected_monitor'),
+                            HGroup(Item('monitor_name'),
+                                   Item('monitor_material')),
+                            HGroup(Item('monitor_age'),
+                                   Item('lambda_k')),
+                            label='Monitor')
 
-                          VGroup(HGroup(UItem('selected_production_name',
-                                              editor=EnumEditor(name='production_names')),
-                                        icon_button_editor('apply_selected_production', 'arrow_left',
-                                                           tooltip='Apply selection'),
-                                        icon_button_editor('update_reactor_default_button',
-                                                           'arrow_up',
-                                                           tooltip='Set current as the reactor default'),
-                                        show_border=True,
-                                        label='Production'),
-
-                                 # HGroup(UItem('selected_reactor_name',
-                                 #              editor=EnumEditor(name='reactor_names')),
-                                 #        icon_button_editor('apply_selected_reactor', 'arrow_left',
-                                 #                           tooltip='Apply selection'),
-                                 #        icon_button_editor('update_reactor_default_button',
-                                 #                           'arrow_up',
-                                 #                           tooltip='Set current as the reactor default'),
-                                 #        label='Reactor',
-                                 #        show_border=True),
-                                 UItem('selected_production', style='custom')),
+        pgrp = BorderHGroup(UItem('selected_production_name',
+                                  editor=EnumEditor(name='production_names')),
+                            icon_button_editor('apply_selected_production', 'arrow_left',
+                                               tooltip='Apply selection'),
+                            icon_button_editor('add_production_button', 'database_add',
+                                               tooltip='Add a Production Ratio'),
+                            icon_button_editor('edit_production_button', 'database_edit',
+                                               enabled_when='selected_production',
+                                               tooltip='Edit Production Ratio'),
+                            label='Production'),
+        pr_group = VGroup(rgrp,
+                          pgrp,
+                          UItem('selected_production', style='custom'),
                           label='Production Ratios')
 
         editor = TabularEditor(adapter=TrayAdapter(),
@@ -114,10 +120,10 @@ class EditView(ModelView):
 
         v = okcancel_view(VGroup(HGroup(Item('name'), Item('z')),
                                  VGroup(UItem('level_note', style='custom'), label='Level Note', show_border=True),
-                                 Group(
-                                     pr_group,
-                                     tray_grp,
-                                     layout='tabbed')),
+                                 Group(pr_group,
+                                       tray_grp,
+                                       mgrp,
+                                       layout='tabbed')),
                           width=550,
                           height=650,
                           title=self.title)
@@ -141,7 +147,7 @@ class LevelEditor(Loggable):
     db = Any
 
     level_note = Str
-    name = Str
+    name = SpacelessStr
     selected_tray = Str
     z = Float
     selected_production = Instance(IrradiationProduction, ())
@@ -155,9 +161,9 @@ class LevelEditor(Loggable):
 
     trays = List
 
-    # reactors = Dict
-    # reactor_names = List
-    # selected_reactor_name = Str
+    reactors = Dict
+    reactor_names = List
+    selected_reactor_name = Str
 
     canvas = Instance(IrradiationCanvas, ())
 
@@ -168,10 +174,17 @@ class LevelEditor(Loggable):
     apply_selected_reactor = Button
     apply_selected_production = Button
 
+    add_reactor_button = Button
     update_reactor_default_button = Button
     update_reactor_name = Str
     update_reactor_names = List
     meta_repo = Instance(MetaRepo)
+
+    selected_monitor = Enum(list(FLUX_CONSTANTS.keys()))
+    monitor_name = Property(depends_on='selected_monitor')
+    monitor_age = Property(depends_on='selected_monitor')
+    monitor_material = Property(depends_on='selected_monitor')
+    lambda_k = Property(depends_on='selected_monitor')
 
     def edit(self):
         self._load_productions()
@@ -247,6 +260,12 @@ class LevelEditor(Loggable):
                     # level.production = pr
 
                     self.meta_repo.update_level_production(self.irradiation, self.name, prname, self.level_note)
+                if self.selected_monitor:
+                    self.meta_repo.update_level_monitor(self.irradiation,
+                                                        self.name,
+                                                        self.monitor_name, self.monitor_material,
+                                                        self.monitor_age,
+                                                        self.lambda_k)
 
                 if original_tray != self.selected_tray:
                     self._save_tray(level, original_tray)
@@ -259,8 +278,8 @@ class LevelEditor(Loggable):
         self.debug('changes {}'.format(changes))
         if changes:
             self.meta_repo.smart_pull()
-            self.meta_repo.commit('Edited level {}'.format(self.name))
-            self.meta_repo.push()
+            # self.meta_repo.commit('Edited level {}'.format(self.name))
+            # self.meta_repo.push()
             db.commit()
 
         self._refresh_production()
@@ -346,7 +365,7 @@ class LevelEditor(Loggable):
             else:
                 return 'break'
 
-    def _load_productions(self):
+    def _load_productions(self, load_reactors=True):
         self.meta_repo.smart_pull()
         root = os.path.join(paths.meta_root, self.irradiation, 'productions')
         ps = {}
@@ -359,31 +378,23 @@ class LevelEditor(Loggable):
                 ps[head] = IrradiationProduction(head, obj)
                 keys.append(head)
 
-        # root = os.path.join(paths.meta_root, 'productions')
-        # for p in os.listdir(root):
-        #     if p.endswith('.json'):
-        #         with open(os.path.join(root, p)) as rfile:
-        #             obj = json.load(rfile)
-        #         head, tail = os.path.splitext(p)
-        #         head = 'Global {}'.format(head)
-        #         ps[head] = IrradiationProduction(head, obj)
-        #         keys.append(head)
         self.productions = ps
         self.production_names = keys
-        # self._load_reactors()
+        if load_reactors:
+            self._load_reactors()
 
-    # def _load_reactors(self):
-    #
-    #     p = os.path.join(paths.meta_root, 'reactors.json')
-    #     reactors = {}
-    #     if os.path.isfile(p):
-    #         with open(p, 'r') as rfile:
-    #             reactors = json.load(rfile)
-    #             for k, v in reactors.items():
-    #                 reactors[k] = IrradiationProduction(k, v)
-    #
-    #     self.reactors = reactors
-    #     self.reactor_names = list(reactors.keys())
+    def _load_reactors(self):
+
+        p = os.path.join(paths.meta_root, 'reactors.json')
+        reactors = {}
+        if os.path.isfile(p):
+            with open(p, 'r') as rfile:
+                reactors = json.load(rfile)
+                for k, v in reactors.items():
+                    reactors[k] = IrradiationProduction(k, v)
+
+        self.reactors = reactors
+        self.reactor_names = list(reactors.keys())
 
     def _update_reactor(self):
         p = os.path.join(paths.meta_root, 'reactors.json')
@@ -478,11 +489,11 @@ class LevelEditor(Loggable):
             self.selected_production_name = ''
             self.selected_production_name = o
 
-    def _apply_selected_reactor_fired(self):
-        if self.selected_reactor_name:
-            o = self.selected_reactor_name
-            self.selected_reactor_name = ''
-            self.selected_reactor_name = o
+    # def _apply_selected_reactor_fired(self):
+    #     if self.selected_reactor_name:
+    #         o = self.selected_reactor_name
+    #         self.selected_reactor_name = ''
+    #         self.selected_reactor_name = o
 
     def _selected_production_name_changed(self, new):
         if new:
@@ -491,6 +502,13 @@ class LevelEditor(Loggable):
     # def _selected_reactor_name_changed(self, new):
     #     if new:
     #         self.selected_production = self.reactors[new]
+
+    def _add_reactor_button_fired(self):
+        if self.selected_reactor_name:
+            prod = self.reactors[self.selected_reactor_name]
+            self.meta_repo.add_production_to_irradiation(self.irradiation,
+                                                         self.selected_reactor_name, prod.get_params())
+            self._load_productions(load_reactors=False)
 
     def _selected_tray_changed(self):
         holes = self.meta_repo.get_irradiation_holder_holes(self.selected_tray)
@@ -506,6 +524,22 @@ class LevelEditor(Loggable):
                     db = self.db
                     load_irradiation_map(db, dlg.path,
                                          os.path.basename(dlg.path), overwrite_geometry=True)
+
+    def _get_monitor_name(self):
+        return FLUX_CONSTANTS[self.selected_monitor].get('monitor_name', '')
+
+    def _get_monitor_age(self):
+        return FLUX_CONSTANTS[self.selected_monitor].get('monitor_age', 0)
+
+    def _get_monitor_material(self):
+        return FLUX_CONSTANTS[self.selected_monitor].get('monitor_material', '')
+
+    def _get_lambda_k(self):
+        c = FLUX_CONSTANTS[self.selected_monitor]
+        try:
+            return c['lambda_ec'][0] + c['lambda_b'][0]
+        except KeyError:
+            return 0
 
 
 if __name__ == '__main__':

@@ -164,12 +164,16 @@ class AnalysisGroup(IdeogramPlotable):
 
     def attr_stats(self, attr):
         w, sd, sem, (vs, es) = self._calculate_weighted_mean(attr, error_kind='both')
-        mswd = calculate_mswd(vs, es, wm=w)
-        valid_mswd = validate_mswd(mswd, self.nanalyses)
-        mi = min(vs)
-        ma = max(vs)
+        mi, ma, total_dev, mswd, valid_mswd = 0, 0, 0, 0, False
+        if len(vs):
+            mswd = calculate_mswd(vs, es, wm=w)
+            valid_mswd = validate_mswd(mswd, self.nanalyses)
+            mi = min(vs)
+            ma = max(vs)
 
-        total_dev = (ma - mi) / ma * 100
+            total_dev = (ma - mi) / ma * 100
+        else:
+            print('atafdsa', attr)
 
         return {'mean': w,
                 'sd': sd,
@@ -233,9 +237,13 @@ class AnalysisGroup(IdeogramPlotable):
     def isochron_mswd(self):
         if not self.isochron_3640:
             self.calculate_isochron_age()
-        reg = self.isochron_regressor
 
-        return reg.mswd, reg.valid_mswd, reg.n
+        mswd, v, n = 0, '', 0
+        reg = self.isochron_regressor
+        if reg:
+            mswd, v, n = reg.mswd, reg.valid_mswd, reg.n
+
+        return mswd, v, n
 
     # properties
     @property
@@ -386,10 +394,10 @@ class AnalysisGroup(IdeogramPlotable):
         if ans:
             vs = array([nominal_value(v) for v in ans])
             es = array([std_dev(v) for v in ans])
-
-            idx = es.astype(bool)
-            vs = vs[idx]
-            es = es[idx]
+            if attr not in ('lab_temperature', 'peak_center', 'lab_humidity', 'lab_airpressure'):
+                idx = es.astype(bool)
+                vs = vs[idx]
+                es = es[idx]
 
             return vs, es
 
@@ -406,7 +414,7 @@ class AnalysisGroup(IdeogramPlotable):
         sem = 0
         if args:
             vs, es = args
-            if use_weights:
+            if use_weights and any(es):
                 av, werr = calculate_weighted_mean(vs, es)
 
                 if error_kind == 'both':
@@ -419,6 +427,7 @@ class AnalysisGroup(IdeogramPlotable):
             else:
                 av = vs.mean()
                 werr = vs.std(ddof=1)
+                sem = werr/len(vs)**0.5
         else:
             av, werr = 0, 0
 

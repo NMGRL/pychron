@@ -24,6 +24,7 @@ from traitsui.api import Item, UItem, Group, VGroup, HGroup, EnumEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+from pychron.core.ui.strings import SpacelessStr
 from pychron.entry.editors.base_editor import ModelView
 from pychron.entry.editors.chronology import IrradiationChronology
 from pychron.entry.editors.production import IrradiationProduction
@@ -64,6 +65,8 @@ class IrradiationEditor(Loggable):
     reactors = Dict
     reactor_names = List
     selected_reactor_name = Str
+
+    name = SpacelessStr
 
     def add(self):
 

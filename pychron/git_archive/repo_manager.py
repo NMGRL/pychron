@@ -840,9 +840,15 @@ class GitRepoManager(Loggable):
         l = self.cmd('log', branch, '--oneline', *args)
         return l.split('\n')
 
-    def get_commits_from_log(self, greps=None):
+    def get_commits_from_log(self, greps=None, max_count=None, after=None, before=None):
         repo = self._repo
         args = [repo.active_branch.name, '--remove-empty', '--simplify-merges']
+        if max_count:
+            args.append('--max-count={}'.format(max_count))
+        if after:
+            args.append('--after={}'.format(after))
+        if before:
+            args.append('--before={}'.format(before))
 
         if greps:
             greps = '\|'.join(greps)

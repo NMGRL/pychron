@@ -162,6 +162,8 @@ class IsotopeGroup(HasTraits):
 
         if iso is not None:
             return iso.get_slope(n)
+        else:
+            return 0
 
     def get_baseline_value(self, attr):
         try:
