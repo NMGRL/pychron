@@ -206,6 +206,18 @@ class GenerateCurrentsAction(Action):
         dvc.generate_currents()
 
 
+class MapRunIDsAction(Action):
+    name = 'Map RunIDs'
+
+    def perform(self, event):
+        app = event.task.window.application
+        dvc = app.get_service(DVC_PROTOCOL)
+
+        from pychron.dvc.map_runid import MapRunID
+        mr = MapRunID()
+        mr.map(dvc)
+
+
 class ClearCacheAction(Action):
     name = 'Clear Cache'
 

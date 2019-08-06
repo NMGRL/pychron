@@ -28,7 +28,6 @@ class SpectrumPanel(FigurePanel):
     _graph_klass = SpectrumGraph
     _figure_klass = Spectrum
     # make_alternate_figure_event = Event
-    figure_event = Event
 
     def _handle_figure_event(self, new):
         kind = new[0]
