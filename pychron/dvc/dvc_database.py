@@ -40,6 +40,7 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
     PrincipalInvestigatorTbl, SamplePrepWorkerTbl, SamplePrepSessionTbl, \
     SamplePrepStepTbl, SamplePrepImageTbl, RestrictedNameTbl, AnalysisGroupTbl, AnalysisGroupSetTbl, \
     SimpleIdentifierTbl, SamplePrepChoicesTbl, CurrentTbl, ParameterTbl, UnitsTbl
+from pychron.experiment.utilities.identifier import strip_runid
 from pychron.globals import globalv
 from pychron.pychron_constants import NULL_STR, EXTRACT_DEVICE, NO_EXTRACT_DEVICE, \
     SAMPLE_PREP_STEPS, SAMPLE_METADATA
@@ -336,6 +337,21 @@ class DVCDatabase(DatabaseAdapter):
 
         q = q.order_by(AnalysisTbl.timestamp.desc())
         return self._query_one(q, verbose_query=True)
+
+    def map_runid(self, src, dst):
+        with self.session_ctx() as sess:
+            dl, da, ds = strip_runid(dst)
+            if self.get_analysis_runid(dl, da, ds):
+                return '"{}" already exists'.format(dst)
+
+            ip = self.get_identifier(dl)
+            if not ip:
+                return 'Identifier "{}" does not exist'.format(dl)
+
+            a = self.get_analysis_runid(*strip_runid(src))
+            a.irradiation_position = ip
+            a.aliquot = da
+            a.increment = alpha_to_int(ds)
 
     # adders
     def add_simple_identifier(self, sid):
@@ -1227,6 +1243,20 @@ class DVCDatabase(DatabaseAdapter):
             q = q.filter(ProjectTbl.name == project)
 
             return self._query_all(q)
+
+    def get_analysis_repository(self, runid):
+        l, a, s = strip_runid(runid)
+        with self.session_ctx() as sess:
+            q = sess.query(RepositoryAssociationTbl.repository)
+            q = q.join(AnalysisTbl)
+            q = q.join(IrradiationPositionTbl)
+
+            q = q.filter(IrradiationPositionTbl.identifier == l)
+            q = q.filter(AnalysisTbl.aliquot == a)
+            if s not in (None, ''):
+                q = q.filter(AnalysisTbl.increment == alpha_to_int(s))
+
+            return self._query_one(q, verbose_query=False)
 
     def get_database_version(self, **kw):
         with self.session_ctx() as sess:

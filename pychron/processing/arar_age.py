@@ -30,7 +30,7 @@ from pychron.core.helpers.isotope_utils import sort_detectors
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.processing.arar_constants import ArArConstants
 from pychron.processing.argon_calculations import calculate_f, abundance_sensitivity_correction, age_equation, \
-    calculate_flux, calculate_arar_decay_factors
+    calculate_flux, calculate_arar_decay_factors, convert_age
 from pychron.processing.isotope import Blank
 from pychron.processing.isotope_group import IsotopeGroup
 from pychron.pychron_constants import ARGON_KEYS, ARAR_MAPPING
@@ -499,28 +499,24 @@ class ArArAge(IsotopeGroup):
             return
 
         j = copy(self.j)
-        # if j is None:
-        #     j = ufloat(1e-4, 1e-7)
         j.tag = 'Position'
         j.std_dev = self.position_jerr or 0
         age = age_equation(j, f, include_decay_error=include_decay_error, arar_constants=arc)
+
+        # new_monitor_age = None
+        # new_lambda_k = None
+        # age = convert_age(age, new_monitor_age, new_lambda_k)
         self.uage_w_position_err = age
 
-        j = self.j
-        # if j is None:
-        #     j = ufloat(1e-4, 1e-7, tag='J')
-
-        age = age_equation(j, f, include_decay_error=include_decay_error, arar_constants=arc)
+        age = age_equation(self.j, f, include_decay_error=include_decay_error, arar_constants=arc)
+        # age = convert_age(age, new_monitor_age, new_lambda_k)
         self.uage_w_j_err = age
 
         j = copy(self.j)
-        # if j is None:
-        #     j = ufloat(1e-4, 1e-7, tag='J')
-
         j.std_dev = 0
         age = age_equation(j, f, include_decay_error=include_decay_error, arar_constants=arc)
+        # age = convert_age(age, new_monitor_age, new_lambda_k)
         self.uage = age
-
         self.age = nominal_value(age)
         self.age_err = std_dev(age)
         self.age_err_wo_j = std_dev(age)

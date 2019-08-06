@@ -158,6 +158,9 @@ class DVC(Loggable):
 
         with db.session_ctx():
             for repo in db.get_repositories():
+                if repo.name in ('JIRSandbox', 'REEFenite', 'Henry01184', 'FractionatedRes',
+                                 'PowerZPattern'):
+                    continue
                 self.debug('Updating currents for {}'.format(repo.name))
                 try:
                     st = time.time()
@@ -169,11 +172,11 @@ class DVC(Loggable):
                     if not ans:
                         continue
 
-                    if not self.confirmation_dialog('Updated currents for {}'.format(repo.name)):
-                        if self.confirmation_dialog('Stop update'):
-                            break
-                        else:
-                            continue
+                    # if not self.confirmation_dialog('Updated currents for {}'.format(repo.name)):
+                    #     if self.confirmation_dialog('Stop update'):
+                    #         break
+                    #     else:
+                    #         continue
 
                     for chunk in chunks(ans, 200):
                         chunk = self.make_analyses(chunk)

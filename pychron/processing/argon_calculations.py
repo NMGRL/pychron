@@ -431,6 +431,13 @@ def calculate_f(isotopes, decay_time, interferences=None, arar_constants=None, f
     return f, f_wo_irrad, non_ar_isotopes, computed, interference_corrected
 
 
+def convert_age(age, new_monitor_age, new_lambda_k):
+    if new_monitor_age is None:
+        pass
+
+    return age
+
+
 def age_equation(j, f, include_decay_error=False, lambda_k=None, arar_constants=None):
     if isinstance(j, tuple):
         j = ufloat(*j)

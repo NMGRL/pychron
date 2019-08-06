@@ -19,7 +19,7 @@ from math import isinf
 
 from chaco.legend import Legend
 from numpy import inf
-from traits.api import HasTraits, Any, List, Str
+from traits.api import HasTraits, Any, List, Str, Event
 
 from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.processing.analysis_graph import AnalysisStackedGraph
@@ -39,6 +39,8 @@ class FigurePanel(HasTraits):
     title = Str
     use_previous_limits = True
     track_value = True
+
+    figure_event = Event
 
     # @on_trait_change('analyses[]')
     # def _analyses_items_changed(self):
