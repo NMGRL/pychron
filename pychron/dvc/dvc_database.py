@@ -353,6 +353,19 @@ class DVCDatabase(DatabaseAdapter):
             a.aliquot = da
             a.increment = alpha_to_int(ds)
 
+    def sorted_repositories(self, names):
+        """
+        sort repositories by analysis time
+        :param names:
+        :return:
+        """
+        with self.session_ctx() as sess:
+            q = sess.query(RepositoryAssociationTbl.repository)
+            q = q.join(AnalysisTbl)
+            q = q.filter(RepositoryAssociationTbl.repository.in_(names))
+            q = q.group_by(RepositoryAssociationTbl.repository)
+            q = q.order_by(AnalysisTbl.timestamp.desc())
+            return self._query_all(q)
     # adders
     def add_simple_identifier(self, sid):
         with self.session_ctx():

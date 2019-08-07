@@ -20,19 +20,35 @@ import xlrd
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
 
-from pychron.core.helpers.iterfuncs import groupby_repo, groupby_idx
+from pychron.core.helpers.iterfuncs import groupby_idx
 from pychron.core.utils import alpha_to_int
 from pychron.dvc import dvc_dump, analysis_path, dvc_load
 from pychron.experiment.utilities.identifier import strip_runid
 from pychron.loggable import Loggable
 from pychron.paths import paths
 
+DEBUG = os.getenv('MAP_RUNID_DEBUG', False)
+
 
 class MapRunID(Loggable):
     def map(self, dvc):
-        path = self._get_path()
-        if os.path.isfile(path):
-            self._map(dvc, path)
+        if self.confirmation_dialog('''Are you sure you want to edit analysis runids? This cannot be easily undone. 
+If you want to continue you will be asked to select an excel file with the following format?
+        
+original_runid, new_runid
+
+e.g
+original_runid, new_runid
+10000-01, 20000-04
+10000-02, 20000-05
+10000-03, 20000-06
+
+
+note: first line is ignored and can be blank or a column header'''):
+
+            path = self._get_path()
+            if os.path.isfile(path):
+                self._map(dvc, path)
 
     def _get_path(self):
         dialog = FileDialog(action='open', default_directory=paths.data_dir)
@@ -93,8 +109,10 @@ class MapRunID(Loggable):
             if paths:
                 dvc.repository_add_paths(repo, paths)
                 dvc.repository_commit(repo, '<MANUAL> modified RunID')
-                if self.confirmation_dialog('Share changes?'):
-                    dvc.push_repository(repo)
+                if DEBUG:
+                    if not self.confirmation_dialog('Share changes?'):
+                        return
+                dvc.push_repository(repo)
 
     def _map_runid(self, dvc, repo, src, dst):
         """

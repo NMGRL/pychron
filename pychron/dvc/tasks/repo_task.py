@@ -34,7 +34,7 @@ from pychron.dvc import repository_path
 from pychron.dvc.tasks import list_local_repos
 from pychron.dvc.tasks.actions import CloneAction, AddBranchAction, CheckoutBranchAction, PushAction, PullAction, \
     FindChangesAction, LoadOriginAction, DeleteLocalChangesAction, ArchiveRepositoryAction, SyncSampleInfoAction, \
-    SyncRepoAction, RepoStatusAction, BookmarkAction, RebaseAction, DeleteChangesAction
+    SyncRepoAction, RepoStatusAction, BookmarkAction, RebaseAction, DeleteChangesAction, SortLocalReposAction
 from pychron.dvc.tasks.panes import RepoCentralPane, SelectionPane
 from pychron.envisage.tasks.base_task import BaseTask
 # from pychron.git_archive.history import from_gitlog
@@ -83,7 +83,7 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
     ncommits = Int(50, enter_set=True, auto_set=False)
 
     selected_local_repositories = List
-    selected_local_repository_name = Property(depends_on='selected_local_repositories')#Instance(RepoItem)
+    selected_local_repository_name = Property(depends_on='selected_local_repositories')  # Instance(RepoItem)
 
     repository_names = List
 
@@ -101,7 +101,8 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
                           ArchiveRepositoryAction(),
                           DeleteChangesAction(),
                           RepoStatusAction(),
-                          BookmarkAction()),
+                          BookmarkAction(),
+                          SortLocalReposAction()),
                  SToolBar(SyncSampleInfoAction())]
 
     commits = List
@@ -118,16 +119,22 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
 
     def activated(self):
         bind_preference(self, 'check_for_changes', 'pychron.dvc.repository.check_for_changes')
-        # self._preference_binder('pychron.dvc.connection', ('organization',))
-        # prefid = 'pychron.dvc.connection'
 
-        # bind_preference(self, 'favorites', '{}.favorites'.format(prefid))
-
-        # self._preference_binder('pychron.github', ('oauth_token',))
         self.refresh_local_names()
         if self.check_for_changes:
             if self.confirmation_dialog('Check all Repositories for changes'):
                 self.find_changes()
+
+    def sort_repos(self):
+        names = self.selected_local_repositories
+        if not names:
+            names = self.local_names
+
+        sorted_names = [r[0] for r in self.dvc.sorted_repositories([r.name for r in names])]
+
+        for si in reversed(sorted_names):
+            lr = next((r for r in names if r.name == si))
+            self.local_names.insert(0, lr)
 
     def archive_repository(self):
         self.debug('archive repository')

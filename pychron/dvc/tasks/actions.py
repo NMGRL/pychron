@@ -142,6 +142,11 @@ class BookmarkAction(LocalRepositoryAction):
     image = icon('git-bookmark')
 
 
+class SortLocalReposAction(TaskAction):
+    name = 'Sort Repos'
+    method = 'sort_repos'
+    tooltip = 'Sort repos by most recently analyzed'
+
 # class SyncMetaDataAction(Action):
 #     name = 'Sync Repo/DB Metadata'
 #
