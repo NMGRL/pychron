@@ -41,7 +41,7 @@ from pychron.pychron_constants import DVC_PROTOCOL
 
 class EntryPlugin(BaseTaskPlugin):
     id = 'pychron.entry.plugin'
-
+    name = 'Entry'
     data_sources = ExtensionPoint(List, id='pychron.entry.data_sources')
 
     def _help_tips_default(self):

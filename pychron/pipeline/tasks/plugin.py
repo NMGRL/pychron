@@ -30,7 +30,7 @@ from pychron.pipeline.tasks.actions import ConfigureRecallAction, IdeogramAction
     FluxAction, \
     FreezeProductionRatios, InverseIsochronAction, IsoEvolutionAction, ExtractionAction, RecallAction, \
     AnalysisTableAction, ClearAnalysisSetsAction, SubgroupIdeogramAction, HistoryIdeogramAction, HybridIdeogramAction, \
-    MassSpecReducedAction, InterpretedAgeRecallAction
+    MassSpecReducedAction, InterpretedAgeRecallAction, IdentifyPeaksDemoAction
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 
 
@@ -124,6 +124,9 @@ class PipelinePlugin(BaseTaskPlugin):
                         break
 
         extensions.append(TaskExtension(actions=additions))
+
+        debug_additions = [SchemaAddition(factory=IdentifyPeaksDemoAction, path='MenuBar/tools.menu')]
+        extensions.append(TaskExtension(actions=debug_additions))
         return extensions
 
     def _available_task_extensions_default(self):

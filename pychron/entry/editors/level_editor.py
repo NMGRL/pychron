@@ -20,7 +20,7 @@ import os
 from enable.component_editor import ComponentEditor
 from pyface.constant import OK, YES, NO
 from pyface.file_dialog import FileDialog
-from traits.api import List, Instance, Str, Float, Any, Button, Property, HasTraits, Dict
+from traits.api import List, Instance, Str, Float, Any, Button, Property, HasTraits, Dict, Enum
 from traitsui.api import View, Item, TabularEditor, HGroup, UItem, Group, VGroup, \
     HSplit, EnumEditor
 from traitsui.tabular_adapter import TabularAdapter
@@ -30,7 +30,7 @@ from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
 from pychron.canvas.utils import load_holder_canvas
 from pychron.core.helpers.logger_setup import logging_setup
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
-from pychron.core.pychron_traits import BorderHGroup
+from pychron.core.pychron_traits import BorderHGroup, BorderVGroup
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.ui.strings import SpacelessStr
 from pychron.core.utils import alphas, alpha_to_int
@@ -41,6 +41,7 @@ from pychron.entry.editors.production import IrradiationProduction
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.loggable import Loggable
 from pychron.paths import paths
+from pychron.pychron_constants import FLUX_CONSTANTS
 
 
 def prep_prname(prname):
@@ -86,6 +87,12 @@ class EditView(ModelView):
                                                'arrow_up',
                                                tooltip='Set current as the reactor default'),
                             label='Available Default Productions')
+        mgrp = BorderVGroup(UItem('selected_monitor'),
+                            HGroup(Item('monitor_name'),
+                                   Item('monitor_material')),
+                            HGroup(Item('monitor_age'),
+                                   Item('lambda_k')),
+                            label='Monitor')
 
         pgrp = BorderHGroup(UItem('selected_production_name',
                                   editor=EnumEditor(name='production_names')),
@@ -113,10 +120,10 @@ class EditView(ModelView):
 
         v = okcancel_view(VGroup(HGroup(Item('name'), Item('z')),
                                  VGroup(UItem('level_note', style='custom'), label='Level Note', show_border=True),
-                                 Group(
-                                     pr_group,
-                                     tray_grp,
-                                     layout='tabbed')),
+                                 Group(pr_group,
+                                       tray_grp,
+                                       mgrp,
+                                       layout='tabbed')),
                           width=550,
                           height=650,
                           title=self.title)
@@ -172,6 +179,12 @@ class LevelEditor(Loggable):
     update_reactor_name = Str
     update_reactor_names = List
     meta_repo = Instance(MetaRepo)
+
+    selected_monitor = Enum(list(FLUX_CONSTANTS.keys()))
+    monitor_name = Property(depends_on='selected_monitor')
+    monitor_age = Property(depends_on='selected_monitor')
+    monitor_material = Property(depends_on='selected_monitor')
+    lambda_k = Property(depends_on='selected_monitor')
 
     def edit(self):
         self._load_productions()
@@ -247,6 +260,12 @@ class LevelEditor(Loggable):
                     # level.production = pr
 
                     self.meta_repo.update_level_production(self.irradiation, self.name, prname, self.level_note)
+                if self.selected_monitor:
+                    self.meta_repo.update_level_monitor(self.irradiation,
+                                                        self.name,
+                                                        self.monitor_name, self.monitor_material,
+                                                        self.monitor_age,
+                                                        self.lambda_k)
 
                 if original_tray != self.selected_tray:
                     self._save_tray(level, original_tray)
@@ -259,8 +278,8 @@ class LevelEditor(Loggable):
         self.debug('changes {}'.format(changes))
         if changes:
             self.meta_repo.smart_pull()
-            self.meta_repo.commit('Edited level {}'.format(self.name))
-            self.meta_repo.push()
+            # self.meta_repo.commit('Edited level {}'.format(self.name))
+            # self.meta_repo.push()
             db.commit()
 
         self._refresh_production()
@@ -505,6 +524,22 @@ class LevelEditor(Loggable):
                     db = self.db
                     load_irradiation_map(db, dlg.path,
                                          os.path.basename(dlg.path), overwrite_geometry=True)
+
+    def _get_monitor_name(self):
+        return FLUX_CONSTANTS[self.selected_monitor].get('monitor_name', '')
+
+    def _get_monitor_age(self):
+        return FLUX_CONSTANTS[self.selected_monitor].get('monitor_age', 0)
+
+    def _get_monitor_material(self):
+        return FLUX_CONSTANTS[self.selected_monitor].get('monitor_material', '')
+
+    def _get_lambda_k(self):
+        c = FLUX_CONSTANTS[self.selected_monitor]
+        try:
+            return c['lambda_ec'][0] + c['lambda_b'][0]
+        except KeyError:
+            return 0
 
 
 if __name__ == '__main__':

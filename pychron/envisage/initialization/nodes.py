@@ -15,14 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-import hashlib
 
 from traits.api import HasTraits, Str, Bool, List, Instance
+from traitsui.tree_node import TreeNode
 
 # ============= standard library imports ========================
+import hashlib
 # ============= local library imports  ==========================
-from traitsui.tree_node import TreeNode
 from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.envisage.resources import icon
 

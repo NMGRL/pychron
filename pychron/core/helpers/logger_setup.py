@@ -150,7 +150,8 @@ def logging_setup(name, use_archiver=True, root=None, use_file=True, **kw):
 def add_root_handler(path, level=None, strformat=None, **kw):
     if level is None:
         level = gLEVEL
-    if format is None:
+
+    if strformat is None:
         strformat = gFORMAT
 
     root = logging.getLogger()

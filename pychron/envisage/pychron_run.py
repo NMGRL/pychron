@@ -77,6 +77,7 @@ PACKAGE_DICT = dict(
     NMGRLFurnaceControlPlugin='pychron.furnace.tasks.nmgrl.furnace_control_plugin',
     LDEOFurnacePlugin='pychron.furnace.tasks.ldeo.furnace_plugin',
     LDEOFurnaceControlPlugin='pychron.furnace.tasks.ldeo.furnace_control_plugin',
+    ThermoFurnacePlugin='pychron.furnace.tasks.thermo.furnace_plugin',
 
     # spectrometers
     ArgusSpectrometerPlugin='pychron.spectrometer.tasks.thermo.argus',

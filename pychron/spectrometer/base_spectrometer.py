@@ -52,6 +52,8 @@ class BaseSpectrometer(SpectrometerDevice):
     spectrometer_configuration = Str
     spectrometer_configurations = List
 
+    force_send_configuration = Bool(True)
+
     use_deflection_correction = Bool(True)
     use_hv_correction = Bool(True)
     _connection_status = False
@@ -313,6 +315,9 @@ class BaseSpectrometer(SpectrometerDevice):
                 except BaseException as e:
                     self.warning(
                         'Cannot update isotopes. isotope={}, detector={}. error:{}'.format(isotope, detector, e))
+
+    def verify_configuration(self, **kw):
+        return True
 
     def send_configuration(self, **kw):
         """

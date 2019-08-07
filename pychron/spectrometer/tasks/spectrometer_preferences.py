@@ -30,6 +30,7 @@ class SpectrometerPreferences(BasePreferencesHelper):
     preferences_path = 'pychron.spectrometer'
     id = 'pychron.spectrometer.preferences_page'
     send_config_on_startup = Bool
+    force_send_configuration = Bool(True)
     use_local_mftable_archive = Bool
     use_db_mftable_archive = Bool
     confirmation_threshold_mass = Float
@@ -62,6 +63,8 @@ class SpectrometerPreferencesPane(PreferencesPane):
                         label='MFTable')
         gen_grp = VGroup(Item('send_config_on_startup',
                               tooltip='Load the spectrometer parameters on startup', ),
+                         Item('force_send_configuration',
+                              tooltip='If disabled pychron will only set configuration values that are out of date'),
                          Item('auto_open_readout',
                               tooltip='Open readout view when Spectrometer plugin starts'))
         scan_grp = VGroup(Item('use_detector_safety',

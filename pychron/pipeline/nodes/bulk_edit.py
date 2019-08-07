@@ -15,10 +15,12 @@
 # ===============================================================================
 import os
 import shutil
+from operator import attrgetter
 
 from traits.api import HasTraits, Float, Str, List, Bool, Property, Int
 from traitsui.api import View, UItem, Item, HGroup, ListEditor, EnumEditor, Label, InstanceEditor, VGroup
 
+from pychron.core.helpers.iterfuncs import groupby_repo, groupby_key
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pychron_traits import BorderVGroup, StepStr
 from pychron.core.utils import alpha_to_int
@@ -58,6 +60,8 @@ class BulkOptions(HasTraits):
     aliquot = Int
     step = StepStr
 
+    sync_sample_enabled = Bool
+
     @property
     def icfactor_message(self):
         return [ic.tostr() for ic in self.ic_factors if ic.enabled]
@@ -71,8 +75,11 @@ class BulkOptions(HasTraits):
 
         runid_grp = BorderVGroup(HGroup(Item('aliquot'), Item('step')),
                                  label='RunID')
-
-        v = okcancel_view(VGroup(icgrp, runid_grp),
+        sample_grp = BorderVGroup(Item('sync_sample_enabled',
+                                       label='Sync Sample MetaData',
+                                       tooltip='Sync analysis sample metadata to the database'),
+                                  label='Sample')
+        v = okcancel_view(VGroup(icgrp, runid_grp, sample_grp),
                           title='Bulk Edit Options')
         return v
 
@@ -118,6 +125,16 @@ class BulkEditNode(BaseDVCNode):
             for expid, ps in paths.items():
                 if self.dvc.repository_add_paths(expid, ps):
                     self.dvc.repository_commit(expid, '<EDIT> RunID')
+
+        if self.options.sync_sample_enabled:
+            for repo, ais in groupby_repo(ans):
+                self.dvc.pull_repository(repo)
+                ps = []
+                for identifier, ais in groupby_key(ais, attrgetter('identifier')):
+                    ps.extend(self.dvc.analyses_db_sync(identifier, ais, repo))
+
+                if self.dvc.repository_add_paths(repo, ps):
+                    self.dvc.repository_commit(repo, '<EDIT> Sync Sample MetaData')
 
     def _bulk_runid(self, ai, aliquot, step):
         if not aliquot:

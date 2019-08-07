@@ -80,6 +80,7 @@ class DVCPreferences(BasePreferencesHelper):
     use_cocktail_irradiation = Bool
     use_cache = Bool
     max_cache_size = Int
+    update_currents_enabled = Bool
 
 
 class DVCPreferencesPane(PreferencesPane):
@@ -91,6 +92,8 @@ class DVCPreferencesPane(PreferencesPane):
                                           tooltip='Use the special cocktail.json for defining the '
                                                   'irradiation flux and chronology',
                                           label='Use Cocktail Irradiation')),
+                        BorderVGroup(Item('update_currents_enabled', label='Enabled'),
+                                     label='Current Values'),
                         BorderVGroup(HGroup(Item('use_cache', label='Enabled'),
                                             Item('max_cache_size', label='Max Size')),
                                      label='Cache')))

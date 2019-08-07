@@ -25,7 +25,7 @@ from operator import itemgetter
 from apptools.preferences.preference_binding import bind_preference
 from git import Repo, GitCommandError
 from traits.api import Instance, Str, Set, List, provides, Bool, Int
-from uncertainties import ufloat
+from uncertainties import ufloat, std_dev, nominal_value
 
 from pychron import json
 from pychron.core.helpers.filetools import remove_extension, list_subdirectories, list_directory
@@ -75,6 +75,8 @@ class DVC(Loggable):
     data_source = Instance(DVCConnectionItem)
     favorites = List
 
+    update_currents_enabled = Bool
+
     use_cocktail_irradiation = Str
     use_cache = Bool
     max_cache_size = Int
@@ -104,6 +106,95 @@ class DVC(Loggable):
 
         if self.db.connect():
             return True
+
+    def generate_currents(self):
+        if not self.update_currents_enabled:
+            self.information_dialog('You must enable "Current Values" in Preferences/DVC')
+            return
+
+        if not self.confirmation_dialog('Are you sure you want to generate current values for the entire database? '
+                                        'This could take a while!'):
+            return
+
+        self.info('Generate currents started')
+        # group by repository
+        db = self.db
+        db.create_session()
+        ocoa = db.commit_on_add
+        db.commit_on_add = False
+
+        def chunks(l, n):
+            for i in range(0, len(l), n):
+                yield l[i:i + n]
+
+        def func(ai, prog, i, n):
+            if prog:
+                if not i % 10:
+                    prog.change_message('Updating Currents {} {}/{}'.format(ai.record_id, i, n))
+                else:
+                    prog.increment()
+
+            ai.load_raw_data()
+            dban = db.get_analysis_uuid(ai.uuid)
+            if ai.analysis_type in ('unknown', 'cocktail'):
+                try:
+                    self._update_current_age(ai, dban=dban, force=True)
+                except BaseException as e:
+                    self.warning('Failed making current age for {}: {}'.format(ai.record_id, e))
+
+            if not ai.analysis_type.lower().startswith('blank'):
+                try:
+                    self._update_current_blanks(ai, dban=dban, force=True, update_age=False, commit=False)
+                except BaseException as e:
+                    self.warning('Failed making current blanks for {}: {}'.format(ai.record_id, e))
+            try:
+                self._update_current(ai, dban=dban, force=True, update_age=False, commit=False)
+            except BaseException as e:
+                self.warning('Failed making intensities for {}: {}'.format(ai.record_id, e))
+
+            # if not i % 100:
+            #     db.commit()
+            #     db.flush()
+
+        with db.session_ctx():
+            for repo in db.get_repositories():
+                if repo.name in ('JIRSandbox', 'REEFenite', 'Henry01184', 'FractionatedRes',
+                                 'PowerZPattern'):
+                    continue
+                self.debug('Updating currents for {}'.format(repo.name))
+                try:
+                    st = time.time()
+                    tans = db.get_repository_analysis_count(repo.name)
+
+                    ans = db.get_analyses_no_current(repo.name)
+                    self.debug('Total repo analyses={}, filtered={}'.format(tans, len(ans)))
+
+                    if not ans:
+                        continue
+
+                    # if not self.confirmation_dialog('Updated currents for {}'.format(repo.name)):
+                    #     if self.confirmation_dialog('Stop update'):
+                    #         break
+                    #     else:
+                    #         continue
+
+                    for chunk in chunks(ans, 200):
+                        chunk = self.make_analyses(chunk)
+                        if chunk:
+                            progress_iterator(chunk, func)
+                        db.commit()
+                        db.flush()
+
+                    self.info('Elapsed time {}: n={}, '
+                              '{:0.2f} min'.format(repo.name, len(ans), (time.time() - st)) / 60.)
+                    db.commit()
+                    db.flush()
+                except BaseException as e:
+                    self.warning('Failed making analyses for {}: {}'.format(repo.name, e))
+
+        db.commit_on_add = ocoa
+        db.close_session()
+        self.info('Generate currents finished')
 
     def find_associated_identifiers(self, samples):
         from pychron.dvc.associated_identifiers import AssociatedIdentifiersView
@@ -174,13 +265,16 @@ class DVC(Loggable):
                                     timestamp=now)
         return True
 
+    def analyses_db_sync(self, ln, ais, reponame):
+        self.info('sync db with analyses')
+        return self._sync_info(ln, ais, reponame)
+
     def repository_db_sync(self, reponame, dry_run=False):
         self.info('sync db with repo={} dry_run={}'.format(reponame, dry_run))
         repo = self._get_repository(reponame, as_current=False)
-        ps = []
         db = self.db
         repo.pull()
-
+        ps = []
         with db.session_ctx():
             ans = db.get_repository_analyses(reponame)
             groups = [(g[0], list(g[1])) for g in groupby_key(ans, 'identifier')]
@@ -188,40 +282,9 @@ class DVC(Loggable):
 
             for ln, ais in groups:
                 progress.change_message('Syncing identifier: {}'.format(ln))
-                ip = db.get_identifier(ln)
-                dblevel = ip.level
-                irrad = dblevel.irradiation.name
-                level = dblevel.name
-                pos = ip.position
-                for ai in ais:
-                    p = analysis_path(ai, reponame)
+                pss = self._sync_info(ln, ais, reponame, dry_run)
+                ps.extend(pss)
 
-                    try:
-                        obj = dvc_load(p)
-                    except ValueError:
-                        print('skipping {}'.format(p))
-
-                    sample = ip.sample.name
-                    project = ip.sample.project.name
-                    material = ip.sample.material.name
-                    changed = False
-                    for attr, v in (('sample', sample),
-                                    ('project', project),
-                                    ('material', material),
-                                    ('irradiation', irrad),
-                                    ('irradiation_level', level),
-                                    ('irradiation_position', pos)):
-                        ov = obj.get(attr)
-                        if ov != v:
-                            self.info('{:<20s} repo={} db={}'.format(attr, ov, v))
-                            obj[attr] = v
-                            changed = True
-
-                    if changed:
-                        self.debug('{}'.format(p))
-                        ps.append(p)
-                        if not dry_run:
-                            dvc_dump(obj, p)
             progress.close()
 
         if ps and not dry_run:
@@ -230,6 +293,46 @@ class DVC(Loggable):
             repo.commit('<SYNC> Synced repository with database {}'.format(self.db.datasource_url))
             repo.push()
         self.info('finished db-repo sync for {}'.format(reponame))
+
+    def _sync_info(self, ln, ais, reponame, dry_run=False):
+        db = self.db
+        ip = db.get_identifier(ln)
+        dblevel = ip.level
+        irrad = dblevel.irradiation.name
+        level = dblevel.name
+        pos = ip.position
+        ps = []
+
+        for ai in ais:
+            p = analysis_path(ai, reponame)
+
+            try:
+                obj = dvc_load(p)
+            except ValueError:
+                print('skipping {}'.format(p))
+
+            sample = ip.sample.name
+            project = ip.sample.project.name
+            material = ip.sample.material.name
+            changed = False
+            for attr, v in (('sample', sample),
+                            ('project', project),
+                            ('material', material),
+                            ('irradiation', irrad),
+                            ('irradiation_level', level),
+                            ('irradiation_position', pos)):
+                ov = obj.get(attr)
+                if ov != v:
+                    self.info('{:<20s} repo={} db={}'.format(attr, ov, v))
+                    obj[attr] = v
+                    changed = True
+
+            if changed:
+                self.debug('{}'.format(p))
+                ps.append(p)
+                if not dry_run:
+                    dvc_dump(obj, p)
+        return ps
 
     def repository_transfer(self, ans, dest):
 
@@ -418,12 +521,16 @@ class DVC(Loggable):
             if self._cache:
                 self._cache.remove(ai.uiid)
 
+            self._update_current_age(ai)
+
     def save_icfactors(self, ai, dets, fits, refs):
         if fits and dets:
             self.info('Saving icfactors for {}'.format(ai))
             ai.dump_icfactors(dets, fits, refs, reviewed=True)
             if self._cache:
                 self._cache.remove(ai.uiid)
+
+            self._update_current_age(ai)
 
     def save_blanks(self, ai, keys, refs):
         if keys:
@@ -432,11 +539,15 @@ class DVC(Loggable):
             if self._cache:
                 self._cache.remove(ai.uiid)
 
+            self._update_current_blanks(ai, keys)
+
     def save_defined_equilibration(self, ai, keys):
         if keys:
             self.info('Saving equilibration for {}'.format(ai))
             if self._cache:
                 self._cache.remove(ai.uiid)
+
+            self._update_current(ai, keys)
             return ai.dump_equilibration(keys, reviewed=True)
 
     def save_fits(self, ai, keys):
@@ -445,6 +556,8 @@ class DVC(Loggable):
             ai.dump_fits(keys, reviewed=True)
             if self._cache:
                 self._cache.remove(ai.uiid)
+
+            self._update_current(ai, keys)
 
     def save_flux(self, identifier, j, e):
         """
@@ -1224,6 +1337,79 @@ class DVC(Loggable):
             self._cache.clear()
 
     # private
+    def _update_current_blanks(self, ai, keys=None, dban=None, force=False, update_age=True, commit=True):
+        if self.update_currents_enabled:
+            db = self.db
+            if dban is None:
+                dban = db.get_analysis_uuid(ai.uuid)
+            if keys is None:
+                keys = ai.isotope_keys
+
+            if dban:
+                for k in keys:
+                    iso = ai.get_isotope(k)
+                    if iso:
+                        iso = iso.blank
+                        db.update_current(dban, '{}_blank'.format(k), iso.value, iso.error, iso.units, force=force)
+                if update_age:
+                    self._update_current_age(ai, dban, force=force)
+                if commit:
+                    db.commit()
+            else:
+                self.warning('Failed to update current values. '
+                             'Could not located RunID={}, UUID={}'.format(ai.runid, ai.uuid))
+
+    def _update_current_age(self, ai, dban=None, force=False):
+        if self.update_currents_enabled:
+            if dban is None:
+                db = self.db
+                dban = db.get_analysis_uuid(ai.uuid)
+
+            if dban:
+                age_units = ai.arar_constants.age_units
+                self.db.update_current(dban, 'age', ai.age, ai.age_err, age_units, force=force)
+                self.db.update_current(dban, 'age_wo_j_error', ai.age, ai.age_err_wo_j, age_units, force=force)
+
+    def _update_current(self, ai, keys=None, dban=None, force=False, update_age=True, commit=True):
+        if self.update_currents_enabled:
+            db = self.db
+            if dban is None:
+                dban = db.get_analysis_uuid(ai.uuid)
+
+            if dban:
+                if keys is None:
+                    keys = ai.isotope_keys
+                    keys += [iso.detector for iso in ai.iter_isotopes()]
+
+                for k in keys:
+                    iso = ai.get_isotope(k)
+                    if iso is None:
+                        iso = ai.get_isotope(detector=k)
+                        bs = iso.baseline
+                        db.update_current(dban, '{}_baseline'.format(k), bs.value, bs.error, bs.units, force=force)
+                        db.update_current(dban, '{}_baseline_n'.format(k), bs.n, None, 'int', force=force)
+                    else:
+                        db.update_current(dban, '{}_n'.format(k), iso.n, None, 'int', force=force)
+                        db.update_current(dban, '{}_intercept'.format(k), iso.value, iso.error, iso.units, force=force)
+
+                        v = iso.get_ic_corrected_value()
+                        db.update_current(dban, '{}_ic_corrected'.format(k), nominal_value(v), std_dev(v), iso.units,
+                                          force=force)
+
+                        v = iso.get_baseline_corrected_value()
+                        db.update_current(dban, '{}_bs_corrected'.format(k), nominal_value(v), std_dev(v), iso.units,
+                                          force=force)
+
+                        v = iso.get_non_detector_corrected_value()
+                        db.update_current(dban, k, nominal_value(v), std_dev(v), iso.units, force=force)
+                if update_age:
+                    self._update_current_age(ai, dban, force=force)
+                if commit:
+                    db.commit()
+            else:
+                self.warning('Failed to update current values. '
+                             'Could not located RunID={}, UUID={}'.format(ai.runid, ai.uuid))
+
     def _transfer_analysis_to(self, dest, src, rid):
         p = analysis_path(rid, src)
         np = analysis_path(rid, dest)
@@ -1277,6 +1463,11 @@ class DVC(Loggable):
                                    analyses=analyses,
                                    options=options, add=add,
                                    position_jerr=position_jerr)
+
+        if self.update_currents_enabed:
+            ans = self.db.get_labnumber_analyses([identifier])
+            for ai in self.make_analyses(ans):
+                self._update_current_age(ai)
 
     def _add_interpreted_age(self, ia, d):
         rid = ia.repository_identifier
@@ -1476,6 +1667,7 @@ class DVC(Loggable):
         bind_preference(self, 'use_cocktail_irradiation', '{}.use_cocktail_irradiation'.format(prefid))
         bind_preference(self, 'use_cache', '{}.use_cache'.format(prefid))
         bind_preference(self, 'max_cache_size', '{}.max_cache_size'.format(prefid))
+        bind_preference(self, 'update_currents_enabled', '{}.update_currents_enabled'.format(prefid))
 
         if self.use_cache:
             self._use_cache_changed()

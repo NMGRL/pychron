@@ -207,8 +207,14 @@ DEFAULT_INTEGRATION_TIME = 1
 K_DECAY_CONSTANTS = {'Min et al., 2000': (5.80e-11, 0, 4.883e-10, 0),
                      'Steiger & Jager 1977': (5.81e-11, 0, 4.962e-10, 0)}
 
-FLUX_CONSTANTS = {'FC Min': {'lambda_ec': [5.80e-11, 0], 'lambda_b': [4.883e-10, 0], 'monitor_age': 28.201},
-                  'FC SJ': {'lambda_ec': [5.81e-11, 0], 'lambda_b': [4.962e-10, 0],
+FLUX_CONSTANTS = {'FC Min': {'lambda_ec': [5.80e-11, 0], 'lambda_b': [4.883e-10, 0],
+                             'monitor_name': 'FC-2',
+                             'monitor_material': 'Sanidine',
+                             'monitor_age': 28.201},
+                  'FC SJ': {'lambda_ec': [5.81e-11, 0],
+                            'lambda_b': [4.962e-10, 0],
+                            'monitor_name': 'FC-2',
+                            'monitor_material': 'Sanidine',
                             'monitor_age': 28.02}}
 
 LEAST_SQUARES_1D = 'LeastSquares1D'

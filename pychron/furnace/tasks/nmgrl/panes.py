@@ -230,7 +230,7 @@ class ControlPane(TraitsDockPane):
                               show_border=True, label='Snapshot', ),
                        label='Graph')
         v = View(VGroup(c_grp,
-                        HGroup(Tabbed(d_grp, g_grp)))) # HGroup(Tabbed(d_grp, v_grp, g_grp))))
+                        HGroup(Tabbed(d_grp, g_grp))))
         return v
 
 

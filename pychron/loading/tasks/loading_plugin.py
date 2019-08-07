@@ -34,6 +34,7 @@ from pychron.pychron_constants import DVC_PROTOCOL
 
 
 class LoadingPlugin(BaseTaskPlugin):
+    name = 'Loading'
     id = 'pychron.loading'
 
     def _task_extensions_default(self):

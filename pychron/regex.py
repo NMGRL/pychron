@@ -45,4 +45,7 @@ MDD_PARAM_REGEX = re.compile(r'E= {3}(?P<E>\d+.\d+) {7}\+\- {4}(?P<Eerr>\d+.\d+)
 
 
 STEPREGEX = re.compile(r'^[A-Z]+$')
+
+
+DETREGEX = re.compile(r'^(H1|H2|L1|L2|CDD|AX)(\(CDD\)){0,1}$')
 # ============= EOF =============================================

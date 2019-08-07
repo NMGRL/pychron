@@ -17,16 +17,14 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
-from __future__ import absolute_import
 import math
 from functools import partial
 
-
 # ============= local library imports  ==========================
-from uncertainties import std_dev, nominal_value
 
 
 def uformat_percent_error(u, *args, **kw):
+    from uncertainties import std_dev, nominal_value
     return format_percent_error(nominal_value(u), std_dev(u), *args, **kw)
 
 

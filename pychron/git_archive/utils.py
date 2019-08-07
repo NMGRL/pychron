@@ -35,19 +35,19 @@ def from_gitlog(obj, tag=None):
     hexsha, author, email, ct, message = obj.split('|')
     date = datetime.fromtimestamp(float(ct))
 
-    if tag is None:
+    if not tag:
         tag = TAG_RE.match(message)
         if tag:
             tag = tag.group('tag')[1:-1]
         else:
-            tag = 'NULL'
+            tag = ''
 
     g = GitSha(hexsha=hexsha,
                message=message,
                date=date,
                author=author,
                email=email,
-               tag=tag)
+               tag=tag or '')
     return g
 
 
