@@ -17,8 +17,10 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 
+import os
 import time
 
+import yaml
 from numpy import array, argmin
 from traits.api import Int, Property, List, \
     Str, DelegatesTo, Bool, Float
@@ -26,10 +28,12 @@ from traits.api import Int, Property, List, \
 from pychron.core.helpers.strtools import csv_to_floats
 from pychron.core.progress import open_progress
 from pychron.core.ramper import StepRamper
+from pychron.paths import paths
 from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES, \
     QTEGRA_DEFAULT_INTEGRATION_TIME
 from pychron.spectrometer import get_spectrometer_config_path
 from pychron.spectrometer.base_spectrometer import BaseSpectrometer
+from pychron.spectrometer.readout_view import Readout, DeflectionReadout
 
 
 def normalize_integration_time(it):
@@ -385,7 +389,7 @@ class ThermoSpectrometer(BaseSpectrometer):
 
     def verify_configuration(self, **kw):
         self.debug('========= Verifying configuration =========')
-
+        readout_comp, defl_comp = self._load_configuration_comparisons()
         mismatch = False
         if self.microcontroller:
             command_map = self.get_command_map()
@@ -393,25 +397,51 @@ class ThermoSpectrometer(BaseSpectrometer):
             if args is not None:
                 specparams, defl, trap, magnet = args
                 for k, v in defl.items():
-                    d = self.get_deflection(k, current=True)
-                    if abs(d - v) / float(v) > 0.01:
-                        self.warning('verify failed {}. current={}, config={}'.format(k, d, v))
-                        mismatch = True
+                    comp = defl_comp.get(k, {})
+                    if comp.get('compare', True):
+                        current = self.get_deflection(k, current=True)
+                        dev = self._get_config_dev(current, v, comp)
+                        if dev:
+                            self.warning('verify failed {}. current={}, config={}'.format(k, current, v))
+                            mismatch = True
 
                 for k, v in specparams.items():
-                    cmd = 'Get{}'.format(command_map[k])
-                    current = self.get_parameter(cmd)
-                    if abs(v - current) / float(v) > 0.01:
-                        self.warning('verify failed {}. current={}, config={}'.format(k, current, v))
-                        mismatch = True
+                    try:
+                        mk = command_map[k]
+                    except KeyError:
+                        self.debug('$$$$$$$$$$ Not checking {}. Not in command_map'.format(k))
+                        continue
+
+                    comp = readout_comp.get(mk, {})
+                    if comp.get('compare', True):
+                        try:
+                            cmd = 'Get{}'.format(mk)
+                        except KeyError:
+                            self.debug('invalid parameter {}'.format(mk))
+                            continue
+
+                        current = self.get_parameter(cmd)
+                        try:
+                            current = float(current)
+                        except ValueError:
+                            self.warning('invalid float value {}, {}'.format(mk, current))
+                            continue
+
+                        dev = self._get_config_dev(current, v, comp)
+                        if dev:
+                            self.warning('verify failed {}. current={}, config={}'.format(mk, current, v))
+                            mismatch = True
 
                 for tag in ('voltage', 'current'):
                     v = trap.get(tag)
                     if v is not None:
-                        current = getattr(self.source, 'trap_{}'.format(tag))
-                        if abs(v - current) / float(v) > 0.01:
-                            self.warning('verify failed trap {}. current={}, config={}'.format(tag, current, v))
-                            mismatch = True
+                        comp = readout_comp.get('Trap{}'.format(tag.capitalize()), {})
+                        if comp.get('compare', True):
+                            current = getattr(self.source, 'trap_{}'.format(tag))
+                            dev = self._get_config_dev(current, v, comp)
+                            if dev:
+                                self.warning('verify failed trap {}. current={}, config={}'.format(tag, current, v))
+                                mismatch = True
         self.debug('========= Verify complete ===========')
         return not mismatch
 
@@ -430,8 +460,44 @@ class ThermoSpectrometer(BaseSpectrometer):
         keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD', 'L2(CDD)', 'AX(CDD)']
         return keys, signals
 
+    def _get_config_dev(self, current, v, comp):
+        dev = False
+        if comp.get('compare', True):
+
+            tol = comp.get('percent_tol')
+            if not tol:
+                tol = comp.get('tolerance', 0.01)
+                dev = abs(current - v) > tol
+            else:
+                try:
+                    dev = abs(current - v) / float(v) > tol
+                except ZeroDivisionError:
+                    tol = comp.get('tolerance', 0.01)
+                    dev = abs(current - v) > tol
+
+        return dev
+
+    def _load_configuration_comparisons(self):
+        path = os.path.join(paths.spectrometer_dir, 'readout.yaml')
+        readouts = {}
+        deflections = {}
+        if not self.force_send_configuration:
+            with open(path, 'r') as rfile:
+                try:
+                    yt = yaml.load(rfile)
+                    if yt:
+                        readouts, deflections = yt
+                        readouts = {r['name']: r for r in readouts}
+                        deflections = {r['name']: r for r in deflections}
+
+                except yaml.YAMLError:
+                    pass
+        return readouts, deflections
+
     def _send_configuration(self, use_ramp=True):
         self.debug('======== Sending configuration ========')
+
+        readout_comp, defl_comp = self._load_configuration_comparisons()
 
         if self.microcontroller:
             command_map = self.get_command_map()
@@ -440,44 +506,90 @@ class ThermoSpectrometer(BaseSpectrometer):
                 specparams, defl, trap, magnet = ret
                 for k, v in defl.items():
                     if not self.force_send_configuration:
-                        d = self.get_deflection(k, current=True)
-                        if abs(d - v) / float(v) < 0.01:
-                            self.debug('Not setting deflection {}. current={}, config={}'.format(k, v, d))
-                            continue
+                        comp = defl_comp.get(k, {})
+                        if comp.get('compare', True):
+                            current = self.get_deflection(k, current=True)
+                            dev = self._get_config_dev(current, v, comp)
+                            if not dev:
+                                self.debug('Not setting deflection {}. current={}, config={}'.format(k, current, v))
+                                continue
 
                     cmd = 'SetDeflection'
                     v = '{},{}'.format(k, v)
                     self.set_parameter(cmd, v, post_delay=0.05)
 
                 for k, v in specparams.items():
-                    if not self.force_send_configuration:
-                        cmd = 'Get{}'.format(command_map[k])
-                        current = self.get_parameter(cmd)
-                        if abs(v - current) / float(v) < 0.01:
-                            self.debug('Not setting {}. current={}, config={}'.format(k, v, current))
-                            continue
-
                     try:
-                        cmd = 'Set{}'.format(command_map[k])
-                        self.set_parameter(cmd, v, post_delay=0.05)
+                        mk = command_map[k]
                     except KeyError:
                         self.debug('$$$$$$$$$$ Not setting {}. Not in command_map'.format(k))
+                        continue
+
+                    if not self.force_send_configuration:
+                        comp = readout_comp.get(mk, {})
+                        if comp.get('compare', True):
+                            cmd = 'Get{}'.format(mk)
+                            current = self.get_parameter(cmd)
+                            try:
+                                current = float(current)
+                            except ValueError:
+                                self.warning('invalid value {}, {}'.format(mk, current))
+                                continue
+
+                            dev = self._get_config_dev(current, v, comp)
+                            if not dev:
+                                self.debug('Not setting {}. current={}, config={}'.format(mk, v, current))
+                                continue
+
+                    cmd = 'Set{}'.format(mk)
+                    self.set_parameter(cmd, v, post_delay=0.05)
 
                 # set trap voltage
                 v = trap.get('voltage')
                 self.debug('send trap voltage {}'.format(v))
                 if v is not None:
-                    self.source.trap_voltage = v
+                    if not self.force_send_configuration:
+                        comp = readout_comp.get('TrapVoltage', {})
+                        if comp.get('compare', True):
+                            current = self.source.read_trap_voltage()
+                            try:
+                                current = float(current)
+                                dev = self._get_config_dev(current, v, comp)
+                                if not dev:
+                                    self.debug('Not setting TrapVoltage. current={}, config={}'.format(v, current))
+                                    v = None
+                            except ValueError:
+                                self.warning('invalid value TrapVoltage, {}'.format(current))
+                        else:
+                            v = None
+
+                    if v is not None:
+                        self.source.trap_voltage = v
 
                 # set the trap current
                 v = trap.get('current')
                 self.debug('send trap current {}'.format(v))
                 if v is not None:
-                    step = trap.get('ramp_step', 1)
-                    period = trap.get('ramp_period', 1)
-                    tol = trap.get('ramp_tolerance', 10)
-                    if not self._ramp_trap_current(v, step, period, use_ramp, tol):
-                        self.source.trap_current = v
+                    if not self.force_send_configuration:
+                        comp = readout_comp.get('TrapCurrent', {})
+                        if comp.get('compare', True):
+                            current = self.source.read_trap_current()
+                            try:
+                                current = float(current)
+                                dev = self._get_config_dev(current, v, comp)
+                                if not dev:
+                                    self.debug('Not setting TrapCurrent current={}, config={}'.format(v, current))
+                                    v = None
+
+                            except ValueError:
+                                self.warning('invalid value TrapCurrent, {}'.format(current))
+
+                    if v is not None:
+                        step = trap.get('ramp_step', 1)
+                        period = trap.get('ramp_period', 1)
+                        tol = trap.get('ramp_tolerance', 10)
+                        self._ramp_trap_current(v, step, period, use_ramp, tol)
+
 
                 # set the mftable
                 mftable_name = magnet.get('mftable')
@@ -492,6 +604,7 @@ class ThermoSpectrometer(BaseSpectrometer):
 
     def _ramp_trap_current(self, v, step, period, use_ramp=False, tol=10):
         if use_ramp:
+            self.debug('ramping trap current')
             current = self.source.read_trap_current()
             if current is None:
                 self.debug('could not read current trap. skipping ramp')
@@ -515,6 +628,9 @@ class ThermoSpectrometer(BaseSpectrometer):
                     r.ramp(func, current, v, step, period)
                     prog.close()
                     return True
+            else:
+                self.debug('trap current is up-to-date')
+                return True
 
     # ===============================================================================
     # defaults
