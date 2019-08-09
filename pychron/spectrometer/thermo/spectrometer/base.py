@@ -499,6 +499,9 @@ class ThermoSpectrometer(BaseSpectrometer):
 
         readout_comp, defl_comp = self._load_configuration_comparisons()
 
+        def not_setting(k, c, v):
+            self.debug('Not setting {:<20s} current={}, config={}'.format(k, c, v))
+
         if self.microcontroller:
             command_map = self.get_command_map()
             ret = self._get_cached_config()
@@ -511,7 +514,7 @@ class ThermoSpectrometer(BaseSpectrometer):
                             current = self.get_deflection(k, current=True)
                             dev = self._get_config_dev(current, v, comp)
                             if not dev:
-                                self.debug('Not setting {:<10s}. current={}, config={}'.format(k, current, v))
+                                not_setting(k, current, v)
                                 continue
 
                     cmd = 'SetDeflection'
@@ -538,7 +541,7 @@ class ThermoSpectrometer(BaseSpectrometer):
 
                             dev = self._get_config_dev(current, v, comp)
                             if not dev:
-                                self.debug('Not setting {}. current={}, config={}'.format(mk, current, v))
+                                not_setting(mk, current, v)
                                 continue
 
                     cmd = 'Set{}'.format(mk)
@@ -559,7 +562,7 @@ class ThermoSpectrometer(BaseSpectrometer):
                                     current = float(current)
                                     dev = self._get_config_dev(current, v, comp)
                                     if not dev:
-                                        self.debug('Not setting {}. current={}, config={}'.format(ttag, current, v))
+                                        not_setting(ttag, current, v)
                                         v = None
                                 except ValueError:
                                     self.warning('invalid value {}, {}'.format(ttag, current))

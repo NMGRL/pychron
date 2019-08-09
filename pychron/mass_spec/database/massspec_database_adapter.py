@@ -384,7 +384,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
     def get_database_version(self, **kw):
         ver = 0
         q = self.session.query(DatabaseVersionTable)
-        item = self._query_one(q, **kw)
+        item = self._query_one(q, verbose_query=True, **kw)
         if item:
             ver = item.Version
 

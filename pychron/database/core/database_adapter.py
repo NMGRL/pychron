@@ -425,7 +425,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
                 url = '{}{}'.format(prefix, name)
             else:
                 url = '{}{}/{}'.format(prefix, host, name)
-                if kind == 'mysql':
+                if kind == 'mysql' and self.timeout:
                     url = '{}?connect_timeout={}'.format(url, timeout)
 
         else:
@@ -679,13 +679,21 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
         except NoResultFound:
             if verbose_query:
                 self.info('no results found for query -- {}'.format(compile_query(q)))
+        except OperationalError as e:
+            self.debug('_query operation exception')
+            self.debug_exception()
+
         except SQLAlchemyError as e:
             if self.verbose:
                 self.debug('_query exception {}'.format(e))
 
-            self.rollback()
-            self.reset_connection()
-            self.connect()
+            try:
+                self.rollback()
+                self.reset_connection()
+                self.connect()
+            except BaseException:
+                pass
+
             if reraise:
                 raise e
 
