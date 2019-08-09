@@ -56,18 +56,14 @@ class FluxOptions(BaseFluxOptions):
         dc = FLUX_CONSTANTS[self.selected_monitor]
         return dc['lambda_b'][0] + dc['lambda_ec'][0]
 
-    def _get_monitor_age(self):
-        dc = FLUX_CONSTANTS[self.selected_monitor]
-        return dc['monitor_age']
-
     def _get_monitor_name(self):
-        return FLUX_CONSTANTS[self.selected_monitor]['monitor_name']
+        return FLUX_CONSTANTS[self.selected_monitor].get('monitor_name', '')
 
     def _get_monitor_age(self):
-        return FLUX_CONSTANTS[self.selected_monitor]['monitor_age']
+        return FLUX_CONSTANTS[self.selected_monitor].get('monitor_age', 0)
 
     def _get_monitor_material(self):
-        return FLUX_CONSTANTS[self.selected_monitor]['monitor_material']
+        return FLUX_CONSTANTS[self.selected_monitor].get('monitor_material', '')
 
     def _get_subview(self, name):
         from pychron.options.views.flux_views import VIEWS
