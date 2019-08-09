@@ -101,8 +101,13 @@ class GitHubService(GitHostService):
             return True
 
     def make_url(self, name, organization):
-        return '{}/{}/{}.git'.format(paths.github_url,
-                                     organization, name)
+
+        if self.oauth_token:
+            token = self.oauth_token
+        else:
+            token = '{}:{}'.format(self.username, self.password)
+
+        return 'https://{}@{}/{}/{}.git'.format(token, paths.github_url, organization, name)
 
     def get_repos(self, organization):
         if self._has_access:

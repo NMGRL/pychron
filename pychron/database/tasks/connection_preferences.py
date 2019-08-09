@@ -19,7 +19,7 @@ from pyface.constant import OK
 from pyface.file_dialog import FileDialog
 from pyface.message_dialog import warning
 from pyface.timer.do_later import do_later
-from traits.api import Str, Password, Enum, Button, on_trait_change, Color, String, List, File, HasTraits, Bool
+from traits.api import Str, Password, Enum, Button, on_trait_change, Color, String, List, File, HasTraits, Bool, Int
 from traitsui.api import View, VGroup, HGroup, spring, Label, Spring, \
     EnumEditor, ObjectColumn, TableEditor, UItem
 from traitsui.editors import TextEditor
@@ -141,8 +141,9 @@ class ConnectionFavoriteItem(HasTraits):
     schema_identifier = Str
     path = File
     default = Bool
+    timeout = Int(5)
 
-    attributes = ('name', 'kind', 'username', 'host', 'dbname', 'password', 'enabled', 'default', 'path')
+    attributes = ('name', 'kind', 'username', 'host', 'dbname', 'password', 'enabled', 'default', 'path', 'timeout')
 
     def __init__(self, schema_identifier='', attrs=None, kind=None):
         super(ConnectionFavoriteItem, self).__init__()
@@ -152,6 +153,7 @@ class ConnectionFavoriteItem(HasTraits):
 
         if attrs:
             attrs = attrs.split(',')
+
             try:
                 self.name, self.kind, self.username, self.host, self.dbname, self.password = attrs
             except ValueError:
@@ -166,11 +168,19 @@ class ConnectionFavoriteItem(HasTraits):
                         self.enabled = to_bool(enabled)
                         self.default = to_bool(default)
                     except ValueError:
-                        (self.name, self.kind, self.username, self.host, self.dbname,
-                         self.password, enabled, default, path) = attrs
-                        self.enabled = to_bool(enabled)
-                        self.default = to_bool(default)
-                        self.path = path
+                        try:
+                            (self.name, self.kind, self.username, self.host, self.dbname,
+                             self.password, enabled, default, path) = attrs
+                            self.enabled = to_bool(enabled)
+                            self.default = to_bool(default)
+                            self.path = path
+                        except ValueError:
+                            (self.name, self.kind, self.username, self.host, self.dbname,
+                             self.password, enabled, default, path, timeout) = attrs
+                            self.enabled = to_bool(enabled)
+                            self.default = to_bool(default)
+                            self.path = path
+                            self.timeout = int(timeout)
 
             self.load_names()
 
@@ -227,7 +237,7 @@ class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
                         host=obj.host,
                         password=obj.password,
                         name=obj.dbname,
-                        kind=obj.kind)
+                        kind=obj.kind, timeout=obj.timeout)
 
     def __selected_changed(self):
         self._reset_connection_label(True)
@@ -269,6 +279,7 @@ class ConnectionPreferencesPane(PreferencesPane):
                              format_func=lambda x: '*' * len(x),
                              editor=TextEditor(password=True)),
                 ObjectColumn(name='host'),
+                ObjectColumn(name='timeout'),
                 ObjectColumn(name='dbname',
                              label='Database',
                              editor=EnumEditor(name='names')),

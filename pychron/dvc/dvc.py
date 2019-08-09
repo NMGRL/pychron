@@ -1701,7 +1701,7 @@ class DVC(Loggable):
     def _data_source_changed(self, old, new):
         self.debug('data source changed. {}, db={}'.format(new, id(self.db)))
         if new is not None:
-            for attr in ('username', 'password', 'host', 'kind', 'path'):
+            for attr in ('username', 'password', 'host', 'kind', 'path', 'timeout'):
                 setattr(self.db, attr, getattr(new, attr))
 
             self.db.name = new.dbname

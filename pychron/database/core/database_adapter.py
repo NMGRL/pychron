@@ -26,83 +26,14 @@ from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, StatementError,
     DBAPIError, OperationalError
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
-from traits.api import Password, Bool, Str, on_trait_change, Any, Property, cached_property
+from traits.api import Password, Bool, Str, on_trait_change, Any, Property, cached_property, Int
 
 from pychron import version
 from pychron.database.core.base_orm import AlembicVersionTable
 from pychron.database.core.query import compile_query
 from pychron.loggable import Loggable
 
-ATTR_KEYS = ['kind', 'username', 'host', 'name', 'password']
 
-
-# class SessionCTX(object):
-#     """
-#     Session Context Manager.
-#     This object is rarely used directly. It is mostly called by ``DatabaseAdapter.session_ctx()``
-#
-#     - enter. initialize sess
-#     - exit. nothing, commit, or rollback
-#
-#     """
-#     _close_at_exit = True
-#     _commit = True
-#     _parent = None
-#
-#     def __init__(self, sess=None, commit=True, rollback=True, parent=None):
-#         """
-#         :param sess: existing Session object
-#         :param commit: commit Session at exit
-#         :param parent: DatabaseAdapter instance
-#
-#         """
-#         self._sess = sess
-#         self._commit = commit
-#         self._rollback = rollback
-#         self._parent = parent
-#         if sess:
-#             self._close_at_exit = False
-#
-#     def __enter__(self):
-#         if self._parent:
-#             if self._sess is None:
-#                 self._sess = self._parent.session_factory()
-#
-#             self._parent.sess_stack += 1
-#             self._parent.sess = self._sess
-#
-#         return self._sess
-#
-#     def __exit__(self, exc_type, exc_val, exc_tb):
-#         if exc_type:
-#             self._parent.warning('=========== Database exception =============')
-#             self._parent.warning(exc_val)
-#             self._parent.warning(traceback.format_tb(exc_tb))
-#
-#         if self._parent:
-#             self._parent.sess_stack -= 1
-#             if not self._parent.sess_stack:
-#                 self._parent.sess = None
-#
-#         if self._close_at_exit:
-#             try:
-#                 if self._commit:
-#                     self._sess.commit()
-#                     self._parent.post_commit()
-#                 else:
-#                     if self._rollback:
-#                         self._sess.rollback()
-#
-#             except Exception, e:
-#                 traceback.print_exc()
-#
-#                 if self._parent:
-#                     self._parent.debug('$%$%$%$%$%$%$%$ commiting changes error:\n{}'.format(str(e)))
-#                 self._sess.rollback()
-#             finally:
-#                 self._sess.expire_on_commit = True
-#                 # self._sess.close()
-#                 # del self._sess
 def binfunc(ds, hours):
     ds = [dx.timestamp for dx in ds]
     p1 = ds[0]
@@ -188,15 +119,12 @@ class DatabaseAdapter(Loggable):
     reraise = False
 
     connected = Bool(False)
-    kind = Str  # ('mysql')
+    kind = Str
     prev_kind = Str
-    username = Str  # ('root')
-    host = Str  # ('localhost')
-    # name = Str#('massspecdata_local')
-    password = Password  # ('Argon')
-
-    # selector_klass = Any
-    # selector = Any
+    username = Str
+    host = Str
+    password = Password
+    timeout = Int
 
     session_factory = None
 
@@ -473,6 +401,8 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
         user = self.username
         host = self.host
         name = self.name
+        timeout = self.timeout
+
         if kind in ('mysql', 'postgresql', 'mssql'):
             if kind == 'mysql':
                 # add support for different mysql drivers
@@ -496,7 +426,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
             else:
                 url = '{}{}/{}'.format(prefix, host, name)
                 if kind == 'mysql':
-                    url = '{}?connect_timeout=5'.format(url)
+                    url = '{}?connect_timeout={}'.format(url, timeout)
 
         else:
             url = 'sqlite:///{}'.format(self.path)
