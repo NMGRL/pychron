@@ -33,7 +33,6 @@ from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES, \
     QTEGRA_DEFAULT_INTEGRATION_TIME
 from pychron.spectrometer import get_spectrometer_config_path
 from pychron.spectrometer.base_spectrometer import BaseSpectrometer
-from pychron.spectrometer.readout_view import Readout, DeflectionReadout
 
 
 def normalize_integration_time(it):
@@ -409,7 +408,7 @@ class ThermoSpectrometer(BaseSpectrometer):
                     try:
                         mk = command_map[k]
                     except KeyError:
-                        self.debug('$$$$$$$$$$ Not checking {}. Not in command_map'.format(k))
+                        self.debug('--- Not checking {}. Not in command_map'.format(k))
                         continue
 
                     comp = readout_comp.get(mk, {})
@@ -442,6 +441,7 @@ class ThermoSpectrometer(BaseSpectrometer):
                             if dev:
                                 self.warning('verify failed trap {}. current={}, config={}'.format(tag, current, v))
                                 mismatch = True
+
         self.debug('========= Verify complete ===========')
         return not mismatch
 
@@ -522,7 +522,7 @@ class ThermoSpectrometer(BaseSpectrometer):
                     try:
                         mk = command_map[k]
                     except KeyError:
-                        self.debug('$$$$$$$$$$ Not setting {}. Not in command_map'.format(k))
+                        self.debug('--- Not setting {}. Not in command_map'.format(k))
                         continue
 
                     if not self.force_send_configuration:
@@ -589,7 +589,6 @@ class ThermoSpectrometer(BaseSpectrometer):
                         period = trap.get('ramp_period', 1)
                         tol = trap.get('ramp_tolerance', 10)
                         self._ramp_trap_current(v, step, period, use_ramp, tol)
-
 
                 # set the mftable
                 mftable_name = magnet.get('mftable')
