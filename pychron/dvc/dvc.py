@@ -970,16 +970,16 @@ class DVC(Loggable):
             self.debug('pull to remote={}, url={}'.format(gi.default_remote_name, gi.remote_url))
             repo.smart_pull(remote=gi.default_remote_name)
 
-    def push_repository(self, repo):
+    def push_repository(self, repo, **kw):
         repo = self._get_repository(repo)
         self.debug('push repository {}'.format(repo))
         for gi in self.application.get_services(IGitHost):
             self.debug('pushing to remote={}, url={}'.format(gi.default_remote_name, gi.remote_url))
-            repo.push(remote=gi.default_remote_name)
+            repo.push(remote=gi.default_remote_name, **kw)
 
     def push_repositories(self, changes):
         for gi in self.application.get_services(IGitHost):
-            push_repositories(changes, gi.default_remote_name, quiet=False)
+            push_repositories(changes, gi, quiet=False)
 
     def delete_local_commits(self, repo, **kw):
         r = self._get_repository(repo)

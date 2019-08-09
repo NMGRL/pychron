@@ -728,18 +728,34 @@ class GitRepoManager(Loggable):
                             except GitCommandError:
                                 pass
 
-                            repo.git.pull('-X', 'theirs', '--commit', '--no-edit')
+                            try:
+                                repo.git.pull('-X', 'theirs', '--commit', '--no-edit')
+                            except GitCommandError:
+                                clean = repo.git.clean('-n')
+                                if clean:
+                                    if self.confirmation_dialog('''You have untracked files that could be an issue. 
+{}
+ 
+You like to delete them and try again?'''.format(clean)):
+                                        try:
+                                            repo.git.clean('-fd')
+                                        except GitCommandError:
+                                            self.warning_dialog('Failed to clean repository')
+                                            return
+
+                                        try:
+                                            repo.git.pull('-X', 'theirs', '--commit', '--no-edit')
+                                            return True
+                                        except GitCommandError:
+                                            self.warning_dialog('Failed pulling changes for {}'.format(self.name))
+                                else:
+                                    self.warning_dialog('Failed pulling changes for {}'.format(self.name))
+
+                                return
+
                             return True
                         else:
                             return
-
-                # self._git_command(lambda: repo.git.rebase('--preserve-merges',
-                #                                           '{}/{}'.format(remote, branch)),
-                #                   'GitRepoManager.smart_pull/ahead')
-                # try:
-                #     repo.git.merge('FETCH_HEAD')
-                # except BaseException:
-                #     pass
 
                 # get conflicted files
                 out, err = grep('<<<<<<<', self.path)

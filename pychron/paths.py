@@ -77,9 +77,9 @@ sounds_search_path = [sounds]
 
 
 class Paths(object):
-    github_url = 'github.com'
-    github_api_url = 'https://api.github.com'
-    dissertation = '/Users/ross/Programming/git/dissertation'
+    # github_url = 'github.com'
+    # github_api_url = 'https://api.github.com'
+    # dissertation = '/Users/ross/Programming/git/dissertation'
 
     # version = None
     root = None

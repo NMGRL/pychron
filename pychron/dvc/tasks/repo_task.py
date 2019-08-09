@@ -154,7 +154,7 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
         self.local_names = [RepoItem(name=i, active_branch=branch) for i, branch in sorted(list_local_repos())]
         self.o_local_repos = None
 
-    def find_changes(self, remote='origin', branch='master'):
+    def find_changes(self, names=None, remote='origin', branch='master'):
         self.debug('find changes')
 
         # def func(item, prog, i, n):
@@ -172,10 +172,12 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
         #         item.update(fetch=False)
         #     except GitCommandError as e:
         #         self.warning('error examining {}. {}'.format(name, e))
-
-        names = self.selected_local_repositories
-        if not names:
-            names = self.local_names
+        if names:
+            names = [n for n in self.local_names if n.name in names]
+        else:
+            names = self.selected_local_repositories
+            if not names:
+                names = self.local_names
 
         self.dvc.find_changes(names, remote, branch)
 
@@ -199,8 +201,9 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
                     self._repo.create_remote(a.url, a.name)
                     self._repo.push(remote=a.name, inform=True)
         else:
-            self._repo.push(inform=True)
+            self.dvc.push_repository(self._repo, inform=True)
 
+        self.find_changes(names=(self._repo.name,))
         self.selected_local_repository_name.dirty = False
 
     def clone(self):

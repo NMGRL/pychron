@@ -45,12 +45,15 @@ def repository_has_staged(ps, remote='origin', branch='master'):
     return changed
 
 
-def push_repositories(ps, remote='origin', branch='master', quiet=True):
+def push_repositories(ps, host=None, remote='origin', branch='master', quiet=True):
     for p in ps:
         pp = repository_path(p)
-        # repo = Repo(pp)
+
         repo = GitRepoManager()
         repo.open_repo(pp)
+
+        if host is not None:
+            remote = host.default_remote_name
 
         if repo.smart_pull(remote=remote, branch=branch, quiet=quiet):
             repo.push(remote=remote, branch=branch)
