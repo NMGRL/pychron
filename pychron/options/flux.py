@@ -40,7 +40,7 @@ class FluxOptions(BaseFluxOptions):
     selected_monitor = Enum(list(FLUX_CONSTANTS.keys()))
     lambda_k = Property(depends_on='selected_monitor')
     monitor_age = Property(depends_on='selected_monitor')
-    monitor_sample = Property(depends_on='selected_monitor')
+    monitor_name = Property(depends_on='selected_monitor')
     monitor_material = Property(depends_on='selected_monitor')
     model_kind = Enum(FLUX_MODEL_KINDS)
     flux_scalar = Float(1000)
