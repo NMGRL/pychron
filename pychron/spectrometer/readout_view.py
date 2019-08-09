@@ -15,11 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from pyface.timer.do_later import do_after
 from traits.api import HasTraits, Str, List, Any, Event, Button, Int, Bool, Float
 from traitsui.api import View, Item, HGroup, spring
 from traitsui.handler import Handler
+from traitsui.api import UItem, VGroup, Item, HGroup, View, TableEditor, Tabbed
+from traitsui.table_column import ObjectColumn
 
 # ============= standard library imports ========================
 import six.moves.configparser
@@ -82,6 +83,21 @@ class BaseReadout(HasTraits):
     value = Float
     spectrometer = Any
     compare = Bool(True)
+    config_value = Float
+    tolerance = Float
+    percent_tol = Float
+    display_tolerance = Str
+
+    @property
+    def dev(self):
+        return self.value - self.config_value
+
+    @property
+    def percent_dev(self):
+        try:
+            return abs(self.dev/self.config_value*100)
+        except ZeroDivisionError:
+            return 0
 
     def set_value(self, v):
         try:
@@ -89,6 +105,26 @@ class BaseReadout(HasTraits):
         except (AttributeError, ValueError, TypeError):
             pass
 
+    def config_compare(self):
+        tolerance = self.percent_tol
+        if tolerance:
+            try:
+                self.display_tolerance = '{:0.2f}%'.format(tolerance*100)
+                if abs(self.value-self.config_value)/self.config_value > tolerance:
+                    return self.name, self.value, self.config_value
+            except ZeroDivisionError:
+                pass
+        else:
+            self.display_tolerance = '{:0.2f}'.format(self.tolerance)
+            if abs(self.value - self.config_value) > self.tolerance:
+                return self.name, self.value, self.config_value
+
+        return
+
+    def compare_message(self):
+        return '{} does not match. Current:{:0.3f}, Config: {:0.3f}, tol.: {}'.format(self.name, self.value,
+                                                                                      self.config_value,
+                                                                                      self.test_tolerance)
 
 class Readout(BaseReadout):
     # value = Property(depends_on='refresh')
@@ -181,6 +217,7 @@ class ReadoutView(Loggable):
                     for rd in yd:
                         rr = DeflectionReadout(spectrometer=self.spectrometer,
                                                name=rd['name'],
+                                               tolerance=rd.get('tolerance', 1),
                                                compare=rd.get('compare', True))
                         self.deflections.append(rr)
 
@@ -212,22 +249,24 @@ class ReadoutView(Loggable):
         self._refresh()
 
     def _refresh(self):
+        readouts = [r for r in self.readouts if r.compare]
+        deflections = [r for r in self.deflections if r.compare]
+        spec = self.spectrometer
+
         if self.use_word_query:
-            keys = [r.name for r in self.readouts]
-            if keys:
-                ds = self.spectrometer.get_parameter_word(keys)
-                for d, r in zip(ds, self.readouts):
-                    r.set_value(d)
 
-            keys = [r.name for r in self.deflections if r.use_deflection]
-            if keys:
-                ds = self.spectrometer.read_deflection_word(keys)
-                for d, r in zip(ds, self.deflections):
-                    r.set_value(d)
+            for func, rs in ((spec.get_parameter_word, readouts),
+                             (spec.read_deflection_word, deflections)):
 
+                keys = [r.name for r in rs]
+                if keys:
+                    ds = func(keys)
+                    for d, r in zip(ds, rs):
+                        r.set_value(d)
         else:
-            for rd in self.readouts:
-                rd.query_value()
+            for rs in (self.readouts, self.deflections):
+                for rd in rs:
+                    rd.query_value()
 
         self.refresh_needed = True
 
@@ -235,22 +274,17 @@ class ReadoutView(Loggable):
         ne = []
         nd = []
 
-        spec = self.spectrometer
-
         if not spec.simulation and self.compare_to_config_enabled:
-            for nn, rs in ((ne, self.readouts), (nd, self.deflections)):
+            for nn, rs in ((ne, readouts), (nd, deflections)):
                 for r in rs:
-                    if not r.compare:
-                        continue
 
                     name = r.name
-                    rv = r.value
-                    tol = r.tolerance
                     cv = spec.get_configuration_value(name)
-                    if abs(rv - cv) > tol:
-                        nn.append((r.name, rv, cv))
-                        self.debug('{} does not match. Current:{:0.3f}, '
-                                   'Config: {:0.3f}, tol.: {}'.format(name, rv, cv, tol))
+                    r.config_value = cv
+                    args = r.config_compare()
+                    if args:
+                        nn.append(args)
+                        self.debug(r.compare_message())
 
             ns = ''
             if ne:
@@ -269,20 +303,35 @@ class ReadoutView(Loggable):
                     spec.set_debug_configuration_values()
 
     def traits_view(self):
-        v = View(listeditor('readouts'),
-                 HGroup(Item('compare_to_config_enabled',label='Comp. Config',
-                             tooltip='If checked, compare the current values to the values in the configuration file.'
-                                     'Warn user if there is a mismatch'),
-                        spring, Item('refresh', show_label=False)))
+        cols = [ObjectColumn(name='name', label='Name'),
+                ObjectColumn(name='value', format='%0.3f', label='Value', width=50),
+                ObjectColumn(name='config_value', format='%0.3f', label='Config. Value', width=50),
+                ObjectColumn(name='dev', format='%0.5f', label='Dev.', width=50),
+                ObjectColumn(name='percent_dev', format='%0.2f', label='%Dev.', width=50),
+                ObjectColumn(name='display_tolerance', label='Tol.')]
+
+        dcols = [ObjectColumn(name='name', label='Name', width=100),
+                 ObjectColumn(name='value', label='Value', width=100),
+                 ObjectColumn(name='dev', format='%0.5f', label='Dev.'),
+                 ObjectColumn(name='percent_dev', format='%0.2f', label='%Dev.'),
+                 ObjectColumn(name='display_tolerance', label='Tol.')]
+
+        b = VGroup(UItem('readouts', editor=TableEditor(columns=cols, editable=False)), label='General')
+        c = VGroup(UItem('deflections', editor=TableEditor(columns=dcols,
+                                                           sortable=False,
+                                                           editable=False)), label='Deflections')
+
+        v = View(VGroup(Tabbed(b, c),
+                        HGroup(Item('compare_to_config_enabled', label='Comp. Config',
+                                    tooltip='If checked, compare the current values to the values in the '
+                                            'configuration file. '
+                                            'Warn user if there is a mismatch'),
+                               spring, Item('refresh', show_label=False))))
         return v
 
 
 def new_readout_view(rv):
     rv.start()
-
-    from traitsui.api import UItem, VGroup, Item, HGroup, View, TableEditor, Tabbed
-
-    from traitsui.table_column import ObjectColumn
 
     from pychron.processing.analyses.view.magnitude_editor import MagnitudeColumn
 

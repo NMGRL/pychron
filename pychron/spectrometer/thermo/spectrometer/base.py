@@ -511,7 +511,7 @@ class ThermoSpectrometer(BaseSpectrometer):
                             current = self.get_deflection(k, current=True)
                             dev = self._get_config_dev(current, v, comp)
                             if not dev:
-                                self.debug('Not setting deflection {}. current={}, config={}'.format(k, current, v))
+                                self.debug('Not setting {:<10s}. current={}, config={}'.format(k, current, v))
                                 continue
 
                     cmd = 'SetDeflection'
@@ -538,57 +538,43 @@ class ThermoSpectrometer(BaseSpectrometer):
 
                             dev = self._get_config_dev(current, v, comp)
                             if not dev:
-                                self.debug('Not setting {}. current={}, config={}'.format(mk, v, current))
+                                self.debug('Not setting {}. current={}, config={}'.format(mk, current, v))
                                 continue
 
                     cmd = 'Set{}'.format(mk)
                     self.set_parameter(cmd, v, post_delay=0.05)
 
-                # set trap voltage
-                v = trap.get('voltage')
-                self.debug('send trap voltage {}'.format(v))
-                if v is not None:
-                    if not self.force_send_configuration:
-                        comp = readout_comp.get('TrapVoltage', {})
-                        if comp.get('compare', True):
-                            current = self.source.read_trap_voltage()
-                            try:
-                                current = float(current)
-                                dev = self._get_config_dev(current, v, comp)
-                                if not dev:
-                                    self.debug('Not setting TrapVoltage. current={}, config={}'.format(v, current))
-                                    v = None
-                            except ValueError:
-                                self.warning('invalid value TrapVoltage, {}'.format(current))
-                        else:
-                            v = None
-
+                for tag, func in (('voltage', self.source.read_trap_voltage),
+                                  ('current', self.source.read_trap_current)):
+                    # set trap voltage
+                    v = trap.get(tag)
+                    ttag = 'Trap{}'.format(tag.capitalize())
+                    self.debug('send trap {} {}'.format(tag, v))
                     if v is not None:
-                        self.source.trap_voltage = v
+                        if not self.force_send_configuration:
+                            comp = readout_comp.get(ttag, {})
+                            if comp.get('compare', True):
+                                current = func()
+                                try:
+                                    current = float(current)
+                                    dev = self._get_config_dev(current, v, comp)
+                                    if not dev:
+                                        self.debug('Not setting {}. current={}, config={}'.format(ttag, current, v))
+                                        v = None
+                                except ValueError:
+                                    self.warning('invalid value {}, {}'.format(ttag, current))
+                            else:
+                                v = None
 
-                # set the trap current
+                        if v is not None:
+                            setattr(self.source, 'trap_{}'.format(tag), v)
+
                 v = trap.get('current')
-                self.debug('send trap current {}'.format(v))
                 if v is not None:
-                    if not self.force_send_configuration:
-                        comp = readout_comp.get('TrapCurrent', {})
-                        if comp.get('compare', True):
-                            current = self.source.read_trap_current()
-                            try:
-                                current = float(current)
-                                dev = self._get_config_dev(current, v, comp)
-                                if not dev:
-                                    self.debug('Not setting TrapCurrent current={}, config={}'.format(v, current))
-                                    v = None
-
-                            except ValueError:
-                                self.warning('invalid value TrapCurrent, {}'.format(current))
-
-                    if v is not None:
-                        step = trap.get('ramp_step', 1)
-                        period = trap.get('ramp_period', 1)
-                        tol = trap.get('ramp_tolerance', 10)
-                        self._ramp_trap_current(v, step, period, use_ramp, tol)
+                    step = trap.get('ramp_step', 1)
+                    period = trap.get('ramp_period', 1)
+                    tol = trap.get('ramp_tolerance', 10)
+                    self._ramp_trap_current(v, step, period, use_ramp, tol)
 
                 # set the mftable
                 mftable_name = magnet.get('mftable')
