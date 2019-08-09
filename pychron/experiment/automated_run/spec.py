@@ -493,7 +493,8 @@ post_equilibration_script, extraction_script, script_options, position, duration
 
     def _set_step(self, v):
         if isinstance(v, str):
-            self._step = alpha_to_int(v)
+            if v:
+                self._step = alpha_to_int(v)
         else:
             self._step = v
 

@@ -246,7 +246,7 @@ class FluxPersistNode(DVCPersistNode):
                        monitor_name=po.monitor_name,
                        monitor_age=po.monitor_age,
                        monitor_material=po.monitor_name,
-                       monitor_reference=po.selected_decay)
+                       monitor_reference=po.selected_monitor)
 
         self.dvc.save_flux_position(irp, options, decay_constants, add=False)
         # self.dvc.save_j(irp.irradiation, irp.level, irp.hole_id, irp.identifier,

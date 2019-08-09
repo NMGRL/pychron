@@ -37,11 +37,11 @@ class BaseFluxOptions(FigureOptions):
 class FluxOptions(BaseFluxOptions):
     error_kind = Enum(*ERROR_TYPES)
 
-    selected_decay = Enum(list(FLUX_CONSTANTS.keys()))
-    lambda_k = Property(depends_on='selected_decay')
-    monitor_age = Property(depends_on='selected_decay')
-    monitor_sample = Property(depends_on='selected_decay')
-    monitor_material = Property(depends_on='selected_decay')
+    selected_monitor = Enum(list(FLUX_CONSTANTS.keys()))
+    lambda_k = Property(depends_on='selected_monitor')
+    monitor_age = Property(depends_on='selected_monitor')
+    monitor_sample = Property(depends_on='selected_monitor')
+    monitor_material = Property(depends_on='selected_monitor')
     model_kind = Enum(FLUX_MODEL_KINDS)
     flux_scalar = Float(1000)
     n_neighbors = Int(2)
@@ -53,11 +53,11 @@ class FluxOptions(BaseFluxOptions):
         self.subview_names = [MAIN, APPEARANCE]
 
     def _get_lambda_k(self):
-        dc = FLUX_CONSTANTS[self.selected_decay]
+        dc = FLUX_CONSTANTS[self.selected_monitor]
         return dc['lambda_b'][0] + dc['lambda_ec'][0]
 
     def _get_monitor_age(self):
-        dc = FLUX_CONSTANTS[self.selected_decay]
+        dc = FLUX_CONSTANTS[self.selected_monitor]
         return dc['monitor_age']
 
     def _get_monitor_name(self):
