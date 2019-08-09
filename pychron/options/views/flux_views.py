@@ -25,7 +25,7 @@ from pychron.pychron_constants import MAIN, APPEARANCE, LEAST_SQUARES_1D, WEIGHT
 
 class FluxSubOptions(SubOptions):
     def traits_view(self):
-        calc_grp = VGroup(Item('selected_decay', label='Flux Const.'),
+        calc_grp = VGroup(Item('selected_monitor', label='Flux Const.'),
                           Readonly('lambda_k', label=u'Total \u03BB K'),
                           Readonly('monitor_age'),
 

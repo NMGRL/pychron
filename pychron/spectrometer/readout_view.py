@@ -179,11 +179,10 @@ class ReadoutView(Loggable):
                         self.readouts.append(rr)
 
                     for rd in yd:
-                        if rd.get('enabled', False):
-                            rr = DeflectionReadout(spectrometer=self.spectrometer,
-                                                   name=rd['name'],
-                                                   compare=rd.get('compare', True))
-                            self.deflections.append(rr)
+                        rr = DeflectionReadout(spectrometer=self.spectrometer,
+                                               name=rd['name'],
+                                               compare=rd.get('compare', True))
+                        self.deflections.append(rr)
 
             except yaml.YAMLError:
                 return

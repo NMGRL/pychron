@@ -17,6 +17,7 @@
 # ========== standard library imports ==========
 from __future__ import absolute_import
 
+import os
 import time
 
 from pychron.core.communication_helper import trim, trim_bool
@@ -48,12 +49,12 @@ class PychronGPActuator(GPActuator):
 
     @trim
     def get_state_word(self, verbose=False):
-        cmd = 'GetStateWord'
+        cmd = 'GetStateWord' if os.getenv('PYCHRON_VALVE_VERSION', 0) == 1 else 'GetValveStates'
         return self.ask(cmd, verbose=verbose)
 
     @trim
     def get_lock_word(self, verbose=False):
-        cmd = 'GetLockWord'
+        cmd = 'GetLockWord' if os.getenv('PYCHRON_VALVE_VERSION', 0) == 1 else 'GetValveLockStates'
         return self.ask(cmd, verbose=verbose)
 
     @trim_bool
