@@ -261,7 +261,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                     text = '\n'.join(make_statistics(pp.regressor, options=options))
                     label = StatisticsTextBoxOverlay(text=text,
                                                      border_color='black')
-                    pp.overlays.append(label)
+                    pp.underlays.append(label)
                     break
 
     def set_filter_outliers(self, fi, plotid=0, series=0):

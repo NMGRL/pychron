@@ -326,7 +326,7 @@ class Series(BaseSeries):
                                        hjustify='left',
                                        font=self.options.error_info_font,
                                        component=plot)
-                    plot.overlays.append(pl)
+                    plot.underlays.append(pl)
 
     def _unpack_attr(self, attr):
         if attr == ANALYSIS_TYPE:
