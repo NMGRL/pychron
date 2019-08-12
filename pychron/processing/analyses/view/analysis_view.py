@@ -182,8 +182,8 @@ class AnalysisView(HasTraits):
 
     def show_iso_evolutions(self, show_evo=True, show_equilibration=False, show_baseline=False):
         isotopes = self.isotope_view.selected
-        self.model.show_isotope_evolutions(isotopes, show_evo=show_evo,
-                                           show_equilibration=show_equilibration, show_baseline=show_baseline)
+        return self.model.show_isotope_evolutions(isotopes, show_evo=show_evo,
+                                                  show_equilibration=show_equilibration, show_baseline=show_baseline)
 
     def update_fontsize(self, view, size):
         if 'main' in view:
@@ -227,7 +227,8 @@ class AnalysisView(HasTraits):
 
     @on_trait_change('isotope_view:updated')
     def show_iso_evo(self, new):
-        self.show_iso_evolutions(**new)
+        g = self.show_iso_evolutions(**new)
+        g.on_trait_change(self.refresh, 'grouping')
 
     def _selected_tab_changed(self, new):
         if isinstance(new, HistoryView):

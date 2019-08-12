@@ -110,9 +110,7 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
         for iso in isotopes:
             iso.set_grouping(n)
 
-        g.clear()
         make_graph(*args)
-        g.refresh()
 
     g.on_trait_change(update_grouping, 'grouping')
     # g.plotcontainer.spacing = 10
@@ -122,7 +120,6 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
 
     make_graph(*args)
 
-    g.refresh()
     g.window_title = '{} {}'.format(record_id, ','.join([i.name for i in reversed(isotopes)]))
 
     return g
@@ -131,6 +128,9 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
 def make_graph(g, isotopes, resizable, show_evo=True, show_equilibration=False, show_baseline=False,
                show_statistics=False,
                scale_to_equilibration=False):
+
+    g.clear()
+
     if not show_evo:
         xmi = Inf
         xma = -Inf
@@ -212,6 +212,8 @@ def make_graph(g, isotopes, resizable, show_evo=True, show_equilibration=False, 
 
         g.set_x_title('Time (s)', plotid=i)
         g.set_y_title('{} ({})'.format(iso.name, iso.units), plotid=i)
+
+    g.refresh()
 
 
 class IdeogramPlotable(HasTraits):

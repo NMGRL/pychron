@@ -53,6 +53,7 @@ class BaseMeasurement(object):
     detector = None
     detector_serial_id = None
     group_data = 0
+    _regressor = None
 
     @property
     def n(self):
@@ -75,6 +76,11 @@ class BaseMeasurement(object):
         self.xs, self.ys = array([]), array([])
         self.mass = 0
         self.time_zero_offset = 0
+
+    def set_grouping(self, n):
+        self.group_data = n
+        if self._regressor:
+            self._regressor.dirty = True
 
     def get_data(self):
         xs = self.offset_xs
@@ -168,7 +174,6 @@ class IsotopicMeasurement(BaseMeasurement):
 
     _value = 0
     _error = 0
-    _regressor = None
     truncate = None
     _fit = None
 
@@ -448,7 +453,8 @@ class IsotopicMeasurement(BaseMeasurement):
         if is_poly:
             reg.set_degree(fit_to_degree(fit), refresh=False)
 
-        reg.trait_set(xs=self.offset_xs, ys=self.ys,
+        xs, ys = self.get_data()
+        reg.trait_set(xs=xs, ys=ys,
                       error_calc_type=self.error_type or 'SEM',
                       filter_outliers_dict=self.filter_outliers_dict,
                       tag=self.name)
@@ -561,8 +567,8 @@ class BaseIsotope(IsotopicMeasurement):
     # baseline_fit_abbreviation = Property(depends_on='baseline:fit')
 
     def set_grouping(self, n):
-        self.group_data = n
-        self.baseline.group_data = n
+        super(BaseIsotope, self).set_grouping(n)
+        self.baseline.set_grouping(n)
 
     @property
     def intercept_percent_error(self):
