@@ -16,7 +16,9 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traits.api import List, Instance
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
@@ -38,19 +40,6 @@ class EmailPlugin(BaseTaskPlugin):
         return e.test_email_server()
 
     # private
-    # def _start_queue(self, ctx):
-    #     if ctx.get('use_email'):
-    #         subject = 'Experiment "{}" Started'.format(ctx.get('name'))
-    #         self.info('Notifying user={} email={}'.format(ctx.get('username'), ctx.get('email')))
-    #         self.experiment_notifier.notify(ctx, subject)
-    #
-    # def _end_queue(self, ctx):
-    #     if ctx.get('use_email'):
-    #         tag = 'Stopped' if ctx.get('err_message') else 'Finished'
-    #         subject = 'Experiment "{}" {}'.format(ctx.get('name'), tag)
-    #         self.info('Notifying user={} email={}'.format(ctx.get('username'), ctx.get('email')))
-    #         self.experiment_notifier.notify(ctx, subject)
-
     def _email_factory(self):
         return Emailer()
 
@@ -75,4 +64,4 @@ class EmailPlugin(BaseTaskPlugin):
                                         level=END_QUEUE)]
         return evts
 
- # ============= EOF =============================================
+# ============= EOF =============================================

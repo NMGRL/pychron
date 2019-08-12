@@ -15,41 +15,27 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
-
 import hashlib
-import inspect
 import os
 import sys
 import time
 import traceback
+from queue import Empty, LifoQueue
 from threading import Event, Thread, Lock
 
 import yaml
-from six.moves.queue import Empty, LifoQueue
 from traits.api import Str, Any, Bool, Property, Int, Dict
 
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.paths import paths
+from pychron.pyscripts.contexts import EXPObject
+from pychron.pyscripts.decorators import makeRegistry, makeNamedRegistry, verbose_skip, calculate_duration, \
+    count_verbose_skip, skip
 from pychron.pyscripts.error import PyscriptError, IntervalError, GosubError, \
     KlassError, MainError
 
 BLOCK_LOCK = Lock()
-
-
-class CTXObject(object):
-    def update(self, ctx):
-        self.__dict__.update(**ctx)
-
-
-class EXPObject(CTXObject):
-    pass
-
-
-class CMDObject(CTXObject):
-    pass
 
 
 class IntervalContext(object):
@@ -62,105 +48,6 @@ class IntervalContext(object):
 
     def __exit__(self, *args):
         self.obj.complete_interval()
-
-
-def verbose_skip(func):
-    if os.environ.get('RTD', 'False') == 'True':
-        return func
-    else:
-        def decorator(obj, *args, **kw):
-
-            fname = func.__name__
-            if fname.startswith('_m_'):
-                fname = fname[3:]
-
-            args1, _, _, defaults = inspect.getargspec(func)
-
-            nd = sum([1 for di in defaults if di is not None]) if defaults else 0
-
-            min_args = len(args1) - 1 - nd
-            an = len(args) + len(kw)
-            if an < min_args:
-                raise PyscriptError(obj.name, 'invalid arguments count for {}, args={} kwargs={}'.format(fname,
-                                                                                                         args, kw))
-            if obj.testing_syntax or obj.is_canceled() or obj.is_truncated() or obj.is_aborted():
-                return 0
-
-            obj.debug('func_name={} args={} kw={}'.format(fname, args, kw))
-
-            return func(obj, *args, **kw)
-
-        return decorator
-
-
-def skip(func):
-    def decorator(obj, *args, **kw):
-        if obj.testing_syntax or obj.is_canceled() or obj.is_truncated() or obj.is_aborted():
-            return
-        return func(obj, *args, **kw)
-
-    return decorator
-
-
-def calculate_duration(func):
-    def decorator(obj, *args, **kw):
-        if obj.testing_syntax:
-            func(obj, calc_time=True, *args, **kw)
-            return 0
-        return func(obj, *args, **kw)
-
-    return decorator
-
-
-def count_verbose_skip(func):
-    def decorator(obj, *args, **kw):
-        if obj.is_truncated() or obj.is_canceled() or obj.is_aborted():
-            return 0
-
-        fname = func.__name__
-        if fname.startswith('_m_'):
-            fname = fname[3:]
-
-        args1, _, _, defaults = inspect.getargspec(func)
-
-        nd = sum([1 for di in defaults if di is not None]) if defaults else 0
-
-        min_args = len(args1) - 1 - nd
-        an = len(args) + len(kw)
-        if an < min_args:
-            raise PyscriptError(fname, 'invalid arguments count for {}, args={} kwargs={}'.format(fname, args, kw))
-        if obj.testing_syntax:
-            func(obj, calc_time=True, *args, **kw)
-            return 0
-
-        obj.debug('{} {} {}'.format(fname, args, kw))
-
-        return func(obj, *args, **kw)
-
-    return decorator
-
-
-def makeRegistry():
-    registry = {}
-
-    def registrar(func):
-        registry[func.__name__] = func.__name__
-        return func  # normally a decorator returns a wrapped function,
-        # but here we return func unmodified, after registering it
-
-    registrar.commands = registry
-    return registrar
-
-
-def makeNamedRegistry(cmd_register):
-    def named_register(name):
-        def decorator(func):
-            cmd_register.commands[name] = func.__name__
-            return func
-
-        return decorator
-
-    return named_register
 
 
 command_register = makeRegistry()
@@ -818,7 +705,7 @@ class PyScript(Loggable):
             time.sleep(v)
 
     def _setup_wait_control(self):
-        from pychron.wait.wait_control import WaitControl
+        from pychron.core.wait.wait_control import WaitControl
         wd = self._wait_control
         if self.manager:
             if hasattr(self.manager, 'get_wait_control'):

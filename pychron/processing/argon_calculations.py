@@ -25,6 +25,7 @@ from uncertainties import ufloat, umath, nominal_value, std_dev
 
 from pychron.core.stats.core import calculate_weighted_mean
 from pychron.core.utils import alpha_to_int
+from pychron.processing.age_converter import converter
 from pychron.processing.arar_constants import ArArConstants
 from pychron.pychron_constants import FLECK
 
@@ -431,11 +432,14 @@ def calculate_f(isotopes, decay_time, interferences=None, arar_constants=None, f
     return f, f_wo_irrad, non_ar_isotopes, computed, interference_corrected
 
 
-def convert_age(age, new_monitor_age, new_lambda_k):
-    if new_monitor_age is None:
-        pass
+def convert_age(uage, orignal_monitor_age, original_lambda_k, new_monitor_age, new_lambda_k):
 
-    return age
+    converter.setup(orignal_monitor_age, original_lambda_k)
+    if new_monitor_age is None:
+        age, err = converter.convert(nominal_value(uage), std_dev(uage))
+        uage = ufloat(age, err, tag=uage.tag)
+
+    return uage
 
 
 def age_equation(j, f, include_decay_error=False, lambda_k=None, arar_constants=None):

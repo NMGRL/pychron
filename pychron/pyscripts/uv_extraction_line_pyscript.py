@@ -15,11 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
+from pychron.pyscripts.decorators import verbose_skip, makeRegistry
 from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
-from pychron.pyscripts.pyscript import verbose_skip, makeRegistry
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================

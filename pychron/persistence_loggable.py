@@ -89,7 +89,7 @@ class PersistenceMixin(object):
             print(e)
             self.warning('persistence path not implemented')
 
-    def load(self, verbose=False):
+    def load(self, verbose=True):
         attrs = self.get_attributes()
         if not attrs:
             raise NotImplementedError

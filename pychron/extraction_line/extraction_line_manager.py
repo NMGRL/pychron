@@ -26,6 +26,7 @@ from traits.api import Instance, List, Any, Bool, on_trait_change, Str, Int, Dic
 from pychron.canvas.canvas_editor import CanvasEditor
 from pychron.core.file_listener import FileListener
 from pychron.core.ui.gui import invoke_in_main_thread
+from pychron.core.wait.wait_group import WaitGroup
 from pychron.envisage.consoleable import Consoleable
 from pychron.extraction_line.explanation.extraction_line_explanation import ExtractionLineExplanation
 from pychron.extraction_line.extraction_line_canvas import ExtractionLineCanvas
@@ -36,7 +37,6 @@ from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.managers.manager import Manager
 from pychron.monitors.system_monitor import SystemMonitor
 from pychron.pychron_constants import NULL_STR
-from pychron.wait.wait_group import WaitGroup
 
 
 class ExtractionLineManager(Manager, Consoleable):

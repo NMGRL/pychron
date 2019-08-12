@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2018 ross
+# Copyright 2019 ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,5 +14,28 @@
 # limitations under the License.
 # ===============================================================================
 
+
+class CTXObject(object):
+    def update(self, ctx):
+        self.__dict__.update(**ctx)
+
+
+class EXPObject(CTXObject):
+    pass
+
+
+class CMDObject(CTXObject):
+    pass
+
+
+class MeasurementCTXObject(object):
+    def create(self, yd):
+        for k in ('baseline', 'multicollect', 'peakcenter', 'equilibration', 'whiff', 'peakhop'):
+            try:
+                c = CTXObject()
+                c.update(yd[k])
+                setattr(self, k, c)
+            except KeyError:
+                pass
 
 # ============= EOF =============================================

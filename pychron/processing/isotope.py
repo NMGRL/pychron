@@ -24,7 +24,7 @@ from binascii import hexlify
 from math import isnan, isinf
 
 import six
-from numpy import array, Inf, polyfit, gradient
+from numpy import array, Inf, polyfit, gradient, array_split, mean
 from uncertainties import ufloat, nominal_value, std_dev
 
 from pychron.core.geometry.geometry import curvature_at
@@ -52,6 +52,7 @@ class BaseMeasurement(object):
     _n = None
     detector = None
     detector_serial_id = None
+    group_data = 0
 
     @property
     def n(self):
@@ -74,6 +75,16 @@ class BaseMeasurement(object):
         self.xs, self.ys = array([]), array([])
         self.mass = 0
         self.time_zero_offset = 0
+
+    def get_data(self):
+        xs = self.offset_xs
+        ys = self.ys
+        if self.group_data > 1:
+            n = len(xs)//self.group_data
+            xs = [mean(g) for g in array_split(xs, n)]
+            ys = [mean(g) for g in array_split(ys, n)]
+
+        return xs, ys
 
     def pack(self, endianness=None, as_hex=True):
         if endianness is None:
@@ -548,6 +559,10 @@ class BaseIsotope(IsotopicMeasurement):
     baseline = None
 
     # baseline_fit_abbreviation = Property(depends_on='baseline:fit')
+
+    def set_grouping(self, n):
+        self.group_data = n
+        self.baseline.group_data = n
 
     @property
     def intercept_percent_error(self):

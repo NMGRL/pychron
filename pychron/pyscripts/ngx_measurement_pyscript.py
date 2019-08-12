@@ -17,8 +17,8 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 
+from pychron.pyscripts.decorators import makeRegistry
 from pychron.pyscripts.measurement_pyscript import MeasurementPyScript
-from pychron.pyscripts.pyscript import makeRegistry
 
 command_register = makeRegistry()
 
