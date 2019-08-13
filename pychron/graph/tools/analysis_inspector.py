@@ -109,7 +109,7 @@ class AnalysisPointInspector(PointInspector):
                     rid = analysis.record_id
                     name = component.container.y_axis.title
                     for tag in ('<sub>','</sub>', '<sup>', '</sup>'):
-                        name = name.replace(tag,'')
+                        name = name.replace(tag, '')
 
                     y = ys[ind]
                     # x = xs[ind]
@@ -135,12 +135,9 @@ class AnalysisPointInspector(PointInspector):
                         if self.value_format:
                             y = self.value_format(y)
 
-                    tag = analysis.tag
-                    uuid = analysis.display_uuid
-
-                    info = [u'Analysis= {}'.format(rid),
-                            u'UUID= {}'.format(uuid),
-                            u'Tag= {}'.format(tag),
+                    info = [u'Analysis= {} UUID({})'.format(rid, analysis.display_uuid),
+                            u'Comment= {}'.format(analysis.comment[:20]),
+                            u'Tag= {}'.format(analysis.tag),
                             u'{}= {}'.format(name, y)]
 
                     if hasattr(analysis, 'status_text'):
