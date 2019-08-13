@@ -151,6 +151,7 @@ MAIN = 'Main'
 APPEARANCE = 'Appearance'
 DISPLAY = 'Display'
 GROUPS = 'Groups'
+CALCULATIONS = 'Calculations'
 
 INTERFERENCE_KEYS = ('K4039', 'K3839', 'K3739', 'Ca3937', 'Ca3837', 'Ca3637', 'Cl3638')
 RATIO_KEYS = ('Ca_K', 'Cl_K')
