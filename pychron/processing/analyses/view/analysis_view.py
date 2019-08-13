@@ -217,7 +217,12 @@ class AnalysisView(HasTraits):
         self._make_subviews(an)
 
     def refresh(self):
+        an = self.model
+        self.isotope_view.isotopes = []
+        isos = [an.isotopes[k] for k in an.isotope_keys]
+        self.isotope_view.isotopes = isos
         self.isotope_view.refresh_needed = True
+
         self.main_view.load_computed(self.model, new_list=False)
         self.main_view.refresh_needed = True
 

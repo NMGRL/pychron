@@ -79,8 +79,9 @@ class BaseMeasurement(object):
 
     def set_grouping(self, n):
         self.group_data = n
-        if self._regressor:
-            self._regressor.dirty = True
+        self._regressor = None
+        # if self._regressor:
+        #     self._regressor.dirty = True
 
     def get_data(self):
         xs = self.offset_xs
