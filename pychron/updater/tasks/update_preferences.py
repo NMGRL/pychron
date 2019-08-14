@@ -14,12 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
+
 import os
 
+# ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from git import Repo, GitCommandError
 from git.exc import InvalidGitRepositoryError
-# ============= enthought library imports =======================
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
 from pyface.message_dialog import warning, information
