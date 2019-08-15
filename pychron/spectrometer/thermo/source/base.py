@@ -15,9 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from traits.api import Float, Range, Property
-from traitsui.api import View, Item, RangeEditor
+from traitsui.api import View, Item, RangeEditor, VGroup
 
 # ============= local library imports  ==========================
 from pychron.spectrometer.base_source import BaseSource
@@ -89,18 +88,24 @@ class ThermoSource(BaseSource):
         self.read_trap_current()
         self.read_hv()
 
+    def _get_default_group(self, label=None):
+        g = VGroup(Item('nominal_hv', format_str='%0.4f'),
+                   Item('current_hv', format_str='%0.4f', style='readonly'),
+                   Item('trap_current'),
+                   Item('trap_voltage'),
+                   Item('y_symmetry', editor=RangeEditor(low_name='y_symmetry_low',
+                                                         high_name='y_symmetry_high',
+                                                         mode='slider')),
+                   Item('z_symmetry', editor=RangeEditor(low_name='z_symmetry_low',
+                                                         high_name='z_symmetry_high',
+                                                         mode='slider')),
+                   Item('extraction_lens'))
+        if label:
+            g.label = label
+        return g
+
     def traits_view(self):
-        v = View(Item('nominal_hv', format_str='%0.4f'),
-                 Item('current_hv', format_str='%0.4f', style='readonly'),
-                 Item('trap_current'),
-                 Item('trap_voltage'),
-                 Item('y_symmetry', editor=RangeEditor(low_name='y_symmetry_low',
-                                                       high_name='y_symmetry_high',
-                                                       mode='slider')),
-                 Item('z_symmetry', editor=RangeEditor(low_name='z_symmetry_low',
-                                                       high_name='z_symmetry_high',
-                                                       mode='slider')),
-                 Item('extraction_lens'))
+        v = View(self._get_default_group())
         return v
 
     # ===============================================================================
@@ -123,7 +128,7 @@ class ThermoSource(BaseSource):
 
     def _set_trap_voltage(self, v):
         if self._set_value('SetParameter', 'Trap Voltage Set,{}'.format(v)):
-            self._trap_current = v
+            self._trap_voltage = v
 
     def _set_trap_current(self, v):
         if self._set_value('SetParameter', 'Trap Current Set,{}'.format(v)):

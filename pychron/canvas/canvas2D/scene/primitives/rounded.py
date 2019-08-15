@@ -18,6 +18,7 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from __future__ import absolute_import
+
 from pychron.canvas.canvas2D.scene.primitives.base import Connectable
 from pychron.canvas.canvas2D.scene.primitives.connections import Tee, Fork, Elbow
 from pychron.canvas.canvas2D.scene.primitives.primitives import Rectangle, Bordered, BorderLine
@@ -161,4 +162,21 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
 
                             gc.draw_path()
 
+
+class Spectrometer(RoundedRectangle):
+    tag = 'spectrometer'
+
+    def __init__(self, *args, **kw):
+        super(Spectrometer, self).__init__(*args, **kw)
+        self.width = 10
+        self.height = 10
+
+
+class Stage(RoundedRectangle):
+    tag = 'stage'
+
+    def __init__(self, *args, **kw):
+        super(Spectrometer, self).__init__(*args, **kw)
+        self.width = 10
+        self.height = 5
 # ============= EOF =============================================

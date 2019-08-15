@@ -40,7 +40,12 @@ class HelixSpectrometer(ThermoSpectrometer):
                            extractionsymmetry='ExtractionSymmetry',
                            extractionlens='ExtractionLens',
                            ioncountervoltage='IonCounterVoltage',
-                           hv='HV')
+                           hv='HV',
+                           flatapole='Flatapole',
+                           rotation_quad='RotationQuad',
+                           vertical_deflection_n='VerticalDeflectionN',
+                           vertical_deflection_s='VerticalDeflectionN',
+                           )
         return command_map
 
 
@@ -51,6 +56,3 @@ class HelixPlusSpectrometer(HelixSpectrometer):
 class HelixSFTSpectrometer(HelixSpectrometer):
     pass
 # ============= EOF =============================================
-
-
-

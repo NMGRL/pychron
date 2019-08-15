@@ -21,7 +21,15 @@ from traitsui.table_column import ObjectColumn
 
 from pychron.canvas.canvas2D.scene.canvas_parser import CanvasParser
 from pychron.canvas.canvas2D.scene.extraction_line_scene import RECT_TAGS, SWITCH_TAGS
-from pychron.canvas.canvas2D.scene.primitives.valves import BaseValve
+from pychron.canvas.canvas2D.scene.primitives.base import Primitive
+from pychron.canvas.canvas2D.scene.primitives.connections import Connection
+from pychron.canvas.canvas2D.scene.primitives.rounded import Spectrometer, Stage
+from pychron.canvas.canvas2D.scene.primitives.valves import BaseValve, Valve
+from pychron.loggable import Loggable
+from pychron.pychron_constants import NULL_STR
+
+ITEM_KLASS = {'Valve': Valve, 'Spectrometer': Spectrometer,
+              'Stage': Stage, 'Connection': Connection}
 
 
 class ItemGroup(HasTraits):
@@ -41,7 +49,7 @@ class ItemGroup(HasTraits):
         return v
 
 
-class CanvasEditor(HasTraits):
+class CanvasEditor(Loggable):
     groups = List
 
     selected_group = Instance(ItemGroup)
@@ -65,6 +73,10 @@ class CanvasEditor(HasTraits):
     width_increment_minus_button = Button
     height_increment_plus_button = Button
     height_increment_minus_button = Button
+
+    add_item_button = Button('Add')
+    new_item_kind = Enum(NULL_STR, 'Valve', 'Spectrometer', 'Stage')
+    new_item = Instance(Primitive)
 
     def load(self, canvas, path):
         self.canvas = canvas
@@ -100,6 +112,29 @@ class CanvasEditor(HasTraits):
 
             self.width = s.width
             self.height = s.height
+
+    def _new_item_kind_changed(self, new):
+        if new and new != NULL_STR:
+            self.new_item = ITEM_KLASS[new](0, 0)
+
+    def _add_item_button_fired(self):
+        item = self.new_item
+        if item:
+            if item.name:
+                cp = CanvasParser(self.path)
+                elem = cp.add(item.tag, item.name)
+                cp.add('translation', '{},{}'.format(item.x, item.y), elem)
+                cp.add('dimension', '{},{}'.format(item.width, item.width), elem)
+                if item.tag in ('valve',):
+                    self.canvas.scene.valves[item.name] = self.new_item
+                elif item.tag in ('stage', 'spectrometer'):
+                    cp.add('color', '100,100,100', elem)
+                self.canvas.scene.add_item(self.new_item)
+                self.canvas.scene.request_layout()
+                self.canvas.invalidate_and_redraw()
+                cp.save()
+            else:
+                self.information_dialog('Please enter a name for the new item')
 
     def _save_button_fired(self):
         cp = CanvasParser(self.path)

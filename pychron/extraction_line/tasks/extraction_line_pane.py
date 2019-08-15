@@ -23,7 +23,7 @@ from traitsui.api import View, UItem, InstanceEditor, ListEditor, TabularEditor,
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 
-from pychron.core.pychron_traits import BorderHGroup
+from pychron.core.pychron_traits import BorderHGroup, BorderVGroup
 from pychron.envisage.icon_button_editor import icon_button_editor
 
 
@@ -136,15 +136,18 @@ class EditorPane(TraitsDockPane):
                                    icon_button_editor('height_increment_minus_button', 'delete'),
                                    icon_button_editor('height_increment_plus_button', 'add'), label='Height'),
 
-
                       UItem('save_button'))
 
+        agrp = BorderVGroup(UItem('add_item_button'),
+                            UItem('new_item_kind'),
+                            UItem('new_item', style='custom', editor=InstanceEditor(view='edit_view')),
+                            label='New Item')
         g = VGroup(UItem('groups', style='custom',
                          editor=ListEditor(use_notebook=True,
                                            page_name='.name',
                                            selected='selected_group',
                                            editor=InstanceEditor())))
 
-        v = View(VGroup(g, egrp))
+        v = View(VGroup(g, agrp, egrp))
         return v
 # ============= EOF =============================================

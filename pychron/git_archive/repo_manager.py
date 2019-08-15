@@ -721,15 +721,17 @@ class GitRepoManager(Loggable):
                     try:
                         repo.git.rebase('--preserve-merges', '{}/{}'.format(remote, branch))
                     except GitCommandError:
+                        try:
+                            repo.git.rebase('--abort')
+                        except GitCommandError:
+                            pass
+
                         if self.confirmation_dialog('There appears to be a problem with {}.'
                                                     '\n\nWould you like to accept the master copy'.format(self.name)):
-                            try:
-                                repo.git.rebase('--abort')
-                            except GitCommandError:
-                                pass
 
                             try:
                                 repo.git.pull('-X', 'theirs', '--commit', '--no-edit')
+                                return True
                             except GitCommandError:
                                 clean = repo.git.clean('-n')
                                 if clean:
@@ -750,10 +752,7 @@ You like to delete them and try again?'''.format(clean)):
                                             self.warning_dialog('Failed pulling changes for {}'.format(self.name))
                                 else:
                                     self.warning_dialog('Failed pulling changes for {}'.format(self.name))
-
                                 return
-
-                            return True
                         else:
                             return
 

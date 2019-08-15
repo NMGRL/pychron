@@ -386,6 +386,13 @@ class ThermoSpectrometer(BaseSpectrometer):
 
         self.clear_cached_config()
 
+    def _get_source_parameter_value(self, mk, k):
+        try:
+            ret = getattr(self.source, 'read_{}'.format(k.lower()))()
+        except AttributeError:
+            ret = self.get_parameter('Get{}'.format(mk))
+        return ret
+
     def verify_configuration(self, **kw):
         self.debug('========= Verifying configuration =========')
         readout_comp, defl_comp = self._load_configuration_comparisons()
@@ -413,13 +420,7 @@ class ThermoSpectrometer(BaseSpectrometer):
 
                     comp = readout_comp.get(mk, {})
                     if comp.get('compare', True):
-                        try:
-                            cmd = 'Get{}'.format(mk)
-                        except KeyError:
-                            self.debug('invalid parameter {}'.format(mk))
-                            continue
-
-                        current = self.get_parameter(cmd)
+                        current = self._get_source_parameter_value(command_map, mk)
                         try:
                             current = float(current)
                         except ValueError:
@@ -531,11 +532,12 @@ class ThermoSpectrometer(BaseSpectrometer):
                     if not self.force_send_configuration:
                         comp = readout_comp.get(mk, {})
                         if comp.get('compare', True):
-                            cmd = 'Get{}'.format(mk)
-                            current = self.get_parameter(cmd)
+                            # cmd = 'Get{}'.format(mk)
+                            # current = self.get_parameter(cmd)
+                            current = self._get_source_parameter_value(mk, k)
                             try:
                                 current = float(current)
-                            except ValueError:
+                            except (ValueError, TypeError):
                                 self.warning('invalid value {}, {}'.format(mk, current))
                                 continue
 
@@ -564,7 +566,7 @@ class ThermoSpectrometer(BaseSpectrometer):
                                     if not dev:
                                         not_setting(ttag, current, v)
                                         v = None
-                                except ValueError:
+                                except (ValueError, TypeError):
                                     self.warning('invalid value {}, {}'.format(ttag, current))
                             else:
                                 v = None

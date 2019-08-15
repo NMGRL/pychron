@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import os
 
 from pyface.action.menu_manager import MenuManager
@@ -163,9 +164,8 @@ class ExtractionLineCanvas2D(SceneCanvas):
         try:
             tt = self.active_item.get_tooltip_text()
             ctrl.setToolTip(tt)
-
         except AttributeError as e:
-            print('select mouse move {}'.format(e))
+            pass
         self.normal_mouse_move(event)
 
     def select_right_down(self, event):

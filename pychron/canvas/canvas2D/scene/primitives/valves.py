@@ -111,6 +111,7 @@ class Valve(BaseValve, RoundedRectangle):
     corner_radius = 4
     use_border_gaps = False
     not_connected_color = (100, 100, 100)
+    tag = 'valve'
 
     def __init__(self, *args, **kw):
         super(Valve, self).__init__(*args, **kw)
