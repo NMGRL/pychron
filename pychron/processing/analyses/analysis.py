@@ -76,12 +76,6 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
         information(None, 'You have too many Isotope Evolution windows open. Close some before proceeding')
         return
 
-    if not show_evo:
-        xmi = Inf
-        xma = -Inf
-    else:
-        xmi, xma = 0, -Inf
-
     if ncols > 1:
         isotopes = sort_isotopes(isotopes, reverse=True, key=attrgetter('name'))
 
@@ -99,19 +93,49 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
         nrows = ceil(len(isotopes) / ncols)
         isotopes = reorder(isotopes, nrows)
         g = ColumnStackedRegressionGraph(resizable=True, ncols=ncols, nrows=nrows,
-                                         container_dict={'padding_top': 15*nrows,
+                                         container_dict={'padding_top': 15 * nrows,
                                                          'spacing': (0, 15),
-                                                         'padding_bottom': 40})
+                                                         'padding_bottom': 40},
+                                         show_grouping=True)
         resizable = 'hv'
     else:
         resizable = 'h'
         isotopes = sort_isotopes(isotopes, reverse=False, key=attrgetter('name'))
-        g = StackedRegressionGraph(resizable=True, container_dict={'spacing': 15})
+        g = StackedRegressionGraph(resizable=True, container_dict={'spacing': 15},
+                                   show_grouping=True)
 
+    args = g, isotopes, resizable, show_evo, show_equilibration, show_baseline, show_statistics, scale_to_equilibration
+
+    def update_grouping(n):
+        for iso in isotopes:
+            iso.set_grouping(n)
+
+        make_graph(*args)
+
+    g.on_trait_change(update_grouping, 'grouping')
     # g.plotcontainer.spacing = 10
     g.window_height = min(275 * len(isotopes), 800)
     g.window_x = OX + XOFFSET * WINDOW_CNT
     g.window_y = OY + YOFFSET * WINDOW_CNT
+
+    make_graph(*args)
+
+    g.window_title = '{} {}'.format(record_id, ','.join([i.name for i in reversed(isotopes)]))
+
+    return g
+
+
+def make_graph(g, isotopes, resizable, show_evo=True, show_equilibration=False, show_baseline=False,
+               show_statistics=False,
+               scale_to_equilibration=False):
+
+    g.clear()
+
+    if not show_evo:
+        xmi = Inf
+        xma = -Inf
+    else:
+        xmi, xma = 0, -Inf
 
     for i, iso in enumerate(isotopes):
         ymi, yma = Inf, -Inf
@@ -139,7 +163,8 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
             if iso.fit is None:
                 iso.fit = 'linear'
 
-            g.new_series(iso.offset_xs, iso.ys,
+            xs, ys = iso.get_data()
+            g.new_series(xs, ys,
                          fit=iso.efit,
                          truncate=iso.truncate,
                          filter_outliers_dict=iso.filter_outliers_dict,
@@ -189,9 +214,6 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
         g.set_y_title('{} ({})'.format(iso.name, iso.units), plotid=i)
 
     g.refresh()
-    g.window_title = '{} {}'.format(record_id, ','.join([i.name for i in reversed(isotopes)]))
-
-    return g
 
 
 class IdeogramPlotable(HasTraits):

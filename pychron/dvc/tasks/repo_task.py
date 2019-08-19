@@ -34,7 +34,7 @@ from pychron.dvc import repository_path
 from pychron.dvc.tasks import list_local_repos
 from pychron.dvc.tasks.actions import CloneAction, AddBranchAction, CheckoutBranchAction, PushAction, PullAction, \
     FindChangesAction, LoadOriginAction, DeleteLocalChangesAction, ArchiveRepositoryAction, SyncSampleInfoAction, \
-    SyncRepoAction, RepoStatusAction, BookmarkAction, RebaseAction, DeleteChangesAction
+    SyncRepoAction, RepoStatusAction, BookmarkAction, RebaseAction, DeleteChangesAction, SortLocalReposAction
 from pychron.dvc.tasks.panes import RepoCentralPane, SelectionPane
 from pychron.envisage.tasks.base_task import BaseTask
 # from pychron.git_archive.history import from_gitlog
@@ -83,7 +83,7 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
     ncommits = Int(50, enter_set=True, auto_set=False)
 
     selected_local_repositories = List
-    selected_local_repository_name = Property(depends_on='selected_local_repositories')#Instance(RepoItem)
+    selected_local_repository_name = Property(depends_on='selected_local_repositories')  # Instance(RepoItem)
 
     repository_names = List
 
@@ -101,7 +101,8 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
                           ArchiveRepositoryAction(),
                           DeleteChangesAction(),
                           RepoStatusAction(),
-                          BookmarkAction()),
+                          BookmarkAction(),
+                          SortLocalReposAction()),
                  SToolBar(SyncSampleInfoAction())]
 
     commits = List
@@ -118,16 +119,22 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
 
     def activated(self):
         bind_preference(self, 'check_for_changes', 'pychron.dvc.repository.check_for_changes')
-        # self._preference_binder('pychron.dvc.connection', ('organization',))
-        # prefid = 'pychron.dvc.connection'
 
-        # bind_preference(self, 'favorites', '{}.favorites'.format(prefid))
-
-        # self._preference_binder('pychron.github', ('oauth_token',))
         self.refresh_local_names()
         if self.check_for_changes:
             if self.confirmation_dialog('Check all Repositories for changes'):
                 self.find_changes()
+
+    def sort_repos(self):
+        names = self.selected_local_repositories
+        if not names:
+            names = self.local_names
+
+        sorted_names = [r[0] for r in self.dvc.sorted_repositories([r.name for r in names])]
+
+        for si in reversed(sorted_names):
+            lr = next((r for r in names if r.name == si))
+            self.local_names.insert(0, lr)
 
     def archive_repository(self):
         self.debug('archive repository')
@@ -147,7 +154,7 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
         self.local_names = [RepoItem(name=i, active_branch=branch) for i, branch in sorted(list_local_repos())]
         self.o_local_repos = None
 
-    def find_changes(self, remote='origin', branch='master'):
+    def find_changes(self, names=None, remote='origin', branch='master'):
         self.debug('find changes')
 
         # def func(item, prog, i, n):
@@ -165,10 +172,12 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
         #         item.update(fetch=False)
         #     except GitCommandError as e:
         #         self.warning('error examining {}. {}'.format(name, e))
-
-        names = self.selected_local_repositories
-        if not names:
-            names = self.local_names
+        if names:
+            names = [n for n in self.local_names if n.name in names]
+        else:
+            names = self.selected_local_repositories
+            if not names:
+                names = self.local_names
 
         self.dvc.find_changes(names, remote, branch)
 
@@ -192,8 +201,9 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
                     self._repo.create_remote(a.url, a.name)
                     self._repo.push(remote=a.name, inform=True)
         else:
-            self._repo.push(inform=True)
+            self.dvc.push_repository(self._repo, inform=True)
 
+        self.find_changes(names=(self._repo.name,))
         self.selected_local_repository_name.dirty = False
 
     def clone(self):

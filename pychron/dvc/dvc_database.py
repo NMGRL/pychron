@@ -39,7 +39,8 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
     RepositoryTbl, AnalysisChangeTbl, \
     PrincipalInvestigatorTbl, SamplePrepWorkerTbl, SamplePrepSessionTbl, \
     SamplePrepStepTbl, SamplePrepImageTbl, RestrictedNameTbl, AnalysisGroupTbl, AnalysisGroupSetTbl, \
-    SimpleIdentifierTbl, SamplePrepChoicesTbl, CurrentTbl, ParameterTbl
+    SimpleIdentifierTbl, SamplePrepChoicesTbl, CurrentTbl, ParameterTbl, UnitsTbl
+from pychron.experiment.utilities.identifier import strip_runid
 from pychron.globals import globalv
 from pychron.pychron_constants import NULL_STR, EXTRACT_DEVICE, NO_EXTRACT_DEVICE, \
     SAMPLE_PREP_STEPS, SAMPLE_METADATA
@@ -337,6 +338,34 @@ class DVCDatabase(DatabaseAdapter):
         q = q.order_by(AnalysisTbl.timestamp.desc())
         return self._query_one(q, verbose_query=True)
 
+    def map_runid(self, src, dst):
+        with self.session_ctx() as sess:
+            dl, da, ds = strip_runid(dst)
+            if self.get_analysis_runid(dl, da, ds):
+                return '"{}" already exists'.format(dst)
+
+            ip = self.get_identifier(dl)
+            if not ip:
+                return 'Identifier "{}" does not exist'.format(dl)
+
+            a = self.get_analysis_runid(*strip_runid(src))
+            a.irradiation_position = ip
+            a.aliquot = da
+            a.increment = alpha_to_int(ds)
+
+    def sorted_repositories(self, names):
+        """
+        sort repositories by analysis time
+        :param names:
+        :return:
+        """
+        with self.session_ctx() as sess:
+            q = sess.query(RepositoryAssociationTbl.repository)
+            q = q.join(AnalysisTbl)
+            q = q.filter(RepositoryAssociationTbl.repository.in_(names))
+            q = q.group_by(RepositoryAssociationTbl.repository)
+            q = q.order_by(AnalysisTbl.timestamp.desc())
+            return self._query_all(q)
     # adders
     def add_simple_identifier(self, sid):
         with self.session_ctx():
@@ -453,6 +482,14 @@ class DVCDatabase(DatabaseAdapter):
             self._add_item(param)
         return param
 
+    def add_units(self, name):
+        units = self.get_units(name)
+        if units is None:
+            units = UnitsTbl()
+            units.name = name
+            self._add_item(units)
+        return units
+
     def add_current(self, analysis, value, error, parameter, units):
         with self.session_ctx():
             c = CurrentTbl()
@@ -460,7 +497,13 @@ class DVCDatabase(DatabaseAdapter):
             c.error = float(error)
             c.analysis = analysis
             c.parameter = parameter
-            c.unit = units
+
+            if isinstance(units, str):
+                units = self.get_units(units)
+                if units is None:
+                    units = self.add_units(units)
+
+            c.units = units
             self._add_item(c)
 
     def add_analysis(self, **kw):
@@ -843,6 +886,12 @@ class DVCDatabase(DatabaseAdapter):
             q = q.filter(AnalysisTbl.uuid == ai.uuid)
             return self._query_all(q)
 
+    def get_units(self, name):
+        with self.session_ctx() as sess:
+            q = sess.query(UnitsTbl)
+            q = q.filter(UnitsTbl.name == name)
+            return self._query_one(q)
+
     def get_parameter(self, name):
         with self.session_ctx() as sess:
             q = sess.query(ParameterTbl)
@@ -895,7 +944,7 @@ class DVCDatabase(DatabaseAdapter):
             return q.count()
 
     def get_analyses_advanced(self, advanced_filter, uuids=None, identifiers=None, return_labnumbers=False,
-                              include_invalid=False, limit=None):
+                              include_invalid=False, limit=None, verbose=False):
         with self.session_ctx() as sess:
             if return_labnumbers:
                 q = sess.query(IrradiationPositionTbl)
@@ -929,13 +978,14 @@ class DVCDatabase(DatabaseAdapter):
                 q = q.filter(AnalysisTbl.uuid.in_(uuids))
             if identifiers:
                 q = q.filter(IrradiationPositionTbl.identifier.in_(identifiers))
-            if not include_invalid:
+
+            if not include_invalid and not return_labnumbers:
                 q = q.filter(AnalysisChangeTbl.tag != 'invalid')
 
             if limit:
                 q = q.limit(limit)
 
-            return self._query_all(q, verbose_query=True)
+            return self._query_all(q, verbose_query=verbose)
 
     def get_flux_value(self, identifier, attr):
         j = 0
@@ -1206,6 +1256,20 @@ class DVCDatabase(DatabaseAdapter):
             q = q.filter(ProjectTbl.name == project)
 
             return self._query_all(q)
+
+    def get_analysis_repository(self, runid):
+        l, a, s = strip_runid(runid)
+        with self.session_ctx() as sess:
+            q = sess.query(RepositoryAssociationTbl.repository)
+            q = q.join(AnalysisTbl)
+            q = q.join(IrradiationPositionTbl)
+
+            q = q.filter(IrradiationPositionTbl.identifier == l)
+            q = q.filter(AnalysisTbl.aliquot == a)
+            if s not in (None, ''):
+                q = q.filter(AnalysisTbl.increment == alpha_to_int(s))
+
+            return self._query_one(q, verbose_query=False)
 
     def get_database_version(self, **kw):
         with self.session_ctx() as sess:
@@ -2135,8 +2199,15 @@ class DVCDatabase(DatabaseAdapter):
                 self._add_item(c)
 
             c.value = float(value)
-            c.error = float(error)
-            c.unit = units
+            if error is not None:
+                c.error = float(error)
+
+            if isinstance(units, str):
+                name = units
+                units = self.get_units(name)
+                if units is None:
+                    units = self.add_units(name)
+            c.units = units
 
     # private
     def _get_date_range(self, q, asc=None, desc=None, hours=0):

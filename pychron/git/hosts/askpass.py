@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2018 ross
+# Copyright 2019 ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,5 +14,24 @@
 # limitations under the License.
 # ===============================================================================
 
+from os import environ
+from sys import argv
 
+v = argv[1].lower()
+if 'username' in v:
+    try:
+        print(environ['GIT_ASKPASS_USERNAME'])
+    except KeyError:
+        exit(1)
+
+    exit()
+elif 'password' in v:
+    try:
+        print(environ['GIT_ASKPASS_PASSWORD'])
+    except KeyError:
+        exit(1)
+
+    exit()
+
+exit(1)
 # ============= EOF =============================================

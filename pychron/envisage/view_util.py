@@ -18,7 +18,6 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
-from __future__ import print_function
 __views__ = []
 
 

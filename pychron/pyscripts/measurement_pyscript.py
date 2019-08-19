@@ -16,38 +16,25 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from __future__ import absolute_import
-from __future__ import print_function
 
 import ast
 import os
 import time
+from configparser import ConfigParser
 
 import yaml
-from six.moves.configparser import ConfigParser
 
 from pychron.core.helpers.filetools import fileiter
 from pychron.paths import paths
 from pychron.pychron_constants import MEASUREMENT_COLOR
-from pychron.pyscripts.pyscript import verbose_skip, count_verbose_skip, \
-    makeRegistry, CTXObject
+from pychron.pyscripts.contexts import MeasurementCTXObject
+from pychron.pyscripts.decorators import verbose_skip, count_verbose_skip, makeRegistry
 from pychron.pyscripts.valve_pyscript import ValvePyScript
 from pychron.spectrometer import get_spectrometer_config_path, set_spectrometer_config_name
 
 ESTIMATED_DURATION_FF = 1.0
 
 command_register = makeRegistry()
-
-
-class MeasurementCTXObject(object):
-    def create(self, yd):
-        for k in ('baseline', 'multicollect', 'peakcenter', 'equilibration', 'whiff', 'peakhop'):
-            try:
-                c = CTXObject()
-                c.update(yd[k])
-                setattr(self, k, c)
-            except KeyError:
-                pass
 
 
 class MeasurementPyScript(ValvePyScript):

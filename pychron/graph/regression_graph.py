@@ -17,8 +17,10 @@
 
 from chaco.lineplot import LinePlot
 from chaco.text_box_overlay import TextBoxOverlay
+from enable.component_editor import ComponentEditor
 from numpy import linspace
-from traits.api import List, Any, Event, Callable, Dict
+from traits.api import List, Any, Event, Callable, Dict, Int, Bool
+from traitsui.api import View, UItem
 
 from pychron.core.helpers.fits import convert_fit
 from pychron.core.regression.base_regressor import BaseRegressor
@@ -68,7 +70,8 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
     use_inspector_tool = True
     use_point_inspector = True
     convert_index_func = Callable
-
+    grouping = Int
+    show_grouping = Bool
     # def __init__(self, *args, **kw):
     #     super(RegressionGraph, self).__init__(*args, **kw)
     #     self._regression_lock = Lock()
@@ -258,7 +261,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                     text = '\n'.join(make_statistics(pp.regressor, options=options))
                     label = StatisticsTextBoxOverlay(text=text,
                                                      border_color='black')
-                    pp.overlays.append(label)
+                    pp.underlays.append(label)
                     break
 
     def set_filter_outliers(self, fi, plotid=0, series=0):
@@ -636,4 +639,18 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                         o.text = '\n'.join(make_correlation_statistics(pp.regressor))
                         o.request_redraw()
                         break
+
+    def traits_view(self):
+        v = View(UItem('grouping', defined_when='show_grouping'),
+                 UItem('plotcontainer',
+                       style='custom',
+                       editor=ComponentEditor()),
+
+                 title=self.window_title,
+                 width=self.window_width,
+                 height=self.window_height,
+                 x=self.window_x,
+                 y=self.window_y,
+                 resizable=self.resizable)
+        return v
 # ============= EOF =============================================

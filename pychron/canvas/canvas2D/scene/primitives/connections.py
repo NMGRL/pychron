@@ -13,13 +13,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from traits.api import Str, Enum
+from traitsui.api import View, Item, HGroup
 
-# ============= enthought library imports =======================
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-from __future__ import absolute_import
 from pychron.canvas.canvas2D.scene.primitives.base import QPrimitive
 from pychron.canvas.canvas2D.scene.primitives.primitives import Point, Bordered, BorderLine
+from pychron.pychron_constants import NULL_STR
+
+
+class ConnectEditMixin:
+    orientation = Enum(NULL_STR, 'vertical', 'horizontal')
+    start = Str
+    end = Str
+    start_offset = Str
+    end_offset = Str
+
+    def edit_view(self):
+        v = View(Item('orientation'),
+                 HGroup(Item('start'), Item('start_offset')),
+                 HGroup(Item('end'), Item('end_offset')))
+        return v
+
+
+class Connection(BorderLine, ConnectEditMixin):
+    tag = 'connection'
 
 
 def fork(gc, lx, ly, rx, ry, mx, my, h):
@@ -41,7 +58,8 @@ def fork(gc, lx, ly, rx, ry, mx, my, h):
     gc.draw_path()
 
 
-class Fork(QPrimitive, Bordered):
+class Fork(QPrimitive, Bordered, ConnectEditMixin):
+    tag = 'fork'
     left = None
     right = None
     mid = None
@@ -117,6 +135,7 @@ def tee_v(gc, x1, y1, x2, mx, y2):
 
 
 class Tee(Fork):
+    tag = 'tee'
     def _render(self, gc):
         lx, ly = self.left.get_xy()
         rx, ry = self.right.get_xy()
@@ -189,6 +208,7 @@ def elbow(gc, sx, sy, ex, ey, corner='ul'):
 
 class Elbow(BorderLine):
     corner = 'ul'
+    tag = 'elbow'
 
     def _render(self, gc):
         sx, sy = self.start_point.get_xy()
@@ -203,6 +223,3 @@ class Elbow(BorderLine):
         elbow(gc, sx, sy, ex, ey, self.corner)
 
 # ============= EOF =============================================
-
-
-

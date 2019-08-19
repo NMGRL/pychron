@@ -27,6 +27,11 @@ from pychron.envisage.resources import icon
 from pychron.envisage.ui_actions import UIAction, UITaskAction
 
 
+class IdentifyPeaksDemoAction(TaskAction):
+    name = 'Id peaks'
+    method = 'identify_peaks'
+
+
 class SavePipelineTemplateAction(TaskAction):
     name = 'Save Pipeline Template'
     method = 'save_pipeline_template'

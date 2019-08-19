@@ -29,7 +29,7 @@ from uncertainties import ufloat, std_dev, nominal_value
 
 from pychron import json
 from pychron.core.helpers.filetools import remove_extension, list_subdirectories, list_directory
-from pychron.core.helpers.iterfuncs import groupby_key, groupby_repo, partition
+from pychron.core.helpers.iterfuncs import groupby_key, groupby_repo
 from pychron.core.i_datastore import IDatastore
 from pychron.core.progress import progress_loader, progress_iterator, open_progress
 from pychron.dvc import dvc_dump, dvc_load, analysis_path, repository_path, AnalysisNotAnvailableError, PATH_MODIFIERS
@@ -122,8 +122,45 @@ class DVC(Loggable):
         db.create_session()
         ocoa = db.commit_on_add
         db.commit_on_add = False
+
+        def chunks(l, n):
+            for i in range(0, len(l), n):
+                yield l[i:i + n]
+
+        def func(ai, prog, i, n):
+            if prog:
+                if not i % 10:
+                    prog.change_message('Updating Currents {} {}/{}'.format(ai.record_id, i, n))
+                else:
+                    prog.increment()
+
+            ai.load_raw_data()
+            dban = db.get_analysis_uuid(ai.uuid)
+            if ai.analysis_type in ('unknown', 'cocktail'):
+                try:
+                    self._update_current_age(ai, dban=dban, force=True)
+                except BaseException as e:
+                    self.warning('Failed making current age for {}: {}'.format(ai.record_id, e))
+
+            if not ai.analysis_type.lower().startswith('blank'):
+                try:
+                    self._update_current_blanks(ai, dban=dban, force=True, update_age=False, commit=False)
+                except BaseException as e:
+                    self.warning('Failed making current blanks for {}: {}'.format(ai.record_id, e))
+            try:
+                self._update_current(ai, dban=dban, force=True, update_age=False, commit=False)
+            except BaseException as e:
+                self.warning('Failed making intensities for {}: {}'.format(ai.record_id, e))
+
+            # if not i % 100:
+            #     db.commit()
+            #     db.flush()
+
         with db.session_ctx():
             for repo in db.get_repositories():
+                if repo.name in ('JIRSandbox', 'REEFenite', 'Henry01184', 'FractionatedRes',
+                                 'PowerZPattern'):
+                    continue
                 self.debug('Updating currents for {}'.format(repo.name))
                 try:
                     st = time.time()
@@ -135,45 +172,21 @@ class DVC(Loggable):
                     if not ans:
                         continue
 
-                    if not self.confirmation_dialog('Updated currents for {}'.format(repo.name)):
-                        if self.confirmation_dialog('Stop update'):
-                            break
-                        else:
-                            continue
-                    ans = self.make_analyses(ans)
+                    # if not self.confirmation_dialog('Updated currents for {}'.format(repo.name)):
+                    #     if self.confirmation_dialog('Stop update'):
+                    #         break
+                    #     else:
+                    #         continue
 
-                    def func(ai, prog, i, n):
-                        if prog:
-                            if not i % 10:
-                                prog.change_message('Updating Currents {} {}/{}'.format(ai.record_id, i, n))
-                            else:
-                                prog.increment()
+                    for chunk in chunks(ans, 200):
+                        chunk = self.make_analyses(chunk)
+                        if chunk:
+                            progress_iterator(chunk, func)
+                        db.commit()
+                        db.flush()
 
-                        dban = db.get_analysis_uuid(ai.uuid)
-                        if ai.analysis_type in ('unknown', 'cocktail'):
-                            try:
-                                self._update_current_age(ai, dban=dban, force=True)
-                            except BaseException as e:
-                                self.warning('Failed making current age for {}: {}'.format(ai.record_id, e))
-
-                        if not ai.analysis_type.lower().startswith('blank'):
-                            try:
-                                self._update_current_blanks(ai, dban=dban, force=True, update_age=False, commit=False)
-                            except BaseException as e:
-                                self.warning('Failed making current blanks for {}: {}'.format(ai.record_id, e))
-                        try:
-                            self._update_current(ai, dban=dban, force=True, update_age=False, commit=False)
-                        except BaseException:
-                            self.warning('Failed making intensities for {}: {}'.format(ai.record_id, e))
-
-                        if not i % 100:
-                            db.commit()
-                            db.flush()
-
-                    if ans:
-                        progress_iterator(ans, func)
-                    self.info(
-                        'Elapsed time {}: n={}, {:0.2f} min'.format(repo.name, len(ans), (time.time() - st)) / 60.)
+                    self.info('Elapsed time {}: n={}, '
+                              '{:0.2f} min'.format(repo.name, len(ans), (time.time() - st)) / 60.)
                     db.commit()
                     db.flush()
                 except BaseException as e:
@@ -252,13 +265,16 @@ class DVC(Loggable):
                                     timestamp=now)
         return True
 
+    def analyses_db_sync(self, ln, ais, reponame):
+        self.info('sync db with analyses')
+        return self._sync_info(ln, ais, reponame)
+
     def repository_db_sync(self, reponame, dry_run=False):
         self.info('sync db with repo={} dry_run={}'.format(reponame, dry_run))
         repo = self._get_repository(reponame, as_current=False)
-        ps = []
         db = self.db
         repo.pull()
-
+        ps = []
         with db.session_ctx():
             ans = db.get_repository_analyses(reponame)
             groups = [(g[0], list(g[1])) for g in groupby_key(ans, 'identifier')]
@@ -266,40 +282,9 @@ class DVC(Loggable):
 
             for ln, ais in groups:
                 progress.change_message('Syncing identifier: {}'.format(ln))
-                ip = db.get_identifier(ln)
-                dblevel = ip.level
-                irrad = dblevel.irradiation.name
-                level = dblevel.name
-                pos = ip.position
-                for ai in ais:
-                    p = analysis_path(ai, reponame)
+                pss = self._sync_info(ln, ais, reponame, dry_run)
+                ps.extend(pss)
 
-                    try:
-                        obj = dvc_load(p)
-                    except ValueError:
-                        print('skipping {}'.format(p))
-
-                    sample = ip.sample.name
-                    project = ip.sample.project.name
-                    material = ip.sample.material.name
-                    changed = False
-                    for attr, v in (('sample', sample),
-                                    ('project', project),
-                                    ('material', material),
-                                    ('irradiation', irrad),
-                                    ('irradiation_level', level),
-                                    ('irradiation_position', pos)):
-                        ov = obj.get(attr)
-                        if ov != v:
-                            self.info('{:<20s} repo={} db={}'.format(attr, ov, v))
-                            obj[attr] = v
-                            changed = True
-
-                    if changed:
-                        self.debug('{}'.format(p))
-                        ps.append(p)
-                        if not dry_run:
-                            dvc_dump(obj, p)
             progress.close()
 
         if ps and not dry_run:
@@ -308,6 +293,46 @@ class DVC(Loggable):
             repo.commit('<SYNC> Synced repository with database {}'.format(self.db.datasource_url))
             repo.push()
         self.info('finished db-repo sync for {}'.format(reponame))
+
+    def _sync_info(self, ln, ais, reponame, dry_run=False):
+        db = self.db
+        ip = db.get_identifier(ln)
+        dblevel = ip.level
+        irrad = dblevel.irradiation.name
+        level = dblevel.name
+        pos = ip.position
+        ps = []
+
+        for ai in ais:
+            p = analysis_path(ai, reponame)
+
+            try:
+                obj = dvc_load(p)
+            except ValueError:
+                print('skipping {}'.format(p))
+
+            sample = ip.sample.name
+            project = ip.sample.project.name
+            material = ip.sample.material.name
+            changed = False
+            for attr, v in (('sample', sample),
+                            ('project', project),
+                            ('material', material),
+                            ('irradiation', irrad),
+                            ('irradiation_level', level),
+                            ('irradiation_position', pos)):
+                ov = obj.get(attr)
+                if ov != v:
+                    self.info('{:<20s} repo={} db={}'.format(attr, ov, v))
+                    obj[attr] = v
+                    changed = True
+
+            if changed:
+                self.debug('{}'.format(p))
+                ps.append(p)
+                if not dry_run:
+                    dvc_dump(obj, p)
+        return ps
 
     def repository_transfer(self, ans, dest):
 
@@ -945,16 +970,16 @@ class DVC(Loggable):
             self.debug('pull to remote={}, url={}'.format(gi.default_remote_name, gi.remote_url))
             repo.smart_pull(remote=gi.default_remote_name)
 
-    def push_repository(self, repo):
+    def push_repository(self, repo, **kw):
         repo = self._get_repository(repo)
         self.debug('push repository {}'.format(repo))
         for gi in self.application.get_services(IGitHost):
             self.debug('pushing to remote={}, url={}'.format(gi.default_remote_name, gi.remote_url))
-            repo.push(remote=gi.default_remote_name)
+            repo.push(remote=gi.default_remote_name, **kw)
 
     def push_repositories(self, changes):
         for gi in self.application.get_services(IGitHost):
-            push_repositories(changes, gi.default_remote_name, quiet=False)
+            push_repositories(changes, gi, quiet=False)
 
     def delete_local_commits(self, repo, **kw):
         r = self._get_repository(repo)
@@ -1362,7 +1387,9 @@ class DVC(Loggable):
                         iso = ai.get_isotope(detector=k)
                         bs = iso.baseline
                         db.update_current(dban, '{}_baseline'.format(k), bs.value, bs.error, bs.units, force=force)
+                        db.update_current(dban, '{}_baseline_n'.format(k), bs.n, None, 'int', force=force)
                     else:
+                        db.update_current(dban, '{}_n'.format(k), iso.n, None, 'int', force=force)
                         db.update_current(dban, '{}_intercept'.format(k), iso.value, iso.error, iso.units, force=force)
 
                         v = iso.get_ic_corrected_value()
@@ -1674,7 +1701,7 @@ class DVC(Loggable):
     def _data_source_changed(self, old, new):
         self.debug('data source changed. {}, db={}'.format(new, id(self.db)))
         if new is not None:
-            for attr in ('username', 'password', 'host', 'kind', 'path'):
+            for attr in ('username', 'password', 'host', 'kind', 'path', 'timeout'):
                 setattr(self.db, attr, getattr(new, attr))
 
             self.db.name = new.dbname

@@ -53,6 +53,7 @@ class ExperimentPreferences(BasePreferencesHelper):
     use_autoplot = Bool
 
     send_config_before_run = Bool
+    verify_spectrometer_configuration = Bool
     use_auto_save = Bool
     auto_save_delay = Int
 
@@ -236,6 +237,10 @@ class ExperimentPreferencesPane(PreferencesPane):
                                      Item('send_config_before_run',
                                           tooltip='Set the spectrometer configuration before each analysis',
                                           label='Set Spectrometer Configuration on Start'),
+                                     Item('verify_spectrometer_configuration',
+                                          enabled_when='send_config_before_run',
+                                          tooltip='Verify spectrometer configuration is properly set, '
+                                                  'otherwise cancel experiment'),
                                      Item('set_integration_time_on_start',
                                           tooltip='Set integration time on start of analysis',
                                           label='Set Integration Time on Start'),

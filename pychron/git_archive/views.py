@@ -108,6 +108,12 @@ class GitTagAdapter(GitObjectAdapter):
         return self._truncate_message(self.item.commit_message)
 
 
+TAGS = 'TAG', 'BLANK', 'ISOEVO', 'ICFactor', 'COLLECTION, EDIT, MANUAL, IMPORT, SYNC'
+TAG_COLORS = {'TAG': '#f5f7c8', 'BLANKS': '#cac8f7',
+              'ISOEVO': '#c8f7e2', 'IMPORT': '#FAE8F0',
+              'ICFactor': '#D2D4A7', 'COLLECTION': 'lightyellow'}
+
+
 class CommitAdapter(GitObjectAdapter):
     columns = [('ID', 'hexsha'),
                ('Date', 'date'),
@@ -116,5 +122,11 @@ class CommitAdapter(GitObjectAdapter):
                ('Email', 'email'),
                ]
     author_width = Int(100)
+
+    def get_bg_color(self, obj, trait, row, column=0):
+        item = getattr(obj, trait)[row]
+        color = TAG_COLORS.get(item.tag, 'white')
+
+        return color
 
 # ============= EOF =============================================

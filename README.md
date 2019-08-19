@@ -31,11 +31,15 @@ A number of Ar/Ar Geochronology laboratories are using Pychron to various degree
  - US Geological Survey - Denver, South West Isotope Research Laboratory
  - Lamont-Doherty Earth Observatory, AGES
  - US Geological Survey - Menlo Park
+ - NASA - MNGRL, Goddard Space Flight Center
+ - AEL-AMS, Ottawa
 
 Installation of Pychron at other laboratories is ongoing. Current interested labs are
   
   - University of Arizona
-  - NASA - Goddard Space Flight Center
+  - University of Florida
+  - Purdue University
+  - CAMS, Lawrence Livermore National Laboratory
 
 Additionally, Remote Control Server, a script made by the pychron developers, is used extensively 
 by the international community to interface third-party software with Thermo Scientific's Mass Spectrometer control software.

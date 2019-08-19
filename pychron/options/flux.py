@@ -37,9 +37,11 @@ class BaseFluxOptions(FigureOptions):
 class FluxOptions(BaseFluxOptions):
     error_kind = Enum(*ERROR_TYPES)
 
-    selected_decay = Enum(list(FLUX_CONSTANTS.keys()))
-    lambda_k = Property(depends_on='selected_decay')
-    monitor_age = Property(depends_on='selected_decay')
+    selected_monitor = Enum(list(FLUX_CONSTANTS.keys()))
+    lambda_k = Property(depends_on='selected_monitor')
+    monitor_age = Property(depends_on='selected_monitor')
+    monitor_name = Property(depends_on='selected_monitor')
+    monitor_material = Property(depends_on='selected_monitor')
     model_kind = Enum(FLUX_MODEL_KINDS)
     flux_scalar = Float(1000)
     n_neighbors = Int(2)
@@ -47,18 +49,21 @@ class FluxOptions(BaseFluxOptions):
     least_squares_fit = Enum('Linear', 'Parabolic', 'Cubic', 'Quartic')
     one_d_axis = Enum('X', 'Y')
 
-    monitor_sample_name = Str
-
     def initialize(self):
         self.subview_names = [MAIN, APPEARANCE]
 
     def _get_lambda_k(self):
-        dc = FLUX_CONSTANTS[self.selected_decay]
+        dc = FLUX_CONSTANTS[self.selected_monitor]
         return dc['lambda_b'][0] + dc['lambda_ec'][0]
 
+    def _get_monitor_name(self):
+        return FLUX_CONSTANTS[self.selected_monitor].get('monitor_name', '')
+
     def _get_monitor_age(self):
-        dc = FLUX_CONSTANTS[self.selected_decay]
-        return dc['monitor_age']
+        return FLUX_CONSTANTS[self.selected_monitor].get('monitor_age', 0)
+
+    def _get_monitor_material(self):
+        return FLUX_CONSTANTS[self.selected_monitor].get('monitor_material', '')
 
     def _get_subview(self, name):
         from pychron.options.views.flux_views import VIEWS

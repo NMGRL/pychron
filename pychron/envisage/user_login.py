@@ -26,6 +26,7 @@ from pyface.directory_dialog import DirectoryDialog
 from traits.api import HasTraits, List, Str, Bool, Button
 from traitsui.api import HGroup, UItem, Label, Handler, EnumEditor
 
+from pychron.core.helpers.strtools import to_bool
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.ui.custom_label_editor import CustomLabel
@@ -187,70 +188,17 @@ def get_user():
     """
         current: str, current user. if supplied omit from available list
     """
-    while 1:
-        login = Login()
-        info = login.edit_traits()
-        if info.result:
-            if login.user and login.environment:
-                return login.user, login.environment
-        else:
-            break
+    login = Login()
+    if to_bool(os.getenv('PYCHRON_USE_LOGIN', True)) or not (login.user and login.environment):
+        while 1:
+            info = login.edit_traits()
+            if info.result:
+                if login.user and login.environment:
+                    return login.user, login.environment
+            else:
+                break
+    else:
+        return login.user, login.environment
 
-            # login_file = paths.login_file
-            # if os.path.isfile(login_file):
-            #     with open(login_file, 'r') as rfile:
-            #         u = rfile.read()
-            #     os.remove(login_file)
-            #     return u
-            #
-            # users, last_login, isfile = load_user_file()
-            # use_login, multi_user = get_last_login(last_login)
-            # if use_login:
-            #     # check to see if the login file is set
-            #
-            #     # read the existing user file
-            #     if not isfile and multi_user:
-            #         information(None, 'Auto login as root. Quit to populate the user list')
-            #         dump_user_file(['root'], 'root')
-            #         return 'root'
-            #
-            #     if current:
-            #         users = [u for u in users if u != current]
-            #     login = Login(users=users)
-            #     if users:
-            #         login.user = last_login if last_login in users else users[0]
-            #
-            #     while 1:
-            #         info = login.edit_traits()
-            #         if info.result:
-            #             if login.user:
-            #                 # add the manually entered user name to the users file
-            #                 if not current and not multi_user:
-            #                     if login.user not in users:
-            #                         users.append(login.user)
-            #                     dump_user_file(users, login.user)
-            #
-            #                 return login.user
-            #         else:
-            #             break
-            # else:
-            #     return 'root'
-
-# def get_src_dest_user(cuser):
-#     users, _, _ = load_user_file()
-#     login = SrcDestUsers(users=users)
-#     login.src_user = cuser
-#     s, d = None, None
-#     while 1:
-#         info = login.edit_traits()
-#         if info.result:
-#             dusers = login.get_dest_user()
-#             if login.src_user and dusers:
-#                 s, d = login.src_user, dusers
-#                 break
-#         else:
-#             break
-#
-#     return s, d
 
 # ============= EOF =============================================

@@ -50,7 +50,7 @@ class BaseSwitch(Loggable):
         self.last_actuation = datetime.now().isoformat()
 
     def set_state(self, state):
-        self.state = state
+        self.state = bool(state)
 
     def set_open(self, *args, **kw):
         pass

@@ -57,16 +57,15 @@ class SparrowPreferences(BasePreferencesHelper, ConnectionMixin):
     password = Password
     dbname = Str
     username = Str
-
-    # _schema_identifier = ''
-    # _fav_klass = SparrowConnectionFavoriteItem
+    timeout = Int(3)
 
     def _get_connection_dict(self):
         return dict(username=self.username,
                     host=self.host,
                     password=self.password,
                     name=self.dbname,
-                    port=self.port)
+                    port=self.port,
+                    timeout=self.timeout)
 
     def _test_connection(self, kw):
         return connect(**kw)
@@ -94,6 +93,7 @@ class SparrowPreferencesPane(ConnectionPreferencesPane):
                    Item('port', label='Post'),
                    Item('username', label='User'),
                    Item('password', label='Password'),
+                   Item('timeout', label='Timeout'),
                    cgrp,
                    enabled_when='enabled',
                    show_border=True,

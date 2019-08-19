@@ -14,6 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 import base64
+import os
+import stat
 import subprocess
 
 import requests
@@ -29,6 +31,9 @@ from pychron.regex import GITREFREGEX
 
 
 class IGitHost(Interface):
+    def set_authentication(self):
+        pass
+
     def bind_preferences(self):
         pass
 
@@ -101,6 +106,23 @@ class GitHostService(Loggable):
         bind_preference(self, 'oauth_token', '{}.oauth_token'.format(self.preference_path))
         bind_preference(self, 'default_remote_name', '{}.default_remote_name'.format(self.preference_path))
 
+    def set_authentication(self):
+        self.info('setting authentication')
+        askpass = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'askpass.py')
+        os.environ['GIT_ASKPASS'] = askpass
+        st = os.stat(askpass)
+        os.chmod(askpass, st.st_mode | stat.S_IXUSR)
+
+        if self.oauth_token:
+            u = self.oauth_token
+            p = ''
+        else:
+            u = self.username
+            p = self.password
+
+        os.environ['GIT_ASKPASS_USERNAME'] = u
+        os.environ['GIT_ASKPASS_PASSWORD'] = p
+
     def up_to_date(self, organization, name, sha, branch='master'):
         pass
 
@@ -147,6 +169,9 @@ class GitHostService(Loggable):
         pass
 
     def get_info(self, org):
+        pass
+
+    def set_authentication(self):
         pass
 
     # private
@@ -208,7 +233,7 @@ class GitHostService(Loggable):
 
     def _put(self, cmd, **payload):
         headers = self._get_authorization()
-        kw={}
+        kw = {}
         if globalv.cert_file:
             kw['verify'] = globalv.cert_file
 

@@ -65,6 +65,9 @@ class ThermoSpectrometerManager(BaseSpectrometerManager):
         bind_preference(self.spectrometer.magnet, 'confirmation_threshold_mass',
                         '{}.confirmation_threshold_mass'.format(pref_id))
 
+        bind_preference(self.spectrometer, 'force_send_configuration',
+                        '{}.force_send_configuration'.format(pref_id))
+
     def relative_detector_positions_task_factory(self):
         return self._factory(RelativeDetectorPositions)
 

@@ -32,7 +32,7 @@ class DVCConnectionItem(ConnectionFavoriteItem):
     meta_repo_dir = Str
     attributes = ('name', 'kind', 'username', 'host',
                   'dbname', 'password', 'enabled', 'default', 'path',
-                  'organization', 'meta_repo_name', 'meta_repo_dir')
+                  'organization', 'meta_repo_name', 'meta_repo_dir', 'timeout')
 
     def __init__(self, schema_identifier='', attrs=None, load_names=False):
         super(ConnectionFavoriteItem, self).__init__()
@@ -45,9 +45,15 @@ class DVCConnectionItem(ConnectionFavoriteItem):
                  self.password, enabled, default, path) = attrs
 
             except ValueError:
-                (self.name, self.kind, self.username, self.host, self.dbname,
-                 self.password, enabled, default, self.path, self.organization,
-                 self.meta_repo_name, self.meta_repo_dir) = attrs
+                try:
+                    (self.name, self.kind, self.username, self.host, self.dbname,
+                     self.password, enabled, default, self.path, self.organization,
+                     self.meta_repo_name, self.meta_repo_dir) = attrs
+                except ValueError:
+                    (self.name, self.kind, self.username, self.host, self.dbname,
+                     self.password, enabled, default, self.path, self.organization,
+                     self.meta_repo_name, self.meta_repo_dir, timeout) = attrs
+                    self.timeout = int(timeout)
 
             self.enabled = to_bool(enabled)
             self.default = to_bool(default)

@@ -64,15 +64,12 @@ class IdeogramPanel(FigurePanel):
         if kind == 'correlation':
             self._make_correlation(*args)
         elif kind == 'identify_peaks':
-            ps =[]
+            ps = []
             for fi in self.figures:
                 print('peaks', fi.peaks)
                 if fi.peaks is not None:
                     ps.extend(fi.peaks)
-
-            from pychron.pipeline.identify_peak_view import IdentifyPeakView
-            ipv = IdentifyPeakView(ps)
-            open_view(ipv)
+            self.figure_event = ('identify_peaks', ps)
 
     def _make_graph_hook(self, g):
         g.on_trait_change(self._handle_figure_event, 'figure_event')

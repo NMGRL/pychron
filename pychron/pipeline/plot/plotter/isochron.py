@@ -199,8 +199,6 @@ class InverseIsochron(Isochron):
 
         if self.options.omit_non_plateau:
 
-
-
             self.analysis_group.calculate_plateau()
             for a in self.analyses:
                 if not self.analysis_group.get_is_plateau_step(a):
@@ -412,12 +410,13 @@ class InverseIsochron(Isochron):
 
         intercept, err = nominal_value(a), std_dev(a)
 
+        opt = self.options
         try:
             inv_intercept = intercept ** -1
             p = calc_percent_error(intercept, err, scale=1)
-            err = inv_intercept * p * self.options.nsigma
+            err = inv_intercept * p * opt.nsigma
             mse = err * mswd ** 0.5
-            sf = self.options.yintercept_sig_figs
+            sf = opt.yintercept_sig_figs
             v, e, p, mse = floatfmt(inv_intercept, n=sf, s=3), floatfmt(err, n=sf, s=3), \
                            floatfmt(p * 100, n=2), floatfmt(mse, s=3)
         except ZeroDivisionError:
@@ -425,19 +424,17 @@ class InverseIsochron(Isochron):
 
         sample_line = u'{}({})'.format(ag.identifier, ag.sample)
         mse_text = ''
-        if self.options.include_4036_mse:
+        if opt.include_4036_mse:
             mse_text = ' MSE= {}'.format(mse)
 
         ptext = ''
-        if self.options.include_percent_error:
+        if opt.include_percent_error:
             ptext = ' ({}%)'.format(p)
 
         ratio_line = '<sup>40</sup>Ar/<sup>36</sup>Ar= {} {}{}{}{}'.format(v, PLUSMINUS, e, ptext, mse_text)
 
         v = nominal_value(age)
-        e = std_dev(age) * self.options.nsigma
-
-        p = format_percent_error(v, e)
+        e = std_dev(age) * opt.nsigma
 
         mse_age = e * mswd ** 0.5
 
@@ -446,22 +443,27 @@ class InverseIsochron(Isochron):
         if not valid:
             mswd = '*{}'.format(mswd)
 
-        af = self.options.age_sig_figs
+        af = opt.age_sig_figs
 
         mse_text = ''
-        if self.options.include_age_mse:
+        if opt.include_age_mse:
             mse_text = ' MSE= {}'.format(floatfmt(mse_age, s=3))
 
-        age_line = u'Age= {} {}{} ({}%) {}{}'.format(floatfmt(v, n=af),
-                                                     PLUSMINUS,
-                                                     floatfmt(e, n=af, s=3), p, ag.age_units, mse_text)
+        pe = ''
+        if opt.include_age_percent_error:
+            p = format_percent_error(v, e)
+            pe = ' ({})%'.format(p)
+
+        age_line = u'Age= {} {}{}{} {}{}'.format(floatfmt(v, n=af),
+                                                PLUSMINUS,
+                                                floatfmt(e, n=af, s=3), pe, ag.age_units, mse_text)
         mswd_line = 'N= {} MSWD= {}'.format(n, mswd)
         if label is None:
             th = 0
             for overlay in plot.overlays:
                 if isinstance(overlay, OffsetPlotLabel):
                     w, h = overlay.get_preferred_size()
-                    th += h + self.options.results_info_spacing
+                    th += h + opt.results_info_spacing
 
             label = OffsetPlotLabel(
                 offset=(1, th),
@@ -469,7 +471,7 @@ class InverseIsochron(Isochron):
                 overlay_position='inside bottom',
                 hjustify='left',
                 bgcolor='white',
-                font=self.options.results_font,
+                font=opt.results_font,
                 color=text_color)
             plot.overlays.append(label)
             self._plot_label = label

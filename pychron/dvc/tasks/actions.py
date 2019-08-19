@@ -142,6 +142,11 @@ class BookmarkAction(LocalRepositoryAction):
     image = icon('git-bookmark')
 
 
+class SortLocalReposAction(TaskAction):
+    name = 'Sort Repos'
+    method = 'sort_repos'
+    tooltip = 'Sort repos by most recently analyzed'
+
 # class SyncMetaDataAction(Action):
 #     name = 'Sync Repo/DB Metadata'
 #
@@ -204,6 +209,18 @@ class GenerateCurrentsAction(Action):
         app = event.task.window.application
         dvc = app.get_service(DVC_PROTOCOL)
         dvc.generate_currents()
+
+
+class MapRunIDsAction(Action):
+    name = 'Map RunIDs'
+
+    def perform(self, event):
+        app = event.task.window.application
+        dvc = app.get_service(DVC_PROTOCOL)
+
+        from pychron.dvc.map_runid import MapRunID
+        mr = MapRunID()
+        mr.map(dvc)
 
 
 class ClearCacheAction(Action):

@@ -529,33 +529,11 @@ class AnalysisGroup(IdeogramPlotable):
     def _calculate_integrated_age(self, ans, weighting=None):
         ret = ufloat(0, 0)
         if ans and all((not isinstance(a, InterpretedAgeGroup) for a in ans)):
-
-            rs = array([a.get_computed_value('rad40') for a in ans])
-            ks = array([a.get_computed_value('k39') for a in ans])
-
-            # sks = ks.sum()
-            # fs = rs / ks
             if weighting is None:
                 weighting = self.integrated_age_weighting
 
-            # if weighting == 'Volume':
-            #     vpercent = array([nominal_value(v) for v in ks / sks])
-            #     errs = array([std_dev(f) for f in fs])
-            #     weights = (vpercent * errs) ** 2
-            #
-            # elif weighting == 'Variance':
-            #     weights = [std_dev(f) ** -2 for f in fs]
-            #
-            # if weights is not None:
-            #     wmean, sum_weights = average([nominal_value(fi) for fi in fs], weights=weights, returned=True)
-            #     if weighting == 'Volume':
-            #         werr = sum_weights ** 0.5
-            #     else:
-            #         werr = sum_weights ** -0.5
-            #
-            #     f = ufloat(wmean, werr)
-            # else:
-            #     f = rs.sum() / sks
+            rs = array([a.get_computed_value('rad40') for a in ans])
+            ks = array([a.get_computed_value('k39') for a in ans])
             f = self._calculate_integrated_mean_error(weighting, ks, rs)
 
             j = self.j
