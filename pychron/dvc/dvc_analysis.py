@@ -28,7 +28,8 @@ from pychron.core.helpers.datetime_tools import make_timef
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.iterfuncs import partition
 from pychron.core.helpers.strtools import to_csv_str
-from pychron.dvc import dvc_dump, dvc_load, analysis_path, make_ref_list, get_spec_sha, get_masses, repository_path
+from pychron.dvc import dvc_dump, dvc_load, analysis_path, make_ref_list, get_spec_sha, get_masses, repository_path, \
+    AnalysisNotAnvailableError
 from pychron.experiment.utilities.environmentals import set_environmentals
 from pychron.experiment.utilities.identifier import make_aliquot_step, make_step
 from pychron.processing.analyses.analysis import Analysis
@@ -70,6 +71,9 @@ class DVCAnalysis(Analysis):
         path = analysis_path((uuid, record_id), repository_identifier)
         self.repository_identifier = repository_identifier
         self.rundate = datetime.datetime.now()
+
+        if path is None:
+            raise AnalysisNotAnvailableError(repository_identifier, record_id)
 
         root = os.path.dirname(path)
         bname = os.path.basename(path)

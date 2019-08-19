@@ -165,3 +165,20 @@ Abundance Sensitivity
     n38 = s38 - abundance_sensitivity * (s39 + s37)
     n37 = s37 - abundance_sensitivity * (s38 + s36)
     n36 = s36 - abundance_sensitivity * (s37 + s37)
+
+
+Integrated Age Weighting Factors
+--------------------------------------
+
+Variance
+
+.. code-block:: python
+
+    W_i = 1/Ar39K_i_sigma**2
+
+
+Volume
+
+.. code-block:: python
+
+    W_i = (39ArK_i/Total_39ArK*39ArK_i_sigma)^2

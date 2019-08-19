@@ -42,7 +42,7 @@ from pychron.dvc.meta_repo import MetaRepo, get_frozen_flux, get_frozen_producti
 from pychron.dvc.tasks.dvc_preferences import DVCConnectionItem
 from pychron.dvc.util import Tag, DVCInterpretedAge
 from pychron.envisage.browser.record_views import InterpretedAgeRecordView
-from pychron.git.hosts import IGitHost, CredentialException
+from pychron.git.hosts import IGitHost
 from pychron.git_archive.repo_manager import GitRepoManager, format_date, get_repository_branch
 from pychron.git_archive.views import StatusView
 from pychron.globals import globalv
@@ -68,6 +68,7 @@ class DVC(Loggable):
 
     current_repository = Instance(GitRepoManager)
     auto_add = True
+    use_auto_pull = Bool(True)
     pulled_repositories = Set
     selected_repositories = List
 
@@ -927,7 +928,7 @@ class DVC(Loggable):
 
         if exists:
             repo = self._get_repository(name)
-            repo.pull(use_progress=use_progress)
+            repo.pull(use_progress=use_progress, use_auto_pull=self.use_auto_pull)
             return True
         else:
             self.debug('getting repository from remote')
@@ -1521,23 +1522,16 @@ class DVC(Loggable):
             # self.debug('use_repo_suffix={} record_id={}'.format(record.use_repository_suffix, record.record_id))
             rid = record.record_id
             uuid = record.uuid
-            # if record.use_repository_suffix:
-            #     rid = '-'.join(rid.split('-')[:-1])
+
             try:
                 a = DVCAnalysis(uuid, rid, expid)
             except AnalysisNotAnvailableError:
-                self.info('Analysis {} not available. Trying to clone repository "{}"'.format(rid, expid))
-                try:
-                    self.sync_repo(expid)
-                except (CredentialException, BaseException):
-                    self.warning_dialog('Invalid credentials for GitHub/GitLab')
-                    return
 
                 try:
                     a = DVCAnalysis(uuid, rid, expid)
-
                 except AnalysisNotAnvailableError:
-                    self.warning_dialog('Analysis {} not in repository {}'.format(rid, expid))
+                    self.warning_dialog('Analysis {} not in repository {}. '
+                                        'You many need to pull changes'.format(rid, expid))
                     return
 
             a.group_id = record.group_id
@@ -1668,6 +1662,7 @@ class DVC(Loggable):
         bind_preference(self, 'use_cache', '{}.use_cache'.format(prefid))
         bind_preference(self, 'max_cache_size', '{}.max_cache_size'.format(prefid))
         bind_preference(self, 'update_currents_enabled', '{}.update_currents_enabled'.format(prefid))
+        bind_preference(self, 'use_auto_pull', '{}.use_auto_pull'.format(prefid))
 
         if self.use_cache:
             self._use_cache_changed()

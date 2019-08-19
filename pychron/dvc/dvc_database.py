@@ -17,7 +17,7 @@
 from datetime import timedelta, datetime
 
 import six
-from sqlalchemy import not_, func, distinct, or_, select, and_, join
+from sqlalchemy import not_, func, distinct, or_, and_
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.functions import count
 from sqlalchemy.util import OrderedSet
@@ -366,6 +366,7 @@ class DVCDatabase(DatabaseAdapter):
             q = q.group_by(RepositoryAssociationTbl.repository)
             q = q.order_by(AnalysisTbl.timestamp.desc())
             return self._query_all(q)
+
     # adders
     def add_simple_identifier(self, sid):
         with self.session_ctx():
@@ -1463,6 +1464,7 @@ class DVCDatabase(DatabaseAdapter):
 
     def get_labnumbers(self, principal_investigators=None,
                        samples=None,
+                       project_ids=None,
                        projects=None, repositories=None,
                        mass_spectrometers=None,
                        irradiation=None, level=None,
@@ -1476,6 +1478,7 @@ class DVCDatabase(DatabaseAdapter):
         self.debug('------- samples: {}'.format(samples))
         self.debug('------- principal_investigators: {}'.format(principal_investigators))
         self.debug('------- projects: {}'.format(projects))
+        self.debug('------- project_ids: {}'.format(project_ids))
         self.debug('------- experiments: {}'.format(repositories))
         self.debug('------- mass_spectrometers: {}'.format(mass_spectrometers))
         self.debug('------- irradiation: {}'.format(irradiation))
@@ -1495,7 +1498,7 @@ class DVCDatabase(DatabaseAdapter):
                 at = True
                 q = q.join(AnalysisTbl, RepositoryAssociationTbl, RepositoryTbl)
 
-            if samples or projects or principal_investigators:
+            if samples or projects or project_ids or principal_investigators:
                 q = q.join(SampleTbl, ProjectTbl)
                 if principal_investigators:
                     q = q.join(PrincipalInvestigatorTbl)
@@ -1541,6 +1544,10 @@ class DVCDatabase(DatabaseAdapter):
             if projects:
                 has_filter = True
                 q = q.filter(ProjectTbl.name.in_(projects))
+            if project_ids:
+                has_filter = True
+                q = q.filter(ProjectTbl.id.in_(project_ids))
+
             if mass_spectrometers:
                 has_filter = True
                 q = in_func(q, AnalysisTbl.mass_spectrometer, mass_spectrometers)
