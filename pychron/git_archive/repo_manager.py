@@ -37,7 +37,7 @@ from pychron.git_archive.merge_view import MergeModel, MergeView
 from pychron.git_archive.utils import get_head_commit, ahead_behind, from_gitlog
 from pychron.git_archive.views import NewBranchView
 from pychron.loggable import Loggable
-from pychron.pychron_constants import DATE_FORMAT
+from pychron.pychron_constants import DATE_FORMAT, NULL_STR
 from pychron.updater.commit_view import CommitView
 
 
@@ -366,6 +366,35 @@ class GitRepoManager(Loggable):
 
         repo.git.filter_branch('--tag-name-filter', 'cat', '--', '--all')
         repo.git.gc('--prune=now')
+
+    def get_topology(self, branch=None, delim='$', limit=None):
+        fmt_args = ('(bold blue)%h',
+                    '(bold green)%ai',
+                    '(bold green)%ar',
+                    '(white)%s',
+                    '(dim white)%an',
+                    '(auto)%d')
+        fmt_args = ['%C{}%C(reset)'.format(fi) for fi in fmt_args]
+
+        fmt_args = ('%h',
+                    '%ai',
+                    '%ar',
+                    '%s',
+                    '%an',
+                    '%d')
+        fmt = delim.join(fmt_args)
+
+        args = ['--graph', '--abbrev-commit', '--decorate',
+                '--format={}'.format(fmt)]
+        if branch == NULL_STR:
+            args.append('--all')
+        else:
+            args.append('-b')
+            args.append(branch)
+        if limit:
+            args.append('-{}'.format(limit))
+
+        return self._repo.git.log(*args)
 
     def commits_iter(self, p, keys=None, limit='-'):
         repo = self._repo

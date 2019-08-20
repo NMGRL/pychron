@@ -40,8 +40,10 @@ from pychron.envisage.tasks.base_task import BaseTask
 # from pychron.git_archive.history import from_gitlog
 from pychron.git.hosts import IGitHost
 from pychron.git_archive.repo_manager import GitRepoManager
-from pychron.git_archive.utils import get_commits, ahead_behind, get_tags
+from pychron.git_archive.utils import ahead_behind, get_tags
+from pychron.git_archive.views import Commit
 from pychron.paths import paths
+from pychron.pychron_constants import NULL_STR
 
 
 class RepoItem(HasTraits):
@@ -266,7 +268,7 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
             except BaseException:
                 pass
 
-        self.information_dialog('{} now on branch "{}'.format(names, branch))
+        self.information_dialog('{} now on branch "{}"'.format(','.join(names), branch))
 
     def load_origin(self):
         self.debug('load origin')
@@ -347,7 +349,7 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
         self.git_tags = get_tags(self._repo.active_repo)
 
     def _refresh_branches(self):
-        self.branches = self._repo.get_branch_names()
+        self.branches = [NULL_STR] + self._repo.get_branch_names()
         b = self._repo.get_active_branch()
 
         force = self.branch == b
@@ -404,7 +406,8 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
 
     def _get_commits(self, new):
         if new:
-            self.commits = get_commits(self._repo.active_repo, new, None, '', limit=self.ncommits)
+            cs = self._repo.get_topology(branch=new, limit=self.ncommits)
+            self.commits = [Commit(ci) for ci in cs.split('\n')] 
         else:
             self.commits = []
 

@@ -18,22 +18,26 @@
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Property
-from traitsui.api import View, UItem, VGroup, TabularEditor, EnumEditor, VSplit, Item
+from traitsui.api import View, UItem, VGroup, TabularEditor, EnumEditor, VSplit, Item, HSplit
 from traitsui.tabular_adapter import TabularAdapter
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import ISO_FORMAT_STR
-from pychron.git_archive.views import CommitAdapter, GitTagAdapter
+from pychron.core.ui.dag_editor import GitDAGEditor
+from pychron.git_archive.views import GitTagAdapter, TopologyAdapter
 
 
 class RepoCentralPane(TraitsTaskPane):
     def traits_view(self):
+        dag_grp = UItem('commits', editor=GitDAGEditor())
         commit_grp = VGroup(Item('ncommits', label='Limit'),
                             VGroup(UItem('commits',
-                                         editor=TabularEditor(adapter=CommitAdapter(),
+                                         editor=TabularEditor(adapter=TopologyAdapter(),
                                                               selected='selected_commit')),
                                    show_border=True, label='Commits'))
+        commit_grp = HSplit(commit_grp, dag_grp)
+
         bookmark_grp = VGroup(VGroup(UItem('git_tags', editor=TabularEditor(adapter=GitTagAdapter()),
                                            height=200),
                                      show_border=True, label='Bookmarks'))

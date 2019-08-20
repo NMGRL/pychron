@@ -15,9 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Any
-from traits.trait_types import Int
-from traits.traits import Property
+from traits.api import HasTraits, Str, Any, List, Int, Property
 from traitsui.api import View, UItem, TextEditor, Item, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -129,4 +127,52 @@ class CommitAdapter(GitObjectAdapter):
 
         return color
 
+
+class TopologyAdapter(TabularAdapter):
+    columns = [('', 'topology'),
+               ('Status', 'status'),
+               ('Date', 'timestamp'),
+               ('', 'rtimestamp'),
+               ('Message', 'message'),
+               ('Committer', 'committer'),
+               ('UUID', 'uuid')]
+    uuid_width = Int(80)
+
+
+class Commit(HasTraits):
+    topology = Str
+    uuid = Str
+    message = Str
+    timestamp = Str
+    rtimestamp = Str
+    committer = Str
+    status = Str
+    oid = Str
+    summary = Str
+    tags = List
+    parents = List
+    column = None
+    generation = 0
+    children = List
+
+    def __init__(self, cs, delim='$'):
+        super(Commit, self).__init__()
+        if delim in cs:
+            args = cs.split(delim)
+            head = args[0].strip()
+
+            self.topology = head[:-8]
+            self.uuid = head[-8:]
+
+            self.timestamp = args[1]
+            self.rtimestamp = args[2]
+            self.message = args[3]
+            self.committer = args[4]
+            self.status = args[5]
+            self.oid = self.uuid
+        else:
+            self.topology = cs
+
+    def is_fork(self):
+        return not self.message
 # ============= EOF =============================================
