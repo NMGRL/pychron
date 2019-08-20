@@ -32,11 +32,13 @@ from pychron.core.progress import open_progress
 from pychron.envisage.view_util import open_view
 from pychron.git_archive.diff_view import DiffView, DiffModel
 from pychron.git_archive.git_objects import GitSha
+from pychron.git_archive.history import BaseGitHistory
 from pychron.git_archive.merge_view import MergeModel, MergeView
 from pychron.git_archive.utils import get_head_commit, ahead_behind, from_gitlog
 from pychron.git_archive.views import NewBranchView
 from pychron.loggable import Loggable
 from pychron.pychron_constants import DATE_FORMAT
+from pychron.updater.commit_view import CommitView
 
 
 def get_repository_branch(path):
@@ -621,9 +623,33 @@ class GitRepoManager(Loggable):
     def get_branch_names(self):
         return [b.name for b in self._repo.branches]
 
-    def pull(self, branch='master', remote='origin', handled=True, use_progress=True):
+    def git_history_view(self, branchname):
+        repo = self._repo
+        h = BaseGitHistory()
+
+        origin = repo.remotes.origin
+        try:
+            oref = origin.refs[branchname]
+            remote_commit = oref.commit
+        except IndexError:
+            remote_commit = None
+
+        branch = self.get_branch(branchname)
+        local_commit = branch.commit
+
+        txt = repo.git.rev_list('--left-right', '{}...{}'.format(local_commit, remote_commit))
+        commits = [ci[1:] for ci in txt.split('\n')]
+
+        commits = [repo.commit(i) for i in commits]
+        h.set_items(commits)
+        commit_view = CommitView(model=h)
+        return commit_view
+
+    def pull(self, branch='master', remote='origin', handled=True, use_progress=True, use_auto_pull=False):
         """
             fetch and merge
+
+            if use_auto_pull is False ask user if they want to accept the available updates
         """
         self.debug('pulling {} from {}'.format(branch, remote))
 
@@ -648,16 +674,27 @@ class GitRepoManager(Loggable):
                 if not handled:
                     raise e
             self.debug('fetch complete')
-            # if use_progress:
-            #     for i in range(100):
-            #         prog.change_message('Merging {}'.format(i))
-            #         time.sleep(1)
-            try:
-                repo.git.merge('FETCH_HEAD')
-            except GitCommandError:
-                self.smart_pull(branch=branch, remote=remote)
 
-            # self._git_command(lambda: repo.git.merge('FETCH_HEAD'), 'merge')
+            def merge():
+                try:
+                    repo.git.merge('FETCH_HEAD')
+                except GitCommandError:
+                    self.smart_pull(branch=branch, remote=remote)
+
+            if not use_auto_pull:
+                ahead, behind = self.ahead_behind(remote)
+                if behind:
+                    if self.confirmation_dialog('Repository "{}" is behind the official version by {} changes.\n'
+                                                'Would you like to pull the available changes?\n\n'
+                                                'If yes, you will be given the opportunity to review the '
+                                                'available changes before applying them'.format(self.name, behind)):
+                        # show the changes
+                        h = self.git_history_view(branch)
+                        info = h.edit_traits(kind='livemodal')
+                        if info.result:
+                            merge()
+            else:
+                merge()
 
             if use_progress:
                 prog.close()

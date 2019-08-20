@@ -15,6 +15,7 @@
 # ===============================================================================
 from operator import attrgetter
 
+from enable.colors import ColorTrait
 from traits.api import HasTraits, List, on_trait_change, Button, Float, Enum, Instance, Str
 from traitsui.api import View, UItem, TableEditor
 from traitsui.table_column import ObjectColumn
@@ -54,8 +55,6 @@ class CanvasEditor(Loggable):
 
     selected_group = Instance(ItemGroup)
 
-    ex = Float
-    ey = Float
     increment_up_x = Button
     increment_down_x = Button
 
@@ -74,6 +73,7 @@ class CanvasEditor(Loggable):
     height_increment_plus_button = Button
     height_increment_minus_button = Button
 
+    color = ColorTrait
     add_item_button = Button('Add')
     new_item_kind = Enum(NULL_STR, 'Valve', 'Spectrometer', 'Stage')
     new_item = Instance(Primitive)
@@ -155,6 +155,8 @@ class CanvasEditor(Loggable):
                     t.text = '{},{}'.format(o.x, o.y)
                     t = elem.find('dimension')
                     t.text = '{},{}'.format(o.width, o.height)
+                    t = elem.find('color')
+                    t.text = '{},{},{}'.format(*o.default_color.getRgb())
                     break
 
         cp.save()
@@ -183,12 +185,34 @@ class CanvasEditor(Loggable):
     def _height_increment_minus_button_fired(self):
         self._dim_increment(-1, 'height')
 
+    def _color_changed(self, new):
+        item = self.selected_group.selected[0]
+        item.default_color = tuple(255*i for i in new)
+        if self.selected_group.name == 'Rects':
+            if item not in self._rect_changes:
+                self._rect_changes.append(item)
+
+        self.canvas.invalidate_and_redraw()
+
+    def _width_changed(self, new):
+        item = self.selected_group.selected[0]
+        item.width = new
+        if self.selected_group.name == 'Rects':
+            self._rect_changes.append(item)
+
+    def _height_changed(self, new):
+        item = self.selected_group.selected[0]
+        item.height = new
+        if self.selected_group.name == 'Rects':
+            self._rect_changes.append(item)
+
     @on_trait_change('groups:selected')
     def _handle_selected(self, obj, name, old, new):
         if new:
             if self.selected_group.name == 'Rects':
                 self.width = new[0].width
                 self.height = new[0].height
+                self.color = new[0].default_color
 
     @on_trait_change('groups:items:[x,y,width,height]')
     def _handle(self, obj, name, old, new):

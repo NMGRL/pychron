@@ -29,3 +29,14 @@ def get_valve_name(obj):
     else:
         name = obj.name.split('-')[1]
     return name
+
+
+base = 'pychron.hardware'
+PACKAGES = dict(AgilentGPActuator='{}.agilent.agilent_gp_actuator'.format(base),
+                ArduinoGPActuator='{}.arduino.arduino_gp_actuator'.format(base),
+                QtegraGPActuator='{}.actuators.qtegra_gp_actuator'.format(base),
+                PychronGPActuator='{}.actuators.pychron_gp_actuator'.format(base),
+                NGXGPActuator='{}.actuators.ngx_gp_actuator'.format(base),
+                NMGRLFurnaceActuator='{}.actuators.nmgrl_furnace_actuator'.format(base),
+                DummyGPActuator='{}.actuators.dummy_gp_actuator'.format(base),
+                RPiGPIO='{}.rpi_gpio'.format(base))

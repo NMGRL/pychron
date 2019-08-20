@@ -14,32 +14,23 @@
 # limitations under the License.
 # ===============================================================================
 
-
 # ============= enthought library imports =======================
-# from traits.api import HasTraits, on_trait_change, Str, Int, Float, Button
-# from traitsui.api import View, Item, Group, HGroup, VGroup
 
 # ============= standard library imports ========================
-
-# ============= local library imports  ==========================
-# from agilent_gp_actuator import AgilentGPActuator
-# from pychron.hardware.arduino.arduino_gp_actuator import ArduinoGPActuator
-# from argus_gp_actuator import ArgusGPActuator
-
-from __future__ import absolute_import
 import time
 
+# ============= local library imports  ==========================
+from pychron.hardware.actuators import PACKAGES
 from pychron.hardware.core.abstract_device import AbstractDevice
 
 
-PACKAGES = dict(AgilentGPActuator='pychron.hardware.agilent.agilent_gp_actuator',
-                ArduinoGPActuator='pychron.hardware.arduino.arduino_gp_actuator',
-                QtegraGPActuator='pychron.hardware.actuators.qtegra_gp_actuator',
-                PychronGPActuator='pychron.hardware.actuators.pychron_gp_actuator',
-                NGXGPActuator='pychron.hardware.actuators.ngx_gp_actuator',
-                NMGRLFurnaceActuator='pychron.hardware.actuators.nmgrl_furnace_actuator',
-                DummyGPActuator='pychron.hardware.actuators.dummy_gp_actuator',
-                RPiGPIO='pychron.hardware.rpi_gpio')
+def simulate(wrapper):
+    def wrapped(obj, *args, **kw):
+        r = wrapper(obj, *args, **kw)
+        if obj.simulation and r is not None:
+            time.sleep(0.01)
+        return r
+    return wrapped
 
 
 class Actuator(AbstractDevice):
@@ -51,65 +42,58 @@ class Actuator(AbstractDevice):
         """
 
         """
-        # self._cdevice=None
-        # if config.has_option('General','subsystem'):
-        #            # if a subsystem is specified than the physical actuator is part of a larger
-        #            # subsystem. ex One arduino can have a actuator subsystem and a data logging system
-        #            #if a subsystem is specified dont want to create our on instance of a GPActuator
-        #            pass
 
+        # old style
         klass = name = self.config_get(config, 'General', 'type')
+        if klass:
+            if 'qtegra' in klass.lower():
+                klass = 'QtegraGPActuator'
+            elif 'agilent' in klass.lower():
+                klass = 'AgilentGPActuator'
 
-        if 'qtegra' in klass.lower():
-            klass = 'QtegraGPActuator'
+        # new style
+        name = self.config_get(config, 'General', 'name', default=name)
+        klass = self.config_get(config, 'General', 'klass', default=klass)
 
         self._type = klass
         if klass is not None:
-            if 'subsystem' in klass:
-                pass
-            else:
+            try:
                 factory = self.get_factory(PACKAGES[klass], klass)
-                self.debug('constructing cdevice: name={}, klass={}'.format(name, klass))
-                self._cdevice = factory(name=name,
-                                        application=self.application,
-                                        configuration_dir_name=self.configuration_dir_name)
-                return True
+            except KeyError:
+                self.warning_dialog('Failed construction device with klass={}'.format(klass))
+                return
+
+            self.debug('constructing cdevice: name={}, klass={}'.format(name, klass))
+            self._cdevice = factory(name=name,
+                                    application=self.application,
+                                    configuration_dir_name=self.configuration_dir_name)
+            return True
 
     def open_channel(self, *args, **kw):
         """
 
         """
-
-        if self._cdevice is not None:
-
-            r = self._cdevice.open_channel(*args, **kw)
-            if self.simulation:
-                time.sleep(0.005)
-            return r
-        else:
-            return True
+        return self._actuate('open', *args, **kw)
 
     def close_channel(self, *args, **kw):
         """
 
         """
-        if self._cdevice is not None:
-            r = self._cdevice.close_channel(*args, **kw)
-            if self.simulation:
-                time.sleep(0.005)
-            return r
-        else:
-            return True
+        return self._actuate('close', *args, **kw)
 
+    @simulate
+    def _actuate(self, tag, *args, **kw):
+        if self._cdevice is not None:
+            func = getattr(self._cdevice, '{}_channel'.format(tag))
+            return func(*args, **kw)
+
+    @simulate
     def get_channel_state(self, *args, **kw):
         """
 
         """
 
         if self._cdevice is not None:
-            r = self._cdevice.get_channel_state(*args, **kw)
-            if self.simulation:
-                time.sleep(0.005)
-            return r
+            return self._cdevice.get_channel_state(*args, **kw)
 
 # ============= EOF ====================================

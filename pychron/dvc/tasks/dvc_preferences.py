@@ -87,6 +87,7 @@ class DVCPreferences(BasePreferencesHelper):
     use_cache = Bool
     max_cache_size = Int
     update_currents_enabled = Bool
+    use_auto_pull = Bool(True)
 
 
 class DVCPreferencesPane(PreferencesPane):
@@ -98,6 +99,11 @@ class DVCPreferencesPane(PreferencesPane):
                                           tooltip='Use the special cocktail.json for defining the '
                                                   'irradiation flux and chronology',
                                           label='Use Cocktail Irradiation')),
+                        BorderVGroup(Item('use_auto_pull', label='Auto Pull', tooltip='If selected, automatically '
+                                                                                      'update your version to the '
+                                                                                      'latest version. Deselect if '
+                                                                                      'you want to be asked to pull '
+                                                                                      'the official version.')),
                         BorderVGroup(Item('update_currents_enabled', label='Enabled'),
                                      label='Current Values'),
                         BorderVGroup(HGroup(Item('use_cache', label='Enabled'),
