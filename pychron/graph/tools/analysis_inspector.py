@@ -136,9 +136,10 @@ class AnalysisPointInspector(PointInspector):
                             y = self.value_format(y)
 
                     info = [u'Analysis= {} UUID({})'.format(rid, analysis.display_uuid),
-                            u'Comment= {}'.format(analysis.comment[:20]),
                             u'Tag= {}'.format(analysis.tag),
                             u'{}= {}'.format(name, y)]
+                    if analysis.comment:
+                        info.insert(1, u'Comment= {}'.format(analysis.comment[:20]))
 
                     if hasattr(analysis, 'status_text'):
                         info.insert(1, 'Status= {}'.format(analysis.status_text))
