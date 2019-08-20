@@ -883,6 +883,7 @@ class SwitchManager(Manager):
         else:
             description = ''
 
+        actuator = None
         if klass != ManualSwitch:
             actname = act_elem.text.strip() if act_elem is not None else 'switch_controller'
             actuator = self.get_actuator_by_name(actname)
