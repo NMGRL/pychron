@@ -46,7 +46,7 @@ use ``Powershell.exe`` or equivalent
 
 .. code-block:: powershell
 
-    $ Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/NMGRL/pychron/develop/app_utils/install.py' -OutfFile
+    $ Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/NMGRL/pychron/develop/app_utils/install.py' -OutFile
      install.py
 
 

@@ -883,13 +883,14 @@ class SwitchManager(Manager):
         else:
             description = ''
 
-        actname = act_elem.text.strip() if act_elem is not None else 'switch_controller'
-        actuator = self.get_actuator_by_name(actname)
-        if actuator is None:
-            if not globalv.ignore_initialization_warnings:
-                self.warning_dialog(
-                    'No actuator for {}. Valve will not operate. Check setupfiles/extractionline/valves.xml'.format(
-                        name))
+        actuator = None
+        if klass != ManualSwitch:
+            actname = act_elem.text.strip() if act_elem is not None else 'switch_controller'
+            actuator = self.get_actuator_by_name(actname)
+            if actuator is None:
+                if not globalv.ignore_initialization_warnings:
+                    self.warning_dialog('No actuator for {}. Valve will not operate. '
+                                        'Check setupfiles/extractionline/valves.xml'.format(name))
 
         qs = True
         vqs = v_elem.get('query_state')

@@ -18,7 +18,7 @@
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Any, Int
-from traitsui.api import View, UItem, InstanceEditor, ListEditor, TabularEditor, VGroup, HGroup, Item
+from traitsui.api import View, UItem, InstanceEditor, ListEditor, TabularEditor, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
@@ -120,8 +120,7 @@ class EditorPane(TraitsDockPane):
     id = 'pychron.extraction_line.editor'
 
     def traits_view(self):
-        egrp = VGroup(HGroup(Item('ex'), Item('ey')),
-                      BorderHGroup(icon_button_editor('increment_down_x', 'arrow_left'),
+        egrp = VGroup(BorderHGroup(icon_button_editor('increment_down_x', 'arrow_left'),
                                    icon_button_editor('increment_up_x', 'arrow_right'),
                                    UItem('x_magnitude'),
                                    label='X'),
@@ -135,7 +134,7 @@ class EditorPane(TraitsDockPane):
                       BorderHGroup(UItem('height'),
                                    icon_button_editor('height_increment_minus_button', 'delete'),
                                    icon_button_editor('height_increment_plus_button', 'add'), label='Height'),
-
+                      UItem('color'),
                       UItem('save_button'))
 
         agrp = BorderVGroup(UItem('add_item_button'),
