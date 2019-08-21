@@ -35,7 +35,8 @@ class HelixSpectrometer(ThermoSpectrometer):
     def get_command_map(self):
         command_map = dict(ionrepeller='IonRepeller',
                            electronenergy='ElectronEnergy',
-                           ysymmetry='YSymmetry',
+                           # ysymmetry='YSymmetry',
+                           horizontalsymmetry='HorizontalSymmetry',
                            extractionfocus='ExtractionFocus',
                            extractionsymmetry='ExtractionSymmetry',
                            extractionlens='ExtractionLens',

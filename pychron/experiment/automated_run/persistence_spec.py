@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 
 from traits.api import HasTraits, Str, Int, Bool, Any, Float, \
-    Dict, Instance, List, Date, Time, Long, Bytes
+    Dict, Instance, List, Date, Time, Long, Bytes, Tuple
 
 
 # ============= standard library imports ========================
@@ -59,6 +59,7 @@ class PersistenceSpec(HasTraits):
     runscript_name = Str
     runscript_blob = Str
 
+    settings = Tuple
     spec_dict = Dict
     defl_dict = Dict
     gains = Dict
