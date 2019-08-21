@@ -353,6 +353,12 @@ class SwitchManager(Manager):
 
         return state
 
+    def get_actuators(self):
+        act = self.actuators
+        if not act:
+            act = self.application.get_services(ICoreDevice)
+        return act
+
     def get_actuator_by_name(self, name):
         act = None
         if self.actuators:
@@ -889,7 +895,9 @@ class SwitchManager(Manager):
             actuator = self.get_actuator_by_name(actname)
             if actuator is None:
                 if not globalv.ignore_initialization_warnings:
-                    self.warning_dialog('No actuator for {}. Valve will not operate. '
+                    available_actnames = [a.name for a in self.get_actuators()]
+                    self.debug('Configured actuator="{}". Available="{}"'.format(actname, available_actnames))
+                    self.warning_dialog('No actuator for "{}". Valve will not operate. '
                                         'Check setupfiles/extractionline/valves.xml'.format(name))
 
         qs = True
