@@ -23,20 +23,22 @@ from pychron.git_archive.views import CommitFactory
 
 class DAGViewer(HasTraits):
     commits = List
+    selected = List
 
     def load(self):
-
         repo = GitRepoManager()
         repo.open_repo('gitlogtest', '/Users/ross/Sandbox')
-        cs = repo.get_topology(branch='---', include_graph=False)
-        self.commits = [CommitFactory.new(log_entry=ci) for ci in reversed(cs.split('\n'))]
+        repo.open_repo('AdvancedArgonFall2018', '/Users/ross/PychronDev/data/.dvc/repositories')
+        cs = repo.get_dag(branch='---')
+        CommitFactory.reset()
+        self.commits = [CommitFactory.new(log_entry=ci) for ci in cs.split('\n')]
         for ci in self.commits:
             print(ci.oid, id(ci), 'parents={}, children={}'.format(','.join([str(id(p)) for p in ci.parents]),
                                                            ','.join([str(id(p)) for p in ci.children])))
 
     def traits_view(self):
-        v = View(UItem('commits', editor=GitDAGEditor()),
-                 resizable=True, width=200, height=300)
+        v = View(UItem('commits', editor=GitDAGEditor(selected='selected')),
+                 resizable=True, width=500, height=300)
         return v
 
 

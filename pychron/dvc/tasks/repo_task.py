@@ -82,7 +82,8 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
     filter_repository_value = Str
     filter_origin_value = Str
     selected_repository = Instance(RepoItem)
-    ncommits = Int(50, enter_set=True, auto_set=False)
+    ncommits = Int(500, enter_set=True, auto_set=False)
+    use_simplify_dag = Bool(True)
 
     selected_local_repositories = List
     selected_local_repository_name = Property(depends_on='selected_local_repositories')  # Instance(RepoItem)
@@ -107,7 +108,9 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
                           SortLocalReposAction()),
                  SToolBar(SyncSampleInfoAction())]
 
+    selected = List
     commits = List
+    scroll_to_row = Int
     git_tags = List
     _repo = None
     selected_commit = Any
@@ -345,6 +348,11 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
         return [SelectionPane(model=self)]
 
     # private
+    def _selected_changed(self, new):
+        if new:
+            self.selected_commit = new[0]
+            self.scroll_to_row = self.commits.index(self.selected_commit)
+
     def _refresh_tags(self):
         self.git_tags = get_tags(self._repo.active_repo)
 
@@ -406,8 +414,11 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
 
     def _get_commits(self, new):
         if new:
-            cs = self._repo.get_topology(branch=new, include_graph=False)
-            self.commits = [CommitFactory.new(log_entry=ci) for ci in reversed(cs.split('\n'))]
+            cs = self._repo.get_dag(branch=new, limit=self.ncommits,
+                                    simplify=self.use_simplify_dag)
+            CommitFactory.reset()
+            cs = [CommitFactory.new(log_entry=ci) for ci in cs.split('\n')]
+            self.commits = cs[::-1]
         else:
             self.commits = []
 

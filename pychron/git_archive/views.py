@@ -131,12 +131,9 @@ class CommitAdapter(GitObjectAdapter):
 
 
 class TopologyAdapter(TabularAdapter):
-    columns = [('', 'topology'),
-               ('Tags', 'dtags'),
-               ('Date', 'timestamp'),
-               ('', 'rtimestamp'),
-               ('Message', 'message'),
-               ('Committer', 'committer'),
+    columns = [('Date', 'authdate'),
+               ('Message', 'summary'),
+               ('Author', 'author'),
                ('ID', 'oid')]
     oid_width = Int(80)
 
@@ -170,19 +167,21 @@ class CommitFactory(object):
         return commit
 
 
-class Commit(HasTraits):
-    topology = Str
-    message = Str
-    timestamp = Str
-    rtimestamp = Str
-    committer = Str
-    status = Str
-    oid = Str
-    summary = Str
-    column = None
-    generation = 0
-    dtags = Str
-    parsed = True
+class Commit(object):
+    root_generation = 0
+
+    __slots__ = ('oid',
+                 'summary',
+                 'parents',
+                 'children',
+                 'tags',
+                 'author',
+                 'authdate',
+                 'email',
+                 'generation',
+                 'column',
+                 'row',
+                 'parsed')
 
     def __init__(self, oid=None, log_entry=None):
         super(Commit, self).__init__()
