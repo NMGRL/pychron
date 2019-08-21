@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Any, List, Int, Property
+from traits.api import HasTraits, Str, Any, Int, Property
 from traitsui.api import View, UItem, TextEditor, Item, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -23,6 +23,8 @@ from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 
+# logsep = chr(0x01)
+logsep = '$'
 
 class StatusView(HasTraits):
     def traits_view(self):
@@ -130,18 +132,46 @@ class CommitAdapter(GitObjectAdapter):
 
 class TopologyAdapter(TabularAdapter):
     columns = [('', 'topology'),
-               ('Status', 'status'),
+               ('Tags', 'dtags'),
                ('Date', 'timestamp'),
                ('', 'rtimestamp'),
                ('Message', 'message'),
                ('Committer', 'committer'),
-               ('UUID', 'uuid')]
-    uuid_width = Int(80)
+               ('ID', 'oid')]
+    oid_width = Int(80)
+
+
+class CommitFactory(object):
+    root_generation = 0
+    commits = {}
+
+    @classmethod
+    def reset(cls):
+        cls.commits.clear()
+        cls.root_generation = 0
+
+    @classmethod
+    def new(cls, oid=None, log_entry=None):
+        if not oid and log_entry:
+            oid = log_entry[:40]
+        try:
+            commit = cls.commits[oid]
+            if log_entry and not commit.parsed:
+                commit.parse(log_entry)
+            cls.root_generation = max(commit.generation,
+                                      cls.root_generation)
+        except KeyError:
+            commit = Commit(oid, log_entry=log_entry)
+            if not log_entry:
+                cls.root_generation += 1
+                commit.generation = max(commit.generation,
+                                        cls.root_generation)
+            cls.commits[oid] = commit
+        return commit
 
 
 class Commit(HasTraits):
     topology = Str
-    uuid = Str
     message = Str
     timestamp = Str
     rtimestamp = Str
@@ -149,30 +179,111 @@ class Commit(HasTraits):
     status = Str
     oid = Str
     summary = Str
-    tags = List
-    parents = List
     column = None
     generation = 0
-    children = List
+    dtags = Str
+    parsed = True
 
-    def __init__(self, cs, delim='$'):
+    def __init__(self, oid=None, log_entry=None):
         super(Commit, self).__init__()
-        if delim in cs:
-            args = cs.split(delim)
-            head = args[0].strip()
 
-            self.topology = head[:-8]
-            self.uuid = head[-8:]
+        self.oid = oid
+        self.summary = ''
+        self.parents = []
+        self.children = []
+        self.tags = set()
+        self.email = None
+        self.author = None
+        self.authdate = None
+        self.parsed = False
+        self.generation = CommitFactory.root_generation
+        self.column = None
+        self.row = None
+        if log_entry:
+            self.parse(log_entry)
 
-            self.timestamp = args[1]
-            self.rtimestamp = args[2]
-            self.message = args[3]
-            self.committer = args[4]
-            self.status = args[5]
-            self.oid = self.uuid
+    def parse(self, log_entry, sep=logsep):
+
+        oid, authdate, rauthdate, summary, author, email, tags, parents = log_entry.split(sep)
+
+        self.oid = oid[:40]
+        self.summary = summary if summary else ''
+        self.author = author if author else ''
+        self.authdate = authdate if authdate else ''
+        self.email = email if email else ''
+
+        if parents:
+            generation = None
+            for parent_oid in parents.split(' '):
+                parent = CommitFactory.new(oid=parent_oid)
+                parent.children.append(self)
+                if generation is None:
+                    generation = parent.generation + 1
+                self.parents.append(parent)
+                generation = max(parent.generation + 1, generation)
+            self.generation = generation
+
+        if tags:
+            for tag in tags[2:-1].split(', '):
+                self.add_label(tag)
+
+        self.parsed = True
+        return self
+
+    def add_label(self, tag):
+        """Add tag/branch labels from `git log --decorate ....`"""
+
+        if tag.startswith('tag: '):
+            tag = tag[5:]  # strip off "tag: " leaving refs/tags/
+
+        if tag.startswith('refs/'):
+            # strip off refs/ leaving just tags/XXX remotes/XXX heads/XXX
+            tag = tag[5:]
+
+        if tag.endswith('/HEAD'):
+            return
+
+        # Git 2.4 Release Notes (draft)
+        # =============================
+        #
+        # Backward compatibility warning(s)
+        # ---------------------------------
+        #
+        # This release has a few changes in the user-visible output from
+        # Porcelain commands. These are not meant to be parsed by scripts, but
+        # the users still may want to be aware of the changes:
+        #
+        # * Output from "git log --decorate" (and "%d" format specifier used in
+        #   the userformat "--format=<string>" parameter "git log" family of
+        #   command takes) used to list "HEAD" just like other tips of branch
+        #   names, separated with a comma in between.  E.g.
+        #
+        #      $ git log --decorate -1 master
+        #      commit bdb0f6788fa5e3cacc4315e9ff318a27b2676ff4 (HEAD, master)
+        #      ...
+        #
+        # This release updates the output slightly when HEAD refers to the tip
+        # of a branch whose name is also shown in the output.  The above is
+        # shown as:
+        #
+        #      $ git log --decorate -1 master
+        #      commit bdb0f6788fa5e3cacc4315e9ff318a27b2676ff4 (HEAD -> master)
+        #      ...
+        #
+        # C.f. http://thread.gmane.org/gmane.linux.kernel/1931234
+
+        head_arrow = 'HEAD -> '
+        if tag.startswith(head_arrow):
+            self.tags.add('HEAD')
+            self.add_label(tag[len(head_arrow):])
         else:
-            self.topology = cs
+            self.tags.add(tag)
 
     def is_fork(self):
-        return not self.message
+        ''' Returns True if the node is a fork'''
+        return len(self.children) > 1
+
+    def is_merge(self):
+        ''' Returns True if the node is a fork'''
+        return len(self.parents) > 1
 # ============= EOF =============================================

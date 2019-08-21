@@ -367,25 +367,21 @@ class GitRepoManager(Loggable):
         repo.git.filter_branch('--tag-name-filter', 'cat', '--', '--all')
         repo.git.gc('--prune=now')
 
-    def get_topology(self, branch=None, delim='$', limit=None):
-        fmt_args = ('(bold blue)%h',
-                    '(bold green)%ai',
-                    '(bold green)%ar',
-                    '(white)%s',
-                    '(dim white)%an',
-                    '(auto)%d')
-        fmt_args = ['%C{}%C(reset)'.format(fi) for fi in fmt_args]
-
-        fmt_args = ('%h',
+    def get_topology(self, branch=None, delim='$', limit=None, include_graph=True):
+        fmt_args = ('%H',
                     '%ai',
                     '%ar',
                     '%s',
                     '%an',
-                    '%d')
+                    '%ae',
+                    '%d',
+                    '%P')
         fmt = delim.join(fmt_args)
 
-        args = ['--graph', '--abbrev-commit', '--decorate',
+        args = ['--abbrev-commit', '--decorate',
                 '--format={}'.format(fmt)]
+        if include_graph:
+            args.append('--graph')
         if branch == NULL_STR:
             args.append('--all')
         else:

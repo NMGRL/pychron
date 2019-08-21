@@ -24,6 +24,23 @@ from traitsui.qt4.editor import Editor
 
 
 # adapted from git-cola
+def get(widget):
+    """Query a widget for its python value"""
+    if hasattr(widget, 'isChecked'):
+        value = widget.isChecked()
+    elif hasattr(widget, 'value'):
+        value = widget.value()
+    elif hasattr(widget, 'text'):
+        value = widget.text()
+    elif hasattr(widget, 'toPlainText'):
+        value = widget.toPlainText()
+    elif hasattr(widget, 'sizes'):
+        value = widget.sizes()
+    elif hasattr(widget, 'date'):
+        value = widget.date().toString(Qt.ISODate)
+    else:
+        value = None
+    return value
 
 class Cache(object):
     _label_font = None
@@ -37,7 +54,7 @@ class Cache(object):
         return font
 
 
-class Commit(QGraphicsItem):
+class CommitGraphicsItem(QGraphicsItem):
     item_type = QGraphicsItem.UserType + 2
     commit_radius = 12.0
     merge_radius = 18.0
@@ -307,7 +324,7 @@ class Edge(QGraphicsItem):
         self.pen = QtGui.QPen(color, 4.0, line, Qt.SquareCap, Qt.RoundJoin)
 
     def recompute_bound(self):
-        dest_pt = Commit.item_bbox.center()
+        dest_pt = CommitGraphicsItem.item_bbox.center()
 
         self.source_pt = self.mapFromItem(self.source, dest_pt)
         self.dest_pt = self.mapFromItem(self.dest, dest_pt)
@@ -431,8 +448,8 @@ class EdgeColor(object):
 
 
 class GraphView(QGraphicsView):
-    x_adjust = int(Commit.commit_radius * 4 / 3)
-    y_adjust = int(Commit.commit_radius * 4 / 3)
+    x_adjust = int(CommitGraphicsItem.commit_radius * 4 / 3)
+    y_adjust = int(CommitGraphicsItem.commit_radius * 4 / 3)
 
     x_off = -18
     y_off = -24
@@ -468,21 +485,179 @@ class GraphView(QGraphicsView):
         scene.setItemIndexMethod(QGraphicsScene.NoIndex)
         self.setScene(scene)
 
+    def set_initial_view(self):
+        items = []
+        selected = self.selected_items()
+        if selected:
+            items.extend(selected)
+
+        if not selected and self.commits:
+            commit = self.commits[-1]
+            items.append(self.items[commit.oid])
+
+        self.setSceneRect(self.scene().itemsBoundingRect())
+        self.fit_view_to_items(items)
+
+    def fit_view_to_items(self, items):
+        if not items:
+            rect = self.scene().itemsBoundingRect()
+        else:
+            x_min = y_min = maxsize
+            x_max = y_max = -maxsize
+
+            for item in items:
+                pos = item.pos()
+                x = pos.x()
+                y = pos.y()
+                x_min = min(x_min, x)
+                x_max = max(x_max, x)
+                y_min = min(y_min, y)
+                y_max = max(y_max, y)
+
+            rect = QtCore.QRectF(x_min, y_min,
+                                 abs(x_max - x_min),
+                                 abs(y_max - y_min))
+
+        x_adjust = abs(GraphView.x_adjust)
+        y_adjust = abs(GraphView.y_adjust)
+
+        count = max(2.0, 10.0 - len(items) / 2.0)
+        y_offset = int(y_adjust * count)
+        x_offset = int(x_adjust * count)
+        rect.setX(rect.x() - x_offset // 2)
+        rect.setY(rect.y() - y_adjust // 2)
+        rect.setHeight(rect.height() + y_offset)
+        rect.setWidth(rect.width() + x_offset)
+
+        self.fitInView(rect, Qt.KeepAspectRatio)
+        self.scene().invalidate()
+    def save_selection(self, event):
+        if event.button() != Qt.LeftButton:
+            return
+        elif Qt.ShiftModifier != event.modifiers():
+            return
+        self.selection_list = self.selected_items()
+
+    def restore_selection(self, event):
+        if Qt.ShiftModifier != event.modifiers():
+            return
+        for item in self.selection_list:
+            item.setSelected(True)
+
+    def handle_event(self, event_handler, event):
+        self.save_selection(event)
+        event_handler(self, event)
+        self.restore_selection(event)
+        self.update()
+
+    def set_selecting(self, selecting):
+        self.selecting = selecting
+
+    def pan(self, event):
+        pos = event.pos()
+        dx = pos.x() - self.mouse_start[0]
+        dy = pos.y() - self.mouse_start[1]
+
+        if dx == 0 and dy == 0:
+            return
+
+        rect = QtCore.QRect(0, 0, abs(dx), abs(dy))
+        delta = self.mapToScene(rect).boundingRect()
+
+        tx = delta.width()
+        if dx < 0.0:
+            tx = -tx
+
+        ty = delta.height()
+        if dy < 0.0:
+            ty = -ty
+
+        matrix = self.transform()
+        matrix.reset()
+        matrix *= self.saved_matrix
+        matrix.translate(tx, ty)
+
+        self.setTransformationAnchor(QtWidgets.QGraphicsView.NoAnchor)
+        self.setTransform(matrix)
+
+    def wheel_zoom(self, event):
+        """Handle mouse wheel zooming."""
+        delta = qtcompat.wheel_delta(event)
+        zoom = math.pow(2.0, delta/512.0)
+        factor = (self.transform()
+                  .scale(zoom, zoom)
+                  .mapRect(QtCore.QRectF(0.0, 0.0, 1.0, 1.0))
+                  .width())
+        if factor < 0.014 or factor > 42.0:
+            return
+        self.setTransformationAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
+        self.zoom = zoom
+        self.scale(zoom, zoom)
+
+    def wheel_pan(self, event):
+        """Handle mouse wheel panning."""
+        unit = QtCore.QRectF(0.0, 0.0, 1.0, 1.0)
+        factor = 1.0 / self.transform().mapRect(unit).width()
+        tx, ty = qtcompat.wheel_translation(event)
+
+        matrix = self.transform().translate(tx * factor, ty * factor)
+        self.setTransformationAnchor(QtWidgets.QGraphicsView.NoAnchor)
+        self.setTransform(matrix)
+
+    def scale_view(self, scale):
+        factor = (self.transform()
+                  .scale(scale, scale)
+                  .mapRect(QtCore.QRectF(0, 0, 1, 1))
+                  .width())
+        if factor < 0.07 or factor > 100.0:
+            return
+        self.zoom = scale
+
+        adjust_scrollbars = True
+        scrollbar = self.verticalScrollBar()
+        if scrollbar:
+            value = get(scrollbar)
+            min_ = scrollbar.minimum()
+            max_ = scrollbar.maximum()
+            range_ = max_ - min_
+            distance = value - min_
+            nonzero_range = range_ > 0.1
+            if nonzero_range:
+                scrolloffset = distance/range_
+            else:
+                adjust_scrollbars = False
+
+        self.setTransformationAnchor(QGraphicsView.NoAnchor)
+        self.scale(scale, scale)
+
+        scrollbar = self.verticalScrollBar()
+        if scrollbar and adjust_scrollbars:
+            min_ = scrollbar.minimum()
+            max_ = scrollbar.maximum()
+            range_ = max_ - min_
+            value = min_ + int(float(range_) * scrolloffset)
+            scrollbar.setValue(value)
+
     def clear(self):
         self.scene().clear()
         self.items.clear()
         self.commits = []
 
     def set_commits(self, cs):
-        self.commits = cs
+        self.commits = cs = [ci for ci in cs if ci.oid]
         scene = self.scene()
         for commit in cs:
-            item = Commit(commit, None)
+            item = CommitGraphicsItem(commit, None)
             self.items[commit.oid] = item
+
+            for ref in commit.tags:
+                self.items[ref] = item
             scene.addItem(item)
+            # print(commit.oid, commit.parents, commit.children)
 
         self.layout_commits()
         self.link(cs)
+        # self.set_initial_view()
 
     def link(self, commits):
         """Create edges linking commits with their parents"""
@@ -493,10 +668,12 @@ class GraphView(QGraphicsView):
             except KeyError:
                 # TODO - Handle truncated history viewing
                 continue
+
             for parent in reversed(commit.parents):
                 try:
                     parent_item = self.items[parent.oid]
                 except KeyError:
+                    print('invalid parent', parent.oid, self.items.keys())
                     # TODO - Handle truncated history viewing
                     continue
                 try:
@@ -504,7 +681,9 @@ class GraphView(QGraphicsView):
                 except KeyError:
                     edge = Edge(parent_item, commit_item)
                 else:
+                    print('comtimiea')
                     continue
+
                 parent_item.edges[commit.oid] = edge
                 commit_item.edges[parent.oid] = edge
                 scene.addItem(edge)
@@ -554,6 +733,7 @@ class GraphView(QGraphicsView):
         self.tagged_cells = set()
 
     def declare_column(self, column):
+        print('decacads', self.frontier)
         if self.frontier:
             # Align new column frontier by frontier of nearest column. If all
             # columns were left then select maximum frontier value.
@@ -608,6 +788,7 @@ class GraphView(QGraphicsView):
             # column then look for free one by moving from center along both
             # directions simultaneously.
             for c in itertools.count(0):
+                print('asdf', c, columns)
                 if c not in columns:
                     if c > self.max_column:
                         self.max_column = c
@@ -668,6 +849,7 @@ class GraphView(QGraphicsView):
                 # happens when tree loading is in progress. Allocate new
                 # columns for such nodes.
                 node.column = self.alloc_column()
+                print('noasd', node.oid, node.column)
 
             node.row = self.alloc_cell(node.column, node.tags)
 
@@ -761,6 +943,7 @@ class _DAGEditor(Editor):
         return GraphView(None, None, parent)
 
     def update_editor(self):
+        self.control.clear()
         self.control.set_commits(self.value)
 
 

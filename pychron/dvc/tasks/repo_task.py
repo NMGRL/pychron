@@ -41,7 +41,7 @@ from pychron.envisage.tasks.base_task import BaseTask
 from pychron.git.hosts import IGitHost
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.git_archive.utils import ahead_behind, get_tags
-from pychron.git_archive.views import Commit
+from pychron.git_archive.views import CommitFactory
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR
 
@@ -406,8 +406,8 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
 
     def _get_commits(self, new):
         if new:
-            cs = self._repo.get_topology(branch=new, limit=self.ncommits)
-            self.commits = [Commit(ci) for ci in cs.split('\n')] 
+            cs = self._repo.get_topology(branch=new, include_graph=False)
+            self.commits = [CommitFactory.new(log_entry=ci) for ci in reversed(cs.split('\n'))]
         else:
             self.commits = []
 
