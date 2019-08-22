@@ -541,6 +541,7 @@ class ExtractionLineManager(Manager, Consoleable):
     def _update(self):
         if self.use_hardware_update:
             self.switch_manager.load_hardware_states()
+            self.switch_manager.load_valve_owners()
             do_after(self.hardware_update_period * 1000, self._update)
 
     def _deactivate_hook(self):
