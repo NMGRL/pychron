@@ -18,8 +18,10 @@
 
 # ========== local library imports =============
 from __future__ import absolute_import
-from pychron.hardware.actuators.gp_actuator import GPActuator
+
 from six.moves import range
+
+from pychron.hardware.actuators.gp_actuator import GPActuator
 
 
 class AgilentGPActuator(GPActuator):
@@ -52,7 +54,7 @@ class AgilentGPActuator(GPActuator):
             self.warning('\n'.join(errs))
         return True
 
-    def get_channel_state(self, obj, verbose=False, **Kw):
+    def get_channel_state(self, obj, verbose=False, **kw):
         """
             Query the hardware for the channel state
         """

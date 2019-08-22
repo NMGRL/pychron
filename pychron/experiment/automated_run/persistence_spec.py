@@ -52,6 +52,9 @@ class PersistenceSpec(HasTraits):
     post_equilibration_name = Str
     post_equilibration_blob = Str
 
+    hops_name = Str
+    hops_blob = Str
+    
     positions = List  # list of position names
     extraction_positions = List  # list of x,y or x,y,z tuples
 

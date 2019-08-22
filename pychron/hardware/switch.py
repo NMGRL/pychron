@@ -92,7 +92,7 @@ class Switch(BaseSwitch):
     address = Str
     actuator = Any
     state_device = Any
-
+    state_address = Str
     query_state = Bool(True)
 
     actuator_name = Property(depends_on='actuator')
@@ -111,13 +111,15 @@ class Switch(BaseSwitch):
         result = None
         if self.state_device is not None:
             dev = self.state_device
+            address = self.state_address
             # result = self.state_device.get_indicator_state(self, 'closed', **kw)
         elif self.actuator is not None:
             dev = self.actuator
+            address = self.address
             # result = self.actuator.get_indicator_state(self, 'closed', **kw)
 
         if dev:
-            result = getattr(dev, func)(self, *args, **kw)
+            result = getattr(dev, func)(address, *args, **kw)
 
         return result
 
