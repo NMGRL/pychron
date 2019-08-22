@@ -905,6 +905,7 @@ class SwitchManager(Manager):
 
         actuator = None
         state_dev = None
+        state_address = ''
         if klass != ManualSwitch:
             actname = act_elem.text.strip() if act_elem is not None else 'switch_controller'
             actuator = self.get_actuator_by_name(actname)
@@ -914,9 +915,15 @@ class SwitchManager(Manager):
                     self.debug('Configured actuator="{}". Available="{}"'.format(actname, available_actnames))
                     self.warning_dialog('No actuator for "{}". Valve will not operate. '
                                         'Check setupfiles/extractionline/valves.xml'.format(name))
+            if state_elem:
+                state_name = state_elem.text.strip()
+                state_address = state_elem.find('address')
+                if state_address:
+                    state_address = state_address.text.strip()
+                else:
+                    state_address = address
 
-            state_name = state_elem.text.strip() if state_elem is not None else 'switch_controller'
-            state_dev = self.get_actuator_by_name(state_name)
+                state_dev = self.get_actuator_by_name(state_name)
 
         qs = True
         vqs = v_elem.get('query_state')
@@ -967,6 +974,7 @@ class SwitchManager(Manager):
                    check_actuation_delay=check_actuation_delay,
                    actuator=actuator,
                    state_device=state_dev,
+                   state_address=state_address,
                    description=description,
                    query_state=qs,
                    ignore_lock_warning=ignore_lock_warning,

@@ -113,42 +113,60 @@ def which(program):
 
 def ask_config():
     info_header('Getting User Configuration')
+    YES = ('y', 'yes', 'Y', 'Yes', 'YES')
+    distro = os.path.join(HOME, 'anaconda3')
 
-    def ask(cfg, key, msg, default):
+    def ask(cfg, key, msg):
+        default = cfg[key]
         v = input('{} [{}] >> '.format(msg, default))
         if not v:
             v = default
         cfg[key] = v
 
-    config = {}
-    ask(config, 'github_org', 'Github organization', 'NMGRL')
-    ask(config, 'github_user', 'Github user name', 'nmgrluser')
-    ask(config, 'github_pwd', 'Github password', '')
-    ask(config, 'massspec_db_version', 'MassSpec Database Version', 16)
-    ask(config, 'fork', 'Pychron Fork', 'NMGRL')
-    ask(config, 'branch', 'Pychron Branch', 'develop')
-    ask(config, 'app_name', 'Pychron Style', 'pyexperiment')
-    ask(config, 'qt_bindings', 'Qt Bindings', 'pyqt')
+    config = {'github_org': 'NMGRL',
+              'github_user': 'nmgrluser',
+              'github_pwd': '',
+              'massspec_db_version': 16,
+              'fork': 'NMGRL',
+              'branch': 'develop',
+              'app_name': 'pyexperiment',
+              'qt_bindings': 'pyqt5',
+              'use_all_defaults': 'no',
+              'mac_os_app': False,
+              'mac_app_name': 'Pychron',
+              'app_id': 0,
+              'pychron_data_dir': 'Pychron',
+              'conda_distro': distro,
+              'conda_env_name': 'pychron3',
+              'update_db': 0,
+              'alembic_url': 'mysql+pymysql://<user>:<pwd>@<host>/<db>'}
 
-    config['mac_os_app'] = False
-    if IS_MAC:
-        ask(config, 'mac_os_app', 'Make a Mac OS application', 'yes')
-        if config['mac_os_app'] in ('y', 'yes'):
-            config['mac_os_app'] = True
-            ask(config, 'mac_app_name', 'Application name', 'Pychron')
+    ask(config, 'use_all_defaults', 'Use all defaults')
+    if config['use_all_defaults'] not in YES:
+        ask(config, 'github_org', 'Github organization')
+        ask(config, 'github_user', 'Github user name')
+        ask(config, 'github_pwd', 'Github password')
+        ask(config, 'massspec_db_version', 'MassSpec Database Version')
+        ask(config, 'fork', 'Pychron Fork')
+        ask(config, 'branch', 'Pychron Branch')
+        ask(config, 'app_name', 'Pychron Style')
+        ask(config, 'qt_bindings', 'Qt Bindings')
 
-    ask(config, 'app_id', 'Application ID', 0)
-    ask(config, 'pychron_data_dir', 'Pychron Data directory', 'Pychron')
+        if IS_MAC:
+            ask(config, 'mac_os_app', 'Make a Mac OS application')
+            if config['mac_os_app'] in YES:
+                config['mac_os_app'] = True
+                ask(config, 'mac_app_name', 'Application name')
 
-    distro = os.path.join(HOME, 'anaconda3')
-    ask(config, 'conda_distro', 'Conda Distro Path', distro)
-    ask(config, 'conda_env_name', 'Conda environment name', 'pychron3')
-
-    ask(config, 'update_db', 'Update Database automatically', 0)
-    if config['update_db'] in ('y', 'yes', 'Y', 'Yes', 'YES'):
-        ask(config, 'alembic_url', 'Database URL', 'mysql+pymysql://<user>:<pwd>@<host>/<db>')
-    else:
-        config['alembic_url'] = ''
+        ask(config, 'app_id', 'Application ID')
+        ask(config, 'pychron_data_dir', 'Pychron Data directory')
+        ask(config, 'conda_distro', 'Conda Distro Path')
+        ask(config, 'conda_env_name', 'Conda environment name')
+        ask(config, 'update_db', 'Update Database automatically')
+        if config['update_db'] in YES:
+            ask(config, 'alembic_url', 'Database URL')
+        else:
+            config['alembic_url'] = ''
 
     # echo config
     print('------------ Config -------------')
@@ -158,7 +176,7 @@ def ask_config():
     config['pip_requirements'] = 'uncertainties peakutils qimage2ndarray chaco'
     creq = 'pip qt numpy statsmodels scikit-learn PyYAML yaml traitsui=6.0.0 envisage sqlalchemy ' \
            'Reportlab lxml xlrd xlwt xlsxwriter requests keyring pillow gitpython cython pytables ' \
-           'pymysql certifi jinja2 swig {}'.format(config['qt_bindings'])
+           'pymysql certifi jinja2 swig=3 {}'.format(config['qt_bindings'])
     if IS_MAC:
         creq = '{}\npython.app'.format(creq)
 
@@ -171,7 +189,10 @@ def ask_config():
 
 
 def yes(msg):
-    return input(msg) in ('', 'y', 'yes', 'Yes', 'YES')
+    return input(msg) in (
+        
+        
+        '', 'y', 'yes', 'Yes', 'YES')
 
 
 def install_src(cfg):
@@ -193,9 +214,15 @@ def install_src(cfg):
 
     url = 'https://github.com/{}/pychron.git'.format(cfg['fork'])
 
-    subprocess.call([GIT, 'clone', url,
-                     '--branch={}'.format(cfg['branch']),
-                     ppath])
+    try:
+        subprocess.call([GIT, 'clone', url,
+                         '--branch={}'.format(cfg['branch']),
+                         ppath])
+
+    except BaseException:
+        subprocess.call(['git', 'clone', url,
+                         '--branch={}'.format(cfg['branch']),
+                         ppath])
 
 
 def install_conda(cfg):
@@ -206,7 +233,7 @@ def install_conda(cfg):
 
     # create env
     env_name = cfg['conda_env_name']
-    subprocess.call(['conda', 'create', '-n', env_name, '--yes', 'python=3.5'])
+    subprocess.call(['conda', 'create', '-n', env_name, '--yes', 'python=3.7'])
     # subprocess.call(['conda', 'activate', cfg['conda_env_name']])
 
     # install deps
@@ -240,10 +267,10 @@ set PYCHRON_APPNAME={app_name:}
 set PYCHRON_DATABASE_UPDATE={update_db:}
 set PYCHRON_ALEMBIC_URL={alembic_url:}
 
-ROOT=%{pychron_path:}%
+ROOT={pychron_path:}
 set PYTHONPATH=%ROOT%
 
-{conda_distro:}\\envs\\{conda_env:}\\python %ROOT%\\launchers\\launcher.py
+{conda_distro:}\\envs\\{conda_env_name:}\\python.exe %ROOT%\\launchers\\launcher.py
 '''.format(**cfg)
 
     else:
