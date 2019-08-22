@@ -21,6 +21,7 @@ from __future__ import absolute_import
 
 from six.moves import range
 
+from pychron.hardware.actuators import get_valve_address
 from pychron.hardware.actuators.gp_actuator import GPActuator
 
 
@@ -60,7 +61,7 @@ class AgilentGPActuator(GPActuator):
         """
 
         # returns one if channel close  0 for open
-        cmd = 'ROUT:{}? (@{})'.format(self._get_cmd('OPEN'), self._get_address(obj))
+        cmd = 'ROUT:{}? (@{})'.format(self._get_cmd('OPEN'), get_valve_address(obj))
         s = self.ask(cmd, verbose=verbose)
         if self.simulation:
             return
@@ -73,7 +74,7 @@ class AgilentGPActuator(GPActuator):
             Close the channel
         """
 
-        address = self._get_address(obj)
+        address = get_valve_address(obj)
         cmd = self._get_cmd('CLOSE')
         if not excl:
             cmd = 'ROUT:{} (@{})'.format(cmd, address)
@@ -90,7 +91,7 @@ class AgilentGPActuator(GPActuator):
             open the channel
         """
 
-        cmd = 'ROUT:{} (@{})'.format(self._get_cmd('OPEN'), self._get_address(obj))
+        cmd = 'ROUT:{} (@{})'.format(self._get_cmd('OPEN'), get_valve_address(obj))
         self.tell(cmd)
         if self.simulation:
             return True
@@ -126,12 +127,5 @@ class AgilentGPActuator(GPActuator):
                     error = s
 
         return error
-
-    def _get_address(self, obj):
-        if isinstance(obj, (str, int)):
-            addr = obj
-        else:
-            addr = obj.address
-        return addr
 
 # ============= EOF =====================================

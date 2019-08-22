@@ -18,8 +18,16 @@
 
 #========== local library imports =============
 from __future__ import absolute_import
+
+from pychron.hardware.actuators import get_valve_address
 from .gp_actuator import GPActuator
 from pychron.globals import globalv
+# ========== local library imports =============
+from __future__ import absolute_import
+
+from pychron.globals import globalv
+from pychron.hardware.actuators import get_valve_address
+from .gp_actuator import GPActuator
 
 
 class QtegraGPActuator(GPActuator):
@@ -34,7 +42,7 @@ class QtegraGPActuator(GPActuator):
         """
         """
 
-        cmd = 'GetValveState {}'.format(obj.address)
+        cmd = 'GetValveState {}'.format(get_valve_address(obj))
 
         s = self.ask(cmd, verbose=verbose)
 
@@ -45,7 +53,7 @@ class QtegraGPActuator(GPActuator):
         """
         """
 
-        cmd = 'Close {}'.format(obj.address)
+        cmd = 'Close {}'.format(get_valve_address(obj))
 
         r = self.ask(cmd)
         if r is None and globalv.communication_simulation:
@@ -57,7 +65,7 @@ class QtegraGPActuator(GPActuator):
     def open_channel(self, obj):
         """
         """
-        cmd = 'Open {}'.format(obj.address)
+        cmd = 'Open {}'.format(get_valve_address(obj))
 
         r = self.ask(cmd)
         if r is None and globalv.communication_simulation:
