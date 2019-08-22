@@ -903,6 +903,7 @@ class SwitchManager(Manager):
         else:
             description = ''
 
+        address = address.text.strip() if address is not None else ''
         actuator = None
         state_dev = None
         state_address = ''
@@ -926,7 +927,7 @@ class SwitchManager(Manager):
 
                 state_dev = self.get_actuator_by_name(state_name)
 
-        self.debug('Setting state_device={}, dev={}'.format(state_name, state_dev))
+        self.debug('Setting state_device={}, dev={}, address={}'.format(state_name, state_dev, state_address))
 
         qs = True
         vqs = v_elem.get('query_state')
@@ -970,7 +971,7 @@ class SwitchManager(Manager):
 
         hv = klass(name,
                    track_actuation=track,
-                   address=address.text.strip() if address is not None else '',
+                   address=address,
                    parent=parent_name,
                    parent_inverted=parent_inverted,
                    check_actuation_enabled=check_actuation_enabled,
