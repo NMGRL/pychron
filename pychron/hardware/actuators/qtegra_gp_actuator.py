@@ -14,20 +14,9 @@
 # limitations under the License.
 # ===============================================================================
 
-#========== standard library imports ==========
-
-#========== local library imports =============
-from __future__ import absolute_import
-
-from pychron.hardware.actuators import get_valve_address
-from .gp_actuator import GPActuator
-from pychron.globals import globalv
-# ========== local library imports =============
-from __future__ import absolute_import
-
 from pychron.globals import globalv
 from pychron.hardware.actuators import get_valve_address
-from .gp_actuator import GPActuator
+from pychron.hardware.actuators.gp_actuator import GPActuator
 
 
 class QtegraGPActuator(GPActuator):
