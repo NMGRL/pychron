@@ -19,10 +19,11 @@ import time
 # ============= enthought library imports =======================
 from datetime import datetime
 
-from traits.api import Str, Any, Bool, Property, Float, List, Int
+from traits.api import Str, Any, Bool, Float, List, Int
 
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
+from pychron.pychron_constants import NULL_STR
 
 
 class BaseSwitch(Loggable):
@@ -72,6 +73,9 @@ class BaseSwitch(Loggable):
     def get_hardware_indicator_state(self, **kw):
         return self.state
 
+    def summary(self, width, keys):
+        return self.name
+
 
 class ManualSwitch(BaseSwitch):
     prefix_name = 'MANUAL_SWITCH'
@@ -95,7 +99,6 @@ class Switch(BaseSwitch):
     state_address = Str
     query_state = Bool(True)
 
-    actuator_name = Property(depends_on='actuator')
     prefix_name = 'SWITCH'
     parent = Str
     parent_inverted = Bool(False)
@@ -103,6 +106,11 @@ class Switch(BaseSwitch):
     positive_interlocks = List
 
     settling_time = Float(0)
+
+    def summary(self, widths, keys):
+        vs = (getattr(self, k) for k in keys)
+        args = ['{{:<{}s}}'.format(w).format(v if v else NULL_STR) for w,v in zip(widths, vs)]
+        return ''.join(args)
 
     def state_str(self):
         return '{}{}{}'.format(self.name, self.state, self.software_lock)
@@ -149,13 +157,13 @@ class Switch(BaseSwitch):
         self.set_state(s)
         return result
 
-    def get_lock_state(self):
+    def get_lock_state(self, **kw):
         return self._state_call('get_lock_state')
         # if self.actuator:
         #     return self.actuator.get_lock_state(self)
 
-    def get_owner(self):
-        return self.get_lock_state()
+    def get_owner(self, **kw):
+        return self.get_lock_state(**kw)
 
     def set_open(self, mode='normal', force=False):
         return self._actuate_state(self._open, mode, True, True, force)
@@ -226,7 +234,15 @@ class Switch(BaseSwitch):
 
         return r
 
-    def _get_actuator_name(self):
+    @property
+    def state_device_name(self):
+        name = ''
+        if self.state_device:
+            name = self.state_device.name
+        return name
+
+    @property
+    def actuator_name(self):
         name = ''
         if self.actuator:
             name = self.actuator.name

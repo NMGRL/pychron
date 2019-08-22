@@ -458,6 +458,9 @@ class SwitchManager(Manager):
         # update = False
         states = []
         for k, v in self.switches.items():
+            if not isinstance(v, HardwareValve):
+                continue
+
             ostate = v.owner
             s = v.get_owner(verbose=verbose)
             if not isinstance(s, bool):
@@ -873,6 +876,19 @@ class SwitchManager(Manager):
 
             self.pipette_trackers = ps
 
+            self._report_valves()
+
+    def _report_valves(self):
+        self.debug('========================== Switch Report ==========================')
+        widths =[25,40,40,20,20]
+        keys = ['name', 'address', 'state_address', 'actuator_name', 'state_device_name']
+        header = ['{{:<{}s}}'.format(w).format(v) for w, v in zip(widths, keys)]
+        self.debug(''.join(header))
+        for klass, vs in groupby_key(self.switches.values(), key=lambda v: str(type(v))):
+            for v in vs:
+                self.debug(v.summary(widths, keys))
+        self.debug('====================================================================')
+
     def _pipette_factory(self, p):
         inner = p.find('inner')
         outer = p.find('outer')
@@ -917,17 +933,15 @@ class SwitchManager(Manager):
                     self.debug('Configured actuator="{}". Available="{}"'.format(actname, available_actnames))
                     self.warning_dialog('No actuator for "{}". Valve will not operate. '
                                         'Check setupfiles/extractionline/valves.xml'.format(name))
-            if state_elem:
+            if state_elem is not None:
                 state_name = state_elem.text.strip()
                 state_address = state_elem.find('address')
-                if state_address:
+                if state_address is not None:
                     state_address = state_address.text.strip()
                 else:
                     state_address = address
 
                 state_dev = self.get_actuator_by_name(state_name)
-
-        self.debug('Setting state_device={}, dev={}, address={}'.format(state_name, state_dev, state_address))
 
         qs = True
         vqs = v_elem.get('query_state')
