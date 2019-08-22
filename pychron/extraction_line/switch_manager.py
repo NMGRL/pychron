@@ -935,7 +935,7 @@ class SwitchManager(Manager):
                                         'Check setupfiles/extractionline/valves.xml'.format(name))
             if state_elem is not None:
                 state_name = state_elem.text.strip()
-                state_address = state_elem.find('address')
+                state_address = v_elem.find('state_address')
                 if state_address is not None:
                     state_address = state_address.text.strip()
                 else:
