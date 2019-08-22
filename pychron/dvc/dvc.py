@@ -82,6 +82,7 @@ class DVC(Loggable):
     use_cache = Bool
     max_cache_size = Int
     _cache = None
+    _uuid_runid_cache = {}
 
     def __init__(self, bind=True, *args, **kw):
         super(DVC, self).__init__(*args, **kw)
@@ -196,6 +197,20 @@ class DVC(Loggable):
         db.commit_on_add = ocoa
         db.close_session()
         self.info('Generate currents finished')
+
+    def convert_uuid_runids(self, uuids):
+        with self.db.session_ctx():
+            ans = self.db.get_analyses_uuid(uuids)
+            return [an.record_id for an in ans]
+
+        # if uuid in self._uuid_runid_cache:
+        #     r = self._uuid_runid_cache[uuid]
+        # else:
+        #     with self.db.session_ctx():
+        #         an = self.db.get_analysis_uuid(uuid)
+        #         r = an.record_id
+        #         self._uuid_runid_cache[uuid] = r
+        # return r
 
     def find_associated_identifiers(self, samples):
         from pychron.dvc.associated_identifiers import AssociatedIdentifiersView

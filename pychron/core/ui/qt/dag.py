@@ -21,12 +21,16 @@
 import collections
 import itertools
 import sys
+from operator import attrgetter
 
 from pyface.qt import QtGui, QtCore
 from pyface.qt.QtCore import Qt
 from pyface.qt.QtGui import QApplication, QGraphicsView, QGraphicsItem, QGraphicsScene
 
 maxsize = sys.maxsize
+
+Y_OFF = 12
+X_OFF = 18
 
 
 def get(widget):
@@ -110,7 +114,7 @@ class CommitGraphicsItem(QGraphicsItem):
         self.setZValue(0)
         self.setFlag(selectable)
         self.setCursor(cursor)
-        self.setToolTip(commit.oid[:12] + ': ' + commit.summary)
+        self.setToolTip(commit.oid[:12] + ': ' + commit.summary + ':' + commit.authdate)
 
         if commit.tags:
             self.label = label = Label(commit)
@@ -333,7 +337,7 @@ class Edge(QGraphicsItem):
             color = EdgeColor.current()
             line = Qt.SolidLine
 
-        self.pen = QtGui.QPen(color, 4.0, line, Qt.SquareCap, Qt.RoundJoin)
+        self.pen = QtGui.QPen(color, 2.0, line, Qt.SquareCap, Qt.RoundJoin)
 
     def recompute_bound(self):
         dest_pt = CommitGraphicsItem.item_bbox.center()
@@ -368,8 +372,8 @@ class Edge(QGraphicsItem):
         QRectF = QtCore.QRectF
         QPointF = QtCore.QPointF
 
-        arc_rect = 10
-        connector_length = 5
+        arc_rect = 8
+        connector_length = -Y_OFF / 4.
 
         path = QtGui.QPainterPath()
 
@@ -377,37 +381,53 @@ class Edge(QGraphicsItem):
             path.moveTo(self.source.x(), self.source.y())
             path.lineTo(self.dest.x(), self.dest.y())
         else:
-            # Define points starting from source
-            point1 = QPointF(self.source.x(), self.source.y())
-            point2 = QPointF(point1.x(), point1.y() - connector_length)
-            point3 = QPointF(point2.x() + arc_rect, point2.y() - arc_rect)
+            if self.source.y() - self.dest.y() > 24:
+                dev = (self.dest.x() - self.source.x()) / 2
+                p1 = QPointF(self.source.x(), self.source.y())
+                p2 = QPointF(self.source.x() + dev, self.source.y())
+                p3 = QPointF(self.source.x() + dev, self.dest.y() + 12)
+                p4 = QPointF(self.dest.x(), self.dest.y())
+                path.moveTo(p1)
+                path.lineTo(p2)
+                path.lineTo(p3)
+                path.lineTo(p4)
+            else:
+                sp = QPointF(self.source.x(), self.source.y())
+                dp = QPointF(self.dest.x(), self.dest.y())
+                path.moveTo(sp)
+                path.lineTo(dp)
 
-            # Define points starting from dest
-            point4 = QPointF(self.dest.x(), self.dest.y())
-            point5 = QPointF(point4.x(), point3.y() - arc_rect)
-            point6 = QPointF(point5.x() - arc_rect, point5.y() + arc_rect)
-
-            start_angle_arc1 = 180
-            span_angle_arc1 = 90
-            start_angle_arc2 = 90
-            span_angle_arc2 = -90
-
-            # If the dest is at the left of the source, then we
-            # need to reverse some values
-            if self.source.x() > self.dest.x():
-                point3 = QPointF(point2.x() - arc_rect, point3.y())
-                point6 = QPointF(point5.x() + arc_rect, point6.y())
-
-                span_angle_arc1 = 90
-
-            path.moveTo(point1)
-            path.lineTo(point2)
-            path.arcTo(QRectF(point2, point3),
-                       start_angle_arc1, span_angle_arc1)
-            path.lineTo(point6)
-            path.arcTo(QRectF(point6, point5),
-                       start_angle_arc2, span_angle_arc2)
-            path.lineTo(point4)
+            # # Define points starting from source
+            # point1 = QPointF(self.source.x(), self.source.y())
+            # point2 = QPointF(point1.x(), point1.y() - connector_length)
+            # point3 = QPointF(point2.x() + arc_rect, point2.y() - arc_rect)
+            #
+            # # Define points starting from dest
+            # point4 = QPointF(self.dest.x(), self.dest.y())
+            # point5 = QPointF(point4.x(), point3.y() - arc_rect)
+            # point6 = QPointF(point5.x() - arc_rect, point5.y() + arc_rect)
+            #
+            # start_angle_arc1 = 180
+            # span_angle_arc1 = 90
+            # start_angle_arc2 = 90
+            # span_angle_arc2 = -90
+            #
+            # # If the dest is at the left of the source, then we
+            # # need to reverse some values
+            # if self.source.x() > self.dest.x():
+            #     point3 = QPointF(point2.x() - arc_rect, point3.y())
+            #     point6 = QPointF(point5.x() + arc_rect, point6.y())
+            #
+            #     span_angle_arc1 = 90
+            #
+            # path.moveTo(point1)
+            # path.lineTo(point2)
+            # path.arcTo(QRectF(point2, point3),
+            #            start_angle_arc1, span_angle_arc1)
+            # path.lineTo(point6)
+            # path.arcTo(QRectF(point6, point5),
+            #            start_angle_arc2, span_angle_arc2)
+            # path.lineTo(point4)
 
         self.path = path
         self.path_valid = True
@@ -460,11 +480,11 @@ class EdgeColor(object):
 
 
 class DAGraphView(QGraphicsView):
-    x_adjust = int(CommitGraphicsItem.commit_radius * 4 / 3)
-    y_adjust = int(CommitGraphicsItem.commit_radius * 4 / 3)
+    x_adjust = int(CommitGraphicsItem.commit_radius) + 10
+    y_adjust = int(CommitGraphicsItem.commit_radius) + 10
 
-    x_off = -18
-    y_off = -24
+    x_off = -X_OFF
+    y_off = -Y_OFF
 
     def __init__(self, context, notifier, parent):
         QGraphicsView.__init__(self, parent)
@@ -491,7 +511,7 @@ class DAGraphView(QGraphicsView):
         self.pressed = False
         self.selecting = False
         self.last_mouse = [0, 0]
-        self.zoom = 2
+        self.zoom = 0
 
         scene = QGraphicsScene(self)
         scene.setItemIndexMethod(QGraphicsScene.NoIndex)
@@ -508,6 +528,7 @@ class DAGraphView(QGraphicsView):
 
         if not selected and self.commits:
             commit = self.commits[0]
+            print('asdf', commit.oid)
             items.append(self.items[commit.oid])
 
         self.setSceneRect(self.scene().itemsBoundingRect())
@@ -539,6 +560,7 @@ class DAGraphView(QGraphicsView):
         count = max(2.0, 10.0 - len(items) / 2.0)
         y_offset = int(y_adjust * count)
         x_offset = int(x_adjust * count)
+
         rect.setX(rect.x() - x_offset // 2)
         rect.setY(rect.y() - y_adjust // 2)
         rect.setHeight(rect.height() + y_offset)
@@ -577,6 +599,8 @@ class DAGraphView(QGraphicsView):
         self.commits = []
 
     def set_commits(self, cs):
+        EdgeColor.reset()
+
         self.commits = cs = [ci for ci in cs if ci.oid]
         scene = self.scene()
         for commit in cs:
@@ -773,18 +797,20 @@ class DAGraphView(QGraphicsView):
         self.reset_columns()
         self.reset_rows()
 
-        for node in sort_by_generation(list(self.commits)):
+        for i, node in enumerate(sort_by_generation(list(self.commits))):
+            # print(node.oid)
             if node.column is None:
                 # Node is either root or its parent is not in items. The last
                 # happens when tree loading is in progress. Allocate new
                 # columns for such nodes.
                 node.column = self.alloc_column()
-
-            node.row = self.alloc_cell(node.column, node.tags)
+            node.row = i
+            # node.row = self.alloc_cell(node.column, node.tags)
 
             # Allocate columns for children which are still without one. Also
             # propagate frontier for children.
             if node.is_fork():
+
                 sorted_children = sorted(node.children,
                                          key=lambda c: c.generation,
                                          reverse=True)
@@ -823,6 +849,9 @@ class DAGraphView(QGraphicsView):
             else:
                 # This is a leaf node.
                 self.leave_column(node.column)
+
+        for i, c in enumerate(sorted(self.commits, key=attrgetter('timestamp'))):
+            c.row = i
 
     def position_nodes(self):
         self.recompute_grid()

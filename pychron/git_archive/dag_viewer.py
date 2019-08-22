@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from operator import attrgetter
+
 from traits.api import HasTraits, List
 from traitsui.api import View, UItem
 
@@ -29,12 +31,13 @@ class DAGViewer(HasTraits):
         repo = GitRepoManager()
         repo.open_repo('gitlogtest', '/Users/ross/Sandbox')
         repo.open_repo('AdvancedArgonFall2018', '/Users/ross/PychronDev/data/.dvc/repositories')
-        cs = repo.get_dag(branch='---')
+        cs = repo.get_dag(branch='master', simplify=False, limit=50)
         CommitFactory.reset()
-        self.commits = [CommitFactory.new(log_entry=ci) for ci in cs.split('\n')]
-        for ci in self.commits:
-            print(ci.oid, id(ci), 'parents={}, children={}'.format(','.join([str(id(p)) for p in ci.parents]),
-                                                           ','.join([str(id(p)) for p in ci.children])))
+        cs = [CommitFactory.new(log_entry=ci) for ci in cs.split('\n')]
+        self.commits = sorted(cs, reverse=True, key=attrgetter('authdate'))
+        # for ci in self.commits:
+        #     print(ci.oid, id(ci), 'parents={}, children={}'.format(','.join([str(id(p)) for p in ci.parents]),
+        #                                                    ','.join([str(id(p)) for p in ci.children])))
 
     def traits_view(self):
         v = View(UItem('commits', editor=GitDAGEditor(selected='selected')),
@@ -46,7 +49,5 @@ if __name__ == '__main__':
     g = DAGViewer()
     g.load()
     g.configure_traits()
-
-
 
 # ============= EOF =============================================

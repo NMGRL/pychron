@@ -381,7 +381,8 @@ class GitRepoManager(Loggable):
         args = ['--abbrev-commit',
                 '--topo-order',
                 '--reverse',
-                '--decorate=full',
+                # '--author-date-order',
+                # '--decorate=full',
                 '--format={}'.format(fmt)]
         if simplify:
             args.append('--simplify-by-decoration')
@@ -411,9 +412,9 @@ class GitRepoManager(Loggable):
 
         return (func(ci) for ci in hx)
 
-    def diff(self, a, b):
+    def diff(self, a, b, *args):
         repo = self._repo
-        return repo.git.diff(a, b, )
+        return repo.git.diff(a, b, *args)
 
     def status(self):
         return self._git_command(self._repo.git.status, 'status')
@@ -994,6 +995,15 @@ You like to delete them and try again?'''.format(clean)):
 
         except GitCommandError:
             self.selected_path_commits = []
+
+    def get_modified_files(self, hexsha):
+        repo = self._repo
+
+        def func():
+            return repo.git.diff_tree('--no-commit-id', '--name-only', '-r', hexsha)
+
+        txt = self._git_command(func, 'get_modified_files')
+        return txt.split('\n')
 
     # private
     def _validate_diff(self):

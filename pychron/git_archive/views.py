@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import datetime
+
 from traits.api import HasTraits, Str, Any, Int, Property
 from traitsui.api import View, UItem, TextEditor, Item, VGroup
 # ============= standard library imports ========================
@@ -108,6 +110,11 @@ class GitTagAdapter(GitObjectAdapter):
         return self._truncate_message(self.item.commit_message)
 
 
+class DiffsAdapter(TabularAdapter):
+    columns = [('Subtraction', 'subtraction'),
+               ('Addition', 'addition')]
+
+
 TAGS = 'TAG', 'BLANK', 'ISOEVO', 'ICFactor', 'COLLECTION, EDIT, MANUAL, IMPORT, SYNC'
 TAG_COLORS = {'TAG': '#f5f7c8', 'BLANKS': '#cac8f7',
               'ISOEVO': '#c8f7e2', 'IMPORT': '#FAE8F0',
@@ -132,9 +139,9 @@ class CommitAdapter(GitObjectAdapter):
 
 class TopologyAdapter(TabularAdapter):
     columns = [('Date', 'authdate'),
+               ('ID', 'oid'),
                ('Message', 'summary'),
-               ('Author', 'author'),
-               ('ID', 'oid')]
+               ('Author', 'author')]
     oid_width = Int(80)
 
 
@@ -181,7 +188,8 @@ class Commit(object):
                  'generation',
                  'column',
                  'row',
-                 'parsed')
+                 'parsed',
+                 'timestamp')
 
     def __init__(self, oid=None, log_entry=None):
         super(Commit, self).__init__()
@@ -198,6 +206,7 @@ class Commit(object):
         self.generation = CommitFactory.root_generation
         self.column = None
         self.row = None
+        self.timestamp = None
         if log_entry:
             self.parse(log_entry)
 
@@ -210,6 +219,8 @@ class Commit(object):
         self.author = author if author else ''
         self.authdate = authdate if authdate else ''
         self.email = email if email else ''
+        if self.authdate:
+            self.timestamp = datetime.datetime.strptime(self.authdate, '%Y-%m-%d %H:%M:%S %z')
 
         if parents:
             generation = None
