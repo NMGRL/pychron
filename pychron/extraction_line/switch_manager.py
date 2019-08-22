@@ -893,7 +893,7 @@ class SwitchManager(Manager):
         name = v_elem.text.strip()
         address = v_elem.find('address')
         act_elem = v_elem.find('actuator')
-        state_elem = v_elem.find('state_dev')
+        state_elem = v_elem.find('state_device')
         description = v_elem.find('description')
 
         positive_interlocks = [i.text.strip() for i in v_elem.findall('positive_interlock')]
@@ -906,6 +906,7 @@ class SwitchManager(Manager):
         actuator = None
         state_dev = None
         state_address = ''
+        state_name = None
         if klass != ManualSwitch:
             actname = act_elem.text.strip() if act_elem is not None else 'switch_controller'
             actuator = self.get_actuator_by_name(actname)
@@ -924,6 +925,8 @@ class SwitchManager(Manager):
                     state_address = address
 
                 state_dev = self.get_actuator_by_name(state_name)
+
+        self.debug('Setting state_device={}, dev={}'.format(state_name, state_dev))
 
         qs = True
         vqs = v_elem.get('query_state')
