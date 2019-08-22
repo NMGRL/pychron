@@ -80,6 +80,9 @@ class BaseSpectrometer(SpectrometerDevice):
     def make_gains_dict(self):
         raise NotImplementedError
 
+    def make_settings(self):
+        return self._get_cached_config()
+
     def start(self):
         pass
 

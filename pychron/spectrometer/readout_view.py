@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from pyface.timer.do_later import do_after
-from traits.api import HasTraits, Str, List, Any, Event, Button, Int, Bool, Float
+from traits.api import HasTraits, Str, List, Any, Event, Button, Int, Bool, Float, Either
 from traitsui.api import View, Item, HGroup, spring
 from traitsui.handler import Handler
 from traitsui.api import UItem, VGroup, Item, HGroup, View, TableEditor, Tabbed
@@ -31,6 +31,8 @@ from pychron.core.helpers.traitsui_shortcuts import listeditor
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from six.moves import zip
+
+from pychron.pychron_constants import NULL_STR
 
 DEFAULT_CONFIG = '''-
   - name: HighVoltage
@@ -80,30 +82,34 @@ DEFAULT_CONFIG = '''-
 
 class BaseReadout(HasTraits):
     name = Str
-    value = Float
+    value = Either(Str, Float)
     spectrometer = Any
     compare = Bool(True)
     config_value = Float
     tolerance = Float
     percent_tol = Float
     display_tolerance = Str
+    use_word = Bool(True)
 
     @property
     def dev(self):
-        return self.value - self.config_value
+        try:
+            return self.value - self.config_value
+        except ValueError:
+            return NULL_STR
 
     @property
     def percent_dev(self):
         try:
             return abs(self.dev/self.config_value*100)
         except ZeroDivisionError:
-            return 0
+            return NULL_STR
 
     def set_value(self, v):
         try:
             self.value = float(v)
         except (AttributeError, ValueError, TypeError):
-            pass
+            self.value = v
 
     def config_compare(self):
         tolerance = self.percent_tol
@@ -124,7 +130,8 @@ class BaseReadout(HasTraits):
     def compare_message(self):
         return '{} does not match. Current:{:0.3f}, Config: {:0.3f}, tol.: {}'.format(self.name, self.value,
                                                                                       self.config_value,
-                                                                                      self.test_tolerance)
+                                                                                      self.display_tolerance)
+
 
 class Readout(BaseReadout):
     # value = Property(depends_on='refresh')
@@ -140,8 +147,8 @@ class Readout(BaseReadout):
         return v
 
     def query_value(self):
-        cmd = 'Get{}'.format(self.name)
-        v = self.spectrometer.get_parameter(cmd)
+        # cmd = 'Get{}'.format(self.name)
+        v = self.spectrometer.get_parameter(self.name)
         self.set_value(v)
 
     def get_percent_value(self):
@@ -211,7 +218,8 @@ class ReadoutView(Loggable):
                                      min_value=rd.get('min', 0),
                                      max_value=rd.get('max', 1),
                                      tolerance=rd.get('tolerance', 0.01),
-                                     compare=rd.get('compare', True))
+                                     compare=rd.get('compare', True),
+                                     use_word=rd.get('use_word', True))
                         self.readouts.append(rr)
 
                     for rd in yd:
@@ -249,7 +257,7 @@ class ReadoutView(Loggable):
         self._refresh()
 
     def _refresh(self):
-        readouts = [r for r in self.readouts if r.compare]
+        readouts = [r for r in self.readouts if r.compare and r.use_word]
         deflections = [r for r in self.deflections if r.compare]
         spec = self.spectrometer
 
@@ -263,6 +271,10 @@ class ReadoutView(Loggable):
                     ds = func(keys)
                     for d, r in zip(ds, rs):
                         r.set_value(d)
+            for rd in self.readouts:
+                if rd.compare and not rd.use_word:
+                    rd.query_value()
+
         else:
             for rs in (self.readouts, self.deflections):
                 for rd in rs:
@@ -275,16 +287,18 @@ class ReadoutView(Loggable):
         nd = []
 
         if not spec.simulation and self.compare_to_config_enabled:
-            for nn, rs in ((ne, readouts), (nd, deflections)):
+            for nn, rs in ((ne, self.readouts), (nd, self.deflections)):
                 for r in rs:
-
                     name = r.name
                     cv = spec.get_configuration_value(name)
                     r.config_value = cv
-                    args = r.config_compare()
-                    if args:
-                        nn.append(args)
-                        self.debug(r.compare_message())
+                    if r.compare:
+                        args = r.config_compare()
+                        if args:
+                            nn.append(args)
+                            self.debug(r.compare_message())
+                    else:
+                        r.set_value(NULL_STR)
 
             ns = ''
             if ne:
@@ -303,17 +317,21 @@ class ReadoutView(Loggable):
                     spec.set_debug_configuration_values()
 
     def traits_view(self):
+        def ff(x):
+            return '{:0.3f}'.format(x) if isinstance(x, float) else x
+
         cols = [ObjectColumn(name='name', label='Name'),
-                ObjectColumn(name='value', format='%0.3f', label='Value', width=50),
+                ObjectColumn(name='value', format_func=ff,
+                             label='Value', width=50),
                 ObjectColumn(name='config_value', format='%0.3f', label='Config. Value', width=50),
-                ObjectColumn(name='dev', format='%0.5f', label='Dev.', width=50),
-                ObjectColumn(name='percent_dev', format='%0.2f', label='%Dev.', width=50),
+                ObjectColumn(name='dev', format_func=ff, label='Dev.', width=50),
+                ObjectColumn(name='percent_dev', format_func=ff, label='%Dev.', width=50),
                 ObjectColumn(name='display_tolerance', label='Tol.')]
 
         dcols = [ObjectColumn(name='name', label='Name', width=100),
-                 ObjectColumn(name='value', label='Value', width=100),
-                 ObjectColumn(name='dev', format='%0.5f', label='Dev.'),
-                 ObjectColumn(name='percent_dev', format='%0.2f', label='%Dev.'),
+                 ObjectColumn(name='value', format_func=ff, label='Value', width=100),
+                 ObjectColumn(name='dev', format_func=ff, label='Dev.'),
+                 ObjectColumn(name='percent_dev', format_func=ff, label='%Dev.'),
                  ObjectColumn(name='display_tolerance', label='Tol.')]
 
         b = VGroup(UItem('readouts', editor=TableEditor(columns=cols, editable=False)), label='General')
@@ -336,7 +354,8 @@ def new_readout_view(rv):
     from pychron.processing.analyses.view.magnitude_editor import MagnitudeColumn
 
     cols = [ObjectColumn(name='name', label='Name'),
-            ObjectColumn(name='value', format='%0.3f', label='Value'),
+            ObjectColumn(name='value', format_func=lambda x: '{:0.3f}'.format(x) if isinstance(x, float) else x,
+                         label='Value'),
             MagnitudeColumn(name='value',
                             label='',
                             width=200), ]

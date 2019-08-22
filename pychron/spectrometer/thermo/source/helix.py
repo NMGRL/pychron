@@ -34,19 +34,26 @@ class HelixSource(ThermoSource):
     vertical_deflection_s = Property(depends_on='_vertical_deflection_s')
 
     def read_flatapole(self):
-        return self._read_value('GetParameter Flatapole')
+        return self._read_value('GetParameter DAC_1_0_(Flata-Pole)', '_flatapole')
 
-    def read_rotation_quad(self):
-        return self._read_value('GetParameter Rotation Quad')
+    def read_rotationquad(self):
+        return self._read_value('GetParameter RotationQuad', '_rotation_quad')
 
-    def read_vertical_deflection_n(self):
-        return self._read_value('GetParameter Vertical Deflection N')
+    def read_verticaldeflectionn(self):
+        return self._read_value('GetParameter DAC_0_0_(Pole-N)', '_vertical_deflection_n')
 
-    def read_vertical_deflection_s(self):
-        return self._read_value('GetParameter Vertical Deflection S')
+    def read_verticaldeflections(self):
+        return self._read_value('GetParameter DAC_0_4_(Pole-S)', '_vertical_deflection_s')
 
     def read_z_symmetry(self):
         return self._read_value('GetExtractionSymmetry', '_z_symmetry')
+
+    def sync_parameters(self):
+        super(HelixSource, self).sync_parameters()
+        self.read_flatapole()
+        self.read_rotationquad()
+        self.read_verticaldeflectionn()
+        self.read_verticaldeflections()
 
     def _set_parameter(self, param, v):
         if self._set_value('SetParameter', '{} Set,{}'.format(param, v)):

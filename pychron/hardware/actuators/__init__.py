@@ -37,6 +37,7 @@ PACKAGES = dict(AgilentGPActuator='{}.agilent.agilent_gp_actuator'.format(base),
                 QtegraGPActuator='{}.actuators.qtegra_gp_actuator'.format(base),
                 PychronGPActuator='{}.actuators.pychron_gp_actuator'.format(base),
                 NGXGPActuator='{}.actuators.ngx_gp_actuator'.format(base),
+                WiscArGPActuator='{}.actuators.wiscar_actuactor'.format(base),
                 NMGRLFurnaceActuator='{}.actuators.nmgrl_furnace_actuator'.format(base),
                 DummyGPActuator='{}.actuators.dummy_gp_actuator'.format(base),
                 RPiGPIO='{}.rpi_gpio'.format(base))

@@ -40,9 +40,9 @@ def format_repository_identifier(project):
     return project.replace('/', '_').replace('\\', '_')
 
 
-def spectrometer_sha(src, defl, gains):
+def spectrometer_sha(settings, src, defl, gains):
     sha = hashlib.sha1()
-    for d in (src, defl, gains):
+    for d in settings + (src, defl, gains):
         for k, v in sorted(d.items()):
             sha.update(k.encode('utf-8'))
             sha.update(str(v).encode('utf-8'))
@@ -637,7 +637,8 @@ class DVCPersister(BasePersister):
     def _save_spectrometer_file(self, path):
         obj = dict(spectrometer=dict(self.per_spec.spec_dict),
                    gains=dict(self.per_spec.gains),
-                   deflections=dict(self.per_spec.defl_dict))
+                   deflections=dict(self.per_spec.defl_dict),
+                   settings=self.per_spec.settings)
         # hexsha = self.dvc.get_meta_head()
         # obj['commit'] = str(hexsha)
 
@@ -718,7 +719,8 @@ class DVCPersister(BasePersister):
         for key,value in sorted(dictionary)
         :return:
         """
-        return spectrometer_sha(self.per_spec.spec_dict, self.per_spec.defl_dict, self.per_spec.gains)
+        return spectrometer_sha(self.per_spec.settings,
+                                self.per_spec.spec_dict, self.per_spec.defl_dict, self.per_spec.gains)
 
         # ============= EOF =============================================
         #         self._save_measured_positions()

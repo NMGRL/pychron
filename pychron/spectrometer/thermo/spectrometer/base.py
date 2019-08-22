@@ -92,7 +92,14 @@ class ThermoSpectrometer(BaseSpectrometer):
     def make_configuration_dict(self):
         keys = list(self.get_command_map().values())
         values = self.get_parameter_word(keys)
-        return dict(list(zip(keys, values)))
+        d = dict(list(zip(keys, values)))
+
+        key = 'ElectronEnergy'
+        if key in d:
+            d[key] = float('{:0.2f}'.format(d[key]))
+
+    def make_settings(self):
+        return self._get_cached_config()
 
     def make_gains_dict(self):
         return {di.name: di.get_gain() for di in self.detectors}
@@ -187,7 +194,10 @@ class ThermoSpectrometer(BaseSpectrometer):
             time.sleep(post_delay)
 
     def get_parameter(self, cmd):
-        return self.ask(cmd)
+        if hasattr(self.source, 'read_{}'.format(cmd.lower())):
+            return getattr(self.source, 'read_{}'.format(cmd.lower()))()
+        else:
+            return self.ask('Get{}'.format(cmd))
 
     def set_deflection(self, name, value):
         det = self.get_detector(name)
@@ -221,7 +231,7 @@ class ThermoSpectrometer(BaseSpectrometer):
         return x
 
     def read_parameter_word(self, keys):
-        x = self.ask('GetParameters {}'.format(','.join(keys)), verbose=False, quiet=True)
+        x = self.ask('GetParameters {}'.format(','.join(keys)), verbose=True, quiet=False)
         x = self._parse_word(x)
         return x
 

@@ -113,7 +113,11 @@ class ExtractionLineScene(Scene):
         else:
             ox, oy = origin
 
-        key = elem.text.strip()
+        try:
+            key = elem.text.strip()
+        except AttributeError:
+            key = ''
+
         display_name = elem.get('display_name', key)
         # print key, display_name
         fill = to_bool(elem.get('fill', 'T'))

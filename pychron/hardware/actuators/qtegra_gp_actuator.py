@@ -39,12 +39,7 @@ class QtegraGPActuator(GPActuator):
         s = self.ask(cmd, verbose=verbose)
 
         if s is not None:
-            if s.strip() in 'True':
-                return True
-            else:
-                return False
-        # else:
-        #     return False
+            return s.strip() == 'True'
 
     def close_channel(self, obj):
         """

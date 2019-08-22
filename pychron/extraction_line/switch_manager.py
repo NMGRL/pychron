@@ -353,6 +353,12 @@ class SwitchManager(Manager):
 
         return state
 
+    def get_actuators(self):
+        act = self.actuators
+        if not act:
+            act = self.application.get_services(ICoreDevice)
+        return act
+
     def get_actuator_by_name(self, name):
         act = None
         if self.actuators:
@@ -443,35 +449,48 @@ class SwitchManager(Manager):
     def load_valve_lock_states(self, *args, **kw):
         self._load_soft_lock_states()
 
-    def load_valve_owners(self):
-        pass
+    def load_valve_owners(self, verbose=False, **kw):
+        """
 
-    def load_hardware_states(self, force=False, indicator=True, verbose=False):
+        :return:
+        """
+        self.debug('load owners')
+        # update = False
+        states = []
+        for k, v in self.switches.items():
+            ostate = v.owner
+            s = v.get_owner(verbose=verbose)
+            if not isinstance(s, bool):
+                s = None
+
+            if ostate != s:
+                states.append((k, s, False))
+                # update = True
+
+        if states:
+            self.refresh_owned_state = states
+            self.refresh_canvas_needed = True
+
+    def load_hardware_states(self, force=False, verbose=False):
         self.debug('load hardware states')
-        update = False
+        # update = False
         states = []
         for k, v in self.switches.items():
             if v.query_state or force:
                 ostate = v.state
 
-                if indicator:
-                    func = v.get_hardware_indicator_state
-                else:
-                    func = v.get_hardware_state
-
-                s = func(verbose=verbose)
-
+                s = v.get_hardware_indicator_state(verbose=verbose)
                 if not isinstance(s, bool):
                     s = None
 
-                states.append((k, s, False))
                 if ostate != s:
-                    update = update or ostate != s
+                    states.append((k, s, False))
+                    # update = True
 
         if states:
             self.refresh_state = states
-            if update:
-                self.refresh_canvas_needed = True
+            self.refresh_canvas_needed = True
+            # if update:
 
     def load_indicator_states(self):
         self.debug('load indicator states')
@@ -874,6 +893,7 @@ class SwitchManager(Manager):
         name = v_elem.text.strip()
         address = v_elem.find('address')
         act_elem = v_elem.find('actuator')
+        state_elem = v_elem.find('state_dev')
         description = v_elem.find('description')
 
         positive_interlocks = [i.text.strip() for i in v_elem.findall('positive_interlock')]
@@ -884,13 +904,19 @@ class SwitchManager(Manager):
             description = ''
 
         actuator = None
+        state_dev = None
         if klass != ManualSwitch:
             actname = act_elem.text.strip() if act_elem is not None else 'switch_controller'
             actuator = self.get_actuator_by_name(actname)
             if actuator is None:
                 if not globalv.ignore_initialization_warnings:
-                    self.warning_dialog('No actuator for {}. Valve will not operate. '
+                    available_actnames = [a.name for a in self.get_actuators()]
+                    self.debug('Configured actuator="{}". Available="{}"'.format(actname, available_actnames))
+                    self.warning_dialog('No actuator for "{}". Valve will not operate. '
                                         'Check setupfiles/extractionline/valves.xml'.format(name))
+
+            state_name = state_elem.text.strip() if state_elem is not None else 'switch_controller'
+            state_dev = self.get_actuator_by_name(state_name)
 
         qs = True
         vqs = v_elem.get('query_state')
@@ -940,6 +966,7 @@ class SwitchManager(Manager):
                    check_actuation_enabled=check_actuation_enabled,
                    check_actuation_delay=check_actuation_delay,
                    actuator=actuator,
+                   state_device=state_dev,
                    description=description,
                    query_state=qs,
                    ignore_lock_warning=ignore_lock_warning,

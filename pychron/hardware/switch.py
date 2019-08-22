@@ -91,6 +91,7 @@ class ManualSwitch(BaseSwitch):
 class Switch(BaseSwitch):
     address = Str
     actuator = Any
+    state_device = Any
 
     query_state = Bool(True)
 
@@ -106,11 +107,24 @@ class Switch(BaseSwitch):
     def state_str(self):
         return '{}{}{}'.format(self.name, self.state, self.software_lock)
 
-    def get_hardware_indicator_state(self, verbose=True):
+    def _state_call(self, func, *args, **kw):
         result = None
+        if self.state_device is not None:
+            dev = self.state_device
+            # result = self.state_device.get_indicator_state(self, 'closed', **kw)
+        elif self.actuator is not None:
+            dev = self.actuator
+            # result = self.actuator.get_indicator_state(self, 'closed', **kw)
+
+        if dev:
+            result = getattr(dev, func)(self, *args, **kw)
+
+        return result
+
+    def get_hardware_indicator_state(self, verbose=True):
         msg = 'Get hardware indicator state err'
-        if self.actuator is not None:
-            result = self.actuator.get_indicator_state(self, 'closed', verbose=verbose)
+
+        result = self._state_call('get_indicator_state', 'closed', verbose)
         s = result
         if not isinstance(result, bool):
             self.debug('{}: {}'.format(msg, result))
@@ -134,8 +148,12 @@ class Switch(BaseSwitch):
         return result
 
     def get_lock_state(self):
-        if self.actuator:
-            return self.actuator.get_lock_state(self)
+        return self._state_call('get_lock_state')
+        # if self.actuator:
+        #     return self.actuator.get_lock_state(self)
+
+    def get_owner(self):
+        return self.get_lock_state()
 
     def set_open(self, mode='normal', force=False):
         return self._actuate_state(self._open, mode, True, True, force)

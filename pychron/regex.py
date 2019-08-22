@@ -32,8 +32,8 @@ def make_image_regex(ext):
     return re.compile(s)
 
 
-ISOREGEX = re.compile('[A-Za-z]{1,2}\d+$')
-ALT_ISOREGEX = re.compile('\d+[A-Za-z]{1,2}$')
+ISOREGEX = re.compile(r'[A-Za-z]{1,2}\d+$')
+ALT_ISOREGEX = re.compile(r'\d+[A-Za-z]{1,2}$')
 
 PACKETREGEX = re.compile(r'(?P<prefix>[a-zA-Z]+)?(?P<number>\d+)')
 IPREGEX = re.compile(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$')
@@ -46,6 +46,14 @@ MDD_PARAM_REGEX = re.compile(r'E= {3}(?P<E>\d+.\d+) {7}\+\- {4}(?P<Eerr>\d+.\d+)
 
 STEPREGEX = re.compile(r'^[A-Z]+$')
 
+DETREGEX = re.compile(r'^(H1|H2|L1|L2|CDD|AX)(\(CDD\))?$')
 
-DETREGEX = re.compile(r'^(H1|H2|L1|L2|CDD|AX)(\(CDD\)){0,1}$')
+tags = 'icfactors', 'blanks', 'baselines', 'intercepts', 'peakcenter'
+a = '|'.join(['{}\\/'.format(tag) for tag in tags])
+b = '|'.join(['{}\\.'.format(tag[:4]) for tag in tags])
+p = r'^.{{3,5}}\/(?P<tag>{})?[\w-]+\.({})?json$'.format(a, b)
+RUNID_PATH_REGEX = re.compile(p)
+
+TAG_PATH_REGEX = re.compile(r'^(?P<head>\w{5})\/tags\/(?P<tail>[\w-]*).tags.json$')
+
 # ============= EOF =============================================
