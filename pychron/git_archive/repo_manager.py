@@ -37,7 +37,7 @@ from pychron.git_archive.merge_view import MergeModel, MergeView
 from pychron.git_archive.utils import get_head_commit, ahead_behind, from_gitlog
 from pychron.git_archive.views import NewBranchView
 from pychron.loggable import Loggable
-from pychron.pychron_constants import DATE_FORMAT
+from pychron.pychron_constants import DATE_FORMAT, NULL_STR
 from pychron.updater.commit_view import CommitView
 
 
@@ -367,6 +367,35 @@ class GitRepoManager(Loggable):
         repo.git.filter_branch('--tag-name-filter', 'cat', '--', '--all')
         repo.git.gc('--prune=now')
 
+    def get_dag(self, branch=None, delim='$', limit=None, simplify=True):
+        fmt_args = ('%H',
+                    '%ai',
+                    '%ar',
+                    '%s',
+                    '%an',
+                    '%ae',
+                    '%d',
+                    '%P')
+        fmt = delim.join(fmt_args)
+
+        args = ['--abbrev-commit',
+                '--topo-order',
+                '--reverse',
+                # '--author-date-order',
+                # '--decorate=full',
+                '--format={}'.format(fmt)]
+        if simplify:
+            args.append('--simplify-by-decoration')
+        if branch == NULL_STR:
+            args.append('--all')
+        else:
+            args.append('-b')
+            args.append(branch)
+        if limit:
+            args.append('-{}'.format(limit))
+
+        return self._repo.git.log(*args)
+
     def commits_iter(self, p, keys=None, limit='-'):
         repo = self._repo
         p = os.path.join(repo.working_tree_dir, p)
@@ -383,9 +412,9 @@ class GitRepoManager(Loggable):
 
         return (func(ci) for ci in hx)
 
-    def diff(self, a, b):
+    def diff(self, a, b, *args):
         repo = self._repo
-        return repo.git.diff(a, b, )
+        return repo.git.diff(a, b, *args)
 
     def status(self):
         return self._git_command(self._repo.git.status, 'status')
@@ -966,6 +995,15 @@ You like to delete them and try again?'''.format(clean)):
 
         except GitCommandError:
             self.selected_path_commits = []
+
+    def get_modified_files(self, hexsha):
+        repo = self._repo
+
+        def func():
+            return repo.git.diff_tree('--no-commit-id', '--name-only', '-r', hexsha)
+
+        txt = self._git_command(func, 'get_modified_files')
+        return txt.split('\n')
 
     # private
     def _validate_diff(self):

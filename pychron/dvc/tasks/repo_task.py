@@ -19,6 +19,8 @@ import os
 import shutil
 
 # ============= enthought library imports =======================
+from operator import attrgetter
+
 from apptools.preferences.preference_binding import bind_preference
 from git import GitCommandError, InvalidGitRepositoryError
 from pyface.tasks.action.schema import SToolBar
@@ -40,8 +42,20 @@ from pychron.envisage.tasks.base_task import BaseTask
 # from pychron.git_archive.history import from_gitlog
 from pychron.git.hosts import IGitHost
 from pychron.git_archive.repo_manager import GitRepoManager
-from pychron.git_archive.utils import get_commits, ahead_behind, get_tags
+from pychron.git_archive.utils import ahead_behind, get_tags
+from pychron.git_archive.views import CommitFactory
 from pychron.paths import paths
+from pychron.pychron_constants import NULL_STR
+from pychron.regex import RUNID_PATH_REGEX, TAG_PATH_REGEX
+
+
+class DiffItem(HasTraits):
+    addition = Str
+    subtraction = Str
+
+    @property
+    def complete(self):
+        return self.addition and self.subtraction
 
 
 class RepoItem(HasTraits):
@@ -80,7 +94,8 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
     filter_repository_value = Str
     filter_origin_value = Str
     selected_repository = Instance(RepoItem)
-    ncommits = Int(50, enter_set=True, auto_set=False)
+    ncommits = Int(30, enter_set=True, auto_set=False)
+    use_simplify_dag = Bool(False)
 
     selected_local_repositories = List
     selected_local_repository_name = Property(depends_on='selected_local_repositories')  # Instance(RepoItem)
@@ -105,7 +120,9 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
                           SortLocalReposAction()),
                  SToolBar(SyncSampleInfoAction())]
 
+    selected = List
     commits = List
+    scroll_to_row = Int
     git_tags = List
     _repo = None
     selected_commit = Any
@@ -116,6 +133,12 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
     o_origin_repos = None
     check_for_changes = Bool(True)
     origin_column_clicked = Any
+
+    files = List
+    selected_file = Str
+    analyses = List
+    diff_text = Str
+    diffs = List
 
     def activated(self):
         bind_preference(self, 'check_for_changes', 'pychron.dvc.repository.check_for_changes')
@@ -266,7 +289,7 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
             except BaseException:
                 pass
 
-        self.information_dialog('{} now on branch "{}'.format(names, branch))
+        self.information_dialog('{} now on branch "{}"'.format(','.join(names), branch))
 
     def load_origin(self):
         self.debug('load origin')
@@ -347,7 +370,7 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
         self.git_tags = get_tags(self._repo.active_repo)
 
     def _refresh_branches(self):
-        self.branches = self._repo.get_branch_names()
+        self.branches = [NULL_STR] + self._repo.get_branch_names()
         b = self._repo.get_active_branch()
 
         force = self.branch == b
@@ -356,24 +379,6 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
             self._branch_changed(self.branch)
 
         self.selected_local_repository_name.active_branch = b
-
-    def _filter_origin_value_changed(self, new):
-        if new:
-            if self.o_origin_repos is None:
-                self.o_origin_repos = self.repository_names
-
-            self.repository_names = fuzzyfinder(new, self.o_origin_repos, attr='name')
-        elif self.o_origin_repos:
-            self.repository_names = self.o_origin_repos
-
-    def _filter_repository_value_changed(self, new):
-        if new:
-            if self.o_local_repos is None:
-                self.o_local_repos = self.local_names
-
-            self.local_names = fuzzyfinder(new, self.o_local_repos, attr='name')
-        elif self.o_local_repos:
-            self.local_names = self.o_local_repos
 
     def _has_selected_local(self):
         if not self.selected_local_repository_name:
@@ -394,6 +399,118 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
         if self.selected_local_repositories:
             return self.selected_local_repositories[0]
 
+    def _get_commits(self, new):
+        if new:
+            cs = self._repo.get_dag(branch=new, limit=self.ncommits,
+                                    simplify=self.use_simplify_dag)
+            CommitFactory.reset()
+            cs = [CommitFactory.new(log_entry=ci) for ci in cs.split('\n')]
+            self.commits = sorted(cs, reverse=True, key=attrgetter('authdate'))
+        else:
+            self.commits = []
+
+    def _set_files(self):
+        c = self.selected_commit
+        fs = []
+        if c:
+            fs = self._repo.get_modified_files(self.selected_commit.oid)
+
+        self._set_analyses(fs)
+        self.files = fs
+
+    def _set_analyses(self, fs):
+        def func(fx, m):
+            tag = m.group('tag')
+            if tag:
+                fx = fx.replace(tag, '')
+                fx, _ = os.path.splitext(fx)
+
+            fx = fx.replace('/', '')
+            fx, _ = os.path.splitext(fx)
+            return fx
+
+        ans = []
+        uuids = []
+        for fi in fs:
+            m = RUNID_PATH_REGEX.match(fi)
+            if m:
+                ans.append((fi, m))
+                continue
+
+            m = TAG_PATH_REGEX.match(fi)
+            if m:
+                head = m.group('head')
+                tail = m.group('tail')
+                uuids.append('{}{}'.format(head, tail))
+                continue
+
+        tag_ans = self.dvc.convert_uuid_runids(uuids)
+        ans = list({an for an in (func(*a) for a in ans) if an})
+        self.analyses = ans + tag_ans
+
+    def _make_diff_changes(self, oid, new):
+        txt = self._repo.diff('{}~1'.format(oid), oid, '--', new)
+        ds = []
+        item = None
+        for line in txt.split('\n'):
+            if line[:2] == '- ':
+                if item is None:
+                    item = DiffItem()
+                item.subtraction = line[2:]
+            elif line[:2] == '+ ':
+                if item is None:
+                    item = DiffItem()
+                item.addition = line[2:]
+
+            if item and item.complete:
+                ds.append(item)
+                item = None
+
+        # ds = []
+        # d = ''
+        # ds.append(d)
+        self.diffs = ds
+
+    # handlers
+    def _selected_file_changed(self, new):
+        if new:
+            oid = self.selected_commit.oid
+            txt = self._repo.diff('-U0', '{}~1'.format(oid), oid, '--', new)
+            self.diff_text = txt
+            self._make_diff_changes(oid, new)
+
+        else:
+            self.diffs = []
+            self.diff_text = ''
+
+    def _selected_changed(self, new):
+        if new:
+            self.selected_commit = new[0]
+            # i = next((i for i, c in enumerate(self.commits)))
+            self.scroll_to_row = self.commits.index(self.selected_commit)
+        self._set_files()
+
+    def _selected_commit_changed(self, new):
+        self._set_files()
+
+    def _filter_origin_value_changed(self, new):
+        if new:
+            if self.o_origin_repos is None:
+                self.o_origin_repos = self.repository_names
+
+            self.repository_names = fuzzyfinder(new, self.o_origin_repos, attr='name')
+        elif self.o_origin_repos:
+            self.repository_names = self.o_origin_repos
+
+    def _filter_repository_value_changed(self, new):
+        if new:
+            if self.o_local_repos is None:
+                self.o_local_repos = self.local_names
+
+            self.local_names = fuzzyfinder(new, self.o_local_repos, attr='name')
+        elif self.o_local_repos:
+            self.local_names = self.o_local_repos
+
     def _selected_local_repositories_changed(self, new):
         if new:
             repo = self._get_repo(new[0].name)
@@ -402,11 +519,8 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
                 self._refresh_branches()
                 self._refresh_tags()
 
-    def _get_commits(self, new):
-        if new:
-            self.commits = get_commits(self._repo.active_repo, new, None, '', limit=self.ncommits)
-        else:
-            self.commits = []
+    def _use_simplify_dag_changed(self):
+        self._get_commits(self.branch)
 
     def _ncommits_changed(self):
         self._get_commits(self.branch)
