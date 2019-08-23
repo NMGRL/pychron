@@ -220,7 +220,7 @@ class Switch(BaseSwitch):
 
         elif actuator is not None:
             func = getattr(actuator, func)
-            r = func(self.address)
+            r = func(self)
             
             # if mode.startswith('client'):
             #     r = func(self.address)

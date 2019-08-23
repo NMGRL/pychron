@@ -87,7 +87,7 @@ class AgilentGPActuator(GPActuator):
             name = get_valve_name(obj)
             self.warning_dialog('Address not set for valve "{}"'.format(name))
 
-        cmd = 'ROUT:{}{} (@{})'.format(self._get_cmd('OPEN'), ':EXCL' if excl else '', addr)
+        cmd = 'ROUT:{}{} (@{})'.format(self._get_cmd(action), ':EXCL' if excl else '', addr)
         self.tell(cmd)
         if self.simulation:
             return True

@@ -35,7 +35,7 @@ class ASCIIGPActuator(GPActuator):
     _affirmative = 'OK'
     _close_cmd = 'Close'
     _open_cmd = 'Open'
-    _delimiter = ''
+    _delimiter = ' '
     _state_open = 'True'
     _state_cmd = 'GetValveState'
 

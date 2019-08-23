@@ -26,7 +26,7 @@ from traitsui.menu import Action
 
 from pychron.canvas.canvas2D.overlays.extraction_line_overlay import ExtractionLineInfoTool, ExtractionLineInfoOverlay
 from pychron.canvas.canvas2D.scene.extraction_line_scene import ExtractionLineScene
-from pychron.canvas.canvas2D.scene.primitives.connections import Elbow
+from pychron.canvas.canvas2D.scene.primitives.connections import Elbow, Connection, ConnectionMixin
 from pychron.canvas.canvas2D.scene.primitives.lasers import Laser
 from pychron.canvas.canvas2D.scene.primitives.primitives import BorderLine
 from pychron.canvas.canvas2D.scene.primitives.valves import RoughValve, \
@@ -132,7 +132,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
 
     def _over_item(self, event):
         x, y = event.x, event.y
-        return self.scene.get_is_in(x, y, exclude=[BorderLine, Elbow])
+        return self.scene.get_is_in(x, y, exclude=[BorderLine, Elbow, Connection])
 
     def normal_left_down(self, event):
         pass

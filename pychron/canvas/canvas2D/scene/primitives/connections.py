@@ -21,7 +21,7 @@ from pychron.canvas.canvas2D.scene.primitives.primitives import Point, Bordered,
 from pychron.pychron_constants import NULL_STR
 
 
-class ConnectEditMixin:
+class ConnectionMixin:
     orientation = Enum(NULL_STR, 'vertical', 'horizontal')
     start = Str
     end = Str
@@ -35,7 +35,7 @@ class ConnectEditMixin:
         return v
 
 
-class Connection(BorderLine, ConnectEditMixin):
+class Connection(BorderLine, ConnectionMixin):
     tag = 'connection'
 
 
@@ -58,7 +58,7 @@ def fork(gc, lx, ly, rx, ry, mx, my, h):
     gc.draw_path()
 
 
-class Fork(QPrimitive, Bordered, ConnectEditMixin):
+class Fork(QPrimitive, Bordered, ConnectionMixin):
     tag = 'fork'
     left = None
     right = None

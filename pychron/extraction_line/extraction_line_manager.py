@@ -256,7 +256,7 @@ class ExtractionLineManager(Manager, Consoleable):
         pass
 
     def refresh_canvas(self):
-        self.debug('refresh canvas')
+        # self.debug('refresh canvas')
         for ci in self.canvases:
             ci.refresh()
 
@@ -788,7 +788,7 @@ class ExtractionLineManager(Manager, Consoleable):
         self.update_switch_owned_state(*new)
 
     def _handle_refresh_canvas(self, new):
-        self.debug('refresh_canvas_needed fired')
+        #self.debug('refresh_canvas_needed fired')
         self.refresh_canvas()
 
     def _handle_console_message(self, new):

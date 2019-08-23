@@ -252,9 +252,10 @@ class SwitchManager(Manager):
 
         if timeout:
             if clear_prev_keys and len(keys) == len(self.switches):
-                keys = None
+                self._prev_keys = []
+            else:
 
-            self._prev_keys = keys
+                self._prev_keys = keys
 
         if version:
             r = '{}:{:X}'.format(','.join(skeys), word)
@@ -454,7 +455,7 @@ class SwitchManager(Manager):
 
         :return:
         """
-        self.debug('load owners')
+        # self.debug('load owners')
         # update = False
         states = []
         for k, v in self.switches.items():
@@ -475,7 +476,7 @@ class SwitchManager(Manager):
             self.refresh_canvas_needed = True
 
     def load_hardware_states(self, force=False, verbose=False):
-        self.debug('load hardware states')
+        # self.debug('load hardware states')
         # update = False
         states = []
         for k, v in self.switches.items():
@@ -496,7 +497,7 @@ class SwitchManager(Manager):
             # if update:
 
     def load_indicator_states(self):
-        self.debug('load indicator states')
+        # self.debug('load indicator states')
         self.load_hardware_states()
 
     # private
@@ -884,8 +885,16 @@ class SwitchManager(Manager):
 
     def _report_valves(self):
         self.debug('========================== Switch Report ==========================')
-        widths =[25,40,40,20,20]
+
+        widths = []
         keys = ['name', 'address', 'state_address', 'actuator_name', 'state_device_name']
+        for k in keys:
+            vs = [getattr(v, k) if hasattr(v, k) else '---' for v in self.switches.values() ]
+            vs = [len(vi if vi else k) for vi in vs]
+            vs = max(len(k), max(vs))+3
+
+            widths.append(vs)
+        # widths =[32,40,40,20,20]
         header = ['{{:<{}s}}'.format(w).format(v) for w, v in zip(widths, keys)]
         self.debug(''.join(header))
         for klass, vs in groupby_key(self.switches.values(), key=lambda v: str(type(v))):
@@ -930,8 +939,9 @@ class SwitchManager(Manager):
         if address is not None:
             address = address.text.strip()
         else:
-            self.warning_dialog('No Address set for "{}"'.format(name))
-            return
+            if isinstance(klass, Switch):
+                self.warning_dialog('No Address set for "{}"'.format(name))
+                return
 
         actuator = None
         state_dev = None
