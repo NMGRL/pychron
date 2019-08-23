@@ -953,6 +953,7 @@ class SwitchManager(Manager):
         if address is not None:
             address = address.text.strip()
         else:
+            address = ''
             if isinstance(klass, Switch):
                 self.warning_dialog('No Address set for "{}"'.format(name))
                 return
