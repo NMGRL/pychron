@@ -20,6 +20,7 @@ from uncertainties import std_dev, nominal_value
 
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.pychron_traits import BorderVGroup
+from pychron.pychron_constants import format_mswd
 
 
 class IdeogramResultsAdapter(TabularAdapter):
@@ -55,7 +56,7 @@ class IdeogramResultsAdapter(TabularAdapter):
 
     def _get_mswd_text(self):
         m, v, n = self.item.get_mswd_tuple()
-        return '{}{}'.format('' if v else '*', floatfmt(m, n=3))
+        return format_mswd(m, v)
 
     def _get_weighted_mean_age_text(self):
         wt = self.item.weighted_age
@@ -63,7 +64,7 @@ class IdeogramResultsAdapter(TabularAdapter):
 
     def _get_weighted_mean_age_error_text(self):
         wt = self.item.weighted_age
-        return floatfmt(std_dev(wt)*self.nsigma, n=5)
+        return floatfmt(std_dev(wt) * self.nsigma, n=5)
 
 
 class IdeogramResultsTable(HasTraits):

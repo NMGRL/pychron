@@ -164,6 +164,7 @@ class ExperimentPlugin(BaseTaskPlugin):
                                                          (UndoAction, 'undo'),
                                                          (ConfigureEditorTableAction, 'configure'))),
                          ('file.menu/Save', ((SaveAsCurrentExperimentAction, 'save_as_current_experiment'),))):
+            path = 'MenuBar/{}'.format(path)
             for f, t in fs:
                 eactions.append(SchemaAddition(id=eidformat(t),
                                                factory=f,

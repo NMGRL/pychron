@@ -29,7 +29,8 @@ from pychron.dvc import repository_path
 from pychron.dvc.dvc import DVC
 from pychron.dvc.dvc_persister import DVCPersister
 from pychron.dvc.tasks import list_local_repos
-from pychron.dvc.tasks.actions import WorkOfflineAction, UseOfflineDatabase, ShareChangesAction, ClearCacheAction
+from pychron.dvc.tasks.actions import WorkOfflineAction, UseOfflineDatabase, ShareChangesAction, ClearCacheAction, \
+    GenerateCurrentsAction, MapRunIDsAction
 from pychron.dvc.tasks.dvc_preferences import DVCConnectionPreferencesPane, DVCExperimentPreferencesPane, \
     DVCRepositoryPreferencesPane, DVCPreferencesPane
 from pychron.dvc.tasks.repo_task import ExperimentRepoTask
@@ -38,6 +39,7 @@ from pychron.git.hosts import IGitHost
 
 
 class DVCPlugin(BaseTaskPlugin):
+    id = 'pychron.dvc.plugin'
     name = 'DVC'
     _fetched = False
 
@@ -150,6 +152,10 @@ class DVCPlugin(BaseTaskPlugin):
                                   path='MenuBar/tools.menu'),
                    SchemaAddition(factory=ClearCacheAction,
                                   path='MenuBar/tools.menu'),
+                   SchemaAddition(factory=GenerateCurrentsAction,
+                                  path='MenuBar/tools.menu'),
+                   SchemaAddition(factory=MapRunIDsAction,
+                                  path='MenuBar/tools.menu')
                    ]
 
         return [TaskExtension(actions=actions), ]

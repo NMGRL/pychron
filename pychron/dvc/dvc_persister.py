@@ -40,9 +40,9 @@ def format_repository_identifier(project):
     return project.replace('/', '_').replace('\\', '_')
 
 
-def spectrometer_sha(src, defl, gains):
+def spectrometer_sha(settings, src, defl, gains):
     sha = hashlib.sha1()
-    for d in (src, defl, gains):
+    for d in settings + (src, defl, gains):
         for k, v in sorted(d.items()):
             sha.update(k.encode('utf-8'))
             sha.update(str(v).encode('utf-8'))
@@ -54,7 +54,7 @@ class DVCPersister(BasePersister):
     active_repository = Instance(GitRepoManager)
     dvc = Instance(DVC_PROTOCOL)
     use_isotope_classifier = Bool(False)
-    use_uuid_path_name = Bool(False)
+    use_uuid_path_name = Bool(True)
     # isotope_classifier = Instance(IsotopeClassifier, ())
     stage_files = Bool(True)
     default_principal_investigator = Str
@@ -377,9 +377,12 @@ class DVCPersister(BasePersister):
         db = self.dvc.db
         an = db.add_analysis(**d)
 
-        # save results
-        for iso in ps.isotope_group.isotopes.values():
-            db.add_analysis_result(an, iso)
+        # save currents
+        self._save_currents(an)
+
+        # for iso in ps.isotope_group.isotopes.values():
+        #     self.add_current(iso)
+        # db.add_analysis_result(an, iso)
 
         # save media
         if ps.snapshots:
@@ -426,6 +429,41 @@ class DVCPersister(BasePersister):
         an.change = change
 
         db.commit()
+
+    def _save_currents(self, dban):
+        dvc = self.dvc
+        if dvc.update_currents_enabled:
+
+            ps = self.per_spec
+            db = dvc.db
+
+            for key, iso in ps.isotope_group.isotopes.items():
+                param = db.add_parameter('{}_intercept'.format(key))
+                db.add_current(dban, iso.value, iso.error, param, iso.units)
+
+                param = db.add_parameter('{}_blank'.format(key), iso.blank.units)
+                db.add_current(dban, iso.blank.value, iso.blank.error, param, iso.blank.units)
+
+                param = db.add_parameter('{}_bs_corrected'.format(key))
+                v = iso.get_baseline_corrected_value()
+                db.add_current(dban, nominal_value(v), std_dev(v), param, iso.units)
+
+                param = db.add_parameter('{}_ic_corrected'.format(key))
+                v = iso.get_ic_corrected_value()
+                db.add_current(dban, nominal_value(v), std_dev(v), param, iso.units)
+
+                param = db.add_parameter(key)
+                v = iso.get_non_detector_corrected_value()
+                db.add_current(dban, nominal_value(v), std_dev(v), param, iso.units)
+
+                param = db.add_parameter(iso.baseline.name)
+                db.add_current(dban, iso.baseline.value, iso.baseline.error, param, iso.baseline.units)
+
+                param = db.add_parameter('{}_n'.format(iso.baseline.name))
+                db.add_current(dban, iso.baseline.n, None, param, 'int')
+
+                param = db.add_parameter('{}_n'.format(iso.name))
+                db.add_current(dban, iso.n, None, param, 'int')
 
     def _save_analysis(self, timestamp):
 
@@ -599,7 +637,8 @@ class DVCPersister(BasePersister):
     def _save_spectrometer_file(self, path):
         obj = dict(spectrometer=dict(self.per_spec.spec_dict),
                    gains=dict(self.per_spec.gains),
-                   deflections=dict(self.per_spec.defl_dict))
+                   deflections=dict(self.per_spec.defl_dict),
+                   settings=self.per_spec.settings)
         # hexsha = self.dvc.get_meta_head()
         # obj['commit'] = str(hexsha)
 
@@ -680,7 +719,8 @@ class DVCPersister(BasePersister):
         for key,value in sorted(dictionary)
         :return:
         """
-        return spectrometer_sha(self.per_spec.spec_dict, self.per_spec.defl_dict, self.per_spec.gains)
+        return spectrometer_sha(self.per_spec.settings,
+                                self.per_spec.spec_dict, self.per_spec.defl_dict, self.per_spec.gains)
 
         # ============= EOF =============================================
         #         self._save_measured_positions()

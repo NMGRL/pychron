@@ -224,7 +224,6 @@ TASK_EXTENSION_DEFAULT = """
   - pychron.entry1.generate_irradiation_table, False
   - pychron.entry1.import_irradiation_holder, False
   - pychron.entry1.sensitivity_entry, True
-  - pychron.entry1.molecular_weight_entry, False
   - pychron.entry1.flux_monitor, False
 """
 actions = []

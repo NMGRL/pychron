@@ -34,7 +34,7 @@ class BaseSpectrometerManager(Manager):
         self.application = application
         super(BaseSpectrometerManager, self).__init__(*args, **kw)
 
-    def get_intensity(self,*args, **kw):
+    def get_intensity(self, *args, **kw):
         return self.spectrometer.get_intensity(*args, **kw)
 
     def read_trap_current(self):
@@ -61,6 +61,10 @@ class BaseSpectrometerManager(Manager):
     def send_configuration(self):
         if self.spectrometer:
             self.spectrometer.send_configuration()
+
+    def verify_configuration(self):
+        if self.spectrometer:
+            return self.spectrometer.verify_configuration()
 
     def reload_mftable(self):
         self.spectrometer.magnet.reload_field_table()

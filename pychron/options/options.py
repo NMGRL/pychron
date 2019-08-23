@@ -484,7 +484,7 @@ class FigureOptions(BaseOptions):
             return []
 
     def _edit_title_format_button_fired(self):
-        from pychron.processing.label_maker import TitleTemplater, TitleTemplateView
+        from pychron.options.label_maker import TitleTemplater, TitleTemplateView
 
         tm = TitleTemplater(label=self.title,
                             delimiter=self.title_delimiter,

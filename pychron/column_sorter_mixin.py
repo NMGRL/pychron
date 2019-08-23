@@ -60,15 +60,17 @@ class ColumnSorterMixin(HasTraits):
         else:
             key = attrgetter(field)
 
-        # values.sort(key=key,
-        #             reverse=self._reverse_sort)
+        def wkey(x):
+            v = key(x)
+            return v is None, v
+
         try:
-            vs = sorted(values, key=key, reverse=self._reverse_sort)
+            vs = sorted(values, key=wkey, reverse=self._reverse_sort)
             self._sort_field = field
             self._sorted_hook(vs)
             return vs
-        except AttributeError:
-            pass
+        except AttributeError as e:
+            print('sorting exception: {}'.format(e))
 
     def _sorted_hook(self, vs):
         pass

@@ -27,7 +27,7 @@ from pychron.core.regression.tinv import tinv
 from pychron.core.stats.core import calculate_mswd, validate_mswd
 from pychron.core.stats.monte_carlo import RegressionEstimator
 from pychron.core.utils import alphas
-from pychron.pychron_constants import PLUSMINUS
+from pychron.pychron_constants import PLUSMINUS, format_mswd
 
 logger = logging.getLogger('BaseRegressor')
 
@@ -357,6 +357,10 @@ class BaseRegressor(HasTraits):
 
     def get_exog(self, x):
         return x
+
+    def format_mswd(self, mean=False):
+        m, v = (self.mean_mswd, self.valid_mean_mswd) if mean else (self.mswd, self.valid_mswd)
+        return format_mswd(m, v)
 
     # private
     def _calculate_ci(self, rx):

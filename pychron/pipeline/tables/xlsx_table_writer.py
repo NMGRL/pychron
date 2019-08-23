@@ -33,12 +33,12 @@ from pychron.pipeline.tables.util import iso_value, icf_value, icf_error, correc
     subreg, interpolate_noteline, value
 from pychron.pipeline.tables.xlsx_table_options import XLSXAnalysisTableWriterOptions
 from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
-from pychron.pychron_constants import PLUSMINUS_NSIGMA, NULL_STR, DESCENDING
+from pychron.pychron_constants import PLUSMINUS_NSIGMA, NULL_STR, DESCENDING, format_mswd as FM
 
 
 def format_mswd(t):
     m, v, _ = t
-    return 'MSWD={}{:0.3f}'.format('' if v else '*', m)
+    return 'MSWD={}'.format(FM(m, v))
 
 
 class XLSXAnalysisTableWriter(BaseTableWriter):
@@ -971,6 +971,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
             self._current_row += 1
 
+        t = group.arar_constants.atm4036
+        trapped_value, trapped_error = nominal_value(t), std_dev(t)
         if self._options.include_isochron_age:
             sh.write_string(self._current_row, start_col, u'Isochron Age {}'.format(pmsigma),
                             fmt)

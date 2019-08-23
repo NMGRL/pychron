@@ -186,7 +186,7 @@ class IdeogramOptions(AgeOptions):
             ap.clear_ylimits()
 
     def _edit_label_format_button_fired(self):
-        from pychron.processing.label_maker import LabelTemplater, LabelTemplateView
+        from pychron.options.label_maker import LabelTemplater, LabelTemplateView
 
         lm = LabelTemplater(label=self.analysis_label_display)
         lv = LabelTemplateView(model=lm)
@@ -197,7 +197,7 @@ class IdeogramOptions(AgeOptions):
             # self.refresh_plot_needed = True
 
     def _edit_mean_format_button_fired(self):
-        from pychron.processing.label_maker import MeanLabelTemplater, MeanLabelTemplateView
+        from pychron.options.label_maker import MeanLabelTemplater, MeanLabelTemplateView
 
         lm = MeanLabelTemplater(label=self.mean_label_display)
         lv = MeanLabelTemplateView(model=lm)

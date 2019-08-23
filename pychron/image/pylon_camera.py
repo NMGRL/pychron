@@ -75,8 +75,11 @@ class PylonCamera(Loggable):
     def read(self):
 
         if self._cam and not self._setting_config:
-            img = self._cam.grab_one()
-            return True, img
+            try:
+                img = self._cam.grab_one()
+                return True, img
+            except BaseException:
+                pass
 
             # if self._grabber is None:
             #     self._grabber = self._cam.grab_images(-1, 1)

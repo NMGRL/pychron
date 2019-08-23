@@ -26,6 +26,7 @@ from pychron.git.tasks.githost_preferences import GitHubPreferencesPane
 class GitHubPlugin(BaseGitPlugin):
     name = 'GitHub'
     service_klass = GitHubService
+    id = 'pychron.github.plugin'
 
     def _preferences_panes_default(self):
         return [GitHubPreferencesPane]

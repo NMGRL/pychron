@@ -1056,9 +1056,12 @@ class AutomatedRun(Loggable):
             ext_blob = self._assemble_extraction_blob()
 
         ms_name, ms_blob, sfods, bsfods = '', '', {}, {}
+        hops_name, hops_blob = '', ''
         if self.measurement_script:
             ms_name = self.measurement_script.name
             ms_blob = self.measurement_script.toblob()
+
+            hops_name, hops_blob = self.measurement_script.hops_blob()
             sfods, bsfods = self._get_default_fods()
 
         pe_name, pe_blob = '', ''
@@ -1093,7 +1096,8 @@ class AutomatedRun(Loggable):
                                     post_measurement_blob=pm_blob,
                                     post_equilibration_name=pe_name,
                                     post_equilibration_blob=pe_blob,
-
+                                    hops_name=hops_name,
+                                    hops_blob=hops_blob,
                                     runscript_name=script_name,
                                     runscript_blob=script_blob,
                                     signal_fods=sfods,
@@ -1234,6 +1238,7 @@ class AutomatedRun(Loggable):
             self.debug('setting trap, emission, spec, defl, and gains')
             self._update_persister_spec(spec_dict=sm.make_configuration_dict(),
                                         defl_dict=sm.make_deflections_dict(),
+                                        settings=sm.make_settings(),
                                         gains=sm.make_gains_dict(),
                                         trap=sm.read_trap_current(),
                                         emission=sm.read_emission())

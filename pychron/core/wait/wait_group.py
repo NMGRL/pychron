@@ -15,11 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from traits.api import HasTraits, List, Any, Property
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.wait.wait_control import WaitControl
+from pychron.core.wait.wait_control import WaitControl
 
 
 class WaitGroup(HasTraits):

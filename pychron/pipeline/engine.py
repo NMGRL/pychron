@@ -27,6 +27,7 @@ from pychron.core.confirmation import remember_confirmation_dialog
 from pychron.core.helpers.filetools import glob_list_directory, add_extension
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.dvc.tasks.repo_task import RepoItem
+from pychron.envisage.view_util import open_view
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.paths import paths
@@ -932,6 +933,8 @@ class PipelineEngine(Loggable):
 
         self._handle_len('references', func)
 
+    def identify_peaks(self, *args, **kw):
+        self._identify_peaks(*args, **kw)
     # private
     def _active_repositories(self):
         if self.selected_repositories:
@@ -1022,6 +1025,22 @@ class PipelineEngine(Loggable):
             self._make_alternate_figure(evt)
         elif kind == 'tag':
             self.tag_event = evt[1]
+        elif kind == 'identify_peaks':
+            self._identify_peaks(evt[1])
+
+    def _identify_peaks(self, ps):
+        from pychron.pipeline.identify_peak_view import IdentifyPeakView
+
+        source = self.application.get_service('pychron.sparrow.sparrow.Sparrow')
+        if source is None:
+            self.warning_dialog('At least on datasource plugin is required, e.g. Sparrow')
+            return
+
+        if source.connect():
+            ipv = IdentifyPeakView(ps, source=source)
+            open_view(ipv)
+        else:
+            self.warning_dialog('Failed to connect to a relevant datasource')
 
     def _make_alternate_figure(self, evt):
         self.add_pipeline = True

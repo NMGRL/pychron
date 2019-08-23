@@ -45,7 +45,7 @@ def make_line(vs, delimiter=','):
 
 
 class CSVRecord(HasTraits):
-    runid = Str
+    runid = Str('A')
     age = CFloat
     age_err = CFloat
     group = CInt
@@ -72,6 +72,10 @@ class CSVRecordGroup(HasTraits):
     n = Int
     excluded = Int
     displayn = Str
+    min = Float
+    max = Float
+    dev = Float
+    percent_dev = Float
 
     def __init__(self, name, records, *args, **kw):
         super(CSVRecordGroup, self).__init__(*args, **kw)
@@ -83,7 +87,14 @@ class CSVRecordGroup(HasTraits):
     @on_trait_change('records:[age,age_err,status]')
     def calculate(self):
         total = len(self.records)
-        data = array([(a.age, a.age_err) for a in self.records if a.status])
+        if not total:
+            return
+
+        data = [(a.age, a.age_err) for a in self.records if a.status]
+        if not data:
+            return
+
+        data = array(data)
         x, errs = data.T
 
         self.mean = x.mean()
@@ -93,7 +104,15 @@ class CSVRecordGroup(HasTraits):
         self.weighted_mean, self.weighted_mean_err = calculate_weighted_mean(x, errs)
 
         self.mean = sum(x) / n
-        self.mswd = calculate_mswd(x, errs, self.weighted_mean)
+        self.mswd = calculate_mswd(x, errs, wm=self.weighted_mean)
+
+        self.min = min(x)
+        self.max = max(x)
+        self.dev = self.max - self.min
+        try:
+            self.percent_dev = self.dev / self.max * 100
+        except ZeroDivisionError:
+            self.percent_dev = 0
 
         self.displayn = '{}'.format(n)
         if total > n:
@@ -114,10 +133,12 @@ class CSVDataSetFactory(HasTraits):
     groups = List
 
     selected = List
+    add_record_button = Button('Add Row')
     test_button = Button('Load Test Data')
     save_button = Button('Save')
     save_as_button = Button('Save As')
     clear_button = Button('Clear')
+    calculate_button = Button('Calculate')
     open_via_finder_button = Button('Use Finder')
 
     name = SpacelessStr
@@ -149,6 +170,14 @@ class CSVDataSetFactory(HasTraits):
 
     # private
     # handlers
+    def _calculate_button_fired(self):
+        for gi in self.groups:
+            gi.calculate()
+
+    def _add_record_button_fired(self):
+        self.records.append(CSVRecord())
+        self._make_groups()
+
     def _name_filter_changed(self, new):
         if new:
             self.names = fuzzyfinder(new, self.onames)
@@ -211,10 +240,12 @@ class CSVDataSetFactory(HasTraits):
 
     def _clear_button_fired(self):
         self.records = self._records_default()
+        self._make_groups()
 
     @on_trait_change('records:[+]')
     def _handle_change(self):
         self.dirty = True
+        self._make_groups()
 
     @on_trait_change('records:group')
     def _handle_group_change(self):
@@ -241,12 +272,15 @@ class CSVDataSetFactory(HasTraits):
     def _make_csv_data(self):
         return [make_line(HEADER)] + [ri.to_csv() for ri in self.records if ri.valid()]
 
-    def _load_names(self, repo):
+    def _load_names(self, repo=None):
+        if repo is None:
+            repo = self.repository
+
         self.names = self.dvc.get_csv_datasets(repo)
         self.onames = self.names
 
     def _records_default(self):
-        return [CSVRecord() for i in range(5)]
+        return []
 
     def _group_selected(self, selection=None):
         if selection:
@@ -255,16 +289,15 @@ class CSVDataSetFactory(HasTraits):
                 si.group = gid
 
     def traits_view(self):
-        cols = [
-            CheckboxColumn(name='status'),
-            ObjectColumn(name='status'),
-            ObjectColumn(name='runid'),
-            ObjectColumn(name='age'),
-            ObjectColumn(name='age_err'),
-            ObjectColumn(name='group'),
-            ObjectColumn(name='aliquot'),
-            ObjectColumn(name='sample'),
-        ]
+        cols = [CheckboxColumn(name='status'),
+                ObjectColumn(name='status'),
+                ObjectColumn(name='runid', width=50),
+                ObjectColumn(name='age', width=100),
+                ObjectColumn(name='age_err', width=100,
+                             label=PLUSMINUS_ONE_SIGMA),
+                ObjectColumn(name='group'),
+                ObjectColumn(name='aliquot'),
+                ObjectColumn(name='sample')]
 
         gcols = [ObjectColumn(name='name'),
                  ObjectColumn(name='weighted_mean', label='Wtd. Mean',
@@ -277,11 +310,16 @@ class CSVDataSetFactory(HasTraits):
                               label='MSWD'),
                  ObjectColumn(name='displayn', label='N'),
                  ObjectColumn(name='mean', format='%0.6f', label='Mean'),
-                 ObjectColumn(name='std', format='%0.6f', label='Std')
-                 ]
+                 ObjectColumn(name='std', format='%0.6f', label='Std'),
+                 ObjectColumn(name='min', format='%0.6f', label='Min'),
+                 ObjectColumn(name='max', format='%0.6f', label='Max'),
+                 ObjectColumn(name='dev', format='%0.6f', label='Dev.'),
+                 ObjectColumn(name='percent_dev', format='%0.2f', label='% Dev.')]
 
         button_grp = HGroup(UItem('save_button'), UItem('save_as_button'),
-                            UItem('clear_button'), UItem('open_via_finder_button'), UItem('test_button')),
+                            UItem('clear_button'), UItem('open_via_finder_button'),
+                            UItem('add_record_button'),
+                            UItem('calculate_button')),
 
         repo_grp = VGroup(BorderVGroup(UItem('repo_filter'),
                                        UItem('repositories',
@@ -305,7 +343,7 @@ class CSVDataSetFactory(HasTraits):
         main_grp = HSplit(repo_grp, record_grp)
 
         v = okcancel_view(VGroup(button_grp, main_grp),
-                          width=800,
+                          width=1100,
                           height=500,
                           title='CSV Dataset',
                           # handler=CSVDataSetFactoryHandler()

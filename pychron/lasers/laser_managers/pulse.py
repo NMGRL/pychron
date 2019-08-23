@@ -14,21 +14,17 @@
 # limitations under the License.
 # ===============================================================================
 
+# ============= standard library imports ========================
+from threading import Thread
+
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from traits.api import HasTraits, Any, Instance, Float, Event, \
     Property, Bool, on_trait_change
 from traitsui.api import View, Item, Handler, HGroup, ButtonEditor, spring, VGroup, Spring, UItem, RangeEditor
-# import apptools.sweet_pickle as pickle
-# ============= standard library imports ========================
-# import os
-from threading import Thread
+
 # ============= local library imports  ==========================
-# from pychron.paths import paths
-# from pychron.pyscripts.wait_dialog import WaitDialog
-# import time
 from pychron.core.ui.custom_label_editor import CustomLabel
-from pychron.wait.wait_control import WaitControl
+from pychron.core.wait.wait_control import WaitControl
 
 
 class PulseHandler(Handler):

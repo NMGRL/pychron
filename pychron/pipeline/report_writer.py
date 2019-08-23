@@ -295,7 +295,7 @@ class ReportWriter(BasePDFTableWriter):
             r.add_item(value=stat['sd'], fmt='{:0.4f}')
             r.add_item(value=stat['sem'], fmt='{:0.4f}')
             r.add_item(value='{}{}'.format('{:0.4f}'.format(stat['mswd']),
-                                           '' if stat['valid_mswd'] else '*'))
+                                           '' if stat['valid_mswd'] else INVALID_MSWD_CHR))
             r.add_item(value=stat['min'], fmt='{:0.4f}')
             r.add_item(value=stat['max'], fmt='{:0.4f}')
             r.add_item(value=stat['total_dev'], fmt='{:0.4f}')

@@ -30,7 +30,7 @@ except ImportError:
             return None
 
 
-class OPCCommunicator(Communicator):
+class OpcCommunicator(Communicator):
     """
         OPC (OLE for Process Control) communicator.
         http://openopc.sourceforge.net/

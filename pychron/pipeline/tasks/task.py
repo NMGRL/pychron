@@ -129,6 +129,10 @@ class PipelineTask(BaseBrowserTask):
                  EditorOptionsPane(model=self)]
         return panes
 
+    def identify_peaks(self):
+        ps = [924]
+        self.engine.identify_peaks(ps)
+
     # toolbar actions
     def run_script(self):
         path = self.open_file_dialog()

@@ -44,7 +44,7 @@ from pychron.envisage.browser.record_views import ProjectRecordView
 class BrowserModel(BaseBrowserModel):
     filter_focus = Bool(True)
     use_focus_switching = Bool(True)
-    fuzzy_search_entry = String #(auto_set=False, enter_set=True)
+    fuzzy_search_entry = String
     execute_fuzzy_search = Button
 
     irradiation_visible = Property(depends_on='filter_focus')
@@ -56,7 +56,6 @@ class BrowserModel(BaseBrowserModel):
     principal_investigator_visible = Property(depends_on='filter_focus')
 
     filter_by_button = Button
-    advanced_filter_button = Button
     toggle_focus = Button
     load_view_button = Button
     refresh_selectors_button = Button
@@ -298,17 +297,14 @@ class BrowserModel(BaseBrowserModel):
         if self.principal_investigator_enabled and self.selected_principal_investigators:
             principal_investigators = [p.name for p in self.selected_principal_investigators]
 
-        # if self.repository_enabled:
-        #     if self.selected_repositories:
-        #         es = [e.name for e in self.selected_repositories]
         if self.project_enabled:
             if self.selected_projects:
-                ps = [p.name for p in self.selected_projects]
+                ps = [p.unique_id for p in self.selected_projects]
 
         at = self.analysis_include_types if self.use_analysis_type_filtering else None
 
-        hp = self.high_post  # if self.use_high_post or self.use_named_date_range else None
-        lp = self.low_post  # if self.use_low_post or self.use_named_date_range else None
+        hp = self.high_post
+        lp = self.low_post
 
         ats = []
         samples = None
@@ -324,7 +320,7 @@ class BrowserModel(BaseBrowserModel):
                     ats.append(a)
 
         lns = self.db.get_labnumbers(principal_investigators=principal_investigators,
-                                     projects=ps,
+                                     project_ids=ps,
                                      # repositories=es,
                                      samples=samples,
                                      mass_spectrometers=ms,
@@ -390,8 +386,7 @@ class BrowserModel(BaseBrowserModel):
 
         db = self.db
         ps = db.get_projects(mass_spectrometers=ms)
-        ps = self._make_project_records(ps,
-                                        ms, include_recent_first=True)
+        ps = self._make_project_records(ps, ms, include_recent_first=True)
         self.projects = ps
         sp = []
         if self.selected_projects:

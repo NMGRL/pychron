@@ -35,6 +35,9 @@ class BaseGitPlugin(BaseTaskPlugin):
         if not tok and not (usr and pwd):
             self.information_dialog('Please set user name and password or token in {} preferences'.format(self.name),
                                     position=STARTUP_MESSAGE_POSITION)
+        else:
+            service = self.application.get_service(IGitHost)
+            service.set_authentication()
 
     def test_api(self):
         service = self.application.get_service(IGitHost)

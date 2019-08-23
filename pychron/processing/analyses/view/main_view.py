@@ -474,6 +474,7 @@ class MainView(HasTraits):
 
             self.computed_values = cv
         else:
+            an.calculate_age(force=True)
             age = an.uage
             nage, sage = nominal_value(age), std_dev(age)
             try:

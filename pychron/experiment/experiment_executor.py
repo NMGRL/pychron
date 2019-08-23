@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 
 import os
 import time
@@ -39,6 +38,7 @@ from pychron.core.helpers.logger_setup import add_root_handler, remove_root_hand
 from pychron.core.progress import open_progress
 from pychron.core.stats import calculate_weighted_mean
 from pychron.core.ui.gui import invoke_in_main_thread
+from pychron.core.wait.wait_group import WaitGroup
 from pychron.envisage.consoleable import Consoleable
 from pychron.envisage.preference_mixin import PreferenceMixin
 from pychron.envisage.view_util import open_view
@@ -60,7 +60,6 @@ from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
 from pychron.globals import globalv
 from pychron.paths import paths
 from pychron.pychron_constants import DEFAULT_INTEGRATION_TIME, LINE_STR, AR_AR, DVC_PROTOCOL, DEFAULT_MONITOR_NAME
-from pychron.wait.wait_group import WaitGroup
 
 
 def remove_backup(uuid_str):
@@ -155,6 +154,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     use_automated_run_monitor = Bool(False)
     set_integration_time_on_start = Bool(False)
     send_config_before_run = Bool(False)
+    verify_spectrometer_configuration = Bool(False)
     default_integration_time = Float(DEFAULT_INTEGRATION_TIME)
     use_memory_check = Bool(True)
     memory_threshold = Int
@@ -240,6 +240,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                  'min_ms_pumptime',
                  'set_integration_time_on_start',
                  'send_config_before_run',
+                 'verify_spectrometer_configuration',
                  'default_integration_time',
                  'use_xls_persistence',
                  'use_db_persistence',
@@ -1129,6 +1130,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.info('Sending spectrometer configuration')
             man = self.spectrometer_manager
             man.send_configuration()
+            if self.verify_spectrometer_configuration:
+                if not man.verify_configuration():
+                    ret = self._failed_execution_step('Setting Spectrometer Configuration Failed')
+                    return ret
 
         ret = True
         self.measuring_run = ai

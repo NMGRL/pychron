@@ -24,8 +24,7 @@ from uncertainties import nominal_value, std_dev
 from pychron.core.fits.fit_selector import CheckboxColumn
 from pychron.core.geometry.affine import AffineTransform
 from pychron.core.helpers.formatting import floatfmt
-from pychron.core.regression.flux_regressor import BowlFluxRegressor, PlaneFluxRegressor, MatchingFluxRegressor, \
-    BracketingFluxRegressor
+from pychron.core.regression.flux_regressor import BowlFluxRegressor, PlaneFluxRegressor, NearestNeighborFluxRegressor
 from pychron.core.regression.mean_regressor import WeightedMeanRegressor
 from pychron.core.regression.ols_regressor import OLSRegressor
 from pychron.core.stats.monte_carlo import FluxEstimator
@@ -41,7 +40,7 @@ from pychron.graph.tools.data_tool import DataTool, DataToolOverlay
 from pychron.options.layout import FigureLayout
 from pychron.pipeline.editors.irradiation_tray_overlay import IrradiationTrayOverlay
 from pychron.pychron_constants import LEAST_SQUARES_1D, MATCHING, BRACKETING, WEIGHTED_MEAN, BOWL, PLANE, \
-    WEIGHTED_MEAN_1D, MSEM
+    WEIGHTED_MEAN_1D, MSEM, NN, format_mswd
 
 
 def make_grid(r, n):
@@ -175,7 +174,7 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         else:
             pts = array([[p.x, p.y] for p in ipositions])
 
-        if options.use_monte_carlo and options.model_kind not in (MATCHING, BRACKETING):
+        if options.use_monte_carlo and options.model_kind not in (MATCHING, BRACKETING, NN):
             fe = FluxEstimator(options.monte_carlo_ntrials, reg)
 
             split = len(self.unknown_positions)
@@ -243,9 +242,14 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
             elif model_kind == PLANE:
                 klass = PlaneFluxRegressor
             elif model_kind == MATCHING:
-                klass = MatchingFluxRegressor
+                klass = NearestNeighborFluxRegressor
+                kw['n'] = 1
             elif model_kind == BRACKETING:
-                klass = BracketingFluxRegressor
+                klass = NearestNeighborFluxRegressor
+                kw['n'] = 2
+            elif model_kind == NN:
+                klass = NearestNeighborFluxRegressor
+                kw['n'] = po.n_neighbors
 
             xs = vstack((x, y)).T
 
@@ -487,7 +491,6 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
             self.graph = g
 
         po = self.plotter_options
-        is_matching = po.model_kind == MATCHING
 
         ys = reg.ys
         xs = arctan2(x, y)
@@ -496,14 +499,16 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         lyy = ys - yserr
         uyy = ys + yserr
         a = max((abs(min(xs)), abs(max(xs))))
-        fxs = linspace(-a, a)
+        fxs = linspace(-a, a, 200)
 
         a = r * sin(fxs)
         b = r * cos(fxs)
         pts = vstack((a, b)).T
         fys = reg.predict(pts)
 
-        if not is_matching:
+        use_ee = False
+        if po.model_kind not in (MATCHING, BRACKETING, NN):
+            use_ee = True
             try:
                 l, u = reg.calculate_error_envelope(fxs, rmodel=fys)
             except BaseException:
@@ -526,13 +531,16 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
 
             # plot fit line
             # plot0 == line
-            if not is_matching:
-                line, _p = g.new_series(fxs, fys)
 
-                ee = ErrorEnvelopeOverlay(component=line,
-                                          xs=fxs, lower=l, upper=u)
-                line.error_envelope = ee
-                line.underlays.append(ee)
+            if po.model_kind in (MATCHING, BRACKETING, NN):
+                g.new_series(fxs, fys, render_style='connectedhold')
+            else:
+                line, _p = g.new_series(fxs, fys)
+                if use_ee:
+                    ee = ErrorEnvelopeOverlay(component=line,
+                                              xs=fxs, lower=l, upper=u)
+                    line.error_envelope = ee
+                    line.underlays.append(ee)
 
             miy = 100
             may = -1
@@ -571,14 +579,10 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
 
             if self._individual_analyses_enabled:
                 # add a legend
-                if not is_matching:
-                    labels = [('plot1', 'Individual'),
-                              ('plot2', 'Mean'),
-                              ('plot0', 'Fit'),
-                              ]
-                else:
-                    labels = [('plot0', 'Individual'),
-                              ('plot1', 'Mean')]
+                labels = [('plot1', 'Individual'),
+                          ('plot2', 'Mean'),
+                          ('plot0', 'Fit'),
+                          ]
             else:
                 labels = [('plot0', 'Mean')]
 
@@ -588,28 +592,27 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
 
         else:
             plot = g.plots[0]
-
-            s1 = plot.plots['plot1' if is_matching else 'plot2'][0]
+            s1 = plot.plots['plot2'][0]
             s1.yerror.set_data(yserr)
             s1.error_bars.invalidate()
 
-            g.set_data(ys, plotid=0, series=1 if is_matching else 2, axis=1)
+            g.set_data(ys, plotid=0, series=2, axis=1)
 
-            if not is_matching:
-                l1 = plot.plots['plot0'][0]
+            l1 = plot.plots['plot0'][0]
+            l1.index.metadata['selections'] = sel
+            g.set_data(fys, plotid=0, series=0, axis=1)
+
+            if use_ee:
                 l1.error_envelope.trait_set(xs=fxs, lower=l, upper=u)
                 l1.error_envelope.invalidate()
-                g.set_data(fys, plotid=0, series=0, axis=1)
-
-            s2 = plot.plots['plot1' if is_matching else 'plot0'][0]
-            s2.index.metadata['selections'] = sel
 
         self.max_j = fys.max()
         self.min_j = fys.min()
 
     def _additional_info(self, ind):
         fm = self.monitor_positions[ind]
-        return ['Pos: {}'.format(fm.hole_id),
+        return ['MSWD: {}'.format(format_mswd(fm.mean_j_mswd, fm.mean_j_valid_mswd)),
+                'Pos: {}'.format(fm.hole_id),
                 'Identifier: {}'.format(fm.identifier)]
 
     def _grid_additional_info(self, ind, y):

@@ -14,7 +14,6 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
 import inspect
 import re
 import time
@@ -29,9 +28,10 @@ from pychron.furnace.ifurnace_manager import IFurnaceManager
 from pychron.hardware.core.exceptions import TimeoutError
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
-from pychron.pychron_constants import EXTRACTION_COLOR, LINE_STR, NULL_STR
-from pychron.pyscripts.pyscript import verbose_skip, makeRegistry, calculate_duration
-from pychron.pyscripts.valve_pyscript import ValvePyScript, ELPROTOCOL
+from pychron.pychron_constants import EXTRACTION_COLOR, LINE_STR, NULL_STR, EL_PROTOCOL
+from pychron.pyscripts.context_managers import RecordingCTX, LightingCTX, GrainPolygonCTX
+from pychron.pyscripts.decorators import verbose_skip, makeRegistry, calculate_duration
+from pychron.pyscripts.valve_pyscript import ValvePyScript
 
 COMPRE = re.compile(r'[A-Za-z]*')
 
@@ -39,41 +39,6 @@ COMPRE = re.compile(r'[A-Za-z]*')
 # used when building the context
 # see PyScript.get_context and get_command_register
 command_register = makeRegistry()
-
-
-class RecordingCTX(object):
-    def __init__(self, script, name):
-        self._script = script
-        self._name = name
-
-    def __enter__(self, *args, **kw):
-        self._script.start_video_recording(self._name)
-
-    def __exit__(self, *args, **kw):
-        self._script.stop_video_recording()
-
-
-class LightingCTX(object):
-    def __init__(self, script, value):
-        self._script = script
-        self._value = value
-
-    def __enter__(self, *args, **kw):
-        self._script.set_light(self._value)
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self._script.set_light(0)
-
-
-class GrainPolygonCTX(object):
-    def __init__(self, script):
-        self._script = script
-
-    def __enter__(self, *args, **kw):
-        self._script.start_grain_polygon()
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self._script.stop_grain_polygon()
 
 
 class ExtractionPyScript(ValvePyScript):
@@ -212,20 +177,20 @@ class ExtractionPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def get_pressure(self, controller, gauge):
-        result = self._manager_action(('get_pressure', (controller, gauge), {}), protocol=ELPROTOCOL)
+        result = self._manager_action(('get_pressure', (controller, gauge), {}), protocol=EL_PROTOCOL)
         return result
 
     @verbose_skip
     @command_register
     def set_cryo(self, value):
-        result = self._manager_action(('set_cryo', (value,), {}), protocol=ELPROTOCOL)
+        result = self._manager_action(('set_cryo', (value,), {}), protocol=EL_PROTOCOL)
         self.debug('set cyro result={}'.format(result))
         return result
 
     @verbose_skip
     @command_register
     def get_cryo_temp(self, value):
-        result = self._manager_action(('get_cryo_temp', (value,), {}), protocol=ELPROTOCOL)
+        result = self._manager_action(('get_cryo_temp', (value,), {}), protocol=EL_PROTOCOL)
         return result
 
     @calculate_duration

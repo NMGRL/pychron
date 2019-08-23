@@ -141,6 +141,12 @@ class BookmarkAction(LocalRepositoryAction):
     tooltip = 'Add a bookmark to the data reduction history. e.g. git tag -a <name> -m <message>'
     image = icon('git-bookmark')
 
+
+class SortLocalReposAction(TaskAction):
+    name = 'Sort Repos'
+    method = 'sort_repos'
+    tooltip = 'Sort repos by most recently analyzed'
+
 # class SyncMetaDataAction(Action):
 #     name = 'Sync Repo/DB Metadata'
 #
@@ -196,41 +202,26 @@ class ShareChangesAction(Action):
         information(None, msg)
 
 
-# class PullAnalysesAction(Action):
-#     name = 'Pull Analyses'
-#     image = icon('arrow_down')
-#
-#     def perform(self, event):
-#         from pychron.envisage.browser.view import StandaloneBrowserView
-#         from pychron.dvc.offline_index import index_factory
-#
-#         app = event.task.window.application
-#
-#         db = index_factory(paths.index_db)
-#
-#         dvc = app.get_service('pychron.dvc.dvc.DVC')
-#         dvc.initialize()
-#
-#         bserivce = 'pychron.envisage.browser.browser_model.BrowserModel'
-#         bmodel = app.get_service(bserivce)
-#
-#         bmodel.activated()
-#         bmodel.activate_sample_browser()
-#         browser_view = StandaloneBrowserView(model=bmodel)
-#         info = browser_view.edit_traits(kind='livemodal')
-#
-#         if info.result:
-#             records = bmodel.get_analysis_records()
-#             if records:
-#                 analyses = dvc.make_analyses(records)
-#
-#                 def func(x, prog, i, n):
-#                     if prog:
-#                         prog.change_message(
-#                                 'Adding to Index: {}'.format(x.record_id))
-#                     db.add_analysis_to_index(x.experiment_identifier, x)
-#
-#                 progress_iterator(analyses, func, threshold=1)
+class GenerateCurrentsAction(Action):
+    name = 'Generate Currents'
+
+    def perform(self, event):
+        app = event.task.window.application
+        dvc = app.get_service(DVC_PROTOCOL)
+        dvc.generate_currents()
+
+
+class MapRunIDsAction(Action):
+    name = 'Map RunIDs'
+
+    def perform(self, event):
+        app = event.task.window.application
+        dvc = app.get_service(DVC_PROTOCOL)
+
+        from pychron.dvc.map_runid import MapRunID
+        mr = MapRunID()
+        mr.map(dvc)
+
 
 class ClearCacheAction(Action):
     name = 'Clear Cache'

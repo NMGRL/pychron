@@ -32,7 +32,7 @@ class DVCConnectionItem(ConnectionFavoriteItem):
     meta_repo_dir = Str
     attributes = ('name', 'kind', 'username', 'host',
                   'dbname', 'password', 'enabled', 'default', 'path',
-                  'organization', 'meta_repo_name', 'meta_repo_dir')
+                  'organization', 'meta_repo_name', 'meta_repo_dir', 'timeout')
 
     def __init__(self, schema_identifier='', attrs=None, load_names=False):
         super(ConnectionFavoriteItem, self).__init__()
@@ -45,9 +45,15 @@ class DVCConnectionItem(ConnectionFavoriteItem):
                  self.password, enabled, default, path) = attrs
 
             except ValueError:
-                (self.name, self.kind, self.username, self.host, self.dbname,
-                 self.password, enabled, default, self.path, self.organization,
-                 self.meta_repo_name, self.meta_repo_dir) = attrs
+                try:
+                    (self.name, self.kind, self.username, self.host, self.dbname,
+                     self.password, enabled, default, self.path, self.organization,
+                     self.meta_repo_name, self.meta_repo_dir) = attrs
+                except ValueError:
+                    (self.name, self.kind, self.username, self.host, self.dbname,
+                     self.password, enabled, default, self.path, self.organization,
+                     self.meta_repo_name, self.meta_repo_dir, timeout) = attrs
+                    self.timeout = int(timeout)
 
             self.enabled = to_bool(enabled)
             self.default = to_bool(default)
@@ -80,6 +86,8 @@ class DVCPreferences(BasePreferencesHelper):
     use_cocktail_irradiation = Bool
     use_cache = Bool
     max_cache_size = Int
+    update_currents_enabled = Bool
+    use_auto_pull = Bool(True)
 
 
 class DVCPreferencesPane(PreferencesPane):
@@ -91,6 +99,13 @@ class DVCPreferencesPane(PreferencesPane):
                                           tooltip='Use the special cocktail.json for defining the '
                                                   'irradiation flux and chronology',
                                           label='Use Cocktail Irradiation')),
+                        BorderVGroup(Item('use_auto_pull', label='Auto Pull', tooltip='If selected, automatically '
+                                                                                      'update your version to the '
+                                                                                      'latest version. Deselect if '
+                                                                                      'you want to be asked to pull '
+                                                                                      'the official version.')),
+                        BorderVGroup(Item('update_currents_enabled', label='Enabled'),
+                                     label='Current Values'),
                         BorderVGroup(HGroup(Item('use_cache', label='Enabled'),
                                             Item('max_cache_size', label='Max Size')),
                                      label='Cache')))

@@ -19,11 +19,13 @@
 import math
 
 from numpy import array, vstack, mean, average, hstack, zeros, gradient
+# ============= local library imports  ==========================
+from numpy.linalg import norm
 
 
 # from pychron.core.geometry.centroid.calculate_centroid import calculate_centroid
 
-# ============= local library imports  ==========================
+
 def sort_clockwise(pts, xy, reverse=False):
     """
         pts = list of points
@@ -139,8 +141,13 @@ def rotate_pt(pt, theta):
     return npt[0, 0], npt[1, 0]
 
 
-def calc_length(p1, p2):
-    return ((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2) ** 0.5
+def calc_length(v1, v2):
+    return norm(array(v1) - array(v2))
+
+
+def calc_distances(v1, v2):
+    from scipy.spatial.distance import cdist
+    return cdist(v1, v2)
 
 
 def calc_angle(p1, p2):

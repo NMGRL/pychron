@@ -33,7 +33,7 @@ kronecker = vectorize(_kronecker)
 def calculate_mswd(x, errs, k=1, wm=None):
     mswd_w = 0
     n = len(x)
-    if n >= 2:
+    if n > k:
         x = asarray(x)
         errs = asarray(errs)
         if wm is None:
@@ -41,11 +41,6 @@ def calculate_mswd(x, errs, k=1, wm=None):
 
         ssw = (x - wm) ** 2 / errs ** 2
         mswd_w = ssw.sum() / float(n - k)
-
-    #         xmean_u = x.mean()
-    #         ssu = (x - xmean_u) ** 2 / errs ** 2
-    #         mswd_u = ssu.sum() / float(n - k)
-    #         print mswd_w, mswd_u
 
     return mswd_w
 
@@ -80,7 +75,8 @@ def validate_mswd(mswd, n, k=1):
          http://en.wikipedia.org/wiki/Goodness_of_fit
          http://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.chi2.html#scipy.stats.chi2
     """
-    if n - k + 1 < 2:
+    # if n - k + 1 < 2:
+    if n <= k:
         return False
 
     low, high = get_mswd_limits(n, k)
@@ -145,4 +141,3 @@ def calculate_mswd2(x, y, ex, ey, a, b, corrcoeffs=None):
     return chi_squared(x, y, ex, ey, a, b, corrcoeffs) / (n - 2)
 
 # ============= EOF =============================================
-

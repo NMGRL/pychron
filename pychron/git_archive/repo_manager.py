@@ -32,11 +32,13 @@ from pychron.core.progress import open_progress
 from pychron.envisage.view_util import open_view
 from pychron.git_archive.diff_view import DiffView, DiffModel
 from pychron.git_archive.git_objects import GitSha
+from pychron.git_archive.history import BaseGitHistory
 from pychron.git_archive.merge_view import MergeModel, MergeView
 from pychron.git_archive.utils import get_head_commit, ahead_behind, from_gitlog
 from pychron.git_archive.views import NewBranchView
 from pychron.loggable import Loggable
-from pychron.pychron_constants import DATE_FORMAT
+from pychron.pychron_constants import DATE_FORMAT, NULL_STR
+from pychron.updater.commit_view import CommitView
 
 
 def get_repository_branch(path):
@@ -365,6 +367,35 @@ class GitRepoManager(Loggable):
         repo.git.filter_branch('--tag-name-filter', 'cat', '--', '--all')
         repo.git.gc('--prune=now')
 
+    def get_dag(self, branch=None, delim='$', limit=None, simplify=True):
+        fmt_args = ('%H',
+                    '%ai',
+                    '%ar',
+                    '%s',
+                    '%an',
+                    '%ae',
+                    '%d',
+                    '%P')
+        fmt = delim.join(fmt_args)
+
+        args = ['--abbrev-commit',
+                '--topo-order',
+                '--reverse',
+                # '--author-date-order',
+                # '--decorate=full',
+                '--format={}'.format(fmt)]
+        if simplify:
+            args.append('--simplify-by-decoration')
+        if branch == NULL_STR:
+            args.append('--all')
+        else:
+            args.append('-b')
+            args.append(branch)
+        if limit:
+            args.append('-{}'.format(limit))
+
+        return self._repo.git.log(*args)
+
     def commits_iter(self, p, keys=None, limit='-'):
         repo = self._repo
         p = os.path.join(repo.working_tree_dir, p)
@@ -381,9 +412,9 @@ class GitRepoManager(Loggable):
 
         return (func(ci) for ci in hx)
 
-    def diff(self, a, b):
+    def diff(self, a, b, *args):
         repo = self._repo
-        return repo.git.diff(a, b, )
+        return repo.git.diff(a, b, *args)
 
     def status(self):
         return self._git_command(self._repo.git.status, 'status')
@@ -621,9 +652,33 @@ class GitRepoManager(Loggable):
     def get_branch_names(self):
         return [b.name for b in self._repo.branches]
 
-    def pull(self, branch='master', remote='origin', handled=True, use_progress=True):
+    def git_history_view(self, branchname):
+        repo = self._repo
+        h = BaseGitHistory()
+
+        origin = repo.remotes.origin
+        try:
+            oref = origin.refs[branchname]
+            remote_commit = oref.commit
+        except IndexError:
+            remote_commit = None
+
+        branch = self.get_branch(branchname)
+        local_commit = branch.commit
+
+        txt = repo.git.rev_list('--left-right', '{}...{}'.format(local_commit, remote_commit))
+        commits = [ci[1:] for ci in txt.split('\n')]
+
+        commits = [repo.commit(i) for i in commits]
+        h.set_items(commits)
+        commit_view = CommitView(model=h)
+        return commit_view
+
+    def pull(self, branch='master', remote='origin', handled=True, use_progress=True, use_auto_pull=False):
         """
             fetch and merge
+
+            if use_auto_pull is False ask user if they want to accept the available updates
         """
         self.debug('pulling {} from {}'.format(branch, remote))
 
@@ -648,16 +703,27 @@ class GitRepoManager(Loggable):
                 if not handled:
                     raise e
             self.debug('fetch complete')
-            # if use_progress:
-            #     for i in range(100):
-            #         prog.change_message('Merging {}'.format(i))
-            #         time.sleep(1)
-            try:
-                repo.git.merge('FETCH_HEAD')
-            except GitCommandError:
-                self.smart_pull(branch=branch, remote=remote)
 
-            # self._git_command(lambda: repo.git.merge('FETCH_HEAD'), 'merge')
+            def merge():
+                try:
+                    repo.git.merge('FETCH_HEAD')
+                except GitCommandError:
+                    self.smart_pull(branch=branch, remote=remote)
+
+            if not use_auto_pull:
+                ahead, behind = self.ahead_behind(remote)
+                if behind:
+                    if self.confirmation_dialog('Repository "{}" is behind the official version by {} changes.\n'
+                                                'Would you like to pull the available changes?\n\n'
+                                                'If yes, you will be given the opportunity to review the '
+                                                'available changes before applying them'.format(self.name, behind)):
+                        # show the changes
+                        h = self.git_history_view(branch)
+                        info = h.edit_traits(kind='livemodal')
+                        if info.result:
+                            merge()
+            else:
+                merge()
 
             if use_progress:
                 prog.close()
@@ -721,25 +787,40 @@ class GitRepoManager(Loggable):
                     try:
                         repo.git.rebase('--preserve-merges', '{}/{}'.format(remote, branch))
                     except GitCommandError:
+                        try:
+                            repo.git.rebase('--abort')
+                        except GitCommandError:
+                            pass
+
                         if self.confirmation_dialog('There appears to be a problem with {}.'
                                                     '\n\nWould you like to accept the master copy'.format(self.name)):
-                            try:
-                                repo.git.rebase('--abort')
-                            except GitCommandError:
-                                pass
 
-                            repo.git.pull('-X', 'theirs', '--commit', '--no-edit')
-                            return True
+                            try:
+                                repo.git.pull('-X', 'theirs', '--commit', '--no-edit')
+                                return True
+                            except GitCommandError:
+                                clean = repo.git.clean('-n')
+                                if clean:
+                                    if self.confirmation_dialog('''You have untracked files that could be an issue. 
+{}
+ 
+You like to delete them and try again?'''.format(clean)):
+                                        try:
+                                            repo.git.clean('-fd')
+                                        except GitCommandError:
+                                            self.warning_dialog('Failed to clean repository')
+                                            return
+
+                                        try:
+                                            repo.git.pull('-X', 'theirs', '--commit', '--no-edit')
+                                            return True
+                                        except GitCommandError:
+                                            self.warning_dialog('Failed pulling changes for {}'.format(self.name))
+                                else:
+                                    self.warning_dialog('Failed pulling changes for {}'.format(self.name))
+                                return
                         else:
                             return
-
-                # self._git_command(lambda: repo.git.rebase('--preserve-merges',
-                #                                           '{}/{}'.format(remote, branch)),
-                #                   'GitRepoManager.smart_pull/ahead')
-                # try:
-                #     repo.git.merge('FETCH_HEAD')
-                # except BaseException:
-                #     pass
 
                 # get conflicted files
                 out, err = grep('<<<<<<<', self.path)
@@ -840,9 +921,15 @@ class GitRepoManager(Loggable):
         l = self.cmd('log', branch, '--oneline', *args)
         return l.split('\n')
 
-    def get_commits_from_log(self, greps=None):
+    def get_commits_from_log(self, greps=None, max_count=None, after=None, before=None):
         repo = self._repo
         args = [repo.active_branch.name, '--remove-empty', '--simplify-merges']
+        if max_count:
+            args.append('--max-count={}'.format(max_count))
+        if after:
+            args.append('--after={}'.format(after))
+        if before:
+            args.append('--before={}'.format(before))
 
         if greps:
             greps = '\|'.join(greps)
@@ -908,6 +995,15 @@ class GitRepoManager(Loggable):
 
         except GitCommandError:
             self.selected_path_commits = []
+
+    def get_modified_files(self, hexsha):
+        repo = self._repo
+
+        def func():
+            return repo.git.diff_tree('--no-commit-id', '--name-only', '-r', hexsha)
+
+        txt = self._git_command(func, 'get_modified_files')
+        return txt.split('\n')
 
     # private
     def _validate_diff(self):

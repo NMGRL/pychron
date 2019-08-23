@@ -21,6 +21,7 @@ from operator import attrgetter
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Button, Instance, Str, Property
 
+from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.envisage.browser.advanced_filter_view import AdvancedFilterView
 from pychron.envisage.browser.analysis_table import AnalysisTable
 from pychron.envisage.browser.browser_model import BrowserModel
@@ -30,16 +31,19 @@ from pychron.envisage.browser.util import get_pad
 
 
 class SampleBrowserModel(BrowserModel):
-    graphical_filter_button = Button
-    find_references_button = Button
-    find_references_enabled = Property(depends_on='analysis_table:analyses[]')
+    advanced_filter = Instance(AdvancedFilterView, ())
+    analysis_table = Instance(AnalysisTable)
+    time_view_model = Instance(TimeViewModel)
 
     load_recent_button = Button
     toggle_view = Button
-
+    graphical_filter_button = Button
+    find_references_button = Button
+    advanced_filter_button = Button
     add_analysis_group_button = Button
-    analysis_table = Instance(AnalysisTable)
-    time_view_model = Instance(TimeViewModel)
+
+    find_references_enabled = Property(depends_on='analysis_table:analyses[]')
+
     monitor_sample_name = Str
 
     def __init__(self, *args, **kw):
@@ -199,27 +203,41 @@ class SampleBrowserModel(BrowserModel):
         self.analysis_table.add_analysis_set()
 
     # handlers
-    _afilter = None
-
     def _advanced_filter_button_fired(self):
         self.debug('advanced filter')
-        if self._afilter is None:
-            attrs = self.dvc.get_search_attributes()
-            if attrs:
-                attrs = list(next(zip(*attrs)))
-            m = AdvancedFilterView(attributes=attrs)
-            # m.demo()
-            self._afilter = m
+        # self.warning_dialog('Advanced filtering currently disabled')
+        attrs = self.dvc.get_search_attributes()
+        if attrs:
+            attrs = sort_isotopes(list({a[0].split('_')[0] for a in attrs}))
 
-        m = self._afilter
+        m = self.advanced_filter
+        m.attributes = attrs
+        m.demo()
         info = m.edit_traits(kind='livemodal')
         if info.result:
-            lns = self.dvc.get_analyses_advanced(m.filters, return_labnumbers=True)
-            sams = self._load_sample_record_views(lns)
-            self.samples = sams
-            self.osamples = sams
+            uuids = None
+            at = self.analysis_table
+            if not m.apply_to_current_selection and not m.apply_to_current_samples:
+                lns = self.dvc.get_analyses_advanced(m, return_labnumbers=True)
+                sams = self._load_sample_record_views(lns)
+                self.samples = sams
+                self.osamples = sams
+            elif m.apply_to_current_selection:
+                ans = self.analysis_table.get_selected_analyses()
+                if ans:
+                    uuids = [ai.uuid for ai in ans]
 
-            ans = self.dvc.get_analyses_advanced(m.filters)
+            identifiers = None
+            if m.apply_to_current_samples:
+                identifiers = [si.identifier for si in self.samples]
+
+            ans = self.dvc.get_analyses_advanced(m, uuids=uuids, identifiers=identifiers,
+                                                 include_invalid=not m.omit_invalid,
+                                                 limit=m.limit)
+            if m.apply_to_current_selection and not ans:
+                self.warning_dialog('No analyses match criteria')
+                return
+
             ans = self._make_records(ans)
             self.analysis_table.set_analyses(ans)
 
@@ -298,14 +316,15 @@ class SampleBrowserModel(BrowserModel):
         if not self.available_mass_spectrometers:
             self._load_mass_spectrometers()
 
-        v = RecentView(mass_spectrometers=self.available_mass_spectrometers)
+        v = RecentView(available_mass_spectrometers=self.available_mass_spectrometers,
+                       use_mass_spectrometers=len(self.available_analysis_types) > 1)
         v.load()
         info = v.edit_traits()
         if info.result:
             v.dump()
             now = datetime.now()
             lp = now - timedelta(hours=v.nhours)
-            ls = self.db.get_labnumbers(mass_spectrometers=v.mass_spectrometer,
+            ls = self.db.get_labnumbers(mass_spectrometers=v.mass_spectrometers if v.use_mass_spectrometers else None,
                                         analysis_types=v.analysis_types,
                                         high_post=now,
                                         low_post=lp,
@@ -316,8 +335,12 @@ class SampleBrowserModel(BrowserModel):
                 self.samples = sams
                 self.osamples = sams
 
-                xx = self._get_analysis_series(lp, now, v.mass_spectrometer, analysis_types=v.analysis_types)
+                xx = self._get_analysis_series(lp, now, v.mass_spectrometers, analysis_types=v.analysis_types)
                 self.analysis_table.set_analyses(xx)
+            else:
+                self.samples = []
+                self.osamples = []
+                self.analysis_table.clear()
 
     def _find_references_hook(self):
         ans = self.analysis_table.analyses

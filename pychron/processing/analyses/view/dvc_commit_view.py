@@ -36,18 +36,9 @@ from pychron.git_archive.utils import get_diff, get_head_commit, from_gitlog
 from pychron.paths import paths
 from pychron.pychron_constants import LIGHT_RED, PLUSMINUS_ONE_SIGMA, LIGHT_YELLOW
 
-TAGS = 'TAG', 'BLANK', 'ISOEVO', 'ICFactor'
-TAG_COLORS = {'TAG': '#f5f7c8', 'BLANKS': '#cac8f7',
-              'ISOEVO': '#c8f7e2', 'IMPORT': '#FAE8F0',
-              'ICFactor': '#D2D4A7'}
-
 
 class HistoryCommitAdapter(CommitAdapter):
-    def get_bg_color(self, obj, trait, row, column=0):
-        item = getattr(obj, trait)[row]
-        color = TAG_COLORS.get(item.tag, 'white')
-
-        return color
+    pass
 
 
 class DiffAdapter(TabularAdapter):

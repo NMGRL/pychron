@@ -45,6 +45,7 @@ class ArgusSpectrometer(ThermoSpectrometer):
                            zsymmetry='ZSymmetry',
                            extractionlens='ExtractionLens',
                            ioncountervoltage='IonCounterVoltage',
+                           zfocus='ZFocus',
                            hv='HV')
         return command_map
 # ============= EOF =============================================
