@@ -29,6 +29,7 @@ from traits.api import Any, Dict, List, Bool, Event, Str
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.helpers.strtools import to_bool
+from pychron.extraction_line import VERBOSE_DEBUG, VERBOSE
 from pychron.extraction_line.pipettes.tracking import PipetteTracker
 from pychron.globals import globalv
 from pychron.hardware.core.checksum_helper import computeCRC
@@ -82,6 +83,13 @@ class SwitchManager(Manager):
     setup_name = Str('valves')
 
     _prev_keys = None
+
+    def set_logger_level_hook(self, level):
+        for v in self.switches.values():
+            v.logger.setLevel(level)
+
+        for act in self.actuators:
+            act.logger.setLevel(level)
 
     def actuate_children(self, name, action, mode):
         """
@@ -475,8 +483,14 @@ class SwitchManager(Manager):
             self.refresh_owned_state = states
             self.refresh_canvas_needed = True
 
+    def _verbose(self, msg):
+        self.log(msg, VERBOSE)
+
+    def _verbose_debug(self, msg):
+        self.log(msg, VERBOSE_DEBUG)
+
     def load_hardware_states(self, force=False, verbose=False):
-        # self.debug('load hardware states')
+        self._verbose('load hardware states')
         # update = False
         states = []
         for k, v in self.switches.items():
@@ -497,7 +511,7 @@ class SwitchManager(Manager):
             # if update:
 
     def load_indicator_states(self):
-        # self.debug('load indicator states')
+        self._verbose('load indicator states')
         self.load_hardware_states()
 
     # private
@@ -522,17 +536,17 @@ class SwitchManager(Manager):
         """
         """
         cv = self.get_switch_by_name(name)
-        self.debug('check software interlocks {}'.format(name))
+        self._verbose_debug('check software interlocks {}'.format(name))
         if cv is not None:
             interlocks = cv.interlocks
-            self.debug('interlocks {}'.format(interlocks))
+            self._verbose_debug('interlocks {}'.format(interlocks))
             switches = self.switches
             for interlock in interlocks:
 
                 if interlock in switches:
                     v = switches[interlock]
                     if v.state:
-                        self.debug('interlocked {}'.format(interlock))
+                        self._verbose_debug('interlocked {}'.format(interlock))
                         return v
 
     def _get_indicator_state_by(self, v, force=False):
@@ -678,7 +692,7 @@ class SwitchManager(Manager):
         return d
 
     def _load_states(self):
-        self.debug('$$$$$$$$$$$$$$$$$$$$$ Load states')
+        self._verbose_debug('$$$$$$$$$$$$$$$$$$$$$ Load states')
         self.load_hardware_states(force=True)
 
     def _load_manual_states(self):

@@ -15,13 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 # ============= standard library imports ========================
 import os
 
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import Str, Bool, Int, Float
+from traits.api import Str, Bool, Int, Float, Enum
 from traitsui.api import View, Item, VGroup, HGroup, spring
 from traitsui.editors import FileEditor
 from traitsui.group import Tabbed
@@ -31,6 +29,7 @@ from traitsui.item import UItem
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper, BaseConsolePreferences, \
     BaseConsolePreferencesPane
+from pychron.extraction_line import LOG_LEVEL_NAMES
 from pychron.paths import paths
 
 
@@ -79,6 +78,7 @@ class ExtractionLinePreferences(BaseExtractionLinePreferences):
     use_hardware_update = Bool
     hardware_update_period = Float
     check_master_owner = Bool
+    logging_level = Enum(LOG_LEVEL_NAMES)
 
 
 class ExtractionLinePreferencesPane(PreferencesPane):
@@ -151,6 +151,7 @@ class ExtractionLinePreferencesPane(PreferencesPane):
         return p_grp, v_grp, g_grp
 
     def traits_view(self):
-        return View(Tabbed(*self._get_tabs()))
+        mgrp = VGroup(Item('logging_level'))
+        return View(VGroup(Tabbed(*self._get_tabs()), mgrp))
 
 # ============= EOF =============================================

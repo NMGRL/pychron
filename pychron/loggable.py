@@ -16,7 +16,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 
 from threading import current_thread
 
@@ -136,6 +135,14 @@ class Loggable(HasTraits):
     def debug(self, msg):
         self._log_('debug', msg)
 
+    def log(self, msg, level=10):
+        def log(m, *args, **kw):
+            print('levelasdf', level, self.logger.level)
+            self.logger.debug(m)
+            self.logger.log(level, m, *args, **kw)
+
+        self._log_(log, msg)
+
     # dialogs
     def warning_dialog(self, msg, sound=None, title='Warning', **kw):
         self.warning(msg)
@@ -216,7 +223,8 @@ class Loggable(HasTraits):
             return
 
         extras = {'threadName_': get_thread_name()}
-        func = getattr(self.logger, func)
+        if isinstance(func, str):
+            func = getattr(self.logger, func)
 
         if isinstance(msg, (list, tuple)):
             msg = ','.join(map(str, msg))
@@ -233,7 +241,6 @@ class Loggable(HasTraits):
 
     def _logger_name_changed(self):
         self._add_logger()
-
 
 # class Loggable(HasTraits, Loggable):
 #     def __init__(self, *args, **kw):

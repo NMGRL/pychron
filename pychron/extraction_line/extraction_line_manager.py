@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
+import logging
 import time
 from socket import gethostbyname, gethostname
 from threading import Thread
@@ -21,13 +21,14 @@ from threading import Thread
 # =============enthought library imports=======================
 from apptools.preferences.preference_binding import bind_preference
 from pyface.timer.do_later import do_after
-from traits.api import Instance, List, Any, Bool, on_trait_change, Str, Int, Dict, File, Float
+from traits.api import Instance, List, Any, Bool, on_trait_change, Str, Int, Dict, File, Float, Enum
 
 from pychron.canvas.canvas_editor import CanvasEditor
 from pychron.core.file_listener import FileListener
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.wait.wait_group import WaitGroup
 from pychron.envisage.consoleable import Consoleable
+from pychron.extraction_line import LOG_LEVEL_NAMES, LOG_LEVELS
 from pychron.extraction_line.explanation.extraction_line_explanation import ExtractionLineExplanation
 from pychron.extraction_line.extraction_line_canvas import ExtractionLineCanvas
 from pychron.extraction_line.graph.extraction_line_graph import ExtractionLineGraph
@@ -93,6 +94,7 @@ class ExtractionLineManager(Manager, Consoleable):
     _monitoring_valve_status = False
 
     canvas_editor = Instance(CanvasEditor, ())
+    logging_level = Enum(LOG_LEVEL_NAMES)
 
     def set_extract_state(self, *args, **kw):
         pass
@@ -121,7 +123,7 @@ class ExtractionLineManager(Manager, Consoleable):
 
         attrs = ('canvas_path', 'canvas_config_path', 'valves_path',
                  'use_hardware_update', 'hardware_update_period',
-                 'check_master_owner', 'use_network')
+                 'check_master_owner', 'use_network', 'logging_level')
 
         for attr in attrs:
             try:
@@ -263,6 +265,7 @@ class ExtractionLineManager(Manager, Consoleable):
     def finish_loading(self):
         if self.use_network:
             self.network.load(self.canvas_path)
+        self._set_logger_level(self.switch_manager)
 
     def reload_canvas(self):
         self.debug('reload canvas')
@@ -734,9 +737,21 @@ class ExtractionLineManager(Manager, Consoleable):
             else:
                 self.debug('could not create manager {}, {},{},{}'.format(klass, manager, params, kw))
 
+    def _set_logger_level(self, obj=None):
+        level = LOG_LEVELS.get(self.logging_level, logging.DEBUG)
+        getattr(obj, 'logger').setLevel(level)
+        if hasattr(obj, 'set_logger_level_hook'):
+            obj.set_logger_level_hook(level)
+
     # ===============================================================================
     # handlers
     # ===============================================================================
+    def _logging_level_changed(self, new):
+        if new:
+            self._set_logger_level(self)
+            if self.switch_manager:
+                self._set_logger_level(self.switch_manager)
+
     @on_trait_change('use_hardware_update')
     def _update_use_hardware_update(self):
         if self.use_hardware_update:
@@ -788,7 +803,7 @@ class ExtractionLineManager(Manager, Consoleable):
         self.update_switch_owned_state(*new)
 
     def _handle_refresh_canvas(self, new):
-        #self.debug('refresh_canvas_needed fired')
+        # self.debug('refresh_canvas_needed fired')
         self.refresh_canvas()
 
     def _handle_console_message(self, new):
