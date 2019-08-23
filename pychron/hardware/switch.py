@@ -124,7 +124,7 @@ class Switch(BaseSwitch):
         result = None
         msg = 'Get hardware state err'
         if self.actuator is not None:
-            result = self.actuator.get_channel_state(self, verbose=verbose)
+            result = self.actuator.get_channel_state(self.address, verbose=verbose)
 
         s = result
         if not isinstance(result, bool):
@@ -184,7 +184,7 @@ class Switch(BaseSwitch):
         :param do_actuation:
         :return:
         """
-        self.debug('doing actuation {} {} {}'.format(mode, func, do_actuation))
+        self.debug('doing actuation mode={} func={}'.format(mode, func))
         r = True
         actuator = self.actuator
         if mode == 'debug':
@@ -192,10 +192,12 @@ class Switch(BaseSwitch):
 
         elif actuator is not None:
             func = getattr(actuator, func)
-            if mode.startswith('client'):
-                r = func(self)
-            else:
-                r = func(self)
+            r = func(self.address)
+            
+            # if mode.startswith('client'):
+            #     r = func(self.address)
+            # else:
+            #     r = func(self.address)
                 # if do_actuation:
                 #     r = func(self)
                 # else:

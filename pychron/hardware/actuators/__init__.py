@@ -15,7 +15,7 @@
 # ===============================================================================
 
 
-def get_valve_address(obj):
+def get_switch_address(obj):
     if isinstance(obj, (str, int)):
         addr = obj
     else:

@@ -18,8 +18,11 @@
 
 # ========== local library imports =============
 from __future__ import absolute_import
-from pychron.hardware.actuators.gp_actuator import GPActuator
+
 from six.moves import range
+
+from pychron.hardware.actuators import get_switch_address, get_valve_name
+from pychron.hardware.actuators.gp_actuator import GPActuator
 
 
 class AgilentGPActuator(GPActuator):
@@ -47,18 +50,16 @@ class AgilentGPActuator(GPActuator):
         self.communicator.write_terminator = chr(10)
 
         # clear and record any accumulated errors
-        errs = self._get_errors()
-        if errs:
-            self.warning('\n'.join(errs))
+        self._clear_and_report_errors()
         return True
 
-    def get_channel_state(self, obj, verbose=False, **Kw):
+    def get_channel_state(self, obj, verbose=False, **kw):
         """
             Query the hardware for the channel state
         """
 
         # returns one if channel close  0 for open
-        cmd = 'ROUT:{}? (@{})'.format(self._get_cmd('OPEN'), self._get_address(obj))
+        cmd = 'ROUT:{}? (@{})'.format(self._get_cmd('OPEN'), get_switch_address(obj))
         s = self.ask(cmd, verbose=verbose)
         if self.simulation:
             return
@@ -71,34 +72,44 @@ class AgilentGPActuator(GPActuator):
             Close the channel
         """
 
-        address = self._get_address(obj)
-        cmd = self._get_cmd('CLOSE')
-        if not excl:
-            cmd = 'ROUT:{} (@{})'.format(cmd, address)
-        else:
-            # ensure all channels open before closing
-            cmd = 'ROUT:{}:EXCL (@{})'.format(cmd, address)
-        self.tell(cmd)
-        if self.simulation:
-            return True
-        return self.get_channel_state(obj) == False
+        return self._actuate(obj, 'CLOSE', excl)
 
     def open_channel(self, obj):
         """
-            open the channel
+            Open the channel
         """
+        return self._actuate(obj, 'OPEN')
 
-        cmd = 'ROUT:{} (@{})'.format(self._get_cmd('OPEN'), self._get_address(obj))
+    def _actuate(self, obj, action, excl=False):
+        state = action == 'OPEN'
+        addr = get_switch_address(obj)
+        if not addr:
+            name = get_valve_name(obj)
+            self.warning_dialog('Address not set for valve "{}"'.format(name))
+
+        cmd = 'ROUT:{}{} (@{})'.format(self._get_cmd('OPEN'), ':EXCL' if excl else '', addr)
         self.tell(cmd)
         if self.simulation:
             return True
-        return self.get_channel_state(obj) == True
+        return self.get_channel_state(obj) is state
 
     # private
     def _get_cmd(self, cmd):
         if self.invert:
             cmd = 'CLOSE' if cmd == 'OPEN' else 'OPEN'
         return cmd
+
+    def _clear_and_report_errors(self):
+        self.info('Clear and Report Errors. simulation:{}'.format(self.simulation))
+
+        es = self._get_errors()
+        self.info('------------------------ Errors ------------------------')
+        if es:
+            for ei in es:
+                self.warning(ei)
+        else:
+            self.info('No Errors')
+        self.info('--------------------------------------------------------')
 
     def _get_errors(self):
         # maximum of 10 errors so no reason to use a while loop
@@ -113,7 +124,6 @@ class AgilentGPActuator(GPActuator):
         return list(gen_error())
 
     def _get_error(self):
-        self.debug('get error. simulation:{}'.format(self.simulation))
         error = None
         cmd = 'SYST:ERR?'
         if not self.simulation:
@@ -124,12 +134,5 @@ class AgilentGPActuator(GPActuator):
                     error = s
 
         return error
-
-    def _get_address(self, obj):
-        if isinstance(obj, (str, int)):
-            addr = obj
-        else:
-            addr = obj.address
-        return addr
 
 # ============= EOF =====================================

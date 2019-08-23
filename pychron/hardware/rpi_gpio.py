@@ -16,6 +16,8 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
+from pychron.hardware.actuators import get_switch_address
 from pychron.hardware.actuators.gp_actuator import GPActuator
 
 try:
@@ -73,14 +75,14 @@ class RPiGPIO(GPActuator):
                 GPIO.setup(pin, mode)
 
     def open_channel(self, channel, **kw):
-        GPIO.output(channel, 0)
+        GPIO.output(get_switch_address(channel), 0)
         return True
 
     def close_channel(self, channel, **kw):
-        GPIO.output(channel, 1)
+        GPIO.output(get_switch_address(channel), 1)
         return True
 
     def get_channel_state(self, channel, **kw):
-        return GPIO.input(channel)
+        return GPIO.input(get_switch_address(channel))
 
 # ============= EOF =============================================

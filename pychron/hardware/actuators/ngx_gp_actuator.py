@@ -16,15 +16,19 @@
 
 # ========== standard library imports ==========
 import time
+
 # ========== local library imports =============
-from pychron.hardware.actuators.gp_actuator import GPActuator
-from pychron.globals import globalv
+from pychron.hardware.actuators import get_switch_address
+from pychron.hardware.actuators.ascii_gp_actuator import ASCIIGPActuator
 
 
-class NGXGPActuator(GPActuator):
+class NGXGPActuator(ASCIIGPActuator):
     """
 
     """
+    _open_cmd = 'OpenValve'
+    _close_cmd = 'CloseValve'
+    _affirmative = 'E00'
 
     def initialize(self, *args, **kw):
         service = 'pychron.hardware.isotopx_spectrometer_controller.NGXController'
@@ -32,9 +36,6 @@ class NGXGPActuator(GPActuator):
         if s is not None:
             self.communicator = s.communicator
             return True
-
-    def get_state_checksum(self, keys):
-        return 0
 
     def get_channel_state(self, obj, delay=False, verbose=True, **kw):
         """
@@ -44,7 +45,7 @@ class NGXGPActuator(GPActuator):
                 delay = 0.25
             time.sleep(delay)
 
-        cmd = 'GetValveStatus {}'.format(obj.address)
+        cmd = 'GetValveStatus {}'.format(get_switch_address(obj))
 
         s = self.ask(cmd, verbose=verbose)
         if s is not None:
@@ -57,30 +58,5 @@ class NGXGPActuator(GPActuator):
 
         else:
             return False
-
-    def close_channel(self, obj):
-        """
-        """
-
-        cmd = 'CloseValve {}'.format(obj.address)
-
-        r = self.ask(cmd)
-        if r is None and globalv.communication_simulation:
-            return True
-
-        if r is not None and r.strip() == 'E00':
-            return self.get_channel_state(obj, delay=True) is False
-
-    def open_channel(self, obj):
-        """
-        """
-        cmd = 'OpenValve {}'.format(obj.address)
-
-        r = self.ask(cmd)
-        if r is None and globalv.communication_simulation:
-            return True
-
-        if r is not None and r.strip() == 'E00':
-            return self.get_channel_state(obj, delay=True) is True
 
 # ============= EOF =====================================

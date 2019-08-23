@@ -20,6 +20,9 @@
 
 # ============= local library imports  ==========================
 from __future__ import absolute_import
+
+import time
+
 from pychron.hardware.core.core_device import CoreDevice
 
 
@@ -40,18 +43,52 @@ class GPActuator(CoreDevice):
     def get_indicator_state(self, obj, *args, **kw):
         return self.get_channel_state(obj, **kw)
 
+    def get_state_checksum(self, keys):
+        return 0
+
     def get_channel_state(self, *args, **kw):
         """
         """
         raise NotImplementedError
 
-    def open_channel(self, *args, **kw):
+    def close_channel(self, obj, excl=False):
         """
-        """
-        raise NotImplementedError
+            Close the channel
+            obj: valve object
 
-    def close_channel(self, *args, **kw):
+            return True if actuation completed successfully
         """
+        return self.actuate(obj, 'Close')
+
+    def open_channel(self, obj):
         """
+            Open the channel
+            obj: valve object
+
+            return True if actuation completed successfully
+        """
+        return self.actuate(obj, 'Open')
+
+    def actuate(self, obj, action):
+        if self._actuate(obj, action):
+            return self._check_actuate(obj, action)
+
+    def _check_actuate(self, obj, action):
+        if not obj.check_actuation_enabled:
+            return True
+
+        if obj.check_actuation_delay:
+            time.sleep(obj.check_actuation_delay)
+
+        # state = action == 'Open'
+        result = self.get_indicator_state(obj, action)
+        self.debug('check actuate action={}, result={}'.format(action, result))
+
+        if action == 'Close':
+            result = not result
+
+        return result
+
+    def _actuate(self, obj, action):
         raise NotImplementedError
 # ============= EOF ====================================

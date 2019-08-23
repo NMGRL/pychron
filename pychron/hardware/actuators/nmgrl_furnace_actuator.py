@@ -16,13 +16,12 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-import json
-import time
 
-from .gp_actuator import GPActuator
+import json
+
 from pychron.core.communication_helper import trim_bool
-from pychron.core.helpers.strtools import to_bool
-from pychron.hardware.actuators import get_valve_address
+from pychron.hardware.actuators import get_switch_address
+from .gp_actuator import GPActuator
 
 
 class NMGRLFurnaceActuator(GPActuator):
@@ -61,7 +60,7 @@ class NMGRLFurnaceActuator(GPActuator):
         """
             Query the hardware for the channel state
         """
-        cmd = 'GetChannelState {}'.format(get_valve_address(obj))
+        cmd = 'GetChannelState {}'.format(get_switch_address(obj))
         return self.ask(cmd, verbose=verbose)
 
     def get_indicator_state(self, obj, action='open', verbose=False):
@@ -74,7 +73,7 @@ class NMGRLFurnaceActuator(GPActuator):
         :return:
         """
         cmd = json.dumps({'command': 'GetIndicatorState',
-                          'name': get_valve_address(obj),
+                          'name': get_switch_address(obj),
                           'action': action})
         resp = self.ask(cmd, verbose=verbose)
 
@@ -104,27 +103,27 @@ class NMGRLFurnaceActuator(GPActuator):
                 # # print 'cc', obj, resp
                 # return resp
 
-    def close_channel(self, obj, excl=False):
-        """
-            Close the channel
-            obj: valve object
-
-            return True if actuation completed successfully
-        """
-        return self.actuate(obj, 'Close')
-
-    def open_channel(self, obj):
-        """
-            Open the channel
-            obj: valve object
-
-            return True if actuation completed successfully
-        """
-        return self.actuate(obj, 'Open')
-
-    def actuate(self, obj, action):
-        if self._actuate(obj, action):
-            return self._check_actuate(obj, action)
+    # def close_channel(self, obj, excl=False):
+    #     """
+    #         Close the channel
+    #         obj: valve object
+    #
+    #         return True if actuation completed successfully
+    #     """
+    #     return self.actuate(obj, 'Close')
+    #
+    # def open_channel(self, obj):
+    #     """
+    #         Open the channel
+    #         obj: valve object
+    #
+    #         return True if actuation completed successfully
+    #     """
+    #     return self.actuate(obj, 'Open')
+    #
+    # def actuate(self, obj, action):
+    #     if self._actuate(obj, action):
+    #         return self._check_actuate(obj, action)
 
     @trim_bool
     def _actuate(self, obj, action):
@@ -135,26 +134,8 @@ class NMGRLFurnaceActuator(GPActuator):
         if self.simulation:
             return True
 
-        cmd = '{} {}'.format(action, get_valve_address(obj))
+        cmd = '{} {}'.format(action, get_switch_address(obj))
         return self.ask(cmd)
-
-    def _check_actuate(self, obj, action):
-        if not obj.check_actuation_enabled:
-            return True
-
-        if obj.check_actuation_delay:
-            time.sleep(obj.check_actuation_delay)
-
-        # state = action == 'Open'
-        result = self.get_indicator_state(obj, action)
-        self.debug('check actuate action={}, result={}'.format(action, result))
-
-        if action == 'Close':
-            result = not result
-
-        return result
-
-# ============= EOF =====================================
 
 
 # ============= EOF =============================================

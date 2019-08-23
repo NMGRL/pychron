@@ -353,6 +353,12 @@ class SwitchManager(Manager):
 
         return state
 
+    def get_actuators(self):
+        act = self.actuators
+        if not act:
+            act = self.application.get_services(ICoreDevice)
+        return act
+
     def get_actuator_by_name(self, name):
         act = None
         if self.actuators:
@@ -443,35 +449,51 @@ class SwitchManager(Manager):
     def load_valve_lock_states(self, *args, **kw):
         self._load_soft_lock_states()
 
-    def load_valve_owners(self):
-        pass
+    def load_valve_owners(self, verbose=False, **kw):
+        """
 
-    def load_hardware_states(self, force=False, indicator=True, verbose=False):
+        :return:
+        """
+        self.debug('load owners')
+        # update = False
+        states = []
+        for k, v in self.switches.items():
+            if not isinstance(v, HardwareValve):
+                continue
+
+            ostate = v.owner
+            s = v.get_owner(verbose=verbose)
+            if not isinstance(s, bool):
+                s = None
+
+            if ostate != s:
+                states.append((k, s, False))
+                # update = True
+
+        if states:
+            self.refresh_owned_state = states
+            self.refresh_canvas_needed = True
+
+    def load_hardware_states(self, force=False, verbose=False):
         self.debug('load hardware states')
-        update = False
+        # update = False
         states = []
         for k, v in self.switches.items():
             if v.query_state or force:
                 ostate = v.state
 
-                if indicator:
-                    func = v.get_hardware_indicator_state
-                else:
-                    func = v.get_hardware_state
-
-                s = func(verbose=verbose)
-
+                s = v.get_hardware_indicator_state(verbose=verbose)
                 if not isinstance(s, bool):
                     s = None
 
-                states.append((k, s, False))
                 if ostate != s:
-                    update = update or ostate != s
+                    states.append((k, s, False))
+                    # update = True
 
         if states:
             self.refresh_state = states
-            if update:
-                self.refresh_canvas_needed = True
+            self.refresh_canvas_needed = True
+            # if update:
 
     def load_indicator_states(self):
         self.debug('load indicator states')
@@ -839,12 +861,16 @@ class SwitchManager(Manager):
                 factory(v)
 
             for s in parser.get_switches():
-                name, sw = self._switch_factory(s, actuations, klass=Switch)
-                self.switches[name] = sw
+                args = self._switch_factory(s, actuations, klass=Switch)
+                if args:
+                    name, sw = args
+                    self.switches[name] = sw
 
             for mv in parser.get_manual_valves():
-                name, sw = self._switch_factory(mv, actuations, klass=ManualSwitch)
-                self.switches[name] = sw
+                args = self._switch_factory(mv, actuations, klass=ManualSwitch)
+                if args:
+                    name, sw = args
+                    self.switches[name] = sw
 
             ps = []
             for p in parser.get_pipettes():
@@ -853,6 +879,19 @@ class SwitchManager(Manager):
                     ps.append(pip)
 
             self.pipette_trackers = ps
+
+            self._report_valves()
+
+    def _report_valves(self):
+        self.debug('========================== Switch Report ==========================')
+        widths =[25,40,40,20,20]
+        keys = ['name', 'address', 'state_address', 'actuator_name', 'state_device_name']
+        header = ['{{:<{}s}}'.format(w).format(v) for w, v in zip(widths, keys)]
+        self.debug(''.join(header))
+        for klass, vs in groupby_key(self.switches.values(), key=lambda v: str(type(v))):
+            for v in vs:
+                self.debug(v.summary(widths, keys))
+        self.debug('====================================================================')
 
     def _pipette_factory(self, p):
         inner = p.find('inner')
@@ -871,9 +910,14 @@ class SwitchManager(Manager):
         if klass is None:
             klass = HardwareValve
 
+        if not v_elem.text:
+            self.warning('Must specify a name for all switches. i.e. must provide text in <valve></valve> tags')
+            return
         name = v_elem.text.strip()
+
         address = v_elem.find('address')
         act_elem = v_elem.find('actuator')
+        state_elem = v_elem.find('state_device')
         description = v_elem.find('description')
 
         positive_interlocks = [i.text.strip() for i in v_elem.findall('positive_interlock')]
@@ -883,13 +927,33 @@ class SwitchManager(Manager):
         else:
             description = ''
 
-        actname = act_elem.text.strip() if act_elem is not None else 'switch_controller'
-        actuator = self.get_actuator_by_name(actname)
-        if actuator is None:
-            if not globalv.ignore_initialization_warnings:
-                self.warning_dialog(
-                    'No actuator for {}. Valve will not operate. Check setupfiles/extractionline/valves.xml'.format(
-                        name))
+        if address is not None:
+            address = address.text.strip()
+        else:
+            self.warning_dialog('No Address set for "{}"'.format(name))
+            return
+
+        actuator = None
+        state_dev = None
+        state_address = ''
+        if klass != ManualSwitch:
+            actname = act_elem.text.strip() if act_elem is not None else 'switch_controller'
+            actuator = self.get_actuator_by_name(actname)
+            if actuator is None:
+                if not globalv.ignore_initialization_warnings:
+                    available_actnames = [a.name for a in self.get_actuators()]
+                    self.debug('Configured actuator="{}". Available="{}"'.format(actname, available_actnames))
+                    self.warning_dialog('No actuator for "{}". Valve will not operate. '
+                                        'Check setupfiles/extractionline/valves.xml'.format(name))
+            if state_elem is not None:
+                state_name = state_elem.text.strip()
+                state_address = v_elem.find('state_address')
+                if state_address is not None:
+                    state_address = state_address.text.strip()
+                else:
+                    state_address = address
+
+                state_dev = self.get_actuator_by_name(state_name)
 
         qs = True
         vqs = v_elem.get('query_state')
@@ -933,12 +997,14 @@ class SwitchManager(Manager):
 
         hv = klass(name,
                    track_actuation=track,
-                   address=address.text.strip() if address is not None else '',
+                   address=address,
                    parent=parent_name,
                    parent_inverted=parent_inverted,
                    check_actuation_enabled=check_actuation_enabled,
                    check_actuation_delay=check_actuation_delay,
                    actuator=actuator,
+                   state_device=state_dev,
+                   state_address=state_address,
                    description=description,
                    query_state=qs,
                    ignore_lock_warning=ignore_lock_warning,
