@@ -186,6 +186,8 @@ class EthernetCommunicator(Communicator):
 
     default_timeout = 3
 
+    _comms_report_attrs = ('host', 'port', 'kind', 'timeout')
+
     @property
     def address(self):
         return '{}://{}:{}'.format(self.kind, self.host, self.port)

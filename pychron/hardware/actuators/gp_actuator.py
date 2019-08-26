@@ -16,15 +16,22 @@
 
 # ============= enthought library imports =======================
 
-# ============= standard library imports ========================
-
 # ============= local library imports  ==========================
 import time
+
+# ============= standard library imports ========================
+from traits.api import Bool
 
 from pychron.hardware.core.core_device import CoreDevice
 
 
 class GPActuator(CoreDevice):
+    invert = Bool(False)
+
+    def load_additional_args(self, config, **kw):
+        self.set_attribute(config, 'invert', 'General', 'invert')
+        return True
+
     def get_lock_state(self, *args, **kw):
         pass
 

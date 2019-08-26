@@ -137,7 +137,6 @@ class Loggable(HasTraits):
 
     def log(self, msg, level=10):
         def log(m, *args, **kw):
-            print('levelasdf', level, self.logger.level)
             self.logger.debug(m)
             self.logger.log(level, m, *args, **kw)
 

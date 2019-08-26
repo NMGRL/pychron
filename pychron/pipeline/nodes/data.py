@@ -216,6 +216,7 @@ class CSVNode(BaseDVCNode):
                                                     age_err=float(d['age_err']),
                                                     record_id=d['runid'],
                                                     sample=d.get('sample', ''),
+                                                    label_name=d.get('label_name', ''),
                                                     aliquot=int(d.get('aliquot', 0)))) for d in parser.values()]
             items = []
             for i, (gid, aa) in enumerate(groupby_idx(ans, 0)):

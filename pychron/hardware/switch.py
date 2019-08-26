@@ -105,6 +105,7 @@ class Switch(BaseSwitch):
     interlocks = List
     positive_interlocks = List
 
+    invert_state = Bool(False)
     settling_time = Float(0)
 
     def summary(self, widths, keys):
@@ -139,6 +140,10 @@ class Switch(BaseSwitch):
         if not isinstance(result, bool):
             self.debug('{}: {}'.format(msg, result))
             s = None
+        else:
+            if self.state_invert:
+                s = not s
+
         self.set_state(s)
         return result
 

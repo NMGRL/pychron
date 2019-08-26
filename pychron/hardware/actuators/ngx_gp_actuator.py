@@ -26,9 +26,9 @@ class NGXGPActuator(ASCIIGPActuator):
     """
 
     """
-    _open_cmd = 'OpenValve'
-    _close_cmd = 'CloseValve'
-    _affirmative = 'E00'
+    open_cmd = 'OpenValve'
+    close_cmd = 'CloseValve'
+    affirmative = 'E00'
 
     def initialize(self, *args, **kw):
         service = 'pychron.hardware.isotopx_spectrometer_controller.NGXController'

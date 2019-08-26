@@ -434,7 +434,8 @@ class BaseArArFigure(SelectionFigure):
                    'step': si.step,
                    'sample': si.sample,
                    'name': si.name,
-                   'label_name': si.label_name}
+                   'label_name': si.label_name,
+                   'runid': si.record_id}
 
             x = f.format(**ctx)
             labels.append(x)

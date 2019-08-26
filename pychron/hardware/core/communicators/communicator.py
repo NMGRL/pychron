@@ -18,11 +18,11 @@
 # ============= standard library imports ========================
 from __future__ import absolute_import
 
-import codecs
-import time
-from threading import Lock, RLock
 # ============= local library imports  ==========================
 import binascii
+import codecs
+import time
+from threading import RLock
 
 from pychron.headless_config_loadable import HeadlessConfigLoadable
 
@@ -101,6 +101,11 @@ class Communicator(HeadlessConfigLoadable):
 
         return True
 
+    def report(self):
+        self.debug('============ Communications Report ==============')
+        self._generate_comms_report()
+        self.debug('=================================================')
+
     def close(self):
         pass
 
@@ -162,4 +167,20 @@ class Communicator(HeadlessConfigLoadable):
     @property
     def lock(self):
         return self._lock
+
+    # private
+    def _get_report_value(self, key):
+        c = getattr(self, key)
+        value = '---'
+        return c, value
+
+    def _generate_comms_report(self):
+        if self._comms_report_attrs:
+            self.debug('{:<10s} {:<20s}          Value'.format('Param:', 'Config:'))
+            for key in self._comms_report_attrs:
+                c, value = self._get_report_value(key)
+                self.debug('{:<10s} {:<30s} {}'.format('{}:'.format(key.capitalize()),
+                                                       str(c), value))
+        else:
+            self.debug('Comms report not yet implemented')
 # ============= EOF ====================================

@@ -37,7 +37,7 @@ from pychron.core.ui.strings import SpacelessStr
 from pychron.paths import paths
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
-HEADER = 'enabled, runid', 'age', 'age_err', 'group', 'aliquot', 'sample'
+HEADER = 'enabled, runid', 'age', 'age_err', 'group', 'aliquot', 'sample', 'label_name'
 
 
 def make_line(vs, delimiter=','):
@@ -52,6 +52,7 @@ class CSVRecord(HasTraits):
     aliquot = CInt
     sample = Str
     status = Bool(True)
+    label_name = Str
 
     def valid(self):
         return self.runid and self.age and self.age_err
@@ -290,14 +291,14 @@ class CSVDataSetFactory(HasTraits):
 
     def traits_view(self):
         cols = [CheckboxColumn(name='status'),
-                ObjectColumn(name='status'),
-                ObjectColumn(name='runid', width=50),
+                ObjectColumn(name='runid', width=50, label='RunID'),
                 ObjectColumn(name='age', width=100),
                 ObjectColumn(name='age_err', width=100,
                              label=PLUSMINUS_ONE_SIGMA),
                 ObjectColumn(name='group'),
                 ObjectColumn(name='aliquot'),
-                ObjectColumn(name='sample')]
+                ObjectColumn(name='sample'),
+                ObjectColumn(name='label_name', label='Label Name')]
 
         gcols = [ObjectColumn(name='name'),
                  ObjectColumn(name='weighted_mean', label='Wtd. Mean',
