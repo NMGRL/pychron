@@ -292,6 +292,7 @@ class PipelineEngine(Loggable):
             items = self.selected.unknowns
 
         self._set_grouping(items, 0)
+        self._set_grouping(items, 0, attr='secondary_group_id')
 
     def unknowns_group_by(self, attr):
         items = self.selected_unknowns
@@ -303,17 +304,11 @@ class PipelineEngine(Loggable):
         self.selected.unknowns = sunks
         self.refresh_figure_editors()
 
-    def unknowns_graph_group_by_selected(self):
+    def group_selected(self, key):
         items = self.selected.unknowns
-        max_gid = max([si.graph_id for si in items]) + 1
+        max_gid = max([getattr(si, key) for si in items]) + 1
 
-        self._set_grouping(self.selected_unknowns, max_gid, attr='graph_id')
-
-    def unknowns_group_by_selected(self):
-        items = self.selected.unknowns
-        max_gid = max([si.group_id for si in items]) + 1
-
-        self._set_grouping(self.selected_unknowns, max_gid)
+        self._set_grouping(self.selected_unknowns, max_gid, attr=key)
 
     def recall_unknowns(self):
         self.debug('recall unks')
@@ -935,6 +930,7 @@ class PipelineEngine(Loggable):
 
     def identify_peaks(self, *args, **kw):
         self._identify_peaks(*args, **kw)
+
     # private
     def _active_repositories(self):
         if self.selected_repositories:

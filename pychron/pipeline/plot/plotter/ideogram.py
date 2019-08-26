@@ -32,6 +32,7 @@ from pychron.core.helpers.formatting import floatfmt
 from pychron.core.stats.peak_detection import fast_find_peaks
 from pychron.core.stats.probability_curves import cumulative_probability, kernel_density
 from pychron.graph.ticks import IntTickGenerator
+from pychron.pipeline.plot.overlays.grouping_scatter_overlay import GroupingScatterOverlay
 from pychron.pipeline.plot.overlays.ideogram_inset_overlay import IdeogramInset, IdeogramPointsInset
 from pychron.pipeline.plot.overlays.mean_indicator_overlay import MeanIndicatorOverlay
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
@@ -232,6 +233,10 @@ class Ideogram(BaseArArFigure):
         func = self._get_index_attr_label_func()
         self._add_scatter_inspector(scatter,
                                     additional_info=func)
+
+        if any((ai.secondary_group_id for ai in self.sorted_analyses)):
+            o = GroupingScatterOverlay(component=scatter, analyses=self.sorted_analyses)
+            scatter.overlays.append(o)
 
         return scatter, selection, invalid
 

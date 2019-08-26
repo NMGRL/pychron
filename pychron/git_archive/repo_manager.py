@@ -412,6 +412,10 @@ class GitRepoManager(Loggable):
 
         return (func(ci) for ci in hx)
 
+    def odiff(self, a, b, **kw):
+        a = self._repo.commit(a)
+        return a.diff(b, **kw)
+
     def diff(self, a, b, *args):
         repo = self._repo
         return repo.git.diff(a, b, *args)

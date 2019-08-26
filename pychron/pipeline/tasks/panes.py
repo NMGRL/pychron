@@ -405,6 +405,7 @@ class UnknownsAdapter(BaseAnalysesAdapter):
 
     def get_menu(self, obj, trait, row, column):
         grp = MenuManager(Action(name='Group Selected', action='unknowns_group_by_selected'),
+                          Action(name='Secondary Group Selected', action='unknowns_group_by_selected_secondary'),
                           Action(name='Group by Sample', action='unknowns_group_by_sample'),
                           Action(name='Group by Aliquot', action='unknowns_group_by_aliquot'),
                           Action(name='Group by Identifier', action='unknowns_group_by_identifier'),
@@ -501,11 +502,15 @@ class AnalysesPaneHandler(Handler):
 
     def unknowns_graph_group_by_selected(self, info, obj):
         obj = info.ui.context['object']
-        obj.unknowns_graph_group_by_selected()
+        obj.group_selected('graph_id')
 
     def unknowns_group_by_selected(self, info, obj):
         obj = info.ui.context['object']
-        obj.unknowns_group_by_selected()
+        obj.group_selected('group_id')
+
+    def unknowns_group_by_selected_secondary(self, info, obj):
+        obj = info.ui.context['object']
+        obj.group_selected('secondary_group_id')
 
     def unknowns_clear_grouping(self, info, obj):
         obj = info.ui.context['object']

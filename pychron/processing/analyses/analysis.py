@@ -220,6 +220,7 @@ class IdeogramPlotable(HasTraits):
     history_id = 0
     group_id = 0
     graph_id = 0
+    secondary_group_id = 0
     tab_id = 0
 
     _label_name = None
@@ -352,12 +353,6 @@ class IdeogramPlotable(HasTraits):
 class Analysis(ArArAge, IdeogramPlotable):
     analysis_view_klass = ('pychron.processing.analyses.view.analysis_view', 'AnalysisView')
     _analysis_view = None  # Instance('pychron.processing.analyses.analysis_view.AnalysisView')
-
-    # ids
-    # record_id = Property(depends_on='labnumber,aliquot, step')
-    _record_id = None
-    group_id = 0  # Int
-    graph_id = 0  # Int
 
     # sample
     sample = ''

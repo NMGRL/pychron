@@ -211,13 +211,27 @@ class CSVNode(BaseDVCNode):
 
     def _get_items_from_file(self, parser):
         from pychron.processing.analyses.file_analysis import FileAnalysis
+
+        def get_case_insensitive(d, key, default=None):
+            for k in (key, key.lower(), key.upper(), k.capitalize()):
+                try:
+                    v = d[k]
+                    break
+                except KeyError:
+                    continue
+
+            if v is None:
+                v = default
+            return v
+
         try:
-            ans = [(d.get('group', 0), FileAnalysis(age=float(d['age']),
-                                                    age_err=float(d['age_err']),
-                                                    record_id=d['runid'],
-                                                    sample=d.get('sample', ''),
-                                                    label_name=d.get('label_name', ''),
-                                                    aliquot=int(d.get('aliquot', 0)))) for d in parser.values()]
+            ans = [(d.get('group', 0), FileAnalysis(age=float(get_case_insensitive(d, 'age')),
+                                                    age_err=float(get_case_insensitive(d, 'age_err')),
+                                                    record_id=get_case_insensitive(d, 'runid'),
+                                                    sample=get_case_insensitive(d, 'sample', ''),
+                                                    label_name=get_case_insensitive(d, 'label_name', ''),
+                                                    aliquot=int(get_case_insensitive(d, 'aliquot', 0))))
+                   for d in parser.values()]
             items = []
             for i, (gid, aa) in enumerate(groupby_idx(ans, 0)):
                 for _, ai in aa:

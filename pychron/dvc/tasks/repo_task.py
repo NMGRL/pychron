@@ -17,7 +17,6 @@
 # ============= standard library imports ========================
 import os
 import shutil
-
 # ============= enthought library imports =======================
 from operator import attrgetter
 
@@ -448,37 +447,50 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
         ans = list({an for an in (func(*a) for a in ans) if an})
         self.analyses = ans + tag_ans
 
-    def _make_diff_changes(self, oid, new):
-        txt = self._repo.diff('{}~1'.format(oid), oid, '--', new)
-        ds = []
-        item = None
-        for line in txt.split('\n'):
-            if line[:2] == '- ':
-                if item is None:
-                    item = DiffItem()
-                item.subtraction = line[2:]
-            elif line[:2] == '+ ':
-                if item is None:
-                    item = DiffItem()
-                item.addition = line[2:]
-
-            if item and item.complete:
-                ds.append(item)
-                item = None
+    def _make_diff_changes(self, rev, d):
+        rev = self._repo.get_commit(rev)
+        print('asdf', d)
+        if d.change_type == 'A':
+            print(rev.stats)
+        elif d.change_type == 'M':
+            pass
+        # txt = self._repo.diff('{}~1'.format(oid), oid, '--', new)
+        # ds = []
+        # item = None
+        # for line in txt.split('\n'):
+        #     pass
+            # if line[:2] == '- ':
+            #     if item is None:
+            #         item = DiffItem()
+            #     item.subtraction = line[2:]
+            # elif line[:2] == '+ ':
+            #     if item is None:
+            #         item = DiffItem()
+            #     item.addition = line[2:]
+            #
+            # if item and item.complete:
+            #     ds.append(item)
+            #     item = None
 
         # ds = []
         # d = ''
         # ds.append(d)
-        self.diffs = ds
-
+        # self.diffs = ds
     # handlers
     def _selected_file_changed(self, new):
         if new:
             oid = self.selected_commit.oid
-            txt = self._repo.diff('-U0', '{}~1'.format(oid), oid, '--', new)
-            self.diff_text = txt
-            self._make_diff_changes(oid, new)
 
+            a = '{}~1'.format(oid)
+            b = oid
+
+            # txt = self._repo.diff('-U0', '{}~1'.format(oid), oid, '--', new)
+            # self.diff_text = txt
+            # self._make_diff_changes(txt)
+
+            d = self._repo.odiff(a, b, paths=new)[0]
+            self.diff_text = d.diff
+            self._make_diff_changes(a, d)
         else:
             self.diffs = []
             self.diff_text = ''
