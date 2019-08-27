@@ -628,7 +628,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
             for k, v in plot.plots.items():
                 if k.startswith('fit'):
                     pp = v[0]
-                    o = next((oo for oo in pp.overlays if isinstance(oo, StatisticsTextBoxOverlay)), None)
+                    o = next((oo for oo in pp.underlays if isinstance(oo, StatisticsTextBoxOverlay)), None)
                     if o:
                         o.text = '\n'.join(make_statistics(pp.regressor, options=pp.statistics_options))
                         o.request_redraw()
