@@ -70,7 +70,7 @@ class Loggable(HasTraits):
     shared_logger = False
 
     def __init__(self, *args, **kw):
-        super().__init__(*args, **kw)
+        super(Loggable, self).__init__(*args, **kw)
         self.init_logger()
 
     def init_logger(self):

@@ -26,7 +26,6 @@ from string import digits
 import yaml
 from traits.api import Any, Dict, List, Bool, Event, Str
 
-from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.helpers.strtools import to_bool
 from pychron.extraction_line import VERBOSE_DEBUG, VERBOSE
@@ -65,6 +64,7 @@ class SwitchManager(Manager):
     explanable_items = List
     extraction_line_manager = Any
     pipette_trackers = List(PipetteTracker)
+    valves_path = Str
 
     actuators = List
 
@@ -136,8 +136,8 @@ class SwitchManager(Manager):
                 self.info('comm. device = {} '.format(a.com_device_name))
 
         # open config file
-        setup_file = os.path.join(paths.extraction_line_dir, add_extension(self.setup_name, '.xml'))
-        self._load_valves_from_file(setup_file)
+        # setup_file = os.path.join(paths.extraction_line_dir, add_extension(self.setup_name, '.xml'))
+        self._load_valves_from_file(self.valves_path)
 
         if globalv.load_valve_states:
             self._load_states()
@@ -856,17 +856,25 @@ class SwitchManager(Manager):
         self.info('loading valve definitions file  {}'.format(path))
 
         actuations = self._load_actuation_tracker()
-
-        def factory(v):
-            name, hv = self._switch_factory(v, actuations)
-            if self.use_explanation:
-                hv.explain_enabled = True
-            self.switches[name] = hv
-            return hv
-
         parser = SwitchParser()
+
+        def factory(v, use_explanation=True, klass=HardwareValve):
+            if parser.is_yaml:
+                ff = self._switch_factory_yaml
+            else:
+                ff = self._switch_factory_xml
+
+            aa = ff(v, actuations, klass=klass)
+            if aa:
+                n, hv = aa
+                if use_explanation:
+                    if self.use_explanation:
+                        hv.explain_enabled = True
+                self.switches[n] = hv
+                return hv
+
         if not parser.load(path):
-            self.warning_dialog('No valves.xml file located in "{}"'.format(os.path.dirname(path)))
+            self.warning_dialog('Invalid valve file. "{}"'.format(path))
         else:
             for g in parser.get_groups():
                 for v in parser.get_valves(group=g):
@@ -875,17 +883,10 @@ class SwitchManager(Manager):
             for v in parser.get_valves():
                 factory(v)
 
-            for s in parser.get_switches():
-                args = self._switch_factory(s, actuations, klass=Switch)
-                if args:
-                    name, sw = args
-                    self.switches[name] = sw
-
-            for mv in parser.get_manual_valves():
-                args = self._switch_factory(mv, actuations, klass=ManualSwitch)
-                if args:
-                    name, sw = args
-                    self.switches[name] = sw
+            for klass, func in ((Switch, parser.get_switches),
+                                (ManualSwitch, parser.get_manual_valves)):
+                for s in func():
+                    factory(s, use_explanation=False, klass=klass)
 
             ps = []
             for p in parser.get_pipettes():
@@ -894,18 +895,19 @@ class SwitchManager(Manager):
                     ps.append(pip)
 
             self.pipette_trackers = ps
-
             self._report_valves()
 
     def _report_valves(self):
         self.debug('========================== Switch Report ==========================')
 
         widths = []
-        keys = ['name', 'address', 'state_address', 'actuator_name', 'state_device_name']
+        keys = ['name', 'address', 'state_address', 'actuator_name', 'actuator_obj',
+                'state_device_name',
+                'state_device_obj', 'state_invert']
         for k in keys:
-            vs = [getattr(v, k) if hasattr(v, k) else '---' for v in self.switches.values() ]
-            vs = [len(vi if vi else k) for vi in vs]
-            vs = max(len(k), max(vs))+3
+            vs = [getattr(v, k) if hasattr(v, k) else '---' for v in self.switches.values()]
+            vs = [len(str(vi) if vi else k) for vi in vs]
+            vs = max(len(k), max(vs)) + 3
 
             widths.append(vs)
         # widths =[32,40,40,20,20]
@@ -929,9 +931,93 @@ class SwitchManager(Manager):
                     inner=innerk,
                     outer=outerk)
 
-    def _switch_factory(self, v_elem, actuations, klass=None):
-        if klass is None:
-            klass = HardwareValve
+    def _switch_factory_yaml(self, vobj, actuations, klass=HardwareValve):
+        ctx = self._make_switch_yaml_ctx(vobj, klass)
+        return self._switch_factory(ctx, actuations, klass, 'yaml')
+
+    def _switch_factory_xml(self, vobj, actuations, klass=HardwareValve):
+        ctx = self._make_switch_xml_ctx(vobj, klass)
+        return self._switch_factory(ctx, actuations, klass, 'xml')
+
+    def _switch_factory(self, ctx, actuations, klass, ext):
+        if ctx:
+            for b in ('actuator', 'state_device'):
+                key = '{}_name'.format(b)
+                actuator = ctx.get(key)
+                if b == 'state_device' and not actuator:
+                    continue
+
+                actuator = self.get_actuator_by_name(actuator)
+                if actuator is None:
+                    if not globalv.ignore_initialization_warnings:
+                        available_actnames = [a.name for a in self.get_actuators()]
+                        self.debug('Configured actuator="{}". Available="{}"'.format(key,
+                                                                                     available_actnames))
+                        self.warning_dialog('No actuator for "{}". Valve will not operate. '
+                                            'Check setupfiles/extractionline/valves.{}'.format(b, ctx['name'], ext))
+
+                ctx[b] = actuator
+
+            name = ctx.pop('name')
+            hv = klass(name, **ctx)
+            ad = actuations.get(hv.name)
+            if ad is not None:
+                hv.actuations = ad.get('count', 0)
+                hv.last_actuation = ad.get('timestamp', '')
+
+            return hv.name, hv
+
+    def _make_switch_yaml_ctx(self, vobj, klass):
+        name = vobj.get('name')
+        if not name:
+            self.warning('Must specify a name for all switches.')
+            return
+
+        address = vobj.get('address', '')
+        actuator_name = vobj.get('actuator', 'switch_controller')
+        state_dev_obj = vobj.get('state_device', None)
+
+        if not address:
+            if isinstance(klass, Switch):
+                self.warning_dialog('No Address set for "{}"'.format(name))
+                return
+
+        state_dev_name = ''
+        state_address = ''
+        state_invert = False
+        if klass != ManualSwitch:
+            if state_dev_obj is not None:
+                state_dev_name = state_dev_obj.get('name')
+                state_address = state_dev_obj.get('address')
+                state_invert = to_bool(state_dev_obj.get('inverted'))
+
+        parent = vobj.get('parent')
+        parent_name = ''
+        parent_inverted = False
+        if parent is not None:
+            parent_name = parent.get('name', '')
+            parent_inverted = to_bool(parent.get('inverted'))
+
+        ctx = dict(name=name,
+                   track_actuation=to_bool(vobj.get('track', True)),
+                   address=address,
+                   parent=parent_name,
+                   parent_inverted=parent_inverted,
+                   check_actuation_enabled=to_bool(vobj.get('check_actuation_enabled', True)),
+                   check_actuation_delay=float(vobj.get('check_actuation_delay', 0)),
+                   actuator_name=actuator_name,
+                   state_device_name=state_dev_name,
+                   state_address=state_address,
+                   state_invert=state_invert,
+                   description=vobj.get('description', ''),
+                   query_state=to_bool(vobj.get('query_state', True)),
+                   ignore_lock_warning=to_bool(vobj.get('ignore_lock_warning', False)),
+                   positive_interlocks=[i.strip() for i in vobj.get('positive_interlock', [])],
+                   interlocks=[i.strip() for i in vobj.get('interlock', [])],
+                   settling_time=float(vobj.get('settling_time', 0)))
+        return ctx
+
+    def _make_switch_xml_ctx(self, v_elem, klass):
 
         if not v_elem.text:
             self.warning('Must specify a name for all switches. i.e. must provide text in <valve></valve> tags')
@@ -958,27 +1044,23 @@ class SwitchManager(Manager):
                 self.warning_dialog('No Address set for "{}"'.format(name))
                 return
 
-        actuator = None
-        state_dev = None
+        actname = None
+        state_dev_name = None
         state_address = ''
+        state_invert = False
         if klass != ManualSwitch:
             actname = act_elem.text.strip() if act_elem is not None else 'switch_controller'
-            actuator = self.get_actuator_by_name(actname)
-            if actuator is None:
-                if not globalv.ignore_initialization_warnings:
-                    available_actnames = [a.name for a in self.get_actuators()]
-                    self.debug('Configured actuator="{}". Available="{}"'.format(actname, available_actnames))
-                    self.warning_dialog('No actuator for "{}". Valve will not operate. '
-                                        'Check setupfiles/extractionline/valves.xml'.format(name))
             if state_elem is not None:
-                state_name = state_elem.text.strip()
+                state_dev_name = state_elem.text.strip()
                 state_address = v_elem.find('state_address')
                 if state_address is not None:
                     state_address = state_address.text.strip()
                 else:
                     state_address = address
 
-                state_dev = self.get_actuator_by_name(state_name)
+                si = v_elem.find('state_invert')
+                if si is not None:
+                    state_invert = to_bool(si.text.strip())
 
         qs = True
         vqs = v_elem.get('query_state')
@@ -1020,16 +1102,17 @@ class SwitchManager(Manager):
         else:
             track = to_bool(track.text.strip())
 
-        hv = klass(name,
+        ctx = dict(name=name,
                    track_actuation=track,
                    address=address,
                    parent=parent_name,
                    parent_inverted=parent_inverted,
                    check_actuation_enabled=check_actuation_enabled,
                    check_actuation_delay=check_actuation_delay,
-                   actuator=actuator,
-                   state_device=state_dev,
+                   actuator_name=actname,
+                   state_device_name=state_dev_name,
                    state_address=state_address,
+                   state_invert=state_invert,
                    description=description,
                    query_state=qs,
                    ignore_lock_warning=ignore_lock_warning,
@@ -1037,12 +1120,7 @@ class SwitchManager(Manager):
                    interlocks=interlocks,
                    settling_time=st or 0)
 
-        ad = actuations.get(hv.name)
-        if ad is not None:
-            hv.actuations = ad.get('count', 0)
-            hv.last_actuation = ad.get('timestamp', '')
-
-        return name, hv
+        return ctx
 
     def _get_simulation(self):
         return any([act.simulation for act in self.actuators])

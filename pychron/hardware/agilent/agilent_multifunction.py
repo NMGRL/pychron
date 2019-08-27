@@ -47,14 +47,14 @@ class AgilentMultifunction(GPActuator, AgilentMixin):
                 self._state_word = [0,]*16
                 return True
         else:
-
             resp = resp.strip()
-            word = '{:016b}'.format(int(resp))
-            if self.invert:
-                word = int(word) ^ 65535
+            if resp:
+                word = '{:016b}'.format(int(resp))
+                if self.invert:
+                    word = int(word) ^ 65535
 
-            self._state_word = list(word)[::-1]
-            return True
+                self._state_word = list(word)[::-1]
+                return True
 
     def _assemble_state_word(self, slot, channel, state):
         """

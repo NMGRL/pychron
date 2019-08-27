@@ -29,7 +29,7 @@ class GPActuator(CoreDevice):
     invert = Bool(False)
 
     def load_additional_args(self, config, **kw):
-        self.set_attribute(config, 'invert', 'General', 'invert')
+        self.set_attribute(config, 'invert', 'General', 'invert', cast='boolean')
         return True
 
     def get_lock_state(self, *args, **kw):

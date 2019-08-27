@@ -96,6 +96,10 @@ class Switch(BaseSwitch):
     address = Str
     actuator = Any
     state_device = Any
+
+    state_device_name = Str
+    actuator_name = Str
+
     state_address = Str
     query_state = Bool(True)
 
@@ -105,12 +109,12 @@ class Switch(BaseSwitch):
     interlocks = List
     positive_interlocks = List
 
-    invert_state = Bool(False)
+    state_invert = Bool(False)
     settling_time = Float(0)
 
     def summary(self, widths, keys):
         vs = (getattr(self, k) for k in keys)
-        args = ['{{:<{}s}}'.format(w).format(v if v else NULL_STR) for w,v in zip(widths, vs)]
+        args = ['{{:<{}s}}'.format(w).format(str(v) if v not in (None, '') else NULL_STR) for w,v in zip(widths, vs)]
         return ''.join(args)
 
     def state_str(self):
@@ -226,15 +230,6 @@ class Switch(BaseSwitch):
         elif actuator is not None:
             func = getattr(actuator, func)
             r = func(self)
-            
-            # if mode.startswith('client'):
-            #     r = func(self.address)
-            # else:
-            #     r = func(self.address)
-                # if do_actuation:
-                #     r = func(self)
-                # else:
-                #     r = True
 
         if self.settling_time:
             time.sleep(self.settling_time)
@@ -242,17 +237,12 @@ class Switch(BaseSwitch):
         return r
 
     @property
-    def state_device_name(self):
-        name = ''
+    def state_device_obj(self):
         if self.state_device:
-            name = self.state_device.name
-        return name
+            return '{}({})'.format(self.state_device.__class__.__name__, id(self.state_device))
 
     @property
-    def actuator_name(self):
-        name = ''
+    def actuator_obj(self):
         if self.actuator:
-            name = self.actuator.name
-        return name
-
+            return '{}({})'.format(self.actuator.__class__.__name__, id(self.actuator))
 # ============= EOF =============================================

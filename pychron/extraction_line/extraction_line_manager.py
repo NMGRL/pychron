@@ -79,7 +79,6 @@ class ExtractionLineManager(Manager, Consoleable):
 
     canvas_path = File
     canvas_config_path = File
-    valves_path = File
 
     use_hardware_update = Bool
     hardware_update_period = Float
@@ -121,7 +120,7 @@ class ExtractionLineManager(Manager, Consoleable):
 
         prefid = 'pychron.extraction_line'
 
-        attrs = ('canvas_path', 'canvas_config_path', 'valves_path',
+        attrs = ('canvas_path', 'canvas_config_path',
                  'use_hardware_update', 'hardware_update_period',
                  'check_master_owner', 'use_network', 'logging_level')
 
@@ -839,6 +838,9 @@ class ExtractionLineManager(Manager, Consoleable):
         vm.on_trait_change(self._handle_owned_state, 'refresh_owned_state')
         vm.on_trait_change(self._handle_refresh_canvas, 'refresh_canvas_needed')
         vm.on_trait_change(self._handle_console_message, 'console_message')
+
+        bind_preference(vm, 'valves_path', 'pychron.extraction_line.valves_path')
+
         return vm
 
     def _get_switch_manager_klass(self):

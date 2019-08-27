@@ -19,10 +19,30 @@
 # ============= local library imports  ==========================
 from __future__ import absolute_import
 
+import yaml
+
 from pychron.core.xml.xml_parser import XMLParser
 
 
 class SwitchParser(XMLParser):
+
+    def load(self, path):
+        self.path = path
+        if self.is_yaml:
+            with open(path, 'r') as rfile:
+                try:
+                    self._yobj = yaml.load(rfile)
+                except yaml.YAMLError:
+                    return
+
+                return True
+        else:
+            return super(SwitchParser, self).load(path)
+
+    @property
+    def is_yaml(self):
+        return self.path and (self.path.endswith('.yaml') or self.path.endswith('.yml'))
+
     def get_all_switches(self):
         switches = []
         for g in self.get_groups():
@@ -54,11 +74,11 @@ class SwitchParser(XMLParser):
                      for v in gi.findall(attr) if v.text.strip() == name), None)
 
     def get_groups(self, element=True):
-        tree = self.get_root()
-        #        tree = self._tree
-        # return [tree]+[g if element else g.text.strip()
-        #         for g in tree.findall('group')]
-        return [g if element else g.text.strip() for g in tree.findall('group')]
+        if self.is_yaml:
+            return []
+        else:
+            tree = self.get_root()
+            return [g if element else g.text.strip() for g in tree.findall('group')]
 
     def get_manual_valves(self, **kw):
         return self._get_items('manual_valve', **kw)
@@ -73,10 +93,14 @@ class SwitchParser(XMLParser):
         return self._get_items('pipette', **kw)
 
     def _get_items(self, attr, group=None, element=True):
-        if group is None:
-            group = self.get_root()
-        return [v if element else v.text.strip()
-                for v in group.findall(attr)]
+
+        if self.is_yaml:
+            return [i for i in self._yobj if i.get('kind', 'valve') == attr]
+        else:
+            if group is None:
+                group = self.get_root()
+            return [v if element else v.text.strip()
+                    for v in group.findall(attr)]
 
 # ============= EOF =============================================
 
