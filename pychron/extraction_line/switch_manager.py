@@ -890,7 +890,11 @@ class SwitchManager(Manager):
 
             ps = []
             for p in parser.get_pipettes():
-                pip = self._pipette_factory(p)
+                if parser.is_yaml:
+                    func = self._pipette_factory_yaml
+                else:
+                    func = self._pipette_factory_xml
+                pip = func(p)
                 if pip:
                     ps.append(pip)
 
@@ -918,18 +922,22 @@ class SwitchManager(Manager):
                 self.debug(v.summary(widths, keys))
         self.debug('====================================================================')
 
-    def _pipette_factory(self, p):
+    def _pipette_factory_yaml(self, pobj):
+        inner = pobj.get('inner')
+        outer = pobj.get('outer')
+        if inner in self.switches and outer in self.switches:
+            return PipetteTracker(name=pobj.get('name', 'Pipette'),
+                                  inner=inner, outer=outer)
+
+    def _pipette_factory_xml(self, p):
         inner = p.find('inner')
         outer = p.find('outer')
         if inner is not None and outer is not None:
             innerk = inner.text.strip()
             outerk = outer.text.strip()
-            if innerk in self.switches \
-                    and outerk in self.switches:
-                return PipetteTracker(
-                    name=p.text.strip(),
-                    inner=innerk,
-                    outer=outerk)
+            if innerk in self.switches and outerk in self.switches:
+                return PipetteTracker(name=p.text.strip(),
+                                      inner=innerk, outer=outerk)
 
     def _switch_factory_yaml(self, vobj, actuations, klass=HardwareValve):
         ctx = self._make_switch_yaml_ctx(vobj, klass)

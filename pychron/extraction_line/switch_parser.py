@@ -14,11 +14,6 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-from __future__ import absolute_import
-
 import yaml
 
 from pychron.core.xml.xml_parser import XMLParser
