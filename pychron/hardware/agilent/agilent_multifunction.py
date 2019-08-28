@@ -32,14 +32,20 @@ class AgilentMultifunction(GPActuator, AgilentMixin):
         if self._read_state_word(addr[0]):
             return bool(self._state_word[int(addr)])
 
-    def _read_state_word(self, slot, channel='01'):
+    def _read_state_word(self, slot, as_word=True, port='01'):
         """
         state word is a list of 16 bits
         return True if read properly
 
         :return:
         """
-        cmd = 'SENS:DIG:DATA:WORD? (@{}{})'.format(slot, channel)
+        base = 'SENS:DIG:DATA:{}? (@{}{})'
+        datatype = 'BYTE'
+        if as_word:
+            datatype = 'WORD'
+            port = '01'
+
+        cmd = base.format(datatype, slot, port)
 
         resp = self.ask(cmd)
         if resp is None:
@@ -49,9 +55,13 @@ class AgilentMultifunction(GPActuator, AgilentMixin):
         else:
             resp = resp.strip()
             if resp:
-                word = '{:016b}'.format(int(resp))
+                nbits = 16 if as_word else 8
+                fmt = '{{:0{}b}}'.format(nbits)
+
+                resp = resp.split(',')[0]
+                word = fmt(int(float(resp)))
                 if self.invert:
-                    word = int(word) ^ 65535
+                    word = fmt(int(word) ^ 2**nbits-1)
 
                 self._state_word = list(word)[::-1]
                 return True

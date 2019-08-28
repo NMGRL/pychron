@@ -225,12 +225,13 @@ class CSVNode(BaseDVCNode):
             return v
 
         try:
-            ans = [(d.get('group', 0), FileAnalysis(age=float(get_case_insensitive(d, 'age')),
-                                                    age_err=float(get_case_insensitive(d, 'age_err')),
-                                                    record_id=get_case_insensitive(d, 'runid'),
-                                                    sample=get_case_insensitive(d, 'sample', ''),
-                                                    label_name=get_case_insensitive(d, 'label_name', ''),
-                                                    aliquot=int(get_case_insensitive(d, 'aliquot', 0))))
+            ans = [(get_case_insensitive(d, 'group', 0),
+                    FileAnalysis(age=float(get_case_insensitive(d, 'age')),
+                                 age_err=float(get_case_insensitive(d, 'age_err')),
+                                 record_id=get_case_insensitive(d, 'runid'),
+                                 sample=get_case_insensitive(d, 'sample', ''),
+                                 label_name=get_case_insensitive(d, 'label_name', ''),
+                                 aliquot=int(get_case_insensitive(d, 'aliquot', 0))))
                    for d in parser.values()]
             items = []
             for i, (gid, aa) in enumerate(groupby_idx(ans, 0)):
