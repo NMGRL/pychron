@@ -956,7 +956,7 @@ class SwitchManager(Manager):
                     continue
 
                 actuator = self.get_actuator_by_name(actuator)
-                if actuator is None:
+                if actuator is None and klass != ManualSwitch:
                     if not globalv.ignore_initialization_warnings:
                         available_actnames = [a.name for a in self.get_actuators()]
                         self.debug('Configured actuator="{}". Available="{}"'.format(key,
@@ -1053,7 +1053,7 @@ class SwitchManager(Manager):
                 return
 
         actname = None
-        state_dev_name = None
+        state_dev_name = ''
         state_address = ''
         state_invert = False
         if klass != ManualSwitch:
@@ -1118,7 +1118,7 @@ class SwitchManager(Manager):
                    check_actuation_enabled=check_actuation_enabled,
                    check_actuation_delay=check_actuation_delay,
                    actuator_name=actname,
-                   state_device_name=state_dev_name,
+                   state_device_name=state_dev_name or '',
                    state_address=state_address,
                    state_invert=state_invert,
                    description=description,

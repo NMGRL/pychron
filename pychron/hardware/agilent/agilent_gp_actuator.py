@@ -39,7 +39,7 @@ class AgilentGPActuator(GPActuator, AgilentMixin):
         if self.simulation:
             return
 
-        if s is not None:
+        if s:
             return s[0] == '1'
 
     def close_channel(self, obj, excl=False):

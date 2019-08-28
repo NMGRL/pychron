@@ -288,11 +288,12 @@ class ExtractionLineManager(Manager, Consoleable):
     def reload_scene_graph(self):
         self.info('reloading canvas scene')
         for c in self.canvases:
-            c.load_canvas_file(self.canvas_path, self.canvas_config_path, self.valves_path)
             self.canvas_editor.load(c.canvas2D, self.canvas_path)
             # c.load_canvas_file(c.config_name)
 
             if self.switch_manager:
+                c.load_canvas_file(self.canvas_path, self.canvas_config_path, self.switch_manager.valves_path)
+
                 for k, v in self.switch_manager.switches.items():
                     vc = c.get_object(k)
                     if vc:
