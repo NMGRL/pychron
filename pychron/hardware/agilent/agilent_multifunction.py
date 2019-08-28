@@ -30,7 +30,7 @@ class AgilentMultifunction(GPActuator, AgilentMixin):
     def get_channel_state(self, obj, verbose=False, **kw):
         addr = get_switch_address(obj)
         if self._read_state_word(addr[0]):
-            return bool(self._state_word[int(addr)])
+            return bool(self._state_word[int(addr) - 1])
 
     def _read_state_word(self, slot, as_word=True, port='01'):
         """

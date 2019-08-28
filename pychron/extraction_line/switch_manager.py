@@ -1052,14 +1052,14 @@ class SwitchManager(Manager):
                 self.warning_dialog('No Address set for "{}"'.format(name))
                 return
 
-        actname = None
-        state_dev_name = ''
+        actname = ''
+        state_device_name = ''
         state_address = ''
         state_invert = False
         if klass != ManualSwitch:
             actname = act_elem.text.strip() if act_elem is not None else 'switch_controller'
             if state_elem is not None:
-                state_dev_name = state_elem.text.strip()
+                state_device_name = state_elem.text.strip()
                 state_address = v_elem.find('state_address')
                 if state_address is not None:
                     state_address = state_address.text.strip()
@@ -1118,7 +1118,7 @@ class SwitchManager(Manager):
                    check_actuation_enabled=check_actuation_enabled,
                    check_actuation_delay=check_actuation_delay,
                    actuator_name=actname,
-                   state_device_name=state_dev_name or '',
+                   state_device_name=state_device_name or '',
                    state_address=state_address,
                    state_invert=state_invert,
                    description=description,
