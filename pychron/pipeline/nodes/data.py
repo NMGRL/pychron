@@ -213,7 +213,7 @@ class CSVNode(BaseDVCNode):
         from pychron.processing.analyses.file_analysis import FileAnalysis
 
         def get_case_insensitive(d, key, default=None):
-            for k in (key, key.lower(), key.upper(), k.capitalize()):
+            for k in (key, key.lower(), key.upper(), key.capitalize()):
                 try:
                     v = d[k]
                     break
