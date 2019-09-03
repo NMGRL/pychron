@@ -29,10 +29,10 @@ from traits.api import Array
 from uncertainties import nominal_value, std_dev
 
 from pychron.core.helpers.formatting import floatfmt
+from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.stats.peak_detection import fast_find_peaks
 from pychron.core.stats.probability_curves import cumulative_probability, kernel_density
 from pychron.graph.ticks import IntTickGenerator
-from pychron.pipeline.plot.overlays.grouping_scatter_overlay import GroupingScatterOverlay
 from pychron.pipeline.plot.overlays.ideogram_inset_overlay import IdeogramInset, IdeogramPointsInset
 from pychron.pipeline.plot.overlays.mean_indicator_overlay import MeanIndicatorOverlay
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
@@ -210,33 +210,47 @@ class Ideogram(BaseArArFigure):
     # ===============================================================================
     # plotters
     # ===============================================================================
+    def _get_aux_plot_data(self, k, scalar=1):
+        def gen():
+            # for self._unpack_attr(k, scalar=scalar)
+            for aux_id, ais in groupby_key(self.sorted_analyses, key='aux_id'):
+                ais = list(ais)
+                xs, xes = zip(*[(nominal_value(vi), std_dev(vi)) for vi in
+                                self._unpack_attr(self.options.index_attr, ans=ais)])
+
+                ys, yes = zip(*[(nominal_value(vi), std_dev(vi)) for vi in
+                                self._unpack_attr(k, ans=ais, scalar=scalar)])
+
+                yield aux_id, xs, xes, ys, yes
+
+        return gen()
+
     def _plot_aux(self, title, vk, po, pid):
 
-        ys, es = self._get_aux_plot_data(vk, po.scalar)
         selection = []
         invalid = []
+        for aux_id, xs, xes, ys, yes in self._get_aux_plot_data(vk, po.scalar):
+            scatter = self._add_aux_plot(ys, title, po, pid, gid=self.group_id or aux_id, es=yes, xs=xs)
+            nsigma = self.options.error_bar_nsigma
+            if xes:
+                self._add_error_bars(scatter, xes, 'x', nsigma,
+                                     end_caps=self.options.x_end_caps,
+                                     visible=po.x_error)
+            if yes:
+                self._add_error_bars(scatter, yes, 'y', nsigma,
+                                     end_caps=self.options.y_end_caps,
+                                     visible=po.y_error)
 
-        scatter = self._add_aux_plot(ys, title, po, pid, es=es)
+            if po.show_labels:
+                self._add_point_labels(scatter)
 
-        nsigma = self.options.error_bar_nsigma
-        self._add_error_bars(scatter, self.xes, 'x', nsigma,
-                             end_caps=self.options.x_end_caps,
-                             visible=po.x_error)
-        if es:
-            self._add_error_bars(scatter, es, 'y', nsigma,
-                                 end_caps=self.options.y_end_caps,
-                                 visible=po.y_error)
+            func = self._get_index_attr_label_func()
+            self._add_scatter_inspector(scatter,
+                                        additional_info=func)
 
-        if po.show_labels:
-            self._add_point_labels(scatter)
-
-        func = self._get_index_attr_label_func()
-        self._add_scatter_inspector(scatter,
-                                    additional_info=func)
-
-        if any((ai.secondary_group_id for ai in self.sorted_analyses)):
-            o = GroupingScatterOverlay(component=scatter, analyses=self.sorted_analyses)
-            scatter.overlays.append(o)
+            # if any((ai.secondary_group_id for ai in self.sorted_analyses)):
+            #     o = GroupingScatterOverlay(component=scatter, analyses=self.sorted_analyses)
+            #     scatter.overlays.append(o)
 
         return scatter, selection, invalid
 
@@ -682,7 +696,10 @@ class Ideogram(BaseArArFigure):
         xs = array([ai for ai in self._unpack_attr(key, nonsorted=nonsorted)])
         return xs
 
-    def _add_aux_plot(self, ys, title, po, pid, es=None, type='scatter', xs=None, **kw):
+    def _add_aux_plot(self, ys, title, po, pid, gid=None, es=None, type='scatter', xs=None, **kw):
+        if gid is None:
+            gid = self.group_id
+
         if xs is None:
             xs = self.xs
 
@@ -693,7 +710,7 @@ class Ideogram(BaseArArFigure):
 
         graph = self.graph
 
-        plotkw = self.options.get_plot_dict(self.group_id, self.subgroup_id)
+        plotkw = self.options.get_plot_dict(gid, 0)
 
         s, p = graph.new_series(
             x=xs, y=ys,

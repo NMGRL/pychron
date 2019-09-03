@@ -252,11 +252,14 @@ class BaseArArFigure(SelectionFigure):
     def _cmp_analyses(self, x):
         return x.timestamp
 
-    def _unpack_attr(self, attr, scalar=1, exclude_omit=False, nonsorted=False):
-        def gen():
+    def _unpack_attr(self, attr, scalar=1, exclude_omit=False, nonsorted=False, ans=None):
+        if ans is None:
             ans = self.sorted_analyses
-            if nonsorted:
-                ans = self.analyses
+
+        if nonsorted:
+            ans = self.analyses
+
+        def gen():
             for ai in ans:
                 if exclude_omit and ai.is_omitted():
                     continue

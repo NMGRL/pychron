@@ -405,7 +405,7 @@ class UnknownsAdapter(BaseAnalysesAdapter):
 
     def get_menu(self, obj, trait, row, column):
         grp = MenuManager(Action(name='Group Selected', action='unknowns_group_by_selected'),
-                          Action(name='Secondary Group Selected', action='unknowns_group_by_selected_secondary'),
+                          Action(name='Aux Group Selected', action='unknowns_aux_group_by_selected'),
                           Action(name='Group by Sample', action='unknowns_group_by_sample'),
                           Action(name='Group by Aliquot', action='unknowns_group_by_aliquot'),
                           Action(name='Group by Identifier', action='unknowns_group_by_identifier'),
@@ -456,9 +456,8 @@ class UnknownsAdapter(BaseAnalysesAdapter):
 
     def get_text_color(self, obj, trait, row, column=0):
         color = 'black'
-
-        gid = getattr(obj, trait)[row].group_id
-
+        item = getattr(obj, trait)[row]
+        gid = item.group_id or item.aux_id
         cid = gid % self._ncolors if self._ncolors else 0
         try:
             color = colornames[cid]
@@ -508,9 +507,9 @@ class AnalysesPaneHandler(Handler):
         obj = info.ui.context['object']
         obj.group_selected('group_id')
 
-    def unknowns_group_by_selected_secondary(self, info, obj):
+    def unknowns_aux_group_by_selected(self, info, obj):
         obj = info.ui.context['object']
-        obj.group_selected('secondary_group_id')
+        obj.group_selected('aux_id')
 
     def unknowns_clear_grouping(self, info, obj):
         obj = info.ui.context['object']

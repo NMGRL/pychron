@@ -14,27 +14,23 @@
 # limitations under the License.
 # ===============================================================================
 from chaco.abstract_overlay import AbstractOverlay
-from chaco.scatterplot import render_markers
-from numpy import array
-
-from pychron.core.helpers.color_generators import color1f_generator
-from pychron.core.helpers.iterfuncs import groupby_key
 
 
 class GroupingScatterOverlay(AbstractOverlay):
     def overlay(self, other_component, gc, view_bounds=None, mode='normal'):
+        raise NotImplementedError
 
-        ans = self.analyses
-        if any((a.secondary_group_id for a in ans)):
-            cgen = color1f_generator()
-            points = array(self.component.get_screen_points())
-            marker = self.component.marker
-            marker_size = self.component.marker_size+0.5
-            line_width = self.component.line_width
-
-            for gid, ais in groupby_key(enumerate(ans), lambda x: x[1].secondary_group_id):
-                color = next(cgen)
-                outline_color = color
-                idxs, _ = zip(*ais)
-                render_markers(gc, points[idxs, :], marker, marker_size, color, line_width, outline_color)
+        # ans = self.analyses
+        # if any((a.secondary_group_id for a in ans)):
+        #     cgen = color1f_generator()
+        #     points = array(self.component.get_screen_points())
+        #     marker = self.component.marker
+        #     marker_size = self.component.marker_size+0.5
+        #     line_width = self.component.line_width
+        #
+        #     for gid, ais in groupby_key(enumerate(ans), lambda x: x[1].secondary_group_id):
+        #         color = next(cgen)
+        #         outline_color = color
+        #         idxs, _ = zip(*ais)
+        #         render_markers(gc, points[idxs, :], marker, marker_size, color, line_width, outline_color)
 # ============= EOF =============================================

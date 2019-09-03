@@ -220,7 +220,7 @@ class IdeogramPlotable(HasTraits):
     history_id = 0
     group_id = 0
     graph_id = 0
-    secondary_group_id = 0
+    aux_id = 0
     tab_id = 0
 
     _label_name = None

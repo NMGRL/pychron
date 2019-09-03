@@ -292,7 +292,7 @@ class PipelineEngine(Loggable):
             items = self.selected.unknowns
 
         self._set_grouping(items, 0)
-        self._set_grouping(items, 0, attr='secondary_group_id')
+        self._set_grouping(items, 0, attr='aux_id')
 
     def unknowns_group_by(self, attr):
         items = self.selected_unknowns
