@@ -16,12 +16,10 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-import os
 
 from traits.api import Any, DelegatesTo, Property
 
 from pychron.managers.manager import Manager
-from pychron.paths import paths
 
 
 class BaseSpectrometerManager(Manager):
@@ -57,6 +55,9 @@ class BaseSpectrometerManager(Manager):
 
     def make_deflections_dict(self):
         return self.spectrometer.make_deflection_dict()
+
+    def make_settings(self):
+        return self.spectrometer.make_settings()
 
     def send_configuration(self):
         if self.spectrometer:

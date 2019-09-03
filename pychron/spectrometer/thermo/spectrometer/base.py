@@ -98,9 +98,6 @@ class ThermoSpectrometer(BaseSpectrometer):
         if key in d:
             d[key] = float('{:0.2f}'.format(d[key]))
 
-    def make_settings(self):
-        return self._get_cached_config()
-
     def make_gains_dict(self):
         return {di.name: di.get_gain() for di in self.detectors}
 
