@@ -22,15 +22,17 @@ class AgilentMixin:
         if response.strip() == '0':
             return True
 
-    def initialize(self):
-        self.communicator.write_terminator = chr(10)
-        cmds = self._get_initialization_commands()
-        if cmds:
-            for c in cmds:
-                self.tell(c)
+    def initialize(self, *args, **kw):
+        ret = super(AgilentMixin, self).initialize(*args, **kw)
+        if ret:
+            self.communicator.write_terminator = chr(10)
+            cmds = self._get_initialization_commands()
+            if cmds:
+                for c in cmds:
+                    self.tell(c)
 
-        self._clear_and_report_errors()
-        return True
+            self._clear_and_report_errors()
+        return ret
 
     def _get_initialization_commands(self):
         pass

@@ -42,7 +42,7 @@ class ASCIIGPActuator(GPActuator):
         state = action.lower() == 'Open'
         cmd = self.open_cmd if state else self.close_cmd
 
-        if isinstance(self.cmd, callable):
+        if isinstance(cmd, callable):
             cmd = cmd(get_switch_address(obj))
         else:
             cmd = '{}{}{}'.format(cmd, self.delimiter, get_switch_address(obj))

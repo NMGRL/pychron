@@ -22,7 +22,7 @@ from pychron.hardware.actuators.gp_actuator import GPActuator
 from pychron.hardware.agilent.agilent_mixin import AgilentMixin
 
 
-class AgilentGPActuator(GPActuator, AgilentMixin):
+class AgilentGPActuator(AgilentMixin, GPActuator):
     """
         Abstract module for the Agilent 34903A GP AgilentGPActuator
 

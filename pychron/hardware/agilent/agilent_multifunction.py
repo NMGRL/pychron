@@ -19,7 +19,7 @@ from pychron.hardware.actuators.gp_actuator import GPActuator
 from pychron.hardware.agilent.agilent_mixin import AgilentMixin
 
 
-class AgilentMultifunction(GPActuator, AgilentMixin):
+class AgilentMultifunction(AgilentMixin, GPActuator):
     """
 
     Agilent 34907A
@@ -30,16 +30,28 @@ class AgilentMultifunction(GPActuator, AgilentMixin):
     def get_channel_state(self, obj, verbose=False, **kw):
         addr = get_switch_address(obj)
         if self._read_state_word(addr[0]):
-            return bool(self._state_word[int(addr) - 1])
 
-    def _read_state_word(self, slot, as_word=True, port='01'):
+            bitidx = int(addr[1:])-1
+            state = bool(int(self._state_word[bitidx]))
+            if verbose:
+                self.debug('addr: {}: bitidx: {}, state={}'.format(addr, bitidx, state))
+                self.debug(''.join(['{:<4s}'.format(str(i)) for i in range(16)]))
+                self.debug(''.join(['{:<4s}'.format(str(w)) for w in self._state_word]))
+
+            return state
+
+    def _read_state_word(self, slot, as_word=True, port=1):
         """
         state word is a list of 16 bits
         return True if read properly
 
         :return:
         """
-        base = 'SENS:DIG:DATA:{}? (@{}{})'
+        if port not in (1, 2):
+            self.warning('Invalid port number {}. defaulting to port 1'.format(port))
+            port = 1
+
+        base = 'SENS:DIG:DATA:{}? (@{}{:02n})'
         datatype = 'BYTE'
         if as_word:
             datatype = 'WORD'
@@ -50,7 +62,7 @@ class AgilentMultifunction(GPActuator, AgilentMixin):
         resp = self.ask(cmd)
         if resp is None:
             if globalv.communication_simulation:
-                self._state_word = [0,]*16
+                self._state_word = [0, ] * 16
                 return True
         else:
             resp = resp.strip()
@@ -59,9 +71,9 @@ class AgilentMultifunction(GPActuator, AgilentMixin):
                 fmt = '{{:0{}b}}'.format(nbits)
 
                 resp = resp.split(',')[0]
-                word = fmt(int(float(resp)))
+                word = fmt.format(int(float(resp)))
                 if self.invert:
-                    word = fmt(int(word) ^ 2**nbits-1)
+                    word = fmt.format(int(word, 2) ^ (2 ** nbits - 1))
 
                 self._state_word = list(word)[::-1]
                 return True

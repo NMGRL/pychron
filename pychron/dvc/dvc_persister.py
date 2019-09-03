@@ -569,10 +569,11 @@ class DVCPersister(BasePersister):
 
         # save the scripts
         ms = per_spec.run_spec.mass_spectrometer
-        for si in ('measurement', 'extraction', 'post_measurement', 'post_equilibration'):
+        for si in ('measurement', 'extraction', 'post_measurement', 'post_equilibration', 'hops'):
             name = getattr(per_spec, '{}_name'.format(si))
             blob = getattr(per_spec, '{}_blob'.format(si))
-            self.dvc.meta_repo.update_script(ms, name, blob)
+            if name:
+                self.dvc.meta_repo.update_script(ms, name, blob)
             obj[si] = name
 
         # save keys for the arar isotopes

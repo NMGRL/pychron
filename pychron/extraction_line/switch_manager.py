@@ -973,7 +973,7 @@ class SwitchManager(Manager):
                 hv.actuations = ad.get('count', 0)
                 hv.last_actuation = ad.get('timestamp', '')
 
-            return hv.name, hv
+            return name, hv
 
     def _make_switch_yaml_ctx(self, vobj, klass):
         name = vobj.get('name')
