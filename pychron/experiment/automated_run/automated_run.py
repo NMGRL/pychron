@@ -1061,8 +1061,10 @@ class AutomatedRun(Loggable):
             ms_name = self.measurement_script.name
             ms_blob = self.measurement_script.toblob()
 
-            hops_name, hops_blob = self.measurement_script.hops_blob()
+            hops_name = self.measurement_script.hops_name
+            hops_blob = self.measurement_script.hops_blob
             sfods, bsfods = self._get_default_fods()
+
 
         pe_name, pe_blob = '', ''
         if self.post_equilibration_script:

@@ -46,6 +46,8 @@ class MeasurementPyScript(ValvePyScript):
     info_color = MEASUREMENT_COLOR
     abbreviated_count_ratio = None
 
+    hops_name = ''
+    hops_blob = ''
     _time_zero = None
     _time_zero_offset = 0
 
@@ -257,6 +259,11 @@ class MeasurementPyScript(ValvePyScript):
             p = os.path.join(self.root, p)
 
         if os.path.isfile(p):
+            self.hops_name = os.path.basename(p)
+
+            with open(p, 'r') as rfile:
+                self.hops_blob = rfile.read()
+
             with open(p, 'r') as rfile:
                 head, ext = os.path.splitext(p)
                 if ext in ('.yaml', '.yml'):

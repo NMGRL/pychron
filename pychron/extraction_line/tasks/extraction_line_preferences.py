@@ -73,12 +73,14 @@ class BaseExtractionLinePreferences(BasePreferencesHelper):
     canvas_config_path = Str
     valves_path = Str
 
+    logging_level = Enum(LOG_LEVEL_NAMES)
+
+
 
 class ExtractionLinePreferences(BaseExtractionLinePreferences):
     use_hardware_update = Bool
     hardware_update_period = Float
     check_master_owner = Bool
-    logging_level = Enum(LOG_LEVEL_NAMES)
 
 
 class ExtractionLinePreferencesPane(PreferencesPane):
