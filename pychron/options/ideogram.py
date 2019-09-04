@@ -75,6 +75,7 @@ class IdeogramOptions(AgeOptions):
     asymptotic_height_percent = Float
 
     analysis_number_sorting = Enum('Oldest @Top', 'Youngest @Top')
+    global_analysis_number_sorting = Bool(True)
 
     mean_indicator_font = Property
     mean_indicator_fontname = Enum(*FONTS)
@@ -131,13 +132,19 @@ class IdeogramOptions(AgeOptions):
              'edge_color': line_color,
              'edge_width': fg.line_width,
              'line_width': fg.line_width,
-             'line_color': line_color}
+             'line_color': line_color,
+             }
 
         if fg.use_fill:
             color = fg.color.toRgb()
             color.setAlphaF(fg.alpha * 0.01)
             d['fill_color'] = color
             d['type'] = 'filled_line'
+
+        if fg.marker_non_default():
+            d['marker'] = fg.marker
+        if fg.marker_size_non_default():
+            d['marker_size'] = fg.marker_size
 
         return d
 

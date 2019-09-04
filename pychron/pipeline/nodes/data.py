@@ -107,12 +107,6 @@ class InterpretedAgeNode(DVCNode):
                 ias = self.interpreted_ages
                 ias.extend(interpreted_ages)
 
-                # if browser_view.is_append:
-                #     ias = self.interpreted_ages
-                #     ias.extend(interpreted_ages)
-                # else:
-                #     self.interpreted_ages = interpreted_ages
-
             return True
 
     def run(self, state):
@@ -143,8 +137,11 @@ class CSVNode(BaseDVCNode):
     def reset(self):
         super(CSVNode, self).reset()
         self.path = ''
+        self.unknowns = []
 
     def configure(self, pre_run=False, **kw):
+        # self.path = '/Users/ross/PychronDev/data/csv/Murphy ideo ages2.csv'
+
         if not pre_run:
             self._manual_configured = True
 
@@ -155,33 +152,6 @@ class CSVNode(BaseDVCNode):
             if info.result:
                 if dsf.data_path:
                     self.path = dsf.data_path
-
-            # if confirm(None, 'Would you like to create a new CSV dataset?'):
-            #     # open a table editor to enter all the information
-            #     pass
-            # else:
-            #     # select a file from DVC or native finder
-            #     pass
-        #             msg = '''CSV File Format
-        # Create/select a file with a column header as the first line.
-        # The following columns are required:
-        #
-        # runid, age, age_err
-        #
-        # Optional columns are:
-        #
-        # group, aliquot, sample
-        #
-        # e.x.
-        # runid, age, age_error
-        # Run1, 10, 0.24
-        # Run2, 11, 0.32
-        # Run3, 10, 0.40'''
-        #             information(None, msg)
-        #
-        #             dlg = FileDialog()
-        #             if dlg.open() == OK:
-        #                 self.path = dlg.path
 
         return bool(self.path)
 
@@ -225,8 +195,15 @@ class CSVNode(BaseDVCNode):
                 v = default
             return v
 
+        def toint(i):
+            try:
+                i = int(i)
+            except ValueError:
+                pass
+            return i
+
         try:
-            ans = [(get_case_insensitive(d, 'group', 0),
+            ans = [(toint(get_case_insensitive(d, 'group', '')),
                     FileAnalysis(age=float(get_case_insensitive(d, 'age')),
                                  age_err=float(get_case_insensitive(d, 'age_err')),
                                  record_id=get_case_insensitive(d, 'runid'),
@@ -237,7 +214,7 @@ class CSVNode(BaseDVCNode):
             items = []
             for i, (gid, aa) in enumerate(groupby_idx(ans, 0)):
                 for _, ai in aa:
-                    ai.group_id = i
+                    ai.group = i
                     items.append(ai)
             return items
 

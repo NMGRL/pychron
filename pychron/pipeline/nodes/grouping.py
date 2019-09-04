@@ -33,7 +33,10 @@ from pychron.pychron_constants import SUBGROUPING_ATTRS, WEIGHTED_MEAN, \
 
 class GroupingNode(BaseNode):
     by_key = Str
-    keys = ('Aliquot', 'Comment', 'Identifier', 'Sample', 'Step', 'SubGroup', 'No Grouping')
+    keys = ('Aliquot', 'Comment', 'Identifier', 'Sample', 'Step', 'SubGroup',
+            'Group Name',
+            'Label Name',
+            'No Grouping')
     analysis_kind = 'unknowns'
     name = 'Grouping'
     title = 'Edit Grouping'
@@ -49,6 +52,8 @@ class GroupingNode(BaseNode):
 
     def load(self, nodedict):
         self.by_key = nodedict.get('key', 'Identifier')
+        # self.by_key = 'Group Name'
+        # self.attribute = 'Aux'
 
     def _to_template(self, d):
         d['key'] = self.by_key
@@ -58,6 +63,10 @@ class GroupingNode(BaseNode):
         if key != 'No Grouping':
             if key == 'Aliquot':
                 key = 'identifier_aliquot_pair'
+            elif key == 'Group Name':
+                key = 'group'
+            elif key == 'Label name':
+                key = 'label_name'
 
             return attrgetter(key.lower())
 
@@ -104,8 +113,7 @@ class GroupingNode(BaseNode):
                                     'Tab=Display groups on separate tabs'), label='To Group', show_border=True)
         v = okcancel_view(VGroup(agrp, kgrp),
                           width=300,
-                          title=self.title,
-                          )
+                          title=self.title)
         return v
 
 

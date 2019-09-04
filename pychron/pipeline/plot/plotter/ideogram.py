@@ -221,15 +221,12 @@ class Ideogram(BaseArArFigure):
                 ys, yes = zip(*[(nominal_value(vi), std_dev(vi)) for vi in
                                 self._unpack_attr(k, ans=ais, scalar=scalar)])
 
-                yield aux_id, xs, xes, ys, yes
+                yield aux_id, ais, xs, xes, ys, yes
 
         return gen()
 
     def _plot_aux(self, title, vk, po, pid):
-
-        selection = []
-        invalid = []
-        for aux_id, xs, xes, ys, yes in self._get_aux_plot_data(vk, po.scalar):
+        for aux_id, items, xs, xes, ys, yes in self._get_aux_plot_data(vk, po.scalar):
             scatter = self._add_aux_plot(ys, title, po, pid, gid=self.group_id or aux_id, es=yes, xs=xs)
             nsigma = self.options.error_bar_nsigma
             if xes:
@@ -246,13 +243,14 @@ class Ideogram(BaseArArFigure):
 
             func = self._get_index_attr_label_func()
             self._add_scatter_inspector(scatter,
+                                        items=items,
                                         additional_info=func)
 
             # if any((ai.secondary_group_id for ai in self.sorted_analyses)):
             #     o = GroupingScatterOverlay(component=scatter, analyses=self.sorted_analyses)
             #     scatter.overlays.append(o)
 
-        return scatter, selection, invalid
+        # return scatter, selection, invalid
 
     def _plot_analysis_number(self, *args, **kw):
         return self.__plot_analysis_number(*args, **kw)
@@ -262,92 +260,205 @@ class Ideogram(BaseArArFigure):
         return self.__plot_analysis_number(*args, **kw)
 
     def __plot_analysis_number(self, po, plot, pid, nonsorted=False):
-        xs = self.xs
-        xes = self.xes
-        n = xs.shape[0]
+        opt = self.options
+        index_attr = opt.index_attr
+        if index_attr == 'uage' and opt.include_j_position_error:
+            index_attr = 'uage_w_position_err'
 
-        startidx = 1
-        items = self.sorted_analyses
         if nonsorted:
             name = 'A# Nonsorted'
             tag = 'Analysis Number Nonsorted'
-            opt = self.options
-
-            index_attr = opt.index_attr
-            if index_attr == 'uage' and opt.include_j_position_error:
-                index_attr = 'uage_w_position_err'
-
-            xs = [nominal_value(x) for x in self._get_xs(key=index_attr, nonsorted=True)]
+            # xs = [nominal_value(x) for x in self._get_xs(key=index_attr, nonsorted=True)]
         else:
             name = 'Analysis #'
             tag = 'Analysis Number'
-            xs = self.xs
+            # xs = self.xs
 
+        selection = []
+
+        startidx = 1
         for p in self.graph.plots:
             # if title is not visible title=='' so check tag instead
-
             if p.y_axis.tag == tag:
                 for k, rend in p.plots.items():
                     # if title is not visible k == e.g '-1' instead of 'Analysis #-1'
                     if k.startswith(name) or k.startswith('-'):
                         startidx += rend[0].index.get_size()
 
-        if self.options.analysis_number_sorting == 'Oldest @Top' or nonsorted:
-            ys = arange(startidx, startidx + n)
-        else:
-            ys = arange(startidx + n - 1, startidx - 1, -1)
+        items = self.sorted_analyses
+        ats = array([ai.timestamp or 0 for ai in items])
 
-        ans = self.sorted_analyses
-        ts = array([ai.timestamp or 0 for ai in ans])
-        ts -= ts[0]
+        gitems = groupby_key(items, key='aux_id')
+        if not nonsorted:
+            gitems = [(a, list(b)) for a, b in gitems]
+            gitems = sorted(gitems, key=lambda x: min(xi.age for xi in x[1]))
+            if opt.analysis_number_sorting != 'Oldest @Top':
+                gitems = reversed(gitems)
 
-        kw = {}
-        if self.options.use_cmap_analysis_number:
-            kw = dict(colors=ts,
-                      color_map_name=self.options.cmap_analysis_number,
-                      type='cmap_scatter',
-                      xs=xs)
-        else:
-            if nonsorted:
-                data = sorted(zip(xs, ys), key=lambda x: x[0])
-                xs, ys = list(zip(*data))
+        global_sorting = opt.global_analysis_number_sorting
 
-        scatter = self._add_aux_plot(ys, name, po, pid, xs=xs, **kw)
+        if global_sorting:
+            n = len(items)
+            if opt.analysis_number_sorting == 'Oldest @Top' or nonsorted:
+                gys = arange(startidx, startidx + n)
+            else:
+                gys = arange(startidx + n - 1, startidx - 1, -1)
 
-        if self.options.use_latest_overlay:
-            idx = argmax(ts)
-            dx = scatter.index.get_data()[idx]
-            dy = scatter.value.get_data()[idx]
+        for aux_id, ais in gitems:
+            ais = list(ais)
+            n = len(ais)
 
-            scatter.overlays.append(LatestOverlay(component=scatter,
-                                                  data_position=array([(dx, dy)])))
+            if not global_sorting:
+                if opt.analysis_number_sorting == 'Oldest @Top' or nonsorted:
+                    ys = arange(startidx, startidx + n)
+                else:
+                    ys = arange(startidx + n - 1, startidx - 1, -1)
+            else:
+                idxs = [items.index(ai) for ai in ais]
+                if opt.analysis_number_sorting != 'Oldest @Top':
+                    idxs = reversed(idxs)
+                ys = [gys[idx] for idx in idxs]
 
-        self._add_error_bars(scatter, xes, 'x', self.options.error_bar_nsigma,
-                             end_caps=self.options.x_end_caps,
-                             visible=po.x_error)
+            xs, xes = zip(*((nominal_value(xi), std_dev(xi)) for xi in
+                            self._unpack_attr(index_attr, ans=ais)))
+            startidx += n + 1
+            kw = {}
+            if opt.use_cmap_analysis_number:
+                ts = array([ai.timestamp or 0 for ai in ais])
+                ts -= ats[0]
+                kw = dict(colors=ts,
+                          color_map_name=opt.cmap_analysis_number,
+                          type='cmap_scatter',
+                          xs=xs)
+            else:
+                if nonsorted:
+                    data = sorted(zip(xs, ys), key=lambda x: x[0])
+                    xs, ys = list(zip(*data))
 
-        if po.show_labels:
-            self._add_point_labels(scatter)
+            scatter = self._add_aux_plot(ys, name, po, pid,
+                                         gid=self.group_id or aux_id, xs=xs, **kw)
 
-        # set tick generator
-        gen = IntTickGenerator()
-        plot.y_axis.tick_generator = gen
-        plot.y_grid.tick_generator = gen
+            if opt.use_latest_overlay:
+                idx = argmax(ts)
+                dx = scatter.index.get_data()[idx]
+                dy = scatter.value.get_data()[idx]
 
-        my = max(ys) + 1
-        plot.value_range.tight_bounds = True
-        self._set_y_limits(0, my, min_=0, max_=my, pid=pid)
+                scatter.overlays.append(LatestOverlay(component=scatter,
+                                                      data_position=array([(dx, dy)])))
+            self._add_error_bars(scatter, xes, 'x', opt.error_bar_nsigma,
+                                 end_caps=opt.x_end_caps,
+                                 visible=po.x_error)
 
-        omits, invalids, outliers = self._do_aux_plot_filtering(scatter, po, xs, xes)
-        func = self._get_index_attr_label_func()
-        self._add_scatter_inspector(scatter,
-                                    items=items,
-                                    value_format=lambda x: '{:d}'.format(int(x)),
-                                    additional_info=func)
+            if po.show_labels:
+                self._add_point_labels(scatter)
 
-        selection = omits + outliers
+            # set tick generator
+            gen = IntTickGenerator()
+            plot.y_axis.tick_generator = gen
+            plot.y_grid.tick_generator = gen
 
-        return scatter, selection, invalids
+            my = max(ys) + 1
+            plot.value_range.tight_bounds = True
+            self._set_y_limits(0, my, min_=0, max_=my, pid=pid)
+
+            func = self._get_index_attr_label_func()
+            self._add_scatter_inspector(scatter,
+                                        items=ais,
+                                        value_format=lambda x: '{:d}'.format(int(x)),
+                                        additional_info=func)
+
+            # omits, invalids, outliers = self._do_aux_plot_filtering(scatter, po, xs, xes)
+            # selection = omits + outliers
+            # selection.extend(omits)
+            # selection.extend(outliers)
+
+    # def __plot_analysis_number_old(self, po, plot, pid, nonsorted=False):
+    #     xs = self.xs
+    #     xes = self.xes
+    #     n = xs.shape[0]
+    #
+    #     startidx = 1
+    #     items = self.sorted_analyses
+    #     if nonsorted:
+    #         name = 'A# Nonsorted'
+    #         tag = 'Analysis Number Nonsorted'
+    #         opt = self.options
+    #
+    #         index_attr = opt.index_attr
+    #         if index_attr == 'uage' and opt.include_j_position_error:
+    #             index_attr = 'uage_w_position_err'
+    #
+    #         xs = [nominal_value(x) for x in self._get_xs(key=index_attr, nonsorted=True)]
+    #     else:
+    #         name = 'Analysis #'
+    #         tag = 'Analysis Number'
+    #         xs = self.xs
+    #
+    #     for p in self.graph.plots:
+    #         # if title is not visible title=='' so check tag instead
+    #
+    #         if p.y_axis.tag == tag:
+    #             for k, rend in p.plots.items():
+    #                 # if title is not visible k == e.g '-1' instead of 'Analysis #-1'
+    #                 if k.startswith(name) or k.startswith('-'):
+    #                     startidx += rend[0].index.get_size()
+    #
+    #     if self.options.analysis_number_sorting == 'Oldest @Top' or nonsorted:
+    #         ys = arange(startidx, startidx + n)
+    #     else:
+    #         ys = arange(startidx + n - 1, startidx - 1, -1)
+    #
+    #     ans = self.sorted_analyses
+    #     ts = array([ai.timestamp or 0 for ai in ans])
+    #     ts -= ts[0]
+    #
+    #     kw = {}
+    #     if self.options.use_cmap_analysis_number:
+    #         kw = dict(colors=ts,
+    #                   color_map_name=self.options.cmap_analysis_number,
+    #                   type='cmap_scatter',
+    #                   xs=xs)
+    #     else:
+    #         if nonsorted:
+    #             data = sorted(zip(xs, ys), key=lambda x: x[0])
+    #             xs, ys = list(zip(*data))
+    #
+    #     scatter = self._add_aux_plot(ys, name, po, pid, xs=xs, **kw)
+    #
+    #     if self.options.use_latest_overlay:
+    #         idx = argmax(ts)
+    #         dx = scatter.index.get_data()[idx]
+    #         dy = scatter.value.get_data()[idx]
+    #
+    #         scatter.overlays.append(LatestOverlay(component=scatter,
+    #                                               data_position=array([(dx, dy)])))
+    #
+    #     self._add_error_bars(scatter, xes, 'x', self.options.error_bar_nsigma,
+    #                          end_caps=self.options.x_end_caps,
+    #                          visible=po.x_error)
+    #
+    #     if po.show_labels:
+    #         self._add_point_labels(scatter)
+    #
+    #     # set tick generator
+    #     gen = IntTickGenerator()
+    #     plot.y_axis.tick_generator = gen
+    #     plot.y_grid.tick_generator = gen
+    #
+    #     my = max(ys) + 1
+    #     plot.value_range.tight_bounds = True
+    #     self._set_y_limits(0, my, min_=0, max_=my, pid=pid)
+    #
+    #     omits, invalids, outliers = self._do_aux_plot_filtering(scatter, po, xs, xes)
+    #     func = self._get_index_attr_label_func()
+    #     self._add_scatter_inspector(scatter,
+    #                                 items=items,
+    #                                 value_format=lambda x: '{:d}'.format(int(x)),
+    #                                 additional_info=func)
+    #
+    #     selection = omits + outliers
+    #
+    #     return scatter, selection, invalids
 
     def _get_index_attr_label_func(self):
         ia = self.options.index_attr
@@ -712,15 +823,22 @@ class Ideogram(BaseArArFigure):
 
         plotkw = self.options.get_plot_dict(gid, 0)
 
-        s, p = graph.new_series(
-            x=xs, y=ys,
-            color=plotkw['color'],
-            type=type,
-            marker=po.marker,
-            marker_size=po.marker_size,
-            selection_marker_size=po.marker_size,
-            bind_id=self.group_id,
-            plotid=pid, **kw)
+        if 'marker' not in plotkw:
+            plotkw['marker'] = po.marker
+
+        if 'marker_size' not in plotkw:
+            plotkw['marker_size'] = po.marker_size
+
+        if 'selection_marker_size' not in plotkw:
+            plotkw['selection_marker_size'] = plotkw['marker_size']
+
+        plotkw.pop('type')
+        kw.update(plotkw)
+
+        s, p = graph.new_series(x=xs, y=ys,
+                                type=type,
+                                bind_id=self.group_id,
+                                plotid=pid, **kw)
 
         if es is not None:
             s.yerror = array(es)

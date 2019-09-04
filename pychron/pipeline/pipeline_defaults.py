@@ -92,6 +92,7 @@ CSV_IDEO = """
 required:
 nodes:
   - klass: CSVNode
+  - klass: GroupingNode
   - klass: IdeogramNode
 """
 

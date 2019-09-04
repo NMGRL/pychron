@@ -14,34 +14,47 @@
 # limitations under the License.
 # ===============================================================================
 
+from enable.markers import MarkerTrait
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from traitsui.api import View, UItem, Item, HGroup, VGroup
+from traits.api import Range
+from traitsui.api import View, UItem, Item, HGroup
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.pychron_traits import BorderVGroup, BorderHGroup
 from pychron.options.group.base_group_options import BaseGroupOptions
 
 
 class IdeogramGroupOptions(BaseGroupOptions):
+    marker_size = Range(0.0, 10.0, 1.0, mode='spinner')
+    marker = MarkerTrait
+
+    def marker_non_default(self):
+        return self.marker != 'square'
+
+    def marker_size_non_default(self):
+        return self.marker_size != 1
+
     def traits_view(self):
-        fill_grp = VGroup(HGroup(UItem('use_fill'),
-                                 UItem('color')),
-                          Item('alpha', label='Opacity'),
-                          label='Fill',
-                          show_border=True)
+        fill_grp = BorderVGroup(HGroup(UItem('use_fill'),
+                                       UItem('color')),
+                                Item('alpha', label='Opacity'),
+                                label='Fill')
 
-        line_grp = VGroup(UItem('line_color'),
-                          Item('line_width',
-                               label='Width'),
-                          show_border=True,
-                          label='Line')
+        line_grp = BorderVGroup(UItem('line_color'),
+                                Item('line_width',
+                                     label='Width'),
+                                label='Line')
 
-        g = VGroup(Item('bind_colors', label='Bind Colors',
-                        tooltip='Bind the Fill and Line colors, i.e changing the Fill color changes'
-                                'the line color and vice versa'),
-                   HGroup(fill_grp, line_grp),
-                   show_border=True,
-                   label='Group {}'.format(self.group_id + 1))
+        mgrp = BorderHGroup(UItem('marker'),
+                            UItem('marker_size'),
+                            label='Marker')
+
+        g = BorderVGroup(Item('bind_colors', label='Bind Colors',
+                              tooltip='Bind the Fill and Line colors, i.e changing the Fill color changes'
+                                      'the line color and vice versa'),
+                         HGroup(fill_grp, line_grp, mgrp),
+                         label='Group {}'.format(self.group_id + 1))
         v = View(g)
         return v
 

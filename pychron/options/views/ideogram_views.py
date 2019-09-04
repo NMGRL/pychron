@@ -35,6 +35,8 @@ class DisplaySubOptions(TitleSubOptions):
                             label='Error Bars')
 
         an_grp = VGroup(Item('analysis_number_sorting', label='Analysis# Sort'),
+                        Item('global_analysis_number_sorting', label='Global Sort', tooltip='Applicable only when '
+                                                                                            'using Aux Grouping'),
                         HGroup(Item('use_cmap_analysis_number', label='Use Color Mapping'),
                                UItem('cmap_analysis_number', enabled_when='use_cmap_analysis_number')),
                         Item('use_latest_overlay'), show_border=True, label='Analysis #')
