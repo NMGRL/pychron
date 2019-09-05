@@ -115,7 +115,13 @@ def make_at_filter(analysis_types):
     else:
         analysis_types = (analysis_types.lower(),)
 
-    analysis_types = [xi.replace(' ', '_') for xi in analysis_types]
+    ants = [xi.replace(' ', '_') for xi in analysis_types]
+
+    analysis_types = []
+    for a in ants:
+        if a == 'ic':
+            a = 'detector_ic'
+        analysis_types.append(a)
 
     if 'blank' in analysis_types:
         ret = or_(AnalysisTbl.analysis_type.startswith('blank'),

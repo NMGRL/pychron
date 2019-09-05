@@ -243,7 +243,7 @@ QTEGRA_SOURCE_KEYS = ('extraction_lens', 'ysymmetry', 'zsymmetry', 'zfocus')
 QTEGRA_SOURCE_NAMES = ('ExtractionLens', 'Y-Symmetry', 'Z-Symmetry', 'Z-Focus')
 
 BLANKS = ['Blank Unknown', 'Blank Air', 'Blank Cocktail', 'Blank']
-REFERENCE_ANALYSIS_TYPES = ['Air', 'Cocktail']
+REFERENCE_ANALYSIS_TYPES = ['Air', 'Cocktail', 'IC']
 ANALYSIS_TYPES = ['Unknown'] + REFERENCE_ANALYSIS_TYPES + BLANKS
 
 DEFAULT_MONITOR_NAME = 'FC-2'
