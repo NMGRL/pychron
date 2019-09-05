@@ -424,7 +424,7 @@ class BaseArArFigure(SelectionFigure):
     def _handle_xlimits(self):
         pass
 
-    def _add_point_labels(self, scatter):
+    def _add_point_labels(self, scatter, ans=None):
         labels = []
 
         f = self.options.analysis_label_format
@@ -432,16 +432,11 @@ class BaseArArFigure(SelectionFigure):
         if not f:
             f = '{aliquot:02d}{step:}'
 
-        for si in self.sorted_analyses:
-            ctx = {'aliquot': si.aliquot,
-                   'step': si.step,
-                   'sample': si.sample,
-                   'name': si.name,
-                   'label_name': si.label_name,
-                   'runid': si.record_id}
+        if ans is None:
+            ans = self.sorted_analyses
 
-            x = f.format(**ctx)
-            labels.append(x)
+        labels = [f.format(aliquot=si.aliquot, step=si.step, sample=si.sample, name=si.name,
+                           label_name=si.label_name, runid=si.record_id) for si in ans]
 
         font = self.options.label_font
         ov = PointsLabelOverlay(component=scatter,
