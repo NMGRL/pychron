@@ -32,6 +32,7 @@ from pychron.core.helpers.formatting import floatfmt
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.stats.peak_detection import fast_find_peaks
 from pychron.core.stats.probability_curves import cumulative_probability, kernel_density
+from pychron.graph.explicit_legend import ExplicitLegend
 from pychron.graph.ticks import IntTickGenerator
 from pychron.pipeline.plot.overlays.ideogram_inset_overlay import IdeogramInset, IdeogramPointsInset
 from pychron.pipeline.plot.overlays.mean_indicator_overlay import MeanIndicatorOverlay
@@ -207,6 +208,35 @@ class Ideogram(BaseArArFigure):
                self.max_x(self.options.index_attr, exclude_omit=True)
         return l, h
 
+    def update_index_mapper(self, obj, name, old, new):
+        self._rebuild_ideo()
+        # if new:
+        #     self.update_graph_metadata(None, name, old, new)
+
+    def update_graph_metadata(self, obj, name, old, new):
+        if hasattr(obj, 'suppress_update') and obj.suppress_update:
+            return
+
+        ans = self.sorted_analyses
+        sel = obj.metadata.get('selections', [])
+        self._set_selected(ans, sel)
+
+        self._rebuild_ideo(sel)
+        self.recalculate_event = True
+
+        # self._filter_metadata_changes(obj, sorted_ans, self._rebuild_ideo)
+
+    def get_ybounds(self):
+        plot = self.graph.plots[0]
+        gid = self.group_id + 1
+        lp = plot.plots['Current-{}'.format(gid)][0]
+        d = lp.value.get_data()
+        h = d.max()
+        return 0, h
+
+    def replot(self):
+        self._rebuild_ideo()
+
     # ===============================================================================
     # plotters
     # ===============================================================================
@@ -300,6 +330,9 @@ class Ideogram(BaseArArFigure):
             else:
                 gys = arange(startidx + n - 1, startidx - 1, -1)
 
+        plots = {}
+        labels = []
+        gla = opt.group_legend_label_attribute
         for aux_id, ais in gitems:
             ais = list(ais)
             n = len(ais)
@@ -334,6 +367,16 @@ class Ideogram(BaseArArFigure):
             scatter = self._add_aux_plot(ys, name, po, pid,
                                          gid=self.group_id or aux_id, xs=xs, **kw)
 
+            if opt.include_group_legend:
+                key = str(aux_id)
+                plots[key] = [scatter]
+                if gla == 'Group':
+                    label = key
+                else:
+                    label = getattr(ais[0], gla.lower().replace(' ', '_'))
+
+                labels.append((key, label))
+
             if opt.use_latest_overlay:
                 idx = argmax(ts)
                 dx = scatter.index.get_data()[idx]
@@ -363,6 +406,8 @@ class Ideogram(BaseArArFigure):
                                         value_format=lambda x: '{:d}'.format(int(x)),
                                         additional_info=func)
 
+        if opt.include_group_legend:
+            self._add_group_legend(plot, plots, labels)
             # omits, invalids, outliers = self._do_aux_plot_filtering(scatter, po, xs, xes)
             # selection = omits + outliers
             # selection.extend(omits)
@@ -487,6 +532,14 @@ class Ideogram(BaseArArFigure):
                     ov.set_x_limits(xmi, xma)
                     ov.set_y_limits(0, yma2)
 
+    def _add_group_legend(self, plot, plots, labels):
+        legend = ExplicitLegend(plots=plots,
+                                labels=list(labels),
+                                inside=True,
+                                align='ul')
+
+        plot.overlays.append(legend)
+
     def _add_peak_labels(self, line):
         opt = self.options
 
@@ -582,35 +635,6 @@ class Ideogram(BaseArArFigure):
                 m.label.trait_set(x=ap[0], y=ap[1])
 
         return m
-
-    def update_index_mapper(self, obj, name, old, new):
-        self._rebuild_ideo()
-        # if new:
-        #     self.update_graph_metadata(None, name, old, new)
-
-    def update_graph_metadata(self, obj, name, old, new):
-        if hasattr(obj, 'suppress_update') and obj.suppress_update:
-            return
-
-        ans = self.sorted_analyses
-        sel = obj.metadata.get('selections', [])
-        self._set_selected(ans, sel)
-
-        self._rebuild_ideo(sel)
-        self.recalculate_event = True
-
-        # self._filter_metadata_changes(obj, sorted_ans, self._rebuild_ideo)
-
-    def get_ybounds(self):
-        plot = self.graph.plots[0]
-        gid = self.group_id + 1
-        lp = plot.plots['Current-{}'.format(gid)][0]
-        d = lp.value.get_data()
-        h = d.max()
-        return 0, h
-
-    def replot(self):
-        self._rebuild_ideo()
 
     def _rebuild_ideo(self, sel=None):
         graph = self.graph

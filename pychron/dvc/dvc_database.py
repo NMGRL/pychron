@@ -16,13 +16,12 @@
 
 from datetime import timedelta, datetime
 
-import six
 from sqlalchemy import not_, func, distinct, or_, and_
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.functions import count
 from sqlalchemy.util import OrderedSet
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, List
+from traits.api import HasTraits, Str, List, TraitError
 from traitsui.api import Item
 
 from pychron.core.helpers.datetime_tools import bin_datetimes
@@ -224,7 +223,10 @@ class DVCDatabase(DatabaseAdapter):
         info = self.get_identifier_info(identifier)
         if info:
             for attr in SAMPLE_METADATA:
-                setattr(ia, attr, info.get(attr))
+                try:
+                    setattr(ia, attr, info.get(attr))
+                except TraitError:
+                    pass
 
     def check_restricted_name(self, name, category, check_principal_investigator=False):
         """
@@ -461,7 +463,7 @@ class DVCDatabase(DatabaseAdapter):
 
     def add_analysis_group(self, ans, name, project, pi=None):
         with self.session_ctx():
-            if not isinstance(project, six.text_type):
+            if not isinstance(project, str):
                 pi = project.principal_investigator
                 project = project.name
 
@@ -1213,7 +1215,7 @@ class DVCDatabase(DatabaseAdapter):
             q = sess.query(AnalysisTbl)
             q = q.join(IrradiationPositionTbl)
             if step:
-                if isinstance(step, (str, six.text_type)):
+                if isinstance(step, (str, )):
                     step = alpha_to_int(step)
 
                 q = q.filter(AnalysisTbl.increment == step)
@@ -1671,7 +1673,7 @@ class DVCDatabase(DatabaseAdapter):
             return self._query_one(q)
 
     def get_project(self, name, pi=None):
-        if isinstance(name, (str, six.text_type)):
+        if isinstance(name, (str, )):
             if pi:
                 with self.session_ctx() as sess:
 

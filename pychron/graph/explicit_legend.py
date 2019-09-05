@@ -16,12 +16,14 @@
 from chaco.legend import Legend
 from enable.font_metrics_provider import font_metrics_provider
 from numpy import zeros_like, array
-from traits.api import Bool
+from traits.api import Bool, Int
 
 
 class ExplicitLegend(Legend):
     bgcolor = 'transparent'
     inside = Bool(False)
+    xoffset = Int(0)
+    yoffset = Int(0)
 
     def get_preferred_size(self):
         """
@@ -136,6 +138,8 @@ class ExplicitLegend(Legend):
             else:
                 self.y += self.height + 5
 
+            self.x += self.xoffset
+            self.y += self.yoffset
             gc.clip_to_rect(int(self.x), int(self.y),
                             int(self.width), int(self.height))
             edge_space = self.border_width + self.border_padding

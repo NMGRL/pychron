@@ -90,6 +90,8 @@ class IdeogramOptions(AgeOptions):
 
     group_options_klass = IdeogramGroupOptions
 
+    include_group_legend = Bool(True)
+    group_legend_label_attribute = Enum('Group', 'Label Name', 'Sample', 'Aliquot')
     _use_centered_range = Bool
     _use_asymptotic_limits = Bool
     _suppress_xlimits_clear = Bool
@@ -100,10 +102,10 @@ class IdeogramOptions(AgeOptions):
     def to_dict(self):
         d = super(IdeogramOptions, self).to_dict()
         aux_plots = self.to_dict_aux_plots()
-        groups = self.to_dict_groups()
+        # groups = self.to_dict_groups()
 
         d['aux_plots'] = aux_plots
-        d['groups'] = groups
+        # d['groups'] = groups
         return d
 
     def to_dict_aux_plots(self):
@@ -132,8 +134,7 @@ class IdeogramOptions(AgeOptions):
              'edge_color': line_color,
              'edge_width': fg.line_width,
              'line_width': fg.line_width,
-             'line_color': line_color,
-             }
+             'line_color': line_color}
 
         if fg.use_fill:
             color = fg.color.toRgb()
