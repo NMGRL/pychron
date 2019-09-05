@@ -15,30 +15,42 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from enable.markers import marker_names
 from traitsui.api import View, UItem, Item, HGroup, VGroup, EnumEditor, Label
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.pychron_traits import BorderVGroup
-from pychron.options.options import SubOptions, AppearanceSubOptions, object_column, checkbox_column
-from pychron.options.views.ratio_series_views import RatioSeriesMainOptions
+from pychron.options.options import SubOptions, AppearanceSubOptions, MainOptions, object_column, checkbox_column
 from pychron.pychron_constants import MAIN, APPEARANCE
 
 
-class ICFactorMainOptions(RatioSeriesMainOptions):
+class RatioSeriesMainOptions(MainOptions):
+    def _get_edit_view(self):
+        v = View(VGroup(self._get_ic_group(), self._get_scatter_group(), self._get_y_group()))
+        return v
+
     def _get_ic_group(self):
         return BorderVGroup(HGroup(UItem('numerator', editor=EnumEditor(name='detectors')), Label('/'),
                                    UItem('denominator', editor=EnumEditor(name='detectors'))),
                             HGroup(Item('fit', editor=EnumEditor(name='fit_types')),
                                    UItem('error_type', editor=EnumEditor(name='error_types'))),
-                            Item('analysis_type', editor=EnumEditor(name='analysis_types')),
                             Item('standard_ratio'), label='IC')
+
+    def _get_y_group(self):
+        return BorderVGroup(HGroup(Item('ymin', label='Min'),
+                                   Item('ymax', label='Max')), label='Y Limits')
+
+    def _get_scatter_group(self):
+        return BorderVGroup(Item('height'),
+                            HGroup(Item('marker', editor=EnumEditor(values=marker_names)),
+                                   Item('marker_size')), label='Scatter')
 
     def _get_columns(self):
         return [object_column(name='numerator', editor=EnumEditor(name='detectors')),
                 object_column(name='denominator', editor=EnumEditor(name='detectors')),
                 checkbox_column(name='plot_enabled', label='Plot'),
-                checkbox_column(name='save_enabled', label='Save'),
+                # checkbox_column(name='save_enabled', label='Save'),
                 object_column(name='standard_ratio', label='Standard Ratio'),
                 object_column(name='fit',
                               editor=EnumEditor(name='fit_types'),
@@ -46,29 +58,27 @@ class ICFactorMainOptions(RatioSeriesMainOptions):
                 object_column(name='error_type',
                               editor=EnumEditor(name='error_types'),
                               width=75, label='Error'),
-                object_column(name='height', label='Height')]
+                object_column(name='height', label='Height')
+                ]
 
 
-class ICFactorSubOptions(SubOptions):
+class RatioSeriesSubOptions(SubOptions):
     def traits_view(self):
-        v = View(VGroup(Item('delete_existing', label='Delete Existing',
-                             tooltip='Delete existing icfactors. Only necessary if you have '
-                                     'redefined how you are handling the IC factor correction. '),
-                        Item('show_statistics'),
+        v = View(VGroup(Item('show_statistics'),
                         Item('link_plots', label='Link Plots', tooltip='Link plots together so that omitting an '
                                                                        'analysis from any plot omits the analysis on '
                                                                        'all other plots')))
         return v
 
 
-class ICFactorAppearance(AppearanceSubOptions):
+class RatioSeriesAppearance(AppearanceSubOptions):
     pass
 
 
 # ===============================================================
 # ===============================================================
-VIEWS = {MAIN.lower(): ICFactorMainOptions,
-         'icfactor': ICFactorSubOptions,
-         APPEARANCE.lower(): ICFactorAppearance}
+VIEWS = {MAIN.lower(): RatioSeriesMainOptions,
+         'ratio series': RatioSeriesSubOptions,
+         APPEARANCE.lower(): RatioSeriesAppearance}
 
 # ============= EOF =============================================

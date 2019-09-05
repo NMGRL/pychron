@@ -39,6 +39,7 @@ from pychron.options.iso_evo import IsotopeEvolutionOptions
 from pychron.options.isochron import InverseIsochronOptions
 from pychron.options.options import BaseOptions, SubOptions
 from pychron.options.radial import RadialOptions
+from pychron.options.ratio_series import RatioSeriesOptions
 from pychron.options.regression_series import RegressionSeriesOptions
 from pychron.options.series import SeriesOptions
 from pychron.options.spectrum import SpectrumOptions
@@ -352,6 +353,11 @@ class SeriesOptionsManager(FigureOptionsManager):
     options_klass = SeriesOptions
     _defaults = (('screen', SERIES_SCREEN),)
     _default_options_txt = SERIES_SCREEN
+
+
+class RatioSeriesOptionsManager(FigureOptionsManager):
+    id = 'ratio_series'
+    options_klass = RatioSeriesOptions
 
 
 class BlanksOptionsManager(FigureOptionsManager):

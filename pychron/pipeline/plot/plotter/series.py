@@ -109,104 +109,6 @@ class BaseSeries(BaseArArFigure):
             p.data.set_data('x{}'.format(self.group_id*2), xs)
         return xs
 
-    def _get_xs(self, plots, ans, tzero=None):
-        if self.options.use_time_axis:
-            xs = array([ai.timestamp for ai in ans])
-            px = plots[0]
-            if tzero is None:
-                if px.normalize == 'now':
-                    tzero = time.time()
-                else:
-                    tzero = xs[-1]
-
-            xs -= tzero
-            if not px.use_time_axis:
-                xs /= 3600.
-            else:
-                self.graph.convert_index_func = lambda x: '{:0.2f} hrs'.format(x / 3600.)
-
-        else:
-            xs = arange(len(ans))
-        return xs
-
-    def _handle_limits(self):
-        self.graph.refresh()
-
-
-RATIO_RE = re.compile(r'(?P<ni>[A-Za-z]+)(?P<nd>\d+)\/(?P<di>[A-Za-z]+)(?P<dd>\d+)(?P<rem>[\S\s]*)')
-ISOTOPE_RE = re.compile(r'(?P<ni>[A-Za-z]+)(?P<nd>\d+)(?P<rem>[\S\s]*)')
-
-
-class Series(BaseSeries):
-    # _omit_key = 'omit_series'
-
-    # def _has_attr(self, name):
-    #     a = name in (ANALYSIS_TYPE, PEAK_CENTER, AGE, RADIOGENIC_YIELD)
-    #     if not a:
-    #         if self.sorted_analyses:
-    #             ai = self.sorted_analyses[0]
-    #             a = bool(ai.get_value(name))
-    #     return a
-    def build(self, plots):
-
-        graph = self.graph
-        # plots = (pp for pp in plots if self._has_attr(pp.name))
-
-        for i, po in enumerate(plots):
-            ytitle = po.name
-            if po.use_dev:
-                ytitle = '{} Dev'.format(ytitle)
-            elif po.use_percent_dev:
-                ytitle = '{} Dev %'.format(ytitle)
-
-            kw = {'padding': self.options.get_paddings(),
-                  'ytitle': ytitle}
-
-            if self.options.use_time_axis:
-                kw['xtitle'] = 'Time (hrs)'
-            else:
-                kw['xtitle'] = 'N'
-
-            p = graph.new_plot(**kw)
-
-            if i == 0:
-                self._add_info(p)
-
-            if po.name == ANALYSIS_TYPE:
-                from pychron.pipeline.plot.plotter.ticks import tick_formatter, StaticTickGenerator
-
-                p.y_axis.tick_label_formatter = tick_formatter
-                p.y_axis.tick_generator = StaticTickGenerator()
-                # p.y_axis.tick_label_rotate_angle = 45
-                graph.set_y_limits(-0.5, len(TICKS) - 0.5, plotid=i)
-                # graph.set_y_limits(min_=-1, max_=7, plotid=i)
-
-            p.value_range.tight_bounds = False
-            self._setup_plot(i, p, po, ytitle)
-
-    def _setup_plot(self, pid, pp, po, ytitle):
-        if not ytitle.endswith('DetIC'):
-            match = RATIO_RE.match(ytitle)
-            if match:
-                ytitle = '<sup>{}</sup>{}/<sup>{}</sup>{}'.format(match.group('nd'),
-                                                                  match.group('ni'),
-                                                                  match.group('dd'),
-                                                                  match.group('di'))
-                if match.group('rem'):
-                    ytitle = '{}{}'.format(ytitle, match.group('rem'))
-            else:
-                match = ISOTOPE_RE.match(ytitle)
-                if match:
-                    ytitle = '<sup>{}</sup>{}'.format(match.group('nd'), match.group('ni'))
-                    if match.group('rem'):
-                        ytitle = '{}{}'.format(ytitle, match.group('rem'))
-
-        super(Series, self)._setup_plot(pid, pp, po)
-        # if '<sup>' in ytitle or '<sub>' in ytitle:
-        #     self._set_ml_title(ytitle, pid, 'y')
-        # else:
-        self.graph.set_y_title(ytitle, plotid=pid)
-
     def plot(self, plots, legend=None):
         """
             plot data on plots
@@ -229,22 +131,21 @@ class Series(BaseSeries):
     def _plot_series(self, po, pid, omits):
         graph = self.graph
         try:
+            ys, yerr = self._get_ys(po)
             if po.name == ANALYSIS_TYPE:
                 from pychron.pipeline.plot.plotter.ticks import analysis_type_formatter
-
-                ys = list(self._unpack_attr(po.name))
+                #
+                # ys = list(self._unpack_attr(po.name))
                 kw = dict(y=ys, colors=ys, type='cmap_scatter',
                           fit='',
                           color_map_name='gist_rainbow')
-                yerr = None
+                # yerr = None
                 value_format = analysis_type_formatter
                 set_ylimits = False
 
             else:
                 set_ylimits = True
                 value_format = None
-                ys = array([nominal_value(ai) for ai in self._unpack_attr(po.name)])
-                yerr = array([std_dev(ai) for ai in self._unpack_attr(po.name)])
 
                 if po.use_dev or po.use_percent_dev:
                     graph.add_horizontal_rule(0, plotid=pid, color='black', line_style='solid')
@@ -307,14 +208,69 @@ class Series(BaseSeries):
             traceback.print_exc()
             print('Series', e)
 
-    def update_graph_metadata(self, obj, name, old, new):
-        sorted_ans = self.sorted_analyses
-        if obj:
-            sel = self._filter_metadata_changes(obj, sorted_ans)
-            for p in self.graph.plots:
-                p.default_index.metadata['selections'] = sel
+    def _get_xs(self, plots, ans, tzero=None):
+        if self.options.use_time_axis:
+            xs = array([ai.timestamp for ai in ans])
+            px = plots[0]
+            if tzero is None:
+                if px.normalize == 'now':
+                    tzero = time.time()
+                else:
+                    tzero = xs[-1]
 
-    # private
+            xs -= tzero
+            if not px.use_time_axis:
+                xs /= 3600.
+            else:
+                self.graph.convert_index_func = lambda x: '{:0.2f} hrs'.format(x / 3600.)
+
+        else:
+            xs = arange(len(ans))
+        return xs
+
+    def _get_ys(self, po):
+        raise NotImplementedError
+
+    def _handle_limits(self):
+        self.graph.refresh()
+
+    def _get_plot_kw(self, po):
+        ytitle = po.name
+        if po.use_dev:
+            ytitle = '{} Dev'.format(ytitle)
+        elif po.use_percent_dev:
+            ytitle = '{} Dev %'.format(ytitle)
+
+        kw = {'padding': self.options.get_paddings(),
+              'ytitle': ytitle}
+
+        if self.options.use_time_axis:
+            kw['xtitle'] = 'Time (hrs)'
+        else:
+            kw['xtitle'] = 'N'
+        return ytitle, kw
+
+    def _setup_plot(self, pid, pp, po, ytitle):
+        if not ytitle.endswith('DetIC'):
+            match = RATIO_RE.match(ytitle)
+            if match:
+                ytitle = '<sup>{}</sup>{}/<sup>{}</sup>{}'.format(match.group('nd'),
+                                                                  match.group('ni'),
+                                                                  match.group('dd'),
+                                                                  match.group('di'))
+                if match.group('rem'):
+                    ytitle = '{}{}'.format(ytitle, match.group('rem'))
+            else:
+                match = ISOTOPE_RE.match(ytitle)
+                if match:
+                    ytitle = '<sup>{}</sup>{}'.format(match.group('nd'), match.group('ni'))
+                    if match.group('rem'):
+                        ytitle = '{}{}'.format(ytitle, match.group('rem'))
+
+        super(BaseSeries, self)._setup_plot(pid, pp, po)
+
+        self.graph.set_y_title(ytitle, plotid=pid)
+
     def _add_info(self, plot):
         if self.group_id == 0:
             if self.options.show_info:
@@ -328,6 +284,61 @@ class Series(BaseSeries):
                                        component=plot)
                     plot.underlays.append(pl)
 
+
+RATIO_RE = re.compile(r'(?P<ni>[A-Za-z]+)(?P<nd>\d+)\/(?P<di>[A-Za-z]+)(?P<dd>\d+)(?P<rem>[\S\s]*)')
+ISOTOPE_RE = re.compile(r'(?P<ni>[A-Za-z]+)(?P<nd>\d+)(?P<rem>[\S\s]*)')
+
+
+class Series(BaseSeries):
+    # _omit_key = 'omit_series'
+
+    # def _has_attr(self, name):
+    #     a = name in (ANALYSIS_TYPE, PEAK_CENTER, AGE, RADIOGENIC_YIELD)
+    #     if not a:
+    #         if self.sorted_analyses:
+    #             ai = self.sorted_analyses[0]
+    #             a = bool(ai.get_value(name))
+    #     return a
+    def build(self, plots):
+        graph = self.graph
+        # plots = (pp for pp in plots if self._has_attr(pp.name))
+
+        for i, po in enumerate(plots):
+            ytitle, kw = self._get_plot_kw(po)
+            p = graph.new_plot(**kw)
+
+            if i == 0:
+                self._add_info(p)
+
+            if po.name == ANALYSIS_TYPE:
+                from pychron.pipeline.plot.plotter.ticks import tick_formatter, StaticTickGenerator
+
+                p.y_axis.tick_label_formatter = tick_formatter
+                p.y_axis.tick_generator = StaticTickGenerator()
+                # p.y_axis.tick_label_rotate_angle = 45
+                graph.set_y_limits(-0.5, len(TICKS) - 0.5, plotid=i)
+                # graph.set_y_limits(min_=-1, max_=7, plotid=i)
+
+            p.value_range.tight_bounds = False
+            self._setup_plot(i, p, po, ytitle)
+
+    def _get_ys(self, po):
+        if po.name == ANALYSIS_TYPE:
+            ys = list(self._unpack_attr(po.name))
+            yerr = None
+        else:
+            ys = array([nominal_value(ai) for ai in self._unpack_attr(po.name)])
+            yerr = array([std_dev(ai) for ai in self._unpack_attr(po.name)])
+        return ys, yerr
+
+    def update_graph_metadata(self, obj, name, old, new):
+        sorted_ans = self.sorted_analyses
+        if obj:
+            sel = self._filter_metadata_changes(obj, sorted_ans)
+            for p in self.graph.plots:
+                p.default_index.metadata['selections'] = sel
+
+    # private
     def _unpack_attr(self, attr):
         if attr == ANALYSIS_TYPE:
             def f(x):

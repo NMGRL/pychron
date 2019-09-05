@@ -253,6 +253,13 @@ nodes:
   - klass: SeriesNode
 """
 
+RATIO_SERIES = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: RatioSeriesNode
+"""
+
 FLUX = """
 required:
 nodes:
