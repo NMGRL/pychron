@@ -140,6 +140,8 @@ class YorkRegressor(OLSRegressor):
     def get_intercept_error(self):
         if self.error_calc_type == 'CI':
             e = self.calculate_ci_error(0)[0]
+        elif self.error_calc_type == 'SEM':
+            e = self.calculate_ci_error(0)[0] * self.n**-0.5
         else:
             e = self.get_intercept_variance() ** 0.5
         return e

@@ -15,11 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 
 from traitsui.api import View, UItem, Item, HGroup, VGroup, Group, EnumEditor
 
-from pychron.core.pychron_traits import BorderVGroup
+from pychron.core.pychron_traits import BorderVGroup, BorderHGroup
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.options import SubOptions, AppearanceSubOptions, GroupSubOptions, checkbox_column, object_column, \
     MainOptions, TitleSubOptions
@@ -32,8 +31,13 @@ class SpectrumSubOptions(SubOptions):
                                       Item('integrated_include_omitted', label='Include Omitted'),
                                       Item('include_j_error_in_integrated', label='Include J Error'),
                                       label='Integrated Age')
-        iso_grp = BorderVGroup(HGroup(Item('use_isochron_trapped', label='Use Isochron'),
-                                      Item('include_isochron_trapped_error'), label='Include Uncertainty'),
+        iso_grp = BorderHGroup(Item('use_isochron_trapped',
+                                    tooltip='Use the (40/36)trapped calculated from an inverse isochron instead of '
+                                            'the nominal (40/36)atm set in Preferences/Constants/Ratios',
+                                    label='Use Isochron'),
+                               Item('include_isochron_trapped_error',
+                                    tooltip='Propagate the (40/36)trapped uncertainty',
+                                    label='Include Uncertainty'),
                                label='Trapped Ar40/Ar36')
 
         return self._make_view(VGroup(integrated_grp, iso_grp))
