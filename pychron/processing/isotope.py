@@ -104,6 +104,9 @@ class BaseMeasurement(object):
         return txt
 
     def unpack_data(self, blob, n_only=False):
+        if not blob:
+            return
+
         try:
             xs, ys = self._unpack_blob(blob)
         except (ValueError, TypeError, IndexError, AttributeError) as e:

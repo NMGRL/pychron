@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 
-from traits.api import Str, Int, Property, List
+from traits.api import Int, Property, List
 from traitsui.api import VGroup, UItem, HGroup, Group, Tabbed
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -32,10 +32,6 @@ from pychron.pychron_constants import LIGHT_YELLOW
 
 
 class UpdateGitHistory(BaseGitHistory):
-    local_commit = Str
-    latest_remote_commit = Str
-    n = Int
-    branchname = Str
     tags = List
 
     def set_tags(self, tags):

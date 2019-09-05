@@ -658,7 +658,7 @@ class GitRepoManager(Loggable):
 
     def git_history_view(self, branchname):
         repo = self._repo
-        h = BaseGitHistory()
+        h = BaseGitHistory(branchname=branchname)
 
         origin = repo.remotes.origin
         try:
@@ -669,6 +669,7 @@ class GitRepoManager(Loggable):
 
         branch = self.get_branch(branchname)
         local_commit = branch.commit
+        h.local_commit = str(local_commit)
 
         txt = repo.git.rev_list('--left-right', '{}...{}'.format(local_commit, remote_commit))
         commits = [ci[1:] for ci in txt.split('\n')]
@@ -718,9 +719,7 @@ class GitRepoManager(Loggable):
                 ahead, behind = self.ahead_behind(remote)
                 if behind:
                     if self.confirmation_dialog('Repository "{}" is behind the official version by {} changes.\n'
-                                                'Would you like to pull the available changes?\n\n'
-                                                'If yes, you will be given the opportunity to review the '
-                                                'available changes before applying them'.format(self.name, behind)):
+                                                'Would you like to pull the available changes?'.format(self.name, behind)):
                         # show the changes
                         h = self.git_history_view(branch)
                         info = h.edit_traits(kind='livemodal')
