@@ -534,7 +534,7 @@ class Ideogram(BaseArArFigure):
 
     def _add_group_legend(self, plot, plots, labels):
         legend = ExplicitLegend(plots=plots,
-                                labels=list(labels),
+                                labels=reversed(list(labels)),
                                 inside=True,
                                 align='ul')
 
