@@ -113,6 +113,16 @@ class LatestOverlay(AbstractOverlay):
             render_markers(gc, pts, 'circle', 5, self.color_, 2, self.outline_color_)
 
 
+def groupby_aux_key(ans):
+    if all((ORDER_PREFIX_REGEX.match(a.aux_name) for a in ans)):
+        def key(ai):
+            m = ORDER_PREFIX_REGEX.match(ai.aux_name)
+            return int(m.group('prefix')[:-1])
+    else:
+        key = 'aux_id'
+    return groupby_key(ans, key=key)
+
+
 class Ideogram(BaseArArFigure):
     xs = Array
     xes = Array
@@ -246,15 +256,6 @@ class Ideogram(BaseArArFigure):
     # plotters
     # ===============================================================================
     def _get_aux_plot_data(self, k, scalar=1):
-        def groupby_aux_key(ans):
-            if all((ORDER_PREFIX_REGEX.match(a.aux_id) for a in ans)):
-                def key(ai):
-                    m = ORDER_PREFIX_REGEX.match(ai.aux_id)
-                    return m.group('prefix')
-            else:
-                key = 'aux_id'
-            return groupby_key(ans, key=key)
-
         def gen():
             for aux_id, ais in groupby_aux_key(self.sorted_analyses):
                 ais = list(ais)
@@ -264,9 +265,9 @@ class Ideogram(BaseArArFigure):
                 ys, yes = zip(*[(nominal_value(vi), std_dev(vi)) for vi in
                                 self._unpack_attr(k, ans=ais, scalar=scalar)])
 
-                m = ORDER_PREFIX_REGEX.match(ais[0].aux_id)
+                m = ORDER_PREFIX_REGEX.match(ais[0].aux_name)
                 if m:
-                    aux_id = m.group('label')
+                    aux_id = int(m.group('prefix')[:-1])
 
                 yield aux_id, ais, xs, xes, ys, yes
 
@@ -331,7 +332,7 @@ class Ideogram(BaseArArFigure):
         items = self.sorted_analyses
         ats = array([ai.timestamp or 0 for ai in items])
 
-        gitems = groupby_key(items, key='aux_id')
+        gitems = groupby_aux_key(items)
         if not nonsorted:
             gitems = [(a, list(b)) for a, b in gitems]
             gitems = sorted(gitems, key=lambda x: min(xi.age for xi in x[1]))
@@ -391,6 +392,10 @@ class Ideogram(BaseArArFigure):
                     label = key
                 else:
                     label = getattr(ais[0], gla.lower().replace(' ', '_'))
+
+                m = ORDER_PREFIX_REGEX.match(label)
+                if m:
+                    label = m.group('label')
 
                 labels.append((key, label))
 

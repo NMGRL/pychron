@@ -14,15 +14,43 @@
 # limitations under the License.
 # ===============================================================================
 
-from enable.markers import MarkerTrait
+from enable.markers import MarkerNameDict, marker_names
 # ============= enthought library imports =======================
-from traits.api import Range
-from traitsui.api import View, UItem, Item, HGroup
+from traits.api import Range, Trait
+from traitsui.api import View, UItem, Item, HGroup, EnumEditor
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.pychron_traits import BorderVGroup, BorderHGroup
 from pychron.options.group.base_group_options import BaseGroupOptions
+from pychron.pychron_constants import NULL_STR
+
+# Mapping of marker string names to classes.
+# MarkerNameDict = {"square": SquareMarker,
+#                   "circle": CircleMarker,
+#                   "triangle": TriangleMarker,
+#                   "inverted_triangle": Inverted_TriangleMarker,
+#                   "left_triangle":LeftTriangleMarker,
+#                   "right_triangle": RightTriangleMarker,
+#                   "pentagon": PentagonMarker,
+#                   "hexagon": Hexagon1Marker,
+#                   "hexagon2": Hexagon2Marker,
+#                   "plus": PlusMarker,
+#                   "cross": CrossMarker,
+#                   "star": StarMarker,
+#                   "cross_plus": CrossPlusMarker,
+#                   "diamond": DiamondMarker,
+#                   "dot": DotMarker,
+#                   "pixel": PixelMarker,
+#                   "custom": CustomMarker}
+
+m = [NULL_STR] + list(marker_names)
+md = MarkerNameDict.copy()
+md[NULL_STR] = ''
+
+# A mapped trait that allows string naming of marker classes.
+MarkerTrait = Trait("circle", md,
+                    editor=EnumEditor(values=m))
 
 
 class IdeogramGroupOptions(BaseGroupOptions):
@@ -30,7 +58,7 @@ class IdeogramGroupOptions(BaseGroupOptions):
     marker = MarkerTrait
 
     def marker_non_default(self):
-        return self.marker != 'circle'
+        return self.marker != NULL_STR
 
     def marker_size_non_default(self):
         return self.marker_size != 1
