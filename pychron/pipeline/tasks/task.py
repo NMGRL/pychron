@@ -122,9 +122,11 @@ class PipelineTask(BaseBrowserTask):
         super(PipelineTask, self).prepare_destroy()
 
     def create_dock_panes(self):
+        self.analyses_pane = AnalysesPane(model=self.engine)
 
         panes = [PipelinePane(model=self.engine),
-                 AnalysesPane(model=self.engine),
+
+                 self.analyses_pane,
                  RepositoryPane(model=self.engine),
                  EditorOptionsPane(model=self)]
         return panes
@@ -580,6 +582,9 @@ class PipelineTask(BaseBrowserTask):
     def _active_editor_changed(self, new):
         if new:
             self.engine.select_node_by_editor(new)
+            if hasattr(new.plotter_options, 'get_group_colors'):
+                self.analyses_pane.unknowns_adapter.set_colors(new.plotter_options.get_group_colors())
+                self.engine.refresh_table_needed = True
 
         self.set_interpreted_enabled = isinstance(new, InterpretedAgeEditor)
         if hasattr(new, 'editor_options'):

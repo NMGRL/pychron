@@ -115,13 +115,22 @@ class LatestOverlay(AbstractOverlay):
 
 
 def groupby_aux_key(ans):
-    if all((ORDER_PREFIX_REGEX.match(a.aux_name) for a in ans)):
+    use_explicit_ordering = all((ORDER_PREFIX_REGEX.match(a.aux_name) for a in ans))
+    if use_explicit_ordering:
         def key(ai):
             m = ORDER_PREFIX_REGEX.match(ai.aux_name)
             return int(m.group('prefix')[:-1])
     else:
         key = 'aux_id'
-    return groupby_key(ans, key=key)
+
+    gitems = groupby_key(ans, key=key)
+    gitems = [(a, list(b)) for a, b in gitems]
+
+    for i, (gid, analyses) in enumerate(gitems):
+        for ai in analyses:
+            ai.aux_id = i
+
+    return gitems, use_explicit_ordering
 
 
 class Ideogram(BaseArArFigure):
@@ -258,7 +267,8 @@ class Ideogram(BaseArArFigure):
     # ===============================================================================
     def _get_aux_plot_data(self, k, scalar=1):
         def gen():
-            for aux_id, ais in groupby_aux_key(self.sorted_analyses):
+            items, ordering = groupby_aux_key(self.sorted_analyses)
+            for aux_id, ais in items:
                 ais = list(ais)
                 xs, xes = zip(*[(nominal_value(vi), std_dev(vi)) for vi in
                                 self._unpack_attr(self.options.index_attr, ans=ais)])
@@ -333,10 +343,18 @@ class Ideogram(BaseArArFigure):
         items = self.sorted_analyses
         ats = array([ai.timestamp or 0 for ai in items])
 
-        gitems = groupby_aux_key(items)
+        gitems, use_explicit_ordering = groupby_aux_key(items)
+
         if not nonsorted:
             gitems = [(a, list(b)) for a, b in gitems]
-            gitems = sorted(gitems, key=lambda x: min(xi.age for xi in x[1]))
+            if use_explicit_ordering:
+                def key(x):
+                    return x[0]
+            else:
+                def key(x):
+                    return min(xi.age for xi in x[1])
+
+            gitems = sorted(gitems, key=key)
             if opt.analysis_number_sorting != 'Oldest @Top':
                 gitems = reversed(gitems)
 
@@ -384,7 +402,7 @@ class Ideogram(BaseArArFigure):
                     xs, ys = list(zip(*data))
 
             scatter = self._add_aux_plot(ys, name, po, pid,
-                                         gid=self.group_id or aux_id, xs=xs, **kw)
+                                         gid=self.group_id or (aux_id-1), xs=xs, **kw)
 
             if opt.include_group_legend:
                 key = str(aux_id)

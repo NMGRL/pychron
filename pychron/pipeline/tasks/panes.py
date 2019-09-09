@@ -401,7 +401,13 @@ class UnknownsAdapter(BaseAnalysesAdapter):
 
     def __init__(self, *args, **kw):
         super(UnknownsAdapter, self).__init__(*args, **kw)
-        self._ncolors = len(colornames)
+        # self._ncolors = len(colornames)
+
+        self.set_colors(colornames)
+
+    def set_colors(self, colors):
+        self._colors = colors
+        self._ncolors = len(colors)
 
     def get_menu(self, obj, trait, row, column):
         grp = MenuManager(Action(name='Group Selected', action='unknowns_group_by_selected'),
@@ -459,11 +465,11 @@ class UnknownsAdapter(BaseAnalysesAdapter):
         item = getattr(obj, trait)[row]
         gid = item.group_id or item.aux_id
         cid = gid % self._ncolors if self._ncolors else 0
+
         try:
-            color = colornames[cid]
+            color = self._colors[cid]
         except IndexError:
             pass
-
         return color
 
 
