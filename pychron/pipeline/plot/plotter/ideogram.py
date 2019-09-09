@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 import math
+from operator import itemgetter
 
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.array_data_source import ArrayDataSource
@@ -394,10 +395,12 @@ class Ideogram(BaseArArFigure):
                     label = getattr(ais[0], gla.lower().replace(' ', '_'))
 
                 m = ORDER_PREFIX_REGEX.match(label)
+                sortkey = label
                 if m:
                     label = m.group('label')
+                    sortkey = int(m.group('prefix')[:-1])
 
-                labels.append((key, label))
+                labels.append((key, label, sortkey))
 
             if opt.use_latest_overlay:
                 idx = argmax(ts)
@@ -429,6 +432,7 @@ class Ideogram(BaseArArFigure):
                                         additional_info=func)
 
         if opt.include_group_legend:
+            labels = sorted(labels, key=itemgetter(2))
             self._add_group_legend(plot, plots, labels)
             # omits, invalids, outliers = self._do_aux_plot_filtering(scatter, po, xs, xes)
             # selection = omits + outliers

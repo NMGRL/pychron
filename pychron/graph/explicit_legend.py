@@ -37,7 +37,7 @@ class ExplicitLegend(Legend):
         # plot_names, visible_plots = list(map(list, list(zip(*sorted(self.plots.items())))))
         plot_names, visible_plots = [list(a) for a in zip(*sorted(self.plots.items()))]
 
-        label_names, names = list(zip(*self.labels))
+        label_names, names, _ = list(zip(*self.labels))
         if len(label_names) == 0:
             if len(self.plots) > 0:
                 label_names = plot_names
@@ -52,7 +52,7 @@ class ExplicitLegend(Legend):
         if self.hide_invisible_plots:
             visible_labels = []
             visible_plots = []
-            for key, name in self.labels:
+            for key, name, _ in self.labels:
                 # If the user set self.labels, there might be a bad value,
                 # so ensure that each name is actually in the plots dict.
                 if key in self.plots:
