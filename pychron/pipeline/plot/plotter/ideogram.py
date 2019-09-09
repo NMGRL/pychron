@@ -355,8 +355,10 @@ class Ideogram(BaseArArFigure):
                     return min(xi.age for xi in x[1])
 
             gitems = sorted(gitems, key=key)
-            if opt.analysis_number_sorting != 'Oldest @Top':
-                gitems = reversed(gitems)
+
+            if not use_explicit_ordering:
+                if opt.analysis_number_sorting != 'Oldest @Top':
+                    gitems = reversed(gitems)
 
         global_sorting = opt.global_analysis_number_sorting
 
