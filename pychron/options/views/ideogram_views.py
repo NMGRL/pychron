@@ -34,7 +34,7 @@ class DisplaySubOptions(TitleSubOptions):
                             show_border=True,
                             label='Error Bars')
 
-        an_grp = VGroup(Item('analysis_number_sorting', label='Analysis# Sort'),
+        an_grp = VGroup(Item('analysis_number_sorting', label='Analysis# Order'),
                         Item('global_analysis_number_sorting', label='Global Sort', tooltip='Applicable only when '
                                                                                             'using Aux Grouping'),
                         HGroup(Item('include_group_legend', label='Include Group Legend'),
