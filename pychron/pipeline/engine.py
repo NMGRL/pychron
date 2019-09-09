@@ -50,7 +50,7 @@ from pychron.pipeline.pipeline_defaults import ISOEVO, BLANKS, ICFACTOR, IDEO, S
     REGRESSION_SERIES, VERTICAL_FLUX, \
     CSV_ANALYSES_EXPORT, BULK_EDIT, HISTORY_IDEOGRAM, HISTORY_SPECTRUM, AUDIT, SUBGROUP_IDEOGRAM, HYBRID_IDEOGRAM, \
     MASSSPEC_REDUCED, DEFINE_EQUILIBRATION, CA_CORRECTION_FACTORS, K_CORRECTION_FACTORS, \
-    FLUX_VISUALIZATION, CSV_RAW_DATA_EXPORT, COMPOSITE, SIMPLE_ANALYSIS_TABLE, MASS_SPEC_FLUX, RATIO_SERIES
+    FLUX_VISUALIZATION, CSV_RAW_DATA_EXPORT, COMPOSITE, SIMPLE_ANALYSIS_TABLE, MASS_SPEC_FLUX, PYSCRIPT, RATIO_SERIES
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
 from pychron.pipeline.plot.editors.spectrum_editor import SpectrumEditor
@@ -731,6 +731,9 @@ class PipelineEngine(Loggable):
                     self.debug('{:02n}: {} Runtime: {:0.4f}'.format(idx, node, time.time() - st))
 
                     if state.veto:
+                        if state.veto_message:
+                            self.information_dialog(state.veto_message)
+
                         self.debug('pipeline vetoed by {}'.format(node))
                         return
 
@@ -853,7 +856,8 @@ class PipelineEngine(Loggable):
                    ('Share', (('CSV Analyses Export', CSV_ANALYSES_EXPORT),
                               ('CSV Raw Data Export', CSV_RAW_DATA_EXPORT))),
                    ('Transfer', (('Mass Spec Reduced', MASSSPEC_REDUCED),
-                                 ('Mass Spec Flux', MASS_SPEC_FLUX)))]
+                                 ('Mass Spec Flux', MASS_SPEC_FLUX))),
+                   ('Scripting', (('PyScript', PYSCRIPT),))]
 
         # predefined_templates contributed to by other plugins
         for name, gs in groupby_key(default + self.predefined_templates, key=itemgetter(0)):

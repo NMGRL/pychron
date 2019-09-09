@@ -69,11 +69,13 @@ class SwitchParser(XMLParser):
                      for v in gi.findall(attr) if v.text.strip() == name), None)
 
     def get_groups(self, element=True):
-        if self.is_yaml:
-            return []
-        else:
+        ret = []
+        if not self.is_yaml:
             tree = self.get_root()
-            return [g if element else g.text.strip() for g in tree.findall('group')]
+            if tree:
+                ret = [g if element else g.text.strip() for g in tree.findall('group')]
+
+        return ret
 
     def get_manual_valves(self, **kw):
         return self._get_items('manual_valve', **kw)

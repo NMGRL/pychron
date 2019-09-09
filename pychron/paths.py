@@ -144,6 +144,7 @@ class Paths(object):
     hops_dir = None
     fits_dir = None
     spectrometer_scripts_dir = None
+    pipeline_script_dir = None
     # ==============================================================================
     # setup
     # ==============================================================================
@@ -342,10 +343,11 @@ class Paths(object):
         self.extraction_dir = join(scripts_dir, 'extraction')
         self.post_equilibration_dir = join(scripts_dir, 'post_equilibration')
         self.conditionals_dir = join(scripts_dir, 'conditionals')
+        self.pipeline_script_dir = join(scripts_dir, 'pipeline')
+
         self.hops_dir = join(self.measurement_dir, 'hops')
         self.fits_dir = join(self.measurement_dir, 'fits')
         self.spectrometer_scripts_dir = join(scripts_dir, 'spectrometer')
-
         self.experiment_dir = join(root, 'experiments')
         self.experiment_rem_dir = join(self.experiment_dir, 'rem')
         self.auto_save_experiment_dir = join(self.experiment_dir, 'auto_save')

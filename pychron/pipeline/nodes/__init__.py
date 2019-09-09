@@ -49,6 +49,7 @@ from pychron.pipeline.nodes.push import PushNode
 from pychron.pipeline.nodes.report import ReportNode
 from pychron.pipeline.nodes.review import ReviewNode
 from pychron.pipeline.nodes.table import InterpretedAgeTableNode, GroupAnalysisTableNode, SubGroupAnalysisTableNode
+from pychron.pipeline.nodes.scripting import PyScriptNode
 
 
 class NodeFactory:

@@ -59,7 +59,7 @@ named_register = makeNamedRegistry(command_register)
 
 
 class PyScript(Loggable):
-    text = Property
+    # text = Property
     syntax_checked = Bool
 
     manager = Any
@@ -68,6 +68,10 @@ class PyScript(Loggable):
     root = Str
     # filename = Str
     info_color = Str
+    display_state = Str
+    execution_error = Str
+    exception_trace = Str
+    text = Str
 
     testing_syntax = Bool(False)
     cancel_flag = Bool
@@ -76,7 +80,7 @@ class PyScript(Loggable):
     _ctx = None
     _exp_obj = None
 
-    _text = Str
+    # _text = Str
 
     _interval_stack = None
 
@@ -150,11 +154,11 @@ class PyScript(Loggable):
                 delay_start=0,
                 on_completion=None,
                 trace=False,
-                argv=None):
+                argv=None, test=True):
         if bootstrap:
             self.bootstrap()
 
-        if not self.syntax_checked:
+        if not self.syntax_checked and test:
             self.test()
 
         def _ex_():
@@ -232,15 +236,16 @@ class PyScript(Loggable):
             try:
                 code = compile(snippet, '<string>', 'exec')
             except BaseException as e:
-                self.debug(traceback.format_exc())
+                exc = self.debug_exception()
+                self.exception_trace = exc
                 return e
 
             try:
                 exec(code, safe_dict)
                 func = safe_dict['main']
             except KeyError as e:
-                print('exception', e, list(safe_dict.keys()))
-                self.debug('{} {}'.format(e, traceback.format_exc()))
+                exc = self.debug_exception()
+                self.exception_trace = exc
                 return MainError()
 
             try:
@@ -252,7 +257,9 @@ class PyScript(Loggable):
                 self.debug('executed snippet estimated_duration={}, duration={}'.format(self._estimated_duration,
                                                                                         time.time() - st))
             except Exception as e:
-                return traceback.format_exc()
+                exc = self.debug_exception()
+                self.exception_trace = exc
+                return exc
 
     def syntax_ok(self, warn=True):
         try:
@@ -610,10 +617,13 @@ class PyScript(Loggable):
         self._cancel = False
         self._completed = False
         self._truncate = False
+        self.exception_trace = ''
+        self.execution_error = ''
 
         error = self.execute_snippet(**kw)
         if error:
             self.warning('_execute: {}'.format(str(error)))
+            self.execution_error = str(error)
             return error
 
         if self.testing_syntax:
@@ -862,11 +872,11 @@ class PyScript(Loggable):
 
         return '0'
 
-    def _get_text(self):
-        return self._text
-
-    def _set_text(self, t):
-        self._text = t
+    # def _get_text(self):
+    #     return self._text
+    #
+    # def _set_text(self, t):
+    #     self._text = t
 
     def __str__(self):
         return '{}, 0x{:x} name: {}'.format(type(self), id(self), self.name)

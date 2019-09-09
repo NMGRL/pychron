@@ -337,4 +337,12 @@ nodes:
   - klass: MassSpecFluxNode
 """
 
+PYSCRIPT = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: GroupingNode
+  - klass: PyScriptNode
+"""
+
 # ============= EOF =============================================
