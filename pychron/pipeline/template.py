@@ -175,6 +175,9 @@ class PipelineTemplate(HasTraits):
 
         if isinstance(node, BaseMassSpecNode):
             recaller = application.get_service('pychron.mass_spec.mass_spec_recaller.MassSpecRecaller')
+            if not recaller:
+                warning(None, 'Mass Spec Plugin not enabled. Enable with Help/Edit Initialization')
+
             node.trait_set(recaller=recaller)
         return node
 
