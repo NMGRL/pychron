@@ -247,7 +247,7 @@ class Ideogram(BaseArArFigure):
     # ===============================================================================
     def _get_aux_plot_data(self, k, scalar=1):
         def groupby_aux_key(ans):
-            if all((ORDER_PREFIX_REGEX.match(a) for a in ans)):
+            if all((ORDER_PREFIX_REGEX.match(a.aux_id) for a in ans)):
                 def key(ai):
                     m = ORDER_PREFIX_REGEX.match(ai.aux_id)
                     return m.group('prefix')
