@@ -65,7 +65,7 @@ class GroupingNode(BaseNode):
                 key = 'identifier_aliquot_pair'
             elif key == 'Group Name':
                 key = 'group'
-            elif key == 'Label name':
+            elif key == 'Label Name':
                 key = 'label_name'
 
             return attrgetter(key.lower())

@@ -39,6 +39,7 @@ from pychron.pipeline.plot.overlays.mean_indicator_overlay import MeanIndicatorO
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 from pychron.pipeline.plot.point_move_tool import OverlayMoveTool
 from pychron.pychron_constants import PLUSMINUS, SIGMA
+from pychron.regex import ORDER_PREFIX_REGEX
 
 N = 500
 
@@ -241,15 +242,27 @@ class Ideogram(BaseArArFigure):
     # plotters
     # ===============================================================================
     def _get_aux_plot_data(self, k, scalar=1):
+        def groupby_aux_key(ans):
+            if all((ORDER_PREFIX_REGEX.match(a) for a in ans)):
+                def key(ai):
+                    m = ORDER_PREFIX_REGEX.match(ai.aux_id)
+                    return m.group('prefix')
+            else:
+                key = 'aux_id'
+            return groupby_key(ans, key=key)
+
         def gen():
-            # for self._unpack_attr(k, scalar=scalar)
-            for aux_id, ais in groupby_key(self.sorted_analyses, key='aux_id'):
+            for aux_id, ais in groupby_aux_key(self.sorted_analyses):
                 ais = list(ais)
                 xs, xes = zip(*[(nominal_value(vi), std_dev(vi)) for vi in
                                 self._unpack_attr(self.options.index_attr, ans=ais)])
 
                 ys, yes = zip(*[(nominal_value(vi), std_dev(vi)) for vi in
                                 self._unpack_attr(k, ans=ais, scalar=scalar)])
+
+                m = ORDER_PREFIX_REGEX.match(ais[0].aux_id)
+                if m:
+                    aux_id = m.group('label')
 
                 yield aux_id, ais, xs, xes, ys, yes
 

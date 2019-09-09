@@ -163,10 +163,14 @@ class BaseSpectrometer(SpectrometerDevice):
         if self.use_deflection_correction:
             dev = det.get_deflection_correction(current=current)
             dac += dev
+            self.debug('doing deflection correction.  dev: {}, new dac: {}'.format(dev, dac))
 
         # correct for hv
         if self.use_hv_correction:
-            dac = self.get_hv_correction(dac, current=current)
+            cor = self.get_hv_correction(dac, current=current)
+            dac *= cor
+            self.debug('doing hv correction. factor: {}, new dac: {}'.format(cor, dac))
+
         return dac
 
     def uncorrect_dac(self, det, dac, current=True):
@@ -175,13 +179,14 @@ class BaseSpectrometer(SpectrometerDevice):
         """
 
         if self.use_hv_correction:
-            dac = self.get_hv_correction(dac, uncorrect=True, current=current)
+            cor = self.get_hv_correction(dac, uncorrect=True, current=current)
+            dac *= cor
 
         if self.use_deflection_correction:
             dac -= det.get_deflection_correction(current=current)
         return dac
 
-    def get_hv_correction(self, dac, uncorrect=False, current=False):
+    def get_hv_correction(self, uncorrect=False, current=False):
         """
         ion optics correction::
 
@@ -224,8 +229,8 @@ class BaseSpectrometer(SpectrometerDevice):
             except ZeroDivisionError:
                 cor = 1
 
-        dac *= cor
-        return dac
+        # dac *= cor
+        return cor
 
     def get_deflection_word(self, keys):
         if self.simulation:

@@ -79,6 +79,40 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
     # ===============================================================================
     # context menu handlers
     # ===============================================================================
+    def cm_toggle_filtering(self):
+        regs = {}
+        for plot in self.plots:
+            for k, v in plot.plots.items():
+                if k.startswith('fit'):
+                    pp = v[0]
+                    # regs.append(pp.regressor)
+                    regs[k[3:]] = pp.regressor
+
+                    fo = pp.regressor.filter_outliers_dict['filter_outliers']
+                    pp.regressor.filter_outliers_dict['filter_outliers'] = not fo
+                    pp.regressor.dirty = True
+                    pp.regressor.calculate()
+                # if hasattr(v[0], 'filter_outliers_dict'):
+                #     fo = v[0].filter_outliers_dict['filter_outliers']
+                #     v[0].filter_outliers_dict['filter_outliers'] = not fo
+                # if not fo:
+                #     v[0].index.metadata['selections'] = []
+                # else:
+
+        for plot in self.plots:
+            for k, v in plot.plots.items():
+                if k.startswith('data'):
+                    scatter = v[0]
+                    idx = k[4:]
+                    reg = regs[idx]
+
+                    fo = scatter.filter_outliers_dict['filter_outliers']
+                    scatter.filter_outliers_dict['filter_outliers'] = fo = not fo
+                    self._set_regressor(scatter, reg)
+                    scatter.index.metadata['selections'] = reg.get_excluded() if fo else []
+
+        self.redraw()
+
     def cm_toggle_filter_bounds_all(self):
         for plot in self.plots:
             self.cm_toggle_filter_bounds(plot, redraw=False)
@@ -264,16 +298,16 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                     pp.underlays.append(label)
                     break
 
-    def set_filter_outliers(self, fi, plotid=0, series=0):
-        plot = self.plots[plotid]
-        scatter = plot.plots['data{}'.format(series)][0]
-        scatter.filter_outliers_dict['filter_outliers'] = fi
-        self.redraw()
+    # def set_filter_outliers(self, fi, plotid=0, series=0):
+    #     plot = self.plots[plotid]
+    #     scatter = plot.plots['data{}'.format(series)][0]
+    #     scatter.filter_outliers_dict['filter_outliers'] = fi
+    #     self.redraw()
 
-    def get_filter_outliers(self, fi, plotid=0, series=0):
-        plot = self.plots[plotid]
-        scatter = plot.plots['data{}'.format(series)][0]
-        return scatter.filter_outliers_dict['filter_outliers']
+    # def get_filter_outliers(self, fi, plotid=0, series=0):
+    #     plot = self.plots[plotid]
+    #     scatter = plot.plots['data{}'.format(series)][0]
+    #     return scatter.filter_outliers_dict['filter_outliers']
 
     def set_error_calc_type(self, fi, plotid=0, series=0, redraw=True):
         fi = fi.lower()

@@ -16,10 +16,8 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from __future__ import absolute_import
 
 import re
-
 # ============= local library imports  ==========================
 
 ALIQUOT_REGEX = re.compile('\d+-+\d+$')
@@ -56,4 +54,6 @@ RUNID_PATH_REGEX = re.compile(p)
 
 TAG_PATH_REGEX = re.compile(r'^(?P<head>\w{5})\/tags\/(?P<tail>[\w-]*).tags.json$')
 
+
+ORDER_PREFIX_REGEX = re.compile(r'^(?P<prefix>\d+:)(?P<label>.*)$')
 # ============= EOF =============================================

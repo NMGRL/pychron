@@ -25,7 +25,6 @@ from pyface.timer.do_later import do_after
 from traits.api import Instance, Bool, Int, Str, List, Enum, Float, Time
 from traitsui.api import Item, EnumEditor, CheckListEditor
 
-from pychron.core.helpers.iterfuncs import groupby_idx
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.globals import globalv
 from pychron.pipeline.csv_dataset_factory import CSVDataSetFactory
@@ -203,20 +202,16 @@ class CSVNode(BaseDVCNode):
             return i
 
         try:
-            ans = [(toint(get_case_insensitive(d, 'group', '')),
-                    FileAnalysis(age=float(get_case_insensitive(d, 'age')),
-                                 age_err=float(get_case_insensitive(d, 'age_err')),
-                                 record_id=get_case_insensitive(d, 'runid'),
-                                 sample=get_case_insensitive(d, 'sample', ''),
-                                 label_name=get_case_insensitive(d, 'label_name', ''),
-                                 aliquot=int(get_case_insensitive(d, 'aliquot', 0))))
+            ans = [FileAnalysis(age=float(get_case_insensitive(d, 'age')),
+                                age_err=float(get_case_insensitive(d, 'age_err')),
+                                record_id=get_case_insensitive(d, 'runid'),
+                                sample=get_case_insensitive(d, 'sample', ''),
+                                label_name=get_case_insensitive(d, 'label_name', ''),
+                                group=toint(get_case_insensitive(d, 'group', '')),
+                                aliquot=int(get_case_insensitive(d, 'aliquot', 0)))
                    for d in parser.values()]
-            items = []
-            for i, (gid, aa) in enumerate(groupby_idx(ans, 0)):
-                for _, ai in aa:
-                    ai.group = i
-                    items.append(ai)
-            return items
+
+            return ans
 
         except (TypeError, ValueError) as e:
             warning(None, 'Invalid values in the import file. Error="{}"'.format(e))
