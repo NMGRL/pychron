@@ -450,7 +450,7 @@ class Ideogram(BaseArArFigure):
                                         additional_info=func)
 
         if opt.include_group_legend:
-            labels = sorted(labels, key=itemgetter(2))
+            labels = sorted(labels, key=itemgetter(2), reverse=opt.analysis_number_sorting != 'Oldest @Top')
             self._add_group_legend(plot, plots, labels)
             # omits, invalids, outliers = self._do_aux_plot_filtering(scatter, po, xs, xes)
             # selection = omits + outliers
