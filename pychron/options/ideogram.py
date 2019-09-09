@@ -53,6 +53,8 @@ class IdeogramOptions(AgeOptions):
     xlow = Float
     xhigh = Float
 
+    reverse_x_axis = Bool(False)
+
     centered_range = Float(0.5)
 
     display_mean_indicator = Bool(True)

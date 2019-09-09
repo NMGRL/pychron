@@ -140,6 +140,8 @@ class IdeogramSubOptions(SubOptions):
         xgrp = VGroup(Item('index_attr',
                            editor=EnumEditor(name='index_attrs'),
                            label='X Value'),
+                      Item('reverse_x_axis', label='Reverse',
+                           tooltip='Display decreasing left to right'),
                       HGroup(UItem('use_static_limits'),
                              Item('xlow', label='Min.',
                                   enabled_when='object.use_static_limits'),

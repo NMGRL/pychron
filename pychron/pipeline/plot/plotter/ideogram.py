@@ -155,6 +155,10 @@ class Ideogram(BaseArArFigure):
         for pid, (plotobj, po) in enumerate(zip(graph.plots, plots)):
             # plotobj.group_id = self.group_id
             # print(id(plotobj), plotobj.group_id)
+
+            if self.options.reverse_x_axis:
+                plotobj.default_origin = 'bottom right'
+
             try:
                 args = getattr(self, '_plot_{}'.format(po.plot_name))(po, plotobj, pid)
             except AttributeError:
