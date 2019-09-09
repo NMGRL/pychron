@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
+import os
 from operator import attrgetter
 
 from numpy import array, array_split
@@ -52,8 +52,9 @@ class GroupingNode(BaseNode):
 
     def load(self, nodedict):
         self.by_key = nodedict.get('key', 'Identifier')
-        # self.by_key = 'Group Name'
-        # self.attribute = 'Aux'
+        if os.getenv('CSV_DEBUG'):
+            self.by_key = 'Group Name'
+            self.attribute = 'Aux'
 
     def _to_template(self, d):
         d['key'] = self.by_key

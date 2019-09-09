@@ -30,7 +30,7 @@ class IdeogramGroupOptions(BaseGroupOptions):
     marker = MarkerTrait
 
     def marker_non_default(self):
-        return self.marker != 'square'
+        return self.marker != 'circle'
 
     def marker_size_non_default(self):
         return self.marker_size != 1

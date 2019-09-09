@@ -139,7 +139,8 @@ class CSVNode(BaseDVCNode):
         self.unknowns = []
 
     def configure(self, pre_run=False, **kw):
-        # self.path = '/Users/ross/PychronDev/data/csv/Murphy ideo ages2.csv'
+        if os.getenv('CSV_DEBUG'):
+            self.path = '/Users/ross/PychronDev/data/csv/Murphy ideo ages2.csv'
 
         if not pre_run:
             self._manual_configured = True
