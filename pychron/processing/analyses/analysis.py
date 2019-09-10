@@ -223,6 +223,7 @@ class IdeogramPlotable(HasTraits):
     aux_id = 0
     tab_id = 0
     group = ''
+    aux_name = ''
 
     _label_name = None
 
