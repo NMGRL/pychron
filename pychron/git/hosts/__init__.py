@@ -156,7 +156,7 @@ class GitHostService(Loggable):
 
     def get_repository_names(self, organization):
         repos = self.get_repos(organization)
-        return [repo['name'] for repo in repos]
+        return [r for r in (repo.get('name', '') for repo in repos) if r]
 
     def test_connection(self, organization):
         return bool(self.get_info(organization))

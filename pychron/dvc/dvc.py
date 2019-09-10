@@ -23,7 +23,7 @@ from operator import itemgetter
 
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
-from git import Repo, GitCommandError
+from git import Repo, GitCommandError, NoSuchPathError
 from traits.api import Instance, Str, Set, List, provides, Bool, Int
 from uncertainties import ufloat, std_dev, nominal_value
 
@@ -772,8 +772,10 @@ class DVC(Loggable):
         else:
             for ei in exps:
                 self.sync_repo(ei, use_progress=False)
-
-        branches = {ei: get_repository_branch(repository_path(ei)) for ei in exps}
+        try:
+            branches = {ei: get_repository_branch(repository_path(ei)) for ei in exps}
+        except NoSuchPathError:
+            return []
 
         fluxes = {}
         productions = {}
@@ -953,9 +955,10 @@ class DVC(Loggable):
                 service.clone_from(name, root, self.organization)
                 return True
             else:
-                self.debug('name={} not in available repos from service={}, organization={}'.format(name,
-                                                                                                    service.remote_url,
-                                                                                                    self.organization))
+                self.warning_dialog('name={} not in available repos '
+                                    'from service={}, organization={}'.format(name,
+                                                                              service.remote_url,
+                                                                              self.organization))
                 for ni in names:
                     self.debug('available repo== {}'.format(ni))
 

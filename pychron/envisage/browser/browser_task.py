@@ -134,6 +134,7 @@ class BaseBrowserTask(BaseEditorTask):
                 try:
                     ans = self.dvc.make_analyses(records)
                 except BaseException:
+                    ans = None
                     self.debug_exception()
 
                 if ans:

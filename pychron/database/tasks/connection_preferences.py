@@ -14,6 +14,9 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+import os
+
+import yaml
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
@@ -32,6 +35,7 @@ from pychron.core.pychron_traits import HostStr
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_preferences_helper import FavoritesPreferencesHelper
+from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR
 
 
@@ -209,6 +213,7 @@ class ConnectionFavoriteItem(HasTraits):
 class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
     preferences_path = 'pychron.database'
     add_favorite_path = Button
+    add_favorite_shareable_archive = Button
 
     _fav_klass = ConnectionFavoriteItem
     _schema_identifier = None
@@ -216,6 +221,25 @@ class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
 
     def __init__(self, *args, **kw):
         super(ConnectionPreferences, self).__init__(*args, **kw)
+
+    def _add_add_favorite_shareable_archive_fired(self):
+        dlg = FileDialog(action='open', wildcard='*.pz')
+        if dlg.open() == OK:
+            if dlg.path:
+                with open(dlg.path, 'r') as rfile:
+                    yd = yaml.load(rfile)
+
+                name = os.splitext(os.path.basename(dlg.path))[0]
+                path = os.path.join(paths.offline_db_dir, '{}.sqlite'.format(name))
+                with open(path) as wfile:
+                    wfile.write(yd['database'])
+
+                item = self._fav_factory(kind='sqlite', path=path, enabled=True)
+                item.trait_set(**{k: yd[k] for k in ['organization',
+                                                     'meta_repo_name',
+                                                     'meta_repo_dir']})
+                self._fav_items.append(item)
+                self._set_favorites()
 
     def _add_favorite_path_fired(self):
         dlg = FileDialog(action='open')
@@ -291,6 +315,9 @@ class ConnectionPreferencesPane(PreferencesPane):
                                          tooltip='Add saved connection'),
                       icon_button_editor('add_favorite_path', 'dbs_sqlite',
                                          tooltip='Add sqlite database'),
+                      icon_button_editor('add_favorite_shareable_archive',
+                                         'add_archive',
+                                         tooltip='Add an shareable archive'),
                       icon_button_editor('delete_favorite', 'delete',
                                          tooltip='Delete saved connection'),
                       icon_button_editor('test_connection_button', 'database_connect',

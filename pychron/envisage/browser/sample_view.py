@@ -89,7 +89,7 @@ class BaseBrowserSampleView(PaneModelView):
 
     def _get_project_group(self):
         project_grp = Group(UItem('projects',
-                                  height=-150,
+                                  height=100,
                                   editor=FilterTabularEditor(editable=False,
                                                              enabled_cb='project_enabled',
                                                              use_fuzzy=True,
@@ -181,7 +181,7 @@ class BaseBrowserSampleView(PaneModelView):
 
     def _get_pi_group(self):
         pi_grp = Group(UItem('principal_investigators',
-                             height=-150,
+                             height=100,
                              editor=FilterTabularEditor(editable=False,
                                                         use_fuzzy=True,
                                                         enabled_cb='principal_investigator_enabled',

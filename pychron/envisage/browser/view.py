@@ -76,25 +76,25 @@ class BaseBrowserView(HasTraits):
         return BrowserSampleView(model=self.model, pane=self)
 
 
-class StandaloneBrowserView(BaseBrowserView):
-    def traits_view(self):
-        main_grp = self._get_browser_group()
-
-        hgrp = HGroup(icon_button_editor('filter_by_button',
-                                         'find',
-                                         tooltip='Filter analyses using defined criteria'),
-                      icon_button_editor('toggle_view',
-                                         'arrow_switch',
-                                         tooltip='Toggle between Sample and Time views'),
-                      spring,
-                      CustomLabel('datasource_url', color='maroon'),
-                      show_border=True)
-
-        v = okcancel_view(VGroup(hgrp, main_grp),
-                          title='Standalone Browser',
-                          width=-900)
-
-        return v
+# class StandaloneBrowserView(BaseBrowserView):
+#     def traits_view(self):
+#         main_grp = self._get_browser_group()
+#
+#         hgrp = HGroup(icon_button_editor('filter_by_button',
+#                                          'find',
+#                                          tooltip='Filter analyses using defined criteria'),
+#                       icon_button_editor('toggle_view',
+#                                          'arrow_switch',
+#                                          tooltip='Toggle between Sample and Time views'),
+#                       spring,
+#                       CustomLabel('datasource_url', color='maroon'),
+#                       show_border=True)
+#
+#         v = okcancel_view(VGroup(hgrp, main_grp),
+#                           title='Standalone Browser',
+#                           width=-900)
+#
+#         return v
 
 
 class PaneBrowserView(BaseBrowserView):

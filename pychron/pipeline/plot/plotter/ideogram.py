@@ -404,7 +404,7 @@ class Ideogram(BaseArArFigure):
                     xs, ys = list(zip(*data))
 
             scatter = self._add_aux_plot(ys, name, po, pid,
-                                         gid=self.group_id or (aux_id-1), xs=xs, **kw)
+                                         gid=max(0, self.group_id or (aux_id-1)), xs=xs, **kw)
 
             if opt.include_group_legend:
                 key = str(aux_id)
@@ -810,9 +810,11 @@ class Ideogram(BaseArArFigure):
         if 'selection_marker_size' not in plotkw:
             plotkw['selection_marker_size'] = plotkw['marker_size']
 
-        plotkw.pop('type')
-        kw.update(plotkw)
+        if 'type' in plotkw:
+            plotkw.pop('type')
 
+        kw.update(plotkw)
+        print(type, kw)
         s, p = graph.new_series(x=xs, y=ys,
                                 type=type,
                                 bind_id=self.group_id,
