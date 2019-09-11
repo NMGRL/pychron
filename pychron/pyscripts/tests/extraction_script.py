@@ -88,7 +88,7 @@ def main():
     waitfor(('dummy', 'get_value', 'x>10'), timeout=3)
 '''
         ret = self.s.execute()
-        self.assertEqual(ret, False)
+        self.assertEqual(ret, True)
 
     def test_waitfor_func(self):
         self.s.text = '''

@@ -1,6 +1,7 @@
 import os
 import unittest
 
+from pychron.pyscripts.tests.extraction_script import WaitForTestCase
 
 use_logger = False
 
@@ -122,7 +123,7 @@ def suite():
         AgeConverterTestCase,
 
         # Pyscripts
-        # WaitForTestCase,
+        WaitForTestCase,
         InterpolationTestCase,
         DocstrContextTestCase,
 

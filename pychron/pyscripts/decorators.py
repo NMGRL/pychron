@@ -56,8 +56,7 @@ def check_parameters(func, pargs, pkw):
              if p.kind not in (inspect._VAR_KEYWORD, inspect._VAR_POSITIONAL)]
 
     defaults = [p.default for p in signature.parameters.values() if p.default is not inspect._empty]
-    nd = sum([1 for di in defaults if di is not None]) if defaults else 0
-
+    nd = len(defaults)
     min_args = len(args1) - 1 - nd
     an = len(pargs) + len(pkw)
     if an < min_args:
