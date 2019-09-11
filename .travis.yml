@@ -32,7 +32,7 @@ install:
   - source activate pychron-test
 
   - conda install --yes statsmodels PyYAML traits traitsui xlrd xlwt lxml apptools swig
-  - pip install uncertainties codecov coverage chaco
+  - pip install uncertainties codecov coverage
 
 
 script: coverage run setup.py test

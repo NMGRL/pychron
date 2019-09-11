@@ -250,26 +250,26 @@ class BaseSeries(BaseArArFigure):
             kw['xtitle'] = 'N'
         return ytitle, kw
 
-    def _setup_plot(self, pid, pp, po, ytitle):
-        if not ytitle.endswith('DetIC'):
-            match = RATIO_RE.match(ytitle)
-            if match:
-                ytitle = '<sup>{}</sup>{}/<sup>{}</sup>{}'.format(match.group('nd'),
-                                                                  match.group('ni'),
-                                                                  match.group('dd'),
-                                                                  match.group('di'))
-                if match.group('rem'):
-                    ytitle = '{}{}'.format(ytitle, match.group('rem'))
-            else:
-                match = ISOTOPE_RE.match(ytitle)
+    def _setup_plot(self, pid, pp, po, ytitle=None):
+        super(BaseSeries, self)._setup_plot(pid, pp, po)
+        if ytitle:
+            if not ytitle.endswith('DetIC'):
+                match = RATIO_RE.match(ytitle)
                 if match:
-                    ytitle = '<sup>{}</sup>{}'.format(match.group('nd'), match.group('ni'))
+                    ytitle = '<sup>{}</sup>{}/<sup>{}</sup>{}'.format(match.group('nd'),
+                                                                      match.group('ni'),
+                                                                      match.group('dd'),
+                                                                      match.group('di'))
                     if match.group('rem'):
                         ytitle = '{}{}'.format(ytitle, match.group('rem'))
+                else:
+                    match = ISOTOPE_RE.match(ytitle)
+                    if match:
+                        ytitle = '<sup>{}</sup>{}'.format(match.group('nd'), match.group('ni'))
+                        if match.group('rem'):
+                            ytitle = '{}{}'.format(ytitle, match.group('rem'))
 
-        super(BaseSeries, self)._setup_plot(pid, pp, po)
-
-        self.graph.set_y_title(ytitle, plotid=pid)
+            self.graph.set_y_title(ytitle, plotid=pid)
 
     def _add_info(self, plot):
         if self.group_id == 0:

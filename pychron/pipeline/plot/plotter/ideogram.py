@@ -582,6 +582,10 @@ class Ideogram(BaseArArFigure):
                     ov.set_y_limits(0, yma2)
 
     def _add_group_legend(self, plot, plots, labels):
+
+        ln, ns, _ = zip(*labels)
+        labels = list(zip(ln, ns))
+
         legend = ExplicitLegend(plots=plots,
                                 labels=list(reversed(labels)),
                                 inside=True,
