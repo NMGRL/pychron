@@ -6,12 +6,12 @@ notifications:
     on_failure: change
 
 python:
-  - 3.5
+  - 3.7
 
 env:
   # Default values for common packages, override as needed
   global:
-    - PYTHON=3.5
+    - PYTHON=3.7
 
 before_install:
   - export TZ=America/Denver
@@ -30,9 +30,11 @@ install:
 #  - conda create --yes --quiet -n pychron-test ${PKGS} ${OPTIONAL}
   - conda create --yes --quiet -n pychron-test python=${PYTHON}
   - source activate pychron-test
-
-  - conda install --yes statsmodels PyYAML traits traitsui xlrd xlwt lxml apptools swig
-  - pip install uncertainties codecov coverage
+  - conda config --add channels conda-forge
+  - conda config --set channel_priority strict
+  #- conda install --yes statsmodels PyYAML traits traitsui xlrd xlwt lxml apptools swig coverage
+  - conda install --yes pyyaml yaml traits lxml coverage six numpy scipy uncertainties statsmodels codecov xlrd xlwt pyface
+#  - pip install codecov
 
 
 script: coverage run setup.py test

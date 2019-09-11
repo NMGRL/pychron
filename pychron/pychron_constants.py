@@ -44,9 +44,11 @@ TTF_FONTS = ['Andale Mono', 'Arial', 'Arial Black',
 FONTS = TTF_FONTS
 SIZES = [10, 6, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36]
 
-from kiva.fonttools.font_manager import fontManager
-
-fontManager.defaultFamily = {'ttf': 'Arial', 'afm': 'Arial'}
+try:
+    from kiva.fonttools.font_manager import fontManager
+    fontManager.defaultFamily = {'ttf': 'Arial', 'afm': 'Arial'}
+except ImportError:
+    pass
 
 PLUSMINUS = '\N{Plus-minus sign}'
 SIGMA = '\N{Greek Small Letter Sigma}'

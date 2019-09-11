@@ -210,7 +210,7 @@ class ExpoRegressionTest2(TestCase):
 
     def test_c(self):
         self.reg.calculate()
-        self.assertAlmostEqual(self.reg.coefficients[2], self.solution['coefficients'][2])
+        self.assertAlmostEqual(self.reg.coefficients[2], self.solution['coefficients'][2], places=5)
 # ============= EOF =============================================
 
 # class WeightedMeanRegressionTest(RegressionTestCase, TestCase):

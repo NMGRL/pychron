@@ -79,8 +79,10 @@ class LeastSquaresRegressor(BaseRegressor):
             self._covariance = cov
             self._coefficient_errors = list(sqrt(diagonal(cov)))
         except RuntimeError:
-            from pyface.message_dialog import warning
-            warning(None, 'Exponential failed to converge. Choose a different fit')
+            import os
+            if not os.getenv('TRAVIS_CI'):
+                from pyface.message_dialog import warning
+                warning(None, 'Exponential failed to converge. Choose a different fit')
             raise FitError()
 
     def _calculate_coefficients(self):
