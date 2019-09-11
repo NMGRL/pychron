@@ -309,6 +309,8 @@ class FindReferencesNode(FindNode):
     use_extract_device = Bool
     use_mass_spectrometer = Bool
 
+    use_browser = Bool
+
     def reset(self):
         self.user_choice = None
         super(FindReferencesNode, self).reset()
@@ -355,12 +357,26 @@ class FindReferencesNode(FindNode):
         return super(FindReferencesNode, self).pre_run(state, configure=configure)
 
     def run(self, state):
-        for gid, ans in groupby_group_id(state.unknowns):
-            if self._run_group(state, gid, list(ans)):
+        if self.use_browser:
+            if self._run_browser(state):
                 return
+        else:
+            for gid, ans in groupby_group_id(state.unknowns):
+                if self._run_group(state, gid, list(ans)):
+                    return
 
-        compress_groups(state.unknowns)
-        compress_groups(state.references)
+            compress_groups(state.unknowns)
+            compress_groups(state.references)
+
+    def _run_browser(self, state):
+        is_append, analyses = self.get_browser_analyses()
+        if analyses:
+            self.references = analyses
+            state.references = analyses
+        else:
+            # veto the pipeline
+            state.veto = self
+            return True
 
     def _run_group(self, state, gid, unknowns):
         atypes = [ai.lower().replace(' ', '_') for ai in self.analysis_types]
@@ -452,9 +468,10 @@ class FindReferencesNode(FindNode):
                                          show_border=True, label='Analysis Types'),
                                   label='Filtering')
 
-        v = self._view_factory(VGroup(load_grp,
-                                      filter_grp,
-                                      inst_grp))
+        v = self._view_factory(VGroup(Item('use_browser'),
+                                      VGroup(load_grp,
+                                             filter_grp,
+                                             inst_grp, enabled_when='not use_browser')))
 
         return v
 
