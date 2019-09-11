@@ -255,9 +255,12 @@ class Ideogram(BaseArArFigure):
     def get_ybounds(self):
         plot = self.graph.plots[0]
         gid = self.group_id + 1
-        lp = plot.plots['Current-{}'.format(gid)][0]
-        d = lp.value.get_data()
-        h = d.max()
+        try:
+            lp = plot.plots['Current-{}'.format(gid)][0]
+            h = lp.value.get_data().max()
+        except KeyError:
+            h = 1
+
         return 0, h
 
     def replot(self):
@@ -686,6 +689,17 @@ class Ideogram(BaseArArFigure):
     def _rebuild_ideo(self, sel=None):
         graph = self.graph
         gid = self.group_id + 1
+
+        plot = graph.plots[0]
+        try:
+            lp = plot.plots['Current-{}'.format(gid)][0]
+            dp = plot.plots['Original-{}'.format(gid)][0]
+        except KeyError:
+            return
+
+        if not self.xs.shape[0]:
+            return
+
         ss = [p.plots[key][0]
               for p in graph.plots[1:]
               for key in p.plots
@@ -698,14 +712,6 @@ class Ideogram(BaseArArFigure):
             self._set_renderer_selection(ss, sel)
         else:
             sel = []
-
-        plot = graph.plots[0]
-
-        lp = plot.plots['Current-{}'.format(gid)][0]
-        dp = plot.plots['Original-{}'.format(gid)][0]
-
-        if not self.xs.shape[0]:
-            return
 
         fxs = [a for i, a in enumerate(self.xs) if i not in sel]
 
