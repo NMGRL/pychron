@@ -37,7 +37,7 @@ install:
   - conda config --add channels conda-forge
   - conda config --set channel_priority strict
   #- conda install --yes statsmodels PyYAML traits traitsui xlrd xlwt lxml apptools swig coverage
-  - conda install --yes pyyaml yaml traits lxml coverage six numpy scipy uncertainties statsmodels codecov xlrd xlwt pyface
+  - conda install --yes pyyaml yaml traits traitsui lxml coverage six numpy scipy uncertainties statsmodels codecov xlrd xlwt pyface
 #  - pip install codecov
 
 
