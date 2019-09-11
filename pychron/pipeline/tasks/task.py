@@ -294,7 +294,7 @@ class PipelineTask(BaseBrowserTask):
             return
 
         ed = self.active_editor
-        if isinstance(ed, FigureEditor):
+        if isinstance(ed, InterpretedAgeEditor):
             from pychron.pipeline.tables.xlsx_table_options import XLSXAnalysisTableWriterOptions
             from pychron.pipeline.tables.xlsx_table_writer import XLSXAnalysisTableWriter
 
