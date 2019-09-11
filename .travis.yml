@@ -23,8 +23,8 @@ before_install:
   - export PATH=/home/travis/miniconda3/bin:$PATH
   - conda update --yes --quiet conda
   # Fix for headless TravisCI
-  - "export DISPLAY=:99.0"
-  - "sh -e /etc/init.d/xvfb start"
+#  - "export DISPLAY=:99.0"
+#  - "sh -e /etc/init.d/xvfb start"
 
 install:
 #  - conda create --yes --quiet -n pychron-test ${PKGS} ${OPTIONAL}

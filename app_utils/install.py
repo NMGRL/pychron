@@ -130,7 +130,7 @@ def ask_config():
               'fork': 'NMGRL',
               'branch': 'develop',
               'app_name': 'pyexperiment',
-              'qt_bindings': 'pyqt5',
+              'qt_bindings': 'pyqt=5',
               'use_all_defaults': 'no',
               'mac_os_app': False,
               'mac_app_name': 'Pychron',

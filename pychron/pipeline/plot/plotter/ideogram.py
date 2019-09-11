@@ -115,8 +115,7 @@ class LatestOverlay(AbstractOverlay):
 
 
 def groupby_aux_key(ans):
-
-    use_explicit_ordering = all((ORDER_PREFIX_REGEX.match(a.aux_name or '') for a in ans))
+    use_explicit_ordering = all((ORDER_PREFIX_REGEX.match(str(a.aux_name or '')) for a in ans))
     if use_explicit_ordering:
         def key(ai):
             m = ORDER_PREFIX_REGEX.match(ai.aux_name)
