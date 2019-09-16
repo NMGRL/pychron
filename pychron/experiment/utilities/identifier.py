@@ -39,11 +39,13 @@ SPECIAL_MAPPING = dict()  # blank_air: ba
 SPECIAL_NAMES = [SPECIAL_IDENTIFIER, LINE_STR]  # 'Blank Air'
 SPECIAL_KEYS = []  # ba
 
-try:
-    p = os.path.join(paths.hidden_dir, 'identifiers.yaml')
+
+p = os.path.join(paths.hidden_dir, 'identifiers.yaml')
+if os.path.isfile(p):
     yd = yload(p)
-except BaseException:
+else:
     yd = yload(IDENTIFIERS_DEFAULT)
+
 
 for i, idn_d in enumerate(yd):
     key = idn_d['shortname']
