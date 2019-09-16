@@ -25,10 +25,10 @@ from pyface.timer.do_later import do_after
 from traits.api import Instance, Bool, Int, Str, List, Enum, Float, Time
 from traitsui.api import Item, EnumEditor, CheckListEditor
 
-from pychron.core.helpers.strtools import to_bool
+from pychron.core.helpers.strtools import to_bool, get_case_insensitive, to_int
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.globals import globalv
-from pychron.pipeline.csv_dataset_factory import CSVDataSetFactory
+from pychron.pipeline.csv_dataset_factory import CSVDataSetFactory, CSVSpectrumDataSetFactory
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pychron_constants import ANALYSIS_TYPES
 
@@ -133,6 +133,9 @@ class DataNode(DVCNode):
 class CSVNode(BaseDVCNode):
     path = Str
     name = 'CSV Data'
+    required_columns = ('runid', 'age', 'age_err')
+
+    _factory_klass = CSVDataSetFactory
 
     def reset(self):
         super(CSVNode, self).reset()
@@ -152,7 +155,7 @@ class CSVNode(BaseDVCNode):
             ret = True
 
         if not self.path or not os.path.isfile(self.path):
-            dsf = CSVDataSetFactory(dvc=self.dvc)
+            dsf = self._factory_klass(dvc=self.dvc)
             dsf.load()
             info = dsf.edit_traits()
             if info.result:
@@ -183,48 +186,45 @@ class CSVNode(BaseDVCNode):
 
         par = CSVColumnParser(delimiter=',')
         par.load(self.path)
-        if par.check(('runid', 'age', 'age_err')):
+        if par.check(self.required_columns):
             return self._get_items_from_file(par)
         else:
             warning(None, 'Invalid file format. Minimum columns required are "runid", "age", "age_err"')
 
     def _get_items_from_file(self, parser):
-        from pychron.processing.analyses.file_analysis import FileAnalysis
-
-        def get_case_insensitive(d, key, default=None):
-            v = None
-            for k in (key, key.lower(), key.upper(), key.capitalize()):
-                try:
-                    v = d[k]
-                    break
-                except KeyError:
-                    continue
-
-            if v is None:
-                v = default
-            return v
-
-        def toint(i):
-            try:
-                i = int(i)
-            except ValueError:
-                pass
-            return i
-
         try:
-            ans = [FileAnalysis(age=float(get_case_insensitive(d, 'age')),
-                                age_err=float(get_case_insensitive(d, 'age_err')),
-                                record_id=get_case_insensitive(d, 'runid'),
-                                sample=get_case_insensitive(d, 'sample', ''),
-                                label_name=get_case_insensitive(d, 'label_name', ''),
-                                group=toint(get_case_insensitive(d, 'group', '')),
-                                aliquot=int(get_case_insensitive(d, 'aliquot', 0)))
+            ans = [self._analysis_factory(d)
                    for d in parser.values()]
 
             return ans
 
         except (TypeError, ValueError) as e:
             warning(None, 'Invalid values in the import file. Error="{}"'.format(e))
+
+    def _analysis_factory(self, d):
+        from pychron.processing.analyses.file_analysis import FileAnalysis
+        fa = FileAnalysis(age=float(get_case_insensitive(d, 'age')),
+                          age_err=float(get_case_insensitive(d, 'age_err')),
+                          record_id=get_case_insensitive(d, 'runid'),
+                          sample=get_case_insensitive(d, 'sample', ''),
+                          label_name=get_case_insensitive(d, 'label_name', ''),
+                          group=to_int(get_case_insensitive(d, 'group', '')),
+                          aliquot=int(get_case_insensitive(d, 'aliquot', 0)))
+        return fa
+
+
+class CSVSpectrumNode(CSVNode):
+    required_columns = ('runid', 'age', 'age_err', 'k39', 'k39_err', 'rad40', 'rad40_err')
+    _factory_klass = CSVSpectrumDataSetFactory
+
+    def _analysis_factory(self, d):
+        f = super(CSVSpectrumNode, self)._analysis_factory(d)
+
+        f.k39 = float(get_case_insensitive(d, 'k39'))
+        f.k39_err = float(get_case_insensitive(d, 'k39_err'))
+        f.rad40 = float(get_case_insensitive(d, 'rad40'))
+        f.rad40_err = float(get_case_insensitive(d, 'rad40_err'))
+        return f
 
 
 class UnknownNode(DataNode):

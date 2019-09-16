@@ -103,6 +103,27 @@ def ratio(xs, ys=None):
     return ret
 
 
+def get_case_insensitive(d, key, default=None):
+    v = None
+    for k in (key, key.lower(), key.upper(), key.capitalize()):
+        try:
+            v = d[k]
+            break
+        except KeyError:
+            continue
+
+    if v is None:
+        v = default
+    return v
+
+
+def to_int(i):
+    try:
+        i = int(i)
+    except ValueError:
+        pass
+    return i
+
 if __name__ == '__main__':
     for ret in ratio('abc'):
         print(ret)

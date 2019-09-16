@@ -34,10 +34,14 @@ class NonDBAnalysis(Analysis):
     k39 = Float
     k39_err = Float
 
+    rad40_ = Float
+    rad40_err = Float
+
     @classmethod
     def from_csv_record(cls, ri):
         obj = cls()
-        for a in ('age', 'age_err', 'group', 'aliquot', 'sample', 'label_name'):
+        for a in ('age', 'age_err', 'group', 'aliquot', 'sample', 'label_name',
+                  'k39', 'k39_err', 'rad40', 'rad40_err'):
             setattr(obj, a, getattr(ri, a))
 
         return obj
@@ -45,6 +49,8 @@ class NonDBAnalysis(Analysis):
     def get_computed_value(self, attr):
         if attr == 'k39':
             return ufloat(self.k39, self.k39_err)
+        elif attr == 'rad40':
+            return ufloat(self.rad40, self.rad40_err)
         else:
             return ufloat(0, 0)
 

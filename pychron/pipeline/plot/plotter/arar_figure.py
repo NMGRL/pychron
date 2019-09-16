@@ -250,7 +250,7 @@ class BaseArArFigure(SelectionFigure):
         self.refresh_unknowns_table = True
 
     def _cmp_analyses(self, x):
-        return x.timestamp
+        return x.timestamp or 0
 
     def _unpack_attr(self, attr, scalar=1, exclude_omit=False, nonsorted=False, ans=None):
         if ans is None:

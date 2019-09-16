@@ -73,7 +73,8 @@ class PyScriptNode(BaseNode):
     def traits_view(self):
         v = okcancel_view(Item('available_scripts', editor=ListStrEditor(selected='selected', editable=False)),
                           Item('path', label='Script Location'),
-                          Item('auto_execute'))
+                          Item('auto_execute'),
+                          title='Select Script')
         return v
 
 # ============= EOF =============================================

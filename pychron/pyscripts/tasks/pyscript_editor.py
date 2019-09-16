@@ -373,7 +373,7 @@ class PyScriptEditor(Editor, PyScriptEdit):
 
         # We will have no path for a new script.
         if len(path) > 0:
-            f = open(self.path, 'r')
+            f = open(path, 'r')
             text = f.read()
             f.close()
         else:

@@ -158,6 +158,22 @@ class CSVDataSetFactory(HasTraits):
     repo_filter = Str
     dirty = False
 
+    _message_text = '''CSV File Format
+# Create/select a file with a column header as the first line.
+# The following columns are required:
+#
+# runid, age, age_err
+#
+# Optional columns are:
+#
+# group, aliquot, sample, label_name
+#
+# e.x.
+# runid, age, age_error
+# Run1, 10, 0.24
+# Run2, 11, 0.32
+# Run3, 10, 0.40'''
+
     def as_analyses(self):
         ret = []
         if not self.data_path:
@@ -168,6 +184,8 @@ class CSVDataSetFactory(HasTraits):
     def load(self):
         self.repositories = self.dvc.get_local_repositories()
         self.orepositories = self.repositories
+        self.records = [CSVRecord() for i in range(3)]
+        self._test_button_fired()
 
     def dump(self):
         if not self.name:
@@ -212,22 +230,8 @@ class CSVDataSetFactory(HasTraits):
             self._load_csv_data(new)
 
     def _open_via_finder_button_fired(self):
-        msg = '''CSV File Format
-        # Create/select a file with a column header as the first line.
-        # The following columns are required:
-        #
-        # runid, age, age_err
-        #
-        # Optional columns are:
-        #
-        # group, aliquot, sample
-        #
-        # e.x.
-        # runid, age, age_error
-        # Run1, 10, 0.24
-        # Run2, 11, 0.32
-        # Run3, 10, 0.40'''
-        information(None, msg)
+
+        information(None, self._message_text)
 
         dlg = FileDialog(default_directory=paths.csv_data_dir,
                          action='open')
@@ -297,7 +301,7 @@ class CSVDataSetFactory(HasTraits):
             for si in selection:
                 si.group = gid
 
-    def traits_view(self):
+    def _get_columns(self):
         cols = [CheckboxColumn(name='status'),
                 ObjectColumn(name='runid', width=50, label='RunID'),
                 ObjectColumn(name='age', width=100),
@@ -307,6 +311,10 @@ class CSVDataSetFactory(HasTraits):
                 ObjectColumn(name='aliquot'),
                 ObjectColumn(name='sample'),
                 ObjectColumn(name='label_name', label='Label Name')]
+        return cols
+
+    def traits_view(self):
+        cols = self._get_columns()
 
         gcols = [ObjectColumn(name='name'),
                  ObjectColumn(name='weighted_mean', label='Wtd. Mean',
@@ -368,13 +376,65 @@ class CSVDataSetFactory(HasTraits):
         self.records[1].age = 2
         self.records[2].age = 3
 
-        self.records[0].age_err = 10
-        self.records[1].age_err = 20
-        self.records[2].age_err = 30
+        self.records[0].age_err = .10
+        self.records[1].age_err = .20
+        self.records[2].age_err = .30
+
+        self.records[0].k39 = 10
+        self.records[1].k39 = 20
+        self.records[2].k39 = 30
+
+        self.records[0].k39_err = .100
+        self.records[1].k39_err = .200
+        self.records[2].k39_err = .300
+
+        self.records[0].rad40 = 10
+        self.records[1].rad40 = 20
+        self.records[2].rad40 = 30
+
+        self.records[0].rad40_err = .100
+        self.records[1].rad40_err = .200
+        self.records[2].rad40_err = .300
 
         self._make_groups()
         # rs = [r for r in self.records if r.valid()]
         # self.groups = [CSVRecordGroup(gid, rs) for gid, rs in groupby_key(rs, 'group')]
+
+
+class CSVSpectrumDataSetFactory(CSVDataSetFactory):
+    _message_text = '''CSV File Format
+# Create/select a file with a column header as the first line.
+# The following columns are required:
+#
+# runid, age, age_err, k39, k39_err, rad40, rad40_err
+#
+# Optional columns are:
+#
+# group, aliquot, sample, label_name
+#
+# e.x.
+# runid, age, age_error, k39, k39_err, rad40, rad40_err
+# Run1, 10, 0.24, 0.4, 0.001, 1, 0.1
+# Run2, 11, 0.32, 0.23, 0.02, 2, 0.1
+# Run3, 10, 0.40, 0.01, 0.1, 4, 0.1'''
+
+    def _get_columns(self):
+        cols = [CheckboxColumn(name='status'),
+                ObjectColumn(name='runid', width=50, label='RunID'),
+                ObjectColumn(name='age', width=100),
+                ObjectColumn(name='age_err', width=100,
+                             label=PLUSMINUS_ONE_SIGMA),
+                ObjectColumn(name='k39', width=100),
+                ObjectColumn(name='k39_err', width=100,
+                             label=PLUSMINUS_ONE_SIGMA),
+                ObjectColumn(name='rad40', width=100),
+                ObjectColumn(name='rad40_err', width=100,
+                             label=PLUSMINUS_ONE_SIGMA),
+                ObjectColumn(name='group'),
+                ObjectColumn(name='aliquot'),
+                ObjectColumn(name='sample'),
+                ObjectColumn(name='label_name', label='Label Name')]
+        return cols
 
 
 if __name__ == '__main__':

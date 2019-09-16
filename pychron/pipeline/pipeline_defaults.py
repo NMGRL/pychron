@@ -120,6 +120,14 @@ nodes:
   - klass: SpectrumNode
 """
 
+CSV_SPEC = """
+required:
+nodes:
+  - klass: CSVSpectrumNode
+  - klass: GroupingNode
+  - klass: SpectrumNode
+"""
+
 COMPOSITE = """
 required:
 nodes:

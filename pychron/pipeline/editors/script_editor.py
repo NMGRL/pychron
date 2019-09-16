@@ -14,16 +14,16 @@
 # limitations under the License.
 # ===============================================================================
 import io
-import traceback
 
 from traits.api import Instance, Button, Str
-from traitsui.api import View, Item, Readonly, UItem, TextEditor, Tabbed, VGroup, Group
+from traitsui.api import View, Readonly, UItem, TextEditor, Tabbed, VGroup, HGroup
 
 from pychron.core.file_listener import FileListener
 from pychron.core.pychron_traits import BorderVGroup
+from pychron.core.ui.code_editor import PyScriptCodeEditor
+from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
-
 from pychron.pyscripts.pipeline_pyscript import PipelinePyScript
 
 
@@ -34,7 +34,6 @@ class PipelinePyScriptEditor(BaseTraitsEditor):
     file_listener = None
     exception_trace = Str
     output = Str
-    results = Str
 
     def destroy(self):
         super(PipelinePyScriptEditor, self).destroy()
@@ -46,11 +45,9 @@ class PipelinePyScriptEditor(BaseTraitsEditor):
 
         script = self.script
         script.display_state = 'not run'
+        script.bootstrap()
         if auto_execute:
-            script.bootstrap()
             self._execute()
-        else:
-            script.bootstrap()
 
     def _execute(self):
         script = self.script
@@ -79,19 +76,24 @@ class PipelinePyScriptEditor(BaseTraitsEditor):
         self._execute()
 
     def traits_view(self):
-        error_grp = VGroup(Readonly('object.script.execution_error'),
-                           BorderVGroup(UItem('exception_trace', style='custom', editor=TextEditor(read_only=True)),
-                                        label='Exception'),
-                           label='Errors')
 
-        main_grp = VGroup(icon_button_editor('execute_button', 'start'),
-                          Readonly('object.script.display_state'),
-                          BorderVGroup(UItem('object.script.text', style='custom'), label='Text'),
+        error_grp = BorderVGroup(Readonly('object.script.execution_error'),
+                                 BorderVGroup(UItem('exception_trace', style='custom',
+                                                    editor=TextEditor(read_only=True)),
+                                              label='Exception'),
+                                 label='Errors')
+        output_grp = VGroup(BorderVGroup(UItem('output', style='custom', editor=TextEditor(read_only=True)),
+                                         label='StdOut'),
+                            error_grp,
+                            label='Output')
+
+        main_grp = VGroup(HGroup(icon_button_editor('execute_button', 'start'),
+                                 CustomLabel('object.script.display_state')),
+                          BorderVGroup(UItem('object.script.text', style='custom',
+                                             editor=PyScriptCodeEditor()), label='Text'),
                           label='Main')
 
-        results_grp = Group(UItem('results'), label='Results')
-        output_grp = Group(UItem('output', style='custom', editor=TextEditor(read_only=True)), label='Output')
-        v = View(Tabbed(main_grp, results_grp, error_grp, output_grp))
+        v = View(Tabbed(main_grp, output_grp))
 
         return v
 # ============= EOF =============================================
