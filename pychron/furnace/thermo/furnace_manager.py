@@ -23,12 +23,13 @@ import yaml
 from traits.api import TraitError, Float, provides, Str
 
 from pychron.core.progress import open_progress
+from pychron.core.yaml import yload
 from pychron.furnace.base_furnace_manager import BaseFurnaceManager
 from pychron.furnace.configure_dump import ConfigureDump
 from pychron.furnace.ifurnace_manager import IFurnaceManager
-from pychron.hardware.furnace.thermo.furnace_controller import ThermoFurnaceController
 from pychron.furnace.thermo.stage_manager import ThermoFurnaceStageManager
 from pychron.graph.time_series_graph import TimeSeriesStreamStackedGraph
+from pychron.hardware.furnace.thermo.furnace_controller import ThermoFurnaceController
 from pychron.paths import paths
 
 
@@ -258,14 +259,13 @@ class ThermoFurnaceManager(BaseFurnaceManager):
         self.debug('load sample states')
         p = paths.furnace_sample_states
         if os.path.isfile(p):
-            with open(p, 'r') as rfile:
-                states = yaml.load(rfile)
-                self.debug('states={}'.format(states))
-                for si in states:
-                    hole = self.stage_manager.stage_map.get_hole(si)
-                    self.debug('si={} hole={}'.format(si, hole))
-                    if hole:
-                        hole.analyzed = True
+            states = yload(p)
+            self.debug('states={}'.format(states))
+            for si in states:
+                hole = self.stage_manager.stage_map.get_hole(si)
+                self.debug('si={} hole={}'.format(si, hole))
+                if hole:
+                    hole.analyzed = True
 
     def _dump_sample_states(self, states=None):
         if states is None:

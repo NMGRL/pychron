@@ -35,6 +35,7 @@ from pychron.core.pychron_traits import BorderVGroup
 from pychron.core.stats import calculate_weighted_mean, calculate_mswd
 from pychron.core.ui.strings import SpacelessStr
 from pychron.paths import paths
+from pychron.processing.analyses.file_analysis import FileAnalysis
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 HEADER = 'enabled, runid', 'age', 'age_err', 'group', 'aliquot', 'sample', 'label_name'
@@ -156,6 +157,13 @@ class CSVDataSetFactory(HasTraits):
     name_filter = Str
     repo_filter = Str
     dirty = False
+
+    def as_analyses(self):
+        ret = []
+        if not self.data_path:
+            ret = [FileAnalysis.from_csv_record(ri) for ri in self.records]
+
+        return ret
 
     def load(self):
         self.repositories = self.dvc.get_local_repositories()

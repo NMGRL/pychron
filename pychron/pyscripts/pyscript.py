@@ -24,8 +24,9 @@ from queue import Empty, LifoQueue
 from threading import Event, Thread, Lock
 
 import yaml
-from traits.api import Str, Any, Bool, Property, Int, Dict
+from traits.api import Str, Any, Bool, Int, Dict
 
+from pychron.core.yaml import yload
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.paths import paths
@@ -794,8 +795,7 @@ class PyScript(Loggable):
         if self.interpolation_path:
             if os.path.isfile(self.interpolation_path):
                 try:
-                    with open(self.interpolation_path, 'r') as rfile:
-                        d = yaml.load(rfile)
+                    d = yload(self.interpolation_path)
                 except yaml.YAMLError as e:
                     self.debug(e)
             else:

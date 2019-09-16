@@ -22,6 +22,7 @@ from numpy import array, nan, average
 from traits.api import List, Property, cached_property, Str, Bool, Int, Event, Float, Any, Enum, on_trait_change
 from uncertainties import ufloat, nominal_value, std_dev
 
+from pychron.core.stats import calculate_mswd_probability
 from pychron.core.stats.core import calculate_mswd, calculate_weighted_mean, validate_mswd
 from pychron.core.utils import alphas
 from pychron.experiment.utilities.identifier import make_aliquot
@@ -185,7 +186,7 @@ class AnalysisGroup(IdeogramPlotable):
     def get_mswd_tuple(self):
         mswd = self.mswd
         valid_mswd = validate_mswd(mswd, self.nanalyses)
-        return mswd, valid_mswd, self.nanalyses
+        return mswd, valid_mswd, self.nanalyses, calculate_mswd_probability(mswd, self.nanalyses-1)
 
     def set_j_error(self, individual, mean, dirty=False):
         self.include_j_position_error = individual
@@ -238,12 +239,12 @@ class AnalysisGroup(IdeogramPlotable):
         if not self.isochron_3640:
             self.calculate_isochron_age()
 
-        mswd, v, n = 0, '', 0
+        mswd, v, n, p = 0, '', 0, 0
         reg = self.isochron_regressor
         if reg:
-            mswd, v, n = reg.mswd, reg.valid_mswd, reg.n
+            mswd, v, n, p = reg.mswd, reg.valid_mswd, reg.n, reg.mswd_pvalue
 
-        return mswd, v, n
+        return mswd, v, n, p
 
     # properties
     @property
@@ -626,7 +627,8 @@ class StepHeatAnalysisGroup(AnalysisGroup):
         return nominal_value(cum / self.total_ar39 * 100)
 
     def get_plateau_mswd_tuple(self):
-        return self.plateau_mswd, self.plateau_mswd_valid, self.nsteps
+        return self.plateau_mswd, self.plateau_mswd_valid, \
+               self.nsteps, calculate_mswd_probability(self.plateau_mswd, self.nsteps-1)
 
     def calculate_plateau(self):
         return self.plateau_age

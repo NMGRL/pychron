@@ -14,24 +14,23 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from pyface.timer.do_later import do_after
-from traits.api import HasTraits, Str, List, Any, Event, Button, Int, Bool, Float, Either
-from traitsui.api import View, Item, HGroup, spring
-from traitsui.handler import Handler
-from traitsui.api import UItem, VGroup, Item, HGroup, View, TableEditor, Tabbed
-from traitsui.table_column import ObjectColumn
+import os
 
 # ============= standard library imports ========================
 import six.moves.configparser
-import os
-import yaml
+# ============= enthought library imports =======================
+from pyface.timer.do_later import do_after
+from six.moves import zip
+from traits.api import HasTraits, Str, List, Any, Event, Button, Int, Bool, Float, Either
+from traitsui.api import UItem, VGroup, Item, HGroup, View, TableEditor, Tabbed
+from traitsui.api import spring
+from traitsui.handler import Handler
+from traitsui.table_column import ObjectColumn
+
 # ============= local library imports  ==========================
-from pychron.core.helpers.traitsui_shortcuts import listeditor
+from pychron.core.yaml import yload
 from pychron.loggable import Loggable
 from pychron.paths import paths
-from six.moves import zip
-
 from pychron.pychron_constants import NULL_STR
 
 DEFAULT_CONFIG = '''-
@@ -206,31 +205,26 @@ class ReadoutView(Loggable):
             self.readouts.append(rd)
 
     def _load_yaml(self, path):
-        with open(path, 'r') as rfile:
-            try:
-                yt = yaml.load(rfile)
-                if yt:
-                    yl, yd = yt
+        yt = yload(path)
+        if yt:
+            yl, yd = yt
 
-                    for rd in yl:
-                        rr = Readout(spectrometer=self.spectrometer,
-                                     name=rd['name'],
-                                     min_value=rd.get('min', 0),
-                                     max_value=rd.get('max', 1),
-                                     tolerance=rd.get('tolerance', 0.01),
-                                     compare=rd.get('compare', True),
-                                     use_word=rd.get('use_word', True))
-                        self.readouts.append(rr)
+            for rd in yl:
+                rr = Readout(spectrometer=self.spectrometer,
+                             name=rd['name'],
+                             min_value=rd.get('min', 0),
+                             max_value=rd.get('max', 1),
+                             tolerance=rd.get('tolerance', 0.01),
+                             compare=rd.get('compare', True),
+                             use_word=rd.get('use_word', True))
+                self.readouts.append(rr)
 
-                    for rd in yd:
-                        rr = DeflectionReadout(spectrometer=self.spectrometer,
-                                               name=rd['name'],
-                                               tolerance=rd.get('tolerance', 1),
-                                               compare=rd.get('compare', True))
-                        self.deflections.append(rr)
-
-            except yaml.YAMLError:
-                return
+            for rd in yd:
+                rr = DeflectionReadout(spectrometer=self.spectrometer,
+                                       name=rd['name'],
+                                       tolerance=rd.get('tolerance', 1),
+                                       compare=rd.get('compare', True))
+                self.deflections.append(rr)
 
     def _write_default(self, ypath):
         with open(ypath, 'w') as wfile:

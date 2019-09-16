@@ -31,6 +31,7 @@ from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pychron_traits import BorderVGroup
+from pychron.core.yaml import yload
 from pychron.paths import paths
 from pychron.pychron_constants import ARGON_KEYS, SIZES
 
@@ -186,14 +187,14 @@ class TableConfigurer(HasTraits):
     def _set_defaults(self):
         p = self.defaults_path
         if os.path.isfile(p):
-            import yaml
-
-            with open(p, 'r') as rfile:
-                yd = yaml.load(rfile)
-                try:
-                    self.columns = yd['columns']
-                except KeyError:
-                    pass
+            # import yaml
+            # with open(p, 'r') as rfile:
+            #     yd = yaml.load(rfile)
+            yd = yload(p)
+            try:
+                self.columns = yd['columns']
+            except KeyError:
+                pass
             self.set_columns()
 
     def _default_button_fired(self):

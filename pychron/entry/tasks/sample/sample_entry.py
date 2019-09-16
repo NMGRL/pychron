@@ -26,6 +26,7 @@ from traitsui.api import UItem, Item, VGroup, HGroup, EnumEditor
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pychron_traits import EmailStr
+from pychron.core.yaml import yload
 from pychron.dvc.dvc_irradiationable import DVCAble
 from pychron.entry.providers.macrostrat import get_lithology_values
 from pychron.entry.tasks.sample.sample_edit_view import SampleEditModel, LatFloat, LonFloat, SAMPLE_ATTRS
@@ -47,8 +48,7 @@ class RString(String):
 
 PI_NAMES = ('NMGRL',)
 if os.path.isfile(paths.valid_pi_names):
-    with open(paths.valid_pi_names, 'r') as rf:
-        PI_NAMES = yaml.load(rf)
+    PI_NAMES = yload(paths.valid_pi_names)
 
 
 class PIStr(String):
@@ -349,14 +349,13 @@ class SampleEntry(DVCAble):
             self.information_dialog(msg)
 
     def load(self, p):
-        with open(p, 'r') as rfile:
-            obj = yaml.load(rfile)
-            self._principal_investigators = ps = [PISpec.fromdump(p) for p in obj['principal_investigators'] if
-                                                  p is not None]
-            self._materials = ms = [MaterialSpec.fromdump(p) for p in obj['materials'] if p is not None]
+        obj = yload(p)
+        self._principal_investigators = ps = [PISpec.fromdump(p) for p in obj['principal_investigators'] if
+                                              p is not None]
+        self._materials = ms = [MaterialSpec.fromdump(p) for p in obj['materials'] if p is not None]
 
-            self._projects = pps = [ProjectSpec.fromdump(p, ps) for p in obj['projects'] if p is not None]
-            self._samples = [SampleSpec.fromdump(p, pps, ms) for p in obj['samples'] if p is not None]
+        self._projects = pps = [ProjectSpec.fromdump(p, ps) for p in obj['projects'] if p is not None]
+        self._samples = [SampleSpec.fromdump(p, pps, ms) for p in obj['samples'] if p is not None]
 
     def dump(self, p):
         """

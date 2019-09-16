@@ -623,7 +623,7 @@ class ExtractionLineManager(Manager, Consoleable):
 
             result = self._change_switch_state(name, mode, action, **kw)
 
-            self.debug('open_close_valve, mode={}'.format(mode))
+            self.debug('open_close_valve, mode={} result={}'.format(mode, result))
             if mode == 'script':
                 invoke_in_main_thread(self.refresh_canvas)
 

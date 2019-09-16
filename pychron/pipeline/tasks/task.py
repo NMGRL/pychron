@@ -36,7 +36,6 @@ from pychron.pipeline.nodes.figure import FigureNode
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.interpreted_age_editor import InterpretedAgeEditor
 from pychron.pipeline.save_figure import SaveFigureView, SaveFigureModel
-from pychron.pipeline.script import DataReductionScript
 from pychron.pipeline.state import EngineState
 from pychron.pipeline.tasks.actions import RunAction, ResumeAction, ResetAction, \
     ConfigureRecallAction, TagAction, SetInterpretedAgeAction, ClearAction, SavePDFAction, SetInvalidAction, \
@@ -136,12 +135,12 @@ class PipelineTask(BaseBrowserTask):
         self.engine.identify_peaks(ps)
 
     # toolbar actions
-    def run_script(self):
-        path = self.open_file_dialog()
-        if path is not None:
-            script = DataReductionScript()
-            script.dvc = self.dvc
-            script.run(path)
+    # def run_script(self):
+    #     path = self.open_file_dialog()
+    #     if path is not None:
+    #         script = DataReductionScript()
+    #         script.dvc = self.dvc
+    #         script.run(path)
 
     def diff_analysis(self):
         self.debug('diff analysis')

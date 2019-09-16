@@ -33,10 +33,10 @@ A number of Ar/Ar Geochronology laboratories are using Pychron to various degree
  - US Geological Survey - Menlo Park
  - NASA - MNGRL, Goddard Space Flight Center
  - AEL-AMS, Ottawa
+ - University of Arizona
 
 Installation of Pychron at other laboratories is ongoing. Current interested labs are
   
-  - University of Arizona
   - University of Florida
   - Purdue University
   - CAMS, Lawrence Livermore National Laboratory

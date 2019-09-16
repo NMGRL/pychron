@@ -17,10 +17,11 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 from __future__ import absolute_import
+
 import os
 
-import yaml
 # ============= local library imports  ==========================
+from pychron.core.yaml import yload
 from pychron.loggable import Loggable
 from pychron.paths import paths
 
@@ -60,8 +61,7 @@ class IdentifierMapper(Loggable):
             self.warning('Using the default identifier mapping because {} does not exist'.format(p))
             return default_mapping()
         else:
-            with open(p, 'r') as rfile:
-                return yaml.load(rfile)
+            return yload(p)
 
 # ============= EOF =============================================
 

@@ -26,6 +26,7 @@ from traits.api import HasTraits, Str, Instance, List, Event, on_trait_change, A
 from pychron.core.confirmation import remember_confirmation_dialog
 from pychron.core.helpers.filetools import glob_list_directory, add_extension
 from pychron.core.helpers.iterfuncs import groupby_key
+from pychron.core.yaml import yload
 from pychron.dvc.tasks.repo_task import RepoItem
 from pychron.envisage.view_util import open_view
 from pychron.globals import globalv
@@ -372,9 +373,7 @@ class PipelineEngine(Loggable):
         name = self.selected_pipeline_template
         path, is_user_path = self._get_template_path(name)
         if path:
-            with open(path, 'r') as rfile:
-                nodes = yaml.load(rfile)
-
+            nodes = yload(path)
             for i, ni in enumerate(nodes):
                 klass = ni['klass']
                 if klass == 'ReviewNode':
@@ -1081,8 +1080,9 @@ class PipelineEngine(Loggable):
         if self.selected_references:
             self.recall_references()
 
-    def _dclicked_pipeline_template_fired(self):
-        self.run_needed = True
+    def _dclicked_pipeline_template_fired(self, new):
+        if not isinstance(new, PipelineTemplateGroup):
+            self.run_needed = True
 
     def _selected_pipeline_template_changed(self, new):
         if isinstance(new, (PipelineTemplate, str, tuple)):

@@ -27,6 +27,7 @@ from traitsui.menu import Action
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import get_path, add_extension
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+from pychron.core.yaml import yload
 from pychron.envisage.view_util import open_view
 from pychron.experiment.conditional.conditional import ActionConditional, TruncationConditional, \
     CancelationConditional, TerminationConditional, QueueModificationConditional
@@ -135,8 +136,7 @@ class ConditionalsEditView(ConditionalsViewable):
                 if not save_as:
                     self.path = p
 
-                with open(p, 'r') as rfile:
-                    yd = yaml.load(rfile)
+                yd = yload(p)
 
         if 'pre_run_terminations' in self.group_names:
             grp = self._group_factory(yd, EPreRunGroup, name='pre_run_terminations',

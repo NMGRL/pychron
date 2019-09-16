@@ -28,6 +28,7 @@ from traits.api import Any, Dict, List, Bool, Event, Str
 
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.helpers.strtools import to_bool
+from pychron.core.yaml import yload
 from pychron.extraction_line import VERBOSE_DEBUG, VERBOSE
 from pychron.extraction_line.pipettes.tracking import PipetteTracker
 from pychron.globals import globalv
@@ -763,7 +764,9 @@ class SwitchManager(Manager):
             self.warning(msg)
             return False, False
 
+        print('got here')
         r, c = self._actuate_(name, action, mode, force=force)
+        print('actuate return {}, {}'.format(r,c))
         if r and c:
             for pip in self.pipette_trackers:
                 '''
@@ -847,8 +850,7 @@ class SwitchManager(Manager):
         p = paths.actuation_tracker_file
         obj = {}
         if p and os.path.isfile(p):
-            with open(p, 'r') as rfile:
-                obj = yaml.load(rfile)
+            obj = yload(p)
 
         return obj
 

@@ -17,6 +17,7 @@
 import yaml
 
 from pychron.core.xml.xml_parser import XMLParser
+from pychron.core.yaml import yload
 
 
 class SwitchParser(XMLParser):
@@ -24,13 +25,12 @@ class SwitchParser(XMLParser):
     def load(self, path):
         self.path = path
         if self.is_yaml:
-            with open(path, 'r') as rfile:
-                try:
-                    self._yobj = yaml.load(rfile)
-                except yaml.YAMLError:
-                    return
+            try:
+                self._yobj = yload(path)
+            except yaml.YAMLError:
+                return
 
-                return True
+            return True
         else:
             return super(SwitchParser, self).load(path)
 

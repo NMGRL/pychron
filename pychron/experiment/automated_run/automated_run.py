@@ -24,7 +24,6 @@ import weakref
 from pprint import pformat
 from threading import Thread, Event as TEvent
 
-import yaml
 from numpy import Inf, polyfit, linspace, polyval
 from traits.api import Any, Str, List, Property, \
     Event, Instance, Bool, HasTraits, Float, Int, Long, Tuple, Dict
@@ -35,6 +34,7 @@ from pychron.core.helpers.filetools import get_path
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.helpers.strtools import to_bool
 from pychron.core.ui.preference_binding import set_preference
+from pychron.core.yaml import yload
 from pychron.experiment import ExtractionException
 from pychron.experiment.automated_run.hop_util import parse_hops
 from pychron.experiment.automated_run.persistence_spec import PersistenceSpec
@@ -1662,10 +1662,9 @@ anaylsis_type={}
         dfp = self._get_default_fits_file()
         if dfp:
             self.debug('using default fits file={}'.format(dfp))
-            with open(dfp, 'r') as rfile:
-                yd = yaml.load(rfile)
-                key = 'baseline' if is_baseline else 'signal'
-                fd = {yi['name']: (yi['fit'], yi['error_type']) for yi in yd[key]}
+            yd = yload(dfp)
+            key = 'baseline' if is_baseline else 'signal'
+            fd = {yi['name']: (yi['fit'], yi['error_type']) for yi in yd[key]}
         else:
             self.debug('no default fits file')
             fd = {}
@@ -1683,10 +1682,9 @@ anaylsis_type={}
         sfods, bsfods = {}, {}
         dfp = self._get_default_fits_file()
         if dfp:
-            with open(dfp, 'r') as rfile:
-                ys = yaml.load(rfile)
-                extract_fit_dict(sfods, ys['signal'])
-                extract_fit_dict(bsfods, ys['baseline'])
+            ys = yload(dfp)
+            extract_fit_dict(sfods, ys['signal'])
+            extract_fit_dict(bsfods, ys['baseline'])
 
         return sfods, bsfods
 
@@ -1804,30 +1802,29 @@ anaylsis_type={}
             p = os.path.join(paths.conditionals_dir, add_extension(t, '.yaml'))
             if os.path.isfile(p):
                 self.debug('extract conditionals from file. {}'.format(p))
-                with open(p, 'r') as rfile:
-                    yd = yaml.load(rfile)
-                    failure = False
-                    for kind, items in yd.items():
+                yd = yload(p)
+                failure = False
+                for kind, items in yd.items():
+                    try:
+                        klass = klass_dict[kind]
+                    except KeyError:
+                        self.debug('Invalid conditional kind="{}"'.format(kind))
+                        continue
+
+                    for cd in items:
                         try:
-                            klass = klass_dict[kind]
-                        except KeyError:
-                            self.debug('Invalid conditional kind="{}"'.format(kind))
-                            continue
+                            # trim off s
+                            if kind.endswith('s'):
+                                kind = kind[:-1]
 
-                        for cd in items:
-                            try:
-                                # trim off s
-                                if kind.endswith('s'):
-                                    kind = kind[:-1]
+                            self._conditional_appender(kind, cd, klass, location=p)
+                        except BaseException as e:
+                            self.debug('Failed adding {}. excp="{}", cd={}'.format(kind, e, cd))
+                            failure = True
 
-                                self._conditional_appender(kind, cd, klass, location=p)
-                            except BaseException as e:
-                                self.debug('Failed adding {}. excp="{}", cd={}'.format(kind, e, cd))
-                                failure = True
-
-                    if failure:
-                        if not self.confirmation_dialog('Failed to add Conditionals. Would you like to continue?'):
-                            self.cancel_run(do_post_equilibration=False)
+                if failure:
+                    if not self.confirmation_dialog('Failed to add Conditionals. Would you like to continue?'):
+                        self.cancel_run(do_post_equilibration=False)
             else:
                 try:
                     c, start = t.split(',')
@@ -2560,7 +2557,7 @@ anaylsis_type={}
             docstr = docstr.strip()
             # self.debug('{} {} metadata\n{}'.format(script.name, key, docstr))
             try:
-                params = yaml.load(docstr)
+                params = yload(docstr)
                 return params[key]
             except KeyError:
                 self.warning('No value "{}" in metadata'.format(key))

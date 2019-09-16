@@ -16,12 +16,14 @@
 
 # ============= enthought library imports =======================
 
-from traits.api import Bool, Any, Float, Tuple, Int, Str, HasTraits, Button
+import yaml
 # ============= standard library imports ========================
 from numpy import polyval, exp
-import yaml
+from traits.api import Float, Tuple, Int, Str, HasTraits
+
 # ============= local library imports  ==========================
 from pychron.config_loadable import ConfigLoadable
+from pychron.core.yaml import yload
 from pychron.loggable import Loggable
 
 
@@ -126,8 +128,9 @@ class YamlCamera(Loggable, BaseCamera):
                 setattr(self, name, opt)
 
     def get_configuration(self, path):
-        with open(path, 'r') as rfile:
-            return yaml.load(rfile)
+        return yload(path)
+        # with open(path, 'r') as rfile:
+        #     return yaml.load(rfile)
 
     def write_configuration(self, obj, path):
         with open(path, 'w') as wfile:

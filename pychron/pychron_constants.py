@@ -19,9 +19,8 @@
 # ============= local library imports  ==========================
 import os
 
-import yaml
-
 from pychron.core.helpers.formatting import floatfmt
+from pychron.core.yaml import yload
 from pychron.paths import paths
 
 STARTUP_MESSAGE_POSITION = (100, 300)
@@ -113,8 +112,15 @@ WEIGHTINGS = (NULL_STR, 'Volume', 'Variance')
 INVALID_MSWD_CHR = '*'
 
 
-def format_mswd(m, v, n=3):
-    return '{}{}'.format('' if v else INVALID_MSWD_CHR, floatfmt(m, n=n))
+def format_mswd(m, v, n=3, include_tag=False):
+    tag = ''
+    if include_tag:
+        if isinstance(include_tag, str):
+            tag = include_tag
+        else:
+            tag = 'MSWD='
+
+    return '{}{}{}'.format(tag, '' if v else INVALID_MSWD_CHR, floatfmt(m, n=n))
 
 
 DELIMITERS = {',': 'comma', '\t': 'tab', ' ': 'space'}
@@ -233,7 +239,7 @@ if paths.setup_dir:
     flux_constants = os.path.join(paths.setup_dir, 'flux_constants.yaml')
     if os.path.isfile(flux_constants):
         with open(flux_constants, 'r') as rf:
-            obj = yaml.load(rf)
+            obj = yload(rf)
             try:
                 FLUX_CONSTANTS.update(obj)
             except BaseException:

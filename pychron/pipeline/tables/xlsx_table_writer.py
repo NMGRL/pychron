@@ -37,8 +37,8 @@ from pychron.pychron_constants import PLUSMINUS_NSIGMA, NULL_STR, DESCENDING, fo
 
 
 def format_mswd(t):
-    m, v, _ = t
-    return 'MSWD={}'.format(FM(m, v))
+    m, v, _, p = t
+    return FM(m, v, include_tag=True)
 
 
 class XLSXAnalysisTableWriter(BaseTableWriter):

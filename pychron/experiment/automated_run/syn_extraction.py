@@ -16,16 +16,18 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import os
 import time
 import uuid
 from threading import Thread
 
 from traits.api import HasTraits, Instance, Str, Dict, Property, Bool, Float
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-import yaml
 from pychron.core.helpers.filetools import add_extension
+from pychron.core.yaml import yload
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.loggable import Loggable
 from pychron.paths import paths
@@ -220,8 +222,7 @@ class SynExtractionCollector(Loggable):
     def _load_config(self):
         p = self.path
         if os.path.isfile(p):
-            with open(p, 'r') as rfile:
-                return yaml.load(rfile)
+            return yload(p)
 
     def _static_spec_factory(self, config):
         config = config.get('static')

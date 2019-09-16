@@ -15,6 +15,7 @@
 # ===============================================================================
 from __future__ import absolute_import
 from __future__ import print_function
+
 import os
 
 import yaml
@@ -30,6 +31,7 @@ from traitsui.table_column import ObjectColumn
 from pychron.core.helpers.filetools import fileiter, add_extension
 from pychron.core.ui.table_editor import myTableEditor
 from pychron.core.ui.text_editor import myTextEditor
+from pychron.core.yaml import yload
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.resources import icon
 from pychron.experiment.automated_run.hop_util import split_hopstr
@@ -285,9 +287,8 @@ class HopEditorModel(Loggable):
             self.use_yaml = True
             with open(p, 'r') as rfile:
                 self.text = rfile.read()
-                rfile.seek(0)
                 try:
-                    for i, hop in enumerate(yaml.load(rfile)):
+                    for i, hop in enumerate(yload(self.text)):
                         h = Hop(name=str(i + 1),
                                 counts=hop.get('counts', 0),
                                 settle=hop.get('settle', 0),

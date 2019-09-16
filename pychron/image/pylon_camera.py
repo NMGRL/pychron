@@ -15,14 +15,15 @@
 # ===============================================================================
 from __future__ import absolute_import
 from __future__ import print_function
+
 import os
+
+from pychron.core.yaml import yload
 
 try:
     import pypylon
 except ImportError:
     print('failed importing pylon')
-
-import yaml
 
 from pychron.loggable import Loggable
 
@@ -102,9 +103,8 @@ class PylonCamera(Loggable):
 
         self._setting_config = True
         if os.path.isfile(p):
-            with open(p, 'r') as rfile:
-                yd = yaml.load(rfile)
-                self.load_configuration(yd)
+            yd = yload(p)
+            self.load_configuration(yd)
         self._setting_config = False
 
 # ============= EOF =============================================

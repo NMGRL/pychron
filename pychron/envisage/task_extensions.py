@@ -34,6 +34,7 @@ from pychron.core.helpers.strtools import to_bool
 # ============= local library imports  ==========================
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.tree_editor import TreeEditor
+from pychron.core.yaml import yload
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.resources import icon
 from pychron.paths import paths
@@ -76,10 +77,8 @@ class ViewModel(HasTraits):
     def set_states(self, modename):
         if modename == 'simple':
             enables = []
-            p = paths.simple_ui_file
             try:
-                with open(p, 'r') as rfile:
-                    enables = yaml.load(rfile)
+                enables = yload(paths.simple_ui_file)
             except BaseException as e:
                 print('ViewModel.set states', e)
         elif modename == 'advanced':
@@ -109,16 +108,15 @@ class ViewModel(HasTraits):
     def load(self):
         p = paths.task_extensions_file
         if os.path.isfile(p):
-            with open(p, 'r') as rfile:
-                yl = yaml.load(rfile)
-                for te in self.task_extensions:
-                    yd = next((d for d in yl if d['plugin_id'] == te.id), None)
-                    if yd:
-                        for ai in yd['actions']:
-                            action, enabled = ai.split(',')
-                            tt = next((ta for ta in te.additions if ta.model.id == action), None)
-                            if tt:
-                                tt.enabled = to_bool(enabled)
+            yl = yload(p)
+            for te in self.task_extensions:
+                yd = next((d for d in yl if d['plugin_id'] == te.id), None)
+                if yd:
+                    for ai in yd['actions']:
+                        action, enabled = ai.split(',')
+                        tt = next((ta for ta in te.additions if ta.model.id == action), None)
+                        if tt:
+                            tt.enabled = to_bool(enabled)
 
     def dump(self):
         p = paths.task_extensions_file
@@ -209,12 +207,11 @@ class EditExtensionsView(HasTraits):
     def load(self):
         self.view_model.load()
         if os.path.isfile(paths.edit_ui_defaults):
-            with open(paths.edit_ui_defaults, 'r') as rfile:
-                try:
-                    d = yaml.load(rfile)
-                    self.trait_set(**d)
-                except BaseException as e:
-                    print('exception', e)
+            try:
+                d = yload(paths.edit_ui_defaults)
+                self.trait_set(**d)
+            except BaseException as e:
+                print('exception', e)
 
     def dump(self):
         self.view_model.dump()

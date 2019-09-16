@@ -20,7 +20,6 @@ from __future__ import absolute_import
 import os
 import time
 
-import yaml
 from numpy import array, argmin
 from traits.api import Int, Property, List, \
     Str, DelegatesTo, Bool, Float
@@ -28,6 +27,7 @@ from traits.api import Int, Property, List, \
 from pychron.core.helpers.strtools import csv_to_floats
 from pychron.core.progress import open_progress
 from pychron.core.ramper import StepRamper
+from pychron.core.yaml import yload
 from pychron.paths import paths
 from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES, \
     QTEGRA_DEFAULT_INTEGRATION_TIME
@@ -490,16 +490,12 @@ class ThermoSpectrometer(BaseSpectrometer):
         readouts = {}
         deflections = {}
         if not self.force_send_configuration:
-            with open(path, 'r') as rfile:
-                try:
-                    yt = yaml.load(rfile)
-                    if yt:
-                        readouts, deflections = yt
-                        readouts = {r['name']: r for r in readouts}
-                        deflections = {r['name']: r for r in deflections}
+            yt = yload(path)
+            if yt:
+                readouts, deflections = yt
+                readouts = {r['name']: r for r in readouts}
+                deflections = {r['name']: r for r in deflections}
 
-                except yaml.YAMLError:
-                    pass
         return readouts, deflections
 
     def _send_configuration(self, use_ramp=True):

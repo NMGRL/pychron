@@ -25,6 +25,8 @@ from datetime import datetime
 
 import yaml
 
+from pychron.core.yaml import yload
+
 
 def subdirize(root, name, n=1, sublen=2, mode='r'):
     for i in range(n):
@@ -298,8 +300,9 @@ def unique_path_from_manifest(root, base, extension='.txt'):
     mp = os.path.join(root, 'manifest.yaml')
     yd = {}
     if os.path.isfile(mp):
-        with open(mp, 'r') as rfile:
-            yd = yaml.load(rfile)
+        yd = yload(mp)
+        # with open(mp, 'r') as rfile:
+        #     yd = yaml.load(rfile)
 
         if yd:
             v = yd.get(base, None)

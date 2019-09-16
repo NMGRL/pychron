@@ -26,7 +26,7 @@ from traitsui.menu import Action
 
 from pychron.canvas.canvas2D.overlays.extraction_line_overlay import ExtractionLineInfoTool, ExtractionLineInfoOverlay
 from pychron.canvas.canvas2D.scene.extraction_line_scene import ExtractionLineScene
-from pychron.canvas.canvas2D.scene.primitives.connections import Elbow, Connection, ConnectionMixin
+from pychron.canvas.canvas2D.scene.primitives.connections import Elbow, Connection
 from pychron.canvas.canvas2D.scene.primitives.lasers import Laser
 from pychron.canvas.canvas2D.scene.primitives.primitives import BorderLine
 from pychron.canvas.canvas2D.scene.primitives.valves import RoughValve, \
@@ -230,13 +230,10 @@ class ExtractionLineCanvas2D(SceneCanvas):
                 if event.shift_down:
                     mode = 'shift_select'
 
-                try:
-                    if state:
-                        ok, change = self.manager.open_valve(item.name, mode=mode)
-                    else:
-                        ok, change = self.manager.close_valve(item.name, mode=mode)
-                except TypeError:
-                    ok, change = True, True
+                if state:
+                    ok, change = self.manager.open_valve(item.name, mode=mode)
+                else:
+                    ok, change = self.manager.close_valve(item.name, mode=mode)
 
         if ok:
             item.state = state

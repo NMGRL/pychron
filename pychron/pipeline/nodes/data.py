@@ -25,6 +25,7 @@ from pyface.timer.do_later import do_after
 from traits.api import Instance, Bool, Int, Str, List, Enum, Float, Time
 from traitsui.api import Item, EnumEditor, CheckListEditor
 
+from pychron.core.helpers.strtools import to_bool
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.globals import globalv
 from pychron.pipeline.csv_dataset_factory import CSVDataSetFactory
@@ -139,13 +140,16 @@ class CSVNode(BaseDVCNode):
         self.unknowns = []
 
     def configure(self, pre_run=False, **kw):
-        if os.getenv('CSV_DEBUG'):
+        if to_bool(os.getenv('CSV_DEBUG')):
             self.path = '/Users/ross/PychronDev/data/csv/Murphy ideo ages2.csv'
             self.path = '/Users/ross/Downloads/Takahe_Ideo.csv'
             self.path = '/Users/ross/Downloads/VallesTest.csv'
 
+        ret = bool(self.path)
         if not pre_run:
             self._manual_configured = True
+        else:
+            ret = True
 
         if not self.path or not os.path.isfile(self.path):
             dsf = CSVDataSetFactory(dvc=self.dvc)
@@ -154,8 +158,10 @@ class CSVNode(BaseDVCNode):
             if info.result:
                 if dsf.data_path:
                     self.path = dsf.data_path
-
-        return bool(self.path)
+                    ret = True
+                elif dsf.records:
+                    self.unknowns = dsf.as_analyses()
+        return ret
 
     def run(self, state):
         if not self.unknowns:
@@ -163,9 +169,10 @@ class CSVNode(BaseDVCNode):
                 state.canceled = True
                 return
 
-        unks = self._load_analyses()
-        if unks:
-            self.unknowns.extend(unks)
+        if not self.unknowns:
+            unks = self._load_analyses()
+            if unks:
+                self.unknowns.extend(unks)
 
         # add our analyses to the state
         items = state.unknowns

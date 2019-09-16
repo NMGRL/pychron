@@ -17,6 +17,7 @@ from __future__ import absolute_import
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui import set_qt
+from pychron.core.yaml import yload
 
 set_qt()
 
@@ -47,22 +48,21 @@ class OptionsEditor(HasTraits):
 
     def _path_changed(self):
         if self.path and os.path.isfile(self.path):
-            with open(self.path, 'r') as rfile:
-                try:
-                    d = yaml.load(rfile)
-                except yaml.YAMLError:
-                    return
+            try:
+                d = yload(self.path)
+            except yaml.YAMLError:
+                return
 
-                opts = []
-                bopts = []
-                for k, v in d.items():
-                    opt = Option(name=k, value=v)
-                    if isinstance(v, bool):
-                        bopts.append(opt)
-                    else:
-                        opts.append(opt)
-                self.numeric_options = opts
-                self.bool_options = bopts
+            opts = []
+            bopts = []
+            for k, v in d.items():
+                opt = Option(name=k, value=v)
+                if isinstance(v, bool):
+                    bopts.append(opt)
+                else:
+                    opts.append(opt)
+            self.numeric_options = opts
+            self.bool_options = bopts
 
     def traits_view(self):
         ncols = [ObjectColumn(name='name', editable=False),

@@ -18,23 +18,26 @@
 from pyface.timer.do_later import do_after
 from traits.api import List, Event
 from traitsui.api import View, UItem, Group, VSplit
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from traitsui.editors import TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
 
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+from pychron.core.helpers.formatting import floatfmt
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.models.series_model import SeriesModel
 
 
 class SeriesStatsTabularAdapter(TabularAdapter):
     columns = [('Label', 'label'),
-               ('Mean', 'mean'),
-               ('StdDev', 'std'),
+               ('Wt. Mean', 'mean'),
+               ('SD', 'std'),
+               ('SEWM', 'se'),
+               ('SEM', 'sem'),
                ('Mean MSWD', 'mean_mswd'),
                ('Min', 'min'),
                ('Max', 'max'),
-               ('Dev.', 'dev'), ]
+               ('Dev.', 'dev')]
 
 
 class SeriesStatistics:
@@ -44,7 +47,10 @@ class SeriesStatistics:
 
     def __getattr__(self, attr):
         if hasattr(self._reg, attr):
-            return getattr(self._reg, attr)
+            v = getattr(self._reg, attr)
+            if isinstance(v, float):
+                v = floatfmt(v)
+            return v
 
 
 class SeriesEditor(FigureEditor):

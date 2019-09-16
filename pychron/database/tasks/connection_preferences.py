@@ -16,7 +16,6 @@
 # ============= enthought library imports =======================
 import os
 
-import yaml
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
@@ -33,6 +32,7 @@ from traitsui.extras.checkbox_column import CheckboxColumn
 from pychron.core.helpers.strtools import to_bool, to_csv_str
 from pychron.core.pychron_traits import HostStr
 from pychron.core.ui.custom_label_editor import CustomLabel
+from pychron.core.yaml import yload
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_preferences_helper import FavoritesPreferencesHelper
 from pychron.paths import paths
@@ -226,9 +226,7 @@ class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
         dlg = FileDialog(action='open', wildcard='*.pz')
         if dlg.open() == OK:
             if dlg.path:
-                with open(dlg.path, 'r') as rfile:
-                    yd = yaml.load(rfile)
-
+                yd = yload(dlg.path)
                 name = os.splitext(os.path.basename(dlg.path))[0]
                 path = os.path.join(paths.offline_db_dir, '{}.sqlite'.format(name))
                 with open(path) as wfile:

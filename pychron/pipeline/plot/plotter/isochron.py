@@ -454,10 +454,10 @@ class InverseIsochron(Isochron):
             p = format_percent_error(v, e)
             pe = ' ({})%'.format(p)
 
-        age_line = u'Age= {} {}{}{} {}{}'.format(floatfmt(v, n=af),
+        age_line = u'Age={} {}{}{} {}{}'.format(floatfmt(v, n=af),
                                                 PLUSMINUS,
                                                 floatfmt(e, n=af, s=3), pe, ag.age_units, mse_text)
-        mswd_line = 'N= {} MSWD= {}'.format(n, mswd)
+        mswd_line = 'N={} MSWD={}'.format(n, mswd)
         if label is None:
             th = 0
             for overlay in plot.overlays:

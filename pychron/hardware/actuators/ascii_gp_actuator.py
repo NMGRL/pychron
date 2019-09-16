@@ -39,15 +39,16 @@ class ASCIIGPActuator(GPActuator):
 
     @trim_affirmative
     def _actuate(self, obj, action):
-        state = action.lower() == 'Open'
+        self.debug('Actuate {} {}'.format(obj, action))
+        state = action.lower() == 'open'
         cmd = self.open_cmd if state else self.close_cmd
 
-        if isinstance(cmd, callable):
+        if callable(cmd):
             cmd = cmd(get_switch_address(obj))
         else:
             cmd = '{}{}{}'.format(cmd, self.delimiter, get_switch_address(obj))
 
-        r = self.ask(cmd)
+        r = self.ask(cmd, verbose=True)
         return r
 
 # ============= EOF =============================================

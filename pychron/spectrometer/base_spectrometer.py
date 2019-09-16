@@ -20,6 +20,7 @@ from numpy import array
 from traits.api import Any, cached_property, List, TraitError, Str, Property, Bool
 
 from pychron.core.helpers.filetools import glob_list_directory
+from pychron.core.yaml import yload
 from pychron.globals import globalv
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR
@@ -398,7 +399,7 @@ class BaseSpectrometer(SpectrometerDevice):
         return config
 
     def load_molecular_weights(self):
-        import csv, yaml
+        import csv
         # load the molecular weights dictionary
 
         p = os.path.join(paths.spectrometer_dir, 'molecular_weights.csv')
@@ -414,11 +415,10 @@ class BaseSpectrometer(SpectrometerDevice):
                     mws = None
         elif os.path.isfile(yp):
             self.info('loading "molecular_weights.yaml" file. {}'.format(yp))
-            with open(yp, 'r') as f:
-                try:
-                    mws = yaml.load(f)
-                except BaseException:
-                    mws = None
+            try:
+                mws = yload(yp)
+            except BaseException:
+                mws = None
 
         if mws is None:
             self.info('writing a default "molecular_weights.csv" file')

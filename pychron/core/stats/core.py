@@ -17,12 +17,13 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
-from __future__ import absolute_import
 
 from numpy import asarray, average, vectorize
 
-
 # ============= local library imports  ==========================
+from scipy.stats import chi2
+
+
 def _kronecker(ii, jj):
     return int(ii == jj)
 
@@ -139,5 +140,16 @@ def calculate_mswd2(x, y, ex, ey, a, b, corrcoeffs=None):
     n = len(x)
 
     return chi_squared(x, y, ex, ey, a, b, corrcoeffs) / (n - 2)
+
+
+def calculate_mswd_probability(mswd, dof):
+    """
+    replicates MassSpec's  StatsModule.ProbMSWD
+
+    :param mswd:
+    :param dof:
+    :return:
+    """
+    return chi2.sf(mswd * dof, dof)
 
 # ============= EOF =============================================

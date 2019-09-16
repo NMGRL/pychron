@@ -27,6 +27,7 @@ from pychron.canvas.canvas2D.dumper_canvas import DumperCanvas
 from pychron.canvas.canvas2D.video_canvas import VideoCanvas
 from pychron.core.helpers.filetools import pathtolist
 from pychron.core.progress import open_progress
+from pychron.core.yaml import yload
 from pychron.experiment import ExtractionException
 from pychron.furnace.base_furnace_manager import BaseFurnaceManager
 from pychron.furnace.configure_dump import ConfigureDump
@@ -437,14 +438,14 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self.debug('load sample states')
         p = paths.furnace_sample_states
         if os.path.isfile(p):
-            with open(p, 'r') as rfile:
-                states = yaml.load(rfile)
-                self.debug('states={}'.format(states))
-                for si in states:
-                    hole = self.stage_manager.stage_map.get_hole(si)
-                    self.debug('si={} hole={}'.format(si, hole))
-                    if hole:
-                        hole.analyzed = True
+            # with open(p, 'r') as rfile:
+            states = yload(p)
+            self.debug('states={}'.format(states))
+            for si in states:
+                hole = self.stage_manager.stage_map.get_hole(si)
+                self.debug('si={} hole={}'.format(si, hole))
+                if hole:
+                    hole.analyzed = True
 
     def _dump_sample_states(self, states=None):
         if states is None:

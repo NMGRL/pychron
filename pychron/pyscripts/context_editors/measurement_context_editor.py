@@ -31,6 +31,7 @@ from traitsui.api import View, Item, EnumEditor, VGroup, HGroup, CheckListEditor
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.helpers.filetools import glob_list_directory
 from pychron.core.ui.qt.combobox_editor import ComboboxEditor
+from pychron.core.yaml import yload
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.paths import paths
 from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES
@@ -148,7 +149,7 @@ class MeasurementContextEditor(ContextEditor):
 
             if s:
                 try:
-                    ctx = yaml.load(s)
+                    ctx = yload(s)
                 except yaml.YAMLError:
                     return
 

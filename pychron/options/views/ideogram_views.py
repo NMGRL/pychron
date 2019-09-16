@@ -81,7 +81,8 @@ class DisplaySubOptions(TitleSubOptions):
         submean = HGroup(VGroup(Item('display_mean', label='Value', ),
                                 Item('display_percent_error', label='%Error', )),
                          VGroup(Item('display_mean_mswd', label='MSWD', ),
-                                Item('display_mean_n', label='N')),
+                                Item('display_mean_n', label='N'),
+                                Item('display_mswd_pvalue', label='P-Value')),
                          Item('mean_sig_figs', label='SigFigs'),
                          enabled_when='display_mean_indicator')
 

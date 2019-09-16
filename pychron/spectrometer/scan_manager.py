@@ -28,6 +28,7 @@ from traits.api import Instance, Any, DelegatesTo, List, Property, \
     Str, TraitError
 
 from pychron.core.ui.preference_binding import bind_preference
+from pychron.core.yaml import yload
 from pychron.graph.tools.data_tool import DataTool, DataToolOverlay
 from pychron.managers.data_managers.csv_data_manager import CSVDataManager
 from pychron.managers.stream_graph_manager import StreamGraphManager
@@ -147,9 +148,8 @@ class ScanManager(StreamGraphManager):
                                   default_flow_style=False)
 
             if os.path.isfile(p):
-                with open(p, 'r') as rfile:
-                    yd = yaml.load(rfile)
-                    self._valve_event_list = yd['valves']
+                yd = yload(p)
+                self._valve_event_list = yd['valves']
 
     def bind_preferences(self):
         pref_id = 'pychron.spectrometer'

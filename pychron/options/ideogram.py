@@ -61,6 +61,7 @@ class IdeogramOptions(AgeOptions):
     display_mean = Bool(True)
     display_mean_mswd = Bool(True)
     display_mean_n = Bool(True)
+    display_mswd_pvalue = Bool(True)
     display_percent_error = Bool(True)
     # display_identifier_on_mean = Bool(False)
     # display_sample_on_mean = Bool(False)

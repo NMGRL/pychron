@@ -21,10 +21,10 @@ from __future__ import absolute_import
 import os
 import time
 
-import yaml
 from traits.api import HasTraits, Str, Float, Enum, List
 
 # ============= local library imports  ==========================
+from pychron.core.yaml import yload
 from pychron.loggable import Loggable
 from pychron.paths import paths
 
@@ -126,8 +126,7 @@ class StartupTester(Loggable):
 
     def _load(self):
         if os.path.isfile(paths.startup_tests):
-            with open(paths.startup_tests, 'r') as rfile:
-                yd = yaml.load(rfile)
+            yd = yload(paths.startup_tests)
             return yd
         else:
             self.warning('No Startup Test file located at "{}"'.format(paths.startup_tests))

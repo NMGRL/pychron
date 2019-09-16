@@ -20,9 +20,9 @@ from __future__ import absolute_import
 import os
 import pickle
 
-import yaml
 from traits.api import Button, on_trait_change
 
+from pychron.core.yaml import yload
 from pychron.paths import paths
 from pychron.stage.maps.base_stage_map import BaseStageMap, SampleHole
 
@@ -214,11 +214,10 @@ class UVLaserStageMap(LaserStageMap):
         pass
 
     def load(self):
-        with open(self.file_path, 'r') as rfile:
-            d = yaml.load(rfile.read())
-            for attr in ('points', 'lines', 'polygons', 'transects'):
-                if attr in d:
-                    setattr(self, attr, d[attr])
+        d = yload(self.file_path)
+        for attr in ('points', 'lines', 'polygons', 'transects'):
+            if attr in d:
+                setattr(self, attr, d[attr])
 
     def get_polygon(self, name):
         return self._get_item('polygon', 'r', name)

@@ -15,9 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import os
 
-import yaml
 from chaco.axis import DEFAULT_TICK_FORMATTER
 from chaco.axis_view import float_or_auto
 from enable.markers import marker_names
@@ -35,6 +33,7 @@ from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.core.pychron_traits import BorderHGroup, BorderVGroup
 from pychron.core.ui.table_editor import myTableEditor
 from pychron.core.utils import alphas
+from pychron.core.yaml import yload
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.layout import FigureLayout
@@ -276,12 +275,7 @@ class BaseOptions(HasTraits):
 
     def load_factory_defaults(self, path):
         if path:
-            if not os.path.isfile(path):
-                yd = yaml.load(path)
-            else:
-                with open(path, 'r') as rfile:
-                    yd = yaml.load(rfile)
-
+            yd = yload(path)
             self._load_factory_defaults(yd)
 
     def setup(self):

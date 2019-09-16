@@ -1,6 +1,7 @@
 import os
 import unittest
 
+from pychron.core.stats.tests.mswd_tests import MSWDTestCase
 from pychron.pyscripts.tests.extraction_script import WaitForTestCase
 
 use_logger = False
@@ -91,6 +92,7 @@ def suite():
         FilterOLSRegressionTest,
         OLSRegressionTest2,
         TruncateRegressionTest,
+        MSWDTestCase,
 
         # DataMapper
         USGSVSCFileSourceUnittest,

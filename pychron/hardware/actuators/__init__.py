@@ -66,7 +66,7 @@ def trim_affirmative(func):
                 r, cmd = r
 
             r = r.strip()
-            if isinstance(obj.affirmative, callable):
+            if callable(obj.affirmative):
                 r = obj.affirmative(r, cmd)
             else:
                 r = r == obj.affirmative

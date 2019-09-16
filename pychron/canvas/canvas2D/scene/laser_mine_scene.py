@@ -16,16 +16,16 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-import yaml
 
-from pychron.canvas.canvas2D.scene.scene import Scene
+import six
 
 # from pychron.canvas.canvas2D.scene.primitives.primitives import Polygon, RasterPolygon
 from pychron.canvas.canvas2D.scene.primitives.laser_primitives import RasterPolygon
-import six
-
+from pychron.canvas.canvas2D.scene.scene import Scene
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.yaml import yload
+
 
 class LaserMineScene(Scene):
     def load(self, path):
@@ -36,9 +36,9 @@ class LaserMineScene(Scene):
             pass
 
     def load_yaml(self, path):
-        txt = open(path, 'r').read()
-        yobj = yaml.load(txt)
-
+        # txt = open(path, 'r').read()
+        # yobj = yaml.load(txt)
+        yobj = yload(path)
         if 'polygons' in yobj:
             for k, po in six.iteritems(yobj['polygons']):
                 self._new_polygon(po, k)

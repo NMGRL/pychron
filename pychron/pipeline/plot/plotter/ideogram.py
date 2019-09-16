@@ -407,7 +407,7 @@ class Ideogram(BaseArArFigure):
                     xs, ys = list(zip(*data))
 
             scatter = self._add_aux_plot(ys, name, po, pid,
-                                         gid=max(0, self.group_id or (aux_id-1)), xs=xs, **kw)
+                                         gid=max(0, self.group_id or (aux_id - 1)), xs=xs, **kw)
 
             if opt.include_group_legend:
                 key = str(aux_id)
@@ -635,7 +635,7 @@ class Ideogram(BaseArArFigure):
                     self._add_info_label(plot, ts)
 
     def _add_mean_indicator(self, g, line, po, bins, probs, pid):
-        wm, we, mswd, valid_mswd, n = self._calculate_stats(bins, probs)
+        wm, we, mswd, valid_mswd, n, pvalue = self._calculate_stats(bins, probs)
         ogid = self.group_id
         gid = ogid + 1
 
@@ -646,13 +646,9 @@ class Ideogram(BaseArArFigure):
 
             mswd_args = None
             if opt.display_mean_mswd:
-                mswd_args = (mswd, valid_mswd, n)
+                mswd_args = (mswd, valid_mswd, n, pvalue)
 
-            if opt.display_mean_n:
-                pass
-
-            text = self._make_mean_label(wm, we * opt.nsigma, n, total_n, mswd_args,
-                                         display_n=opt.display_mean_n)
+            text = self._make_mean_label(wm, we * opt.nsigma, n, total_n, mswd_args)
 
         plotkw = opt.get_plot_dict(ogid, self.subgroup_id)
 
@@ -721,12 +717,12 @@ class Ideogram(BaseArArFigure):
         if fxs:
             fxes = [a for i, a in enumerate(self.xes) if i not in sel]
             xs, ys = self._calculate_probability_curve(fxs, fxes)
-            wm, we, mswd, valid_mswd, n = self._calculate_stats(xs, ys)
+            wm, we, mswd, valid_mswd, n, pvalue = self._calculate_stats(xs, ys)
         else:
             n = 0
             ys = []
             xs = []
-            wm, we, mswd, valid_mswd = 0, 0, 0, False
+            wm, we, mswd, valid_mswd, pvalue = 0, 0, 0, False, 0
 
         lp.value.set_data(ys)
         lp.index.set_data(xs)
@@ -741,10 +737,9 @@ class Ideogram(BaseArArFigure):
 
                     mswd_args = None
                     if opt.display_mean_mswd:
-                        mswd_args = (mswd, valid_mswd, n)
+                        mswd_args = (mswd, valid_mswd, n, pvalue)
 
-                    text = self._make_mean_label(wm, we * opt.nsigma, n, total_n, mswd_args,
-                                                 display_n=opt.display_mean_n)
+                    text = self._make_mean_label(wm, we * opt.nsigma, n, total_n, mswd_args)
                     ov.label.text = text
 
         lp.overlays = [o for o in lp.overlays if not isinstance(o, PeakLabel)]
@@ -778,6 +773,8 @@ class Ideogram(BaseArArFigure):
                                       mswd_args=mswd_args,
                                       sig_figs=self.options.mean_sig_figs,
                                       percent_error=self.options.display_percent_error,
+                                      display_n=self.options.display_mean_n,
+                                      display_mswd_pvalue=self.options.display_mswd_pvalue,
                                       **kw)
 
         f = self.options.mean_label_format
@@ -975,7 +972,7 @@ class Ideogram(BaseArArFigure):
 
         ag.set_j_error(options.include_j_position_error, options.include_j_error_in_mean, dirty=True)
 
-        mswd, valid_mswd, n = self.analysis_group.get_mswd_tuple()
+        mswd, valid_mswd, n, pvalue = self.analysis_group.get_mswd_tuple()
 
         if options.mean_calculation_kind == 'kernel':
             wm, we = 0, 0
@@ -985,7 +982,7 @@ class Ideogram(BaseArArFigure):
         else:
             wage = self.analysis_group.weighted_age
             wm, we = nominal_value(wage), std_dev(wage)
-        return wm, we, mswd, valid_mswd, n
+        return wm, we, mswd, valid_mswd, n, pvalue
 
         # def _handle_xlimits(self):
         #     self.xlimits_updated = True

@@ -26,6 +26,7 @@ from pyface.tasks.task_window_layout import TaskWindowLayout
 from traits.api import List, Instance
 
 from pychron.core.helpers.strtools import to_bool
+from pychron.core.yaml import yload
 from pychron.envisage.view_util import open_view, close_views, report_view_stats
 from pychron.globals import globalv
 from pychron.hardware.core.i_core_device import ICoreDevice
@@ -66,20 +67,16 @@ class BaseTasksApplication(TasksApplication, Loggable):
         return to_bool(self.preferences.get(pid, default))
 
     def get_task_extensions(self, pid):
-        import yaml
-
-        p = paths.task_extensions_file
-        with open(p, 'r') as rfile:
-            yl = yaml.load(rfile)
-            for yi in yl:
-                # print yi['plugin_id'], pid
-                if yi['plugin_id'].startswith(pid):
-                    tid = yi.get('task_id', '')
-                    for ai in yi['actions']:
-                        a, e = ai.split(',')
-                        # print tid, a, e
-                        if to_bool(e):
-                            yield tid, a
+        yl = yload(paths.task_extensions_file)
+        for yi in yl:
+            # print yi['plugin_id'], pid
+            if yi['plugin_id'].startswith(pid):
+                tid = yi.get('task_id', '')
+                for ai in yi['actions']:
+                    a, e = ai.split(',')
+                    # print tid, a, e
+                    if to_bool(e):
+                        yield tid, a
 
     def about(self):
         self.about_dialog.open()

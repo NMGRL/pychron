@@ -25,6 +25,7 @@ from configparser import ConfigParser
 import yaml
 
 from pychron.core.helpers.filetools import fileiter
+from pychron.core.yaml import yload
 from pychron.paths import paths
 from pychron.pychron_constants import MEASUREMENT_COLOR
 from pychron.pyscripts.contexts import MeasurementCTXObject
@@ -267,7 +268,7 @@ class MeasurementPyScript(ValvePyScript):
             with open(p, 'r') as rfile:
                 head, ext = os.path.splitext(p)
                 if ext in ('.yaml', '.yml'):
-                    hops = yaml.load(rfile)
+                    hops = yload(rfile)
                 elif ext in ('.txt',):
                     def hop_factory(l):
                         pairs, counts, settle = eval(l)
@@ -768,7 +769,7 @@ class MeasurementPyScript(ValvePyScript):
         try:
             m = ast.parse(self.text)
             try:
-                yd = yaml.load(ast.get_docstring(m))
+                yd = yload(ast.get_docstring(m))
                 if yd:
                     mx = MeasurementCTXObject()
                     mx.create(yd)

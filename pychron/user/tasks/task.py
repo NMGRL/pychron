@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import hashlib
 import os
 
@@ -27,6 +28,7 @@ from traits.api import HasTraits, List, Str, Bool, Enum, on_trait_change
 from traits.api import Instance
 
 from pychron.core.pychron_traits import EmailStr
+from pychron.core.yaml import yload
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.base_task import BaseTask
 from pychron.paths import paths
@@ -103,12 +105,11 @@ class UsersTask(BaseTask):
     def _sync(self, users):
         path = os.path.join(paths.setup_dir, 'users.yaml')
         if os.path.isfile(path):
-            with open(path, 'r') as rfile:
-                yl = yaml.load(rfile)
-                for yi in yl:
-                    uu = next((i for i in users if i.name == yi.get('name')), None)
-                    if uu:
-                        uu.enabled = yi.get('enabled')
+            yl = yload(path)
+            for yi in yl:
+                uu = next((i for i in users if i.name == yi.get('name')), None)
+                if uu:
+                    uu.enabled = yi.get('enabled')
 
     def _generate_hash(self, users):
         md5 = hashlib.md5()

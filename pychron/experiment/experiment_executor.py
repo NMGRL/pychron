@@ -22,7 +22,6 @@ from datetime import datetime
 from operator import itemgetter
 from threading import Thread, Lock, currentThread
 
-import yaml
 from pyface.constant import CANCEL, YES, NO
 from pyface.timer.do_later import do_after
 from traits.api import Event, String, Bool, Enum, Property, Instance, Int, List, Any, Color, Dict, \
@@ -39,6 +38,7 @@ from pychron.core.progress import open_progress
 from pychron.core.stats import calculate_weighted_mean
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.wait.wait_group import WaitGroup
+from pychron.core.yaml import yload
 from pychron.envisage.consoleable import Consoleable
 from pychron.envisage.preference_mixin import PreferenceMixin
 from pychron.envisage.view_util import open_view
@@ -696,10 +696,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         names, addrs = None, None
         path = os.path.join(paths.setup_dir, 'users.yaml')
         if os.path.isfile(path):
-            with open(path, 'r') as rfile:
-                yl = yaml.load(rfile)
+            yl = yload(path)
+            items = [(i['name'], i['email']) for i in yl if i['enabled'] and i['email'] != email]
 
-                items = [(i['name'], i['email']) for i in yl if i['enabled'] and i['email'] != email]
             if items:
                 names, addrs = list(zip(*items))
         return names, addrs
@@ -1389,11 +1388,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 atype = spec.analysis_type
                 ms = self.experiment_queue.mass_spectrometer
                 try:
-                    with open(p, 'r') as rfile:
-                        checks = yaml.load(rfile)
-                        for ci in checks:
-                            if self._check_ratio_change(ms, atype, ci):
-                                return True
+                    checks = yload(p)
+                    for ci in checks:
+                        if self._check_ratio_change(ms, atype, ci):
+                            return True
                 except BaseException as e:
                     import traceback
                     traceback.print_exc()

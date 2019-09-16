@@ -30,6 +30,7 @@ from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.progress import open_progress
+from pychron.core.yaml import yload
 from pychron.database.core.defaults import load_irradiation_map
 from pychron.dvc.dvc_irradiationable import DVCIrradiationable
 from pychron.entry.editors.irradiation_editor import IrradiationEditor
@@ -484,8 +485,8 @@ class LabnumberEntry(DVCIrradiationable):
         level = self.level
         if irradiation and level:
             p = os.path.join(paths.hidden_dir, 'backup.{}.{}.yaml'.format(irradiation, level))
-            with open(p, 'r') as rfile:
-                self.irradiated_positions = [IrradiatedPosition(**pos) for pos in yaml.load(rfile)]
+            yd = yload(p)
+            self.irradiated_positions = [IrradiatedPosition(**pos) for pos in yd]
         else:
             self.information_dialog('No recover file for {}'.format(irradiation, level))
 

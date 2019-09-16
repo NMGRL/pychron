@@ -38,7 +38,7 @@ from pychron.pipeline.plot.flow_label import FlowDataLabel, FlowPlotLabel
 from pychron.pipeline.plot.overlays.points_label_overlay import PointsLabelOverlay
 from pychron.pipeline.plot.point_move_tool import OverlayMoveTool
 from pychron.processing.analyses.analysis_group import AnalysisGroup
-from pychron.pychron_constants import PLUSMINUS
+from pychron.pychron_constants import PLUSMINUS, format_mswd
 
 
 class SelectionFigure(HasTraits):
@@ -579,6 +579,7 @@ class BaseArArFigure(SelectionFigure):
                           mswd_args=None,
                           display_n=True,
                           display_mswd=True,
+                          display_mswd_pvalue=True,
                           percent_error=False,
                           sig_figs=3):
 
@@ -593,9 +594,10 @@ class BaseArArFigure(SelectionFigure):
             n = ''
 
         if mswd_args and display_mswd:
-            mswd, valid_mswd, _ = mswd_args
-            vd = '' if valid_mswd else '*'
-            mswd = '{} MSWD= {:0.2f}'.format(vd, mswd)
+            mswd, valid_mswd, _, pvalue = mswd_args
+            mswd = format_mswd(mswd, valid_mswd, include_tag=True)
+            if display_mswd_pvalue:
+                mswd = '{} pvalue={:0.2f}'.format(mswd, pvalue)
         else:
             mswd = ''
 

@@ -19,7 +19,6 @@ import os
 import shutil
 from datetime import datetime
 
-import yaml
 from apptools.preferences.preference_binding import bind_preference
 from git.exc import GitCommandError
 # ============= enthought library imports =======================
@@ -28,6 +27,7 @@ from uncertainties import std_dev, nominal_value
 from yaml import YAMLError
 
 from pychron.core.helpers.binpack import encode_blob, pack
+from pychron.core.yaml import yload
 from pychron.dvc import dvc_dump, analysis_path, repository_path, NPATH_MODIFIERS
 from pychron.experiment.automated_run.persistence import BasePersister
 from pychron.git_archive.repo_manager import GitRepoManager
@@ -327,18 +327,19 @@ class DVCPersister(BasePersister):
         p = os.path.join(paths.setup_dir, 'arar_mapping.yaml')
         if os.path.isfile(p):
             self.debug('loading arar mapping from {}'.format(p))
-            with open(p, 'r') as rfile:
-                try:
-                    obj = yaml.load(rfile)
-                except YAMLError:
-                    pass
 
-                for k in ARGON_KEYS:
-                    if k not in obj:
-                        self.warning('Invalid arar_mapping.yaml file. required keys={}'.format(ARGON_KEYS))
-                        return
+            # with open(p, 'r') as rfile:
+            try:
+                obj = yload(p)
+            except YAMLError:
+                obj = {}
 
-                self.arar_mapping = obj
+            for k in ARGON_KEYS:
+                if k not in obj:
+                    self.warning('Invalid arar_mapping.yaml file. required keys={}'.format(ARGON_KEYS))
+                    return
+
+            self.arar_mapping = obj
 
     def _check_repository_identifier(self):
         repo_id = self.per_spec.run_spec.repository_identifier

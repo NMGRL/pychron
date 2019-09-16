@@ -19,10 +19,10 @@ import os
 import time
 from math import pi
 
-import yaml
 from numpy import arange, sin
 from traits.api import Property, Float, Event, Instance
 
+from pychron.core.yaml import yload
 from pychron.paths import paths
 from pychron.spectrometer.fieldmixin import FieldMixin
 from pychron.spectrometer.spectrometer_device import SpectrometerDevice
@@ -188,12 +188,11 @@ class BaseMagnet(SpectrometerDevice, FieldMixin):
 
         p = paths.af_demagnetization
         if os.path.isfile(p):
-            with open(p, 'r') as rfile:
-                try:
-                    yd = yaml.load(rfile)
-                except BaseException as e:
-                    self.warning_dialog('AF Demagnetization unavailable. Syntax error in file. Error: {}'.format(e))
-                    return
+            try:
+                yd = yload(p)
+            except BaseException as e:
+                self.warning_dialog('AF Demagnetization unavailable. Syntax error in file. Error: {}'.format(e))
+                return
 
             if not isinstance(yd, dict):
                 self.warning_dialog('AF Demagnetization unavailable. Syntax error in file')
@@ -206,12 +205,11 @@ class BaseMagnet(SpectrometerDevice, FieldMixin):
 
         p = paths.af_demagnetization
         if os.path.isfile(p):
-            with open(p, 'r') as rfile:
-                try:
-                    yd = yaml.load(rfile)
-                except BaseException as e:
-                    self.warning('AF Demagnetization unavailable. Syntax error in file. Error: {}'.format(e))
-                    return
+            try:
+                yd = yload(p)
+            except BaseException as e:
+                self.warning('AF Demagnetization unavailable. Syntax error in file. Error: {}'.format(e))
+                return
 
             period = yd.get('period', None)
             if period is None:
