@@ -30,6 +30,7 @@ from traitsui.table_column import ObjectColumn
 from pychron.core.csv.csv_parser import CSVColumnParser
 from pychron.core.fuzzyfinder import fuzzyfinder
 from pychron.core.helpers.iterfuncs import groupby_key
+from pychron.core.helpers.strtools import to_bool
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pychron_traits import BorderVGroup
 from pychron.core.stats import calculate_weighted_mean, calculate_mswd
@@ -184,8 +185,9 @@ class CSVDataSetFactory(HasTraits):
     def load(self):
         self.repositories = self.dvc.get_local_repositories()
         self.orepositories = self.repositories
-        self.records = [CSVRecord() for i in range(3)]
-        self._test_button_fired()
+        if to_bool(os.getenv('CSV_DEBUG')):
+            self.records = [CSVRecord() for i in range(3)]
+            self._test_button_fired()
 
     def dump(self):
         if not self.name:
