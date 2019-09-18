@@ -168,7 +168,7 @@ class BaseSpectrometer(SpectrometerDevice):
 
         # correct for hv
         if self.use_hv_correction:
-            cor = self.get_hv_correction(dac, current=current)
+            cor = self.get_hv_correction(current=current)
             dac *= cor
             self.debug('doing hv correction. factor: {}, new dac: {}'.format(cor, dac))
 
@@ -180,8 +180,9 @@ class BaseSpectrometer(SpectrometerDevice):
         """
 
         if self.use_hv_correction:
-            cor = self.get_hv_correction(dac, uncorrect=True, current=current)
+            cor = self.get_hv_correction(uncorrect=True, current=current)
             dac *= cor
+            self.debug('doing hv uncorrection. factor: {}, new dac: {}'.format(cor, dac))
 
         if self.use_deflection_correction:
             dac -= det.get_deflection_correction(current=current)

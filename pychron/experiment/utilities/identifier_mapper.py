@@ -44,9 +44,15 @@ class IdentifierMapper(Loggable):
         mapping = self._get_spectrometer_mapping(spectrometer.lower(), destination)
         lvalue = value.lower()
         if lvalue in mapping:
-            return mapping[lvalue]
+            m = mapping[lvalue]
         else:
-            return value
+            self.debug('value "{}" not in mapping for spectrometer "{}". '
+                       'Available keys={}'.format(value, spectrometer, mapping.keys()))
+
+            m = value
+
+        self.debug('mapped "{}" to "{}"'.format(value, m))
+        return m
 
     # private
     def _get_spectrometer_mapping(self, spec, destination):
@@ -64,6 +70,3 @@ class IdentifierMapper(Loggable):
             return yload(p)
 
 # ============= EOF =============================================
-
-
-
