@@ -19,7 +19,6 @@ from numpy import array
 from pyface.confirmation_dialog import confirm
 from pyface.constant import OK, YES
 from pyface.file_dialog import FileDialog
-from pyface.message_dialog import information
 from traits.api import Float, Int, Str, HasTraits, List, Button, CFloat, CInt, on_trait_change, Bool
 from traitsui.api import UItem, TableEditor, HGroup, Item, VGroup, ListStrEditor, Handler, HSplit, \
     VSplit
@@ -34,6 +33,7 @@ from pychron.core.helpers.strtools import to_bool
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pychron_traits import BorderVGroup
 from pychron.core.stats import calculate_weighted_mean, calculate_mswd
+from pychron.core.ui.dialogs import cinformation
 from pychron.core.ui.strings import SpacelessStr
 from pychron.paths import paths
 from pychron.processing.analyses.file_analysis import FileAnalysis
@@ -159,21 +159,26 @@ class CSVDataSetFactory(HasTraits):
     repo_filter = Str
     dirty = False
 
-    _message_text = '''CSV File Format
-# Create/select a file with a column header as the first line.
-# The following columns are required:
-#
-# runid, age, age_err
-#
-# Optional columns are:
-#
-# group, aliquot, sample, label_name
-#
-# e.x.
-# runid, age, age_error
-# Run1, 10, 0.24
-# Run2, 11, 0.32
-# Run3, 10, 0.40'''
+    _message_text = '''Create/select a file with a column header as the first line.<br/><br/>
+        
+The following columns are required:<br/>
+&nbsp;&nbsp;<b>runid, age, age_err</b><br/><br/>
+
+Optional columns are:<br/>
+&nbsp;&nbsp;<b>group, aliquot, sample, label_name, kca, kca_err, radiogenic_yield, radiogenic_yield_err</b><br/><br/>
+
+e.g.
+<table cellpadding="3" style="border-width: 1px; border-color: black; border-style: solid;">
+<tr>
+    <th>runid</th>
+    <th>age</th>
+    <th>age_err</th>
+</tr>
+<tr><td>Run1</td><td>10</td><td>0.24</tr>
+<tr><td>Run2</td><td>11</td><td>0.13</tr>
+<tr><td>Run3</td><td>12</td><td>0.40</tr>
+
+</table>'''
 
     def as_analyses(self):
         ret = []
@@ -233,7 +238,8 @@ class CSVDataSetFactory(HasTraits):
 
     def _open_via_finder_button_fired(self):
 
-        information(None, self._message_text)
+        # information(None, self._message_text)
+        cinformation(message=self._message_text, title='CSV Format')
 
         dlg = FileDialog(default_directory=paths.csv_data_dir,
                          action='open')
@@ -404,21 +410,34 @@ class CSVDataSetFactory(HasTraits):
 
 
 class CSVSpectrumDataSetFactory(CSVDataSetFactory):
-    _message_text = '''CSV File Format
-# Create/select a file with a column header as the first line.
-# The following columns are required:
-#
-# runid, age, age_err, k39, k39_err, rad40, rad40_err
-#
-# Optional columns are:
-#
-# group, aliquot, sample, label_name
-#
-# e.x.
-# runid, age, age_error, k39, k39_err, rad40, rad40_err
-# Run1, 10, 0.24, 0.4, 0.001, 1, 0.1
-# Run2, 11, 0.32, 0.23, 0.02, 2, 0.1
-# Run3, 10, 0.40, 0.01, 0.1, 4, 0.1'''
+    _message_text = '''Create/select a file with a column header as the first line.<br/><br/>
+        
+The following columns are required:<br/>
+&nbsp;&nbsp;<b>runid, age, age_err, k39, k39_err, rad40, rad40_err</b><br/><br/>
+
+Optional columns are:<br/>
+&nbsp;&nbsp;<b>group, aliquot, sample, label_name, kca, kca_err, radiogenic_yield, radiogenic_yield_err</b><br/><br/>
+
+e.g.
+<table cellpadding="3" style="border-width: 1px; border-color: black; border-style: solid;">
+<tr>
+    <th>runid</th>
+    <th>age</th>
+    <th>age_err</th>
+    <th>k39</th>
+    <th>k39_err</th> 
+    <th>rad40</th> 
+    <th>rad40_err</th>
+</tr>
+<tr><td>Run1</td><td>10</td><td>0.24</td><td>0.4</td><td>0.001</td><td>1</td><td>0.1</td></tr>
+<tr><td>Run2</td><td>11</td><td>0.13</td><td>0.24</td><td>0.004</td><td>1.1</td><td>0.1</td></tr>
+<tr><td>Run3</td><td>12</td><td>0.40</td><td>0.44</td><td>0.003</td><td>1.5</td><td>0.1</td></tr>
+
+</table>
+'''
+    # Run1, 10, 0.24, 0.4, 0.001, 1, 0.1
+    # Run2, 11, 0.32, 0.23, 0.02, 2, 0.1
+    # Run3, 10, 0.40, 0.01, 0.1, 4, 0.1
 
     def _get_columns(self):
         cols = [CheckboxColumn(name='status'),

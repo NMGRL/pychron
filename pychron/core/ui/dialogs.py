@@ -18,13 +18,18 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from __future__ import absolute_import
+
 from pychron.core.ui.factory import toolkit_factory
 
 myMessageDialog = toolkit_factory('dialogs', 'myMessageDialog')
 myConfirmationDialog = toolkit_factory('dialogs', 'myConfirmationDialog')
 RememberConfirmationDialog = toolkit_factory('dialogs', 'RememberConfirmationDialog')
+CustomizableDialog = toolkit_factory('dialogs', 'CustomizableDialog')
 
 
+def cinformation(**kw):
+    d = CustomizableDialog(**kw)
+    d.open()
 
 
 # ============= EOF =============================================

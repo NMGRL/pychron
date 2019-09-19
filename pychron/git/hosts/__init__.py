@@ -15,6 +15,7 @@
 # ===============================================================================
 import base64
 import os
+import platform
 import stat
 import subprocess
 
@@ -108,14 +109,18 @@ class GitHostService(Loggable):
 
     def set_authentication(self):
         self.info('setting authentication')
-        askpass = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'askpass.py')
+        if platform.system() == 'Windows':
+            askpass = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'askpass.bat')
+        else:
+            askpass = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'askpass.sh')
+
         os.environ['GIT_ASKPASS'] = askpass
         st = os.stat(askpass)
         os.chmod(askpass, st.st_mode | stat.S_IXUSR)
 
         if self.oauth_token:
-            u = self.oauth_token
-            p = ''
+            u = ''
+            p = self.oauth_token
         else:
             u = self.username
             p = self.password
@@ -169,9 +174,6 @@ class GitHostService(Loggable):
         pass
 
     def get_info(self, org):
-        pass
-
-    def set_authentication(self):
         pass
 
     # private
