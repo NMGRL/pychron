@@ -16,12 +16,15 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traits.api import HasTraits, Instance, Str, Float, Unicode, Bool, on_trait_change
 from traitsui.api import View, Item, HGroup, VGroup, UCustom, Tabbed, UItem, Group
 
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.pychron_traits import BorderVGroup
+
+
 class ProductionValue(HasTraits):
     value = Float
     error = Float
@@ -160,22 +163,19 @@ Ca_K:[value,error],Cl_K:[value,error],note''')
         # self.note = dbrecord.note or ''
 
     def traits_view(self):
-        kgrp = VGroup(EUCustom('k4039'),
-                      EUCustom('k3839'),
-                      EUCustom('k3739'),
-                      label='K', show_border=True)
-        cagrp = VGroup(
-            EUCustom('ca3937'),
-            EUCustom('ca3837'),
-            EUCustom('ca3637'),
-            label='Ca', show_border=True)
-        clgrp = VGroup(
-            EUCustom('cl3638'),
-            label='Cl', show_border=True)
-        elem_grp = VGroup(
-            EUCustom('Ca_K'),
-            EUCustom('Cl_K'),
-            label='Elemental', show_border=True)
+        kgrp = BorderVGroup(EUCustom('k4039'),
+                            EUCustom('k3839'),
+                            EUCustom('k3739'),
+                            label='K')
+        cagrp = BorderVGroup(EUCustom('ca3937'),
+                             EUCustom('ca3837'),
+                             EUCustom('ca3637'),
+                             label='Ca')
+        clgrp = BorderVGroup(EUCustom('cl3638'),
+                             label='Cl')
+        elem_grp = BorderVGroup(EUCustom('Ca_K'),
+                                EUCustom('Cl_K'),
+                                label='Elemental')
 
         v = View(
             Tabbed(VGroup(HGroup(kgrp,

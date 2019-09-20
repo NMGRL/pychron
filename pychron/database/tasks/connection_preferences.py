@@ -222,20 +222,21 @@ class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
     def __init__(self, *args, **kw):
         super(ConnectionPreferences, self).__init__(*args, **kw)
 
-    def _add_add_favorite_shareable_archive_fired(self):
-        dlg = FileDialog(action='open', wildcard='*.pz')
+    def _add_favorite_shareable_archive_fired(self):
+        dlg = FileDialog(action='open', wildcard='*.pz', default_directory=paths.data_dir)
         if dlg.open() == OK:
             if dlg.path:
                 yd = yload(dlg.path)
-                name = os.splitext(os.path.basename(dlg.path))[0]
+                name = os.path.splitext(os.path.basename(dlg.path))[0]
                 path = os.path.join(paths.offline_db_dir, '{}.sqlite'.format(name))
-                with open(path) as wfile:
+                with open(path, 'wb') as wfile:
                     wfile.write(yd['database'])
 
                 item = self._fav_factory(kind='sqlite', path=path, enabled=True)
                 item.trait_set(**{k: yd[k] for k in ['organization',
-                                                     'meta_repo_name',
-                                                     'meta_repo_dir']})
+                                                     'meta_repo_name']})
+                item.meta_repo_dir = '{}MetaData'.format(item.organization)
+
                 self._fav_items.append(item)
                 self._set_favorites()
 
@@ -315,7 +316,7 @@ class ConnectionPreferencesPane(PreferencesPane):
                                          tooltip='Add sqlite database'),
                       icon_button_editor('add_favorite_shareable_archive',
                                          'add_archive',
-                                         tooltip='Add an shareable archive'),
+                                         tooltip='Add a shareable archive'),
                       icon_button_editor('delete_favorite', 'delete',
                                          tooltip='Delete saved connection'),
                       icon_button_editor('test_connection_button', 'database_connect',

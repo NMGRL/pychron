@@ -45,10 +45,10 @@ class TableConfigurerHandler(Handler):
 
 
 def get_columns_group():
-    col_grp = VGroup(UItem('columns',
-                           style='custom',
-                           editor=CheckListEditor(name='available_columns', cols=3)),
-                     label='Columns', show_border=True)
+    col_grp = BorderVGroup(UItem('columns',
+                                 style='custom',
+                                 editor=CheckListEditor(name='available_columns', cols=3)),
+                           label='Columns')
     return col_grp
 
 
@@ -248,11 +248,10 @@ class TableConfigurer(HasTraits):
                                         UItem('default_button',
                                               tooltip='Set to Laboratory defaults. File located at '
                                                       '[root]/experiments/experiment_defaults.yaml')),
-                                 VGroup(UItem('columns',
-                                              style='custom',
-                                              editor=CheckListEditor(name='available_columns', cols=3)),
-                                        Item('font', enabled_when='fontsize_enabled'),
-                                        show_border=True)),
+                                 BorderVGroup(UItem('columns',
+                                                    style='custom',
+                                                    editor=CheckListEditor(name='available_columns', cols=3)),
+                                              Item('font', enabled_when='fontsize_enabled'))),
                           handler=TableConfigurerHandler(),
                           title=self.title)
         return v
@@ -297,13 +296,12 @@ class AnalysisTableConfigurer(TableConfigurer):
         self.omit_invalid = obj.get('omit_invalid', True)
 
     def traits_view(self):
-        v = okcancel_view(VGroup(get_columns_group(),
-                                 Item('omit_invalid'),
-                                 Item('limit',
-                                      tooltip='Limit number of displayed analyses',
-                                      label='Limit'),
-                                 show_border=True,
-                                 label='Limiting'),
+        v = okcancel_view(BorderVGroup(get_columns_group(),
+                                       Item('omit_invalid'),
+                                       Item('limit',
+                                            tooltip='Limit number of displayed analyses',
+                                            label='Limit'),
+                                       label='Limiting'),
                           buttons=['OK', 'Cancel', 'Revert'],
                           title=self.title,
                           handler=TableConfigurerHandler,
@@ -341,10 +339,9 @@ class IsotopeTableConfigurer(TableConfigurer):
     id = 'recall.isotopes'
 
     def traits_view(self):
-        v = View(VGroup(get_columns_group(),
-                        Item('font', enabled_when='fontsize_enabled'),
-                        show_border=True,
-                        label='Isotopes'))
+        v = View(BorderVGroup(get_columns_group(),
+                              Item('font', enabled_when='fontsize_enabled'),
+                              label='Isotopes'))
         return v
 
 

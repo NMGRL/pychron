@@ -27,7 +27,14 @@ from pychron.pychron_constants import MAIN, APPEARANCE, FLECK_PLATEAU_DEFINITION
 
 class SpectrumSubOptions(SubOptions):
     def traits_view(self):
-        integrated_grp = BorderVGroup(Item('integrated_age_weighting', label='Weighting'),
+        tooltip = '''---= No weighted. Isotopic Recombination and quadratic summing 
+of uncertainties
+Variance=  Inverse variance weighting
+Volume=  Weight by signal size.  Wi = (Vi*Ei)**2  where Vi = Ar39i/TotalAr39 and Ei=1 sigma uncertainty in Ar40/Ar39)
+'''
+        integrated_grp = BorderVGroup(Item('integrated_age_weighting',
+                                           tooltip=tooltip,
+                                           label='Weighting'),
                                       Item('integrated_include_omitted', label='Include Omitted'),
                                       Item('include_j_error_in_integrated', label='Include J Error'),
                                       label='Integrated Age')
@@ -144,7 +151,6 @@ class CalculationSubOptions(SubOptions):
                            tooltip='Fleck 1977={}\n'
                                    'Mahon 1996={}'.format(FLECK_PLATEAU_DEFINITION, MAHON_PLATEAU_DEFINITION),
                            label='Method'),
-                      # Item('nsigma'),
                       Item('plateau_age_error_kind',
                            width=-100,
                            label='Error Type'),
@@ -157,18 +163,11 @@ class CalculationSubOptions(SubOptions):
                                          tooltip='Edit Plateau Criteria'), )
         plat_grp = HGroup(lgrp, rgrp)
 
-        # grp_grp = VGroup(UItem('group',
-        #                        style='custom',
-        #                        editor=InstanceEditor(view='simple_view')),
-        #                  show_border=True,
-        #                  label='Group Attributes')
-
-        error_grp = VGroup(HGroup(Item('step_nsigma',
-                                       editor=EnumEditor(values=[1, 2, 3]),
-                                       tooltip='Set the size of the error envelope in standard deviations',
-                                       label='N. Sigma')),
-                           show_border=True,
-                           label='Error Envelope')
+        error_grp = BorderVGroup(HGroup(Item('step_nsigma',
+                                             editor=EnumEditor(values=[1, 2, 3]),
+                                             tooltip='Set the size of the error envelope in standard deviations',
+                                             label='N. Sigma')),
+                                 label='Error Envelope')
 
         return self._make_view(VGroup(plat_grp, error_grp))
 
@@ -197,10 +196,9 @@ class SpectrumMainOptions(MainOptions):
                                Item('scale', editor=EnumEditor(values=['linear', 'log']))),
                         Item('height'),
                         self._get_yticks_grp(),
-                        HGroup(Item('ymin', label='Min'),
-                               Item('ymax', label='Max'),
-                               show_border=True,
-                               label='Y Limits'),
+                        BorderHGroup(Item('ymin', label='Min'),
+                                     Item('ymax', label='Max'),
+                                     label='Y Limits'),
                         show_border=True))
         return v
 

@@ -119,7 +119,7 @@ class EditView(ModelView):
                           label='Tray')
 
         v = okcancel_view(VGroup(HGroup(Item('name'), Item('z')),
-                                 VGroup(UItem('level_note', style='custom'), label='Level Note', show_border=True),
+                                 BorderVGroup(UItem('level_note', style='custom'), label='Level Note'),
                                  Group(pr_group,
                                        tray_grp,
                                        mgrp,

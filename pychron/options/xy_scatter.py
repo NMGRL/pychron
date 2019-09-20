@@ -65,7 +65,7 @@ class XYScatterAuxPlot(AuxPlot):
         if name == 'TimeSeries':
             r = 'Time (hrs)'
         elif name == 'Ratio':
-            self._make_ratio('x')
+            r = self._make_ratio('x')
         elif name == 'Scatter':
             r = self.x_key
 

@@ -27,6 +27,7 @@ from traitsui.api import View, Item, UItem, Spring, Label, spring, VGroup, HGrou
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+from pychron.core.pychron_traits import BorderHGroup, BorderVGroup
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 from pychron.pychron_constants import PLUSMINUS, NULL_STR, K_DECAY_CONSTANTS, PLUSMINUS_ONE_SIGMA
@@ -52,10 +53,10 @@ class DecayConstantEntry(HasTraits):
 
     def traits_view(self):
         v = okcancel_view(VGroup(Item('name'),
-                                 HGroup(UItem('lambda_e'), Label(PLUSMINUS), UItem('lambda_e_error'),
-                                        show_border=True, label='Ar40K epsilon/yr'),
-                                 HGroup(UItem('lambda_b'), Label(PLUSMINUS), UItem('lambda_b_error'),
-                                        show_border=True, label='Ar40K beta/yr'),
+                                 BorderHGroup(UItem('lambda_e'), Label(PLUSMINUS), UItem('lambda_e_error'),
+                                              label='Ar40K epsilon/yr'),
+                                 BorderHGroup(UItem('lambda_b'), Label(PLUSMINUS), UItem('lambda_b_error'),
+                                              label='Ar40K beta/yr'),
                                  Item('total_k_decay', style='readonly')),
                           title='Add Decay Constant Entry')
         return v
@@ -73,10 +74,10 @@ class AtmConstantsEntry(HasTraits):
 
     def traits_view(self):
         v = okcancel_view(VGroup(Item('name'),
-                                 HGroup(UItem('ar40_ar36_atm'), Label(PLUSMINUS), UItem('ar40_ar36_atm_error'),
-                                        show_border=True, label='(Ar40/Ar36)atm'),
-                                 HGroup(UItem('ar40_ar38_atm'), Label(PLUSMINUS), UItem('ar40_ar38_atm_error'),
-                                        show_border=True, label='(Ar40/Ar38)atm')),
+                                 BorderHGroup(UItem('ar40_ar36_atm'), Label(PLUSMINUS), UItem('ar40_ar36_atm_error'),
+                                              label='(Ar40/Ar36)atm'),
+                                 BorderHGroup(UItem('ar40_ar38_atm'), Label(PLUSMINUS), UItem('ar40_ar38_atm_error'),
+                                              label='(Ar40/Ar38)atm')),
                           title='Add Atm Constant Entry')
         return v
 
@@ -295,16 +296,14 @@ class ArArConstantsPreferencesPane(PreferencesPane):
                           tooltip='Use irradiation end time for decay calculations instead of the start time. '
                                   'FYI Mass Spec and NMGRL by default use the start time. '
                                   'McDougall and Harrison 1999 and ArArCalc use the end time.'))
-        decay = VGroup(
-            presets,
-            HGroup(Item('total_k_decay', style='readonly', label='Total Ar40K/yr')),
-            HGroup(spring, Label('Value'),
-                   Spring(width=75, springy=False),
-                   Label(PLUSMINUS_ONE_SIGMA),
-                   Spring(width=75, springy=False)),
-            *items,
-            show_border=True,
-            label='Decay')
+        decay = BorderVGroup(presets,
+                             HGroup(Item('total_k_decay', style='readonly', label='Total Ar40K/yr')),
+                             HGroup(spring, Label('Value'),
+                                    Spring(width=75, springy=False),
+                                    Label(PLUSMINUS_ONE_SIGMA),
+                                    Spring(width=75, springy=False)),
+                             *items,
+                             label='Decay')
         return decay
 
     def _get_ratio_group(self):

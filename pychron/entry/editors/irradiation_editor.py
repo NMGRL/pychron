@@ -19,11 +19,12 @@ import json
 import os
 
 from traits.api import Instance, Dict, List, Str
-from traitsui.api import Item, UItem, Group, VGroup, HGroup, EnumEditor
+from traitsui.api import Item, UItem, VGroup, EnumEditor
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+from pychron.core.pychron_traits import BorderVGroup, BorderHGroup
 from pychron.core.ui.strings import SpacelessStr
 from pychron.entry.editors.base_editor import ModelView
 from pychron.entry.editors.chronology import IrradiationChronology
@@ -35,10 +36,10 @@ from pychron.paths import paths
 class AddView(ModelView):
     def traits_view(self):
         v = okcancel_view(VGroup(Item('name'),
-                                 Group(UItem('chronology', style='custom'),
-                                       label='Chronology', show_border=True)),
-                          HGroup(UItem('selected_reactor_name', editor=EnumEditor(name='reactor_names')),
-                                 label='Reactor', show_border=True),
+                                 BorderVGroup(UItem('chronology', style='custom'),
+                                              label='Chronology')),
+                          BorderHGroup(UItem('selected_reactor_name', editor=EnumEditor(name='reactor_names')),
+                                       label='Reactor'),
                           title='Add Irradiation',
                           width=500)
         return v
@@ -47,8 +48,8 @@ class AddView(ModelView):
 class EditView(ModelView):
     def traits_view(self):
         v = okcancel_view(VGroup(Item('name', style='readonly'),
-                                 Group(UItem('chronology', style='custom'),
-                                       label='Chronology', show_border=True)),
+                                 BorderVGroup(UItem('chronology', style='custom'),
+                                              label='Chronology')),
                           title='Edit Irradiation',
                           width=500)
         return v
