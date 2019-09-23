@@ -107,6 +107,8 @@ class ScanManager(StreamGraphManager):
                                          '_low_value, _high_value', remove=True)
         self.readout_view.stop()
 
+        # peristence mixin dump
+        self.readout_view.dump()
         self.mass_scanner.dump()
         self.dac_scanner.dump()
 

@@ -45,7 +45,7 @@ class HelixSpectrometer(ThermoSpectrometer):
                            flatapole='Flatapole',
                            rotation_quad='RotationQuad',
                            vertical_deflection_n='VerticalDeflectionN',
-                           vertical_deflection_s='VerticalDeflectionN',
+                           vertical_deflection_s='VerticalDeflectionS',
                            )
         return command_map
 

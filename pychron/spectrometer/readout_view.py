@@ -15,8 +15,9 @@
 # ===============================================================================
 
 import os
-
 # ============= standard library imports ========================
+import time
+
 import six.moves.configparser
 # ============= enthought library imports =======================
 from pyface.timer.do_later import do_after
@@ -29,8 +30,8 @@ from traitsui.table_column import ObjectColumn
 
 # ============= local library imports  ==========================
 from pychron.core.yaml import yload
-from pychron.loggable import Loggable
 from pychron.paths import paths
+from pychron.persistence_loggable import PersistenceLoggable
 from pychron.pychron_constants import NULL_STR
 
 DEFAULT_CONFIG = '''-
@@ -88,7 +89,7 @@ class BaseReadout(HasTraits):
     tolerance = Float
     percent_tol = Float
     display_tolerance = Str
-    use_word = Bool(True)
+    # use_word = Bool(True)
 
     @property
     def dev(self):
@@ -133,25 +134,38 @@ class BaseReadout(HasTraits):
 
 
 class Readout(BaseReadout):
-    # value = Property(depends_on='refresh')
-    # format = Str('{:0.3f}')
-    # refresh = Event
-
     min_value = Float(0)
     max_value = Float(100)
     tolerance = Float(0.01)
+    query_timeout = 3
+    _last_query = 0
 
     def traits_view(self):
         v = View(HGroup(Item('value', style='readonly', label=self.name)))
         return v
 
     def query_value(self):
-        # cmd = 'Get{}'.format(self.name)
-        v = self.spectrometer.get_parameter(self.name)
-        self.set_value(v)
+        if self.query_needed and self.compare:
+            v = self.spectrometer.get_parameter(self.query_name)
+            self.set_value(v)
+            self._last_query = time.time()
 
     def get_percent_value(self):
         return (self.value - self.min_value) / (self.max_value - self.min_value)
+
+    @property
+    def query_name(self):
+        n = self.name
+        if self.hardware_name:
+            q = self.hardware_name
+        elif ',' in n:
+            _, q = n.split(',')
+
+        return q.strip()
+
+    @property
+    def query_needed(self):
+        return not self._last_query or (time.time()-self._last_query)>self.query_timeout
 
 
 class DeflectionReadout(BaseReadout):
@@ -163,7 +177,7 @@ class ReadoutHandler(Handler):
         info.object.stop()
 
 
-class ReadoutView(Loggable):
+class ReadoutView(PersistenceLoggable):
     readouts = List(Readout)
     deflections = List(DeflectionReadout)
     spectrometer = Any
@@ -171,16 +185,21 @@ class ReadoutView(Loggable):
 
     refresh_needed = Event
     refresh_period = Int(10, enter_set=True, auto_set=False)  # seconds
-    use_word_query = Bool(True)
     compare_to_config_enabled = Bool(True)
 
     _alive = False
+    pattributes = ('compare_to_config_enabled', 'refresh_period')
+    persistence_name = 'readout'
 
     def __init__(self, *args, **kw):
         super(ReadoutView, self).__init__(*args, **kw)
-        self._load()
 
-    def _load(self):
+        #  peristence_mixin load
+        self.load()
+
+        self._load_configuration()
+
+    def _load_configuration(self):
 
         ypath = os.path.join(paths.spectrometer_dir, 'readout.yaml')
         if not os.path.isfile(ypath):
@@ -197,6 +216,7 @@ class ReadoutView(Loggable):
             self._load_yaml(ypath)
 
     def _load_cfg(self, path):
+        self.warning_dialog('Using readout.cfg is deprecated. Please consider migrating to readout.yaml')
         config = six.moves.configparser.ConfigParser()
         config.read(path)
         for section in config.sections():
@@ -212,11 +232,12 @@ class ReadoutView(Loggable):
             for rd in yl:
                 rr = Readout(spectrometer=self.spectrometer,
                              name=rd['name'],
+                             hardware_name=rd.get('hardware_name'),
                              min_value=rd.get('min', 0),
                              max_value=rd.get('max', 1),
                              tolerance=rd.get('tolerance', 0.01),
                              compare=rd.get('compare', True),
-                             use_word=rd.get('use_word', True))
+                             query_timeout=self.refresh_period)
                 self.readouts.append(rr)
 
             for rd in yd:
@@ -250,29 +271,45 @@ class ReadoutView(Loggable):
     def _refresh_fired(self):
         self._refresh()
 
+    def _refresh_period_changed(self):
+        for r in self.readouts:
+            r.query_timeout = self.refresh_period
+
     def _refresh(self):
-        readouts = [r for r in self.readouts if r.compare and r.use_word]
-        deflections = [r for r in self.deflections if r.compare]
         spec = self.spectrometer
 
-        if self.use_word_query:
+        deflections = [r for r in self.deflections if r.compare]
+        keys = [r.name for r in deflections]
+        if keys:
+            ds = spec.read_deflection_word(keys)
+            for d, r in zip(ds, deflections):
+                r.set_value(d)
 
-            for func, rs in ((spec.get_parameter_word, readouts),
-                             (spec.read_deflection_word, deflections)):
+        # if self.use_word_query:
+        #
+        #     for func, rs in ((spec.get_parameter_word, readouts),
+        #                      (spec.read_deflection_word, deflections)):
+        #
+        #         keys = [r.name for r in rs]
+        #         if keys:
+        #             ds = func(keys)
+        #             for d, r in zip(ds, rs):
+        #                 r.set_value(d)
+        #     for rd in self.readouts:
+        #         if rd.compare and not rd.use_word:
+        #             rd.query_value()
+        #
+        # else:
+        #     for rs in (self.readouts, self.deflections):
+        #         for rd in rs:
+        #             rd.query_value()
 
-                keys = [r.name for r in rs]
-                if keys:
-                    ds = func(keys)
-                    for d, r in zip(ds, rs):
-                        r.set_value(d)
-            for rd in self.readouts:
-                if rd.compare and not rd.use_word:
-                    rd.query_value()
-
-        else:
-            for rs in (self.readouts, self.deflections):
-                for rd in rs:
-                    rd.query_value()
+        st = time.time()
+        timeout = self.refresh_period*0.95
+        for rd in self.readouts:
+            if time.time()-st > timeout:
+                break
+            rd.query_value()
 
         self.refresh_needed = True
 
