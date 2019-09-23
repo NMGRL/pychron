@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from enable.markers import marker_names
 from traitsui.api import View, EnumEditor, UItem, HGroup, Item, VGroup
 
 # ============= standard library imports ========================
@@ -45,13 +44,8 @@ class BlanksMainOptions(MainOptions):
                                Item('fit', editor=EnumEditor(values=FIT_TYPES_INTERPOLATE)),
                                UItem('error_type', editor=EnumEditor(values=FIT_ERROR_TYPES))),
                         Item('height'),
-                        HGroup(UItem('marker', editor=EnumEditor(values=marker_names)),
-                               Item('marker_size', label='Size'),
-                               show_border=True, label='Marker'),
-                        HGroup(Item('ymin', label='Min'),
-                               Item('ymax', label='Max'),
-                               show_border=True,
-                               label='Y Limits'),
+                        self._get_marker_group(),
+                        self._get_ylimits_group(),
                         show_border=True))
         return v
 

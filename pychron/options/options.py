@@ -193,19 +193,26 @@ class MainOptions(SubOptions):
                          label='Y Ticks'),
         return g
 
+    def _get_ylimits_group(self):
+        g = BorderHGroup(Item('ymin', label='Min'),
+                         Item('ymax', label='Max'),
+                         icon_button_editor('clear_ylimits_button', 'clear'),
+                         label='Y Limits')
+        return g
+
+    def _get_marker_group(self):
+        g = BorderHGroup(UItem('marker', editor=EnumEditor(values=marker_names)),
+                         Item('marker_size', label='Size'),
+                         label='Marker')
+        return g
+
     def _get_edit_view(self):
-        v = View(VGroup(HGroup(Item('name', editor=EnumEditor(name='names')),
-                               Item('scale', editor=EnumEditor(values=['linear', 'log']))),
-                        Item('height'),
-                        self._get_yticks_grp(),
-                        HGroup(UItem('marker', editor=EnumEditor(values=marker_names)),
-                               Item('marker_size', label='Size'),
-                               show_border=True, label='Marker'),
-                        HGroup(Item('ymin', label='Min'),
-                               Item('ymax', label='Max'),
-                               show_border=True,
-                               label='Y Limits'),
-                        show_border=True))
+        v = View(BorderVGroup(HGroup(Item('name', editor=EnumEditor(name='names')),
+                                     Item('scale', editor=EnumEditor(values=['linear', 'log']))),
+                              Item('height'),
+                              self._get_yticks_grp(),
+                              self._get_ylimits_group(),
+                              self._get_marker_group()))
         return v
 
     def _get_analysis_group(self):
@@ -404,7 +411,7 @@ class FigureOptions(BaseOptions):
                 start = len(self.groups)
                 new_groups = [self.group_options_klass(color=ci,
                                                        line_color=ci,
-                                                       group_id=start+i) for i, ci in enumerate(colornames[start:])]
+                                                       group_id=start + i) for i, ci in enumerate(colornames[start:])]
                 self.groups.extend(new_groups)
 
     def get_paddings(self):

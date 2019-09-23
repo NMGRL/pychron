@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from enable.markers import marker_names
 from traitsui.api import UItem, Item, HGroup, VGroup, Group, EnumEditor, spring, View
 
 from pychron.core.pychron_traits import BorderVGroup, BorderHGroup
@@ -242,16 +241,13 @@ Additional examples
                                    UItem('sigma_filter_tag')),
                             label='Filtering')
 
-        v = View(VGroup(HGroup(Item('name', editor=EnumEditor(name='names')),
-                               Item('scale', editor=EnumEditor(values=['linear', 'log']))),
-                        Item('height'),
-                        self._get_yticks_grp(),
-                        BorderHGroup(UItem('marker', editor=EnumEditor(values=marker_names)),
-                                     Item('marker_size', label='Size'), label='Marker'),
-                        BorderHGroup(Item('ymin', label='Min'),
-                                     Item('ymax', label='Max'), label='Y Limits'),
-                        fgrp,
-                        show_border=True))
+        v = View(BorderVGroup(HGroup(Item('name', editor=EnumEditor(name='names')),
+                                     Item('scale', editor=EnumEditor(values=['linear', 'log']))),
+                              Item('height'),
+                              self._get_yticks_grp(),
+                              self._get_ylimits_group(),
+                              self._get_marker_group(),
+                              fgrp))
         return v
 
 

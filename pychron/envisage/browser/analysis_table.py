@@ -14,16 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-from __future__ import absolute_import
-
 import json
 import os
 from collections import OrderedDict
 from datetime import datetime
 from hashlib import md5
-# ============= enthought library imports =======================
 from operator import attrgetter
 
+# ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import List, Any, Str, Enum, Bool, Event, Property, cached_property, Instance, DelegatesTo, \
     CStr, Int, Button
@@ -36,6 +34,7 @@ from pychron.core.ui.table_configurer import AnalysisTableConfigurer
 from pychron.dvc.func import get_review_status
 from pychron.envisage.browser.adapters import AnalysisAdapter
 from pychron.paths import paths
+from pychron.pychron_constants import AUTO_SCROLL_KINDS, BOTTOM, TOP
 
 
 def sort_items(ans):
@@ -64,6 +63,9 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
 
     no_update = False
     scroll_to_row = Event
+    scroll_to_bottom = Event
+    scroll_to_top = Event
+
     refresh_needed = Event
     tabular_adapter = Instance(AnalysisAdapter)
     append_replace_enabled = Bool(True)
@@ -79,10 +81,13 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
     dvc = Instance('pychron.dvc.dvc.DVC')
 
     one_selected_is_all = Bool(True)
+    auto_scroll_kind = Enum(AUTO_SCROLL_KINDS)
 
     def __init__(self, *args, **kw):
         super(AnalysisTable, self).__init__(*args, **kw)
         bind_preference(self, 'one_selected_is_all', 'pychron.browser.one_selected_is_all')
+        bind_preference(self, 'auto_scroll_kind', 'pychron.browser.auto_scroll_kind')
+
         self._analysis_sets = OrderedDict()
 
     def _sorted_hook(self, vs):
@@ -165,7 +170,8 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
         items.extend(ans)
         self.oanalyses = self.analyses = sort_items(items)
         self.calculate_dts(self.analyses)
-        self.scroll_to_row = len(self.analyses) - 1
+        # self.scroll_to_row = len(self.analyses) - 1
+        self._auto_scroll()
 
     def clear_non_frozen(self):
         self.analyses = [a for a in self.analyses if a.frozen]
@@ -195,7 +201,7 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
         self.oanalyses = self.analyses = items
 
         self.calculate_dts(self.analyses)
-        self.scroll_to_row = len(self.analyses) - 1
+        self._auto_scroll()
 
     def calculate_dts(self, ans):
         if ans and len(ans) > 1:
@@ -218,7 +224,6 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
 
     def remove_others(self):
         self.set_analyses(self.selected)
-        # self.analyses = self.oanalyses = [self.selected]
 
     def group_selected(self):
         max_gid = max([si.group_id for si in self.analyses]) + 1
@@ -268,6 +273,13 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
 
         return records
 
+    # private
+    def _auto_scroll(self):
+        if self.auto_scroll_kind == TOP:
+            self.scroll_to_top = True
+        elif self.auto_scroll_kind == BOTTOM:
+            self.scroll_to_bottom = True
+
     # selectsame
     def _get_records(self):
         return self.analyses
@@ -303,7 +315,6 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
         if new:
             name = self.analysis_filter_parameter
             self.analyses = fuzzyfinder(new, self.oanalyses, name)
-            # self.analyses = filter(filter_func(new, name), self.oanalyses)
         else:
             self.analyses = self.oanalyses
 
@@ -320,8 +331,7 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
 
     # defaults
     def _table_configurer_default(self):
-        return AnalysisTableConfigurer(id='analysis.table',
-                                       title='Configure Analysis Table')
+        return AnalysisTableConfigurer(id='analysis.table', title='Configure Analysis Table')
 
     def _analysis_filter_parameter_default(self):
         return 'record_id'

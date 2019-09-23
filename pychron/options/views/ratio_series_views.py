@@ -27,7 +27,7 @@ from pychron.pychron_constants import MAIN, APPEARANCE
 
 class RatioSeriesMainOptions(MainOptions):
     def _get_edit_view(self):
-        v = View(VGroup(self._get_ic_group(), self._get_scatter_group(), self._get_y_group()))
+        v = View(VGroup(self._get_ic_group(), self._get_scatter_group(), self._get_ylimits_group()))
         return v
 
     def _get_ic_group(self):
@@ -36,10 +36,6 @@ class RatioSeriesMainOptions(MainOptions):
                             HGroup(Item('fit', editor=EnumEditor(name='fit_types')),
                                    UItem('error_type', editor=EnumEditor(name='error_types'))),
                             Item('standard_ratio'), label='IC')
-
-    def _get_y_group(self):
-        return BorderVGroup(HGroup(Item('ymin', label='Min'),
-                                   Item('ymax', label='Max')), label='Y Limits')
 
     def _get_scatter_group(self):
         return BorderVGroup(Item('height'),

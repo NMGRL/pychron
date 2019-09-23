@@ -114,7 +114,7 @@ class GitHubService(GitHostService):
             elif self.username and self.password:
                 auth = '{}:{}@'.format(self.username, self.password)
 
-        url = '{}://{}/{}{}/{}.git'.format(protocol, BASE_URL, auth, organization, name)
+        url = '{}://{}{}/{}/{}.git'.format(protocol, auth, BASE_URL, organization, name)
         return url
 
     def get_repos(self, organization):

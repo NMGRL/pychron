@@ -61,6 +61,9 @@ PLUSMINUS_PERCENT = '{}%  '.format(PLUSMINUS)
 SPECIAL_IDENTIFIER = 'Special Identifier'
 NULL_STR = '---'
 LINE_STR = '---------'
+TOP = 'Top'
+BOTTOM = 'Bottom'
+AUTO_SCROLL_KINDS = (NULL_STR, TOP, BOTTOM)
 SCRIPT_KEYS = ['measurement', 'post_measurement', 'extraction', 'post_equilibration']
 SCRIPT_NAMES = ['{}_script'.format(si) for si in SCRIPT_KEYS]
 

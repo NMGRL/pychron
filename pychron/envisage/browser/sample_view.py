@@ -267,7 +267,7 @@ class BrowserSampleView(BaseBrowserSampleView):
 
     def traits_view(self):
         analysis_tools = VGroup(HGroup(UItem('analysis_table.analysis_set',
-                                             width=-90,
+                                             width=250,
                                              editor=EnumEditor(name='analysis_table.analysis_set_names')),
                                        icon_button_editor('analysis_table.add_analysis_set_button', 'add',
                                                           enabled_when='analysis_table.items',
@@ -278,7 +278,12 @@ class BrowserSampleView(BaseBrowserSampleView):
                                 HGroup(UItem('analysis_table.analysis_filter_parameter',
                                              width=-90,
                                              editor=EnumEditor(name='analysis_table.analysis_filter_parameters')),
-                                       UItem('analysis_table.analysis_filter')))
+                                       UItem('analysis_table.analysis_filter'),
+                                       icon_button_editor('analysis_table.scroll_to_bottom', 'arrow_down',
+                                                          tooltip='Scroll to bottom'),
+                                       icon_button_editor('analysis_table.scroll_to_top', 'arrow_up',
+                                                          tooltip='Scroll to top')))
+
         agrp = Group(VGroup(analysis_tools,
                             UItem('analysis_table.analyses',
                                   width=0.4,
@@ -291,7 +296,11 @@ class BrowserSampleView(BaseBrowserSampleView):
                                       dclicked='analysis_table.dclicked',
                                       multi_select=self.pane.multi_select,
                                       drag_external=True,
+
                                       scroll_to_row='analysis_table.scroll_to_row',
+                                      scroll_to_bottom='analysis_table.scroll_to_bottom',
+                                      scroll_to_top='analysis_table.scroll_to_top',
+                                      # scroll_to_row_hint='bottom',
                                       stretch_last_section=False)),
                             defined_when=self.pane.analyses_defined,
                             show_border=True,

@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Int, Bool, \
-    Float, Property, on_trait_change, Dict, Tuple, Enum, List, Any, Trait
+    Float, Property, on_trait_change, Dict, Tuple, Enum, List, Any, Trait, Button
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -24,9 +24,15 @@ from pychron.core.pychron_traits import FilterPredicate
 from pychron.pychron_constants import NULL_STR
 
 
+def has_limits(lims):
+    return lims is not None and lims[0] != lims[1]
+
+
 class AuxPlot(HasTraits):
     names = List(transient=True)
     _plot_names = List
+
+    clear_ylimits_button = Button
 
     save_enabled = Bool
     plot_enabled = Bool
@@ -93,29 +99,30 @@ class AuxPlot(HasTraits):
         if self._suppress:
             return
 
-        self._has_xlimits = True
         self.xlimits = (self.xmin, self.xmax)
+        self._has_xlimits = has_limits(self.xlimits)
 
     @on_trait_change('ymin, ymax')
     def _handle_ymin_max(self):
         if self._suppress:
             return
 
-        self._has_ylimits = True
         self.ylimits = (self.ymin, self.ymax)
+
+        self._has_ylimits = has_limits(self.ylimits)
 
     def set_overlay_position(self, k, v):
         self.overlay_positions[k] = v
 
     def has_xlimits(self):
-        return self._has_xlimits or (self.xlimits is not None and self.xlimits[0] != self.xlimits[1])
+        return self._has_xlimits or has_limits(self.xlimits)
 
     def has_ylimits(self):
-        return self._has_ylimits or (self.ylimits is not None and self.ylimits[0] != self.ylimits[1])
+        return self._has_ylimits or has_limits(self.ylimits)
 
+    @on_trait_change('clear_ylimits_button')
     def clear_ylimits(self):
-        self._has_ylimits = False
-        self.ylimits = (0, 0)
+        self.ymin, self.ymax = 0, 0
 
     def clear_xlimits(self):
         self._has_xlimits = False
