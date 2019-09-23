@@ -100,8 +100,10 @@ class GitHostService(Loggable):
     _cached_repo_names = Dict
     _clear_cached_repo_names = False
     _session = None
+    organization = Str
 
     def bind_preferences(self):
+        bind_preference(self, 'organization', '{}.organization'.format(self.preference_path))
         bind_preference(self, 'username', '{}.username'.format(self.preference_path))
         bind_preference(self, 'password', '{}.password'.format(self.preference_path))
         bind_preference(self, 'oauth_token', '{}.oauth_token'.format(self.preference_path))
@@ -156,7 +158,7 @@ class GitHostService(Loggable):
     def test_api(self):
         raise NotImplementedError
 
-    def make_url(self):
+    def make_url(self, *args, **kw):
         raise NotImplementedError
 
     def get_repository_names(self, organization):

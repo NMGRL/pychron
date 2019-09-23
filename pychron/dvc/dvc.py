@@ -927,9 +927,9 @@ class DVC(Loggable):
         git_service = self.application.get_service(IGitHost)
         return git_service.test_connection(self.organization)
 
-    def make_url(self, name):
+    def make_url(self, name, **kw):
         git_service = self.application.get_service(IGitHost)
-        return git_service.make_url(name, self.organization)
+        return git_service.make_url(name, self.organization, **kw)
 
     def git_session_ctx(self, repository_identifier, message):
         return GitSessionCTX(self, repository_identifier, message)

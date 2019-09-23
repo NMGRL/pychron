@@ -32,6 +32,13 @@ class BaseGitPlugin(BaseTaskPlugin):
         usr = p.get('pychron.github.username')
         pwd = p.get('pychron.github.password')
         tok = p.get('pychron.github.oauth_token')
+        org = p.get('pychron.github.organization')
+
+        if not org:
+            self.information_dialog('Please set the organization that contains your (e.g. NMGRLData) in {} '
+                                    'preferences'.format(self.name),
+                                    position=STARTUP_MESSAGE_POSITION)
+
         if not tok and not (usr and pwd):
             self.information_dialog('Please set user name and password or token in {} preferences'.format(self.name),
                                     position=STARTUP_MESSAGE_POSITION)

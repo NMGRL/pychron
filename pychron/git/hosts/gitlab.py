@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Str
 
@@ -48,7 +49,7 @@ class GitLabService(GitHostService):
             self.debug('Create repo response {}'.format(resp.status_code))
             return resp.status_code == 201
 
-    def make_url(self, name, organization):
+    def make_url(self, name, organization, protocol=None):
         return 'http://{}/{}/{}.git'.format(self.host, organization, name)
 
     def get_repos(self, organization):

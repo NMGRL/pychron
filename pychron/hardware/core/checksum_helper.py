@@ -16,9 +16,12 @@
 
 
 
-from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import print_function
+
 from six.moves import range
+
+
 def computeBCC(data_str):
     """
         data str= ASCII string
@@ -111,13 +114,12 @@ def computeCRC(data, start_crc=0xffff):
         pre = lambda x: ord(x)
 
     for a in data:
-        crc = ((crc >> 8) & 0xff) ^ TABLE[
-            (crc ^ pre(a)) & 0xff]
+        crc = ((crc >> 8) & 0xff) ^ TABLE[(crc ^ pre(a)) & 0xff]
 
     # flip lo and hi bits
-    crc = '%04x' % crc
+    crc = '{:04x}'.format(crc)
 
-    crc = '%s%s' % (crc[2:], crc[:2])
+    crc = '{}{}'.format((crc[2:], crc[:2]))
     return crc
 
 

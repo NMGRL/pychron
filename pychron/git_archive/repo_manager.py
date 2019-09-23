@@ -317,11 +317,14 @@ class GitRepoManager(Loggable):
         #     #     time.sleep(max(0, period - time.time() + st))
         #     # prog.close()
 
-    def clone(self, url, path):
+    def clone(self, url, path, reraise=False):
         try:
             self._repo = Repo.clone_from(url, path)
         except GitCommandError as e:
-            self.warning_dialog('Cloning error: {}, url={}, path={}'.format(e, url, path))
+            self.warning_dialog('Cloning error: {}, url={}, path={}'.format(e, url, path),
+                                position=(100,100))
+            if reraise:
+                raise
 
     def unpack_blob(self, hexsha, p):
         """

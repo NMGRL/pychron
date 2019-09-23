@@ -82,16 +82,14 @@ class GitHubService(GitHostService):
             self._put(cmd, permission=permission)
 
     def get_team_id(self, name, organization):
-        for td in self._get('{}/orgs/{}/teams'.format(API_URL,
-                                                      organization)):
+        for td in self._get('{}/orgs/{}/teams'.format(API_URL, organization)):
             if td['name'] == name:
                 return td['id']
 
     def create_repo(self, name, organization, **kw):
         if self._has_access:
             try:
-                cmd = '{}/orgs/{}/repos'.format(API_URL,
-                                                organization)
+                cmd = '{}/orgs/{}/repos'.format(API_URL, organization)
                 resp = self._post(cmd, name=name, **kw)
                 if resp:
                     self.debug('Create repo response {}'.format(resp.status_code))
@@ -107,7 +105,16 @@ class GitHubService(GitHostService):
         if protocol is None:
             protocol = self.protocol
 
-        url = '{}://{}/{}/{}.git'.format(protocol, BASE_URL, organization, name)
+        auth = ''
+        # including the authenitcation when cloning presents an issue when cloning a repository
+        # you only have read-only access to
+        if organization == self.organization:
+            if self.oauth_token:
+                auth = '{}@'.format(self.oauth_token)
+            elif self.username and self.password:
+                auth = '{}:{}@'.format(self.username, self.password)
+
+        url = '{}://{}/{}{}/{}.git'.format(protocol, BASE_URL, auth, organization, name)
         return url
 
     def get_repos(self, organization):

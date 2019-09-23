@@ -89,8 +89,8 @@ class PipelinePyScriptEditor(BaseTraitsEditor):
 
         main_grp = VGroup(HGroup(icon_button_editor('execute_button', 'start'),
                                  CustomLabel('object.script.display_state')),
-                          BorderVGroup(UItem('object.script.text', style='custom',
-                                             editor=PyScriptCodeEditor()), label='Text'),
+                          UItem('object.script.text', style='custom',
+                                editor=PyScriptCodeEditor()),
                           label='Main')
 
         v = View(Tabbed(main_grp, output_grp))

@@ -31,6 +31,7 @@ class GitHostPreferences(BasePreferencesHelper):
     password = Password
     oauth_token = Str
     default_remote_name = Str
+    organization = Str
 
     test_connection = Button
     _remote_status = Str
@@ -83,7 +84,8 @@ class GitLabPreferences(GitHostPreferences):
 
 class GitHostPreferencesPane(PreferencesPane):
     def _cred_group(self):
-        g = VGroup(VGroup(Item('username'),
+        g = VGroup(Item('organization'),
+                   VGroup(Item('username'),
                           Item('password'),
                           show_border=True, label='Basic'),
                    VGroup(Item('oauth_token',

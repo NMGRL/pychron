@@ -22,8 +22,12 @@ import struct
 
 from pychron.hardware.core.checksum_helper import computeCRC
 # =============local library imports  =========================
+from pychron.hardware.core.communicators.serial_communicator import SerialCommunicator
 from pychron.hardware.core.exceptions import CRCError
-from .serial_communicator import SerialCommunicator
+
+WRITE_FUNCTION_CODE = '06'
+WRITE_MULTIPLE_FUNCTION_CODE = '10'
+READ_FUNCTION_CODE = '03'
 
 
 class ModbusCommunicator(SerialCommunicator):
@@ -35,17 +39,11 @@ class ModbusCommunicator(SerialCommunicator):
     slave_address = '01'
     device_word_order = 'low_high'
 
-    _write_func_code = '06'
-
-    #    scheduler = None
-
     def load(self, config, path):
         """
         """
         super(ModbusCommunicator, self).load(config, path)
-        #        SerialCommunicator.load(self, config, path)
-        self.set_attribute(config, 'slave_address',
-                           'Communications', 'slave_address')
+        self.set_attribute(config, 'slave_address', 'Communications', 'slave_address')
 
     def write(self, register, value, nregisters=1,
               response_type='register_write', **kw):
@@ -116,15 +114,6 @@ class ModbusCommunicator(SerialCommunicator):
             else:
                 return [hexstr[i:i + 2] for i in gen]
 
-                # if return_type == 'int':
-                #     def func(b):
-                #         return int(b, 16)
-                # else:
-                #     def func(b):
-                #         return b
-                #
-                # return [func(b) for b in hexstr]
-
     def _parse_response(self, cmd, resp, response_type):
         """
         """
@@ -142,14 +131,6 @@ class ModbusCommunicator(SerialCommunicator):
                 return
 
             # check the crc
-            # cargs = self._parse_hexstr(resp, return_type='int')
-            # self.debug('cargs {}'.format(cargs))
-            # self.debug('args {}'.format(args))
-
-            # crc = ''.join([str(bytes([a]) for a in args[-2:]])
-            # self.debug('asdf {}'.format(args[-2:]))
-            # crc = bytes(args[-2:])
-            # calc_crc = computeCRC(args[:-2])
             crc = args[-2:]
             calc_crc = computeCRC(args[:-2])
             calc_crc = [int(calc_crc[:2], 16), int(calc_crc[2:], 16)]
@@ -205,12 +186,10 @@ class ModbusCommunicator(SerialCommunicator):
                     return int.from_bytes(data, 'big')
                     # return int(data, 16)
 
-    def set_multiple_registers(self, startid,
-                               nregisters, value, response_type, **kw):
+    def set_multiple_registers(self, startid, nregisters, value, response_type, **kw):
         """
         """
 
-        func_code = '10'
         data_address = '{:04X}'.format(int(startid))
         n = '{:04X}'.format(int(nregisters))
         nbytes = '{:02X}'.format(int(nregisters * 2))
@@ -234,26 +213,25 @@ class ModbusCommunicator(SerialCommunicator):
                 value = hexstr
             value = value.decode('utf8')
 
-        return self._execute_request([func_code, data_address, n,
+        return self._execute_request([WRITE_MULTIPLE_FUNCTION_CODE, data_address, n,
                                       nbytes, value],
                                      response_type, **kw)
 
-    def set_single_register(self, rid, value,
-                            response_type, func_code='06', **kw):
+    def set_single_register(self, rid, value, response_type, **kw):
         """
         """
         register_addr = '{:04X}'.format(int(rid))
         value = '{:04X}'.format(int(value))
-        return self._execute_request([func_code, register_addr, value],
+        return self._execute_request([WRITE_FUNCTION_CODE, register_addr, value],
                                      response_type, **kw)
 
     def read_holding_register(self, holdid, nregisters, response_type, **kw):
         """
         """
-        func_code = '03'
+
         data_address = '{:04X}'.format(holdid)
         n = '{:04X}'.format(nregisters)
-        return self._execute_request([func_code, data_address, n],
+        return self._execute_request([READ_FUNCTION_CODE, data_address, n],
                                      response_type, **kw)
 
 # def read_input_status(self, inputid, ninputs):
