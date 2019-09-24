@@ -15,8 +15,11 @@
 # ===============================================================================
 # ============= enthought library imports =======================
 import os
+import sys
+# from pickle import BUILD
+import apptools.sweet_pickle as spickle
+import pickle
 
-import apptools.sweet_pickle as pickle
 from traits.api import Str, List, Button, Instance, Tuple, Property, cached_property
 from traitsui.api import Controller, Item
 
@@ -45,6 +48,77 @@ from pychron.options.series import SeriesOptions
 from pychron.options.spectrum import SpectrumOptions
 from pychron.options.xy_scatter import XYScatterOptions
 from pychron.paths import paths
+
+
+class OptionsUnpickler(pickle.Unpickler):
+    def __init__(self, *args, **kw):
+        super(OptionsUnpickler, self).__init__(*args, **kw)
+
+        self.dispatch['oreduce'] = self.dispatch[pickle.REDUCE[0]]
+        self.dispatch['obuild'] = self.dispatch[pickle.BUILD[0]]
+        self.dispatch[pickle.REDUCE[0]] = self.load_reduce
+        self.dispatch[pickle.BUILD[0]] = self.load_build
+
+    def destroy(self):
+        self.dispatch[pickle.REDUCE[0]] = self.dispatch['oreduce']
+        self.dispatch[pickle.BUILD[0]] = self.dispatch['obuild']
+
+    def find_class(self, mod, klass):
+        if klass == 'QColor':
+            from PyQt5.QtGui import QColor
+            r = QColor
+        else:
+            r = super(OptionsUnpickler, self).find_class(mod, klass)
+
+        return r
+
+    @classmethod
+    def load_reduce(cls, obj):
+        stack = obj.stack
+        args = stack.pop()
+        func = stack[-1]
+
+        if args and args[0] == 'PyQt4.QtGui':
+            try:
+                stack[-1] = func(*args)
+            except ModuleNotFoundError:
+                from PyQt5.QtGui import QColor
+                stack[-1] = QColor(*args[2])
+        else:
+            stack[-1] = func(*args)
+
+    # pickle.Unpickler.dispatch[pickle.REDUCE[0]] = load_reduce
+
+    @classmethod
+    def load_build(cls, obj):
+        stack = obj.stack
+        state = stack.pop()
+        inst = stack[-1]
+        setstate = getattr(inst, "__setstate__", None)
+        if setstate is not None:
+            setstate(state)
+            return
+        slotstate = None
+        if isinstance(state, tuple) and len(state) == 2:
+            state, slotstate = state
+
+        if state == 'setRgbF':
+            inst.setRgbF(*slotstate)
+        else:
+            if state:
+                inst_dict = inst.__dict__
+                intern = sys.intern
+
+                for k, v in state.items():
+                    if type(k) is str:
+                        inst_dict[intern(k)] = v
+                    else:
+                        inst_dict[k] = v
+            if slotstate:
+                for k, v in slotstate.items():
+                    setattr(inst, k, v)
+
+    # pickle.Unpickler.dispatch[pickle.BUILD[0]] = load_build
 
 
 class OptionsManager(Loggable):
@@ -145,13 +219,13 @@ class OptionsManager(Loggable):
 
         if self.selected:
             with open(self.selected_options_path, 'wb') as wfile:
-                pickle.dump(self.selected, wfile)
+                spickle.dump(self.selected, wfile)
 
     def save_selected_as(self):
         name = self.new_name
 
         with open(os.path.join(self.persistence_root, '{}.p'.format(name)), 'wb') as wfile:
-            pickle.dump(self.selected_options, wfile)
+            spickle.dump(self.selected_options, wfile)
 
         self.refresh()
         self.selected = name
@@ -167,7 +241,7 @@ class OptionsManager(Loggable):
                 name = self.selected
 
         with open(os.path.join(self.persistence_root, '{}.p'.format(name)), 'wb') as wfile:
-            pickle.dump(obj, wfile)
+            spickle.dump(obj, wfile)
 
     def add(self, name):
         p = self.options_klass()
@@ -214,6 +288,7 @@ class OptionsManager(Loggable):
                     n = pickle.load(rfile)
                 except (pickle.PickleError, EOFError):
                     n = 'Default'
+
         return n
 
     def _populate(self):
@@ -245,9 +320,12 @@ class OptionsManager(Loggable):
             if os.path.isfile(p):
                 try:
                     with open(p, 'rb') as rfile:
-                        obj = pickle.load(rfile)
-                except BaseException:
-                    pass
+                        unp = OptionsUnpickler(rfile)
+                        obj = unp.load()
+                except BaseException as e:
+                    self.debug_exception()
+                finally:
+                    unp.destroy()
 
             if obj is None:
                 obj = self.options_klass()
