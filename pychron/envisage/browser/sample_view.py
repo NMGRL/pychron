@@ -23,6 +23,7 @@ from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+from pychron.core.pychron_traits import BorderVGroup, BorderHGroup
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.ui.qt.tabular_editors import FilterTabularEditor
 from pychron.core.ui.tabular_editor import myTabularEditor
@@ -49,7 +50,16 @@ class BaseBrowserSampleView(PaneModelView):
     configure_mass_spectrometer_filter_button = Button
 
     def _configure_date_filter_button_fired(self):
-        v = okcancel_view(self._get_date_group(),
+        grp = BorderHGroup(UItem('use_low_post'),
+                           UItem('low_post', style='custom', enabled_when='use_low_post'),
+                           UItem('use_high_post'),
+                           UItem('high_post', style='custom', enabled_when='use_high_post'),
+                           UItem('use_named_date_range'),
+                           UItem('named_date_range'),
+                           label='Date',
+                           visible_when='date_visible')
+
+        v = okcancel_view(grp,
                           height=150,
                           title='Configure Date Filter')
         info = self.edit_traits(view=v)
@@ -57,7 +67,18 @@ class BaseBrowserSampleView(PaneModelView):
             self.model.refresh_samples()
 
     def _configure_analysis_type_filter_button_fired(self):
-        v = okcancel_view(self._get_analysis_type_group(),
+        grp = BorderHGroup(UItem('use_analysis_type_filtering',
+                                 tooltip='Enable Analysis Type filter',
+                                 label='Enabled'),
+                           spring,
+                           UItem('_analysis_include_types',
+                                 enabled_when='use_analysis_type_filtering',
+                                 style='custom',
+                                 editor=CheckListEditor(cols=5,
+                                                        name='available_analysis_types')),
+                           visible_when='analysis_types_visible',
+                           label='Analysis Types')
+        v = okcancel_view(grp,
                           height=150,
                           title='Configure Analysis Type Filter')
         info = self.edit_traits(view=v)
@@ -65,121 +86,70 @@ class BaseBrowserSampleView(PaneModelView):
             self.model.refresh_samples()
 
     def _configure_mass_spectrometer_filter_button_fired(self):
-        v = okcancel_view(self._get_mass_spectrometer_group(),
+        grp = BorderHGroup(UItem('mass_spectrometers_enabled',
+                                 tooltip='Enable Mass Spectrometer filter'),
+                           spring,
+                           UItem('mass_spectrometer_includes',
+                                 style='custom',
+                                 enabled_when='use_mass_spectrometers',
+                                 editor=CheckListEditor(name='available_mass_spectrometers',
+                                                        cols=10)),
+                           visible_when='mass_spectrometer_visible',
+                           label='Mass Spectrometer')
+
+        v = okcancel_view(grp,
                           height=150,
                           title='Configure Mass Spectrometer Filter')
         info = self.edit_traits(view=v)
         if info.result:
             self.model.refresh_samples()
 
-    def _get_irrad_group(self):
-        irrad_grp = VGroup(
-            HGroup(UItem('irradiation_enabled',
-                         tooltip='Enable Irradiation filter'),
-                   UItem('irradiation',
-                         enabled_when='irradiation_enabled',
-                         editor=EnumEditor(name='irradiations'))),
-            UItem('level',
-                  enabled_when='irradiation_enabled',
-                  editor=EnumEditor(name='levels')),
-            visible_when='irradiation_visible',
-            show_border=True,
-            label='Irradiations')
-        return irrad_grp
+    def _get_sample_group(self):
+        irrad_grp = BorderVGroup(HGroup(UItem('irradiation_enabled',
+                                              tooltip='Enable Irradiation filter'),
+                                        UItem('irradiation',
+                                              enabled_when='irradiation_enabled',
+                                              editor=EnumEditor(name='irradiations'))),
+                                 UItem('level',
+                                       enabled_when='irradiation_enabled',
+                                       editor=EnumEditor(name='levels')),
+                                 visible_when='irradiation_visible',
+                                 label='Irradiations')
 
-    def _get_project_group(self):
-        project_grp = Group(UItem('projects',
-                                  height=100,
-                                  editor=FilterTabularEditor(editable=False,
-                                                             enabled_cb='project_enabled',
-                                                             use_fuzzy=True,
-                                                             column_index=-1,
-                                                             refresh='refresh_needed',
-                                                             selected='selected_projects',
-                                                             adapter=ProjectAdapter(),
-                                                             multi_select=True)),
-                            springy=False,
-                            visible_when='project_visible',
-                            show_border=True,
-                            label='Projects')
-        return project_grp
+        project_grp = BorderVGroup(UItem('projects',
+                                         height=100,
+                                         editor=FilterTabularEditor(editable=False,
+                                                                    enabled_cb='project_enabled',
+                                                                    use_fuzzy=True,
+                                                                    column_index=-1,
+                                                                    refresh='refresh_needed',
+                                                                    selected='selected_projects',
+                                                                    adapter=ProjectAdapter(),
+                                                                    multi_select=True)),
+                                   springy=False,
+                                   visible_when='project_visible',
+                                   label='Projects')
 
-    def _get_simple_analysis_type_group(self):
-        grp = HGroup(UItem('use_analysis_type_filtering',
-                           tooltip='Enable Analysis Type filter'),
-                     icon_button_editor('controller.configure_analysis_type_filter_button',
-                                        'cog',
-                                        tooltip='Configure analysis type filtering',
-                                        enabled_when='use_analysis_type_filtering'),
-                     show_border=True, label='Analysis Types')
-        return grp
+        simple_analysis_type_grp = BorderHGroup(UItem('use_analysis_type_filtering',
+                                                      tooltip='Enable Analysis Type filter'),
+                                                icon_button_editor('controller.configure_analysis_type_filter_button',
+                                                                   'cog',
+                                                                   tooltip='Configure analysis type filtering',
+                                                                   enabled_when='use_analysis_type_filtering'),
+                                                label='Analysis Types')
+        simple_date_grp = BorderHGroup(UItem('date_enabled',
+                                             tooltip='Enable Date Filtering'),
+                                       icon_button_editor('controller.configure_date_filter_button', 'cog',
+                                                          enabled_when='date_enabled',
+                                                          tooltip='Configure date filtering'),
+                                       label='Date')
+        simple_mass_spectrometer_grp = BorderHGroup(UItem('mass_spectrometers_enabled',
+                                                          tooltip='Enable Mass Spectrometer filter'),
+                                                    icon_button_editor(
+                                                        'controller.configure_mass_spectrometer_filter_button', 'cog',
+                                                        tooltip='Configure mass_spectrometer filtering'),
+                                                    label='Mass Spectrometer')
 
-    def _get_simple_date_group(self):
-        grp = HGroup(UItem('date_enabled',
-                           tooltip='Enable Date Filtering'),
-                     icon_button_editor('controller.configure_date_filter_button', 'cog',
-                                        enabled_when='date_enabled',
-                                        tooltip='Configure date filtering'), show_border=True,
-                     label='Date')
-        return grp
-
-    def _get_simple_mass_spectrometer_group(self):
-        grp = HGroup(UItem('mass_spectrometers_enabled',
-                           tooltip='Enable Mass Spectrometer filter'),
-                     icon_button_editor('controller.configure_mass_spectrometer_filter_button', 'cog',
-                                        tooltip='Configure mass_spectrometer filtering'), show_border=True,
-                     label='Mass Spectrometer')
-        return grp
-
-    def _get_analysis_type_group(self):
-        analysis_type_group = HGroup(
-            UItem('use_analysis_type_filtering',
-                  tooltip='Enable Analysis Type filter',
-                  label='Enabled'),
-            spring,
-            UItem('_analysis_include_types',
-                  enabled_when='use_analysis_type_filtering',
-                  style='custom',
-                  editor=CheckListEditor(cols=5,
-                                         name='available_analysis_types')),
-            visible_when='analysis_types_visible',
-            show_border=True,
-            label='Analysis Types')
-        return analysis_type_group
-
-    def _get_date_group(self):
-        date_grp = HGroup(UItem('use_low_post'),
-                          UItem('low_post', style='custom', enabled_when='use_low_post'),
-                          UItem('use_high_post'),
-                          UItem('high_post', style='custom', enabled_when='use_high_post'),
-                          UItem('use_named_date_range'),
-                          UItem('named_date_range'),
-                          label='Date',
-                          visible_when='date_visible',
-                          show_border=True)
-        return date_grp
-
-    def _get_mass_spectrometer_group(self):
-        ms_grp = HGroup(UItem('mass_spectrometers_enabled',
-                              tooltip='Enable Mass Spectrometer filter'),
-                        spring,
-                        UItem('mass_spectrometer_includes',
-                              style='custom',
-                              enabled_when='use_mass_spectrometers',
-                              editor=CheckListEditor(name='available_mass_spectrometers',
-                                                     cols=10)),
-                        visible_when='mass_spectrometer_visible',
-                        label='Mass Spectrometer', show_border=True)
-        return ms_grp
-
-    def _get_identifier_group(self):
-        ln_grp = HGroup(
-            UItem('identifier'),
-            label='Identifier', show_border=True,
-            visible_when='identifier_visible')
-        return ln_grp
-
-    def _get_pi_group(self):
         pi_grp = Group(UItem('principal_investigators',
                              height=100,
                              editor=FilterTabularEditor(editable=False,
@@ -193,41 +163,31 @@ class BaseBrowserSampleView(PaneModelView):
                        visible_when='principal_investigator_visible',
                        show_border=True,
                        label='PI')
-        return pi_grp
 
-    def _get_load_group(self):
-        load_grp = Group(UItem('loads',
-                               editor=FilterTabularEditor(editable=False,
-                                                          use_fuzzy=True,
-                                                          enabled_cb='load_enabled',
-                                                          refresh='refresh_needed',
-                                                          selected='selected_loads',
-                                                          adapter=LoadAdapter(),
-                                                          multi_select=True)),
-                         show_border=True,
-                         label='Load')
-        return load_grp
+        load_grp = BorderVGroup(UItem('loads',
+                                      editor=FilterTabularEditor(editable=False,
+                                                                 use_fuzzy=True,
+                                                                 enabled_cb='load_enabled',
+                                                                 refresh='refresh_needed',
+                                                                 selected='selected_loads',
+                                                                 adapter=LoadAdapter(),
+                                                                 multi_select=True)),
+                                label='Load')
 
-    def _get_sample_group(self):
-        irrad_grp = self._get_irrad_group()
-        project_grp = self._get_project_group()
+        search_grp = BorderHGroup(UItem('fuzzy_search_entry',
+                                        tooltip='Enter a simple search, Pychron will do the '
+                                                'rest. Must enter at least 3 characters'),
+                                  icon_button_editor('execute_fuzzy_search', 'eye',
+                                                     tooltip='Execute Fuzzy Search',
+                                                     enabled_when='len(fuzzy_search_entry)>2'),
+                                  label='Search')
 
-        simple_analysis_type_grp = self._get_simple_analysis_type_group()
-        simple_date_grp = self._get_simple_date_group()
-        simple_mass_spectrometer_grp = self._get_simple_mass_spectrometer_group()
-
-        pi_grp = self._get_pi_group()
-        load_grp = self._get_load_group()
-        s_grp = HGroup(UItem('fuzzy_search_entry', tooltip='Enter a simple search, Pychron will do the rest. Must '
-                                                           'enter at least 3 characters'),
-                       icon_button_editor('execute_fuzzy_search', 'eye',
-                                          tooltip='Execute Fuzzy Search', enabled_when='len(fuzzy_search_entry)>2'),
-                       label='Search',
-                       show_border=True)
-
-        top_level_filter_grp = VGroup(HGroup(s_grp, simple_mass_spectrometer_grp,
-                                             simple_analysis_type_grp, simple_date_grp),
-                                      HGroup(VGroup(pi_grp, project_grp), VGroup(irrad_grp, load_grp)))
+        top_level_filter_grp = VGroup(HGroup(search_grp,
+                                             simple_mass_spectrometer_grp,
+                                             simple_analysis_type_grp,
+                                             simple_date_grp),
+                                      HGroup(VGroup(pi_grp, project_grp),
+                                             VGroup(irrad_grp, load_grp)))
 
         sample_tools = HGroup(UItem('sample_filter_parameter',
                                     width=-90, editor=EnumEditor(name='sample_filter_parameters')),
@@ -244,17 +204,16 @@ class BaseBrowserSampleView(PaneModelView):
                                                           editable=False,
                                                           selected='selected_analysis_groups'))
 
-        sample_table = VGroup(sample_tools,
-                              UItem('samples',
-                                    editor=myTabularEditor(
-                                        adapter=self.model.labnumber_tabular_adapter,
-                                        editable=False,
-                                        selected='selected_samples',
-                                        multi_select=True,
-                                        dclicked='dclicked_sample',
-                                        column_clicked='column_clicked',
-                                        stretch_last_section=False)),
-                              show_border=True, label='Samples')
+        sample_table = BorderVGroup(sample_tools,
+                                    UItem('samples',
+                                          editor=myTabularEditor(adapter=self.model.labnumber_tabular_adapter,
+                                                                 editable=False,
+                                                                 selected='selected_samples',
+                                                                 multi_select=True,
+                                                                 dclicked='dclicked_sample',
+                                                                 column_clicked='column_clicked',
+                                                                 stretch_last_section=False)),
+                                    label='Samples')
         grp = VGroup(top_level_filter_grp, Tabbed(sample_table, analysis_grp_table))
         return grp
 
@@ -287,21 +246,20 @@ class BrowserSampleView(BaseBrowserSampleView):
         agrp = Group(VGroup(analysis_tools,
                             UItem('analysis_table.analyses',
                                   width=0.4,
-                                  editor=myTabularEditor(
-                                      adapter=self.model.analysis_table.tabular_adapter,
-                                      operations=['move', 'delete'],
-                                      column_clicked='analysis_table.column_clicked',
-                                      refresh='analysis_table.refresh_needed',
-                                      selected='analysis_table.selected',
-                                      dclicked='analysis_table.dclicked',
-                                      multi_select=self.pane.multi_select,
-                                      drag_external=True,
+                                  editor=myTabularEditor(adapter=self.model.analysis_table.tabular_adapter,
+                                                         operations=['move', 'delete'],
+                                                         column_clicked='analysis_table.column_clicked',
+                                                         refresh='analysis_table.refresh_needed',
+                                                         selected='analysis_table.selected',
+                                                         dclicked='analysis_table.dclicked',
+                                                         multi_select=self.pane.multi_select,
+                                                         drag_external=True,
 
-                                      scroll_to_row='analysis_table.scroll_to_row',
-                                      scroll_to_bottom='analysis_table.scroll_to_bottom',
-                                      scroll_to_top='analysis_table.scroll_to_top',
-                                      # scroll_to_row_hint='bottom',
-                                      stretch_last_section=False)),
+                                                         scroll_to_row='analysis_table.scroll_to_row',
+                                                         scroll_to_bottom='analysis_table.scroll_to_bottom',
+                                                         scroll_to_top='analysis_table.scroll_to_top',
+                                                         # scroll_to_row_hint='bottom',
+                                                         stretch_last_section=False)),
                             defined_when=self.pane.analyses_defined,
                             show_border=True,
                             label='Analyses'))

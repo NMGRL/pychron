@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 from numpy import array
+
 # ============= local library imports  ==========================
 from pychron.graph.ticks import IntTickGenerator
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
@@ -29,7 +30,7 @@ class VerticalFlux(BaseArArFigure):
         gen = IntTickGenerator()
         pp.y_axis.tick_generator = gen
         pp.y_grid.tick_generator = gen
-        self.graph.set_x_title('J')
+        self.graph.set_x_title(self.options.x_title)
 
     def post_make(self):
         self.graph.set_x_limits(min_=self.xmi, max_=self.xma, pad='0.1')

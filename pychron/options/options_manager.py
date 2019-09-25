@@ -14,16 +14,16 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+import json
 import os
-import sys
-# from pickle import BUILD
-import apptools.sweet_pickle as spickle
 import pickle
+import shutil
+import sys
 
 from traits.api import Str, List, Button, Instance, Tuple, Property, cached_property
 from traitsui.api import Controller, Item
 
-from pychron.core.helpers.filetools import glob_list_directory
+from pychron.core.helpers.filetools import glob_list_directory, add_extension
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.file_defaults import SPECTRUM_PRESENTATION, RADIAL_SCREEN, REGRESSION_SERIES_SCREEN, \
     DEFINE_EQUILIBRATION_SCREEN
@@ -40,7 +40,7 @@ from pychron.options.icfactor import ICFactorOptions
 from pychron.options.ideogram import IdeogramOptions
 from pychron.options.iso_evo import IsotopeEvolutionOptions
 from pychron.options.isochron import InverseIsochronOptions
-from pychron.options.options import BaseOptions, SubOptions
+from pychron.options.options import BaseOptions, SubOptions, importklass
 from pychron.options.radial import RadialOptions
 from pychron.options.ratio_series import RatioSeriesOptions
 from pychron.options.regression_series import RegressionSeriesOptions
@@ -65,7 +65,7 @@ class OptionsUnpickler(pickle.Unpickler):
 
     def find_class(self, mod, klass):
         if klass == 'QColor':
-            from PyQt5.QtGui import QColor
+            from pyface.qt.QtGui import QColor
             r = QColor
         else:
             r = super(OptionsUnpickler, self).find_class(mod, klass)
@@ -77,17 +77,14 @@ class OptionsUnpickler(pickle.Unpickler):
         stack = obj.stack
         args = stack.pop()
         func = stack[-1]
-
         if args and args[0] == 'PyQt4.QtGui':
             try:
                 stack[-1] = func(*args)
             except ModuleNotFoundError:
-                from PyQt5.QtGui import QColor
+                from pyface.qt.QtGui import QColor
                 stack[-1] = QColor(*args[2])
         else:
             stack[-1] = func(*args)
-
-    # pickle.Unpickler.dispatch[pickle.REDUCE[0]] = load_reduce
 
     @classmethod
     def load_build(cls, obj):
@@ -117,8 +114,6 @@ class OptionsUnpickler(pickle.Unpickler):
             if slotstate:
                 for k, v in slotstate.items():
                     setattr(inst, k, v)
-
-    # pickle.Unpickler.dispatch[pickle.BUILD[0]] = load_build
 
 
 class OptionsManager(Loggable):
@@ -201,7 +196,7 @@ class OptionsManager(Loggable):
 
     def delete_selected(self):
         if self.confirmation_dialog('Are you sure you want to delete "{}"'.format(self.selected)):
-            p = os.path.join(self.persistence_root, '{}.p'.format(self.selected))
+            p = self._pname(self.selected)
             os.remove(p)
             self.refresh()
 
@@ -218,14 +213,17 @@ class OptionsManager(Loggable):
                 os.mkdir(self.persistence_root)
 
         if self.selected:
-            with open(self.selected_options_path, 'wb') as wfile:
-                spickle.dump(self.selected, wfile)
+            with open(self._pname('selected', '.json'), 'w') as wfile:
+                json.dump({'selected': self.selected}, wfile)
+
+            p = self._pname('selected')
+            if os.path.isfile(p):
+                os.remove(p)
 
     def save_selected_as(self):
         name = self.new_name
 
-        with open(os.path.join(self.persistence_root, '{}.p'.format(name)), 'wb') as wfile:
-            spickle.dump(self.selected_options, wfile)
+        self._save(self.selected_options, name)
 
         self.refresh()
         self.selected = name
@@ -240,8 +238,22 @@ class OptionsManager(Loggable):
                 obj = self.selected_options
                 name = self.selected
 
-        with open(os.path.join(self.persistence_root, '{}.p'.format(name)), 'wb') as wfile:
-            spickle.dump(obj, wfile)
+        self._save(name, obj)
+
+    def _save(self, name, obj):
+        p = self._pname(name, '.json')
+        with open(p, 'w') as wfile:
+            obj.dump(wfile)
+
+        # for backwards compatiblity keep this for now
+        p = self._pname(name)
+        if os.path.isfile(p):
+            dp = self._pname(name, '.p.bak')
+            shutil.move(p, dp)
+
+        # p = self._pname(name)
+        # with open(p, 'wb') as wfile:
+        #     spickle.dump(obj, wfile)
 
     def add(self, name):
         p = self.options_klass()
@@ -259,7 +271,7 @@ class OptionsManager(Loggable):
                 if name == options_name:
                     self.selected = ''
                     self.debug('set factory default for {}'.format(name))
-                    dp = os.path.join(self.persistence_root, '{}.p'.format(name))
+                    dp = self._pname(name)
                     os.remove(dp)
 
                     p = self.options_klass()
@@ -276,26 +288,28 @@ class OptionsManager(Loggable):
             self.information_dialog('Not Factory Defaults available')
 
     def _initialize(self):
-        selected = self._load_selected_po()
-        self.selected = selected
-
-    def _load_selected_po(self):
-        p = self.selected_options_path
+        p = self._pname('selected', '.json')
         n = 'Default'
         if os.path.isfile(p):
-            with open(p, 'rb') as rfile:
-                try:
-                    n = pickle.load(rfile)
-                except (pickle.PickleError, EOFError):
-                    n = 'Default'
+            with open(p, 'r') as rfile:
+                obj = json.load(rfile)
+                n = obj['selected']
+        else:
+            p = self._pname('selected')
+            if os.path.isfile(p):
+                with open(p, 'rb') as rfile:
+                    try:
+                        n = pickle.load(rfile)
+                    except (pickle.PickleError, EOFError):
+                        n = 'Default'
 
-        return n
+        self.selected = n
 
     def _populate(self):
         # write some defaults
         if self._defaults:
             for name, txt in self._defaults:
-                dp = os.path.join(self.persistence_root, '{}.p'.format(name))
+                dp = self._pname(name)
                 if not os.path.isfile(dp):
                     p = self.options_klass()
                     p.load_factory_defaults(txt)
@@ -304,28 +318,58 @@ class OptionsManager(Loggable):
         self._load_names()
 
     def _load_names(self):
-        self.names = [n for n in glob_list_directory(self.persistence_root,
-                                                     extension='.p',
-                                                     remove_extension=True) if n != 'selected']
+        ps = glob_list_directory(self.persistence_root, extension='.p', remove_extension=True)
+        js = glob_list_directory(self.persistence_root, extension='.json', remove_extension=True)
+
+        ps.extend(js)
+        self.names = [ni for ni in ps if ni != 'selected']
 
     def _selected_subview_changed(self, new):
         if new:
             v = self.selected_options.get_subview(new)
             self.subview = v
 
+    def _load_json(self, p):
+        with open(p, 'rb') as rfile:
+            try:
+                j = json.load(rfile)
+            except json.JSONDecodeError:
+                return
+
+        klass = j.get('klass')
+        if klass is None:
+            return
+
+        cls = importklass(klass)
+        obj = cls()
+        obj.load(j)
+        return obj
+
     def _selected_changed(self, new):
         if new:
             obj = None
-            p = os.path.join(self.persistence_root, '{}.p'.format(new.lower()))
-            if os.path.isfile(p):
-                try:
-                    with open(p, 'rb') as rfile:
-                        unp = OptionsUnpickler(rfile)
-                        obj = unp.load()
-                except BaseException as e:
-                    self.debug_exception()
-                finally:
-                    unp.destroy()
+            name = new.lower()
+
+            yp = self._pname(name, '.json')
+            if os.path.isfile(yp):
+                obj = self._load_json(yp)
+                if obj:
+                    p = self._pname(name)
+                    if os.path.isfile(p):
+                        dp = self._pname(name, '.p.bak')
+                        shutil.move(p, dp)
+
+            if obj is None:
+                p = self._pname(name)
+                if os.path.isfile(p):
+                    try:
+                        with open(p, 'rb') as rfile:
+                            unp = OptionsUnpickler(rfile)
+                            obj = unp.load()
+                    except BaseException as e:
+                        self.debug_exception()
+                    finally:
+                        unp.destroy()
 
             if obj is None:
                 obj = self.options_klass()
@@ -347,31 +391,13 @@ class OptionsManager(Loggable):
         else:
             self.selected_options = None
 
-    # def _add_options_fired(self):
-    #     info = self.edit_traits(view='new_options_name_view')
-    #     if info.result:
-    #         self.plotter_options.name = self.new_options_name
-    #         self.plotter_options.dump(self.persistence_root)
-    #
-    #         self._plotter_options_list_dirty = True
-    #         self.set_plotter_options(self.new_options_name)
-
-    # def _delete_options_fired(self):
-    #     po = self.plotter_options
-    #     if self.confirmation_dialog('Are you sure you want to delete {}'.format(po.name)):
-    #         p = os.path.join(self.persistence_root, po.name)
-    #         os.remove(p)
-    #         self._plotter_options_list_dirty = True
-    #         self.plotter_options = self.plotter_options_list[0]
-    @property
-    def selected_options_path(self):
-        return os.path.join(self.persistence_root, 'selected.p')
+    def _pname(self, name, ext='.p'):
+        name = add_extension(name, ext)
+        return os.path.join(self.persistence_root, name)
 
     @property
     def persistence_root(self):
-        return os.path.join(paths.plotter_options_dir,
-                            globalv.username,
-                            self.id)
+        return os.path.join(paths.plotter_options_dir, globalv.username, self.id)
 
 
 class FigureOptionsManager(OptionsManager):

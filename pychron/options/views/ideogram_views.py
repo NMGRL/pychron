@@ -241,9 +241,7 @@ Additional examples
                                    UItem('sigma_filter_tag')),
                             label='Filtering')
 
-        v = View(BorderVGroup(HGroup(Item('name', editor=EnumEditor(name='names')),
-                                     Item('scale', editor=EnumEditor(values=['linear', 'log']))),
-                              Item('height'),
+        v = View(BorderVGroup(self._get_name_grp(),
                               self._get_yticks_grp(),
                               self._get_ylimits_group(),
                               self._get_marker_group(),

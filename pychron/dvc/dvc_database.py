@@ -246,8 +246,7 @@ class DVCDatabase(DatabaseAdapter):
                 q = q.filter(func.substring(lname, 2) == name)
                 q = q.filter(or_(lname == name))
 
-                print(q)
-                pret = bool(self._query_one(q, verbose_query=True))
+                pret = bool(self._query_one(q))
                 ret = pret or ret
 
             return ret
@@ -288,7 +287,7 @@ class DVCDatabase(DatabaseAdapter):
             if exclude_invalid:
                 q = exclude_invalid_analyses(q)
 
-            records = self._query_all(q, verbose_query=True)
+            records = self._query_all(q)
             return records
 
     def find_references(self, times, atypes, hours=10, exclude=None,
@@ -344,7 +343,7 @@ class DVCDatabase(DatabaseAdapter):
         #     q = q.filter(RepositoryTbl.name == repository)
 
         q = q.order_by(AnalysisTbl.timestamp.desc())
-        return self._query_one(q, verbose_query=True)
+        return self._query_one(q)
 
     def map_runid(self, src, dst):
         with self.session_ctx() as sess:
@@ -676,7 +675,7 @@ class DVCDatabase(DatabaseAdapter):
 
             f = or_(ProjectTbl.name.like('{}%'.format(search_str)), ProjectTbl.id.like('{}%'.format(search_str)))
             q = q.filter(f)
-            return self._query_all(q, verbose_query=True)
+            return self._query_all(q)
 
     def get_fuzzy_labnumbers(self, search_str):
         with self.session_ctx() as sess:
@@ -690,7 +689,7 @@ class DVCDatabase(DatabaseAdapter):
                     ProjectTbl.name == search_str,
                     ProjectTbl.id == search_str)
             q = q.filter(f)
-            ips = self._query_all(q, verbose_query=True)
+            ips = self._query_all(q)
 
             q = sess.query(ProjectTbl)
             q = q.join(SampleTbl)
@@ -1654,7 +1653,7 @@ class DVCDatabase(DatabaseAdapter):
                 q = q.filter(MaterialTbl.grainsize == grainsize)
             q = q.filter(ProjectTbl.name == project)
             q = principal_investigator_filter(q, principal_investigator)
-            return self._query_all(q, verbose_query=True)
+            return self._query_all(q)
 
     def get_irradiation_position(self, irrad, level, pos):
         with self.session_ctx() as sess:
@@ -1685,7 +1684,7 @@ class DVCDatabase(DatabaseAdapter):
                     if dbpi:
                         q = principal_investigator_filter(q, pi)
 
-                    return self._query_one(q, verbose_query=True)
+                    return self._query_one(q)
             else:
                 return self._retrieve_item(ProjectTbl, name)
         else:
@@ -1842,7 +1841,7 @@ class DVCDatabase(DatabaseAdapter):
             q = q.filter(IrradiationPositionTbl.identifier.isnot(None))
             q = q.order_by(func.abs(IrradiationPositionTbl.identifier).desc())
             q = q.limit(limit)
-            return [ni.identifier for ni in self._query_all(q, verbose_query=True)]
+            return [ni.identifier for ni in self._query_all(q)]
 
     def get_loads(self):
         return self._retrieve_items(LoadTbl, order=LoadTbl.create_date.desc())
@@ -1919,7 +1918,7 @@ class DVCDatabase(DatabaseAdapter):
         with self.session_ctx() as sess:
             q = sess.query(SampleTbl)
             q = q.filter(SampleTbl.name.like('%{}%'.format(name)))
-            return self._query_all(q, verbose_query=True)
+            return self._query_all(q)
 
     def distinct_sample_names(self, irradiation, level):
         with self.session_ctx() as sess:
@@ -2146,7 +2145,7 @@ class DVCDatabase(DatabaseAdapter):
             q = q.filter(SampleTbl.name == sample)
             q = q.filter(AnalysisChangeTbl.tag != 'invalid')
 
-            return self._query_all(q, verbose_query=True)
+            return self._query_all(q)
 
     # update/delete
     def delete_tag(self, name):

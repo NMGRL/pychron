@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import importlib
+import json
 
 from chaco.axis import DEFAULT_TICK_FORMATTER
 from chaco.axis_view import float_or_auto
@@ -39,6 +41,13 @@ from pychron.options.aux_plot import AuxPlot
 from pychron.options.layout import FigureLayout
 from pychron.processing.j_error_mixin import JErrorMixin
 from pychron.pychron_constants import NULL_STR, ERROR_TYPES, FONTS, SIZES
+
+
+def importklass(klass):
+    args = klass[8:-2].split('.')
+    mod = '.'.join(args[:-1])
+    mod = importlib.import_module(mod)
+    return getattr(mod, args[-1])
 
 
 def _table_column(klass, *args, **kw):
@@ -185,6 +194,12 @@ class MainOptions(SubOptions):
 
         return cols
 
+    def _get_name_grp(self):
+        grp = HGroup(Item('name', editor=EnumEditor(name='names')),
+                     Item('scale', editor=EnumEditor(values=['linear', 'log'])),
+                     Item('height'))
+        return grp
+
     def _get_yticks_grp(self):
         g = BorderHGroup(Item('use_sparse_yticks', label='Sparse'),
                          Item('sparse_yticks_step', label='Step', enabled_when='use_sparse_yticks'),
@@ -207,9 +222,7 @@ class MainOptions(SubOptions):
         return g
 
     def _get_edit_view(self):
-        v = View(BorderVGroup(HGroup(Item('name', editor=EnumEditor(name='names')),
-                                     Item('scale', editor=EnumEditor(values=['linear', 'log']))),
-                              Item('height'),
+        v = View(BorderVGroup(self._get_name_grp(),
                               self._get_yticks_grp(),
                               self._get_ylimits_group(),
                               self._get_marker_group()))
@@ -253,6 +266,64 @@ class BaseOptions(HasTraits):
     subview_names = List(transient=True)
 
     _subview_cache = None
+
+    def dump(self, wfile):
+        def convert_color(s):
+            from pyface.qt.QtGui import QColor
+            nd = {}
+            for k, v in s.items():
+                if isinstance(v, QColor):
+                    nd[k] = v.rgba()
+            s.update(**nd)
+
+        state = self.__getstate__()
+        state['klass'] = str(self.__class__)
+
+        layout = state.pop('layout')
+        if layout:
+            state['layout'] = str(layout.__class__), layout.__getstate__()
+
+        groups = state.pop('groups')
+        if groups:
+            def func(gi):
+                s = gi.__getstate__()
+                convert_color(s)
+                return str(gi.__class__), s
+
+            ngs = [func(gi) for gi in groups]
+            state['groups'] = ngs
+
+        convert_color(state)
+
+        if 'aux_plots' in state:
+            state['aux_plots'] = [(str(a.__class__), a.__getstate__())
+                                  for a in state.pop('aux_plots')]
+
+        state['selected'] = [(str(s.__class__), s.__getstate__())
+                             for s in state.pop('selected')]
+        json.dump(state, wfile, indent=4, sort_keys=True)
+
+    def load(self, state):
+        state.pop('klass')
+
+        def inst(klass):
+            klass, ctx = klass
+            cls = importklass(klass)
+            return cls(**ctx)
+
+        if 'layout' in state:
+            layout = state.pop('layout')
+            try:
+                obj = inst(layout)
+                state['layout'] = obj
+            except ValueError:
+                pass
+
+        for key in ('aux_plots', 'groups', 'selected'):
+            if key in state:
+                state[key] = [inst(a) for a in state.pop(key)]
+
+        self.__setstate__(state)
 
     def get_cached_subview(self, name):
         if self._subview_cache is None:

@@ -192,9 +192,7 @@ class SpectrumMainOptions(MainOptions):
         return cols
 
     def _get_edit_view(self):
-        v = View(BorderVGroup(HGroup(Item('name', editor=EnumEditor(name='names')),
-                                     Item('scale', editor=EnumEditor(values=['linear', 'log']))),
-                              Item('height'),
+        v = View(BorderVGroup(self._get_name_grp(),
                               self._get_yticks_grp(),
                               self._get_ylimits_group()))
         return v

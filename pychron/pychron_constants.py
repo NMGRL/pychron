@@ -52,12 +52,12 @@ except ImportError:
 PLUSMINUS = '\N{Plus-minus sign}'
 SIGMA = '\N{Greek Small Letter Sigma}'
 LAMBDA = '\u03BB'
+DELTA = '\N{Greek Capital Letter Delta}'
 
 PLUSMINUS_NSIGMA = '{}{{}}{}'.format(PLUSMINUS, SIGMA)
 PLUSMINUS_ONE_SIGMA = PLUSMINUS_NSIGMA.format(1)
 PLUSMINUS_TWO_SIGMA = PLUSMINUS_NSIGMA.format(2)
 PLUSMINUS_PERCENT = '{}%  '.format(PLUSMINUS)
-
 SPECIAL_IDENTIFIER = 'Special Identifier'
 NULL_STR = '---'
 LINE_STR = '---------'

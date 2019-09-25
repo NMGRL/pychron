@@ -179,14 +179,6 @@ class FindVerticalFluxNode(FindIrradiationNode):
     exclude = None
     use_saved_means = Bool(False)
 
-    def configure(self, *args, **kw):
-
-        self.irradiation = 'NM-304'
-        self.dirty = True
-        print('asdf', self.levels)
-        self.selected_levels = ['K', 'L', 'M', 'N', 'O', 'P']
-        return super(FindVerticalFluxNode, self).configure(*args, **kw)
-
     def traits_view(self):
         v = self._view_factory(Item('irradiation', editor=EnumEditor(name='irradiations')),
                                UItem('select_all_button', enabled_when='irradiation'),

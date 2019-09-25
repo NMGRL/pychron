@@ -166,8 +166,6 @@ class VerticalFluxNode(FigureNode):
         editor = self._editor_factory()
         state.editors.append(editor)
 
-        print('irrad', state.irradiation)
-        print('state', state.levels)
         editor.levels = state.levels
         editor.irradiation = state.irradiation
 

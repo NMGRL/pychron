@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traitsui.api import VGroup, Item, Readonly
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.options.options import SubOptions, AppearanceSubOptions
@@ -22,32 +24,11 @@ from pychron.options.options import SubOptions, AppearanceSubOptions
 
 class VerticalFluxSubOptions(SubOptions):
     def traits_view(self):
-        # twodgrp = VGroup(HGroup(Item('color_map_name',
-        #                              label='Color Map',
-        #                              editor=EnumEditor(values=sorted(color_map_name_dict.keys()))),
-        #                         Item('levels')),
-        #                  Item('model_kind'),
-        #                  visible_when='plot_kind=="2D"')
-        # onedgrp = VGroup(Item('marker_size'),
-        #                  visible_when='plot_kind=="1D"')
-        #
-        # # ogrp = HGroup(Item('confirm_save',
-        # #                    label='Confirm Save', tooltip='Allow user to review evolutions '
-        # #                                                  'before saving to file'))
-        # grp = VGroup(Item('plot_kind'),
-        #              twodgrp,
-        #              onedgrp,
-        #              Item('selected_decay', label='Decay Const.'),
-        #              Readonly('lambda_k', label=u'Total \u03BB K'),
-        #              Item('monitor_age'),
-        #              Item('predicted_j_error_type', ),
-        #              Item('use_weighted_fit', ),
-        #              Item('monte_carlo_ntrials', ),
-        #              Item('use_monte_carlo', ),
-        #              label='Fits',
-        #              show_border=True)
-
-        return self._make_view()
+        vg = VGroup(Item('use_j'),
+                    Item('selected_monitor', label='Flux Const.'),
+                    Readonly('lambda_k', label=u'Total \u03BB K'),
+                    Readonly('monitor_age'))
+        return self._make_view(vg)
 
 
 class VerticalFluxAppearanceSubOptions(AppearanceSubOptions):

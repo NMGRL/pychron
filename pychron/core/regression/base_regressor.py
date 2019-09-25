@@ -67,6 +67,7 @@ class BaseRegressor(HasTraits):
 
     error_calc_type = 'CI'
 
+    delta = Property(depends_on='dirty, xs, ys')
     mswd = Property(depends_on='dirty, xs, ys')
     valid_mswd = Bool
 
@@ -149,8 +150,9 @@ class BaseRegressor(HasTraits):
         return self.std
 
     @property
-    def dev(self):
+    def delta(self):
         return self.max - self.min
+    dev = delta
 
     @property
     def rsquared(self):

@@ -20,7 +20,10 @@ from pychron.processing.argon_calculations import calculate_flux
 
 
 def mean_j(ans, use_weights, error_kind, monitor_age, lambda_k):
-    js = [calculate_flux(ai.uF, monitor_age, lambda_k=lambda_k) for ai in ans]
+    if monitor_age is None:
+        js = [ai.uF for ai in ans]
+    else:
+        js = [calculate_flux(ai.uF, monitor_age, lambda_k=lambda_k) for ai in ans]
 
     fs = [nominal_value(fi) for fi in js]
     es = [std_dev(fi) for fi in js]
