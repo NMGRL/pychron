@@ -231,7 +231,8 @@ class Updater(Loggable):
     def _out_of_date(self, lc, rc):
         if rc and lc != rc:
             self.info('updates are available')
-            if not self.confirmation_dialog('Updates are available. Install and Restart?'):
+            if not self.confirmation_dialog('Updates are available. Install and Restart?',
+                                            position=STARTUP_MESSAGE_POSITION):
                 return False
 
             txt = self._repo.git.rev_list('--left-right', '{}...{}'.format(lc, rc))
@@ -253,6 +254,7 @@ class Updater(Loggable):
             # return self.version_tag, self.version_tag
         else:
             repo = self._get_working_repo()
+            repo.fetch()
             branchname = self.branch
             origin = repo.remotes.origin
             try:
