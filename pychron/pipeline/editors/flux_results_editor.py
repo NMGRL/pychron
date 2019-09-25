@@ -26,35 +26,13 @@ from uncertainties import nominal_value, std_dev, ufloat
 
 from pychron.core.helpers.formatting import calc_percent_error, floatfmt
 from pychron.core.helpers.iterfuncs import groupby_key
-from pychron.core.regression.mean_regressor import MeanRegressor, WeightedMeanRegressor
 from pychron.core.stats import validate_mswd
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.pipeline.editors.flux_visualization_editor import BaseFluxVisualizationEditor
 from pychron.pipeline.plot.plotter.arar_figure import SelectionFigure
-from pychron.processing.argon_calculations import calculate_flux
+from pychron.processing.flux import mean_j
 from pychron.pychron_constants import LEAST_SQUARES_1D, WEIGHTED_MEAN_1D
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
-
-
-def mean_j(ans, use_weights, error_kind, monitor_age, lambda_k):
-    js = [calculate_flux(ai.uF, monitor_age, lambda_k=lambda_k) for ai in ans]
-
-    fs = [nominal_value(fi) for fi in js]
-    es = [std_dev(fi) for fi in js]
-
-    if use_weights:
-        klass = WeightedMeanRegressor
-    else:
-        klass = MeanRegressor
-
-    reg = klass(ys=fs, yserr=es, error_calc_type=error_kind)
-    reg.calculate()
-    av = reg.predict()
-    werr = reg.predict_error(1)
-
-    j = ufloat(av, werr)
-
-    return j, reg.mswd
 
 
 def column(klass=ObjectColumn, editable=False, **kw):

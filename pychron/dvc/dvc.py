@@ -650,10 +650,10 @@ class DVC(Loggable):
 
         return ias
 
-    def find_flux_monitors(self, irradiation, level, sample, make_records=True):
+    def find_flux_monitors(self, irradiation, levels, sample, make_records=True):
         db = self.db
         with db.session_ctx():
-            ans = db.get_flux_monitor_analyses(irradiation, level, sample)
+            ans = db.get_flux_monitor_analyses(irradiation, levels, sample)
             for a in ans:
                 a.bind()
 

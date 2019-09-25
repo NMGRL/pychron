@@ -151,6 +151,11 @@ class FindIrradiationNode(BaseFindFluxNode):
             state.levels = self.selected_levels
             state.irradiation = self.irradiation
 
+        self._run_hook(state)
+
+    def _run_hook(self, state):
+        pass
+
     def _select_all_button_fired(self):
         self.selected_levels = self.levels
 
@@ -172,6 +177,36 @@ class FindIrradiationNode(BaseFindFluxNode):
 class FindVerticalFluxNode(FindIrradiationNode):
     name = 'Find Vertical Flux'
     exclude = None
+    use_saved_means = Bool(False)
+
+    def configure(self, *args, **kw):
+
+        self.irradiation = 'NM-304'
+        self.dirty = True
+        print('asdf', self.levels)
+        self.selected_levels = ['K', 'L', 'M', 'N', 'O', 'P']
+        return super(FindVerticalFluxNode, self).configure(*args, **kw)
+
+    def traits_view(self):
+        v = self._view_factory(Item('irradiation', editor=EnumEditor(name='irradiations')),
+                               UItem('select_all_button', enabled_when='irradiation'),
+                               BorderVGroup(UItem('selected_levels',
+                                                  style='custom',
+                                                  editor=CheckListEditor(name='levels', cols=3)),
+                                            visible_when='irradiation',
+                                            label='Levels'),
+                               Item('monitor_sample_name'),
+                               Item('use_saved_means'),
+                               width=300,
+                               height=300,
+                               title='Select Irradiation and Level',
+                               resizable=True)
+        return v
+
+    def _run_hook(self, state):
+        if not self.use_saved_means:
+            monitors = self.dvc.find_flux_monitors(self.irradiation, state.levels, self.monitor_sample_name)
+            state.unknowns = monitors
 
 
 class TransferFluxMonitorMeansNode(FindIrradiationNode):

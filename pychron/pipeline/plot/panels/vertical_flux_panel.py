@@ -32,6 +32,7 @@ class VerticalFluxPanel(FigurePanel):
 
     def _make_figures(self):
         return [self._figure_klass(irradiation=self.irradiation,
-                                   items=self.items)]
+                                   items=self.items,
+                                   options=self.plot_options)]
 
 # ============= EOF =============================================

@@ -2130,14 +2130,19 @@ class DVCDatabase(DatabaseAdapter):
     def get_flux_monitors(self, *args, **kw):
         return self._flux_positions(*args, **kw)
 
-    def get_flux_monitor_analyses(self, irradiation, level, sample):
+    def get_flux_monitor_analyses(self, irradiation, levels, sample):
         with self.session_ctx() as sess:
             q = sess.query(AnalysisTbl)
             q = q.join(IrradiationPositionTbl, LevelTbl, IrradiationTbl,
                        SampleTbl, AnalysisChangeTbl)
 
             q = q.filter(IrradiationTbl.name == irradiation)
-            q = q.filter(LevelTbl.name == level)
+
+            if isinstance(levels, (list, tuple)):
+                q = q.filter(LevelTbl.name.in_(levels))
+            else:
+                q = q.filter(LevelTbl.name == levels)
+
             q = q.filter(SampleTbl.name == sample)
             q = q.filter(AnalysisChangeTbl.tag != 'invalid')
 
