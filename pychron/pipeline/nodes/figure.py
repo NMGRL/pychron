@@ -175,6 +175,7 @@ class VerticalFluxNode(FigureNode):
             editor.set_items(state.levels)
 
         editor.name = 'VerticalFlux {}'.format(state.irradiation)
+        editor.plotter_options.use_f_enabled = not state.use_saved_means
         self.editor = editor
 
 

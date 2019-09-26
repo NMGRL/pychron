@@ -341,14 +341,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.alive = False
             self.stats.stop_timer()
             self.wait_group.stop()
-            # self.wait_group.active_control.stop
-            # self.active_wait_control.stop()
-            # self.wait_dialog.stop()
 
             msg = '{} Stopped'.format(self.experiment_queue.name)
             self._set_message(msg, color='orange')
-        else:
-            self.cancel()
+
+        self.cancel()
 
     def experiment_blob(self):
         path = self.experiment_queue.path
@@ -499,8 +496,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.heading(msg)
 
         # delay before starting
-        delay = exp.delay_before_analyses
-        self._delay(delay, message='before')
+        self._delay(exp.delay_before_analyses, message='before')
 
         for i, exp in enumerate(self.experiment_queues):
             self._set_thread_name(exp.name)
@@ -529,12 +525,16 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         """
 
         self.experiment_queue = exp
+        exp.stats.reset()
+
         self.info('Starting automated runs set={:02d} {}'.format(i, exp.name))
         self.debug('reset stats: {}'.format(self.stats))
+
+        self.stats.experiment_queues = self.experiment_queues
         self.stats.reset()
         self.stats.start_timer()
 
-        exp.start_timestamp = datetime.now()  # .strftime('%m-%d-%Y %H:%M:%S')
+        exp.start_timestamp = datetime.now()
 
         self._do_event(events.START_QUEUE)
 
@@ -600,10 +600,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 if not overlapping:
                     if self.is_alive() and cnt < nruns and not is_first_analysis:
                         # delay between runs
-                        # self._delay(exp.delay_between_analyses)
-                        d = delay_after_previous_analysis
-                        if d:
-                            self._delay(d)
+                        self._delay(delay_after_previous_analysis)
 
                         if not self.is_alive():
                             self.debug('User Cancel between runs')
@@ -1339,11 +1336,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
             sleep for ``delay`` seconds
         """
-        # self.delaying_between_runs = True
-        msg = 'Delay {} runs {} sec'.format(message, delay)
-        self.info(msg)
-        self._wait(delay, msg)
-        self.delaying_between_runs = False
+        if delay:
+            self.delaying_between_runs = True
+            msg = 'Delay {} runs {} sec'.format(message, delay)
+            self.info(msg)
+            self._wait(delay, msg)
+            self.delaying_between_runs = False
 
     def _wait(self, delay, msg):
         """

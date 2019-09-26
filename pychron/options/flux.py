@@ -92,10 +92,14 @@ class VerticalFluxAuxPlot(AuxPlot):
 class VerticalFluxOptions(FigureOptions, MonitorMixin):
 
     use_j = Bool
+    use_f_enabled = Bool
 
     @property
     def x_title(self):
-        return 'J' if self.use_j else '<sup>40</sup>Ar*/<sup>Ar</sub>39<sup>K</sub>'
+        t = 'J'
+        if self.use_f_enabled:
+            t = 'J' if self.use_j else '<sup>40</sup>Ar*/<sup>Ar</sub>39<sup>K</sub>'
+        return t
 
     def initialize(self):
         self.subview_names = [MAIN, APPEARANCE]

@@ -91,6 +91,7 @@ class VerticalFluxItem(HasTraits):
     j = Float
     j_err = Float
     z = Float
+    mswd = Float
 
 
 class VerticalFluxGroupItem(VerticalFluxItem):
@@ -133,7 +134,7 @@ class VerticalFluxEditor(FigureEditor):
             lambda_k = self.plotter_options.lambda_k
             monitor_age = None
             if self.plotter_options.use_j:
-                monitor_age = self.plotter_options.monitor_age*1e6
+                monitor_age = self.plotter_options.monitor_age * 1e6
 
             zs = {}
             items = [i for i in items if not i.is_omitted()]
@@ -179,13 +180,17 @@ class VerticalFluxEditor(FigureEditor):
                     obj = json.load(rfile)
 
                     positions = obj['positions']
-                    d = next((o for o in positions if o['position'] == 1), None)
-                    if d:
-                        vi = VerticalFluxItem(level=level, position=1,
-                                              j=d['mean_j'],
-                                              j_err=d['mean_j_err'],
-                                              z=obj['z'])
-                        nitems.append(vi)
+                    z = obj['z']
+
+                    for p in positions:
+                        j, j_err = p['mean_j'], p['mean_j_err']
+                        if j and j_err:
+                            vi = VerticalFluxItem(level=level,
+                                                  position=p['position'],
+                                                  j=j,
+                                                  j_err=j_err,
+                                                  z=z)
+                            nitems.append(vi)
 
         self.items = nitems
 
@@ -210,14 +215,14 @@ class VerticalFluxEditor(FigureEditor):
         g = self.get_component_view()
         g.width = 0.65
         items = UItem('items',
-                      width=1-g.width,
+                      width=1 - g.width,
                       editor=TabularEditor(adapter=VerticalFluxTabularAdapter()))
         groups = VGroup(UItem('groups',
-                              width=1-g.width,
+                              width=1 - g.width,
                               editor=TabularEditor(adapter=VerticalFluxGroupTabularAdapter())),
                         HGroup(freadonly(6, 'min'),
                                freadonly(6, 'max')),
-                        HGroup(freadonly(6,'delta'),
+                        HGroup(freadonly(6, 'delta'),
                                freadonly(2, 'pdelta', label='%')))
         v = View(HSplit(g,
                         VSplit(groups, items)))

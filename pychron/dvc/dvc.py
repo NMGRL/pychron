@@ -77,10 +77,11 @@ class DVC(Loggable):
     favorites = List
 
     update_currents_enabled = Bool
-
     use_cocktail_irradiation = Str
     use_cache = Bool
     max_cache_size = Int
+    irradiation_prefix = Str
+
     _cache = None
     _uuid_runid_cache = {}
 
@@ -1090,6 +1091,10 @@ class DVC(Loggable):
         irrads = self.db.get_irradiations()
         return [i.name for i in irrads]
 
+    def get_irradiations(self, *args, **kw):
+        sort_name_key = self.irradiation_prefix
+        return self.db.get_irradiations(sort_name_key=sort_name_key, *args, **kw)
+
     # add
     def add_interpreted_ages(self, rid, iass):
         ps = []
@@ -1682,6 +1687,8 @@ class DVC(Loggable):
         bind_preference(self, 'update_currents_enabled', '{}.update_currents_enabled'.format(prefid))
         bind_preference(self, 'use_auto_pull', '{}.use_auto_pull'.format(prefid))
 
+        prefid = 'pychron.entry'
+        bind_preference(self, 'irradiation_prefix', '{}.irradiation_prefix'.format(prefid))
         if self.use_cache:
             self._use_cache_changed()
 

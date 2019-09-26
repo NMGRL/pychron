@@ -1214,7 +1214,7 @@ class DVCDatabase(DatabaseAdapter):
             q = sess.query(AnalysisTbl)
             q = q.join(IrradiationPositionTbl)
             if step:
-                if isinstance(step, (str, )):
+                if isinstance(step, (str,)):
                     step = alpha_to_int(step)
 
                 q = q.filter(AnalysisTbl.increment == step)
@@ -1672,7 +1672,7 @@ class DVCDatabase(DatabaseAdapter):
             return self._query_one(q)
 
     def get_project(self, name, pi=None):
-        if isinstance(name, (str, )):
+        if isinstance(name, (str,)):
             if pi:
                 with self.session_ctx() as sess:
 
@@ -2025,7 +2025,7 @@ class DVCDatabase(DatabaseAdapter):
     def get_irradiations(self, names=None, project_names=None, order_func='desc',
                          order_by_date=None,
                          mass_spectrometers=None,
-                         exclude_name=None, **kw):
+                         exclude_name=None, sort_name_key=None, **kw):
 
         if names is not None:
             if hasattr(names, '__call__'):
@@ -2054,7 +2054,22 @@ class DVCDatabase(DatabaseAdapter):
         elif order_func:
             order = getattr(IrradiationTbl.name, order_func)()
 
-        return self._retrieve_items(IrradiationTbl, order=order, **kw)
+        items = self._retrieve_items(IrradiationTbl, order=order, **kw)
+        if sort_name_key:
+
+            n = '{:05n}'.format(len(items))
+
+            def func(i):
+                name = i.name
+                if name.startswith(sort_name_key):
+                    ret = name
+                else:
+                    ret = n
+                return ret
+
+            items = sorted(items, key=func, reverse=True)
+
+        return items
 
     def get_projects(self, principal_investigators=None, irradiation=None, level=None,
                      mass_spectrometers=None, order=None, verbose_query=False):

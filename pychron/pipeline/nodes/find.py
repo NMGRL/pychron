@@ -161,11 +161,11 @@ class FindIrradiationNode(BaseFindFluxNode):
 
     def traits_view(self):
         v = self._view_factory(Item('irradiation', editor=EnumEditor(name='irradiations')),
-                               UItem('select_all_button', enabled_when='irradiation'),
-                               BorderVGroup(UItem('selected_levels',
+                               BorderVGroup(UItem('select_all_button', enabled_when='irradiation'),
+                                            UItem('selected_levels',
                                                   style='custom',
-                                                  editor=CheckListEditor(name='levels', cols=3)),
-                                            visible_when='irradiation',
+                                                  editor=CheckListEditor(name='levels', cols=6)),
+                                            enabled_when='irradiation',
                                             label='Levels'),
                                width=300,
                                height=300,
@@ -179,13 +179,17 @@ class FindVerticalFluxNode(FindIrradiationNode):
     exclude = None
     use_saved_means = Bool(False)
 
+    def _configure_hook(self):
+        if not self.irradiation:
+            self.irradiation = self.irradiations[0]
+
     def traits_view(self):
         v = self._view_factory(Item('irradiation', editor=EnumEditor(name='irradiations')),
-                               UItem('select_all_button', enabled_when='irradiation'),
-                               BorderVGroup(UItem('selected_levels',
+                               BorderVGroup(UItem('select_all_button'),
+                                            UItem('selected_levels',
                                                   style='custom',
-                                                  editor=CheckListEditor(name='levels', cols=3)),
-                                            visible_when='irradiation',
+                                                  editor=CheckListEditor(name='levels', cols=6)),
+                                            enabled_when='irradiation',
                                             label='Levels'),
                                Item('monitor_sample_name'),
                                Item('use_saved_means'),
@@ -199,6 +203,7 @@ class FindVerticalFluxNode(FindIrradiationNode):
         if not self.use_saved_means:
             monitors = self.dvc.find_flux_monitors(self.irradiation, state.levels, self.monitor_sample_name)
             state.unknowns = monitors
+        state.use_saved_means = self.use_saved_means
 
 
 class TransferFluxMonitorMeansNode(FindIrradiationNode):
