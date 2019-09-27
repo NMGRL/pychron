@@ -299,8 +299,9 @@ class BaseOptions(HasTraits):
             state['aux_plots'] = [(str(a.__class__), a.__getstate__())
                                   for a in state.pop('aux_plots')]
 
-        state['selected'] = [(str(s.__class__), s.__getstate__())
-                             for s in state.pop('selected')]
+        if 'selected' in state:
+            state['selected'] = [(str(s.__class__), s.__getstate__())
+                                 for s in state.pop('selected')]
         json.dump(state, wfile, indent=4, sort_keys=True)
 
     def load(self, state):

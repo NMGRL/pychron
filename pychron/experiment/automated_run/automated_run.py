@@ -49,7 +49,8 @@ from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR, MEASUREMENT_COLOR, \
-    EXTRACTION_COLOR, SCRIPT_KEYS, AR_AR, NO_BLANK_CORRECT
+    EXTRACTION_COLOR, SCRIPT_KEYS, AR_AR, NO_BLANK_CORRECT, EXTRACTION, MEASUREMENT, EM_SCRIPT_KEYS, SCRIPT_NAMES, \
+    POST_MEASUREMENT, POST_EQUILIBRATION
 from pychron.spectrometer.base_spectrometer import NoIntensityChange
 
 DEBUG = False
@@ -206,6 +207,7 @@ class AutomatedRun(Loggable):
     log_path = Str
 
     failed_intensity_count_threshold = Int(3)
+    use_equilibration_analysis = Bool(False)
 
     def set_preferences(self, preferences):
         self.debug('set preferences')
@@ -213,6 +215,7 @@ class AutomatedRun(Loggable):
         for attr, cast in (('experiment_type', str),
                            ('laboratory', str),
                            ('instrument_name', str),
+                           ('use_equilibration_analysis', to_bool),
                            ('use_peak_center_threshold', to_bool),
                            ('peak_center_threshold', float),
                            ('peak_center_threshold_window', int),
@@ -728,7 +731,7 @@ class AutomatedRun(Loggable):
         self.debug('Abort run do_post_equilibration={}'.format(do_post_equilibration))
         self._persister_action('trait_set', save_enabled=False)
 
-        for s in ('extraction', 'measurement'):
+        for s in EM_SCRIPT_KEYS:
             script = getattr(self, '{}_script'.format(s))
             if script is not None:
                 script.abort()
@@ -759,7 +762,7 @@ class AutomatedRun(Loggable):
         self.collector.canceled = True
         self._persister_action('trait_set', save_enabled=False)
 
-        for s in ('extraction', 'measurement'):
+        for s in EM_SCRIPT_KEYS:
             script = getattr(self, '{}_script'.format(s))
             if script is not None:
                 script.cancel()
@@ -1065,7 +1068,6 @@ class AutomatedRun(Loggable):
             hops_blob = self.measurement_script.hops_blob
             sfods, bsfods = self._get_default_fods()
 
-
         pe_name, pe_blob = '', ''
         if self.post_equilibration_script:
             pe_name = self.post_equilibration_script.name
@@ -1112,10 +1114,10 @@ class AutomatedRun(Loggable):
     # doers
     # ===============================================================================
     def start_extraction(self):
-        return self._start_script('extraction')
+        return self._start_script(EXTRACTION)
 
     def start_measurement(self):
-        return self._start_script('measurement')
+        return self._start_script(MEASUREMENT)
 
     def do_extraction(self):
         self.debug('do extraction')
@@ -1231,7 +1233,7 @@ class AutomatedRun(Loggable):
         self.info_color = MEASUREMENT_COLOR
         msg = 'Measurement Started {}'.format(script.name)
         self.heading('{}'.format(msg))
-        self.spec.state = 'measurement'
+        self.spec.state = MEASUREMENT
         self.experiment_queue.refresh_table_needed = True
 
         # get current spectrometer values
@@ -1955,7 +1957,7 @@ anaylsis_type={}
                 self.overlap_evt.set()
 
     def _analyze_equilibration(self):
-        if self.plot_panel:
+        if self.use_equilibration_analysis and self.plot_panel:
             g = self.plot_panel.sniff_graph
             xmi, xma = g.get_x_limits()
             xma *= 1.25
@@ -2047,14 +2049,13 @@ anaylsis_type={}
         if for_collection:
             if update_labels:
                 self._update_labels()
-                # from pychron.core.ui.gui import invoke_in_main_thread
-                # invoke_in_main_thread(self._update_labels)
 
             if update_detectors:
                 self._update_detectors()
 
             if remove_non_active:
-                for k in self.isotope_group.keys():
+                keys = list(self.isotope_group.keys())
+                for k in keys:
                     iso = self.isotope_group.isotopes[k]
                     det = next((di for di in self._active_detectors if di.isotope == iso.name), None)
                     if det is None:
@@ -2066,8 +2067,7 @@ anaylsis_type={}
                 def key2(v):
                     return v[1].detector
 
-                self.debug('per cleaned {}'.format(list(self.isotope_group.keys())))
-                # for name, items in groupby(sorted(list(self.isotope_group.items()), key=key), key=key):
+                self.debug('per cleaned {}'.format(keys))
                 for name, items in groupby_key(self.isotope_group.items(), key):
                     items = list(items)
                     if len(items) > 1:
@@ -2079,7 +2079,7 @@ anaylsis_type={}
                                     if v.name == k:
                                         self.isotope_group.isotopes.pop(k)
 
-                self.debug('cleaned isotoped group {}'.format(list(self.isotope_group.keys())))
+                self.debug('cleaned isotope group {}'.format(keys))
 
             if self.plot_panel:
                 self.debug('load analysis view')
@@ -2283,10 +2283,24 @@ anaylsis_type={}
 
         return not m.canceled
 
-    def _setup_baseline_graph(self, starttime_offset, color):
-        graph = self.plot_panel.baseline_graph
-        mi, ma = graph.get_x_limits()
+    def _get_plot_id_by_ytitle(self, graph, pair, iso=None):
+        """
+        pair is string in form <Iso><Det>, iso is just <Iso>
+        :param graph:
+        :param pair:
+        :param secondary:
+        :return:
+        """
+        idx = graph.get_plotid_by_ytitle(pair)
+        if idx is None and iso:
+            if not isinstance(iso, str):
+                iso = iso.name
+            idx = graph.get_plotid_by_ytitle(iso)
+        return idx
 
+    def _update_limits(self, graph, starttime_offset):
+        # update limits
+        mi, ma = graph.get_x_limits()
         max_ = ma
         min_ = mi
         tc = self.plot_panel.total_counts
@@ -2297,13 +2311,16 @@ anaylsis_type={}
             min_ = -starttime_offset
 
         graph.set_x_limits(min_=min_, max_=max_ * 1.25)
-        series = 0
-        # for k, iso in se:
+
+    def _setup_baseline_graph(self, starttime_offset, color):
+        graph = self.plot_panel.baseline_graph
+        self._update_limits(graph, starttime_offset)
+
         for det in self._active_detectors:
             idx = graph.get_plotid_by_ytitle(det.name)
             if idx is not None:
                 try:
-                    graph.series[idx][series]
+                    graph.series[idx][0]
                 except IndexError as e:
                     graph.new_series(marker='circle',
                                      color=color,
@@ -2317,18 +2334,7 @@ anaylsis_type={}
 
     def _setup_sniff_graph(self, starttime_offset, color):
         graph = self.plot_panel.sniff_graph
-        mi, ma = graph.get_x_limits()
-
-        max_ = ma
-        min_ = mi
-        tc = self.plot_panel.total_counts
-        if tc > ma or ma == Inf:
-            max_ = tc * self._integration_seconds
-
-        if starttime_offset > mi:
-            min_ = -starttime_offset
-
-        graph.set_x_limits(min_=min_, max_=max_ * 1.1)
+        self._update_limits(graph, starttime_offset)
 
         series = self.collector.series_idx
         for k, iso in self.isotope_group.items():
@@ -2349,21 +2355,6 @@ anaylsis_type={}
                                      add_inspector=False,
                                      add_tools=False)
 
-    def _get_plot_id_by_ytitle(self, graph, pair, iso=None):
-        """
-        pair is string in form <Iso><Det>, iso is just <Iso>
-        :param graph:
-        :param pair:
-        :param secondary:
-        :return:
-        """
-        idx = graph.get_plotid_by_ytitle(pair)
-        if idx is None and iso:
-            if not isinstance(iso, str):
-                iso = iso.name
-            idx = graph.get_plotid_by_ytitle(iso)
-        return idx
-
     def _setup_isotope_graph(self, starttime_offset, color, grpname):
         """
             execute in main thread is necessary.
@@ -2371,21 +2362,9 @@ anaylsis_type={}
             set 0-count fits
 
         """
-
         graph = self.plot_panel.isotope_graph
-        # update limits
-        mi, ma = graph.get_x_limits()
+        self._update_limits(graph, starttime_offset)
 
-        max_ = ma
-        min_ = mi
-        tc = self.plot_panel.total_counts
-        if tc > ma or ma == Inf:
-            max_ = tc * self._integration_seconds
-
-        if starttime_offset > mi:
-            min_ = -starttime_offset
-
-        graph.set_x_limits(min_=min_, max_=max_ * 1.1)
         regressing = grpname != 'sniff'
         series = self.collector.series_idx
         for k, iso in self.isotope_group.items():
@@ -2446,14 +2425,14 @@ anaylsis_type={}
         # ensure mim mass spectrometer pump time
         # wait until pumping started
         self.debug('wait for mass spec pump out to start')
-        self._wait_for(lambda x: not self.ms_pumptime_start is None,
-                       msg=lambda x: 'waiting for mass spec pumptime to start {:0.2f}'.format(x))
-        self.debug('mass spec pump out to started')
+        self._wait_for(lambda x: self.ms_pumptime_start is not None,
+                       lambda x: 'waiting for mass spec pumptime to start {:0.2f}'.format(x))
 
         # wait for min pump time
-        pred = lambda x: self.elapsed_ms_pumptime > mp
-        msg = lambda x: 'waiting for min mass spec pumptime {}, elapse={:0.2f}'.format(mp, x)
-        self._wait_for(pred, msg)
+        self.debug('mass spec pump out to started')
+        self._wait_for(lambda x: self.elapsed_ms_pumptime > mp,
+                       lambda x: 'waiting for min mass spec pumptime {}, elapse={:0.2f}'.format(mp, x))
+
         self.debug('min pumptime elapsed {} {}'.format(mp, self.elapsed_ms_pumptime))
 
     # ===============================================================================
@@ -2574,12 +2553,12 @@ anaylsis_type={}
         return c
 
     def _assemble_extraction_blob(self):
-        _names, txt = self._assemble_script_blob(kinds=('extraction', 'post_equilibration', 'post_measurement'))
+        _names, txt = self._assemble_script_blob(kinds=(EXTRACTION, POST_EQUILIBRATION, POST_MEASUREMENT))
         return txt
 
     def _assemble_script_blob(self, kinds=None):
         if kinds is None:
-            kinds = 'extraction', 'measurement', 'post_equilibration', 'post_measurement'
+            kinds = SCRIPT_KEYS
         okinds = []
         bs = []
         for s in kinds:
@@ -2595,8 +2574,8 @@ anaylsis_type={}
     # ===============================================================================
     def _runner_changed(self, new):
         self.debug('Runner runner:{}'.format(new))
-        for s in ['measurement', 'extraction', 'post_equilibration', 'post_measurement']:
-            sc = getattr(self, '{}_script'.format(s))
+        for s in SCRIPT_NAMES:
+            sc = getattr(self, s)
             if sc is not None:
                 setattr(sc, 'runner', new)
 

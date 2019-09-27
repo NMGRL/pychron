@@ -64,7 +64,14 @@ LINE_STR = '---------'
 TOP = 'Top'
 BOTTOM = 'Bottom'
 AUTO_SCROLL_KINDS = (NULL_STR, TOP, BOTTOM)
-SCRIPT_KEYS = ['measurement', 'post_measurement', 'extraction', 'post_equilibration']
+
+MEASUREMENT = 'measurement'
+POST_MEASUREMENT = 'post_measurement'
+POST_EQUILIBRATION = 'post_measurement'
+EXTRACTION = 'extraction'
+EM_SCRIPT_KEYS = (EXTRACTION, MEASUREMENT)
+SCRIPT_KEYS = [MEASUREMENT, POST_MEASUREMENT, EXTRACTION, POST_EQUILIBRATION]
+
 SCRIPT_NAMES = ['{}_script'.format(si) for si in SCRIPT_KEYS]
 
 SD = 'SD'

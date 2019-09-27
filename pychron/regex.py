@@ -35,7 +35,7 @@ ALT_ISOREGEX = re.compile(r'\d+[A-Za-z]{1,2}$')
 
 PACKETREGEX = re.compile(r'(?P<prefix>[a-zA-Z]+)?(?P<number>\d+)')
 IPREGEX = re.compile(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$')
-
+URLREGEX = re.compile(r'^[\w-_]+\.([\w-_].*)*$')
 GITREFREGEX = re.compile(r'^[\w]{40}')
 
 MDD_PARAM_REGEX = re.compile(r'E= {3}(?P<E>\d+.\d+) {7}\+\- {4}(?P<Eerr>\d+.\d+) '

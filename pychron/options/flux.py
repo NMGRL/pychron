@@ -98,7 +98,7 @@ class VerticalFluxOptions(FigureOptions, MonitorMixin):
     def x_title(self):
         t = 'J'
         if self.use_f_enabled:
-            t = 'J' if self.use_j else '<sup>40</sup>Ar*/<sup>Ar</sub>39<sup>K</sub>'
+            t = 'J' if self.use_j else '<sup>40</sup>Ar*/<sup>Ar</sub>39<sub>K</sub>'
         return t
 
     def initialize(self):

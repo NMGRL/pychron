@@ -19,15 +19,18 @@ from traitsui.api import VGroup, Item, Readonly
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.pychron_traits import BorderVGroup
 from pychron.options.options import SubOptions, AppearanceSubOptions
 
 
 class VerticalFluxSubOptions(SubOptions):
     def traits_view(self):
-        vg = VGroup(Item('use_j'),
-                    Item('selected_monitor', label='Flux Const.'),
-                    Readonly('lambda_k', label=u'Total \u03BB K'),
-                    Readonly('monitor_age'))
+        vg = VGroup(Item('use_j', label='Use J'),
+                    BorderVGroup(Item('selected_monitor', label='Flux Const.'),
+                                 Readonly('lambda_k', label=u'Total \u03BB K'),
+                                 Readonly('monitor_age', label='Monitor Age'),
+                                 label='Monitor',
+                                 enabled_when='use_j'))
         return self._make_view(vg)
 
 

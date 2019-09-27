@@ -15,17 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 
 # ============= standard library imports ========================
+
+# ============= local library imports  ==========================
 import re
 
-from traits.api import BaseStr, Int, String
-# ============= local library imports  ==========================
+from traits.api import BaseStr, Int, String, Float
 from traitsui.group import VGroup, HGroup
 
 from pychron.core.filtering import validate_filter_predicate
-from pychron.regex import IPREGEX, PACKETREGEX, STEPREGEX
+from pychron.regex import IPREGEX, PACKETREGEX, STEPREGEX, URLREGEX
 
 
 class StepStr(BaseStr):
@@ -46,7 +46,11 @@ class PacketStr(BaseStr):
 
 class HostStr(BaseStr):
     def validate(self, obj, name, value):
-        if not value or value == 'localhost' or IPREGEX.match(value) or '\\' in value:
+        if not value or value == 'localhost' \
+                or IPREGEX.match(value) \
+                or URLREGEX.match(value) \
+                or '\\' in value:
+
             return value
         else:
             self.error(obj, name, value)
@@ -61,6 +65,14 @@ class IPAddress(BaseStr):
 
 
 class PositiveInteger(Int):
+    def validate(self, object, name, value):
+        if value >= 0:
+            return value
+
+        self.error(object, name, value)
+
+
+class PositiveFloat(Float):
     def validate(self, object, name, value):
         if value >= 0:
             return value

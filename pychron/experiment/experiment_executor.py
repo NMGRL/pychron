@@ -45,6 +45,7 @@ from pychron.envisage.view_util import open_view
 from pychron.experiment import events, PreExecuteCheckException
 from pychron.experiment.automated_run.persistence import ExcelPersister
 from pychron.experiment.conditional.conditional import conditionals_from_file
+from pychron.experiment.conditional.conditionals_view import ConditionalsView
 from pychron.experiment.conflict_resolver import ConflictResolver
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.experiment_scheduler import ExperimentScheduler
@@ -59,7 +60,8 @@ from pychron.experiment.utilities.repository_identifier import retroactive_repos
 from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
 from pychron.globals import globalv
 from pychron.paths import paths
-from pychron.pychron_constants import DEFAULT_INTEGRATION_TIME, LINE_STR, AR_AR, DVC_PROTOCOL, DEFAULT_MONITOR_NAME
+from pychron.pychron_constants import DEFAULT_INTEGRATION_TIME, LINE_STR, AR_AR, DVC_PROTOCOL, DEFAULT_MONITOR_NAME, \
+    SCRIPT_NAMES, EM_SCRIPT_KEYS
 
 
 def remove_backup(uuid_str):
@@ -307,12 +309,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     def set_queue_modified(self):
         self.queue_modified = True
-
-    # def get_prev_baselines(self):
-    #     return self._prev_baselines
-    # 
-    # def get_prev_blanks(self):
-    #     return self._prev_blank_id, self._prev_blanks, self._prev_blank_runid
 
     def is_alive(self):
         return self.alive
@@ -629,8 +625,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
                     self.info('overlaping')
 
-                    t = Thread(target=self._do_run, args=(run,),
-                               name=run.runid)
+                    t = Thread(target=self._do_run, args=(run,), name=run.runid)
                     t.start()
 
                     run.wait_for_overlap()
@@ -754,9 +749,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     self._prev_blanks = pb
                     self.debug('previous blanks ={}'.format(pb))
 
-        self._report_execution_state(run)
-
-        # invoke_in_main_thread(run.teardown)
         run.teardown()
 
         self.measuring_run = None
@@ -784,10 +776,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         self.extracting_run = run
 
-        for step in ('_start',
-                     '_extraction',
-                     '_measurement',
-                     '_post_measurement'):
+        for step in ('_start', '_extraction', '_measurement', '_post_measurement'):
 
             if not self.is_alive():
                 break
@@ -800,8 +789,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 run.spec.state = 'failed'
                 break
 
-            f = getattr(self, step)
-            if not f(run):
+            if not getattr(self, step)(run):
                 self.warning('{} did not complete successfully'.format(step[1:]))
                 if step != '_post_measurement':  # save data even if post measurement fails
                     run.spec.state = 'failed'
@@ -854,8 +842,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # close conditionals view
         self._close_cv()
 
-        self._do_event(events.END_RUN,
-                       run=run)
+        self._do_event(events.END_RUN, run=run)
 
         remove_root_handler(handler)
         run.post_finish()
@@ -893,10 +880,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if run.analysis_type.startswith('blank'):
             pb = run.get_baseline_corrected_signals()
             if pb is not None:
-                # self._prev_blank_id = run.spec.analysis_dbid
                 self._prev_blanks = pb
-        self._report_execution_state(run)
-        # run.teardown()
+
         do_after(1000, run.teardown)
 
     def _abort_run(self):
@@ -986,31 +971,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         msg = '{} {}'.format(n, msg)
         self._set_message(msg, c)
 
-    #     invoke_in_main_thread(self._show_shareables)
-    #
-    # def _show_shareables(self):
-    #     if self.use_dvc_persistence:
-    #         from pychron.dvc.share import PushExperimentsModel
-    #         from pychron.dvc.share import PushExperimentsView
-    #         # dvc = self.datahub.stores['dvc']
-    #         from pychron.git.hosts import IGitHost
-    #         gs = self.application.get_services(IGitHost)
-    #         org = self.application.preferences.get('pychron.dvc.organization')
-    #         for gi in gs:
-    #             pm = PushExperimentsModel(org,
-    #                                       gi.username,
-    #                                       gi.password,
-    #                                       gi.oauth_token)
-    #             if pm.shareables:
-    #                 self.info('shareable repositories: {}'.format(pm.names))
-    #                 if self.confirmation_dialog('You have shareable Repositories. Would you like to examine them?'):
-    #                     pv = PushExperimentsView(model=pm)
-    #                     open_view(pv)
-
     def _show_conditionals(self, active_run=None, tripped=None, kind='live'):
         try:
-
-            from pychron.experiment.conditional.conditionals_view import ConditionalsView
 
             v = ConditionalsView()
 
@@ -1060,10 +1022,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.debug('open view _cv_info={}'.format(self._cv_info))
 
         except BaseException:
-            import traceback
-
             self.warning('******** Exception trying to open conditionals. Notify developer ********')
-            self.debug(traceback.format_exc())
+            self.debug_exception()
 
     # ===============================================================================
     # execution steps
@@ -1166,9 +1126,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     # ===============================================================================
     # utilities
     # ===============================================================================
-    def _report_execution_state(self, run):
-        pass
-
     def _make_run(self, spec):
         """
             spec: AutomatedRunSpec
@@ -1217,10 +1174,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         arun.set_preferences(self.application.preferences)
 
         arun.refresh_scripts()
-        for script in (arun.extraction_script,
-                       arun.measurement_script,
-                       arun.post_measurement_script,
-                       arun.post_equilibration_script):
+
+        for sname in SCRIPT_NAMES:
+            script = getattr(arun, sname)
             if script:
                 script.application = self.application
                 script.manager = self
@@ -1278,7 +1234,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         ens = self.experiment_queue.executed_runs
         step_offset, aliquot_offset = 0, 0
 
-        exs = [ai for ai in ens if ai.state in ('measurement', 'extraction')]
+        exs = [ai for ai in ens if ai.state in EM_SCRIPT_KEYS]
         if exs:
             if spec.is_step_heat():
                 eruns = [(ei.labnumber, ei.aliquot) for ei in exs]

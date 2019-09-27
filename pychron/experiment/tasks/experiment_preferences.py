@@ -22,21 +22,11 @@ from traits.api import Str, Int, \
     Bool, Password, Color, Property, Float, Enum
 from traitsui.api import View, Item, Group, VGroup, HGroup, UItem
 
-from pychron.core.pychron_traits import PositiveInteger
+from pychron.core.pychron_traits import PositiveInteger, PositiveFloat
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper, BaseConsolePreferences, \
     BaseConsolePreferencesPane
 from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES
-
-
-# class LabspyPreferences(BasePreferencesHelper):
-#     preferences_path = 'pychron.experiment.labspy'
-#     use_labspy = Bool
-#
-#
-# class DVCPreferences(BasePreferencesHelper):
-#     preferences_path = 'pychron.experiment.dvc'
-#     use_dvc_persistence = Bool
 
 
 class ExperimentPreferences(BasePreferencesHelper):
@@ -49,13 +39,13 @@ class ExperimentPreferences(BasePreferencesHelper):
 
     use_uuid_path_name = Bool
     use_notifications = Bool
-    notifications_port = Int
+    notifications_port = PositiveInteger
     use_autoplot = Bool
 
     send_config_before_run = Bool
     verify_spectrometer_configuration = Bool
     use_auto_save = Bool
-    auto_save_delay = Int
+    auto_save_delay = PositiveInteger
 
     baseline_color = Color
     sniff_color = Color
@@ -64,11 +54,10 @@ class ExperimentPreferences(BasePreferencesHelper):
     bg_color = Color
     even_bg_color = Color
 
-    min_ms_pumptime = Int
+    min_ms_pumptime = PositiveInteger
 
     use_memory_check = Bool
-    memory_threshold = Property(PositiveInteger,
-                                depends_on='_memory_threshold')
+    memory_threshold = Property(PositiveInteger, depends_on='_memory_threshold')
     _memory_threshold = Int
 
     use_analysis_grouping = Bool
@@ -98,15 +87,16 @@ class ExperimentPreferences(BasePreferencesHelper):
     air_color = Color
     cocktail_color = Color
 
-    use_peak_center_threshold = Bool
-    # peak_center_threshold1 = Int(10)
-    peak_center_threshold = Float(3)
-    peak_center_threshold_window = Int(10)
+    use_equilibration_analysis = Bool
 
-    n_executed_display = Int
-    failed_intensity_count_threshold = Int(3)
+    use_peak_center_threshold = Bool
+    peak_center_threshold = PositiveFloat(3)
+    peak_center_threshold_window = PositiveInteger(10)
+
+    n_executed_display = PositiveInteger
+    failed_intensity_count_threshold = PositiveInteger(3)
     ratio_change_detection_enabled = Bool(False)
-    plot_panel_update_period = Int(1)
+    plot_panel_update_period = PositiveInteger(1)
 
     def _get_memory_threshold(self):
         return self._memory_threshold
@@ -121,7 +111,7 @@ class UserNotifierPreferences(BasePreferencesHelper):
     server_username = Str
     server_password = Password
     server_host = Str
-    server_port = Int
+    server_port = PositiveInteger
     include_log = Bool
 
 
@@ -167,27 +157,19 @@ class ExperimentPreferencesPane(PreferencesPane):
     category = 'Experiment'
 
     def traits_view(self):
-        # notification_grp = VGroup(
-        #     Item('use_autoplot'),
-        #     Item('use_notifications'),
-        #     Item('notifications_port',
-        #          enabled_when='use_notifications',
-        #          label='Port'),
-        #     label='Notifications')
-
-        editor_grp = VGroup(
-            Item('automated_runs_editable',
-                 label='Direct editing',
-                 tooltip='Allow user to edit Automated Runs directly within table. '
-                         'Reopen experiment tab required to take effect'),
-            Item('use_auto_save',
-                 tooltip='If "Use auto save" experiment queue saved after "timeout" seconds'),
-            Item('auto_save_delay',
-                 label='Auto save timeout (s)',
-                 tooltip='If experiment queue is not saved then wait "timeout" seconds before saving or canceling'),
-            Item('bg_color', label='Background'),
-            Item('even_bg_color', label='Even Row'),
-            label='Editor')
+        editor_grp = VGroup(Item('automated_runs_editable',
+                                 label='Direct editing',
+                                 tooltip='Allow user to edit Automated Runs directly within table. '
+                                         'Reopen experiment tab required to take effect'),
+                            Item('use_auto_save',
+                                 tooltip='If "Use auto save" experiment queue saved after "timeout" seconds'),
+                            Item('auto_save_delay',
+                                 label='Auto save timeout (s)',
+                                 tooltip='If experiment queue is not saved then wait "timeout" seconds'
+                                         ' before saving or canceling'),
+                            Item('bg_color', label='Background'),
+                            Item('even_bg_color', label='Even Row'),
+                            label='Editor')
 
         color_group = VGroup(VGroup(Item('sniff_color', label='Equilibration'),
                                     Item('baseline_color', label='Baseline'),
@@ -249,6 +231,9 @@ class ExperimentPreferencesPane(PreferencesPane):
                                      Item('n_executed_display',
                                           label='N. Executed',
                                           tooltip='Number of analyses to display in the "Executed" table'),
+                                     Item('use_equilibration_analysis',
+                                          label='Do Equilibration Analysis',
+                                          tooltip='Analyze and display equilibration results'),
                                      Item('failed_intensity_count_threshold',
                                           label='N. Failed Intensity',
                                           tooltip='Cancel Experiment if pychron fails to get intensities from '

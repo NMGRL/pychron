@@ -27,6 +27,7 @@ from uncertainties import nominal_value, std_dev
 
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.helpers.iterfuncs import groupby_key
+from pychron.core.pychron_traits import BorderVGroup
 from pychron.core.regression.mean_regressor import WeightedMeanRegressor
 from pychron.core.utils import alpha_to_int
 from pychron.paths import paths
@@ -115,8 +116,8 @@ class VerticalFluxEditor(FigureEditor):
 
         d[level] = obj.get('z', alpha_to_int(level))
 
-    def set_stats(self):
-        js, es = zip(*[(g.j, g.j_err) for g in self.groups])
+    def set_stats(self, items):
+        js, es = zip(*[(i.j, i.j_err) for i in items])
         reg = WeightedMeanRegressor(ys=js, yserr=es, error_calc_type=MSEM)
         reg.calculate()
 
@@ -172,7 +173,7 @@ class VerticalFluxEditor(FigureEditor):
                                            z=zs[0])
                 gs.append(gi)
             self.groups = gs
-            self.set_stats()
+            self.set_stats(gs)
         else:
             for i, level in enumerate(items):
                 p = os.path.join(paths.meta_root, self.irradiation, '{}.json'.format(level))
@@ -192,6 +193,7 @@ class VerticalFluxEditor(FigureEditor):
                                                   z=z)
                             nitems.append(vi)
 
+            self.set_stats(nitems)
         self.items = nitems
 
     def _figure_model_factory(self):
@@ -213,18 +215,26 @@ class VerticalFluxEditor(FigureEditor):
             return Readonly(format_str='%0.{}f'.format(n), *args, **kw)
 
         g = self.get_component_view()
-        g.width = 0.65
-        items = UItem('items',
-                      width=1 - g.width,
-                      editor=TabularEditor(adapter=VerticalFluxTabularAdapter()))
-        groups = VGroup(UItem('groups',
-                              width=1 - g.width,
-                              editor=TabularEditor(adapter=VerticalFluxGroupTabularAdapter())),
-                        HGroup(freadonly(6, 'min'),
-                               freadonly(6, 'max')),
-                        HGroup(freadonly(6, 'delta'),
-                               freadonly(2, 'pdelta', label='%')))
+        g.width = 0.75
+
+        items = VGroup(BorderVGroup(UItem('items',
+                                          width=1 - g.width,
+                                          editor=TabularEditor(adapter=VerticalFluxTabularAdapter())),
+                                    label='Positions'))
+
+        stats = VGroup(BorderVGroup(HGroup(freadonly(6, 'min'),
+                                           freadonly(6, 'max')),
+                                    HGroup(freadonly(6, 'delta'),
+                                           freadonly(2, 'pdelta', label='%')),
+                                    label='Stats'))
+
+        groups = VGroup(BorderVGroup(UItem('groups',
+                                           width=1 - g.width,
+                                           defined_when='groups',
+                                           editor=TabularEditor(adapter=VerticalFluxGroupTabularAdapter())),
+                                     label='Levels'))
+
         v = View(HSplit(g,
-                        VSplit(groups, items)))
+                        VSplit(groups, items, stats)))
         return v
 # ============= EOF =============================================
