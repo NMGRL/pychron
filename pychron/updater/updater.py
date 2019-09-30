@@ -254,7 +254,7 @@ class Updater(Loggable):
             # return self.version_tag, self.version_tag
         else:
             repo = self._get_working_repo()
-            repo.fetch()
+            repo.git.fetch()
             branchname = self.branch
             origin = repo.remotes.origin
             try:
