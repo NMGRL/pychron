@@ -205,6 +205,14 @@ class CircleStage(Connectable, Bordered):
             elif not self.display_name == '':
                 self._render_name(gc, x, y, width, height)
 
+    def _render_textbox(self, gc, x, y, w, h, txt):
+
+        tw, th, _, _ = gc.get_full_text_extent(txt)
+        x = x - tw / 2.
+        y = y - th / 2.
+
+        self._render_text(gc, txt, x, y)
+
     def _render_border(self, gc, x, y, width):
         gc.set_line_width(self.border_width)
         with gc:
@@ -215,22 +223,21 @@ class CircleStage(Connectable, Bordered):
 
         self._render_gaps(gc, x, y, width)
 
-    def _render_gaps(self, gc, x, y, r):
+    def _render_gaps(self, gc, cx, cy, r):
+        gc.set_line_width(self.border_width+2)
+
         def sgn(x):
             return -1 if x < 0 else 1
 
-        cx, cy = self.get_xy()
-        dw = 0.08
-
         def angle(x, y):
-            dx = x  # - cx
-            dy = y  # - cy
-            return math.pi/2 - math.atan2(dx, dy)
+            return math.pi / 2 - math.atan2(x, y)
 
         with gc:
             gc.set_stroke_color(self._convert_color(self.default_color))
             for t, c in self.connections:
                 if isinstance(c, BorderLine):
+                    dw = math.atan((c.width-c.border_width/2) / r)
+
                     p1, p2 = c.start_point, c.end_point
                     p2x, p2y = p2.get_xy()
                     p1x, p1y = p1.get_xy()
@@ -258,15 +265,12 @@ class CircleStage(Connectable, Bordered):
                     minus_x /= dr ** 2
                     minus_y /= dr ** 2
 
-                    if p2y>p1y:
+                    if p2y > p1y:
                         theta = angle(plus_x, plus_y)
                     else:
                         theta = angle(minus_x, minus_y)
 
                     gc.arc(cx, cy, r, theta - dw, theta + dw)
                     gc.stroke_path()
-
-                    # theta = angle(minus_x, minus_y)
-                    # gc.arc(cx, cy, r, theta - dw, theta + dw)
 
 # ============= EOF =============================================
