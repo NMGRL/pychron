@@ -15,13 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from traits.api import HasTraits, List, on_trait_change, Any, Event
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.canvas.canvas2D.scene.primitives.primitives import Primitive
+from pychron.canvas.canvas2D.scene.canvas_parser import CanvasParser
 from pychron.canvas.canvas2D.scene.layer import Layer
-from .canvas_parser import CanvasParser
+from pychron.canvas.canvas2D.scene.primitives.primitives import Primitive
 
 
 class Scene(HasTraits):

@@ -19,6 +19,8 @@
 # ============= local library imports  ==========================
 from __future__ import absolute_import
 
+import math
+
 from pychron.canvas.canvas2D.scene.primitives.base import Connectable
 from pychron.canvas.canvas2D.scene.primitives.connections import Tee, Fork, Elbow
 from pychron.canvas.canvas2D.scene.primitives.primitives import Rectangle, Bordered, BorderLine
@@ -179,4 +181,92 @@ class Stage(RoundedRectangle):
         super(Spectrometer, self).__init__(*args, **kw)
         self.width = 10
         self.height = 5
+
+
+class CircleStage(Connectable, Bordered):
+    tag = 'cirle_stage'
+
+    def get_tooltip_text(self):
+        return 'Circle Stage={}\nVolume={}'.format(self.name, self.volume)
+
+    def _render(self, gc):
+        with gc:
+            width, height = self.get_wh()
+            x, y = self.get_xy()
+            gc.arc(x, y, width, 0, 360)
+            gc.draw_path()
+
+            self._render_border(gc, x, y, width)
+
+            gc.set_fill_color(self._convert_color(self.name_color))
+            if self.display_name:
+                self._render_textbox(gc, x, y, width, height,
+                                     self.display_name)
+            elif not self.display_name == '':
+                self._render_name(gc, x, y, width, height)
+
+    def _render_border(self, gc, x, y, width):
+        gc.set_line_width(self.border_width)
+        with gc:
+            c = self._get_border_color()
+            gc.set_stroke_color(c)
+            gc.arc(x, y, width, 0, 2 * math.pi)
+            gc.stroke_path()
+
+        self._render_gaps(gc, x, y, width)
+
+    def _render_gaps(self, gc, x, y, r):
+        def sgn(x):
+            return -1 if x < 0 else 1
+
+        cx, cy = self.get_xy()
+        dw = 0.08
+
+        def angle(x, y):
+            dx = x  # - cx
+            dy = y  # - cy
+            return math.pi/2 - math.atan2(dx, dy)
+
+        with gc:
+            gc.set_stroke_color(self._convert_color(self.default_color))
+            for t, c in self.connections:
+                if isinstance(c, BorderLine):
+                    p1, p2 = c.start_point, c.end_point
+                    p2x, p2y = p2.get_xy()
+                    p1x, p1y = p1.get_xy()
+
+                    p2x = p2x - cx
+                    p2y = p2y - cy
+
+                    p1x = p1x - cx
+                    p1y = p1y - cy
+
+                    dx = p2x - p1x
+                    dy = p2y - p1y
+                    dr = (dx ** 2 + dy ** 2) ** 0.5
+                    D = p1x * p2y - p2x * p1y
+
+                    ss = (r ** 2 * dr ** 2 - D ** 2) ** 0.5
+                    plus_x = D * dy + sgn(dy) * dx * ss
+                    minus_x = D * dy - sgn(dy) * dx * ss
+
+                    plus_y = (-D * dx + abs(dy) * ss)
+                    minus_y = (-D * dx - abs(dy) * ss)
+
+                    plus_x /= dr ** 2
+                    plus_y /= dr ** 2
+                    minus_x /= dr ** 2
+                    minus_y /= dr ** 2
+
+                    if p2y>p1y:
+                        theta = angle(plus_x, plus_y)
+                    else:
+                        theta = angle(minus_x, minus_y)
+
+                    gc.arc(cx, cy, r, theta - dw, theta + dw)
+                    gc.stroke_path()
+
+                    # theta = angle(minus_x, minus_y)
+                    # gc.arc(cx, cy, r, theta - dw, theta + dw)
+
 # ============= EOF =============================================
