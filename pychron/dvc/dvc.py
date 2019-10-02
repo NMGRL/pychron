@@ -1605,7 +1605,7 @@ class DVC(Loggable):
                             pass
 
                     if not prod:
-                        if pname != 'NoIrradiation':
+                        if a.irradiation != 'NoIrradiation':
                             try:
                                 pname, prod = productions[a.irradiation][a.irradiation_level]
                             except KeyError:
