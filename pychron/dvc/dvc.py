@@ -1605,11 +1605,11 @@ class DVC(Loggable):
                             pass
 
                     if not prod:
-                        try:
-                            pname, prod = productions[a.irradiation][a.irradiation_level]
-                        except KeyError:
-                            pname, prod = meta_repo.get_production(a.irradiation, a.irradiation_level)
-                            if pname != 'NoIrradiation':
+                        if pname != 'NoIrradiation':
+                            try:
+                                pname, prod = productions[a.irradiation][a.irradiation_level]
+                            except KeyError:
+                                pname, prod = meta_repo.get_production(a.irradiation, a.irradiation_level)
                                 self.warning('production key error name={} '
                                              'irrad={}, level={}, productions={}'.format(pname,
                                                                                          a.irradiation,
