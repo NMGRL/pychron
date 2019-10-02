@@ -266,7 +266,7 @@ class DVC(Loggable):
 
             fd = self.meta_repo.get_flux(irrad, level, pos)
             _, prod = self.meta_repo.get_production(irrad, level, allow_null=True)
-            cs = self.meta_repo.get_chronology(irrad)
+            cs = self.meta_repo.get_chronology(irrad, allow_null=True)
 
             x = datetime.now()
             now = time.mktime(x.timetuple())
