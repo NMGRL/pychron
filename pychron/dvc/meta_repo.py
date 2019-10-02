@@ -41,9 +41,9 @@ def irradiation_geometry_holes(name):
     return geom.holes
 
 
-def irradiation_chronology(name):
+def irradiation_chronology(name, allow_null=False):
     p = os.path.join(paths.meta_root, name, 'chronology.txt')
-    return Chronology(p)
+    return Chronology(p, allow_null=allow_null)
 
 
 def dump_chronology(path, doses):
@@ -568,9 +568,9 @@ class MetaRepo(GitRepoManager):
         return pname, ip
 
     # @cached('clear_cache')
-    def get_chronology(self, name, **kw):
+    def get_chronology(self, name, allow_null=False,**kw):
 
-        chron = irradiation_chronology(name)
+        chron = irradiation_chronology(name, allow_null=allow_null)
         if self.application:
             chron.use_irradiation_endtime = self.application.get_boolean_preference(
                 'pychron.arar.constants.use_irradiation_endtime', False)
