@@ -105,8 +105,9 @@ class Script(Loggable):
         return default
 
     def script_path(self):
+        name = self.name
         if self.name_prefix:
-            name = '{}{}'.format(self.name_prefix, self.name)
+            name = '{}{}'.format(self.name_prefix, name)
 
         name = add_extension(name, '.py')
         p = os.path.join(self._get_root(), name)
