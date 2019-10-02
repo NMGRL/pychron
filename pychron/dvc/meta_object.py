@@ -33,12 +33,12 @@ class MetaObjectException(BaseException):
 
 
 class MetaObject(object):
-    def __init__(self, path=None, new=False):
+    def __init__(self, path=None, new=False, allow_null=False):
         self.path = path
         if path is not None and os.path.isfile(path):
             with open(path, 'r') as rfile:
                 self._load_hook(path, rfile)
-        elif not new:
+        elif not new and not allow_null:
             msg = 'failed loading {} {}'.format(path, os.path.isfile(path))
             raise MetaObjectException(msg)
 

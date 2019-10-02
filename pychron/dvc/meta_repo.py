@@ -556,14 +556,14 @@ class MetaRepo(GitRepoManager):
         return Gains(p)
 
     # @cached('clear_cache')
-    def get_production(self, irrad, level, **kw):
+    def get_production(self, irrad, level, allow_null=False, **kw):
         path = os.path.join(paths.meta_root, irrad, 'productions.json')
         obj = dvc_load(path)
 
         pname = obj.get(level, '')
         p = os.path.join(paths.meta_root, irrad, 'productions', add_extension(pname, ext='.json'))
 
-        ip = Production(p)
+        ip = Production(p, allow_null=allow_null)
         # print 'new production id={}, name={}, irrad={}, level={}'.format(id(ip), pname, irrad, level)
         return pname, ip
 

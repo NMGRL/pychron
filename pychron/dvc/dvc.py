@@ -265,7 +265,7 @@ class DVC(Loggable):
             pos = ip.position
 
             fd = self.meta_repo.get_flux(irrad, level, pos)
-            prodname, prod = self.meta_repo.get_production(irrad, level)
+            _, prod = self.meta_repo.get_production(irrad, level, allow_null=True)
             cs = self.meta_repo.get_chronology(irrad)
 
             x = datetime.now()
@@ -273,10 +273,22 @@ class DVC(Loggable):
             if fd['lambda_k']:
                 isotope_group.arar_constants.lambda_k = fd['lambda_k']
 
+            try:
+                pr = prod.to_dict(RATIO_KEYS)
+            except BaseException as e:
+                self.debug('invalid production. error={}'.format(e))
+                pr = {}
+
+            try:
+                ic = prod.to_dict(INTERFERENCE_KEYS)
+            except BaseException as e:
+                self.debug('invalid production. error={}'.format(e))
+                ic = {}
+
             isotope_group.trait_set(j=fd['j'],
                                     # lambda_k=lambda_k,
-                                    production_ratios=prod.to_dict(RATIO_KEYS),
-                                    interference_corrections=prod.to_dict(INTERFERENCE_KEYS),
+                                    production_ratios=pr,
+                                    interference_corrections=ic,
                                     chron_segments=cs.get_chron_segments(x),
                                     irradiation_time=cs.irradiation_time,
                                     timestamp=now)
