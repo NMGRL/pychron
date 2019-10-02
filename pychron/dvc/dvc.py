@@ -1615,8 +1615,9 @@ class DVC(Loggable):
                                                                                          a.irradiation,
                                                                                          a.irradiation_level,
                                                                                          productions))
+                    if prod is not None:
+                        a.set_production(pname, prod)
 
-                    a.set_production(pname, prod)
                     fd = None
                     if frozen_fluxes:
                         try:
