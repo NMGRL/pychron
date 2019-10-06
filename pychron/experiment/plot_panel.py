@@ -211,7 +211,9 @@ class PlotPanel(Loggable):
         else:
             from pychron.processing.analyses.view.automated_run_view import GenericAutomatedRunAnalysisView
             klass = GenericAutomatedRunAnalysisView
-        self.analysis_view = klass(**kw)
+
+        if not self.analysis_view or not isinstance(self.analysis_view, klass):
+            self.analysis_view = klass(**kw)
 
     def add_isotope_graph(self, name):
         self.debug('add isotope graph name={}'.format(name))

@@ -54,18 +54,12 @@ class AutomatedRunAnalysisView(MainView):
         # teditor, ieditor, ceditor, eeditor, meditor = es = self._get_editors()
         ceditor, eeditor, meditor = es = self._get_editors()
         for ei in es:
-            ei.adapter.font = '10'
+            ei.adapter.font = 'modern 10'
 
         isotopes = UItem('isotopes', editor=teditor, label='Isotopes')
-
         ratios = UItem('computed_values', editor=ceditor, label='Ratios')
-
-        meas = UItem('measurement_values',
-                     editor=meditor, label='General')
-
-        extract = UItem('extraction_values',
-                        editor=eeditor,
-                        label='Extraction')
+        meas = UItem('measurement_values', editor=meditor, label='General')
+        extract = UItem('extraction_values', editor=eeditor, label='Extraction')
 
         v = View(VGroup(HGroup(spring, UItem('summary_str', style='readonly'), spring),
                  Tabbed(isotopes, ratios, extract, meas)))

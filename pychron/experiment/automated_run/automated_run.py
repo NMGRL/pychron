@@ -1465,7 +1465,7 @@ anaylsis_type={}
             self.plot_panel.total_counts = 0
             self.plot_panel.is_peak_hop = False
             self.plot_panel.is_baseline = False
-            self.plot_panel.set_analysis_view(self.experiment_type)
+            # self.plot_panel.set_analysis_view(self.experiment_type)
 
         self.multi_collector.canceled = False
         self.multi_collector.is_baseline = False
@@ -1913,7 +1913,10 @@ anaylsis_type={}
 
             if inlet:
                 self.info('waiting {}s before opening inlet value {}'.format(delay, inlet))
-                time.sleep(delay)
+                for i in range(int(delay)):
+                    time.sleep(1)
+                    self.debug('wait {}'.format(i))
+                self.debug('wait complete')
 
                 # open inlet
                 for i in inlet:
