@@ -15,10 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
-
-from traitsui.api import View, UItem, Group, HGroup, spring, VGroup
+from traitsui.api import View, UItem, HGroup, spring, VGroup, Tabbed
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -71,7 +68,7 @@ class AutomatedRunAnalysisView(MainView):
                         label='Extraction')
 
         v = View(VGroup(HGroup(spring, UItem('summary_str', style='readonly'), spring),
-                 Group(isotopes, ratios, extract, meas, layout='tabbed')))
+                 Tabbed(isotopes, ratios, extract, meas)))
         return v
 
 

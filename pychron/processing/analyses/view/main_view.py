@@ -22,6 +22,7 @@ from traitsui.api import View, UItem, VGroup, HGroup
 from uncertainties import std_dev, nominal_value, ufloat
 
 from pychron.core.helpers.formatting import floatfmt, format_percent_error
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.processing.analyses.view.adapters import ComputedValueTabularAdapter, \
     DetectorRatioTabularAdapter, ExtractionTabularAdapter, MeasurementTabularAdapter
@@ -220,6 +221,7 @@ class MainView(HasTraits):
             self._load_cocktail_computed(an, new_list)
             if self._corrected_enabled:
                 self._load_corrected_values(an, new_list)
+
     # def _get_isotope(self, name):
     #     return next((iso for iso in self.isotopes if iso.name == name), None)
 
@@ -307,6 +309,9 @@ class MainView(HasTraits):
         niso, diso = get_iso(n), get_iso(d)
         return niso, diso
 
+    def _set_summary_str(self, s):
+        invoke_in_main_thread(self.trait_set, summary_str=s)
+
     def _update_ratios(self):
 
         for ci in self.computed_values:
@@ -349,10 +354,12 @@ class MainView(HasTraits):
                     noncorrected = self._get_non_corrected_ratio(niso, diso)
                     v, e = nominal_value(noncorrected), std_dev(noncorrected)
                     ref = 295.5
-                    self.summary_str = u'Ar40/Ar36={} {}{}({}%) IC={:0.5f}'.format(floatfmt(v),
-                                                                                   PLUSMINUS, floatfmt(e),
-                                                                                   format_percent_error(v, e),
-                                                                                   nominal_value(noncorrected / ref))
+                    ss = u'Ar40/Ar36={} {}{}({}%) IC={:0.5f}'.format(floatfmt(v),
+                                                                     PLUSMINUS, floatfmt(e),
+                                                                     format_percent_error(v, e),
+                                                                     nominal_value(noncorrected / ref))
+
+                    self._set_summary_str(ss)
             except:
                 pass
         else:
@@ -478,8 +485,9 @@ class MainView(HasTraits):
             age = an.uage
             nage, sage = nominal_value(age), std_dev(age)
             try:
-                self.summary_str = u'Age={} {}{}({}%)'.format(floatfmt(nage), PLUSMINUS,
-                                                              floatfmt(sage), format_percent_error(nage, sage))
+                ss = u'Age={} {}{}({}%)'.format(floatfmt(nage), PLUSMINUS,
+                                                floatfmt(sage), format_percent_error(nage, sage))
+                self._set_summary_str(ss)
             except:
                 pass
 

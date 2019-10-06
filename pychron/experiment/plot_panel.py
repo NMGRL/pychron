@@ -17,8 +17,6 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 
-from threading import Event
-
 from traits.api import Instance, Property, List, on_trait_change, Bool, \
     Str, CInt, Tuple, Color, HasTraits, Any, Int
 from traitsui.api import View, UItem, VGroup, HGroup, spring, ListEditor
@@ -174,16 +172,14 @@ class PlotPanel(Loggable):
         self.debug('create graphs')
         self.detectors = dets
 
-        evt = Event()
-        # invoke_in_main_thread(self._create, evt)
-        self._create(evt)
-        # wait here until _create finishes
-        # while not evt.wait(0.05):
-        #     pass
+        self.reset()
 
-        evt.wait(0.1)
-        # while not evt.is_set():
-        #     time.sleep(0.05)
+        self.isotope_graph.clear()
+        self.sniff_graph.clear()
+        self.baseline_graph.clear()
+        self.debug('creating plots for detectors {}'.format(self.detectors))
+        for det in self.detectors:
+            self._new_plot(ytitle=det.name)
 
     def update(self):
         if self.is_baseline:
@@ -278,21 +274,6 @@ class PlotPanel(Loggable):
                 plots[k] = plot
 
         return plots
-
-    def _create(self, evt):
-        self.reset()
-
-        g = self.isotope_graph
-        self.selected_graph = g
-
-        self.isotope_graph.clear()
-        self.sniff_graph.clear()
-        self.baseline_graph.clear()
-        self.debug('creating plots for detectors {}'.format(self.detectors))
-        for det in self.detectors:
-            self._new_plot(ytitle=det.name)
-
-        evt.set()
 
     def _get_ncounts(self):
         return self._ncounts

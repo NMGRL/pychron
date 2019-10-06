@@ -1757,8 +1757,6 @@ anaylsis_type={}
         else:
             p.isotope_graph.clear_plots()
 
-        p.show_isotope_graph()
-
         self.debug('clear isotope group')
 
         self.isotope_group.clear_isotopes()
