@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, List, Event, Instance, Any, cached_property, Unicode
+from traits.api import HasTraits, Str, List, Event, Instance, Any, cached_property, Unicode, Property
 from traitsui.api import View, UItem, VGroup, HGroup, TabularEditor
 from uncertainties import std_dev, nominal_value, ufloat
 
@@ -51,7 +51,7 @@ class MainView(HasTraits):
 
     measurement_adapter = Instance(MeasurementTabularAdapter, ())
     extraction_adapter = Instance(ExtractionTabularAdapter, ())
-    #computed_adapter = Property(depends_on='analysis_type')
+    computed_adapter = Property(depends_on='analysis_type')
 
     selected = Any
     show_iso_evo_needed = Event
