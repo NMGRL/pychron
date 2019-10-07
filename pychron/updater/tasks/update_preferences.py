@@ -104,6 +104,7 @@ class Updater:
 class UpdatePreferencesHelper(GitRepoPreferencesHelper):
     preferences_path = 'pychron.update'
     check_on_startup = Bool(False)
+    check_on_quit = Bool(False)
 
     use_tag = Bool
     version_tag = Str
@@ -188,6 +189,8 @@ class UpdatePreferencesPane(PreferencesPane):
     def traits_view(self):
         v = View(VGroup(Item('check_on_startup',
                              label='Check for updates at startup'),
+                        Item('check_on_quit',
+                             label='Check for updates at quit'),
                         VGroup(remote_status_item(),
                                Item('build_repo', label='Build Directory'),
                                Item('use_tag', label='Use Production'),

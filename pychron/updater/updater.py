@@ -33,6 +33,7 @@ from pychron.updater.commit_view import CommitView, UpdateGitHistory
 
 class Updater(Loggable):
     check_on_startup = Bool
+    check_on_quit = Bool
     branch = Str
     remote = Str
 
@@ -48,7 +49,7 @@ class Updater(Loggable):
         return repo.active_branch.name
 
     def bind_preferences(self):
-        for a in ('check_on_startup', 'branch', 'remote', 'use_tag', 'version_tag', 'build_repo'):
+        for a in ('check_on_startup', 'branch', 'remote', 'use_tag', 'version_tag', 'build_repo', 'check_on_quit'):
             bind_preference(self, a, 'pychron.update.{}'.format(a))
 
     def test_origin(self):
@@ -58,7 +59,7 @@ class Updater(Loggable):
     def set_revisions(self):
         self._check_for_updates()
 
-    def check_for_updates(self, inform=False):
+    def check_for_updates(self, inform=False, restart=True):
         self.debug('checking for updates')
         branch = self.branch
         remote = self.remote
@@ -106,7 +107,7 @@ class Updater(Loggable):
                             if os.getenv('PYCHRON_UPDATE_DATABASE', False):
                                 self._update_database()
 
-                            if self.confirmation_dialog('Restart?'):
+                            if restart and self.confirmation_dialog('Restart?'):
                                 os.execl(sys.executable, *([sys.executable] + sys.argv))
                         elif hexsha is None:
                             if inform:
@@ -228,11 +229,16 @@ class Updater(Loggable):
         self.application.set_revisions(local_commit, remote_commit)
         return local_commit, remote_commit
 
-    def _out_of_date(self, lc, rc):
+    def _out_of_date(self, lc, rc, restart=True):
         if rc and lc != rc:
             self.info('updates are available')
-            if not self.confirmation_dialog('Updates are available. Install and Restart?',
-                                            position=STARTUP_MESSAGE_POSITION):
+            msg = 'Updates are available.'
+            if restart:
+                msg = '{}. Install and Restart?'.format(msg)
+            else:
+                msg = '{}. Install?'.format(msg)
+
+            if not self.confirmation_dialog(msg, position=STARTUP_MESSAGE_POSITION):
                 return False
 
             txt = self._repo.git.rev_list('--left-right', '{}...{}'.format(lc, rc))
