@@ -1913,10 +1913,7 @@ anaylsis_type={}
 
             if inlet:
                 self.info('waiting {}s before opening inlet value {}'.format(delay, inlet))
-                for i in range(int(delay)):
-                    time.sleep(1)
-                    self.debug('wait {}'.format(i))
-                self.debug('wait complete')
+                time.sleep(delay)
 
                 # open inlet
                 for i in inlet:

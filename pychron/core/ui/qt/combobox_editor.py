@@ -18,7 +18,7 @@
 import six
 from pyface.qt import QtGui
 from pyface.qt.QtGui import QCompleter, QSizePolicy, QComboBox, QHBoxLayout, QPushButton, QWidget
-from traits.api import Str, Bool, Event, List
+from traits.api import Str, Bool, Event, List, Enum
 from traits.trait_errors import TraitError
 from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.constants import OKColor, ErrorColor
@@ -201,5 +201,6 @@ class ComboboxEditor(BasicEditorFactory):
     addable = Bool(False)
     refresh = Str
     use_filter = Bool(True)
+    completion_mode = Enum(('popup', 'inline'))
 
 # ============= EOF =============================================
