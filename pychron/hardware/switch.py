@@ -22,6 +22,7 @@ from datetime import datetime
 from traits.api import Str, Any, Bool, Float, List, Int
 
 # ============= local library imports  ==========================
+from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.pychron_constants import NULL_STR
 
@@ -147,6 +148,10 @@ class Switch(BaseSwitch):
         else:
             if self.state_invert:
                 s = not s
+
+        if s is None and globalv.communication_simulation:
+            s = self.state
+            result = s
 
         self.set_state(s)
         return result

@@ -34,6 +34,9 @@ from pychron.canvas.canvas2D.scene.primitives.calibration import calc_rotation
 class Point(QPrimitive):
     radius = Float(1)
 
+    def __str__(self):
+        return 'Point<{}> ({},{})'.format(id(self), self.x, self.y)
+
     def _get_group(self):
         gs = VGroup('radius')
         return gs

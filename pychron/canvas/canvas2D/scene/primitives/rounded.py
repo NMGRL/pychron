@@ -224,7 +224,7 @@ class CircleStage(Connectable, Bordered):
         self._render_gaps(gc, x, y, width)
 
     def _render_gaps(self, gc, cx, cy, r):
-        gc.set_line_width(self.border_width+2)
+        gc.set_line_width(self.border_width + 2)
 
         def sgn(x):
             return -1 if x < 0 else 1
@@ -236,11 +236,14 @@ class CircleStage(Connectable, Bordered):
             gc.set_stroke_color(self._convert_color(self.default_color))
             for t, c in self.connections:
                 if isinstance(c, BorderLine):
-                    dw = math.atan((c.width-c.border_width/2) / r)
+                    dw = math.atan((c.width - c.border_width / 2) / r)
 
                     p1, p2 = c.start_point, c.end_point
                     p2x, p2y = p2.get_xy()
                     p1x, p1y = p1.get_xy()
+
+                    if p1x == p2x and p1y == p2y:
+                        continue
 
                     p2x = p2x - cx
                     p2y = p2y - cy
@@ -259,16 +262,21 @@ class CircleStage(Connectable, Bordered):
 
                     plus_y = (-D * dx + abs(dy) * ss)
                     minus_y = (-D * dx - abs(dy) * ss)
-
                     plus_x /= dr ** 2
                     plus_y /= dr ** 2
                     minus_x /= dr ** 2
                     minus_y /= dr ** 2
 
                     if p2y > p1y:
-                        theta = angle(plus_x, plus_y)
+                        if p2x > p1x:
+                            theta = angle(plus_x, plus_y)
+                        else:
+                            theta = angle(minus_x, minus_y)
                     else:
-                        theta = angle(minus_x, minus_y)
+                        if p2x > p1x:
+                            theta = angle(minus_x, minus_y)
+                        else:
+                            theta = angle(plus_x, plus_y)
 
                     gc.arc(cx, cy, r, theta - dw, theta + dw)
                     gc.stroke_path()

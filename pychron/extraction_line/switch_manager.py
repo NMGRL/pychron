@@ -764,9 +764,7 @@ class SwitchManager(Manager):
             self.warning(msg)
             return False, False
 
-        print('got here')
         r, c = self._actuate_(name, action, mode, force=force)
-        print('actuate return {}, {}'.format(r,c))
         if r and c:
             for pip in self.pipette_trackers:
                 '''
@@ -827,6 +825,10 @@ class SwitchManager(Manager):
             self.refresh_explanation = True
             if v.track_actuation:
                 self._update_actuation_tracker(v)
+
+        if result is None and globalv.communication_simulation:
+            result = action.lower() == 'set_open'
+            changed = True
 
         return result, changed
 
