@@ -109,23 +109,25 @@ class BaseReadout(HasTraits):
         try:
             self.value = float(v)
         except (AttributeError, ValueError, TypeError):
-            self.value = v
+            if v is not None:
+                self.value = v
 
     def config_compare(self):
         tolerance = self.percent_tol
         if tolerance:
             try:
                 self.display_tolerance = '{:0.2f}%'.format(tolerance*100)
-                if abs(self.value-self.config_value)/self.config_value > tolerance:
-                    return self.name, self.value, self.config_value
+                try:
+                    if abs(self.value-self.config_value)/self.config_value > tolerance:
+                        return self.name, self.value, self.config_value
+                except TypeError:
+                    pass
             except ZeroDivisionError:
                 pass
         else:
             self.display_tolerance = '{:0.2f}'.format(self.tolerance)
             if abs(self.value - self.config_value) > self.tolerance:
                 return self.name, self.value, self.config_value
-
-        return
 
     def compare_message(self):
         return '{} does not match. Current:{:0.3f}, Config: {:0.3f}, tol.: {}'.format(self.name, self.value,
@@ -160,6 +162,8 @@ class Readout(BaseReadout):
             q = self.hardware_name
         elif ',' in n:
             _, q = n.split(',')
+        else:
+            q = n
 
         return q.strip()
 

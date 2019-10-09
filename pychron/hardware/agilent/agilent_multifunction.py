@@ -57,7 +57,7 @@ class AgilentMultifunction(AgilentMixin, GPActuator):
             datatype = 'WORD'
             port = '01'
 
-        cmd = base.format(datatype, slot, port)
+        cmd = base.format(datatype, slot, int(port))
 
         resp = self.ask(cmd)
         if resp is None:
