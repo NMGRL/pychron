@@ -765,10 +765,13 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         sh.write_string(row, 6, group.identifier, fmt)
 
         self._current_row += 1
-
         row = self._current_row
+
         sh.write_string(row, 1, 'Material:', fmt)
         sh.write_string(row, 2, group.material, fmt)
+
+        sh.write_string(row, 5, 'Location:', fmt)
+        sh.write_string(row, 6, group.flatlon, fmt)
 
         self._current_row += 1
 

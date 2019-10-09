@@ -248,6 +248,17 @@ class AnalysisGroup(IdeogramPlotable):
 
     # properties
     @property
+    def flatlon(self):
+        r = NULL_STR
+        if self.latitude is not None and self.longitude is not None:
+            try:
+                r = '{:0.3f},{:0.3f}'.format(self.latitude, self.longitude)
+            except ValueError:
+                r = '{},{}'.format(self.latitude, self.longitude)
+
+        return r
+
+    @property
     def isochron_4036(self):
         if self.isochron_3640:
             v = 1 / self.isochron_3640
