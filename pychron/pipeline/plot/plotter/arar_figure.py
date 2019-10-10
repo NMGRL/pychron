@@ -579,7 +579,7 @@ class BaseArArFigure(SelectionFigure):
                           mswd_args=None,
                           display_n=True,
                           display_mswd=True,
-                          display_mswd_pvalue=True,
+                          display_mswd_pvalue=False,
                           percent_error=False,
                           sig_figs=3):
 
