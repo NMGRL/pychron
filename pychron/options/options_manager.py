@@ -362,6 +362,7 @@ class OptionsManager(Loggable):
             if obj is None:
                 p = self._pname(name)
                 if os.path.isfile(p):
+                    unp = None
                     try:
                         with open(p, 'rb') as rfile:
                             unp = OptionsUnpickler(rfile)
@@ -369,7 +370,8 @@ class OptionsManager(Loggable):
                     except BaseException as e:
                         self.debug_exception()
                     finally:
-                        unp.destroy()
+                        if unp:
+                            unp.destroy()
 
             if obj is None:
                 obj = self.options_klass()
