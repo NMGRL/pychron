@@ -53,15 +53,20 @@ from pychron.paths import paths
 class OptionsUnpickler(pickle.Unpickler):
     def __init__(self, *args, **kw):
         super(OptionsUnpickler, self).__init__(*args, **kw)
-
-        self.dispatch['oreduce'] = self.dispatch[pickle.REDUCE[0]]
-        self.dispatch['obuild'] = self.dispatch[pickle.BUILD[0]]
-        self.dispatch[pickle.REDUCE[0]] = self.load_reduce
-        self.dispatch[pickle.BUILD[0]] = self.load_build
+        try:
+            self.dispatch['oreduce'] = self.dispatch[pickle.REDUCE[0]]
+            self.dispatch['obuild'] = self.dispatch[pickle.BUILD[0]]
+            self.dispatch[pickle.REDUCE[0]] = self.load_reduce
+            self.dispatch[pickle.BUILD[0]] = self.load_build
+        except AttributeError:
+            pass
 
     def destroy(self):
-        self.dispatch[pickle.REDUCE[0]] = self.dispatch['oreduce']
-        self.dispatch[pickle.BUILD[0]] = self.dispatch['obuild']
+        try:
+            self.dispatch[pickle.REDUCE[0]] = self.dispatch['oreduce']
+            self.dispatch[pickle.BUILD[0]] = self.dispatch['obuild']
+        except AttributeError:
+            pass
 
     def find_class(self, mod, klass):
         if klass == 'QColor':
