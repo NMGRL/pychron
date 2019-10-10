@@ -35,8 +35,8 @@ class BaseGitPlugin(BaseTaskPlugin):
         org = p.get('pychron.github.organization')
 
         if not org:
-            self.information_dialog('Please set the organization that contains your (e.g. NMGRLData) in {} '
-                                    'preferences'.format(self.name),
+            self.information_dialog("Please set the organization that contains your data (e.g. NMGRLData) "
+                                    "in Pychron's {} preferences".format(self.name),
                                     position=STARTUP_MESSAGE_POSITION)
 
         if not tok and not (usr and pwd):

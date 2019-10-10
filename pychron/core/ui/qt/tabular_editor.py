@@ -539,9 +539,14 @@ class _TabularEditor(qtTabularEditor):
         self.sync_value(factory.right_dclicked, 'right_dclicked', 'to')
         self.sync_value(factory.column_clicked, 'column_clicked', 'to')
         self.sync_value(factory.column_right_clicked, 'column_right_clicked', 'to')
-        self.sync_value(factory.scroll_to_row, 'scroll_to_row', 'from', is_event=True)
-        self.sync_value(factory.scroll_to_bottom, 'scroll_to_bottom', 'from', is_event=True)
-        self.sync_value(factory.scroll_to_top, 'scroll_to_top', 'from', is_event=True)
+        try:
+            self.sync_value(factory.scroll_to_row, 'scroll_to_row', 'from', is_event=True)
+            self.sync_value(factory.scroll_to_bottom, 'scroll_to_bottom', 'from', is_event=True)
+            self.sync_value(factory.scroll_to_top, 'scroll_to_top', 'from', is_event=True)
+        except TypeError:
+            self.sync_value(factory.scroll_to_row, 'scroll_to_row', 'from')
+            self.sync_value(factory.scroll_to_bottom, 'scroll_to_bottom', 'from')
+            self.sync_value(factory.scroll_to_top, 'scroll_to_top', 'from')
 
         # Connect other signals as necessary
         # signal = QtCore.SIGNAL('activated(QModelIndex)')

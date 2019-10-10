@@ -55,7 +55,7 @@ class AgilentMultifunction(AgilentMixin, GPActuator):
         datatype = 'BYTE'
         if as_word:
             datatype = 'WORD'
-            port = '01'
+            port = 1
 
         cmd = base.format(datatype, slot, int(port))
 
