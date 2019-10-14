@@ -201,8 +201,11 @@ class OptionsManager(Loggable):
 
     def delete_selected(self):
         if self.confirmation_dialog('Are you sure you want to delete "{}"'.format(self.selected)):
-            p = self._pname(self.selected)
-            os.remove(p)
+            for ext in ('.p', '.json'):
+                p = self._pname(self.selected, ext)
+                if os.path.isfile(p):
+                    os.remove(p)
+                    break
             self.refresh()
 
     def refresh(self):
@@ -228,7 +231,7 @@ class OptionsManager(Loggable):
     def save_selected_as(self):
         name = self.new_name
 
-        self._save(self.selected_options, name)
+        self._save(name, self.selected_options)
 
         self.refresh()
         self.selected = name
