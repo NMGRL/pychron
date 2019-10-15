@@ -264,7 +264,7 @@ class AutomatedRunConditional(BaseConditional):
     def _should_check(self, run, data, cnt):
         if self.analysis_types:
             # check if checking should be done on this run based on analysis_type
-            atype = run.analysis_type.lower()
+            atype = run.spec.analysis_type.lower()
             if 'blank' in self.analysis_types:
                 if atype.startswith('blank'):
                     return

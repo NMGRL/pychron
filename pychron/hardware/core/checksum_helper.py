@@ -119,7 +119,7 @@ def computeCRC(data, start_crc=0xffff):
     # flip lo and hi bits
     crc = '{:04x}'.format(crc)
 
-    crc = '{}{}'.format((crc[2:], crc[:2]))
+    crc = '{}{}'.format(crc[2:], crc[:2])
     return crc
 
 

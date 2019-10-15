@@ -397,7 +397,7 @@ class ThermoSpectrometer(BaseSpectrometer):
         try:
             ret = getattr(self.source, 'read_{}'.format(k.lower()))()
         except AttributeError:
-            ret = self.get_parameter('Get{}'.format(mk))
+            ret = self.get_parameter(mk[k.lower()])
         return ret
 
     def verify_configuration(self, **kw):
@@ -418,6 +418,7 @@ class ThermoSpectrometer(BaseSpectrometer):
                             self.warning('verify failed {}. current={}, config={}'.format(k, current, v))
                             mismatch = True
 
+                print('asdffffff', readout_comp)
                 for k, v in specparams.items():
                     try:
                         mk = command_map[k]
@@ -433,7 +434,7 @@ class ThermoSpectrometer(BaseSpectrometer):
                         except ValueError:
                             self.warning('invalid float value {}, {}'.format(mk, current))
                             continue
-
+                        print('asdf', mk, comp)
                         dev = self._get_config_dev(current, v, comp)
                         if dev:
                             self.warning('verify failed {}. current={}, config={}'.format(mk, current, v))
@@ -475,13 +476,20 @@ class ThermoSpectrometer(BaseSpectrometer):
             tol = comp.get('percent_tol')
             if not tol:
                 tol = comp.get('tolerance', 0.01)
-                dev = abs(current - v) > tol
+                delta = abs(current-v)
+                dev = delta > tol
+                self.debug('abs tolerance={}, delta={}'.format(tol, delta))
             else:
                 try:
-                    dev = abs(current - v) / float(v) > tol
+                    delta = abs(current - v) / float(v)
+                    dev = delta > tol
+                    self.debug('percent tolerance={}, delta={}'.format(tol, delta))
                 except ZeroDivisionError:
+                    self.warning('zero division exception')
                     tol = comp.get('tolerance', 0.01)
-                    dev = abs(current - v) > tol
+                    delta = abs(current - v)
+                    dev = delta > tol
+                    self.debug('abs tolerance={}, delta={}'.format(tol, delta))
 
         return dev
 
@@ -489,19 +497,21 @@ class ThermoSpectrometer(BaseSpectrometer):
         path = os.path.join(paths.spectrometer_dir, 'readout.yaml')
         readouts = {}
         deflections = {}
-        if not self.force_send_configuration:
-            yt = yload(path)
-            if yt:
-                readouts, deflections = yt
-                readouts = {r['name']: r for r in readouts}
-                deflections = {r['name']: r for r in deflections}
+        yt = yload(path)
+        if yt:
+            readouts, deflections = yt
+            readouts = {r['name']: r for r in readouts}
+            deflections = {r['name']: r for r in deflections}
 
         return readouts, deflections
 
     def _send_configuration(self, use_ramp=True):
         self.debug('======== Sending configuration ========')
 
-        readout_comp, defl_comp = self._load_configuration_comparisons()
+        if self.force_send_configuration:
+            readout_comp, defl_comp = {}, {}
+        else:
+            readout_comp, defl_comp = self._load_configuration_comparisons()
 
         def not_setting(k, c, v):
             self.debug('Not setting {:<20s} current={}, config={}'.format(k, c, v))
