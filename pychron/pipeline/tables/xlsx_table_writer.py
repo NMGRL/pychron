@@ -197,10 +197,17 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                    ]
 
         # setup formats
-        sigfigs = ('age', 'kca', 'radiogenic_yield', 'cumulative_ar39', 'uF')
+        sigfigs = ('age', 'radiogenic_yield', 'cumulative_ar39', 'uF', 'kca', 'kcl')
         for c in columns:
             if c.attr in sigfigs:
                 c.sigformat = c.attr
+
+        if invert_kca_kcl:
+            for c in columns:
+                if c.attr == 'cak':
+                    c.sigformat = 'kca'
+                elif c.attr == 'clk':
+                    c.sigformat = 'kcl'
 
         self._signal_columns(columns, ibit, bkbit)
         self._intercalibration_columns(columns, detectors, ic_visible=icbit, disc_visible=dbit)

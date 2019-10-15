@@ -41,7 +41,9 @@ class XLSXAnalysisTableWriterOptions(BasePersistenceOptions, JErrorMixin):
     summary_age_sig_figs = dumpable(Int(6))
 
     kca_sig_figs = dumpable(Int(6))
+    kcl_sig_figs = dumpable(Int(6))
     summary_kca_sig_figs = dumpable(Int(6))
+    summary_kcl_sig_figs = dumpable(Int(6))
 
     radiogenic_yield_sig_figs = dumpable(Int(6))
     cumulative_ar39_sig_figs = dumpable(Int(6))
@@ -297,6 +299,8 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                                            isigfig('summary_age', 'Summary Age')),
                                     HGroup(isigfig('kca', 'K/Ca'),
                                            isigfig('summary_kca', 'Summary K/Ca')),
+                                    HGroup(isigfig('kcl', 'K/Cl'),
+                                           isigfig('summary_kcl', 'Summary K/Cl')),
                                     HGroup(isigfig('radiogenic_yield', '%40Ar*'),
                                            isigfig('cumulative_ar39', 'Cum. %39Ar')),
                                     HGroup(isigfig('signal', 'Signal'),

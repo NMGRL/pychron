@@ -22,6 +22,7 @@ from traits.api import Str, Enum
 from traitsui.api import UItem, EnumEditor, VGroup
 
 from pychron.core.helpers.datetime_tools import bin_timestamps
+from pychron.core.helpers.strtools import to_bool
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.pipeline.grouping import group_analyses_by_key
 from pychron.pipeline.nodes.base import BaseNode
@@ -52,7 +53,7 @@ class GroupingNode(BaseNode):
 
     def load(self, nodedict):
         self.by_key = nodedict.get('key', 'Identifier')
-        if os.getenv('CSV_DEBUG'):
+        if to_bool(os.getenv('CSV_DEBUG')):
             self.by_key = 'Group Name'
             self.attribute = 'Aux'
 
