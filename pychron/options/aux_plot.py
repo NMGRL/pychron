@@ -64,6 +64,8 @@ class AuxPlot(HasTraits):
 
     ymin = Float
     ymax = Float
+    xmin = Float
+    xmax = Float
 
     ylimits = Tuple(Float, Float, transient=True)
     xlimits = Tuple(Float, Float, transient=True)
@@ -72,12 +74,8 @@ class AuxPlot(HasTraits):
     _has_ylimits = Bool(False, transient=True)
     _has_xlimits = Bool(False, transient=True)
 
-    # enabled = True
-
     marker = Str('circle')
     marker_size = Float(2)
-
-    _suppress = False
 
     calculated_ymax = Any(transient=True)
     calculated_ymin = Any(transient=True)
@@ -85,31 +83,6 @@ class AuxPlot(HasTraits):
     def to_dict(self):
         keys = [k for k in self.traits(transient=False)]
         return {key: getattr(self, key) for key in keys}
-
-    # @on_trait_change('ylimits')
-    # def _handle_ylimits(self, new):
-    #     print 'fasdfsdf', new
-    #     self._suppress = True
-    #     self.ymin = new[0]
-    #     self.ymax = new[1]
-    #     self._suppress = False
-
-    @on_trait_change('xmin, xmax')
-    def _handle_xmin_max(self):
-        if self._suppress:
-            return
-
-        self.xlimits = (self.xmin, self.xmax)
-        self._has_xlimits = has_limits(self.xlimits)
-
-    @on_trait_change('ymin, ymax')
-    def _handle_ymin_max(self):
-        if self._suppress:
-            return
-
-        self.ylimits = (self.ymin, self.ymax)
-
-        self._has_ylimits = has_limits(self.ylimits)
 
     def set_overlay_position(self, k, v):
         self.overlay_positions[k] = v
@@ -123,10 +96,13 @@ class AuxPlot(HasTraits):
     @on_trait_change('clear_ylimits_button')
     def clear_ylimits(self):
         self.ymin, self.ymax = 0, 0
+        self.ylimits = (self.ymin, self.ymax)
+        self._has_ylimits = has_limits(self.ylimits)
 
     def clear_xlimits(self):
-        self._has_xlimits = False
-        self.xlimits = (0, 0)
+        self.xmin, self.xmax = 0, 0
+        self.xlimits = (self.xmin, self.xmax)
+        self._has_xlimits = has_limits(self.xlimits)
 
     def _name_changed(self):
         if self.initialized:

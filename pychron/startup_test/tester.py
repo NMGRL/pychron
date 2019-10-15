@@ -14,12 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Float, Enum, List
 # ============= standard library imports ========================
 import os
 import time
 
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Float, Enum, List
 
 # ============= local library imports  ==========================
@@ -82,6 +81,11 @@ class StartupTester(Loggable):
             elif result is None:
                 result = 'Invalid'
 
+            # try:
+            #     error = getattr(plugin, '{}_error'.format(ti))
+            # except AttributeError:
+            #     error = ''
+
             self.add_test_result(name=ti, plugin=pname,
                                  description=description,
                                  duration=time.time() - st,
@@ -108,6 +112,9 @@ class StartupTester(Loggable):
 
     def _get_tests(self, name):
         if self._tests:
+            # for ti in self._tests:
+            #     print(ti['plugin'].lower() , name.lower())
+
             ts = next((ti['tests'] for ti in self._tests if ti['plugin'].lower() == name.lower()), None)
             if ts is None:
                 self.debug('------------ Plugin "{}" not in startup_tests.yaml'.format(name))
