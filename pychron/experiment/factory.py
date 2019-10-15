@@ -15,12 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
-
 from pyface.timer.do_later import do_later
 from traits.api import Instance, Button, Bool, Property, \
-    DelegatesTo, List, Str
+    DelegatesTo, List, Str, on_trait_change
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -36,7 +33,7 @@ from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.pychron_constants import LINE_STR
 
 
-class ExperimentFactory(DVCAble): #, ConsumerMixin):
+class ExperimentFactory(DVCAble):
     run_factory = Instance(AutomatedRunFactory)
     queue_factory = Instance(ExperimentQueueFactory)
 
@@ -231,6 +228,10 @@ class ExperimentFactory(DVCAble): #, ConsumerMixin):
                 ai.end_after = False
 
         self.run_factory.set_end_after(new)
+
+    @on_trait_change('run_factory.apply_stepheat')
+    def _apply_stepheat(self):
+        self.run_factory.do_apply_stepheat(self.queue)
 
     def _queue_changed(self, new):
         self.undoer.queue = new
