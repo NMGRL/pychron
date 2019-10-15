@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str, Int, Enum, Property, Bool, Float
+from traits.api import Str, Int, Enum, Property, Bool, Float, HasTraits
 
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.options import FigureOptions
@@ -34,7 +34,7 @@ class BaseFluxOptions(FigureOptions):
     predicted_j_error_type = Enum(*ERROR_TYPES)
 
 
-class FluxOptions(BaseFluxOptions):
+class MonitorMixin(HasTraits):
     error_kind = Enum(*ERROR_TYPES)
 
     selected_monitor = Enum(list(FLUX_CONSTANTS.keys()))
@@ -42,15 +42,6 @@ class FluxOptions(BaseFluxOptions):
     monitor_age = Property(depends_on='selected_monitor')
     monitor_name = Property(depends_on='selected_monitor')
     monitor_material = Property(depends_on='selected_monitor')
-    model_kind = Enum(FLUX_MODEL_KINDS)
-    flux_scalar = Float(1000)
-    n_neighbors = Int(2)
-
-    least_squares_fit = Enum('Linear', 'Parabolic', 'Cubic', 'Quartic')
-    one_d_axis = Enum('X', 'Y')
-
-    def initialize(self):
-        self.subview_names = [MAIN, APPEARANCE]
 
     def _get_lambda_k(self):
         dc = FLUX_CONSTANTS[self.selected_monitor]
@@ -64,6 +55,19 @@ class FluxOptions(BaseFluxOptions):
 
     def _get_monitor_material(self):
         return FLUX_CONSTANTS[self.selected_monitor].get('monitor_material', '')
+
+
+class FluxOptions(BaseFluxOptions, MonitorMixin):
+
+    model_kind = Enum(FLUX_MODEL_KINDS)
+    flux_scalar = Float(1000)
+    n_neighbors = Int(2)
+
+    least_squares_fit = Enum('Linear', 'Parabolic', 'Cubic', 'Quartic')
+    one_d_axis = Enum('X', 'Y')
+
+    def initialize(self):
+        self.subview_names = [MAIN, APPEARANCE]
 
     def _get_subview(self, name):
         from pychron.options.views.flux_views import VIEWS
@@ -82,10 +86,20 @@ class FluxVisualizationOptions(BaseFluxOptions):
 
 
 class VerticalFluxAuxPlot(AuxPlot):
-    name = 'Height (cm)'
+    name = 'Height (mm)'
 
 
-class VerticalFluxOptions(FigureOptions):
+class VerticalFluxOptions(FigureOptions, MonitorMixin):
+
+    use_j = Bool
+    use_f_enabled = Bool
+
+    @property
+    def x_title(self):
+        t = 'J'
+        if self.use_f_enabled:
+            t = 'J' if self.use_j else '<sup>40</sup>Ar*/<sup>Ar</sub>39<sub>K</sub>'
+        return t
 
     def initialize(self):
         self.subview_names = [MAIN, APPEARANCE]

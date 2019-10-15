@@ -16,38 +16,26 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from __future__ import absolute_import
-from __future__ import print_function
 
 import ast
 import os
 import time
+from configparser import ConfigParser
 
 import yaml
-from six.moves.configparser import ConfigParser
 
 from pychron.core.helpers.filetools import fileiter
+from pychron.core.yaml import yload
 from pychron.paths import paths
 from pychron.pychron_constants import MEASUREMENT_COLOR
-from pychron.pyscripts.pyscript import verbose_skip, count_verbose_skip, \
-    makeRegistry, CTXObject
+from pychron.pyscripts.contexts import MeasurementCTXObject
+from pychron.pyscripts.decorators import verbose_skip, count_verbose_skip, makeRegistry
 from pychron.pyscripts.valve_pyscript import ValvePyScript
 from pychron.spectrometer import get_spectrometer_config_path, set_spectrometer_config_name
 
 ESTIMATED_DURATION_FF = 1.0
 
 command_register = makeRegistry()
-
-
-class MeasurementCTXObject(object):
-    def create(self, yd):
-        for k in ('baseline', 'multicollect', 'peakcenter', 'equilibration', 'whiff', 'peakhop'):
-            try:
-                c = CTXObject()
-                c.update(yd[k])
-                setattr(self, k, c)
-            except KeyError:
-                pass
 
 
 class MeasurementPyScript(ValvePyScript):
@@ -59,6 +47,8 @@ class MeasurementPyScript(ValvePyScript):
     info_color = MEASUREMENT_COLOR
     abbreviated_count_ratio = None
 
+    hops_name = ''
+    hops_blob = ''
     _time_zero = None
     _time_zero_offset = 0
 
@@ -270,10 +260,15 @@ class MeasurementPyScript(ValvePyScript):
             p = os.path.join(self.root, p)
 
         if os.path.isfile(p):
+            self.hops_name = os.path.basename(p)
+
+            with open(p, 'r') as rfile:
+                self.hops_blob = rfile.read()
+
             with open(p, 'r') as rfile:
                 head, ext = os.path.splitext(p)
                 if ext in ('.yaml', '.yml'):
-                    hops = yaml.load(rfile)
+                    hops = yload(rfile)
                 elif ext in ('.txt',):
                     def hop_factory(l):
                         pairs, counts, settle = eval(l)
@@ -774,7 +769,7 @@ class MeasurementPyScript(ValvePyScript):
         try:
             m = ast.parse(self.text)
             try:
-                yd = yaml.load(ast.get_docstring(m))
+                yd = yload(ast.get_docstring(m))
                 if yd:
                     mx = MeasurementCTXObject()
                     mx.create(yd)

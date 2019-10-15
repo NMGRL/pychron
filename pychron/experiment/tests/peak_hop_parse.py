@@ -1,5 +1,6 @@
 from __future__ import absolute_import
-import yaml
+
+from pychron.core.yaml import yload
 
 __author__ = 'ross'
 
@@ -14,7 +15,7 @@ HOPS = [('Ar40:H1, Ar36:CDD', 2, 1),
 
 class PeakHopYamlCase(unittest.TestCase):
     def setUp(self):
-        hops = yaml.load(self.txt)
+        hops = yload(self.txt)
         self.gen = generate_hops(hops)
 
     def hop1(self):

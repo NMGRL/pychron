@@ -1,6 +1,6 @@
 Pychron
 ========
-
+[![Build Status](https://travis-ci.org/NMGRL/pychron.svg?branch=develop)](https://travis-ci.org/NMGRL/pychron)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3237834.svg)](https://doi.org/10.5281/zenodo.3237834)
 
 [Changes](CHANGELOG.md)
@@ -33,10 +33,10 @@ A number of Ar/Ar Geochronology laboratories are using Pychron to various degree
  - US Geological Survey - Menlo Park
  - NASA - MNGRL, Goddard Space Flight Center
  - AEL-AMS, Ottawa
+ - University of Arizona
 
 Installation of Pychron at other laboratories is ongoing. Current interested labs are
   
-  - University of Arizona
   - University of Florida
   - Purdue University
   - CAMS, Lawrence Livermore National Laboratory

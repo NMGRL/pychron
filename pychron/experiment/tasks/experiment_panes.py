@@ -329,8 +329,10 @@ class StatsPane(TraitsDockPane):
     id = 'pychron.experiment.stats'
     name = 'Stats'
     recalculate_button = Button('Recalculate')
+    executor = Any
 
     def _recalculate_button_fired(self):
+        self.model.experiment_queues = self.executor.experiment_queues
         self.model.reset()
 
     def traits_view(self):

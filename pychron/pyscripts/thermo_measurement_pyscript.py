@@ -17,8 +17,8 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 
+from pychron.pyscripts.decorators import verbose_skip
 from pychron.pyscripts.measurement_pyscript import MeasurementPyScript, command_register
-from pychron.pyscripts.pyscript import verbose_skip
 
 ESTIMATED_DURATION_FF = 1.0
 

@@ -15,9 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import os
+import importlib
+import json
 
-import yaml
 from chaco.axis import DEFAULT_TICK_FORMATTER
 from chaco.axis_view import float_or_auto
 from enable.markers import marker_names
@@ -35,11 +35,19 @@ from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.core.pychron_traits import BorderHGroup, BorderVGroup
 from pychron.core.ui.table_editor import myTableEditor
 from pychron.core.utils import alphas
+from pychron.core.yaml import yload
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.layout import FigureLayout
 from pychron.processing.j_error_mixin import JErrorMixin
 from pychron.pychron_constants import NULL_STR, ERROR_TYPES, FONTS, SIZES
+
+
+def importklass(klass):
+    args = klass[8:-2].split('.')
+    mod = '.'.join(args[:-1])
+    mod = importlib.import_module(mod)
+    return getattr(mod, args[-1])
 
 
 def _table_column(klass, *args, **kw):
@@ -186,6 +194,12 @@ class MainOptions(SubOptions):
 
         return cols
 
+    def _get_name_grp(self):
+        grp = HGroup(Item('name', editor=EnumEditor(name='names')),
+                     Item('scale', editor=EnumEditor(values=['linear', 'log'])),
+                     Item('height'))
+        return grp
+
     def _get_yticks_grp(self):
         g = BorderHGroup(Item('use_sparse_yticks', label='Sparse'),
                          Item('sparse_yticks_step', label='Step', enabled_when='use_sparse_yticks'),
@@ -194,19 +208,24 @@ class MainOptions(SubOptions):
                          label='Y Ticks'),
         return g
 
+    def _get_ylimits_group(self):
+        g = BorderHGroup(Item('ymin', label='Min'),
+                         Item('ymax', label='Max'),
+                         icon_button_editor('clear_ylimits_button', 'clear'),
+                         label='Y Limits')
+        return g
+
+    def _get_marker_group(self):
+        g = BorderHGroup(UItem('marker', editor=EnumEditor(values=marker_names)),
+                         Item('marker_size', label='Size'),
+                         label='Marker')
+        return g
+
     def _get_edit_view(self):
-        v = View(VGroup(HGroup(Item('name', editor=EnumEditor(name='names')),
-                               Item('scale', editor=EnumEditor(values=['linear', 'log']))),
-                        Item('height'),
-                        self._get_yticks_grp(),
-                        HGroup(UItem('marker', editor=EnumEditor(values=marker_names)),
-                               Item('marker_size', label='Size'),
-                               show_border=True, label='Marker'),
-                        HGroup(Item('ymin', label='Min'),
-                               Item('ymax', label='Max'),
-                               show_border=True,
-                               label='Y Limits'),
-                        show_border=True))
+        v = View(BorderVGroup(self._get_name_grp(),
+                              self._get_yticks_grp(),
+                              self._get_ylimits_group(),
+                              self._get_marker_group()))
         return v
 
     def _get_analysis_group(self):
@@ -248,6 +267,65 @@ class BaseOptions(HasTraits):
 
     _subview_cache = None
 
+    def dump(self, wfile):
+        def convert_color(s):
+            from pyface.qt.QtGui import QColor
+            nd = {}
+            for k, v in s.items():
+                if isinstance(v, QColor):
+                    nd[k] = v.rgba()
+            s.update(**nd)
+
+        state = self.__getstate__()
+        state['klass'] = str(self.__class__)
+
+        layout = state.pop('layout')
+        if layout:
+            state['layout'] = str(layout.__class__), layout.__getstate__()
+
+        groups = state.pop('groups')
+        if groups:
+            def func(gi):
+                s = gi.__getstate__()
+                convert_color(s)
+                return str(gi.__class__), s
+
+            ngs = [func(gi) for gi in groups]
+            state['groups'] = ngs
+
+        convert_color(state)
+
+        if 'aux_plots' in state:
+            state['aux_plots'] = [(str(a.__class__), a.__getstate__())
+                                  for a in state.pop('aux_plots')]
+
+        if 'selected' in state:
+            state['selected'] = [(str(s.__class__), s.__getstate__())
+                                 for s in state.pop('selected')]
+        json.dump(state, wfile, indent=4, sort_keys=True)
+
+    def load(self, state):
+        state.pop('klass')
+
+        def inst(klass):
+            klass, ctx = klass
+            cls = importklass(klass)
+            return cls(**ctx)
+
+        if 'layout' in state:
+            layout = state.pop('layout')
+            try:
+                obj = inst(layout)
+                state['layout'] = obj
+            except ValueError:
+                pass
+
+        for key in ('aux_plots', 'groups', 'selected'):
+            if key in state:
+                state[key] = [inst(a) for a in state.pop(key)]
+
+        self.__setstate__(state)
+
     def get_cached_subview(self, name):
         if self._subview_cache is None:
             self._subview_cache = {}
@@ -276,12 +354,7 @@ class BaseOptions(HasTraits):
 
     def load_factory_defaults(self, path):
         if path:
-            if not os.path.isfile(path):
-                yd = yaml.load(path)
-            else:
-                with open(path, 'r') as rfile:
-                    yd = yaml.load(rfile)
-
+            yd = yload(path)
             self._load_factory_defaults(yd)
 
     def setup(self):
@@ -410,7 +483,7 @@ class FigureOptions(BaseOptions):
                 start = len(self.groups)
                 new_groups = [self.group_options_klass(color=ci,
                                                        line_color=ci,
-                                                       group_id=start+i) for i, ci in enumerate(colornames[start:])]
+                                                       group_id=start + i) for i, ci in enumerate(colornames[start:])]
                 self.groups.extend(new_groups)
 
     def get_paddings(self):
@@ -484,7 +557,7 @@ class FigureOptions(BaseOptions):
             return []
 
     def _edit_title_format_button_fired(self):
-        from pychron.processing.label_maker import TitleTemplater, TitleTemplateView
+        from pychron.options.label_maker import TitleTemplater, TitleTemplateView
 
         tm = TitleTemplater(label=self.title,
                             delimiter=self.title_delimiter,

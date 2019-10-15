@@ -15,15 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
+
+# ============= standard library imports ========================
 import os
 import weakref
 
 from traits.api import HasTraits, Str, Any, List, Property
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
+
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import created_datetime, modified_datetime
 from pychron.paths import paths
 
@@ -47,9 +47,9 @@ class FilePath(HasTraits):
 
     @property
     def path(self):
-        '''
-            recursively assemble the path to this resourse
-        '''
+        """
+            recursively assemble the path to this resource
+        """
         if self.root:
             return os.path.join(self.root.path, self.name)
         elif self.root_path:
@@ -59,11 +59,11 @@ class FilePath(HasTraits):
             return self.name
 
 
-
 class Hierarchy(FilePath):
     children = List
 
     chronology = Property(List)  # Property(depends_on='refresh_needed, children')
+
     # refresh_needed=Event
 
     # def reset_chronology(self):
@@ -102,6 +102,3 @@ class Hierarchy(FilePath):
     #     c=self._get_chronology()
     #     return c[-1]
 # ============= EOF =============================================
-
-
-

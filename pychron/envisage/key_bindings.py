@@ -19,6 +19,7 @@ from pyface.message_dialog import information
 from traits.trait_types import List
 
 from pychron.core.ui import set_qt
+from pychron.core.yaml import yload
 
 set_qt()
 # ============= enthought library imports =======================
@@ -45,11 +46,12 @@ def load_key_map():
     p = key_bindings_path()
     # if not os.path.isfile(p):
     # dump_key_bindings(default_key_map)
-    if os.path.isfile(p):
-        with open(p, 'r') as rfile:
-            return yaml.load(rfile)
-    else:
-        return {}
+    return yload(p)
+    # if os.path.isfile(p):
+    #     with open(p, 'r') as rfile:
+    #         return yaml.load(rfile)
+    # else:
+    #     return {}
 
 
 user_key_map = load_key_map()

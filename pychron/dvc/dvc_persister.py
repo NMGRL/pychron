@@ -19,7 +19,6 @@ import os
 import shutil
 from datetime import datetime
 
-import yaml
 from apptools.preferences.preference_binding import bind_preference
 from git.exc import GitCommandError
 # ============= enthought library imports =======================
@@ -28,6 +27,7 @@ from uncertainties import std_dev, nominal_value
 from yaml import YAMLError
 
 from pychron.core.helpers.binpack import encode_blob, pack
+from pychron.core.yaml import yload
 from pychron.dvc import dvc_dump, analysis_path, repository_path, NPATH_MODIFIERS
 from pychron.experiment.automated_run.persistence import BasePersister
 from pychron.git_archive.repo_manager import GitRepoManager
@@ -40,9 +40,9 @@ def format_repository_identifier(project):
     return project.replace('/', '_').replace('\\', '_')
 
 
-def spectrometer_sha(src, defl, gains):
+def spectrometer_sha(settings, src, defl, gains):
     sha = hashlib.sha1()
-    for d in (src, defl, gains):
+    for d in settings + (src, defl, gains):
         for k, v in sorted(d.items()):
             sha.update(k.encode('utf-8'))
             sha.update(str(v).encode('utf-8'))
@@ -327,18 +327,19 @@ class DVCPersister(BasePersister):
         p = os.path.join(paths.setup_dir, 'arar_mapping.yaml')
         if os.path.isfile(p):
             self.debug('loading arar mapping from {}'.format(p))
-            with open(p, 'r') as rfile:
-                try:
-                    obj = yaml.load(rfile)
-                except YAMLError:
-                    pass
 
-                for k in ARGON_KEYS:
-                    if k not in obj:
-                        self.warning('Invalid arar_mapping.yaml file. required keys={}'.format(ARGON_KEYS))
-                        return
+            # with open(p, 'r') as rfile:
+            try:
+                obj = yload(p)
+            except YAMLError:
+                obj = {}
 
-                self.arar_mapping = obj
+            for k in ARGON_KEYS:
+                if k not in obj:
+                    self.warning('Invalid arar_mapping.yaml file. required keys={}'.format(ARGON_KEYS))
+                    return
+
+            self.arar_mapping = obj
 
     def _check_repository_identifier(self):
         repo_id = self.per_spec.run_spec.repository_identifier
@@ -569,10 +570,11 @@ class DVCPersister(BasePersister):
 
         # save the scripts
         ms = per_spec.run_spec.mass_spectrometer
-        for si in ('measurement', 'extraction', 'post_measurement', 'post_equilibration'):
+        for si in ('measurement', 'extraction', 'post_measurement', 'post_equilibration', 'hops'):
             name = getattr(per_spec, '{}_name'.format(si))
             blob = getattr(per_spec, '{}_blob'.format(si))
-            self.dvc.meta_repo.update_script(ms, name, blob)
+            if name:
+                self.dvc.meta_repo.update_script(ms, name, blob)
             obj[si] = name
 
         # save keys for the arar isotopes
@@ -637,7 +639,8 @@ class DVCPersister(BasePersister):
     def _save_spectrometer_file(self, path):
         obj = dict(spectrometer=dict(self.per_spec.spec_dict),
                    gains=dict(self.per_spec.gains),
-                   deflections=dict(self.per_spec.defl_dict))
+                   deflections=dict(self.per_spec.defl_dict),
+                   settings=self.per_spec.settings)
         # hexsha = self.dvc.get_meta_head()
         # obj['commit'] = str(hexsha)
 
@@ -718,7 +721,8 @@ class DVCPersister(BasePersister):
         for key,value in sorted(dictionary)
         :return:
         """
-        return spectrometer_sha(self.per_spec.spec_dict, self.per_spec.defl_dict, self.per_spec.gains)
+        return spectrometer_sha(self.per_spec.settings,
+                                self.per_spec.spec_dict, self.per_spec.defl_dict, self.per_spec.gains)
 
         # ============= EOF =============================================
         #         self._save_measured_positions()

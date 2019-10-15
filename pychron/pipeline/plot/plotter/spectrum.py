@@ -424,11 +424,12 @@ class Spectrum(BaseArArFigure):
     def _make_plateau_text(self):
         ag = self.analysis_group
         plateau_age = ag.plateau_age
-        plateau_mswd, valid_mswd, nsteps = ag.get_plateau_mswd_tuple()
+        mswd_args = ag.get_plateau_mswd_tuple()
+        plateau_mswd, valid_mswd, nsteps, pvalue = mswd_args
 
         e = plateau_age.std_dev * self.options.nsigma
         text = self._build_label_text(nominal_value(plateau_age), e, nsteps,
-                                      mswd_args=(plateau_mswd, valid_mswd, nsteps),
+                                      mswd_args=mswd_args,
                                       sig_figs=self.options.plateau_sig_figs)
 
         sample = ag.sample

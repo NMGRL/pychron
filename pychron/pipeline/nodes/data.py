@@ -25,10 +25,10 @@ from pyface.timer.do_later import do_after
 from traits.api import Instance, Bool, Int, Str, List, Enum, Float, Time
 from traitsui.api import Item, EnumEditor, CheckListEditor
 
-from pychron.core.helpers.iterfuncs import groupby_idx
+from pychron.core.helpers.strtools import to_bool, get_case_insensitive, to_int
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.globals import globalv
-from pychron.pipeline.csv_dataset_factory import CSVDataSetFactory
+from pychron.pipeline.csv_dataset_factory import CSVDataSetFactory, CSVSpectrumDataSetFactory
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pychron_constants import ANALYSIS_TYPES
 
@@ -107,12 +107,6 @@ class InterpretedAgeNode(DVCNode):
                 ias = self.interpreted_ages
                 ias.extend(interpreted_ages)
 
-                # if browser_view.is_append:
-                #     ias = self.interpreted_ages
-                #     ias.extend(interpreted_ages)
-                # else:
-                #     self.interpreted_ages = interpreted_ages
-
             return True
 
     def run(self, state):
@@ -139,51 +133,38 @@ class DataNode(DVCNode):
 class CSVNode(BaseDVCNode):
     path = Str
     name = 'CSV Data'
+    required_columns = ('runid', 'age', 'age_err')
+
+    _factory_klass = CSVDataSetFactory
 
     def reset(self):
         super(CSVNode, self).reset()
         self.path = ''
+        self.unknowns = []
 
     def configure(self, pre_run=False, **kw):
+        if to_bool(os.getenv('CSV_DEBUG')):
+            self.path = '/Users/ross/PychronDev/data/csv/Murphy ideo ages2.csv'
+            self.path = '/Users/ross/Downloads/Takahe_Ideo.csv'
+            self.path = '/Users/ross/Downloads/VallesTest.csv'
+
+        ret = bool(self.path)
         if not pre_run:
             self._manual_configured = True
+        else:
+            ret = True
 
         if not self.path or not os.path.isfile(self.path):
-            dsf = CSVDataSetFactory(dvc=self.dvc)
+            dsf = self._factory_klass(dvc=self.dvc)
             dsf.load()
             info = dsf.edit_traits()
             if info.result:
                 if dsf.data_path:
                     self.path = dsf.data_path
-
-            # if confirm(None, 'Would you like to create a new CSV dataset?'):
-            #     # open a table editor to enter all the information
-            #     pass
-            # else:
-            #     # select a file from DVC or native finder
-            #     pass
-        #             msg = '''CSV File Format
-        # Create/select a file with a column header as the first line.
-        # The following columns are required:
-        #
-        # runid, age, age_err
-        #
-        # Optional columns are:
-        #
-        # group, aliquot, sample
-        #
-        # e.x.
-        # runid, age, age_error
-        # Run1, 10, 0.24
-        # Run2, 11, 0.32
-        # Run3, 10, 0.40'''
-        #             information(None, msg)
-        #
-        #             dlg = FileDialog()
-        #             if dlg.open() == OK:
-        #                 self.path = dlg.path
-
-        return bool(self.path)
+                    ret = True
+                elif dsf.records:
+                    self.unknowns = dsf.as_analyses()
+        return ret
 
     def run(self, state):
         if not self.unknowns:
@@ -191,9 +172,10 @@ class CSVNode(BaseDVCNode):
                 state.canceled = True
                 return
 
-        unks = self._load_analyses()
-        if unks:
-            self.unknowns.extend(unks)
+        if not self.unknowns:
+            unks = self._load_analyses()
+            if unks:
+                self.unknowns.extend(unks)
 
         # add our analyses to the state
         items = state.unknowns
@@ -204,28 +186,45 @@ class CSVNode(BaseDVCNode):
 
         par = CSVColumnParser(delimiter=',')
         par.load(self.path)
-        if par.check(('runid', 'age', 'age_err')):
+        if par.check(self.required_columns):
             return self._get_items_from_file(par)
         else:
             warning(None, 'Invalid file format. Minimum columns required are "runid", "age", "age_err"')
 
     def _get_items_from_file(self, parser):
-        from pychron.processing.analyses.file_analysis import FileAnalysis
         try:
-            ans = [(d.get('group', 0), FileAnalysis(age=float(d['age']),
-                                                    age_err=float(d['age_err']),
-                                                    record_id=d['runid'],
-                                                    sample=d.get('sample', ''),
-                                                    aliquot=int(d.get('aliquot', 0)))) for d in parser.values()]
-            items = []
-            for i, (gid, aa) in enumerate(groupby_idx(ans, 0)):
-                for _, ai in aa:
-                    ai.group_id = i
-                    items.append(ai)
-            return items
+            ans = [self._analysis_factory(d)
+                   for d in parser.values()]
+
+            return ans
 
         except (TypeError, ValueError) as e:
             warning(None, 'Invalid values in the import file. Error="{}"'.format(e))
+
+    def _analysis_factory(self, d):
+        from pychron.processing.analyses.file_analysis import FileAnalysis
+        fa = FileAnalysis(age=float(get_case_insensitive(d, 'age')),
+                          age_err=float(get_case_insensitive(d, 'age_err')),
+                          record_id=get_case_insensitive(d, 'runid'),
+                          sample=get_case_insensitive(d, 'sample', ''),
+                          label_name=get_case_insensitive(d, 'label_name', ''),
+                          group=to_int(get_case_insensitive(d, 'group', '')),
+                          aliquot=int(get_case_insensitive(d, 'aliquot', 0)))
+        return fa
+
+
+class CSVSpectrumNode(CSVNode):
+    required_columns = ('runid', 'age', 'age_err', 'k39', 'k39_err', 'rad40', 'rad40_err')
+    _factory_klass = CSVSpectrumDataSetFactory
+
+    def _analysis_factory(self, d):
+        f = super(CSVSpectrumNode, self)._analysis_factory(d)
+
+        f.k39 = float(get_case_insensitive(d, 'k39'))
+        f.k39_err = float(get_case_insensitive(d, 'k39_err'))
+        f.rad40 = float(get_case_insensitive(d, 'rad40'))
+        f.rad40_err = float(get_case_insensitive(d, 'rad40_err'))
+        return f
 
 
 class UnknownNode(DataNode):

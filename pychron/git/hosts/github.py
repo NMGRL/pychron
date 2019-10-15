@@ -22,20 +22,23 @@ from __future__ import absolute_import
 from requests.exceptions import SSLError
 
 from pychron.git.hosts import GitHostService
-from pychron.paths import paths
+
+BASE_URL = 'github.com'
+API_URL = 'https://api.github.com'
 
 
 class GitHubService(GitHostService):
     preference_path = 'pychron.github'
     name = 'GitHub'
     _has_access = True
+    protocol = 'https'
 
     @property
     def remote_url(self):
-        return paths.github_url
+        return '{}://{}'.format(self.protocol, BASE_URL)
 
     def up_to_date(self, organization, name, sha, branch='master'):
-        cmd = '{}/repos/{}/{}/commits/{}'.format(paths.github_api_url, organization, name, branch)
+        cmd = '{}/repos/{}/{}/commits/{}'.format(API_URL, organization, name, branch)
         close_at_end = False
         if not self._session:
             self.new_session()
@@ -52,7 +55,7 @@ class GitHubService(GitHostService):
         return ret, rsha
 
     def get_repo(self, organization, name):
-        cmd = '{}/repos/{}/{}'.format(paths.github_api_url, organization, name)
+        cmd = '{}/repos/{}/{}'.format(API_URL, organization, name)
         resp = self._get(cmd)
         try:
             return resp[0]
@@ -62,7 +65,7 @@ class GitHubService(GitHostService):
     def test_api(self):
         ret, err = True, ''
         try:
-            self._get(paths.github_api_url)
+            self._get(API_URL)
         except BaseException as e:
             ret = False
             err = e
@@ -75,20 +78,18 @@ class GitHubService(GitHostService):
 
         team_id = self.get_team_id(team, organization)
         if team_id:
-            cmd = '{}/teams/{}/repos/{}/{}'.format(paths.github_api_url, team_id, organization, repo)
+            cmd = '{}/teams/{}/repos/{}/{}'.format(API_URL, team_id, organization, repo)
             self._put(cmd, permission=permission)
 
     def get_team_id(self, name, organization):
-        for td in self._get('{}/orgs/{}/teams'.format(paths.github_api_url,
-                                                      organization)):
+        for td in self._get('{}/orgs/{}/teams'.format(API_URL, organization)):
             if td['name'] == name:
                 return td['id']
 
     def create_repo(self, name, organization, **kw):
         if self._has_access:
             try:
-                cmd = '{}/orgs/{}/repos'.format(paths.github_api_url,
-                                                organization)
+                cmd = '{}/orgs/{}/repos'.format(API_URL, organization)
                 resp = self._post(cmd, name=name, **kw)
                 if resp:
                     self.debug('Create repo response {}'.format(resp.status_code))
@@ -100,14 +101,26 @@ class GitHubService(GitHostService):
         else:
             return True
 
-    def make_url(self, name, organization):
-        return '{}/{}/{}.git'.format(paths.github_url,
-                                     organization, name)
+    def make_url(self, name, organization, protocol=None):
+        if protocol is None:
+            protocol = self.protocol
+
+        auth = ''
+        # including the authenitcation when cloning presents an issue when cloning a repository
+        # you only have read-only access to
+        if organization == self.organization:
+            if self.oauth_token:
+                auth = '{}@'.format(self.oauth_token)
+            elif self.username and self.password:
+                auth = '{}:{}@'.format(self.username, self.password)
+
+        url = '{}://{}{}/{}/{}.git'.format(protocol, auth, BASE_URL, organization, name)
+        return url
 
     def get_repos(self, organization):
         if self._has_access:
             try:
-                cmd = '{}/orgs/{}/repos'.format(paths.github_api_url, organization)
+                cmd = '{}/orgs/{}/repos'.format(API_URL, organization)
                 return self._get(cmd)
             except SSLError as e:
                 self.warning('SSL Error. {}'.format(e))
@@ -117,7 +130,7 @@ class GitHubService(GitHostService):
             return []
 
     def get_info(self, organization):
-        cmd = '{}/{}'.format(paths.github_api_url, organization)
+        cmd = '{}/{}'.format(API_URL, organization)
         return self._get(cmd)
 
     # private

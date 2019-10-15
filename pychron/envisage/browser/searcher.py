@@ -24,6 +24,7 @@ from traits.api import Str, List
 
 # ============= local library imports  ==========================
 from pychron.core.progress import progress_loader
+from pychron.core.yaml import yload
 from pychron.dvc.dvc_database import DVCDatabase
 from pychron.loggable import Loggable
 from pychron.paths import paths
@@ -116,8 +117,7 @@ class Searcher(Loggable):
     def _load_entries(self):
         p = paths.hidden_path('search_entries')
         if os.path.isfile(p):
-            with open(p, 'r') as rfile:
-                self.search_entries = yaml.load(rfile)
+            self.search_entries = yload(p)
 
     def _search_entry_changed(self):
         self.search()

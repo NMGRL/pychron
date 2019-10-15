@@ -42,7 +42,8 @@ def get_list(cmd, attr='name', headers=None):
     with requests.Session() as s:
         def _rget(ci):
             r = s.get(ci, headers=headers)
-            result = json.loads(r.text)
+
+            result = r.json()
             if attr:
                 result = [di[attr] for di in result]
 

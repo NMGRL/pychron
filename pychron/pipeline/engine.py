@@ -26,6 +26,7 @@ from traits.api import HasTraits, Str, Instance, List, Event, on_trait_change, A
 from pychron.core.confirmation import remember_confirmation_dialog
 from pychron.core.helpers.filetools import glob_list_directory, add_extension
 from pychron.core.helpers.iterfuncs import groupby_key
+from pychron.core.yaml import yload
 from pychron.dvc.tasks.repo_task import RepoItem
 from pychron.envisage.view_util import open_view
 from pychron.globals import globalv
@@ -50,7 +51,8 @@ from pychron.pipeline.pipeline_defaults import ISOEVO, BLANKS, ICFACTOR, IDEO, S
     REGRESSION_SERIES, VERTICAL_FLUX, \
     CSV_ANALYSES_EXPORT, BULK_EDIT, HISTORY_IDEOGRAM, HISTORY_SPECTRUM, AUDIT, SUBGROUP_IDEOGRAM, HYBRID_IDEOGRAM, \
     MASSSPEC_REDUCED, DEFINE_EQUILIBRATION, CA_CORRECTION_FACTORS, K_CORRECTION_FACTORS, \
-    FLUX_VISUALIZATION, CSV_RAW_DATA_EXPORT, COMPOSITE, SIMPLE_ANALYSIS_TABLE, MASS_SPEC_FLUX
+    FLUX_VISUALIZATION, CSV_RAW_DATA_EXPORT, COMPOSITE, SIMPLE_ANALYSIS_TABLE, MASS_SPEC_FLUX, PYSCRIPT, RATIO_SERIES, \
+    CSV_SPEC
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
 from pychron.pipeline.plot.editors.spectrum_editor import SpectrumEditor
@@ -292,6 +294,7 @@ class PipelineEngine(Loggable):
             items = self.selected.unknowns
 
         self._set_grouping(items, 0)
+        self._set_grouping(items, 0, attr='aux_id')
 
     def unknowns_group_by(self, attr):
         items = self.selected_unknowns
@@ -303,17 +306,11 @@ class PipelineEngine(Loggable):
         self.selected.unknowns = sunks
         self.refresh_figure_editors()
 
-    def unknowns_graph_group_by_selected(self):
+    def group_selected(self, key):
         items = self.selected.unknowns
-        max_gid = max([si.graph_id for si in items]) + 1
+        max_gid = max([getattr(si, key) for si in items]) + 1
 
-        self._set_grouping(self.selected_unknowns, max_gid, attr='graph_id')
-
-    def unknowns_group_by_selected(self):
-        items = self.selected.unknowns
-        max_gid = max([si.group_id for si in items]) + 1
-
-        self._set_grouping(self.selected_unknowns, max_gid)
+        self._set_grouping(self.selected_unknowns, max_gid, attr=key)
 
     def recall_unknowns(self):
         self.debug('recall unks')
@@ -377,9 +374,7 @@ class PipelineEngine(Loggable):
         name = self.selected_pipeline_template
         path, is_user_path = self._get_template_path(name)
         if path:
-            with open(path, 'r') as rfile:
-                nodes = yaml.load(rfile)
-
+            nodes = yload(path)
             for i, ni in enumerate(nodes):
                 klass = ni['klass']
                 if klass == 'ReviewNode':
@@ -736,6 +731,9 @@ class PipelineEngine(Loggable):
                     self.debug('{:02n}: {} Runtime: {:0.4f}'.format(idx, node, time.time() - st))
 
                     if state.veto:
+                        if state.veto_message:
+                            self.information_dialog(state.veto_message)
+
                         self.debug('pipeline vetoed by {}'.format(node))
                         return
 
@@ -841,8 +839,10 @@ class PipelineEngine(Loggable):
                              ('Hybrid Ideogram', HYBRID_IDEOGRAM),
                              ('SubGroup Ideogram', SUBGROUP_IDEOGRAM),
                              ('Spectrum', SPEC),
+                             ('CSV Spectrum', CSV_SPEC),
                              ('Spectrum/Isochron', COMPOSITE),
                              ('Series', SERIES),
+                             ('Ratio Series', RATIO_SERIES),
                              ('InverseIsochron', INVERSE_ISOCHRON),
                              ('XY Scatter', XY_SCATTER),
                              ('Regression', REGRESSION_SERIES),
@@ -857,7 +857,8 @@ class PipelineEngine(Loggable):
                    ('Share', (('CSV Analyses Export', CSV_ANALYSES_EXPORT),
                               ('CSV Raw Data Export', CSV_RAW_DATA_EXPORT))),
                    ('Transfer', (('Mass Spec Reduced', MASSSPEC_REDUCED),
-                                 ('Mass Spec Flux', MASS_SPEC_FLUX)))]
+                                 ('Mass Spec Flux', MASS_SPEC_FLUX))),
+                   ('Scripting', (('PyScript', PYSCRIPT),))]
 
         # predefined_templates contributed to by other plugins
         for name, gs in groupby_key(default + self.predefined_templates, key=itemgetter(0)):
@@ -935,6 +936,7 @@ class PipelineEngine(Loggable):
 
     def identify_peaks(self, *args, **kw):
         self._identify_peaks(*args, **kw)
+
     # private
     def _active_repositories(self):
         if self.selected_repositories:
@@ -1080,8 +1082,9 @@ class PipelineEngine(Loggable):
         if self.selected_references:
             self.recall_references()
 
-    def _dclicked_pipeline_template_fired(self):
-        self.run_needed = True
+    def _dclicked_pipeline_template_fired(self, new):
+        if not isinstance(new, PipelineTemplateGroup):
+            self.run_needed = True
 
     def _selected_pipeline_template_changed(self, new):
         if isinstance(new, (PipelineTemplate, str, tuple)):

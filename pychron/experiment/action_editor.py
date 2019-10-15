@@ -27,6 +27,7 @@ from traitsui.editors import ListEditor
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+from pychron.core.yaml import yload
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.paths import paths
 
@@ -139,9 +140,8 @@ class ActionEditor(Controller):
             self.model = ActionModel()
 
         self.model.path = p
-        with open(p, 'r') as rfile:
-            yd = yaml.load(rfile)
-            self.model.load_yaml(yd)
+        yd = yload(p)
+        self.model.load_yaml(yd)
 
     def _dump(self, p):
         d = self.model.dump_yaml()

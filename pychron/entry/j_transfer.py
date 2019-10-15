@@ -23,6 +23,7 @@ from traitsui.api import Item, VGroup, Controller, Readonly
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+from pychron.core.pychron_traits import BorderVGroup
 from pychron.loggable import Loggable
 
 
@@ -38,10 +39,8 @@ class TransferConfigView(Controller):
     model = Instance(TransferConfigModel)
 
     def traits_view(self):
-        transfer_grp = VGroup(
-            Item('include_j', label='J', tooltip='Transfer J data'),
-            Item('include_note', label='Note', tooltip='Transfer Notes'),
-            label='Transfer', show_border=True)
+        transfer_grp = BorderVGroup(Item('include_j', label='J', tooltip='Transfer J data'),
+                                    Item('include_note', label='Note', tooltip='Transfer Notes'))
 
         v = okcancel_view(VGroup(Readonly('massspecname', label='Mass Spec DB Name'),
                                  transfer_grp,

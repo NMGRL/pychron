@@ -78,21 +78,19 @@ class GitRepoPreferencesHelper(BasePreferencesHelper):
     _remote_status_color = Color
 
     def _test_connection_fired(self):
+        self._remote_status_color = 'red'
+        self._remote_status = 'Invalid'
 
-        print('fffff', self.remote)
         if self.remote.strip():
             try:
                 cmd = 'https://github.com/{}.git'.format(self.remote)
-                requests.get(cmd)
-                self._remote_status = 'Valid'
-                self._remote_status_color = 'green'
-                self._connection_hook()
-                return
+                r = requests.get(cmd)
+                if r.status_code == 200:
+                    self._remote_status = 'Valid'
+                    self._remote_status_color = 'green'
+                    self._connection_hook()
             except BaseException as e:
                 print('exception', e, cmd)
-
-        self._remote_status_color = 'red'
-        self._remote_status = 'Invalid'
 
     def _connection_hook(self):
         pass

@@ -13,9 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from pychron.globals import globalv
 
 
-def get_valve_address(obj):
+def get_switch_address(obj):
     if isinstance(obj, (str, int)):
         addr = obj
     else:
@@ -29,3 +30,60 @@ def get_valve_name(obj):
     else:
         name = obj.name.split('-')[1]
     return name
+
+
+def sim(func):
+    def wrapper(*args, **kw):
+        r = func(*args, **kw)
+        if r is None and globalv.communication_simulation:
+            r = True
+        return r
+
+    return wrapper
+
+
+def word(func):
+    def wrapper(*args, **kw):
+        r = func(*args, **kw)
+        d = {}
+        if not isinstance(r, bool):
+            args = r.split(',')
+            d = {args[i]: args[i + 1] for i in range(0, len(args), 2)}
+
+        return d
+
+    return wrapper
+
+
+def trim_affirmative(func):
+    def wrapper(obj, *args, **kw):
+        r = func(obj, *args, **kw)
+        if r is None and globalv.communication_simulation:
+            r = True
+        else:
+            cmd = None
+            if isinstance(r, tuple):
+                r, cmd = r
+
+            r = r.strip()
+            if callable(obj.affirmative):
+                r = obj.affirmative(r, cmd)
+            else:
+                r = r == obj.affirmative
+
+        return r
+
+    return wrapper
+
+
+base = 'pychron.hardware'
+PACKAGES = dict(AgilentGPActuator='{}.agilent.agilent_gp_actuator'.format(base),
+                AgilentMultifunction='{}.agilent.agilent_multifunction'.format(base),
+                ArduinoGPActuator='{}.arduino.arduino_gp_actuator'.format(base),
+                QtegraGPActuator='{}.actuators.qtegra_gp_actuator'.format(base),
+                PychronGPActuator='{}.actuators.pychron_gp_actuator'.format(base),
+                NGXGPActuator='{}.actuators.ngx_gp_actuator'.format(base),
+                WiscArGPActuator='{}.actuators.wiscar_actuactor'.format(base),
+                NMGRLFurnaceActuator='{}.actuators.nmgrl_furnace_actuator'.format(base),
+                DummyGPActuator='{}.actuators.dummy_gp_actuator'.format(base),
+                RPiGPIO='{}.rpi_gpio'.format(base))

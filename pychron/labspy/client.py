@@ -20,12 +20,12 @@ import time
 from datetime import datetime
 from threading import Thread, Lock
 
-import yaml
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Instance, Bool, Int
 
 from pychron.core.helpers.logger_setup import logging_setup
+from pychron.core.yaml import yload
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.labspy.database_adapter import LabspyDatabaseAdapter
 from pychron.loggable import Loggable
@@ -293,8 +293,7 @@ class LabspyClient(Loggable):
     @property
     def notification_triggers(self):
         p = paths.notification_triggers
-        with open(p, 'r') as rfile:
-            return [NotificationTrigger(i) for i in yaml.load(rfile)]
+        return [NotificationTrigger(i) for i in yload(p)]
 
     # private
     def _get_configuration(self):
@@ -319,8 +318,7 @@ class LabspyClient(Loggable):
         config = []
         p = paths.labspy_client_config
         if p and os.path.isfile(p):
-            with open(p, 'r') as rfile:
-                config = yaml.load(rfile)
+            config = yload(p)
 
         return config
 

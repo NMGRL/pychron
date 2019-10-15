@@ -15,19 +15,21 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
+# ============= standard library imports ========================
+import os
+
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import Str, Bool, Int, Float
+from traits.api import Str, Bool, Int, Float, Enum
 from traitsui.api import View, Item, VGroup, HGroup, spring
 from traitsui.editors import FileEditor
 from traitsui.group import Tabbed
 from traitsui.item import UItem
-# ============= standard library imports ========================
-import os
+
 # ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper, BaseConsolePreferences, \
     BaseConsolePreferencesPane
+from pychron.extraction_line import LOG_LEVEL_NAMES
 from pychron.paths import paths
 
 
@@ -71,6 +73,9 @@ class BaseExtractionLinePreferences(BasePreferencesHelper):
     canvas_config_path = Str
     valves_path = Str
 
+    logging_level = Enum(LOG_LEVEL_NAMES)
+
+
 
 class ExtractionLinePreferences(BaseExtractionLinePreferences):
     use_hardware_update = Bool
@@ -84,11 +89,14 @@ class ExtractionLinePreferencesPane(PreferencesPane):
 
     def _network_group(self):
         n_grp = VGroup(Item('use_network',
+                            label='Use Network',
                             tooltip='Flood the extraction line with the maximum state color'),
                        Item('inherit_state',
+                            label='Inherit State',
                             tooltip='Should the valves inherit the maximum state color',
                             enabled_when='use_network'),
                        VGroup(HGroup(Item('display_volume',
+                                          label='Display Volume',
                                           tooltip='Display the volume for selected section. Hover over section '
                                                   'and hit the defined volume key (default="v")'),
                                      Item('volume_key',
@@ -145,6 +153,7 @@ class ExtractionLinePreferencesPane(PreferencesPane):
         return p_grp, v_grp, g_grp
 
     def traits_view(self):
-        return View(Tabbed(*self._get_tabs()))
+        mgrp = VGroup(Item('logging_level'))
+        return View(VGroup(Tabbed(*self._get_tabs()), mgrp))
 
 # ============= EOF =============================================

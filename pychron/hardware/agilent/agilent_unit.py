@@ -16,15 +16,19 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import Int
+
 # ============= standard library imports ========================
 import time
-# ============= local library imports  ==========================
-from pychron.hardware.core.core_device import CoreDevice
+
 from six.moves import range
+from traits.api import Int
+
+# ============= local library imports  ==========================
+from pychron.hardware.agilent.agilent_mixin import AgilentMixin
+from pychron.hardware.core.core_device import CoreDevice
 
 
-class AgilentUnit(CoreDevice):
+class AgilentUnit(CoreDevice, AgilentMixin):
     slot = Int
     trigger_count = Int
 
@@ -33,27 +37,18 @@ class AgilentUnit(CoreDevice):
         self.trigger_count = self.config_get(config, 'General', 'trigger_count', cast='int', default=1)
         return True
 
-    def initialize(self, *args, **kw):
-        """
-            Agilent requires chr(10) as its communicator terminator
-
-        """
-
-        self.communicator.write_terminator = chr(10)
-        cmds = (
-            '*CLS',
-            'FORM:READING:ALARM OFF',
-            'FORM:READING:CHANNEL ON',
-            'FORM:READING:TIME OFF',
-            'FORM:READING:UNIT OFF',
-            'TRIG:SOURCE TIMER',
-            'TRIG:TIMER 0',
-            'TRIG:COUNT {}'.format(self.trigger_count),
-            #              # 'ROUT:CHAN:DELAY {} {}'.format(0.05, self._make_scan_list()),
-            'ROUT:SCAN {}'.format(self.make_scan_list()))
-
-        for c in cmds:
-            self.tell(c)
+    def _get_initialization_commands(self):
+        cmds = ('*CLS',
+                'FORM:READING:ALARM OFF',
+                'FORM:READING:CHANNEL ON',
+                'FORM:READING:TIME OFF',
+                'FORM:READING:UNIT OFF',
+                'TRIG:SOURCE TIMER',
+                'TRIG:TIMER 0',
+                'TRIG:COUNT {}'.format(self.trigger_count),
+                #              # 'ROUT:CHAN:DELAY {} {}'.format(0.05, self._make_scan_list()),
+                'ROUT:SCAN {}'.format(self.make_scan_list()))
+        return cmds
 
     def make_scan_list(self, *args, **kw):
         raise NotImplementedError

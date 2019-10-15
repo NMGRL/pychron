@@ -20,7 +20,6 @@ from __future__ import absolute_import
 import os
 import time
 
-import yaml
 from numpy import array, argmin
 from traits.api import Int, Property, List, \
     Str, DelegatesTo, Bool, Float
@@ -28,6 +27,7 @@ from traits.api import Int, Property, List, \
 from pychron.core.helpers.strtools import csv_to_floats
 from pychron.core.progress import open_progress
 from pychron.core.ramper import StepRamper
+from pychron.core.yaml import yload
 from pychron.paths import paths
 from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES, \
     QTEGRA_DEFAULT_INTEGRATION_TIME
@@ -92,7 +92,11 @@ class ThermoSpectrometer(BaseSpectrometer):
     def make_configuration_dict(self):
         keys = list(self.get_command_map().values())
         values = self.get_parameter_word(keys)
-        return dict(list(zip(keys, values)))
+        d = dict(list(zip(keys, values)))
+
+        key = 'ElectronEnergy'
+        if key in d:
+            d[key] = float('{:0.2f}'.format(d[key]))
 
     def make_gains_dict(self):
         return {di.name: di.get_gain() for di in self.detectors}
@@ -187,7 +191,10 @@ class ThermoSpectrometer(BaseSpectrometer):
             time.sleep(post_delay)
 
     def get_parameter(self, cmd):
-        return self.ask(cmd)
+        if hasattr(self.source, 'read_{}'.format(cmd.lower())):
+            return getattr(self.source, 'read_{}'.format(cmd.lower()))()
+        else:
+            return self.ask('Get{}'.format(cmd))
 
     def set_deflection(self, name, value):
         det = self.get_detector(name)
@@ -221,7 +228,7 @@ class ThermoSpectrometer(BaseSpectrometer):
         return x
 
     def read_parameter_word(self, keys):
-        x = self.ask('GetParameters {}'.format(','.join(keys)), verbose=False, quiet=True)
+        x = self.ask('GetParameters {}'.format(','.join(keys)), verbose=True, quiet=False)
         x = self._parse_word(x)
         return x
 
@@ -386,6 +393,13 @@ class ThermoSpectrometer(BaseSpectrometer):
 
         self.clear_cached_config()
 
+    def _get_source_parameter_value(self, mk, k):
+        try:
+            ret = getattr(self.source, 'read_{}'.format(k.lower()))()
+        except AttributeError:
+            ret = self.get_parameter('Get{}'.format(mk))
+        return ret
+
     def verify_configuration(self, **kw):
         self.debug('========= Verifying configuration =========')
         readout_comp, defl_comp = self._load_configuration_comparisons()
@@ -413,13 +427,7 @@ class ThermoSpectrometer(BaseSpectrometer):
 
                     comp = readout_comp.get(mk, {})
                     if comp.get('compare', True):
-                        try:
-                            cmd = 'Get{}'.format(mk)
-                        except KeyError:
-                            self.debug('invalid parameter {}'.format(mk))
-                            continue
-
-                        current = self.get_parameter(cmd)
+                        current = self._get_source_parameter_value(command_map, mk)
                         try:
                             current = float(current)
                         except ValueError:
@@ -482,22 +490,21 @@ class ThermoSpectrometer(BaseSpectrometer):
         readouts = {}
         deflections = {}
         if not self.force_send_configuration:
-            with open(path, 'r') as rfile:
-                try:
-                    yt = yaml.load(rfile)
-                    if yt:
-                        readouts, deflections = yt
-                        readouts = {r['name']: r for r in readouts}
-                        deflections = {r['name']: r for r in deflections}
+            yt = yload(path)
+            if yt:
+                readouts, deflections = yt
+                readouts = {r['name']: r for r in readouts}
+                deflections = {r['name']: r for r in deflections}
 
-                except yaml.YAMLError:
-                    pass
         return readouts, deflections
 
     def _send_configuration(self, use_ramp=True):
         self.debug('======== Sending configuration ========')
 
         readout_comp, defl_comp = self._load_configuration_comparisons()
+
+        def not_setting(k, c, v):
+            self.debug('Not setting {:<20s} current={}, config={}'.format(k, c, v))
 
         if self.microcontroller:
             command_map = self.get_command_map()
@@ -511,7 +518,7 @@ class ThermoSpectrometer(BaseSpectrometer):
                             current = self.get_deflection(k, current=True)
                             dev = self._get_config_dev(current, v, comp)
                             if not dev:
-                                self.debug('Not setting deflection {}. current={}, config={}'.format(k, current, v))
+                                not_setting(k, current, v)
                                 continue
 
                     cmd = 'SetDeflection'
@@ -528,67 +535,54 @@ class ThermoSpectrometer(BaseSpectrometer):
                     if not self.force_send_configuration:
                         comp = readout_comp.get(mk, {})
                         if comp.get('compare', True):
-                            cmd = 'Get{}'.format(mk)
-                            current = self.get_parameter(cmd)
+                            # cmd = 'Get{}'.format(mk)
+                            # current = self.get_parameter(cmd)
+                            current = self._get_source_parameter_value(mk, k)
                             try:
                                 current = float(current)
-                            except ValueError:
+                            except (ValueError, TypeError):
                                 self.warning('invalid value {}, {}'.format(mk, current))
                                 continue
 
                             dev = self._get_config_dev(current, v, comp)
                             if not dev:
-                                self.debug('Not setting {}. current={}, config={}'.format(mk, v, current))
+                                not_setting(mk, current, v)
                                 continue
 
                     cmd = 'Set{}'.format(mk)
                     self.set_parameter(cmd, v, post_delay=0.05)
 
-                # set trap voltage
-                v = trap.get('voltage')
-                self.debug('send trap voltage {}'.format(v))
-                if v is not None:
-                    if not self.force_send_configuration:
-                        comp = readout_comp.get('TrapVoltage', {})
-                        if comp.get('compare', True):
-                            current = self.source.read_trap_voltage()
-                            try:
-                                current = float(current)
-                                dev = self._get_config_dev(current, v, comp)
-                                if not dev:
-                                    self.debug('Not setting TrapVoltage. current={}, config={}'.format(v, current))
-                                    v = None
-                            except ValueError:
-                                self.warning('invalid value TrapVoltage, {}'.format(current))
-                        else:
-                            v = None
-
+                for tag, func in (('voltage', self.source.read_trap_voltage),
+                                  ('current', self.source.read_trap_current)):
+                    # set trap voltage
+                    v = trap.get(tag)
+                    ttag = 'Trap{}'.format(tag.capitalize())
+                    self.debug('send trap {} {}'.format(tag, v))
                     if v is not None:
-                        self.source.trap_voltage = v
+                        if not self.force_send_configuration:
+                            comp = readout_comp.get(ttag, {})
+                            if comp.get('compare', True):
+                                current = func()
+                                try:
+                                    current = float(current)
+                                    dev = self._get_config_dev(current, v, comp)
+                                    if not dev:
+                                        not_setting(ttag, current, v)
+                                        v = None
+                                except (ValueError, TypeError):
+                                    self.warning('invalid value {}, {}'.format(ttag, current))
+                            else:
+                                v = None
 
-                # set the trap current
+                        if v is not None:
+                            setattr(self.source, 'trap_{}'.format(tag), v)
+
                 v = trap.get('current')
-                self.debug('send trap current {}'.format(v))
                 if v is not None:
-                    if not self.force_send_configuration:
-                        comp = readout_comp.get('TrapCurrent', {})
-                        if comp.get('compare', True):
-                            current = self.source.read_trap_current()
-                            try:
-                                current = float(current)
-                                dev = self._get_config_dev(current, v, comp)
-                                if not dev:
-                                    self.debug('Not setting TrapCurrent current={}, config={}'.format(v, current))
-                                    v = None
-
-                            except ValueError:
-                                self.warning('invalid value TrapCurrent, {}'.format(current))
-
-                    if v is not None:
-                        step = trap.get('ramp_step', 1)
-                        period = trap.get('ramp_period', 1)
-                        tol = trap.get('ramp_tolerance', 10)
-                        self._ramp_trap_current(v, step, period, use_ramp, tol)
+                    step = trap.get('ramp_step', 1)
+                    period = trap.get('ramp_period', 1)
+                    tol = trap.get('ramp_tolerance', 10)
+                    self._ramp_trap_current(v, step, period, use_ramp, tol)
 
                 # set the mftable
                 mftable_name = magnet.get('mftable')

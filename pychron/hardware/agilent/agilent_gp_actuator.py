@@ -17,119 +17,62 @@
 # ========== standard library imports ==========
 
 # ========== local library imports =============
-from __future__ import absolute_import
+from pychron.hardware.actuators import get_switch_address, get_valve_name
 from pychron.hardware.actuators.gp_actuator import GPActuator
-from six.moves import range
+from pychron.hardware.agilent.agilent_mixin import AgilentMixin
 
 
-class AgilentGPActuator(GPActuator):
+class AgilentGPActuator(AgilentMixin, GPActuator):
     """
         Abstract module for the Agilent 34903A GP AgilentGPActuator
 
     """
-    id_query = '*TST?'
-    invert = False
 
-    def id_response(self, response):
-        if response.strip() == '0':
-            return True
-
-    def load_additional_args(self, config, **kw):
-        self.set_attribute(config, 'invert', 'General', 'invert')
-        return True
-
-    def initialize(self, *args, **kw):
-        """
-        """
-        self.debug('initializing')
-
-        self.debug('setting write_terminator to chr(10)')
-        self.communicator.write_terminator = chr(10)
-
-        # clear and record any accumulated errors
-        errs = self._get_errors()
-        if errs:
-            self.warning('\n'.join(errs))
-        return True
-
-    def get_channel_state(self, obj, verbose=False, **Kw):
+    def get_channel_state(self, obj, verbose=False, **kw):
         """
             Query the hardware for the channel state
         """
 
         # returns one if channel close  0 for open
-        cmd = 'ROUT:{}? (@{})'.format(self._get_cmd('OPEN'), self._get_address(obj))
+        cmd = 'ROUT:{}? (@{})'.format(self._get_cmd('OPEN'), get_switch_address(obj))
         s = self.ask(cmd, verbose=verbose)
         if self.simulation:
             return
 
-        if s is not None:
-            return s[:1] == '1'
+        if s:
+            return s[0] == '1'
 
     def close_channel(self, obj, excl=False):
         """
             Close the channel
         """
 
-        address = self._get_address(obj)
-        cmd = self._get_cmd('CLOSE')
-        if not excl:
-            cmd = 'ROUT:{} (@{})'.format(cmd, address)
-        else:
-            # ensure all channels open before closing
-            cmd = 'ROUT:{}:EXCL (@{})'.format(cmd, address)
-        self.tell(cmd)
-        if self.simulation:
-            return True
-        return self.get_channel_state(obj) == False
+        return self._actuate(obj, 'CLOSE', excl)
 
     def open_channel(self, obj):
         """
-            open the channel
+            Open the channel
         """
+        return self._actuate(obj, 'OPEN')
 
-        cmd = 'ROUT:{} (@{})'.format(self._get_cmd('OPEN'), self._get_address(obj))
+    def _actuate(self, obj, action, excl=False):
+        state = action == 'OPEN'
+        addr = get_switch_address(obj)
+        if not addr:
+            name = get_valve_name(obj)
+            self.warning_dialog('Address not set for valve "{}"'.format(name))
+
+        cmd = 'ROUT:{}{} (@{})'.format(self._get_cmd(action), ':EXCL' if excl else '', addr)
         self.tell(cmd)
         if self.simulation:
             return True
-        return self.get_channel_state(obj) == True
+        self._clear_and_report_errors()
+        return self.get_channel_state(obj) is state
 
     # private
     def _get_cmd(self, cmd):
         if self.invert:
             cmd = 'CLOSE' if cmd == 'OPEN' else 'OPEN'
         return cmd
-
-    def _get_errors(self):
-        # maximum of 10 errors so no reason to use a while loop
-        def gen_error():
-            for _i in range(10):
-                error = self._get_error()
-                if error is None:
-                    break
-                else:
-                    yield error
-
-        return list(gen_error())
-
-    def _get_error(self):
-        self.debug('get error. simulation:{}'.format(self.simulation))
-        error = None
-        cmd = 'SYST:ERR?'
-        if not self.simulation:
-            s = self.ask(cmd)
-            if s is not None:
-                s = s.strip()
-                if s != '+0,"No error"':
-                    error = s
-
-        return error
-
-    def _get_address(self, obj):
-        if isinstance(obj, (str, int)):
-            addr = obj
-        else:
-            addr = obj.address
-        return addr
 
 # ============= EOF =====================================

@@ -13,10 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+import os
+
 from traits.api import Instance, Float, Bool, Any
 from pychron.extraction_line.switch_manager import SwitchManager
 from pychron.furnace.base_stage_manager import BaseFurnaceStageManager
 from pychron.managers.stream_graph_manager import StreamGraphManager
+from pychron.paths import paths
 from pychron.response_recorder import ResponseRecorder
 
 
@@ -45,8 +48,9 @@ class BaseFurnaceManager(StreamGraphManager):
         return c
 
     def _switch_manager_default(self):
-        sm = SwitchManager(configuration_dir_name='furnace',
-                           setup_name='furnace_valves')
+        sm = SwitchManager(configuration_dir_name='furnace')
+
+        sm.valves_path = os.path.join(paths.extraction_line_dir, 'furnace_valves.xml')
         sm.on_trait_change(self._handle_state, 'refresh_state')
         return sm
 

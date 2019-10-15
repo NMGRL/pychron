@@ -16,17 +16,18 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import os
 
-import yaml
+import six
+from six.moves import zip
 from traits.api import Any, Dict
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.yaml import yload
 from pychron.loggable import Loggable
 from pychron.paths import paths
-import six
-from six.moves import zip
 
 
 class LoaderLogic(Loggable):
@@ -58,10 +59,9 @@ class LoaderLogic(Loggable):
 
     def load_config(self):
         p = os.path.join(paths.device_dir, 'furnace', 'logic.yaml')
-        with open(p, 'r') as fp:
-            yd = yaml.load(fp)
-            self.rules = yd['rules']
-            self.switches = yd['switches']
+        yd = yload(p)
+        self.rules = yd['rules']
+        self.switches = yd['switches']
 
     def _convert_switch_name(self, name):
 

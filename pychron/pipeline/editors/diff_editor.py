@@ -412,8 +412,7 @@ class DiffEditor(BaseTraitsEditor):
     def _get_configuration(self):
         p = paths.hidden_path('diff_config')
         if os.path.isfile(p):
-            with open(p, 'r') as rfile:
-                return yaml.load(rfile)
+            return yload(p)
 
     def _dump_configuration(self):
         p = paths.hidden_path('diff_config')

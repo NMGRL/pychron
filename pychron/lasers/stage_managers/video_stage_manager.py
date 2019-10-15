@@ -14,30 +14,29 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from traits.api import Instance, String, Property, Button, Bool, Event, on_trait_change, Str, Float, Enum, Int
-from apptools.preferences.preference_binding import bind_preference
-
-from skimage.color import gray2rgb
-from skimage.draw import circle_perimeter, line
-import yaml
 import os
 import shutil
 import time
-
 from threading import Timer, Event as TEvent
-from numpy import copy
 
-from pychron.core.ui.thread import sleep
+from apptools.preferences.preference_binding import bind_preference
+from numpy import copy
+from skimage.color import gray2rgb
+from skimage.draw import circle_perimeter, line
+# ============= enthought library imports =======================
+from traits.api import Instance, String, Property, Button, Bool, Event, on_trait_change, Str, Float, Enum, Int
+
 from pychron.canvas.canvas2D.camera import Camera, YamlCamera, BaseCamera
 from pychron.core.helpers.binpack import pack, encode_blob
 from pychron.core.helpers.filetools import unique_path, unique_path_from_manifest
 from pychron.core.ui.stage_component_editor import VideoComponentEditor
+from pychron.core.ui.thread import Thread as QThread
+from pychron.core.ui.thread import sleep
+from pychron.core.yaml import yload
 from pychron.image.video import Video, pil_save
 from pychron.mv.lumen_detector import LumenDetector
 from pychron.paths import paths
 from .stage_manager import StageManager
-from pychron.core.ui.thread import Thread as QThread
 
 try:
     from pychron.canvas.canvas2D.video_laser_tray_canvas import \
@@ -293,10 +292,9 @@ class VideoStageManager(StageManager):
             identifier = 0
             p = self.video_configuration_path
             if os.path.isfile(p):
-                with open(p, 'r') as rfile:
-                    yd = yaml.load(rfile)
-                    vid = yd['Device']
-                    identifier = vid.get('identifier', 0)
+                yd = yload(p)
+                vid = yd['Device']
+                identifier = vid.get('identifier', 0)
 
             self.video.open(identifier=identifier)
 

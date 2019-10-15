@@ -21,7 +21,6 @@ import time
 from queue import Empty, Queue
 from threading import Thread
 
-import yaml
 from pyface.tasks.action.task_action import TaskAction
 from traits.api import HasTraits, Int, Str, Bool
 from traitsui.api import Item
@@ -30,6 +29,7 @@ from traitsui.menu import Action
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.gui import invoke_in_main_thread
+from pychron.core.yaml import yload
 from pychron.experiment.automated_run.hop_util import parse_hop
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.paths import paths
@@ -77,9 +77,7 @@ class HopsAction(ListAction):
             return
 
         p = os.path.join(paths.hops_dir, add_extension(self.hop_name, ext='.yaml'))
-        with open(p, 'r') as rfile:
-            hops = yaml.load(rfile)
-
+        hops = yload(p)
         prog = self._open_prog(hc.ncycles, hops)
 
         msg_queue = Queue()

@@ -611,15 +611,16 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
 
     def _additional_info(self, ind):
         fm = self.monitor_positions[ind]
-        return ['MSWD: {}'.format(format_mswd(fm.mean_j_mswd, fm.mean_j_valid_mswd)),
-                'Pos: {}'.format(fm.hole_id),
-                'Identifier: {}'.format(fm.identifier)]
+        # 'MSWD={}'.format(format_mswd(fm.mean_j_mswd, fm.mean_j_valid_mswd)),
+        return [format_mswd(fm.mean_j_mswd, fm.mean_j_valid_mswd, include_tag=True),
+                'Pos={}'.format(fm.hole_id),
+                'Identifier={}'.format(fm.identifier)]
 
     def _grid_additional_info(self, ind, y):
         ps = [p for p in self.monitor_positions if p.y == y]
         fm = ps[ind]
-        return ['Pos: {}'.format(fm.hole_id),
-                'Identifier: {}'.format(fm.identifier)]
+        return ['Pos={}'.format(fm.hole_id),
+                'Identifier={}'.format(fm.identifier)]
 
     def _grid_update_graph_metadata(self, ans):
         if not self.suppress_metadata_change:

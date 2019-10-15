@@ -15,11 +15,11 @@
 # ===============================================================================
 import os
 
-import yaml
 from traits.api import Enum
 from traitsui.api import View, Item, InstanceEditor, ListEditor
 
 from pychron.core.helpers.strtools import csv_to_floats
+from pychron.core.yaml import yload
 from pychron.managers.manager import Manager
 from pychron.paths import paths
 
@@ -112,9 +112,8 @@ class CryoManager(Manager):
 
         p = os.path.join(paths.device_dir, 'cryotemps.yaml')
         if os.path.isfile(p):
-            with open(p, 'r') as fp:
-                yd = yaml.load(fp)
-                return csv_to_floats(yd[v])
+            yd = yload(p)
+            return csv_to_floats(yd[v])
         else:
             self.warning('File {} does not exist. Cryostat setpoint can not be set')
 

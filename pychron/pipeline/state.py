@@ -46,6 +46,8 @@ class EngineState(HasTraits):
     delete_existing_icfactors = Bool
 
     veto = Any
+    veto_message = Str
+
     canceled = Bool
     run_groups = Dict
 

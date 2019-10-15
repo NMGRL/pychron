@@ -24,6 +24,7 @@ from traits.api import Array, List, Event, Property, Any, \
     Dict, Str, Bool, cached_property, HasTraits
 
 from pychron.core.regression.tinv import tinv
+from pychron.core.stats import calculate_mswd_probability
 from pychron.core.stats.core import calculate_mswd, validate_mswd
 from pychron.core.stats.monte_carlo import RegressionEstimator
 from pychron.core.utils import alphas
@@ -33,6 +34,7 @@ logger = logging.getLogger('BaseRegressor')
 
 
 class BaseRegressor(HasTraits):
+    ddof = 1
     xs = Array
     ys = Array
     xserr = Array
@@ -65,6 +67,7 @@ class BaseRegressor(HasTraits):
 
     error_calc_type = 'CI'
 
+    delta = Property(depends_on='dirty, xs, ys')
     mswd = Property(depends_on='dirty, xs, ys')
     valid_mswd = Bool
 
@@ -105,16 +108,51 @@ class BaseRegressor(HasTraits):
             return validate_mswd(m, self.n)
 
     @property
+    def mswd_pvalue(self):
+        return calculate_mswd_probability(self.mswd, self.n-1)
+
+    @property
+    def mean(self):
+        ys = self.clean_ys
+        if self._check_integrity(ys, ys):
+            return ys.mean()
+        else:
+            return 0
+
+    @property
     def std(self):
-        return self.clean_ys.std()
+        """
+            mass spec uses ddof=1
+            ddof=0 provides a maximum likelihood estimate of the variance for normally distributed variables
+            ddof=1 unbiased estimator of the variance of the infinite population
+        """
+        ys = self.clean_ys
+        if len(ys) > self.ddof:
+            return ys.std(ddof=self.ddof)
+        else:
+            return 0
 
     @property
     def sem(self):
-        return self.std / self.n ** 0.5
+        ys = self.clean_ys
+        if self._check_integrity(ys, ys):
+            # n = len(ys) - self.ddof
+            n = ys.shape[0]
+            if n > 0:
+                return self.std * n ** -0.5
+            else:
+                return 0
+        else:
+            return 0
 
     @property
-    def dev(self):
+    def se(self):
+        return self.std
+
+    @property
+    def delta(self):
         return self.max - self.min
+    dev = delta
 
     @property
     def rsquared(self):

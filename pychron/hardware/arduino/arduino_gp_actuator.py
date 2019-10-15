@@ -14,11 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-#========== standard library imports ==========
+# ========== standard library imports ==========
 
 from __future__ import absolute_import
 import time
-#========== local library imports =============
+# ========== local library imports =============
+from pychron.hardware.actuators import get_switch_address, get_valve_name
 from pychron.hardware.actuators.gp_actuator import GPActuator
 
 """
@@ -67,20 +68,21 @@ class ArduinoGPActuator(GPActuator):
         return r
 
     def open_channel(self, obj):
-        pin = PIN_MAPPING[int(obj.address)]
+        pin = PIN_MAPPING[int(get_switch_address(obj))]
 
         cmd = ('w', pin, 1)
         self.repeat_command(cmd, ntries=3, check_val='OK')
         return self._check_actuation(obj, True)
 
     def close_channel(self, obj):
-        pin = PIN_MAPPING[int(obj.address)]
+        pin = PIN_MAPPING[int(get_switch_address(obj))]
         cmd = ('w', pin, 0)
         self.repeat_command(cmd, ntries=3, check_val='OK')
         return self._check_actuation(obj, False)
 
     def get_channel_state(self, obj, verbose=True, **kw):
-        pin = PIN_MAPPING[int(obj.address)]
+
+        pin = PIN_MAPPING[int(get_switch_address(obj))]
         indicator_open_pin = pin - 1
         indicator_close_pin = pin - 2
 
@@ -90,11 +92,10 @@ class ArduinoGPActuator(GPActuator):
         closed = self.repeat_command(('r', indicator_close_pin, None),
                                      ntries=3, check_type=int, verbose=verbose)
 
-        err_msg = '{}-{} not functioning properly\nIc (pin={} state={}) does not agree with Io (pin={} state={})'.format(
-            obj.name,
-            obj.description,
-            indicator_close_pin, closed,
-            indicator_open_pin, opened)
+        err_msg = '{} not functioning properly\n' \
+                  'Ic (pin={} state={}) does not agree with Io (pin={} state={})'.format(get_valve_name(obj),
+                                                                                         indicator_close_pin, closed,
+                                                                                         indicator_open_pin, opened)
         try:
             s = closed + opened
         except (TypeError, ValueError, AttributeError):

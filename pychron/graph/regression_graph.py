@@ -17,8 +17,10 @@
 
 from chaco.lineplot import LinePlot
 from chaco.text_box_overlay import TextBoxOverlay
+from enable.component_editor import ComponentEditor
 from numpy import linspace
-from traits.api import List, Any, Event, Callable, Dict
+from traits.api import List, Any, Event, Callable, Dict, Int, Bool
+from traitsui.api import View, UItem
 
 from pychron.core.helpers.fits import convert_fit
 from pychron.core.regression.base_regressor import BaseRegressor
@@ -68,7 +70,8 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
     use_inspector_tool = True
     use_point_inspector = True
     convert_index_func = Callable
-
+    grouping = Int
+    show_grouping = Bool
     # def __init__(self, *args, **kw):
     #     super(RegressionGraph, self).__init__(*args, **kw)
     #     self._regression_lock = Lock()
@@ -76,6 +79,40 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
     # ===============================================================================
     # context menu handlers
     # ===============================================================================
+    def cm_toggle_filtering(self):
+        regs = {}
+        for plot in self.plots:
+            for k, v in plot.plots.items():
+                if k.startswith('fit'):
+                    pp = v[0]
+                    # regs.append(pp.regressor)
+                    regs[k[3:]] = pp.regressor
+
+                    fo = pp.regressor.filter_outliers_dict['filter_outliers']
+                    pp.regressor.filter_outliers_dict['filter_outliers'] = not fo
+                    pp.regressor.dirty = True
+                    pp.regressor.calculate()
+                # if hasattr(v[0], 'filter_outliers_dict'):
+                #     fo = v[0].filter_outliers_dict['filter_outliers']
+                #     v[0].filter_outliers_dict['filter_outliers'] = not fo
+                # if not fo:
+                #     v[0].index.metadata['selections'] = []
+                # else:
+
+        for plot in self.plots:
+            for k, v in plot.plots.items():
+                if k.startswith('data'):
+                    scatter = v[0]
+                    idx = k[4:]
+                    reg = regs[idx]
+
+                    fo = scatter.filter_outliers_dict['filter_outliers']
+                    scatter.filter_outliers_dict['filter_outliers'] = fo = not fo
+                    self._set_regressor(scatter, reg)
+                    scatter.index.metadata['selections'] = reg.get_excluded() if fo else []
+
+        self.redraw()
+
     def cm_toggle_filter_bounds_all(self):
         for plot in self.plots:
             self.cm_toggle_filter_bounds(plot, redraw=False)
@@ -258,19 +295,19 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                     text = '\n'.join(make_statistics(pp.regressor, options=options))
                     label = StatisticsTextBoxOverlay(text=text,
                                                      border_color='black')
-                    pp.overlays.append(label)
+                    pp.underlays.append(label)
                     break
 
-    def set_filter_outliers(self, fi, plotid=0, series=0):
-        plot = self.plots[plotid]
-        scatter = plot.plots['data{}'.format(series)][0]
-        scatter.filter_outliers_dict['filter_outliers'] = fi
-        self.redraw()
+    # def set_filter_outliers(self, fi, plotid=0, series=0):
+    #     plot = self.plots[plotid]
+    #     scatter = plot.plots['data{}'.format(series)][0]
+    #     scatter.filter_outliers_dict['filter_outliers'] = fi
+    #     self.redraw()
 
-    def get_filter_outliers(self, fi, plotid=0, series=0):
-        plot = self.plots[plotid]
-        scatter = plot.plots['data{}'.format(series)][0]
-        return scatter.filter_outliers_dict['filter_outliers']
+    # def get_filter_outliers(self, fi, plotid=0, series=0):
+    #     plot = self.plots[plotid]
+    #     scatter = plot.plots['data{}'.format(series)][0]
+    #     return scatter.filter_outliers_dict['filter_outliers']
 
     def set_error_calc_type(self, fi, plotid=0, series=0, redraw=True):
         fi = fi.lower()
@@ -625,7 +662,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
             for k, v in plot.plots.items():
                 if k.startswith('fit'):
                     pp = v[0]
-                    o = next((oo for oo in pp.overlays if isinstance(oo, StatisticsTextBoxOverlay)), None)
+                    o = next((oo for oo in pp.underlays if isinstance(oo, StatisticsTextBoxOverlay)), None)
                     if o:
                         o.text = '\n'.join(make_statistics(pp.regressor, options=pp.statistics_options))
                         o.request_redraw()
@@ -636,4 +673,18 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                         o.text = '\n'.join(make_correlation_statistics(pp.regressor))
                         o.request_redraw()
                         break
+
+    def traits_view(self):
+        v = View(UItem('grouping', defined_when='show_grouping'),
+                 UItem('plotcontainer',
+                       style='custom',
+                       editor=ComponentEditor()),
+
+                 title=self.window_title,
+                 width=self.window_width,
+                 height=self.window_height,
+                 x=self.window_x,
+                 y=self.window_y,
+                 resizable=self.resizable)
+        return v
 # ============= EOF =============================================

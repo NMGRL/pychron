@@ -23,9 +23,9 @@ import codecs
 import glob
 import os
 import sys
+import time
 
 import serial
-import time
 from six.moves import range
 
 # =============local library imports  ==========================
@@ -77,6 +77,7 @@ class SerialCommunicator(Communicator):
     clear_output = False
 
     _config = None
+    _comms_report_attrs = ('port', 'baudrate', 'bytesize', 'parity', 'stopbits', 'timeout')
 
     @property
     def address(self):
@@ -296,7 +297,6 @@ class SerialCommunicator(Communicator):
                     self.handle = serial.Serial(**args)
                     try_connect = False
                     self.simulation = False
-
                 except serial.serialutil.SerialException:
                     try_connect = False
         elif self._auto_find_handle:
@@ -306,6 +306,12 @@ class SerialCommunicator(Communicator):
         return connected
 
     # private
+    def _get_report_value(self, key):
+        c, value = super(SerialCommunicator, self)._get_report_value(key)
+        if self.handle:
+            value = getattr(self.handle, key)
+        return c, value
+
     def _find_handle(self, args, **kw):
         found = False
         self.simulation = False

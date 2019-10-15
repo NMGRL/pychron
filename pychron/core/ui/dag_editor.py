@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2018 ross
+# Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,5 +14,17 @@
 # limitations under the License.
 # ===============================================================================
 
+# ============= enthought library imports =======================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+
+from __future__ import absolute_import
+
+from .factory import toolkit_factory
+
+GitDAGEditor = toolkit_factory('dag_editor', 'GitDAGEditor')
 
 # ============= EOF =============================================
+
+
+

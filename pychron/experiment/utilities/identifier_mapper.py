@@ -17,10 +17,11 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 from __future__ import absolute_import
+
 import os
 
-import yaml
 # ============= local library imports  ==========================
+from pychron.core.yaml import yload
 from pychron.loggable import Loggable
 from pychron.paths import paths
 
@@ -43,9 +44,15 @@ class IdentifierMapper(Loggable):
         mapping = self._get_spectrometer_mapping(spectrometer.lower(), destination)
         lvalue = value.lower()
         if lvalue in mapping:
-            return mapping[lvalue]
+            m = mapping[lvalue]
         else:
-            return value
+            self.debug('value "{}" not in mapping for spectrometer "{}". '
+                       'Available keys={}'.format(value, spectrometer, mapping.keys()))
+
+            m = value
+
+        self.debug('mapped "{}" to "{}"'.format(value, m))
+        return m
 
     # private
     def _get_spectrometer_mapping(self, spec, destination):
@@ -60,10 +67,6 @@ class IdentifierMapper(Loggable):
             self.warning('Using the default identifier mapping because {} does not exist'.format(p))
             return default_mapping()
         else:
-            with open(p, 'r') as rfile:
-                return yaml.load(rfile)
+            return yload(p)
 
 # ============= EOF =============================================
-
-
-

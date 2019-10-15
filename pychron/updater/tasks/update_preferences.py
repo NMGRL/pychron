@@ -14,15 +14,18 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from traits.api import Str, Bool, List, Button, Instance, Directory
-from traitsui.api import View, Item, EnumEditor, VGroup, HGroup
-from pyface.message_dialog import warning
-from envisage.ui.tasks.preferences_pane import PreferencesPane
 
 import os
-from git import Repo
+
+# ============= enthought library imports =======================
+from envisage.ui.tasks.preferences_pane import PreferencesPane
+from git import Repo, GitCommandError
 from git.exc import InvalidGitRepositoryError
+from pyface.confirmation_dialog import confirm
+from pyface.constant import YES
+from pyface.message_dialog import warning, information
+from traits.api import Str, Bool, List, Button, Instance, Directory
+from traitsui.api import View, Item, EnumEditor, VGroup, HGroup
 
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_preferences_helper import remote_status_item, \
@@ -37,30 +40,45 @@ class Updater:
     def pull(self, branch, inform=False):
         repo = self._get_working_repo(inform)
         if repo is not None:
-            origin = repo.remote('origin')
-            origin.pull(branch)
+            self.gitcommand(repo, repo.head.name,
+                            'pull',
+                            lambda: repo.remote('origin').pull(branch))
+
+    def gitcommand(self, repo, name, tag, func):
+        try:
+            func()
+        except GitCommandError as e:
+            if e.stderr.startswith('error: Your local changes to the following files would be overwritten by '
+                                   'checkout'):
+                if confirm(None, 'You have local changes to Pychron that would be overwritten by {} {}'
+                                 'Would you like continue? If Yes you will be presented with a choice to stash '
+                                 'or delete your changes'.format(tag, name)) == YES:
+                    if confirm(None, 'Would you like to maintain (i.e. stash) your changes?') == YES:
+                        repo.git.stash()
+                        func()
+                        repo.git.stash('pop')
+                        return
+                    elif confirm(None, 'Would you like to delete your changes?') == YES:
+                        repo.git.checkout('--', '.')
+                        func()
+                        return
+
+                information(None, '{} branch "{}" aborted'.format(tag.capitalize(), name))
 
     def checkout_branch(self, name, inform=False):
         repo = self._get_working_repo(inform)
         if repo is not None:
-            try:
-                branch = getattr(repo.branches, name)
-            except AttributeError:
-                if name.startswith('origin'):
-                    name = '/'.join(name.split('/')[1:])
-                branch = repo.create_head(name)
-
-            branch.checkout()
+            branch = self._get_branch(repo, name)
+            self.gitcommand(repo, name, 'checkout', lambda: branch.checkout())
 
     def checkout_tag(self, tag, inform=False):
         repo = self._get_working_repo(inform)
         if repo is not None:
             try:
-                branch = getattr(repo.branches, tag)
-                branch.checkout()
+                self.checkout_branch(tag)
             except AttributeError:
                 repo.git.fetch()
-                repo.git.checkout('-b', tag, tag)
+                self.gitcommand(repo, tag, 'checkout', lambda: repo.git.checkout('-b', tag, tag))
 
     def _get_working_repo(self, inform):
         if not self._repo:
@@ -73,10 +91,20 @@ class Updater:
                                   'Contact developer'.format(self.build_repo))
         return self._repo
 
+    def _get_branch(self, repo, name):
+        try:
+            branch = getattr(repo.branches, name)
+        except AttributeError:
+            if name.startswith('origin'):
+                name = '/'.join(name.split('/')[1:])
+            branch = repo.create_head(name)
+        return branch
+
 
 class UpdatePreferencesHelper(GitRepoPreferencesHelper):
     preferences_path = 'pychron.update'
     check_on_startup = Bool(False)
+    check_on_quit = Bool(False)
 
     use_tag = Bool
     version_tag = Str
@@ -161,6 +189,8 @@ class UpdatePreferencesPane(PreferencesPane):
     def traits_view(self):
         v = View(VGroup(Item('check_on_startup',
                              label='Check for updates at startup'),
+                        Item('check_on_quit',
+                             label='Check for updates at quit'),
                         VGroup(remote_status_item(),
                                Item('build_repo', label='Build Directory'),
                                Item('use_tag', label='Use Production'),

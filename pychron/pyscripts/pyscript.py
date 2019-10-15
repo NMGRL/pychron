@@ -15,41 +15,28 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
-
 import hashlib
-import inspect
 import os
 import sys
 import time
 import traceback
+from queue import Empty, LifoQueue
 from threading import Event, Thread, Lock
 
 import yaml
-from six.moves.queue import Empty, LifoQueue
-from traits.api import Str, Any, Bool, Property, Int, Dict
+from traits.api import Str, Any, Bool, Int, Dict
 
+from pychron.core.yaml import yload
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.paths import paths
+from pychron.pyscripts.contexts import EXPObject
+from pychron.pyscripts.decorators import makeRegistry, makeNamedRegistry, verbose_skip, calculate_duration, \
+    count_verbose_skip, skip
 from pychron.pyscripts.error import PyscriptError, IntervalError, GosubError, \
     KlassError, MainError
 
 BLOCK_LOCK = Lock()
-
-
-class CTXObject(object):
-    def update(self, ctx):
-        self.__dict__.update(**ctx)
-
-
-class EXPObject(CTXObject):
-    pass
-
-
-class CMDObject(CTXObject):
-    pass
 
 
 class IntervalContext(object):
@@ -64,105 +51,6 @@ class IntervalContext(object):
         self.obj.complete_interval()
 
 
-def verbose_skip(func):
-    if os.environ.get('RTD', 'False') == 'True':
-        return func
-    else:
-        def decorator(obj, *args, **kw):
-
-            fname = func.__name__
-            if fname.startswith('_m_'):
-                fname = fname[3:]
-
-            args1, _, _, defaults = inspect.getargspec(func)
-
-            nd = sum([1 for di in defaults if di is not None]) if defaults else 0
-
-            min_args = len(args1) - 1 - nd
-            an = len(args) + len(kw)
-            if an < min_args:
-                raise PyscriptError(obj.name, 'invalid arguments count for {}, args={} kwargs={}'.format(fname,
-                                                                                                         args, kw))
-            if obj.testing_syntax or obj.is_canceled() or obj.is_truncated() or obj.is_aborted():
-                return 0
-
-            obj.debug('func_name={} args={} kw={}'.format(fname, args, kw))
-
-            return func(obj, *args, **kw)
-
-        return decorator
-
-
-def skip(func):
-    def decorator(obj, *args, **kw):
-        if obj.testing_syntax or obj.is_canceled() or obj.is_truncated() or obj.is_aborted():
-            return
-        return func(obj, *args, **kw)
-
-    return decorator
-
-
-def calculate_duration(func):
-    def decorator(obj, *args, **kw):
-        if obj.testing_syntax:
-            func(obj, calc_time=True, *args, **kw)
-            return 0
-        return func(obj, *args, **kw)
-
-    return decorator
-
-
-def count_verbose_skip(func):
-    def decorator(obj, *args, **kw):
-        if obj.is_truncated() or obj.is_canceled() or obj.is_aborted():
-            return 0
-
-        fname = func.__name__
-        if fname.startswith('_m_'):
-            fname = fname[3:]
-
-        args1, _, _, defaults = inspect.getargspec(func)
-
-        nd = sum([1 for di in defaults if di is not None]) if defaults else 0
-
-        min_args = len(args1) - 1 - nd
-        an = len(args) + len(kw)
-        if an < min_args:
-            raise PyscriptError(fname, 'invalid arguments count for {}, args={} kwargs={}'.format(fname, args, kw))
-        if obj.testing_syntax:
-            func(obj, calc_time=True, *args, **kw)
-            return 0
-
-        obj.debug('{} {} {}'.format(fname, args, kw))
-
-        return func(obj, *args, **kw)
-
-    return decorator
-
-
-def makeRegistry():
-    registry = {}
-
-    def registrar(func):
-        registry[func.__name__] = func.__name__
-        return func  # normally a decorator returns a wrapped function,
-        # but here we return func unmodified, after registering it
-
-    registrar.commands = registry
-    return registrar
-
-
-def makeNamedRegistry(cmd_register):
-    def named_register(name):
-        def decorator(func):
-            cmd_register.commands[name] = func.__name__
-            return func
-
-        return decorator
-
-    return named_register
-
-
 command_register = makeRegistry()
 named_register = makeNamedRegistry(command_register)
 
@@ -172,7 +60,7 @@ named_register = makeNamedRegistry(command_register)
 
 
 class PyScript(Loggable):
-    text = Property
+    # text = Property
     syntax_checked = Bool
 
     manager = Any
@@ -181,6 +69,10 @@ class PyScript(Loggable):
     root = Str
     # filename = Str
     info_color = Str
+    display_state = Str
+    execution_error = Str
+    exception_trace = Str
+    text = Str
 
     testing_syntax = Bool(False)
     cancel_flag = Bool
@@ -189,7 +81,7 @@ class PyScript(Loggable):
     _ctx = None
     _exp_obj = None
 
-    _text = Str
+    # _text = Str
 
     _interval_stack = None
 
@@ -263,11 +155,11 @@ class PyScript(Loggable):
                 delay_start=0,
                 on_completion=None,
                 trace=False,
-                argv=None):
+                argv=None, test=True):
         if bootstrap:
             self.bootstrap()
 
-        if not self.syntax_checked:
+        if not self.syntax_checked and test:
             self.test()
 
         def _ex_():
@@ -345,15 +237,16 @@ class PyScript(Loggable):
             try:
                 code = compile(snippet, '<string>', 'exec')
             except BaseException as e:
-                self.debug(traceback.format_exc())
+                exc = self.debug_exception()
+                self.exception_trace = exc
                 return e
 
             try:
                 exec(code, safe_dict)
                 func = safe_dict['main']
             except KeyError as e:
-                print('exception', e, list(safe_dict.keys()))
-                self.debug('{} {}'.format(e, traceback.format_exc()))
+                exc = self.debug_exception()
+                self.exception_trace = exc
                 return MainError()
 
             try:
@@ -365,7 +258,9 @@ class PyScript(Loggable):
                 self.debug('executed snippet estimated_duration={}, duration={}'.format(self._estimated_duration,
                                                                                         time.time() - st))
             except Exception as e:
-                return traceback.format_exc()
+                exc = self.debug_exception()
+                self.exception_trace = exc
+                return exc
 
     def syntax_ok(self, warn=True):
         try:
@@ -723,10 +618,13 @@ class PyScript(Loggable):
         self._cancel = False
         self._completed = False
         self._truncate = False
+        self.exception_trace = ''
+        self.execution_error = ''
 
         error = self.execute_snippet(**kw)
         if error:
             self.warning('_execute: {}'.format(str(error)))
+            self.execution_error = str(error)
             return error
 
         if self.testing_syntax:
@@ -818,7 +716,7 @@ class PyScript(Loggable):
             time.sleep(v)
 
     def _setup_wait_control(self):
-        from pychron.wait.wait_control import WaitControl
+        from pychron.core.wait.wait_control import WaitControl
         wd = self._wait_control
         if self.manager:
             if hasattr(self.manager, 'get_wait_control'):
@@ -897,8 +795,7 @@ class PyScript(Loggable):
         if self.interpolation_path:
             if os.path.isfile(self.interpolation_path):
                 try:
-                    with open(self.interpolation_path, 'r') as rfile:
-                        d = yaml.load(rfile)
+                    d = yload(self.interpolation_path)
                 except yaml.YAMLError as e:
                     self.debug(e)
             else:
@@ -975,11 +872,11 @@ class PyScript(Loggable):
 
         return '0'
 
-    def _get_text(self):
-        return self._text
-
-    def _set_text(self, t):
-        self._text = t
+    # def _get_text(self):
+    #     return self._text
+    #
+    # def _set_text(self, t):
+    #     self._text = t
 
     def __str__(self):
         return '{}, 0x{:x} name: {}'.format(type(self), id(self), self.name)

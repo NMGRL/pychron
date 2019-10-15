@@ -16,7 +16,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 
 from threading import current_thread
 
@@ -71,7 +70,7 @@ class Loggable(HasTraits):
     shared_logger = False
 
     def __init__(self, *args, **kw):
-        super().__init__(*args, **kw)
+        super(Loggable, self).__init__(*args, **kw)
         self.init_logger()
 
     def init_logger(self):
@@ -128,13 +127,28 @@ class Loggable(HasTraits):
     def debug_exception(self):
         import traceback
 
-        self.debug(traceback.format_exc())
+        exc = traceback.format_exc()
+        self.debug(exc)
+        return exc
+
+    def warning_exception(self):
+        import traceback
+        exc = traceback.format_exc()
+        self.warning_dialog(exc)
+        return exc
 
     def critical(self, msg):
         self._log_('critical', msg)
 
     def debug(self, msg):
         self._log_('debug', msg)
+
+    def log(self, msg, level=10):
+        def log(m, *args, **kw):
+            self.logger.debug(m)
+            self.logger.log(level, m, *args, **kw)
+
+        self._log_(log, msg)
 
     # dialogs
     def warning_dialog(self, msg, sound=None, title='Warning', **kw):
@@ -216,7 +230,8 @@ class Loggable(HasTraits):
             return
 
         extras = {'threadName_': get_thread_name()}
-        func = getattr(self.logger, func)
+        if isinstance(func, str):
+            func = getattr(self.logger, func)
 
         if isinstance(msg, (list, tuple)):
             msg = ','.join(map(str, msg))
@@ -233,7 +248,6 @@ class Loggable(HasTraits):
 
     def _logger_name_changed(self):
         self._add_logger()
-
 
 # class Loggable(HasTraits, Loggable):
 #     def __init__(self, *args, **kw):

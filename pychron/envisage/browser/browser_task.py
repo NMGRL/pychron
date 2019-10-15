@@ -131,8 +131,12 @@ class BaseBrowserTask(BaseEditorTask):
         if not open_copy:
             records = self._open_existing_recall_editors(records)
             if records:
+                try:
+                    ans = self.dvc.make_analyses(records)
+                except BaseException:
+                    ans = None
+                    self.debug_exception()
 
-                ans = self.dvc.make_analyses(records)
                 if ans:
                     self._open_recall_editors(ans)
                 else:

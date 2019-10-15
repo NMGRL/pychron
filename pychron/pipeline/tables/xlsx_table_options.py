@@ -15,7 +15,6 @@
 # ===============================================================================
 import os
 
-import yaml
 from traits.api import Enum, Bool, Str, Int, Float, Color, List, Directory
 from traitsui.api import VGroup, HGroup, Tabbed, Item, UItem, EnumEditor
 from traitsui.item import UCustom
@@ -25,6 +24,7 @@ from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.persistence_options import BasePersistenceOptions
 from pychron.core.pychron_traits import SingleStr, BorderHGroup, BorderVGroup
 from pychron.core.ui.combobox_editor import ComboboxEditor
+from pychron.core.yaml import yload
 from pychron.paths import paths
 from pychron.persistence_loggable import dumpable
 from pychron.processing.j_error_mixin import JErrorMixin, J_ERROR_GROUP
@@ -41,7 +41,9 @@ class XLSXAnalysisTableWriterOptions(BasePersistenceOptions, JErrorMixin):
     summary_age_sig_figs = dumpable(Int(6))
 
     kca_sig_figs = dumpable(Int(6))
+    kcl_sig_figs = dumpable(Int(6))
     summary_kca_sig_figs = dumpable(Int(6))
+    summary_kcl_sig_figs = dumpable(Int(6))
 
     radiogenic_yield_sig_figs = dumpable(Int(6))
     cumulative_ar39_sig_figs = dumpable(Int(6))
@@ -180,18 +182,17 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
     def _load_notes(self):
         p = os.path.join(paths.user_pipeline_dir, 'table_notes.yaml')
         if os.path.isfile(p):
-            with open(p, 'r') as rf:
-                obj = yaml.load(rf)
+            obj = yload(p)
 
-                setattr(self, 'summary_notes', obj.get('summary_notes', ''))
+            setattr(self, 'summary_notes', obj.get('summary_notes', ''))
 
-                for grpname in ('unknown',):
-                    grp = obj.get('{}_notes'.format(grpname))
-                    if grp:
-                        try:
-                            setattr(self, 'available_{}_note_names'.format(grpname), list(grp.keys()))
-                        except AttributeError:
-                            pass
+            for grpname in ('unknown',):
+                grp = obj.get('{}_notes'.format(grpname))
+                if grp:
+                    try:
+                        setattr(self, 'available_{}_note_names'.format(grpname), list(grp.keys()))
+                    except AttributeError:
+                        pass
 
     def _unknown_note_name_changed(self, new):
         grp = self._load_note('unknown_notes')
@@ -207,9 +208,8 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
     def _load_note(self, group):
         p = os.path.join(paths.user_pipeline_dir, 'table_notes.yaml')
         if os.path.isfile(p):
-            with open(p, 'r') as rf:
-                obj = yaml.load(rf)
-                return obj.get(group)
+            obj = yload(p)
+            return obj.get(group)
 
     # @property
     # def age_scalar(self):
@@ -299,6 +299,8 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                                            isigfig('summary_age', 'Summary Age')),
                                     HGroup(isigfig('kca', 'K/Ca'),
                                            isigfig('summary_kca', 'Summary K/Ca')),
+                                    HGroup(isigfig('kcl', 'K/Cl'),
+                                           isigfig('summary_kcl', 'Summary K/Cl')),
                                     HGroup(isigfig('radiogenic_yield', '%40Ar*'),
                                            isigfig('cumulative_ar39', 'Cum. %39Ar')),
                                     HGroup(isigfig('signal', 'Signal'),

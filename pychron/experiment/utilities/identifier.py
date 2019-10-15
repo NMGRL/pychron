@@ -21,10 +21,9 @@ import os
 import re
 from itertools import groupby
 
-import yaml
-
 from pychron.core.utils import alphas, alpha_to_int
 # ============= local library imports  ==========================
+from pychron.core.yaml import yload
 from pychron.file_defaults import IDENTIFIERS_DEFAULT
 from pychron.paths import paths
 from pychron.pychron_constants import LINE_STR, SPECIAL_IDENTIFIER
@@ -40,12 +39,13 @@ SPECIAL_MAPPING = dict()  # blank_air: ba
 SPECIAL_NAMES = [SPECIAL_IDENTIFIER, LINE_STR]  # 'Blank Air'
 SPECIAL_KEYS = []  # ba
 
-try:
-    p = os.path.join(paths.hidden_dir, 'identifiers.yaml')
-    with open(p, 'r') as rfile:
-        yd = yaml.load(rfile)
-except BaseException:
-    yd = yaml.load(IDENTIFIERS_DEFAULT)
+
+p = os.path.join(paths.hidden_dir, 'identifiers.yaml')
+if os.path.isfile(p):
+    yd = yload(p)
+else:
+    yd = yload(IDENTIFIERS_DEFAULT)
+
 
 for i, idn_d in enumerate(yd):
     key = idn_d['shortname']

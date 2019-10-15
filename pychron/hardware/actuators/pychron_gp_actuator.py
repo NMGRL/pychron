@@ -15,18 +15,17 @@
 # ===============================================================================
 
 # ========== standard library imports ==========
-from __future__ import absolute_import
-
 import os
 import time
 
+# ========== local library imports =============
 from pychron.core.communication_helper import trim, trim_bool
 from pychron.hardware.actuators import get_valve_name
-# ========== local library imports =============
-from .gp_actuator import GPActuator
+from pychron.hardware.actuators.client_gp_actuator import ClientMixin
+from pychron.hardware.actuators.gp_actuator import GPActuator
 
 
-class PychronGPActuator(GPActuator):
+class PychronGPActuator(GPActuator, ClientMixin):
     """
         Used to communicate with PyValve valves
     """

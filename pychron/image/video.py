@@ -17,22 +17,19 @@
 # =============enthought library imports=======================
 from __future__ import absolute_import
 from __future__ import print_function
+
 import os
-import shutil
 import time
 from threading import Thread, Lock, Event
 
-import yaml
-from PIL import Image as PImage
-from numpy import asarray, uint16
-from skimage.color import gray2rgb
+from numpy import uint16
 from skimage.io import imsave
 from traits.api import Any, Bool, Float, List, Str, Int, Enum
 
-from .cv_wrapper import get_capture_device
-from pychron.core.helpers.filetools import add_extension
+from pychron.core.yaml import yload
 from pychron.globals import globalv
 from pychron.image.image import Image
+from .cv_wrapper import get_capture_device
 
 
 def convert_to_video(path, fps, name_filter='snapshot%03d.jpg',
@@ -125,25 +122,24 @@ class Video(Image):
 
     def load_configuration(self, p):
         if os.path.isfile(p):
-            with open(p, 'r') as rfile:
-                cfg = yaml.load(rfile)
+            cfg = yload(p)
 
-                gen = cfg.get('General')
-                if gen:
-                    self.swap_rb = gen.get('swap_rb', False)
-                    self.hflip = gen.get('hflip', False)
-                    self.vflip = gen.get('vflip', False)
-                    self.rotate = gen.get('rotate', False)
+            gen = cfg.get('General')
+            if gen:
+                self.swap_rb = gen.get('swap_rb', False)
+                self.hflip = gen.get('hflip', False)
+                self.vflip = gen.get('vflip', False)
+                self.rotate = gen.get('rotate', False)
 
-                vid = cfg.get('Video')
-                if vid:
-                    self.output_pic_mode = vid.get('output_pic_mode', 'jpg')
-                    self.ffmpeg_path = vid.get('ffmpeg_path', '')
-                    self.fps = vid.get('fps')
-                    self.max_recording_duration = vid.get('max_recording_duration', 30)
+            vid = cfg.get('Video')
+            if vid:
+                self.output_pic_mode = vid.get('output_pic_mode', 'jpg')
+                self.ffmpeg_path = vid.get('ffmpeg_path', '')
+                self.fps = vid.get('fps')
+                self.max_recording_duration = vid.get('max_recording_duration', 30)
 
-                if hasattr(self.cap, 'load_configuration'):
-                    self.cap.load_configuration(cfg)
+            if hasattr(self.cap, 'load_configuration'):
+                self.cap.load_configuration(cfg)
 
     def open(self, user=None, identifier=None, force=False):
         """

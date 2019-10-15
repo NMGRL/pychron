@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 
 from traits.api import HasTraits, Str, Int, Bool, Any, Float, \
-    Dict, Instance, List, Date, Time, Long, Bytes
+    Dict, Instance, List, Date, Time, Long, Bytes, Tuple
 
 
 # ============= standard library imports ========================
@@ -52,6 +52,9 @@ class PersistenceSpec(HasTraits):
     post_equilibration_name = Str
     post_equilibration_blob = Str
 
+    hops_name = Str
+    hops_blob = Str
+    
     positions = List  # list of position names
     extraction_positions = List  # list of x,y or x,y,z tuples
 
@@ -59,6 +62,7 @@ class PersistenceSpec(HasTraits):
     runscript_name = Str
     runscript_blob = Str
 
+    settings = Tuple
     spec_dict = Dict
     defl_dict = Dict
     gains = Dict

@@ -22,10 +22,9 @@ import json
 import time
 from threading import Thread, Event
 
-import yaml
-
 # ============= local library imports  ==========================
 from pychron.core.helpers.strtools import to_bool
+from pychron.core.yaml import yload
 from pychron.furnace.firmware import PARAMETER_REGISTRY, __version__
 from pychron.hardware.arduino.rotary_dumper import RotaryDumper
 from pychron.hardware.dht11 import DHT11
@@ -85,8 +84,7 @@ class FirmwareManager(HeadlessLoggable):
     def bootstrap(self, **kw):
         self._start_time = time.time()
         p = paths.furnace_firmware
-        with open(p, 'r') as rfile:
-            yd = yaml.load(rfile)
+        yd = yload(p)
 
         self._load_config(yd['config'])
         self._load_devices(yd['devices'])

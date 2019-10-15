@@ -1,6 +1,8 @@
 import os
 import unittest
 
+from pychron.core.stats.tests.mswd_tests import MSWDTestCase
+from pychron.pyscripts.tests.extraction_script import WaitForTestCase
 
 use_logger = False
 
@@ -27,13 +29,12 @@ def suite():
     from pychron.core.helpers.tests.strtools import CamelCaseTestCase
     from pychron.core.xml.tests.xml_parser import XMLParserTestCase
     from pychron.core.regression.tests.regression import OLSRegressionTest, MeanRegressionTest, \
-        FilterOLSRegressionTest, OLSRegressionTest2, TruncateRegressionTest, ExpoRegressionTest, ExpoRegressionTest2
+        FilterOLSRegressionTest, OLSRegressionTest2, TruncateRegressionTest
     from pychron.core.tests.alpha_tests import AlphaTestCase
 
     # DataMapper
     from pychron.data_mapper.tests.usgs_vsc_file_source import USGSVSCFileSourceUnittest, \
         USGSVSCIrradiationSourceUnittest
-    from pychron.data_mapper.tests.nu_file_source import NuFileSourceUnittest
     from pychron.data_mapper.tests.nmgrl_legacy_source import NMGRLLegacySourceUnittest
 
     # Experiment
@@ -59,7 +60,7 @@ def suite():
     from pychron.processing.tests.age_converter import AgeConverterTestCase
 
     # Pyscripts
-    from pychron.pyscripts.tests.extraction_script import WaitForTestCase
+    # from pychron.pyscripts.tests.extraction_script import WaitForTestCase
     from pychron.pyscripts.tests.measurement_pyscript import InterpolationTestCase, DocstrContextTestCase
 
     # Spectrometer
@@ -86,16 +87,17 @@ def suite():
         XMLParserTestCase,
         OLSRegressionTest,
         MeanRegressionTest,
-        ExpoRegressionTest,
-        ExpoRegressionTest2,
+        # ExpoRegressionTest,
+        # ExpoRegressionTest2,
         FilterOLSRegressionTest,
         OLSRegressionTest2,
         TruncateRegressionTest,
+        MSWDTestCase,
 
         # DataMapper
         USGSVSCFileSourceUnittest,
         USGSVSCIrradiationSourceUnittest,
-        NuFileSourceUnittest,
+        # NuFileSourceUnittest,
         NMGRLLegacySourceUnittest,
 
         # Experiment

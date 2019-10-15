@@ -20,6 +20,7 @@ from numpy import array
 from traits.api import Any, cached_property, List, TraitError, Str, Property, Bool
 
 from pychron.core.helpers.filetools import glob_list_directory
+from pychron.core.yaml import yload
 from pychron.globals import globalv
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR
@@ -79,6 +80,9 @@ class BaseSpectrometer(SpectrometerDevice):
 
     def make_gains_dict(self):
         raise NotImplementedError
+
+    def make_settings(self):
+        return self._get_cached_config()
 
     def start(self):
         pass
@@ -160,10 +164,14 @@ class BaseSpectrometer(SpectrometerDevice):
         if self.use_deflection_correction:
             dev = det.get_deflection_correction(current=current)
             dac += dev
+            self.debug('doing deflection correction.  dev: {}, new dac: {}'.format(dev, dac))
 
         # correct for hv
         if self.use_hv_correction:
-            dac = self.get_hv_correction(dac, current=current)
+            cor = self.get_hv_correction(current=current)
+            dac *= cor
+            self.debug('doing hv correction. factor: {}, new dac: {}'.format(cor, dac))
+
         return dac
 
     def uncorrect_dac(self, det, dac, current=True):
@@ -172,13 +180,15 @@ class BaseSpectrometer(SpectrometerDevice):
         """
 
         if self.use_hv_correction:
-            dac = self.get_hv_correction(dac, uncorrect=True, current=current)
+            cor = self.get_hv_correction(uncorrect=True, current=current)
+            dac *= cor
+            self.debug('doing hv uncorrection. factor: {}, new dac: {}'.format(cor, dac))
 
         if self.use_deflection_correction:
             dac -= det.get_deflection_correction(current=current)
         return dac
 
-    def get_hv_correction(self, dac, uncorrect=False, current=False):
+    def get_hv_correction(self, uncorrect=False, current=False):
         """
         ion optics correction::
 
@@ -221,8 +231,8 @@ class BaseSpectrometer(SpectrometerDevice):
             except ZeroDivisionError:
                 cor = 1
 
-        dac *= cor
-        return dac
+        # dac *= cor
+        return cor
 
     def get_deflection_word(self, keys):
         if self.simulation:
@@ -390,7 +400,7 @@ class BaseSpectrometer(SpectrometerDevice):
         return config
 
     def load_molecular_weights(self):
-        import csv, yaml
+        import csv
         # load the molecular weights dictionary
 
         p = os.path.join(paths.spectrometer_dir, 'molecular_weights.csv')
@@ -406,11 +416,10 @@ class BaseSpectrometer(SpectrometerDevice):
                     mws = None
         elif os.path.isfile(yp):
             self.info('loading "molecular_weights.yaml" file. {}'.format(yp))
-            with open(yp, 'r') as f:
-                try:
-                    mws = yaml.load(f)
-                except BaseException:
-                    mws = None
+            try:
+                mws = yload(yp)
+            except BaseException:
+                mws = None
 
         if mws is None:
             self.info('writing a default "molecular_weights.csv" file')

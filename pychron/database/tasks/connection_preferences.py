@@ -14,12 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+import os
+
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
 from pyface.message_dialog import warning
 from pyface.timer.do_later import do_later
-from traits.api import Str, Password, Enum, Button, on_trait_change, Color, String, List, File, HasTraits, Bool
+from traits.api import Str, Password, Enum, Button, on_trait_change, Color, String, List, File, HasTraits, Bool, Int
 from traitsui.api import View, VGroup, HGroup, spring, Label, Spring, \
     EnumEditor, ObjectColumn, TableEditor, UItem
 from traitsui.editors import TextEditor
@@ -30,8 +32,10 @@ from traitsui.extras.checkbox_column import CheckboxColumn
 from pychron.core.helpers.strtools import to_bool, to_csv_str
 from pychron.core.pychron_traits import HostStr
 from pychron.core.ui.custom_label_editor import CustomLabel
+from pychron.core.yaml import yload
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_preferences_helper import FavoritesPreferencesHelper
+from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR
 
 
@@ -141,8 +145,9 @@ class ConnectionFavoriteItem(HasTraits):
     schema_identifier = Str
     path = File
     default = Bool
+    timeout = Int(5)
 
-    attributes = ('name', 'kind', 'username', 'host', 'dbname', 'password', 'enabled', 'default', 'path')
+    attributes = ('name', 'kind', 'username', 'host', 'dbname', 'password', 'enabled', 'default', 'path', 'timeout')
 
     def __init__(self, schema_identifier='', attrs=None, kind=None):
         super(ConnectionFavoriteItem, self).__init__()
@@ -152,6 +157,7 @@ class ConnectionFavoriteItem(HasTraits):
 
         if attrs:
             attrs = attrs.split(',')
+
             try:
                 self.name, self.kind, self.username, self.host, self.dbname, self.password = attrs
             except ValueError:
@@ -166,11 +172,19 @@ class ConnectionFavoriteItem(HasTraits):
                         self.enabled = to_bool(enabled)
                         self.default = to_bool(default)
                     except ValueError:
-                        (self.name, self.kind, self.username, self.host, self.dbname,
-                         self.password, enabled, default, path) = attrs
-                        self.enabled = to_bool(enabled)
-                        self.default = to_bool(default)
-                        self.path = path
+                        try:
+                            (self.name, self.kind, self.username, self.host, self.dbname,
+                             self.password, enabled, default, path) = attrs
+                            self.enabled = to_bool(enabled)
+                            self.default = to_bool(default)
+                            self.path = path
+                        except ValueError:
+                            (self.name, self.kind, self.username, self.host, self.dbname,
+                             self.password, enabled, default, path, timeout) = attrs
+                            self.enabled = to_bool(enabled)
+                            self.default = to_bool(default)
+                            self.path = path
+                            self.timeout = int(timeout)
 
             self.load_names()
 
@@ -199,6 +213,7 @@ class ConnectionFavoriteItem(HasTraits):
 class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
     preferences_path = 'pychron.database'
     add_favorite_path = Button
+    add_favorite_shareable_archive = Button
 
     _fav_klass = ConnectionFavoriteItem
     _schema_identifier = None
@@ -206,6 +221,24 @@ class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
 
     def __init__(self, *args, **kw):
         super(ConnectionPreferences, self).__init__(*args, **kw)
+
+    def _add_favorite_shareable_archive_fired(self):
+        dlg = FileDialog(action='open', wildcard='*.pz', default_directory=paths.data_dir)
+        if dlg.open() == OK:
+            if dlg.path:
+                yd = yload(dlg.path)
+                name = os.path.splitext(os.path.basename(dlg.path))[0]
+                path = os.path.join(paths.offline_db_dir, '{}.sqlite'.format(name))
+                with open(path, 'wb') as wfile:
+                    wfile.write(yd['database'])
+
+                item = self._fav_factory(kind='sqlite', path=path, enabled=True)
+                item.trait_set(**{k: yd[k] for k in ['organization',
+                                                     'meta_repo_name']})
+                item.meta_repo_dir = '{}MetaData'.format(item.organization)
+
+                self._fav_items.append(item)
+                self._set_favorites()
 
     def _add_favorite_path_fired(self):
         dlg = FileDialog(action='open')
@@ -227,7 +260,7 @@ class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
                         host=obj.host,
                         password=obj.password,
                         name=obj.dbname,
-                        kind=obj.kind)
+                        kind=obj.kind, timeout=obj.timeout)
 
     def __selected_changed(self):
         self._reset_connection_label(True)
@@ -269,6 +302,7 @@ class ConnectionPreferencesPane(PreferencesPane):
                              format_func=lambda x: '*' * len(x),
                              editor=TextEditor(password=True)),
                 ObjectColumn(name='host'),
+                ObjectColumn(name='timeout'),
                 ObjectColumn(name='dbname',
                              label='Database',
                              editor=EnumEditor(name='names')),
@@ -280,6 +314,9 @@ class ConnectionPreferencesPane(PreferencesPane):
                                          tooltip='Add saved connection'),
                       icon_button_editor('add_favorite_path', 'dbs_sqlite',
                                          tooltip='Add sqlite database'),
+                      icon_button_editor('add_favorite_shareable_archive',
+                                         'add_archive',
+                                         tooltip='Add a shareable archive'),
                       icon_button_editor('delete_favorite', 'delete',
                                          tooltip='Delete saved connection'),
                       icon_button_editor('test_connection_button', 'database_connect',

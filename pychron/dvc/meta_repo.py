@@ -41,9 +41,9 @@ def irradiation_geometry_holes(name):
     return geom.holes
 
 
-def irradiation_chronology(name):
+def irradiation_chronology(name, allow_null=False):
     p = os.path.join(paths.meta_root, name, 'chronology.txt')
-    return Chronology(p)
+    return Chronology(p, allow_null=allow_null)
 
 
 def dump_chronology(path, doses):
@@ -556,21 +556,21 @@ class MetaRepo(GitRepoManager):
         return Gains(p)
 
     # @cached('clear_cache')
-    def get_production(self, irrad, level, **kw):
+    def get_production(self, irrad, level, allow_null=False, **kw):
         path = os.path.join(paths.meta_root, irrad, 'productions.json')
         obj = dvc_load(path)
 
         pname = obj.get(level, '')
         p = os.path.join(paths.meta_root, irrad, 'productions', add_extension(pname, ext='.json'))
 
-        ip = Production(p)
+        ip = Production(p, allow_null=allow_null)
         # print 'new production id={}, name={}, irrad={}, level={}'.format(id(ip), pname, irrad, level)
         return pname, ip
 
     # @cached('clear_cache')
-    def get_chronology(self, name, **kw):
+    def get_chronology(self, name, allow_null=False,**kw):
 
-        chron = irradiation_chronology(name)
+        chron = irradiation_chronology(name, allow_null=allow_null)
         if self.application:
             chron.use_irradiation_endtime = self.application.get_boolean_preference(
                 'pychron.arar.constants.use_irradiation_endtime', False)

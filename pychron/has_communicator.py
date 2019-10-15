@@ -52,7 +52,9 @@ class HasCommunicator(object):
         """
         """
         if self.communicator is not None:
-            return self.communicator.open(**kw)
+            ret = self.communicator.open(**kw)
+            self.communicator.report()
+            return ret
 
     # def _communicate_hook(self, cmd, r):
     #     """

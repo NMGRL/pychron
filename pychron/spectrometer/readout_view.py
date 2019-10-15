@@ -14,22 +14,25 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
-from pyface.timer.do_later import do_after
-from traits.api import HasTraits, Str, List, Any, Event, Button, Int, Bool, Float
-from traitsui.api import View, Item, HGroup, spring
-from traitsui.handler import Handler
-
-# ============= standard library imports ========================
-import six.moves.configparser
 import os
-import yaml
-# ============= local library imports  ==========================
-from pychron.core.helpers.traitsui_shortcuts import listeditor
-from pychron.loggable import Loggable
-from pychron.paths import paths
+# ============= standard library imports ========================
+import time
+
+import six.moves.configparser
+# ============= enthought library imports =======================
+from pyface.timer.do_later import do_after
 from six.moves import zip
+from traits.api import HasTraits, Str, List, Any, Event, Button, Int, Bool, Float, Either
+from traitsui.api import UItem, VGroup, Item, HGroup, View, TableEditor, Tabbed
+from traitsui.api import spring
+from traitsui.handler import Handler
+from traitsui.table_column import ObjectColumn
+
+# ============= local library imports  ==========================
+from pychron.core.yaml import yload
+from pychron.paths import paths
+from pychron.persistence_loggable import PersistenceLoggable
+from pychron.pychron_constants import NULL_STR
 
 DEFAULT_CONFIG = '''-
   - name: HighVoltage
@@ -79,37 +82,94 @@ DEFAULT_CONFIG = '''-
 
 class BaseReadout(HasTraits):
     name = Str
-    value = Float
+    value = Either(Str, Float)
     spectrometer = Any
     compare = Bool(True)
+    config_value = Float
+    tolerance = Float
+    percent_tol = Float
+    display_tolerance = Str
+    # use_word = Bool(True)
+
+    @property
+    def dev(self):
+        try:
+            return self.value - self.config_value
+        except ValueError:
+            return NULL_STR
+
+    @property
+    def percent_dev(self):
+        try:
+            return abs(self.dev/self.config_value*100)
+        except ZeroDivisionError:
+            return NULL_STR
 
     def set_value(self, v):
         try:
             self.value = float(v)
         except (AttributeError, ValueError, TypeError):
-            pass
+            if v is not None:
+                self.value = v
+
+    def config_compare(self):
+        tolerance = self.percent_tol
+        if tolerance:
+            try:
+                self.display_tolerance = '{:0.2f}%'.format(tolerance*100)
+                try:
+                    if abs(self.value-self.config_value)/self.config_value > tolerance:
+                        return self.name, self.value, self.config_value
+                except TypeError:
+                    pass
+            except ZeroDivisionError:
+                pass
+        else:
+            self.display_tolerance = '{:0.2f}'.format(self.tolerance)
+            if abs(self.value - self.config_value) > self.tolerance:
+                return self.name, self.value, self.config_value
+
+    def compare_message(self):
+        return '{} does not match. Current:{:0.3f}, Config: {:0.3f}, tol.: {}'.format(self.name, self.value,
+                                                                                      self.config_value,
+                                                                                      self.display_tolerance)
 
 
 class Readout(BaseReadout):
-    # value = Property(depends_on='refresh')
-    # format = Str('{:0.3f}')
-    # refresh = Event
-
     min_value = Float(0)
     max_value = Float(100)
     tolerance = Float(0.01)
+    query_timeout = 3
+    _last_query = 0
 
     def traits_view(self):
         v = View(HGroup(Item('value', style='readonly', label=self.name)))
         return v
 
     def query_value(self):
-        cmd = 'Get{}'.format(self.name)
-        v = self.spectrometer.get_parameter(cmd)
-        self.set_value(v)
+        if self.query_needed and self.compare:
+            v = self.spectrometer.get_parameter(self.query_name)
+            self.set_value(v)
+            self._last_query = time.time()
 
     def get_percent_value(self):
         return (self.value - self.min_value) / (self.max_value - self.min_value)
+
+    @property
+    def query_name(self):
+        n = self.name
+        if self.hardware_name:
+            q = self.hardware_name
+        elif ',' in n:
+            _, q = n.split(',')
+        else:
+            q = n
+
+        return q.strip()
+
+    @property
+    def query_needed(self):
+        return not self._last_query or (time.time()-self._last_query)>self.query_timeout
 
 
 class DeflectionReadout(BaseReadout):
@@ -121,7 +181,7 @@ class ReadoutHandler(Handler):
         info.object.stop()
 
 
-class ReadoutView(Loggable):
+class ReadoutView(PersistenceLoggable):
     readouts = List(Readout)
     deflections = List(DeflectionReadout)
     spectrometer = Any
@@ -129,16 +189,21 @@ class ReadoutView(Loggable):
 
     refresh_needed = Event
     refresh_period = Int(10, enter_set=True, auto_set=False)  # seconds
-    use_word_query = Bool(True)
     compare_to_config_enabled = Bool(True)
 
     _alive = False
+    pattributes = ('compare_to_config_enabled', 'refresh_period')
+    persistence_name = 'readout'
 
     def __init__(self, *args, **kw):
         super(ReadoutView, self).__init__(*args, **kw)
-        self._load()
 
-    def _load(self):
+        #  peristence_mixin load
+        self.load()
+
+        self._load_configuration()
+
+    def _load_configuration(self):
 
         ypath = os.path.join(paths.spectrometer_dir, 'readout.yaml')
         if not os.path.isfile(ypath):
@@ -155,6 +220,7 @@ class ReadoutView(Loggable):
             self._load_yaml(ypath)
 
     def _load_cfg(self, path):
+        self.warning_dialog('Using readout.cfg is deprecated. Please consider migrating to readout.yaml')
         config = six.moves.configparser.ConfigParser()
         config.read(path)
         for section in config.sections():
@@ -163,29 +229,27 @@ class ReadoutView(Loggable):
             self.readouts.append(rd)
 
     def _load_yaml(self, path):
-        with open(path, 'r') as rfile:
-            try:
-                yt = yaml.load(rfile)
-                if yt:
-                    yl, yd = yt
+        yt = yload(path)
+        if yt:
+            yl, yd = yt
 
-                    for rd in yl:
-                        rr = Readout(spectrometer=self.spectrometer,
-                                     name=rd['name'],
-                                     min_value=rd.get('min', 0),
-                                     max_value=rd.get('max', 1),
-                                     tolerance=rd.get('tolerance', 0.01),
-                                     compare=rd.get('compare', True))
-                        self.readouts.append(rr)
+            for rd in yl:
+                rr = Readout(spectrometer=self.spectrometer,
+                             name=rd['name'],
+                             hardware_name=rd.get('hardware_name'),
+                             min_value=rd.get('min', 0),
+                             max_value=rd.get('max', 1),
+                             tolerance=rd.get('tolerance', 0.01),
+                             compare=rd.get('compare', True),
+                             query_timeout=self.refresh_period)
+                self.readouts.append(rr)
 
-                    for rd in yd:
-                        rr = DeflectionReadout(spectrometer=self.spectrometer,
-                                               name=rd['name'],
-                                               compare=rd.get('compare', True))
-                        self.deflections.append(rr)
-
-            except yaml.YAMLError:
-                return
+            for rd in yd:
+                rr = DeflectionReadout(spectrometer=self.spectrometer,
+                                       name=rd['name'],
+                                       tolerance=rd.get('tolerance', 1),
+                                       compare=rd.get('compare', True))
+                self.deflections.append(rr)
 
     def _write_default(self, ypath):
         with open(ypath, 'w') as wfile:
@@ -211,23 +275,45 @@ class ReadoutView(Loggable):
     def _refresh_fired(self):
         self._refresh()
 
+    def _refresh_period_changed(self):
+        for r in self.readouts:
+            r.query_timeout = self.refresh_period
+
     def _refresh(self):
-        if self.use_word_query:
-            keys = [r.name for r in self.readouts]
-            if keys:
-                ds = self.spectrometer.get_parameter_word(keys)
-                for d, r in zip(ds, self.readouts):
-                    r.set_value(d)
+        spec = self.spectrometer
 
-            keys = [r.name for r in self.deflections if r.use_deflection]
-            if keys:
-                ds = self.spectrometer.read_deflection_word(keys)
-                for d, r in zip(ds, self.deflections):
-                    r.set_value(d)
+        deflections = [r for r in self.deflections if r.compare]
+        keys = [r.name for r in deflections]
+        if keys:
+            ds = spec.read_deflection_word(keys)
+            for d, r in zip(ds, deflections):
+                r.set_value(d)
 
-        else:
-            for rd in self.readouts:
-                rd.query_value()
+        # if self.use_word_query:
+        #
+        #     for func, rs in ((spec.get_parameter_word, readouts),
+        #                      (spec.read_deflection_word, deflections)):
+        #
+        #         keys = [r.name for r in rs]
+        #         if keys:
+        #             ds = func(keys)
+        #             for d, r in zip(ds, rs):
+        #                 r.set_value(d)
+        #     for rd in self.readouts:
+        #         if rd.compare and not rd.use_word:
+        #             rd.query_value()
+        #
+        # else:
+        #     for rs in (self.readouts, self.deflections):
+        #         for rd in rs:
+        #             rd.query_value()
+
+        st = time.time()
+        timeout = self.refresh_period*0.95
+        for rd in self.readouts:
+            if time.time()-st > timeout:
+                break
+            rd.query_value()
 
         self.refresh_needed = True
 
@@ -235,22 +321,19 @@ class ReadoutView(Loggable):
         ne = []
         nd = []
 
-        spec = self.spectrometer
-
         if not spec.simulation and self.compare_to_config_enabled:
             for nn, rs in ((ne, self.readouts), (nd, self.deflections)):
                 for r in rs:
-                    if not r.compare:
-                        continue
-
                     name = r.name
-                    rv = r.value
-                    tol = r.tolerance
                     cv = spec.get_configuration_value(name)
-                    if abs(rv - cv) > tol:
-                        nn.append((r.name, rv, cv))
-                        self.debug('{} does not match. Current:{:0.3f}, '
-                                   'Config: {:0.3f}, tol.: {}'.format(name, rv, cv, tol))
+                    r.config_value = cv
+                    if r.compare:
+                        args = r.config_compare()
+                        if args:
+                            nn.append(args)
+                            self.debug(r.compare_message())
+                    else:
+                        r.set_value(NULL_STR)
 
             ns = ''
             if ne:
@@ -269,25 +352,45 @@ class ReadoutView(Loggable):
                     spec.set_debug_configuration_values()
 
     def traits_view(self):
-        v = View(listeditor('readouts'),
-                 HGroup(Item('compare_to_config_enabled',label='Comp. Config',
-                             tooltip='If checked, compare the current values to the values in the configuration file.'
-                                     'Warn user if there is a mismatch'),
-                        spring, Item('refresh', show_label=False)))
+        def ff(x):
+            return '{:0.3f}'.format(x) if isinstance(x, float) else x
+
+        cols = [ObjectColumn(name='name', label='Name'),
+                ObjectColumn(name='value', format_func=ff,
+                             label='Value', width=50),
+                ObjectColumn(name='config_value', format='%0.3f', label='Config. Value', width=50),
+                ObjectColumn(name='dev', format_func=ff, label='Dev.', width=50),
+                ObjectColumn(name='percent_dev', format_func=ff, label='%Dev.', width=50),
+                ObjectColumn(name='display_tolerance', label='Tol.')]
+
+        dcols = [ObjectColumn(name='name', label='Name', width=100),
+                 ObjectColumn(name='value', format_func=ff, label='Value', width=100),
+                 ObjectColumn(name='dev', format_func=ff, label='Dev.'),
+                 ObjectColumn(name='percent_dev', format_func=ff, label='%Dev.'),
+                 ObjectColumn(name='display_tolerance', label='Tol.')]
+
+        b = VGroup(UItem('readouts', editor=TableEditor(columns=cols, editable=False)), label='General')
+        c = VGroup(UItem('deflections', editor=TableEditor(columns=dcols,
+                                                           sortable=False,
+                                                           editable=False)), label='Deflections')
+
+        v = View(VGroup(Tabbed(b, c),
+                        HGroup(Item('compare_to_config_enabled', label='Comp. Config',
+                                    tooltip='If checked, compare the current values to the values in the '
+                                            'configuration file. '
+                                            'Warn user if there is a mismatch'),
+                               spring, Item('refresh', show_label=False))))
         return v
 
 
 def new_readout_view(rv):
     rv.start()
 
-    from traitsui.api import UItem, VGroup, Item, HGroup, View, TableEditor, Tabbed
-
-    from traitsui.table_column import ObjectColumn
-
     from pychron.processing.analyses.view.magnitude_editor import MagnitudeColumn
 
     cols = [ObjectColumn(name='name', label='Name'),
-            ObjectColumn(name='value', format='%0.3f', label='Value'),
+            ObjectColumn(name='value', format_func=lambda x: '{:0.3f}'.format(x) if isinstance(x, float) else x,
+                         label='Value'),
             MagnitudeColumn(name='value',
                             label='',
                             width=200), ]

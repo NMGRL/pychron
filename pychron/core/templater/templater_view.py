@@ -21,6 +21,7 @@ from traitsui.api import Item, VGroup, HGroup, ListStrEditor, EnumEditor, UItem,
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+from pychron.core.pychron_traits import BorderHGroup
 from pychron.envisage.icon_button_editor import icon_button_editor
 
 
@@ -36,19 +37,17 @@ class BaseTemplateView(Controller):
                             editor=ListStrEditor(
                                 editable=False,
                                 activated='activated')),
-                      HGroup(UItem('label'),
-                             icon_button_editor('clear_button', 'clear',
-                                                tooltip='Clear current label'),
-                             icon_button_editor('add_label_button', 'add',
-                                                enabled_when='add_enabled',
-                                                tooltip='Save current label to the predefined list'),
-                             icon_button_editor('delete_label_button', 'delete',
-                                                enabled_when='delete_enabled',
-                                                tooltip='Remove current label from the predefined list'),
-                             label='Label',
-                             show_border=True),
-                      HGroup(UItem('example', style='readonly'), label='Example',
-                             show_border=True))
+                      BorderHGroup(UItem('label'),
+                                   icon_button_editor('clear_button', 'clear',
+                                                      tooltip='Clear current label'),
+                                   icon_button_editor('add_label_button', 'add',
+                                                      enabled_when='add_enabled',
+                                                      tooltip='Save current label to the predefined list'),
+                                   icon_button_editor('delete_label_button', 'delete',
+                                                      enabled_when='delete_enabled',
+                                                      tooltip='Remove current label from the predefined list'),
+                                   label='Label'),
+                      BorderHGroup(UItem('example', style='readonly'), label='Example'))
 
     def _get_additional_groups(self):
         pass

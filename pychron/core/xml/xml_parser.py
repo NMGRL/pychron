@@ -17,28 +17,12 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
-# from xml.etree.ElementTree import ElementTree, Element, ParseError
-from __future__ import absolute_import
 
 import os
-# def extract_xml_text(txt):
-# """
-#         return an xml root object
-#     """
-#     elem = XML(txt)
-#     ntxt = elem.text
-#     if ntxt is None:
-#         ntxt = ''
-#         for ei in elem.iter():
-#             if ei.text is not None:
-#                 ntxt += ei.text
-#
-#     return ntxt
 import re
 
 import six
-from lxml import etree
-from lxml.etree import ElementTree, Element, ParseError, XML, XMLSyntaxError
+from lxml.etree import ElementTree, Element, ParseError, XML, XMLSyntaxError, tostring, XMLParser as LXMLParser
 
 # ============= local library imports  ==========================
 
@@ -124,6 +108,22 @@ def pprint_xml(txt):
     return '\n'.join([li for li in lines if li.strip()])
 
 
+def indent(elem, level=0):
+    i = "\n" + level*"  "
+    if len(elem):
+        if not elem.text or not elem.text.strip():
+            elem.text = i + "  "
+        if not elem.tail or not elem.tail.strip():
+            elem.tail = i
+        for ei in elem:
+            indent(ei, level+1)
+        if not elem.tail or not elem.tail.strip():
+            elem.tail = i
+    else:
+        if level and (not elem.tail or not elem.tail.strip()):
+            elem.tail = i
+
+
 class XMLParser(object):
     _root = None
     path = None
@@ -151,7 +151,7 @@ class XMLParser(object):
         if txt is None:
             txt = p.read()
         try:
-            self._root = XML(txt)
+            self._root = XML(txt, parser=LXMLParser(remove_blank_text=True))
             return True
         except XMLSyntaxError:
             pass
@@ -159,7 +159,7 @@ class XMLParser(object):
     def load(self, rfile):
         return self._parse_file(rfile)
 
-    def add(self, tag, value, root, **kw):
+    def add(self, tag, value, root=None, **kw):
         if root is None:
             root = self._root
         elem = self.new_element(tag, value, **kw)
@@ -182,20 +182,14 @@ class XMLParser(object):
         if p is None:
             p = self.path
         if p and os.path.isdir(os.path.dirname(p)):
-            # txt = self.tostring(pretty_print)
-            # with open(p,'w') as fp:
-            # fp.write(pprint_xml(txt))
-
+            indent(self._root)
             tree = self.get_tree()
-            tree.write(p,
-                       xml_declaration=True,
-                       method='xml',
-                       pretty_print=pretty_print)
+            tree.write(p, xml_declaration=True, method='xml', pretty_print=pretty_print)
 
     def tostring(self, pretty_print=True):
         tree = self.get_tree()
         if tree:
-            return etree.tostring(tree, pretty_print=pretty_print)
+            return tostring(tree, pretty_print=pretty_print)
 
     def get_elements(self, name=None):
         root = self.get_root()

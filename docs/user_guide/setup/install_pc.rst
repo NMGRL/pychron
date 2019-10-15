@@ -34,10 +34,9 @@ Download and Install Anaconda3
 
 https://www.anaconda.com/distribution/
 
-Download and Install Microsoft Visual C++ Redistributable for Visual Studio
+Download and Install Microsoft Build Tools 2015 Update 3
 ------------------------------------------------------------------------------
-
-https://visualstudio.microsoft.com/downloads/
+https://visualstudio.microsoft.com/vs/older-downloads/
 
 Download and Run installer
 ----------------------------
@@ -46,7 +45,7 @@ use ``Powershell.exe`` or equivalent
 
 .. code-block:: powershell
 
-    $ Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/NMGRL/pychron/develop/app_utils/install.py' -OutfFile
+    $ Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/NMGRL/pychron/develop/app_utils/install.py' -OutFile
      install.py
 
 

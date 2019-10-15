@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 import math
+from operator import itemgetter
 
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.array_data_source import ArrayDataSource
@@ -29,14 +30,17 @@ from traits.api import Array
 from uncertainties import nominal_value, std_dev
 
 from pychron.core.helpers.formatting import floatfmt
+from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.stats.peak_detection import fast_find_peaks
 from pychron.core.stats.probability_curves import cumulative_probability, kernel_density
+from pychron.graph.explicit_legend import ExplicitLegend
 from pychron.graph.ticks import IntTickGenerator
 from pychron.pipeline.plot.overlays.ideogram_inset_overlay import IdeogramInset, IdeogramPointsInset
 from pychron.pipeline.plot.overlays.mean_indicator_overlay import MeanIndicatorOverlay
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 from pychron.pipeline.plot.point_move_tool import OverlayMoveTool
 from pychron.pychron_constants import PLUSMINUS, SIGMA
+from pychron.regex import ORDER_PREFIX_REGEX
 
 N = 500
 
@@ -110,6 +114,25 @@ class LatestOverlay(AbstractOverlay):
             render_markers(gc, pts, 'circle', 5, self.color_, 2, self.outline_color_)
 
 
+def groupby_aux_key(ans):
+    use_explicit_ordering = all((ORDER_PREFIX_REGEX.match(str(a.aux_name or '')) for a in ans))
+    if use_explicit_ordering:
+        def key(ai):
+            m = ORDER_PREFIX_REGEX.match(ai.aux_name)
+            return int(m.group('prefix')[:-1])
+    else:
+        key = 'aux_id'
+
+    gitems = groupby_key(ans, key=key)
+    gitems = [(a, list(b)) for a, b in gitems]
+
+    for i, (gid, analyses) in enumerate(gitems):
+        for ai in analyses:
+            ai.aux_id = i
+
+    return gitems, use_explicit_ordering
+
+
 class Ideogram(BaseArArFigure):
     xs = Array
     xes = Array
@@ -152,6 +175,10 @@ class Ideogram(BaseArArFigure):
         for pid, (plotobj, po) in enumerate(zip(graph.plots, plots)):
             # plotobj.group_id = self.group_id
             # print(id(plotobj), plotobj.group_id)
+
+            if self.options.reverse_x_axis:
+                plotobj.default_origin = 'bottom right'
+
             try:
                 args = getattr(self, '_plot_{}'.format(po.plot_name))(po, plotobj, pid)
             except AttributeError:
@@ -206,34 +233,82 @@ class Ideogram(BaseArArFigure):
                self.max_x(self.options.index_attr, exclude_omit=True)
         return l, h
 
+    def update_index_mapper(self, obj, name, old, new):
+        self._rebuild_ideo()
+        # if new:
+        #     self.update_graph_metadata(None, name, old, new)
+
+    def update_graph_metadata(self, obj, name, old, new):
+        if hasattr(obj, 'suppress_update') and obj.suppress_update:
+            return
+
+        ans = self.sorted_analyses
+        sel = obj.metadata.get('selections', [])
+        self._set_selected(ans, sel)
+
+        self._rebuild_ideo(sel)
+        self.recalculate_event = True
+
+        # self._filter_metadata_changes(obj, sorted_ans, self._rebuild_ideo)
+
+    def get_ybounds(self):
+        plot = self.graph.plots[0]
+        gid = self.group_id + 1
+        try:
+            lp = plot.plots['Current-{}'.format(gid)][0]
+            h = lp.value.get_data().max()
+        except KeyError:
+            h = 1
+
+        return 0, h
+
+    def replot(self):
+        self._rebuild_ideo()
+
     # ===============================================================================
     # plotters
     # ===============================================================================
+    def _get_aux_plot_data(self, k, scalar=1):
+        def gen():
+            items, ordering = groupby_aux_key(self.sorted_analyses)
+            for aux_id, ais in items:
+                ais = list(ais)
+                xs, xes = zip(*[(nominal_value(vi), std_dev(vi)) for vi in
+                                self._unpack_attr(self.options.index_attr, ans=ais)])
+
+                ys, yes = zip(*[(nominal_value(vi), std_dev(vi)) for vi in
+                                self._unpack_attr(k, ans=ais, scalar=scalar)])
+
+                m = ORDER_PREFIX_REGEX.match(ais[0].aux_name)
+                if m:
+                    aux_id = int(m.group('prefix')[:-1])
+
+                yield aux_id, ais, xs, xes, ys, yes
+
+        return gen()
+
     def _plot_aux(self, title, vk, po, pid):
+        for aux_id, items, xs, xes, ys, yes in self._get_aux_plot_data(vk, po.scalar):
+            scatter = self._add_aux_plot(ys, title, po, pid, gid=self.group_id or aux_id, es=yes, xs=xs)
+            nsigma = self.options.error_bar_nsigma
+            if xes:
+                self._add_error_bars(scatter, xes, 'x', nsigma,
+                                     end_caps=self.options.x_end_caps,
+                                     visible=po.x_error)
+            if yes:
+                self._add_error_bars(scatter, yes, 'y', nsigma,
+                                     end_caps=self.options.y_end_caps,
+                                     visible=po.y_error)
 
-        ys, es = self._get_aux_plot_data(vk, po.scalar)
-        selection = []
-        invalid = []
+            if po.show_labels:
+                self._add_point_labels(scatter, ans=items)
 
-        scatter = self._add_aux_plot(ys, title, po, pid, es=es)
+            func = self._get_index_attr_label_func()
+            self._add_scatter_inspector(scatter,
+                                        items=items,
+                                        additional_info=func)
 
-        nsigma = self.options.error_bar_nsigma
-        self._add_error_bars(scatter, self.xes, 'x', nsigma,
-                             end_caps=self.options.x_end_caps,
-                             visible=po.x_error)
-        if es:
-            self._add_error_bars(scatter, es, 'y', nsigma,
-                                 end_caps=self.options.y_end_caps,
-                                 visible=po.y_error)
-
-        if po.show_labels:
-            self._add_point_labels(scatter)
-
-        func = self._get_index_attr_label_func()
-        self._add_scatter_inspector(scatter,
-                                    additional_info=func)
-
-        return scatter, selection, invalid
+        # return scatter, selection, invalid
 
     def _plot_analysis_number(self, *args, **kw):
         return self.__plot_analysis_number(*args, **kw)
@@ -243,92 +318,149 @@ class Ideogram(BaseArArFigure):
         return self.__plot_analysis_number(*args, **kw)
 
     def __plot_analysis_number(self, po, plot, pid, nonsorted=False):
-        xs = self.xs
-        xes = self.xes
-        n = xs.shape[0]
+        opt = self.options
+        index_attr = opt.index_attr
+        if index_attr == 'uage' and opt.include_j_position_error:
+            index_attr = 'uage_w_position_err'
 
-        startidx = 1
-        items = self.sorted_analyses
         if nonsorted:
             name = 'A# Nonsorted'
             tag = 'Analysis Number Nonsorted'
-            opt = self.options
-
-            index_attr = opt.index_attr
-            if index_attr == 'uage' and opt.include_j_position_error:
-                index_attr = 'uage_w_position_err'
-
-            xs = [nominal_value(x) for x in self._get_xs(key=index_attr, nonsorted=True)]
+            # xs = [nominal_value(x) for x in self._get_xs(key=index_attr, nonsorted=True)]
         else:
             name = 'Analysis #'
             tag = 'Analysis Number'
-            xs = self.xs
+            # xs = self.xs
 
+        selection = []
+
+        startidx = 1
         for p in self.graph.plots:
             # if title is not visible title=='' so check tag instead
-
             if p.y_axis.tag == tag:
                 for k, rend in p.plots.items():
                     # if title is not visible k == e.g '-1' instead of 'Analysis #-1'
                     if k.startswith(name) or k.startswith('-'):
                         startidx += rend[0].index.get_size()
 
-        if self.options.analysis_number_sorting == 'Oldest @Top' or nonsorted:
-            ys = arange(startidx, startidx + n)
-        else:
-            ys = arange(startidx + n - 1, startidx - 1, -1)
+        items = self.sorted_analyses
+        ats = array([ai.timestamp or 0 for ai in items])
 
-        ans = self.sorted_analyses
-        ts = array([ai.timestamp or 0 for ai in ans])
-        ts -= ts[0]
+        gitems, use_explicit_ordering = groupby_aux_key(items)
 
-        kw = {}
-        if self.options.use_cmap_analysis_number:
-            kw = dict(colors=ts,
-                      color_map_name=self.options.cmap_analysis_number,
-                      type='cmap_scatter',
-                      xs=xs)
-        else:
-            if nonsorted:
-                data = sorted(zip(xs, ys), key=lambda x: x[0])
-                xs, ys = list(zip(*data))
+        if not nonsorted:
+            gitems = [(a, list(b)) for a, b in gitems]
+            if use_explicit_ordering:
+                def key(x):
+                    return x[0]
+            else:
+                def key(x):
+                    return min(xi.age for xi in x[1])
 
-        scatter = self._add_aux_plot(ys, name, po, pid, xs=xs, **kw)
+            gitems = sorted(gitems, key=key)
 
-        if self.options.use_latest_overlay:
-            idx = argmax(ts)
-            dx = scatter.index.get_data()[idx]
-            dy = scatter.value.get_data()[idx]
+            if not use_explicit_ordering:
+                if opt.analysis_number_sorting != 'Oldest @Top':
+                    gitems = reversed(gitems)
 
-            scatter.overlays.append(LatestOverlay(component=scatter,
-                                                  data_position=array([(dx, dy)])))
+        global_sorting = opt.global_analysis_number_sorting
 
-        self._add_error_bars(scatter, xes, 'x', self.options.error_bar_nsigma,
-                             end_caps=self.options.x_end_caps,
-                             visible=po.x_error)
+        if global_sorting:
+            n = len(items)
+            if opt.analysis_number_sorting == 'Oldest @Top' or nonsorted:
+                gys = arange(startidx, startidx + n)
+            else:
+                gys = arange(startidx + n - 1, startidx - 1, -1)
 
-        if po.show_labels:
-            self._add_point_labels(scatter)
+        plots = {}
+        labels = []
+        gla = opt.group_legend_label_attribute
+        for aux_id, ais in gitems:
+            ais = list(ais)
+            n = len(ais)
 
-        # set tick generator
-        gen = IntTickGenerator()
-        plot.y_axis.tick_generator = gen
-        plot.y_grid.tick_generator = gen
+            if not global_sorting:
+                if opt.analysis_number_sorting == 'Oldest @Top' or nonsorted:
+                    ys = arange(startidx, startidx + n)
+                else:
+                    ys = arange(startidx + n - 1, startidx - 1, -1)
+            else:
+                idxs = [items.index(ai) for ai in ais]
+                if opt.analysis_number_sorting != 'Oldest @Top':
+                    idxs = reversed(idxs)
+                ys = [gys[idx] for idx in idxs]
 
-        my = max(ys) + 1
-        plot.value_range.tight_bounds = True
-        self._set_y_limits(0, my, min_=0, max_=my, pid=pid)
+            xs, xes = zip(*((nominal_value(xi), std_dev(xi)) for xi in
+                            self._unpack_attr(index_attr, ans=ais)))
+            startidx += n + 1
+            kw = {}
+            if opt.use_cmap_analysis_number:
+                ts = array([ai.timestamp or 0 for ai in ais])
+                ts -= ats[0]
+                kw = dict(colors=ts,
+                          color_map_name=opt.cmap_analysis_number,
+                          type='cmap_scatter',
+                          xs=xs)
+            else:
+                if nonsorted:
+                    data = sorted(zip(xs, ys), key=lambda x: x[0])
+                    xs, ys = list(zip(*data))
 
-        omits, invalids, outliers = self._do_aux_plot_filtering(scatter, po, xs, xes)
-        func = self._get_index_attr_label_func()
-        self._add_scatter_inspector(scatter,
-                                    items=items,
-                                    value_format=lambda x: '{:d}'.format(int(x)),
-                                    additional_info=func)
+            scatter = self._add_aux_plot(ys, name, po, pid,
+                                         gid=max(0, self.group_id or (aux_id - 1)), xs=xs, **kw)
 
-        selection = omits + outliers
+            if opt.include_group_legend:
+                key = str(aux_id)
+                plots[key] = [scatter]
+                if gla == 'Group':
+                    label = key
+                else:
+                    label = getattr(ais[0], gla.lower().replace(' ', '_'))
 
-        return scatter, selection, invalids
+                m = ORDER_PREFIX_REGEX.match(label)
+                sortkey = label
+                if m:
+                    label = m.group('label')
+                    sortkey = int(m.group('prefix')[:-1])
+
+                labels.append((key, label, sortkey))
+
+            if opt.use_latest_overlay:
+                idx = argmax(ts)
+                dx = scatter.index.get_data()[idx]
+                dy = scatter.value.get_data()[idx]
+
+                scatter.overlays.append(LatestOverlay(component=scatter,
+                                                      data_position=array([(dx, dy)])))
+            self._add_error_bars(scatter, xes, 'x', opt.error_bar_nsigma,
+                                 end_caps=opt.x_end_caps,
+                                 visible=po.x_error)
+
+            if po.show_labels:
+                self._add_point_labels(scatter, ans=ais)
+
+            # set tick generator
+            gen = IntTickGenerator()
+            plot.y_axis.tick_generator = gen
+            plot.y_grid.tick_generator = gen
+
+            my = max(ys) + 1
+            plot.value_range.tight_bounds = True
+            self._set_y_limits(0, my, min_=0, max_=my, pid=pid)
+
+            func = self._get_index_attr_label_func()
+            self._add_scatter_inspector(scatter,
+                                        items=ais,
+                                        value_format=lambda x: '{:d}'.format(int(x)),
+                                        additional_info=func)
+
+        if opt.include_group_legend:
+            labels = sorted(labels, key=itemgetter(2))
+            self._add_group_legend(plot, plots, labels)
+            # omits, invalids, outliers = self._do_aux_plot_filtering(scatter, po, xs, xes)
+            # selection = omits + outliers
+            # selection.extend(omits)
+            # selection.extend(outliers)
 
     def _get_index_attr_label_func(self):
         ia = self.options.index_attr
@@ -449,6 +581,18 @@ class Ideogram(BaseArArFigure):
                     ov.set_x_limits(xmi, xma)
                     ov.set_y_limits(0, yma2)
 
+    def _add_group_legend(self, plot, plots, labels):
+
+        ln, ns, _ = zip(*labels)
+        labels = list(zip(ln, ns))
+
+        legend = ExplicitLegend(plots=plots,
+                                labels=list(reversed(labels)),
+                                inside=True,
+                                align='ul')
+
+        plot.overlays.append(legend)
+
     def _add_peak_labels(self, line):
         opt = self.options
 
@@ -491,7 +635,7 @@ class Ideogram(BaseArArFigure):
                     self._add_info_label(plot, ts)
 
     def _add_mean_indicator(self, g, line, po, bins, probs, pid):
-        wm, we, mswd, valid_mswd, n = self._calculate_stats(bins, probs)
+        wm, we, mswd, valid_mswd, n, pvalue = self._calculate_stats(bins, probs)
         ogid = self.group_id
         gid = ogid + 1
 
@@ -502,13 +646,9 @@ class Ideogram(BaseArArFigure):
 
             mswd_args = None
             if opt.display_mean_mswd:
-                mswd_args = (mswd, valid_mswd, n)
+                mswd_args = (mswd, valid_mswd, n, pvalue)
 
-            if opt.display_mean_n:
-                pass
-
-            text = self._make_mean_label(wm, we * opt.nsigma, n, total_n, mswd_args,
-                                         display_n=opt.display_mean_n)
+            text = self._make_mean_label(wm, we * opt.nsigma, n, total_n, mswd_args)
 
         plotkw = opt.get_plot_dict(ogid, self.subgroup_id)
 
@@ -545,38 +685,20 @@ class Ideogram(BaseArArFigure):
 
         return m
 
-    def update_index_mapper(self, obj, name, old, new):
-        self._rebuild_ideo()
-        # if new:
-        #     self.update_graph_metadata(None, name, old, new)
-
-    def update_graph_metadata(self, obj, name, old, new):
-        if hasattr(obj, 'suppress_update') and obj.suppress_update:
-            return
-
-        ans = self.sorted_analyses
-        sel = obj.metadata.get('selections', [])
-        self._set_selected(ans, sel)
-
-        self._rebuild_ideo(sel)
-        self.recalculate_event = True
-
-        # self._filter_metadata_changes(obj, sorted_ans, self._rebuild_ideo)
-
-    def get_ybounds(self):
-        plot = self.graph.plots[0]
-        gid = self.group_id + 1
-        lp = plot.plots['Current-{}'.format(gid)][0]
-        d = lp.value.get_data()
-        h = d.max()
-        return 0, h
-
-    def replot(self):
-        self._rebuild_ideo()
-
     def _rebuild_ideo(self, sel=None):
         graph = self.graph
         gid = self.group_id + 1
+
+        plot = graph.plots[0]
+        try:
+            lp = plot.plots['Current-{}'.format(gid)][0]
+            dp = plot.plots['Original-{}'.format(gid)][0]
+        except KeyError:
+            return
+
+        if not self.xs.shape[0]:
+            return
+
         ss = [p.plots[key][0]
               for p in graph.plots[1:]
               for key in p.plots
@@ -590,25 +712,17 @@ class Ideogram(BaseArArFigure):
         else:
             sel = []
 
-        plot = graph.plots[0]
-
-        lp = plot.plots['Current-{}'.format(gid)][0]
-        dp = plot.plots['Original-{}'.format(gid)][0]
-
-        if not self.xs.shape[0]:
-            return
-
         fxs = [a for i, a in enumerate(self.xs) if i not in sel]
 
         if fxs:
             fxes = [a for i, a in enumerate(self.xes) if i not in sel]
             xs, ys = self._calculate_probability_curve(fxs, fxes)
-            wm, we, mswd, valid_mswd, n = self._calculate_stats(xs, ys)
+            wm, we, mswd, valid_mswd, n, pvalue = self._calculate_stats(xs, ys)
         else:
             n = 0
             ys = []
             xs = []
-            wm, we, mswd, valid_mswd = 0, 0, 0, False
+            wm, we, mswd, valid_mswd, pvalue = 0, 0, 0, False, 0
 
         lp.value.set_data(ys)
         lp.index.set_data(xs)
@@ -623,10 +737,9 @@ class Ideogram(BaseArArFigure):
 
                     mswd_args = None
                     if opt.display_mean_mswd:
-                        mswd_args = (mswd, valid_mswd, n)
+                        mswd_args = (mswd, valid_mswd, n, pvalue)
 
-                    text = self._make_mean_label(wm, we * opt.nsigma, n, total_n, mswd_args,
-                                                 display_n=opt.display_mean_n)
+                    text = self._make_mean_label(wm, we * opt.nsigma, n, total_n, mswd_args)
                     ov.label.text = text
 
         lp.overlays = [o for o in lp.overlays if not isinstance(o, PeakLabel)]
@@ -660,6 +773,8 @@ class Ideogram(BaseArArFigure):
                                       mswd_args=mswd_args,
                                       sig_figs=self.options.mean_sig_figs,
                                       percent_error=self.options.display_percent_error,
+                                      display_n=self.options.display_mean_n,
+                                      display_mswd_pvalue=self.options.display_mswd_pvalue,
                                       **kw)
 
         f = self.options.mean_label_format
@@ -677,7 +792,10 @@ class Ideogram(BaseArArFigure):
         xs = array([ai for ai in self._unpack_attr(key, nonsorted=nonsorted)])
         return xs
 
-    def _add_aux_plot(self, ys, title, po, pid, es=None, type='scatter', xs=None, **kw):
+    def _add_aux_plot(self, ys, title, po, pid, gid=None, es=None, type='scatter', xs=None, **kw):
+        if gid is None:
+            gid = self.group_id
+
         if xs is None:
             xs = self.xs
 
@@ -688,17 +806,25 @@ class Ideogram(BaseArArFigure):
 
         graph = self.graph
 
-        plotkw = self.options.get_plot_dict(self.group_id, self.subgroup_id)
+        plotkw = self.options.get_plot_dict(gid, 0)
 
-        s, p = graph.new_series(
-            x=xs, y=ys,
-            color=plotkw['color'],
-            type=type,
-            marker=po.marker,
-            marker_size=po.marker_size,
-            selection_marker_size=po.marker_size,
-            bind_id=self.group_id,
-            plotid=pid, **kw)
+        if 'marker' not in plotkw:
+            plotkw['marker'] = po.marker
+
+        if 'marker_size' not in plotkw:
+            plotkw['marker_size'] = po.marker_size
+
+        if 'selection_marker_size' not in plotkw:
+            plotkw['selection_marker_size'] = plotkw['marker_size']
+
+        if 'type' in plotkw:
+            plotkw.pop('type')
+
+        kw.update(plotkw)
+        s, p = graph.new_series(x=xs, y=ys,
+                                type=type,
+                                bind_id=self.group_id,
+                                plotid=pid, **kw)
 
         if es is not None:
             s.yerror = array(es)
@@ -846,7 +972,7 @@ class Ideogram(BaseArArFigure):
 
         ag.set_j_error(options.include_j_position_error, options.include_j_error_in_mean, dirty=True)
 
-        mswd, valid_mswd, n = self.analysis_group.get_mswd_tuple()
+        mswd, valid_mswd, n, pvalue = self.analysis_group.get_mswd_tuple()
 
         if options.mean_calculation_kind == 'kernel':
             wm, we = 0, 0
@@ -856,7 +982,7 @@ class Ideogram(BaseArArFigure):
         else:
             wage = self.analysis_group.weighted_age
             wm, we = nominal_value(wage), std_dev(wage)
-        return wm, we, mswd, valid_mswd, n
+        return wm, we, mswd, valid_mswd, n, pvalue
 
         # def _handle_xlimits(self):
         #     self.xlimits_updated = True

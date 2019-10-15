@@ -24,17 +24,18 @@ from pychron.loggable import Loggable
 CRS = 4326
 
 
-def connect(**kw):
+def connect(timeout=3, **kw):
     dsn = "host='{host:}' user='{username:}' " \
           "dbname='{name:}' port='{port:}'".format(**kw)
-
     try:
-        with psycopg2.connect(dsn) as conn:
+        with psycopg2.connect(dsn, connect_timeout=timeout) as conn:
             with conn.cursor() as cursor:
                 cursor.execute('select * from vocabulary.method')
                 return True
     except BaseException as e:
-        print(e)
+        pass
+
+    return False
 
 
 class Sparrow(Loggable):
@@ -43,6 +44,7 @@ class Sparrow(Loggable):
     password = Str
     host = Str
     port = Int
+    timeout = Int(3)
 
     _conn = None
 
@@ -53,7 +55,7 @@ class Sparrow(Loggable):
 
     def connect(self, inform=True):
         result = connect(name=self.dbname, host=self.host, username=self.username, port=self.port,
-                         password=self.password)
+                         password=self.password, timeout=self.timeout)
         if not result:
             msg = 'Connection failed. Database={}, host={}, user={}, port={}'.format(self.dbname, self.host,
                                                                                      self.username, self.port)
@@ -61,10 +63,11 @@ class Sparrow(Loggable):
                 self.warning_dialog(msg)
             else:
                 self.warning(msg)
+        return result
 
     def bind_preferences(self):
         prefid = 'pychron.sparrow'
-        for attr in ('dbname', 'username', 'password', 'host', 'port'):
+        for attr in ('dbname', 'username', 'password', 'host', 'port', 'timeout'):
             bind_preference(self, attr, '{}.{}'.format(prefid, attr))
 
     def insert_ia(self, path):

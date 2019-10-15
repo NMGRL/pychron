@@ -26,12 +26,14 @@ from pychron.core.helpers.strtools import ratio
 from pychron.core.progress import progress_iterator
 from pychron.options.options_manager import IdeogramOptionsManager, OptionsController, SeriesOptionsManager, \
     SpectrumOptionsManager, InverseIsochronOptionsManager, VerticalFluxOptionsManager, XYScatterOptionsManager, \
-    RadialOptionsManager, RegressionSeriesOptionsManager, FluxVisualizationOptionsManager, CompositeOptionsManager
+    RadialOptionsManager, RegressionSeriesOptionsManager, FluxVisualizationOptionsManager, CompositeOptionsManager, \
+    RatioSeriesOptionsManager
 from pychron.options.views.views import view
 from pychron.pipeline.editors.flux_visualization_editor import FluxVisualizationEditor
 from pychron.pipeline.nodes.base import SortableNode
 from pychron.pipeline.plot.plotter.series import RADIOGENIC_YIELD, PEAK_CENTER, \
     ANALYSIS_TYPE, AGE, LAB_TEMP, LAB_HUM, EXTRACT_VALUE, EXTRACT_DURATION, CLEANUP
+from pychron.pipeline.state import get_isotope_set
 from pychron.pychron_constants import COCKTAIL, UNKNOWN, DETECTOR_IC
 
 
@@ -164,12 +166,17 @@ class VerticalFluxNode(FigureNode):
         editor = self._editor_factory()
         state.editors.append(editor)
 
-        editor.items = state.levels
+        editor.levels = state.levels
         editor.irradiation = state.irradiation
-        editor.set_items(state.levels)
-        editor.name = 'VerticalFlux {}'.format(state.irradiation)
-        self.editor = editor
 
+        if state.unknowns:
+            editor.set_items(state.unknowns, as_analyses=True)
+        else:
+            editor.set_items(state.levels)
+
+        editor.name = 'VerticalFlux {}'.format(state.irradiation)
+        editor.plotter_options.use_f_enabled = not state.use_saved_means
+        self.editor = editor
 
 
 class FluxVisualizationNode(FigureNode):
@@ -314,4 +321,15 @@ class CompositeNode(FigureNode):
     plotter_options_manager_klass = CompositeOptionsManager
     # configurable = False
     # skip_configure = True
+
+
+class RatioSeriesNode(FigureNode):
+    name = 'Ratio Series'
+    editor_klass = 'pychron.pipeline.plot.editors.ratio_series_editor,RatioSeriesEditor'
+    plotter_options_manager_klass = RatioSeriesOptionsManager
+
+    def _configure_hook(self):
+        keys = get_isotope_set(self.unknowns)
+        self.plotter_options_manager.set_detectors(list(keys))
+
 # ============= EOF =============================================

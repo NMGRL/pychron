@@ -18,13 +18,13 @@
 
 import os
 
-import yaml
 from pyface.message_dialog import warning
 from traits.api import HasTraits, List, Str, Enum
 from traitsui.api import UItem
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.strings import PascalCase
+from pychron.core.yaml import yload
 from pychron.paths import paths
 from pychron.pipeline.nodes.data import DataNode, UnknownNode, DVCNode, InterpretedAgeNode, ListenUnknownNode, \
     BaseDVCNode
@@ -109,12 +109,13 @@ class PipelineTemplate(HasTraits):
         if clear:
             pipeline.nodes = []
 
-        if os.path.isfile(self.path):
-            with open(self.path, 'r') as rfile:
-                yd = yaml.load(rfile)
-        else:
-            yd = yaml.load(self.path)
+        # if os.path.isfile(self.path):
+        #     with open(self.path, 'r') as rfile:
+        #         yd = yaml.load(rfile)
+        # else:
+        #     yd = yaml.load(self.path)
 
+        yd = yload(self.path)
         nodes = yd['nodes']
 
         if exclude_klass is None:
@@ -175,6 +176,9 @@ class PipelineTemplate(HasTraits):
 
         if isinstance(node, BaseMassSpecNode):
             recaller = application.get_service('pychron.mass_spec.mass_spec_recaller.MassSpecRecaller')
+            if not recaller:
+                warning(None, 'Mass Spec Plugin not enabled. Enable with Help/Edit Initialization')
+
             node.trait_set(recaller=recaller)
         return node
 

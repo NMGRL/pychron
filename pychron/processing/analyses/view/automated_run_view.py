@@ -15,15 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
-
-from traitsui.api import View, UItem, Group, HGroup, spring, VGroup
+from traitsui.api import View, UItem, HGroup, spring, VGroup, Tabbed, TabularEditor
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
-from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter
 from pychron.processing.analyses.view.main_view import MainView
 from pychron.processing.analyses.view.values import MeasurementValue
@@ -46,32 +42,24 @@ class AutomatedRunAnalysisView(MainView):
         pass
 
     def traits_view(self):
-        teditor = myTabularEditor(adapter=IsotopeTabularAdapter(),
-                                  drag_enabled=False,
-                                  stretch_last_section=False,
-                                  editable=False,
-                                  multi_select=True,
-                                  selected='selected',
-                                  refresh='refresh_needed')
+        teditor = TabularEditor(adapter=IsotopeTabularAdapter(),
+                                stretch_last_section=False,
+                                editable=False,
+                                multi_select=False,
+                                selected='selected',
+                                refresh='refresh_needed')
 
-        # teditor, ieditor, ceditor, eeditor, meditor = es = self._get_editors()
         ceditor, eeditor, meditor = es = self._get_editors()
         for ei in es:
-            ei.adapter.font = '10'
+            ei.adapter.font = 'modern 10'
 
-        isotopes = UItem('isotopes', editor=teditor, label='Isotopes')
-
-        ratios = UItem('computed_values', editor=ceditor, label='Ratios')
-
-        meas = UItem('measurement_values',
-                     editor=meditor, label='General')
-
-        extract = UItem('extraction_values',
-                        editor=eeditor,
-                        label='Extraction')
+        isotopes = UItem('isotopes', editor=teditor, label='Isotopes', width=300)
+        ratios = UItem('computed_values', editor=ceditor, label='Ratios', width=300)
+        meas = UItem('measurement_values', editor=meditor, label='General', width=300)
+        extract = UItem('extraction_values', editor=eeditor, label='Extraction', width=300)
 
         v = View(VGroup(HGroup(spring, UItem('summary_str', style='readonly'), spring),
-                 Group(isotopes, ratios, extract, meas, layout='tabbed')))
+                        Tabbed(isotopes, ratios, extract, meas)))
         return v
 
 

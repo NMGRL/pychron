@@ -249,13 +249,11 @@ class ExperimentFactory(DVCAble): #, ConsumerMixin):
                     a.repository_identifier = new
 
         if name == 'mass_spectrometer':
-            self.debug('_update_queue "{}"'.format(new))
             self.mass_spectrometer = new
             self.run_factory.set_mass_spectrometer(new)
 
         elif name == 'extract_device':
             self._set_extract_device(new)
-            # do_later(self._set_extract_device, new)
 
             # elif name == 'username':
             # self._username = new

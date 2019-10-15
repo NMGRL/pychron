@@ -370,4 +370,5 @@ class SaveTableAction(TaskAction):
     name = 'Save Table'
     method = 'save_table'
     image = icon('table_save')
+    enabled_name = 'set_interpreted_enabled'
 # ============= EOF =============================================

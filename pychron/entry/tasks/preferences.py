@@ -17,8 +17,9 @@
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Str, Float, Password, Bool
-from traitsui.api import View, Item, Group, VGroup, HGroup
+from traitsui.api import View, Item
 
+from pychron.core.pychron_traits import BorderHGroup, BorderVGroup
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
@@ -55,27 +56,30 @@ class LabnumberEntryPreferencesPane(PreferencesPane):
     category = 'Entry'
 
     def traits_view(self):
-        irradiation_grp = Group(Item('irradiation_prefix',
-                                     label='Irradiation Prefix',
-                                     tooltip='Irradiation Prefix e.g., NM-'),
-                                HGroup(Item('monitor_name', label='Name'),
-                                       Item('monitor_material', label='Material'),
-                                       show_border=True, label='Monitor'),
-                                Item('j_multiplier', label='J Multiplier',
-                                     tooltip='J units per hour'),
-                                Item('irradiation_project_prefix',
-                                     tooltip='Project Prefix for Irradiations e.g., Irradiation-',
-                                     label='Irradiation Project Prefix'),
-                                Item('allow_multiple_null_identifiers',
-                                     label='Allow Multiple Null Identifiers',
-                                     tooltip='If not selected a placeholder identifier '
-                                             'is automatically generated. <IRRAD>:<LEVEL><POSITION>'),
-                                Item('use_packet_for_default_identifier',
-                                     label='Use Packet for Default Identifier',
-                                     tooltip='Use packet# when generating default Identifiers instead of the hole#'),
-                                Item('use_consecutive_identifiers'),
-                                show_border=True,
-                                label='Irradiations')
+        irradiation_grp = BorderVGroup(Item('irradiation_prefix',
+                                            label='Irradiation Prefix',
+                                            tooltip='Irradiation Prefix e.g., NM-'),
+                                       BorderHGroup(Item('monitor_name', label='Name'),
+                                                    Item('monitor_material', label='Material'),
+                                                    label='Monitor'),
+                                       Item('j_multiplier', label='J Multiplier',
+                                            tooltip='J units per hour'),
+                                       Item('irradiation_project_prefix',
+                                            tooltip='Project Prefix for Irradiations e.g., Irradiation-',
+                                            label='Irradiation Project Prefix'),
+                                       Item('allow_multiple_null_identifiers',
+                                            label='Allow Multiple Null Identifiers',
+                                            tooltip='If not selected a placeholder identifier '
+                                                    'is automatically generated. <IRRAD>:<LEVEL><POSITION>'),
+                                       Item('use_packet_for_default_identifier',
+                                            label='Use Packet for Default Identifier',
+                                            tooltip='Use packet# when generating default '
+                                                    'identifiers instead of the hole#'),
+                                       Item('use_consecutive_identifiers',
+                                            tooltip='If unchecked partition monitors and unknowns when generated '
+                                                    'identifiers, otherwise identifiers are generated as '
+                                                    'a continuous sequence'),
+                                       label='Irradiations')
         v = View(irradiation_grp)
         return v
 
@@ -93,12 +97,11 @@ class SamplePrepPreferencesPane(PreferencesPane):
     category = 'Entry'
 
     def traits_view(self):
-        imggrp = VGroup(Item('host'),
-                        Item('username'),
-                        Item('password'),
-                        Item('root', label='Image folder'),
-                        show_border=True,
-                        label='Image Server')
+        imggrp = BorderVGroup(Item('host'),
+                              Item('username'),
+                              Item('password'),
+                              Item('root', label='Image folder'),
+                              label='Image Server')
         v = View(imggrp)
         return v
 

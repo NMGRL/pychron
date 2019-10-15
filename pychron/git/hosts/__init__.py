@@ -14,6 +14,9 @@
 # limitations under the License.
 # ===============================================================================
 import base64
+import os
+import platform
+import stat
 import subprocess
 
 import requests
@@ -29,6 +32,9 @@ from pychron.regex import GITREFREGEX
 
 
 class IGitHost(Interface):
+    def set_authentication(self):
+        pass
+
     def bind_preferences(self):
         pass
 
@@ -94,12 +100,35 @@ class GitHostService(Loggable):
     _cached_repo_names = Dict
     _clear_cached_repo_names = False
     _session = None
+    organization = Str
 
     def bind_preferences(self):
+        bind_preference(self, 'organization', '{}.organization'.format(self.preference_path))
         bind_preference(self, 'username', '{}.username'.format(self.preference_path))
         bind_preference(self, 'password', '{}.password'.format(self.preference_path))
         bind_preference(self, 'oauth_token', '{}.oauth_token'.format(self.preference_path))
         bind_preference(self, 'default_remote_name', '{}.default_remote_name'.format(self.preference_path))
+
+    def set_authentication(self):
+        self.info('setting authentication')
+        if platform.system() == 'Windows':
+            askpass = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'askpass.bat')
+        else:
+            askpass = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'askpass.sh')
+
+        os.environ['GIT_ASKPASS'] = askpass
+        st = os.stat(askpass)
+        os.chmod(askpass, st.st_mode | stat.S_IXUSR)
+
+        if self.oauth_token:
+            u = ''
+            p = self.oauth_token
+        else:
+            u = self.username
+            p = self.password
+
+        os.environ['GIT_ASKPASS_USERNAME'] = u
+        os.environ['GIT_ASKPASS_PASSWORD'] = p
 
     def up_to_date(self, organization, name, sha, branch='master'):
         pass
@@ -129,12 +158,12 @@ class GitHostService(Loggable):
     def test_api(self):
         raise NotImplementedError
 
-    def make_url(self):
+    def make_url(self, *args, **kw):
         raise NotImplementedError
 
     def get_repository_names(self, organization):
         repos = self.get_repos(organization)
-        return [repo['name'] for repo in repos]
+        return [r for r in (repo.get('name', '') for repo in repos) if r]
 
     def test_connection(self, organization):
         return bool(self.get_info(organization))
@@ -208,7 +237,7 @@ class GitHostService(Loggable):
 
     def _put(self, cmd, **payload):
         headers = self._get_authorization()
-        kw={}
+        kw = {}
         if globalv.cert_file:
             kw['verify'] = globalv.cert_file
 

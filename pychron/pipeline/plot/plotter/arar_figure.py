@@ -38,7 +38,7 @@ from pychron.pipeline.plot.flow_label import FlowDataLabel, FlowPlotLabel
 from pychron.pipeline.plot.overlays.points_label_overlay import PointsLabelOverlay
 from pychron.pipeline.plot.point_move_tool import OverlayMoveTool
 from pychron.processing.analyses.analysis_group import AnalysisGroup
-from pychron.pychron_constants import PLUSMINUS
+from pychron.pychron_constants import PLUSMINUS, format_mswd
 
 
 class SelectionFigure(HasTraits):
@@ -250,13 +250,16 @@ class BaseArArFigure(SelectionFigure):
         self.refresh_unknowns_table = True
 
     def _cmp_analyses(self, x):
-        return x.timestamp
+        return x.timestamp or 0
 
-    def _unpack_attr(self, attr, scalar=1, exclude_omit=False, nonsorted=False):
-        def gen():
+    def _unpack_attr(self, attr, scalar=1, exclude_omit=False, nonsorted=False, ans=None):
+        if ans is None:
             ans = self.sorted_analyses
-            if nonsorted:
-                ans = self.analyses
+
+        if nonsorted:
+            ans = self.analyses
+
+        def gen():
             for ai in ans:
                 if exclude_omit and ai.is_omitted():
                     continue
@@ -421,7 +424,7 @@ class BaseArArFigure(SelectionFigure):
     def _handle_xlimits(self):
         pass
 
-    def _add_point_labels(self, scatter):
+    def _add_point_labels(self, scatter, ans=None):
         labels = []
 
         f = self.options.analysis_label_format
@@ -429,15 +432,11 @@ class BaseArArFigure(SelectionFigure):
         if not f:
             f = '{aliquot:02d}{step:}'
 
-        for si in self.sorted_analyses:
-            ctx = {'aliquot': si.aliquot,
-                   'step': si.step,
-                   'sample': si.sample,
-                   'name': si.name,
-                   'label_name': si.label_name}
+        if ans is None:
+            ans = self.sorted_analyses
 
-            x = f.format(**ctx)
-            labels.append(x)
+        labels = [f.format(aliquot=si.aliquot, step=si.step, sample=si.sample, name=si.name,
+                           label_name=si.label_name, runid=si.record_id) for si in ans]
 
         font = self.options.label_font
         ov = PointsLabelOverlay(component=scatter,
@@ -580,6 +579,7 @@ class BaseArArFigure(SelectionFigure):
                           mswd_args=None,
                           display_n=True,
                           display_mswd=True,
+                          display_mswd_pvalue=False,
                           percent_error=False,
                           sig_figs=3):
 
@@ -594,9 +594,10 @@ class BaseArArFigure(SelectionFigure):
             n = ''
 
         if mswd_args and display_mswd:
-            mswd, valid_mswd, _ = mswd_args
-            vd = '' if valid_mswd else '*'
-            mswd = '{} MSWD= {:0.2f}'.format(vd, mswd)
+            mswd, valid_mswd, _, pvalue = mswd_args
+            mswd = format_mswd(mswd, valid_mswd, include_tag=True)
+            if display_mswd_pvalue:
+                mswd = '{} pvalue={:0.2f}'.format(mswd, pvalue)
         else:
             mswd = ''
 

@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from enable.markers import marker_names
 from traitsui.api import UItem, Item, HGroup, VGroup, Group, EnumEditor, spring, View
 
 from pychron.core.pychron_traits import BorderVGroup, BorderHGroup
@@ -34,7 +33,11 @@ class DisplaySubOptions(TitleSubOptions):
                             show_border=True,
                             label='Error Bars')
 
-        an_grp = VGroup(Item('analysis_number_sorting', label='Analysis# Sort'),
+        an_grp = VGroup(Item('analysis_number_sorting', label='Analysis# Order'),
+                        Item('global_analysis_number_sorting', label='Global Sort', tooltip='Applicable only when '
+                                                                                            'using Aux Grouping'),
+                        HGroup(Item('include_group_legend', label='Include Group Legend'),
+                               UItem('group_legend_label_attribute', enabled_when='include_group_legend')),
                         HGroup(Item('use_cmap_analysis_number', label='Use Color Mapping'),
                                UItem('cmap_analysis_number', enabled_when='use_cmap_analysis_number')),
                         Item('use_latest_overlay'), show_border=True, label='Analysis #')
@@ -77,7 +80,8 @@ class DisplaySubOptions(TitleSubOptions):
         submean = HGroup(VGroup(Item('display_mean', label='Value', ),
                                 Item('display_percent_error', label='%Error', )),
                          VGroup(Item('display_mean_mswd', label='MSWD', ),
-                                Item('display_mean_n', label='N')),
+                                Item('display_mean_n', label='N'),
+                                Item('display_mswd_pvalue', label='P-Value')),
                          Item('mean_sig_figs', label='SigFigs'),
                          enabled_when='display_mean_indicator')
 
@@ -136,6 +140,8 @@ class IdeogramSubOptions(SubOptions):
         xgrp = VGroup(Item('index_attr',
                            editor=EnumEditor(name='index_attrs'),
                            label='X Value'),
+                      Item('reverse_x_axis', label='Reverse',
+                           tooltip='Display decreasing left to right'),
                       HGroup(UItem('use_static_limits'),
                              Item('xlow', label='Min.',
                                   enabled_when='object.use_static_limits'),
@@ -235,16 +241,11 @@ Additional examples
                                    UItem('sigma_filter_tag')),
                             label='Filtering')
 
-        v = View(VGroup(HGroup(Item('name', editor=EnumEditor(name='names')),
-                               Item('scale', editor=EnumEditor(values=['linear', 'log']))),
-                        Item('height'),
-                        self._get_yticks_grp(),
-                        BorderHGroup(UItem('marker', editor=EnumEditor(values=marker_names)),
-                                     Item('marker_size', label='Size'), label='Marker'),
-                        BorderHGroup(Item('ymin', label='Min'),
-                                     Item('ymax', label='Max'), label='Y Limits'),
-                        fgrp,
-                        show_border=True))
+        v = View(BorderVGroup(self._get_name_grp(),
+                              self._get_yticks_grp(),
+                              self._get_ylimits_group(),
+                              self._get_marker_group(),
+                              fgrp))
         return v
 
 

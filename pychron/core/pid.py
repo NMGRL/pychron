@@ -16,12 +16,16 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import HasTraits, Range, Float
-from traitsui.api import View, UItem, Item, HGroup, VGroup
+
 # ============= standard library imports ========================
 import os
+
 import yaml
+from traits.api import HasTraits, Range, Float
+from traitsui.api import View, Item, HGroup, VGroup
+
 # ============= local library imports  ==========================
+from pychron.core.yaml import yload
 from pychron.paths import paths
 
 ATTRS = ('kp', 'ki', 'kd', 'kdt')
@@ -57,9 +61,8 @@ class PID(HasTraits):
 
     def load(self):
         p = self.persistence_path
-        with open(p, 'rb') as rfile:
-            jd = yaml.load(rfile)
-            self.load_from_obj(jd)
+        jd = yload(p)
+        self.load_from_obj(jd)
 
     def dump(self):
         p = self.persistence_path

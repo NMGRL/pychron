@@ -18,7 +18,6 @@
 import os
 import pickle
 
-import yaml
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import String, Str, Property, Any, Float, Instance, Int, List, \
     cached_property, on_trait_change, Bool, Button, Event, Enum, Dict
@@ -29,6 +28,7 @@ from pychron.core.helpers.filetools import list_directory, add_extension, remove
 from pychron.core.helpers.iterfuncs import partition
 from pychron.core.helpers.strtools import camel_case
 from pychron.core.ui.gui import invoke_in_main_thread
+from pychron.core.yaml import yload
 from pychron.dvc.dvc_irradiationable import DVCAble
 from pychron.entry.entry_views.repository_entry import RepositoryIdentifierEntry
 from pychron.envisage.view_util import open_view
@@ -836,8 +836,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             self.warning('Script defaults file does not exist {}'.format(p))
             return
 
-        with open(p, 'r') as rfile:
-            defaults = yaml.load(rfile)
+        defaults = yload(p)
 
         # convert keys to lowercase
         defaults = dict([(k.lower(), v) for k, v in defaults.items()])

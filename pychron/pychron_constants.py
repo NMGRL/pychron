@@ -19,9 +19,8 @@
 # ============= local library imports  ==========================
 import os
 
-import yaml
-
 from pychron.core.helpers.formatting import floatfmt
+from pychron.core.yaml import yload
 from pychron.paths import paths
 
 STARTUP_MESSAGE_POSITION = (100, 300)
@@ -44,23 +43,35 @@ TTF_FONTS = ['Andale Mono', 'Arial', 'Arial Black',
 FONTS = TTF_FONTS
 SIZES = [10, 6, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36]
 
-from kiva.fonttools.font_manager import fontManager
-
-fontManager.defaultFamily = {'ttf': 'Arial', 'afm': 'Arial'}
+try:
+    from kiva.fonttools.font_manager import fontManager
+    fontManager.defaultFamily = {'ttf': 'Arial', 'afm': 'Arial'}
+except ImportError:
+    pass
 
 PLUSMINUS = '\N{Plus-minus sign}'
 SIGMA = '\N{Greek Small Letter Sigma}'
 LAMBDA = '\u03BB'
+DELTA = '\N{Greek Capital Letter Delta}'
 
 PLUSMINUS_NSIGMA = '{}{{}}{}'.format(PLUSMINUS, SIGMA)
 PLUSMINUS_ONE_SIGMA = PLUSMINUS_NSIGMA.format(1)
 PLUSMINUS_TWO_SIGMA = PLUSMINUS_NSIGMA.format(2)
 PLUSMINUS_PERCENT = '{}%  '.format(PLUSMINUS)
-
 SPECIAL_IDENTIFIER = 'Special Identifier'
 NULL_STR = '---'
 LINE_STR = '---------'
-SCRIPT_KEYS = ['measurement', 'post_measurement', 'extraction', 'post_equilibration']
+TOP = 'Top'
+BOTTOM = 'Bottom'
+AUTO_SCROLL_KINDS = (NULL_STR, TOP, BOTTOM)
+
+MEASUREMENT = 'measurement'
+POST_MEASUREMENT = 'post_measurement'
+POST_EQUILIBRATION = 'post_equilibration'
+EXTRACTION = 'extraction'
+EM_SCRIPT_KEYS = (EXTRACTION, MEASUREMENT)
+SCRIPT_KEYS = [MEASUREMENT, POST_MEASUREMENT, EXTRACTION, POST_EQUILIBRATION]
+
 SCRIPT_NAMES = ['{}_script'.format(si) for si in SCRIPT_KEYS]
 
 SD = 'SD'
@@ -111,8 +122,15 @@ WEIGHTINGS = (NULL_STR, 'Volume', 'Variance')
 INVALID_MSWD_CHR = '*'
 
 
-def format_mswd(m, v, n=3):
-    return '{}{}'.format('' if v else INVALID_MSWD_CHR, floatfmt(m, n=n))
+def format_mswd(m, v, n=3, include_tag=False):
+    tag = ''
+    if include_tag:
+        if isinstance(include_tag, str):
+            tag = include_tag
+        else:
+            tag = 'MSWD='
+
+    return '{}{}{}'.format(tag, '' if v else INVALID_MSWD_CHR, floatfmt(m, n=n))
 
 
 DELIMITERS = {',': 'comma', '\t': 'tab', ' ': 'space'}
@@ -151,6 +169,7 @@ MAIN = 'Main'
 APPEARANCE = 'Appearance'
 DISPLAY = 'Display'
 GROUPS = 'Groups'
+CALCULATIONS = 'Calculations'
 
 INTERFERENCE_KEYS = ('K4039', 'K3839', 'K3739', 'Ca3937', 'Ca3837', 'Ca3637', 'Cl3638')
 RATIO_KEYS = ('Ca_K', 'Cl_K')
@@ -230,7 +249,7 @@ if paths.setup_dir:
     flux_constants = os.path.join(paths.setup_dir, 'flux_constants.yaml')
     if os.path.isfile(flux_constants):
         with open(flux_constants, 'r') as rf:
-            obj = yaml.load(rf)
+            obj = yload(rf)
             try:
                 FLUX_CONSTANTS.update(obj)
             except BaseException:
@@ -242,7 +261,7 @@ QTEGRA_SOURCE_KEYS = ('extraction_lens', 'ysymmetry', 'zsymmetry', 'zfocus')
 QTEGRA_SOURCE_NAMES = ('ExtractionLens', 'Y-Symmetry', 'Z-Symmetry', 'Z-Focus')
 
 BLANKS = ['Blank Unknown', 'Blank Air', 'Blank Cocktail', 'Blank']
-REFERENCE_ANALYSIS_TYPES = ['Air', 'Cocktail']
+REFERENCE_ANALYSIS_TYPES = ['Air', 'Cocktail', 'IC']
 ANALYSIS_TYPES = ['Unknown'] + REFERENCE_ANALYSIS_TYPES + BLANKS
 
 DEFAULT_MONITOR_NAME = 'FC-2'

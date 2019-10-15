@@ -307,7 +307,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     def load_principal_investigators(self):
         self.debug('load principal investigators')
         db = self.db
-        ps = db.get_principal_investigators(order='asc', verbose_query=True)
+        ps = db.get_principal_investigators(order='asc')
         self.debug('n pis={}'.format(len(ps)))
         if ps:
             self.principal_investigators = [PrincipalInvestigatorRecordView(p) for p in ps]
@@ -317,9 +317,6 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         db = self.db
         gs = db.get_analysis_groups([p.unique_id for p in projects])
         return gs
-
-        # grps = [AnalysisGroupRecordView(gi) for gi in gs]
-        # return grps
 
     def do_filter(self):
         self._filter_by_hook()

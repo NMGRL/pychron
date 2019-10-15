@@ -16,24 +16,22 @@
 
 # ============= enthought library imports =======================
 
-# ============= standard library imports ========================
-
 # ============= local library imports  ==========================
-from __future__ import absolute_import
+import time
+
+# ============= standard library imports ========================
+from traits.api import Bool
+
 from pychron.hardware.core.core_device import CoreDevice
 
 
 class GPActuator(CoreDevice):
+    invert = Bool(False)
 
-    def get_owners_word(self):
-        pass
+    def load_additional_args(self, config, **kw):
+        self.set_attribute(config, 'invert', 'General', 'invert', cast='boolean')
+        return True
 
-    def get_state_word(self, *args, **kw):
-        pass
-
-    def get_lock_word(self, *args, **kw):
-        pass
-    
     def get_lock_state(self, *args, **kw):
         pass
 
@@ -45,13 +43,44 @@ class GPActuator(CoreDevice):
         """
         raise NotImplementedError
 
-    def open_channel(self, *args, **kw):
+    def close_channel(self, obj, excl=False):
         """
-        """
-        raise NotImplementedError
+            Close the channel
+            obj: valve object
 
-    def close_channel(self, *args, **kw):
+            return True if actuation completed successfully
         """
+        return self.actuate(obj, 'Close')
+
+    def open_channel(self, obj):
         """
+            Open the channel
+            obj: valve object
+
+            return True if actuation completed successfully
+        """
+        return self.actuate(obj, 'Open')
+
+    def actuate(self, obj, action):
+        if self._actuate(obj, action):
+            return self._check_actuate(obj, action)
+
+    def _check_actuate(self, obj, action):
+        if not obj.check_actuation_enabled:
+            return True
+
+        if obj.check_actuation_delay:
+            time.sleep(obj.check_actuation_delay)
+
+        # state = action == 'Open'
+        result = self.get_indicator_state(obj, action)
+        self.debug('check actuate action={}, result={}'.format(action, result))
+
+        if action == 'Close':
+            result = not result
+
+        return result
+
+    def _actuate(self, obj, action):
         raise NotImplementedError
 # ============= EOF ====================================

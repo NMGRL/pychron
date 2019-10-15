@@ -16,9 +16,11 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import HasTraits, List, Int, Property, Str
-from traitsui.api import Controller, View, UItem, TabularEditor, VGroup
 
+from traits.api import HasTraits, List, Int, Property, Str
+from traitsui.api import Controller, View, UItem, TabularEditor
+
+from pychron.core.pychron_traits import BorderVGroup
 from pychron.entry.irradiated_position import IrradiatedPositionAdapter
 
 
@@ -51,10 +53,9 @@ class IrradiationStatusModel(HasTraits):
 
 class IrradiationStatusView(Controller):
     def traits_view(self):
-        v = View(VGroup(UItem('filtered_positions',
-                              editor=TabularEditor(adapter=IrradiatedPositionAdapter())),
-                        show_border=True,
-                        label='Non Analyzed Positions'),
+        v = View(BorderVGroup(UItem('filtered_positions',
+                                    editor=TabularEditor(adapter=IrradiatedPositionAdapter())),
+                              label='Non Analyzed Positions'),
                  resizable=True,
                  kind='modal',
                  buttons=['OK'],

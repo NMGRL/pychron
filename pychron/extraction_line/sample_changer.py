@@ -16,18 +16,21 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import os
 import time
 
 from traits.api import Str, Any, Bool, Dict, List
 from traitsui.api import View, Item, EnumEditor
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-import yaml
+from pychron.core.yaml import yload
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR
+
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 class SampleChanger(Loggable):
@@ -209,8 +212,8 @@ class SampleChanger(Loggable):
     def _get_rules(self):
         path = os.path.join(paths.scripts_dir, 'sample_change_rules.yaml')
         if os.path.isfile(path):
-            with open(path, 'r') as rfile:
-                return yaml.load(rfile)
+            return yload(path)
+
         else:
             self.warning_dialog('No sample change rules defined at {}. \n\n'
                                 'Please see documentation for appropriate file format'.format(path))

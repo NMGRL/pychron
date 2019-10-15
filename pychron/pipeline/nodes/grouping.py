@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
+import os
 from operator import attrgetter
 
 from numpy import array, array_split
@@ -22,6 +22,7 @@ from traits.api import Str, Enum
 from traitsui.api import UItem, EnumEditor, VGroup
 
 from pychron.core.helpers.datetime_tools import bin_timestamps
+from pychron.core.helpers.strtools import to_bool
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.pipeline.grouping import group_analyses_by_key
 from pychron.pipeline.nodes.base import BaseNode
@@ -33,12 +34,15 @@ from pychron.pychron_constants import SUBGROUPING_ATTRS, WEIGHTED_MEAN, \
 
 class GroupingNode(BaseNode):
     by_key = Str
-    keys = ('Aliquot', 'Comment', 'Identifier', 'Sample', 'Step', 'SubGroup', 'No Grouping')
+    keys = ('Aliquot', 'Comment', 'Identifier', 'Sample', 'Step', 'SubGroup',
+            'Group Name',
+            'Label Name',
+            'No Grouping')
     analysis_kind = 'unknowns'
     name = 'Grouping'
     title = 'Edit Grouping'
 
-    attribute = Enum('Group', 'Graph', 'Tab')
+    attribute = Enum('Group', 'Graph', 'Tab', 'Aux')
     # _attr = 'group_id'
     _id_func = None
 
@@ -49,6 +53,9 @@ class GroupingNode(BaseNode):
 
     def load(self, nodedict):
         self.by_key = nodedict.get('key', 'Identifier')
+        if to_bool(os.getenv('CSV_DEBUG')):
+            self.by_key = 'Group Name'
+            self.attribute = 'Aux'
 
     def _to_template(self, d):
         d['key'] = self.by_key
@@ -58,6 +65,10 @@ class GroupingNode(BaseNode):
         if key != 'No Grouping':
             if key == 'Aliquot':
                 key = 'identifier_aliquot_pair'
+            elif key == 'Group Name':
+                key = 'group'
+            elif key == 'Label Name':
+                key = 'label_name'
 
             return attrgetter(key.lower())
 
@@ -77,12 +88,12 @@ class GroupingNode(BaseNode):
 
         if self.by_key != 'No Grouping':
             key = self._generate_key()
-            items = group_analyses_by_key(unks, key=key, attr=self._attr, id_func=self._id_func,
-                                          sorting_enabled=self._sorting_enabled,
-                                          parent_group=self._parent_group)
+            group_analyses_by_key(unks, key=key, attr=self._attr, id_func=self._id_func,
+                                  sorting_enabled=self._sorting_enabled,
+                                  parent_group=self._parent_group)
 
-            setattr(state, self.analysis_kind, items)
-            setattr(self, self.analysis_kind, items)
+            setattr(state, self.analysis_kind, unks)
+            setattr(self, self.analysis_kind, unks)
 
     def _clear_grouping(self, unk):
         setattr(unk, self._attr, 0)
@@ -104,8 +115,7 @@ class GroupingNode(BaseNode):
                                     'Tab=Display groups on separate tabs'), label='To Group', show_border=True)
         v = okcancel_view(VGroup(agrp, kgrp),
                           width=300,
-                          title=self.title,
-                          )
+                          title=self.title)
         return v
 
 

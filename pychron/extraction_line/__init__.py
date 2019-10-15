@@ -15,4 +15,12 @@
 # ===============================================================================
 
 
+import logging
 
+LOG_LEVEL_NAMES = 'Normal', 'Quiet', 'Verbose', 'Verbose Debug'
+VERBOSE_DEBUG = 1
+VERBOSE = 5
+LOG_LEVELS = {'Normal': 11, 'Quiet': 21, 'Verbose': VERBOSE_DEBUG, 'Verbose Debug': VERBOSE_DEBUG}
+
+for k, v in LOG_LEVELS.items():
+    logging.addLevelName(v, k)

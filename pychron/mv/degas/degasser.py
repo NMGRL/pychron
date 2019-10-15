@@ -16,22 +16,24 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
+import os
+import time
+from threading import Event, Thread
+
+import yaml
 from chaco.plot_containers import HPlotContainer
 from enable.component_editor import ComponentEditor
-from traits.api import HasTraits, Int, Float, Instance, Range, on_trait_change, Button
-from traitsui.api import View, Item, UItem, ButtonEditor, HGroup, VGroup
-
 # ============= standard library imports ========================
 from numpy import uint8, zeros, random, uint16
 from skimage.color import gray2rgb
-from threading import Event, Thread
-import yaml
-import os
-import time
+from traits.api import Float, Instance, Range, Button
+from traitsui.api import View, Item, UItem, VGroup
 
 # ============= local library imports  ==========================
 from pychron.core.pid import PID
 from pychron.core.ui.gui import invoke_in_main_thread
+from pychron.core.yaml import yload
 from pychron.graph.graph import Graph
 from pychron.graph.stream_graph import StreamStackedGraph
 from pychron.loggable import Loggable
@@ -96,11 +98,10 @@ class Degasser(Loggable):
             self.warning('No PID degasser file located at {}'.format(p))
             return
 
-        with open(p, 'rb') as rfile:
-            jd = yaml.load(rfile)
-            if jd:
-                self.threshold = jd['threshold']
-                self.pid.load_from_obj(jd['pid'])
+        jd = yload(p)
+        if jd:
+            self.threshold = jd['threshold']
+            self.pid.load_from_obj(jd['pid'])
 
     def dump(self):
         self.debug('dump')

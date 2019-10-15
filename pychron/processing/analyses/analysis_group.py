@@ -22,6 +22,7 @@ from numpy import array, nan, average
 from traits.api import List, Property, cached_property, Str, Bool, Int, Event, Float, Any, Enum, on_trait_change
 from uncertainties import ufloat, nominal_value, std_dev
 
+from pychron.core.stats import calculate_mswd_probability
 from pychron.core.stats.core import calculate_mswd, calculate_weighted_mean, validate_mswd
 from pychron.core.utils import alphas
 from pychron.experiment.utilities.identifier import make_aliquot
@@ -185,7 +186,7 @@ class AnalysisGroup(IdeogramPlotable):
     def get_mswd_tuple(self):
         mswd = self.mswd
         valid_mswd = validate_mswd(mswd, self.nanalyses)
-        return mswd, valid_mswd, self.nanalyses
+        return mswd, valid_mswd, self.nanalyses, calculate_mswd_probability(mswd, self.nanalyses-1)
 
     def set_j_error(self, individual, mean, dirty=False):
         self.include_j_position_error = individual
@@ -238,14 +239,25 @@ class AnalysisGroup(IdeogramPlotable):
         if not self.isochron_3640:
             self.calculate_isochron_age()
 
-        mswd, v, n = 0, '', 0
+        mswd, v, n, p = 0, '', 0, 0
         reg = self.isochron_regressor
         if reg:
-            mswd, v, n = reg.mswd, reg.valid_mswd, reg.n
+            mswd, v, n, p = reg.mswd, reg.valid_mswd, reg.n, reg.mswd_pvalue
 
-        return mswd, v, n
+        return mswd, v, n, p
 
     # properties
+    @property
+    def flatlon(self):
+        r = NULL_STR
+        if self.latitude is not None and self.longitude is not None:
+            try:
+                r = '{:0.3f},{:0.3f}'.format(self.latitude, self.longitude)
+            except ValueError:
+                r = '{},{}'.format(self.latitude, self.longitude)
+
+        return r
+
     @property
     def isochron_4036(self):
         if self.isochron_3640:
@@ -529,33 +541,11 @@ class AnalysisGroup(IdeogramPlotable):
     def _calculate_integrated_age(self, ans, weighting=None):
         ret = ufloat(0, 0)
         if ans and all((not isinstance(a, InterpretedAgeGroup) for a in ans)):
-
-            rs = array([a.get_computed_value('rad40') for a in ans])
-            ks = array([a.get_computed_value('k39') for a in ans])
-
-            # sks = ks.sum()
-            # fs = rs / ks
             if weighting is None:
                 weighting = self.integrated_age_weighting
 
-            # if weighting == 'Volume':
-            #     vpercent = array([nominal_value(v) for v in ks / sks])
-            #     errs = array([std_dev(f) for f in fs])
-            #     weights = (vpercent * errs) ** 2
-            #
-            # elif weighting == 'Variance':
-            #     weights = [std_dev(f) ** -2 for f in fs]
-            #
-            # if weights is not None:
-            #     wmean, sum_weights = average([nominal_value(fi) for fi in fs], weights=weights, returned=True)
-            #     if weighting == 'Volume':
-            #         werr = sum_weights ** 0.5
-            #     else:
-            #         werr = sum_weights ** -0.5
-            #
-            #     f = ufloat(wmean, werr)
-            # else:
-            #     f = rs.sum() / sks
+            rs = array([a.get_computed_value('rad40') for a in ans])
+            ks = array([a.get_computed_value('k39') for a in ans])
             f = self._calculate_integrated_mean_error(weighting, ks, rs)
 
             j = self.j
@@ -648,7 +638,8 @@ class StepHeatAnalysisGroup(AnalysisGroup):
         return nominal_value(cum / self.total_ar39 * 100)
 
     def get_plateau_mswd_tuple(self):
-        return self.plateau_mswd, self.plateau_mswd_valid, self.nsteps
+        return self.plateau_mswd, self.plateau_mswd_valid, \
+               self.nsteps, calculate_mswd_probability(self.plateau_mswd, self.nsteps-1)
 
     def calculate_plateau(self):
         return self.plateau_age

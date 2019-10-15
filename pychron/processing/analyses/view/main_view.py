@@ -15,14 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
-from traits.api import HasTraits, Str, List, Event, Instance, Any, Property, cached_property, Unicode
-from traitsui.api import View, UItem, VGroup, HGroup
+from traits.api import HasTraits, Str, List, Event, Instance, Any, cached_property, Unicode, Property
+from traitsui.api import View, UItem, VGroup, HGroup, TabularEditor
 from uncertainties import std_dev, nominal_value, ufloat
 
 from pychron.core.helpers.formatting import floatfmt, format_percent_error
-from pychron.core.ui.tabular_editor import myTabularEditor
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.processing.analyses.view.adapters import ComputedValueTabularAdapter, \
     DetectorRatioTabularAdapter, ExtractionTabularAdapter, MeasurementTabularAdapter
 from pychron.processing.analyses.view.values import ExtractionValue, ComputedValue, MeasurementValue, DetectorRatio
@@ -220,6 +218,7 @@ class MainView(HasTraits):
             self._load_cocktail_computed(an, new_list)
             if self._corrected_enabled:
                 self._load_corrected_values(an, new_list)
+
     # def _get_isotope(self, name):
     #     return next((iso for iso in self.isotopes if iso.name == name), None)
 
@@ -307,6 +306,9 @@ class MainView(HasTraits):
         niso, diso = get_iso(n), get_iso(d)
         return niso, diso
 
+    def _set_summary_str(self, s):
+        invoke_in_main_thread(self.trait_set, summary_str=s)
+
     def _update_ratios(self):
 
         for ci in self.computed_values:
@@ -349,10 +351,12 @@ class MainView(HasTraits):
                     noncorrected = self._get_non_corrected_ratio(niso, diso)
                     v, e = nominal_value(noncorrected), std_dev(noncorrected)
                     ref = 295.5
-                    self.summary_str = u'Ar40/Ar36={} {}{}({}%) IC={:0.5f}'.format(floatfmt(v),
-                                                                                   PLUSMINUS, floatfmt(e),
-                                                                                   format_percent_error(v, e),
-                                                                                   nominal_value(noncorrected / ref))
+                    ss = u'Ar40/Ar36={} {}{}({}%) IC={:0.5f}'.format(floatfmt(v),
+                                                                     PLUSMINUS, floatfmt(e),
+                                                                     format_percent_error(v, e),
+                                                                     nominal_value(noncorrected / ref))
+
+                    self._set_summary_str(ss)
             except:
                 pass
         else:
@@ -474,11 +478,13 @@ class MainView(HasTraits):
 
             self.computed_values = cv
         else:
+            an.calculate_age(force=True)
             age = an.uage
             nage, sage = nominal_value(age), std_dev(age)
             try:
-                self.summary_str = u'Age={} {}{}({}%)'.format(floatfmt(nage), PLUSMINUS,
-                                                              floatfmt(sage), format_percent_error(nage, sage))
+                ss = u'Age={} {}{}({}%)'.format(floatfmt(nage), PLUSMINUS,
+                                                floatfmt(sage), format_percent_error(nage, sage))
+                self._set_summary_str(ss)
             except:
                 pass
 
@@ -508,18 +514,15 @@ class MainView(HasTraits):
 
     def _get_editors(self):
 
-        ceditor = myTabularEditor(adapter=self.computed_adapter,
-                                  editable=False,
-                                  drag_enabled=False,
-                                  refresh='refresh_needed')
-
-        eeditor = myTabularEditor(adapter=self.extraction_adapter,
-                                  drag_enabled=False,
+        ceditor = TabularEditor(adapter=self.computed_adapter,
                                   editable=False,
                                   refresh='refresh_needed')
 
-        meditor = myTabularEditor(adapter=self.measurement_adapter,
-                                  drag_enabled=False,
+        eeditor = TabularEditor(adapter=self.extraction_adapter,
+                                  editable=False,
+                                  refresh='refresh_needed')
+
+        meditor = TabularEditor(adapter=self.measurement_adapter,
                                   editable=False,
                                   refresh='refresh_needed')
 

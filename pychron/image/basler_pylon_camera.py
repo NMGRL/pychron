@@ -13,12 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from pychron.core.yaml import yload
+
 try:
     from pypylon import pylon, genicam
 except ImportError:
     print('failed importing basler pylon')
 
-import yaml
 import os
 
 from pychron.loggable import Loggable
@@ -119,7 +120,6 @@ class BaslerPylonCamera(Loggable):
         # self._setting_config = True
 
         if os.path.isfile(p):
-            with open(p, 'r') as rfile:
-                yd = yaml.load(rfile)
-                self.load_configuration(yd)
+            yd = yload(p)
+            self.load_configuration(yd)
         # self._setting_config = False

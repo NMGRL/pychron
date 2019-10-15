@@ -21,7 +21,7 @@ from pickle import dumps
 import six
 from pyface.qt import QtCore, QtGui
 from pyface.qt.QtGui import QHeaderView, QApplication
-from traits.api import Bool, Str, List, Any, Instance, Property, Int, HasTraits, Color, Either, Callable
+from traits.api import Bool, Str, List, Any, Instance, Property, Int, HasTraits, Color, Either, Callable, Event
 from traitsui.api import Item, TabularEditor, Handler
 from traitsui.mimedata import PyMimeData
 from traitsui.qt4.tabular_editor import TabularEditor as qtTabularEditor, \
@@ -36,10 +36,6 @@ class myTabularEditor(TabularEditor):
     key_pressed = Str
     rearranged = Str
     pasted = Str
-    autoscroll = Bool(False)
-    # copy_cache = Str
-
-    # link_copyable = Bool(True)
     pastable = Bool(True)
 
     paste_function = Str
@@ -52,10 +48,9 @@ class myTabularEditor(TabularEditor):
     row_height = Int
     mime_type = Str('pychron.tabular_item')
 
-    # scroll_to_row_hint = 'top'
-
-    # def _bgcolor_default(self):
-    #     return '#646464'
+    autoscroll = Bool(False)
+    scroll_to_bottom = Str
+    scroll_to_top = Str
 
     def _get_klass(self):
         return _TabularEditor
@@ -497,6 +492,9 @@ class _TabularEditor(qtTabularEditor):
     model = Instance(_TabularModel)
     image_size = (32, 32)
 
+    scroll_to_bottom = Event
+    scroll_to_top = Event
+
     def init(self, layout):
         factory = self.factory
 
@@ -541,7 +539,14 @@ class _TabularEditor(qtTabularEditor):
         self.sync_value(factory.right_dclicked, 'right_dclicked', 'to')
         self.sync_value(factory.column_clicked, 'column_clicked', 'to')
         self.sync_value(factory.column_right_clicked, 'column_right_clicked', 'to')
-        self.sync_value(factory.scroll_to_row, 'scroll_to_row', 'from')
+        try:
+            self.sync_value(factory.scroll_to_row, 'scroll_to_row', 'from', is_event=True)
+            self.sync_value(factory.scroll_to_bottom, 'scroll_to_bottom', 'from', is_event=True)
+            self.sync_value(factory.scroll_to_top, 'scroll_to_top', 'from', is_event=True)
+        except TypeError:
+            self.sync_value(factory.scroll_to_row, 'scroll_to_row', 'from')
+            self.sync_value(factory.scroll_to_bottom, 'scroll_to_bottom', 'from')
+            self.sync_value(factory.scroll_to_top, 'scroll_to_top', 'from')
 
         # Connect other signals as necessary
         # signal = QtCore.SIGNAL('activated(QModelIndex)')
@@ -670,10 +675,15 @@ class _TabularEditor(qtTabularEditor):
                 row = self.value.index(row)
             self.scroll_to_row = row
 
-            # def _scroll_to_row_changed(self, row):
-            #     row = min(row, self.model.rowCount(None)) - 1
-            #     super(_TabularEditor, self)._scroll_to_row_changed(0)
-            #     super(_TabularEditor, self)._scroll_to_row_changed(row)
+    def _scroll_to_row_changed(self, row):
+        super(_TabularEditor, self)._scroll_to_row_changed(0)
+        super(_TabularEditor, self)._scroll_to_row_changed(row)
+
+    def _scroll_to_bottom_changed(self):
+        self.control.scrollToBottom()
+
+    def _scroll_to_top_changed(self):
+        self.control.scrollToTop()
 
 # ============= EOF =============================================
 # def _paste(self):

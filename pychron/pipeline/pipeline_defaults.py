@@ -92,6 +92,7 @@ CSV_IDEO = """
 required:
 nodes:
   - klass: CSVNode
+  - klass: GroupingNode
   - klass: IdeogramNode
 """
 
@@ -115,6 +116,14 @@ SPEC = """
 required:
 nodes:
   - klass: UnknownNode
+  - klass: GroupingNode
+  - klass: SpectrumNode
+"""
+
+CSV_SPEC = """
+required:
+nodes:
+  - klass: CSVSpectrumNode
   - klass: GroupingNode
   - klass: SpectrumNode
 """
@@ -252,6 +261,13 @@ nodes:
   - klass: SeriesNode
 """
 
+RATIO_SERIES = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: RatioSeriesNode
+"""
+
 FLUX = """
 required:
 nodes:
@@ -327,6 +343,14 @@ required:
 nodes:
   - klass: TransferFluxMonitorMeansNode
   - klass: MassSpecFluxNode
+"""
+
+PYSCRIPT = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: GroupingNode
+  - klass: PyScriptNode
 """
 
 # ============= EOF =============================================

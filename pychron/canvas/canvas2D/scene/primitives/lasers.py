@@ -18,7 +18,12 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from __future__ import absolute_import
-from pychron.canvas.canvas2D.scene.primitives.rounded import RoundedRectangle
+
+from pychron.canvas.canvas2D.scene.primitives.rounded import RoundedRectangle, CircleStage
+
+
+class CircleLaser(CircleStage):
+    pass
 
 
 class Laser(RoundedRectangle):

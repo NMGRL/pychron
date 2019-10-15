@@ -28,7 +28,8 @@ from pychron.core.helpers.datetime_tools import make_timef
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.iterfuncs import partition
 from pychron.core.helpers.strtools import to_csv_str
-from pychron.dvc import dvc_dump, dvc_load, analysis_path, make_ref_list, get_spec_sha, get_masses, repository_path
+from pychron.dvc import dvc_dump, dvc_load, analysis_path, make_ref_list, get_spec_sha, get_masses, repository_path, \
+    AnalysisNotAnvailableError
 from pychron.experiment.utilities.environmentals import set_environmentals
 from pychron.experiment.utilities.identifier import make_aliquot_step, make_step
 from pychron.processing.analyses.analysis import Analysis
@@ -70,6 +71,9 @@ class DVCAnalysis(Analysis):
         path = analysis_path((uuid, record_id), repository_identifier)
         self.repository_identifier = repository_identifier
         self.rundate = datetime.datetime.now()
+
+        if path is None:
+            raise AnalysisNotAnvailableError(repository_identifier, record_id)
 
         root = os.path.dirname(path)
         bname = os.path.basename(path)
@@ -216,7 +220,6 @@ class DVCAnalysis(Analysis):
         return jd
 
     def load_raw_data(self, keys=None, n_only=False, use_name_pairs=True):
-
         path = self._analysis_path(modifier='.data')
 
         jd = dvc_load(path)
@@ -243,12 +246,16 @@ class DVCAnalysis(Analysis):
             if not iso:
                 continue
 
-            iso.unpack_data(format_blob(sd.get('blob', '')), n_only)
+            blob = sd.get('blob')
+            if blob:
+                iso.unpack_data(format_blob(blob), n_only)
 
             # det = sd['detector']
             bd = next((b for b in baselines if b.get('detector') == det), None)
             if bd:
-                iso.baseline.unpack_data(format_blob(bd.get('blob', '')), n_only)
+                blob = bd.get('blob')
+                if blob:
+                    iso.baseline.unpack_data(format_blob(blob), n_only)
 
         # loop thru keys to make sure none were missed this can happen when only loading baseline
         if keys:
@@ -257,7 +264,9 @@ class DVCAnalysis(Analysis):
                 if bd:
                     for iso in self.itervalues():
                         if iso.detector == k:
-                            iso.baseline.unpack_data(format_blob(bd.get('blob', '')), n_only)
+                            blob = bd.get('blob')
+                            if blob:
+                                iso.baseline.unpack_data(format_blob(blob), n_only)
 
         for sn in sniffs:
             isok = sn.get('isotope')
@@ -272,7 +281,11 @@ class DVCAnalysis(Analysis):
             if keys and key not in keys and isok not in keys:
                 continue
 
-            data = format_blob(sn.get('blob', ''))
+            data = None
+            blob = sn.get('blob')
+            if blob:
+                data = format_blob(blob)
+
             for iso in self.itervalues():
                 if iso.detector == det:
                     iso.sniff.unpack_data(data, n_only)

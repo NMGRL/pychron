@@ -198,7 +198,7 @@ class ExperimentEditorTask(EditorTask):
         explanation_pane.set_colors(self._assemble_state_colors())
 
         ex = self.manager.executor
-        panes = [StatsPane(model=ex.stats),
+        panes = [StatsPane(model=ex.stats, executor=ex),
                  ControlsPane(model=ex, task=self),
                  ConsolePane(model=ex),
                  LoggerPane(),

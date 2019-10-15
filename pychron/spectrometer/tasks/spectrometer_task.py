@@ -16,13 +16,16 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
+import time
+# ============= standard library imports ========================
+from threading import Thread
+
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, VSplitter
 from pyface.ui.qt4.tasks.advanced_editor_area_pane import EditorWidget
 from traits.api import Any, Instance, on_trait_change
-# ============= standard library imports ========================
-from threading import Thread
-import time
+
 # ============= local library imports  ==========================
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.tasks.editor_task import EditorTask
@@ -34,7 +37,7 @@ from pychron.spectrometer.tasks.spectrometer_panes import ControlsPane, \
 
 class SpectrometerTask(EditorTask):
     scan_manager = Any
-    name = 'Scan'
+    name = 'Spectrometer'
     id = 'pychron.spectrometer'
     _scan_editor = Instance(ScanEditor)
     tool_bars = [SToolBar(StopScanAction(), )]

@@ -401,10 +401,17 @@ class UnknownsAdapter(BaseAnalysesAdapter):
 
     def __init__(self, *args, **kw):
         super(UnknownsAdapter, self).__init__(*args, **kw)
-        self._ncolors = len(colornames)
+        # self._ncolors = len(colornames)
+
+        self.set_colors(colornames)
+
+    def set_colors(self, colors):
+        self._colors = colors
+        self._ncolors = len(colors)
 
     def get_menu(self, obj, trait, row, column):
         grp = MenuManager(Action(name='Group Selected', action='unknowns_group_by_selected'),
+                          Action(name='Aux Group Selected', action='unknowns_aux_group_by_selected'),
                           Action(name='Group by Sample', action='unknowns_group_by_sample'),
                           Action(name='Group by Aliquot', action='unknowns_group_by_aliquot'),
                           Action(name='Group by Identifier', action='unknowns_group_by_identifier'),
@@ -455,15 +462,14 @@ class UnknownsAdapter(BaseAnalysesAdapter):
 
     def get_text_color(self, obj, trait, row, column=0):
         color = 'black'
-
-        gid = getattr(obj, trait)[row].group_id
-
+        item = getattr(obj, trait)[row]
+        gid = item.group_id or item.aux_id
         cid = gid % self._ncolors if self._ncolors else 0
+
         try:
-            color = colornames[cid]
+            color = self._colors[cid]
         except IndexError:
             pass
-
         return color
 
 
@@ -501,11 +507,15 @@ class AnalysesPaneHandler(Handler):
 
     def unknowns_graph_group_by_selected(self, info, obj):
         obj = info.ui.context['object']
-        obj.unknowns_graph_group_by_selected()
+        obj.group_selected('graph_id')
 
     def unknowns_group_by_selected(self, info, obj):
         obj = info.ui.context['object']
-        obj.unknowns_group_by_selected()
+        obj.group_selected('group_id')
+
+    def unknowns_aux_group_by_selected(self, info, obj):
+        obj = info.ui.context['object']
+        obj.group_selected('aux_id')
 
     def unknowns_clear_grouping(self, info, obj):
         obj = info.ui.context['object']

@@ -14,20 +14,22 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+import ast
+# ============= standard library imports ========================
+import os
+
 from traits.api import Str, Property, Button, cached_property, \
     String, HasTraits, Event, List, Bool
 from traitsui.api import View, HGroup, Label, spring, UItem
-# ============= standard library imports ========================
-import os
-import yaml
-import ast
+
+from pychron.core.helpers.filetools import list_directory, add_extension, remove_extension
 # ============= local library imports  ==========================
 from pychron.core.ui.enum_editor import myEnumEditor
-from pychron.core.helpers.filetools import list_directory, add_extension, remove_extension
+from pychron.core.yaml import yload
 from pychron.experiment.script.options_editor import OptionsEditor
+from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR
-from pychron.loggable import Loggable
 
 
 class ScriptOptions(HasTraits):
@@ -92,7 +94,7 @@ class Script(Loggable):
                 m = ast.parse(text)
             docstr = ast.get_docstring(m)
             if docstr is not None:
-                params = yaml.load(docstr)
+                params = yload(docstr)
                 try:
                     return params[key]
                 except KeyError:
@@ -103,8 +105,9 @@ class Script(Loggable):
         return default
 
     def script_path(self):
+        name = self.name
         if self.name_prefix:
-            name = '{}{}'.format(self.name_prefix, self.name)
+            name = '{}{}'.format(self.name_prefix, name)
 
         name = add_extension(name, '.py')
         p = os.path.join(self._get_root(), name)

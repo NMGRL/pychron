@@ -14,21 +14,23 @@
 # limitations under the License.
 # ===============================================================================
 from __future__ import absolute_import
+
 import os
 
 import yaml
 from numpy import array
+from six.moves import map
+from six.moves import zip
 from traits.api import Float, Button, Property, List, Instance, Bool, Event
 from traitsui.api import View, UItem, Item, HGroup, VGroup
 from uncertainties import nominal_value, std_dev
 
 from pychron.core.stats.core import calculate_weighted_mean
+from pychron.core.yaml import yload
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.graph.error_bar_overlay import ErrorBarOverlay
 from pychron.paths import paths
 from pychron.processing.analysis_graph import AnalysisStackedRegressionGraph
-from six.moves import map
-from six.moves import zip
 
 
 class YieldEditor(BaseTraitsEditor):
@@ -141,13 +143,12 @@ class YieldEditor(BaseTraitsEditor):
     def load(self):
         p = self.yield_path
         if os.path.isfile(p):
-            with open(p, 'r') as rfile:
-                yd = yaml.load(rfile)
-                key = '{}_yield'.format(self.options.ratio_str)
-                try:
-                    self.current_yield = yd[key]
-                except KeyError:
-                    pass
+            yd = yload(p)
+            key = '{}_yield'.format(self.options.ratio_str)
+            try:
+                self.current_yield = yd[key]
+            except KeyError:
+                pass
 
     @property
     def yield_path(self):

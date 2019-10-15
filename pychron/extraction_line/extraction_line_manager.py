@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
+import logging
 import time
 from socket import gethostbyname, gethostname
 from threading import Thread
@@ -21,12 +21,14 @@ from threading import Thread
 # =============enthought library imports=======================
 from apptools.preferences.preference_binding import bind_preference
 from pyface.timer.do_later import do_after
-from traits.api import Instance, List, Any, Bool, on_trait_change, Str, Int, Dict, File, Float
+from traits.api import Instance, List, Any, Bool, on_trait_change, Str, Int, Dict, File, Float, Enum
 
 from pychron.canvas.canvas_editor import CanvasEditor
 from pychron.core.file_listener import FileListener
 from pychron.core.ui.gui import invoke_in_main_thread
+from pychron.core.wait.wait_group import WaitGroup
 from pychron.envisage.consoleable import Consoleable
+from pychron.extraction_line import LOG_LEVEL_NAMES, LOG_LEVELS
 from pychron.extraction_line.explanation.extraction_line_explanation import ExtractionLineExplanation
 from pychron.extraction_line.extraction_line_canvas import ExtractionLineCanvas
 from pychron.extraction_line.graph.extraction_line_graph import ExtractionLineGraph
@@ -36,7 +38,6 @@ from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.managers.manager import Manager
 from pychron.monitors.system_monitor import SystemMonitor
 from pychron.pychron_constants import NULL_STR
-from pychron.wait.wait_group import WaitGroup
 
 
 class ExtractionLineManager(Manager, Consoleable):
@@ -78,7 +79,6 @@ class ExtractionLineManager(Manager, Consoleable):
 
     canvas_path = File
     canvas_config_path = File
-    valves_path = File
 
     use_hardware_update = Bool
     hardware_update_period = Float
@@ -93,6 +93,7 @@ class ExtractionLineManager(Manager, Consoleable):
     _monitoring_valve_status = False
 
     canvas_editor = Instance(CanvasEditor, ())
+    logging_level = Enum(LOG_LEVEL_NAMES)
 
     def set_extract_state(self, *args, **kw):
         pass
@@ -119,9 +120,9 @@ class ExtractionLineManager(Manager, Consoleable):
 
         prefid = 'pychron.extraction_line'
 
-        attrs = ('canvas_path', 'canvas_config_path', 'valves_path',
+        attrs = ('canvas_path', 'canvas_config_path',
                  'use_hardware_update', 'hardware_update_period',
-                 'check_master_owner', 'use_network')
+                 'check_master_owner', 'use_network', 'logging_level')
 
         for attr in attrs:
             try:
@@ -256,13 +257,14 @@ class ExtractionLineManager(Manager, Consoleable):
         pass
 
     def refresh_canvas(self):
-        self.debug('refresh canvas')
+        # self.debug('refresh canvas')
         for ci in self.canvases:
             ci.refresh()
 
     def finish_loading(self):
         if self.use_network:
             self.network.load(self.canvas_path)
+        self._set_logger_level(self.switch_manager)
 
     def reload_canvas(self):
         self.debug('reload canvas')
@@ -286,11 +288,12 @@ class ExtractionLineManager(Manager, Consoleable):
     def reload_scene_graph(self):
         self.info('reloading canvas scene')
         for c in self.canvases:
-            c.load_canvas_file(self.canvas_path, self.canvas_config_path, self.valves_path)
             self.canvas_editor.load(c.canvas2D, self.canvas_path)
             # c.load_canvas_file(c.config_name)
 
             if self.switch_manager:
+                c.load_canvas_file(self.canvas_path, self.canvas_config_path, self.switch_manager.valves_path)
+
                 for k, v in self.switch_manager.switches.items():
                     vc = c.get_object(k)
                     if vc:
@@ -541,6 +544,7 @@ class ExtractionLineManager(Manager, Consoleable):
     def _update(self):
         if self.use_hardware_update:
             self.switch_manager.load_hardware_states()
+            self.switch_manager.load_valve_owners()
             do_after(self.hardware_update_period * 1000, self._update)
 
     def _deactivate_hook(self):
@@ -619,7 +623,7 @@ class ExtractionLineManager(Manager, Consoleable):
 
             result = self._change_switch_state(name, mode, action, **kw)
 
-            self.debug('open_close_valve, mode={}'.format(mode))
+            self.debug('open_close_valve, mode={} result={}'.format(mode, result))
             if mode == 'script':
                 invoke_in_main_thread(self.refresh_canvas)
 
@@ -733,9 +737,21 @@ class ExtractionLineManager(Manager, Consoleable):
             else:
                 self.debug('could not create manager {}, {},{},{}'.format(klass, manager, params, kw))
 
+    def _set_logger_level(self, obj=None):
+        level = LOG_LEVELS.get(self.logging_level, logging.DEBUG)
+        getattr(obj, 'logger').setLevel(level)
+        if hasattr(obj, 'set_logger_level_hook'):
+            obj.set_logger_level_hook(level)
+
     # ===============================================================================
     # handlers
     # ===============================================================================
+    def _logging_level_changed(self, new):
+        if new:
+            self._set_logger_level(self)
+            if self.switch_manager:
+                self._set_logger_level(self.switch_manager)
+
     @on_trait_change('use_hardware_update')
     def _update_use_hardware_update(self):
         if self.use_hardware_update:
@@ -787,7 +803,7 @@ class ExtractionLineManager(Manager, Consoleable):
         self.update_switch_owned_state(*new)
 
     def _handle_refresh_canvas(self, new):
-        self.debug('refresh_canvas_needed fired')
+        # self.debug('refresh_canvas_needed fired')
         self.refresh_canvas()
 
     def _handle_console_message(self, new):
@@ -823,6 +839,9 @@ class ExtractionLineManager(Manager, Consoleable):
         vm.on_trait_change(self._handle_owned_state, 'refresh_owned_state')
         vm.on_trait_change(self._handle_refresh_canvas, 'refresh_canvas_needed')
         vm.on_trait_change(self._handle_console_message, 'console_message')
+
+        bind_preference(vm, 'valves_path', 'pychron.extraction_line.valves_path')
+
         return vm
 
     def _get_switch_manager_klass(self):

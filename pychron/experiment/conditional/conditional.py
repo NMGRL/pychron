@@ -19,13 +19,13 @@
 import os
 import pprint
 
-import yaml
 from traits.api import Str, Either, Int, Callable, Bool, Float, Enum, List
 # ============= standard library imports ========================
 from traits.trait_types import BaseStr
 from uncertainties import nominal_value, std_dev
 
 # ============= local library imports  ==========================
+from pychron.core.yaml import yload
 from pychron.experiment.conditional.regexes import MAPPER_KEY_REGEX, \
     STD_REGEX, INTERPOLATE_REGEX, EXTRACTION_STR_ABS_REGEX, EXTRACTION_STR_PERCENT_REGEX
 from pychron.experiment.conditional.utilities import tokenize, get_teststr_attr_func, extract_attr
@@ -48,42 +48,41 @@ def dictgetter(d, attrs, default=None):
 
 
 def conditionals_from_file(p, name=None, level=SYSTEM, **kw):
-    with open(p, 'r') as rfile:
-        yd = yaml.load(rfile)
-        cs = (('TruncationConditional', 'truncation', 'truncations'),
-              ('ActionConditional', 'action', 'actions'),
-              ('ActionConditional', 'action', 'post_run_actions'),
-              ('TerminationConditional', 'termination', 'terminations'),
-              ('TerminationConditional', 'pre_run_termination', 'pre_run_terminations'),
-              ('TerminationConditional', 'post_run_termination', 'post_run_terminations'),
-              ('CancelationConditional', 'cancelation', 'cancelations'))
+    yd = yload(p)
+    cs = (('TruncationConditional', 'truncation', 'truncations'),
+          ('ActionConditional', 'action', 'actions'),
+          ('ActionConditional', 'action', 'post_run_actions'),
+          ('TerminationConditional', 'termination', 'terminations'),
+          ('TerminationConditional', 'pre_run_termination', 'pre_run_terminations'),
+          ('TerminationConditional', 'post_run_termination', 'post_run_terminations'),
+          ('CancelationConditional', 'cancelation', 'cancelations'))
 
-        conddict = {}
-        for klass, _, tag in cs:
-            if name and tag != name:
-                continue
+    conddict = {}
+    for klass, _, tag in cs:
+        if name and tag != name:
+            continue
 
-            yl = yd.get(tag)
-            if not yl:
-                continue
+        yl = yd.get(tag)
+        if not yl:
+            continue
 
-            # print 'yyyy', yl
-            # var = getattr(self, '{}_conditionals'.format(var))
-            conds = [conditional_from_dict(ti, klass, level=level, location=p, **kw) for ti in yl]
-            # print 'ffff', conds
-            conds = [c for c in conds if c is not None]
-            if conds:
-                conddict[tag] = conds
+        # print 'yyyy', yl
+        # var = getattr(self, '{}_conditionals'.format(var))
+        conds = [conditional_from_dict(ti, klass, level=level, location=p, **kw) for ti in yl]
+        # print 'ffff', conds
+        conds = [c for c in conds if c is not None]
+        if conds:
+            conddict[tag] = conds
 
-                # var.extend(conds)
+            # var.extend(conds)
 
-        if name:
-            try:
-                conddict = conddict[name]
-            except KeyError:
-                conddict = None
+    if name:
+        try:
+            conddict = conddict[name]
+        except KeyError:
+            conddict = None
 
-        return conddict
+    return conddict
 
 
 def conditional_from_dict(cd, klass, level=None, location=None, **kw):

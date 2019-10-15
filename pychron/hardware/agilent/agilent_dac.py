@@ -18,15 +18,18 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traits.api import Float, Str, Int
 
-# ============= standard library imports ========================
-
 # ============= local library imports  ==========================
+from pychron.hardware.agilent.agilent_mixin import AgilentMixin
 from pychron.hardware.core.core_device import CoreDevice
 
 
-class AgilentDAC(CoreDevice):
+# ============= standard library imports ========================
+
+
+class AgilentDAC(CoreDevice, AgilentMixin):
     id_query = ''
     value = Float(0)
     slot_number = Str('1')
@@ -35,10 +38,6 @@ class AgilentDAC(CoreDevice):
 
     min_value = Float(0)
     max_value = Float(100)
-
-    def initialize(self):
-        self.communicator.terminator = chr(10)
-        return True
 
     # ===========================================================================
     # configloadable interface

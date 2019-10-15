@@ -20,12 +20,15 @@ from threading import Event, currentThread, _MainThread, Thread
 
 from pyface.api import OK, YES
 from pyface.message_dialog import MessageDialog
+from pyface.qt import QtGui
 from pyface.qt.QtCore import Qt
 from pyface.qt.QtGui import QMessageBox
 from pyface.qt.QtGui import QSizePolicy, QCheckBox
 from pyface.ui.qt4.confirmation_dialog import ConfirmationDialog
-
 # ============= local library imports  ==========================
+from pyface.ui.qt4.dialog import Dialog
+from traits.api import Str
+
 from pychron.core.ui.gui import invoke_in_main_thread
 
 
@@ -136,4 +139,29 @@ class RememberConfirmationDialog(myConfirmationDialog):
     def remember(self):
         return self.cb.checkState() == Qt.Checked
 
+
+class CustomizableDialog(Dialog):
+    message = Str
+
+    def _create_buttons(self, parent):
+        buttons = QtGui.QDialogButtonBox()
+
+        # 'OK' button.
+        if self.ok_label:
+            btn = buttons.addButton(self.ok_label,
+                                    QtGui.QDialogButtonBox.AcceptRole)
+        else:
+            btn = buttons.addButton(QtGui.QDialogButtonBox.Ok)
+
+        btn.setDefault(True)
+        btn.clicked.connect(self.control.accept)
+
+        return buttons
+
+    def _create_dialog_area(self, parent):
+        label = QtGui.QLabel()
+
+        label.setTextFormat(Qt.RichText)
+        label.setText(self.message)
+        return label
 # ============= EOF =============================================

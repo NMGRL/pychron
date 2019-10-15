@@ -53,12 +53,15 @@ class IdeogramOptions(AgeOptions):
     xlow = Float
     xhigh = Float
 
+    reverse_x_axis = Bool(False)
+
     centered_range = Float(0.5)
 
     display_mean_indicator = Bool(True)
     display_mean = Bool(True)
     display_mean_mswd = Bool(True)
     display_mean_n = Bool(True)
+    display_mswd_pvalue = Bool(True)
     display_percent_error = Bool(True)
     # display_identifier_on_mean = Bool(False)
     # display_sample_on_mean = Bool(False)
@@ -75,6 +78,7 @@ class IdeogramOptions(AgeOptions):
     asymptotic_height_percent = Float
 
     analysis_number_sorting = Enum('Oldest @Top', 'Youngest @Top')
+    global_analysis_number_sorting = Bool(True)
 
     mean_indicator_font = Property
     mean_indicator_fontname = Enum(*FONTS)
@@ -89,6 +93,8 @@ class IdeogramOptions(AgeOptions):
 
     group_options_klass = IdeogramGroupOptions
 
+    include_group_legend = Bool(True)
+    group_legend_label_attribute = Enum('Group', 'Label Name', 'Sample', 'Aliquot')
     _use_centered_range = Bool
     _use_asymptotic_limits = Bool
     _suppress_xlimits_clear = Bool
@@ -99,10 +105,10 @@ class IdeogramOptions(AgeOptions):
     def to_dict(self):
         d = super(IdeogramOptions, self).to_dict()
         aux_plots = self.to_dict_aux_plots()
-        groups = self.to_dict_groups()
+        # groups = self.to_dict_groups()
 
         d['aux_plots'] = aux_plots
-        d['groups'] = groups
+        # d['groups'] = groups
         return d
 
     def to_dict_aux_plots(self):
@@ -138,6 +144,11 @@ class IdeogramOptions(AgeOptions):
             color.setAlphaF(fg.alpha * 0.01)
             d['fill_color'] = color
             d['type'] = 'filled_line'
+
+        if fg.marker_non_default():
+            d['marker'] = fg.marker
+        if fg.marker_size_non_default():
+            d['marker_size'] = fg.marker_size
 
         return d
 
@@ -186,7 +197,7 @@ class IdeogramOptions(AgeOptions):
             ap.clear_ylimits()
 
     def _edit_label_format_button_fired(self):
-        from pychron.processing.label_maker import LabelTemplater, LabelTemplateView
+        from pychron.options.label_maker import LabelTemplater, LabelTemplateView
 
         lm = LabelTemplater(label=self.analysis_label_display)
         lv = LabelTemplateView(model=lm)
@@ -197,7 +208,7 @@ class IdeogramOptions(AgeOptions):
             # self.refresh_plot_needed = True
 
     def _edit_mean_format_button_fired(self):
-        from pychron.processing.label_maker import MeanLabelTemplater, MeanLabelTemplateView
+        from pychron.options.label_maker import MeanLabelTemplater, MeanLabelTemplateView
 
         lm = MeanLabelTemplater(label=self.mean_label_display)
         lv = MeanLabelTemplateView(model=lm)

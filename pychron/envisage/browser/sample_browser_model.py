@@ -316,14 +316,15 @@ class SampleBrowserModel(BrowserModel):
         if not self.available_mass_spectrometers:
             self._load_mass_spectrometers()
 
-        v = RecentView(mass_spectrometers=self.available_mass_spectrometers)
+        v = RecentView(available_mass_spectrometers=self.available_mass_spectrometers,
+                       use_mass_spectrometers=len(self.available_analysis_types) > 1)
         v.load()
         info = v.edit_traits()
         if info.result:
             v.dump()
             now = datetime.now()
             lp = now - timedelta(hours=v.nhours)
-            ls = self.db.get_labnumbers(mass_spectrometers=v.mass_spectrometer,
+            ls = self.db.get_labnumbers(mass_spectrometers=v.mass_spectrometers if v.use_mass_spectrometers else None,
                                         analysis_types=v.analysis_types,
                                         high_post=now,
                                         low_post=lp,
@@ -334,8 +335,12 @@ class SampleBrowserModel(BrowserModel):
                 self.samples = sams
                 self.osamples = sams
 
-                xx = self._get_analysis_series(lp, now, v.mass_spectrometer, analysis_types=v.analysis_types)
+                xx = self._get_analysis_series(lp, now, v.mass_spectrometers, analysis_types=v.analysis_types)
                 self.analysis_table.set_analyses(xx)
+            else:
+                self.samples = []
+                self.osamples = []
+                self.analysis_table.clear()
 
     def _find_references_hook(self):
         ans = self.analysis_table.analyses

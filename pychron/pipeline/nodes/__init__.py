@@ -22,7 +22,7 @@ from pychron.pipeline.nodes.audit import AuditNode
 from pychron.pipeline.nodes.bulk_edit import BulkEditNode
 from pychron.pipeline.nodes.correction_factors import CaCorrectionFactorsNode, KCorrectionFactorsNode
 from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode, FluxMonitorsNode, ListenUnknownNode, CSVNode, \
-    InterpretedAgeNode, CalendarUnknownNode
+    InterpretedAgeNode, CalendarUnknownNode, CSVSpectrumNode
 from pychron.pipeline.nodes.detector_yield import YieldNode
 from pychron.pipeline.nodes.diff import DiffNode
 from pychron.pipeline.nodes.dvc_history import DVCHistoryNode
@@ -30,7 +30,7 @@ from pychron.pipeline.nodes.email_node import EmailNode
 from pychron.pipeline.nodes.export import CSVAnalysesExportNode, CSVRawDataExportNode
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, SeriesNode, InverseIsochronNode, \
     VerticalFluxNode, XYScatterNode, RadialNode, RegressionSeriesNode, HistoryIdeogramNode, FluxVisualizationNode, \
-    CompositeNode
+    CompositeNode, RatioSeriesNode
 from pychron.pipeline.nodes.filter import FilterNode, MSWDFilterNode
 from pychron.pipeline.nodes.find import FindReferencesNode, FindFluxMonitorsNode, FindVerticalFluxNode, \
     FindBlanksNode, FindRepositoryAnalysesNode, FindFluxMonitorMeansNode, TransferFluxMonitorMeansNode
@@ -48,6 +48,7 @@ from pychron.pipeline.nodes.persist import DVCPersistNode, PDFFigureNode, \
 from pychron.pipeline.nodes.push import PushNode
 from pychron.pipeline.nodes.report import ReportNode
 from pychron.pipeline.nodes.review import ReviewNode
+from pychron.pipeline.nodes.scripting import PyScriptNode
 from pychron.pipeline.nodes.table import InterpretedAgeTableNode, GroupAnalysisTableNode, SubGroupAnalysisTableNode
 
 

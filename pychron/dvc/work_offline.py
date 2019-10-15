@@ -116,7 +116,7 @@ class WorkOffline(Loggable):
         apath = None
         # create dvc archive
         if self.confirmation_dialog('Create shareable archive'):
-            dialog = FileDialog(action='save as', default_directory=paths.hops_dir)
+            dialog = FileDialog(action='save as', default_directory=paths.data_dir)
             if dialog.open() == OK:
                 apath = dialog.path
 
@@ -131,10 +131,10 @@ class WorkOffline(Loggable):
                            'database': dbfile.read()}
                 yaml.dump(ctx, wfile, encoding='utf-8')
 
-        msg = 'Would you like to switch to the offline database?'
-        if self.confirmation_dialog(msg):
-            # update DVC preferences
-            self._update_preferences()
+        # msg = 'Would you like to switch to the offline database?'
+        # if self.confirmation_dialog(msg):
+        #     # update DVC preferences
+        #     self._update_preferences()
 
     def _clone_repositories(self):
         self.debug('clone repositories')

@@ -15,10 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import Directory, Bool, String, Float, Int, Str, Property
+from traits.api import Directory, Bool, String, Float, Int, Str, Property, Enum
 from traits.traits import Color
 from traitsui.api import View, Item, VGroup
 
@@ -26,6 +24,7 @@ from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.envisage.tasks.base_preferences_helper import GitRepoPreferencesHelper, remote_status_item, \
     BasePreferencesHelper
 from pychron.envisage.user_login import get_usernames
+from pychron.pychron_constants import AUTO_SCROLL_KINDS
 
 
 class GeneralPreferences(GitRepoPreferencesHelper):
@@ -105,6 +104,7 @@ class BrowserPreferences(BasePreferencesHelper):
     air_color = Color
     use_analysis_colors = Bool
     one_selected_is_all = Bool
+    auto_scroll_kind = Enum(AUTO_SCROLL_KINDS)
 
 
 class BrowserPreferencesPane(PreferencesPane):
@@ -139,6 +139,7 @@ class BrowserPreferencesPane(PreferencesPane):
                       tooltip='Maximum number of analysis sets to maintain'),
                  Item('one_selected_is_all', tooltip='If enabled and only one analysis is selected pychron assumes '
                                                      'you actually want the entire dataset'),
+                 Item('auto_scroll_kind', label='AutoScroll'),
                  acgrp, load_grp)
         return v
 

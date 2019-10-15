@@ -17,19 +17,19 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
-from traits.api import HasTraits, Dict, Bool
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 
+from traits.api import HasTraits, Dict, Bool
+
+from pychron.canvas.canvas2D.scene.canvas_parser import CanvasParser, get_volume
+from pychron.canvas.canvas2D.scene.primitives.valves import Valve
 from pychron.extraction_line.graph.nodes import ValveNode, RootNode, \
     PumpNode, Edge, SpectrometerNode, LaserNode, TankNode, PipetteNode, \
     GaugeNode, GetterNode
-
-from pychron.canvas.canvas2D.scene.primitives.valves import Valve
-
-from pychron.canvas.canvas2D.scene.canvas_parser import CanvasParser, get_volume
 from pychron.extraction_line.graph.traverse import bft
-import six
+
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 def split_graph(n):
@@ -49,7 +49,7 @@ def split_graph(n):
             return []
 
         # ensure first node is a Valve node otherwise states not set correctly
-        #see issue #335
+        # see issue #335
         if not isinstance(n1, ValveNode):
             return n2, n1
         else:
@@ -79,6 +79,7 @@ class ExtractionLineGraph(HasTraits):
         # =======================================================================
         # load roots
         for t, klass in (('stage', RootNode),
+                         ('circle_stage', RootNode),
                          ('spectrometer', SpectrometerNode),
                          ('valve', ValveNode),
                          ('rough_valve', ValveNode),
@@ -86,6 +87,7 @@ class ExtractionLineGraph(HasTraits):
                          ('turbo', PumpNode),
                          ('ionpump', PumpNode),
                          ('laser', LaserNode),
+                         ('circle_laser', LaserNode),
                          ('tank', TankNode),
                          ('pipette', PipetteNode),
                          ('gauge', GaugeNode),
@@ -105,7 +107,7 @@ class ExtractionLineGraph(HasTraits):
         # =======================================================================
         # load edges
         # =======================================================================
-        for tag in ('connection','elbow'):
+        for tag in ('connection', 'elbow'):
             for ei in cp.get_elements(tag):
                 sa = ei.find('start')
                 ea = ei.find('end')
@@ -193,13 +195,13 @@ class ExtractionLineGraph(HasTraits):
         if n:
             if n.state == 'closed' and not n.visited:
                 n.visited = True
-                # print 'splitting on {}'.format(n.name)
-                #print ','.join([x.name for x in split_graph(n)])
+                # print('splitting on {}'.format(n.name))
+                # print(','.join([x.name for x in split_graph(n)]))
                 for ni in split_graph(n):
                     self._set_state(ni, scene)
             else:
                 state, term = self._find_max_state(n)
-                # print state, term, n.__class__.__name__, n.name
+                # print(state, term, n.__class__.__name__, n.name)
                 self.fill(scene, n, state, term)
                 self._clear_fvisited()
 
@@ -213,7 +215,7 @@ class ExtractionLineGraph(HasTraits):
         if node.state == 'closed':
             nodes = split_graph(node)
         else:
-            nodes = (node, )
+            nodes = (node,)
 
         vs = [(ni.name, self._calculate_volume(ni)) for ni in nodes]
         self._clear_fvisited()
@@ -356,10 +358,10 @@ if __name__ == '__main__':
     # elg.set_canvas_states('D')
     # print 'exception', elg.calculate_volumes('Obama')
     # print 'exception', elg.calculate_volumes('Bone')
-    #state, root = elg.set_valve_state('H', True)
-    #state, root = elg.set_valve_state('H', False)
+    # state, root = elg.set_valve_state('H', True)
+    # state, root = elg.set_valve_state('H', False)
 
-    #print '-------------------------------'
-    #print state, root
+    # print '-------------------------------'
+    # print state, root
 
 # ============= EOF =============================================

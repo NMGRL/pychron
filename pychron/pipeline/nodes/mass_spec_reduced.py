@@ -83,18 +83,26 @@ class MassSpecReducedNode(BaseMassSpecNode):
         return v
 
     def run(self, state):
-        if self.recaller.connect():
+        if self.recaller:
+            if self.recaller.connect():
 
-            self.dvc.create_session()
-            for repo, unks in groupby_repo(state.unknowns):
-                self.dvc.pull_repository(repo)
-                self._paths = []
+                self.dvc.create_session()
+                for repo, unks in groupby_repo(state.unknowns):
+                    self.dvc.pull_repository(repo)
+                    self._paths = []
 
-                # freeze flux
-                unks = list(unks)
-                self._freeze_flux(repo, unks)
-                self._import_reduced(unks)
-                self._save(repo)
+                    # freeze flux
+                    unks = list(unks)
+                    self._freeze_flux(repo, unks)
+                    self._import_reduced(unks)
+                    self._save(repo)
+                    return
+
+            state.veto_message = self.recaller.db.connection_error
+        else:
+            state.veto_message = 'Mass Spec access not enabled'
+
+        state.veto = self
 
     def _freeze_flux(self, repo, unks):
         """

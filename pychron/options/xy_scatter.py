@@ -19,13 +19,13 @@ from traits.api import Str, List, Bool
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.options.aux_plot import AuxPlot
+from pychron.options.fit import FitAuxPlot
 from pychron.options.options import AuxPlotFigureOptions
 from pychron.options.views.xy_scatter_views import VIEWS
-from pychron.pychron_constants import MAIN, APPEARANCE
+from pychron.pychron_constants import MAIN, APPEARANCE, SERIES_FIT_TYPES
 
 
-class XYScatterAuxPlot(AuxPlot):
+class XYScatterAuxPlot(FitAuxPlot):
     y_n = Str
     y_d = Str
     x_n = Str
@@ -34,6 +34,8 @@ class XYScatterAuxPlot(AuxPlot):
     x_key = Str
     y_key = Str
     available_names = List
+    def _get_fit_types(self):
+        return SERIES_FIT_TYPES
 
     def _make_ratio(self, axis):
         d = getattr(self, '{}_d'.format(axis))
@@ -65,7 +67,7 @@ class XYScatterAuxPlot(AuxPlot):
         if name == 'TimeSeries':
             r = 'Time (hrs)'
         elif name == 'Ratio':
-            self._make_ratio('x')
+            r = self._make_ratio('x')
         elif name == 'Scatter':
             r = self.x_key
 

@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from __future__ import absolute_import
+from numpy import array
 
 # ============= local library imports  ==========================
 from pychron.graph.ticks import IntTickGenerator
@@ -30,12 +30,16 @@ class VerticalFlux(BaseArArFigure):
         gen = IntTickGenerator()
         pp.y_axis.tick_generator = gen
         pp.y_grid.tick_generator = gen
-        self.graph.set_x_title('J')
+        self.graph.set_x_title(self.options.x_title)
+
+    def post_make(self):
+        self.graph.set_x_limits(min_=self.xmi, max_=self.xma, pad='0.1')
 
     def plot(self, plots, legend=None):
         g = self.graph
 
         js, es, zs = self._gather_data()
+
         s, _ = g.new_series(js, zs,
                             marker='circle',
                             type='scatter')
@@ -44,13 +48,15 @@ class VerticalFlux(BaseArArFigure):
 
         g.set_y_limits(pad='0.1')
 
-        self.xma = max(js)
-        self.xmi = min(js)
-        self.xpad = '0.1'
+        # g.set_x_limits()
+        es2 = es*2
+        self.xma = max(js+es2)
+        self.xmi = min(js-es2)
+        # self.xpad = '0.1'
 
     def _gather_data(self):
 
-        return zip(*[(i.j, i.j_err, i.z) for i in self.items])
+        return array([(i.j, i.j_err, i.z) for i in self.items]).T
 
         # js, es, zs = [], [], []
         # for i in self.items:

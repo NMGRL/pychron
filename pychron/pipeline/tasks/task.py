@@ -36,7 +36,6 @@ from pychron.pipeline.nodes.figure import FigureNode
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.interpreted_age_editor import InterpretedAgeEditor
 from pychron.pipeline.save_figure import SaveFigureView, SaveFigureModel
-from pychron.pipeline.script import DataReductionScript
 from pychron.pipeline.state import EngineState
 from pychron.pipeline.tasks.actions import RunAction, ResumeAction, ResetAction, \
     ConfigureRecallAction, TagAction, SetInterpretedAgeAction, ClearAction, SavePDFAction, SetInvalidAction, \
@@ -122,9 +121,11 @@ class PipelineTask(BaseBrowserTask):
         super(PipelineTask, self).prepare_destroy()
 
     def create_dock_panes(self):
+        self.analyses_pane = AnalysesPane(model=self.engine)
 
         panes = [PipelinePane(model=self.engine),
-                 AnalysesPane(model=self.engine),
+
+                 self.analyses_pane,
                  RepositoryPane(model=self.engine),
                  EditorOptionsPane(model=self)]
         return panes
@@ -134,12 +135,12 @@ class PipelineTask(BaseBrowserTask):
         self.engine.identify_peaks(ps)
 
     # toolbar actions
-    def run_script(self):
-        path = self.open_file_dialog()
-        if path is not None:
-            script = DataReductionScript()
-            script.dvc = self.dvc
-            script.run(path)
+    # def run_script(self):
+    #     path = self.open_file_dialog()
+    #     if path is not None:
+    #         script = DataReductionScript()
+    #         script.dvc = self.dvc
+    #         script.run(path)
 
     def diff_analysis(self):
         self.debug('diff analysis')
@@ -292,7 +293,7 @@ class PipelineTask(BaseBrowserTask):
             return
 
         ed = self.active_editor
-        if isinstance(ed, FigureEditor):
+        if isinstance(ed, InterpretedAgeEditor):
             from pychron.pipeline.tables.xlsx_table_options import XLSXAnalysisTableWriterOptions
             from pychron.pipeline.tables.xlsx_table_writer import XLSXAnalysisTableWriter
 
@@ -580,6 +581,10 @@ class PipelineTask(BaseBrowserTask):
     def _active_editor_changed(self, new):
         if new:
             self.engine.select_node_by_editor(new)
+            if isinstance(new, FigureEditor):
+                if hasattr(new.plotter_options, 'get_group_colors'):
+                    self.analyses_pane.unknowns_adapter.set_colors(new.plotter_options.get_group_colors())
+                    self.engine.refresh_table_needed = True
 
         self.set_interpreted_enabled = isinstance(new, InterpretedAgeEditor)
         if hasattr(new, 'editor_options'):

@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 # ============= standard library imports ========================
 import os
 
@@ -25,22 +23,22 @@ from traits.api import Dict
 
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.scene.canvas_parser import get_volume
-from pychron.canvas.canvas2D.scene.primitives.connections import Tee, Fork, Elbow
-from pychron.canvas.canvas2D.scene.primitives.lasers import Laser
+from pychron.canvas.canvas2D.scene.primitives.connections import Tee, Fork, Elbow, Connection
+from pychron.canvas.canvas2D.scene.primitives.lasers import Laser, CircleLaser
 from pychron.canvas.canvas2D.scene.primitives.primitives import Label, BorderLine, Line, Image, ValueLabel
 from pychron.canvas.canvas2D.scene.primitives.pumps import Turbo
-from pychron.canvas.canvas2D.scene.primitives.rounded import RoundedRectangle
+from pychron.canvas.canvas2D.scene.primitives.rounded import RoundedRectangle, CircleStage
 from pychron.canvas.canvas2D.scene.primitives.valves import RoughValve, Valve, Switch, ManualSwitch
 from pychron.canvas.canvas2D.scene.scene import Scene
 from pychron.core.helpers.strtools import to_bool
 from pychron.extraction_line.switch_parser import SwitchParser
 from pychron.paths import paths
 
-KLASS_MAP = {'turbo': Turbo, 'laser': Laser}
+KLASS_MAP = {'turbo': Turbo, 'laser': Laser, 'circle_stage': CircleStage, 'circle_laser': CircleLaser}
 
 RECT_TAGS = ('stage', 'laser', 'spectrometer',
              'turbo', 'getter', 'tank',
-             'ionpump', 'gauge', 'rectangle')
+             'ionpump', 'gauge', 'rectangle', 'circle_stage', 'circle_laser')
 
 SWITCH_TAGS = ('switch', 'valve', 'rough_valve', 'manual_valve')
 
@@ -113,7 +111,11 @@ class ExtractionLineScene(Scene):
         else:
             ox, oy = origin
 
-        key = elem.text.strip()
+        try:
+            key = elem.text.strip()
+        except AttributeError:
+            key = ''
+
         display_name = elem.get('display_name', key)
         # print key, display_name
         fill = to_bool(elem.get('fill', 'T'))
@@ -197,7 +199,7 @@ class ExtractionLineScene(Scene):
 
     def _new_connection(self, conn, klass=None):
         if klass is None:
-            klass = BorderLine
+            klass = Connection
 
         start = conn.find('start')
         end = conn.find('end')

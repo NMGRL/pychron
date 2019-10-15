@@ -23,7 +23,7 @@ from operator import itemgetter
 
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
-from git import Repo, GitCommandError
+from git import Repo, GitCommandError, NoSuchPathError
 from traits.api import Instance, Str, Set, List, provides, Bool, Int
 from uncertainties import ufloat, std_dev, nominal_value
 
@@ -42,7 +42,7 @@ from pychron.dvc.meta_repo import MetaRepo, get_frozen_flux, get_frozen_producti
 from pychron.dvc.tasks.dvc_preferences import DVCConnectionItem
 from pychron.dvc.util import Tag, DVCInterpretedAge
 from pychron.envisage.browser.record_views import InterpretedAgeRecordView
-from pychron.git.hosts import IGitHost, CredentialException
+from pychron.git.hosts import IGitHost
 from pychron.git_archive.repo_manager import GitRepoManager, format_date, get_repository_branch
 from pychron.git_archive.views import StatusView
 from pychron.globals import globalv
@@ -68,6 +68,7 @@ class DVC(Loggable):
 
     current_repository = Instance(GitRepoManager)
     auto_add = True
+    use_auto_pull = Bool(True)
     pulled_repositories = Set
     selected_repositories = List
 
@@ -76,11 +77,13 @@ class DVC(Loggable):
     favorites = List
 
     update_currents_enabled = Bool
-
     use_cocktail_irradiation = Str
     use_cache = Bool
     max_cache_size = Int
+    irradiation_prefix = Str
+
     _cache = None
+    _uuid_runid_cache = {}
 
     def __init__(self, bind=True, *args, **kw):
         super(DVC, self).__init__(*args, **kw)
@@ -196,6 +199,20 @@ class DVC(Loggable):
         db.close_session()
         self.info('Generate currents finished')
 
+    def convert_uuid_runids(self, uuids):
+        with self.db.session_ctx():
+            ans = self.db.get_analyses_uuid(uuids)
+            return [an.record_id for an in ans]
+
+        # if uuid in self._uuid_runid_cache:
+        #     r = self._uuid_runid_cache[uuid]
+        # else:
+        #     with self.db.session_ctx():
+        #         an = self.db.get_analysis_uuid(uuid)
+        #         r = an.record_id
+        #         self._uuid_runid_cache[uuid] = r
+        # return r
+
     def find_associated_identifiers(self, samples):
         from pychron.dvc.associated_identifiers import AssociatedIdentifiersView
 
@@ -248,18 +265,30 @@ class DVC(Loggable):
             pos = ip.position
 
             fd = self.meta_repo.get_flux(irrad, level, pos)
-            prodname, prod = self.meta_repo.get_production(irrad, level)
-            cs = self.meta_repo.get_chronology(irrad)
+            _, prod = self.meta_repo.get_production(irrad, level, allow_null=True)
+            cs = self.meta_repo.get_chronology(irrad, allow_null=True)
 
             x = datetime.now()
             now = time.mktime(x.timetuple())
             if fd['lambda_k']:
                 isotope_group.arar_constants.lambda_k = fd['lambda_k']
 
+            try:
+                pr = prod.to_dict(RATIO_KEYS)
+            except BaseException as e:
+                self.debug('invalid production. error={}'.format(e))
+                pr = {}
+
+            try:
+                ic = prod.to_dict(INTERFERENCE_KEYS)
+            except BaseException as e:
+                self.debug('invalid production. error={}'.format(e))
+                ic = {}
+
             isotope_group.trait_set(j=fd['j'],
                                     # lambda_k=lambda_k,
-                                    production_ratios=prod.to_dict(RATIO_KEYS),
-                                    interference_corrections=prod.to_dict(INTERFERENCE_KEYS),
+                                    production_ratios=pr,
+                                    interference_corrections=ic,
                                     chron_segments=cs.get_chron_segments(x),
                                     irradiation_time=cs.irradiation_time,
                                     timestamp=now)
@@ -634,10 +663,10 @@ class DVC(Loggable):
 
         return ias
 
-    def find_flux_monitors(self, irradiation, level, sample, make_records=True):
+    def find_flux_monitors(self, irradiation, levels, sample, make_records=True):
         db = self.db
         with db.session_ctx():
-            ans = db.get_flux_monitor_analyses(irradiation, level, sample)
+            ans = db.get_flux_monitor_analyses(irradiation, levels, sample)
             for a in ans:
                 a.bind()
 
@@ -756,8 +785,10 @@ class DVC(Loggable):
         else:
             for ei in exps:
                 self.sync_repo(ei, use_progress=False)
-
-        branches = {ei: get_repository_branch(repository_path(ei)) for ei in exps}
+        try:
+            branches = {ei: get_repository_branch(repository_path(ei)) for ei in exps}
+        except NoSuchPathError:
+            return []
 
         fluxes = {}
         productions = {}
@@ -909,9 +940,9 @@ class DVC(Loggable):
         git_service = self.application.get_service(IGitHost)
         return git_service.test_connection(self.organization)
 
-    def make_url(self, name):
+    def make_url(self, name, **kw):
         git_service = self.application.get_service(IGitHost)
-        return git_service.make_url(name, self.organization)
+        return git_service.make_url(name, self.organization, **kw)
 
     def git_session_ctx(self, repository_identifier, message):
         return GitSessionCTX(self, repository_identifier, message)
@@ -927,7 +958,7 @@ class DVC(Loggable):
 
         if exists:
             repo = self._get_repository(name)
-            repo.pull(use_progress=use_progress)
+            repo.pull(use_progress=use_progress, use_auto_pull=self.use_auto_pull)
             return True
         else:
             self.debug('getting repository from remote')
@@ -937,9 +968,10 @@ class DVC(Loggable):
                 service.clone_from(name, root, self.organization)
                 return True
             else:
-                self.debug('name={} not in available repos from service={}, organization={}'.format(name,
-                                                                                                    service.remote_url,
-                                                                                                    self.organization))
+                self.warning_dialog('name={} not in available repos '
+                                    'from service={}, organization={}'.format(name,
+                                                                              service.remote_url,
+                                                                              self.organization))
                 for ni in names:
                     self.debug('available repo== {}'.format(ni))
 
@@ -970,16 +1002,16 @@ class DVC(Loggable):
             self.debug('pull to remote={}, url={}'.format(gi.default_remote_name, gi.remote_url))
             repo.smart_pull(remote=gi.default_remote_name)
 
-    def push_repository(self, repo):
+    def push_repository(self, repo, **kw):
         repo = self._get_repository(repo)
         self.debug('push repository {}'.format(repo))
         for gi in self.application.get_services(IGitHost):
             self.debug('pushing to remote={}, url={}'.format(gi.default_remote_name, gi.remote_url))
-            repo.push(remote=gi.default_remote_name)
+            repo.push(remote=gi.default_remote_name, **kw)
 
     def push_repositories(self, changes):
         for gi in self.application.get_services(IGitHost):
-            push_repositories(changes, gi.default_remote_name, quiet=False)
+            push_repositories(changes, gi, quiet=False)
 
     def delete_local_commits(self, repo, **kw):
         r = self._get_repository(repo)
@@ -1070,6 +1102,10 @@ class DVC(Loggable):
     def get_irradiation_names(self):
         irrads = self.db.get_irradiations()
         return [i.name for i in irrads]
+
+    def get_irradiations(self, *args, **kw):
+        sort_name_key = self.irradiation_prefix
+        return self.db.get_irradiations(sort_name_key=sort_name_key, *args, **kw)
 
     # add
     def add_interpreted_ages(self, rid, iass):
@@ -1521,23 +1557,16 @@ class DVC(Loggable):
             # self.debug('use_repo_suffix={} record_id={}'.format(record.use_repository_suffix, record.record_id))
             rid = record.record_id
             uuid = record.uuid
-            # if record.use_repository_suffix:
-            #     rid = '-'.join(rid.split('-')[:-1])
+
             try:
                 a = DVCAnalysis(uuid, rid, expid)
             except AnalysisNotAnvailableError:
-                self.info('Analysis {} not available. Trying to clone repository "{}"'.format(rid, expid))
-                try:
-                    self.sync_repo(expid)
-                except (CredentialException, BaseException):
-                    self.warning_dialog('Invalid credentials for GitHub/GitLab')
-                    return
 
                 try:
                     a = DVCAnalysis(uuid, rid, expid)
-
                 except AnalysisNotAnvailableError:
-                    self.warning_dialog('Analysis {} not in repository {}'.format(rid, expid))
+                    self.warning_dialog('Analysis {} not in repository {}. '
+                                        'You many need to pull changes'.format(rid, expid))
                     return
 
             a.group_id = record.group_id
@@ -1576,18 +1605,19 @@ class DVC(Loggable):
                             pass
 
                     if not prod:
-                        try:
-                            pname, prod = productions[a.irradiation][a.irradiation_level]
-                        except KeyError:
-                            pname, prod = meta_repo.get_production(a.irradiation, a.irradiation_level)
-                            if pname != 'NoIrradiation':
+                        if a.irradiation != 'NoIrradiation':
+                            try:
+                                pname, prod = productions[a.irradiation][a.irradiation_level]
+                            except KeyError:
+                                pname, prod = meta_repo.get_production(a.irradiation, a.irradiation_level)
                                 self.warning('production key error name={} '
                                              'irrad={}, level={}, productions={}'.format(pname,
                                                                                          a.irradiation,
                                                                                          a.irradiation_level,
                                                                                          productions))
+                    if prod is not None:
+                        a.set_production(pname, prod)
 
-                    a.set_production(pname, prod)
                     fd = None
                     if frozen_fluxes:
                         try:
@@ -1668,7 +1698,10 @@ class DVC(Loggable):
         bind_preference(self, 'use_cache', '{}.use_cache'.format(prefid))
         bind_preference(self, 'max_cache_size', '{}.max_cache_size'.format(prefid))
         bind_preference(self, 'update_currents_enabled', '{}.update_currents_enabled'.format(prefid))
+        bind_preference(self, 'use_auto_pull', '{}.use_auto_pull'.format(prefid))
 
+        prefid = 'pychron.entry'
+        bind_preference(self, 'irradiation_prefix', '{}.irradiation_prefix'.format(prefid))
         if self.use_cache:
             self._use_cache_changed()
 
@@ -1701,7 +1734,7 @@ class DVC(Loggable):
     def _data_source_changed(self, old, new):
         self.debug('data source changed. {}, db={}'.format(new, id(self.db)))
         if new is not None:
-            for attr in ('username', 'password', 'host', 'kind', 'path'):
+            for attr in ('username', 'password', 'host', 'kind', 'path', 'timeout'):
                 setattr(self.db, attr, getattr(new, attr))
 
             self.db.name = new.dbname

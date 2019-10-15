@@ -16,22 +16,29 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
+# ============= standard library imports ========================
+from datetime import datetime
+
 from traits.api import HasTraits, List, Str, Int, Button, Property, Instance, \
     Event
 from traitsui.api import View, Item, Controller, TabularEditor, UItem, spring, HGroup, VSplit, VGroup, InstanceEditor
-# ============= standard library imports ========================
-from datetime import datetime
+
 # ============= local library imports  ==========================
 from pychron.envisage.icon_button_editor import icon_button_editor
+from pychron.git_archive.diff_view import DiffView
 from pychron.git_archive.git_objects import GitSha
 from pychron.git_archive.views import CommitAdapter
-from pychron.git_archive.diff_view import DiffView
 
 
 class BaseGitHistory(HasTraits):
     items = List
     selected = Instance(GitSha)
     head_hexsha = Str
+    branchname = Str
+    local_commit = Str
+    latest_remote_commit = Str
+    n = Int
 
     def set_items(self, items, auto_select=True):
         factory = self.git_sha_object_factory

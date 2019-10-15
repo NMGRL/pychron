@@ -54,7 +54,7 @@ class XYScatter(BaseArArFigure):
         ys = [nominal_value(ai) for ai in self._unpack_attr(po.ytitle)]
 
         plot, scatter, line = self.graph.new_series(x=array(xs), y=array(ys),
-                                                    fit='linear',
+                                                    fit=po.fit,
                                                     add_inspector=False,
                                                     marker=po.marker,
                                                     marker_size=po.marker_size)

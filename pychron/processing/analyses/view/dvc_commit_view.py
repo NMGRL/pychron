@@ -28,11 +28,11 @@ from pychron import json
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.dvc import analysis_path, HISTORY_TAGS, HISTORY_PATHS
-from pychron.dvc.tasks.panes import CommitAdapter
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.view_util import open_view
 from pychron.git_archive.repo_manager import isoformat_date
 from pychron.git_archive.utils import get_diff, get_head_commit, from_gitlog
+from pychron.git_archive.views import CommitAdapter
 from pychron.paths import paths
 from pychron.pychron_constants import LIGHT_RED, PLUSMINUS_ONE_SIGMA, LIGHT_YELLOW
 

@@ -176,7 +176,7 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
 
             q = q.filter(or_(*[ProcessInfo.name.like('%{}%'.format(t)) for t in tag]))
 
-            ps = self._query_all(q, verbose_query=True)
+            ps = self._query_all(q)
             self.debug('get latest {}, ps={}'.format(tag, len(ps)))
             min_date = datetime.now() - timedelta(hours=24)
             for p in ps:
@@ -185,7 +185,7 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
                 q = q.filter(Measurement.pub_date > min_date)
                 q = q.order_by(Measurement.pub_date.desc())
 
-                record = self._query_first(q, verbose_query=True)
+                record = self._query_first(q)
                 if record:
                     values.append({'name': p.name,
                                    'title': p.graph_title,

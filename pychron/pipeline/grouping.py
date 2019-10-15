@@ -17,7 +17,8 @@ from itertools import groupby
 from operator import attrgetter
 
 
-def group_analyses_by_key(items, key, attr='group_id', id_func=None, sorting_enabled=True, parent_group=None):
+def group_analyses_by_key(items, key, attr='group_id', id_func=None, sorting_enabled=True, parent_group=None,
+                          as_int=True):
     if isinstance(key, str):
         keyfunc = attrgetter(key)
     else:
@@ -38,13 +39,14 @@ def group_analyses_by_key(items, key, attr='group_id', id_func=None, sorting_ena
     for _, gitems in groupby(items, attrgetter(parent_group)):
         gitems = list(gitems)
 
-        for k, analyses in groupby(sorted(gitems,key=keyfunc), key=keyfunc):
+        for k, analyses in groupby(sorted(gitems, key=keyfunc), key=keyfunc):
             analyses = list(analyses)
-            gid = ids.index(k)
+            gid = ids.index(k) if as_int else k
             if id_func:
                 id_func(gid, analyses)
             else:
                 for it in analyses:
                     setattr(it, attr, gid)
+                    setattr(it, attr.replace('_id', '_name'), k)
     return items
 # ============= EOF =============================================

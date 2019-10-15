@@ -18,12 +18,12 @@ import datetime
 import os
 
 # ============= standard library imports ========================
-import yaml
 # ============= enthought library imports =======================
 from traits.api import Instance, Str, Property, Event, Bool, String, List, CInt, on_trait_change
 
 from pychron.core.helpers.ctx_managers import no_update
 # ============= local library imports  ==========================
+from pychron.core.yaml import yload
 from pychron.experiment.queue.run_block import RunBlock
 from pychron.experiment.stats import ExperimentStats
 from pychron.experiment.utilities.frequency_generator import frequency_index_gen
@@ -38,7 +38,7 @@ def extract_meta(line_gen):
             break
         metastr += '{}\n'.format(line)
 
-    return yaml.load(metastr), metastr
+    return yload(metastr), metastr
 
 
 METASTR = '''

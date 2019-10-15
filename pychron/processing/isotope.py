@@ -24,7 +24,7 @@ from binascii import hexlify
 from math import isnan, isinf
 
 import six
-from numpy import array, Inf, polyfit, gradient
+from numpy import array, Inf, polyfit, gradient, array_split, mean
 from uncertainties import ufloat, nominal_value, std_dev
 
 from pychron.core.geometry.geometry import curvature_at
@@ -52,6 +52,8 @@ class BaseMeasurement(object):
     _n = None
     detector = None
     detector_serial_id = None
+    group_data = 0
+    _regressor = None
 
     @property
     def n(self):
@@ -75,6 +77,22 @@ class BaseMeasurement(object):
         self.mass = 0
         self.time_zero_offset = 0
 
+    def set_grouping(self, n):
+        self.group_data = n
+        self._regressor = None
+        # if self._regressor:
+        #     self._regressor.dirty = True
+
+    def get_data(self):
+        xs = self.offset_xs
+        ys = self.ys
+        if self.group_data > 1:
+            n = len(xs)//self.group_data
+            xs = [mean(g) for g in array_split(xs, n)]
+            ys = [mean(g) for g in array_split(ys, n)]
+
+        return xs, ys
+
     def pack(self, endianness=None, as_hex=True):
         if endianness is None:
             endianness = self.endianness
@@ -86,6 +104,9 @@ class BaseMeasurement(object):
         return txt
 
     def unpack_data(self, blob, n_only=False):
+        if not blob:
+            return
+
         try:
             xs, ys = self._unpack_blob(blob)
         except (ValueError, TypeError, IndexError, AttributeError) as e:
@@ -157,7 +178,6 @@ class IsotopicMeasurement(BaseMeasurement):
 
     _value = 0
     _error = 0
-    _regressor = None
     truncate = None
     _fit = None
 
@@ -437,7 +457,8 @@ class IsotopicMeasurement(BaseMeasurement):
         if is_poly:
             reg.set_degree(fit_to_degree(fit), refresh=False)
 
-        reg.trait_set(xs=self.offset_xs, ys=self.ys,
+        xs, ys = self.get_data()
+        reg.trait_set(xs=xs, ys=ys,
                       error_calc_type=self.error_type or 'SEM',
                       filter_outliers_dict=self.filter_outliers_dict,
                       tag=self.name)
@@ -548,6 +569,10 @@ class BaseIsotope(IsotopicMeasurement):
     baseline = None
 
     # baseline_fit_abbreviation = Property(depends_on='baseline:fit')
+
+    def set_grouping(self, n):
+        super(BaseIsotope, self).set_grouping(n)
+        self.baseline.set_grouping(n)
 
     @property
     def intercept_percent_error(self):

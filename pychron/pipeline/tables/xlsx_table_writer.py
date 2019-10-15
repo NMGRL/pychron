@@ -37,8 +37,8 @@ from pychron.pychron_constants import PLUSMINUS_NSIGMA, NULL_STR, DESCENDING, fo
 
 
 def format_mswd(t):
-    m, v, _ = t
-    return 'MSWD={}'.format(FM(m, v))
+    m, v, _, p = t
+    return FM(m, v, include_tag=True)
 
 
 class XLSXAnalysisTableWriter(BaseTableWriter):
@@ -197,10 +197,17 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                    ]
 
         # setup formats
-        sigfigs = ('age', 'kca', 'radiogenic_yield', 'cumulative_ar39', 'uF')
+        sigfigs = ('age', 'radiogenic_yield', 'cumulative_ar39', 'uF', 'kca', 'kcl')
         for c in columns:
             if c.attr in sigfigs:
                 c.sigformat = c.attr
+
+        if invert_kca_kcl:
+            for c in columns:
+                if c.attr == 'cak':
+                    c.sigformat = 'kca'
+                elif c.attr == 'clk':
+                    c.sigformat = 'kcl'
 
         self._signal_columns(columns, ibit, bkbit)
         self._intercalibration_columns(columns, detectors, ic_visible=icbit, disc_visible=dbit)
@@ -765,10 +772,13 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         sh.write_string(row, 6, group.identifier, fmt)
 
         self._current_row += 1
-
         row = self._current_row
+
         sh.write_string(row, 1, 'Material:', fmt)
         sh.write_string(row, 2, group.material, fmt)
+
+        sh.write_string(row, 5, 'Location:', fmt)
+        sh.write_string(row, 6, group.flatlon, fmt)
 
         self._current_row += 1
 

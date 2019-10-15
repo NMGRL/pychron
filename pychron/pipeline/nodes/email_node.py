@@ -17,13 +17,13 @@ from __future__ import absolute_import
 
 import os
 
-import yaml
 from traits.api import Instance, List, HasTraits, Str, Bool
 from traitsui.api import UItem, TableEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+from pychron.core.yaml import yload
 from pychron.paths import paths
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.social.email.emailer import Emailer
@@ -52,8 +52,7 @@ class EmailNode(BaseNode):
 
     def configure(self, *args, **kw):
         path = os.path.join(paths.setup_dir, 'users.yaml')
-        with open(path, 'r') as rfile:
-            self.addresses = [Emailee(**d) for d in yaml.load(rfile)]
+        self.addresses = [Emailee(**d) for d in yload(path)]
 
         return super(EmailNode, self).configure(*args, **kw)
 

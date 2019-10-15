@@ -35,7 +35,7 @@ class IsochronAppearance(AppearanceSubOptions):
     pass
 
 
-class InverseIsochronMainOptions(TitleSubOptions):
+class InverseIsochronCalculationOptions(SubOptions):
     def traits_view(self):
         plat_grp = BorderHGroup(VGroup(Item('omit_non_plateau', label='Omit Non Plateau Steps'),
                                        Item('exclude_non_plateau', label='Exclude Non Plateau Steps')),
@@ -49,39 +49,50 @@ class InverseIsochronMainOptions(TitleSubOptions):
                                        visible_when='omit_non_plateau'),
                                 label='Plateau')
 
-        g = Group(Item('error_calc_method',
-                       width=-150,
-                       label='Error Calculation Method'),
-                  Item('regressor_kind', label='Method'),
+        g = BorderHGroup(Item('regressor_kind', label='Method'),
+                         Item('error_calc_method',
+                              width=-150,
+                              label='Error Calculation Method'),
+                         label='Regression')
 
-                  plat_grp,
-                  show_border=True,
-                  label='Calculations')
+        return self._make_view(VGroup(g, plat_grp))
 
-        info_grp = HGroup(Item('show_info', label='Info'),
-                          BorderHGroup(UItem('info_fontname'),
-                                       UItem('info_fontsize')))
 
-        results_grp = HGroup(Item('show_results_info', label='Results'),
-                             VGroup(BorderVGroup(HGroup(Item('nsigma', label='NSigma'),
-                                                        Item('results_info_spacing',
-                                                             editor=RangeEditor(mode='spinner', low=2,
-                                                                                high=20, is_float=False),
-                                                             label='Spacing')),
-                                                 HGroup(UItem('results_fontname'),
-                                                        UItem('results_fontsize'))),
-                                    BorderHGroup(Item('age_sig_figs', label='Age'),
-                                                 Item('yintercept_sig_figs', label='Y-Int.'),
-                                                 label='SigFigs'),
-                                    BorderVGroup(Item('include_4036_mse', label='Ar40/Ar36'),
-                                                 Item('include_age_mse', label='Age'),
-                                                 Item('include_percent_error', label='%Error'),
-                                                 label='Include')))
+class InverseIsochronMainOptions(TitleSubOptions):
+    def traits_view(self):
+        info_grp = BorderHGroup(Item('show_info', label='Display Info',
+                                     tooltip='Display info text in the upper left corner. Displays info on '
+                                             'uncertainties'),
+                                BorderHGroup(UItem('info_fontname'),
+                                             UItem('info_fontsize'),
+                                             enabled_when='show_info'),
+                                label='Info')
 
-        ellipse_grp = BorderHGroup(Item('fill_ellipses', label='fill'),
-                                   Item('ellipse_kind', label='Kind'),
-                                   label='Error Ellipse')
-        label_grp = BorderVGroup(Item('show_labels'),
+        agrp = HGroup(BorderHGroup(Item('nsigma', label='NSigma'),
+                                   Item('results_info_spacing',
+                                        editor=RangeEditor(mode='spinner', low=2,
+                                                           high=20, is_float=False),
+                                        label='Spacing')),
+                      BorderHGroup(UItem('results_fontname'),
+                                   UItem('results_fontsize')))
+        bgrp = HGroup(BorderHGroup(Item('include_4036_mse', label='MSE'),
+                                   Item('include_percent_error', label='%Err.'),
+                                   Item('yintercept_sig_figs', label='SigFigs'),
+                                   label='Ar40/Ar36'),
+                      BorderHGroup(Item('include_age_mse', label='MSE'),
+                                   Item('include_age_percent_error', label='%Err.'),
+                                   Item('age_sig_figs', label='SigFigs'),
+                                   label='Age'), )
+
+        results_grp = BorderVGroup(Item('show_results_info', label='Display Results'),
+                                   VGroup(agrp, bgrp, enabled_when='show_results_info'),
+                                   label='Results')
+
+        error_display_grp = BorderHGroup(Item('fill_ellipses', label='fill'),
+                                         Item('ellipse_kind', label='Kind'),
+                                         Item('include_error_envelope'),
+                                         label='Error Display')
+        label_grp = BorderVGroup(Item('show_labels', label='Display Labels'),
                                  HGroup(Item('label_box'),
                                         UItem('label_fontname'),
                                         UItem('label_fontsize'),
@@ -92,12 +103,10 @@ class InverseIsochronMainOptions(TitleSubOptions):
                                   Item('marker', label='Marker'),
                                   label='Marker')
         g2 = Group(self._get_title_group(),
-                   BorderVGroup(info_grp,
-                                results_grp,
-                                label='Info'),
-                   Item('include_error_envelope'),
+                   info_grp,
+                   results_grp,
                    marker_grp,
-                   ellipse_grp,
+                   error_display_grp,
                    label_grp,
 
                    BorderVGroup(Item('show_nominal_intercept'),
@@ -111,10 +120,8 @@ class InverseIsochronMainOptions(TitleSubOptions):
                                 HGroup(Item('inset_marker_size', label='Marker Size')),
                                 HGroup(Item('inset_width', label='Width'),
                                        Item('inset_height', label='Height')),
-                                label='Inset'),
-                   show_border=True,
-                   label='Display')
-        return self._make_view(VGroup(g, g2))
+                                label='Inset'))
+        return self._make_view(g2)
 
 
 class InverseIsochronAppearance(AppearanceSubOptions):
@@ -127,6 +134,7 @@ class InverseIsochronAppearance(AppearanceSubOptions):
 ISOCHRON_VIEWS = {'main': IsochronMainOptions,
                   'appearance': IsochronAppearance}
 INVERSE_ISOCHRON_VIEWS = {'main': InverseIsochronMainOptions,
+                          'calculations': InverseIsochronCalculationOptions,
                           'appearance': InverseIsochronAppearance,
                           'groups': GroupSubOptions}
 

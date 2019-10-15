@@ -18,29 +18,48 @@
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Property
-from traitsui.api import View, UItem, VGroup, TabularEditor, EnumEditor, VSplit, Item
+from traitsui.api import View, UItem, VGroup, TabularEditor, EnumEditor, VSplit, Item, HSplit, HGroup, Tabbed
+from traitsui.editors import ListStrEditor
 from traitsui.tabular_adapter import TabularAdapter
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import ISO_FORMAT_STR
-from pychron.git_archive.views import CommitAdapter, GitTagAdapter
+from pychron.core.pychron_traits import BorderVGroup
+from pychron.core.ui.dag_editor import GitDAGEditor
+from pychron.git_archive.views import GitTagAdapter, TopologyAdapter, DiffsAdapter
 
 
 class RepoCentralPane(TraitsTaskPane):
     def traits_view(self):
-        commit_grp = VGroup(Item('ncommits', label='Limit'),
-                            VGroup(UItem('commits',
-                                         editor=TabularEditor(adapter=CommitAdapter(),
-                                                              selected='selected_commit')),
-                                   show_border=True, label='Commits'))
-        bookmark_grp = VGroup(VGroup(UItem('git_tags', editor=TabularEditor(adapter=GitTagAdapter()),
-                                           height=200),
-                                     show_border=True, label='Bookmarks'))
+        dag_grp = UItem('commits', editor=GitDAGEditor(selected='selected'))
+        commit_grp = VGroup(HGroup(Item('ncommits', label='Limit'),
+                                   Item('use_simplify_dag', label='Simplify')),
+                            BorderVGroup(UItem('commits',
+                                               editor=TabularEditor(adapter=TopologyAdapter(),
+                                                                    scroll_to_row='scroll_to_row',
+                                                                    selected='selected_commit')),
+                                         label='Commits'))
+        commit_grp = HSplit(commit_grp, dag_grp)
+
+        bookmark_grp = VGroup(BorderVGroup(UItem('git_tags', editor=TabularEditor(adapter=GitTagAdapter()),
+                                                 height=200), label='Bookmarks'))
+
+        file_grp = VGroup(HGroup(Tabbed(UItem('diffs',
+                                              label='Diffs',
+                                              editor=TabularEditor(adapter=DiffsAdapter(),
+                                                                   editable=False)),
+                                        UItem('diff_text',
+                                              label='Text',
+                                              style='custom')),
+                                 UItem('files', style='custom',
+                                       editor=ListStrEditor(selected='selected_file',
+                                                            editable=False))), label='Files')
+        a_grp = VGroup(UItem('analyses', style='custom', editor=ListStrEditor(editable=False)), label='Analyses')
 
         v = View(VGroup(UItem('branch',
                               editor=EnumEditor(name='branches')),
-                        VSplit(commit_grp, bookmark_grp)))
+                        VSplit(commit_grp, HSplit(bookmark_grp, Tabbed(a_grp, file_grp)))))
         return v
 
 
@@ -80,27 +99,27 @@ class SelectionPane(TraitsDockPane):
     name = 'Repositories'
 
     def traits_view(self):
-        origin_grp = VGroup(UItem('filter_origin_value',
-                                  tooltip='Fuzzy filter list of repositories available at "Origin". '
-                                          'e.g. "foo" will match "foo", "foobar", "fobaro", "barfoo", etc'),
-                            UItem('repository_names',
-                                  editor=TabularEditor(selected='selected_repository',
-                                                       column_clicked='origin_column_clicked',
-                                                       adapter=OriginAdapter(),
-                                                       editable=False)),
-                            show_border=True, label='Origin')
+        origin_grp = BorderVGroup(UItem('filter_origin_value',
+                                        tooltip='Fuzzy filter list of repositories available at "Origin". '
+                                                'e.g. "foo" will match "foo", "foobar", "fobaro", "barfoo", etc'),
+                                  UItem('repository_names',
+                                        editor=TabularEditor(selected='selected_repository',
+                                                             column_clicked='origin_column_clicked',
+                                                             adapter=OriginAdapter(),
+                                                             editable=False)),
+                                  label='Origin')
 
-        local_grp = VGroup(UItem('filter_repository_value',
-                                 tooltip='Fuzzy filter list of repositories available at on this computer. '
-                                         'e.g. "foo" will match "foo", "foobar", "fobaro", "barfoo", etc'),
-                           UItem('local_names',
-                                 editor=TabularEditor(adapter=RepoAdapter(),
-                                                      column_clicked='column_clicked',
-                                                      selected='selected_local_repositories',
-                                                      editable=False,
-                                                      multi_select=True,
-                                                      )),
-                           show_border=True, label='Local')
+        local_grp = BorderVGroup(UItem('filter_repository_value',
+                                       tooltip='Fuzzy filter list of repositories available at on this computer. '
+                                               'e.g. "foo" will match "foo", "foobar", "fobaro", "barfoo", etc'),
+                                 UItem('local_names',
+                                       editor=TabularEditor(adapter=RepoAdapter(),
+                                                            column_clicked='column_clicked',
+                                                            selected='selected_local_repositories',
+                                                            editable=False,
+                                                            multi_select=True,
+                                                            )),
+                                 label='Local')
 
         v = View(VGroup(local_grp, origin_grp))
         return v

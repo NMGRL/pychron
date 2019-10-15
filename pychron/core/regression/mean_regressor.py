@@ -25,7 +25,7 @@ from .base_regressor import BaseRegressor
 
 
 class MeanRegressor(BaseRegressor):
-    ddof = 0
+
     _fit = 'average'
 
     def get_exog(self, pts):
@@ -68,41 +68,6 @@ std={}
 sem={}
 
 '''.format(m, e, sem)
-
-    @property
-    def mean(self):
-        ys = self.clean_ys
-        if self._check_integrity(ys, ys):
-            return ys.mean()
-        else:
-            return 0
-
-    @property
-    def std(self):
-        """
-            mass spec uses ddof=1
-            ddof=0 provides a maximum likelihood estimate of the variance for normally distributed variables
-            ddof=1 unbiased estimator of the variance of the infinite population
-        """
-        ys = self.clean_ys
-        if len(ys) > self.ddof:
-            # ys = asarray(self.ys, dtype=float64)
-            return ys.std(ddof=1)
-        else:
-            return 0
-
-    @property
-    def sem(self):
-        ys = self.clean_ys
-        if self._check_integrity(ys, ys):
-            # n = len(ys) - self.ddof
-            n = ys.shape[0]
-            if n > 0:
-                return self.std * n ** -0.5
-            else:
-                return 0
-        else:
-            return 0
 
     def predict(self, xs=None, *args):
         if xs is not None:
@@ -191,9 +156,19 @@ sem={}
 class WeightedMeanRegressor(MeanRegressor):
 
     def fast_predict2(self, endog, exog):
-        ws = 1 / self.clean_yserr ** 2
+        # ws = 1 / self.clean_yserr ** 2
+        ws = self._get_weights()
         mean = average(endog, weights=ws)
         return full(exog.shape[0], mean)
+
+    @property
+    def sem(self):
+        """
+        aka Taylor error, aka standard error of the weighted mean
+        :return:
+        """
+        ws = self._get_weights()
+        return sum(ws) ** -0.5
 
     @property
     def mean(self):

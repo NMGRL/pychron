@@ -15,16 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 import time
 
 from pychron.core.ui.gui import invoke_in_main_thread
+from pychron.pyscripts.decorators import makeRegistry, verbose_skip
 from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
-from pychron.pyscripts.pyscript import makeRegistry, verbose_skip
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 command_register = makeRegistry()
+
 
 class LaserPyScript(ExtractionPyScript):
 

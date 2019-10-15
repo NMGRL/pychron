@@ -13,12 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from __future__ import absolute_import
 
 import yaml
 
+from pychron.core.yaml import yload
 from pychron.paths import paths
-from pychron.pyscripts.pyscript import PyScript, count_verbose_skip, makeRegistry
+from pychron.pyscripts.decorators import count_verbose_skip, makeRegistry
+from pychron.pyscripts.pyscript import PyScript
 
 command_register = makeRegistry()
 
@@ -52,9 +53,7 @@ class SpectrometerPyScript(PyScript):
         if calc_time:
             return
 
-        with open(paths.af_demagnetization, 'r') as rfile:
-            yd = yaml.load(rfile)
-
+        yd = yload(paths.af_demagnetization)
         if period:
             yd['period'] = period
         if frequency:

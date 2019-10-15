@@ -14,13 +14,16 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+import json
 import os
+import pickle
+import shutil
+import sys
 
-import apptools.sweet_pickle as pickle
 from traits.api import Str, List, Button, Instance, Tuple, Property, cached_property
 from traitsui.api import Controller, Item
 
-from pychron.core.helpers.filetools import glob_list_directory
+from pychron.core.helpers.filetools import glob_list_directory, add_extension
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.file_defaults import SPECTRUM_PRESENTATION, RADIAL_SCREEN, REGRESSION_SERIES_SCREEN, \
     DEFINE_EQUILIBRATION_SCREEN
@@ -37,13 +40,85 @@ from pychron.options.icfactor import ICFactorOptions
 from pychron.options.ideogram import IdeogramOptions
 from pychron.options.iso_evo import IsotopeEvolutionOptions
 from pychron.options.isochron import InverseIsochronOptions
-from pychron.options.options import BaseOptions, SubOptions
+from pychron.options.options import BaseOptions, SubOptions, importklass
 from pychron.options.radial import RadialOptions
+from pychron.options.ratio_series import RatioSeriesOptions
 from pychron.options.regression_series import RegressionSeriesOptions
 from pychron.options.series import SeriesOptions
 from pychron.options.spectrum import SpectrumOptions
 from pychron.options.xy_scatter import XYScatterOptions
 from pychron.paths import paths
+
+
+class OptionsUnpickler(pickle.Unpickler):
+    def __init__(self, *args, **kw):
+        super(OptionsUnpickler, self).__init__(*args, **kw)
+        try:
+            self.dispatch['oreduce'] = self.dispatch[pickle.REDUCE[0]]
+            self.dispatch['obuild'] = self.dispatch[pickle.BUILD[0]]
+            self.dispatch[pickle.REDUCE[0]] = self.load_reduce
+            self.dispatch[pickle.BUILD[0]] = self.load_build
+        except AttributeError:
+            pass
+
+    def destroy(self):
+        try:
+            self.dispatch[pickle.REDUCE[0]] = self.dispatch['oreduce']
+            self.dispatch[pickle.BUILD[0]] = self.dispatch['obuild']
+        except AttributeError:
+            pass
+
+    def find_class(self, mod, klass):
+        if klass == 'QColor':
+            from pyface.qt.QtGui import QColor
+            r = QColor
+        else:
+            r = super(OptionsUnpickler, self).find_class(mod, klass)
+
+        return r
+
+    @classmethod
+    def load_reduce(cls, obj):
+        stack = obj.stack
+        args = stack.pop()
+        func = stack[-1]
+        if args and args[0] == 'PyQt4.QtGui':
+            try:
+                stack[-1] = func(*args)
+            except ModuleNotFoundError:
+                from pyface.qt.QtGui import QColor
+                stack[-1] = QColor(*args[2])
+        else:
+            stack[-1] = func(*args)
+
+    @classmethod
+    def load_build(cls, obj):
+        stack = obj.stack
+        state = stack.pop()
+        inst = stack[-1]
+        setstate = getattr(inst, "__setstate__", None)
+        if setstate is not None:
+            setstate(state)
+            return
+        slotstate = None
+        if isinstance(state, tuple) and len(state) == 2:
+            state, slotstate = state
+
+        if state == 'setRgbF':
+            inst.setRgbF(*slotstate)
+        else:
+            if state:
+                inst_dict = inst.__dict__
+                intern = sys.intern
+
+                for k, v in state.items():
+                    if type(k) is str:
+                        inst_dict[intern(k)] = v
+                    else:
+                        inst_dict[k] = v
+            if slotstate:
+                for k, v in slotstate.items():
+                    setattr(inst, k, v)
 
 
 class OptionsManager(Loggable):
@@ -126,8 +201,11 @@ class OptionsManager(Loggable):
 
     def delete_selected(self):
         if self.confirmation_dialog('Are you sure you want to delete "{}"'.format(self.selected)):
-            p = os.path.join(self.persistence_root, '{}.p'.format(self.selected))
-            os.remove(p)
+            for ext in ('.p', '.json'):
+                p = self._pname(self.selected, ext)
+                if os.path.isfile(p):
+                    os.remove(p)
+                    break
             self.refresh()
 
     def refresh(self):
@@ -143,14 +221,17 @@ class OptionsManager(Loggable):
                 os.mkdir(self.persistence_root)
 
         if self.selected:
-            with open(self.selected_options_path, 'wb') as wfile:
-                pickle.dump(self.selected, wfile)
+            with open(self._pname('selected', '.json'), 'w') as wfile:
+                json.dump({'selected': self.selected}, wfile)
+
+            p = self._pname('selected')
+            if os.path.isfile(p):
+                os.remove(p)
 
     def save_selected_as(self):
         name = self.new_name
 
-        with open(os.path.join(self.persistence_root, '{}.p'.format(name)), 'wb') as wfile:
-            pickle.dump(self.selected_options, wfile)
+        self._save(name, self.selected_options)
 
         self.refresh()
         self.selected = name
@@ -165,8 +246,22 @@ class OptionsManager(Loggable):
                 obj = self.selected_options
                 name = self.selected
 
-        with open(os.path.join(self.persistence_root, '{}.p'.format(name)), 'wb') as wfile:
-            pickle.dump(obj, wfile)
+        self._save(name, obj)
+
+    def _save(self, name, obj):
+        p = self._pname(name, '.json')
+        with open(p, 'w') as wfile:
+            obj.dump(wfile)
+
+        # for backwards compatiblity keep this for now
+        p = self._pname(name)
+        if os.path.isfile(p):
+            dp = self._pname(name, '.p.bak')
+            shutil.move(p, dp)
+
+        # p = self._pname(name)
+        # with open(p, 'wb') as wfile:
+        #     spickle.dump(obj, wfile)
 
     def add(self, name):
         p = self.options_klass()
@@ -184,7 +279,7 @@ class OptionsManager(Loggable):
                 if name == options_name:
                     self.selected = ''
                     self.debug('set factory default for {}'.format(name))
-                    dp = os.path.join(self.persistence_root, '{}.p'.format(name))
+                    dp = self._pname(name)
                     os.remove(dp)
 
                     p = self.options_klass()
@@ -201,25 +296,28 @@ class OptionsManager(Loggable):
             self.information_dialog('Not Factory Defaults available')
 
     def _initialize(self):
-        selected = self._load_selected_po()
-        self.selected = selected
-
-    def _load_selected_po(self):
-        p = self.selected_options_path
+        p = self._pname('selected', '.json')
         n = 'Default'
         if os.path.isfile(p):
-            with open(p, 'rb') as rfile:
-                try:
-                    n = pickle.load(rfile)
-                except (pickle.PickleError, EOFError):
-                    n = 'Default'
-        return n
+            with open(p, 'r') as rfile:
+                obj = json.load(rfile)
+                n = obj['selected']
+        else:
+            p = self._pname('selected')
+            if os.path.isfile(p):
+                with open(p, 'rb') as rfile:
+                    try:
+                        n = pickle.load(rfile)
+                    except (pickle.PickleError, EOFError):
+                        n = 'Default'
+
+        self.selected = n
 
     def _populate(self):
         # write some defaults
         if self._defaults:
             for name, txt in self._defaults:
-                dp = os.path.join(self.persistence_root, '{}.p'.format(name))
+                dp = self._pname(name)
                 if not os.path.isfile(dp):
                     p = self.options_klass()
                     p.load_factory_defaults(txt)
@@ -228,25 +326,60 @@ class OptionsManager(Loggable):
         self._load_names()
 
     def _load_names(self):
-        self.names = [n for n in glob_list_directory(self.persistence_root,
-                                                     extension='.p',
-                                                     remove_extension=True) if n != 'selected']
+        ps = glob_list_directory(self.persistence_root, extension='.p', remove_extension=True)
+        js = glob_list_directory(self.persistence_root, extension='.json', remove_extension=True)
+
+        ps.extend(js)
+        self.names = [ni for ni in ps if ni != 'selected']
 
     def _selected_subview_changed(self, new):
         if new:
             v = self.selected_options.get_subview(new)
             self.subview = v
 
+    def _load_json(self, p):
+        with open(p, 'rb') as rfile:
+            try:
+                j = json.load(rfile)
+            except json.JSONDecodeError:
+                return
+
+        klass = j.get('klass')
+        if klass is None:
+            return
+
+        cls = importklass(klass)
+        obj = cls()
+        obj.load(j)
+        return obj
+
     def _selected_changed(self, new):
         if new:
             obj = None
-            p = os.path.join(self.persistence_root, '{}.p'.format(new.lower()))
-            if os.path.isfile(p):
-                try:
-                    with open(p, 'rb') as rfile:
-                        obj = pickle.load(rfile)
-                except BaseException:
-                    pass
+            name = new.lower()
+
+            yp = self._pname(name, '.json')
+            if os.path.isfile(yp):
+                obj = self._load_json(yp)
+                if obj:
+                    p = self._pname(name)
+                    if os.path.isfile(p):
+                        dp = self._pname(name, '.p.bak')
+                        shutil.move(p, dp)
+
+            if obj is None:
+                p = self._pname(name)
+                if os.path.isfile(p):
+                    unp = None
+                    try:
+                        with open(p, 'rb') as rfile:
+                            unp = OptionsUnpickler(rfile)
+                            obj = unp.load()
+                    except BaseException as e:
+                        self.debug_exception()
+                    finally:
+                        if unp:
+                            unp.destroy()
 
             if obj is None:
                 obj = self.options_klass()
@@ -268,31 +401,13 @@ class OptionsManager(Loggable):
         else:
             self.selected_options = None
 
-    # def _add_options_fired(self):
-    #     info = self.edit_traits(view='new_options_name_view')
-    #     if info.result:
-    #         self.plotter_options.name = self.new_options_name
-    #         self.plotter_options.dump(self.persistence_root)
-    #
-    #         self._plotter_options_list_dirty = True
-    #         self.set_plotter_options(self.new_options_name)
-
-    # def _delete_options_fired(self):
-    #     po = self.plotter_options
-    #     if self.confirmation_dialog('Are you sure you want to delete {}'.format(po.name)):
-    #         p = os.path.join(self.persistence_root, po.name)
-    #         os.remove(p)
-    #         self._plotter_options_list_dirty = True
-    #         self.plotter_options = self.plotter_options_list[0]
-    @property
-    def selected_options_path(self):
-        return os.path.join(self.persistence_root, 'selected.p')
+    def _pname(self, name, ext='.p'):
+        name = add_extension(name, ext)
+        return os.path.join(self.persistence_root, name)
 
     @property
     def persistence_root(self):
-        return os.path.join(paths.plotter_options_dir,
-                            globalv.username,
-                            self.id)
+        return os.path.join(paths.plotter_options_dir, globalv.username, self.id)
 
 
 class FigureOptionsManager(OptionsManager):
@@ -352,6 +467,11 @@ class SeriesOptionsManager(FigureOptionsManager):
     options_klass = SeriesOptions
     _defaults = (('screen', SERIES_SCREEN),)
     _default_options_txt = SERIES_SCREEN
+
+
+class RatioSeriesOptionsManager(FigureOptionsManager):
+    id = 'ratio_series'
+    options_klass = RatioSeriesOptions
 
 
 class BlanksOptionsManager(FigureOptionsManager):

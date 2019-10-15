@@ -16,15 +16,14 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from chaco.abstract_overlay import AbstractOverlay
 from enable.base_tool import BaseTool
 from kiva.fonttools import Font
-from traits.api import Event, Instance
-
 # from pychron.pipeline.plot.inspector_item import BaseInspectorItem
-import six
 from six.moves import range
 from six.moves import zip
+from traits.api import Event, Instance
 
 
 def intersperse(m, delim):
@@ -50,15 +49,15 @@ class InfoInspector(BaseTool):
     inspector_item = Event
     # inspector_item_klass = BaseInspectorItem
     event_queue = None
-    hittest_threshold = 3
+    hittest_threshold = 5
 
     def normal_mouse_move(self, event):
         xy = event.x, event.y
         try:
             pos = self.component.hittest(xy, threshold=self.hittest_threshold)
-            # event.window.set_pointer('cross')
+            event.window.set_pointer('cross')
         except IndexError:
-            # event.window.set_pointer('arrow')
+            event.window.set_pointer('arrow')
             return
 
         if isinstance(pos, (tuple, list)):
@@ -66,7 +65,7 @@ class InfoInspector(BaseTool):
             self.current_screen = xy
             event.handled = True
         else:
-            # event.window.set_pointer('arrow')
+            event.window.set_pointer('arrow')
             self.current_position = None
             self.current_screen = None
 
@@ -170,8 +169,9 @@ class InfoOverlay(AbstractOverlay):
             multi_column = 2
         else:
             # move up if too tall
+
             if y + yoffset - rect_height < self.component.y:
-                y = y2 - yoffset
+                y = self.component.y+rect_height-yoffset
 
         # if current point within bounds of box, move box to left
         if x < sx:

@@ -55,7 +55,7 @@ class IdeogramResultsAdapter(TabularAdapter):
         return floatfmt(self.item.age_span, n=5)
 
     def _get_mswd_text(self):
-        m, v, n = self.item.get_mswd_tuple()
+        m, v, n, p = self.item.get_mswd_tuple()
         return format_mswd(m, v)
 
     def _get_weighted_mean_age_text(self):

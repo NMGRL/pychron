@@ -70,8 +70,6 @@ class UpdatePlugin(BaseTaskPlugin):
         return bool(updater.test_origin())
 
     def start(self):
-        super(UpdatePlugin, self).start()
-
         updater = self.application.get_service('pychron.updater.updater.Updater')
         try:
             if updater.check_on_startup:
@@ -80,6 +78,15 @@ class UpdatePlugin(BaseTaskPlugin):
                 updater.set_revisions()
 
             globalv.active_branch = updater.active_branch
+        except (InvalidGitRepositoryError, AttributeError):
+            pass
+
+    def stop(self):
+        updater = self.application.get_service('pychron.updater.updater.Updater')
+        try:
+            if updater.check_on_quit:
+                updater.check_for_updates(restart=False)
+
         except (InvalidGitRepositoryError, AttributeError):
             pass
 

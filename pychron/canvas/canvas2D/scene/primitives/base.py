@@ -15,10 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 from kiva.fonttools import str_to_font
 from traits.api import HasTraits, Str, Any, Float, Property, on_trait_change, Color, List
+from traitsui.api import View, Item, VGroup, HGroup
 
 
 # ============= standard library imports ========================
@@ -80,6 +79,12 @@ class Primitive(HasTraits):
         self.oy = y
         super(Primitive, self).__init__(*args, **kw)
         self._initialized = True
+
+    def edit_view(self):
+        v = View(VGroup(Item('name'),
+                        HGroup(Item('x'), Item('y')),
+                        HGroup(Item('width'), Item('height'))))
+        return v
 
     @property
     def gfont(self):

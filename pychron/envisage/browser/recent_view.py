@@ -13,26 +13,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from __future__ import absolute_import
-
-from traits.api import HasTraits, Str, List, Float, Enum
-from traitsui.api import Item, EnumEditor, CheckListEditor
+from traits.api import HasTraits, List, Float, Enum, Bool
+from traitsui.api import Item, CheckListEditor, UItem, HGroup, VGroup
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+from pychron.core.pychron_traits import BorderHGroup
 from pychron.persistence_loggable import PersistenceMixin
-from pychron.pychron_constants import ANALYSIS_TYPES
+from pychron.pychron_constants import ANALYSIS_TYPES, NULL_STR
 
 PREFIX = {'Last Day': 24, 'Last Week': 24 * 7, 'Last Month': 24 * 30}
 
 
 class RecentView(HasTraits, PersistenceMixin):
-    mass_spectrometer = Str(dump=True)
-    mass_spectrometers = List
+    mass_spectrometers = List(dump=True)
+    available_mass_spectrometers = List
+    use_mass_spectrometers = Bool
 
     nhours = Float(dump=True)
     ndays = Float(dump=True)
 
-    presets = Enum('Last Day', 'Last Week', 'Last Month', dump=True)
+    presets = Enum(NULL_STR, 'Last Day', 'Last Week', 'Last Month', dump=True)
 
     analysis_types = List(ANALYSIS_TYPES, dump=True)
     available_analysis_types = List(ANALYSIS_TYPES)
@@ -40,22 +40,34 @@ class RecentView(HasTraits, PersistenceMixin):
     persistence_name = 'recent_view'
 
     def traits_view(self):
-        v = okcancel_view(Item('presets', label='Presets'),
-                          Item('ndays', label='Days'),
-                          Item('nhours', label='Hours'),
-                          Item('mass_spectrometer', label='Mass Spectrometer',
-                               editor=EnumEditor(name='mass_spectrometers')),
-                          Item('analysis_types', style='custom',
-                               editor=CheckListEditor(name='available_analysis_types', cols=5)),
+        v = okcancel_view(VGroup(HGroup(BorderHGroup(UItem('presets', ),
+                                                     label='Presets'),
+                                        BorderHGroup(Item('ndays', label='Days',
+                                                          tooltip='Number of days. Set Presets to --- to enable',
+                                                          enabled_when='presets=="---"'),
+                                                     UItem('nhours',
+                                                           tooltip='Number of hours. Set Presets to --- to enable',
+                                                           enabled_when='presets=="---"'),
+                                                     label='Time')),
+                                 BorderHGroup(UItem('mass_spectrometers',
+                                                    style='custom',
+                                                    editor=CheckListEditor(name='available_mass_spectrometers',
+                                                                           cols=5)),
+                                              defined_when='use_mass_spectrometers',
+                                              label='Mass Spectrometers'),
+                                 BorderHGroup(UItem('analysis_types', style='custom',
+                                                    editor=CheckListEditor(name='available_analysis_types', cols=5)),
+                                              label='Analysis Types')),
                           title='Recent Analyses')
         return v
 
     def _presets_changed(self, new):
-        if new:
+        if new and new != NULL_STR:
             self.nhours = PREFIX[new]
 
     def _ndays_changed(self, new):
         if new:
+            self.presets = NULL_STR
             self.nhours = new * 24
 
 # ============= EOF =============================================

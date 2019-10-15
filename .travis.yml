@@ -1,17 +1,19 @@
 sudo: false
 language: python
+services:
+  - xvfb
 notifications:
   slack: nmgrl:ols00MOM4n3EimDpMiluJIyF
   email:
     on_failure: change
 
 python:
-  - 3.5
+  - 3.7
 
 env:
   # Default values for common packages, override as needed
   global:
-    - PYTHON=3.5
+    - PYTHON=3.7
 
 before_install:
   - export TZ=America/Denver
@@ -23,16 +25,20 @@ before_install:
   - export PATH=/home/travis/miniconda3/bin:$PATH
   - conda update --yes --quiet conda
   # Fix for headless TravisCI
-  - "export DISPLAY=:99.0"
-  - "sh -e /etc/init.d/xvfb start"
+  #- "export DISPLAY=:99.0"
+  #- if [ "${TRAVIS_OS_NAME}" = "linux" ]; then sh -e /etc/init.d/xvfb start; fi
+  #- if [ "${TRAVIS_OS_NAME}" = "osx" ]; then ( sudo Xvfb :99 -ac -screen 0 1024x768x8; echo ok )& fi
+  #- sleep 3 # give xvfb some time to start
 
 install:
 #  - conda create --yes --quiet -n pychron-test ${PKGS} ${OPTIONAL}
   - conda create --yes --quiet -n pychron-test python=${PYTHON}
   - source activate pychron-test
-
-  - conda install --yes statsmodels pyqt=4 PyYAML traits traitsui xlrd xlwt lxml apptools swig
-  - pip install uncertainties codecov coverage chaco
+  - conda config --add channels conda-forge
+  - conda config --set channel_priority strict
+  #- conda install --yes statsmodels PyYAML traits traitsui xlrd xlwt lxml apptools swig coverage
+  - conda install --yes pyyaml yaml traits traitsui lxml coverage six numpy scipy uncertainties statsmodels codecov xlrd xlwt pyface
+#  - pip install codecov
 
 
 script: coverage run setup.py test

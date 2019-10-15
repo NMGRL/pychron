@@ -19,9 +19,10 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt, format_percent_error
-from pychron.core.regression.mean_regressor import MeanRegressor
+from pychron.core.regression.mean_regressor import MeanRegressor, WeightedMeanRegressor
 from pychron.graph.tools.info_inspector import InfoInspector, InfoOverlay
 from pychron.pychron_constants import PLUSMINUS
+
 
 def make_correlation_statistics(reg):
     lines = ['R\u00b2={}, R\u00b2-Adj.={}'.format(floatfmt(reg.rsquared), floatfmt(reg.rsquared_adj))]
@@ -49,8 +50,7 @@ def make_statistics(reg, x=None, options=None):
                                                     format_percent_error(vv, ee)))
 
     if reg.mswd not in ('NaN', None):
-        lines.append('Fit MSWD= {}{}, N={}'.format(reg.format_mswd(),
-                                               floatfmt(reg.mswd, n=3), reg.n))
+        lines.append('Fit MSWD={}, N={}'.format(reg.format_mswd(), reg.n))
 
     if display_min_max:
         mi, ma = reg.min, reg.max
@@ -58,13 +58,21 @@ def make_statistics(reg, x=None, options=None):
                                                       floatfmt(ma),
                                                       floatfmt((ma - mi) / ma * 100, n=2)))
 
-    lines.append('Mean={}, SD={}, SEM={}, N={}'.format(floatfmt(reg.mean), floatfmt(reg.std),
-                                                       floatfmt(reg.sem), reg.n))
+    d = {'mean': floatfmt(reg.mean),
+         'std': floatfmt(reg.std),
+         'sem': floatfmt(reg.sem),
+         'n': reg.n}
+
+    if isinstance(reg, WeightedMeanRegressor):
+        fmt = 'Wtd. Mean={mean:}, SD={std:}, SEWM={sem:}, N={n:}'
+    else:
+        fmt = 'Mean={mean:}, SD={std:}, SEM={sem:}, N={n:}'
+
+    lines.append(fmt.format(**d))
 
     mean_mswd = reg.mean_mswd
     if mean_mswd is not None:
-        lines.append('Mean MSWD= {}'.format(reg.format_mswd(mean=True)))
-        # lines.append('Mean MSWD= {}{}'.format(valid, floatfmt(reg.mean_mswd, n=3)))
+        lines.append('Mean MSWD={}'.format(reg.format_mswd(mean=True)))
 
     if not isinstance(reg, MeanRegressor):
         lines.append('R\u00b2={}, R\u00b2-Adj.={}'.format(floatfmt(reg.rsquared), floatfmt(reg.rsquared_adj)))

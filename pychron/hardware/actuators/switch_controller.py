@@ -20,8 +20,7 @@
 # ============= standard library imports ========================
 
 # ============= local library imports  ==========================
-from __future__ import absolute_import
-from .actuator import Actuator
+from pychron.hardware.actuators.actuator import Actuator
 
 
 class SwitchController(Actuator):

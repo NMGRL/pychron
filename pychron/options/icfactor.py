@@ -15,41 +15,24 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str, Float, Property, List, Bool
+from traits.api import Str, List, Bool
 
-from pychron.options.fit import FitAuxPlot
-from pychron.options.series import SeriesOptions
+from pychron.options.ratio_series import RatioSeriesOptions, RatioSeriesAuxPlot
 from pychron.options.views.icfactor_views import VIEWS
-from pychron.pychron_constants import FIT_TYPES_INTERPOLATE, NULL_STR, MAIN, APPEARANCE
+from pychron.pychron_constants import NULL_STR, MAIN, APPEARANCE
 
 
-class ICFactorAuxPlot(FitAuxPlot):
-    name = Property
-    detectors = List
-    numerator = Str
-    denominator = Str
+class ICFactorAuxPlot(RatioSeriesAuxPlot):
     analysis_type = Str
     analysis_types = List
-    standard_ratio = Float
-    standard_ratios = List((295.5,))
 
     def _analysis_types_default(self):
         from pychron.experiment.utilities.identifier import ANALYSIS_MAPPING
 
         return list(ANALYSIS_MAPPING.values())
 
-    def _get_name(self):
-        if self.denominator and self.denominator != NULL_STR:
-            ret = '{}/{}'.format(self.numerator, self.denominator)
-        else:
-            ret = self.numerator
-        return ret
 
-    def _get_fit_types(self):
-        return FIT_TYPES_INTERPOLATE
-
-
-class ICFactorOptions(SeriesOptions):
+class ICFactorOptions(RatioSeriesOptions):
     aux_plot_klass = ICFactorAuxPlot
     delete_existing = Bool
 
@@ -60,11 +43,11 @@ class ICFactorOptions(SeriesOptions):
         dets = [NULL_STR, 'age'] + dets
         super(ICFactorOptions, self).set_detectors(dets)
 
-    def get_subview(self, name):
-        name = name.lower()
-        klass = self._get_subview(name)
-        obj = klass(model=self)
-        return obj
+    # def get_subview(self, name):
+    #     name = name.lower()
+    #     klass = self._get_subview(name)
+    #     obj = klass(model=self)
+    #     return obj
 
     def _get_subview(self, name):
         return VIEWS[name]

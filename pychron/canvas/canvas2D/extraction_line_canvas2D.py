@@ -24,7 +24,7 @@ from traitsui.menu import Action
 
 from pychron.canvas.canvas2D.overlays.extraction_line_overlay import ExtractionLineInfoTool, ExtractionLineInfoOverlay
 from pychron.canvas.canvas2D.scene.extraction_line_scene import ExtractionLineScene
-from pychron.canvas.canvas2D.scene.primitives.connections import Elbow
+from pychron.canvas.canvas2D.scene.primitives.connections import Elbow, Connection
 from pychron.canvas.canvas2D.scene.primitives.lasers import Laser
 from pychron.canvas.canvas2D.scene.primitives.primitives import BorderLine
 from pychron.canvas.canvas2D.scene.primitives.valves import RoughValve, \
@@ -130,7 +130,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
 
     def _over_item(self, event):
         x, y = event.x, event.y
-        return self.scene.get_is_in(x, y, exclude=[BorderLine, Elbow])
+        return self.scene.get_is_in(x, y, exclude=[BorderLine, Elbow, Connection])
 
     def normal_left_down(self, event):
         pass
@@ -162,9 +162,8 @@ class ExtractionLineCanvas2D(SceneCanvas):
         try:
             tt = self.active_item.get_tooltip_text()
             ctrl.setToolTip(tt)
-
         except AttributeError as e:
-            print('select mouse move {}'.format(e))
+            pass
         self.normal_mouse_move(event)
 
     def select_right_down(self, event):
@@ -229,13 +228,10 @@ class ExtractionLineCanvas2D(SceneCanvas):
                 if event.shift_down:
                     mode = 'shift_select'
 
-                try:
-                    if state:
-                        ok, change = self.manager.open_valve(item.name, mode=mode)
-                    else:
-                        ok, change = self.manager.close_valve(item.name, mode=mode)
-                except TypeError:
-                    ok, change = True, True
+                if state:
+                    ok, change = self.manager.open_valve(item.name, mode=mode)
+                else:
+                    ok, change = self.manager.close_valve(item.name, mode=mode)
 
         if ok:
             item.state = state

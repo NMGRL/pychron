@@ -34,6 +34,7 @@ from pychron.core.helpers.iterfuncs import partition
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.enum_editor import myEnumEditor
 from pychron.core.ui.table_editor import myTableEditor
+from pychron.core.yaml import yload
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.paths import paths
 
@@ -86,11 +87,10 @@ class MeasurementFitsSelector(FilterFitSelector):
         if not os.path.isfile(p):
             return
 
-        with open(p, 'r') as rfile:
-            yd = yaml.load(rfile)
-            fits = self._load_fits(yd['signal'])
-            fits.extend(self._load_fits(yd['baseline'], is_baseline=True))
-            self.fits = fits
+        yd = yload(p)
+        fits = self._load_fits(yd['signal'])
+        fits.extend(self._load_fits(yd['baseline'], is_baseline=True))
+        self.fits = fits
 
         h, _ = os.path.splitext(os.path.basename(p))
         self.name = h
@@ -103,7 +103,7 @@ class MeasurementFitsSelector(FilterFitSelector):
         with open(path, 'r') as rfile:
             m = ast.parse(rfile.read())
             docstr = ast.get_docstring(m)
-            yd = yaml.load(docstr)
+            yd = yload(docstr)
             if yd:
                 return yd.get('default_fits', None)
 

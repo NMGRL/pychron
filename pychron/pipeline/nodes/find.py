@@ -151,16 +151,21 @@ class FindIrradiationNode(BaseFindFluxNode):
             state.levels = self.selected_levels
             state.irradiation = self.irradiation
 
+        self._run_hook(state)
+
+    def _run_hook(self, state):
+        pass
+
     def _select_all_button_fired(self):
         self.selected_levels = self.levels
 
     def traits_view(self):
         v = self._view_factory(Item('irradiation', editor=EnumEditor(name='irradiations')),
-                               UItem('select_all_button', enabled_when='irradiation'),
-                               BorderVGroup(UItem('selected_levels',
+                               BorderVGroup(UItem('select_all_button', enabled_when='irradiation'),
+                                            UItem('selected_levels',
                                                   style='custom',
-                                                  editor=CheckListEditor(name='levels', cols=3)),
-                                            visible_when='irradiation',
+                                                  editor=CheckListEditor(name='levels', cols=6)),
+                                            enabled_when='irradiation',
                                             label='Levels'),
                                width=300,
                                height=300,
@@ -172,6 +177,33 @@ class FindIrradiationNode(BaseFindFluxNode):
 class FindVerticalFluxNode(FindIrradiationNode):
     name = 'Find Vertical Flux'
     exclude = None
+    use_saved_means = Bool(False)
+
+    def _configure_hook(self):
+        if not self.irradiation:
+            self.irradiation = self.irradiations[0]
+
+    def traits_view(self):
+        v = self._view_factory(Item('irradiation', editor=EnumEditor(name='irradiations')),
+                               BorderVGroup(UItem('select_all_button'),
+                                            UItem('selected_levels',
+                                                  style='custom',
+                                                  editor=CheckListEditor(name='levels', cols=6)),
+                                            enabled_when='irradiation',
+                                            label='Levels'),
+                               Item('monitor_sample_name'),
+                               Item('use_saved_means'),
+                               width=300,
+                               height=300,
+                               title='Select Irradiation and Level',
+                               resizable=True)
+        return v
+
+    def _run_hook(self, state):
+        if not self.use_saved_means:
+            monitors = self.dvc.find_flux_monitors(self.irradiation, state.levels, self.monitor_sample_name)
+            state.unknowns = monitors
+        state.use_saved_means = self.use_saved_means
 
 
 class TransferFluxMonitorMeansNode(FindIrradiationNode):
@@ -309,6 +341,8 @@ class FindReferencesNode(FindNode):
     use_extract_device = Bool
     use_mass_spectrometer = Bool
 
+    use_browser = Bool
+
     def reset(self):
         self.user_choice = None
         super(FindReferencesNode, self).reset()
@@ -355,12 +389,26 @@ class FindReferencesNode(FindNode):
         return super(FindReferencesNode, self).pre_run(state, configure=configure)
 
     def run(self, state):
-        for gid, ans in groupby_group_id(state.unknowns):
-            if self._run_group(state, gid, list(ans)):
+        if self.use_browser:
+            if self._run_browser(state):
                 return
+        else:
+            for gid, ans in groupby_group_id(state.unknowns):
+                if self._run_group(state, gid, list(ans)):
+                    return
 
-        compress_groups(state.unknowns)
-        compress_groups(state.references)
+            compress_groups(state.unknowns)
+            compress_groups(state.references)
+
+    def _run_browser(self, state):
+        is_append, analyses = self.get_browser_analyses()
+        if analyses:
+            self.references = analyses
+            state.references = analyses
+        else:
+            # veto the pipeline
+            state.veto = self
+            return True
 
     def _run_group(self, state, gid, unknowns):
         atypes = [ai.lower().replace(' ', '_') for ai in self.analysis_types]
@@ -452,9 +500,10 @@ class FindReferencesNode(FindNode):
                                          show_border=True, label='Analysis Types'),
                                   label='Filtering')
 
-        v = self._view_factory(VGroup(load_grp,
-                                      filter_grp,
-                                      inst_grp))
+        v = self._view_factory(VGroup(Item('use_browser'),
+                                      VGroup(load_grp,
+                                             filter_grp,
+                                             inst_grp, enabled_when='not use_browser')))
 
         return v
 
