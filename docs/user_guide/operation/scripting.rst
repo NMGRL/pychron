@@ -9,3 +9,5 @@ Scripting
    scripts/measurement_script
    scripts/extraction_line_scripting
    scripts/bakeout_scripting
+   scripts/examples/index
+
