@@ -26,18 +26,38 @@ from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.helpers.formatting import floatfmt
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.models.series_model import SeriesModel
+from pychron.pychron_constants import DELTA
+
+TOOLTIP_MAP = {'label': 'Label',
+               'mean': 'Weighted mean if data has errors otherwise average',
+               'n': 'Number of data points',
+               'std': 'Standard Deviation',
+               'se': 'Standard Error, aka Taylor error.  1/sqrt(sum(weights)). If data has no errors this column '
+                     'will be a replica of SD column',
+               'sem': 'Standard Error of the Mean.  SD/sqrt(n)',
+               'mswd': 'MSWD of the current fit type',
+               'mean_mswd': 'MSWD of a mean fit to the data',
+               'min': 'Minimum value of the data',
+               'max': 'Maximum value of the data',
+               'dev': 'Delta, aka difference between Min and Max'}
 
 
 class SeriesStatsTabularAdapter(TabularAdapter):
     columns = [('Label', 'label'),
-               ('Wt. Mean', 'mean'),
+               ('Mean', 'mean'),
+               ('N', 'fn'),
                ('SD', 'std'),
-               ('SEWM', 'se'),
+               ('SE', 'se'),
                ('SEM', 'sem'),
+               ('Fit MSWD', 'mswd'),
                ('Mean MSWD', 'mean_mswd'),
                ('Min', 'min'),
                ('Max', 'max'),
-               ('Dev.', 'dev')]
+               (DELTA, 'dev')]
+
+    def get_tooltip(self, obj, trait, row, column):
+        name = self.column_map[column]
+        return TOOLTIP_MAP.get(name, '')
 
 
 class SeriesStatistics:
@@ -73,12 +93,12 @@ class SeriesEditor(FigureEditor):
                     for plot in reversed(g.plots):
                         for k, v in plot.plots.items():
                             if k.startswith('fit') and hasattr(v[0], 'regressor'):
-                                    label = plot.y_axis.title
-                                    for tag in ('sub', 'sup'):
-                                        label = label.replace('<{}>'.format(tag), '')
-                                        label = label.replace('</{}>'.format(tag), '')
+                                label = plot.y_axis.title
+                                for tag in ('sub', 'sup'):
+                                    label = label.replace('<{}>'.format(tag), '')
+                                    label = label.replace('</{}>'.format(tag), '')
 
-                                    ss.append(SeriesStatistics(label, v[0].regressor))
+                                ss.append(SeriesStatistics(label, v[0].regressor))
 
                 else:
                     g.on_trait_change(self._handle_reg, 'regression_results', remove=True)
