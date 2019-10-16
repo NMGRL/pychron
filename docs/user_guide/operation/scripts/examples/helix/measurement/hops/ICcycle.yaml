@@ -1,0 +1,73 @@
+# measure Ar40 on H2 Faraday
+- counts: 10
+  settle: 5
+  cup_configuration:
+    - isotope: Ar40
+      active: True
+      deflection: 0
+      detector: H2
+      protect: False
+      is_baseline: False
+  positioning:
+     detector: H2
+     isotope: Ar40
+- counts: 10
+  settle: 5
+  cup_configuration:
+    - isotope: Ar40
+      active: True
+      deflection: 0
+      detector: H2
+      protect: False
+      is_baseline: False
+  positioning:
+     detector: H1
+     isotope: Ar40
+- counts: 10
+  settle: 5
+  cup_configuration:
+    - isotope: Ar40
+      active: True
+      deflection: 0
+      detector: H2
+      protect: False
+      is_baseline: False
+  positioning:
+     detector: AX
+     isotope: Ar40
+- counts: 10
+  settle: 5
+  cup_configuration:
+    - isotope: Ar40
+      active: True
+      deflection: 0
+      detector: H2
+      protect: False
+      is_baseline: False
+  positioning:
+     detector: L1
+     isotope: Ar40
+- counts: 10
+  settle: 5
+  cup_configuration:
+    - isotope: Ar40
+      active: True
+      deflection: 0
+      detector: H2
+      protect: False
+      is_baseline: False
+  positioning:
+     detector: H2
+     isotope: 39.85
+- counts: 10
+  settle: 5
+  cup_configuration:
+    - isotope: Ar40
+      active: True
+      deflection: 0
+      detector: H2
+      protect: False
+      is_baseline: False
+  positioning:
+     detector: H2
+     isotope: Ar40

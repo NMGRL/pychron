@@ -1,0 +1,7 @@
+#('list_of_iso:det_pairs',     measurements, settling time seconds)
+('Ar41:CDD', 10, 2)
+('Ar40:CDD', 10, 2)
+('Ar39:CDD', 10, 2)
+('Ar38:CDD', 10, 2)
+('Ar37:CDD', 10, 2)
+('Ar36:CDD', 10, 2)
