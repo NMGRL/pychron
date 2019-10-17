@@ -1324,21 +1324,27 @@ class Graph(ContextMenuMixin):
                     pad = [convert(p) for p in pad.split(',')]
                 else:
                     pad = convert(pad)
-
             if not pad:
                 pad = 0
 
-            if isinstance(mi, (int, float)):
+            # print(type(mi), isinstance(mi, (int, float)), pad_style)
+            # if isinstance(mi, (int, float)):
+            try:
                 if isinstance(pad, list):
                     mi -= pad[0]
                 elif pad_style in ('symmetric', 'lower'):
                     mi -= pad
+            except TypeError:
+                pass
 
-            if isinstance(ma, (int, float)):
+            # if isinstance(ma, (int, float)):
+            try:
                 if isinstance(pad, list):
                     ma += pad[1]
                 elif pad_style in ('symmetric', 'upper'):
                     ma += pad
+            except TypeError:
+                pass
 
         if scale == 'log':
             try:
