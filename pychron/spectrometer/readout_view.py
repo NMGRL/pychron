@@ -125,9 +125,12 @@ class BaseReadout(HasTraits):
             except ZeroDivisionError:
                 pass
         else:
-            self.display_tolerance = '{:0.2f}'.format(self.tolerance)
-            if abs(self.value - self.config_value) > self.tolerance:
-                return self.name, self.value, self.config_value
+            try:
+                self.display_tolerance = '{:0.2f}'.format(self.tolerance)
+                if abs(self.value - self.config_value) > self.tolerance:
+                    return self.name, self.value, self.config_value
+            except TypeError:
+                pass
 
     def compare_message(self):
         return '{} does not match. Current:{:0.3f}, Config: {:0.3f}, tol.: {}'.format(self.name, self.value,

@@ -1,0 +1,51 @@
+# measure Ar40 on H2 Faraday
+- counts: 10
+  settle: 5
+  cup_configuration:
+    - isotope: Ar40
+      active: True
+      deflection: 0
+      detector: H2
+      protect: False
+      is_baseline: False
+    - isotope: Ar39
+      active: True
+      deflection: 0
+      detector: H1
+      protect: False
+      is_baseline: False
+    - isotope: Ar38
+      active: True
+      deflection: 0
+      detector: AX
+      protect: False
+      is_baseline: False
+    - isotope: Ar37
+      active: True
+      deflection: 0
+      detector: L1
+      protect: False
+      is_baseline: False
+    - isotope: Ar36
+      active: True
+      deflection: 0
+      detector: L2(CDD)
+      protect: False
+      is_baseline: False
+  positioning:
+     detector: L2(CDD)
+     isotope: Ar36
+# measure argon 38
+- counts: 20
+  settle: 5
+  cup_configuration:
+    - isotope: Ar38
+      active: True
+      deflection: 0
+      detector: AX(CDD)
+      protect: False
+      is_baseline: False
+  positioning:
+    detector: AX(CDD)
+    isotope: Ar38
+    use_af_demag: False

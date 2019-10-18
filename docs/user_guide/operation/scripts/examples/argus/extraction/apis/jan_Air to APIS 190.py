@@ -1,0 +1,51 @@
+'''
+eqtime: 25
+'''
+def main():
+    gosub('jan:WaitForMiniboneAccess')
+    info('Prepare for Air Shot')
+    close(description='Jan Inlet')
+    open(description='Jan Ion Pump')
+    close(description='Minibone to Bone')
+    close(description='Bone to Minibone')
+    close(description='Minibone to Turbo')
+    close(description='Quad Inlet')
+    open(description='Microbone to Turbo')
+    open(description='Microbone to Inlet Pipette')
+    open(description='Microbone to Getter NP-10C')
+    open(description='Microbone to Getter NP-10H')
+    close(description='Microbone to CO2 Laser')
+    close('A')
+    open('T')
+    open('L')
+    open('Y')
+    sleep(30)
+    close('Y')
+    sleep(2)
+    if analysis_type=='blank':
+        info('is blank. not filling')
+    else:
+        info('filling pipette')
+        open('Z')
+    sleep(15)
+    close('Z')
+    sleep(1)
+    close('U')
+    sleep(1)
+    open('Y')
+    sleep(45)
+    close('K')
+    sleep(2)
+    open('U')
+    sleep(30)
+    close('T')
+    close('L')
+    close('U')
+    sleep(1)
+    open('K')
+    sleep(30)
+    close('M')
+    sleep(5)
+
+
+    

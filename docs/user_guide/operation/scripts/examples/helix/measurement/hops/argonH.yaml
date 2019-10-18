@@ -1,0 +1,124 @@
+# measure Ar40 on H2 Faraday
+- counts: 10
+  settle: 5
+  cup_configuration:
+    - isotope: Ar40
+      active: True
+      deflection: 0
+      detector: H2
+      protect: False
+      is_baseline: False
+  positioning:
+     detector: H2
+     isotope: Ar40
+# measure argon isotopes on CDD
+- counts: 20
+  settle: 5
+  cup_configuration:
+    - isotope: Ar40
+      active: False
+      deflection: 3250
+      detector: H2(CDD)
+      protect: True
+      is_baseline: False
+    - isotope: Ar39
+      active: True
+      deflection: 200
+      detector: H1(CDD)
+      protect: False
+      is_baseline: False
+    - isotope: Ar38
+      active: True
+      deflection: 0
+      detector: AX(CDD)
+      protect: False
+      is_baseline: False
+    - isotope: Ar37
+      active: True
+      deflection: 600
+      detector: L1(CDD)
+      protect: False
+      is_baseline: False
+    - isotope: Ar36
+      active: True
+      deflection: 0
+      detector: L2(CDD)
+      protect: False
+      is_baseline: False
+  positioning:
+    detector: AX(CDD)
+    isotope: Ar38   
+# measure high mass hydrocarbons
+- counts: 20
+  settle: 5
+  cup_configuration:
+    - isotope: Ar40H
+      active: True
+      deflection: 600
+      detector: H2(CDD)
+      protect: False
+      is_baseline: False
+    - isotope: Ar39H
+      active: True
+      deflection: 0
+      detector: H1(CDD)
+      protect: False
+      is_baseline: False
+    - isotope: Ar38H
+      active: True
+      deflection: 0
+      detector: AX(CDD)
+      protect: False
+      is_baseline: False
+    - isotope: Ar37H
+      active: True
+      deflection: 0
+      detector: L1(CDD)
+      protect: False
+      is_baseline: False
+    - isotope: Ar36H
+      active: True
+      deflection: 1250
+      detector: L2(CDD)
+      protect: False
+      is_baseline: False
+  positioning:
+    detector: AX(CDD)
+    isotope: Ar38H  
+# measure HCl
+- counts: 10
+  settle: 5
+  cup_configuration:
+    - isotope: Ar40H
+      active: False
+      deflection: 3250
+      detector: H2(CDD)
+      protect: False
+      is_baseline: False
+    - isotope: Ar39H
+      active: False
+      deflection: 0
+      detector: H1(CDD)
+      protect: False
+      is_baseline: False
+    - isotope: Ar38H
+      active: False
+      deflection: 0
+      detector: AX(CDD)
+      protect: False
+      is_baseline: False
+    - isotope: Ar37H
+      active: False
+      deflection: 0
+      detector: L1(CDD)
+      protect: False
+      is_baseline: False
+    - isotope: HCl
+      active: True
+      deflection: 0
+      detector: L2(CDD)
+      protect: False
+      is_baseline: False
+  positioning:
+    detector: AX(CDD)
+    isotope: PHHCl

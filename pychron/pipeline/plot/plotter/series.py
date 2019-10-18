@@ -100,14 +100,17 @@ class BaseSeries(BaseArArFigure):
             return self.xs.mean()
         return 0
 
-    def normalize(self, tzero):
-        xs = array([ai.timestamp for ai in self.sorted_analyses])
-
-        xs -= tzero
-        xs /= 3600.
-        for p in self.graph.plots:
-            p.data.set_data('x{}'.format(self.group_id*2), xs)
-        return xs
+    # def normalize(self, tzero):
+    #
+    #     # xs = array([ai.timestamp for ai in self.sorted_analyses])
+    #     xs = self.xs
+    #     if self.options.use_time_axis:
+    #         xs -= tzero
+    #         xs /= 3600.
+    #
+    #     for p in self.graph.plots:
+    #         p.data.set_data('x{}'.format(self.group_id*2), xs)
+    #     return xs
 
     def plot(self, plots, legend=None):
         """
@@ -121,8 +124,6 @@ class BaseSeries(BaseArArFigure):
 
         if plots:
             self.xs = self._get_xs(plots, self.sorted_analyses)
-            # with graph.no_regression(refresh=True):
-            # plots = [po for po in plots if po.use]
             for i, po in enumerate(plots):
                 self._plot_series(po, i, omits)
 
@@ -160,6 +161,7 @@ class BaseSeries(BaseArArFigure):
                           filter_outliers_dict=po.filter_outliers_dict)
 
             n = [ai.record_id for ai in self.sorted_analyses]
+
             args = graph.new_series(x=self.xs,
                                     display_index=ArrayDataSource(data=n),
                                     plotid=pid,
@@ -209,6 +211,7 @@ class BaseSeries(BaseArArFigure):
             print('Series', e)
 
     def _get_xs(self, plots, ans, tzero=None):
+
         if self.options.use_time_axis:
             xs = array([ai.timestamp for ai in ans])
             px = plots[0]
@@ -226,6 +229,7 @@ class BaseSeries(BaseArArFigure):
 
         else:
             xs = arange(len(ans))
+
         return xs
 
     def _get_ys(self, po):

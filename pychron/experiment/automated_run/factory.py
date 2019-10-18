@@ -25,7 +25,7 @@ from traits.trait_errors import TraitError
 from uncertainties import nominal_value, std_dev
 
 from pychron.core.helpers.filetools import list_directory, add_extension, remove_extension
-from pychron.core.helpers.iterfuncs import partition
+from pychron.core.helpers.iterfuncs import partition, groupby_key
 from pychron.core.helpers.strtools import camel_case
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.yaml import yload
@@ -166,7 +166,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
     edit_template = Event
     edit_template_label = Property(depends_on='template')
-
+    apply_stepheat = Event
     # ===========================================================================
     # conditionals
     # ===========================================================================
@@ -1477,6 +1477,46 @@ post_equilibration_script:name''')
             self._set_auto_comment()
         else:
             self.comment = ''
+
+    def do_apply_stepheat(self, queue):
+        dh = self.datahub
+        aliquots = {}
+
+        sruns = self._selected_runs
+        aruns = queue.automated_runs
+
+        for ln, runs in groupby_key(sruns, 'identifier'):
+            gal = dh.get_greatest_aliquot(ln)
+            rgal = max([r.aliquot for r in aruns if r.identifier == ln])
+            aliquot = max(gal, rgal)
+            aliquots[ln] = aliquot
+
+        template = self._new_template()
+        new_runs = []
+        for r in sruns:
+            gal = aliquots[r.identifier]
+            aliquot = gal + 1
+            aliquots[r.identifier] = aliquot
+
+            idx = aruns.index(r)
+            i = 0
+            for st in template.steps:
+                if st.value and (st.duration or st.cleanup):
+                    if i == 0:
+                        arv = r
+                    else:
+                        arv = self._new_run(position=r.position,
+                                            excludes=['position'])
+
+                    arv.trait_set(user_defined_aliquot=aliquot,
+                                  **st.make_dict(self.duration, self.cleanup))
+                    new_runs.append((idx, arv))
+                    i += 1
+
+        for idx, r in reversed(new_runs):
+            if r in aruns:
+                aruns.remove(r)
+            aruns.insert(idx, r)
 
     def _edit_template_fired(self):
         temp = self._new_template()

@@ -34,6 +34,7 @@ from pychron.core.codetools.memory_usage import mem_available
 from pychron.core.helpers.filetools import add_extension, get_path, unique_path2
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.helpers.logger_setup import add_root_handler, remove_root_handler
+from pychron.core.helpers.strtools import to_bool
 from pychron.core.progress import open_progress
 from pychron.core.stats import calculate_weighted_mean
 from pychron.core.ui.gui import invoke_in_main_thread
@@ -214,16 +215,18 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 prog.change_message('Setting Spectrometer')
             self.spectrometer_manager = self.application.get_service(p2)
             if self.spectrometer_manager is None:
-                self.warning_dialog('Spectrometer Plugin is required for Experiment')
-                return
+                if not to_bool(os.getenv('IGNORE_PLUGIN_WARNINGS')):
+                    self.warning_dialog('Spectrometer Plugin is required for Experiment')
+                    return
             self.ion_optics_manager = self.application.get_service(p3)
 
             if prog:
                 prog.change_message('Setting Extraction Line')
             self.extraction_line_manager = self.application.get_service(p1)
             if self.extraction_line_manager is None:
-                self.warning_dialog('Extraction Line Plugin is required for Experiment')
-                return
+                if not to_bool(os.getenv('IGNORE_PLUGIN_WARNINGS')):
+                    self.warning_dialog('Extraction Line Plugin is required for Experiment')
+                    return
 
         dh = self.datahub
         dh.mainstore = self.application.get_service(DVC_PROTOCOL)

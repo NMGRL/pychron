@@ -1,0 +1,33 @@
+- counts: 10
+  settle: 8
+  cup_configuration:
+    - isotope: Ar40
+      active: True
+      detector: H1
+      protect: False
+      is_baseline: False
+  positioning:
+     detector: H1
+     isotope: Ar40
+- counts: 10
+  settle: 8
+  cup_configuration:
+    - isotope: Ar40
+      active: True
+      detector: AX
+      protect: False
+      is_baseline: False
+  positioning:
+     detector: AX
+     isotope: Ar40
+- counts: 10
+  settle: 8
+  cup_configuration:
+    - isotope: Ar40
+      active: True
+      detector: L2
+      protect: False
+      is_baseline: False
+  positioning:
+     detector: L2
+     isotope: Ar40

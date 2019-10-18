@@ -109,7 +109,7 @@ class BaseRegressor(HasTraits):
 
     @property
     def mswd_pvalue(self):
-        return calculate_mswd_probability(self.mswd, self.n-1)
+        return calculate_mswd_probability(self.mswd, self.n - 1)
 
     @property
     def mean(self):
@@ -152,6 +152,7 @@ class BaseRegressor(HasTraits):
     @property
     def delta(self):
         return self.max - self.min
+
     dev = delta
 
     @property
@@ -523,4 +524,12 @@ class BaseRegressor(HasTraits):
         self._fit = v
         self.dirty = True
 
+    @property
+    def fn(self):
+        tn = len(self.ys)
+        fn = len(self.clean_ys)
+
+        if tn != fn:
+            tn = '{}/{}'.format(fn, tn)
+        return tn
 # ============= EOF =============================================

@@ -162,7 +162,7 @@ class WeightedMeanRegressor(MeanRegressor):
         return full(exog.shape[0], mean)
 
     @property
-    def sem(self):
+    def se(self):
         """
         aka Taylor error, aka standard error of the weighted mean
         :return:

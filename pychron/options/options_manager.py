@@ -338,7 +338,7 @@ class OptionsManager(Loggable):
             self.subview = v
 
     def _load_json(self, p):
-        with open(p, 'rb') as rfile:
+        with open(p, 'r') as rfile:
             try:
                 j = json.load(rfile)
             except json.JSONDecodeError:

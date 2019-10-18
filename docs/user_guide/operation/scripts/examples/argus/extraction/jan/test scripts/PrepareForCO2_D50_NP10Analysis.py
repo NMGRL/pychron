@@ -1,0 +1,16 @@
+'''
+'''
+
+def main():
+    info('Prepare for CO2 analysis')
+    close(description='Jan Inlet')
+    open(description='Jan Ion Pump')
+    close(description='Microbone to Minibone')
+    open(description='Microbone to Turbo')
+    open(description='Microbone to Inlet Pipette')
+    open(description='Microbone to Getter NP-10C')
+    open(description='Microbone to Getter NP-10H')
+    
+    close(description='CO2 Laser to Felix')
+    open(description='CO2 Laser to Jan')
+    open(description='Microbone to CO2 Laser')

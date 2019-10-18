@@ -15,12 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 from traits.api import HasTraits, Instance
 from traitsui.api import View, Item, VGroup, Spring, HGroup, ButtonEditor
 
 from pychron.core.ui.enum_editor import myEnumEditor
+from pychron.envisage.icon_button_editor import icon_button_editor
 
 POSITION_TOOLTIP = '''Set the position for this analysis or group of analyses.
 Examples:
@@ -74,34 +73,35 @@ class FactoryView(HasTraits):
                      tooltip='Set the number of seconds to run the extraction device.'),
                 Item('cleanup', label='Cleanup (s)',
                      tooltip='Set the number of seconds to getter the sample gas')),
-            HGroup(Item('beam_diameter'),Item('light_value', label='Lighting')),
+            HGroup(Item('beam_diameter'), Item('light_value', label='Lighting')),
             self._position_group(),
             label='Extract',
             show_border=True)
         return extract_grp
 
     def _position_group(self):
-        grp = HGroup(
-            Item('position',
-                 tooltip=POSITION_TOOLTIP),
-            Item('pattern',
-                 show_label=False,
-                 tooltip=PATTERN_TOOLTIP,
-                 editor=myEnumEditor(name='patterns')),
-            Item('edit_pattern',
-                 show_label=False,
-                 editor=ButtonEditor(label_value='edit_pattern_label')))
+        grp = HGroup(Item('position',
+                          tooltip=POSITION_TOOLTIP),
+                     Item('pattern',
+                          show_label=False,
+                          tooltip=PATTERN_TOOLTIP,
+                          editor=myEnumEditor(name='patterns')),
+                     Item('edit_pattern',
+                          show_label=False,
+                          editor=ButtonEditor(label_value='edit_pattern_label')))
         return grp
 
     def _step_heat_group(self):
-        grp = HGroup(
-            Item('template',
-                 label='Step Heat Template',
-                 editor=myEnumEditor(name='templates'),
-                 show_label=False, ),
-            Item('edit_template',
-                 show_label=False,
-                 editor=ButtonEditor(label_value='edit_template_label')))
+        grp = HGroup(Item('template',
+                          label='Step Heat Template',
+                          editor=myEnumEditor(name='templates'),
+                          show_label=False, ),
+                     Item('edit_template',
+                          show_label=False,
+                          editor=ButtonEditor(label_value='edit_template_label')),
+                     icon_button_editor('apply_stepheat', 'arrow_right',
+                                        enabled_when='_selected_runs',
+                                        tooltip='Apply step heat template to selected'))
         return grp
 
         # ============= EOF =============================================
