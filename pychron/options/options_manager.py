@@ -139,6 +139,8 @@ class OptionsManager(Loggable):
     _cached_names = List
     _cached_detectors = List
     _cached_atypes = List
+    _cached_reference_types = List
+
     _default_options_txt = None
 
     def __init__(self, *args, **kw):
@@ -180,6 +182,7 @@ class OptionsManager(Loggable):
             self.selected_options.set_analysis_types(atypes)
 
     def set_reference_types(self, atypes):
+        self._cached_reference_types = atypes
         if self.selected_options:
             self.selected_options.set_reference_types(atypes)
 
@@ -193,6 +196,9 @@ class OptionsManager(Loggable):
 
             if self._cached_atypes:
                 new.set_analysis_types(self._cached_atypes)
+
+            if self._cached_reference_types:
+                new.set_reference_types(self._cached_reference_types)
 
     def set_selected(self, obj):
         for name in self.names:
