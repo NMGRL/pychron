@@ -461,9 +461,9 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 VColumn(label='Isochron4036', attr='isochron_4036'),
                 EColumn(attr='isochron_4036'),
                 VColumn(label='PlateauAge', attr='plateau_age'),
-                VColumn(attr='plateau_age'),
+                EColumn(attr='plateau_age'),
                 VColumn(label='IntegratedAge', attr='integrated_age'),
-                VColumn(attr='integrated_age')]
+                EColumn(attr='integrated_age')]
 
         return cols
 
