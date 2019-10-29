@@ -33,6 +33,7 @@ class GroupAgeNode(BaseDVCNode):
         unknowns = list(a for a in state.unknowns if a.analysis_type == 'unknown')
 
         editor = self.editor_klass(dvc=self.dvc)
+        editor.load()
         editor.items = unknowns
         editor.make_groups()
         state.editors.append(editor)
@@ -79,4 +80,5 @@ class GroupAgeNode(BaseDVCNode):
         # state.unknowns = nans
         state.run_groups['unknowns'] = self.editor.groups
         state.unknowns = self.editor.unknowns
+        self.editor.dump()
 # ============= EOF =============================================

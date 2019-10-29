@@ -220,7 +220,7 @@ def calculate_arar_decay_factors(dc37, dc39, segments, use_mh=True):
         McDougall and Harrison
         p.75 equation 3.22
 
-        the book suggests using ti==analysis_time-end of irradiation segment_i
+        the book suggests using ti==analysis_time-end of irradiation segment_i (Wijbrans 1985)
 
         mass spec uses ti==analysis_time-start of irradiation segment_i
 
