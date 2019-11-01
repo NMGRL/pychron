@@ -337,8 +337,8 @@ class ScanManager(StreamGraphManager):
 
             if self.graph_y_auto:
                 mi, ma = self._get_graph_y_min_max()
-
-                self.graph.set_y_limits(min_=mi, max_=ma, pad='0.1')
+                if mi is not None and ma is not None:
+                    self.graph.set_y_limits(min_=mi, max_=ma, pad='0.1')
 
             if self._recording and self.queue:
                 self.queue.put((x, keys, signals))

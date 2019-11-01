@@ -111,8 +111,11 @@ class StreamGraphManager(Manager):
             plot = plot[0]
             if plot.visible:
                 ys = plot.value.get_data()
-                ma = max(ma, max(ys))
-                mi = min(mi, min(ys))
+                try:
+                    ma = max(ma, max(ys))
+                    mi = min(mi, min(ys))
+                except ValueError:
+                    mi, ma = None, None
         return mi, ma
 
     def _update_scan_graph(self):
