@@ -213,6 +213,7 @@ class ScanManager(StreamGraphManager):
     # private
     def _load_settings(self, params):
         spec = self.spectrometer
+        det = None
         if self.use_default_scan_settings:
             dd = self.default_detector
             iso = self.default_isotope
@@ -366,7 +367,10 @@ class ScanManager(StreamGraphManager):
 
     def _stop_timer(self):
         self.info('stopping scan timer')
-        self.timer.Stop()
+        if self.timer:
+            self.timer.Stop()
+        else:
+            self.debug('no timer to stop')
 
     def _start_recording(self):
         #        self._first_recording = True
