@@ -28,7 +28,7 @@ from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
-from pychron.core.pychron_traits import PositiveInteger
+from pychron.core.pychron_traits import PositiveInteger, BorderVGroup, BorderHGroup
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.ui.enum_editor import myEnumEditor
 from pychron.core.ui.qt.tabular_editors import FilterTabularEditor
@@ -167,35 +167,25 @@ class IrradiationEditorPane(TraitsDockPane):
         self.table_configurer.edit_traits()
 
     def traits_view(self):
-        # self.sample_tabular_adapter.columns = [('Sample', 'name'),
-        #                                        ('Material', 'material'),
-        #                                        ('Grainsize', 'grainsize'),
-        #                                        ('Project', 'project'),
-        #                                        ('PI', 'principal_investigator'),
-        #                                        ('Note', 'note')]
-
-        # tgrp = HGroup(icon_button_editor('clear_button', 'table_lightning',
-        #                                  enabled_when='selected',
-        #                                  tooltip='Clear contents of selected positions'))
-        pi_grp = VGroup(UItem('principal_investigator',
-                              editor=EnumEditor(name='principal_investigator_names')),
-                        show_border=True,
-                        label='Principal Investigator')
-        project_grp = VGroup(UItem('projects',
-                                   editor=FilterTabularEditor(editable=False,
-                                                              use_fuzzy=True,
-                                                              selected='selected_projects',
-                                                              adapter=ProjectAdapter(),
-                                                              multi_select=True),
-                                   width=175),
-                             show_border=True,
-                             label='Projects')
+        pi_grp = BorderVGroup(UItem('principal_investigator',
+                                    editor=EnumEditor(name='principal_investigator_names')),
+                              label='Principal Investigator')
+        project_grp = BorderVGroup(UItem('projects',
+                                         editor=FilterTabularEditor(editable=False,
+                                                                    use_fuzzy=True,
+                                                                    selected='selected_projects',
+                                                                    adapter=ProjectAdapter(),
+                                                                    multi_select=True),
+                                         # width=175
+                                         ),
+                                   label='Projects')
 
         sample_grp = VGroup(HGroup(UItem('sample_filter_parameter',
                                          editor=EnumEditor(name='sample_filter_parameters')),
                                    UItem('sample_filter',
                                          editor=ComboboxEditor(name='sample_filter_values'),
-                                         width=75),
+                                         # width=75
+                                         ),
                                    # icon_button_editor('edit_sample_button', 'database_edit',
                                    #                    tooltip='Edit sample in database'),
                                    # icon_button_editor('add_sample_button', 'database_add',
@@ -212,38 +202,17 @@ class IrradiationEditorPane(TraitsDockPane):
                                                        multi_select=True,
                                                        column_clicked='column_clicked',
                                                        stretch_last_section=False),
-                                  width=75))
-        jgrp = HGroup(UItem('j'), Label(PLUSMINUS_ONE_SIGMA), UItem('j_err'),
-                      icon_button_editor('estimate_j_button', 'cog', tooltip='Estimate J based on irradiation '
-                                                                             'chronology and the J/hr rate set in '
-                                                                             'Preferences/Entry'),
-                      show_border=True, label='J')
-        ngrp = HGroup(UItem('note'),
-                      Item('weight'),
-                      show_border=True, label='Note')
-        # sgrp = HGroup(UItem('invert_flag'),
-        #               Item('selection_freq', label='Freq'),
-        #               show_border=True,
-        #               label='Selection')
+                                  # width=75
+                                  ))
 
-        sagrp = HGroup(UItem('sample_search_str', tooltip='Search for sample from entire Database'),
-                       show_border=True,
-                       label='Sample')
+        sagrp = BorderHGroup(UItem('sample_search_str',
+                                   tooltip='Search for sample from entire Database'),
+                             label='Sample')
 
         g1 = VGroup(HGroup(pi_grp, sagrp),
                     project_grp)
 
-        g2 = VGroup(sample_grp,
-                    HGroup(UItem('packet', tooltip='Packet label. Must be in the form '
-                                                   '<number> or <prefix><number>. e.g. 1 or p1 or packet01'),
-                           icon_button_editor('set_packet_event', 'arrow_right',
-                                              enabled_when='packet',
-                                              tooltip='Apply the Packet to current selection'),
-                           Item('use_increment_packet', label='Auto-increment'),
-                           show_border=True, label='Packet'),
-                    HGroup(jgrp, ngrp))
-
-        v = View(VSplit(g1, g2), handler=IrradiationEditorHandler())
+        v = View(VSplit(g1, sample_grp), handler=IrradiationEditorHandler())
         return v
 
     def _table_configurer_default(self):
@@ -251,6 +220,30 @@ class IrradiationEditorPane(TraitsDockPane):
                                   refresh_func=self.refresh)
         t.set_adapter(self.sample_tabular_adapter)
         return t
+
+
+class IrradiationMetadataEditorPane(TraitsDockPane):
+    def traits_view(self):
+        jgrp = BorderHGroup(UItem('j'), Label(PLUSMINUS_ONE_SIGMA), UItem('j_err'),
+                            icon_button_editor('estimate_j_button', 'cog',
+                                               tooltip='Estimate J based on irradiation '
+                                                       'chronology and the J/hr rate set in '
+                                                       'Preferences/Entry'),
+                            label='J')
+        ngrp = BorderHGroup(UItem('note'),
+                            Item('weight'),
+                            label='Note')
+        packet_grp = BorderHGroup(UItem('packet',
+                                        tooltip='Packet label. Must be in the form '
+                                                '<number> or <prefix><number>. e.g. 1 or p1 or packet01'),
+                                  icon_button_editor('set_packet_event', 'arrow_right',
+                                                     enabled_when='packet',
+                                                     tooltip='Apply the Packet to current selection'),
+                                  Item('use_increment_packet', label='Auto-increment'),
+
+                                  label='Packet')
+        v = View(VGroup(HGroup(jgrp, ngrp), packet_grp))
+        return v
 
 
 class LabnumbersPane(TraitsTaskPane):
@@ -280,31 +273,29 @@ class IrradiationPane(TraitsDockPane):
     closable = False
 
     def traits_view(self):
-        irrad = HGroup(
-            spacer(),
-            Item('irradiation',
-                 width=-150,
-                 editor=myEnumEditor(name='irradiations')),
-            icon_button_editor('edit_irradiation_button', 'database_edit',
-                               enabled_when='edit_irradiation_enabled',
-                               tooltip='Edit irradiation'),
-            icon_button_editor('add_irradiation_button', 'database_add',
-                               tooltip='Add irradiation'),
-            icon_button_editor('import_irradiation_button', 'database_go',
-                               tooltip='Import irradiation'))
+        irrad = HGroup(spacer(),
+                       Item('irradiation',
+                            width=-150,
+                            editor=myEnumEditor(name='irradiations')),
+                       icon_button_editor('edit_irradiation_button', 'database_edit',
+                                          enabled_when='edit_irradiation_enabled',
+                                          tooltip='Edit irradiation'),
+                       icon_button_editor('add_irradiation_button', 'database_add',
+                                          tooltip='Add irradiation'),
+                       icon_button_editor('import_irradiation_button', 'database_go',
+                                          tooltip='Import irradiation'))
 
-        level = HGroup(
-            spacer(),
-            Label('Level:'),
-            spacer(-23),
-            UItem('level',
-                  width=-150,
-                  editor=myEnumEditor(name='levels')),
-            icon_button_editor('edit_level_button', 'database_edit',
-                               tooltip='Edit level',
-                               enabled_when='edit_level_enabled'),
-            icon_button_editor('add_level_button', 'database_add',
-                               tooltip='Add level'))
+        level = HGroup(spacer(),
+                       Label('Level:'),
+                       spacer(-23),
+                       UItem('level',
+                             width=-150,
+                             editor=myEnumEditor(name='levels')),
+                       icon_button_editor('edit_level_button', 'database_edit',
+                                          tooltip='Edit level',
+                                          enabled_when='edit_level_enabled'),
+                       icon_button_editor('add_level_button', 'database_add',
+                                          tooltip='Add level'))
 
         v = View(VGroup(irrad, level))
         return v

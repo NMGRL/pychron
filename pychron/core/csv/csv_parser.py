@@ -59,7 +59,7 @@ class BaseColumnParser(HasTraits):
         data = array([[gv(ri, ki) for ki in keys] for ri in self.iternrows()], dtype=float)
         return data.T
 
-    def values(self, keys=None):
+    def values(self, keys=None, lowercase_keys=False):
         """
             returns a row iterator
             each iteration is a dictionary containing "keys"
@@ -68,8 +68,14 @@ class BaseColumnParser(HasTraits):
         """
         if keys is None:
             keys = self._header
+
+        def make_key(k):
+            if lowercase_keys:
+                k = k.lower()
+            return k
+
         gv = self.get_value
-        return ({ki: gv(ri, ki) for ki in keys} for ri in self.iternrows())
+        return ({make_key(ki): gv(ri, ki) for ki in keys} for ri in self.iternrows())
 
     itervalues = values
 

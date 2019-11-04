@@ -141,7 +141,7 @@ class YorkRegressor(OLSRegressor):
         if self.error_calc_type == 'CI':
             e = self.calculate_ci_error(0)[0]
         elif self.error_calc_type == 'SEM':
-            e = self.calculate_ci_error(0)[0] * self.n**-0.5
+            e = (self.get_intercept_variance()**0.5) * self.n**-0.5
         else:
             e = self.get_intercept_variance() ** 0.5
         return e
@@ -300,13 +300,17 @@ class NewYorkRegressor(YorkRegressor):
 
         # eq 18
         a = sum(dVdx ** 2 * var_x + dVdy ** 2 * var_y + 2 * sxy * dVdx * dVdy)
-        var_b = a / dVdb ** 2
+        try:
+            var_b = a / dVdb ** 2
+        except ZeroDivisionError:
+            var_b = 1
 
         xm = self.xs.mean()
         dadx = -b * W / sW - xm * dVdx / dVdb
         dady = W / sW - xm * dVdy / dVdb
         # eq 18
         var_a = sum(dadx ** 2 * sx ** 2 + dady ** 2 * sy ** 2 + 2 * sxy * dadx * dady)
+
         self._intercept_variance = var_a
         return var_b
 

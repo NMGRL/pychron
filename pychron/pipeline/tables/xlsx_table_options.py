@@ -144,9 +144,12 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
     include_summary_mswd = dumpable(Bool(True))
     include_summary_kca = dumpable(Bool(True))
     include_summary_comments = dumpable(Bool(True))
+    include_summary_trapped = dumpable(Bool(True))
 
     summary_age_nsigma = dumpable(Enum(1, 2, 3))
     summary_kca_nsigma = dumpable(Enum(1, 2, 3))
+    summary_mswd_sig_figs = dumpable(Int(2))
+    summary_percent_ar39_sig_figs = dumpable(Int(1))
 
     asummary_kca_nsigma = dumpable(Enum(1, 2, 3))
     asummary_age_nsigma = dumpable(Enum(1, 2, 3))
@@ -357,7 +360,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
         columns_grp = BorderHGroup(general_col_grp, arar_col_grp,
                                    label='Columns')
         unk_columns_grp = VGroup(HGroup(columns_grp, sig_figs_grp),
-                                        summary_rows_grp, label='Unknowns')
+                                 summary_rows_grp, label='Unknowns')
         g1 = VGroup(HGroup(grp, appearence_grp), label='Main')
 
         def isum(k):
@@ -366,27 +369,32 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
         def iisum(k, label, **kw):
             return Item(isum(k), label=label, **kw)
 
+        summary_columns = BorderVGroup(iisum('sample', 'Sample'),
+                                       iisum('identifier', 'Identifier'),
+                                       iisum('unit', 'Unit'),
+                                       iisum('location', 'Location'),
+                                       iisum('material', 'Material'),
+                                       iisum('irradiation', 'Irradiation'),
+                                       iisum('age_type', 'Age Type'),
+                                       iisum('n', 'N'),
+                                       iisum('percent_ar39', '%39Ar'),
+                                       iisum('mswd', 'MSWD'),
+                                       HGroup(iisum('kca', 'KCA'),
+                                              Item('summary_kca_nsigma', label=SIGMA)),
+                                       HGroup(iisum('age', 'Age'),
+                                              Item('summary_age_nsigma', label=SIGMA)),
+                                       iisum('comments', 'Comments'),
+                                       iisum('trapped', 'Trapped 40/36'),
+                                       enabled_when=isum('sheet'),
+                                       label='Columns')
+        summary_sigfigs = VGroup(Item('summary_mswd_sig_figs'),
+                                 Item('summary_percent39_sig_figs'),
+                                 Item('summary_age_sig_figs'))
+
         summary_grp = VGroup(iisum('sheet', 'Summary Sheet'),
-                             VGroup(iisum('sample', 'Sample'),
-                                    iisum('identifier', 'Identifier'),
-                                    iisum('unit', 'Unit'),
-                                    iisum('location', 'Location'),
-                                    iisum('material', 'Material'),
-                                    iisum('irradiation', 'Irradiation'),
-                                    iisum('age_type', 'Age Type'),
-                                    iisum('n', 'N'),
-                                    iisum('percent_ar39', '%39Ar'),
-                                    iisum('mswd', 'MSWD'),
-                                    HGroup(iisum('kca', 'KCA'),
-                                           Item('summary_kca_nsigma', label=SIGMA)),
-                                    HGroup(iisum('age', 'Age'),
-                                           Item('summary_age_nsigma', label=SIGMA)),
-                                    iisum('comments', 'Comments'),
-                                    enabled_when=isum('sheet'),
-                                    label='Columns',
-                                    show_border=True),
-                             VGroup(UItem('summary_notes', style='custom'),
-                                    show_border=True, label='Notes'),
+                             HGroup(summary_columns,summary_sigfigs),
+                             BorderVGroup(UItem('summary_notes', style='custom'),
+                                   abel='Notes'),
                              label='Summary')
 
         calc_grp = VGroup(J_ERROR_GROUP, label='Calc.')

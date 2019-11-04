@@ -37,8 +37,12 @@ class IsochronAppearance(AppearanceSubOptions):
 
 class InverseIsochronCalculationOptions(SubOptions):
     def traits_view(self):
-        plat_grp = BorderHGroup(VGroup(Item('omit_non_plateau', label='Omit Non Plateau Steps'),
-                                       Item('exclude_non_plateau', label='Exclude Non Plateau Steps')),
+        plat_grp = BorderHGroup(VGroup(Item('omit_non_plateau', label='Omit Non Plateau Steps',
+                                            tooltip='Displays the non plateau steps but they are not used in the '
+                                                    'calculations'),
+                                       Item('exclude_non_plateau',
+                                            label='Exclude Non Plateau Steps',
+                                            tooltip='Only plot plateau steps')),
                                 HGroup(Item('plateau_method',
                                             tooltip='Fleck 1977={}\n'
                                                     'Mahon 1996={}'.format(FLECK_PLATEAU_DEFINITION,

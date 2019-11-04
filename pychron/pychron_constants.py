@@ -45,6 +45,7 @@ SIZES = [10, 6, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36]
 
 try:
     from kiva.fonttools.font_manager import fontManager
+
     fontManager.defaultFamily = {'ttf': 'Arial', 'afm': 'Arial'}
 except ImportError:
     pass
@@ -116,6 +117,14 @@ MAHON_PLATEAU_DEFINITION = 'X contiguous Steps, Representing >Y% of the gas, ' \
 
 FLECK = 'Fleck 1977'
 MAHON = 'Mahon 1996'
+
+OMIT = 'omit'
+INVALID = 'invalid'
+OUTLIER = 'outlier'
+SKIP = 'skip'
+OMIT_ISOCHRON = 'omit_isochron'
+
+EXCLUDE_TAGS = (OMIT, INVALID, OUTLIER, SKIP)
 
 WEIGHTINGS = (NULL_STR, 'Volume', 'Variance')
 

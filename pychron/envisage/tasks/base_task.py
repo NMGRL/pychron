@@ -377,13 +377,16 @@ class BaseManagerTask(BaseTask):
             r = dialog.path
             return r
 
-    def open_file_dialog(self, action=None, **kw):
+    def open_file_dialog(self, action=None, wildcard_args=None, **kw):
         if 'default_directory' not in kw:
             kw['default_directory'] = self.default_directory
 
-        if 'wildcard' not in kw:
-            if self.wildcard:
-                kw['wildcard'] = self.wildcard
+        if wildcard_args is None:
+            if 'wildcard' not in kw:
+                if self.wildcard:
+                    kw['wildcard'] = self.wildcard
+        else:
+            kw['wildcard'] = FileDialog.create_wildcard(*wildcard_args)
 
         if action is None:
             action = self.default_open_action

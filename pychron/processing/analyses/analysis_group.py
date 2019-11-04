@@ -31,7 +31,8 @@ from pychron.processing.analyses.preferred import Preferred
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
 from pychron.pychron_constants import MSEM, SD, SUBGROUPING_ATTRS, ERROR_TYPES, WEIGHTED_MEAN, \
-    DEFAULT_INTEGRATED, SUBGROUPINGS, ARITHMETIC_MEAN, PLATEAU_ELSE_WEIGHTED_MEAN, WEIGHTINGS, FLECK, NULL_STR, ISOCHRON
+    DEFAULT_INTEGRATED, SUBGROUPINGS, ARITHMETIC_MEAN, PLATEAU_ELSE_WEIGHTED_MEAN, WEIGHTINGS, FLECK, NULL_STR, \
+    ISOCHRON, EXCLUDE_TAGS, OMIT_ISOCHRON
 
 
 def AGProperty(*depends):
@@ -217,7 +218,7 @@ class AnalysisGroup(IdeogramPlotable):
                 return a or b
         else:
             def test(ai):
-                return ai.is_omitted()
+                return ai.is_omitted(tags=EXCLUDE_TAGS+(OMIT_ISOCHRON,))
 
         exclude = [i for i, x in enumerate(ans) if test(x)]
         if ans:

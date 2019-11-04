@@ -399,7 +399,7 @@ class Paths(object):
         self.map_dir = map_dir = join(setup_dir, 'tray_maps')
         self.user_points_dir = join(map_dir, 'user_points')
         self.furnace_map_dir = join(map_dir, 'furnace')
-        self.irradiation_tray_maps_dir = join(setup_dir, 'irradiation_tray_maps')
+        # self.irradiation_tray_maps_dir = join(setup_dir, 'irradiation_tray_maps')
         # ==============================================================================
         # data
         # ==============================================================================
