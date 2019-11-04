@@ -17,6 +17,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from pyface.action.api import Action
 from pyface.tasks.action.task_action import TaskAction
 from pyface.timer.do_later import do_later
@@ -226,7 +227,12 @@ class MagnetFieldTableAction(Action):
     def perform(self, event):
         man = get_manager(event, SPECTROMETER_PROTOCOL)
         if man.spectrometer:
-            mft = man.spectrometer.magnet.mftable
+            from pyface.message_dialog import warning
+            warning(None, 'Editing MF Table is in beta mode. This procedure will not directly modify the existing '
+                          'table. An edited copy is created instead. Contact pychron developers to request this '
+                          'feature be fully implemented')
+
+            mft = man.spectrometer.magnet.field_table
 
             from pychron.spectrometer.mftable_view import MagnetFieldTableView
 

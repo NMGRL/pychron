@@ -15,9 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
-
 import csv
 import hashlib
 import os
@@ -26,7 +23,7 @@ import shutil
 import six
 from numpy import asarray, array, nonzero, polyval
 from scipy.optimize import leastsq, brentq
-from traits.api import HasTraits, List, Str, Dict, Bool, Property
+from traits.api import HasTraits, List, Str, Dict, Bool, Property, CFloat
 
 from pychron.core.helpers.filetools import add_extension, backup
 from pychron.loggable import Loggable
@@ -269,11 +266,15 @@ class FieldTable(Loggable):
         self._set_mftable_hash(p)
         self._add_to_archive(p, message)
 
+    @property
+    def detector_names(self):
+        return self._detectors
+
     # @property
     # def mftable_path(self):
     # return os.path.join(paths.spectrometer_dir, 'mftable.csv')
     def print_table(self, isos, d):
-        detectors = self._detectors
+        detectors = self.detector_names
         for i, iso in enumerate(isos):
             a = [iso]
             for hi in detectors:
@@ -353,7 +354,7 @@ class FieldTable(Loggable):
                 if load_items:
                     fi = FieldItem(isotope=iso)
                     for di, v in zip(detectors, dacs):
-                        fi.add_trait(di, Str(v))
+                        fi.add_trait(di, CFloat(v))
                     items.append(fi)
 
                 row = [iso, mw] + dacs
