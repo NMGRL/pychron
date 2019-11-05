@@ -198,11 +198,7 @@ class InverseIsochron(Isochron):
         graph = self.graph
 
         if self.options.omit_non_plateau:
-
-            self.analysis_group.calculate_plateau()
-            for a in self.analyses:
-                if not self.analysis_group.get_is_plateau_step(a):
-                    a.temp_status = 'omit'
+            self.analysis_group.do_omit_non_plateau()
 
         for pid, (plotobj, po) in enumerate(zip(graph.plots, plots)):
             getattr(self, '_plot_{}'.format(po.plot_name))(po, plotobj, pid)

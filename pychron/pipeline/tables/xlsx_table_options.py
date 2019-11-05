@@ -387,14 +387,15 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                                        iisum('trapped', 'Trapped 40/36'),
                                        enabled_when=isum('sheet'),
                                        label='Columns')
-        summary_sigfigs = VGroup(Item('summary_mswd_sig_figs'),
-                                 Item('summary_percent39_sig_figs'),
-                                 Item('summary_age_sig_figs'))
+        summary_sigfigs = BorderVGroup(Item('summary_mswd_sig_figs', label='MSWD'),
+                                       Item('summary_percent_ar39_sig_figs', label='%39Ar'),
+                                       Item('summary_age_sig_figs', label='Age'),
+                                       label='Sig Figs')
 
         summary_grp = VGroup(iisum('sheet', 'Summary Sheet'),
-                             HGroup(summary_columns,summary_sigfigs),
+                             HGroup(summary_columns, summary_sigfigs),
                              BorderVGroup(UItem('summary_notes', style='custom'),
-                                   abel='Notes'),
+                                          label='Notes'),
                              label='Summary')
 
         calc_grp = VGroup(J_ERROR_GROUP, label='Calc.')

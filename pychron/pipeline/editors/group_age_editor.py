@@ -17,7 +17,7 @@
 from apptools.preferences.preference_binding import bind_preference
 from pyface.action.menu_manager import MenuManager
 from traits.api import Property, Str, Int, List, on_trait_change, Bool
-from traitsui.api import View, UItem, VGroup, Handler, InstanceEditor, Item
+from traitsui.api import View, UItem, VGroup, Handler, InstanceEditor, Item, HGroup
 from traitsui.menu import Action
 
 from pychron.column_sorter_mixin import ColumnSorterMixin
@@ -141,9 +141,10 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin, PersistenceMixin):
     unknowns = List
 
     integrated_include_omitted = Bool(False)
+    omit_non_plateau = Bool(False)
 
     persistence_name = 'group_age_editor'
-    pattributes = ['integrated_include_omitted', ]
+    pattributes = ['integrated_include_omitted', 'omit_non_plateau']
 
     def make_groups(self, bind=True):
         if bind:
@@ -159,6 +160,9 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin, PersistenceMixin):
 
             unks.extend(ans)
             ag = make_interpreted_age_group(ans, gid)
+            if self.omit_non_plateau:
+                ag.do_omit_non_plateau()
+
             ag.integrated_include_omitted = self.integrated_include_omitted
             gs.append(ag)
 
@@ -226,8 +230,15 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin, PersistenceMixin):
         return ggrp
 
     def get_options_group(self):
-        return BorderVGroup(Item('integrated_include_omitted', label='Include Omitted'),
-                            label='Integrated Age')
+        return BorderVGroup(HGroup(BorderVGroup(Item('integrated_include_omitted',
+                                              tooltip='Include omitted steps in the integrated age',
+                                              label='Include Omitted'),
+                                         label='Integrated'),
+                            BorderVGroup(Item('omit_non_plateau',
+                                              tooltip='Omit non plateau steps from the isochron age',
+                                              label='Omit Non Plateau'),
+                                         label='Isochron')),
+                            label='Options')
 
     def traits_view(self):
         agrp = self.get_analyses_group()

@@ -208,6 +208,13 @@ class AnalysisGroup(IdeogramPlotable):
     def clean_analyses(self):
         return (ai for ai in self.analyses if not ai.is_omitted())
 
+    def do_omit_non_plateau(self):
+        self.calculate_plateau()
+        ans = [a for a in self.analyses if isinstance(a, ArArAge) and not a.is_omitted()]
+        for a in ans:
+            if not self.get_is_plateau_step(a):
+                a.temp_status = 'omit'
+
     def get_isochron_data(self, exclude_non_plateau=False):
         ans = [a for a in self.analyses if isinstance(a, ArArAge)]
 
