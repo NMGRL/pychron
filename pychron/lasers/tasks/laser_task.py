@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
 from traits.api import Property
 
@@ -24,15 +23,6 @@ from pychron.envisage.view_util import open_view
 from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
 
 
-# from pychron.lasers.tasks.panes.co2 import FusionsCO2Pane, FusionsCO2StagePane, \
-# FusionsCO2ControlPane
-# from pychron.lasers.tasks.laser_panes import PulsePane, OpticsPane, \
-#     AuxilaryGraphPane
-# from pychron.lasers.tasks.panes.diode import FusionsDiodeClientPane, \
-#     FusionsDiodePane, FusionsDiodeStagePane, FusionsDiodeControlPane, \
-#     FusionsDiodeSupplementalPane
-# from pychron.lasers.tasks.panes.uv import FusionsUVPane, FusionsUVClientPane, \
-#     FusionsUVControlPane, FusionsUVStagePane, FusionsUVSupplementalPane
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -52,6 +42,7 @@ class BaseLaserTask(BaseHardwareTask):
 
     def show_laser_script_executor(self):
         pass
+
 
 class FusionsTask(BaseLaserTask):
     def _default_layout_default(self):
@@ -112,6 +103,18 @@ class FusionsTask(BaseLaserTask):
             #         if self.manager.use_video:
             #             v = self.manager.degasser_factory()
             #             self.window.application.open_view(v)
+
+
+class AblationCO2Task(BaseLaserTask):
+    id = 'pychron.ablation.co2'
+    name = 'Ablation CO2'
+
+    def create_central_pane(self):
+        from pychron.lasers.tasks.panes.ablation import AblationCO2ClientPane
+        return AblationCO2ClientPane(model=self.manager)
+
+    def create_dock_panes(self):
+        return []
 
 
 class ChromiumCO2Task(FusionsTask):

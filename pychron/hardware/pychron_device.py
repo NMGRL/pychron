@@ -15,29 +15,71 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from traits.api import CInt, Str, Bool
+from traits.api import CInt, Str, Bool, Int
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.hardware.core.communicators.ethernet_communicator import EthernetCommunicator
-
+from pychron.hardware.core.communicators.serial_communicator import SerialCommunicator
 from pychron.loggable import Loggable
 
 
-class EthernetDeviceMixin(Loggable):
+class RemoteDeviceMixin(Loggable):
     communicator = None
     connected = False
-    port = CInt
-    host = Str
+
     kind = Str
     message_frame = Str
     use_end = Bool
 
+    def open(self):
+        return self.setup_communicator()
+
+    def opened(self):
+        pass
+
+    def shutdown(self):
+        if self.communicator:
+            self.communicator.close()
+
     def setup_communicator(self):
-        host = self.host
-        port = self.port
-        self.communicator = ec = EthernetCommunicator(host=host,
-                                                      port=port,
+        raise NotImplementedError
+
+    def _ask(self, *args, **kw):
+        if not self.communicator:
+            self.setup_communicator()
+
+        if self.communicator:
+            return self.communicator.ask(*args, **kw)
+
+
+class SerialDeviceMixin(RemoteDeviceMixin):
+    port = Str
+    baudrate = Int
+    parity = Int
+    stopbits = Int
+
+    def setup_communicator(self):
+        self.communicator = ec = SerialCommunicator(port=self.port,
+                                                    baudrate=self.baudrate,
+                                                    parity=self.parity,
+                                                    stopbits=self.stopbits)
+
+        r = ec.open()
+        if r:
+            r = self.opened()
+            self.connected = bool(r)
+
+        return r
+
+
+class EthernetDeviceMixin(RemoteDeviceMixin):
+    port = CInt
+    host = Str
+
+    def setup_communicator(self):
+        self.communicator = ec = EthernetCommunicator(host=self.host,
+                                                      port=self.port,
                                                       kind=self.kind,
                                                       use_end=self.use_end,
                                                       message_frame=self.message_frame)
@@ -48,33 +90,5 @@ class EthernetDeviceMixin(Loggable):
             self.connected = bool(r)
 
         return r
-
-    def open(self):
-        return self.setup_communicator()
-        # host = self.host
-        # port = self.port
-        #
-        # self.communicator = ec = EthernetCommunicator(host=host,
-        #                                               port=port)
-        # r = ec.open()
-        # if r:
-        #     self.connected = True
-        #     self.opened()
-        #
-        # return r
-
-    def opened(self):
-        pass
-
-    def shutdown(self):
-        if self.communicator:
-            self.communicator.close()
-
-    def _ask(self, *args, **kw):
-        if not self.communicator:
-            self.setup_communicator()
-
-        if self.communicator:
-            return self.communicator.ask(*args, **kw)
 
 # ============= EOF =============================================

@@ -14,11 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-
 from pychron.lasers.stage_managers.remote_stage_manger import RemoteStageManager
 
 
-class ChromiumStageManager(RemoteStageManager):
+class AblationStageManager(RemoteStageManager):
     pass
 
 # ============= EOF =============================================
