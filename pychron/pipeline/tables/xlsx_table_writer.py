@@ -173,6 +173,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                    VColumn(visible=ubit and options.include_F,
                            label=('<sup>40</sup>', 'Ar*/', '<sup>39</sup>', 'Ar', '<sub>K</sub>'),
                            attr='uF'),
+                   EColumn(visible=ubit and options.include_F, attr='uF'),
                    VColumn(visible=ubit and options.include_k2o,
                            label=('K', '<sub>2</sub>', 'O'),
                            sigformat='k2o',
