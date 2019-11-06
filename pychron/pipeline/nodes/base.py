@@ -171,6 +171,6 @@ class BaseNode(ColumnSorterMixin):
         return '{}<{}>'.format(self.name, self.__class__.__name__)
 
 
-class SortableNode(BaseNode, ColumnSorterMixin):
+class SortableNode(BaseNode):
     pass
 # ============= EOF =============================================

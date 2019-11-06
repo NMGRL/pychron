@@ -33,8 +33,15 @@ from pychron.pychron_constants import PLUSMINUS
 
 
 def calc_limits(ys, ye, n):
-    ymi = (ys - (ye * n)).min()
-    yma = (ys + (ye * n)).max()
+    try:
+        ymi = (ys - (ye * n)).min()
+    except BaseException:
+        ymi = 0
+    try:
+        yma = (ys + (ye * n)).max()
+    except BaseException:
+        yma = 0
+
     return ymi, yma
 
 
