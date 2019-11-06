@@ -311,7 +311,8 @@ KLASS_MAP = {'pyexperiment': 'PyExperiment',
              'pyvalve': 'PyValve',
              'pyco2': 'PyCO2',
              'pydiode': 'PyDiode',
-             'pysampleprep': 'PySamplePrep'}
+             'pysampleprep': 'PySamplePrep',
+             'pycrunch': 'PyCrunch'}
 
 
 def entry_point(appname, debug=False):
