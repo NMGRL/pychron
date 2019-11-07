@@ -33,16 +33,20 @@ from .communicator import Communicator, process_response, prep_str, remove_eol_f
 
 
 def get_ports():
-    usb = glob.glob('/dev/tty.usb*')
-    furpi = glob.glob('/dev/furpi.*')
-    pychron = glob.glob('/dev/pychron.*')
-    slab = glob.glob('/dev/tty.SLAB*')
-    if sys.platform == 'darwin':
-        keyspan = glob.glob('/dev/tty.U*')
+    if sys.platform == 'win32':
+        ports = ['COM{}'.format(i+1) for i in range(256)]
     else:
-        keyspan = glob.glob('/dev/ttyU*')
+        usb = glob.glob('/dev/tty.usb*')
+        furpi = glob.glob('/dev/furpi.*')
+        pychron = glob.glob('/dev/pychron.*')
+        slab = glob.glob('/dev/tty.SLAB*')
+        if sys.platform == 'darwin':
+            keyspan = glob.glob('/dev/tty.U*')
+        else:
+            keyspan = glob.glob('/dev/ttyU*')
+        ports = keyspan + usb + furpi + pychron + slab
 
-    return keyspan + usb + furpi + pychron + slab
+    return ports
 
 
 class SerialCommunicator(Communicator):
