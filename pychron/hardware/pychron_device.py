@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import CInt, Str, Bool, Int
+from traits.api import CInt, Str, Bool
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -55,9 +55,9 @@ class RemoteDeviceMixin(Loggable):
 
 class SerialDeviceMixin(RemoteDeviceMixin):
     port = Str
-    baudrate = Int
-    parity = Int
-    stopbits = Int
+    baudrate = CInt
+    parity = Str
+    stopbits = CInt
 
     def setup_communicator(self):
         self.communicator = ec = SerialCommunicator(port=self.port,
