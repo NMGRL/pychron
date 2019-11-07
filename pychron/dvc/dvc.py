@@ -962,18 +962,22 @@ class DVC(Loggable):
             return True
         else:
             self.debug('getting repository from remote')
-            names = self.remote_repository_names()
+
             service = self.application.get_service(IGitHost)
-            if name in names:
-                service.clone_from(name, root, self.organization)
+            if not service:
                 return True
             else:
-                self.warning_dialog('name={} not in available repos '
-                                    'from service={}, organization={}'.format(name,
-                                                                              service.remote_url,
-                                                                              self.organization))
-                for ni in names:
-                    self.debug('available repo== {}'.format(ni))
+                names = self.remote_repository_names()
+                if name in names:
+                    service.clone_from(name, root, self.organization)
+                    return True
+                else:
+                    self.warning_dialog('name={} not in available repos '
+                                        'from service={}, organization={}'.format(name,
+                                                                                  service.remote_url,
+                                                                                  self.organization))
+                    for ni in names:
+                        self.debug('available repo== {}'.format(ni))
 
     def rollback_repository(self, expid):
         repo = self._get_repository(expid)
