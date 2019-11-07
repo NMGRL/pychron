@@ -258,9 +258,9 @@ class EthernetCommunicator(Communicator):
         ret = not self.simulation and handler is not None
         return ret
 
-    def get_read_handler(self, handler):
+    def get_read_handler(self, handler, **kw):
         if self.read_port:
-            handler = self.get_handler(addrs=(self.host, self.read_port))
+            handler = self.get_handler(addrs=(self.host, self.read_port), **kw)
 
         return handler
 
