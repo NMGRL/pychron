@@ -44,6 +44,7 @@ PACKAGE_DICT = dict(
     DVCPlugin='pychron.dvc.tasks.dvc_plugin',
     GitLabPlugin='pychron.git.tasks.gitlab_plugin',
     GitHubPlugin='pychron.git.tasks.github_plugin',
+    LocalGitPlugin='pychron.git.tasks.local_plugin',
     PipelinePlugin='pychron.pipeline.tasks.plugin',
     SparrowPlugin='pychron.sparrow.tasks.plugin',
 

@@ -293,8 +293,8 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
     def load_origin(self):
         self.debug('load origin')
         self.repository_names = [RepoItem(name=r['name'],
-                                          push_date=format_iso_datetime(r['pushed_at'], as_str=False),
-                                          create_date=format_iso_datetime(r['created_at'], as_str=False))
+                                          push_date=format_iso_datetime(r.get('pushed_at'), as_str=False),
+                                          create_date=format_iso_datetime(r.get('created_at'), as_str=False))
                                  for r in self.dvc.remote_repositories()]
         self.o_origin_repos = None
 
