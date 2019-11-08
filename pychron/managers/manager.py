@@ -126,7 +126,7 @@ class Manager(Viewable, ConfigLoadable):
         """
         pass
 
-    def opened(self, ui):
+    def ui_opened(self, ui):
         def _loop():
             start = time.time()
             self.info('Window set to close after {} min'.format(self.close_after_minutes))

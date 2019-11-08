@@ -29,7 +29,7 @@ class AblationCO2Manager(SerialLaserManager):
     _alive = False
 
     def _test_connection_hook(self):
-        re = self.ask('GetVersion')
+        re = self._ask('GetVersion')
         self.connected = bool(re)
 
     def end_extract(self, *args, **kw):
@@ -44,7 +44,7 @@ class AblationCO2Manager(SerialLaserManager):
 
     def fire_laser(self):
         self.info('fire laser')
-        self.ask('SetLaserOn 1')
+        self._ask('SetLaserOn 1')
 
     def extract(self, value, units=None, tol=0.1, fire_laser=True):
         if units is None:
@@ -71,23 +71,23 @@ class AblationCO2Manager(SerialLaserManager):
 
     def set_laser_power(self, v):
         self.debug('setting laser output to {}'.format(v))
-        return self.ask('SetLaserOutput {}'.format(v))
+        return self._ask('SetLaserOutput {}'.format(v))
 
     def enable_laser(self, **kw):
-        # self.ask('laser.enable ON')
+        # self._ask('laser.enable ON')
         self.info('enabling laser')
-        self.ask('SetLaserFireMode 3')  # 3= continuous wave
-        self.ask('SetLaserOn 1')
+        self._ask('SetLaserFireMode 3')  # 3= continuous wave
+        self._ask('SetLaserOn 1')
         self.enabled = True
 
     def disable_laser(self):
         self.info('disabling laser')
-        self.ask('SetLaserOn 0')
+        self._ask('SetLaserOn 0')
         self.enabled = False
 
     def get_position(self):
         x, y, z = self._x, self._y, self._z
-        xyz = self.ask('ReadPosition')
+        xyz = self._ask('ReadPosition')
         if xyz:
             x, y, z = [float(v) for v in xyz.split(',')]
             if self.stage_manager.use_sign_position_correction:
@@ -96,17 +96,17 @@ class AblationCO2Manager(SerialLaserManager):
                 z = z * self.stage_manager.z_sign
         return x, y, z
 
-    def ask(self, cmd, **kw):
-        return self._ask('{}\r'.format(cmd), **kw)
+    # def ask(self, cmd, **kw):
+    #     return self._ask('{}\r'.format(cmd), **kw)
 
     def linear_move(self, x, y, block=False, *args, **kw):
         self._move_to_position((x, y), block=block)
 
     def stop(self):
-        # self.ask('stage.stop')
+        # self._ask('stage.stop')
         self._alive = False
         self.update_position()
-
+    
     # private
     def _stage_stop_button_fired(self):
         self.stop()
@@ -117,7 +117,7 @@ class AblationCO2Manager(SerialLaserManager):
         else:
             cmd = 1
         self._firing = not self._firing
-        self.ask('SetLaserOn {}'.format(cmd))
+        self._ask('SetLaserOn {}'.format(cmd))
 
     def _output_power_changed(self, new):
         self.extract(new, self.units, fire_laser=False)
@@ -125,19 +125,19 @@ class AblationCO2Manager(SerialLaserManager):
     def _set_x(self, v):
         if self._move_enabled:
             self._alive = True
-            self.ask('SetPosition {},{},{},{},{},{}'.format(v, self._y, self._z, 10, 10, 0))
+            self._ask('SetPosition {},{},{},{},{},{}'.format(v, self._y, self._z, 10, 10, 0))
             self._single_axis_moving(v, 0)
 
     def _set_y(self, v):
         if self._move_enabled:
             self._alive = True
-            self.ask('SetPosition {},{},{},{},{},{}'.format(self._x, v, self._z, 10, 10, 0))
+            self._ask('SetPosition {},{},{},{},{},{}'.format(self._x, v, self._z, 10, 10, 0))
             self._single_axis_moving(v, 1)
 
     def _set_z(self, v):
         if self._move_enabled:
             self._alive = True
-            self.ask('SetPosition {},{},{},{},{},{}'.format(self._x, self._y, v, 10, 10, 0))
+            self._ask('SetPosition {},{},{},{},{},{}'.format(self._x, self._y, v, 10, 10, 0))
             self._single_axis_moving(v, 2)
 
     def _single_axis_moving(self, v, axis):
@@ -188,7 +188,7 @@ class AblationCO2Manager(SerialLaserManager):
 
         cmd = 'SetPosition {:0.0f},{:0.0f},{:0.0f},{:0.0f},{:0.0f},{:0.0f}'.format(x, y, z, xs, ys, zs)
         self.info('sending {}'.format(cmd))
-        self.ask(cmd)
+        self._ask(cmd)
 
         time.sleep(1)
         return self._moving(x, y, z, block)

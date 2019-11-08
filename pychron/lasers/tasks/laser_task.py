@@ -34,6 +34,8 @@ class BaseLaserTask(BaseHardwareTask):
         return self.manager.mode != 'client'
 
     def activated(self):
+        self.manager.opened()
+
         if self.manager.stage_manager:
             self.manager.stage_manager.keyboard_focus = True
 

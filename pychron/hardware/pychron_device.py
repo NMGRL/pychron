@@ -65,9 +65,9 @@ class SerialDeviceMixin(RemoteDeviceMixin):
         ec.set_parity(self.parity)
         ec.set_stopbits(self.stopbits)
         r = ec.open()
-        if r:
-            r = self.opened()
-            self.connected = bool(r)
+        # if r:
+        #     r = self.opened()
+        #     self.connected = bool(r)
 
         return r
 
@@ -84,9 +84,9 @@ class EthernetDeviceMixin(RemoteDeviceMixin):
                                                       message_frame=self.message_frame)
 
         r = ec.open()
-        if r:
-            r = self.opened()
-            self.connected = bool(r)
+        # if r:
+        #     r = self.opened()
+        #     self.connected = bool(r)
 
         return r
 
