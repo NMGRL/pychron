@@ -263,11 +263,11 @@ class SerialCommunicator(Communicator):
             stopbits= STOPBITS_ONE
             timeout=None
         """
-        args = dict()
+        # args = dict()
 
-        ldict = locals()['kw']
-        port = ldict['port'] if 'port' in ldict else None
-
+        # ldict = locals()['kw']
+        # port = ldict['port'] if 'port' in ldict else None
+        port = kw.get('port')
         if port is None:
             port = self.port
             if port is None:
@@ -278,16 +278,18 @@ class SerialCommunicator(Communicator):
         if sys.platform == 'darwin':
             port = '/dev/tty.{}'.format(port)
 
-        args['port'] = port
+        kw['port'] = port
 
         for key in ['baudrate', 'bytesize', 'parity', 'stopbits', 'timeout']:
-            v = ldict[key] if key in ldict else None
+            # v = ldict[key] if key in ldict else None
+            v = kw.get(key)
             if v is None:
                 v = getattr(self, key)
             if v is not None:
-                args[key] = v
+                kw[key] = v
 
-        pref = kw['prefs'] if 'prefs' in kw else None
+        # pref = kw['prefs'] if 'prefs' in kw else None
+        pref = kw.get('prefs')
         if pref is not None:
             pref = pref.serial_preference
             self._auto_find_handle = pref.auto_find_handle
@@ -298,16 +300,19 @@ class SerialCommunicator(Communicator):
             try_connect = True
             while try_connect:
                 try:
-                    self.handle = serial.Serial(**args)
+                    self.handle = serial.Serial(**kw)
+                    self.debug('')
                     try_connect = False
                     self.simulation = False
                 except serial.serialutil.SerialException:
                     try_connect = False
-        elif self._auto_find_handle:
-            self._find_handle(args, **kw)
+                    self.debug_exception()
 
-        connected = True if self.handle is not None else False
-        return connected
+        elif self._auto_find_handle:
+            self._find_handle(**kw)
+
+        self.debug('Serial device: {}'.format(self.handle))
+        return self.handle is not None  # connected is true if handle is not None
 
     # private
     def _get_report_value(self, key):
@@ -316,7 +321,7 @@ class SerialCommunicator(Communicator):
             value = getattr(self.handle, key)
         return c, value
 
-    def _find_handle(self, args, **kw):
+    def _find_handle(self, **kw):
         found = False
         self.simulation = False
         self.info('Trying to find correct port')
@@ -324,9 +329,9 @@ class SerialCommunicator(Communicator):
         port = None
         for port in get_ports():
             self.info('trying port {}'.format(port))
-            args['port'] = port
+            kw['port'] = port
             try:
-                self.handle = serial.Serial(**args)
+                self.handle = serial.Serial(**kw)
             except serial.SerialException:
                 continue
 
