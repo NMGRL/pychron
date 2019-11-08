@@ -166,11 +166,11 @@ class SerialCommunicator(Communicator):
             self.read_terminator = chr(3)
 
     def set_parity(self, parity):
-        if parity is not None:
+        if parity:
             self.parity = getattr(serial, 'PARITY_%s' % parity.upper())
 
     def set_stopbits(self, stopbits):
-        if stopbits is not None:
+        if stopbits:
             if stopbits in ('1', 1):
                 stopbits = 'ONE'
             elif stopbits in ('2', 2):

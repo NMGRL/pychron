@@ -85,7 +85,7 @@ DEFAULT_PLUGINS = (('General', ('Experiment',
                                 'DVC',
                                 'GitLab',
                                 'GitHub',
-                                'LocalGit'
+                                'LocalGit',
                                 'Pipeline',
                                 'Entry',
                                 'Classifier',
