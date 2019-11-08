@@ -284,7 +284,7 @@ class SerialCommunicator(Communicator):
             if v is not None:
                 kw[key] = v
 
-        pref = kw.get('prefs')
+        pref = kw.pop('prefs')
         if pref is not None:
             pref = pref.serial_preference
             self._auto_find_handle = pref.auto_find_handle
