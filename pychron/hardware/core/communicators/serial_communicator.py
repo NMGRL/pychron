@@ -226,7 +226,8 @@ class SerialCommunicator(Communicator):
                 self.handle.flushInput()
                 self.handle.flushOutput()
 
-            if self._write(cmd, is_hex=is_hex):
+            cmd = self._write(cmd, is_hex=is_hex)
+            if cmd is None:
                 return
 
             if is_hex:
@@ -400,7 +401,6 @@ class SerialCommunicator(Communicator):
 
             if is_hex:
                 cmd = codecs.decode(cmd, 'hex')
-                # cmd = cmd.decode('hex')
             else:
                 wt = self.write_terminator
                 if wt is not None:
@@ -412,7 +412,9 @@ class SerialCommunicator(Communicator):
                 self.handle.write(cmd)
             except (serial.serialutil.SerialException, OSError, IOError, ValueError) as e:
                 self.warning('Serial Communicator write execption: {}'.format(e))
-                return True
+                return
+
+        return cmd
 
     def _read_nchars(self, n, timeout=1, delay=None):
         func = lambda r: self._get_nchars(n, r)
