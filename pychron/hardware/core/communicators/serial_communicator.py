@@ -263,10 +263,6 @@ class SerialCommunicator(Communicator):
             stopbits= STOPBITS_ONE
             timeout=None
         """
-        # args = dict()
-
-        # ldict = locals()['kw']
-        # port = ldict['port'] if 'port' in ldict else None
         port = kw.get('port')
         if port is None:
             port = self.port
@@ -281,14 +277,12 @@ class SerialCommunicator(Communicator):
         kw['port'] = port
 
         for key in ['baudrate', 'bytesize', 'parity', 'stopbits', 'timeout']:
-            # v = ldict[key] if key in ldict else None
             v = kw.get(key)
             if v is None:
                 v = getattr(self, key)
             if v is not None:
                 kw[key] = v
 
-        # pref = kw['prefs'] if 'prefs' in kw else None
         pref = kw.get('prefs')
         if pref is not None:
             pref = pref.serial_preference
@@ -300,8 +294,8 @@ class SerialCommunicator(Communicator):
             try_connect = True
             while try_connect:
                 try:
+                    self.debug('Connection parameters={}'.format(kw))
                     self.handle = serial.Serial(**kw)
-                    self.debug('')
                     try_connect = False
                     self.simulation = False
                 except serial.serialutil.SerialException:

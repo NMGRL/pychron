@@ -28,6 +28,10 @@ class AblationCO2Manager(SerialLaserManager):
     configuration_dir_name = 'ablation'
     _alive = False
 
+    def _test_connection_hook(self):
+        re = self.ask('GetVersion')
+        self.connected = bool(re)
+
     def end_extract(self, *args, **kw):
 
         self.info('ending extraction. set laser power to 0')
@@ -84,15 +88,16 @@ class AblationCO2Manager(SerialLaserManager):
     def get_position(self):
         x, y, z = self._x, self._y, self._z
         xyz = self.ask('ReadPosition')
-        x, y, z = [float(v) for v in xyz.split(',')]
-        if self.stage_manager.use_sign_position_correction:
-            x = x * self.stage_manager.x_sign
-            y = y * self.stage_manager.y_sign
-            z = z * self.stage_manager.z_sign
+        if xyz:
+            x, y, z = [float(v) for v in xyz.split(',')]
+            if self.stage_manager.use_sign_position_correction:
+                x = x * self.stage_manager.x_sign
+                y = y * self.stage_manager.y_sign
+                z = z * self.stage_manager.z_sign
         return x, y, z
 
     def ask(self, cmd, **kw):
-        return self._ask('{}\n'.format(cmd), **kw)
+        return self._ask('{}\r'.format(cmd), **kw)
 
     def linear_move(self, x, y, block=False, *args, **kw):
         self._move_to_position((x, y), block=block)
