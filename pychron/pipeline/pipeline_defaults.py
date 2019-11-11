@@ -100,7 +100,6 @@ IDEO = """
 required:
 nodes:
   - klass: UnknownNode
-  - klass: ArArCalculationsNode
   - klass: GroupingNode
   - klass: IdeogramNode
 """
