@@ -109,6 +109,7 @@ INVERSE_ISOCHRON = """
 required:
 nodes:
   - klass: UnknownNode
+  - klass: ArArCalculationsNode
   - klass: GroupingNode
   - klass: InverseIsochronNode
 """
@@ -117,6 +118,7 @@ SPEC = """
 required:
 nodes:
   - klass: UnknownNode
+  - klass: ArArCalculationsNode
   - klass: GroupingNode
   - klass: SpectrumNode
 """
@@ -175,6 +177,7 @@ SIMPLE_ANALYSIS_TABLE = """
 required:
 nodes:
   - klass: UnknownNode
+  - klass: ArArCalculationsNode
   - klass: GroupingNode
   - klass: GroupAnalysisTableNode
   - klass: ReviewNode

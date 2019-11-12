@@ -176,6 +176,9 @@ NO_BLANK_CORRECT = (BLANK, DETECTOR_IC, BACKGROUND)
 
 MAIN = 'Main'
 APPEARANCE = 'Appearance'
+SPECTRUM = 'Spectrum'
+ISOCHRON = 'Isochron'
+IDEOGRAM = 'Ideogram'
 DISPLAY = 'Display'
 GROUPS = 'Groups'
 CALCULATIONS = 'Calculations'

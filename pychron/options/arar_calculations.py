@@ -13,9 +13,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from traits.api import Bool, Int, Enum, Float
+
 from pychron.options.options import BaseOptions
+from pychron.pychron_constants import MAIN, ISOCHRON, SPECTRUM, IDEOGRAM, FLECK, MAHON
+
+
+def clonable(klass, *args, **kw):
+    return klass(clone=True, *args, **kw)
 
 
 class ArArCalculationsOptions(BaseOptions):
-    pass
+    integrated_include_omitted = clonable(Bool)
+    isochron_omit_non_plateau = clonable(Bool)
+    isochron_exclude_non_plateau = clonable(Bool)
+
+    plateau_method = clonable(Enum(FLECK, MAHON))
+    pc_nsteps = clonable(Int(3))
+    pc_gas_fraction = clonable(Float(50))
+
+    def initialize(self):
+        self.subview_names = [MAIN, IDEOGRAM, SPECTRUM, ISOCHRON]
+
+    def clone_to(self, options):
+        for t in self.trait_names(clone=True):
+            if hasattr(options, t):
+                setattr(options, t, getattr(self, t))
+
+    def _get_subview(self, name):
+        from pychron.options.views.arar_calculation_views import VIEWS
+        return VIEWS[name]
 # ============= EOF =============================================

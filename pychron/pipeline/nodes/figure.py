@@ -102,6 +102,12 @@ class FigureNode(SortableNode):
                 ei.name = ' '.join(ei.name.split(' ')[:-1])
                 ei.name = '{} {:02n}'.format(ei.name, i + 1)
 
+    def _pre_run_hook(self, state):
+        # copy arar options from state if they exist
+        arar_calc_options = state.arar_calculation_options
+        if arar_calc_options:
+            self.plotter_options_manager.set_outside_options(arar_calc_options)
+
     def configure(self, refresh=True, pre_run=False, **kw):
         if not pre_run:
             self._manual_configured = True

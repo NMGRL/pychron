@@ -32,7 +32,7 @@ from pychron.processing.arar_age import ArArAge
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
 from pychron.pychron_constants import MSEM, SD, SUBGROUPING_ATTRS, ERROR_TYPES, WEIGHTED_MEAN, \
     DEFAULT_INTEGRATED, SUBGROUPINGS, ARITHMETIC_MEAN, PLATEAU_ELSE_WEIGHTED_MEAN, WEIGHTINGS, FLECK, NULL_STR, \
-    ISOCHRON, EXCLUDE_TAGS, OMIT_ISOCHRON
+    ISOCHRON, EXCLUDE_TAGS
 
 
 def AGProperty(*depends):
@@ -120,6 +120,9 @@ class AnalysisGroup(IdeogramPlotable):
 
     isochron_3640 = None
     isochron_regressor = None
+
+    exclude_non_plateau = Bool(False)
+
 
     def __init__(self, *args, **kw):
         super(AnalysisGroup, self).__init__(make_arar_constants=False, *args, **kw)
@@ -218,14 +221,14 @@ class AnalysisGroup(IdeogramPlotable):
     def get_isochron_data(self, exclude_non_plateau=False):
         ans = [a for a in self.analyses if isinstance(a, ArArAge)]
 
-        if exclude_non_plateau and hasattr(self, 'get_is_plateau_step'):
+        if (exclude_non_plateau or self.exclude_non_plateau) and hasattr(self, 'get_is_plateau_step'):
             def test(ai):
                 a = ai.is_omitted()
                 b = not self.get_is_plateau_step(ai)
                 return a or b
         else:
             def test(ai):
-                return ai.is_omitted(tags=EXCLUDE_TAGS+(OMIT_ISOCHRON,))
+                return ai.is_omitted(tags=EXCLUDE_TAGS)
 
         exclude = [i for i, x in enumerate(ans) if test(x)]
         if ans:
