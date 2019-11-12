@@ -521,9 +521,22 @@ def build_globals(user, debug):
 
     ip = InitializationParser()
 
-    from pychron.globals import globalv
+    err = ip.verify()
+    if err:
+        from pyface.message_dialog import warning
+        warning(None, 'There is an issue with your initialization.xml file. Please resolve before relaunching\n'
+                      '\n{}\n\nError: {}'.format(ip.path, err))
+        sys.exit(1)
 
-    globalv.build(ip)
+    from pychron.globals import globalv
+    try:
+        globalv.build(ip)
+    except BaseException:
+        from pyface.message_dialog import warning
+        warning(None, 'There is an issue with your initialization.xml file. Please resolve before relaunching\n'
+                      '\n{}'.format(ip.path))
+        sys.exit(1)
+
     globalv.debug = debug
     globalv.username = user
 # ============= EOF =============================================

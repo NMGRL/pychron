@@ -127,6 +127,7 @@ def indent(elem, level=0):
 class XMLParser(object):
     _root = None
     path = None
+    _syntax_error = None
 
     def __init__(self, path=None, *args, **kw):
         if path:
@@ -153,8 +154,8 @@ class XMLParser(object):
         try:
             self._root = XML(txt, parser=LXMLParser(remove_blank_text=True))
             return True
-        except XMLSyntaxError:
-            pass
+        except XMLSyntaxError as e:
+            self._syntax_error = str(e)
 
     def load(self, rfile):
         return self._parse_file(rfile)
