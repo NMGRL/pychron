@@ -1276,21 +1276,25 @@ class DVC(Loggable):
 
                         if gi.create_repo(identifier, organization=self.organization):
                             ret = True
-                            if self.default_team:
-                                gi.set_team(self.default_team, self.organization, identifier,
-                                            permission='push')
-
-                            url = gi.make_url(identifier, self.organization)
-                            if i == 0:
-                                try:
-                                    repo = Repo.clone_from(url, root)
-                                except BaseException as e:
-                                    self.debug('failed cloning repo. {}'.format(e))
-                                    ret = False
-
-                                self.db.add_repository(identifier, principal_investigator)
+                            if isinstance(gi, LocalGitHostService):
+                                if i == 0:
+                                    self.db.add_repository(identifier, principal_investigator)
                             else:
-                                repo.create_remote(gi.default_remote_name or 'origin', url)
+                                if self.default_team:
+                                    gi.set_team(self.default_team, self.organization, identifier,
+                                                permission='push')
+
+                                url = gi.make_url(identifier, self.organization)
+                                if i == 0:
+                                    try:
+                                        repo = Repo.clone_from(url, root)
+                                    except BaseException as e:
+                                        self.debug('failed cloning repo. {}'.format(e))
+                                        ret = False
+
+                                    self.db.add_repository(identifier, principal_investigator)
+                                else:
+                                    repo.create_remote(gi.default_remote_name or 'origin', url)
 
                 return ret
 

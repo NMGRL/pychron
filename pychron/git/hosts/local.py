@@ -29,8 +29,9 @@ class LocalGitHostService(BaseGitHostService):
     def create_empty_repo(self, name):
         root = paths.repository_dataset_dir
         p = os.path.join(root, name)
-        os.mkdir(p)
-        repo = Repo.init(p)
+        if not os.path.isdir(p):
+            os.mkdir(p)
+            repo = Repo.init(p)
 
     def get_repository_names(self, organization):
         root = paths.repository_dataset_dir
