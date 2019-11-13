@@ -16,7 +16,7 @@
 from traits.api import Bool, Int, Enum, Float
 
 from pychron.options.options import BaseOptions
-from pychron.pychron_constants import MAIN, ISOCHRON, SPECTRUM, IDEOGRAM, FLECK, MAHON
+from pychron.pychron_constants import ISOCHRON, SPECTRUM, IDEOGRAM, FLECK, MAHON, ERROR_TYPES
 
 
 def clonable(klass, *args, **kw):
@@ -24,16 +24,24 @@ def clonable(klass, *args, **kw):
 
 
 class ArArCalculationsOptions(BaseOptions):
-    integrated_include_omitted = clonable(Bool)
+
+    # isochron
     isochron_omit_non_plateau = clonable(Bool)
     isochron_exclude_non_plateau = clonable(Bool)
 
+    # spectrum
+    integrated_include_omitted = clonable(Bool)
     plateau_method = clonable(Enum(FLECK, MAHON))
     pc_nsteps = clonable(Int(3))
     pc_gas_fraction = clonable(Float(50))
 
+    # ideogram
+    error_calc_method = clonable(Enum(*ERROR_TYPES))
+    probability_curve_kind = clonable(Enum('cumulative', 'kernel'))
+    mean_calculation_kind = clonable(Enum('weighted mean', 'kernel'))
+
     def initialize(self):
-        self.subview_names = [MAIN, IDEOGRAM, SPECTRUM, ISOCHRON]
+        self.subview_names = [IDEOGRAM, SPECTRUM, ISOCHRON]
 
     def clone_to(self, options):
         for t in self.trait_names(clone=True):

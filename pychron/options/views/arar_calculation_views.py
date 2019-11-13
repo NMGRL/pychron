@@ -19,18 +19,25 @@ from traitsui.api import Item, VGroup
 
 from pychron.core.pychron_traits import BorderVGroup
 from pychron.options.options import SubOptions
-from pychron.pychron_constants import MAIN, IDEOGRAM, ISOCHRON, SPECTRUM, FLECK_PLATEAU_DEFINITION, \
+from pychron.pychron_constants import IDEOGRAM, ISOCHRON, SPECTRUM, FLECK_PLATEAU_DEFINITION, \
     MAHON_PLATEAU_DEFINITION
 
 
-class ArArCalculationSubOptions(SubOptions):
-    def traits_view(self):
-        return self._make_view()
+# class ArArCalculationSubOptions(SubOptions):
+#     def traits_view(self):
+#         return self._make_view()
 
 
 class IdeogramSubOptions(SubOptions):
     def traits_view(self):
-        return self._make_view()
+        grp = BorderVGroup(Item('probability_curve_kind',
+                                label='Probability Curve Method'),
+                           Item('mean_calculation_kind',
+                                label='Mean Calculation Method'),
+                           Item('error_calc_method',
+                                label='Error Calculation Method'))
+
+        return self._make_view(grp)
 
 
 PLAT_GROUP = BorderVGroup(Item('plateau_method',
@@ -61,8 +68,7 @@ class IsochronSubOptions(SubOptions):
         return self._make_view(grp)
 
 
-VIEWS = {MAIN.lower(): ArArCalculationSubOptions,
-         SPECTRUM.lower(): SpectrumSubOptions,
+VIEWS = {SPECTRUM.lower(): SpectrumSubOptions,
          IDEOGRAM.lower(): IdeogramSubOptions,
          ISOCHRON.lower(): IsochronSubOptions}
 # ============= EOF =============================================

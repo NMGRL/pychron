@@ -396,9 +396,7 @@ class BaseOptions(HasTraits):
 
     def get_subview(self, name):
         name = name.lower()
-        # if hasattr(self, name):
-        #     return getattr(self, name)
-        # else:
+
         if name == 'main':
             try:
                 klass = self._get_subview(name)

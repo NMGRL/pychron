@@ -408,7 +408,7 @@ class OptionsManager(Loggable):
 
             o = self.selected_subview
             if not o:
-                o = 'Main'
+                o = self.subview_names[0]
 
             self.selected_subview = ''
             self.selected_subview = o
