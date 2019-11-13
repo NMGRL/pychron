@@ -15,11 +15,19 @@
 # ===============================================================================
 import os
 
+from git import Repo
+
 from pychron.git.hosts import BaseGitHostService
 from pychron.paths import paths
 
 
 class LocalGitHostService(BaseGitHostService):
+    def create_empty_repo(self, name):
+        root = paths.repository_dataset_dir
+        p = os.path.join(root, name)
+        os.mkdir(p)
+        repo = Repo.init(p)
+
     def get_repository_names(self, organization):
         root = paths.repository_dataset_dir
         names = [n for n in os.listdir(root) if os.path.isdir(os.path.join(root, n))]

@@ -43,6 +43,7 @@ from pychron.dvc.tasks.dvc_preferences import DVCConnectionItem
 from pychron.dvc.util import Tag, DVCInterpretedAge
 from pychron.envisage.browser.record_views import InterpretedAgeRecordView
 from pychron.git.hosts import IGitHost
+from pychron.git.hosts.local import LocalGitHostService
 from pychron.git_archive.repo_manager import GitRepoManager, format_date, get_repository_branch
 from pychron.git_archive.views import StatusView
 from pychron.globals import globalv
@@ -974,12 +975,17 @@ class DVC(Loggable):
                     service.clone_from(name, root, self.organization)
                     return True
                 else:
-                    self.warning_dialog('name={} not in available repos '
-                                        'from service={}, organization={}'.format(name,
-                                                                                  service.remote_url,
-                                                                                  self.organization))
-                    for ni in names:
-                        self.debug('available repo== {}'.format(ni))
+                    if isinstance(service, LocalGitHostService):
+                        service.create_empty_repo(name)
+                        return True
+                    else:
+
+                        self.warning_dialog('name={} not in available repos '
+                                            'from service={}, organization={}'.format(name,
+                                                                                      service.remote_url,
+                                                                                      self.organization))
+                        for ni in names:
+                            self.debug('available repo== {}'.format(ni))
 
     def rollback_repository(self, expid):
         repo = self._get_repository(expid)
