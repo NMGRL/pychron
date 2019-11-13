@@ -22,6 +22,10 @@ from pychron.paths import paths
 
 
 class LocalGitHostService(BaseGitHostService):
+    def create_repo(self, name, **kw):
+        self.create_empty_repo(name)
+        return True
+
     def create_empty_repo(self, name):
         root = paths.repository_dataset_dir
         p = os.path.join(root, name)
