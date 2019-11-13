@@ -291,7 +291,8 @@ class DVCPersister(BasePersister):
                         ret = False
 
         with dvc.session_ctx():
-            self._save_analysis_db(timestamp)
+            ret = self._save_analysis_db(timestamp)
+
         self.info('================= post measurement save finished =================')
         return ret
 
@@ -377,6 +378,9 @@ class DVCPersister(BasePersister):
 
         db = self.dvc.db
         an = db.add_analysis(**d)
+        if an is None:
+            self.warning('Failed adding analysis to database. See full log for error')
+            return
 
         # save currents
         self._save_currents(an)
@@ -430,6 +434,7 @@ class DVCPersister(BasePersister):
         an.change = change
 
         db.commit()
+        return True
 
     def _save_currents(self, dban):
         dvc = self.dvc
