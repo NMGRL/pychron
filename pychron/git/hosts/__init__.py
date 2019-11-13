@@ -91,6 +91,11 @@ def authorization(username, password, oauth_token):
 
 @provides(IGitHost)
 class BaseGitHostService(Loggable):
+    default_remote_name = Str('origin')
+
+    def push(self, *args, **kw):
+        pass
+
     def remote_exists(self, organization, name):
         return True
 
@@ -106,7 +111,6 @@ class GitHostService(BaseGitHostService):
     password = Password
     preference_path = ''
     oauth_token = Str
-    default_remote_name = Str
     remote_url = Str
     _cached_repo_names = Dict
     _clear_cached_repo_names = False
