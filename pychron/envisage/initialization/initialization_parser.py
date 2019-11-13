@@ -18,11 +18,14 @@
 # from lxml.etree import Element
 from __future__ import absolute_import
 from __future__ import print_function
-from pyface.message_dialog import warning
+
+import inspect
 # ============= standard library imports ========================
 import os
 import sys
-import inspect
+
+from pyface.message_dialog import warning
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.strtools import to_bool
 from pychron.core.xml.xml_parser import XMLParser
@@ -80,6 +83,9 @@ class InitializationParser(XMLParser):
                 sys.exit()
 
         super(InitializationParser, self).__init__(p, *args, **kw)
+
+    def verify(self):
+        return self._syntax_error
 
     def get_globals(self):
         tree = self.get_root()
