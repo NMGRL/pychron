@@ -305,46 +305,23 @@ class BaseSpectrometer(SpectrometerDevice):
                 self.debug('molweights={}'.format(self.molecular_weights))
 
                 try:
-                    index = det.index
-                    # idxs = [di.index for di]
-                    dets = self.active_detectors
-                    if not dets:
-                        dets = self.detectors
-                    #     idxs = [di.index for di in dets]
-                    # else:
-                        # idxs = range(len(dets))
-                        # index = next((i for i, d in enumerate(dets) if d.index == index), 0)
-
-                    nmass = self.map_mass(isotope)
-                    # for di, didx in zip(dets, idxs):
-                    for di in dets:
-                        mass = nmass - di.index + index
-                        # mass = nmass - didx + index
-                        isotope = self.map_isotope(mass)
-                        self.debug('setting detector {} to {} ({})'.format(di.name, isotope, mass))
-                        di.isotope = isotope
-                        di.mass = mass
-
-                    # index = det.index
-                    # dets = self.active_detectors
-                    # if not dets:
-                    #     dets = self.detectors
-                    #     idxs = [di.index for di in dets]
-                    # else:
-                    #     idxs = range(len(dets))
-                    #     index = next((i for i, d in enumerate(dets) if d.index == index), 0)
-                    #
-                    # nmass = self.map_mass(isotope)
-                    # for di, didx in zip(dets, idxs):
-                    #     mass = nmass - didx + index
-                    #     isotope = self.map_isotope(mass)
-                    #     self.debug('setting detector {} to {} ({})'.format(di.name, isotope, mass))
-                    #     di.isotope = isotope
-                    #     di.mass = mass
-
+                    self._update_isotopes_hook(isotope, det.index)
                 except BaseException as e:
                     self.warning(
                         'Cannot update isotopes. isotope={}, detector={}. error:{}'.format(isotope, detector, e))
+
+    def _update_isotope_hook(self, isotope, index):
+        dets = self.active_detectors
+        if not dets:
+            dets = self.detectors
+
+        nmass = self.map_mass(isotope)
+        for di in dets:
+            mass = nmass - di.index + index
+            isotope = self.map_isotope(mass)
+            self.debug('setting detector {} to {} ({})'.format(di.name, isotope, mass))
+            di.isotope = isotope
+            di.mass = mass
 
     def verify_configuration(self, **kw):
         return True
