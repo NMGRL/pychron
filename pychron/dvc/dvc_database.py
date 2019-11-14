@@ -675,10 +675,12 @@ class DVCDatabase(DatabaseAdapter):
             if repo:
                 return repo
 
-            principal_investigator = self.get_principal_investigator(principal_investigator)
-            if not principal_investigator:
+            pp = self.get_principal_investigator(principal_investigator)
+            if not pp:
                 principal_investigator = self.add_principal_investigator(principal_investigator)
                 self.flush()
+            else:
+                principal_investigator = pp
 
             a = RepositoryTbl(name=name, **kw)
             a.principal_investigator = principal_investigator

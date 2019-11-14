@@ -46,6 +46,23 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
     use_deflection_correction = False
     use_hv_correction = False
 
+    def _update_isotope_hook(self, isotope, index):
+        dets = self.active_detectors
+        if not dets:
+            dets = self.detectors
+            idxs = [di.index for di in dets]
+        else:
+            idxs = range(len(dets))
+            index = next((i for i, d in enumerate(dets) if d.index == index), 0)
+
+        nmass = self.map_mass(isotope)
+        for di, didx in zip(dets, idxs):
+            mass = nmass - didx + index
+            isotope = self.map_isotope(mass)
+            self.debug('setting detector {} to {} ({})'.format(di.name, isotope, mass))
+            di.isotope = isotope
+            di.mass = mass
+
     def _microcontroller_default(self):
         service = 'pychron.hardware.isotopx_spectrometer_controller.NGXController'
         s = self.application.get_service(service)

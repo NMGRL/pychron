@@ -25,7 +25,8 @@ from pychron.core.helpers.datetime_tools import ISO_FORMAT_STR
 from pychron.core.helpers.filetools import glob_list_directory, add_extension, \
     list_directory
 from pychron.dvc import dvc_dump, dvc_load, repository_path, list_frozen_productions
-from pychron.dvc.meta_object import IrradiationGeometry, Chronology, Production, cached, Gains, LoadGeometry
+from pychron.dvc.meta_object import IrradiationGeometry, Chronology, Production, cached, Gains, LoadGeometry, \
+    MetaObjectException
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths, r_mkdir
 from pychron.pychron_constants import INTERFERENCE_KEYS, RATIO_KEYS, DEFAULT_MONITOR_NAME, DATE_FORMAT, NULL_STR
@@ -568,12 +569,16 @@ class MetaRepo(GitRepoManager):
         return pname, ip
 
     # @cached('clear_cache')
-    def get_chronology(self, name, allow_null=False,**kw):
-
-        chron = irradiation_chronology(name, allow_null=allow_null)
-        if self.application:
-            chron.use_irradiation_endtime = self.application.get_boolean_preference(
-                'pychron.arar.constants.use_irradiation_endtime', False)
+    def get_chronology(self, name, allow_null=False, **kw):
+        chron = None
+        try:
+            chron = irradiation_chronology(name, allow_null=allow_null)
+            if self.application:
+                chron.use_irradiation_endtime = self.application.get_boolean_preference(
+                    'pychron.arar.constants.use_irradiation_endtime', False)
+        except MetaObjectException:
+            if name != 'NoIrradiation':
+                self.warning('Could not locate the irradiation chronology "{}"'.format(name))
         return chron
 
     @cached('clear_cache')

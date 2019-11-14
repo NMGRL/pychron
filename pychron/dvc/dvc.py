@@ -43,6 +43,7 @@ from pychron.dvc.tasks.dvc_preferences import DVCConnectionItem
 from pychron.dvc.util import Tag, DVCInterpretedAge
 from pychron.envisage.browser.record_views import InterpretedAgeRecordView
 from pychron.git.hosts import IGitHost
+from pychron.git.hosts.local import LocalGitHostService
 from pychron.git_archive.repo_manager import GitRepoManager, format_date, get_repository_branch
 from pychron.git_archive.views import StatusView
 from pychron.globals import globalv
@@ -974,12 +975,17 @@ class DVC(Loggable):
                     service.clone_from(name, root, self.organization)
                     return True
                 else:
-                    self.warning_dialog('name={} not in available repos '
-                                        'from service={}, organization={}'.format(name,
-                                                                                  service.remote_url,
-                                                                                  self.organization))
-                    for ni in names:
-                        self.debug('available repo== {}'.format(ni))
+                    if isinstance(service, LocalGitHostService):
+                        service.create_empty_repo(name)
+                        return True
+                    else:
+
+                        self.warning_dialog('name={} not in available repos '
+                                            'from service={}, organization={}'.format(name,
+                                                                                      service.remote_url,
+                                                                                      self.organization))
+                        for ni in names:
+                            self.debug('available repo== {}'.format(ni))
 
     def rollback_repository(self, expid):
         repo = self._get_repository(expid)
@@ -1270,21 +1276,25 @@ class DVC(Loggable):
 
                         if gi.create_repo(identifier, organization=self.organization):
                             ret = True
-                            if self.default_team:
-                                gi.set_team(self.default_team, self.organization, identifier,
-                                            permission='push')
-
-                            url = gi.make_url(identifier, self.organization)
-                            if i == 0:
-                                try:
-                                    repo = Repo.clone_from(url, root)
-                                except BaseException as e:
-                                    self.debug('failed cloning repo. {}'.format(e))
-                                    ret = False
-
-                                self.db.add_repository(identifier, principal_investigator)
+                            if isinstance(gi, LocalGitHostService):
+                                if i == 0:
+                                    self.db.add_repository(identifier, principal_investigator)
                             else:
-                                repo.create_remote(gi.default_remote_name or 'origin', url)
+                                if self.default_team:
+                                    gi.set_team(self.default_team, self.organization, identifier,
+                                                permission='push')
+
+                                url = gi.make_url(identifier, self.organization)
+                                if i == 0:
+                                    try:
+                                        repo = Repo.clone_from(url, root)
+                                    except BaseException as e:
+                                        self.debug('failed cloning repo. {}'.format(e))
+                                        ret = False
+
+                                    self.db.add_repository(identifier, principal_investigator)
+                                else:
+                                    repo.create_remote(gi.default_remote_name or 'origin', url)
 
                 return ret
 
