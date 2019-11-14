@@ -54,6 +54,9 @@ class FigureNode(SortableNode):
     use_plotting = True
     editors = Dict
 
+    def bind_preferences(self):
+        bind_preference(self, 'skip_meaning', 'pychron.pipeline.skip_meaning')
+
     def reset(self):
         super(FigureNode, self).reset()
         self.editors = {}
@@ -90,7 +93,6 @@ class FigureNode(SortableNode):
                 state.editors.append(editor)
                 self.editor = editor
                 if self.auto_set_items:
-                    bind_preference(self, 'skip_meaning', 'pychron.pipeline.skip_meaning')
                     if self.name in self.skip_meaning.split(','):
                         unks = [u for u in unks if u.tag.lower() != 'skip']
 

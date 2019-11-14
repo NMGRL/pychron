@@ -96,7 +96,7 @@ nodes:
   - klass: IdeogramNode
 """
 
-IDEO = """
+ARAR_IDEO = """
 required:
 nodes:
   - klass: UnknownNode
@@ -105,7 +105,23 @@ nodes:
   - klass: IdeogramNode
 """
 
+IDEO = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: GroupingNode
+  - klass: IdeogramNode
+"""
+
 INVERSE_ISOCHRON = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: GroupingNode
+  - klass: InverseIsochronNode
+"""
+
+ARAR_INVERSE_ISOCHRON = """
 required:
 nodes:
   - klass: UnknownNode
@@ -115,6 +131,14 @@ nodes:
 """
 
 SPEC = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: GroupingNode
+  - klass: SpectrumNode
+"""
+
+ARAR_SPEC = """
 required:
 nodes:
   - klass: UnknownNode
@@ -174,6 +198,16 @@ nodes:
 """
 
 SIMPLE_ANALYSIS_TABLE = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: GroupingNode
+  - klass: GroupAnalysisTableNode
+  - klass: ReviewNode
+  - klass: XLSXAnalysisTablePersistNode
+"""
+
+ARAR_SIMPLE_ANALYSIS_TABLE = """
 required:
 nodes:
   - klass: UnknownNode

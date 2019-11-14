@@ -29,6 +29,9 @@ class GroupAgeNode(BaseDVCNode):
     editor = None
     editor_klass = SubGroupAgeEditor
 
+    def bind_preferences(self):
+        bind_preference(self, 'skip_meaning', 'pychron.pipeline.skip_meaning')
+
     def run(self, state):
         unknowns = list(a for a in state.unknowns if a.analysis_type == 'unknown')
 
@@ -41,32 +44,30 @@ class GroupAgeNode(BaseDVCNode):
         self.set_groups(state)
 
     def set_groups(self, state):
-            bind_preference(self, 'skip_meaning', 'pychron.pipeline.skip_meaning')
+        def factory(ans, tag='Human Table'):
+            if self.skip_meaning:
+                if tag in self.skip_meaning:
+                    ans = (ai for ai in ans if ai.tag.lower() != 'skip')
 
-            def factory(ans, tag='Human Table'):
-                if self.skip_meaning:
-                    if tag in self.skip_meaning:
-                        ans = (ai for ai in ans if ai.tag.lower() != 'skip')
+            g = InterpretedAgeGroup(analyses=list(ans))
+            return g
 
-                g = InterpretedAgeGroup(analyses=list(ans))
-                return g
+        unknowns = list(a for a in state.unknowns if a.analysis_type == UNKNOWN)
+        blanks = (a for a in state.unknowns if a.analysis_type in BLANK_TYPES)
+        airs = (a for a in state.unknowns if a.analysis_type == AIR)
 
-            unknowns = list(a for a in state.unknowns if a.analysis_type == UNKNOWN)
-            blanks = (a for a in state.unknowns if a.analysis_type in BLANK_TYPES)
-            airs = (a for a in state.unknowns if a.analysis_type == AIR)
+        # unk_group = [factory(analyses) for _, analyses in groupby(sorted(unknowns, key=key), key=key)]
+        blank_group = [factory(analyses) for _, analyses in groupby_group_id(blanks)]
+        air_group = [factory(analyses) for _, analyses in groupby_group_id(airs)]
+        munk_group = [factory(analyses, 'Machine Table') for _, analyses in groupby_group_id(unknowns)]
 
-            # unk_group = [factory(analyses) for _, analyses in groupby(sorted(unknowns, key=key), key=key)]
-            blank_group = [factory(analyses) for _, analyses in groupby_group_id(blanks)]
-            air_group = [factory(analyses) for _, analyses in groupby_group_id(airs)]
-            munk_group = [factory(analyses, 'Machine Table') for _, analyses in groupby_group_id(unknowns)]
+        groups = {
+            # 'unknowns': unk_group,
+            'blanks': blank_group,
+            'airs': air_group,
+            'machine_unknowns': munk_group}
 
-            groups = {
-                # 'unknowns': unk_group,
-                'blanks': blank_group,
-                'airs': air_group,
-                'machine_unknowns': munk_group}
-
-            state.run_groups = groups
+        state.run_groups = groups
 
     def resume(self, state):
         # key = attrgetter('group_id')

@@ -49,6 +49,13 @@ class BaseNode(ColumnSorterMixin):
     use_state_unknowns = True
     use_state_references = True
 
+    def __init__(self, *args, **kw):
+        super(BaseNode, self).__init__(*args, **kw)
+        self.bind_preferences()
+
+    def bind_preferences(self):
+        pass
+
     def resume(self, state):
         pass
 
