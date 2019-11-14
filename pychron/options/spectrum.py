@@ -24,7 +24,7 @@ from pychron.options.group.spectrum_group_options import SpectrumGroupOptions
 from pychron.options.options import AgeOptions
 from pychron.options.views.spectrum_views import VIEWS
 from pychron.pychron_constants import NULL_STR, ERROR_TYPES, SIZES, FONTS, SIG_FIGS, WEIGHTINGS, MAIN, APPEARANCE, \
-    DISPLAY, GROUPS, MAHON, FLECK
+    DISPLAY, GROUPS, MAHON, FLECK, SPECTRUM, PLATEAU
 
 
 class SpectrumAuxPlot(AuxPlot):
@@ -33,7 +33,8 @@ class SpectrumAuxPlot(AuxPlot):
                  transient=True)
     _plot_names = List(['', 'extract_value',
                         'radiogenic_yield',
-                        'kca', 'kcl', 'moles_ar40', 'moles_ar36', 'moles_k39', 'age_spectrum'])
+                        'kca', 'kcl', 'moles_ar40', 'moles_ar36', 'moles_k39', 'age_spectrum'],
+                       transient=True)
 
 
 class PlateauOptions(AgeOptions):
@@ -106,7 +107,7 @@ class SpectrumOptions(PlateauOptions):
     group_options_klass = SpectrumGroupOptions
 
     def initialize(self):
-        self.subview_names = [MAIN, 'Spectrum', APPEARANCE, 'Plateau', DISPLAY, GROUPS]
+        self.subview_names = [MAIN, SPECTRUM, APPEARANCE, PLATEAU, DISPLAY, GROUPS]
 
     def _get_subview(self, name):
         return VIEWS[name]

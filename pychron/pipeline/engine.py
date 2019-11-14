@@ -20,6 +20,7 @@ from operator import attrgetter, itemgetter
 
 import yaml
 # ============= enthought library imports =======================
+from apptools.preferences.preference_binding import bind_preference
 from pyface.timer.do_later import do_later
 from traits.api import HasTraits, Str, Instance, List, Event, on_trait_change, Any, Bool
 
@@ -52,7 +53,7 @@ from pychron.pipeline.pipeline_defaults import ISOEVO, BLANKS, ICFACTOR, IDEO, S
     CSV_ANALYSES_EXPORT, BULK_EDIT, HISTORY_IDEOGRAM, HISTORY_SPECTRUM, AUDIT, SUBGROUP_IDEOGRAM, HYBRID_IDEOGRAM, \
     MASSSPEC_REDUCED, DEFINE_EQUILIBRATION, CA_CORRECTION_FACTORS, K_CORRECTION_FACTORS, \
     FLUX_VISUALIZATION, CSV_RAW_DATA_EXPORT, COMPOSITE, SIMPLE_ANALYSIS_TABLE, MASS_SPEC_FLUX, PYSCRIPT, RATIO_SERIES, \
-    CSV_SPEC
+    CSV_SPEC, ARAR_IDEO, ARAR_SPEC, ARAR_INVERSE_ISOCHRON, ARAR_SIMPLE_ANALYSIS_TABLE
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
 from pychron.pipeline.plot.editors.spectrum_editor import SpectrumEditor
@@ -244,10 +245,12 @@ class PipelineEngine(Loggable):
     editors = List
 
     pipeline_template_root = Instance(PipelineTemplateRoot)
+    use_arar_calculations = Bool
 
     def __init__(self, *args, **kw):
         super(PipelineEngine, self).__init__(*args, **kw)
         self._confirmation_cache = {}
+        bind_preference(self, 'use_arar_calculations', 'pychron.pipeline.use_arar_calculations')
 
     def drop_factory(self, items):
         return self.dvc.make_analyses(items)
@@ -824,6 +827,47 @@ class PipelineEngine(Loggable):
         node_factories = {v.name: v for v in self.node_factories}
         groups = []
 
+        if self.use_arar_calculations:
+            plots = (('Ideogram', ARAR_IDEO),
+                     ('CSV Ideogram', CSV_IDEO),
+                     ('Interpreted Age Ideogram', INTERPRETED_AGE_IDEOGRAM),
+                     ('Hybrid Ideogram', HYBRID_IDEOGRAM),
+                     ('SubGroup Ideogram', SUBGROUP_IDEOGRAM),
+                     ('Spectrum', ARAR_SPEC),
+                     ('CSV Spectrum', CSV_SPEC),
+                     ('Spectrum/Isochron', COMPOSITE),
+                     ('Series', SERIES),
+                     ('Ratio Series', RATIO_SERIES),
+                     ('InverseIsochron', ARAR_INVERSE_ISOCHRON),
+                     ('XY Scatter', XY_SCATTER),
+                     ('Regression', REGRESSION_SERIES),
+                     ('Flux Visualization', FLUX_VISUALIZATION),
+                     ('Vertical Flux', VERTICAL_FLUX))
+            tables = (('SubGrouped Analyses', ANALYSIS_TABLE),
+                      ('Grouped Analyses', ARAR_SIMPLE_ANALYSIS_TABLE),
+                      ('Interpreted Age', INTERPRETED_AGE_TABLE),
+                      ('Report', REPORT))
+        else:
+            plots = (('Ideogram', IDEO),
+                     ('CSV Ideogram', CSV_IDEO),
+                     ('Interpreted Age Ideogram', INTERPRETED_AGE_IDEOGRAM),
+                     ('Hybrid Ideogram', HYBRID_IDEOGRAM),
+                     ('SubGroup Ideogram', SUBGROUP_IDEOGRAM),
+                     ('Spectrum', SPEC),
+                     ('CSV Spectrum', CSV_SPEC),
+                     ('Spectrum/Isochron', COMPOSITE),
+                     ('Series', SERIES),
+                     ('Ratio Series', RATIO_SERIES),
+                     ('InverseIsochron', INVERSE_ISOCHRON),
+                     ('XY Scatter', XY_SCATTER),
+                     ('Regression', REGRESSION_SERIES),
+                     ('Flux Visualization', FLUX_VISUALIZATION),
+                     ('Vertical Flux', VERTICAL_FLUX))
+            tables = (('SubGrouped Analyses', ANALYSIS_TABLE),
+                      ('Grouped Analyses', SIMPLE_ANALYSIS_TABLE),
+                      ('Interpreted Age', INTERPRETED_AGE_TABLE),
+                      ('Report', REPORT))
+
         default = [('Fit', (('Define Equilibration', DEFINE_EQUILIBRATION),
                             ('Iso Evo', ISOEVO),
                             ('Blanks', BLANKS),
@@ -833,25 +877,8 @@ class PipelineEngine(Loggable):
                             ('K Correction Factors', K_CORRECTION_FACTORS),
                             ('Audit', AUDIT))),
                    ('Edit', (('Bulk Edit', BULK_EDIT),)),
-                   ('Plot', (('Ideogram', IDEO),
-                             ('CSV Ideogram', CSV_IDEO),
-                             ('Interpreted Age Ideogram', INTERPRETED_AGE_IDEOGRAM),
-                             ('Hybrid Ideogram', HYBRID_IDEOGRAM),
-                             ('SubGroup Ideogram', SUBGROUP_IDEOGRAM),
-                             ('Spectrum', SPEC),
-                             ('CSV Spectrum', CSV_SPEC),
-                             ('Spectrum/Isochron', COMPOSITE),
-                             ('Series', SERIES),
-                             ('Ratio Series', RATIO_SERIES),
-                             ('InverseIsochron', INVERSE_ISOCHRON),
-                             ('XY Scatter', XY_SCATTER),
-                             ('Regression', REGRESSION_SERIES),
-                             ('Flux Visualization', FLUX_VISUALIZATION),
-                             ('Vertical Flux', VERTICAL_FLUX))),
-                   ('Table', (('SubGrouped Analyses', ANALYSIS_TABLE),
-                              ('Grouped Analyses', SIMPLE_ANALYSIS_TABLE),
-                              ('Interpreted Age', INTERPRETED_AGE_TABLE),
-                              ('Report', REPORT))),
+                   ('Plot', plots),
+                   ('Table', tables),
                    ('History', (('Ideogram', HISTORY_IDEOGRAM),
                                 ('Spectrum', HISTORY_SPECTRUM))),
                    ('Share', (('CSV Analyses Export', CSV_ANALYSES_EXPORT),

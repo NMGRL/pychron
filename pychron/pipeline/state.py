@@ -64,6 +64,7 @@ class EngineState(HasTraits):
     report_path = None
 
     mdd_workspace = None
+    arar_calculation_options = None
 
 
 # ============= EOF =============================================

@@ -99,8 +99,7 @@ class MDDNode(BaseNode):
     root_dir = Str
     executable_root = Str
 
-    def __init__(self, *args, **kw):
-        super(MDDNode, self).__init__(*args, **kw)
+    def bind_preferences(self):
         bind_preference(self, 'executable_root', 'pychron.mdd.executable_root')
 
     def run(self, state):
@@ -188,8 +187,7 @@ class MDDLabTableNode(MDDNode):
     temp_offset = Float
     time_offset = Float
 
-    def __init__(self, *args, **kw):
-        super(MDDLabTableNode, self).__init__(*args, **kw)
+    def bind_preferences(self):
         bind_preference(self, 'temp_offset', 'pychron.mdd.default_temp_offset')
 
     def run(self, state):

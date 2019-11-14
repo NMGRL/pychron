@@ -54,6 +54,9 @@ class FigureNode(SortableNode):
     use_plotting = True
     editors = Dict
 
+    def bind_preferences(self):
+        bind_preference(self, 'skip_meaning', 'pychron.pipeline.skip_meaning')
+
     def reset(self):
         super(FigureNode, self).reset()
         self.editors = {}
@@ -90,7 +93,6 @@ class FigureNode(SortableNode):
                 state.editors.append(editor)
                 self.editor = editor
                 if self.auto_set_items:
-                    bind_preference(self, 'skip_meaning', 'pychron.pipeline.skip_meaning')
                     if self.name in self.skip_meaning.split(','):
                         unks = [u for u in unks if u.tag.lower() != 'skip']
 
@@ -101,6 +103,12 @@ class FigureNode(SortableNode):
             for i, ei in enumerate(es):
                 ei.name = ' '.join(ei.name.split(' ')[:-1])
                 ei.name = '{} {:02n}'.format(ei.name, i + 1)
+
+    def _pre_run_hook(self, state):
+        # copy arar options from state if they exist
+        arar_calc_options = state.arar_calculation_options
+        if arar_calc_options:
+            self.plotter_options_manager.set_outside_options(arar_calc_options)
 
     def configure(self, refresh=True, pre_run=False, **kw):
         if not pre_run:

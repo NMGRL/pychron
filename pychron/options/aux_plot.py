@@ -30,7 +30,7 @@ def has_limits(lims):
 
 class AuxPlot(HasTraits):
     names = List(transient=True)
-    _plot_names = List
+    _plot_names = List(transient=True)
 
     clear_ylimits_button = Button
 
@@ -110,7 +110,6 @@ class AuxPlot(HasTraits):
                 self.plot_enabled = True
 
     def _get_plot_name(self):
-
         if self._plot_names and self.name in self.names:
             return self._plot_names[self.names.index(self.name)]
         else:

@@ -16,15 +16,14 @@
 
 from apptools.preferences.preference_binding import bind_preference
 from pyface.action.menu_manager import MenuManager
-from traits.api import Property, Str, Int, List, on_trait_change, Bool
-from traitsui.api import View, UItem, VGroup, Handler, InstanceEditor, Item, HGroup
+from traits.api import Property, Str, Int, List, on_trait_change
+from traitsui.api import View, UItem, VGroup, Handler, InstanceEditor
 from traitsui.menu import Action
 
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.core.pychron_traits import BorderVGroup
 from pychron.core.ui.tabular_editor import myTabularEditor
-from pychron.persistence_loggable import PersistenceMixin
 from pychron.pipeline.editors.base_adapter import BaseAdapter
 from pychron.pipeline.editors.base_table_editor import BaseTableEditor
 from pychron.pipeline.subgrouping import compress_groups, make_interpreted_age_groups, make_interpreted_age_group
@@ -131,7 +130,7 @@ def gchange(obj, gs):
         g.set_preferred_kind(obj.attr, obj.kind, obj.error_kind)
 
 
-class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin, PersistenceMixin):
+class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
     help_str = Str('Right-click to subgroup analyses and calculate an age')
     groups = List
     selected_group = List
@@ -140,11 +139,12 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin, PersistenceMixin):
     skip_meaning = Str
     unknowns = List
 
-    integrated_include_omitted = Bool(False)
-    omit_non_plateau = Bool(False)
+    arar_calculation_options = None
+    # integrated_include_omitted = Bool(False)
+    # omit_non_plateau = Bool(False)
 
-    persistence_name = 'group_age_editor'
-    pattributes = ['integrated_include_omitted', 'omit_non_plateau']
+    # persistence_name = 'group_age_editor'
+    # pattributes = ['integrated_include_omitted', 'omit_non_plateau']
 
     def make_groups(self, bind=True):
         if bind:
@@ -160,10 +160,17 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin, PersistenceMixin):
 
             unks.extend(ans)
             ag = make_interpreted_age_group(ans, gid)
-            if self.omit_non_plateau:
-                ag.do_omit_non_plateau()
+            # if self.omit_non_plateau:
+            #     ag.do_omit_non_plateau()
 
-            ag.integrated_include_omitted = self.integrated_include_omitted
+            acopt = self.arar_calculation_options
+            if acopt:
+                ag.integrated_include_omitted = acopt.integrated_include_omitted
+                if acopt.isochron_exclude_non_plateau:
+                    ag.exclude_non_plateau = acopt.isochron_exclude_non_plateau
+                elif acopt.isochron_omit_non_plateau:
+                    ag.do_omit_non_plateau()
+
             gs.append(ag)
 
         self.groups = gs
@@ -229,23 +236,23 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin, PersistenceMixin):
                             label='Groups')
         return ggrp
 
-    def get_options_group(self):
-        return BorderVGroup(HGroup(BorderVGroup(Item('integrated_include_omitted',
-                                              tooltip='Include omitted steps in the integrated age',
-                                              label='Include Omitted'),
-                                         label='Integrated'),
-                            BorderVGroup(Item('omit_non_plateau',
-                                              tooltip='Omit non plateau steps from the isochron age',
-                                              label='Omit Non Plateau'),
-                                         label='Isochron')),
-                            label='Options')
+    # def get_options_group(self):
+    #     return BorderVGroup(HGroup(BorderVGroup(Item('integrated_include_omitted',
+    #                                           tooltip='Include omitted steps in the integrated age',
+    #                                           label='Include Omitted'),
+    #                                      label='Integrated'),
+    #                         BorderVGroup(Item('omit_non_plateau',
+    #                                           tooltip='Omit non plateau steps from the isochron age',
+    #                                           label='Omit Non Plateau'),
+    #                                      label='Isochron')),
+    #                         label='Options')
 
     def traits_view(self):
         agrp = self.get_analyses_group()
         ggrp = self.get_groups_group()
-        optsgrp = self.get_options_group()
+        # optsgrp = self.get_options_group()
 
-        v = View(VGroup(optsgrp, agrp, ggrp),
+        v = View(VGroup(agrp, ggrp),
                  handler=THandler())
         return v
 
