@@ -323,6 +323,29 @@ class BaseSpectrometer(SpectrometerDevice):
             di.isotope = isotope
             di.mass = mass
 
+        # old version
+        # this version of the update isotope function was developed with Stephen cox in 3/20/19
+        # however potentially the issue was not with the code but not having detectors.cfg setup correctly
+        # e.g. not having the "index" value set correctly for each detector
+        # H2 index=0, H1 index=1, H2(CDD) index=0.1, H1(CDD) index=1.1 etc
+
+        # def _update_isotope_hook(self, isotope, index):
+        #     dets = self.active_detectors
+        #     if not dets:
+        #         dets = self.detectors
+        #         idxs = [di.index for di in dets]
+        #     else:
+        #         idxs = range(len(dets))
+        #         index = next((i for i, d in enumerate(dets) if d.index == index), 0)
+        #
+        #     nmass = self.map_mass(isotope)
+        #     for di, didx in zip(dets, idxs):
+        #         mass = nmass - didx + index
+        #         isotope = self.map_isotope(mass)
+        #         self.debug('setting detector {} to {} ({})'.format(di.name, isotope, mass))
+        #         di.isotope = isotope
+        #         di.mass = mass
+
     def verify_configuration(self, **kw):
         return True
 

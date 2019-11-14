@@ -15,14 +15,15 @@
 # ===============================================================================
 from __future__ import absolute_import
 from __future__ import print_function
+
 import time
-from apptools.preferences.preference_binding import bind_preference
-from traits.api import Enum, Str, Float, Int, List
+
+from traits.api import Int, List
 
 from pychron.hardware.isotopx_spectrometer_controller import NGXController
 from pychron.pychron_constants import ISOTOPX_DEFAULT_INTEGRATION_TIME, ISOTOPX_INTEGRATION_TIMES, NULL_STR
 from pychron.spectrometer.base_spectrometer import BaseSpectrometer
-from pychron.spectrometer.isotopx import SOURCE_CONTROL_PARAMETERS, ERRORS, IsotopxMixin
+from pychron.spectrometer.isotopx import SOURCE_CONTROL_PARAMETERS, IsotopxMixin
 from pychron.spectrometer.isotopx.detector.ngx import NGXDetector
 from pychron.spectrometer.isotopx.magnet.ngx import NGXMagnet
 from pychron.spectrometer.isotopx.source.ngx import NGXSource
@@ -45,23 +46,6 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
 
     use_deflection_correction = False
     use_hv_correction = False
-
-    def _update_isotope_hook(self, isotope, index):
-        dets = self.active_detectors
-        if not dets:
-            dets = self.detectors
-            idxs = [di.index for di in dets]
-        else:
-            idxs = range(len(dets))
-            index = next((i for i, d in enumerate(dets) if d.index == index), 0)
-
-        nmass = self.map_mass(isotope)
-        for di, didx in zip(dets, idxs):
-            mass = nmass - didx + index
-            isotope = self.map_isotope(mass)
-            self.debug('setting detector {} to {} ({})'.format(di.name, isotope, mass))
-            di.isotope = isotope
-            di.mass = mass
 
     def _microcontroller_default(self):
         service = 'pychron.hardware.isotopx_spectrometer_controller.NGXController'
