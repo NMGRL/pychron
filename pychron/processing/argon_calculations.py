@@ -18,7 +18,6 @@
 
 # ============= standard library imports ========================
 import math
-from copy import copy
 
 from numpy import asarray, average, array
 from uncertainties import ufloat, umath, nominal_value, std_dev
@@ -389,7 +388,7 @@ def calculate_f(isotopes, decay_time, interferences=None, arar_constants=None, f
                                                   arar_constants)
 
         # calculate radiogenic
-        trapped_4036 = copy(arar_constants.atm4036)
+        trapped_4036 = ufloat(nominal_value(arar_constants.atm4036), std_dev(arar_constants.atm4036))
         trapped_4036.tag = 'trapped_4036'
         atm40 = atm36 * trapped_4036
 
