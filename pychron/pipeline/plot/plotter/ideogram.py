@@ -968,6 +968,7 @@ class Ideogram(BaseArArFigure):
         ag = self.analysis_group
         options = self.options
         ag.attribute = options.index_attr
+        ag.age_error_kind = options.error_calc_method
         ag.weighted_age_error_kind = options.error_calc_method
 
         ag.set_j_error(options.include_j_position_error, options.include_j_error_in_mean, dirty=True)
@@ -983,8 +984,5 @@ class Ideogram(BaseArArFigure):
             wage = self.analysis_group.weighted_age
             wm, we = nominal_value(wage), std_dev(wage)
         return wm, we, mswd, valid_mswd, n, pvalue
-
-        # def _handle_xlimits(self):
-        #     self.xlimits_updated = True
 
 # ============= EOF =============================================
