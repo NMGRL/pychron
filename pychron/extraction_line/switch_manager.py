@@ -1039,8 +1039,8 @@ class SwitchManager(Manager):
                    description=vobj.get('description', ''),
                    query_state=to_bool(vobj.get('query_state', True)),
                    ignore_lock_warning=to_bool(vobj.get('ignore_lock_warning', False)),
-                   positive_interlocks=parse_interlocks('positive_interlock'),
-                   interlocks=parse_interlocks('interlock'),
+                   positive_interlocks=parse_interlocks(vobj, 'positive_interlock'),
+                   interlocks=parse_interlocks(vobj, 'interlock'),
                    settling_time=float(vobj.get('settling_time', 0)))
         return ctx
 
