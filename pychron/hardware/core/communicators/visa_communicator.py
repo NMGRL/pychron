@@ -31,6 +31,8 @@ class VisaCommunicator(Communicator):
     serial_number = 0
     usb_interface_number = None
 
+    _comms_report_attrs = ('board', 'model_code', 'serial_number')
+
     def _make_address(self):
         base = 'USB{}::{}::{}::{}'.format(self.board, self.manufacture_id, self.model_code, self.serial_number)
         if self.usb_interface_number:
