@@ -184,10 +184,11 @@ class IdeogramSubOptions(SubOptions):
                                  tooltip='If selected only analyses tagged as "OK" are included in the calculations'),
                             label='Tags')
 
-        rtgrp = BorderVGroup(Item('show_results_table', label='Show',
+        rtgrp = BorderVGroup(Item('show_results_table', label='Show Summary',
                                   tooltip='Display a summary table below the ideogram'),
                              Item('show_ttest_table', label='Show T-test'),
-                             label='Summary Table')
+                             Item('show_rvalues', label='Show R Values'),
+                             label='Aux. Tables')
 
         return self._make_view(VGroup(xgrp, tgrp, rtgrp))
 

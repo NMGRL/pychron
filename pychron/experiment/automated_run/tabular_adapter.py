@@ -71,9 +71,10 @@ group_e = MenuManager(Action(name='AAA,BBB,CCC', action='group_extractions'),
                       Action(name='ABC,ABC,ABC', action='group_extractions2'),
                       name='Group Extractions')
 
-randomize = MenuManager(Action(name='Unknowns', action='randomize_unknowns'),
-                        Action(name='All', action='randomize_all'),
-                        name='Randomize')
+randomize = MenuManager(Action(name='Randomize Unknowns', action='randomize_unknowns'),
+                        Action(name='Randomize All', action='randomize_all'),
+                        Action(name='Order From File', action='order_from_file'),
+                        name='Position Ordering')
 
 EDIT_MENU = MenuManager(move, copy, jump, blocks, selects, group_e,
                         randomize,

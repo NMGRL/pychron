@@ -31,7 +31,7 @@ from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.paths import paths, users_file, environments_file, HOME
+from pychron.paths import paths, users_file, environments_file
 
 
 class LoginHandler(Handler):
@@ -120,7 +120,7 @@ class Login(HasTraits):
         dump_environments_file(self.environment, self.environments)
 
     def _directory_select_button_fired(self):
-        dlg = DirectoryDialog(default_path=HOME)
+        dlg = DirectoryDialog(default_path=paths.home)
         if dlg.open() == OK and dlg.path:
             self.environments.append(dlg.path)
             self.environment = dlg.path

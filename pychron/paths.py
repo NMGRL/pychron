@@ -44,8 +44,7 @@ def get_file_text(d):
     return txt
 
 
-HOME = path.expanduser('~')
-global_hidden = os.path.join(HOME, '.pychron.{}'.format(os.environ.get('APPLICATION_ID', 0)))
+global_hidden = os.path.join(path.expanduser('~'), '.pychron.{}'.format(os.environ.get('APPLICATION_ID', 0)))
 if not os.path.isdir(global_hidden):
     mkdir(global_hidden)
 
@@ -77,13 +76,10 @@ sounds_search_path = [sounds]
 
 
 class Paths(object):
-    # github_url = 'github.com'
-    # github_api_url = 'https://api.github.com'
-    # dissertation = '/Users/ross/Programming/git/dissertation'
 
-    # version = None
     root = None
     bundle_root = None
+    home = None
 
     icons = ''
     images = ''
@@ -91,6 +87,7 @@ class Paths(object):
     abouts = None
     sounds = None
     app_resources = None
+
     # _dir suffix ensures the path is checked for existence
     root_dir = root
     stable_root = None
@@ -315,12 +312,14 @@ class Paths(object):
 
     def build(self, root):
         join = path.join
+
+        self.home = path.expanduser('~')
         # self.version = version
         if root.startswith('_'):
-            root = join(path.expanduser('~'), 'Pychron{}'.format(root))
+            root = join(self.home, 'Pychron{}'.format(root))
 
         if root.startswith('~'):
-            root = join(path.expanduser('~'), root[2:])
+            root = join(self.home, root[2:])
 
         if not path.isdir(root):
             mkdir(root)

@@ -223,6 +223,8 @@ class IrradiationEditorPane(TraitsDockPane):
 
 
 class IrradiationMetadataEditorPane(TraitsDockPane):
+    name = 'Irradiation MetaData'
+
     def traits_view(self):
         jgrp = BorderHGroup(UItem('j'), Label(PLUSMINUS_ONE_SIGMA), UItem('j_err'),
                             icon_button_editor('estimate_j_button', 'cog',

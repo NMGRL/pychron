@@ -64,6 +64,7 @@ class AnalysisGroup(IdeogramPlotable):
     j_err = AGProperty()
     j = AGProperty()
     total_n = AGProperty()
+    weighted_mean_f = AGProperty()
 
     integrated_age_weighting = Enum(WEIGHTINGS)
     include_j_error_in_integrated = Bool(False)
@@ -351,6 +352,18 @@ class AnalysisGroup(IdeogramPlotable):
         try:
             wa = ufloat(v, max(0, me))
             return self._apply_j_err(wa)
+
+        except AttributeError:
+            return ufloat(0, 0)
+
+    @cached_property
+    def _get_weighted_mean_f(self):
+        v, e = self._calculate_weighted_mean('uF', self.age_error_kind)
+        me = self._modify_error(v, e, self.age_error_kind)
+        try:
+            wa = ufloat(v, max(0, me))
+            return wa
+            # return self._apply_j_err(wa)
 
         except AttributeError:
             return ufloat(0, 0)

@@ -133,6 +133,25 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
         ve = ValueEditor(self)
         open_view(ve)
 
+    def order_from_file(self):
+        """
+        open a txt file that contains the positions in execution order
+        :return:
+        """
+        self.warning_dialog('Order from file not yet implemented')
+        return
+
+        p = self.open_file_dialog()
+        if p is not None:
+            with open(p, 'r') as rfile:
+
+                positions = reversed(rfile.readlines())
+                for cpos in positions:
+                    arun = next((a for a in self.automated_runs if a.position == cpos.strip()), None)
+                    if arun:
+                        self.automated_runs.remove(arun)
+                        self.automated_runs.insert(0, arun)
+
     def randomize_all(self):
         from random import shuffle
         aruns = self.automated_runs[:]

@@ -34,11 +34,17 @@ class ArArCalculationsOptions(BaseOptions):
     plateau_method = clonable(Enum(FLECK, MAHON))
     pc_nsteps = clonable(Int(3))
     pc_gas_fraction = clonable(Float(50))
+    include_j_error_in_plateau = clonable(Bool(True))
+    include_j_error_in_integrated = clonable(Bool(False))
 
     # ideogram
     error_calc_method = clonable(Enum(*ERROR_TYPES))
     probability_curve_kind = clonable(Enum('cumulative', 'kernel'))
     mean_calculation_kind = clonable(Enum('weighted mean', 'kernel'))
+    include_irradiation_error = clonable(Bool(True))
+    include_decay_error = clonable(Bool(False))
+    include_j_position_error = clonable(Bool(False))
+    include_j_error_in_mean = clonable(Bool(True))
 
     def initialize(self):
         self.subview_names = [IDEOGRAM, SPECTRUM, ISOCHRON]
