@@ -42,6 +42,21 @@ from pychron.pychron_constants import NULL_STR
 from .switch_parser import SwitchParser
 
 
+def parse_interlocks(vobj, tag):
+    vs = []
+    if tag in vobj:
+        vs = vobj[tag]
+    elif '{}s'.format(tag) in vobj:
+        vs = vobj.get('{}s'.format(tag))
+
+    if isinstance(vs, (tuple, list)):
+        interlocks = [i.strip() for i in vs]
+    else:
+        interlocks = [vs.strip()]
+
+    return interlocks
+
+
 def add_checksum(func):
     def wrapper(*args, **kw):
         d = func(*args, **kw)
@@ -1024,8 +1039,8 @@ class SwitchManager(Manager):
                    description=vobj.get('description', ''),
                    query_state=to_bool(vobj.get('query_state', True)),
                    ignore_lock_warning=to_bool(vobj.get('ignore_lock_warning', False)),
-                   positive_interlocks=[i.strip() for i in vobj.get('positive_interlock', [])],
-                   interlocks=[i.strip() for i in vobj.get('interlock', [])],
+                   positive_interlocks=parse_interlocks('positive_interlock'),
+                   interlocks=parse_interlocks('interlock'),
                    settling_time=float(vobj.get('settling_time', 0)))
         return ctx
 
