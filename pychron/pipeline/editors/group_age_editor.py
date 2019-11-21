@@ -22,6 +22,7 @@ from traitsui.menu import Action
 
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.helpers.iterfuncs import groupby_group_id
+from pychron.core.pychron_traits import BorderVGroup
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.pipeline.editors.base_adapter import BaseAdapter
 from pychron.pipeline.editors.base_table_editor import BaseTableEditor
@@ -138,6 +139,13 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
     skip_meaning = Str
     unknowns = List
 
+    arar_calculation_options = None
+    # integrated_include_omitted = Bool(False)
+    # omit_non_plateau = Bool(False)
+
+    # persistence_name = 'group_age_editor'
+    # pattributes = ['integrated_include_omitted', 'omit_non_plateau']
+
     def make_groups(self, bind=True):
         if bind:
             bind_preference(self, 'skip_meaning', 'pychron.pipeline.skip_meaning')
@@ -151,7 +159,19 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
                     ans = [ai for ai in ans if ai.tag.lower() != 'skip']
 
             unks.extend(ans)
-            gs.append(make_interpreted_age_group(ans, gid))
+            ag = make_interpreted_age_group(ans, gid)
+            # if self.omit_non_plateau:
+            #     ag.do_omit_non_plateau()
+
+            acopt = self.arar_calculation_options
+            if acopt:
+                ag.integrated_include_omitted = acopt.integrated_include_omitted
+                if acopt.isochron_exclude_non_plateau:
+                    ag.exclude_non_plateau = acopt.isochron_exclude_non_plateau
+                elif acopt.isochron_omit_non_plateau:
+                    ag.do_omit_non_plateau()
+
+            gs.append(ag)
 
         self.groups = gs
         self.unknowns = unks
@@ -205,31 +225,32 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
         return agrp
 
     def get_groups_group(self):
-        ggrp = VGroup(UItem('groups',
-                            height=0.25,
-                            style='custom', editor=myTabularEditor(adapter=GroupAdapter(),
-                                                                   multi_select=True,
-                                                                   editable=False,
-                                                                   selected='selected_group')),
-                      UItem('selected_group_item',
-                            style='custom', editor=InstanceEditor(view=View(get_preferred_grp()))),
-                      label='Groups',
-                      show_border=True)
+        ggrp = BorderVGroup(UItem('groups',
+                                  height=0.25,
+                                  style='custom', editor=myTabularEditor(adapter=GroupAdapter(),
+                                                                         multi_select=True,
+                                                                         editable=False,
+                                                                         selected='selected_group')),
+                            UItem('selected_group_item',
+                                  style='custom', editor=InstanceEditor(view=View(get_preferred_grp()))),
+                            label='Groups')
         return ggrp
+
+    # def get_options_group(self):
+    #     return BorderVGroup(HGroup(BorderVGroup(Item('integrated_include_omitted',
+    #                                           tooltip='Include omitted steps in the integrated age',
+    #                                           label='Include Omitted'),
+    #                                      label='Integrated'),
+    #                         BorderVGroup(Item('omit_non_plateau',
+    #                                           tooltip='Omit non plateau steps from the isochron age',
+    #                                           label='Omit Non Plateau'),
+    #                                      label='Isochron')),
+    #                         label='Options')
 
     def traits_view(self):
         agrp = self.get_analyses_group()
         ggrp = self.get_groups_group()
-        # sgrp = VGroup(UItem('subgroups',
-        #                     editor=myTabularEditor(adapter=SubGroupAdapter(),
-        #                                            multi_select=True,
-        #                                            editable=False,
-        #                                            auto_update=True,
-        #                                            selected='selected_subgroup')),
-        #               UItem('selected_subgroup_item',
-        #                     style='custom', editor=InstanceEditor(view=View(get_preferred_grp()))),
-        #               label='SubGroups',
-        #               show_border=True)
+        # optsgrp = self.get_options_group()
 
         v = View(VGroup(agrp, ggrp),
                  handler=THandler())

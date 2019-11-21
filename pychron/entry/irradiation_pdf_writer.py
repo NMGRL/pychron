@@ -15,17 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.units import inch
 from reportlab.platypus import Paragraph
-from six.moves import range
-from traits.api import Bool, Float
+from traits.api import Bool, Float, Str
 from traitsui.api import VGroup, Tabbed, Item
 
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
+from pychron.canvas.utils import markup_canvas
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pdf.base_table_pdf_writer import BasePDFTableWriter
 from pychron.core.pdf.items import Row
@@ -36,6 +34,10 @@ from pychron.loading.component_flowable import ComponentFlowable
 from pychron.pychron_constants import DEFAULT_MONITOR_NAME
 
 MATERIAL_MAP = {'GroundmassConcentrate': 'GMC'}
+
+
+def fontsize(x, f):
+    return '<font size={}>{}</font>'.format(f, x)
 
 
 class RotatedParagraph(Paragraph):
@@ -96,6 +98,8 @@ class IrradiationPDFWriter(BasePDFTableWriter):
     selected_level = None
     _options_klass = IrradiationPDFTableOptions
 
+    monitor_name = Str
+
     def _build(self, doc, irrad, *args, **kw):
         if not self.options.only_selected_level:
             self.options.page_number_format = '{} {{page:d}} - {{total:d}}'.format(irrad.name)
@@ -134,8 +138,6 @@ class IrradiationPDFWriter(BasePDFTableWriter):
         return flowables
 
     def _make_summary(self, irrad):
-        fontsize = lambda x, f: '<font size={}>{}</font>'.format(f, x)
-
         name = irrad.name
         levels = ', '.join(sorted([li.name for li in irrad.levels]))
 
@@ -274,6 +276,8 @@ class IrradiationPDFWriter(BasePDFTableWriter):
             holes = irradiation_geometry_holes(level.holder)
             canvas = IrradiationCanvas()
             load_holder_canvas(canvas, holes)
+
+            markup_canvas(canvas, level.positions, self.monitor_name)
             return canvas
 
 
@@ -308,8 +312,6 @@ class LabbookPDFWriter(IrradiationPDFWriter):
         return p, self._page_break()
 
     def _make_summary(self, irrad):
-        fontsize = lambda x, f: '<font size={}>{}</font>'.format(f, x)
-
         name = irrad.name
         levels = ', '.join(sorted([li.name for li in irrad.levels]))
 
@@ -317,20 +319,12 @@ class LabbookPDFWriter(IrradiationPDFWriter):
         dur = chron.total_duration_seconds
         date = chron.start_date
 
-        # dur = 0
-        # if chron:
-        #     doses = chron.get_doses()
-        #     for pwr, st, en in doses:
-        #         dur += (en - st).total_seconds()
-        #     _, _, date = chron.get_doses(todatetime=False)[-1]
-
         dur /= (60 * 60.)
         date = 'Irradiation Date: {}'.format(date)
         dur = 'Irradiation Duration: {:0.1f} hrs'.format(dur)
 
         name = fontsize(name, 40)
-        # levels = fontsize(levels, 28)
-        # dur = fontsize(dur, 28)
+
         txt = '<br/>'.join((name, levels, date, dur))
         p = self._new_paragraph(txt,
                                 s='Title',

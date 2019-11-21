@@ -58,6 +58,9 @@ class BaseLaserManager(Manager):
     def bind_preferences(self, prefid):
         pass
 
+    def opened(self):
+        pass
+
     def test_connection(self):
         if self.mode == 'client':
             return self._test_connection()

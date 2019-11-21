@@ -34,7 +34,7 @@ class ViewableHandler(Handler):
         #        info.object.ui = info.ui
         info.object.initialized = True
         #        try:
-        info.object.opened(info.ui)
+        info.object.ui_opened(info.ui)
 
     #        except AttributeError:
     #            pass
@@ -97,7 +97,7 @@ class Viewable(Loggable):
         self.activated = True
         return self._is_active
 
-    def opened(self, ui):
+    def ui_opened(self, ui):
         pass
 
     def close(self, ok):

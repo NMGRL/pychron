@@ -36,9 +36,9 @@ class FitOptions(AuxPlotFigureOptions):
     global_error_type = Str('Error')
     nsigma = Int(1)
     use_time_axis = Bool(True)
-    analysis_types = List
-    available_types = List
-    reference_types = List
+    analysis_types = List(transient=True)
+    available_types = List(transient=True)
+    reference_types = List(transient=True)
 
     def set_names(self, names, clear_missing=True):
         for ai in self.aux_plots:
@@ -57,7 +57,7 @@ class FitOptions(AuxPlotFigureOptions):
         self.available_types = atypes
 
     def set_reference_types(self, atypes):
-        self.reference_types = atypes[:]
+        self.reference_types = atypes
 
     def _get_aux_plots(self):
         fs = self.selected_aux_plots

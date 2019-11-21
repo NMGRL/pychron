@@ -173,6 +173,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                    VColumn(visible=ubit and options.include_F,
                            label=('<sup>40</sup>', 'Ar*/', '<sup>39</sup>', 'Ar', '<sub>K</sub>'),
                            attr='uF'),
+                   EColumn(visible=ubit and options.include_F, attr='uF'),
                    VColumn(visible=ubit and options.include_k2o,
                            label=('K', '<sub>2</sub>', 'O'),
                            sigformat='k2o',
@@ -433,7 +434,9 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 Column(visible=opt.include_summary_n, label='N', attr='nratio'),
                 Column(visible=opt.include_summary_percent_ar39, label=('%', '<sup>39</sup>', 'Ar'),
                        func=get_plateau_ar39),
-                Column(visible=opt.include_summary_mswd, label='MSWD', attr='mswd'),
+                Column(visible=opt.include_summary_mswd,
+                       sigformat='summary_mswd',
+                       label='MSWD', attr='mswd'),
                 Column(visible=opt.include_summary_kca, label='K/Ca',
                        func=get_kca),
 
@@ -442,10 +445,12 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                        func=get_kca_error),
 
                 Column(visible=opt.include_summary_age,
+                       sigformat='summary_age',
                        label='Age {}'.format(age_units),
                        func=get_preferred_age),
 
                 Column(visible=opt.include_summary_age,
+                       sigformat='summary_age',
                        label=PLUSMINUS_NSIGMA.format(opt.summary_age_nsigma),
                        func=get_preferred_age_error),
 
@@ -458,12 +463,13 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 EColumn(attr='arith_age'),
                 VColumn(label='IsochronAge', attr='isochron_age'),
                 EColumn(attr='isochron_age'),
-                VColumn(label='Isochron4036', attr='isochron_4036'),
+                VColumn(label=('(', '<sup>40</sup>', 'Ar/', '<sup>36</sup>', 'Ar)', '<sub>I</sub>'),
+                        attr='isochron_4036'),
                 EColumn(attr='isochron_4036'),
                 VColumn(label='PlateauAge', attr='plateau_age'),
-                VColumn(attr='plateau_age'),
+                EColumn(attr='plateau_age'),
                 VColumn(label='IntegratedAge', attr='integrated_age'),
-                VColumn(attr='integrated_age')]
+                EColumn(attr='integrated_age')]
 
         return cols
 
@@ -510,11 +516,13 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         sh.set_row(self._current_row, 5)
         self._current_row += 1
         self._write_header(sh, cols, include_units=False)
-        center = self._workbook.add_format({'align': 'center'})
+        # center = self._workbook.add_format({'align': 'center'})
+        # fmt = self._workbook.add_format()
         for ug in unks:
             for i, ci in enumerate(cols):
                 txt = self._get_txt(ug, ci)
-                sh.write(self._current_row, i, txt, center)
+                fmt = self._get_fmt(ci)
+                sh.write(self._current_row, i, txt, fmt)
             self._current_row += 1
 
         self._make_notes(None, sh, len(cols), 'summary')
@@ -871,7 +879,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
         sh.write(row, 0, status, fmt)
         for j, c in enumerate(cols[1:]):
-            cfmt = self._get_fmt(item, c)
+            cfmt = self._get_fmt(c)
             if c.attr == 'cumulative_ar39':
                 txt = cum
             else:
@@ -1102,7 +1110,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         units = [c.units for c in cols]
         return names, units
 
-    def _get_fmt(self, item, col):
+    def _get_fmt(self, col):
         fmt = None
         if col.sigformat:
             fmt = self._get_number_format(col.sigformat, col.use_scientific)

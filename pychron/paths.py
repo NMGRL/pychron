@@ -399,7 +399,7 @@ class Paths(object):
         self.map_dir = map_dir = join(setup_dir, 'tray_maps')
         self.user_points_dir = join(map_dir, 'user_points')
         self.furnace_map_dir = join(map_dir, 'furnace')
-        self.irradiation_tray_maps_dir = join(setup_dir, 'irradiation_tray_maps')
+        # self.irradiation_tray_maps_dir = join(setup_dir, 'irradiation_tray_maps')
         # ==============================================================================
         # data
         # ==============================================================================
@@ -497,6 +497,7 @@ class Paths(object):
         build_directories()
 
         migrate_hidden()
+        migrate_pyview()
 
     def set_template_manifest(self, files):
         # open the manifest file to set the overwrite flag
@@ -601,13 +602,22 @@ def build_directories():
             r_mkdir(getattr(paths, l))
 
 
+def migrate_pyview():
+    pv = os.path.join(paths.appdata_dir, 'pyview')
+    migrate(pv, os.path.join(paths.appdata_dir, 'pycrunch'))
+
+
 def migrate_hidden():
     hd = os.path.join(paths.root_dir, '.hidden')
-    for root, dirs, files in os.walk(hd):
-        if root == hd:
-            droot = paths.appdata_dir
+    migrate(hd, paths.appdata_dir)
+
+
+def migrate(src, dest):
+    for root, dirs, files in os.walk(src):
+        if root == src:
+            droot = dest
         else:
-            droot = os.path.join(paths.appdata_dir, os.path.basename(root))
+            droot = os.path.join(dest, os.path.basename(root))
 
         if not os.path.isdir(droot):
             os.makedirs(droot)

@@ -254,7 +254,7 @@ class MeasurementContextEditor(ContextEditor):
             HGroup(Item('object.peakcenter.before'),
                    Item('object.peakcenter.after')),
             Item('object.peakcenter.detectors', style='custom',
-                 editor=CheckListEditor(name='available_detectors', cols=len(self.available_detectors))),
+                 editor=CheckListEditor(name='available_detectors', cols=max(1, len(self.available_detectors)))),
             show_border=True, label='PeakCenter')
 
         eq_grp = VGroup(HGroup(Item('object.equilibration.inlet',

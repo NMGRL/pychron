@@ -33,16 +33,20 @@ from .communicator import Communicator, process_response, prep_str, remove_eol_f
 
 
 def get_ports():
-    usb = glob.glob('/dev/tty.usb*')
-    furpi = glob.glob('/dev/furpi.*')
-    pychron = glob.glob('/dev/pychron.*')
-    slab = glob.glob('/dev/tty.SLAB*')
-    if sys.platform == 'darwin':
-        keyspan = glob.glob('/dev/tty.U*')
+    if sys.platform == 'win32':
+        ports = ['COM{}'.format(i+1) for i in range(256)]
     else:
-        keyspan = glob.glob('/dev/ttyU*')
+        usb = glob.glob('/dev/tty.usb*')
+        furpi = glob.glob('/dev/furpi.*')
+        pychron = glob.glob('/dev/pychron.*')
+        slab = glob.glob('/dev/tty.SLAB*')
+        if sys.platform == 'darwin':
+            keyspan = glob.glob('/dev/tty.U*')
+        else:
+            keyspan = glob.glob('/dev/ttyU*')
+        ports = keyspan + usb + furpi + pychron + slab
 
-    return keyspan + usb + furpi + pychron + slab
+    return ports
 
 
 class SerialCommunicator(Communicator):
@@ -162,11 +166,11 @@ class SerialCommunicator(Communicator):
             self.read_terminator = chr(3)
 
     def set_parity(self, parity):
-        if parity is not None:
+        if parity:
             self.parity = getattr(serial, 'PARITY_%s' % parity.upper())
 
     def set_stopbits(self, stopbits):
-        if stopbits is not None:
+        if stopbits:
             if stopbits in ('1', 1):
                 stopbits = 'ONE'
             elif stopbits in ('2', 2):
@@ -222,7 +226,8 @@ class SerialCommunicator(Communicator):
                 self.handle.flushInput()
                 self.handle.flushOutput()
 
-            if self._write(cmd, is_hex=is_hex):
+            cmd = self._write(cmd, is_hex=is_hex)
+            if cmd is None:
                 return
 
             if is_hex:
@@ -259,11 +264,7 @@ class SerialCommunicator(Communicator):
             stopbits= STOPBITS_ONE
             timeout=None
         """
-        args = dict()
-
-        ldict = locals()['kw']
-        port = ldict['port'] if 'port' in ldict else None
-
+        port = kw.get('port')
         if port is None:
             port = self.port
             if port is None:
@@ -274,16 +275,16 @@ class SerialCommunicator(Communicator):
         if sys.platform == 'darwin':
             port = '/dev/tty.{}'.format(port)
 
-        args['port'] = port
+        kw['port'] = port
 
         for key in ['baudrate', 'bytesize', 'parity', 'stopbits', 'timeout']:
-            v = ldict[key] if key in ldict else None
+            v = kw.get(key)
             if v is None:
                 v = getattr(self, key)
             if v is not None:
-                args[key] = v
+                kw[key] = v
 
-        pref = kw['prefs'] if 'prefs' in kw else None
+        pref = kw.pop('prefs', None)
         if pref is not None:
             pref = pref.serial_preference
             self._auto_find_handle = pref.auto_find_handle
@@ -294,16 +295,19 @@ class SerialCommunicator(Communicator):
             try_connect = True
             while try_connect:
                 try:
-                    self.handle = serial.Serial(**args)
+                    self.debug('Connection parameters={}'.format(kw))
+                    self.handle = serial.Serial(**kw)
                     try_connect = False
                     self.simulation = False
                 except serial.serialutil.SerialException:
                     try_connect = False
-        elif self._auto_find_handle:
-            self._find_handle(args, **kw)
+                    self.debug_exception()
 
-        connected = True if self.handle is not None else False
-        return connected
+        elif self._auto_find_handle:
+            self._find_handle(**kw)
+
+        self.debug('Serial device: {}'.format(self.handle))
+        return self.handle is not None  # connected is true if handle is not None
 
     # private
     def _get_report_value(self, key):
@@ -312,7 +316,7 @@ class SerialCommunicator(Communicator):
             value = getattr(self.handle, key)
         return c, value
 
-    def _find_handle(self, args, **kw):
+    def _find_handle(self, **kw):
         found = False
         self.simulation = False
         self.info('Trying to find correct port')
@@ -320,9 +324,9 @@ class SerialCommunicator(Communicator):
         port = None
         for port in get_ports():
             self.info('trying port {}'.format(port))
-            args['port'] = port
+            kw['port'] = port
             try:
-                self.handle = serial.Serial(**args)
+                self.handle = serial.Serial(**kw)
             except serial.SerialException:
                 continue
 
@@ -397,7 +401,6 @@ class SerialCommunicator(Communicator):
 
             if is_hex:
                 cmd = codecs.decode(cmd, 'hex')
-                # cmd = cmd.decode('hex')
             else:
                 wt = self.write_terminator
                 if wt is not None:
@@ -409,7 +412,9 @@ class SerialCommunicator(Communicator):
                 self.handle.write(cmd)
             except (serial.serialutil.SerialException, OSError, IOError, ValueError) as e:
                 self.warning('Serial Communicator write execption: {}'.format(e))
-                return True
+                return
+
+        return cmd
 
     def _read_nchars(self, n, timeout=1, delay=None):
         func = lambda r: self._get_nchars(n, r)

@@ -28,6 +28,7 @@ from pychron.core.helpers.datetime_tools import ISO_FORMAT_STR
 from pychron.core.pychron_traits import BorderVGroup
 from pychron.core.ui.dag_editor import GitDAGEditor
 from pychron.git_archive.views import GitTagAdapter, TopologyAdapter, DiffsAdapter
+from pychron.pychron_constants import NULL_STR
 
 
 class RepoCentralPane(TraitsTaskPane):
@@ -88,10 +89,16 @@ class OriginAdapter(TabularAdapter):
     push_date_text = Property
 
     def _get_create_date_text(self):
-        return self.item.create_date.strftime(ISO_FORMAT_STR)
+        d = self.item.create_date
+        if d != NULL_STR:
+            d = d.strftime(ISO_FORMAT_STR)
+        return d
 
     def _get_push_date_text(self):
-        return self.item.push_date.strftime(ISO_FORMAT_STR)
+        d = self.item.push_date
+        if d != NULL_STR:
+            d = d.strftime(ISO_FORMAT_STR)
+        return d
 
 
 class SelectionPane(TraitsDockPane):

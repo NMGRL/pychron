@@ -16,14 +16,15 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traitsui.api import View, Item, VGroup, InstanceEditor, UItem, EnumEditor, \
     RangeEditor, spring, HGroup, Group, ButtonEditor
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.led_editor import LEDEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
-
 from pychron.lasers.tasks.laser_panes import ClientPane
 
 
@@ -58,8 +59,8 @@ class ChromiumClientPane(ClientPane):
                                        enabled_when='not tray_calibration.isCalibrating()'),
                                  UItem('tray_calibration.calibrate',
                                        editor=ButtonEditor(label_value='tray_calibration.calibration_step')),
-                                 HGroup(Item('tray_calibration.x', format_str='%0.3f', style='readonly'),
-                                        Item('tray_calibration.y', format_str='%0.3f', style='readonly')),
+                                 HGroup(Item('tray_calibration.cx', format_str='%0.3f', style='readonly'),
+                                        Item('tray_calibration.cy', format_str='%0.3f', style='readonly')),
                                  Item('tray_calibration.rotation', format_str='%0.3f', style='readonly'),
                                  Item('tray_calibration.scale', format_str='%0.4f', style='readonly'),
                                  Item('tray_calibration.error', format_str='%0.2f', style='readonly'),

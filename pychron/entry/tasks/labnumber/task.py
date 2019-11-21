@@ -22,12 +22,12 @@ from traitsui.api import Item, VGroup, UItem, HGroup
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pychron_traits import PacketStr
-from pychron.entry.graphic_generator import GraphicModel, GraphicGeneratorController
 from pychron.entry.labnumber_entry import LabnumberEntry
 from pychron.entry.tasks.actions import SavePDFAction, DatabaseSaveAction, PreviewGenerateIdentifiersAction, \
     GenerateIdentifiersAction, ClearSelectionAction, RecoverAction, SyncMetaDataAction
 from pychron.entry.tasks.labnumber.panes import LabnumbersPane, \
-    IrradiationPane, IrradiationEditorPane, IrradiationCanvasPane, LevelInfoPane, ChronologyPane, FluxHistoryPane
+    IrradiationPane, IrradiationEditorPane, IrradiationCanvasPane, LevelInfoPane, ChronologyPane, FluxHistoryPane, \
+    IrradiationMetadataEditorPane
 from pychron.envisage.browser.base_browser_model import BaseBrowserModel
 from pychron.envisage.browser.record_views import SampleRecordView
 from pychron.envisage.tasks.base_task import BaseManagerTask
@@ -190,32 +190,32 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     #     self.info('Import analyses')
     #     self.manager.import_analyses()
 
-    def generate_tray(self):
-        # p='/Users/ross/Sandbox/entry_tray'
-        p = self.open_file_dialog()
-        if p is not None:
-            gm = GraphicModel()
-
-            # op='/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/newtrays/26_no_spokes.txt'
-
-            gm.srcpath = p
-            # gm.xmlpath=p
-            # p = make_xml(p,
-            # default_radius=radius,
-            #              default_bounds=bounds,
-            #              convert_mm=convert_mm,
-            #              use_label=use_label,
-            #              make=make,
-            #              rotate=rotate)
-            #
-            # #    p = '/Users/ross/Sandbox/graphic_gen_from_csv.xml'
-            # gm.load(p)
-            gcc = GraphicGeneratorController(model=gm)
-            info = gcc.edit_traits(kind='livemodal')
-            if info.result:
-                if self.confirmation_dialog(
-                        'Do you want to save this tray to the database. Saving tray as "{}"'.format(gm.name)):
-                    self.manager.save_tray_to_db(gm.srcpath, gm.name)
+    # def generate_tray(self):
+    #     # p='/Users/ross/Sandbox/entry_tray'
+    #     p = self.open_file_dialog()
+    #     if p is not None:
+    #         gm = GraphicModel()
+    #
+    #         # op='/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/newtrays/26_no_spokes.txt'
+    #
+    #         gm.srcpath = p
+    #         # gm.xmlpath=p
+    #         # p = make_xml(p,
+    #         # default_radius=radius,
+    #         #              default_bounds=bounds,
+    #         #              convert_mm=convert_mm,
+    #         #              use_label=use_label,
+    #         #              make=make,
+    #         #              rotate=rotate)
+    #         #
+    #         # #    p = '/Users/ross/Sandbox/graphic_gen_from_csv.xml'
+    #         # gm.load(p)
+    #         gcc = GraphicGeneratorController(model=gm)
+    #         info = gcc.edit_traits(kind='livemodal')
+    #         if info.result:
+    #             if self.confirmation_dialog(
+    #                     'Do you want to save this tray to the database. Saving tray as "{}"'.format(gm.name)):
+    #                 self.manager.save_tray_to_db(gm.srcpath, gm.name)
 
     def save_pdf(self):
         if globalv.irradiation_pdf_debug:
@@ -263,30 +263,32 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     #         self.information_dialog('Template saved to {}'.format(path))
     #         # self.view_xls(path)
 
-    def import_sample_from_file(self):
-        # path = self.open_file_dialog(default_directory=paths.root_dir,
-        # wildcard='*.xls')
-        path = '/Users/ross/Desktop/sample_import.xls'
-        if path:
-            from pychron.entry.loaders.xls_sample_loader import XLSSampleLoader
+    # def import_sample_from_file(self):
+    #     path = self.open_file_dialog(default_directory=paths.root_dir,
+    #                                  wildcard_args=('Excel', ('*.xls', '*.xlsx')))
+    #     # path = '/Users/ross/Desktop/sample_import.xls'
+    #     if path:
+    #         # from pychron.entry.loaders.xls_sample_loader import XLSSampleLoader
+    #         #
+    #         from pychron.entry.sample_loader import XLSSampleLoader
+    #         sample_loader = XLSSampleLoader()
+    #         sample_loader.load(path)
+    #         sample_loader.do_import()
+    #
+    #         # spnames = []
+    #         # if self.selected_projects:
+    #         #     spnames = [ni.name for ni in self.selected_projects]
+    #         #
+    #         # self.load_projects(include_recent=False)
+    #         #
+    #         # if spnames:
+    #         #     sel = [si for si in self.projects if si.name in spnames]
+    #         #     self.selected_projects = sel
+    #         #
+    #         # self._load_associated_samples()
 
-            sample_loader = XLSSampleLoader()
-            sample_loader.do_loading(self.manager, self.manager.db, path)
-
-            spnames = []
-            if self.selected_projects:
-                spnames = [ni.name for ni in self.selected_projects]
-
-            self.load_projects(include_recent=False)
-
-            if spnames:
-                sel = [si for si in self.projects if si.name in spnames]
-                self.selected_projects = sel
-
-            self._load_associated_samples()
-
-    def import_sample_metadata(self):
-        self.warning('Import sample metadata Deprecated')
+    # def import_sample_metadata(self):
+    #     self.warning('Import sample metadata Deprecated')
 
     #     path = '/Users/ross/Programming/git/dissertation/data/minnabluff/lithologies.xls'
     #     path = '/Users/ross/Programming/git/dissertation/data/minnabluff/tables/TAS.xls'
@@ -342,15 +344,14 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
         return LabnumbersPane(model=self.manager)
 
     def create_dock_panes(self):
-        iep = IrradiationEditorPane(model=self)
-        return [
-            IrradiationPane(model=self.manager),
-            ChronologyPane(model=self.manager),
-            LevelInfoPane(model=self.manager),
-            FluxHistoryPane(model=self.manager),
-            # ImporterPane(model=self.importer),
-            iep,
-            IrradiationCanvasPane(model=self.manager)]
+
+        return [IrradiationPane(model=self.manager),
+                ChronologyPane(model=self.manager),
+                LevelInfoPane(model=self.manager),
+                FluxHistoryPane(model=self.manager),
+                IrradiationEditorPane(model=self),
+                IrradiationMetadataEditorPane(model=self),
+                IrradiationCanvasPane(model=self.manager)]
 
     # ===========================================================================
     # GenericActon Handlers

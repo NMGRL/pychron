@@ -102,6 +102,13 @@ def principal_investigator_filter(q, principal_investigator):
             q = q.filter(PrincipalInvestigatorTbl.first_initial == fi.strip())
         except ValueError:
             pass
+    elif ' ' in principal_investigator:
+        try:
+            fn, ln = principal_investigator.split(' ')
+            q = q.filter(PrincipalInvestigatorTbl.last_name == ln.strip())
+            q = q.filter(PrincipalInvestigatorTbl.first_initial == fn.strip()[0])
+        except ValueError:
+            pass
     else:
         q = q.filter(PrincipalInvestigatorTbl.last_name == principal_investigator)
 
@@ -601,9 +608,18 @@ class DVCDatabase(DatabaseAdapter):
             if piname is None:
                 if ',' in name:
                     last_name, fi = name.split(',')
-                    piname = PrincipalInvestigatorTbl(last_name=last_name.strip(), first_initial=fi.strip(), **kw)
+                    kw['last_name'] = last_name.strip()
+                    kw['first_initial'] = fi.strip()
+
+                elif ' ' in name:
+                    fi, last_name = name.split(' ')
+                    kw['last_name'] = last_name.strip()
+                    kw['first_initial'] = fi.strip()[0]
                 else:
-                    piname = PrincipalInvestigatorTbl(last_name=name, **kw)
+                    kw['last_name'] = name
+
+                piname = PrincipalInvestigatorTbl(**kw)
+
                 piname = self._add_item(piname)
                 self.debug('added principal investigator {}'.format(name))
             return piname
@@ -659,10 +675,12 @@ class DVCDatabase(DatabaseAdapter):
             if repo:
                 return repo
 
-            principal_investigator = self.get_principal_investigator(principal_investigator)
-            if not principal_investigator:
+            pp = self.get_principal_investigator(principal_investigator)
+            if not pp:
                 principal_investigator = self.add_principal_investigator(principal_investigator)
                 self.flush()
+            else:
+                principal_investigator = pp
 
             a = RepositoryTbl(name=name, **kw)
             a.principal_investigator = principal_investigator
@@ -1590,7 +1608,7 @@ class DVCDatabase(DatabaseAdapter):
                 q = q.having(count(AnalysisTbl.id) > 0)
 
             if has_filter:
-                res = self._query_all(q, verbose_query=False)
+                res = self._query_all(q, verbose_query=True)
                 if res:
                     ids = [r[0] for r in res]
                     q = sess.query(IrradiationPositionTbl)

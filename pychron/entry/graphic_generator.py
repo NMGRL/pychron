@@ -15,8 +15,10 @@
 # ===============================================================================
 from __future__ import absolute_import
 from __future__ import print_function
-from pychron.core.ui import set_qt
+
 from six.moves import map
+
+from pychron.core.ui import set_qt
 
 set_qt()
 
@@ -24,7 +26,7 @@ set_qt()
 from chaco.abstract_overlay import AbstractOverlay
 from enable.base import str_to_font
 from traits.api import HasTraits, Instance, Float, File, Property, Str, List
-from traitsui.api import View, Controller, UItem, Item
+from traitsui.api import View, Controller, UItem
 from chaco.api import OverlayPlotContainer
 from enable.component_editor import ComponentEditor
 from pyface.api import FileDialog, OK
@@ -41,6 +43,8 @@ from chaco.plot_graphics_context import PlotGraphicsContext
 from traitsui.menu import Action
 import math
 from pychron.core.helpers.strtools import to_bool
+
+
 # ============= local library imports  ==========================
 class myDataLabel(DataLabel):
     show_label_coords = False
@@ -51,12 +55,13 @@ class myDataLabel(DataLabel):
 
 class LabelsOverlay(AbstractOverlay):
     labels = List
+
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
         with gc:
-            gc.set_font(str_to_font(None, None, '8'))
+            gc.set_font(str_to_font(None, None, '6'))
             for x, y, l in self.labels:
                 x, y = other_component.map_screen([(x, y)])[0]
-                gc.set_text_position(x - 5, y - 5)
+                gc.set_text_position(x - 5, y - 10)
                 gc.show_text(l)
 
 
@@ -79,14 +84,13 @@ class GraphicGeneratorController(Controller):
 
     def traits_view(self):
         w, h = 750, 750
-        v = View(
-            UItem('srcpath'),
-            Item('rotation'),
-            UItem('container', editor=ComponentEditor(), style='custom'),
-            width=w + 2,
-            height=h + 56,
-            resizable=True,
-            buttons=[Action(name='Save', action='save'), 'OK', 'Cancel'])
+        v = View(UItem('srcpath'),
+                 # Item('rotation'),
+                 UItem('container', editor=ComponentEditor(), style='custom'),
+                 width=w + 2,
+                 height=h + 56,
+                 resizable=True,
+                 buttons=[Action(name='Save', action='save'), 'OK', 'Cancel'])
         return v
 
 
@@ -134,7 +138,8 @@ class GraphicModel(HasTraits):
             #         pass
 
             # c.use_backbuffer = False
-
+            from reportlab.lib.pagesizes import LETTER
+            c.do_layout(size=(LETTER[1], LETTER[1]), force=True)
             gc.render_component(c)
             #            c.use_backbuffer = True
             gc.save(path)
@@ -156,7 +161,7 @@ class GraphicModel(HasTraits):
             use_label = True
 
         data = ArrayPlotData()
-        p = Plot(data=data, padding=100)
+        p = Plot(data=data, padding=10)
         p.x_grid.visible = False
         p.y_grid.visible = False
 
@@ -166,13 +171,6 @@ class GraphicModel(HasTraits):
         p.x_axis.title = 'X cm'
         p.y_axis.title = 'Y cm'
 
-        # font = 'modern 22'
-        # p.x_axis.title_font = font
-        # p.x_axis.tick_label_font = font
-        # p.y_axis.title_font = font
-        # p.y_axis.tick_label_font = font
-        #         p.x_axis_visible = False
-        #         p.y_axis_visible = False
         p.index_range.low_setting = -w / 2
         p.index_range.high_setting = w / 2
 
@@ -232,7 +230,6 @@ class GraphicModel(HasTraits):
         self.container.invalidate_and_redraw()
 
     def _srcpath_changed(self):
-
 
         # default_radius=radius,
         # default_bounds=bounds,
@@ -429,9 +426,8 @@ if __name__ == '__main__':
     #     p2 = '/Users/ross/Pychrondata_diode/setupfiles/irradiation_tray_maps/newtrays/TX_6-Hole.txt'
     #     gcc, gm2 = open_txt(p2, (2.54, 2.54), .1, make=False)
 
-    #p2 = '/Users/ross/Pychrondata_diode/setupfiles/irradiation_tray_maps/newtrays/TX_20-Hole.txt'
-    #gcc, gm2 = open_txt(p2, (2.54, 2.54), .1, make=False)
-
+    # p2 = '/Users/ross/Pychrondata_diode/setupfiles/irradiation_tray_maps/newtrays/TX_20-Hole.txt'
+    # gcc, gm2 = open_txt(p2, (2.54, 2.54), .1, make=False)
 
     #     gm2.container.bgcolor = 'transparent'
     #     gm2.container.add(gm.container)

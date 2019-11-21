@@ -279,19 +279,25 @@ class BaseOptions(HasTraits):
         state = self.__getstate__()
         state['klass'] = str(self.__class__)
 
-        layout = state.pop('layout')
-        if layout:
-            state['layout'] = str(layout.__class__), layout.__getstate__()
+        try:
+            layout = state.pop('layout')
+            if layout:
+                state['layout'] = str(layout.__class__), layout.__getstate__()
+        except KeyError:
+            pass
 
-        groups = state.pop('groups')
-        if groups:
-            def func(gi):
-                s = gi.__getstate__()
-                convert_color(s)
-                return str(gi.__class__), s
+        try:
+            groups = state.pop('groups')
+            if groups:
+                def func(gi):
+                    s = gi.__getstate__()
+                    convert_color(s)
+                    return str(gi.__class__), s
 
-            ngs = [func(gi) for gi in groups]
-            state['groups'] = ngs
+                ngs = [func(gi) for gi in groups]
+                state['groups'] = ngs
+        except KeyError:
+            pass
 
         convert_color(state)
 
@@ -307,9 +313,13 @@ class BaseOptions(HasTraits):
     def load(self, state):
         state.pop('klass')
 
-        def inst(klass):
+        def inst(klass, key=None):
             klass, ctx = klass
             cls = importklass(klass)
+            if key == 'aux_plots':
+                if '_plot_names' in ctx:
+                    ctx.pop('_plot_names')
+
             return cls(**ctx)
 
         if 'layout' in state:
@@ -322,7 +332,7 @@ class BaseOptions(HasTraits):
 
         for key in ('aux_plots', 'groups', 'selected'):
             if key in state:
-                state[key] = [inst(a) for a in state.pop(key)]
+                state[key] = [inst(a, key) for a in state.pop(key)]
 
         self.__setstate__(state)
 
@@ -386,9 +396,7 @@ class BaseOptions(HasTraits):
 
     def get_subview(self, name):
         name = name.lower()
-        # if hasattr(self, name):
-        #     return getattr(self, name)
-        # else:
+
         if name == 'main':
             try:
                 klass = self._get_subview(name)
@@ -663,13 +671,13 @@ class AuxPlotFigureOptions(FigureOptions):
             aux = self.aux_plot_klass()
             self.aux_plots.append(aux)
 
-    def add_aux_plot(self, name, i=0, **kw):
-        plt = self.aux_plot_klass(name=name, **kw)
-        plt.plot_enabled = True
-        try:
-            self.aux_plots[i] = plt
-        except IndexError:
-            self.aux_plots.append(plt)
+    # def add_aux_plot(self, name, i=0, **kw):
+    #     plt = self.aux_plot_klass(name=name, **kw)
+    #     plt.plot_enabled = True
+    #     try:
+    #         self.aux_plots[i] = plt
+    #     except IndexError:
+    #         self.aux_plots.append(plt)
 
     # def get_loadable_aux_plots(self):
     #     return reversed([pi for pi in self.aux_plots

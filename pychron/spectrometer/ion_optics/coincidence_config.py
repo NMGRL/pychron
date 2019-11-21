@@ -56,7 +56,8 @@ class CoincidenceConfig(PeakCenterConfig):
                              enabled_when='not use_nominal_dac'),
                       show_border=True, label='Center')
         degrp = VGroup(UItem('additional_detectors', style='custom',
-                             editor=CheckListEditor(name='available_detectors', cols=len(self.available_detectors))),
+                             editor=CheckListEditor(name='available_detectors',
+                                                    cols=max(1, len(self.available_detectors)))),
                        show_border=True, label='Detectors')
 
         v = okcancel_view(VGroup(rgrp, degrp, dgrp),

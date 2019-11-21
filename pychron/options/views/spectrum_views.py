@@ -22,7 +22,8 @@ from pychron.core.pychron_traits import BorderVGroup, BorderHGroup
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.options import SubOptions, AppearanceSubOptions, GroupSubOptions, checkbox_column, object_column, \
     MainOptions, TitleSubOptions
-from pychron.pychron_constants import MAIN, APPEARANCE, FLECK_PLATEAU_DEFINITION, MAHON_PLATEAU_DEFINITION
+from pychron.pychron_constants import MAIN, APPEARANCE, FLECK_PLATEAU_DEFINITION, MAHON_PLATEAU_DEFINITION, SPECTRUM, \
+    PLATEAU, GROUPS, DISPLAY
 
 
 class SpectrumSubOptions(SubOptions):
@@ -199,10 +200,10 @@ class SpectrumMainOptions(MainOptions):
 
 
 VIEWS = {MAIN.lower(): SpectrumMainOptions,
-         'spectrum': SpectrumSubOptions,
+         SPECTRUM.lower(): SpectrumSubOptions,
          APPEARANCE.lower(): SpectrumAppearance,
-         'plateau': CalculationSubOptions,
-         'display': DisplaySubOptions,
-         'groups': GroupSubOptions}
+         PLATEAU.lower(): CalculationSubOptions,
+         DISPLAY.lower(): DisplaySubOptions,
+         GROUPS.lower(): GroupSubOptions}
 
 # ============= EOF =============================================

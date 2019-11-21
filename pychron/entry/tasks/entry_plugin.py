@@ -27,13 +27,13 @@ from pychron.entry.tasks.actions import MakeIrradiationBookPDFAction, MakeIrradi
     SensitivityEntryAction, AddFluxMonitorAction, \
     GenerateTrayAction, \
     ImportIrradiationGeometryAction, ExportIrradiationAction, ImportIrradiationAction, \
-    TransferJAction, ImportSamplesAction, ImportIrradiationFileAction, GetIGSNAction, GenerateIrradiationTableAction, \
+    TransferJAction, ImportIrradiationFileAction, GetIGSNAction, GenerateIrradiationTableAction, \
     GenerateStatusReportAction, ImportAnalysesAction, EditIrradiationGeometryAction
 from pychron.entry.tasks.labnumber.actions import LabnumberEntryAction
 from pychron.entry.tasks.preferences import LabnumberEntryPreferencesPane, SamplePrepPreferencesPane, \
     SampleEntryPreferencesPane
 from pychron.entry.tasks.project.actions import ProjectAction
-from pychron.entry.tasks.sample.actions import SampleEntryAction
+from pychron.entry.tasks.sample.actions import SampleEntryAction, ImportSamplesAction
 from pychron.entry.tasks.sample_prep.actions import SamplePrepAction
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.pychron_constants import DVC_PROTOCOL
@@ -107,14 +107,16 @@ class EntryPlugin(BaseTaskPlugin):
                  [SchemaAddition(id='pychron.entry2.transfer_j', factory=TransferJAction, path=g2path),
                   SchemaAddition(id='pychron.entry2.get_igsns', factory=GetIGSNAction, path=g2path),
                   SchemaAddition(id='pychron.entry2.export_irradiation', factory=ExportIrradiationAction, path=g2path),
-                  SchemaAddition(id='pychron.entry2.import_samples_from_file', factory=ImportSamplesAction,
-                                 path=g2path),
                   SchemaAddition(id='pychron.entry2.import_irradiations_from_file', factory=ImportIrradiationFileAction,
                                  path=g2path),
-                  SchemaAddition(id='pychron.entry2.generate_tray', factory=GenerateTrayAction, path=g2path),
                   SchemaAddition(id='pychron.entry2.run_report', factory=GenerateStatusReportAction,
                                  path=gpath),
                   SchemaAddition(id='pychron.entry2.save_labbook', factory=MakeIrradiationBookPDFAction, path=g2path)]),
+                ('{}.sample_entry'.format(self.id),
+                 'pychron.entry.sample.task',
+                 'Sample',
+                 [SchemaAddition(id='pychron.entry2.import_samples_from_file', factory=ImportSamplesAction,
+                                 path=g2path),]),
                 (self.id, '', 'Entry',
                  [SchemaAddition(id='pychron.entry1.sample_entry', factory=SampleEntryAction,
                                  path=spath, absolute_position='first'),
@@ -139,7 +141,10 @@ class EntryPlugin(BaseTaskPlugin):
                   # SchemaAddition(id='pychron.entry1.molecular_weight_entry', factory=AddMolecularWeightAction,
                   #                path=gpath),
                   SchemaAddition(id='pychron.entry1.flux_monitor', factory=AddFluxMonitorAction,
-                                 path=gpath)])]
+                                 path=gpath),
+                  SchemaAddition(id='pychron.entry2.generate_tray', factory=GenerateTrayAction, path=g2path),
+
+                  ])]
 
     def _tasks_default(self):
         return [TaskFactory(id='pychron.entry.irradiation.task',

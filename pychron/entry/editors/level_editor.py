@@ -18,8 +18,7 @@ import os
 
 # ============= enthought library imports =======================
 from enable.component_editor import ComponentEditor
-from pyface.constant import OK, YES, NO
-from pyface.file_dialog import FileDialog
+from pyface.constant import YES, NO
 from traits.api import List, Instance, Str, Float, Any, Button, Property, HasTraits, Dict, Enum
 from traitsui.api import View, Item, TabularEditor, HGroup, UItem, Group, VGroup, \
     HSplit, EnumEditor
@@ -34,7 +33,6 @@ from pychron.core.pychron_traits import BorderHGroup, BorderVGroup
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.ui.strings import SpacelessStr
 from pychron.core.utils import alphas, alpha_to_int
-from pychron.database.core.defaults import parse_irradiation_tray_map, load_irradiation_map
 from pychron.dvc.meta_repo import MetaRepo
 from pychron.entry.editors.base_editor import ModelView
 from pychron.entry.editors.production import IrradiationProduction
@@ -516,14 +514,16 @@ class LevelEditor(Loggable):
             load_holder_canvas(self.canvas, holes)
 
     def _add_tray_button_fired(self):
-        dlg = FileDialog(action='open', default_directory=paths.irradiation_tray_maps_dir)
-        if dlg.open() == OK:
-            if dlg.path:
-                # verify this is a valid irradiation map file
-                if parse_irradiation_tray_map(dlg.path) is not None:
-                    db = self.db
-                    load_irradiation_map(db, dlg.path,
-                                         os.path.basename(dlg.path), overwrite_geometry=True)
+        self.warning_dialog('Adding trays has been disabled. Contact pychron developers')
+
+        # dlg = FileDialog(action='open', default_directory=paths.irradiation_tray_maps_dir)
+        # if dlg.open() == OK:
+        #     if dlg.path:
+        #         # verify this is a valid irradiation map file
+        #         if parse_irradiation_tray_map(dlg.path) is not None:
+        #             db = self.db
+        #             load_irradiation_map(db, dlg.path,
+        #                                  os.path.basename(dlg.path), overwrite_geometry=True)
 
     def _get_monitor_name(self):
         return FLUX_CONSTANTS[self.selected_monitor].get('monitor_name', '')

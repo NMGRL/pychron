@@ -156,7 +156,10 @@ class Readout(BaseReadout):
             self._last_query = time.time()
 
     def get_percent_value(self):
-        return (self.value - self.min_value) / (self.max_value - self.min_value)
+        try:
+            return (self.value - self.min_value) / (self.max_value - self.min_value)
+        except (TypeError, ZeroDivisionError, ValueError):
+            return 0
 
     @property
     def query_name(self):

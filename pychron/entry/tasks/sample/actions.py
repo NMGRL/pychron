@@ -20,7 +20,7 @@ from __future__ import absolute_import
 from pyface.tasks.action.task_action import TaskAction
 
 from pychron.envisage.resources import icon
-from pychron.envisage.ui_actions import UIAction
+from pychron.envisage.ui_actions import UIAction, UITaskAction
 
 
 # class SampleEditAction(Action):
@@ -77,4 +77,11 @@ class ClearAction(TaskAction):
     name = 'Clear'
     image = icon('clear')
     method = 'clear'
+
+
+class ImportSamplesAction(UITaskAction):
+    name = 'Import Sample File'
+    method = 'import_sample_from_file'
+
+
 # ============= EOF =============================================

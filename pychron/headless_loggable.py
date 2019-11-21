@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traits.api import HasTraits, Str
 
 # ============= standard library imports ========================
@@ -51,4 +52,10 @@ class HeadlessLoggable(HasTraits):
     def critical(self, msg, **kw):
         self.logger.critcial(msg)
 
+    def debug_exception(self):
+        import traceback
+
+        exc = traceback.format_exc()
+        self.logger.debug(exc)
+        return exc
 # ============= EOF =============================================

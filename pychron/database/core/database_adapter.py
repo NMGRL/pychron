@@ -349,6 +349,8 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
         if self._trying_to_add:
             self.modified = True
 
+    def add_item(self, *args, **kw):
+        return self._add_item(*args, **kw)
     # def get_session(self):
     #     """
     #     return the current session or make a new one

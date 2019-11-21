@@ -288,6 +288,22 @@ class SampleEntry(DVCAble):
         self._backup()
         self.dvc.close_session()
 
+    def import_sample_from_file(self):
+
+        from pyface.file_dialog import FileDialog
+        from pyface.constant import OK
+
+        dlg = FileDialog(action='open', default_directory=paths.root_dir,
+                         wildcard=FileDialog.create_wildcard('Excel', ('*.xls', '*.xlsx')))
+        if dlg.open() == OK:
+            path = dlg.path
+
+            if path:
+                from pychron.entry.sample_loader import XLSSampleLoader
+                sample_loader = XLSSampleLoader(dvc=self.dvc)
+                sample_loader.load(path)
+                sample_loader.do_import()
+
     def clear(self):
         if self.selected_principal_investigators:
             for p in self.selected_principal_investigators:
