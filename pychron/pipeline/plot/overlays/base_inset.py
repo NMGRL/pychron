@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from chaco.array_data_source import ArrayDataSource
 from chaco.axis import PlotAxis
 from chaco.data_range_1d import DataRange1D
@@ -31,6 +30,7 @@ class BaseInset(HasTraits):
     visible_axes = True
     # plots = List
     yoffset = Float
+    label_font = Str('Helvetica 8')
 
     def __init__(self, xs, ys, index_bounds=None, value_bounds=None, *args, **kw):
         index = ArrayDataSource(xs)
@@ -60,16 +60,19 @@ class BaseInset(HasTraits):
 
         super(BaseInset, self).__init__(*args, **kw)
 
-        tick_label_font = 'Helvetica 8'
+        label_font = self.label_font
+
         left = PlotAxis(orientation='left',
                         mapper=value_mapper,
                         bgcolor=self.bgcolor,
-                        tick_label_font=tick_label_font)
+                        tick_label_font=label_font,
+                        title_font=label_font)
 
         bottom = PlotAxis(orientation='bottom',
                           mapper=index_mapper,
                           bgcolor=self.bgcolor,
-                          tick_label_font=tick_label_font)
+                          title_font=label_font,
+                          tick_label_font=label_font)
 
         self.underlays.append(left)
         self.underlays.append(bottom)

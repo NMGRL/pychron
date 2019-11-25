@@ -725,6 +725,17 @@ class AgeOptions(AuxPlotFigureOptions, JErrorMixin):
     inset_width = Int(100)
     inset_height = Int(100)
     inset_location = Enum('Upper Right', 'Upper Left', 'Lower Right', 'Lower Left')
+    inset_label_font = Property
+    inset_label_fontname = Enum(*FONTS)
+    inset_label_fontsize = Enum(*SIZES)
+
+    inset_x_bounds = Property
+    inset_xmin = Float
+    inset_xmax = Float
+
+    inset_y_bounds = Property
+    inset_ymin = Float
+    inset_ymax = Float
 
     def make_legend_key(self, ident, sample):
         key = ident
@@ -735,4 +746,14 @@ class AgeOptions(AuxPlotFigureOptions, JErrorMixin):
     def _get_label_font(self):
         return '{} {}'.format(self.label_fontname, self.label_fontsize)
 
+    def _get_inset_label_font(self):
+        return '{} {}'.format(self.inset_label_fontname, self.inset_label_fontsize)
+
+    def _get_inset_x_bounds(self):
+        mi, ma = self.inset_xmin, self.inset_xmax
+        return mi, ma
+
+    def _get_inset_y_bounds(self):
+        mi, ma = self.inset_ymin, self.inset_ymax
+        return mi, ma
 # ============= EOF =============================================

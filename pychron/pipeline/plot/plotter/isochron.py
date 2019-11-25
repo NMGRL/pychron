@@ -348,18 +348,11 @@ class InverseIsochron(Isochron):
 
         opt = self.options
         group = opt.get_group(self.group_id)
-        color = group.color
-
         insetp = InverseIsochronPointsInset(reg.xs, reg.ys,
                                             marker_size=opt.inset_marker_size,
-                                            color=color,
                                             line_width=0,
-                                            # regressor=reg,
                                             nominal_intercept=opt.inominal_intercept_value,
-                                            location=opt.inset_location,
-                                            width=opt.inset_width,
-                                            height=opt.inset_height,
-                                            visible_axes=False)
+                                            )
         if self.group_id > 0:
             insetp.y_axis.visible = False
             insetp.x_axis.visible = False
@@ -367,27 +360,41 @@ class InverseIsochron(Isochron):
         xintercept = reg.x_intercept * 1.1
         yintercept = reg.predict(0)
         m, _ = insetp.index.get_bounds()
-        lx = -0.1 * (xintercept - m)
-        hx = xintercept
+
+        lx, hx = opt.inset_x_bounds
+
+        if not lx and not hx:
+            lx = -0.1 * (xintercept - m)
+            hx = xintercept
+        elif lx and lx > hx:
+            hx = xintercept
 
         xs = linspace(lx, hx, 20)
         ys = reg.predict(xs)
-        insetl = InverseIsochronLineInset(xs, ys,
-                                          # regressor=reg,
-                                          color=color,
-                                          location=opt.inset_location,
-                                          width=opt.inset_width,
-                                          height=opt.inset_height)
+        insetl = InverseIsochronLineInset(xs, ys)
         plot.overlays.append(insetl)
         plot.overlays.append(insetp)
 
+        ly, hy = opt.inset_y_bounds
+        if not ly and not hy:
+            ly = 0
+            hy = max(1.1 * opt.inominal_intercept_value, yintercept * 1.1)
+        elif hy < ly:
+            hy = max(1.1 * opt.inominal_intercept_value, yintercept * 1.1)
+
         for inset in plot.overlays:
             if isinstance(inset, (InverseIsochronPointsInset, InverseIsochronLineInset)):
+                inset.label_font = opt.inset_label_font
+                inset.location = opt.inset_location
+                inset.width = opt.inset_width
+                inset.height = opt.inset_height
+                inset.color = group.color
+
                 inset.index_range.low = lx
                 inset.index_range.high = hx
 
-                inset.value_range.low = 0
-                inset.value_range.high = max(1.1 * opt.inominal_intercept_value, yintercept * 1.1)
+                inset.value_range.low = ly
+                inset.value_range.high = hy
 
     def _add_atm_overlay(self, plot):
         plot.overlays.append(AtmInterceptOverlay(component=plot,
