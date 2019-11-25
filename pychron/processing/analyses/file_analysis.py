@@ -41,7 +41,10 @@ class NonDBAnalysis(Analysis):
         for a in ('age', 'age_err', 'group', 'aliquot', 'sample', 'label_name',
                   'k39', 'k39_err', 'rad40', 'rad40_err',
                   'kca', 'kca_err', 'radiogenic_yield', 'radiogenic_yield_err'):
-            setattr(obj, a, getattr(ri, a))
+            try:
+                setattr(obj, a, getattr(ri, a))
+            except AttributeError:
+                pass
 
         return obj
 
