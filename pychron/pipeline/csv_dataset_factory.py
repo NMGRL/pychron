@@ -39,7 +39,7 @@ from pychron.paths import paths
 from pychron.processing.analyses.file_analysis import FileAnalysis
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
-HEADER = 'enabled, runid', 'age', 'age_err', 'group', 'aliquot', 'sample', 'label_name'
+HEADER = 'status', 'runid', 'age', 'age_err', 'group', 'aliquot', 'sample', 'label_name'
 
 
 def make_line(vs, delimiter=','):
@@ -47,7 +47,7 @@ def make_line(vs, delimiter=','):
 
 
 class CSVRecord(HasTraits):
-    runid = Str('A')
+    runid = Str('')
     age = CFloat
     age_err = CFloat
     group = CInt
@@ -55,6 +55,11 @@ class CSVRecord(HasTraits):
     sample = Str
     status = Bool(True)
     label_name = Str
+
+    def __init__(self, *args, **kw):
+        if 'status' in kw:
+            kw['status'] = to_bool(kw['status'])
+        super(CSVRecord, self).__init__(*args, **kw)
 
     def valid(self):
         return self.runid and self.age and self.age_err
@@ -195,10 +200,28 @@ e.g.
             self._test_button_fired()
 
     def dump(self):
+        local_dir = False
+        if not self.repository:
+            if YES == confirm(None, 'Would you like to save the file locally?\n'
+                                    'Otherwise please select a repository to save the data '
+                                    'file'):
+
+                dlg = FileDialog(action='save as', default_directory=paths.csv_data_dir)
+                if dlg.open():
+                    local_dir = dlg.path
+
+                if not local_dir:
+                    return
+                else:
+                    name, ext = os.path.splitext(os.path.basename(local_dir))
+                    self.name = name
+            else:
+                return
+
         if not self.name:
             self._save_as_button_fired()
         else:
-            p = self.dvc.save_csv_dataset(self.name, self.repository, self._make_csv_data())
+            p = self.dvc.save_csv_dataset(self.name, self.repository, self._make_csv_data(), local_dir=local_dir)
             self.data_path = p
             self.dirty = False
 
@@ -282,7 +305,6 @@ e.g.
             parser.load(p)
 
             records = [CSVRecord(**row) for row in parser.values()]
-            records.extend((CSVRecord() for i in range(50 - len(records))))
             self.records = records
 
             self._make_groups()
@@ -435,6 +457,7 @@ e.g.
 
 </table>
 '''
+
     # Run1, 10, 0.24, 0.4, 0.001, 1, 0.1
     # Run2, 11, 0.32, 0.23, 0.02, 2, 0.1
     # Run3, 10, 0.40, 0.01, 0.1, 4, 0.1

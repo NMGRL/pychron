@@ -637,14 +637,18 @@ class DVC(Loggable):
         self._save_j(irradiation, level, pos, identifier, j, e, mj, me, position_jerr, decay_constants, analyses,
                      options, add)
 
-    def save_csv_dataset(self, name, repository, lines):
+    def save_csv_dataset(self, name, repository, lines, local_dir=False):
 
-        repo = self.get_repository(repository)
-        root = os.path.join(repo.path, 'csv')
-        if not os.path.isdir(root):
-            os.mkdir(root)
+        if local_dir:
+            root = local_dir
+        else:
+            repo = self.get_repository(repository)
+            root = os.path.join(repo.path, 'csv')
+            if not os.path.isdir(root):
+                os.mkdir(root)
 
         p = os.path.join(root, '{}.csv'.format(name))
+        self.debug('writing dataset to {}'.format(p))
         with open(p, 'w') as wfile:
             wfile.writelines(lines)
         return p

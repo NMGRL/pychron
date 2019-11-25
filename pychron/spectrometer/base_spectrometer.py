@@ -405,7 +405,10 @@ class BaseSpectrometer(SpectrometerDevice):
     def load(self):
         self.load_molecular_weights()
         self.load_detectors()
+
+        # does this ever do anything? I don't think any magnet defines a `load` method
         self.magnet.load()
+
         # load local configurations
         self.spectrometer_configurations = glob_list_directory(paths.spectrometer_config_dir, remove_extension=True,
                                                                extension='.cfg')
@@ -461,7 +464,17 @@ class BaseSpectrometer(SpectrometerDevice):
         populates self.detectors
         :return:
         """
-        config = self.get_configuration(path=os.path.join(paths.spectrometer_dir, 'detectors.cfg'))
+
+        path = os.path.join(paths.spectrometer_dir, 'detectors.cfg')
+        if not os.path.isfile(path):
+            self.warning_dialog('Could not find a detectors file. Please add "{}"'.format(path))
+            return
+
+        try:
+            config = self.get_configuration(path=path)
+        except BaseException:
+            self.warning_dialog('There is an issue with your detectors file. Please fix "{}"'.format(path))
+            return
 
         for i, name in enumerate(config.sections()):
             relative_position = self.config_get(config, name, 'relative_position', cast='float')
