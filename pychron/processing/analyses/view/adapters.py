@@ -493,7 +493,6 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
             v = 0.0
         else:
             v = std_dev(ic)
-
         return floatfmt(v, n=self.sig_figs)
 
     def _get_discrimination_text(self):
@@ -557,7 +556,7 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
         return format_percent_error(cv.nominal_value, cv.std_dev)
 
     def _get_age_error_component_text(self):
-        return floatfmt(self.item.age_error_component, n=1)
+        return floatfmt(self.item.age_error_component, n=2)
 
     def _get_include_baseline_error_text(self):
         return 'Yes' if self.item.include_baseline_error else 'No'

@@ -30,7 +30,7 @@ from pychron.core.helpers.isotope_utils import sort_detectors
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.processing.arar_constants import ArArConstants
 from pychron.processing.argon_calculations import calculate_f, abundance_sensitivity_correction, age_equation, \
-    calculate_flux, calculate_arar_decay_factors, convert_age
+    calculate_flux, calculate_arar_decay_factors
 from pychron.processing.isotope import Blank
 from pychron.processing.isotope_group import IsotopeGroup
 from pychron.pychron_constants import ARGON_KEYS, ARAR_MAPPING
@@ -492,8 +492,7 @@ class ArArAge(IsotopeGroup):
 
     def _set_age_values(self, f, include_decay_error=False):
         arc = self.arar_constants
-        for iso in self.itervalues():
-            iso.age_error_component = self.get_error_component(iso.name)
+
 
         if self.j is None:
             return
@@ -520,6 +519,9 @@ class ArArAge(IsotopeGroup):
         self.age = nominal_value(age)
         self.age_err = std_dev(age)
         self.age_err_wo_j = std_dev(age)
+
+        for iso in self.itervalues():
+            iso.age_error_component = self.get_error_component(iso.name)
 
     @property
     def detector_keys(self):
