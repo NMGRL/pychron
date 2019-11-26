@@ -644,13 +644,24 @@ class DVC(Loggable):
         else:
             repo = self.get_repository(repository)
             root = os.path.join(repo.path, 'csv')
-            if not os.path.isdir(root):
-                os.mkdir(root)
-            p = os.path.join(root, '{}.csv'.format(name))
+            p = os.path.join(root, add_extension(name, '.csv'))
+
+            if repo.smart_pull(quiet=False):
+                if not os.path.isdir(root):
+                    os.mkdir(root)
+            else:
+                self.warning_dialog('Failed to update repository. Not saving CSV file "{}"'.format(p))
+                return
 
         self.debug('writing dataset to {}'.format(p))
+        exists = os.path.isfile(p)
         with open(p, 'w') as wfile:
             wfile.writelines(lines)
+
+        if not local_path:
+            if repo.add_paths(p):
+                repo.commit('<CSV> {} dataset "{}"'.format('Modified' if exists else 'Added', name))
+
         return p
 
     def remove_irradiation_position(self, irradiation, level, hole):

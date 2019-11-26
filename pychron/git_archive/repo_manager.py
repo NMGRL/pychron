@@ -854,7 +854,7 @@ You like to delete them and try again?'''.format(clean)):
         else:
             self.debug('Up-to-date with {}'.format(remote))
             if not quiet:
-                self.information_dialog('Up-to-date with {}'.format(remote))
+                self.information_dialog('Repository "{}" up-to-date with {}'.format(self.name, remote))
 
         return True
 

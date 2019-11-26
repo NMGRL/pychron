@@ -35,6 +35,7 @@ from pychron.core.pychron_traits import BorderVGroup
 from pychron.core.stats import calculate_weighted_mean, calculate_mswd
 from pychron.core.ui.dialogs import cinformation
 from pychron.core.ui.strings import SpacelessStr
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.paths import paths
 from pychron.processing.analyses.file_analysis import FileAnalysis
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
@@ -148,6 +149,7 @@ class CSVDataSetFactory(HasTraits):
     clear_button = Button('Clear')
     # calculate_button = Button('Calculate')
     open_via_finder_button = Button('Use Finder')
+    open_help_button = Button('Help')
 
     name = SpacelessStr
     names = List
@@ -221,8 +223,9 @@ e.g.
             self._save_as_button_fired()
         else:
             p = self.dvc.save_csv_dataset(self.name, self.repository, self._make_csv_data(), local_path=local_path)
-            self.data_path = p
-            self.dirty = False
+            if p:
+                self.data_path = p
+                self.dirty = False
 
     # private
     # handlers
@@ -254,11 +257,10 @@ e.g.
         if new:
             self._load_names(new)
 
-    def _open_via_finder_button_fired(self):
-
-        # information(None, self._message_text)
+    def _open_help_button_fired(self):
         cinformation(message=self._message_text, title='CSV Format')
 
+    def _open_via_finder_button_fired(self):
         dlg = FileDialog(default_directory=paths.csv_data_dir,
                          action='open')
         if dlg.open() == OK:
@@ -355,9 +357,12 @@ e.g.
                  ObjectColumn(name='dev', format='%0.6f', label='Dev.'),
                  ObjectColumn(name='percent_dev', format='%0.2f', label='% Dev.')]
 
-        button_grp = HGroup(UItem('save_button'), UItem('save_as_button'),
-                            UItem('clear_button'), UItem('open_via_finder_button'),
-                            UItem('add_record_button'),
+        button_grp = HGroup(icon_button_editor('save_button', 'disk', tooltip='Save'),
+                            icon_button_editor('save_as_button', 'save_as', tooltip='Save As'),
+                            icon_button_editor('clear_button', 'clear', tooltip='Clear current data'),
+                            icon_button_editor('add_record_button', 'add'),
+                            icon_button_editor('open_help_button', 'help', tooltip='Show CSV formatting instructions'),
+                            UItem('open_via_finder_button', tooltip='Open a csv file on your computer'),
                             # UItem('calculate_button')
                             ),
 
