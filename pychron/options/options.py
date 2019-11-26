@@ -721,6 +721,7 @@ class AgeOptions(AuxPlotFigureOptions, JErrorMixin):
     label_fontname = Enum(*FONTS)
     label_fontsize = Enum(*SIZES)
 
+    # inset
     display_inset = Bool
     inset_width = Int(100)
     inset_height = Int(100)
@@ -728,6 +729,8 @@ class AgeOptions(AuxPlotFigureOptions, JErrorMixin):
     inset_label_font = Property
     inset_label_fontname = Enum(*FONTS)
     inset_label_fontsize = Enum(*SIZES)
+
+    inset_show_axes_titles = Bool(False)
 
     inset_x_bounds = Property
     inset_xmin = Float

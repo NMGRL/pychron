@@ -311,14 +311,15 @@ class EthernetCommunicator(Communicator):
                 self.info('no handle    {}'.format(cmd.strip()))
             return
 
-        # print self.write_terminator
         cmd = '{}{}'.format(cmd, self.write_terminator)
-        # print cmd
-        # cmd = '{}\n'.format(cmd)
+
         r = None
         with self._lock:
             if use_error_mode and self.error_mode:
                 retries = 2
+
+            if timeout is None:
+                timeout = self.default_timeout
 
             re = 'ERROR: Connection refused: {}, timeout={}'.format(self.address, timeout)
             for i in range(retries):

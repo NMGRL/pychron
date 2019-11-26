@@ -352,7 +352,15 @@ class InverseIsochron(Isochron):
                                             marker_size=opt.inset_marker_size,
                                             line_width=0,
                                             nominal_intercept=opt.inominal_intercept_value,
-                                            )
+                                            label_font=opt.inset_label_font)
+        if opt.inset_show_error_ellipse:
+            eo = ErrorEllipseOverlay(component=insetp,
+                                     reg=reg,
+                                     border_color=group.color,
+                                     fill=opt.fill_ellipses,
+                                     kind=opt.ellipse_kind)
+            insetp.overlays.append(eo)
+
         if self.group_id > 0:
             insetp.y_axis.visible = False
             insetp.x_axis.visible = False
@@ -371,7 +379,16 @@ class InverseIsochron(Isochron):
 
         xs = linspace(lx, hx, 20)
         ys = reg.predict(xs)
-        insetl = InverseIsochronLineInset(xs, ys)
+
+        xtitle, ytitle = '', ''
+        if opt.inset_show_axes_titles:
+            xtitle = '<sup>39</sup>Ar/<sup>40</sup>Ar'
+            ytitle = '<sup>36</sup>Ar/<sup>40</sup>Ar'
+
+        insetl = InverseIsochronLineInset(xs, ys,
+                                          xtitle=xtitle,
+                                          ytitle=ytitle,
+                                          label_font=opt.inset_label_font)
         plot.overlays.append(insetl)
         plot.overlays.append(insetp)
 
@@ -384,7 +401,6 @@ class InverseIsochron(Isochron):
 
         for inset in plot.overlays:
             if isinstance(inset, (InverseIsochronPointsInset, InverseIsochronLineInset)):
-                inset.label_font = opt.inset_label_font
                 inset.location = opt.inset_location
                 inset.width = opt.inset_width
                 inset.height = opt.inset_height
@@ -395,6 +411,7 @@ class InverseIsochron(Isochron):
 
                 inset.value_range.low = ly
                 inset.value_range.high = hy
+        plot.request_redraw()
 
     def _add_atm_overlay(self, plot):
         plot.overlays.append(AtmInterceptOverlay(component=plot,

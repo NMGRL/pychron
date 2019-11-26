@@ -58,7 +58,12 @@ class InverseIsochronOptions(IsochronOptions):
     nominal_intercept_label = Str('Atm', enter_set=True, auto_set=False)
     nominal_intercept_value = Float(295.5)
 
+    # inset
     inset_marker_size = Float(1.0)
+    inset_show_error_ellipse = Bool(True)
+    inset_fill_ellipses = Bool(False)
+    inset_ellipse_kind = Enum(ELLIPSE_KINDS)
+
     regressor_kind = Enum('Reed', 'NewYork')
     group_options_klass = InverseIsochronGroupOptions
 

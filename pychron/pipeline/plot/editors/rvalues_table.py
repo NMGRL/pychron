@@ -21,9 +21,6 @@ from pychron.pipeline.results.base_matrix_result import BaseMatrixResult
 
 
 class Results(BaseMatrixResult):
-    def _set_name(self, ag):
-        self.name = str(ag.group_id)
-
     def _format_value(self, v):
         return '{:0.4f}'.format(v)
 
@@ -48,7 +45,7 @@ class RValuesTable(BaseMatrixTable):
 
     def _make_adapter(self, ags):
         adp = ResultsAdapter()
-        cols = [(a.group_id, '{}_value'.format(a.group_id)) for a in ags[1:]]
+        cols = [(self._make_name(a), '{}_value'.format(a.group_id)) for a in ags[1:]]
         adp.columns = [('Group', 'name'), ] + cols
         return adp
 

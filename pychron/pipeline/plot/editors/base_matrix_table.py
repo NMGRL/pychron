@@ -20,7 +20,7 @@ from pychron.pipeline.results.base_matrix_result import BaseMatrixResult
 
 
 class ResultsAdapter(TabularAdapter):
-    name_width = Int(50)
+    name_width = Int(60)
 
     def get_text(self, obj, trait, row, column):
         return getattr(obj, trait)[row].get_value(row, column)
@@ -42,13 +42,16 @@ class BaseMatrixTable(HasTraits):
         self.adapter = self._make_adapter(ags)
         self.recalculate()
 
+    def _make_name(self, ag):
+        return '{}({})'.format(ag.identifier, ag.group_id)
+
     def recalculate(self):
         results = [self.result_klass(ag, self.analysis_groups) for ag in self.analysis_groups[:-1]]
         self.results = results
 
     def _make_adapter(self, ags):
         adp = ResultsAdapter()
-        cols = [(a.identifier, '{}_value'.format(a.identifier)) for a in ags[1:]]
+        cols = [(self._make_name(a), '{}_value'.format(a.identifier)) for a in ags[1:]]
         adp.columns = [('Identifier', 'name'), ] + cols
         return adp
 # ============= EOF =============================================

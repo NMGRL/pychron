@@ -93,7 +93,7 @@ class InverseIsochronMainOptions(TitleSubOptions):
                                    VGroup(agrp, bgrp, enabled_when='show_results_info'),
                                    label='Results')
 
-        error_display_grp = BorderHGroup(Item('fill_ellipses', label='fill'),
+        error_display_grp = BorderHGroup(Item('fill_ellipses', label='Fill'),
                                          Item('ellipse_kind', label='Kind'),
                                          Item('include_error_envelope'),
                                          label='Error Display')
@@ -119,8 +119,7 @@ class InverseIsochronMainOptions(TitleSubOptions):
                                             enabled_when='show_nominal_intercept'),
                                        Item('nominal_intercept_value', label='Value',
                                             enabled_when='show_nominal_intercept')),
-                                label='Nominal Intercept'),
-                   )
+                                label='Nominal Intercept'))
         return self._make_view(g2)
 
 
@@ -133,18 +132,22 @@ class InverseIsochronInset(SubOptions):
         ybounds = BorderHGroup(Item('inset_ymin', label='Min.'),
                                Item('inset_ymax', label='Max.'),
                                label='Y Limits')
+        e = BorderHGroup(Item('inset_show_error_ellipse', label='Show'),
+                         Item('inset_fill_ellipses', label='Fill'),
+                         Item('inset_ellipse_kind', label='Kind'),
+                         label='Error Ellipse')
 
         g = VGroup(Item('display_inset'),
                    Item('inset_location'),
                    HGroup(Item('inset_marker_size', label='Marker Size')),
+                   HGroup(Item('inset_show_axes_titles', label='Show Axes Titles')),
                    HGroup(Item('inset_width', label='Width'),
                           Item('inset_height', label='Height')),
-
                    HGroup(Item('inset_label_fontname', label='Label Font'),
                           UItem('inset_label_fontsize')),
-
                    xbounds,
-                   ybounds)
+                   ybounds,
+                   e)
 
         return self._make_view(g)
 
