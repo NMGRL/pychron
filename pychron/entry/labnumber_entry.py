@@ -423,7 +423,7 @@ class LabnumberEntry(DVCIrradiationable):
                 if test_monitor_sample(dbpos):
                     return True
 
-        projectname = '{}-{}'.format(self.irradiation_project_prefix, self.irradiation)
+        projectname = '{}{}'.format(self.irradiation_project_prefix, self.irradiation)
 
         def correct_monitor_sample(l):
             incorrect_monitors = []

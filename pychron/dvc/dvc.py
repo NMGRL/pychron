@@ -28,7 +28,7 @@ from traits.api import Instance, Str, Set, List, provides, Bool, Int
 from uncertainties import ufloat, std_dev, nominal_value
 
 from pychron import json
-from pychron.core.helpers.filetools import remove_extension, list_subdirectories, list_directory
+from pychron.core.helpers.filetools import remove_extension, list_subdirectories, list_directory, add_extension
 from pychron.core.helpers.iterfuncs import groupby_key, groupby_repo
 from pychron.core.i_datastore import IDatastore
 from pychron.core.progress import progress_loader, progress_iterator, open_progress
@@ -637,17 +637,17 @@ class DVC(Loggable):
         self._save_j(irradiation, level, pos, identifier, j, e, mj, me, position_jerr, decay_constants, analyses,
                      options, add)
 
-    def save_csv_dataset(self, name, repository, lines, local_dir=False):
+    def save_csv_dataset(self, name, repository, lines, local_path=False):
 
-        if local_dir:
-            root = local_dir
+        if local_path:
+            p = add_extension(local_path, '.csv')
         else:
             repo = self.get_repository(repository)
             root = os.path.join(repo.path, 'csv')
             if not os.path.isdir(root):
                 os.mkdir(root)
+            p = os.path.join(root, '{}.csv'.format(name))
 
-        p = os.path.join(root, '{}.csv'.format(name))
         self.debug('writing dataset to {}'.format(p))
         with open(p, 'w') as wfile:
             wfile.writelines(lines)
