@@ -15,6 +15,7 @@
 # ===============================================================================
 
 from datetime import timedelta, datetime
+from string import digits, ascii_letters
 
 from sqlalchemy import not_, func, distinct, or_, and_
 from sqlalchemy.orm.exc import NoResultFound
@@ -1932,6 +1933,42 @@ class DVCDatabase(DatabaseAdapter):
             gs = self._query_all(q)
             return [g[0] for g in gs if g[0]]
 
+    def get_fuzzy_samples(self, name):
+        with self.session_ctx() as sess:
+            q = sess.query(SampleTbl)
+
+            oname = name
+            likes = ['{}%'.format(oname)]
+
+            regexp = ''
+            was_letter = False
+            for c in oname:
+                if c in digits:
+                    if was_letter:
+                        c = '[-_ ]*{}'.format(c)
+                        was_letter = False
+                elif c in ascii_letters:
+                    was_letter = True
+                else:
+                    was_letter = False
+
+                regexp += c
+
+            # %FC-2%
+            for r in '_- ':
+                name = name.replace(r, '%')
+
+            # FC%2
+            likes.append(name)
+
+            # %FC%2%
+            likes.append('{}%'.format(name))
+
+            comps = [func.lower(SampleTbl.name.like(like)) for like in likes]
+            comps.append(func.lower(SampleTbl.name.op('regexp')(regexp)))
+            q = q.filter(or_(*comps))
+            return self._query_all(q, verbose_query=True)
+
     def get_samples_by_name(self, name):
         with self.session_ctx() as sess:
             q = sess.query(SampleTbl)
@@ -2008,7 +2045,16 @@ class DVCDatabase(DatabaseAdapter):
                     q = principal_investigator_filter(q, p)
 
             if name_like:
-                q = q.filter(SampleTbl.name.like('{}%'.format(name_like)))
+                if not isinstance(name_like, (list, tuple)):
+                    name_like = (name_like,)
+
+                clauses = []
+                for ni in name_like:
+                    if '%' not in ni:
+                        like = '{}%'.format(ni)
+                    clauses.append(SampleTbl.name.like(like))
+                q = q.filter(or_(*clauses))
+
             return self._query_all(q, **kw)
 
     def get_irradiations_by_repositories(self, repositories):

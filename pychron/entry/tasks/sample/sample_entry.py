@@ -470,8 +470,10 @@ class SampleEntry(DVCAble):
                     continue
                 if (s.project and not s.project.name) or not s.project:
                     self.warning_dialog('A project name is required. Skipping {}'.format(s.name))
+                    continue
                 if (s.material and not s.material.name) or not s.material:
                     self.warning_dialog('A material is required. Skipping {}'.format(s.name))
+                    continue
 
                 if dvc.add_sample(s.name, s.project.name, s.project.principal_investigator.name,
                                   s.material.name,
@@ -493,6 +495,15 @@ class SampleEntry(DVCAble):
 
         self.refresh_table = True
         return True
+
+    def _check_for_similar_sample(self, s):
+        dvc = self.dvc
+        sims = []
+        sams = dvc.get_fuzzy_samples(s.name)
+        if sams:
+            sims = ['{}({})'.format(si.name, si.project.name) for si in sams]
+
+        return ','.join(sims)
 
     def _principal_investigator_factory(self):
         p = PISpec(name=self.principal_investigator,
@@ -616,10 +627,25 @@ class SampleEntry(DVCAble):
 
                 kw[specattr] = getattr(self, attr)
 
-            self._samples.append(SampleSpec(**kw))
+            add = True
+            spec = SampleSpec(**kw)
+            sim = self._check_for_similar_sample(spec)
+            if sim:
+                add = False
+                # a similar sample exists
+                msg = '''A similar sample already exists.
+                                Yes= Add anyways
+                                No = Skip sample  
+                                Current Sample: {}
+                                Existing Sample: {}'''.format(spec.name, sim)
+                if self.confirmation_dialog(msg):
+                    add = True
+
+            if add:
+                self._samples.append(spec)
+                self._add_sample_enabled = False
 
             self._backup()
-            self._add_sample_enabled = False
 
     def _add_project_button_fired(self):
         if self.project:
