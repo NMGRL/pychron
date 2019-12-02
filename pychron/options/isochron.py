@@ -63,6 +63,7 @@ class InverseIsochronOptions(IsochronOptions):
     inset_show_error_ellipse = Bool(True)
     inset_fill_ellipses = Bool(False)
     inset_ellipse_kind = Enum(ELLIPSE_KINDS)
+    inset_link_status = Bool(True)
 
     regressor_kind = Enum('Reed', 'NewYork')
     group_options_klass = InverseIsochronGroupOptions

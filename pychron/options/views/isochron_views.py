@@ -145,6 +145,8 @@ class InverseIsochronInset(SubOptions):
                           Item('inset_height', label='Height')),
                    HGroup(Item('inset_label_fontname', label='Label Font'),
                           UItem('inset_label_fontsize')),
+                   HGroup(Item('inset_link_status', label='Link Omit Status',
+                               tooltip='When enabled, link omit status between main and inset plots')),
                    xbounds,
                    ybounds,
                    e)

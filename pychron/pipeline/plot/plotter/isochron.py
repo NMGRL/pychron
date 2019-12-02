@@ -517,12 +517,6 @@ class InverseIsochron(Isochron):
                   if pp == 'data{}'.format(self.group_id)]
             self._set_renderer_selection(ss, sel)
 
-        # reg = self._cached_reg
-        #
-        # reg.user_excluded = sel
-        # reg.error_calc_type = self.options.error_calc_method
-        # reg.dirty = True
-        # reg.calculate()
         self.analysis_group.dirty = True
         if self._plot_label:
             self._add_results_info(self.graph.plots[0], label=self._plot_label)
@@ -557,6 +551,13 @@ class InverseIsochron(Isochron):
 
                 fit.error_envelope.lower = lci
                 fit.error_envelope.upper = uci
+
+        if self.options.display_inset and self.options.inset_link_status:
+            plot = self.graph.plots[self.group_id]
+            for o in plot.overlays:
+                if isinstance(o, InverseIsochronLineInset):
+                    o.index.set_data(rxs)
+                    o.value.set_data(rys)
 
     def update_graph_metadata(self, obj, name, old, new):
         if obj:
