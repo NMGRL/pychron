@@ -29,6 +29,7 @@ from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.fuzzyfinder import fuzzyfinder
 from pychron.core.progress import progress_loader
 from pychron.core.ui.table_configurer import SampleTableConfigurer
+from pychron.envisage.browser import progress_bind_records
 from pychron.envisage.browser.adapters import LabnumberAdapter
 from pychron.envisage.browser.record_views import ProjectRecordView, LabnumberRecordView, \
     PrincipalInvestigatorRecordView, LoadRecordView
@@ -486,18 +487,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         import time
         st = time.time()
 
-        def func(xi, prog, i, n):
-            if prog:
-                if i == 0:
-                    prog.change_message('Loading')
-                elif i == n - 1:
-                    prog.change_message('Finished')
-                if prog and i % 25 == 0:
-                    prog.change_message('Loading {}'.format(xi.record_id))
-            xi.bind()
-            return xi
-
-        ret = progress_loader(ans, func, threshold=100, step=20)
+        ret = progress_bind_records(ans)
         self.debug('make records {}'.format(time.time() - st))
         return ret
 
