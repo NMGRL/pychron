@@ -971,7 +971,9 @@ class Ideogram(BaseArArFigure):
         ag.age_error_kind = options.error_calc_method
         ag.weighted_age_error_kind = options.error_calc_method
 
-        ag.set_j_error(options.include_j_position_error, options.include_j_error_in_mean, dirty=True)
+        ag.set_external_error(options.include_j_position_error,
+                              options.include_j_error_in_mean,
+                              options.include_decay_error, dirty=True)
 
         mswd, valid_mswd, n, pvalue = self.analysis_group.get_mswd_tuple()
 

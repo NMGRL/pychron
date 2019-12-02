@@ -493,7 +493,6 @@ class ArArAge(IsotopeGroup):
     def _set_age_values(self, f, include_decay_error=False):
         arc = self.arar_constants
 
-
         if self.j is None:
             return
 

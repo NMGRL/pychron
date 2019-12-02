@@ -431,9 +431,9 @@ def calculate_f(isotopes, decay_time, interferences=None, arar_constants=None, f
     return f, f_wo_irrad, non_ar_isotopes, computed, interference_corrected
 
 
-def convert_age(uage, orignal_monitor_age, original_lambda_k, new_monitor_age, new_lambda_k):
+def convert_age(uage, original_monitor_age, original_lambda_k, new_monitor_age, new_lambda_k):
 
-    converter.setup(orignal_monitor_age, original_lambda_k)
+    converter.setup(original_monitor_age, original_lambda_k)
     if new_monitor_age is None:
         age, err = converter.convert(nominal_value(uage), std_dev(uage))
         uage = ufloat(age, err, tag=uage.tag)

@@ -594,7 +594,10 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             if not n:
                 continue
 
-            group.set_j_error(options.include_j_position_error, options.include_j_error_in_mean)
+            group.set_external_error(options.include_j_position_error,
+                                     options.include_j_error_in_mean,
+                                     options.include_decay_error)
+
             self._make_meta(worksheet, group)
             if repeat_header or i == 0:
                 self._make_column_header(worksheet, cols, i)

@@ -113,8 +113,10 @@ class AnalysisGroup(IdeogramPlotable):
     # age_scalar = Property
     # age_units = AGProperty()
 
+    # external errors
     include_j_error_in_mean = Bool(True)
     include_j_position_error = Bool(False)
+    include_decay_error_mean = Bool(False)
 
     # percent_39Ar = AGProperty()
     dirty = Event
@@ -123,7 +125,6 @@ class AnalysisGroup(IdeogramPlotable):
     isochron_regressor = None
 
     exclude_non_plateau = Bool(False)
-
 
     def __init__(self, *args, **kw):
         super(AnalysisGroup, self).__init__(make_arar_constants=False, *args, **kw)
@@ -193,9 +194,10 @@ class AnalysisGroup(IdeogramPlotable):
         valid_mswd = validate_mswd(mswd, self.nanalyses)
         return mswd, valid_mswd, self.nanalyses, calculate_mswd_probability(mswd, self.nanalyses-1)
 
-    def set_j_error(self, individual, mean, dirty=False):
+    def set_external_error(self, individual, mean, decay, dirty=False):
         self.include_j_position_error = individual
         self.include_j_error_in_mean = mean
+        self.include_decay_error_mean = decay
 
         if dirty:
             self.dirty = True
@@ -339,7 +341,7 @@ class AnalysisGroup(IdeogramPlotable):
         v, e = self._calculate_arithmetic_mean(self.age_attr)
         e = self._modify_error(v, e, self.age_error_kind)
         aa = ufloat(v, e)
-        return self._apply_j_err(aa)
+        return self._apply_external_err(aa)
 
     @cached_property
     def _get_weighted_age(self):
@@ -351,7 +353,7 @@ class AnalysisGroup(IdeogramPlotable):
         me = self._modify_error(v, e, self.age_error_kind)
         try:
             wa = ufloat(v, max(0, me))
-            return self._apply_j_err(wa)
+            return self._apply_external_err(wa)
 
         except AttributeError:
             return ufloat(0, 0)
@@ -387,19 +389,28 @@ class AnalysisGroup(IdeogramPlotable):
 
         return m
 
-    def _apply_j_err(self, wa, force=False):
+    def _apply_external_err(self, wa, force=False):
+        v, e = nominal_value(wa), std_dev(wa)
+        v = abs(v)
+        try:
+            pa = e / v
+        except ZeroDivisionError:
+            pa = 0
+
         if self.include_j_error_in_mean or force:
-            v, e = nominal_value(wa), std_dev(wa)
-            v = abs(v)
-            try:
-                pa = e / v
-            except ZeroDivisionError:
-                pa = 0
-
-            pj = self.j_err
-
-            ne = (pa ** 2 + pj ** 2) ** 0.5
+            ne = (pa ** 2 + self.j_err ** 2) ** 0.5
             wa = ufloat(v, ne * v)
+
+        if self.include_decay_error_mean or force:
+            k = self.arar_constants.lambda_k
+            de = 0
+            try:
+                de = std_dev(k) / nominal_value(k)
+            except ZeroDivisionError:
+                pass
+
+            ne = (pa**2 + de**2)**0.5
+            wa = ufloat(v, ne*v)
 
         return wa
 
@@ -756,7 +767,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
                         e = 0
 
         a = ufloat(v, max(0, e))
-        self._apply_j_err(a, force=self.include_j_error_in_mean or self.include_j_error_in_plateau)
+        self._apply_external_err(a, force=self.include_j_error_in_mean or self.include_j_error_in_plateau)
 
         return a
 
