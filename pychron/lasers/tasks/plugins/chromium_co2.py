@@ -15,11 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from envisage.ui.tasks.task_factory import TaskFactory
 
 from pychron.lasers.tasks.plugins.chromium import ChromiumPlugin
-from pychron.lasers.tasks.plugins.laser_plugin import BaseLaserPlugin
 
 
 class ChromiumCO2Plugin(ChromiumPlugin):
