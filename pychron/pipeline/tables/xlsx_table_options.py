@@ -174,6 +174,8 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
     # include_j_error_in_mean = dumpable(Bool(True))
     # _suppress = False
 
+    include_decay_error = dumpable(Bool(False))
+
     def __init__(self, *args, **kw):
         super(XLSXAnalysisTableWriterOptions, self).__init__(*args, **kw)
         # self.load_notes()
@@ -398,7 +400,9 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                                           label='Notes'),
                              label='Summary')
 
-        calc_grp = VGroup(J_ERROR_GROUP, label='Calc.')
+        calc_grp = VGroup(J_ERROR_GROUP,
+                          Item('include_decay_error', label='Include Decay Error in Wt. Mean'),
+                          label='Calc.')
 
         v = okcancel_view(Tabbed(g1, unk_columns_grp, unknown_grp, calc_grp, blank_grp, air_grp, monitor_grp,
                                  summary_grp),
