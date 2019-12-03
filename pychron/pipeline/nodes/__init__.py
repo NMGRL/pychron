@@ -18,6 +18,7 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+from pychron.pipeline.nodes.arar_calculations import ArArCalculationsNode
 from pychron.pipeline.nodes.audit import AuditNode
 from pychron.pipeline.nodes.bulk_edit import BulkEditNode
 from pychron.pipeline.nodes.correction_factors import CaCorrectionFactorsNode, KCorrectionFactorsNode

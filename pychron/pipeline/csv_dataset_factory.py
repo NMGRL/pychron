@@ -35,11 +35,12 @@ from pychron.core.pychron_traits import BorderVGroup
 from pychron.core.stats import calculate_weighted_mean, calculate_mswd
 from pychron.core.ui.dialogs import cinformation
 from pychron.core.ui.strings import SpacelessStr
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.paths import paths
 from pychron.processing.analyses.file_analysis import FileAnalysis
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
-HEADER = 'enabled, runid', 'age', 'age_err', 'group', 'aliquot', 'sample', 'label_name'
+HEADER = 'status', 'runid', 'age', 'age_err', 'group', 'aliquot', 'sample', 'label_name'
 
 
 def make_line(vs, delimiter=','):
@@ -47,7 +48,7 @@ def make_line(vs, delimiter=','):
 
 
 class CSVRecord(HasTraits):
-    runid = Str('A')
+    runid = Str('')
     age = CFloat
     age_err = CFloat
     group = CInt
@@ -55,6 +56,11 @@ class CSVRecord(HasTraits):
     sample = Str
     status = Bool(True)
     label_name = Str
+
+    def __init__(self, *args, **kw):
+        if 'status' in kw:
+            kw['status'] = to_bool(kw['status'])
+        super(CSVRecord, self).__init__(*args, **kw)
 
     def valid(self):
         return self.runid and self.age and self.age_err
@@ -141,8 +147,9 @@ class CSVDataSetFactory(HasTraits):
     save_button = Button('Save')
     save_as_button = Button('Save As')
     clear_button = Button('Clear')
-    calculate_button = Button('Calculate')
+    # calculate_button = Button('Calculate')
     open_via_finder_button = Button('Use Finder')
+    open_help_button = Button('Help')
 
     name = SpacelessStr
     names = List
@@ -153,7 +160,6 @@ class CSVDataSetFactory(HasTraits):
     orepositories = List
 
     data_path = None
-    in_path = Str
 
     name_filter = Str
     repo_filter = Str
@@ -195,18 +201,37 @@ e.g.
             self._test_button_fired()
 
     def dump(self):
+        local_path = False
+        if not self.repository:
+            if YES == confirm(None, 'Would you like to save the file locally?\n'
+                                    'Otherwise please select a repository to save the data '
+                                    'file'):
+
+                dlg = FileDialog(action='save as', default_directory=paths.csv_data_dir)
+                if dlg.open():
+                    local_path = dlg.path
+
+                if not local_path:
+                    return
+                else:
+                    name, ext = os.path.splitext(os.path.basename(local_path))
+                    self.name = name
+            else:
+                return
+
         if not self.name:
             self._save_as_button_fired()
         else:
-            p = self.dvc.save_csv_dataset(self.name, self.repository, self._make_csv_data())
-            self.data_path = p
-            self.dirty = False
+            p = self.dvc.save_csv_dataset(self.name, self.repository, self._make_csv_data(), local_path=local_path)
+            if p:
+                self.data_path = p
+                self.dirty = False
 
     # private
     # handlers
-    def _calculate_button_fired(self):
-        for gi in self.groups:
-            gi.calculate()
+    # def _calculate_button_fired(self):
+    #     for gi in self.groups:
+    #         gi.calculate()
 
     def _add_record_button_fired(self):
         self.records.append(CSVRecord())
@@ -232,23 +257,15 @@ e.g.
         if new:
             self._load_names(new)
 
-    def _in_path_changed(self, new):
-        if new:
-            self._load_csv_data(new)
-
-    def _open_via_finder_button_fired(self):
-
-        # information(None, self._message_text)
+    def _open_help_button_fired(self):
         cinformation(message=self._message_text, title='CSV Format')
 
+    def _open_via_finder_button_fired(self):
         dlg = FileDialog(default_directory=paths.csv_data_dir,
                          action='open')
-        path = ''
         if dlg.open() == OK:
             if dlg.path:
-                path = dlg.path
-
-        self.in_path = path
+                self._load_csv_data(dlg.path)
 
     def _save_button_fired(self):
         self.dump()
@@ -282,7 +299,6 @@ e.g.
             parser.load(p)
 
             records = [CSVRecord(**row) for row in parser.values()]
-            records.extend((CSVRecord() for i in range(50 - len(records))))
             self.records = records
 
             self._make_groups()
@@ -341,10 +357,14 @@ e.g.
                  ObjectColumn(name='dev', format='%0.6f', label='Dev.'),
                  ObjectColumn(name='percent_dev', format='%0.2f', label='% Dev.')]
 
-        button_grp = HGroup(UItem('save_button'), UItem('save_as_button'),
-                            UItem('clear_button'), UItem('open_via_finder_button'),
-                            UItem('add_record_button'),
-                            UItem('calculate_button')),
+        button_grp = HGroup(icon_button_editor('save_button', 'disk', tooltip='Save'),
+                            icon_button_editor('save_as_button', 'save_as', tooltip='Save As'),
+                            icon_button_editor('clear_button', 'clear', tooltip='Clear current data'),
+                            icon_button_editor('add_record_button', 'add'),
+                            icon_button_editor('open_help_button', 'help', tooltip='Show CSV formatting instructions'),
+                            UItem('open_via_finder_button', tooltip='Open a csv file on your computer'),
+                            # UItem('calculate_button')
+                            ),
 
         repo_grp = VGroup(BorderVGroup(UItem('repo_filter'),
                                        UItem('repositories',
@@ -435,6 +455,7 @@ e.g.
 
 </table>
 '''
+
     # Run1, 10, 0.24, 0.4, 0.001, 1, 0.1
     # Run2, 11, 0.32, 0.23, 0.02, 2, 0.1
     # Run3, 10, 0.40, 0.01, 0.1, 4, 0.1

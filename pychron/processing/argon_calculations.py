@@ -18,7 +18,6 @@
 
 # ============= standard library imports ========================
 import math
-from copy import copy
 
 from numpy import asarray, average, array
 from uncertainties import ufloat, umath, nominal_value, std_dev
@@ -220,7 +219,7 @@ def calculate_arar_decay_factors(dc37, dc39, segments, use_mh=True):
         McDougall and Harrison
         p.75 equation 3.22
 
-        the book suggests using ti==analysis_time-end of irradiation segment_i
+        the book suggests using ti==analysis_time-end of irradiation segment_i (Wijbrans 1985)
 
         mass spec uses ti==analysis_time-start of irradiation segment_i
 
@@ -389,7 +388,7 @@ def calculate_f(isotopes, decay_time, interferences=None, arar_constants=None, f
                                                   arar_constants)
 
         # calculate radiogenic
-        trapped_4036 = copy(arar_constants.atm4036)
+        trapped_4036 = ufloat(nominal_value(arar_constants.atm4036), std_dev(arar_constants.atm4036))
         trapped_4036.tag = 'trapped_4036'
         atm40 = atm36 * trapped_4036
 
@@ -432,9 +431,9 @@ def calculate_f(isotopes, decay_time, interferences=None, arar_constants=None, f
     return f, f_wo_irrad, non_ar_isotopes, computed, interference_corrected
 
 
-def convert_age(uage, orignal_monitor_age, original_lambda_k, new_monitor_age, new_lambda_k):
+def convert_age(uage, original_monitor_age, original_lambda_k, new_monitor_age, new_lambda_k):
 
-    converter.setup(orignal_monitor_age, original_lambda_k)
+    converter.setup(original_monitor_age, original_lambda_k)
     if new_monitor_age is None:
         age, err = converter.convert(nominal_value(uage), std_dev(uage))
         uage = ufloat(age, err, tag=uage.tag)

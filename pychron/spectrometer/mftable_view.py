@@ -15,9 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
-from pychron.spectrometer.mftable import FieldTable
 from traitsui.api import UItem, TableEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -25,6 +22,7 @@ from traitsui.handler import Controller
 from traitsui.table_column import ObjectColumn
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+from pychron.spectrometer.field_table import FieldTable
 
 
 class MagnetFieldTableView(Controller):
@@ -40,7 +38,7 @@ class MagnetFieldTableView(Controller):
 
         cols = [ObjectColumn(name='isotope', editable=False)]
 
-        for di in self.model._detectors:
+        for di in self.model.detector_names:
             cols.append(ObjectColumn(name=di,
                                      format='%0.5f',
                                      label=di))

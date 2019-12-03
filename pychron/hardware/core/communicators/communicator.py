@@ -41,10 +41,7 @@ def prep_str(s):
     return ns
 
 
-def remove_eol_func(re):
-    """
-    """
-
+def convert(re):
     if re is not None:
         if isinstance(re, bytes):
             try:
@@ -55,7 +52,23 @@ def remove_eol_func(re):
                 except binascii.Error:
                     re = ''.join(('[{}]'.format(str(b)) for b in re))
 
-        return re.rstrip()
+        return re
+
+
+def replace_eol_func(s):
+    s = convert(s)
+    if s is not None:
+        s = s.replace('\r', '[13]')
+        s = s.replace('\n', '[10]')
+        return s
+
+
+def remove_eol_func(re):
+    """
+    """
+    re = convert(re)
+    if re is not None:
+        return re.strip()
 
 
 def process_response(re, replace=None, remove_eol=True):
@@ -66,7 +79,7 @@ def process_response(re, replace=None, remove_eol=True):
 
     if isinstance(replace, tuple):
         re = re.replace(replace[0], replace[1])
-    # re = prep_str(re)
+
     return re
 
 
@@ -148,7 +161,7 @@ class Communicator(HeadlessConfigLoadable):
         """
         Log command and response as an INFO message
         """
-        cmd = remove_eol_func(cmd)
+        cmd = replace_eol_func(cmd)
 
         ncmd = prep_str(cmd)
         if ncmd:

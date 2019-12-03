@@ -23,6 +23,7 @@ from operator import attrgetter
 
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
+from pyface.message_dialog import warning
 from traits.api import List, Any, Str, Enum, Bool, Event, Property, cached_property, Instance, DelegatesTo, \
     CStr, Int, Button
 
@@ -32,6 +33,7 @@ from pychron.core.helpers.iterfuncs import groupby_repo
 from pychron.core.select_same import SelectSameMixin
 from pychron.core.ui.table_configurer import AnalysisTableConfigurer
 from pychron.dvc.func import get_review_status
+from pychron.envisage.browser import progress_bind_records
 from pychron.envisage.browser.adapters import AnalysisAdapter
 from pychron.paths import paths
 from pychron.pychron_constants import AUTO_SCROLL_KINDS, BOTTOM, TOP
@@ -71,6 +73,8 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
     append_replace_enabled = Bool(True)
 
     add_analysis_set_button = Button
+    refresh_analysis_set_button = Button
+
     analysis_set = Str
     analysis_set_names = List
     _analysis_sets = None
@@ -288,6 +292,29 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
         return ['identifier', 'aliquot', 'step', 'comment', 'tag']
 
     # handlers
+    def _refresh_analysis_set_button_fired(self):
+        self._analysis_set_changed(self.analysis_set)
+
+    def _analysis_set_changed(self, new):
+        if self.suppress_load_analysis_set:
+            return
+
+        try:
+            ans = self.get_analysis_set(new)
+            if not ans:
+                warning(None, 'Analysis set is empty')
+                return
+
+            ans = self.dvc.get_analyses_uuid([a[0] for a in ans])
+            if not ans:
+                warning(None, 'Analyses not in database')
+                return
+
+            ans = progress_bind_records(ans)
+            self.set_analyses(ans)
+        except StopIteration:
+            pass
+
     def _add_analysis_set_button_fired(self):
         name = self.add_analysis_set()
         if name:

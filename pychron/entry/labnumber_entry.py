@@ -26,12 +26,12 @@ from uncertainties import nominal_value
 from uncertainties import std_dev
 
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
+from pychron.canvas.utils import markup_canvas_position
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.progress import open_progress
 from pychron.core.yaml import yload
-from pychron.database.core.defaults import load_irradiation_map
 from pychron.dvc.dvc_irradiationable import DVCIrradiationable
 from pychron.entry.editors.irradiation_editor import IrradiationEditor
 from pychron.entry.editors.level_editor import LevelEditor, load_holder_canvas
@@ -253,9 +253,9 @@ class LabnumberEntry(DVCIrradiationable):
             self.warning_dialog('Unable to Transfer Js. Mass Spec database not configured properly. '
                                 'Check Preferences>Database')
 
-    def save_tray_to_db(self, p, name):
-        load_irradiation_map(self.dvc.db, p, name, overwrite_geometry=True)
-        self._inform_save()
+    # def save_tray_to_db(self, p, name):
+    #     load_irradiation_map(self.dvc.db, p, name, overwrite_geometry=True)
+    #     self._inform_save()
 
     def estimate_j(self):
         j = self._estimated_j_value
@@ -324,7 +324,7 @@ class LabnumberEntry(DVCIrradiationable):
         info = table.edit_traits()
         if info.result:
             if table.selected:
-                w = LabbookPDFWriter()
+                w = LabbookPDFWriter(monitor_name=self.monitor_name)
                 if self.lab_name:
                     w.title = self.lab_name
 
@@ -345,7 +345,7 @@ class LabnumberEntry(DVCIrradiationable):
         name = self.irradiation
         irrad = db.get_irradiation(name)
         if irrad:
-            w = IrradiationPDFWriter()
+            w = IrradiationPDFWriter(monitor_name=self.monitor_name)
             info = w.options.edit_traits(kind='livemodal')
             if info.result:
                 w.selected_level = self.level
@@ -423,7 +423,7 @@ class LabnumberEntry(DVCIrradiationable):
                 if test_monitor_sample(dbpos):
                     return True
 
-        projectname = '{}-{}'.format(self.irradiation_project_prefix, self.irradiation)
+        projectname = '{}{}'.format(self.irradiation_project_prefix, self.irradiation)
 
         def correct_monitor_sample(l):
             incorrect_monitors = []
@@ -815,17 +815,19 @@ available holder positions {}'.format(pn, ipn))
 
     def _sync_position(self, dbpos, ir, include_canvas=True):
 
-        cgen = ('#{:02x}{:02x}{:02x}'.format(*ci) for ci in ((194, 194, 194),
-                                                             (255, 255, 160),
-                                                             (255, 255, 0),
-                                                             (25, 230, 25)))
-
-        def set_color(ii, value):
-            if ii is not None:
-                if value:
-                    ii.fill_color = next(cgen)
+        # cgen = ('#{:02x}{:02x}{:02x}'.format(*ci) for ci in ((194, 194, 194),
+        #                                                      (255, 255, 160),
+        #                                                      (255, 255, 0),
+        #                                                      (25, 230, 25)))
+        #
+        # def set_color(ii, value):
+        #     if ii is not None:
+        #         if value:
+        #             ii.fill_color = next(cgen)
 
         if dbpos:
+            markup_canvas_position(self.canvas, dbpos, self.monitor_name)
+
             v = ''
             if dbpos.identifier:
                 v = str(dbpos.identifier)
@@ -833,12 +835,12 @@ available holder positions {}'.format(pn, ipn))
             ir.identifier = v
             ir.hole = dbpos.position
 
-            item = None
-            if include_canvas:
-                item = self.canvas.scene.get_item(str(ir.hole))
-                item.fill = True
-                if v:
-                    set_color(item, v)
+            # item = None
+            # if include_canvas:
+            #     item = self.canvas.scene.get_item(str(ir.hole))
+            #     item.fill = True
+            #     if v:
+            #         set_color(item, v)
 
             fd = self.dvc.meta_repo.get_flux(self.irradiation, self.level, ir.hole)
             j = fd['j']
@@ -861,22 +863,22 @@ available holder positions {}'.format(pn, ipn))
 
             dbsam = dbpos.sample
             if dbsam:
-                ir.sample = v = dbsam.name
+                ir.sample = dbsam.name
 
-                item.measured_indicator = ir.analyzed
+                # item.measured_indicator = ir.analyzed
 
-                if v == self.monitor_name:
-                    item.monitor_indicator = True
+                # if v == self.monitor_name:
+                #     item.monitor_indicator = True
 
-                set_color(item, v)
+                # set_color(item, v)
                 if dbsam.material:
-                    ir.material = v = dbsam.material.name
+                    ir.material = dbsam.material.name
                     ir.grainsize = dbsam.material.grainsize or ''
-                    set_color(item, v)
+                    # set_color(item, v)
 
                 if dbsam.project:
-                    ir.project = v = dbsam.project.name
-                    set_color(item, v)
+                    ir.project = dbsam.project.name
+                    # set_color(item, v)
                     if dbsam.project.principal_investigator:
                         ir.principal_investigator = dbsam.project.principal_investigator.name
 

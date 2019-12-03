@@ -17,6 +17,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from pyface.action.api import Action
 from pyface.tasks.action.task_action import TaskAction
 from pyface.timer.do_later import do_later
@@ -119,21 +120,24 @@ class EditGainsAction(Action):
     name = 'Edit Gains...'
 
     def perform(self, event):
-        from pychron.spectrometer.gains_edit_view import GainsModel, GainsEditView
-
-        app = event.task.window.application
-        spec = app.get_service(SPECTROMETER_PROTOCOL)
-        gv = GainsModel(spectrometer=spec.spectrometer)
-
-        man = app.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
-        if man:
-            gv.db = man.db
-
-        gv.load_histories()
-        spec.spectrometer.load_current_detector_gains()
-
-        gev = GainsEditView(model=gv)
-        gev.edit_traits(kind='livemodal')
+        from pyface.message_dialog import warning
+        warning(None, 'Editing detector gains directly from pychron is currently disabled. '
+                      'Contact pychron developers to request that this feature be enabled and fully implemented')
+        # from pychron.spectrometer.gains_edit_view import GainsModel, GainsEditView
+        #
+        # app = event.task.window.application
+        # spec = app.get_service(SPECTROMETER_PROTOCOL)
+        # gv = GainsModel(spectrometer=spec.spectrometer)
+        #
+        # man = app.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
+        # if man:
+        #     gv.db = man.db
+        #
+        # gv.load_histories()
+        # spec.spectrometer.load_current_detector_gains()
+        #
+        # gev = GainsEditView(model=gv)
+        # gev.edit_traits(kind='livemodal')
 
 
 class ToggleSpectrometerTask(TaskAction):
@@ -226,7 +230,12 @@ class MagnetFieldTableAction(Action):
     def perform(self, event):
         man = get_manager(event, SPECTROMETER_PROTOCOL)
         if man.spectrometer:
-            mft = man.spectrometer.magnet.mftable
+            from pyface.message_dialog import warning
+            warning(None, 'Editing MF Table is in beta mode. This procedure will not directly modify the existing '
+                          'table. An edited copy is created instead. Contact pychron developers to request this '
+                          'feature be fully implemented')
+
+            mft = man.spectrometer.magnet.field_table
 
             from pychron.spectrometer.mftable_view import MagnetFieldTableView
 

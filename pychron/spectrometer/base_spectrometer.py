@@ -305,26 +305,46 @@ class BaseSpectrometer(SpectrometerDevice):
                 self.debug('molweights={}'.format(self.molecular_weights))
 
                 try:
-                    index = det.index
-                    dets = self.active_detectors
-                    if not dets:
-                        dets = self.detectors
-                        idxs = [di.index for di in dets]
-                    else:
-                        idxs = range(len(dets))
-                        index = next((i for i, d in enumerate(dets) if d.index == index), 0)
-
-                    nmass = self.map_mass(isotope)
-                    for di, didx in zip(dets, idxs):
-                        mass = nmass - didx + index
-                        isotope = self.map_isotope(mass)
-                        self.debug('setting detector {} to {} ({})'.format(di.name, isotope, mass))
-                        di.isotope = isotope
-                        di.mass = mass
-
+                    self._update_isotopes_hook(isotope, det.index)
                 except BaseException as e:
                     self.warning(
                         'Cannot update isotopes. isotope={}, detector={}. error:{}'.format(isotope, detector, e))
+
+    def _update_isotope_hook(self, isotope, index):
+        dets = self.active_detectors
+        if not dets:
+            dets = self.detectors
+
+        nmass = self.map_mass(isotope)
+        for di in dets:
+            mass = nmass - di.index + index
+            isotope = self.map_isotope(mass)
+            self.debug('setting detector {} to {} ({})'.format(di.name, isotope, mass))
+            di.isotope = isotope
+            di.mass = mass
+
+        # old version
+        # this version of the update isotope function was developed with Stephen cox in 3/20/19
+        # however potentially the issue was not with the code but not having detectors.cfg setup correctly
+        # e.g. not having the "index" value set correctly for each detector
+        # H2 index=0, H1 index=1, H2(CDD) index=0.1, H1(CDD) index=1.1 etc
+
+        # def _update_isotope_hook(self, isotope, index):
+        #     dets = self.active_detectors
+        #     if not dets:
+        #         dets = self.detectors
+        #         idxs = [di.index for di in dets]
+        #     else:
+        #         idxs = range(len(dets))
+        #         index = next((i for i, d in enumerate(dets) if d.index == index), 0)
+        #
+        #     nmass = self.map_mass(isotope)
+        #     for di, didx in zip(dets, idxs):
+        #         mass = nmass - didx + index
+        #         isotope = self.map_isotope(mass)
+        #         self.debug('setting detector {} to {} ({})'.format(di.name, isotope, mass))
+        #         di.isotope = isotope
+        #         di.mass = mass
 
     def verify_configuration(self, **kw):
         return True
@@ -385,7 +405,10 @@ class BaseSpectrometer(SpectrometerDevice):
     def load(self):
         self.load_molecular_weights()
         self.load_detectors()
+
+        # does this ever do anything? I don't think any magnet defines a `load` method
         self.magnet.load()
+
         # load local configurations
         self.spectrometer_configurations = glob_list_directory(paths.spectrometer_config_dir, remove_extension=True,
                                                                extension='.cfg')
@@ -441,7 +464,17 @@ class BaseSpectrometer(SpectrometerDevice):
         populates self.detectors
         :return:
         """
-        config = self.get_configuration(path=os.path.join(paths.spectrometer_dir, 'detectors.cfg'))
+
+        path = os.path.join(paths.spectrometer_dir, 'detectors.cfg')
+        if not os.path.isfile(path):
+            self.warning_dialog('Could not find a detectors file. Please add "{}"'.format(path))
+            return
+
+        try:
+            config = self.get_configuration(path=path)
+        except BaseException:
+            self.warning_dialog('There is an issue with your detectors file. Please fix "{}"'.format(path))
+            return
 
         for i, name in enumerate(config.sections()):
             relative_position = self.config_get(config, name, 'relative_position', cast='float')

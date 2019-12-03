@@ -15,40 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
-from envisage.ui.tasks.task_factory import TaskFactory
-
-from pychron.lasers.tasks.plugins.laser_plugin import BaseLaserPlugin
+from pychron.lasers.tasks.plugins.remote_laser_plugin import RemoteLaserPlugin
 
 
-class ChromiumPlugin(BaseLaserPlugin):
+class ChromiumPlugin(RemoteLaserPlugin):
 
-    def test_communication(self):
-        man = self._get_manager()
-        return man.test_connection()
-
-    def _get_task_klass(self):
-        factory = __import__(self.task_klass[0], fromlist=[self.task_klass[1]])
-        klassfactory = getattr(factory, self.task_klass[1])
-        return klassfactory
-
-    def _task_factory(self):
-        klass = self._get_task_klass()
-        t = klass(manager=self._get_manager(), application=self.application)
-        return t
-
-    def _tasks_default(self):
-        return [TaskFactory(id=self.id,
-                            task_group='hardware',
-                            factory=self._task_factory,
-                            name=self.task_name,
-                            image='laser',
-                            accelerator=self.accelerator)]
-
-    def _task_extensions_default(self):
-        exts = self._create_task_extensions()
-        self._setup_pattern_extensions(exts)
-
-        return exts
+    pass
 # ============= EOF =============================================

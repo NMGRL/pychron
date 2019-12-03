@@ -147,12 +147,59 @@ class ImportAnalysesAction(Action):
         do_import_analyses(dvc, sources)
 
 
-class GenerateTrayAction(TaskAction):
-    name = 'Generate Tray'
+class GenerateTrayAction(Action):
+    name = 'Generate Tray Image'
     image = icon('table_lightning')
 
-    method = 'generate_tray'
+    # method = 'generate_tray'
     description = 'Make a irradiation tray image from an irradiation tray text file.'
+
+    def perform(self, event):
+        # p='/Users/ross/Sandbox/entry_tray'
+        # p = self.open_file_dialog()
+        p = None
+        from pychron.paths import paths
+        dlg = FileDialog(action='open', default_directory=os.path.join(paths.meta_root, 'irradiation_holders'))
+        if dlg.open() == OK:
+            p = dlg.path
+
+        if p is not None:
+            from pychron.entry.graphic_generator import open_txt
+            bounds = (2.54, 2.54)
+            radius = 0.03 * 2.54
+            gcc, gm = open_txt(p,
+                               bounds,
+                               radius,
+                               convert_mm=True,
+                               make=True,
+                               rotate=0)
+            info = gcc.edit_traits(kind='livemodal')
+
+            # from pychron.entry.graphic_generator import GraphicModel
+            # from pychron.entry.graphic_generator import GraphicGeneratorController
+            #
+            # gm = GraphicModel()
+            #
+            # # op='/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/newtrays/26_no_spokes.txt'
+            #
+            # gm.srcpath = p
+            # # gm.xmlpath=p
+            # # p = make_xml(p,
+            # # default_radius=radius,
+            # #              default_bounds=bounds,
+            # #              convert_mm=convert_mm,
+            # #              use_label=use_label,
+            # #              make=make,
+            # #              rotate=rotate)
+            # #
+            # # #    p = '/Users/ross/Sandbox/graphic_gen_from_csv.xml'
+            # # gm.load(p)
+            # gcc = GraphicGeneratorController(model=gm)
+            # info = gcc.edit_traits(kind='livemodal')
+            # if info.result:
+            #     if self.confirmation_dialog(
+            #             'Do you want to save this tray to the database. Saving tray as "{}"'.format(gm.name)):
+            #         self.manager.save_tray_to_db(gm.srcpath, gm.name)
 
 
 class ImportIrradiationFileAction(TaskAction):
@@ -195,14 +242,9 @@ class MakeIrradiationTemplateAction(Action):
                     # information(None, 'Template saved to {}'.format(path))
 
 
-class ImportSamplesAction(TaskAction):
-    name = 'Import Sample File'
-    method = 'import_sample_from_file'
-
-
-class ImportSampleMetadataAction(TaskAction):
-    name = 'Import Sample Metadata...'
-    method = 'import_sample_metadata'
+# class ImportSampleMetadataAction(TaskAction):
+#     name = 'Import Sample Metadata...'
+#     method = 'import_sample_metadata'
 
 
 class ExportIrradiationAction(TaskAction):

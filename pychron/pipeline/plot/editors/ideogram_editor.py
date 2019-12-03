@@ -19,13 +19,14 @@ from chaco.abstract_overlay import AbstractOverlay
 from chaco.label import Label
 from pyface.timer.do_later import do_later
 from traits.api import Instance, List, Property, on_trait_change
-from traitsui.api import View, VSplit, VGroup, HGroup
+from traitsui.api import View, VSplit, VGroup, HSplit
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.traitsui_shortcuts import listeditor
 from pychron.pipeline.plot.editors.ideogram_results_table import IdeogramResultsTable
 from pychron.pipeline.plot.editors.interpreted_age_editor import InterpretedAgeEditor
+from pychron.pipeline.plot.editors.rvalues_table import RValuesTable
 from pychron.pipeline.plot.editors.ttest_table import TTestTable
 from pychron.pipeline.plot.models.ideogram_model import IdeogramModel
 from pychron.processing.analyses.file_analysis import InterpretedAgeAnalysis
@@ -58,14 +59,12 @@ class IdeogramEditor(InterpretedAgeEditor):
     basename = 'ideo'
     results_tables = List
     ttest_tables = List
+    rvalues_tables = List
 
-    # @on_trait_change('figure_model:panels:correlation_event')
-    # def handle_correlation_event(self, evt):
-    #     print('asdf', evt)
     additional_visible = Property
 
     def _get_additional_visible(self):
-        return self.ttest_tables or self.results_tables
+        return self.ttest_tables or self.results_tables or self.rvalues_tables
 
     @on_trait_change('figure_model:panels:figures:recalculate_event')
     def _handle_recalculate(self):
@@ -77,6 +76,7 @@ class IdeogramEditor(InterpretedAgeEditor):
 
         rs = []
         ts = []
+        rvs = []
 
         for p in model.panels:
             ags = []
@@ -87,7 +87,6 @@ class IdeogramEditor(InterpretedAgeEditor):
                 ag.color = color
                 ags.append(ag)
 
-            # ags = [pp.analysis_group for pp in p.figures]
             if self.plotter_options.show_results_table:
                 r = IdeogramResultsTable(ags, self.plotter_options.nsigma)
                 rs.append(r)
@@ -96,7 +95,11 @@ class IdeogramEditor(InterpretedAgeEditor):
                 t = TTestTable(ags)
                 ts.append(t)
 
-        do_later(self.trait_set, results_tables=rs, ttest_tables=ts)
+            if self.plotter_options.show_rvalues and len(ags) > 1:
+                t = RValuesTable(ags)
+                rvs.append(t)
+
+        do_later(self.trait_set, results_tables=rs, ttest_tables=ts, rvalues_tables=rvs)
 
     def plot_interpreted_ages(self, iages):
         def construct(a):
@@ -129,11 +132,17 @@ class IdeogramEditor(InterpretedAgeEditor):
         ttest_grp = VGroup(listeditor('ttest_tables', height=0.2),
                            visible_when='ttest_tables')
 
+        rvalues_grp = VGroup(listeditor('rvalues_tables', height=0.2),
+                             visible_when='rvalues_tables')
+
         g = self.get_component_view()
         g.height = 0.8
 
         v = View(VSplit(g,
-                        HGroup(tbl_grp, ttest_grp, visible_when='additional_visible')),
+                        HSplit(tbl_grp,
+                               ttest_grp,
+                               rvalues_grp,
+                               visible_when='additional_visible')),
                  resizable=True)
         return v
 # ============= EOF =============================================

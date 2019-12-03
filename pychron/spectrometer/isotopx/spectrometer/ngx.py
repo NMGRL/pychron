@@ -15,14 +15,15 @@
 # ===============================================================================
 from __future__ import absolute_import
 from __future__ import print_function
+
 import time
-from apptools.preferences.preference_binding import bind_preference
-from traits.api import Enum, Str, Float, Int, List
+
+from traits.api import Int, List
 
 from pychron.hardware.isotopx_spectrometer_controller import NGXController
 from pychron.pychron_constants import ISOTOPX_DEFAULT_INTEGRATION_TIME, ISOTOPX_INTEGRATION_TIMES, NULL_STR
 from pychron.spectrometer.base_spectrometer import BaseSpectrometer
-from pychron.spectrometer.isotopx import SOURCE_CONTROL_PARAMETERS, ERRORS, IsotopxMixin
+from pychron.spectrometer.isotopx import SOURCE_CONTROL_PARAMETERS, IsotopxMixin
 from pychron.spectrometer.isotopx.detector.ngx import NGXDetector
 from pychron.spectrometer.isotopx.magnet.ngx import NGXMagnet
 from pychron.spectrometer.isotopx.source.ngx import NGXSource

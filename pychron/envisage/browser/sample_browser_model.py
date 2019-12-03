@@ -246,22 +246,22 @@ class SampleBrowserModel(BrowserModel):
         if ans:
             self.add_analysis_group(ans)
 
-    def _analysis_set_changed(self, new):
-        if self.analysis_table.suppress_load_analysis_set:
-            return
-
-        self.debug('analysis set changed={}'.format(new))
-        try:
-            ans = self.analysis_table.get_analysis_set(new)
-            ans = self.db.get_analyses_uuid([a[0] for a in ans])
-            xx = self._make_records(ans)
-
-            # for a in (xx[0], xx[-1]):
-            #     print('ab', a.record_id, a.timestampf)
-
-            self.analysis_table.set_analyses(xx)
-        except StopIteration:
-            pass
+    # def _analysis_set_changed(self, new):
+    #     if self.analysis_table.suppress_load_analysis_set:
+    #         return
+    #
+    #     self.debug('analysis set changed={}'.format(new))
+    #     try:
+    #         ans = self.analysis_table.get_analysis_set(new)
+    #         ans = self.db.get_analyses_uuid([a[0] for a in ans])
+    #         xx = self._make_records(ans)
+    #
+    #         # for a in (xx[0], xx[-1]):
+    #         #     print('ab', a.record_id, a.timestampf)
+    #
+    #         self.analysis_table.set_analyses(xx)
+    #     except StopIteration:
+    #         pass
 
     def _find_references_button_fired(self):
         self.debug('find references button fired')
@@ -445,7 +445,7 @@ class SampleBrowserModel(BrowserModel):
 
     def _analysis_table_default(self):
         at = AnalysisTable(dvc=self.dvc)
-        at.on_trait_change(self._analysis_set_changed, 'analysis_set')
+        # at.on_trait_change(self._analysis_set_changed, 'analysis_set')
         # at.load()
         prefid = 'pychron.browser'
         bind_preference(at, 'max_history', '{}.max_history'.format(prefid))

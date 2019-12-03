@@ -175,6 +175,7 @@ class EthernetCommunicator(Communicator):
     """
     host = None
     port = None
+    read_port = None
     handler = None
     kind = 'UDP'
     test_cmd = None
@@ -207,6 +208,7 @@ class EthernetCommunicator(Communicator):
 
         # self.host = 'localhost'
         self.port = self.config_get(config, 'Communications', 'port', cast='int')
+        self.read_port = self.config_get(config, 'Communications', 'read_port', cast='int', optional=True)
         self.timeout = self.config_get(config, 'Communications', 'timeout', cast='float', optional=True, default=1.0)
         self.kind = self.config_get(config, 'Communications', 'kind', optional=True)
         self.test_cmd = self.config_get(config, 'Communications', 'test_cmd', optional=True, default='')
@@ -256,9 +258,17 @@ class EthernetCommunicator(Communicator):
         ret = not self.simulation and handler is not None
         return ret
 
-    def get_handler(self, timeout=None):
+    def get_read_handler(self, handler, **kw):
+        if self.read_port:
+            handler = self.get_handler(addrs=(self.host, self.read_port), **kw)
+
+        return handler
+
+    def get_handler(self, addrs=None, timeout=None):
         if timeout is None:
             timeout = self.timeout
+        if addrs is None:
+            addrs = (self.host, self.port)
 
         try:
             h = self.handler
@@ -270,7 +280,7 @@ class EthernetCommunicator(Communicator):
 
                 # self.debug('get handler cmd={}, {},{} {}'.format(cmd.strip() if cmd is not None else '---', self.host,
                 #                                                  self.port, timeout))
-                h.open_socket((self.host, self.port), timeout=timeout)
+                h.open_socket(addrs, timeout=timeout)
                 h.set_frame(self.message_frame)
                 self.handler = h
             return h
@@ -301,14 +311,15 @@ class EthernetCommunicator(Communicator):
                 self.info('no handle    {}'.format(cmd.strip()))
             return
 
-        # print self.write_terminator
         cmd = '{}{}'.format(cmd, self.write_terminator)
-        # print cmd
-        # cmd = '{}\n'.format(cmd)
+
         r = None
         with self._lock:
             if use_error_mode and self.error_mode:
                 retries = 2
+
+            if timeout is None:
+                timeout = self.default_timeout
 
             re = 'ERROR: Connection refused: {}, timeout={}'.format(self.address, timeout)
             for i in range(retries):
@@ -376,6 +387,7 @@ class EthernetCommunicator(Communicator):
             timeout = self.default_timeout
 
         self.error_mode = False
+
         handler = self.get_handler(timeout=timeout)
         if not handler:
             return
@@ -386,6 +398,7 @@ class EthernetCommunicator(Communicator):
             if delay:
                 time.sleep(delay)
 
+            handler = self.get_read_handler(handler, timeout=timeout)
             try:
                 return handler.get_packet(message_frame=message_frame)
             except socket.error as e:

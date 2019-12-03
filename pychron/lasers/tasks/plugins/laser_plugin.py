@@ -22,7 +22,7 @@ import os
 
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
-from pyface.tasks.action.schema import SMenu, SGroup
+from pyface.tasks.action.schema import SMenu
 from pyface.tasks.action.schema_addition import SchemaAddition
 from traits.api import List, Str
 
@@ -106,7 +106,11 @@ class BaseLaserPlugin(BaseTaskPlugin):
         if mode == 'client':
             try:
                 tag = ip.get_parameter(plugin, 'communications', element=True)
-                for attr in ['host', 'port', 'kind', 'message_frame', ('use_end', to_bool)]:
+                for attr in ['host', 'port', 'kind',
+                             'baudrate',
+                             'parity',
+                             'stopbits',
+                             'message_frame', ('use_end', to_bool)]:
                     func = None
                     if isinstance(attr, tuple):
                         attr, func = attr

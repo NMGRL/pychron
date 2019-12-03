@@ -32,6 +32,7 @@ from pychron.file_defaults import SPECTRUM_SCREEN, IDEOGRAM_SCREEN, IDEOGRAM_PRE
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.mdd.tasks.mdd_figure import MDDFigureOptions
+from pychron.options.arar_calculations import ArArCalculationsOptions
 from pychron.options.blanks import BlanksOptions
 from pychron.options.composite import CompositeOptions
 from pychron.options.define_equilibration import DefineEquilibrationOptions
@@ -139,6 +140,9 @@ class OptionsManager(Loggable):
     _cached_names = List
     _cached_detectors = List
     _cached_atypes = List
+    _cached_reference_types = List
+    _cached_options = None
+
     _default_options_txt = None
 
     def __init__(self, *args, **kw):
@@ -173,6 +177,10 @@ class OptionsManager(Loggable):
 
             # for p in self.plotter_options_list:
             #     p.set_names(names)
+    def set_outside_options(self, options):
+        self._cached_options = options
+        if self.selected_options:
+            options.clone_to(self.selected_options)
 
     def set_analysis_types(self, atypes):
         self._cached_atypes = atypes
@@ -180,6 +188,7 @@ class OptionsManager(Loggable):
             self.selected_options.set_analysis_types(atypes)
 
     def set_reference_types(self, atypes):
+        self._cached_reference_types = atypes
         if self.selected_options:
             self.selected_options.set_reference_types(atypes)
 
@@ -193,6 +202,12 @@ class OptionsManager(Loggable):
 
             if self._cached_atypes:
                 new.set_analysis_types(self._cached_atypes)
+
+            if self._cached_reference_types:
+                new.set_reference_types(self._cached_reference_types)
+
+            if self._cached_options:
+                self._cached_options.clone_to(new)
 
     def set_selected(self, obj):
         for name in self.names:
@@ -393,7 +408,7 @@ class OptionsManager(Loggable):
 
             o = self.selected_subview
             if not o:
-                o = 'Main'
+                o = self.subview_names[0]
 
             self.selected_subview = ''
             self.selected_subview = o
@@ -408,6 +423,11 @@ class OptionsManager(Loggable):
     @property
     def persistence_root(self):
         return os.path.join(paths.plotter_options_dir, globalv.username, self.id)
+
+
+class ArArCalculationsOptionsManager(OptionsManager):
+    id = 'arar_calculations'
+    options_klass = ArArCalculationsOptions
 
 
 class FigureOptionsManager(OptionsManager):

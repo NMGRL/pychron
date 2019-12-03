@@ -16,17 +16,22 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traits.api import Instance, Str, Button
 from traitsui.api import Item, HGroup, spring
+
+from pychron.core.ui.custom_label_editor import CustomLabel
+from pychron.hardware.core.core_device import CoreDevice
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.managers.manager import Manager
-from pychron.hardware.core.core_device import CoreDevice
-from pychron.core.ui.custom_label_editor import CustomLabel
+
 
 class HeaderLabel(CustomLabel):
     color = 'maroon'
     size = 14
+
+
 class MultiplexerManager(Manager):
     controller = Instance(CoreDevice)
     hname = Str('Name')
@@ -43,9 +48,6 @@ class MultiplexerManager(Manager):
         self.closed(True)
         self.controller.bootstrap()
         self.controller.post_initialize()
-        self.opened(None)
-
-    def opened(self, ui):
         self.controller.start_scan()
 
     def closed(self, isok):
@@ -56,29 +58,29 @@ class MultiplexerManager(Manager):
         if self.devices:
             self.controller = self.devices[0]
 
-# ===============================================================================
-# handlers
-# ===============================================================================
+    # ===============================================================================
+    # handlers
+    # ===============================================================================
     def _reload_channels_button_fired(self):
         self.reload_channels()
 
     def traits_view(self):
         v = self.view_factory(
-               HGroup(
-#                      CustomLabel('hname', size=18, color='maroon', width=200),
-                      HeaderLabel('hname', width=200),
-#                      Item('hname', show_label=False, style='readonly', width=200),
-                      HeaderLabel('haddress', width=75),
+            HGroup(
+                #                      CustomLabel('hname', size=18, color='maroon', width=200),
+                HeaderLabel('hname', width=200),
+                #                      Item('hname', show_label=False, style='readonly', width=200),
+                HeaderLabel('haddress', width=75),
 
-#                      Item('haddress', show_label=False, style='readonly', width=75),
-                      HeaderLabel('hvalue', width=100),
-#                      Item('hvalue', show_label=False, style='readonly', width=100),
-                      HeaderLabel('hprocessvalue', width=100)
-#                      Item('hprocessvalue', show_label=False, style='readonly', width=100)
-                      ),
-               Item('controller', style='custom', show_label=False),
-               HGroup(spring, Item('reload_channels_button', show_label=False)),
-               )
+                #                      Item('haddress', show_label=False, style='readonly', width=75),
+                HeaderLabel('hvalue', width=100),
+                #                      Item('hvalue', show_label=False, style='readonly', width=100),
+                HeaderLabel('hprocessvalue', width=100)
+                #                      Item('hprocessvalue', show_label=False, style='readonly', width=100)
+            ),
+            Item('controller', style='custom', show_label=False),
+            HGroup(spring, Item('reload_channels_button', show_label=False)),
+        )
 
         return v
 # ============= EOF =============================================

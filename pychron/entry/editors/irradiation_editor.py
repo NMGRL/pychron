@@ -35,11 +35,11 @@ from pychron.paths import paths
 
 class AddView(ModelView):
     def traits_view(self):
-        v = okcancel_view(VGroup(Item('name'),
-                                 BorderVGroup(UItem('chronology', style='custom'),
-                                              label='Chronology')),
-                          BorderHGroup(UItem('selected_reactor_name', editor=EnumEditor(name='reactor_names')),
-                                       label='Reactor'),
+        v = okcancel_view(VGroup(VGroup(Item('name'),
+                                        BorderVGroup(UItem('chronology', style='custom'),
+                                                     label='Chronology')),
+                                 BorderHGroup(UItem('selected_reactor_name', editor=EnumEditor(name='reactor_names')),
+                                              label='Reactor')),
                           title='Add Irradiation',
                           width=500)
         return v

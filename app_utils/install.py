@@ -118,10 +118,10 @@ def ask_config():
 
     def ask(cfg, key, msg):
         default = cfg[key]
-        v = input('{} [{}] >> '.format(msg, default))
-        if not v:
-            v = default
-        cfg[key] = v
+        vv = input('{} [{}] >> '.format(msg, default))
+        if not vv:
+            vv = default
+        cfg[key] = vv
 
     config = {'github_org': 'NMGRL',
               'github_user': 'nmgrluser',

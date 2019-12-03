@@ -31,7 +31,8 @@ from pychron.processing.analyses.preferred import Preferred
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
 from pychron.pychron_constants import MSEM, SD, SUBGROUPING_ATTRS, ERROR_TYPES, WEIGHTED_MEAN, \
-    DEFAULT_INTEGRATED, SUBGROUPINGS, ARITHMETIC_MEAN, PLATEAU_ELSE_WEIGHTED_MEAN, WEIGHTINGS, FLECK, NULL_STR, ISOCHRON
+    DEFAULT_INTEGRATED, SUBGROUPINGS, ARITHMETIC_MEAN, PLATEAU_ELSE_WEIGHTED_MEAN, WEIGHTINGS, FLECK, NULL_STR, \
+    ISOCHRON, EXCLUDE_TAGS
 
 
 def AGProperty(*depends):
@@ -63,6 +64,7 @@ class AnalysisGroup(IdeogramPlotable):
     j_err = AGProperty()
     j = AGProperty()
     total_n = AGProperty()
+    weighted_mean_f = AGProperty()
 
     integrated_age_weighting = Enum(WEIGHTINGS)
     include_j_error_in_integrated = Bool(False)
@@ -111,14 +113,18 @@ class AnalysisGroup(IdeogramPlotable):
     # age_scalar = Property
     # age_units = AGProperty()
 
+    # external errors
     include_j_error_in_mean = Bool(True)
     include_j_position_error = Bool(False)
+    include_decay_error_mean = Bool(False)
 
     # percent_39Ar = AGProperty()
     dirty = Event
 
     isochron_3640 = None
     isochron_regressor = None
+
+    exclude_non_plateau = Bool(False)
 
     def __init__(self, *args, **kw):
         super(AnalysisGroup, self).__init__(make_arar_constants=False, *args, **kw)
@@ -188,9 +194,10 @@ class AnalysisGroup(IdeogramPlotable):
         valid_mswd = validate_mswd(mswd, self.nanalyses)
         return mswd, valid_mswd, self.nanalyses, calculate_mswd_probability(mswd, self.nanalyses-1)
 
-    def set_j_error(self, individual, mean, dirty=False):
+    def set_external_error(self, individual, mean, decay, dirty=False):
         self.include_j_position_error = individual
         self.include_j_error_in_mean = mean
+        self.include_decay_error_mean = decay
 
         if dirty:
             self.dirty = True
@@ -207,17 +214,24 @@ class AnalysisGroup(IdeogramPlotable):
     def clean_analyses(self):
         return (ai for ai in self.analyses if not ai.is_omitted())
 
+    def do_omit_non_plateau(self):
+        self.calculate_plateau()
+        ans = [a for a in self.analyses if isinstance(a, ArArAge) and not a.is_omitted()]
+        for a in ans:
+            if not self.get_is_plateau_step(a):
+                a.temp_status = 'omit'
+
     def get_isochron_data(self, exclude_non_plateau=False):
         ans = [a for a in self.analyses if isinstance(a, ArArAge)]
 
-        if exclude_non_plateau and hasattr(self, 'get_is_plateau_step'):
+        if (exclude_non_plateau or self.exclude_non_plateau) and hasattr(self, 'get_is_plateau_step'):
             def test(ai):
                 a = ai.is_omitted()
                 b = not self.get_is_plateau_step(ai)
                 return a or b
         else:
             def test(ai):
-                return ai.is_omitted()
+                return ai.is_omitted(tags=EXCLUDE_TAGS)
 
         exclude = [i for i, x in enumerate(ans) if test(x)]
         if ans:
@@ -327,7 +341,7 @@ class AnalysisGroup(IdeogramPlotable):
         v, e = self._calculate_arithmetic_mean(self.age_attr)
         e = self._modify_error(v, e, self.age_error_kind)
         aa = ufloat(v, e)
-        return self._apply_j_err(aa)
+        return self._apply_external_err(aa)
 
     @cached_property
     def _get_weighted_age(self):
@@ -339,7 +353,19 @@ class AnalysisGroup(IdeogramPlotable):
         me = self._modify_error(v, e, self.age_error_kind)
         try:
             wa = ufloat(v, max(0, me))
-            return self._apply_j_err(wa)
+            return self._apply_external_err(wa)
+
+        except AttributeError:
+            return ufloat(0, 0)
+
+    @cached_property
+    def _get_weighted_mean_f(self):
+        v, e = self._calculate_weighted_mean('uF', self.age_error_kind)
+        me = self._modify_error(v, e, self.age_error_kind)
+        try:
+            wa = ufloat(v, max(0, me))
+            return wa
+            # return self._apply_j_err(wa)
 
         except AttributeError:
             return ufloat(0, 0)
@@ -363,19 +389,28 @@ class AnalysisGroup(IdeogramPlotable):
 
         return m
 
-    def _apply_j_err(self, wa, force=False):
+    def _apply_external_err(self, wa, force=False):
+        v, e = nominal_value(wa), std_dev(wa)
+        v = abs(v)
+        try:
+            pa = e / v
+        except ZeroDivisionError:
+            pa = 0
+
         if self.include_j_error_in_mean or force:
-            v, e = nominal_value(wa), std_dev(wa)
-            v = abs(v)
-            try:
-                pa = e / v
-            except ZeroDivisionError:
-                pa = 0
-
-            pj = self.j_err
-
-            ne = (pa ** 2 + pj ** 2) ** 0.5
+            ne = (pa ** 2 + self.j_err ** 2) ** 0.5
             wa = ufloat(v, ne * v)
+
+        if self.include_decay_error_mean or force:
+            k = self.arar_constants.lambda_k
+            de = 0
+            try:
+                de = std_dev(k) / nominal_value(k)
+            except ZeroDivisionError:
+                pass
+
+            ne = (pa**2 + de**2)**0.5
+            wa = ufloat(v, ne*v)
 
         return wa
 
@@ -732,7 +767,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
                         e = 0
 
         a = ufloat(v, max(0, e))
-        self._apply_j_err(a, force=self.include_j_error_in_mean or self.include_j_error_in_plateau)
+        self._apply_external_err(a, force=self.include_j_error_in_mean or self.include_j_error_in_plateau)
 
         return a
 

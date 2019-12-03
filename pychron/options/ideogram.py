@@ -90,6 +90,7 @@ class IdeogramOptions(AgeOptions):
     use_latest_overlay = Bool(False)
     show_results_table = Bool(False)
     show_ttest_table = Bool(False)
+    show_rvalues = Bool(False)
 
     group_options_klass = IdeogramGroupOptions
 

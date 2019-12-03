@@ -14,21 +14,23 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from traits.api import Str, List
-from traitsui.api import View, Item, UItem, VGroup
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-
+# ============= enthought library imports =======================
+from traits.api import Str, List, Bool
+from traitsui.api import View, Item, UItem, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.editors import CheckListEditor
 
+from pychron.core.pychron_traits import BorderVGroup
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
 class PipelinePreferences(BasePreferencesHelper):
     preferences_path = 'pychron.pipeline'
     skip_meaning = Str
+    use_arar_calculations = Bool
+
     _skip_meaning = List
     _initialized = False
 
@@ -48,15 +50,16 @@ class PipelinePreferencesPane(PreferencesPane):
     category = 'Pipeline'
 
     def traits_view(self):
-        v = View(VGroup(UItem('_skip_meaning',
-                              tooltip='Select how the "Skip" tag is used. '
-                                      'If X is selected all analyses tagged as "Skip" are excluded when making X',
-                              style='custom',
-                              editor=CheckListEditor(cols=5,
-                                                     values=['Human Table', 'Machine Table', 'Ideogram',
-                                                             'Spectrum', 'Series', 'Isochron'])),
-                        label='Skip Tag Associations',
-                        show_border=True))
+        skipgrp = BorderVGroup(UItem('_skip_meaning',
+                                     tooltip='Select how the "Skip" tag is used. '
+                                             'If X is selected all analyses tagged as "Skip" are excluded when making X',
+                                     style='custom',
+                                     editor=CheckListEditor(cols=5,
+                                                            values=['Human Table', 'Machine Table', 'Ideogram',
+                                                                    'Spectrum', 'Series', 'Isochron'])),
+                               label='Skip Tag Associations')
+        calcgrp = BorderVGroup(Item('use_arar_calculations', label='ArAr Calculations Node'))
+        v = View(VGroup(skipgrp, calcgrp))
         return v
 
 # ============= EOF =============================================

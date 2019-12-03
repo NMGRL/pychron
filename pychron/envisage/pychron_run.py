@@ -44,6 +44,7 @@ PACKAGE_DICT = dict(
     DVCPlugin='pychron.dvc.tasks.dvc_plugin',
     GitLabPlugin='pychron.git.tasks.gitlab_plugin',
     GitHubPlugin='pychron.git.tasks.github_plugin',
+    LocalGitPlugin='pychron.git.tasks.local_plugin',
     PipelinePlugin='pychron.pipeline.tasks.plugin',
     SparrowPlugin='pychron.sparrow.tasks.plugin',
 
@@ -78,6 +79,7 @@ PACKAGE_DICT = dict(
     LDEOFurnacePlugin='pychron.furnace.tasks.ldeo.furnace_plugin',
     LDEOFurnaceControlPlugin='pychron.furnace.tasks.ldeo.furnace_control_plugin',
     ThermoFurnacePlugin='pychron.furnace.tasks.thermo.furnace_plugin',
+    AblationCO2Plugin='pychron.lasers.tasks.plugins.ablation_co2',
 
     # spectrometers
     ArgusSpectrometerPlugin='pychron.spectrometer.tasks.thermo.argus',
@@ -188,7 +190,7 @@ def get_user_plugins():
     core_added = False
     for p in ps:
         # if laser plugin add CoreLaserPlugin
-        if p in ('FusionsCO2', 'FusionsDiode', 'ChromiumCO2'):
+        if p in ('FusionsCO2', 'FusionsDiode', 'ChromiumCO2', 'AblationCO2'):
 
             plugint = ip.get_plugin(p, category='hardware')
             mode = ip.get_parameter(plugint, 'mode')

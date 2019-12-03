@@ -17,14 +17,12 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from __future__ import absolute_import
-
-from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
+from pychron.envisage.tasks.base_plugin import BasePlugin
 from pychron.git.hosts import IGitHost
 from pychron.pychron_constants import STARTUP_MESSAGE_POSITION
 
 
-class BaseGitPlugin(BaseTaskPlugin):
+class BaseGitPlugin(BasePlugin):
     service_klass = None
 
     def start(self):

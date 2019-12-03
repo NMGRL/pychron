@@ -28,7 +28,7 @@ from traits.api import Instance, Str, Set, List, provides, Bool, Int
 from uncertainties import ufloat, std_dev, nominal_value
 
 from pychron import json
-from pychron.core.helpers.filetools import remove_extension, list_subdirectories, list_directory
+from pychron.core.helpers.filetools import remove_extension, list_subdirectories, list_directory, add_extension
 from pychron.core.helpers.iterfuncs import groupby_key, groupby_repo
 from pychron.core.i_datastore import IDatastore
 from pychron.core.progress import progress_loader, progress_iterator, open_progress
@@ -43,6 +43,7 @@ from pychron.dvc.tasks.dvc_preferences import DVCConnectionItem
 from pychron.dvc.util import Tag, DVCInterpretedAge
 from pychron.envisage.browser.record_views import InterpretedAgeRecordView
 from pychron.git.hosts import IGitHost
+from pychron.git.hosts.local import LocalGitHostService
 from pychron.git_archive.repo_manager import GitRepoManager, format_date, get_repository_branch
 from pychron.git_archive.views import StatusView
 from pychron.globals import globalv
@@ -50,6 +51,8 @@ from pychron.loggable import Loggable
 from pychron.paths import paths, r_mkdir
 from pychron.processing.interpreted_age import InterpretedAge
 from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS, STARTUP_MESSAGE_POSITION
+
+HOST_WARNING_MESSAGE = 'GitLab or GitHub or LocalGit plugin is required'
 
 
 @provides(IDatastore)
@@ -634,16 +637,31 @@ class DVC(Loggable):
         self._save_j(irradiation, level, pos, identifier, j, e, mj, me, position_jerr, decay_constants, analyses,
                      options, add)
 
-    def save_csv_dataset(self, name, repository, lines):
+    def save_csv_dataset(self, name, repository, lines, local_path=False):
 
-        repo = self.get_repository(repository)
-        root = os.path.join(repo.path, 'csv')
-        if not os.path.isdir(root):
-            os.mkdir(root)
+        if local_path:
+            p = add_extension(local_path, '.csv')
+        else:
+            repo = self.get_repository(repository)
+            root = os.path.join(repo.path, 'csv')
+            p = os.path.join(root, add_extension(name, '.csv'))
 
-        p = os.path.join(root, '{}.csv'.format(name))
+            if repo.smart_pull(quiet=False):
+                if not os.path.isdir(root):
+                    os.mkdir(root)
+            else:
+                self.warning_dialog('Failed to update repository. Not saving CSV file "{}"'.format(p))
+                return
+
+        self.debug('writing dataset to {}'.format(p))
+        exists = os.path.isfile(p)
         with open(p, 'w') as wfile:
             wfile.writelines(lines)
+
+        if not local_path:
+            if repo.add_paths(p):
+                repo.commit('<CSV> {} dataset "{}"'.format('Modified' if exists else 'Added', name))
+
         return p
 
     def remove_irradiation_position(self, irradiation, level, hole):
@@ -921,7 +939,7 @@ class DVC(Loggable):
                 ri = gi.get_repos(self.organization)
                 rs.extend(ri)
         else:
-            self.warning_dialog('GitLab or GitHub plugin is required')
+            self.warning_dialog(HOST_WARNING_MESSAGE)
         return rs
 
     def remote_repository_names(self):
@@ -933,7 +951,7 @@ class DVC(Loggable):
                 ri = gi.get_repository_names(self.organization)
                 rs.extend(ri)
         else:
-            self.warning_dialog('GitLab or GitHub plugin is required')
+            self.warning_dialog(HOST_WARNING_MESSAGE)
         return rs
 
     def check_githost_connection(self):
@@ -962,18 +980,27 @@ class DVC(Loggable):
             return True
         else:
             self.debug('getting repository from remote')
-            names = self.remote_repository_names()
+
             service = self.application.get_service(IGitHost)
-            if name in names:
-                service.clone_from(name, root, self.organization)
+            if not service:
                 return True
             else:
-                self.warning_dialog('name={} not in available repos '
-                                    'from service={}, organization={}'.format(name,
-                                                                              service.remote_url,
-                                                                              self.organization))
-                for ni in names:
-                    self.debug('available repo== {}'.format(ni))
+                names = self.remote_repository_names()
+                if name in names:
+                    service.clone_from(name, root, self.organization)
+                    return True
+                else:
+                    if isinstance(service, LocalGitHostService):
+                        service.create_empty_repo(name)
+                        return True
+                    else:
+
+                        self.warning_dialog('name={} not in available repos '
+                                            'from service={}, organization={}'.format(name,
+                                                                                      service.remote_url,
+                                                                                      self.organization))
+                        for ni in names:
+                            self.debug('available repo== {}'.format(ni))
 
     def rollback_repository(self, expid):
         repo = self._get_repository(expid)
@@ -1254,28 +1281,35 @@ class DVC(Loggable):
                 if inform:
                     self.warning_dialog('{} already exists.'.format(root))
             else:
+                self.db.add_repository(identifier, principal_investigator)
+                ret = True
                 gs = self.application.get_services(IGitHost)
-                ret = False
-                for i, gi in enumerate(gs):
-                    self.info('Creating repository at {}. {}'.format(gi.name, identifier))
+                if gs:
+                    ret = False
+                    for i, gi in enumerate(gs):
+                        self.info('Creating repository at {}. {}'.format(gi.name, identifier))
 
-                    if gi.create_repo(identifier, organization=self.organization):
-                        ret = True
-                        if self.default_team:
-                            gi.set_team(self.default_team, self.organization, identifier,
-                                        permission='push')
+                        if gi.create_repo(identifier, organization=self.organization):
+                            ret = True
+                            if isinstance(gi, LocalGitHostService):
+                                if i == 0:
+                                    self.db.add_repository(identifier, principal_investigator)
+                            else:
+                                if self.default_team:
+                                    gi.set_team(self.default_team, self.organization, identifier,
+                                                permission='push')
 
-                        url = gi.make_url(identifier, self.organization)
-                        if i == 0:
-                            try:
-                                repo = Repo.clone_from(url, root)
-                            except BaseException as e:
-                                self.debug('failed cloning repo. {}'.format(e))
-                                ret = False
+                                url = gi.make_url(identifier, self.organization)
+                                if i == 0:
+                                    try:
+                                        repo = Repo.clone_from(url, root)
+                                    except BaseException as e:
+                                        self.debug('failed cloning repo. {}'.format(e))
+                                        ret = False
 
-                            self.db.add_repository(identifier, principal_investigator)
-                        else:
-                            repo.create_remote(gi.default_remote_name or 'origin', url)
+                                    self.db.add_repository(identifier, principal_investigator)
+                                else:
+                                    repo.create_remote(gi.default_remote_name or 'origin', url)
 
                 return ret
 

@@ -1,6 +1,27 @@
 Measurement Scripts
 ---------------------------
 
+
+
+.. note:: Please see :ref:`script_examples` for more a comprehensive set of examples
+
+
+Functions
+~~~~~~~~~~~~~~~
+
+.. autoclass:: pychron.pyscripts.measurement_pyscript.MeasurementPyScript
+   :members:
+
+
+
+Variables
+~~~~~~~~~~~~~~~~
+truncated
+
+eqtime
+
+use_cdd_warming
+
 Multicollect
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ::

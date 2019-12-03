@@ -15,6 +15,7 @@
 # ===============================================================================
 
 from datetime import timedelta, datetime
+from string import digits, ascii_letters
 
 from sqlalchemy import not_, func, distinct, or_, and_
 from sqlalchemy.orm.exc import NoResultFound
@@ -100,6 +101,13 @@ def principal_investigator_filter(q, principal_investigator):
             ln, fi = principal_investigator.split(',')
             q = q.filter(PrincipalInvestigatorTbl.last_name == ln.strip())
             q = q.filter(PrincipalInvestigatorTbl.first_initial == fi.strip())
+        except ValueError:
+            pass
+    elif ' ' in principal_investigator:
+        try:
+            fn, ln = principal_investigator.split(' ')
+            q = q.filter(PrincipalInvestigatorTbl.last_name == ln.strip())
+            q = q.filter(PrincipalInvestigatorTbl.first_initial == fn.strip()[0])
         except ValueError:
             pass
     else:
@@ -601,9 +609,18 @@ class DVCDatabase(DatabaseAdapter):
             if piname is None:
                 if ',' in name:
                     last_name, fi = name.split(',')
-                    piname = PrincipalInvestigatorTbl(last_name=last_name.strip(), first_initial=fi.strip(), **kw)
+                    kw['last_name'] = last_name.strip()
+                    kw['first_initial'] = fi.strip()
+
+                elif ' ' in name:
+                    fi, last_name = name.split(' ')
+                    kw['last_name'] = last_name.strip()
+                    kw['first_initial'] = fi.strip()[0]
                 else:
-                    piname = PrincipalInvestigatorTbl(last_name=name, **kw)
+                    kw['last_name'] = name
+
+                piname = PrincipalInvestigatorTbl(**kw)
+
                 piname = self._add_item(piname)
                 self.debug('added principal investigator {}'.format(name))
             return piname
@@ -659,10 +676,12 @@ class DVCDatabase(DatabaseAdapter):
             if repo:
                 return repo
 
-            principal_investigator = self.get_principal_investigator(principal_investigator)
-            if not principal_investigator:
+            pp = self.get_principal_investigator(principal_investigator)
+            if not pp:
                 principal_investigator = self.add_principal_investigator(principal_investigator)
                 self.flush()
+            else:
+                principal_investigator = pp
 
             a = RepositoryTbl(name=name, **kw)
             a.principal_investigator = principal_investigator
@@ -1590,7 +1609,7 @@ class DVCDatabase(DatabaseAdapter):
                 q = q.having(count(AnalysisTbl.id) > 0)
 
             if has_filter:
-                res = self._query_all(q, verbose_query=False)
+                res = self._query_all(q, verbose_query=True)
                 if res:
                     ids = [r[0] for r in res]
                     q = sess.query(IrradiationPositionTbl)
@@ -1914,6 +1933,42 @@ class DVCDatabase(DatabaseAdapter):
             gs = self._query_all(q)
             return [g[0] for g in gs if g[0]]
 
+    def get_fuzzy_samples(self, name):
+        with self.session_ctx() as sess:
+            q = sess.query(SampleTbl)
+
+            oname = name
+            likes = ['{}%'.format(oname)]
+
+            regexp = ''
+            was_letter = False
+            for c in oname:
+                if c in digits:
+                    if was_letter:
+                        c = '[-_ ]*{}'.format(c)
+                        was_letter = False
+                elif c in ascii_letters:
+                    was_letter = True
+                else:
+                    was_letter = False
+
+                regexp += c
+
+            # %FC-2%
+            for r in '_- ':
+                name = name.replace(r, '%')
+
+            # FC%2
+            likes.append(name)
+
+            # %FC%2%
+            likes.append('{}%'.format(name))
+
+            comps = [func.lower(SampleTbl.name.like(like)) for like in likes]
+            comps.append(func.lower(SampleTbl.name.op('regexp')(regexp)))
+            q = q.filter(or_(*comps))
+            return self._query_all(q, verbose_query=True)
+
     def get_samples_by_name(self, name):
         with self.session_ctx() as sess:
             q = sess.query(SampleTbl)
@@ -1990,7 +2045,16 @@ class DVCDatabase(DatabaseAdapter):
                     q = principal_investigator_filter(q, p)
 
             if name_like:
-                q = q.filter(SampleTbl.name.like('{}%'.format(name_like)))
+                if not isinstance(name_like, (list, tuple)):
+                    name_like = (name_like,)
+
+                clauses = []
+                for ni in name_like:
+                    if '%' not in ni:
+                        like = '{}%'.format(ni)
+                    clauses.append(SampleTbl.name.like(like))
+                q = q.filter(or_(*clauses))
+
             return self._query_all(q, **kw)
 
     def get_irradiations_by_repositories(self, repositories):

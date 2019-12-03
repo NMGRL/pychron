@@ -15,21 +15,18 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-
+# ============= standard library imports ========================
 from threading import current_thread
 
-from traits.api import HasTraits, Any, String
+# ============= enthought library imports =======================
+from traits.api import Any, String
 
-# ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.base_fs import BaseFS
 from pychron.core.confirmation import confirmation_dialog
 from pychron.core.helpers.color_generators import colorname_generator
 from pychron.core.helpers.logger_setup import new_logger
 from pychron.globals import globalv
-
-# from pychron.core.ui.dialogs import myConfirmationDialog, myMessageDialog
-# from pychron.core.ui.gui import invoke_in_main_thread
 
 color_name_gen = colorname_generator()
 NAME_WIDTH = 40
@@ -57,7 +54,7 @@ class unique(object):
         return wrapped_f
 
 
-class Loggable(HasTraits):
+class Loggable(BaseFS):
     """
     """
     application = Any

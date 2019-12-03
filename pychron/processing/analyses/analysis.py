@@ -38,7 +38,7 @@ from pychron.graph.stacked_regression_graph import ColumnStackedRegressionGraph,
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.arar_constants import ArArConstants
 from pychron.processing.isotope import Isotope
-from pychron.pychron_constants import PLUSMINUS, NULL_STR, AR_AR
+from pychron.pychron_constants import PLUSMINUS, NULL_STR, AR_AR, EXCLUDE_TAGS
 
 Fit = namedtuple('Fit', 'fit '
                         'filter_outliers filter_outlier_iterations filter_outlier_std_devs '
@@ -273,7 +273,7 @@ class IdeogramPlotable(HasTraits):
 
     def is_omitted_by_tag(self, tags=None):
         if tags is None:
-            tags = ('omit', 'invalid', 'outlier', 'skip')
+            tags = EXCLUDE_TAGS
         return self.tag in tags
 
     def set_temp_status(self, tag):
@@ -346,7 +346,7 @@ class IdeogramPlotable(HasTraits):
 
     @property
     def temp_selected(self):
-        return self.temp_status in ('omit', 'outlier', 'invalid')
+        return self.temp_status in EXCLUDE_TAGS
 
     def _value_string(self, t):
         raise NotImplementedError

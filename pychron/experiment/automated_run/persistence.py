@@ -122,7 +122,7 @@ class ExcelPersister(BasePersister):
         rs = self.per_spec.run_spec
         for i, (tag, attr) in enumerate((('User', 'username'),
                                          ('AnalysisType', 'analysis_type'),
-                                         ('UUID', 'uud'))):
+                                         ('UUID', 'uuid'))):
             sh.write(i, 0, tag)
             sh.write(i, 1, getattr(rs, attr))
 

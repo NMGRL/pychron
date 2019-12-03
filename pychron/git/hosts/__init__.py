@@ -90,13 +90,28 @@ def authorization(username, password, oauth_token):
 
 
 @provides(IGitHost)
-class GitHostService(Loggable):
+class BaseGitHostService(Loggable):
+    default_remote_name = Str('origin')
+    remote_url = Str
+
+    def push(self, *args, **kw):
+        pass
+
+    def remote_exists(self, organization, name):
+        return True
+
+    def manual_remote_exists(self, organization, name):
+        return True
+
+    def bind_preferences(self):
+        pass
+
+
+class GitHostService(BaseGitHostService):
     username = Str
     password = Password
     preference_path = ''
     oauth_token = Str
-    default_remote_name = Str
-    remote_url = Str
     _cached_repo_names = Dict
     _clear_cached_repo_names = False
     _session = None
@@ -131,7 +146,7 @@ class GitHostService(Loggable):
         os.environ['GIT_ASKPASS_PASSWORD'] = p
 
     def up_to_date(self, organization, name, sha, branch='master'):
-        pass
+        return True, None
 
     def remote_exists(self, organization, name):
         try:

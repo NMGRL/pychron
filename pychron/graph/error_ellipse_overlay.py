@@ -71,10 +71,14 @@ class ErrorEllipseOverlay(AbstractOverlay):
         """
         gc.clip_to_rect(component.x, component.y, component.width, component.height)
 
-        x = component.index.get_data()
-        y = component.value.get_data()
-        xer = component.xerror.get_data()
-        yer = component.yerror.get_data()
+        # x = component.index.get_data()
+        # y = component.value.get_data()
+        # xer = component.xerror.get_data()
+        # yer = component.yerror.get_data()
+        x = self.reg.xs
+        y = self.reg.ys
+        xer = self.reg.xserr
+        yer = self.reg.yserr
 
         sel = component.index.metadata['selections']
 

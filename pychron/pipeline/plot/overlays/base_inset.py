@@ -15,22 +15,26 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from chaco.array_data_source import ArrayDataSource
 from chaco.axis import PlotAxis
 from chaco.data_range_1d import DataRange1D
 from chaco.linear_mapper import LinearMapper
 from traits.api import HasTraits, Float
 from traits.trait_types import Str
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.graph.ml_label import MPlotAxis
 
 
 class BaseInset(HasTraits):
     location = Str
     visible_axes = True
-    # plots = List
     yoffset = Float
+
+    label_font = Str('Helvetica 8')
+    xtitle = Str
+    ytitle = Str
 
     def __init__(self, xs, ys, index_bounds=None, value_bounds=None, *args, **kw):
         index = ArrayDataSource(xs)
@@ -60,19 +64,30 @@ class BaseInset(HasTraits):
 
         super(BaseInset, self).__init__(*args, **kw)
 
-        tick_label_font = 'Helvetica 8'
-        left = PlotAxis(orientation='left',
-                        mapper=value_mapper,
-                        bgcolor=self.bgcolor,
-                        tick_label_font=tick_label_font)
+        label_font = self.label_font
 
-        bottom = PlotAxis(orientation='bottom',
-                          mapper=index_mapper,
-                          bgcolor=self.bgcolor,
-                          tick_label_font=tick_label_font)
+        for orien, title, mapper in (('left', self.ytitle, value_mapper),
+                                     ('bottom', self.xtitle, index_mapper)):
+            klass = PlotAxis
+            if 'sub' in title or 'sup' in title:
+                klass = MPlotAxis
 
-        self.underlays.append(left)
-        self.underlays.append(bottom)
+            axis = klass(orientation=orien,
+                         title=title,
+                         mapper=mapper,
+                         bgcolor=self.bgcolor,
+                         tick_label_font=label_font,
+                         title_font=label_font)
+            self.underlays.append(axis)
+
+        # bottom = PlotAxis(orientation='bottom',
+        #                   mapper=index_mapper,
+        #                   bgcolor=self.bgcolor,
+        #                   title_font=label_font,
+        #                   tick_label_font=label_font)
+        #
+        # self.underlays.append(left)
+        # self.underlays.append(bottom)
 
     def _compute_location(self, component):
         x1, y1 = component.x, component.y

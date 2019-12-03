@@ -70,6 +70,9 @@ class ExperimentEditorHandler(TabularEditorHandler):
     def randomize_unknowns(self, info, obj):
         obj.randomize_unknowns()
 
+    def order_from_file(self, info, obj):
+        obj.order_from_file()
+
     def show_summary(self, info, obj):
         obj.show_summary()
 

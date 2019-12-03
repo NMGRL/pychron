@@ -24,7 +24,7 @@ from pychron.options.group.inverse_isochron_group_options import InverseIsochron
 from pychron.options.spectrum import PlateauOptions
 from pychron.options.views.isochron_views import INVERSE_ISOCHRON_VIEWS, ISOCHRON_VIEWS
 from pychron.pychron_constants import FIT_ERROR_TYPES, ELLIPSE_KINDS, FONTS, SIZES, MAIN, APPEARANCE, GROUPS, \
-    CALCULATIONS
+    CALCULATIONS, INSET
 
 
 class IsochronOptions(PlateauOptions):
@@ -58,7 +58,13 @@ class InverseIsochronOptions(IsochronOptions):
     nominal_intercept_label = Str('Atm', enter_set=True, auto_set=False)
     nominal_intercept_value = Float(295.5)
 
+    # inset
     inset_marker_size = Float(1.0)
+    inset_show_error_ellipse = Bool(True)
+    inset_fill_ellipses = Bool(False)
+    inset_ellipse_kind = Enum(ELLIPSE_KINDS)
+    inset_link_status = Bool(True)
+
     regressor_kind = Enum('Reed', 'NewYork')
     group_options_klass = InverseIsochronGroupOptions
 
@@ -86,7 +92,7 @@ class InverseIsochronOptions(IsochronOptions):
     exclude_non_plateau = Bool(False)
 
     def initialize(self):
-        self.subview_names = [MAIN, CALCULATIONS, APPEARANCE, GROUPS]
+        self.subview_names = [MAIN, CALCULATIONS, APPEARANCE, INSET, GROUPS]
 
     def _get_results_font(self):
         return '{} {}'.format(self.results_fontname, self.results_fontsize)

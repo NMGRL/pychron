@@ -22,7 +22,8 @@ from traitsui.api import View, Item, HGroup, VGroup, Group, UItem, RangeEditor
 from pychron.core.pychron_traits import BorderHGroup, BorderVGroup
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.options import SubOptions, AppearanceSubOptions, GroupSubOptions, TitleSubOptions
-from pychron.pychron_constants import FLECK_PLATEAU_DEFINITION, MAHON_PLATEAU_DEFINITION
+from pychron.pychron_constants import FLECK_PLATEAU_DEFINITION, MAHON_PLATEAU_DEFINITION, GROUPS, APPEARANCE, MAIN, \
+    INSET, CALCULATIONS
 
 
 class IsochronMainOptions(SubOptions):
@@ -37,8 +38,12 @@ class IsochronAppearance(AppearanceSubOptions):
 
 class InverseIsochronCalculationOptions(SubOptions):
     def traits_view(self):
-        plat_grp = BorderHGroup(VGroup(Item('omit_non_plateau', label='Omit Non Plateau Steps'),
-                                       Item('exclude_non_plateau', label='Exclude Non Plateau Steps')),
+        plat_grp = BorderHGroup(VGroup(Item('omit_non_plateau', label='Omit Non Plateau Steps',
+                                            tooltip='Displays the non plateau steps but they are not used in the '
+                                                    'calculations'),
+                                       Item('exclude_non_plateau',
+                                            label='Exclude Non Plateau Steps',
+                                            tooltip='Only plot plateau steps')),
                                 HGroup(Item('plateau_method',
                                             tooltip='Fleck 1977={}\n'
                                                     'Mahon 1996={}'.format(FLECK_PLATEAU_DEFINITION,
@@ -88,7 +93,7 @@ class InverseIsochronMainOptions(TitleSubOptions):
                                    VGroup(agrp, bgrp, enabled_when='show_results_info'),
                                    label='Results')
 
-        error_display_grp = BorderHGroup(Item('fill_ellipses', label='fill'),
+        error_display_grp = BorderHGroup(Item('fill_ellipses', label='Fill'),
                                          Item('ellipse_kind', label='Kind'),
                                          Item('include_error_envelope'),
                                          label='Error Display')
@@ -114,14 +119,39 @@ class InverseIsochronMainOptions(TitleSubOptions):
                                             enabled_when='show_nominal_intercept'),
                                        Item('nominal_intercept_value', label='Value',
                                             enabled_when='show_nominal_intercept')),
-                                label='Nominal Intercept'),
-                   BorderVGroup(Item('display_inset'),
-                                Item('inset_location'),
-                                HGroup(Item('inset_marker_size', label='Marker Size')),
-                                HGroup(Item('inset_width', label='Width'),
-                                       Item('inset_height', label='Height')),
-                                label='Inset'))
+                                label='Nominal Intercept'))
         return self._make_view(g2)
+
+
+class InverseIsochronInset(SubOptions):
+    def traits_view(self):
+
+        xbounds = BorderHGroup(Item('inset_xmin', label='Min.'),
+                               Item('inset_xmax', label='Max.'),
+                               label='X Limits')
+        ybounds = BorderHGroup(Item('inset_ymin', label='Min.'),
+                               Item('inset_ymax', label='Max.'),
+                               label='Y Limits')
+        e = BorderHGroup(Item('inset_show_error_ellipse', label='Show'),
+                         Item('inset_fill_ellipses', label='Fill'),
+                         Item('inset_ellipse_kind', label='Kind'),
+                         label='Error Ellipse')
+
+        g = VGroup(Item('display_inset'),
+                   Item('inset_location'),
+                   HGroup(Item('inset_marker_size', label='Marker Size')),
+                   HGroup(Item('inset_show_axes_titles', label='Show Axes Titles')),
+                   HGroup(Item('inset_width', label='Width'),
+                          Item('inset_height', label='Height')),
+                   HGroup(Item('inset_label_fontname', label='Label Font'),
+                          UItem('inset_label_fontsize')),
+                   HGroup(Item('inset_link_status', label='Link Omit Status',
+                               tooltip='When enabled, link omit status between main and inset plots')),
+                   xbounds,
+                   ybounds,
+                   e)
+
+        return self._make_view(g)
 
 
 class InverseIsochronAppearance(AppearanceSubOptions):
@@ -131,11 +161,13 @@ class InverseIsochronAppearance(AppearanceSubOptions):
 # ===============================================================
 # ===============================================================
 
-ISOCHRON_VIEWS = {'main': IsochronMainOptions,
-                  'appearance': IsochronAppearance}
-INVERSE_ISOCHRON_VIEWS = {'main': InverseIsochronMainOptions,
-                          'calculations': InverseIsochronCalculationOptions,
-                          'appearance': InverseIsochronAppearance,
-                          'groups': GroupSubOptions}
+ISOCHRON_VIEWS = {MAIN.lower(): IsochronMainOptions,
+                  APPEARANCE.lower(): IsochronAppearance}
+
+INVERSE_ISOCHRON_VIEWS = {MAIN.lower(): InverseIsochronMainOptions,
+                          CALCULATIONS.lower(): InverseIsochronCalculationOptions,
+                          APPEARANCE.lower(): InverseIsochronAppearance,
+                          INSET.lower(): InverseIsochronInset,
+                          GROUPS.lower(): GroupSubOptions}
 
 # ============= EOF =============================================

@@ -288,6 +288,22 @@ class SampleEntry(DVCAble):
         self._backup()
         self.dvc.close_session()
 
+    def import_sample_from_file(self):
+
+        from pyface.file_dialog import FileDialog
+        from pyface.constant import OK
+
+        dlg = FileDialog(action='open', default_directory=paths.root_dir,
+                         wildcard=FileDialog.create_wildcard('Excel', ('*.xls', '*.xlsx')))
+        if dlg.open() == OK:
+            path = dlg.path
+
+            if path:
+                from pychron.entry.sample_loader import XLSSampleLoader
+                sample_loader = XLSSampleLoader(dvc=self.dvc)
+                sample_loader.load(path)
+                sample_loader.do_import()
+
     def clear(self):
         if self.selected_principal_investigators:
             for p in self.selected_principal_investigators:
@@ -454,8 +470,10 @@ class SampleEntry(DVCAble):
                     continue
                 if (s.project and not s.project.name) or not s.project:
                     self.warning_dialog('A project name is required. Skipping {}'.format(s.name))
+                    continue
                 if (s.material and not s.material.name) or not s.material:
                     self.warning_dialog('A material is required. Skipping {}'.format(s.name))
+                    continue
 
                 if dvc.add_sample(s.name, s.project.name, s.project.principal_investigator.name,
                                   s.material.name,
@@ -477,6 +495,15 @@ class SampleEntry(DVCAble):
 
         self.refresh_table = True
         return True
+
+    def _check_for_similar_sample(self, s):
+        dvc = self.dvc
+        sims = []
+        sams = dvc.get_fuzzy_samples(s.name)
+        if sams:
+            sims = ['{}({})'.format(si.name, si.project.name) for si in sams]
+
+        return ','.join(sims)
 
     def _principal_investigator_factory(self):
         p = PISpec(name=self.principal_investigator,
@@ -600,10 +627,25 @@ class SampleEntry(DVCAble):
 
                 kw[specattr] = getattr(self, attr)
 
-            self._samples.append(SampleSpec(**kw))
+            add = True
+            spec = SampleSpec(**kw)
+            sim = self._check_for_similar_sample(spec)
+            if sim:
+                add = False
+                # a similar sample exists
+                msg = '''A similar sample already exists.
+                                Yes= Add anyways
+                                No = Skip sample  
+                                Current Sample: {}
+                                Existing Sample: {}'''.format(spec.name, sim)
+                if self.confirmation_dialog(msg):
+                    add = True
+
+            if add:
+                self._samples.append(spec)
+                self._add_sample_enabled = False
 
             self._backup()
-            self._add_sample_enabled = False
 
     def _add_project_button_fired(self):
         if self.project:

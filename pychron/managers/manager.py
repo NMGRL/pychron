@@ -23,7 +23,6 @@ import os
 import time
 from threading import Thread
 
-from pyface.api import FileDialog, OK, DirectoryDialog
 from traits.api import Str, Float, Any, Button, Int, List, Bool, Property
 from traitsui.api import Item, HGroup, VGroup, \
     ButtonEditor, spring
@@ -126,7 +125,7 @@ class Manager(Viewable, ConfigLoadable):
         """
         pass
 
-    def opened(self, ui):
+    def ui_opened(self, ui):
         def _loop():
             start = time.time()
             self.info('Window set to close after {} min'.format(self.close_after_minutes))
@@ -179,22 +178,6 @@ class Manager(Viewable, ConfigLoadable):
                 if man is not None:
                     if hasattr(man, 'kill'):
                         man.kill()
-
-    def open_file_dialog(self, **kw):
-        """
-        """
-        return self._file_dialog('open', **kw)
-
-    def save_file_dialog(self, **kw):
-        """
-        """
-        return self._file_dialog('save as', **kw)
-
-    def open_directory_dialog(self, **kw):
-        return self._directory_dialog(False, **kw)
-
-    def save_directory_dialog(self, **kw):
-        return self._directory_dialog(True)
 
     def get_error(self):
         if self.error_code:
@@ -375,38 +358,26 @@ class Manager(Viewable, ConfigLoadable):
 
     def _create_manager(self, klass, manager, params,
                         port=None, host=None, remote=False):
-        from pychron.managers import manager_package_dict
-
-        if remote:
-            klass = 'Remote{}'.format(klass)
-            params['rpc_port'] = port
-            params['rpc_host'] = host
-
-        try:
-            package = manager_package_dict[klass]
-            class_factory = self.get_manager_factory(package, klass)
-            if class_factory:
-                m = class_factory(**params)
-
-                self.add_trait(manager, m)
-                return m
-
-        except KeyError as e:
-            print('create manager', e)
-            pass
-
-    def _directory_dialog(self, new_directory, **kw):
-        dlg = DirectoryDialog(new_directory=new_directory, **kw)
-        if dlg.open() == OK:
-            return dlg.path
-
-    def _file_dialog(self, action, **kw):
-        """
-        """
-        #         print 'file_dialog', kw
-        dlg = FileDialog(action=action, **kw)
-        if dlg.open() == OK:
-            return dlg.path
+        raise NotImplementedError
+        # from pychron.managers import manager_package_dict
+        #
+        # if remote:
+        #     klass = 'Remote{}'.format(klass)
+        #     params['rpc_port'] = port
+        #     params['rpc_host'] = host
+        #
+        # try:
+        #     package = manager_package_dict[klass]
+        #     class_factory = self.get_manager_factory(package, klass)
+        #     if class_factory:
+        #         m = class_factory(**params)
+        #
+        #         self.add_trait(manager, m)
+        #         return m
+        #
+        # except KeyError as e:
+        #     print('create manager', e)
+        #     pass
 
     def _get_simulation(self):
         return False
