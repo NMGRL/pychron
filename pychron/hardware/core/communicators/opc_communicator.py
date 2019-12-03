@@ -20,6 +20,7 @@ from pychron.hardware.core.communicators.communicator import Communicator
 
 try:
     import OpenOPC
+    from Pyro4.errors import CommunicationError
 except ImportError:
     print('OPC required')
 
@@ -40,16 +41,26 @@ class OpcCommunicator(Communicator):
 
     def open(self, *args, **kw):
         self.debug('opening OPC communicator')
-
-        self.handle = OpenOPC.open_client(self.address)
-
+        
+        try:
+            self.handle = OpenOPC.open_client(self.address)
+        except CommunicationError as e:
+            self.debug('Failed connecting to client at {}. error={}'.format(self.address, e))
+            return
         if self.handle is not None:
-            self.handle.connect(self.server_name)
+            try:
+                self.handle.connect(self.server_name)
+            except BaseException:
+                servers = self.handle.servers()
+                if servers:
+                    servers = ','.join(servers)
+                self.warning('Invalid serve name="{}". Available={}'.format(self.server_name, servers))
             self.simulation = False
             return True
 
     def load(self, config, path, **kw):
         self.set_attribute(config, 'server_name', 'Communications', 'server_name')
+        self.set_attribute(config, 'address', 'Communications', 'address')
         # self.set_attribute(config, 'manufacture_id', 'Communications', 'manufacture_id')
         # self.set_attribute(config, 'model_code', 'Communications', 'model_code')
         # self.set_attribute(config, 'serial_number', 'Communications', 'serial_number')
