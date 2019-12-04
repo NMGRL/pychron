@@ -27,11 +27,16 @@ class Results(BaseMatrixResult):
     def _calculate_values(self, ag, others):
         vs = ['']
         fstd = ag.weighted_mean_f
+
         for other in others:
             if other == ag:
                 pv = ''
             else:
-                pv = other.weighted_mean_f / fstd
+                try:
+                    pv = other.weighted_mean_f / fstd
+                except ZeroDivisionError:
+                    pv = ''
+
             vs.append(pv)
 
         return vs
