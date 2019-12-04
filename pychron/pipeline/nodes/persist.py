@@ -18,7 +18,7 @@
 from traits.api import Str, Instance
 from traitsui.api import Item
 from traitsui.editors import DirectoryEditor
-from uncertainties import ufloat
+from uncertainties import ufloat, std_dev, nominal_value
 
 from pychron.core.confirmation import confirmation_dialog
 from pychron.core.helpers.filetools import unique_path2
@@ -237,7 +237,7 @@ class FluxPersistNode(DVCPersistNode):
         po = state.flux_options
         lk = po.lambda_k
 
-        decay_constants = {'lambda_k_total': lk, 'lambda_k_total_error': 0}
+        decay_constants = {'lambda_k_total': nominal_value(lk), 'lambda_k_total_error': std_dev(lk)}
         options = dict(model_kind=po.model_kind,
                        predicted_j_error_type=po.predicted_j_error_type,
                        use_weighted_fit=po.use_weighted_fit,

@@ -26,7 +26,8 @@ from pychron.pychron_constants import MAIN, APPEARANCE, LEAST_SQUARES_1D, WEIGHT
 class FluxSubOptions(SubOptions):
     def traits_view(self):
         calc_grp = VGroup(Item('selected_monitor', label='Flux Const.'),
-                          Readonly('lambda_k', label=u'Total \u03BB K'),
+                          Readonly('lambda_k', format_func=lambda x: '{:0.3u}'.format(x),
+                                   label=u'Total \u03BB K'),
                           Readonly('monitor_age'),
 
                           BorderVGroup(Item('model_kind', label='Kind'),

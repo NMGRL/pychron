@@ -22,7 +22,7 @@ from traits.api import HasTraits, Str, Int, Bool, Float, Property, List, Event, 
 from traitsui.api import View, UItem, TableEditor, VGroup, HGroup, Item, spring, Tabbed, Readonly, EnumEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
-from uncertainties import nominal_value, std_dev, ufloat
+from uncertainties import nominal_value, std_dev
 
 from pychron.core.helpers.formatting import calc_percent_error, floatfmt
 from pychron.core.helpers.iterfuncs import groupby_key
@@ -191,7 +191,7 @@ class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
         self.debug('setting positions mons={}, unks={}'.format(len(monitors), len(unk) if unk else 0))
         opt = self.plotter_options
         monage = opt.monitor_age * 1e6
-        lk = opt.lambda_k
+        lk = nominal_value(opt.lambda_k)
         ek = opt.error_kind
 
         geom = self.geometry

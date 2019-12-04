@@ -651,7 +651,7 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
 
         opt = self.plotter_options
         monage = opt.monitor_age * 1e6
-        lk = opt.lambda_k
+        lk = nominal_value(opt.lambda_k)
         ans = self._analyses[0]
         scale = opt.flux_scalar
         for r in range(nrows):

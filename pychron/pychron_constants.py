@@ -236,10 +236,10 @@ ISOTOPX_DEFAULT_INTEGRATION_TIME = 1
 
 DEFAULT_INTEGRATION_TIME = 1
 
-K_DECAY_CONSTANTS = {'Min et al., 2000': (5.80e-11, 0, 4.883e-10, 0),
+K_DECAY_CONSTANTS = {'Min et al., 2000': (5.80e-11, 0.099e-10, 4.883e-10, 0.014e-10),
                      'Steiger & Jager 1977': (5.81e-11, 0, 4.962e-10, 0)}
 
-FLUX_CONSTANTS = {'FC Min': {'lambda_ec': [5.80e-11, 0], 'lambda_b': [4.883e-10, 0],
+FLUX_CONSTANTS = {'FC Min': {'lambda_ec': [5.80e-11, 0.099e-10], 'lambda_b': [4.883e-10, 0.014e-10],
                              'monitor_name': 'FC-2',
                              'monitor_material': 'Sanidine',
                              'monitor_age': 28.201},

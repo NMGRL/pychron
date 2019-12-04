@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import Str, Int, Enum, Property, Bool, Float, HasTraits
+from uncertainties import ufloat
 
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.options import FigureOptions
@@ -45,7 +46,9 @@ class MonitorMixin(HasTraits):
 
     def _get_lambda_k(self):
         dc = FLUX_CONSTANTS[self.selected_monitor]
-        return dc['lambda_b'][0] + dc['lambda_ec'][0]
+        b = ufloat(*dc['lambda_b'])
+        ec = ufloat(*dc['lambda_ec'])
+        return b+ec
 
     def _get_monitor_name(self):
         return FLUX_CONSTANTS[self.selected_monitor].get('monitor_name', '')

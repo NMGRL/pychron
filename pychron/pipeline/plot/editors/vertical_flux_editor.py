@@ -132,7 +132,7 @@ class VerticalFluxEditor(FigureEditor):
 
             use_weights = True
             error_kind = self.plotter_options.error_kind
-            lambda_k = self.plotter_options.lambda_k
+            lambda_k = nominal_value(self.plotter_options.lambda_k)
             monitor_age = None
             if self.plotter_options.use_j:
                 monitor_age = self.plotter_options.monitor_age * 1e6
