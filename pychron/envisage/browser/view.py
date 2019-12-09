@@ -115,7 +115,7 @@ class BrowserView(BaseBrowserView):
         tool_grp = self._get_browser_tool_group()
         v = okcancel_view(VGroup(tool_grp, main_grp),
                           title='Browser',
-                          width=1200)
+                          width=0.75)
 
         return v
 

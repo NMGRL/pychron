@@ -17,6 +17,8 @@
 # ============= enthought library imports =======================
 from pyface.action.menu_manager import MenuManager
 from traits.api import Button
+from traits.api import Str, Instance, Any
+from traitsui.api import InstanceEditor, Controller
 from traitsui.api import View, UItem, VGroup, EnumEditor, \
     HGroup, CheckListEditor, spring, Group, HSplit, Tabbed
 from traitsui.menu import Action
@@ -30,6 +32,25 @@ from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.browser.adapters import ProjectAdapter, PrincipalInvestigatorAdapter, LoadAdapter
 from pychron.envisage.browser.pane_model_view import PaneModelView
 from pychron.envisage.icon_button_editor import icon_button_editor
+
+
+class InstanceUItem(UItem):
+    """Convenience class for including an Instance in a View"""
+    style = Str('custom')
+    editor = Instance(InstanceEditor, ())
+
+
+class GroupView(Controller):
+    pane = Any
+    controller = Any
+
+    def trait_context(self):
+        """ Returns the default context to use for editing or configuring
+            traits.
+        """
+        return {'object': self.model, 'controller': self.controller,
+                'handler': self.controller, 'pane': self.pane, 'analysis_table': self.model.analysis_table}
+        return ctx
 
 
 class AnalysisGroupsAdapter(TabularAdapter):
@@ -104,7 +125,9 @@ class BaseBrowserSampleView(PaneModelView):
         if info.result:
             self.model.refresh_samples()
 
-    def _get_sample_group(self):
+
+class SampleGroupView(GroupView):
+    def traits_view(self):
         irrad_grp = BorderVGroup(HGroup(UItem('irradiation_enabled',
                                               tooltip='Enable Irradiation filter'),
                                         UItem('irradiation',
@@ -215,14 +238,10 @@ class BaseBrowserSampleView(PaneModelView):
                                                                  stretch_last_section=False)),
                                     label='Samples')
         grp = VGroup(top_level_filter_grp, Tabbed(sample_table, analysis_grp_table))
-        return grp
+        return View(grp)
 
 
-class BrowserSampleView(BaseBrowserSampleView):
-    def trait_context(self):
-        ctx = super(BrowserSampleView, self).trait_context()
-        ctx['analysis_table'] = self.model.analysis_table
-        return ctx
+class AnalysisGroupView(GroupView):
 
     def traits_view(self):
         analysis_tools = VGroup(HGroup(UItem('analysis_table.analysis_set',
@@ -248,7 +267,7 @@ class BrowserSampleView(BaseBrowserSampleView):
 
         agrp = Group(VGroup(analysis_tools,
                             UItem('analysis_table.analyses',
-                                  width=0.4,
+                                  # width=0.75,
                                   editor=myTabularEditor(adapter=self.model.analysis_table.tabular_adapter,
                                                          operations=['move', 'delete'],
                                                          column_clicked='analysis_table.column_clicked',
@@ -266,9 +285,28 @@ class BrowserSampleView(BaseBrowserSampleView):
                             defined_when=self.pane.analyses_defined,
                             show_border=True,
                             label='Analyses'))
+        return View(agrp)
 
-        sample_grp = self._get_sample_group()
-        return View(HSplit(sample_grp, agrp))
+
+class BrowserSampleView(BaseBrowserSampleView):
+    sample_grp = Instance(SampleGroupView)
+    analysis_grp = Instance(AnalysisGroupView, ())
+
+    def _sample_grp_default(self):
+        s = SampleGroupView(model=self.model,
+                            pane=self.pane,
+                            controller=self)
+        return s
+
+    def _analysis_grp_default(self):
+        a = AnalysisGroupView(model=self.model,
+                              pane=self.pane,
+                              controller=self)
+        return a
+
+    def traits_view(self):
+        return View(HSplit(InstanceUItem('controller.sample_grp', width=0.5),
+                           InstanceUItem('controller.analysis_grp', width=0.5)))
 
     def unselect_projects(self, info, obj):
         obj.selected_projects = []
@@ -338,16 +376,13 @@ class BrowserSampleView(BaseBrowserSampleView):
             obj.analysis_table.refresh_needed = True
 
 
-class BrowserInterpretedAgeView(BaseBrowserSampleView):
-    def delete(self, info, obj):
-        obj.delete()
-
+class InterpretedGroupView(GroupView):
     def trait_context(self):
         ctx = super(BrowserInterpretedAgeView, self).trait_context()
         ctx['table'] = self.model.table
         return ctx
 
-    def _get_interpreted_age_group(self):
+    def traits_view(self):
         grp = VGroup(
             UItem('table.interpreted_ages',
                   editor=myTabularEditor(
@@ -361,12 +396,30 @@ class BrowserInterpretedAgeView(BaseBrowserSampleView):
             show_border=True,
             label='Interpreted Ages')
 
-        return grp
+        return View(grp)
+
+
+class BrowserInterpretedAgeView(BaseBrowserSampleView):
+    sample_grp = Instance(SampleGroupView)
+    interpreted_grp = Instance(AnalysisGroupView, ())
+
+    def _sample_grp_default(self):
+        s = SampleGroupView(model=self.model,
+                            pane=self.pane,
+                            controller=self)
+        return s
+
+    def _interpretd_grp_default(self):
+        a = InterpretedGroupView(model=self.model,
+                                 pane=self.pane,
+                                 controller=self)
+        return a
 
     def traits_view(self):
-        sample_grp = self._get_sample_group()
-        ia_grp = self._get_interpreted_age_group()
-        v = View(HGroup(sample_grp, ia_grp))
-        return v
+        return View(HSplit(InstanceUItem('controller.sample_grp', width=0.5),
+                           InstanceUItem('controller.interpreted_grp', width=0.5)))
+
+    def delete(self, info, obj):
+        obj.delete()
 
 # ============= EOF =============================================
