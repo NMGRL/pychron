@@ -275,12 +275,9 @@ class AnalysisGroupView(GroupView):
                                                          selected='analysis_table.selected',
                                                          dclicked='analysis_table.dclicked',
                                                          multi_select=self.pane.multi_select,
-                                                         drag_external=True,
-
                                                          scroll_to_row='analysis_table.scroll_to_row',
                                                          scroll_to_bottom='analysis_table.scroll_to_bottom',
                                                          scroll_to_top='analysis_table.scroll_to_top',
-                                                         # scroll_to_row_hint='bottom',
                                                          stretch_last_section=False)),
                             defined_when=self.pane.analyses_defined,
                             show_border=True,

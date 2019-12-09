@@ -61,6 +61,8 @@ class TableConfigurer(HasTraits):
     id = 'table'
     font = Enum(*SIZES)
     auto_set = Bool(False)
+    auto_set_str = Str
+
     fontsize_enabled = Bool(True)
     title = Str('Configure Table')
     refresh_func = Callable
@@ -82,14 +84,17 @@ class TableConfigurer(HasTraits):
     def __init__(self, *args, **kw):
         super(TableConfigurer, self).__init__(*args, **kw)
         if self.auto_set:
-            self.on_trait_change(self.update, 'font, columns[]')
+            s = self.auto_set_str
+            if not s:
+                s = 'font, columns[]'
+            self.on_trait_change(self.update, s)
+
         self._load_state()
 
     def closed(self, is_ok):
         if is_ok:
             self.dump()
-            self.set_columns()
-            self.set_font()
+            self.update()
 
     def load(self):
         self._load_state()
@@ -100,6 +105,14 @@ class TableConfigurer(HasTraits):
     def update(self):
         self.set_font()
         self.set_columns()
+        self.set_column_widths()
+        self.update_hook()
+
+    def set_column_widths(self):
+        pass
+
+    def update_hook(self):
+        pass
 
     def set_font(self):
         if self.adapter:
@@ -284,19 +297,49 @@ class AnalysisTableConfigurer(TableConfigurer):
     limit = Int
     omit_invalid = Bool(True)
 
+    cw_record_id_width = Int(70)
+
+    def __init__(self, *args,**kw):
+
+        self.auto_set = True
+        self.auto_set_str = 'font, columns[], cw_+'
+        super(AnalysisTableConfigurer, self).__init__(*args, **kw)
+
+    def set_adapter(self, adp):
+        super(AnalysisTableConfigurer, self).set_adapter(adp)
+        self.set_column_widths()
+
+    def set_column_widths(self, adapter=None):
+        if adapter is None:
+            adapter = self.adapter
+
+        if adapter:
+            ctx = {}
+            for w in ('record_id',):
+                v = getattr(self, 'cw_{}_width'.format(w))
+                setattr(adapter, '{}_width'.format(w), v)
+                ctx['{}_width'.format(w)] = v
+
+            adapter.column_widths = ctx
+
     def _get_dump(self):
         obj = super(AnalysisTableConfigurer, self)._get_dump()
         obj['limit'] = self.limit
         obj['omit_invalid'] = self.omit_invalid
-
+        obj['record_id_width'] = self.cw_record_id_width
         return obj
 
     def _load_hook(self, obj):
         self.limit = obj.get('limit', 500)
         self.omit_invalid = obj.get('omit_invalid', True)
+        self.cw_record_id_width = int(obj.get('record_id_width', 70))
 
     def traits_view(self):
-        v = okcancel_view(BorderVGroup(get_columns_group(),
+        widths_grp = BorderVGroup(Item('cw_record_id_width', label='RunID'),
+                                  label='Column Widths')
+
+        v = okcancel_view(BorderVGroup(Tabbed(get_columns_group(),
+                                              widths_grp),
                                        Item('omit_invalid'),
                                        Item('limit',
                                             tooltip='Limit number of displayed analyses',

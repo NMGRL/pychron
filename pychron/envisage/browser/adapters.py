@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from pyface.action.menu_manager import MenuManager
-from traits.api import Int, Property, Str, Color, Bool
+from traits.api import Int, Property, Str, Color, Bool, Event
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
@@ -139,6 +139,7 @@ class AnalysisAdapter(BrowserAdapter):
                ('Tag', 'tag'),
                ('Dt', 'delta_time')]
 
+    column_widths = Event
     review_status_width = Int(50)
     review_status_image = Property
     review_status_text = Str('')

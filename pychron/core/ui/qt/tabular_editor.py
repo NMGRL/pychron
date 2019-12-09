@@ -604,12 +604,10 @@ class _TabularEditor(qtTabularEditor):
         self.on_trait_change(self.update_editor, 'adapter.columns',
                              dispatch='ui')
 
-        factory = self.factory
-        self.sync_value(factory.col_widths, 'col_widths', 'to')
-        # self.sync_value(factory.copy_cache, 'copy_cache', 'both')
-        self.sync_value(factory.key_pressed, 'key_pressed', 'to')
+        self.on_trait_change(self.set_column_widths, 'adapter.column_widths')
 
-        control = self.control
+        self.sync_value(factory.col_widths, 'col_widths', 'to')
+        self.sync_value(factory.key_pressed, 'key_pressed', 'to')
 
         # somehow this was causing all the majority of the lagginess
         if factory.bgcolor:
@@ -639,6 +637,14 @@ class _TabularEditor(qtTabularEditor):
 
             super(_TabularEditor, self).refresh_editor()
 
+    def set_column_widths(self, v):
+        control = self.control
+        if control:
+            for k, v in v.items():
+                for idx, col in enumerate(self.adapter.columns):
+                    if '{}_width'.format(col[1]) == k:
+                        self.control.setColumnWidth(idx, v)
+    # private
     def _add_image(self, image_resource):
         """ Adds a new image to the image map.
 
