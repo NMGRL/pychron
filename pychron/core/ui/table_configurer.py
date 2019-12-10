@@ -297,15 +297,19 @@ class AnalysisTableConfigurer(TableConfigurer):
     limit = Int
     omit_invalid = Bool(True)
 
-    cw_record_id_width = Int(70)
-
-    def __init__(self, *args,**kw):
-
+    def __init__(self, *args, **kw):
         self.auto_set = True
         self.auto_set_str = 'font, columns[], cw_+'
+        # self.width_labels = {}
         super(AnalysisTableConfigurer, self).__init__(*args, **kw)
 
     def set_adapter(self, adp):
+        for label, name in adp.all_columns:
+            tag = 'cw_{}_width'.format(name)
+            if not hasattr(self, tag):
+                self.add_trait(tag, Int)
+            setattr(self, tag, getattr(adp, '{}_width'.format(name)))
+
         super(AnalysisTableConfigurer, self).set_adapter(adp)
         self.set_column_widths()
 
@@ -315,10 +319,14 @@ class AnalysisTableConfigurer(TableConfigurer):
 
         if adapter:
             ctx = {}
-            for w in ('record_id',):
-                v = getattr(self, 'cw_{}_width'.format(w))
-                setattr(adapter, '{}_width'.format(w), v)
-                ctx['{}_width'.format(w)] = v
+            for w in self.trait_names():
+                if w.endswith('width') and w.startswith('cw'):
+                    v = getattr(self, w)
+
+                    # trim off cw_
+                    setattr(adapter, w[3:], v)
+
+                    ctx[w[3:]] = v
 
             adapter.column_widths = ctx
 
@@ -326,18 +334,38 @@ class AnalysisTableConfigurer(TableConfigurer):
         obj = super(AnalysisTableConfigurer, self)._get_dump()
         obj['limit'] = self.limit
         obj['omit_invalid'] = self.omit_invalid
-        obj['record_id_width'] = self.cw_record_id_width
+
+        for w in self.trait_names():
+            if w.endswith('width') and w.startswith('cw'):
+                v = getattr(self, w)
+                obj[w[3:]] = v
+
         return obj
 
     def _load_hook(self, obj):
         self.limit = obj.get('limit', 500)
         self.omit_invalid = obj.get('omit_invalid', True)
-        self.cw_record_id_width = int(obj.get('record_id_width', 70))
+
+        for k, v in obj.items():
+            if k.endswith('width'):
+                if not hasattr(self, 'cw_{}'.format(k)):
+                    self.add_trait('cw_{}'.format(k), Int)
+                setattr(self, 'cw_{}'.format(k), int(v) or 50)
 
     def traits_view(self):
-        widths_grp = BorderVGroup(Item('cw_record_id_width', label='RunID'),
-                                  label='Column Widths')
 
+        n = len(self.adapter.all_columns)
+        aitems = []
+        for label, name in self.adapter.all_columns[:n // 2]:
+            aitems.append(Item('cw_{}_width'.format(name), label=label))
+
+        bitems = []
+        for label, name in self.adapter.all_columns[n // 2:]:
+            bitems.append(Item('cw_{}_width'.format(name), label=label))
+
+        widths_grp = BorderVGroup(HGroup(VGroup(*aitems),
+                                         VGroup(*bitems)),
+                                  label='Column Widths')
         v = okcancel_view(BorderVGroup(Tabbed(get_columns_group(),
                                               widths_grp),
                                        Item('omit_invalid'),

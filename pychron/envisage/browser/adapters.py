@@ -140,14 +140,31 @@ class AnalysisAdapter(BrowserAdapter):
                ('Dt', 'delta_time')]
 
     column_widths = Event
+
     review_status_width = Int(50)
-    review_status_image = Property
-    review_status_text = Str('')
+    record_id_width = Int(70)
+    uuid_width = Int
+    sample_width = Int
+    project_width = Int
+    repository_identifier_width = Int
+    packet_width = Int
+    irradiation_info_width = Int
+    tag_width = Int(60)
     rundate_width = Int(125)
     delta_time_width = Int(65)
+    mass_spectrometer_width = Int
+    meas_script_name_width = Int
+    extract_script_name_width = Int
+    extract_value_width = Int
+    cleanup_width = Int
+    duration_width = Int
+    position_width = Int
+    extract_device_width = Int
+    comment_width = Int
+
+    review_status_image = Property
+    review_status_text = Str('')
     delta_time_text = Property
-    record_id_width = Int(70)
-    tag_width = Int(65)
     odd_bg_color = 'lightgray'
     font = 'arial 10'
 
