@@ -15,15 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-
-from __future__ import absolute_import
-
-from six.moves import range
 from traits.api import Any, on_trait_change, Date, Time, Instance, Bool
 
-from pychron.core.ui.table_configurer import RecallTableConfigurer
 from pychron.envisage.browser.interpreted_age_recall_editor import InterpretedAgeRecallEditor
 from pychron.envisage.browser.recall_editor import RecallEditor
+from pychron.envisage.browser.recall_table_configurer import RecallTableConfigurer
 from pychron.envisage.tasks.editor_task import BaseEditorTask
 from pychron.envisage.view_util import open_view
 from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter, IntermediateTabularAdapter

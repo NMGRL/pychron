@@ -13,27 +13,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-import os
 # ============= enthought library imports =======================
-import pickle
-# import apptools.sweet_pickle as pickle
 # ============= standard library imports ========================
+import os
+import pickle
+import shutil
 from datetime import datetime
 
-from traits.api import HasTraits, List, Bool, Int, Instance, Enum, \
-    Str, Callable, Button, Property
+import yaml
+from traits.api import HasTraits, List, Bool, Instance, Enum, \
+    Str, Callable, Button, Property, Int
 from traits.trait_errors import TraitError
-from traitsui.api import View, Item, UItem, CheckListEditor, VGroup, Handler, HGroup, Tabbed, InstanceEditor, \
-    TableEditor, EnumEditor
-# ============= local library imports  ==========================
-from traitsui.table_column import ObjectColumn
+from traitsui.api import Item, UItem, CheckListEditor, VGroup, Handler, HGroup
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pychron_traits import BorderVGroup
 from pychron.core.yaml import yload
 from pychron.paths import paths
-from pychron.pychron_constants import ARGON_KEYS, SIZES
+from pychron.pychron_constants import SIZES
+
+
+# ============= local library imports  ==========================
 
 
 class TableConfigurerHandler(Handler):
@@ -108,8 +109,24 @@ class TableConfigurer(HasTraits):
         self.set_column_widths()
         self.update_hook()
 
-    def set_column_widths(self):
-        pass
+    def set_column_widths(self, adapter=None):
+        if adapter is None:
+            adapter = self.adapter
+
+        if adapter:
+            ctx = {}
+            for w in self.trait_names(kind='column_width'):
+                v = getattr(self, w)
+                # trim off cw_
+                attr = w[3:]
+                if hasattr(adapter, attr):
+                    setattr(adapter, attr, v)
+                    ctx[attr] = v
+
+            try:
+                adapter.column_widths = ctx
+            except TraitError:
+                pass
 
     def update_hook(self):
         pass
@@ -124,10 +141,7 @@ class TableConfigurer(HasTraits):
             if self.refresh_func:
                 self.refresh_func()
 
-                # self.refresh_table_needed = True
-
     def set_columns(self):
-        # def _columns_changed(self):
         if self.adapter:
             cols = self._assemble_columns()
             for ci in self.children:
@@ -140,16 +154,21 @@ class TableConfigurer(HasTraits):
         s = f.pointSize()
         self.font = s
 
-    def _load_state(self):
+    def _get_state(self):
         p = os.path.join(paths.hidden_dir, self.id)
         if os.path.isfile(p):
             try:
                 with open(p, 'rb') as rfile:
                     state = pickle.load(rfile)
-
             except (pickle.PickleError, OSError, EOFError, TraitError):
                 return
+        elif os.path.isfile('{}.yaml'.format(p)):
+            state = yload('{}.yaml'.format(p))
+        return state
 
+    def _load_state(self):
+        state = self._get_state()
+        if state:
             try:
                 self.sparse_columns = state.get('sparse_columns')
             except:
@@ -167,25 +186,40 @@ class TableConfigurer(HasTraits):
             font = state.get('font', None)
             if font:
                 self.font = font
-
+            self._load_column_widths(state)
             self._load_hook(state)
             self.update()
 
     def _dump_state(self):
-        p = os.path.join(paths.hidden_dir, self.id)
+        p = os.path.join(paths.appdata_dir, self.id)
         obj = self._get_dump()
 
-        with open(p, 'wb') as wfile:
-            try:
-                pickle.dump(obj, wfile)
-            except pickle.PickleError:
-                pass
+        with open('{}.yaml'.format(p), 'w') as wfile:
+            yaml.dump(obj, wfile)
+
+        # remove the deprecated pickle file
+        if os.path.isfile(p):
+            shutil.move(p, os.path.join(paths.appdata_dir, '~{}'.format(self.id)))
 
     def _get_dump(self):
         obj = dict(columns=self.columns,
                    font=self.font,
                    sparse_columns=self.sparse_columns)
+
+        cws = {w: getattr(self, w) for w in self.trait_names(kind='column_width')}
+        obj['column_widths'] = cws
         return obj
+
+    def _add_column_width(self, k):
+        self.add_trait(k, Int(kind='column_width'))
+
+    def _load_column_widths(self, state):
+        widths = state.get('column_widths')
+        if widths:
+            for k, v in widths.items():
+                if not hasattr(self, k):
+                    self._add_column_width(k)
+                setattr(self, k, int(v) or 50)
 
     def _load_hook(self, state):
         pass
@@ -234,8 +268,7 @@ class TableConfigurer(HasTraits):
 
     def set_adapter(self, adp):
         self.adapter = adp
-        # def _adapter_changed(self, adp):
-        #     if adp:
+
         acols = [c for c, _ in adp.all_columns]
 
         # set currently visible columns
@@ -250,6 +283,29 @@ class TableConfigurer(HasTraits):
             self._set_font(adp.font)
 
         self._load_state()
+
+        for name in adp.trait_names():
+            if name != 'width' and name.endswith('width'):
+                tag = 'cw_{}'.format(name)
+                if not hasattr(self, tag):
+                    self._add_column_width(tag)
+
+                setattr(self, tag, getattr(adp, name))
+
+    def _get_column_width_group(self):
+        n = len(self.adapter.all_columns)
+        aitems = []
+        for label, name in self.adapter.all_columns[:n // 2]:
+            aitems.append(Item('cw_{}_width'.format(name), label=label))
+
+        bitems = []
+        for label, name in self.adapter.all_columns[n // 2:]:
+            bitems.append(Item('cw_{}_width'.format(name), label=label))
+
+        widths_grp = BorderVGroup(HGroup(VGroup(*aitems),
+                                         VGroup(*bitems)),
+                                  label='Column Widths')
+        return widths_grp
 
     def traits_view(self):
         v = okcancel_view(VGroup(HGroup(UItem('show_all', tooltip='Show all columns'),
@@ -292,92 +348,8 @@ class ExperimentTableConfigurer(TableConfigurer):
     defaults_path = paths.experiment_defaults
 
 
-class AnalysisTableConfigurer(TableConfigurer):
-    id = 'analysis.table'
-    limit = Int
-    omit_invalid = Bool(True)
-
-    def __init__(self, *args, **kw):
-        self.auto_set = True
-        self.auto_set_str = 'font, columns[], cw_+'
-        # self.width_labels = {}
-        super(AnalysisTableConfigurer, self).__init__(*args, **kw)
-
-    def set_adapter(self, adp):
-        for label, name in adp.all_columns:
-            tag = 'cw_{}_width'.format(name)
-            if not hasattr(self, tag):
-                self.add_trait(tag, Int)
-            setattr(self, tag, getattr(adp, '{}_width'.format(name)))
-
-        super(AnalysisTableConfigurer, self).set_adapter(adp)
-        self.set_column_widths()
-
-    def set_column_widths(self, adapter=None):
-        if adapter is None:
-            adapter = self.adapter
-
-        if adapter:
-            ctx = {}
-            for w in self.trait_names():
-                if w.endswith('width') and w.startswith('cw'):
-                    v = getattr(self, w)
-
-                    # trim off cw_
-                    setattr(adapter, w[3:], v)
-
-                    ctx[w[3:]] = v
-
-            adapter.column_widths = ctx
-
-    def _get_dump(self):
-        obj = super(AnalysisTableConfigurer, self)._get_dump()
-        obj['limit'] = self.limit
-        obj['omit_invalid'] = self.omit_invalid
-
-        for w in self.trait_names():
-            if w.endswith('width') and w.startswith('cw'):
-                v = getattr(self, w)
-                obj[w[3:]] = v
-
-        return obj
-
-    def _load_hook(self, obj):
-        self.limit = obj.get('limit', 500)
-        self.omit_invalid = obj.get('omit_invalid', True)
-
-        for k, v in obj.items():
-            if k.endswith('width'):
-                if not hasattr(self, 'cw_{}'.format(k)):
-                    self.add_trait('cw_{}'.format(k), Int)
-                setattr(self, 'cw_{}'.format(k), int(v) or 50)
-
-    def traits_view(self):
-
-        n = len(self.adapter.all_columns)
-        aitems = []
-        for label, name in self.adapter.all_columns[:n // 2]:
-            aitems.append(Item('cw_{}_width'.format(name), label=label))
-
-        bitems = []
-        for label, name in self.adapter.all_columns[n // 2:]:
-            bitems.append(Item('cw_{}_width'.format(name), label=label))
-
-        widths_grp = BorderVGroup(HGroup(VGroup(*aitems),
-                                         VGroup(*bitems)),
-                                  label='Column Widths')
-        v = okcancel_view(BorderVGroup(Tabbed(get_columns_group(),
-                                              widths_grp),
-                                       Item('omit_invalid'),
-                                       Item('limit',
-                                            tooltip='Limit number of displayed analyses',
-                                            label='Limit'),
-                                       label='Limiting'),
-                          buttons=['OK', 'Cancel', 'Revert'],
-                          title=self.title,
-                          handler=TableConfigurerHandler,
-                          width=300)
-        return v
+def width_test(v):
+    return v.startswith('cw') and v.endswith('width')
 
 
 class SampleTableConfigurer(TableConfigurer):
@@ -403,227 +375,6 @@ class SampleTableConfigurer(TableConfigurer):
                           title=self.title,
                           handler=TableConfigurerHandler,
                           width=300)
-        return v
-
-
-class IsotopeTableConfigurer(TableConfigurer):
-    id = 'recall.isotopes'
-
-    def traits_view(self):
-        v = View(BorderVGroup(get_columns_group(),
-                              Item('font', enabled_when='fontsize_enabled'),
-                              label='Isotopes'))
-        return v
-
-
-class IntermediateTableConfigurer(TableConfigurer):
-    id = 'recall.intermediate'
-
-
-class Ratio(HasTraits):
-    isotopes = List([''] + list(ARGON_KEYS))
-    numerator = Str
-    denominator = Str
-
-    @property
-    def tagname(self):
-        if self.numerator and self.denominator:
-            return '{}/{}'.format(self.numerator, self.denominator)
-
-    def get_dump(self):
-        return {'numerator': self.numerator, 'denominator': self.denominator}
-
-
-class CocktailOptions(HasTraits):
-    ratios = List
-
-    def get_dump(self):
-        return {'ratios': [r.get_dump() for r in self.ratios]}
-
-    def set_ratios(self, ratios):
-        self.ratios = [Ratio(numerator=r['numerator'], denominator=r['denominator']) for r in ratios]
-
-    def _ratios_default(self):
-        return [Ratio() for i in range(10)]
-
-    def traits_view(self):
-        cols = [ObjectColumn(name='numerator', editor=EnumEditor(name='isotopes')),
-                ObjectColumn(name='denominator', editor=EnumEditor(name='isotopes'))]
-        v = View(BorderVGroup(UItem('ratios',
-                                    editor=TableEditor(sortable=False, columns=cols)),
-                              label='Cocktail Options'))
-        return v
-
-
-class RecallOptions(HasTraits):
-    cocktail_options = Instance(CocktailOptions, ())
-    isotope_sig_figs = Int(5)
-    computed_sig_figs = Int(5)
-    intermediate_sig_figs = Int(5)
-
-    def set_cocktail(self, co):
-        cc = CocktailOptions()
-        cc.set_ratios(co.get('ratios'))
-        self.cocktail_options = cc
-
-    def get_dump(self):
-        return {'cocktail_options': self.cocktail_options.get_dump(),
-                'computed_sig_figs': self.computed_sig_figs,
-                'sig_figs': self.isotope_sig_figs,
-                'intermediate_sig_figs': self.intermediate_sig_figs}
-
-    def traits_view(self):
-        v = View(Item('computed_sig_figs', label='Main SigFigs'),
-                 Item('isotope_sig_figs', label='Isotope SigFigs'),
-                 Item('intermediate_sig_figs', label='Intermediate SigFigs'),
-                 UItem('cocktail_options', style='custom'))
-        return v
-
-
-class RecallTableConfigurer(TableConfigurer):
-    isotope_table_configurer = Instance(IsotopeTableConfigurer, ())
-    intermediate_table_configurer = Instance(IntermediateTableConfigurer, ())
-    show_intermediate = Bool
-    experiment_fontsize = Enum(*SIZES)
-    measurement_fontsize = Enum(*SIZES)
-    extraction_fontsize = Enum(*SIZES)
-    main_measurement_fontsize = Enum(*SIZES)
-    main_extraction_fontsize = Enum(*SIZES)
-    main_computed_fontsize = Enum(*SIZES)
-
-    subview_names = ('experiment', 'measurement', 'extraction')
-    main_names = ('measurement', 'extraction', 'computed')
-    bind_fontsizes = Bool(False)
-    global_fontsize = Enum(*SIZES)
-
-    recall_options = Instance(RecallOptions, ())
-
-    def _get_dump(self):
-        obj = super(RecallTableConfigurer, self)._get_dump()
-        obj['show_intermediate'] = self.show_intermediate
-        for a in self.subview_names:
-            a = '{}_fontsize'.format(a)
-            obj[a] = getattr(self, a)
-
-        for a in self.main_names:
-            a = 'main_{}_fontsize'.format(a)
-            obj[a] = getattr(self, a)
-
-        for attr in ('global_fontsize', 'bind_fontsizes'):
-            obj[attr] = getattr(self, attr)
-
-        obj['recall_options'] = self.recall_options.get_dump()
-        return obj
-
-    def _load_hook(self, obj):
-        self.show_intermediate = obj.get('show_intermediate', True)
-        self.isotope_table_configurer.load()
-        self.intermediate_table_configurer.load()
-
-        for a in self.subview_names:
-            a = '{}_fontsize'.format(a)
-            setattr(self, a, obj.get(a, 10))
-
-        for a in self.main_names:
-            a = 'main_{}_fontsize'.format(a)
-            setattr(self, a, obj.get(a, 10))
-
-        for attr in ('global_fontsize', 'bind_fontsizes'):
-            try:
-                setattr(self, attr, obj[attr])
-            except KeyError:
-                pass
-
-        recall_options = obj.get('recall_options')
-        if recall_options:
-            r = RecallOptions()
-            r.set_cocktail(recall_options.get('cocktail_options'))
-            for tag in ('intermediate', 'isotope', 'computed'):
-                tag = '{}_sig_figs'.format(tag)
-                setattr(r, tag, recall_options.get(tag, 5))
-
-            self.recall_options = r
-
-    def dump(self):
-        super(RecallTableConfigurer, self).dump()
-        self.intermediate_table_configurer.dump()
-        self.isotope_table_configurer.dump()
-
-    def set_columns(self):
-        self.isotope_table_configurer.set_columns()
-        self.intermediate_table_configurer.set_columns()
-
-        self.isotope_table_configurer.update()
-        self.intermediate_table_configurer.update()
-
-    def set_font(self):
-        self.isotope_table_configurer.set_font()
-        self.intermediate_table_configurer.set_font()
-
-    def set_fonts(self, av):
-        self.set_font()
-
-        for a in self.subview_names:
-            s = getattr(self, '{}_fontsize'.format(a))
-            av.update_fontsize(a, s)
-
-        for a in self.main_names:
-            av.update_fontsize('main.{}'.format(a),
-                               getattr(self, 'main_{}_fontsize'.format(a)))
-
-        av.main_view.refresh_needed = True
-
-    def _bind_fontsizes_changed(self, new):
-        if new:
-            self._global_fontsize_changed()
-        self.isotope_table_configurer.fontsize_enabled = not new
-        self.intermediate_table_configurer.fontsize_enabled = not new
-
-    def _global_fontsize_changed(self):
-        gf = self.global_fontsize
-        self.isotope_table_configurer.font = gf
-        self.intermediate_table_configurer.font = gf
-
-        self.main_measurement_fontsize = gf
-        self.main_extraction_fontsize = gf
-        self.main_computed_fontsize = gf
-
-    def traits_view(self):
-        main_grp = VGroup(HGroup(Item('bind_fontsizes'),
-                                 Item('global_fontsize', enabled_when='bind_fontsizes')),
-                          Item('main_extraction_fontsize', enabled_when='not bind_fontsizes'),
-                          Item('main_measurement_fontsize', enabled_when='not bind_fontsizes'),
-                          Item('main_computed_fontsize', enabled_when='not bind_fontsizes'))
-
-        main_view = VGroup(main_grp,
-                           UItem('isotope_table_configurer', style='custom'),
-                           HGroup(Item('show_intermediate', label='Show Intermediate Table')),
-                           UItem('intermediate_table_configurer', style='custom', enabled_when='show_intermediate'),
-                           label='Main')
-
-        # experiment_view = VGroup(Item('experiment_fontsize', label='Size'),
-        #                          show_border=True,
-        #                          label='Experiment')
-        # measurement_view = VGroup(Item('measurement_fontsize', label='Size'),
-        #                           show_border=True,
-        #                           label='Measurement')
-        # extraction_view = VGroup(Item('extraction_fontsize', label='Size'),
-        #                          show_border=True,
-        #                          label='Extraction')
-
-        v = View(Tabbed(main_view,
-                        UItem('recall_options', editor=InstanceEditor(), style='custom'),
-                        # VGroup(experiment_view,
-                        #        measurement_view,
-                        #        extraction_view, label='Scripts')
-                        ),
-
-                 buttons=['OK', 'Cancel', 'Revert'],
-                 kind='livemodal',
-                 title='Configure Table',
-                 handler=TableConfigurerHandler,
-                 resizable=True,
-                 width=300)
         return v
 
 # ============= EOF =============================================

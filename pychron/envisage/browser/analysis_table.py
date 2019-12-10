@@ -31,10 +31,10 @@ from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.fuzzyfinder import fuzzyfinder
 from pychron.core.helpers.iterfuncs import groupby_repo
 from pychron.core.select_same import SelectSameMixin
-from pychron.core.ui.table_configurer import AnalysisTableConfigurer
 from pychron.dvc.func import get_review_status
 from pychron.envisage.browser import progress_bind_records
 from pychron.envisage.browser.adapters import AnalysisAdapter
+from pychron.envisage.browser.analysis_table_configurer import AnalysisTableConfigurer
 from pychron.paths import paths
 from pychron.pychron_constants import AUTO_SCROLL_KINDS, BOTTOM, TOP
 
