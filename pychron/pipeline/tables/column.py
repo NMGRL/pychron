@@ -17,7 +17,7 @@ from traits.api import HasTraits, Bool, Str, Tuple, Either, Callable, List, Int
 
 from pychron.core.helpers.formatting import floatfmt
 from pychron.pipeline.tables.util import value, error
-from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
+from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, PLUSMINUS_NSIGMA
 
 
 class Column(HasTraits):
@@ -82,4 +82,10 @@ class EColumn(Column):
 
     def _func_default(self):
         return error
+
+
+class AEColumn(Column):
+    def __init__(self, nsigma, *args, **kw):
+        self.label = PLUSMINUS_NSIGMA.format(nsigma)
+        super(AEColumn, self).__init__(*args, **kw)
 # ============= EOF =============================================
