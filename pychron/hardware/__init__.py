@@ -38,6 +38,8 @@ HW_PACKAGE_MAP = {
 
     'MKSController': 'pychron.hardware.gauges.mks.controller',
     'PfeifferMaxiGaugeController': 'pychron.hardware.gauges.pfeiffer.maxi_gauge_controller',
+    'XGS600GaugeController': 'pychron.hardware.gauges.varian.varian_gauge_controller',
+    'QtegraGaugeController': 'pychron.hardware.gauges.thermo.qtegra_gauge_controller',
     'ArgusController': 'pychron.hardware.thermo_spectrometer_controller',
     'HelixController': 'pychron.hardware.thermo_spectrometer_controller',
     'FerrupsUPS': 'pychron.hardware.FerrupsUPS',
