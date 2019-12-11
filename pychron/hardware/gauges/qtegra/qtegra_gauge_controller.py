@@ -13,10 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.gauges.base_controller import BaseGaugeController
 
 
-class QtegraGaugeController(BaseGaugeController):
+class QtegraGaugeController(BaseGaugeController, CoreDevice):
     def load_additional_args(self, config, *args, **kw):
         self.display_name = self.config_get(config, 'General', 'display_name', default=self.name)
         self._load_gauges(config)
