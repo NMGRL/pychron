@@ -265,7 +265,9 @@ class BaseArArFigure(SelectionFigure):
                     continue
 
                 v = ai.get_value(attr)
-                yield v * scalar or ufloat(0, 0)
+                if v is None:
+                    v = ufloat(0, 0)
+                yield v * scalar
 
         return gen()
 
