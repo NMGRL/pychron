@@ -115,7 +115,7 @@ def git_post(cmd, return_json=True, **kw):
                           'Pychron will quit when this window is closed')
         sys.exit()
 
-    kw['auth'] = tok
+    kw['auth'] = (tok, '')
     if globalv.cert_file:
         kw['verify'] = globalv.cert_file
 
