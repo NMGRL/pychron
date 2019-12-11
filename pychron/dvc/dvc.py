@@ -322,7 +322,7 @@ class DVC(Loggable):
         if ps and not dry_run:
             # repo.pull()
             repo.add_paths(ps)
-            repo.commit('<SYNC> Synced repository with database {}'.format(self.db.datasource_url))
+            repo.commit('<SYNC> Synced repository with database {}'.format(self.db.public_datasource_url))
             repo.push()
         self.info('finished db-repo sync for {}'.format(reponame))
 

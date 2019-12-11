@@ -155,7 +155,8 @@ class TableConfigurer(HasTraits):
         self.font = s
 
     def _get_state(self):
-        p = os.path.join(paths.hidden_dir, self.id)
+        p = os.path.join(paths.appdata_dir, self.id)
+        state = None
         if os.path.isfile(p):
             try:
                 with open(p, 'rb') as rfile:
@@ -164,6 +165,7 @@ class TableConfigurer(HasTraits):
                 return
         elif os.path.isfile('{}.yaml'.format(p)):
             state = yload('{}.yaml'.format(p))
+
         return state
 
     def _load_state(self):

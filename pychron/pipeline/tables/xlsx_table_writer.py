@@ -28,7 +28,7 @@ from pychron.core.helpers.formatting import floatfmt
 from pychron.core.helpers.isotope_utils import sort_detectors
 from pychron.paths import paths, r_mkdir
 from pychron.pipeline.tables.base_table_writer import BaseTableWriter
-from pychron.pipeline.tables.column import Column, EColumn, VColumn
+from pychron.pipeline.tables.column import Column, EColumn, VColumn, AEColumn
 from pychron.pipeline.tables.util import iso_value, icf_value, icf_error, correction_value, age_value, supreg, \
     subreg, interpolate_noteline, value
 from pychron.pipeline.tables.xlsx_table_options import XLSXAnalysisTableWriterOptions
@@ -422,6 +422,19 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         def get_plateau_ar39(ag, *args):
             return ag.plateau_total_ar39()
 
+        def get_trapped_ratio_error(ag, *args):
+            return std_dev(ag.isochron_4036)*opt.summary_trapped_ratio_nsigma
+
+        def get_age(attr):
+            def f(ag, *args):
+                return ag.scaled_age(nominal_value(getattr(ag, attr)), opt.age_units)
+            return f
+
+        def get_age_error(attr):
+            def f(ag, *args):
+                return ag.scaled_age(std_dev(getattr(ag, attr)), opt.age_units)*opt.summary_age_nsigma
+            return f
+
         cols = [Column(visible=opt.include_summary_sample, label='Sample', attr='sample'),
                 Column(visible=opt.include_summary_identifier, label='Identifier', attr='identifier'),
                 Column(visible=opt.include_summary_unit, label='Unit', attr='unit'),
@@ -457,19 +470,24 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 Column(visible=opt.include_summary_comments, label='Comments', attr='comments'),
 
                 # Hidden Cols
-                VColumn(label='WeightedMeanAge', attr='weighted_age'),
-                EColumn(attr='weighted_age'),
-                VColumn(label='ArithmeticMeanAge', attr='arith_age'),
-                EColumn(attr='arith_age'),
-                VColumn(label='IsochronAge', attr='isochron_age'),
-                EColumn(attr='isochron_age'),
+                VColumn(label='WeightedMeanAge', func=get_age('weighted_age')),
+                AEColumn(opt.summary_age_nsigma, func=get_age_error('weighted_age')),
+                VColumn(label='ArithmeticMeanAge', func=get_age('arith_age')),
+                AEColumn(opt.summary_age_nsigma, func=get_age_error('arith_age')),
+                VColumn(label='IsochronAge', func=get_age('isochron_age')),
+                AEColumn(opt.summary_age_nsigma, func=get_age_error('isochron_age')),
+
                 VColumn(label=('(', '<sup>40</sup>', 'Ar/', '<sup>36</sup>', 'Ar)', '<sub>I</sub>'),
                         attr='isochron_4036'),
-                EColumn(attr='isochron_4036'),
-                VColumn(label='PlateauAge', attr='plateau_age'),
-                EColumn(attr='plateau_age'),
-                VColumn(label='IntegratedAge', attr='integrated_age'),
-                EColumn(attr='integrated_age')]
+                Column(attr='isochron_4036',
+                       label=PLUSMINUS_NSIGMA.format(opt.summary_trapped_ratio_nsigma),
+                       func=get_trapped_ratio_error),
+
+                VColumn(label='PlateauAge', func=get_age('plateau_age')),
+                AEColumn(opt.summary_age_nsigma, func=get_age_error('plateau_age')),
+
+                VColumn(label='IntegratedAge', func=get_age('integrated_age')),
+                AEColumn(opt.summary_age_nsigma, func=get_age_error('integrated_age'))]
 
         return cols
 
