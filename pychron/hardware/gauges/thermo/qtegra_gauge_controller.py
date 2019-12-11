@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2017 ross
+# Copyright 2019 ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.gauges.base_controller import BaseGauge, BaseGaugeController
 
 
-class BaseVarianGaugeController(BaseGaugeController, CoreDevice):
+class BaseQtegraGaugeController(BaseGaugeController, CoreDevice):
     gauge_klass = BaseGauge
     scan_func = 'update_pressures'
 
@@ -32,7 +32,6 @@ class BaseVarianGaugeController(BaseGaugeController, CoreDevice):
         return [g.pressure for g in self.gauges]
 
     def load_additional_args(self, config, *args, **kw):
-        self.address = self.config_get(config, 'General', 'address', optional=False)
         self.display_name = self.config_get(config, 'General', 'display_name', default=self.name)
         # self.mode = self.config_get(config, 'Communications', 'mode', default='rs485')
         self._load_gauges(config)
@@ -49,17 +48,18 @@ class BaseVarianGaugeController(BaseGaugeController, CoreDevice):
         return v
 
 
-class XGS600GaugeController(BaseVarianGaugeController):
+class QtegraGaugeController(BaseQtegraGaugeController):
     def _read_pressure(self, name=None, verbose=False):
         pressure = 'err'
         if name is not None:
             gauge = name
             if isinstance(gauge, str):
                 gauge = self.get_gauge(name)
-            channel = gauge.channel
-            cmd = '#{}02U{}'.format(self.address, channel)
-            pressure = self.ask(cmd, verbose=verbose)
-            if pressure and pressure.startswith('>'):
+            gauge_name = name
+            if gauge_name and isinstance(gauge_name,BaseGauge):
+                gauge_name = gauge_name.name
+            pressure = self.ask('GetParameter {} Readback'.format(gauge_name), verbose=verbose)
+            if pressure and pressure.startswith('>'): # This line and the next could go, I suppose.
                 pressure = pressure[1:]
 
         return pressure or 'err'
