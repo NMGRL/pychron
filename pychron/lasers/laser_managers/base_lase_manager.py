@@ -205,6 +205,19 @@ class BaseLaserManager(Manager):
     def _move_to_position(self, *args, **kw):
         pass
 
+    def _get_hole_xy(self, pos):
+        sm = self.stage_manager
+        if isinstance(pos, tuple):
+            x, y = pos
+
+        else:
+            try:
+                x, y = sm.get_hole_xy(pos)
+            except ValueError:
+                self.warning_dialog('Invalid position {} for {}'.format(pos, sm.stage_map_name))
+                return
+        return x, y
+
     def _block(self, cmd='GetDriveMoving', cmpfunc=None, period=0.25, position_callback=None, nsuccess=2, timeout=50):
 
         ask = self._ask

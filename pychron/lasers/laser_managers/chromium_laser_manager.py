@@ -160,11 +160,10 @@ class ChromiumLaserManager(EthernetLaserManager):
 
     def _move_to_position(self, pos, block=True, *args, **kw):
         sm = self.stage_manager
-        if isinstance(pos, tuple):
-            x, y = pos
-
-        else:
-            x, y = sm.get_hole_xy(pos)
+        try:
+            x, y = self._get_hole_xy(pos)
+        except ValueError:
+            return
 
         z = self._z
         xs = 5000

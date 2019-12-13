@@ -112,7 +112,7 @@ class AblationCO2Manager(SerialLaserManager):
         # self._ask('stage.stop')
         self._alive = False
         self.update_position()
-    
+
     # private
     def _stage_stop_button_fired(self):
         self.stop()
@@ -173,11 +173,10 @@ class AblationCO2Manager(SerialLaserManager):
 
     def _move_to_position(self, pos, autocenter=False, block=True, *args, **kw):
         sm = self.stage_manager
-        if isinstance(pos, tuple):
-            x, y = pos
-
-        else:
-            x, y = sm.get_hole_xy(pos)
+        try:
+            x, y = self._get_hole_xy(pos)
+        except ValueError:
+            return
 
         z = self._z
         #xs = 5000
