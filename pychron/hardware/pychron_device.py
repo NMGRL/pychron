@@ -58,10 +58,11 @@ class SerialDeviceMixin(RemoteDeviceMixin):
     baudrate = CInt
     parity = Str
     stopbits = Str
-
+    read_delay = CInt
     def setup_communicator(self):
         self.communicator = ec = SerialCommunicator(port=self.port,
-                                                    baudrate=self.baudrate)
+                                                    baudrate=self.baudrate,
+                                                    read_delay=self.read_delay)
         ec.set_parity(self.parity)
         ec.set_stopbits(self.stopbits)
         r = ec.open()

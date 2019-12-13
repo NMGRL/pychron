@@ -27,7 +27,8 @@ class AblationCO2Manager(SerialLaserManager):
     stage_manager_id = 'ablation.pychron'
     configuration_dir_name = 'ablation'
     _alive = False
-
+    read_delay = 25
+    
     def _test_connection_hook(self):
         re = self._ask('GetVersion')
         self.connected = bool(re)
@@ -61,7 +62,7 @@ class AblationCO2Manager(SerialLaserManager):
 
         resp = self.set_laser_power(value)
         if fire_laser:
-            time.sleep(1)
+            time.slVaeep(1)
             self.fire_laser()
 
         try:
@@ -77,11 +78,12 @@ class AblationCO2Manager(SerialLaserManager):
         # self._ask('laser.enable ON')
         self.info('enabling laser')
         self._ask('SetLaserFireMode 3')  # 3= continuous wave
-        self._ask('SetLaserOn 1')
+        #self._ask('SetLaserOn 1')
         self.enabled = True
 
     def disable_laser(self):
         self.info('disabling laser')
+        self.set_laser_power(0)
         self._ask('SetLaserOn 0')
         self.enabled = False
 
@@ -89,11 +91,15 @@ class AblationCO2Manager(SerialLaserManager):
         x, y, z = self._x, self._y, self._z
         xyz = self._ask('ReadPosition')
         if xyz:
-            x, y, z = [float(v) for v in xyz.split(',')]
-            if self.stage_manager.use_sign_position_correction:
-                x = x * self.stage_manager.x_sign
-                y = y * self.stage_manager.y_sign
-                z = z * self.stage_manager.z_sign
+            try:
+                x, y, z = [float(v) for v in xyz.split(',')]
+                if self.stage_manager.use_sign_position_correction:
+                    x = x * self.stage_manager.x_sign
+                    y = y * self.stage_manager.y_sign
+                    z = z * self.stage_manager.z_sign
+            except ValueError:
+                self.warning('failed parsing position: {}'.format(xyz))
+                
         return x, y, z
 
     # def ask(self, cmd, **kw):
@@ -123,21 +129,21 @@ class AblationCO2Manager(SerialLaserManager):
         self.extract(new, self.units, fire_laser=False)
 
     def _set_x(self, v):
-        if self._move_enabled:
+        if self._move_enabled and v!=self._x:
             self._alive = True
-            self._ask('SetPosition {},{},{},{},{},{}'.format(v, self._y, self._z, 10, 10, 0))
+            self._ask('SetPosition {:0.3f},{:0.3f},{:0.3f}'.format(v, self._y, self._z))
             self._single_axis_moving(v, 0)
 
     def _set_y(self, v):
-        if self._move_enabled:
+        if self._move_enabled and v!=self._y:
             self._alive = True
-            self._ask('SetPosition {},{},{},{},{},{}'.format(self._x, v, self._z, 10, 10, 0))
+            self._ask('SetPosition {:0.3f},{:0.3f},{:0.3f}'.format(self._x, v, self._z))
             self._single_axis_moving(v, 1)
 
     def _set_z(self, v):
-        if self._move_enabled:
+        if self._move_enabled and v!=self._z:
             self._alive = True
-            self._ask('SetPosition {},{},{},{},{},{}'.format(self._x, self._y, v, 10, 10, 0))
+            self._ask('SetPosition {:0.3f},{:0.3f},{:0.3f}'.format(self._x, self._y, v))
             self._single_axis_moving(v, 2)
 
     def _single_axis_moving(self, v, axis):
@@ -160,12 +166,12 @@ class AblationCO2Manager(SerialLaserManager):
             except ValueError as e:
                 print('_moving exception {}'.format(e))
 
-        self._block(cmd='ReadPosition\n', cmpfunc=cmpfunc)
+        self._block(cmd='ReadPosition', cmpfunc=cmpfunc)
         time.sleep(0.25)
         self._alive = False
         self.update_position()
 
-    def _move_to_position(self, pos, block=True, *args, **kw):
+    def _move_to_position(self, pos, autocenter=False, block=True, *args, **kw):
         sm = self.stage_manager
         if isinstance(pos, tuple):
             x, y = pos
@@ -174,9 +180,9 @@ class AblationCO2Manager(SerialLaserManager):
             x, y = sm.get_hole_xy(pos)
 
         z = self._z
-        xs = 5000
-        ys = 5000
-        zs = 100
+        #xs = 5000
+        #ys = 5000
+        #zs = 100
 
         self._alive = True
         self.debug('pos={}, x={}, y={}'.format(pos, x, y))
@@ -186,7 +192,7 @@ class AblationCO2Manager(SerialLaserManager):
             y *= sm.y_sign
             z *= sm.z_sign
 
-        cmd = 'SetPosition {:0.0f},{:0.0f},{:0.0f},{:0.0f},{:0.0f},{:0.0f}'.format(x, y, z, xs, ys, zs)
+        cmd = 'SetPosition {:0.3f},{:0.3f},{:0.3f}'.format(x, y, z)
         self.info('sending {}'.format(cmd))
         self._ask(cmd)
 
@@ -196,7 +202,7 @@ class AblationCO2Manager(SerialLaserManager):
     def _moving(self, xm, ym, zm, block=True):
         r = True
         if block:
-            time.sleep(0.05)
+            time.sleep(0.5)
 
             def cmpfunc(xyz):
                 try:
@@ -208,12 +214,13 @@ class AblationCO2Manager(SerialLaserManager):
                     # return not all([abs(ab[0] - ab[1]) <= 2 for ab in zip(list(map(float, xyz.split(','))),
                     #                        (xm, ym, zm))])
 
-                    return not all(abs(a - b) <= 10 for a, b in zip(ps, (xm, ym, zm)))
+                    return not all(abs(a - b) <= 0.01 for a, b in zip(ps, (xm, ym, zm)))
                 except ValueError as e:
                     print('_moving exception {}'.format(e))
 
-            r = self._block(cmd='ReadPosition\n', cmpfunc=cmpfunc, period=1)
+            r = self._block(cmd='ReadPosition', cmpfunc=cmpfunc, period=1)
             self._alive = False
+            time.sleep(0.5)
             self.update_position()
         return r
 
