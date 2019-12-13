@@ -33,9 +33,15 @@ HW_PACKAGE_MAP = {
     'ThermoRack': 'pychron.hardware.thermorack',
     'MicroIonController': 'pychron.hardware.gauges.granville_phillips.micro_ion_controller',
     'PychronMicroIonController': 'pychron.hardware.gauges.granville_phillips.pychron_micro_ion_controller',
+
+    # QtegraMicroIonController is deprecated use QtegraGaugeController instead
     'QtegraMicroIonController': 'pychron.hardware.gauges.granville_phillips.pychron_micro_ion_controller',
+    'QtegraGaugeController': 'pychron.hardware.gauges.qtegra.qtegra_gauge_controller',
+
     'MKSController': 'pychron.hardware.gauges.mks.controller',
     'PfeifferMaxiGaugeController': 'pychron.hardware.gauges.pfeiffer.maxi_gauge_controller',
+    'XGS600GaugeController': 'pychron.hardware.gauges.varian.varian_gauge_controller',
+
     'ArgusController': 'pychron.hardware.thermo_spectrometer_controller',
     'HelixController': 'pychron.hardware.thermo_spectrometer_controller',
     'FerrupsUPS': 'pychron.hardware.FerrupsUPS',

@@ -17,7 +17,9 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 from __future__ import absolute_import
+
 import time
+
 # ============= local library imports  ==========================
 from pychron.hardware.gauges.granville_phillips.micro_ion_controller import MicroIonController
 
@@ -41,27 +43,19 @@ class PychronMicroIonController(MicroIonController):
 
 
 class QtegraMicroIonController(MicroIonController):
-    def get_pressures(self, verbose=False):
-        kw = {'verbose': verbose, 'force': True}
-        for d in self.gauges:
-            ig = self.ask('GetParameter {}'.format(d.name), **kw)
-            self._set_gauge_pressure(d.name, ig)
+    def load_additional_args(self, config, *args, **kw):
+        self.warning_dialog('QtegraMicroIonController is deprecated and will be removed soon. Please use '
+                            'QtegraGaugeController instead')
 
-    # def get_pressure(self, name, **kw):
-    #     k=''
-    #     return self.ask('GetParameter {}'.format(k))
-    #
-    # def get_ion_pressure(self, **kw):
-    #     k=''
-    #     return self.ask('GetParameter {}'.format(k))
-    #
-    # def get_convectron_a_pressure(self, **kw):
-    #     k=''
-    #     return self.ask('GetParameter {}'.format(k))
-    #
-    # def get_convectron_b_pressure(self, **kw):
-    #     k=''
-    #     return self.ask('GetParameter {}'.format(k))
+        self.display_name = self.config_get(config, 'General', 'display_name', default=self.name)
+        self._load_gauges(config)
+        return True
+
+    def get_pressures(self, verbose=False):
+        for g in self.gauges:
+            ig = self.ask('GetParameter {}'.format(g.name), verbose=verbose, force=True)
+            self._set_gauge_pressure(g.name, ig)
+
 # ============= EOF =============================================
 
 

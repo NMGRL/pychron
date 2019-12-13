@@ -148,6 +148,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
 
     summary_age_nsigma = dumpable(Enum(1, 2, 3))
     summary_kca_nsigma = dumpable(Enum(1, 2, 3))
+    summary_trapped_ratio_nsigma = dumpable(Enum(1, 2, 3))
     summary_mswd_sig_figs = dumpable(Int(2))
     summary_percent_ar39_sig_figs = dumpable(Int(1))
 
@@ -386,7 +387,8 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                                        HGroup(iisum('age', 'Age'),
                                               Item('summary_age_nsigma', label=SIGMA)),
                                        iisum('comments', 'Comments'),
-                                       iisum('trapped', 'Trapped 40/36'),
+                                       HGroup(iisum('trapped', 'Trapped 40/36'),
+                                              Item('summary_trapped_ratio_nsigma', label=SIGMA)),
                                        enabled_when=isum('sheet'),
                                        label='Columns')
         summary_sigfigs = BorderVGroup(Item('summary_mswd_sig_figs', label='MSWD'),

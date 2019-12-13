@@ -99,15 +99,23 @@ def create_issue(issue):
 
 
 def git_post(cmd, return_json=True, **kw):
-    usr = os.environ.get('GITHUB_USER')
-    pwd = os.environ.get('GITHUB_PASSWORD')
 
-    if not pwd:
-        warning(None, 'No password set for "{}". Contact Developer.\n'
-                      'Pychron will quit when this window is closed'.format(usr))
+    tok = os.environ.get('GITHUB_TOKEN')
+
+    if not tok:
+        usr = os.environ.get('GITHUB_USER')
+        pwd = os.environ.get('GITHUB_PASSWORD')
+        if usr and pwd:
+            warning(None, 'Password authentication deprecated. Please update to a Github token. Contact Pychron '
+                          'Developers.\n'
+                          'Pychron will quit when this window is closed'.format(usr))
+        else:
+            warning(None, 'No Github token set for "{}". Please set the GITHUB_TOKEN environment variable or Contact '
+                          'Pychron Developers\n'
+                          'Pychron will quit when this window is closed')
         sys.exit()
 
-    kw['auth'] = (usr, pwd)
+    kw['auth'] = (tok, '')
     if globalv.cert_file:
         kw['verify'] = globalv.cert_file
 

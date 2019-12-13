@@ -124,8 +124,7 @@ def ask_config():
         cfg[key] = vv
 
     config = {'github_org': 'NMGRL',
-              'github_user': 'nmgrluser',
-              'github_pwd': '',
+              'github_token': '',
               'massspec_db_version': 16,
               'fork': 'NMGRL',
               'branch': 'develop',
@@ -144,8 +143,7 @@ def ask_config():
     ask(config, 'use_all_defaults', 'Use all defaults')
     if config['use_all_defaults'] not in YES:
         ask(config, 'github_org', 'Github organization')
-        ask(config, 'github_user', 'Github user name')
-        ask(config, 'github_pwd', 'Github password')
+        ask(config, 'github_token', 'Github token')
         ask(config, 'massspec_db_version', 'MassSpec Database Version')
         ask(config, 'fork', 'Pychron Fork')
         ask(config, 'branch', 'Pychron Branch')
@@ -255,8 +253,7 @@ def install_launcher_script(cfg):
         lpath = 'pychron_launcher.bat'
         txt = '''
 set GITHUB_ORGANIZATION={github_org:}
-set GITHUB_USER={github_user:}
-set GITHUB_PASSWORD={github_pwd:}
+set GITHUB_TOKEN={github_token:}
 set MassSpecDBVersion={massspec_db_version:}
 set CONDA_ENV={conda_env_name:}
 set CONDA_DISTRO={conda_distro:}
@@ -277,8 +274,7 @@ set PYTHONPATH=%ROOT%
         lpath = 'pychron_launcher.sh'
         txt = '''#!/bin/bash
 export GITHUB_ORGANIZATION={github_org:}
-export GITHUB_USER={github_user:}
-export GITHUB_PASSWORD={github_pwd:}
+export GITHUB_TOKEN={github_token:}
 export MassSpecDBVersion={massspec_db_version:}
 export CONDA_ENV={conda_env_name:}
 export CONDA_DISTRO={conda_distro:}

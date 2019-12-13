@@ -32,6 +32,13 @@ from pychron import version
 from pychron.database.core.base_orm import AlembicVersionTable
 from pychron.database.core.query import compile_query
 from pychron.loggable import Loggable
+from pychron.regex import IPREGEX
+
+
+def obscure_host(h):
+    if IPREGEX.match(h):
+        h = 'x.x.x.{}'.format(h.split('.')[-1])
+    return h
 
 
 def binfunc(ds, hours):
@@ -372,6 +379,16 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
         q = self.session.query(AlembicVersionTable)
         mv = q.one()
         return mv
+
+    @property
+    def public_datasource_url(self):
+        if self.kind == 'sqlite':
+            url = '{}:{}'.format(os.path.basename(os.path.dirname(self.path)),
+                                 os.path.basename(self.path))
+        else:
+
+            url = '{}:{}'.format(obscure_host(self.host), self.name)
+        return url
 
     @cached_property
     def _get_datasource_url(self):

@@ -305,10 +305,18 @@ class FindFluxMonitorsNode(BaseFindFluxNode):
         d['level'] = self.level
 
     def traits_view(self):
-        v = self._view_factory(Item('irradiation', editor=EnumEditor(name='irradiations')),
-                               Item('level', editor=EnumEditor(name='levels')),
-                               Item('monitor_sample_name', editor=EnumEditor(name='samples')),
-                               Item('use_browser'),
+        sgrp = BorderVGroup(Item('irradiation', editor=EnumEditor(name='irradiations')),
+                            Item('level', editor=EnumEditor(name='levels')),
+                            Item('monitor_sample_name', editor=EnumEditor(name='samples')),
+                            label='Auto Select',
+                            enabled_when='not use_browser')
+
+        bgrp = BorderHGroup(Item('use_browser',
+                                 label='Use Browser',
+                                 tooltip='Use Browser to select monitor analyses manually'),
+                            label='Manual Select')
+
+        v = self._view_factory(VGroup(bgrp, sgrp),
                                width=300,
                                title='Select Irradiation and Level')
         return v
