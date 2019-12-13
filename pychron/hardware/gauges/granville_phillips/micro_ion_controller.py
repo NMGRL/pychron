@@ -29,15 +29,6 @@ class MicroIonController(BaseMicroIonController, CoreDevice):
     scan_func = 'get_pressures'
     gauge_klass = BaseGauge
 
-    def gauge_view(self):
-        v = View(Group(Item('gauges', style='custom',
-                            show_label=False,
-                            editor=ListEditor(mutable=False,
-                                              style='custom',
-                                              editor=InstanceEditor())),
-                       show_border=True,
-                       label=self.display_name))
-        return v
 
     def graph_builder(self, g):
         super(MicroIonController, self).graph_builder(g, show_legend=True)
