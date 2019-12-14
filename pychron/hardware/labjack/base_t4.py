@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2016 Jake Ross
+# Copyright 2019 ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,41 +13,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
-# ============= enthought library imports =======================
-# ============= standard library imports ========================
-import u3
-from LabJackPython import NullHandleException
-# ============= local library imports  ==========================
+from pychron.hardware.labjack.base_labjack import BaseLabjack
 
 
-class BaseU3LV:
-    _device = None
-    _dio_mapping = None
+class BaseT4(BaseLabjack):
 
     def load(self, *args, **kw):
-        self._dio_mapping = {}
 
-        try:
-            self._device = u3.U3()
-        except NullHandleException:
-            return
 
         config = self.get_configuration()
         if config:
             return self.load_additional_args(config)
 
     def open(self, *args, **kw):
+        try:
+            self._device = self._create_device()
+        except NullHandleException:
+            return
+
         return True
 
     def load_additional_args(self, config):
-        mapping = {}
-        section = 'DIOMapping'
-        if config.has_section(section):
-            for option in config.options(section):
-                u3channel = config.get(section, option)
-                mapping[option] = getattr(u3, u3channel)
-        self._dio_mapping = mapping
 
         return True
 
@@ -78,14 +64,6 @@ class BaseU3LV:
         v = self._device.getFIOState(ch)
         return v
 
-    def read_temperature(self):
-        v = self._device.getTemperature()
-        return v
-
-    def close(self):
-        self._device.reset(True)
-        self._device.close()
-
     # private
     def _get_pin(self, ch):
         try:
@@ -95,6 +73,3 @@ class BaseU3LV:
             self.warning('DIOMapping {}'.format(self._dio_mapping))
 
 # ============= EOF =============================================
-
-
-
