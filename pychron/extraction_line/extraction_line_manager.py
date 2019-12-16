@@ -230,12 +230,10 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def test_valve_communication(self):
         self.info('test valve communication')
-
+        print('asdf', self.switch_manager,  hasattr(self.switch_manager, 'get_state_checksum'))
         ret, err = True, ''
         if self.switch_manager:
-            if self.switch_manager.simulation:
-                ret = globalv.communication_simulation
-            elif hasattr(self.switch_manager, 'get_state_checksum'):
+            if hasattr(self.switch_manager, 'get_state_checksum'):
                 valves = self.switch_manager.switches
                 vkeys = sorted(valves.keys())
                 state = self.switch_manager.get_state_checksum(vkeys)

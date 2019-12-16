@@ -14,38 +14,47 @@
 # limitations under the License.
 # ===============================================================================
 from pychron.hardware.labjack.base_labjack import BaseLabjack
-from traits.api import Enum, Str
+from traits.api import Enum, Str, HasTraits
+from pychron.hardware.core.data_helper import make_bitarray
 
 from labjack import ljm
 
 
-class BaseT4(BaseLabjack):
+class BaseT4(BaseLabjack, HasTraits):
 
     connection_type = Enum('ANY', 'USB', 'TCP', 'ETHERNET',  'WIFI')
     identifier = Str
-
+    dio = Str
+    
     def load(self, *args, **kw):
         config = self.get_configuration()
         if config:
             return self.load_additional_args(config)
 
     def open(self, *args, **kw):
-
         self._device = ljm.openS('T4', self.connection_type, self.identifier)
-        # try:
-        #     self._device = self._create_device()
-        # except NullHandleException:
-        #     return
-
         return True
 
     def load_additional_args(self, config):
-        self.set_attribute(config, 'connection_type', 'Communications', 'connection_type')
+        
+        ct = self.config_get(config, 'Communications', 'type')
+        if ct:
+            try:
+                self.connection_type = ct.upper()
+            except TraitError:
+                self.warning('Invalid connection type. {}'.format(ct))
+                
         self.set_attribute(config, 'identifier', 'Communications', 'identifier')
+        self.set_attribute(config, 'dio', 'General', 'dio')
 
         return True
 
     def initialize(self, *args, **kw):
+        if self.dio:
+            for dio in self.dio.split(','):
+                # read from the dio
+                self.get_channel_state(dio)
+        
         return True
 
     def set_channel_state(self, ch, state):
@@ -58,11 +67,22 @@ class BaseT4(BaseLabjack):
         ljm.eWriteName(self._device, ch, int(state))
 
     def get_channel_state(self, ch):
-        result = ljm.eReadName(self._device, ch)
-        return result
-
+        ret = None
+        if ch.lower().startswith('eio'):
+            ret = self._get_eio_state(ch)
+    
+        return ret
+    
     def read_dac_channel(self, ch):
         pass
 
     # private
+    def _get_eio_state(self, ch):
+        v = ljm.eReadName(self._device, 'EIO_STATE')
+        ba = make_bitarray(int(v))
+        self.debug('eio state={} ba={}, ch={}'.format(int(v), ba, ch))
+        
+        idx = 7 - int(ch[3:])
+        return bool(int(ba[idx]))
+        
 # ============= EOF =============================================

@@ -17,11 +17,4 @@
 class BaseLabjack:
     _device = None
 
-    def read_temperature(self):
-        v = self._device.getTemperature()
-        return v
-
-    def close(self):
-        self._device.reset(True)
-        self._device.close()
 # ============= EOF =============================================
