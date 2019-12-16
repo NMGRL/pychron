@@ -21,17 +21,6 @@ from pychron.hardware.gauges.base_controller import BaseGauge, BaseGaugeControll
 
 
 class PfeifferMaxiGaugeController(BaseGaugeController, CoreDevice):
-    gauge_klass = BaseGauge
-    scan_func = 'update_pressures'
-
-    def initialize(self, *args, **kw):
-        return True
-
-    def get_pressures(self, verbose=False):
-        # this could be moved to BaseGaugeController
-        self.update_pressures()
-        return [g.pressure for g in self.gauges]
-
     def _read_pressure(self, name=None, verbose=False):
         if name is not None:
             gauge = name
@@ -67,15 +56,5 @@ class PfeifferMaxiGaugeController(BaseGaugeController, CoreDevice):
         # self.mode = self.config_get(config, 'Communications', 'mode', default='rs485')
         self._load_gauges(config)
         return True
-
-    def gauge_view(self):
-        v = View(Group(Item('gauges', style='custom',
-                            show_label=False,
-                            editor=ListEditor(mutable=False,
-                                              style='custom',
-                                              editor=InstanceEditor())),
-                       show_border=True,
-                       label=self.display_name))
-        return v
 
 # ============= EOF =============================================

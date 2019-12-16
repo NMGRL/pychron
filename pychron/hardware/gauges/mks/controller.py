@@ -102,14 +102,5 @@ class MKSController(BaseGaugeController, CoreDevice):
         self._load_gauges(config)
         return True
 
-    def gauge_view(self):
-        v = View(Group(Item('gauges', style='custom',
-                            show_label=False,
-                            editor=ListEditor(mutable=False,
-                                              style='custom',
-                                              editor=InstanceEditor())),
-                       show_border=True,
-                       label=self.display_name))
-        return v
 
 # ============= EOF =============================================

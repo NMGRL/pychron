@@ -14,9 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 
-import six
 from traits.api import HasTraits, List, Str, Float, Int
-from traitsui.api import View, HGroup, Item
+from traitsui.api import View, HGroup, Item, Group, InstanceEditor, ListEditor
 
 from pychron.core.ui.color_map_bar_editor import BarGaugeEditor
 
@@ -69,7 +68,7 @@ class BaseGaugeController(HasTraits):
                      if gi.name == name or gi.display_name == name), None)
 
     def get_pressure(self, gauge, force=False, verbose=False):
-        if isinstance(gauge, (str, six.text_type)):
+        if isinstance(gauge, str):
             gauge = self.get_gauge(gauge)
         if gauge is not None:
             if force:
@@ -77,9 +76,9 @@ class BaseGaugeController(HasTraits):
 
             return gauge.pressure
 
-    def get_pressures(self, force=False):
+    def get_pressures(self, force=False, **kw):
         if force:
-            self.update_pressures()
+            self.update_pressures(**kw)
 
         return [g.pressure for g in self.gauges]
 
@@ -90,7 +89,7 @@ class BaseGaugeController(HasTraits):
         raise NotImplementedError
 
     def _set_gauge_pressure(self, gauge, v):
-        if isinstance(gauge, (str, six.text_type)):
+        if isinstance(gauge, str):
             gauge = self.get_gauge(gauge)
 
         if gauge is not None:
@@ -156,4 +155,14 @@ class BaseGaugeController(HasTraits):
                 g.on_trait_change(self._pressure_change, 'pressure')
 
                 self.gauges.append(g)
+
+    def gauge_view(self):
+        v = View(Group(Item('gauges', style='custom',
+                            show_label=False,
+                            editor=ListEditor(mutable=False,
+                                              style='custom',
+                                              editor=InstanceEditor())),
+                       show_border=True,
+                       label=self.display_name))
+        return v
 # ============= EOF =============================================
