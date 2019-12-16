@@ -174,21 +174,24 @@ class BaseStageManager(Manager):
         self.debug('User entered calibrated position {}'.format(new))
         self.goto_position(new)
 
-    def _stage_map_name_changed(self, new):
+    def _stage_map_name_changed(self, old, new):
         if new:
             self.debug('setting stage map to {}'.format(new))
             root = self.root
             path = os.path.join(root, add_extension(new, '.txt'))
             sm = self.stage_map_klass(file_path=path)
 
-            self.tray_calibration_manager.load_calibration(stage_map=new)
+            if sm.load():
+                self.tray_calibration_manager.load_calibration(stage_map=new)
 
-            self.canvas.set_map(sm)
-            self.canvas.request_redraw()
+                self.canvas.set_map(sm)
+                self.canvas.request_redraw()
 
-            self.stage_map = sm
+                self.stage_map = sm
 
-            self._stage_map_changed_hook()
+                self._stage_map_changed_hook()
+            else:
+                self.stage_map_name = old
 
     # defaults
     def _root_default(self):

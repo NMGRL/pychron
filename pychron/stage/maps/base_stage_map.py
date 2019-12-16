@@ -72,9 +72,9 @@ class BaseStageMap(Loggable):
     # should always be N,E,S,W,center
     calibration_holes = None
 
-    def __init__(self, *args, **kw):
-        super(BaseStageMap, self).__init__(*args, **kw)
-        self.load()
+    # def __init__(self, *args, **kw):
+    #     super(BaseStageMap, self).__init__(*args, **kw)
+    #     self.load()
 
     def load(self):
         self.debug('loading stage map file {}'.format(self.file_path))
@@ -106,20 +106,12 @@ class BaseStageMap(Loggable):
             hi = 0
             sms = []
             for line in rfile:
-                if not line.startswith('#'):
-
-                    # try:
-                    #     hole, x, y = line.split(',')
-                    # except ValueError:
-                    #     try:
-                    #         x, y = line.split(',')
-                    #         hole = str(hi + 1)
-                    #     except ValueError:
-                    #         break
-                    h = self._hole_factory(hi, line, shape, dimension,
-                                           valid_holes)
+                line = line.strip()
+                if line and not line.startswith('#'):
+                    h = self._hole_factory(hi, line, shape, dimension, valid_holes)
                     if h is None:
-                        break
+                        self.warning_dialog('Invalid Stage Map {}'.format(self.name))
+                        return
 
                     sms.append(h)
                     hi += 1
@@ -127,6 +119,7 @@ class BaseStageMap(Loggable):
                 self.sample_holes = sms
 
             self._load_hook()
+            return True
 
     def row_dict(self):
         return {k: list(v) for k, v in self._grouped_rows()}

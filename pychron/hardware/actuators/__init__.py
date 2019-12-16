@@ -77,13 +77,16 @@ def trim_affirmative(func):
 
 
 base = 'pychron.hardware'
+abase='{}.actuators'.format(base)
+
 PACKAGES = dict(AgilentGPActuator='{}.agilent.agilent_gp_actuator'.format(base),
                 AgilentMultifunction='{}.agilent.agilent_multifunction'.format(base),
                 ArduinoGPActuator='{}.arduino.arduino_gp_actuator'.format(base),
-                QtegraGPActuator='{}.actuators.qtegra_gp_actuator'.format(base),
-                PychronGPActuator='{}.actuators.pychron_gp_actuator'.format(base),
-                NGXGPActuator='{}.actuators.ngx_gp_actuator'.format(base),
-                WiscArGPActuator='{}.actuators.wiscar_actuator'.format(base),
-                NMGRLFurnaceActuator='{}.actuators.nmgrl_furnace_actuator'.format(base),
-                DummyGPActuator='{}.actuators.dummy_gp_actuator'.format(base),
-                RPiGPIO='{}.rpi_gpio'.format(base))
+                QtegraGPActuator='{}.qtegra_gp_actuator'.format(abase),
+                PychronGPActuator='{}.pychron_gp_actuator'.format(abase),
+                NGXGPActuator='{}.ngx_gp_actuator'.format(abase),
+                WiscArGPActuator='{}.wiscar_actuator'.format(abase),
+                NMGRLFurnaceActuator='{}.nmgrl_furnace_actuator'.format(abase),
+                DummyGPActuator='{}.dummy_gp_actuator'.format(abase),
+                RPiGPIO='{}.rpi_gpio'.format(base),
+                T4Actuator='{}.t4_actuator'.format(abase))
