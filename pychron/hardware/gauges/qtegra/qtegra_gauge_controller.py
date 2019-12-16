@@ -23,10 +23,22 @@ class QtegraGaugeController(BaseGaugeController, CoreDevice):
         self._load_gauges(config)
         return True
 
+    def get_pressures(self, *args, **kw):
+        kw['force'] = True
+        return super(QtegraGaugeController, self).get_pressures(*args, **kw)
+
     def _read_pressure(self, name=None, verbose=False):
         pressure = 'err'
+
+        if isinstance(name, str):
+            gauge = self.get_gauge(name)
+            name = gauge.name
+        else:
+            name = name.name
+
         if name is not None:
             pressure = self.ask('GetParameter {}'.format(name), verbose=True)
+
         return pressure
 
 # ============= EOF =============================================
