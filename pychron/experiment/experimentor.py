@@ -87,7 +87,11 @@ class Experimentor(DVCIrradiationable):
         self._update_queues()
 
     def update_info(self):
-        self._update()
+        try:
+            self._update()
+        except BaseException as e:
+            self.debug_exception()
+            self.warning_dialog('Failed updating info: Error={}'.format(e))
 
     # ===============================================================================
     # info update
@@ -257,11 +261,7 @@ class Experimentor(DVCIrradiationable):
 
     @on_trait_change('experiment_queue:refresh_info_needed')
     def _handle_refresh(self):
-        try:
-            self.update_info()
-        except BaseException as e:
-            self.debug_exception()
-            self.warning_dialog('Failed updating info: Error={}'.format(e))
+        self.update_info()
 
     @on_trait_change('experiment_queue:selected')
     def _selected_changed(self, new):
