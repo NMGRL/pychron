@@ -26,7 +26,7 @@ class QtegraGaugeController(BaseGaugeController, CoreDevice):
     def _read_pressure(self, name=None, verbose=False):
         pressure = 'err'
         if name is not None:
-            pressure = self.ask('GetParameter {}'.format(name), verbose=verbose)
+            pressure = self.ask('GetParameter {}'.format(name), verbose=True)
         return pressure
 
 # ============= EOF =============================================

@@ -76,9 +76,9 @@ class BaseGaugeController(HasTraits):
 
             return gauge.pressure
 
-    def get_pressures(self, force=False):
+    def get_pressures(self, force=False, **kw):
         if force:
-            self.update_pressures()
+            self.update_pressures(**kw)
 
         return [g.pressure for g in self.gauges]
 
