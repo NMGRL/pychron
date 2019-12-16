@@ -20,17 +20,6 @@ from pychron.hardware.gauges.base_controller import BaseGauge, BaseGaugeControll
 
 
 class BaseVarianGaugeController(BaseGaugeController, CoreDevice):
-    gauge_klass = BaseGauge
-    scan_func = 'update_pressures'
-
-    def initialize(self, *args, **kw):
-        return True
-
-    def get_pressures(self, verbose=False):
-        # this could be moved to BaseGaugeController
-        self.update_pressures()
-        return [g.pressure for g in self.gauges]
-
     def load_additional_args(self, config, *args, **kw):
         self.address = self.config_get(config, 'General', 'address', optional=False)
         self.display_name = self.config_get(config, 'General', 'display_name', default=self.name)
