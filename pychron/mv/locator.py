@@ -165,7 +165,7 @@ class Locator(Loggable):
         fa = self._get_filter_target_area(shape, dim)
         phigh, plow = None, None
 
-        for low, high in self._generate_steps(src, search):
+        for low, high in self._generate_steps(src, search)():
             self.debug('bandwidth low={}, high={}'.format(low, high))
 
             if inverted:
