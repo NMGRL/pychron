@@ -269,7 +269,7 @@ class MotionController(CoreDevice):
         self.z_progress = z
 
     def _check_moving(self, axis=None, verbose=True):
-        m = self._moving(axis=axis, verbose=False)
+        m = self._moving(axis=axis, verbose=verbose)
         if verbose:
             self.debug('is moving={}'.format(m))
 
@@ -343,7 +343,7 @@ class MotionController(CoreDevice):
                 return self.timer.isActive()
         else:
             self.debug('check moving={}'.format(axis))
-            period = 0.25
+            period = 0.15
 
             def func():
                 return self._moving(axis=axis, verbose=False)
@@ -351,9 +351,11 @@ class MotionController(CoreDevice):
         cnt = 0
         threshold = 0 if timer else 1
         while 1:
-            st = time.time()
 
+            st = time.time()
             a = func()
+            et = time.time() - st
+
             if not a:
                 cnt += 1
                 if cnt > threshold:
@@ -361,8 +363,9 @@ class MotionController(CoreDevice):
             else:
                 cnt = 0
 
-            p = max(0, period - (time.time() - st))
-            time.sleep(p)
+            s = max(0, period - et)
+            if s:
+                time.sleep(s)
 
         self.debug('block finished')
 
