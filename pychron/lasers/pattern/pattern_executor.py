@@ -249,7 +249,7 @@ class PatternExecutor(Patternable):
                     break
 
                 self.info('doing pattern iteration {}'.format(ni))
-                self._execute_iteration()
+                self._execute_iteration(ni)
 
             self.controller.linear_move(pat.cx, pat.cy, block=True, source='execute_xy_pattern')
             if pat.disable_at_end:
@@ -263,7 +263,7 @@ class PatternExecutor(Patternable):
             self.controller.stop()
             self.laser_manager.emergency_shutoff(str(e))
 
-    def _execute_iteration(self):
+    def _execute_iteration(self, i):
         controller = self.controller
         pattern = self.pattern
         if controller is not None:
@@ -276,16 +276,21 @@ class PatternExecutor(Patternable):
             elif kind in ('SeekPattern', 'DragonFlyPeakPattern'):
                 self._execute_seek(controller, pattern)
             else:
-                self._execute_points(controller, pattern, multipoint=False)
+                self._execute_points(controller, pattern, i,  multipoint=False)
 
-    def _execute_points(self, controller, pattern, multipoint=False):
+    def _execute_points(self, controller, pattern, iteration, multipoint=False):
         pts = pattern.points_factory()
         if multipoint:
             controller.multiple_point_move(pts, velocity=pattern.velocity)
         else:
-            for x, y in pts:
+            for i, (x, y) in enumerate(pts):
+                if iteration > 0 and i == 0:
+                    continue
+
                 if not self.isPatterning():
                     break
+
+                self.debug('Pattern pt {}-{}: {},{}'.format(iteration, i, x, y))
                 controller.linear_move(x, y, block=True,
                                        velocity=pattern.velocity)
 

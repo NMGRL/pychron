@@ -261,7 +261,7 @@ class MotionController(CoreDevice):
         self.z_progress = z
 
     def _check_moving(self, axis=None, verbose=True):
-        m = self._moving(axis=axis, verbose=verbose)
+        m = self._moving(axis=axis)
         if verbose:
             self.debug('is moving={}'.format(m))
 
@@ -271,7 +271,7 @@ class MotionController(CoreDevice):
         else:
             self._not_moving_count = 0
 
-        if self._not_moving_count > 2:
+        if self._not_moving_count > 1:
             if verbose:
                 self.debug('not moving cnt={}'.format(self._not_moving_count))
             self._not_moving_count = 0
@@ -348,39 +348,37 @@ class MotionController(CoreDevice):
             event.clear()
 
         timer = self.timer
-        period = 0.25
 
         if timer is not None:
             self.debug('using existing timer')
+            period = 0.05
 
             def func():
                 return self.timer.isActive()
         else:
             self.debug('check moving={}'.format(axis))
+            period = 0.15
 
             def func():
                 return self._moving(axis=axis, verbose=False)
 
-        i = 0
         cnt = 0
-        threshold = 5
-        # fn = func.func_name
-        # n = 10
+        threshold = 0 if timer is not None else 2
         while 1:
+            st = time.time()
             a = func()
-            # if i % n == 0:
-            #     self.debug('blocking {} {}'.format(fn, a))
+            et = time.time() - st
 
-            time.sleep(period)
-            if i > 100:
-                i = 0
             if not a:
+                cnt += 1
                 if cnt > threshold:
                     break
-                cnt += 1
             else:
                 cnt = 0
-            i += 1
+
+            s = max(0, period - et)
+            if s:
+                time.sleep(s)
 
         self.debug('block finished')
 
