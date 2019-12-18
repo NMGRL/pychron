@@ -118,7 +118,7 @@ class BaseSeries(BaseArArFigure):
         """
         # plots = (pp for pp in plots if self._has_attr(pp.name))
 
-        omits = self._get_omitted_by_tag(self.sorted_analyses)
+        omits = self.analysis_group.get_omitted_by_tag(self.sorted_analyses)
         for o in omits:
             self.sorted_analyses[o].set_temp_status('omit')
 

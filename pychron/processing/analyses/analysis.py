@@ -268,8 +268,12 @@ class IdeogramPlotable(HasTraits):
     def refresh_view(self):
         pass
 
-    def is_omitted(self, tags=None):
-        return self.is_omitted_by_tag(tags) and self.temp_selected
+    def is_omitted(self, tags=None, omit_by_tag=True):
+        ret = False
+        if omit_by_tag:
+            ret = self.is_omitted_by_tag(tags)
+
+        return ret and self.temp_selected
 
     def is_omitted_by_tag(self, tags=None):
         if tags is None:

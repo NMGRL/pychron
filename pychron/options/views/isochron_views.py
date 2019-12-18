@@ -89,6 +89,10 @@ class InverseIsochronMainOptions(TitleSubOptions):
                                    Item('age_sig_figs', label='SigFigs'),
                                    label='Age'), )
 
+        tgrp = BorderVGroup(Item('omit_by_tag', label='Omit Tags',
+                                 tooltip='If selected only analyses tagged as "OK" are included in the calculations'),
+                            label='Tags')
+
         results_grp = BorderVGroup(Item('show_results_info', label='Display Results'),
                                    VGroup(agrp, bgrp, enabled_when='show_results_info'),
                                    label='Results')
@@ -113,7 +117,7 @@ class InverseIsochronMainOptions(TitleSubOptions):
                    marker_grp,
                    error_display_grp,
                    label_grp,
-
+                   tgrp,
                    BorderVGroup(Item('show_nominal_intercept'),
                                 HGroup(Item('nominal_intercept_label', label='Label',
                                             enabled_when='show_nominal_intercept'),

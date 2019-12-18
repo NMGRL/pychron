@@ -506,7 +506,7 @@ class InverseIsochron(Isochron):
         label.request_redraw()
 
     def replot(self):
-        sel = self._get_omitted_by_tag(self.analyses)
+        sel = self.analysis_group.get_omitted_by_tag(self.analyses)
         if len(sel) < self.analysis_group.nanalyses:
             self._rebuild_iso(sel)
 
