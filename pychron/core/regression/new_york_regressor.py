@@ -13,9 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from __future__ import absolute_import
-from __future__ import print_function
-
 # ============= enthought library imports =======================
 from numpy import linspace, Inf, identity
 from scipy.optimize import fsolve
@@ -28,6 +25,7 @@ from uncertainties import ufloat
 from pychron.core.regression.ols_regressor import OLSRegressor
 from pychron.core.stats import calculate_mswd2
 from pychron.core.stats.core import validate_mswd
+from pychron.pychron_constants import SEM, MSEM
 
 
 class YorkRegressor(OLSRegressor):
@@ -140,8 +138,8 @@ class YorkRegressor(OLSRegressor):
     def get_intercept_error(self):
         if self.error_calc_type == 'CI':
             e = self.calculate_ci_error(0)[0]
-        elif self.error_calc_type == 'SEM':
-            e = (self.get_intercept_variance()**0.5) * self.n**-0.5
+        elif self.error_calc_type in (SEM, MSEM):
+            e = (self.get_intercept_variance() ** 0.5) * self.n ** -0.5
         else:
             e = self.get_intercept_variance() ** 0.5
         return e
