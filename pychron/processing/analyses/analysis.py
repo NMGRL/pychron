@@ -269,7 +269,7 @@ class IdeogramPlotable(HasTraits):
         pass
 
     def is_omitted(self, tags=None):
-        return self.is_omitted_by_tag(tags) or self.temp_selected
+        return self.is_omitted_by_tag(tags) and self.temp_selected
 
     def is_omitted_by_tag(self, tags=None):
         if tags is None:
@@ -292,6 +292,7 @@ class IdeogramPlotable(HasTraits):
             self.subgroup = tag.get('subgroup', '')
         else:
             self.tag = tag
+        self.temp_status = self.tag
 
     def value_string(self, t):
         a, e = self._value_string(t)
