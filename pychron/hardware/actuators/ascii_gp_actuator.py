@@ -49,6 +49,6 @@ class ASCIIGPActuator(GPActuator):
             cmd = '{}{}{}'.format(cmd, self.delimiter, get_switch_address(obj))
 
         r = self.ask(cmd, verbose=True)
-        return r
+        return r, cmd
 
 # ============= EOF =============================================

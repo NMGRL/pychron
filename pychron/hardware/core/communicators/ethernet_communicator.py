@@ -15,9 +15,6 @@
 # ===============================================================================
 
 # ============= standard library imports ========================
-from __future__ import absolute_import
-from __future__ import print_function
-
 import socket
 import time
 
@@ -103,6 +100,7 @@ class Handler(object):
         data = b''
         while 1:
             s = recv(datasize)
+           
             if not s:
                 break
 
@@ -131,7 +129,7 @@ class Handler(object):
 
 
 class TCPHandler(Handler):
-    def open_socket(self, addr, timeout=1.0):
+    def open_socket(self, addr, timeout=1.0, **kw):
         self.address = addr
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         if globalv.communication_simulation:
@@ -151,13 +149,20 @@ class TCPHandler(Handler):
 
 
 class UDPHandler(Handler):
-    def open_socket(self, addr, timeout=1.0):
+    def open_socket(self, addr, timeout=1.0, bind=False):
         self.address = addr
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         if globalv.communication_simulation:
             timeout = 0.01
         self.sock.settimeout(timeout)
-
+            
+        try:
+            if bind:
+                addr = '', addr[1]
+                self.sock.bind(addr)
+        except BaseException:
+            print('failed binding', addr)
+        
     def get_packet(self, **kw):
         def recv(ds):
             rx, _ = self.sock.recvfrom(ds)
@@ -187,7 +192,7 @@ class EthernetCommunicator(Communicator):
 
     default_timeout = 3
 
-    _comms_report_attrs = ('host', 'port', 'kind', 'timeout')
+    _comms_report_attrs = ('host', 'port', 'read_port', 'kind', 'timeout')
 
     @property
     def address(self):
@@ -259,20 +264,22 @@ class EthernetCommunicator(Communicator):
         return ret
 
     def get_read_handler(self, handler, **kw):
+        
         if self.read_port:
-            handler = self.get_handler(addrs=(self.host, self.read_port), **kw)
-
+            handler = self.get_handler(addrs=(self.host, self.read_port), bind=True, **kw)
+        
         return handler
 
-    def get_handler(self, addrs=None, timeout=None):
+    def get_handler(self, addrs=None, timeout=None, bind=False):
         if timeout is None:
             timeout = self.timeout
         if addrs is None:
             addrs = (self.host, self.port)
 
         try:
+            
             h = self.handler
-            if h is None:
+            if h is None or h.address!=addrs:
                 if self.kind.lower() == 'udp':
                     h = UDPHandler()
                 else:
@@ -280,7 +287,7 @@ class EthernetCommunicator(Communicator):
 
                 # self.debug('get handler cmd={}, {},{} {}'.format(cmd.strip() if cmd is not None else '---', self.host,
                 #                                                  self.port, timeout))
-                h.open_socket(addrs, timeout=timeout)
+                h.open_socket(addrs, timeout=timeout, bind=bind)
                 h.set_frame(self.message_frame)
                 self.handler = h
             return h
@@ -402,10 +409,11 @@ class EthernetCommunicator(Communicator):
             try:
                 return handler.get_packet(message_frame=message_frame)
             except socket.error as e:
-                self.warning('ask. get packet. error: {} address: {}'.format(e, self.address))
+                self.debug_exception()
+                self.warning('ask. get packet. error: {} address: {}'.format(e, handler.address))
                 self.error_mode = True
         except socket.error as e:
-            self.warning('ask. send packet. error: {} address: {}'.format(e, self.address))
+            self.warning('ask. send packet. error: {} address: {}'.format(e, handler.address))
             self.error_mode = True
 
 # ============= EOF ====================================

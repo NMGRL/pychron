@@ -31,15 +31,23 @@ def get_channel(name):
     return command('get', 'valve', name)
 
 
-def actuate(name, action):
-    return set_channel(name, action)
+#def actuate(name, action):
+#    return set_channel(name, action)
 
+def actuate(action):
+    def fa(obj, name):
+        return set_channel(name, action)
+    return fa
 
 def validate_response(resp, cmd):
-    cmd_args = cmd.split(',')
-    args = resp.split(',')
-    return all([c == a for c, a in zip(cmd_args, args)])
-
+    if resp:
+        cmd_args = cmd.split(',')
+        args = resp.split(',')
+        
+        #print('casd', cmd_args)
+        #print('aaaa', args)
+        #return all([c == a for c, a in zip(cmd_args, args)])
+        return cmd_args[2].lower() == args[2].lower()
 
 class WiscArGPActuator(ASCIIGPActuator, ClientMixin):
     """
@@ -51,15 +59,17 @@ class WiscArGPActuator(ASCIIGPActuator, ClientMixin):
     @word
     @sim
     def get_state_word(self, *args, **kw):
-        return self.ask('get,valves,all')
+        return self.ask('get,valves,all', verbose=True)
 
     def get_channel_state(self, obj, *args, **kw):
         cmd = get_channel(get_switch_address(obj))
-        resp = self.ask(cmd)
-
+        resp = self.ask(cmd, verbose=True)
+        
         if validate_response(resp, cmd):
             args = resp.split(',')
-            return args[4].lower() == 'open'
+            return args[3].lower() == 'open'
+        else:
+            self.debug('invalid response: cmd={}, resp={}'.format(cmd, resp))
 
     def affirmative(self, resp, cmd):
         """
@@ -76,10 +86,17 @@ class WiscArGPActuator(ASCIIGPActuator, ClientMixin):
         :return:
         """
         try:
+            print('asfffffdf', resp, cmd)
             if validate_response(resp, cmd):
-                ok = resp.split(',')[4]
-                return to_bool(ok)
+                return all((r.lower()==c.lower() for c, r in list(zip(cmd.split(','), resp.split(',')))[1:]))
+                #respstate = resp.split(',')[4].lower()
+                #resqueststate = cmd.split(',')[3].lower()
+                #self.debug('resp={} request={}'.format(respstate, requeststate))
+                #return respstate ==requeststate
+            else:
+                self.debug('invalid affirmative response: cmd={} resp={}'.format(cmd, resp))
         except BaseException:
+            self.debug_exception()
             return
 
 # ============= EOF =============================================
