@@ -540,7 +540,7 @@ class ExtractionLineManager(Manager, Consoleable):
             do_after(1000, self._update)
 
     def _update(self):
-        if self.use_hardware_update:
+        if self.use_hardware_update and self._active:
             self.switch_manager.load_hardware_states()
             self.switch_manager.load_valve_owners()
             do_after(self.hardware_update_period * 1000, self._update)
