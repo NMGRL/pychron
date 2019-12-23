@@ -273,7 +273,7 @@ class IdeogramPlotable(HasTraits):
         if omit_by_tag:
             ret = self.is_omitted_by_tag(tags)
 
-        return ret and self.temp_selected
+        return ret or self.temp_selected
 
     def is_omitted_by_tag(self, tags=None):
         if tags is None:
