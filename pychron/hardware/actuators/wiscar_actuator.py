@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from pychron.core.helpers.strtools import to_bool
 from pychron.hardware.actuators import get_switch_address, word, sim
 from pychron.hardware.actuators.ascii_gp_actuator import ASCIIGPActuator
 from pychron.hardware.actuators.client_gp_actuator import ClientMixin
@@ -31,23 +30,26 @@ def get_channel(name):
     return command('get', 'valve', name)
 
 
-#def actuate(name, action):
+# def actuate(name, action):
 #    return set_channel(name, action)
 
 def actuate(action):
     def fa(obj, name):
         return set_channel(name, action)
+
     return fa
+
 
 def validate_response(resp, cmd):
     if resp:
         cmd_args = cmd.split(',')
         args = resp.split(',')
-        
-        #print('casd', cmd_args)
-        #print('aaaa', args)
-        #return all([c == a for c, a in zip(cmd_args, args)])
+
+        # print('casd', cmd_args)
+        # print('aaaa', args)
+        # return all([c == a for c, a in zip(cmd_args, args)])
         return cmd_args[2].lower() == args[2].lower()
+
 
 class WiscArGPActuator(ASCIIGPActuator, ClientMixin):
     """
@@ -64,7 +66,7 @@ class WiscArGPActuator(ASCIIGPActuator, ClientMixin):
     def get_channel_state(self, obj, *args, **kw):
         cmd = get_channel(get_switch_address(obj))
         resp = self.ask(cmd, verbose=True)
-        
+
         if validate_response(resp, cmd):
             args = resp.split(',')
             return args[3].lower() == 'open'
@@ -88,11 +90,11 @@ class WiscArGPActuator(ASCIIGPActuator, ClientMixin):
         try:
             print('asfffffdf', resp, cmd)
             if validate_response(resp, cmd):
-                return all((r.lower()==c.lower() for c, r in list(zip(cmd.split(','), resp.split(',')))[1:]))
-                #respstate = resp.split(',')[4].lower()
-                #resqueststate = cmd.split(',')[3].lower()
-                #self.debug('resp={} request={}'.format(respstate, requeststate))
-                #return respstate ==requeststate
+                return all((r.lower() == c.lower() for c, r in list(zip(cmd.split(','), resp.split(',')))[1:]))
+                # respstate = resp.split(',')[4].lower()
+                # resqueststate = cmd.split(',')[3].lower()
+                # self.debug('resp={} request={}'.format(respstate, requeststate))
+                # return respstate ==requeststate
             else:
                 self.debug('invalid affirmative response: cmd={} resp={}'.format(cmd, resp))
         except BaseException:
