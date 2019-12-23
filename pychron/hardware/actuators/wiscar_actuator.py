@@ -58,10 +58,16 @@ class WiscArGPActuator(ASCIIGPActuator, ClientMixin):
     close_cmd = actuate('close')
     open_cmd = actuate('open')
 
-    @word
     @sim
     def get_state_word(self, *args, **kw):
-        return self.ask('get,valves,all', verbose=True)
+        resp = self.ask('get,valve,all', verbose=False)
+        if resp:
+            # convert resp into a word dict
+            args = resp.split(',')
+            # remove the command header args
+            args = args[3:]
+            worddict = {args[i]:args[i+1]=='Open' for i in range(0, len(args), 2)}
+            return worddict
 
     def get_channel_state(self, obj, *args, **kw):
         cmd = get_channel(get_switch_address(obj))
