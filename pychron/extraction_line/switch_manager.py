@@ -526,7 +526,7 @@ class SwitchManager(Manager):
 
                 if ostate != s:
                     states.append((k, s, False))
-
+                    
         for actuator, items in words.items():
             stateword = actuator.get_state_word()
             if stateword:
@@ -535,6 +535,7 @@ class SwitchManager(Manager):
                         s = stateword[address]
                         if s != ostate:
                             states.append((k, s, False))
+                        self.switches[k].set_state(s)
                     except KeyError:
                         self.warning('Failed getting state from valve word={}, '
                                      'valve={}({})'.format(stateword, k, address))
@@ -1169,7 +1170,8 @@ class SwitchManager(Manager):
             track = to_bool(track.text.strip())
 
         use_state_word = v_elem.find('use_state_word')
-        if use_state_word:
+        
+        if use_state_word is not None:
             use_state_word = to_bool(use_state_word.text.strip())
 
         ctx = dict(name=name,
