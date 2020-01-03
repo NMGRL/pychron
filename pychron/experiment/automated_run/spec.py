@@ -302,7 +302,7 @@ class AutomatedRunSpec(HasTraits):
                    analysis_type=an)
 
         for attr in ('disable_between_positions',
-                     'tray' 'duration', 'extract_value', 'extract_units',
+                     'tray', 'duration', 'extract_value', 'extract_units',
                      'pre_cleanup', 'cleanup', 'post_cleanup', 'delay_after',
                      'pattern', 'light_value',
                      'beam_diameter', 'ramp_duration', 'ramp_rate'):

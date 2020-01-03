@@ -30,7 +30,7 @@ from pychron.spectrometer.isotopx.source.ngx import NGXSource
 
 
 class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
-    integration_time = Int
+    #integration_time = Int
     integration_times = List(ISOTOPX_INTEGRATION_TIMES)
 
     magnet_klass = NGXMagnet
@@ -118,7 +118,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                     if datastr:
                         signals = [float(i) for i in datastr.split(',')[5:]]
                         break
-
+        #print('read', keys, signals)
         return keys, signals
 
     def read_integration_time(self):

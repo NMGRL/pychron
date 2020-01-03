@@ -165,6 +165,7 @@ class ExtractionPyScript(ValvePyScript):
                            ramp_rate='',
                            ramp_duration=0,
                            duration=0,
+                           delay_after=0,
                            cleanup=0,
                            pre_cleanup=0,
                            post_cleanup=0,
