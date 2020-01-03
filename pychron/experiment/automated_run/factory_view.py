@@ -18,6 +18,7 @@
 from traits.api import HasTraits, Instance
 from traitsui.api import View, Item, VGroup, Spring, HGroup, ButtonEditor
 
+from pychron.core.pychron_traits import BorderVGroup
 from pychron.core.ui.enum_editor import myEnumEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 
