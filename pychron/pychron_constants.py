@@ -317,6 +317,8 @@ EXTRACTION_ATTRS = ('weight', 'extract_device', 'tray',
                     'load_holder',
                     'extract_duration',
                     'cleanup_duration',
+                    'pre_cleanup_duration',
+                    'post_cleanup_duration',
                     'light_value',
                     'pattern', 'beam_diameter', 'ramp_duration', 'ramp_rate')
 

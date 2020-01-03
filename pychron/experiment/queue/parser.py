@@ -93,6 +93,8 @@ class RunParser(Loggable):
     def _load_numbers(self, header, args, params):
         for attr in ['duration',
                      'cleanup',
+                     'pre_cleanup',
+                     'post_cleanup',
                      ('ramp_duration', 'ramp'),
                      'weight',
                      'delay_after',

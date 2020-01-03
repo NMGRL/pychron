@@ -51,32 +51,32 @@ class FactoryView(HasTraits):
 
     def _get_group(self):
         sspring = lambda width=17: Spring(springy=False, width=width)
-        extract_grp = VGroup(
-            HGroup(sspring(width=33),
-                   Item('extract_value', label='Extract',
-                        tooltip='Set the extract value in extract units',
-                        enabled_when='extractable'),
-                   Item('extract_units',
-                        show_label=False,
-                        editor=myEnumEditor(name='extract_units_names')),
-                   Item('ramp_duration', label='Ramp Dur. (s)'), ),
-            HGroup(
-                Item('use_cdd_warming', label='CDD Warm',
-                     tooltip='Use the CDD warming routine at end of measurement'),
-                # Item('collection_time_zero_offset',
-                #      label='T_o offset (s)',
-                #      tooltip='# of seconds afer inlet opens to set time zero'),
-                Item('overlap', label='Overlap (s)', tooltip='Duration to wait before staring next run')),
-            self._step_heat_group(),
-            HGroup(
-                Item('duration', label='Duration (s)',
-                     tooltip='Set the number of seconds to run the extraction device.'),
-                Item('cleanup', label='Cleanup (s)',
-                     tooltip='Set the number of seconds to getter the sample gas')),
-            HGroup(Item('beam_diameter'), Item('light_value', label='Lighting')),
-            self._position_group(),
-            label='Extract',
-            show_border=True)
+        extract_grp = VGroup(HGroup(sspring(width=33),
+                                    Item('extract_value', label='Extract',
+                                         tooltip='Set the extract value in extract units',
+                                         enabled_when='extractable'),
+                                    Item('extract_units',
+                                         show_label=False,
+                                         editor=myEnumEditor(name='extract_units_names')),
+                                    Item('ramp_duration', label='Ramp Dur. (s)'), ),
+                             HGroup(Item('use_cdd_warming', label='CDD Warm',
+                                         tooltip='Use the CDD warming routine at end of measurement'),
+                                    # Item('collection_time_zero_offset',
+                                    #      label='T_o offset (s)',
+                                    #      tooltip='# of seconds afer inlet opens to set time zero'),
+                                    Item('overlap', label='Overlap (s)',
+                                         tooltip='Duration to wait before staring next run')),
+                             self._step_heat_group(),
+                             HGroup(Item('duration', label='Duration (s)',
+                                         tooltip='Set the number of seconds to run the extraction device.'),
+                                    Item('pre_cleanup', label='Pre Cleanup (s)'),
+                                    Item('cleanup', label='Cleanup (s)',
+                                         tooltip='Set the number of seconds to getter the sample gas'),
+                                    Item('post_cleanup', label='Post Cleanup (s)')),
+                             HGroup(Item('beam_diameter'), Item('light_value', label='Lighting')),
+                             self._position_group(),
+                             label='Extract',
+                             show_border=True)
         return extract_grp
 
     def _position_group(self):

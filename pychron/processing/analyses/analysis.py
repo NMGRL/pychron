@@ -412,6 +412,8 @@ class Analysis(ArArAge, IdeogramPlotable):
     extract_value = 0
     extract_units = ''
     cleanup_duration = 0
+    pre_cleanup_duration = 0
+    post_cleanup_duration = 0
     extract_duration = 0
     extract_device = ''
     position = ''
