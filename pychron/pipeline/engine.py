@@ -1063,7 +1063,7 @@ class PipelineEngine(Loggable):
 
         source = self.application.get_service('pychron.sparrow.sparrow.Sparrow')
         if source is None:
-            self.warning_dialog('At least on datasource plugin is required, e.g. Sparrow')
+            self.warning_dialog('At least one datasource plugin is required, e.g. Sparrow')
             return
 
         if source.connect():
