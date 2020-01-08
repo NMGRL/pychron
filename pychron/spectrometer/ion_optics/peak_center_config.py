@@ -115,7 +115,8 @@ class PeakCenterConfig(HasTraits):
                                Item('isotope', editor=EnumEditor(name='isotopes'))),
                         degrp,
                         m_grp,
-                        pp_grp))
+                        pp_grp),
+                resizable=True)
         return v
 
     def _get_post_process_grp(self, include_update_others=True):
@@ -141,17 +142,44 @@ class PeakCenterConfig(HasTraits):
         return pp_grp
 
     def _get_measure_grp(self):
-        dac_grp = VGroup(HGroup(Item('use_current_dac',
+        mass_grp = VGroup(HGroup(Item('use_current_dac',
                                      label='Use Current DAC'),
                                 Item('use_mftable_dac',
                                      label='Use DAC from MFTable')),
-                         Item('dac', enabled_when='not use_current_dac and not use_mftable_dac'),
-                         visible_when='dataspace=="dac"')
+                          Item('dac', label='Center DAC', enabled_when='not use_current_dac and not use_mftable_dac'),
+                          visible_when='dataspace=="dac"')
+                          
+        dac_grp = VGroup(HGroup(Item('use_current_dac',
+                                    label='Use Current Mass'),
+                                Item('use_mftable_dac', 
+                                     label='Use Mass from MFTable')),
+                        Item('dac', label='Center Mass', enabled_when='not use_current_dac and not use_mftable_dac'),
+                        visible_when='dataspace=="mass"')
+        
+        center_grp = VGroup(mass_grp, dac_grp, show_border=True, label='Center')
+        '''dac_grp = VGroup(HGroup(Item('use_current_dac',
+                                     label='Use Current DAC',
+                                    visible_when='dataspace=="dac"'),
+                                Item('use_mftable_dac',
+                                     label='Use DAC from MFTable',
+                                     visible_when='dataspace=="dac"'),
+                                
+                                Item('use_current_dac',
+                                    label='Use Current Mass',
+                                    visible_when='dataspace=="mass"'),
+                                Item('use_mftable_dac', label='Use Mass from MFTable'),
+                                     visible_when='dataspace=="mass"'),
+                         
+                         Item('dac', label='Center DAC', enabled_when='not use_current_dac and not use_mftable_dac',
+                         visible_when='dataspace=="dac"'),
+                         Item('dac', label='Center Mass', enabled_when='not use_current_dac and not use_mftable_dac',
+                         visible_when='dataspace=="mass"'),
+                        )'''
 
-        dataspace_grp = HGroup(Item('dataspace'), label='Dataspace', show_border=True)
+        dataspace_grp = HGroup(UItem('dataspace'), label='Dataspace', show_border=True)
 
         m_grp = VGroup(dataspace_grp,
-                       dac_grp,
+                       center_grp,
                        Item('integration_time', editor=EnumEditor(name='integration_times')),
                        Item('directions'),
 
