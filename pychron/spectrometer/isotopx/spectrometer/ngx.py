@@ -30,7 +30,7 @@ from pychron.spectrometer.isotopx.source.ngx import NGXSource
 
 
 class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
-    #integration_time = Int
+    # integration_time = Int
     integration_times = List(ISOTOPX_INTEGRATION_TIMES)
 
     magnet_klass = NGXMagnet
@@ -63,7 +63,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
 
     def convert_to_axial(self, det, v):
         print('asdfsadf', det, det.index, v)
-        v = v-(det.index-2)
+        v = v - (det.index - 2)
         return v
 
     def start(self):
@@ -84,11 +84,11 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         pass
 
     def trigger_acq(self):
-        #self.debug('trigger acquie {}'.format(self.microcontroller.lock))
+        # self.debug('trigger acquie {}'.format(self.microcontroller.lock))
         self.microcontroller.lock.acquire()
         return self.ask('StartAcq 1,{}'.format(self.rcs_id), verbose=False)
-        #return True
-    
+        # return True
+
     def read_intensities(self, timeout=40, trigger=False, target='ACQ.B', verbose=False):
         resp = True
         if trigger:
@@ -108,7 +108,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                 while 1:
                     if time.time() - st > timeout:
                         break
-                    
+
                     if tag in ds:
                         args = ds.split('#')
                         datastr = None
@@ -120,23 +120,23 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                             self.debug('datastr {} = {}'.format(k, datastr))
 
                         if datastr:
-                            if k==target:
+                            if k == target:
                                 signals = [float(i) for i in datastr.split(',')[5:]]
                             break
-                            
+
                     try:
                         ds += self.read(1024)
                     except BaseException as e:
                         print('in buffer', ds)
                         self.debug_exception()
                         break
-            
-        #self.debug('lock released')
+
+        # self.debug('lock released')
         self.microcontroller.lock.release()
-        #print('read', keys, signals)
-        if len(signals)!=len(keys):
-            keys,signals = [], []
-            
+        # print('read', keys, signals)
+        if len(signals) != len(keys):
+            keys, signals = [], []
+
         return keys, signals
 
     def read_integration_time(self):

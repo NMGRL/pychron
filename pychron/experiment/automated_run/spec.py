@@ -432,6 +432,8 @@ class AutomatedRunSpec(HasTraits):
                   'xyz_position',
                   'duration',
                   'cleanup',
+                  'pre_cleanup',
+                  'post_cleanup',
                   'pattern',
                   'beam_diameter',
                   'ramp_duration',
@@ -469,7 +471,7 @@ class AutomatedRunSpec(HasTraits):
     # handlers
     # ===============================================================================
     @on_trait_change('''measurement_script, post_measurement_script,
-post_equilibration_script, extraction_script, script_options, position, duration, cleanup''')
+post_equilibration_script, extraction_script, script_options, position, duration, cleanup, pre_cleanup, post_cleanup''')
     def _change_handler(self, name, new):
         if new == 'None':
             self.trait_set(**{name: ''})
