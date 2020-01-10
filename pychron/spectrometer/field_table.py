@@ -248,7 +248,7 @@ class FieldTable(Loggable):
         detectors = self._detectors
         p = self.path
         self.debug('dump mftable to {}'.format(p))
-        with open(p, 'w') as f:
+        with open(p, 'w', newline='') as f:
             writer = csv.writer(f)
             writer.writerow([self.mass_cal_func])
             writer.writerow(['iso'] + detectors)

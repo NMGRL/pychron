@@ -168,7 +168,7 @@ class HumanErrorChecker(Loggable):
         # if ant in ('unknown', 'background') or ant.startswith('blank'):
         # self._mass_spec_required = True
 
-        if run.extract_value or run.cleanup or run.duration:
+        if run.extract_value or run.cleanup or run.duration or run.post_cleanup or run.pre_cleanup:
             self._extraction_line_required = True
 
     def _check_attr(self, run, attr, inform):

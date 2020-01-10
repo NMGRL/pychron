@@ -30,7 +30,7 @@ from pychron.spectrometer.isotopx.source.ngx import NGXSource
 
 
 class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
-    integration_time = Int
+    # integration_time = Int
     integration_times = List(ISOTOPX_INTEGRATION_TIMES)
 
     magnet_klass = NGXMagnet
@@ -63,7 +63,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
 
     def convert_to_axial(self, det, v):
         print('asdfsadf', det, det.index, v)
-        v = v-(det.index-2)
+        v = v - (det.index - 2)
         return v
 
     def start(self):
@@ -84,9 +84,12 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         pass
 
     def trigger_acq(self):
+        # self.debug('trigger acquie {}'.format(self.microcontroller.lock))
+        self.microcontroller.lock.acquire()
         return self.ask('StartAcq 1,{}'.format(self.rcs_id), verbose=False)
+        # return True
 
-    def read_intensities(self, timeout=4, trigger=False):
+    def read_intensities(self, timeout=40, trigger=False, target='ACQ.B', verbose=False):
         resp = True
         if trigger:
             resp = self.trigger_acq()
@@ -97,27 +100,42 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         signals = []
         if resp is not None:
             keys = self.detector_names[::-1]
-            tag = 'EVENT:ACQ,{}'.format(self.rcs_id)
             ds = ''
-            st = time.time()
+            for k in ('ACQ', 'ACQ.B'):
+                tag = 'EVENT:{},{}'.format(k, self.rcs_id)
+                st = time.time()
 
-            while 1:
-                if time.time() - st > timeout:
-                    break
+                while 1:
+                    if time.time() - st > timeout:
+                        break
 
-                ds += self.read(1024)
+                    if tag in ds:
+                        args = ds.split('#')
+                        datastr = None
+                        for a in args:
+                            if a.startswith(tag):
+                                datastr = a
+                                break
+                        if verbose:
+                            self.debug('datastr {} = {}'.format(k, datastr))
 
-                if tag in ds:
-                    args = ds.split('#')
-                    datastr = None
-                    for a in args:
-                        if a.startswith(tag):
-                            datastr = a
+                        if datastr:
+                            if k == target:
+                                signals = [float(i) for i in datastr.split(',')[5:]]
                             break
 
-                    if datastr:
-                        signals = [float(i) for i in datastr.split(',')[5:]]
+                    try:
+                        ds += self.read(1024)
+                    except BaseException as e:
+                        print('in buffer', ds)
+                        self.debug_exception()
                         break
+
+        # self.debug('lock released')
+        self.microcontroller.lock.release()
+        # print('read', keys, signals)
+        if len(signals) != len(keys):
+            keys, signals = [], []
 
         return keys, signals
 

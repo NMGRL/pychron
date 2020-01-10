@@ -238,10 +238,10 @@ class BaseExperimentQueue(RunBlock):
             if len(runspecs) == 1:
                 if rtype.startswith('blank'):
                     t = '_'.join(rtype.split('_')[1:])
-                    incrementable_types = (t, )
+                    incrementable_types = (t,)
 
         for idx in reversed(list(frequency_index_gen(runblock, freq, incrementable_types,
-                                                freq_before, freq_after, sidx=sidx))):
+                                                     freq_before, freq_after, sidx=sidx))):
             for ri in reversed(runspecs):
                 run = ri.clone_traits()
                 run.frequency_group = fcnt
@@ -349,7 +349,9 @@ class BaseExperimentQueue(RunBlock):
         seq = ['labnumber', 'sample', 'position',
                ('e_value', 'extract_value'),
                ('e_units', 'extract_units'),
-               'duration', 'cleanup', 'overlap',
+               'duration',
+               'cleanup', 'pre_cleanup', 'post_cleanup',
+               'overlap',
                ('beam_diam', 'beam_diameter'),
                'pattern',
                'light_value',
@@ -370,8 +372,6 @@ class BaseExperimentQueue(RunBlock):
                'delay_after']
 
         if self.extract_device == 'Fusions UV':
-            # header.extend(('reprate', 'mask', 'attenuator', 'image'))
-            # attrs.extend(('reprate', 'mask', 'attenuator', 'image'))
             seq.extend(('reprate', 'mask', 'attenuator', 'image'))
 
         seq = [(v, v) if not isinstance(v, tuple) else v for v in seq]
@@ -383,23 +383,22 @@ class BaseExperimentQueue(RunBlock):
         if ms in ('Spectrometer', LINE_STR):
             ms = ''
 
-        s = METASTR.format(
-            username=self.username,
-            use_email=self.use_email,
-            email=self.email,
-            use_group_email=self.use_group_email,
-            date=datetime.datetime.today(),
-            queue_conditionals=self.queue_conditionals_name,
-            mass_spectrometer=ms,
-            delay_before_analyses=self.delay_before_analyses,
-            delay_between_analyses=self.delay_between_analyses,
-            delay_after_blank=self.delay_after_blank,
-            delay_after_air=self.delay_after_air,
-            extract_device=self.extract_device,
-            default_lighting = self.default_lighting,
-            tray=self.tray or '',
-            load=self.load_name or '',
-            note=self.note)
+        s = METASTR.format(username=self.username,
+                           use_email=self.use_email,
+                           email=self.email,
+                           use_group_email=self.use_group_email,
+                           date=datetime.datetime.today(),
+                           queue_conditionals=self.queue_conditionals_name,
+                           mass_spectrometer=ms,
+                           delay_before_analyses=self.delay_before_analyses,
+                           delay_between_analyses=self.delay_between_analyses,
+                           delay_after_blank=self.delay_after_blank,
+                           delay_after_air=self.delay_after_air,
+                           extract_device=self.extract_device,
+                           default_lighting=self.default_lighting,
+                           tray=self.tray or '',
+                           load=self.load_name or '',
+                           note=self.note)
 
         if wfile:
             wfile.write(s)
@@ -425,6 +424,7 @@ class BaseExperimentQueue(RunBlock):
         sm = self.application.get_service('pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager')
         for a in self.automated_runs:
             a.spectrometer_manager = sm
+
     # ===============================================================================
     # property get/set
     # ===============================================================================

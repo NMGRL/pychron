@@ -94,9 +94,8 @@ class WiscArGPActuator(ASCIIGPActuator, ClientMixin):
         :return:
         """
         try:
-            print('asfffffdf', resp, cmd)
             if validate_response(resp, cmd):
-                return all((r.lower() == c.lower() for c, r in list(zip(cmd.split(','), resp.split(',')))[1:]))
+                return all((r.lower() == c.lower() for c, r in list(zip(cmd.split(','), resp.split(',')))[2:]))
                 # respstate = resp.split(',')[4].lower()
                 # resqueststate = cmd.split(',')[3].lower()
                 # self.debug('resp={} request={}'.format(respstate, requeststate))

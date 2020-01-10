@@ -35,28 +35,34 @@ class NGXGPActuator(ASCIIGPActuator):
         s = self.application.get_service(service)
         if s is not None:
             self.communicator = s.communicator
+            self._lock = s.lock
             return True
 
-    def get_channel_state(self, obj, delay=False, verbose=True, **kw):
+    def get_channel_state(self, obj, delay=False, verbose=False, **kw):
         """
         """
         if delay:
             if not isinstance(delay, (float, int)):
                 delay = 0.25
-            time.sleep(delay)
+                
+        time.sleep(delay)
+        with self._lock:
+            return self._get_channel_state(obj, verbose=verbose, **kw)
+    
+    def _get_channel_state(self, obj, verbose=False, **kw):
+        
 
         cmd = 'GetValveStatus {}'.format(get_switch_address(obj))
-
         s = self.ask(cmd, verbose=verbose)
+
         if s is not None:
             if s.strip() == 'E00':
-                time.sleep(0.25)
+                # time.sleep(0.2)
                 # recusively call get_channel_state
-                return self.get_channel_state(obj, verbose=verbose, **kw)
+                return self._get_channel_state(obj, verbose=verbose, **kw)
 
             return s.strip() == 'OPEN'
 
         else:
             return False
-
 # ============= EOF =====================================

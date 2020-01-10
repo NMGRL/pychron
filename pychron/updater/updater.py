@@ -22,13 +22,39 @@ import requests
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
 from git import GitCommandError
+from pyface.confirmation_dialog import confirm
+from pyface.constant import YES
+from pyface.message_dialog import information
 from traits.api import Bool, Str, Directory
 
 from pychron.core.helpers.datetime_tools import get_datetime
+from pychron.git_archive.repo_manager import StashCTX
 from pychron.loggable import Loggable
 from pychron.paths import r_mkdir
 from pychron.pychron_constants import STARTUP_MESSAGE_POSITION
 from pychron.updater.commit_view import CommitView, UpdateGitHistory
+
+
+def gitcommand(repo, name, tag, func):
+    try:
+        func()
+    except GitCommandError as e:
+        if e.stderr.startswith('error: Your local changes to the following files would be overwritten by '
+                               'checkout'):
+            if confirm(None, 'You have local changes to Pychron that would be overwritten by {} {}'
+                             'Would you like continue? If Yes you will be presented with a choice to stash '
+                             'or delete your changes'.format(tag, name)) == YES:
+                if confirm(None, 'Would you like to maintain (i.e. stash) your changes?') == YES:
+                    repo.git.stash()
+                    func()
+                    repo.git.stash('pop')
+                    return
+                elif confirm(None, 'Would you like to delete your changes?') == YES:
+                    repo.git.checkout('--', '.')
+                    func()
+                    return
+
+            information(None, '{} branch "{}" aborted'.format(tag.capitalize(), name))
 
 
 class Updater(Loggable):
@@ -90,7 +116,15 @@ class Updater(Loggable):
                             origin = self._repo.remotes.origin
                             self.debug('pulling changes from {} to {}'.format(origin.url, branch))
 
-                            self._repo.git.pull(origin, hexsha)
+                            try:
+                                with StashCTX(self._repo):
+                                    gitcommand(self._repo, self._repo.head.name, 'pull',
+                                               lambda: self._repo.git.pull(origin, hexsha))
+                            except BaseException:
+                                self.debug_exception()
+                                self.warning_dialog('Failed installing updates. Please contact pychron developers')
+                                return
+
                             conda_env = os.environ.get('CONDA_ENV')
                             conda_distro = os.environ.get('CONDA_DISTRO')
 

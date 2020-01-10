@@ -165,7 +165,10 @@ class ExtractionPyScript(ValvePyScript):
                            ramp_rate='',
                            ramp_duration=0,
                            duration=0,
+                           delay_after=0,
                            cleanup=0,
+                           pre_cleanup=0,
+                           post_cleanup=0,
                            light_value=0,
                            beam_diameter=None,
                            load_identifier='default_load',
@@ -841,17 +844,22 @@ class ExtractionPyScript(ValvePyScript):
     @property
     def duration(self):
         return self._get_property('duration')
-        # return self.get_context()['duration']
 
     @property
     def cleanup(self):
         return self._get_property('cleanup')
-        # return self.get_context()['cleanup']
+
+    @property
+    def pre_cleanup(self):
+        return self._get_property('pre_cleanup')
+
+    @property
+    def post_cleanup(self):
+        return self._get_property('post_cleanup')
 
     @property
     def pattern(self):
         return self._get_property('pattern')
-        # return self.get_context()['pattern']
 
     @property
     def analysis_type(self):
@@ -859,12 +867,10 @@ class ExtractionPyScript(ValvePyScript):
         self.debug('getting analysis type for {}. '
                    'analysis_type={}'.format(self.run_identifier, at))
         return at
-        # return self.get_context()['analysis_type']
 
     @property
     def extract_device(self):
         return self._get_property('extract_device')
-        # return self.get_context()['extract_device']
 
     @property
     def tray(self):

@@ -208,8 +208,10 @@ class BasePeakCenter(HasTraits):
                 break
 
         center, smart_shift, success = None, False, False
-
-        ok = self._do_sweep(start, end, width, directions=self.directions, map_mass=self.dataspace == 'mass')
+        self.debug('pre sweep, dataspace={}'.format(self.dataspace))
+        
+        #ok = self._do_sweep(start, end, width, directions=self.directions, map_mass=self.dataspace == 'mass')
+        ok = self._do_sweep(start, end, width, directions=self.directions, map_mass=False)
         self.debug('result of _do_sweep={}'.format(ok))
 
         if ok and self.directions != 'Oscillate':
@@ -250,8 +252,8 @@ class BasePeakCenter(HasTraits):
             center, success = xs[1], True
             # invoke_in_main_thread(self._plot_center, xs, ys, mx, my, center)
             self._plot_center(xs, ys, mx, my, center)
-            if self.calculate_all_peaks:
-                self.results = self.get_results()
+            # if self.calculate_all_peaks:
+            self.results = self.get_results()
 
             return center, success
 
@@ -424,7 +426,7 @@ class BasePeakCenter(HasTraits):
                           container_dict=dict(padding=5, bgcolor='lightgray'))
 
         graph.new_plot(padding=[50, 5, 5, 50],
-                       xtitle='DAC (V)',
+                       xtitle='DAC (V)' if self.dataspace=='dac' else 'Mass (AMU)',
                        ytitle='Intensity (fA)',
                        zoom=False,
                        show_legend='ul',
