@@ -534,10 +534,10 @@ class BaseSpectrometer(SpectrometerDevice):
         keys = []
         signals = []
         if self.microcontroller and not self.microcontroller.simulation:
-            keys, signals = self.read_intensities(trigger=trigger)
+            keys, signals, t = self.read_intensities(trigger=trigger)
 
         if not keys and globalv.communication_simulation:
-            keys, signals = self._get_simulation_data()
+            keys, signals, t = self._get_simulation_data()
 
         signals = array(signals)
 
@@ -549,7 +549,7 @@ class BaseSpectrometer(SpectrometerDevice):
             det.set_intensity(v)
             gsignals.append(v * det.software_gain)
 
-        return keys, array(gsignals)
+        return keys, array(gsignals), t
 
     def _check_intensity_no_change(self, signals):
         if self.simulation:
@@ -594,18 +594,20 @@ class BaseSpectrometer(SpectrometerDevice):
             dkeys: str or tuple of strs
 
         """
-        data = self.get_intensities(**kw)
-        if data is not None:
+        try:
+            keys, signals, t = self.get_intensities()
+        except ValueError:
+            self.debug('failed getting intensities')
+            self.debug_exception()
+            return
 
-            keys, signals = data
+        def func(k):
+            return signals[keys.index(k)] if k in keys else 0
 
-            def func(k):
-                return signals[keys.index(k)] if k in keys else 0
-
-            if isinstance(dkeys, (tuple, list)):
-                return [func(key) for key in dkeys]
-            else:
-                return func(dkeys)
+        if isinstance(dkeys, (tuple, list)):
+            return [func(key) for key in dkeys]
+        else:
+            return func(dkeys)
 
     def get_detector(self, name):
         """

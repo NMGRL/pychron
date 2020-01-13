@@ -237,16 +237,19 @@ class DataCollector(Consoleable):
         if not data:
             return
 
-        k, s = data
+        k, s, t = data
         if k is not None and s is not None:
-            x = self._get_time()
+            x = self._get_time(t)
             self._save_data(x, k, s)
             self._plot_data(i, x, k, s)
 
         return True
 
-    def _get_time(self):
-        return time.time() - self.starttime
+    def _get_time(self, t):
+        if t is None:
+            t = time.time()
+
+        return t - self.starttime
 
     def _get_data(self, detectors=None):
         try:
