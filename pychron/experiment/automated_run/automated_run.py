@@ -113,7 +113,7 @@ class AutomatedRun(Loggable):
 
     spectrometer_manager = Any
     extraction_line_manager = Any
-    experiment_executor = Any
+    # experiment_executor = Any
     ion_optics_manager = Any
 
     multi_collector = Instance('pychron.experiment.automated_run.multi_collector.MultiCollector')
@@ -726,6 +726,10 @@ class AutomatedRun(Loggable):
     # ===============================================================================
     # run termination
     # ===============================================================================
+    def set_end_after(self):
+        self.is_last = True
+        self.executor_event = {'kind': 'end_after'}
+
     def abort_run(self, do_post_equilibration=True):
         self._aborted = True
         self.debug('Abort run do_post_equilibration={}'.format(do_post_equilibration))
@@ -1199,7 +1203,6 @@ class AutomatedRun(Loggable):
             # if overlapping need to wait for previous runs min mass spec pump time
             self._wait_for_min_ms_pumptime()
 
-            return True
         else:
             if syn_extractor:
                 syn_extractor.stop()
@@ -1211,7 +1214,8 @@ class AutomatedRun(Loggable):
 
             self.heading('Extraction Finished unsuccessfully', color='red')
             self.info_color = None
-            return False
+
+        return bool(ex_result)
 
     def do_measurement(self, script=None, use_post_on_fail=True):
         self.debug('do measurement')

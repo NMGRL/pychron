@@ -2212,6 +2212,8 @@ Use Last "blank_{}"= {}
                 self._prev_baselines = new['baselines']
             elif kind == 'show_conditionals':
                 self.show_conditionals(active_run=obj, **new)
+            elif kind == 'end_after':
+                self.end_at_run_completion = True
 
     # ===============================================================================
     # property get/set

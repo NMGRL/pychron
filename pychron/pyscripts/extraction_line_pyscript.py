@@ -917,6 +917,9 @@ class ExtractionPyScript(ValvePyScript):
     # ===============================================================================
     # private
     # ===============================================================================
+    def _failed_actuation_hook(self):
+        self._automated_run_call('set_end_after')
+
     def _check_responding(self, rr, st):
         self._extraction_action(('check_responding', (rr, st), {}))
 
