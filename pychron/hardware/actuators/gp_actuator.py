@@ -38,6 +38,9 @@ class GPActuator(CoreDevice):
     def get_indicator_state(self, obj, *args, **kw):
         return self.get_channel_state(obj, **kw)
 
+    def get_state_word(self):
+        return
+
     def get_channel_state(self, *args, **kw):
         """
         """

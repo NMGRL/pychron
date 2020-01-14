@@ -32,7 +32,7 @@ from pychron.processing.arar_age import ArArAge
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
 from pychron.pychron_constants import MSEM, SD, SUBGROUPING_ATTRS, ERROR_TYPES, WEIGHTED_MEAN, \
     DEFAULT_INTEGRATED, SUBGROUPINGS, ARITHMETIC_MEAN, PLATEAU_ELSE_WEIGHTED_MEAN, WEIGHTINGS, FLECK, NULL_STR, \
-    ISOCHRON, EXCLUDE_TAGS
+    ISOCHRON
 
 
 def AGProperty(*depends):
@@ -125,6 +125,7 @@ class AnalysisGroup(IdeogramPlotable):
     isochron_regressor = None
 
     exclude_non_plateau = Bool(False)
+    omit_by_tag = Bool(True)
 
     def __init__(self, *args, **kw):
         super(AnalysisGroup, self).__init__(make_arar_constants=False, *args, **kw)
@@ -211,12 +212,18 @@ class AnalysisGroup(IdeogramPlotable):
     def plateau_analyses(self):
         return
 
+    def _is_omitted(self, ai, **kw):
+        return ai.is_omitted(omit_by_tag=self.omit_by_tag, **kw)
+
+    def get_omitted_by_tag(self, ans, tags=None):
+        return [i for i, ai in enumerate(ans) if self._is_omitted(ai, tags=tags)]
+
     def clean_analyses(self):
-        return (ai for ai in self.analyses if not ai.is_omitted())
+        return (ai for ai in self.analyses if not self._is_omitted(ai))
 
     def do_omit_non_plateau(self):
         self.calculate_plateau()
-        ans = [a for a in self.analyses if isinstance(a, ArArAge) and not a.is_omitted()]
+        ans = [a for a in self.analyses if isinstance(a, ArArAge) and not self._is_omitted(a)]
         for a in ans:
             if not self.get_is_plateau_step(a):
                 a.temp_status = 'omit'
@@ -226,12 +233,12 @@ class AnalysisGroup(IdeogramPlotable):
 
         if (exclude_non_plateau or self.exclude_non_plateau) and hasattr(self, 'get_is_plateau_step'):
             def test(ai):
-                a = ai.is_omitted()
+                a = self._is_omitted(ai)
                 b = not self.get_is_plateau_step(ai)
                 return a or b
         else:
             def test(ai):
-                return ai.is_omitted(tags=EXCLUDE_TAGS)
+                return self._is_omitted(ai)
 
         exclude = [i for i, x in enumerate(ans) if test(x)]
         if ans:
@@ -688,7 +695,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
 
         plateau_step = False
         if self.plateau_steps:
-            if not an.is_omitted():
+            if not self._is_omitted(an):
                 ps, pe = self.plateau_steps
                 plateau_step = ps <= idx <= pe
 
@@ -736,7 +743,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
                            'overlap_sigma': self.plateau_overlap_sigma,
                            'fixed_steps': self.fixed_steps}
 
-                excludes = [i for i, ai in enumerate(ans) if ai.is_omitted()]
+                excludes = [i for i, ai in enumerate(ans) if self._is_omitted(ai)]
                 args = calculate_plateau_age(ages, errors, k39, method=self.plateau_method,
                                              options=options, excludes=excludes)
 
@@ -748,7 +755,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
                     self.plateau_steps_str = '{}-{}'.format(alphas(pidx[0]),
                                                             alphas(pidx[1]))
 
-                    step_idxs = [i for i in range(pidx[0], pidx[1] + 1) if not ans[i].is_omitted()]
+                    step_idxs = [i for i in range(pidx[0], pidx[1] + 1) if not self._is_omitted(ans[i])]
                     self.nsteps = len(step_idxs)
 
                     pages = array([ages[i] for i in step_idxs])

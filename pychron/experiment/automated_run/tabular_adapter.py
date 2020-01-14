@@ -100,6 +100,8 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
         ('Ramp (s)', 'ramp_duration'),
         ('Duration (s)', 'duration'),
         ('Cleanup (s)', 'cleanup'),
+        ('Pre Cleanup (s)', 'pre_cleanup'),
+        ('Post Cleanup (s)', 'post_cleanup'),
         ('Overlap (s)', 'overlap'),
         ('Beam (mm)', 'beam_diameter'),
         ('Pattern', 'pattern'),
@@ -137,6 +139,9 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     duration_width = Int(70)
     ramp_duration_width = Int(50)
     cleanup_width = Int(70)
+    pre_cleanup_width = Int(70)
+    post_cleanup_width = Int(70)
+
     pattern_width = Int(80)
     beam_diameter_width = Int(65)
 
@@ -161,6 +166,8 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     beam_diameter_text = Property
     duration_text = Property
     cleanup_text = Property
+    pre_cleanup_text = Property
+    post_cleanup_text = Property
 
     aliquot_text = Property
     overlap_text = Property
@@ -295,6 +302,12 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
 
     def _get_cleanup_text(self):
         return self._get_number('cleanup')
+
+    def _get_pre_cleanup_text(self):
+        return self._get_number('pre_cleanup')
+
+    def _get_post_cleanup_text(self):
+        return self._get_number('post_cleanup')
 
     def _get_weight_text(self):
         return self._get_number('weight')

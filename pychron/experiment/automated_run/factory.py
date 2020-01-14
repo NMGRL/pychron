@@ -148,6 +148,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     overlap = EKlass(String)
     duration = EKlass(Float)
     cleanup = EKlass(Float)
+    pre_cleanup = EKlass(Float)
+    post_cleanup = EKlass(Float)
     light_value = EKlass(Float)
     beam_diameter = Property(EKlass(String), depends_on='_beam_diameter')
     _beam_diameter = String
@@ -239,7 +241,11 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     persistence_name = 'run_factory'
     pattributes = ('collection_time_zero_offset',
                    'selected_irradiation', 'selected_level',
-                   'extract_value', 'extract_units', 'cleanup', 'light_value',
+                   'extract_value', 'extract_units',
+                   'cleanup',
+                   'pre_cleanup',
+                   'post_cleanup',
+                   'light_value',
                    'duration', 'beam_diameter', 'ramp_duration', 'overlap',
                    'pattern', 'labnumber', 'position',
                    'weight', 'comment', 'template',
@@ -482,17 +488,20 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         if arv.analysis_type in (BLANK_UNKNOWN, PAUSE, BLANK_EXTRACTIONLINE):
             excludes.extend(('extract_value', 'extract_units', 'pattern', 'beam_diameter'))
             if arv.analysis_type == PAUSE:
-                excludes.extend(('cleanup', 'position'))
+                excludes.extend(('cleanup', 'pre_cleanup', 'post_cleanup', 'position'))
         elif arv.analysis_type not in (UNKNOWN, DEGAS):
             excludes.extend(('position', 'extract_value', 'extract_units', 'pattern',
-                             'cleanup', 'duration', 'beam_diameter'))
+                             'cleanup', 'pre_cleanup', 'post_cleanup', 'duration', 'beam_diameter'))
 
         self._set_run_values(arv, excludes=excludes)
         return arv
 
     def _get_run_attr(self):
         return ['position',
-                'extract_value', 'extract_units', 'cleanup', 'duration', 'light_value',
+                'extract_value', 'extract_units',
+                'cleanup', 'pre_cleanup', 'post_cleanup',
+                'duration',
+                'light_value',
                 'use_cdd_warming',
                 'conditionals_str',
                 'collection_time_zero_offset',
@@ -556,7 +565,9 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             excludes.append('comment')
 
         for attr in ('labnumber',
-                     'extract_value', 'extract_units', 'cleanup', 'duration', 'light_value',
+                     'extract_value', 'extract_units',
+                     'cleanup', 'pre_cleanup', 'post_cleanup',
+                     'duration', 'light_value',
                      'pattern', 'beam_diameter',
                      'position',
                      'collection_time_zero_offset',
@@ -726,7 +737,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     def _load_defaults(self, ln, attrs=None, overwrite=True):
         if attrs is None:
             attrs = ('extract_value', 'extract_units',
-                     'cleanup', 'duration', 'beam_diameter', 'light_value')
+                     'cleanup', 'pre_cleanup', 'post_cleanup', 'duration', 'beam_diameter', 'light_value')
 
         self.debug('loading defaults for {}. ed={} attrs={}'.format(ln, self.extract_device, attrs))
         defaults = self._load_default_file()
@@ -953,7 +964,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             if ln == 'dg':
                 self._load_defaults(ln, attrs=('extract_value', 'extract_units'))
             else:
-                self._load_defaults(ln, attrs=('cleanup', 'duration'), overwrite=False)
+                self._load_defaults(ln, attrs=('cleanup', 'pre_cleanup', 'post_cleanup', 'duration'), overwrite=False)
         else:
             self._load_defaults(labnumber if special else 'u')
 
@@ -1361,7 +1372,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             t = self.conditionals_str
             self._set_conditionals(t)
 
-    @on_trait_change('''cleanup, duration, extract_value, ramp_duration, light_value,
+    @on_trait_change('''cleanup, pre_cleanup, post_cleanup, duration, extract_value, ramp_duration, light_value,
 collection_time_zero_offset,
 use_cdd_warming,
 extract_units,

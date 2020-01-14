@@ -305,12 +305,12 @@ class BaseSpectrometer(SpectrometerDevice):
                 self.debug('molweights={}'.format(self.molecular_weights))
 
                 try:
-                    self._update_isotopes_hook(isotope, det.index)
+                    self._update_isotope_hook(isotope, det.index)
                 except BaseException as e:
                     self.warning(
                         'Cannot update isotopes. isotope={}, detector={}. error:{}'.format(isotope, detector, e))
 
-    def _update_isotope_hook(self, isotope, index):
+    def _update_isotopes_hook(self, isotope, index):
         dets = self.active_detectors
         if not dets:
             dets = self.detectors

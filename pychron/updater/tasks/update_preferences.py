@@ -31,6 +31,7 @@ from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_preferences_helper import remote_status_item, \
     GitRepoPreferencesHelper
 from pychron.pychron_constants import LINE_STR
+from pychron.updater.updater import gitcommand
 
 
 class Updater:
@@ -40,36 +41,15 @@ class Updater:
     def pull(self, branch, inform=False):
         repo = self._get_working_repo(inform)
         if repo is not None:
-            self.gitcommand(repo, repo.head.name,
+            gitcommand(repo, repo.head.name,
                             'pull',
                             lambda: repo.remote('origin').pull(branch))
-
-    def gitcommand(self, repo, name, tag, func):
-        try:
-            func()
-        except GitCommandError as e:
-            if e.stderr.startswith('error: Your local changes to the following files would be overwritten by '
-                                   'checkout'):
-                if confirm(None, 'You have local changes to Pychron that would be overwritten by {} {}'
-                                 'Would you like continue? If Yes you will be presented with a choice to stash '
-                                 'or delete your changes'.format(tag, name)) == YES:
-                    if confirm(None, 'Would you like to maintain (i.e. stash) your changes?') == YES:
-                        repo.git.stash()
-                        func()
-                        repo.git.stash('pop')
-                        return
-                    elif confirm(None, 'Would you like to delete your changes?') == YES:
-                        repo.git.checkout('--', '.')
-                        func()
-                        return
-
-                information(None, '{} branch "{}" aborted'.format(tag.capitalize(), name))
 
     def checkout_branch(self, name, inform=False):
         repo = self._get_working_repo(inform)
         if repo is not None:
             branch = self._get_branch(repo, name)
-            self.gitcommand(repo, name, 'checkout', lambda: branch.checkout())
+            gitcommand(repo, name, 'checkout', lambda: branch.checkout())
 
     def checkout_tag(self, tag, inform=False):
         repo = self._get_working_repo(inform)
@@ -78,7 +58,7 @@ class Updater:
                 self.checkout_branch(tag)
             except AttributeError:
                 repo.git.fetch()
-                self.gitcommand(repo, tag, 'checkout', lambda: repo.git.checkout('-b', tag, tag))
+                gitcommand(repo, tag, 'checkout', lambda: repo.git.checkout('-b', tag, tag))
 
     def _get_working_repo(self, inform):
         if not self._repo:

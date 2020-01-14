@@ -154,7 +154,7 @@ class Spectrum(BaseArArFigure):
 
         pma = None
         plateau_age = ag.plateau_age
-        selections = self._get_omitted_by_tag(self.sorted_analyses)
+        selections = ag.get_omitted_by_tag(self.sorted_analyses)
 
         spec = self._add_plot(xs, ys, es, pid, po)
         ls = grp.center_line_style
@@ -266,7 +266,7 @@ class Spectrum(BaseArArFigure):
                                       )
             ds.underlays.append(sp)
 
-        omit = self._get_omitted_by_tag(self.sorted_analyses)
+        omit = self.analysis_group.get_omitted_by_tag(self.sorted_analyses)
         sp.selections = omit
 
         self._set_renderer_selection((ds,), omit)

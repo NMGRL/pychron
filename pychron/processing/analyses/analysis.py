@@ -268,8 +268,14 @@ class IdeogramPlotable(HasTraits):
     def refresh_view(self):
         pass
 
-    def is_omitted(self, tags=None):
-        return self.is_omitted_by_tag(tags) or self.temp_selected
+    def is_omitted(self, tags=None, omit_by_tag=True):
+        ret = False
+        if omit_by_tag and not self.otemp_status is not None:
+            # if otemp_status is None then user toggled this point and we are no longer going to respect the tag
+            # omission
+            ret = self.is_omitted_by_tag(tags)
+
+        return ret or self.temp_selected
 
     def is_omitted_by_tag(self, tags=None):
         if tags is None:
@@ -277,6 +283,7 @@ class IdeogramPlotable(HasTraits):
         return self.tag in tags
 
     def set_temp_status(self, tag):
+
         tag = tag.lower()
         if tag != 'ok':
             self.otemp_status = tag
@@ -292,6 +299,8 @@ class IdeogramPlotable(HasTraits):
             self.subgroup = tag.get('subgroup', '')
         else:
             self.tag = tag
+
+        self.temp_status = self.tag
 
     def value_string(self, t):
         a, e = self._value_string(t)
@@ -403,6 +412,8 @@ class Analysis(ArArAge, IdeogramPlotable):
     extract_value = 0
     extract_units = ''
     cleanup_duration = 0
+    pre_cleanup_duration = 0
+    post_cleanup_duration = 0
     extract_duration = 0
     extract_device = ''
     position = ''

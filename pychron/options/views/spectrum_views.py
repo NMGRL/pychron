@@ -47,8 +47,11 @@ Volume=  Weight by signal size.  Wi = (Vi*Ei)**2  where Vi = Ar39i/TotalAr39 and
                                     tooltip='Propagate the (40/36)trapped uncertainty',
                                     label='Include Uncertainty'),
                                label='Trapped Ar40/Ar36')
+        tgrp = BorderVGroup(Item('omit_by_tag', label='Omit Tags',
+                                 tooltip='If selected only analyses tagged as "OK" are included in the calculations'),
+                            label='Tags')
 
-        return self._make_view(VGroup(integrated_grp, iso_grp))
+        return self._make_view(VGroup(integrated_grp, iso_grp, tgrp))
 
 
 class SpectrumAppearance(AppearanceSubOptions):

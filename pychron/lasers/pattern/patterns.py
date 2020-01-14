@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import math
 import os
 
@@ -23,16 +24,16 @@ from chaco.api import AbstractOverlay
 from numpy import array, transpose, linspace, sin, pi, append, arange, asarray, diff, roll, \
     gradient, sign, hstack
 from scipy import signal
+from six.moves import zip
 from traits.api import Bool, Float, Button, Instance, Range, Str, Property, Enum, on_trait_change
 from traits.has_traits import HasTraits
 from traitsui.api import View, Item, Group, HGroup, RangeEditor, spring, VGroup, Tabbed, UItem
 
-from .pattern_generators import square_spiral_pattern, line_spiral_pattern, random_pattern, \
-    polygon_pattern, arc_pattern, line_pattern, trough_pattern, rubberband_pattern, raster_rubberband_pattern
 from pychron.graph.graph import Graph
 from pychron.lasers.pattern.pattern_generators import circular_contour_pattern
 from pychron.pychron_constants import NULL_STR
-from six.moves import zip
+from .pattern_generators import square_spiral_pattern, line_spiral_pattern, random_pattern, \
+    polygon_pattern, arc_pattern, line_pattern, trough_pattern, rubberband_pattern, raster_rubberband_pattern
 
 POLYGONS = ['triangle', 'diamond', 'pentagon', 'hexagon', 'heptagon', 'octogon', 'nonagon', 'decagon']
 
@@ -738,7 +739,7 @@ class PolygonPattern(Pattern):
     def _basename(self):
         nsides = self.nsides
         if nsides < 11:
-            bn = POLYGONS[nsides]
+            bn = POLYGONS[nsides-3]
         else:
             bn = '{}gon'.format(nsides)
         return bn

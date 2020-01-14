@@ -130,6 +130,8 @@ class AnalysisAdapter(BrowserAdapter):
                    ('Ext.', 'extract_script_name'),
                    ('EVal.', 'extract_value'),
                    ('Cleanup', 'cleanup'),
+                   ('Pre Cleanup', 'pre_cleanup'),
+                   ('Post Cleanup', 'post_cleanup'),
                    ('Dur', 'duration'),
                    ('Position', 'position'),
                    ('Device', 'extract_device'),
@@ -157,6 +159,8 @@ class AnalysisAdapter(BrowserAdapter):
     extract_script_name_width = Int
     extract_value_width = Int
     cleanup_width = Int
+    pre_cleanup_width = Int
+    post_cleanup_width = Int
     duration_width = Int
     position_width = Int
     extract_device_width = Int

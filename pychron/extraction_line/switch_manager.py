@@ -506,6 +506,47 @@ class SwitchManager(Manager):
         self.log(msg, VERBOSE_DEBUG)
 
     def load_hardware_states(self, force=False, verbose=False):
+        """
+        """
+        states = []
+        words = {}
+        for k, v in self.switches.items():
+            a = (k, v.address, v.state)
+            if v.use_state_word:
+                if v.actuator not in words:
+                    words[v.actuator] = [a]
+                else:
+                    words[v.actuator].append(a)
+
+            elif v.query_state or force:
+                ostate = v.state
+                s = v.get_hardware_indicator_state(verbose=verbose)
+                if not isinstance(s, bool):
+                    s = None
+
+                if ostate != s:
+                    states.append((k, s, False))
+                    
+        for actuator, items in words.items():
+            stateword = actuator.get_state_word()
+            if stateword:
+                for k, address, ostate in items:
+                    try:
+                        s = stateword[address]
+                        if s != ostate:
+                            states.append((k, s, False))
+                        self.switches[k].set_state(s)
+                    except KeyError:
+                        self.warning('Failed getting state from valve word={}, '
+                                     'valve={}({})'.format(stateword, k, address))
+            else:
+                self.warning('Actuator failed to return state word')
+
+        if states:
+            self.refresh_state = states
+            self.refresh_canvas_needed = True
+
+    def load_hardware_states_old(self, force=False, verbose=False):
         self._verbose('load hardware states')
         # update = False
         states = []
@@ -524,7 +565,6 @@ class SwitchManager(Manager):
         if states:
             self.refresh_state = states
             self.refresh_canvas_needed = True
-            # if update:
 
     def load_indicator_states(self):
         self._verbose('load indicator states')
@@ -1129,6 +1169,11 @@ class SwitchManager(Manager):
         else:
             track = to_bool(track.text.strip())
 
+        use_state_word = v_elem.find('use_state_word')
+        
+        if use_state_word is not None:
+            use_state_word = to_bool(use_state_word.text.strip())
+
         ctx = dict(name=name,
                    track_actuation=track,
                    address=address,
@@ -1145,7 +1190,8 @@ class SwitchManager(Manager):
                    ignore_lock_warning=ignore_lock_warning,
                    positive_interlocks=positive_interlocks,
                    interlocks=interlocks,
-                   settling_time=st or 0)
+                   settling_time=st or 0,
+                   use_state_word=bool(use_state_word))
 
         return ctx
 

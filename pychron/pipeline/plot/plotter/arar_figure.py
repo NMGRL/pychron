@@ -242,9 +242,6 @@ class BaseArArFigure(SelectionFigure):
         # print 'using options format'
         pass
 
-    def _get_omitted_by_tag(self, ans, tags=None):
-        return [i for i, ai in enumerate(ans) if ai.is_omitted(tags)]
-
     def _set_selected(self, ans, sel):
         super(BaseArArFigure, self)._set_selected(ans, sel)
         self.refresh_unknowns_table = True
@@ -672,7 +669,8 @@ class BaseArArFigure(SelectionFigure):
         ag = self._analysis_group
         if ag is None:
             ag = self._analysis_group_klass(group_id=self.group_id,
-                                            analyses=self.sorted_analyses)
+                                            analyses=self.sorted_analyses,
+                                            omit_by_tag=self.options.omit_by_tag)
             self._analysis_group_hook(ag)
 
         return ag

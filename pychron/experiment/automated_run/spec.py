@@ -100,6 +100,11 @@ class AutomatedRunSpec(HasTraits):
 
     duration = Float
     cleanup = Float
+    pre_cleanup = Float
+    post_cleanup = Float
+
+    post_analysis_delay = Float
+
     pattern = Str
     beam_diameter = CStr
     ramp_duration = Float
@@ -290,22 +295,19 @@ class AutomatedRunSpec(HasTraits):
 
     def make_script_context(self):
         hdn = convert_extract_device(self.extract_device)
-
         an = self.analysis_type.split('_')[0]
-        ctx = dict(tray=self.tray,
-                   position=self.get_position_list(),
-                   disable_between_positions=self.disable_between_positions,
-                   duration=self.duration,
-                   extract_value=self.extract_value,
-                   extract_units=self.extract_units,
-                   cleanup=self.cleanup,
+
+        ctx = dict(position=self.get_position_list(),
                    extract_device=hdn,
-                   analysis_type=an,
-                   ramp_rate=self.ramp_rate,
-                   pattern=self.pattern,
-                   light_value=self.light_value,
-                   beam_diameter=self.beam_diameter,
-                   ramp_duration=self.ramp_duration)
+                   analysis_type=an)
+
+        for attr in ('disable_between_positions',
+                     'tray', 'duration', 'extract_value', 'extract_units',
+                     'pre_cleanup', 'cleanup', 'post_cleanup', 'delay_after',
+                     'pattern', 'light_value',
+                     'beam_diameter', 'ramp_duration', 'ramp_rate'):
+            ctx[attr] = getattr(self, attr)
+
         return ctx
 
     def get_estimated_duration(self, script_context=None, warned=None, force=False):
@@ -430,6 +432,8 @@ class AutomatedRunSpec(HasTraits):
                   'xyz_position',
                   'duration',
                   'cleanup',
+                  'pre_cleanup',
+                  'post_cleanup',
                   'pattern',
                   'beam_diameter',
                   'ramp_duration',
@@ -467,7 +471,7 @@ class AutomatedRunSpec(HasTraits):
     # handlers
     # ===============================================================================
     @on_trait_change('''measurement_script, post_measurement_script,
-post_equilibration_script, extraction_script, script_options, position, duration, cleanup''')
+post_equilibration_script, extraction_script, script_options, position, duration, cleanup, pre_cleanup, post_cleanup''')
     def _change_handler(self, name, new):
         if new == 'None':
             self.trait_set(**{name: ''})
@@ -623,15 +627,18 @@ post_equilibration_script, extraction_script, script_options, position, duration
     def _base_script_hash(self):
         # ctx should only contain values that affect the length of the analysis
         ctx = dict(nposition=len(self.get_position_list()),
-                   disable_between_positions=self.disable_between_positions,
-                   duration=self.duration,
-                   cleanup=self.cleanup,
-                   ramp_rate=self.ramp_rate,
-                   pattern=self.pattern,
-                   ramp_duration=self.ramp_duration)
+                   measurement=self.measurement_script,
+                   extraction=self.extraction_script)
 
-        ctx['measurement'] = self.measurement_script
-        ctx['extraction'] = self.extraction_script
+        for a in ('disable_between_positions',
+                  'duration',
+                  'cleanup',
+                  'pre_cleanup',
+                  'post_cleanup',
+                  'ramp_rate',
+                  'pattern',
+                  'ramp_duration'):
+            ctx[a] = getattr(self, a)
 
         md5 = hashlib.md5()
         for k, v in sorted(ctx.items()):

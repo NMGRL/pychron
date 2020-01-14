@@ -27,6 +27,7 @@ class BaseSource(SpectrometerDevice, FieldMixin):
 
     def finish_loading(self):
         self.field_table_setup()
+        self.current_hv = self.read_hv()
 
     def map_mass_to_hv(self, mass):
         return self.field_table.map_mass_to_dac(mass)
@@ -40,7 +41,10 @@ class BaseSource(SpectrometerDevice, FieldMixin):
 
     def set_hv(self, new):
         pass
-
+    
+    def read_hv(self):
+        pass
+    
     # private
     def _nominal_hv_changed(self, new):
         if new is not None:

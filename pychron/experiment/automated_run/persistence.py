@@ -781,6 +781,8 @@ class AutomatedRunPersister(BasePersister):
                  extract_value=spec.extract_value,
                  extract_duration=spec.duration,
                  cleanup_duration=spec.cleanup,
+                 pre_cleanup_duration=spec.pre_cleanup,
+                 post_cleanup_duration=spec.post_cleanup,
                  weight=spec.weight,
                  response_blob=response_blob or '',
                  output_blob=output_blob or '',
@@ -1006,7 +1008,8 @@ class AutomatedRunPersister(BasePersister):
                              extract_units=spec.extract_units,
                              duration=spec.duration,
                              cleanup=spec.cleanup,
-
+                             pre_cleanup=spec.pre_cleanup,
+                             post_cleanup=spec.post_cleanup,
                              comment=spec.comment,
                              weight=spec.weight,
                              collection_path=cp)

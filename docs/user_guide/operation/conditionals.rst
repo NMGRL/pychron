@@ -29,9 +29,9 @@ Conditional Types
 =================== ==========================
 Name                Description
 ------------------- --------------------------
-Action               Executed for all runs in all experiment queues
-Truncation            Executed for all runs in this experiment queue
-Termination              Executed for only this run
+Action
+Truncation
+Termination
 Cancelation
 PreRunTermination
 PostRunTermination

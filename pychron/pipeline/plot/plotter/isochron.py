@@ -35,7 +35,7 @@ from pychron.graph.ml_label import tokenize
 from pychron.pipeline.plot.overlays.isochron_inset import InverseIsochronPointsInset, InverseIsochronLineInset
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 from pychron.processing.analyses.analysis_group import StepHeatAnalysisGroup
-from pychron.pychron_constants import PLUSMINUS, SIGMA
+from pychron.pychron_constants import PLUSMINUS, SIGMA, MSEM, SEM
 
 
 class MLTextLabel(Label):
@@ -455,8 +455,12 @@ class InverseIsochron(Isochron):
 
         v = nominal_value(age)
         e = std_dev(age) * opt.nsigma
-
-        mse_age = e * mswd ** 0.5
+        if ag.isochron_age_error_kind == MSEM:
+            mse_age = e
+        elif ag.isochron_age_error_kind == SEM:
+            mse_age = e * mswd ** 0.5
+        else:
+            mse_age = 0
 
         valid = validate_mswd(mswd, n)
         mswd = '{:0.2f}'.format(mswd)
@@ -502,7 +506,7 @@ class InverseIsochron(Isochron):
         label.request_redraw()
 
     def replot(self):
-        sel = self._get_omitted_by_tag(self.analyses)
+        sel = self.analysis_group.get_omitted_by_tag(self.analyses)
         if len(sel) < self.analysis_group.nanalyses:
             self._rebuild_iso(sel)
 

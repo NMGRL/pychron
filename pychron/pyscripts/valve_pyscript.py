@@ -32,6 +32,7 @@ class ValvePyScript(PyScript):
     runner = Any
     allow_lock = False
     retry_actuation = True
+    cancel_on_failed_actuation = True
 
     def get_command_register(self):
         return list(command_register.commands.items())
@@ -71,15 +72,15 @@ class ValvePyScript(PyScript):
 
     @verbose_skip
     @named_register('open')
-    def _m_open(self, name=None, description=''):
-        self._valve_actuation('open', name, description)
+    def _m_open(self, name=None, description='', cancel_on_failed_actuation=True):
+        self._valve_actuation('open', name, description, cancel_on_failed_actuation)
 
     @verbose_skip
     @command_register
-    def close(self, name=None, description=''):
-        self._valve_actuation('close', name, description)
+    def close(self, name=None, description='', cancel_on_failed_actuation=True):
+        self._valve_actuation('close', name, description, cancel_on_failed_actuation)
 
-    def _valve_actuation(self, action, name, description):
+    def _valve_actuation(self, action, name, description, cancel_on_failed_actuation):
         self.console_info('{} name={} desc={}'.format(action, name or NULL_STR, description or NULL_STR))
 
         result = self._manager_actions([('{}_valve'.format(action), (name,),
@@ -89,10 +90,20 @@ class ValvePyScript(PyScript):
         if result is not None:
             if not self._finish_valve_change(action, result, name, description):
                 if not globalv.experiment_debug:
+
+                    if cancel_on_failed_actuation:
+                        self.cancel()
+                    else:
+                        # certain valves can fail to actuate but still you'd want to analyses the gas in the
+                        # extraction line. So we dont want to cancel. but we dont want to run another analysis either.
+                        # setting "end_at_run_completion" should do it
+                        self._failed_actuation_hook()
+
                     from pychron.core.ui.gui import invoke_in_main_thread
                     msg = 'Failed to {} valve name="{}", description="{}"'.format(action, name, description)
+
                     invoke_in_main_thread(self.warning_dialog, msg)
-                    self.cancel()
+
                 else:
                     self.debug('Experiment debug mode. not canceling')
 
@@ -115,6 +126,9 @@ class ValvePyScript(PyScript):
             return r
 
     # private
+    def _failed_actuation_hook(self):
+        pass
+
     def _finish_valve_change(self, action, result, name, description, retry=1):
         """
         :param action: 

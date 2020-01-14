@@ -103,6 +103,7 @@ class Switch(BaseSwitch):
 
     state_address = Str
     query_state = Bool(True)
+    use_state_word = Bool(False)
 
     prefix_name = 'SWITCH'
     parent = Str

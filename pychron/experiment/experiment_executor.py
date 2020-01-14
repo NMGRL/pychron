@@ -170,6 +170,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     use_db_persistence = Bool(True)
 
     ratio_change_detection_enabled = Bool(False)
+    execute_open_queues = Bool(True)
 
     # dvc
     use_dvc_persistence = Bool(False)
@@ -251,7 +252,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                  'use_db_persistence',
                  'experiment_type',
                  'laboratory',
-                 'ratio_change_detection_enabled')
+                 'ratio_change_detection_enabled',
+                 'execute_open_queues')
         self._preference_binder(prefid, attrs)
 
         # dvc
@@ -511,6 +513,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
             if self.end_at_run_completion:
                 self.debug('Previous queue ended at completion. Not continuing to other opened experiments')
+                break
+
+            if not self.execute_open_queues:
+                self.debug('Execute open queues preference not selected')
                 break
 
         self.alive = False
@@ -2206,6 +2212,8 @@ Use Last "blank_{}"= {}
                 self._prev_baselines = new['baselines']
             elif kind == 'show_conditionals':
                 self.show_conditionals(active_run=obj, **new)
+            elif kind == 'end_after':
+                self.end_at_run_completion = True
 
     # ===============================================================================
     # property get/set

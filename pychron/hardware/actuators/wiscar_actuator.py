@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from pychron.core.helpers.strtools import to_bool
 from pychron.hardware.actuators import get_switch_address, word, sim
 from pychron.hardware.actuators.ascii_gp_actuator import ASCIIGPActuator
 from pychron.hardware.actuators.client_gp_actuator import ClientMixin
@@ -31,14 +30,25 @@ def get_channel(name):
     return command('get', 'valve', name)
 
 
-def actuate(name, action):
-    return set_channel(name, action)
+# def actuate(name, action):
+#    return set_channel(name, action)
+
+def actuate(action):
+    def fa(obj, name):
+        return set_channel(name, action)
+
+    return fa
 
 
 def validate_response(resp, cmd):
-    cmd_args = cmd.split(',')
-    args = resp.split(',')
-    return all([c == a for c, a in zip(cmd_args, args)])
+    if resp:
+        cmd_args = cmd.split(',')
+        args = resp.split(',')
+
+        # print('casd', cmd_args)
+        # print('aaaa', args)
+        # return all([c == a for c, a in zip(cmd_args, args)])
+        return cmd_args[2].lower() == args[2].lower()
 
 
 class WiscArGPActuator(ASCIIGPActuator, ClientMixin):
@@ -48,18 +58,26 @@ class WiscArGPActuator(ASCIIGPActuator, ClientMixin):
     close_cmd = actuate('close')
     open_cmd = actuate('open')
 
-    @word
     @sim
     def get_state_word(self, *args, **kw):
-        return self.ask('get,valves,all')
+        resp = self.ask('get,valve,all', verbose=False)
+        if resp:
+            # convert resp into a word dict
+            args = resp.split(',')
+            # remove the command header args
+            args = args[3:]
+            worddict = {args[i]:args[i+1]=='Open' for i in range(0, len(args), 2)}
+            return worddict
 
     def get_channel_state(self, obj, *args, **kw):
         cmd = get_channel(get_switch_address(obj))
-        resp = self.ask(cmd)
+        resp = self.ask(cmd, verbose=True)
 
         if validate_response(resp, cmd):
             args = resp.split(',')
-            return args[4].lower() == 'open'
+            return args[3].lower() == 'open'
+        else:
+            self.debug('invalid response: cmd={}, resp={}'.format(cmd, resp))
 
     def affirmative(self, resp, cmd):
         """
@@ -77,9 +95,15 @@ class WiscArGPActuator(ASCIIGPActuator, ClientMixin):
         """
         try:
             if validate_response(resp, cmd):
-                ok = resp.split(',')[4]
-                return to_bool(ok)
+                return all((r.lower() == c.lower() for c, r in list(zip(cmd.split(','), resp.split(',')))[2:]))
+                # respstate = resp.split(',')[4].lower()
+                # resqueststate = cmd.split(',')[3].lower()
+                # self.debug('resp={} request={}'.format(respstate, requeststate))
+                # return respstate ==requeststate
+            else:
+                self.debug('invalid affirmative response: cmd={} resp={}'.format(cmd, resp))
         except BaseException:
+            self.debug_exception()
             return
 
 # ============= EOF =============================================
