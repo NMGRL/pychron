@@ -40,6 +40,7 @@ Installation of Pychron at other laboratories is ongoing. Current interested lab
   - University of Florida
   - Purdue University
   - CAMS, Lawrence Livermore National Laboratory
+  - University of Alaska, Fairbanks
 
 Additionally, Remote Control Server, a script made by the pychron developers, is used extensively 
 by the international community to interface third-party software with Thermo Scientific's Mass Spectrometer control software.
