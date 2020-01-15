@@ -507,8 +507,11 @@ class InverseIsochron(Isochron):
 
     def replot(self):
         sel = self.analysis_group.get_omitted_by_tag(self.analyses)
-        if len(sel) < self.analysis_group.nanalyses:
-            self._rebuild_iso(sel)
+        self._rebuild_iso(sel)
+
+        # this is nonsensical and unnecessar
+        # if len(sel) < self.analysis_group.nanalyses:s
+        #     self._rebuild_iso(sel)
 
     def _rebuild_iso(self, sel=None):
         if not self.graph:
