@@ -112,7 +112,7 @@ class ThermoSpectrometer(BaseSpectrometer):
         :param dname:
         :return:
         """
-        keys, prev = self.get_intensities()
+        keys, prev, t = self.get_intensities()
         return dname in keys
 
     def test_intensity(self):
@@ -123,18 +123,18 @@ class ThermoSpectrometer(BaseSpectrometer):
         :return:
         """
         ret, err = True, ''
-        keys, one = self.get_intensities()
+        keys, one, t = self.get_intensities()
         it = 0.1 if self.simulation else self.integration_time
 
         time.sleep(it)
-        keys, two = self.get_intensities()
+        keys, two, t = self.get_intensities()
 
         if all(one == two):
             time.sleep(it)
-            keys, three = self.get_intensities()
+            keys, three, t = self.get_intensities()
             if all(two == three):
                 time.sleep(it)
-                keys, four = self.get_intensities()
+                keys, four, t = self.get_intensities()
                 if all(three == four):
                     ret = False
         return ret, err
@@ -353,26 +353,7 @@ class ThermoSpectrometer(BaseSpectrometer):
 
             signals = [float(s) for s in signals]
 
-        return keys, signals
-
-    def get_intensity(self, dkeys):
-        """
-            dkeys: str or tuple of strs
-
-        """
-        data = self.get_intensities()
-        if data is not None:
-
-            keys, signals = data
-
-            def func(k):
-                return signals[keys.index(k)] if k in keys else 0
-
-            if isinstance(dkeys, (tuple, list)):
-                return [func(key) for key in dkeys]
-            else:
-                return func(dkeys)
-                # return signals[keys.index(dkeys)] if dkeys in keys else 0
+        return keys, signals, None
 
     def clear_cached_config(self):
         self._config = None

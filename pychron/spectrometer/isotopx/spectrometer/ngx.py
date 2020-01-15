@@ -98,6 +98,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
 
         keys = []
         signals = []
+        collection_time = None
         if resp is not None:
             keys = self.detector_names[::-1]
             ds = ''
@@ -121,7 +122,10 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
 
                         if datastr:
                             if k == target:
-                                signals = [float(i) for i in datastr.split(',')[5:]]
+                                args = datastr.split(',')
+                                self.debug('args', args)
+                                collection_time = args[3]
+                                signals = [float(i) for i in args[5:]]
                             break
 
                     try:
@@ -137,7 +141,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         if len(signals) != len(keys):
             keys, signals = [], []
 
-        return keys, signals
+        return keys, signals, collection_time
 
     def read_integration_time(self):
         return self.integration_time
@@ -179,7 +183,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
     def _get_simulation_data(self):
         signals = [1, 100, 3, 0.01, 0.01, 0.01]  # + random(6)
         keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
-        return keys, signals
+        return keys, signals, None
 
     def _integration_time_default(self):
         self.default_integration_time = ISOTOPX_DEFAULT_INTEGRATION_TIME

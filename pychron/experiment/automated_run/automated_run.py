@@ -2099,7 +2099,7 @@ anaylsis_type={}
             self._intensities = {}
             while 1:
                 try:
-                    k, s = spec.get_intensities(tagged=True)
+                    k, s, t = spec.get_intensities(tagged=True)
                 except NoIntensityChange:
                     self.warning('Canceling Run. Intensity from mass spectrometer not changing')
 
@@ -2140,7 +2140,7 @@ anaylsis_type={}
                     self._intensities['tags'] = k
                     self._intensities['signals'] = s
 
-                    yield k, s
+                    yield k, s, t
 
         return gen()
 
