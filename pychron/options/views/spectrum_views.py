@@ -160,7 +160,9 @@ class CalculationSubOptions(SubOptions):
                            label='Error Type'),
                       Item('include_j_error_in_plateau',
                            tooltip='Include J error in plateau age',
-                           label='Include J Error'))
+                           label='Include J Error'),
+                      Item('include_decay_error',
+                           label='Include Decay Error'))
         rgrp = VGroup(Item('extend_plateau_end_caps',
                            label='Extend End Caps'),
                       icon_button_editor('edit_plateau_criteria', 'cog',
