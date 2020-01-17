@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from pyface.message_dialog import warning
 from traits.api import HasTraits, List
 from traitsui.api import UItem, CheckListEditor
 
@@ -24,9 +25,12 @@ class SelectSameMixin(HasTraits):
 
     def select_same_attr(self):
         hs = self._get_selection_attrs()
-        ev = SelectAttrView(available_attributes=hs)
-        ev.on_trait_change(self._handle_select_attributes, 'attributes')
-        ev.edit_traits()
+        if self.selected:
+            ev = SelectAttrView(available_attributes=hs)
+            ev.on_trait_change(self._handle_select_attributes, 'attributes')
+            ev.edit_traits()
+        else:
+            warning(None, 'You must select at least one run to use "Select Same"')
 
     def _handle_select_attributes(self, attributes):
         if attributes:
