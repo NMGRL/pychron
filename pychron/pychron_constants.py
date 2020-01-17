@@ -75,9 +75,12 @@ SCRIPT_KEYS = [MEASUREMENT, POST_MEASUREMENT, EXTRACTION, POST_EQUILIBRATION]
 
 SCRIPT_NAMES = ['{}_script'.format(si) for si in SCRIPT_KEYS]
 
+SE = 'SE'
 SD = 'SD'
 SEM = 'SEM'
 MSEM = 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)'
+MSE = 'SE but if MSWD>1 use SE * sqrt(MSWD)'
+
 ERROR_TYPES = [MSEM, SEM, SD]
 SIG_FIGS = range(0, 15)
 
@@ -93,6 +96,7 @@ FIT_TYPES = ['Linear', 'Parabolic', 'Cubic',
 
 FIT_ERROR_TYPES = [SD, SEM, MSEM, 'CI', 'MonteCarlo']
 SERIES_FIT_TYPES = [NULL_STR] + FIT_TYPES
+ISOCHRON_ERROR_TYPES = [SE, MSE, SEM, MSEM]
 
 INTERPOLATE_TYPES = ['Preceding', 'Bracketing Interpolate', 'Bracketing Average', 'Succeeding']
 FIT_TYPES_INTERPOLATE = FIT_TYPES + INTERPOLATE_TYPES

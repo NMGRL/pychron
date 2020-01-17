@@ -14,18 +14,28 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-from numpy import linspace, Inf, identity
+from numpy import linspace, Inf, zeros_like
 from scipy.optimize import fsolve
 from traits.api import Array, Property, Float
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from uncertainties import std_dev
-from uncertainties import ufloat
+from uncertainties import std_dev, ufloat
 
 from pychron.core.regression.ols_regressor import OLSRegressor
 from pychron.core.stats import calculate_mswd2
 from pychron.core.stats.core import validate_mswd
-from pychron.pychron_constants import SEM, MSEM
+from pychron.pychron_constants import SEM, MSEM, MSE, SE
+
+
+def kron(i, j):
+    """"
+    # calculates Kronecker delta
+    if i == j:
+        return 1.
+    else:
+        return 0.
+    """
+    return int(i == j)
 
 
 class YorkRegressor(OLSRegressor):
@@ -51,6 +61,7 @@ class YorkRegressor(OLSRegressor):
     x_intercept_error = Property
 
     mswd = Property
+    error_calc_type = SE
 
     def calculate(self, *args, **kw):
         super(YorkRegressor, self).calculate(*args, **kw)
@@ -64,7 +75,6 @@ class YorkRegressor(OLSRegressor):
         self._calculate()
 
     def calculate_correlation_coefficients(self, clean=True):
-
         if len(self.xds):
             xds = self.xds
             xns = self.xns
@@ -90,7 +100,7 @@ class YorkRegressor(OLSRegressor):
             b = (1 + (fxn / fd) ** 2)
             return (a * b) ** -0.5
         else:
-            return 0
+            return zeros_like(self.clean_xs)
 
     def _calculate(self):
         raise NotImplementedError
@@ -136,12 +146,16 @@ class YorkRegressor(OLSRegressor):
         return self._intercept
 
     def get_intercept_error(self):
+
         if self.error_calc_type == 'CI':
             e = self.calculate_ci_error(0)[0]
         elif self.error_calc_type in (SEM, MSEM):
             e = (self.get_intercept_variance() ** 0.5) * self.n ** -0.5
-        else:
+        elif self.error_calc_type in (SE, MSE):
             e = self.get_intercept_variance() ** 0.5
+        else:
+            e = 0
+
         return e
 
     def get_slope_error(self):
@@ -256,6 +270,12 @@ class NewYorkRegressor(YorkRegressor):
         return self._intercept_variance
 
     def get_slope_variance(self):
+        """
+        adapted from https://github.com/LLNL/MahonFitting/blob/master/mahon.py
+        Trappitsch et al. (2018)
+
+        :return:
+        """
 
         b = self._slope
         W = self._calculate_W(b)
@@ -280,37 +300,79 @@ class NewYorkRegressor(YorkRegressor):
         dd = da + db - dc
 
         # eq 19
-        dVdb = sum(W ** 2 * (aa + bb)) + 4 * sum(cc * dd)
+        dthdb = sum(W ** 2 * (aa + bb)) + 4 * sum(cc * dd)
 
-        # kronecker delta i.e int(i==j)
-        kd = identity(W.shape[0])
+        xbar, _ = self._calculate_xy_bar(W)
 
-        sW = sum(W)
+        # now calculate sigasq and sigbsq
+        wksum = sum(W)
+        sigasq = 0.
+        sigbsq = 0.
 
-        ee = W ** 2 * (kd - W / sW)
-        # eq 20
-        dVdx = sum(ee * (b ** 2 * (V * var_x - 2 * U * sxy) + \
-                         2 * b * U * var_y - V * var_y))
+        x = (b ** 2 * (V * var_x - 2 * U * sxy) + 2 * b * U * var_y - V * var_y)
+        xx = (b ** 2 * U * var_x + 2 * V * sxy - 2 * b * V * var_x - U * var_y)
+        for i, wi in enumerate(W):
+            var_xi = var_x[i]
+            var_yi = var_y[i]
+            sxyi = sxy[i]
 
-        # eq 21
-        dVdy = sum(ee * (b ** 2 * (U * var_x + 2 * V * sxy) - \
-                         2 * b * V * var_x - U * var_y))
+            # calculate dell theta / dell xi and dell theta / dell yi
+            dthdxi = 0.
+            dthdyi = 0.
+            ww = wi / wksum
+            for j, wj in enumerate(W):
+                # add to dthdxi and dthdyi
+                a = wj ** 2. * (kron(i, j) - ww)
+                dthdxi += a * x[j]
+                # correct equation! not equal to equation 21 in Mahon (1996)
+                dthdyi += a * xx[j]
 
-        # eq 18
-        a = sum(dVdx ** 2 * var_x + dVdy ** 2 * var_y + 2 * sxy * dVdx * dVdy)
-        try:
-            var_b = a / dVdb ** 2
-        except ZeroDivisionError:
-            var_b = 1
+            # now calculate dell a / dell xi and dell a / dell yi
+            dadxi = -b * ww - xbar * dthdxi / dthdb
+            dadyi = ww - xbar * dthdyi / dthdb
 
-        xm = self.xs.mean()
-        dadx = -b * W / sW - xm * dVdx / dVdb
-        dady = W / sW - xm * dVdy / dVdb
-        # eq 18
-        var_a = sum(dadx ** 2 * sx ** 2 + dady ** 2 * sy ** 2 + 2 * sxy * dadx * dady)
+            # now finally add to sigasq and sigbsq
+            sigbsq += dthdxi ** 2. * var_xi + dthdyi ** 2. * var_yi + 2 * sxyi * dthdxi * dthdyi
+            sigasq += dadxi ** 2. * var_xi + dadyi ** 2. * var_yi + 2 * sxyi * dadxi * dadyi
 
-        self._intercept_variance = var_a
-        return var_b
+        # now divide sigbsq
+        sigbsq /= dthdb ** 2.
+        self._intercept_variance = sigasq
+        return sigbsq
+
+        # # this seems to be the issue. application of the kronecker delta not correct
+        #
+        # # kronecker delta i.e int(i==j)
+        # kd = identity(W.shape[0])
+        # sW = sum(W)
+        #
+        # ee = W ** 2 * (kd - W / sW)
+        #
+        # # eq 20
+        # dVdx = sum(ee * (b ** 2 * (V * var_x - 2 * U * sxy) + \
+        #                  2 * b * U * var_y - V * var_y))
+        #
+        # # eq 21
+        # dVdy = sum(ee * (b ** 2 * (U * var_x + 2 * V * sxy) - \
+        #                  2 * b * V * var_x - U * var_y))
+        #
+        # # eq 18
+        # a = sum(dVdx ** 2 * var_x + dVdy ** 2 * var_y + 2 * sxy * dVdx * dVdy)
+        # try:
+        #     var_b = a / dVdb ** 2
+        # except ZeroDivisionError:
+        #     var_b = 1
+        #
+        # xm, _ = self._calculate_xy_bar(W)
+        #
+        # dadx = -b * W / sW - xm * dVdx / dVdb
+        # dady = W / sW - xm * dVdy / dVdb
+        #
+        # # eq 18
+        # var_a = sum(dadx ** 2 * var_x + dady ** 2 * var_y + 2 * sxy * dadx * dady)
+        #
+        # self._intercept_variance = var_a
+        # return var_b
 
     def predict(self, x):
         m, b = self._slope, self._intercept
@@ -364,8 +426,8 @@ class ReedYorkRegressor(YorkRegressor):
         self._slope = slope
 
         W = self._calculate_W(slope, Wx, Wy)
-        X_bar, Y_bar = self._calculate_xy_bar(W)
-        self._intercept = Y_bar - slope * X_bar
+        x_bar, y_bar = self._calculate_xy_bar(W)
+        self._intercept = y_bar - slope * x_bar
 
     def _calculate_W(self, slope, Wx, Wy):
         W = Wx * Wy / (slope ** 2 * Wy + Wx)
@@ -374,9 +436,9 @@ class ReedYorkRegressor(YorkRegressor):
     def get_intercept_variance(self):
         var_slope = self.get_slope_variance()
         xs = self.clean_xs
-        Wx, Wy = self._get_weights()
-        W = self._calculate_W(self._slope, Wx, Wy)
-        return var_slope * sum(W * xs ** 2) / sum(W)
+        wx, wy = self._get_weights()
+        w = self._calculate_W(self._slope, wx, wy)
+        return var_slope * sum(w * xs ** 2) / sum(w)
 
     def get_slope_variance(self):
         n = len(self.clean_xs)
@@ -385,8 +447,11 @@ class ReedYorkRegressor(YorkRegressor):
         slope = self._slope
         W = self._calculate_W(slope, Wx, Wy)
         U, V = self._calculate_UV(W)
-        sumA = sum(W * (slope * U - V) ** 2)
 
+        # this is not the correct algo for the Read method
+        # this is the York 1966 equations which Reed 1992 says are erroneous
+        # Reed 1992 Linear least‐squares fits with errors in both coordinates. II: Comments on parameter variances
+        sumA = sum(W * (slope * U - V) ** 2)
         sumB = sum(W * U ** 2)
         try:
             var = 1 / float(n - 2) * sumA / sumB

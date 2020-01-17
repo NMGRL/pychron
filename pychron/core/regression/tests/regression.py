@@ -156,7 +156,8 @@ class PearsonRegressionTest(RegressionTestCase):
 
         self.reg.trait_set(xs=xs, ys=ys,
                            xserr=exs,
-                           yserr=eys)
+                           yserr=eys,
+                           error_calc_type='SE')
         self.reg.calculate()
         self.solution = {'n': len(xs)}
 
@@ -164,9 +165,17 @@ class PearsonRegressionTest(RegressionTestCase):
         exp = pearson(self.kind)
         self.assertAlmostEqual(self.reg.slope, exp['slope'], 4)
 
+    def test_slope_err(self):
+        exp = pearson(self.kind)
+        self.assertAlmostEqual(self.reg.get_slope_variance() ** 0.5, exp['slope_err'], 4)
+
     def test_y_intercept(self):
         expected = pearson(self.kind)
         self.assertAlmostEqual(self.reg.intercept, expected['intercept'], 4)
+
+    def test_y_intercept_error(self):
+        expected = pearson(self.kind)
+        self.assertAlmostEqual(self.reg.get_intercept_error(), expected['intercept_err'], 4)
 
     def test_mswd(self):
         expected = pearson(self.kind)
@@ -180,7 +189,11 @@ class ReedRegressionTest(PearsonRegressionTest, TestCase):
 
 class NewYorkRegressionTest(PearsonRegressionTest, TestCase):
     reg_klass = NewYorkRegressor
-    kind = 'reed'
+    kind = 'new_york'
+    # def test_llnl(self):
+    #     self.assertEqual(self.reg.get_slope_variance(), self.reg.test_llnl())
+    # def test_llnl_vs_pychron_mahon(self):
+    #     self.assertEqual(self.reg.get_slope_variance_llnl(), self.reg.get_slope_variance_pychron())
 
 
 class ExpoRegressionTest(TestCase):

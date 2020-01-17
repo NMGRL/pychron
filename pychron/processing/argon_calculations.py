@@ -95,7 +95,7 @@ def calculate_isochron(analyses, error_calc_kind, exclude=None, reg='NewYork', i
     return age, yint, reg
 
 
-def isochron_regressor(xs, xes, ys, yes, xds, xdes, xns, xnes, yns, ynes, reg='Reed'):
+def isochron_regressor(xs, xes, ys, yes, xds, xdes, xns, xnes, yns, ynes, reg='NewYork'):
     if reg.lower() in ('newyork', 'new_york'):
         from pychron.core.regression.new_york_regressor import NewYorkRegressor as klass
     else:

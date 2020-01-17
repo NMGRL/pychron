@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 
 import numpy as np
 from numpy import random
@@ -15,11 +14,13 @@ def pearson(expected=False):
                                intercept=5.4799,
                                intercept_err=0.3555,
                                mswd=1.4832),
-                     new_york=dict(slope=0,
-                                   slope_err=0,
-                                   intercept=0,
-                                   intercept_err=0,
-                                   mswd=0))
+                     new_york=dict(slope=-0.4805,
+                                   slope_err=5.760009e-02,
+                                   intercept=5.4799,
+                                   intercept_err=2.944537e-01,
+                                   mswd=1.4832),
+
+                     )
     if expected:
         if not expected in solutions:
             v = ','.join(list(solutions.keys()))

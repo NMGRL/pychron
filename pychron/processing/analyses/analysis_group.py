@@ -32,7 +32,7 @@ from pychron.processing.arar_age import ArArAge
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
 from pychron.pychron_constants import MSEM, SD, SUBGROUPING_ATTRS, ERROR_TYPES, WEIGHTED_MEAN, \
     DEFAULT_INTEGRATED, SUBGROUPINGS, ARITHMETIC_MEAN, PLATEAU_ELSE_WEIGHTED_MEAN, WEIGHTINGS, FLECK, NULL_STR, \
-    ISOCHRON
+    ISOCHRON, MSE
 
 
 def AGProperty(*depends):
@@ -426,7 +426,7 @@ class AnalysisGroup(IdeogramPlotable):
         if mswd is None:
             mswd = self.mswd
 
-        if kind == MSEM:
+        if kind in (MSE, MSEM):
             e *= mswd ** 0.5 if mswd > 1 else 1
 
         return e
