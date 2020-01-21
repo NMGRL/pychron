@@ -16,15 +16,11 @@
 
 
 # ============= enthought library imports =======================
-# from traits.api import HasTraits, on_trait_change, Str, Int, Float, Button
-# from traitsui.api import View, Item, Group, HGroup, VGroup
-
-# ============= standard library imports ========================
-
-# ============= local library imports  ==========================
-from apptools.preferences.preference_binding import bind_preference
 from traits.api import Str, HasTraits
-from threading import Lock
+from apptools.preferences.preference_binding import bind_preference
+# ============= standard library imports ========================
+from threading import RLock
+# ============= local library imports  ==========================
 
 from pychron.hardware.core.core_device import CoreDevice
 
@@ -32,14 +28,16 @@ from pychron.hardware.core.core_device import CoreDevice
 class NGXController(CoreDevice):
     username = Str('')
     password = Str('')
-    
+    lock = None
+
     def set(self, *args, **kw):
         return HasTraits.set(self, *args, **kw)
 
     def initialize(self, *args, **kw):
         ret = super(NGXController, self).initialize(*args, **kw)
-        
-        self.lock = Lock()
+
+        # trying a new locking mechanism see ngx.trigger for more details
+        self.lock = RLock()
         if ret:
             resp = self.read()
 

@@ -18,7 +18,7 @@ from __future__ import print_function
 
 import time
 
-from traits.api import Int, List
+from traits.api import List
 
 from pychron.hardware.isotopx_spectrometer_controller import NGXController
 from pychron.pychron_constants import ISOTOPX_DEFAULT_INTEGRATION_TIME, ISOTOPX_INTEGRATION_TIMES, NULL_STR
@@ -85,11 +85,22 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
 
     def trigger_acq(self):
         # self.debug('trigger acquie {}'.format(self.microcontroller.lock))
+        # locking the microcontroller not necessary and detrimental when doing long integration times
+        # other commands can be executed when waiting 10-20 sec integration period.
+        # locking prevents those other command from happening. locking only ok when integration time < 5 seconds
+        # probably (min time probably has to do with the update valve state frequency).
+        # Disable locking complete for now
+
+        # another trick could be to make it an rlock. if lock is acquired by reading data then valve commands ok.
+        # but not vis versa.
+        while self.microcontroller.lock.locked:
+            time.sleep(0.25)
+
         self.microcontroller.lock.acquire()
         return self.ask('StartAcq 1,{}'.format(self.rcs_id), verbose=False)
         # return True
 
-    def read_intensities(self, timeout=40, trigger=False, target='ACQ.B', verbose=False):
+    def read_intensities(self, timeout=60, trigger=False, target='ACQ.B', verbose=False):
         resp = True
         if trigger:
             resp = self.trigger_acq()
