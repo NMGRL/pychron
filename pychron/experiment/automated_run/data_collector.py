@@ -230,14 +230,15 @@ class DataCollector(Consoleable):
     def _iteration(self, i, detectors=None):
         try:
             data = self._get_data(detectors)
+            
+            if not data:
+                return
+
+            k, s, t = data
         except (AttributeError, TypeError, ValueError) as e:
             self.debug('failed getting data {}'.format(e))
             return
-
-        if not data:
-            return
-
-        k, s, t = data
+        
         if k is not None and s is not None:
             x = self._get_time(t)
             self._save_data(x, k, s)
