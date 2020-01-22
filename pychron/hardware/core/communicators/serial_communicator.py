@@ -396,20 +396,25 @@ class SerialCommunicator(Communicator):
         """
 
         if not self.simulation:
-            if not isinstance(cmd, bytes):
-                cmd = bytes(cmd, 'utf-8')
+            # want to write back the original cmd
+            # use command locally
+
+            command = cmd
+            if not isinstance(command, bytes):
+                command = bytes(command, 'utf-8')
 
             if is_hex:
-                cmd = codecs.decode(cmd, 'hex')
+                command = codecs.decode(command, 'hex')
             else:
                 wt = self.write_terminator
                 if wt is not None:
                     if not isinstance(wt, bytes):
                         wt = bytes(wt, 'utf-8')
-                    cmd += wt
+                    command += wt
+                    cmd = command
 
             try:
-                self.handle.write(cmd)
+                self.handle.write(command)
             except (serial.serialutil.SerialException, OSError, IOError, ValueError) as e:
                 self.warning('Serial Communicator write execption: {}'.format(e))
                 return
