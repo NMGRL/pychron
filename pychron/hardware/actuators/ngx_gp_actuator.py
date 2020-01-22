@@ -47,10 +47,14 @@ class NGXGPActuator(ASCIIGPActuator):
         if delay:
             if not isinstance(delay, (float, int)):
                 delay = 0.25
-                
-        time.sleep(delay)
+        if delay:      
+            time.sleep(delay)
+            
         with self._lock:
-            return self._get_channel_state(obj, verbose=verbose, **kw)
+            self.debug(f'acquired lock {self._lock}')
+            r = self._get_channel_state(obj, verbose=True, **kw)
+        self.debug(f'lock released')
+        return r
     
     def _get_channel_state(self, obj, verbose=False, **kw):
 
@@ -58,12 +62,16 @@ class NGXGPActuator(ASCIIGPActuator):
         s = self.ask(cmd, verbose=verbose)
 
         if s is not None:
-            if s.strip() == 'E00':
-                # time.sleep(0.2)
-                # recursively call get_channel_state
-                return self._get_channel_state(obj, verbose=verbose, **kw)
-
-            return s.strip() == 'OPEN'
+            for si in s.split('\r\n'):
+                if si.strip() == 'E00':
+                    # time.sleep(0.2)
+                    # recursively call get_channel_state
+                    return self._get_channel_state(obj, verbose=verbose, **kw)
+            for si in s.split('\r\n'):
+                if si.strip() == 'OPEN':
+                    return True
+            else:
+                return False
 
         else:
             return False

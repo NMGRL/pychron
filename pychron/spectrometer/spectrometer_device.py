@@ -42,9 +42,11 @@ class SpectrometerDevice(ConfigLoadable):
 
     def ask(self, cmd, *args, **kw):
         if self.microcontroller:
-            resp = self.microcontroller.ask(cmd, *args, **kw)
-            if hasattr(self, 'handle_response'):
-                resp = self.handle_response(cmd, resp)
+            with self.microcontroller.lock:
+            
+                resp = self.microcontroller.ask(cmd, *args, **kw)
+                if hasattr(self, 'handle_response'):
+                    resp = self.handle_response(cmd, resp)
             return resp
 
     def read(self, *args, **kw):

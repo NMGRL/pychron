@@ -966,7 +966,7 @@ class SwitchManager(Manager):
         widths = []
         keys = ['name', 'address', 'state_address', 'actuator_name', 'actuator_obj',
                 'state_device_name',
-                'state_device_obj', 'state_invert']
+                'state_device_obj', 'state_invert', 'query_state']
         for k in keys:
             vs = [getattr(v, k) if hasattr(v, k) else '---' for v in self.switches.values()]
             vs = [len(str(vi) if vi else k) for vi in vs]
@@ -1130,9 +1130,9 @@ class SwitchManager(Manager):
                     state_invert = to_bool(si.text.strip())
 
         qs = True
-        vqs = v_elem.get('query_state')
-        if vqs:
-            qs = vqs == 'true'
+        vqs = v_elem.find('query_state')
+        if vqs is not None:
+            qs = to_bool(vqs.text.strip())
 
         parent = v_elem.find('parent')
 

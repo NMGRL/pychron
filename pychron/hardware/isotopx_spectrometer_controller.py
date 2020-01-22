@@ -19,7 +19,7 @@
 from traits.api import Str, HasTraits
 from apptools.preferences.preference_binding import bind_preference
 # ============= standard library imports ========================
-from threading import RLock
+from threading import RLock, Lock
 # ============= local library imports  ==========================
 
 from pychron.hardware.core.core_device import CoreDevice
@@ -37,7 +37,7 @@ class NGXController(CoreDevice):
         ret = super(NGXController, self).initialize(*args, **kw)
 
         # trying a new locking mechanism see ngx.trigger for more details
-        self.lock = RLock()
+        self.lock = Lock()
         if ret:
             resp = self.read()
 
