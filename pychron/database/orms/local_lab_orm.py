@@ -38,6 +38,8 @@ class LabTable(Base, BaseMixin):
     extract_value = Column(Float)
     cleanup = Column(Float)
     duration = Column(Float)
+    pre_cleanup = Column(Float)
+    post_cleanup = Column(Float)
 
     weight = Column(Float)
     comment = Column(TEXT)

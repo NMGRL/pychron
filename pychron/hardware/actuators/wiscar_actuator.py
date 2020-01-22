@@ -48,7 +48,10 @@ def validate_response(resp, cmd):
         # print('casd', cmd_args)
         # print('aaaa', args)
         # return all([c == a for c, a in zip(cmd_args, args)])
-        return cmd_args[2].lower() == args[2].lower()
+        try:
+            return cmd_args[2].lower() == args[2].lower()
+        except IndexError:
+            print('too few arguments to compare. cmd={}, resp={}'.format(cmd, resp))
 
 
 class WiscArGPActuator(ASCIIGPActuator, ClientMixin):

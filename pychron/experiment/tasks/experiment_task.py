@@ -606,7 +606,12 @@ class ExperimentEditorTask(EditorTask):
                 break
 
     def execute(self):
-        # self.debug('execute event {} {}'.format(id(self), id(obj)))
+        # self.debug('execute event {} {}'.format(id(self), id(obj))
+        if globalv.experiment_debug:
+            if not self.confirmation_dialog('The Experiment Debug global flag is set. Are you sure you want to '
+                                            'continue? If you have do not know what this means you likely do not want '
+                                            'to continue and should contact an expert.'):
+                return
 
         if self.editor_area.editors:
             try:

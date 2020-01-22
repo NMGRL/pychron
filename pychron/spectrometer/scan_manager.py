@@ -167,6 +167,7 @@ class ScanManager(StreamGraphManager):
         bind_preference(self, 'default_isotope', '{}.default_isotope'.format(pref_id))
 
     def setup_scan(self):
+        self.spectrometer.initialize_scan()
         # force update
         self.load_settings()
 
@@ -182,6 +183,8 @@ class ScanManager(StreamGraphManager):
         # force position update
         self._set_position()
         self.log_events_enabled = True
+        
+        
 
     def add_spec_event_marker(self, msg, mode=None, extra=None, bgcolor='white'):
         if self.use_log_events and self.log_events_enabled:
@@ -323,7 +326,7 @@ class ScanManager(StreamGraphManager):
     #     self._prev_signals = signals
 
     def _update(self, data):
-        keys, signals = data
+        keys, signals, _ = data
         if keys:
             self._signal_failed_cnt = 0
             # if self._check_intensity_no_change(signals):
@@ -350,14 +353,15 @@ class ScanManager(StreamGraphManager):
                                     'Check Qtegra and RemoteControlServer.\n\n'
                                     'Scan is stopped! Close and reopen window to restart')
                 self._stop_timer()
-
+                
     def _update_scan_graph(self):
         if self.scan_enabled:
             try:
-                data = self.spectrometer.get_intensities(trigger=True)
+                data = self.spectrometer.get_intensities(trigger=False, target='ACQ.B')
                 if data:
                     self._update(data)
-
+                self.spectrometer.trigger_acq()
+                    
             except NoIntensityChange:
                 self.warning_dialog('Something appears to be wrong.\n\n'
                                     'The detector intensities have not changed in 5 iterations. '

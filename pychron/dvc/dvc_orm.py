@@ -106,8 +106,8 @@ class AnalysisTbl(Base, IDMixin):
     extract_value = Column(Float)
     extract_units = stringcolumn(45)
     cleanup = Column(Float)
-    # pre_cleanup = Column(Float)
-    # post_cleanup = Column(Float)
+    pre_cleanup = Column(Float)
+    post_cleanup = Column(Float)
     duration = Column(Float)
 
     weight = Column(Float)

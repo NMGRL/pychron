@@ -15,6 +15,7 @@
 # ===============================================================================
 
 import time
+from datetime import datetime
 from queue import Queue
 from threading import Event, Thread
 
@@ -101,6 +102,7 @@ class DataCollector(Consoleable):
         st = time.time()
         if self.starttime is None:
             self.starttime = st
+            self.starttime_abs = datetime.now()
 
         et = self.ncounts * self.period_ms * 0.001
         # evt = self._evt
@@ -230,14 +232,15 @@ class DataCollector(Consoleable):
     def _iteration(self, i, detectors=None):
         try:
             data = self._get_data(detectors)
+            
+            if not data:
+                return
+
+            k, s, t = data
         except (AttributeError, TypeError, ValueError) as e:
             self.debug('failed getting data {}'.format(e))
             return
-
-        if not data:
-            return
-
-        k, s, t = data
+        
         if k is not None and s is not None:
             x = self._get_time(t)
             self._save_data(x, k, s)
@@ -248,8 +251,16 @@ class DataCollector(Consoleable):
     def _get_time(self, t):
         if t is None:
             t = time.time()
+            r = t - self.starttime
+        else:
+            # t is provided by the spectrometer. t should be a python datetime object
+            # since t is in absolute time use self.starttime_abs
+            r = t-self.starttime_abs
 
-        return t - self.starttime
+            # convert to seconds
+            r = r.total_seconds()
+            
+        return r
 
     def _get_data(self, detectors=None):
         try:

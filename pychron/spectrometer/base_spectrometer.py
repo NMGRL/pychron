@@ -520,7 +520,7 @@ class BaseSpectrometer(SpectrometerDevice):
                                kind=kind,
                                ypadding=ypadding)
 
-    def get_intensities(self, tagged=True, trigger=False):
+    def get_intensities(self, tagged=True, trigger=False, **kw):
         """
         keys, list of strings
         signals, list of floats::
@@ -534,7 +534,7 @@ class BaseSpectrometer(SpectrometerDevice):
         keys = []
         signals = []
         if self.microcontroller and not self.microcontroller.simulation:
-            keys, signals, t = self.read_intensities(trigger=trigger)
+            keys, signals, t = self.read_intensities(trigger=trigger, **kw)
 
         if not keys and globalv.communication_simulation:
             keys, signals, t = self._get_simulation_data()
