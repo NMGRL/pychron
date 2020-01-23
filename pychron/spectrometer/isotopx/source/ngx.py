@@ -26,26 +26,32 @@ class NGXSource(IsotopxSource):
         self.set_mftable('avftable')
 
     def set_hv(self, new):
-        self.ask('SSO IE, {}'.format(new), verbose=True)
+        with self.microcontroller.lock:
+            self.ask('SSO IE, {}'.format(new), verbose=True)
 
     def read_hv(self):
-        resp = self.ask('GSO IE', verbose=True)
+        with self.microcontroller.lock:
+            resp = self.ask('GSO IE', verbose=True)
+
         actual = 0
         if ',' in resp:
             setpoint, actual = csv_to_floats(resp)
         return actual
 
     def read_trap_current(self):
-        resp = self.ask('GSO TC')
+        with self.microcontroller.lock:
+            resp = self.ask('GSO TC')
+
         actual = 0
-        if ',' in resp:
+        if resp is not None and ',' in resp:
             setpoint, actual = csv_to_floats(resp)
         return actual
 
     def read_emission(self):
-        resp = self.ask('GSO EC')
+        with self.microcontroller.lock:
+            resp = self.ask('GSO EC')
         actual = 0
-        if ',' in resp:
+        if resp is not None and ',' in resp:
             setpoint, actual = csv_to_floats(resp)
         return actual
         # return self.ask('GSO ')
