@@ -21,6 +21,7 @@ import json
 from chaco.axis import DEFAULT_TICK_FORMATTER
 from chaco.axis_view import float_or_auto
 from enable.markers import marker_names
+from pyface.message_dialog import warning
 from traits.api import HasTraits, Str, Int, Bool, Float, Property, Enum, List, Range, \
     Color, Button, Instance
 from traitsui.api import View, Item, HGroup, VGroup, EnumEditor, Spring, Group, \
@@ -334,7 +335,30 @@ class BaseOptions(HasTraits):
             if key in state:
                 state[key] = [inst(a, key) for a in state.pop(key)]
 
-        self.__setstate__(state)
+        try:
+            self.__setstate__(state)
+        except BaseException:
+            try:
+                self._setstate(state)
+            except BaseException:
+                warning(None, 'Pychron options changed and your saved options are incompatible.  Unable to fully load. '
+                              'You will need to check/rebuild this saved options set')
+
+    def _setstate(self, state):
+
+        # see self.__setstate___
+
+        self._init_trait_listeners()
+        for k, v in state.items():
+            try:
+                self.trait_set(trait_change_notify=True, **{k: v})
+            except BaseException:
+                continue
+
+        self._post_init_trait_listeners()
+        self.traits_init()
+
+        self.traits_inited(True)
 
     def get_cached_subview(self, name):
         if self._subview_cache is None:

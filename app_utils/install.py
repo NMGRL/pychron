@@ -172,7 +172,7 @@ def ask_config():
         print('{:<20s}: {}'.format(k, v))
 
     config['pip_requirements'] = 'uncertainties peakutils qimage2ndarray chaco'
-    creq = 'pip qt numpy statsmodels scikit-learn PyYAML yaml traitsui=6.0.0 envisage sqlalchemy ' \
+    creq = 'pip qt numpy statsmodels scikit-learn PyYAML yaml traitsui envisage sqlalchemy ' \
            'Reportlab lxml xlrd xlwt xlsxwriter requests keyring pillow gitpython cython pytables ' \
            'pymysql certifi jinja2 swig=3 {}'.format(config['qt_bindings'])
     if IS_MAC:
@@ -252,6 +252,7 @@ def install_launcher_script(cfg):
     if IS_WINDOWS:
         lpath = 'pychron_launcher.bat'
         txt = '''
+call {conda_distro:}\\Scripts\\activate.bat {conda_distro:}\\envs\\{conda_env_name:}
 set GITHUB_ORGANIZATION={github_org:}
 set GITHUB_TOKEN={github_token:}
 set MassSpecDBVersion={massspec_db_version:}

@@ -54,7 +54,9 @@ class BaseGaugeController(HasTraits):
     display_name = Str
     gauge_klass = BaseGauge
 
-    scan_func = 'update_pressures'
+    def initialize(self):
+        self.scan_func = 'update_pressures'
+        return True
 
     def update_pressures(self, verbose=False):
         if verbose:

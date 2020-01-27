@@ -113,6 +113,55 @@ class DVC(Loggable):
         if self.db.connect():
             return True
 
+    def fix_identifier(self, src_id, dest_id, repo, identifier, new_aliquot=None):
+        dry = True
+
+        repo = self._get_repository(repo)
+
+        # fix git files
+        root = paths.repository_dataset_dir
+
+        sp = analysis_path(src_id, repo, root=root)
+        dp = analysis_path(dest_id, repo, root=root, mode='w')
+
+        if os.path.isfile(dp):
+            self.info('Already an analysis. {} {}'.format(dest_id, dp))
+            return
+
+        if not os.path.isfile(sp):
+            self.info('not a file. {}'.format(sp))
+            return
+
+        jd = dvc_load(sp)
+        jd['identifier'] = identifier
+        if new_aliquot:
+            jd['aliquot'] = new_aliquot
+
+        self.debug('{}>>{}'.format(sp, dp))
+        if not dry:
+            repo.add(sp)
+            repo.add(dp)
+
+            dvc_dump(jd, dp)
+            os.remove(sp)
+
+        for modifier in ('baselines', 'blanks', 'extraction',
+                         'intercepts', 'icfactors', 'peakcenter', '.data'):
+            sp = analysis_path(src_id, repo, modifier=modifier, root=root)
+            dp = analysis_path(dest_id, repo, modifier=modifier, root=root, mode='w')
+            self.debug('{}>>{}'.format(sp, dp))
+            if sp and os.path.isfile(sp):
+                if not dry:
+                    repo.add(sp)
+                    repo.add(dp)
+                    shutil.move(sp, dp)
+
+
+        # fix database
+
+
+        # c
+
     def generate_currents(self):
         if not self.update_currents_enabled:
             self.information_dialog('You must enable "Current Values" in Preferences/DVC')
@@ -337,11 +386,15 @@ class DVC(Loggable):
 
         for ai in ais:
             p = analysis_path(ai, reponame)
-
-            try:
-                obj = dvc_load(p)
-            except ValueError:
-                print('skipping {}'.format(p))
+            if p and os.path.isfile(p):
+                try:
+                    obj = dvc_load(p)
+                except ValueError:
+                    self.warning('Skipping {}. invalid file'.format(p))
+                    continue
+            else:
+                self.warning('Skipping {}. no file'.format(ai.record_id))
+                continue
 
             sample = ip.sample.name
             project = ip.sample.project.name

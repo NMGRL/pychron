@@ -33,6 +33,7 @@ from uncertainties import nominal_value, std_dev
 
 from pychron.core.helpers.iterfuncs import groupby_group_id, groupby_key
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+from pychron.core.pychron_traits import BorderVGroup
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_editor import grouped_name
 from pychron.globals import globalv
@@ -44,7 +45,8 @@ from pychron.pipeline.nodes.figure import FigureNode
 from pychron.processing.analyses.analysis_group import StepHeatAnalysisGroup
 from pychron.regex import MDD_PARAM_REGEX
 
-EOF = 1
+
+# EOF = 1
 
 
 class MDDWorkspace(HasTraits):
@@ -62,8 +64,10 @@ class MDDWorkspace(HasTraits):
                               'named {}.in'.format(dlg.path, name))
 
     def traits_view(self):
-        v = View(VGroup(icon_button_editor('add_root_button', 'add'),
-                        UItem('roots', editor=ListStrEditor())))
+        w = BorderVGroup(UItem('roots', editor=ListStrEditor()), label='Workspaces')
+        b = HGroup(icon_button_editor('add_root_button', 'add',
+                                      tooltip='Add an MDD workspace (folder) to the available workspace list'))
+        v = View(VGroup(b, w), title='Select a MDD Workspace')
         return v
 
     def _roots_default(self):

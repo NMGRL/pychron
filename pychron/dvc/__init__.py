@@ -27,7 +27,10 @@ from pychron.core.helpers.filetools import subdirize, add_extension
 from pychron.paths import paths
 from pychron.wisc_ar_constants import WISCAR_ID_RE
 
-__version__ = '2.0'
+__version__ = '2.1'
+
+# changelog
+# 2.1 added pre/post cleanup
 
 MASS_SPEC_REDUCED = 'MASS SPEC REDUCED'
 HISTORY_TAGS = ('TAG', 'ISOEVO', 'BLANKS', 'ICFactor', 'DEFINE EQUIL', MASS_SPEC_REDUCED, 'COLLECTION', 'IMPORT',

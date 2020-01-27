@@ -26,7 +26,6 @@ from sqlalchemy.orm import relationship
 from pychron.core.helpers.datetime_tools import make_timef
 from pychron.core.utils import alphas
 from pychron.database.orms import stringcolumn, primary_key
-# from pychron.database.records.isotope_record import DVCIsotopeRecordView
 from pychron.experiment.utilities.identifier import make_runid
 
 Base = declarative_base()
