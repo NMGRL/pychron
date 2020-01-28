@@ -72,7 +72,7 @@ class PipelinePlugin(BaseTaskPlugin):
               'Scripting': 'script',
               'Edit': 'toolbox',
               'Fit': '',
-              'Transfer': 'bucket_truck',
+              'Transfer': 'network-transmit',
               'History': 'edit-history-2',
               'Share': 'share'}
         # convert the extension point into a dict

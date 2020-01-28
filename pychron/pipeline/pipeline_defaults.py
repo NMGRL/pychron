@@ -98,6 +98,7 @@ nodes:
 """
 
 ARAR_IDEO = """
+icon: ideogram
 required:
 nodes:
   - klass: UnknownNode
@@ -107,6 +108,7 @@ nodes:
 """
 
 IDEO = """
+icon: ideo
 required:
 nodes:
   - klass: UnknownNode
@@ -181,6 +183,7 @@ nodes:
 """
 
 XY_SCATTER = """
+icon: chart_curve
 required:
 nodes:
   - klass: UnknownNode
@@ -294,6 +297,7 @@ nodes:
 """
 
 SERIES = """
+icon: chart_curve
 required:
 nodes:
   - klass: UnknownNode

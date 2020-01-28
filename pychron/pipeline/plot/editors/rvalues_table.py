@@ -26,7 +26,10 @@ class Results(BaseMatrixResult):
 
     def _calculate_values(self, ag, others):
         vs = ['']
-        fstd = ag.weighted_mean_f
+        try:
+            fstd = ag.weighted_mean_f
+        except TypeError:
+            fstd = 0
 
         for other in others:
             if other == ag:
@@ -34,7 +37,7 @@ class Results(BaseMatrixResult):
             else:
                 try:
                     pv = other.weighted_mean_f / fstd
-                except ZeroDivisionError:
+                except (TypeError, ZeroDivisionError):
                     pv = ''
 
             vs.append(pv)
