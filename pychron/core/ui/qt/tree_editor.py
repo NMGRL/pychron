@@ -14,6 +14,9 @@
 # limitations under the License.
 # ===============================================================================
 
+import collections
+import platform
+
 # ============= enthought library imports =======================
 from pyface.qt import QtGui, QtCore
 from pyface.qt.QtCore import Qt
@@ -21,10 +24,6 @@ from pyface.qt.QtGui import QIcon, QTreeWidgetItemIterator, QColor
 from traits.api import Str, Bool, Event
 from traitsui.api import TreeEditor as _TreeEditor
 from traitsui.qt4.tree_editor import SimpleEditor as _SimpleEditor
-
-import collections
-import platform
-
 
 LABEL_FONT_SIZE = 14
 if platform.system() == 'Windows':
@@ -240,7 +239,6 @@ class _PipelineEditor(SimpleEditor):
             item = PipelineDelegate(self._tree, self.factory.show_icons)
             self._tree.setItemDelegate(item)
 
-
     def _create_item(self, nid, node, obj, index=None):
         """ Create  a new TreeWidgetItem as per word_wrap policy.
 
@@ -252,9 +250,12 @@ class _PipelineEditor(SimpleEditor):
             cnid = QtGui.QTreeWidgetItem()
             nid.insertChild(index, cnid)
 
-        # cnid.setIcon(0, self._get_icon(node, object))
         cnid.setToolTip(0, node.get_tooltip(obj))
-        self._set_column_labels(cnid, node.get_column_labels(obj))
+        try:
+            self._set_column_labels(cnid, node, obj)
+        except BaseException:
+            # pre-6.1.3
+            self._set_column_labels(cnid, node.get_column_labels(obj))
 
         color = node.get_background(obj)
         if color:

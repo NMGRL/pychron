@@ -121,6 +121,7 @@ class PlotPanel(Loggable):
     series_cnt = 0
 
     total_counts = CInt
+    total_seconds = CInt
 
     is_baseline = Bool(False)
     is_peak_hop = Bool(False)
@@ -156,6 +157,12 @@ class PlotPanel(Loggable):
             self.info_func(*args, **kw)
         else:
             super(PlotPanel, self).info(*args, **kw)
+
+    def start(self):
+        self.total_counts = 0
+        self.total_seconds = 0
+        self.is_peak_hop = False
+        self.is_baseline = False
 
     def reset(self):
         self.debug('clearing graphs')
@@ -282,6 +289,8 @@ class PlotPanel(Loggable):
 
     def set_ncounts(self, v):
         self._ncounts = v
+        self.total_seconds += (self.integration_time*v)
+        self.total_counts += v
 
     def _set_ncounts(self, v):
 

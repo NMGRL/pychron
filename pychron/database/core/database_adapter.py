@@ -32,6 +32,7 @@ from pychron import version
 from pychron.database.core.base_orm import AlembicVersionTable
 from pychron.database.core.query import compile_query
 from pychron.loggable import Loggable
+from pychron.pychron_constants import STARTUP_MESSAGE_POSITION
 from pychron.regex import IPREGEX
 
 
@@ -137,8 +138,8 @@ class DatabaseAdapter(Loggable):
 
     application = Any
 
-    test_func = 'get_migrate_version'
-    version_func = 'get_migrate_version'
+    test_func = 'get_versions'
+    version_func = 'get_versions'
 
     autoflush = True
     autocommit = False
@@ -241,7 +242,7 @@ class DatabaseAdapter(Loggable):
         self.session = None
 
     # @caller
-    def connect(self, test=True, force=False, warn=True, version_warn=False, attribute_warn=False):
+    def connect(self, test=True, force=False, warn=True, version_warn=True, attribute_warn=False):
         """
         Connect to the database
 
@@ -358,6 +359,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
 
     def add_item(self, *args, **kw):
         return self._add_item(*args, **kw)
+
     # def get_session(self):
     #     """
     #     return the current session or make a new one
@@ -379,6 +381,9 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
         q = self.session.query(AlembicVersionTable)
         mv = q.one()
         return mv
+
+    def get_versions(self, **kw):
+        pass
 
     @property
     def public_datasource_url(self):
@@ -496,19 +501,33 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
 
         try:
             self.info('testing database connection {}'.format(self.test_func))
-            ver = getattr(self, self.test_func)(reraise=True)
+            vers = getattr(self, self.test_func)(reraise=True)
             if version_warn:
-                ver = ver.version_num
-                aver = version.__alembic__
-                self.debug('testing database versions current={} local={}'.format(ver, aver))
-                if ver != aver:
-                    if not self.confirmation_dialog(
-                            'Your database is out of date and it may not work correctly with '
-                            'this version of Pychron. Contact admin to update db.\n\n'
-                            'Current={} Yours={}\n\n'
-                            'Continue with Pychron despite out of date db?'.format(ver, aver)):
-                        self.application.stop()
-                        sys.exit()
+                # ver = ver.version_num
+                # aver = version.__alembic__
+
+                # vers is a list of all the supported versions of pychron for this database
+
+                lver = version.__version__
+
+                self.debug('testing database versions. pychron version={}, db_versions={}'.format(lver, vers))
+                if not vers:
+                    self.debug('not versions in the database. added a default one')
+                    self.add_default_version('19.6')
+                    # self.warning_dialog('Please add at least one record to the VersionTbl table. e.g. version=20.1')
+
+                else:
+                    if lver not in vers:
+                        if not self.confirmation_dialog(
+                                'Your database is out of date and it MAY not work correctly with '
+                                'this version of Pychron. Contact admin to update db.\n\n'
+                                'Continue with Pychron despite out of date db?',
+                                position=STARTUP_MESSAGE_POSITION):
+
+                            self.debug('exiting application')
+                            if self.application:
+                                self.application.stop()
+                            sys.exit()
 
             connected = True
         except OperationalError:
@@ -527,12 +546,12 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
 
         return connected
 
-    def test_version(self):
-        ver = getattr(self, self.version_func)()
-        ver = ver.version_num
-        aver = version.__alembic__
-        if ver != aver:
-            return 'Database is out of data. Pychron ver={}, Database ver={}'.format(aver, ver)
+    # def test_version(self):
+    #     ver = getattr(self, self.version_func)()
+    #     ver = ver.version_num
+    #     aver = version.__alembic__
+    #     if ver != aver:
+    #         return 'Database is out of data. Pychron ver={}, Database ver={}'.format(aver, ver)
 
     def _add_item(self, obj):
         sess = self.session
@@ -550,7 +569,6 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
                 return obj
             except SQLAlchemyError as e:
                 import traceback
-                # traceback.print_exc()
                 self.debug('add_item exception {} {}'.format(obj, traceback.format_exc()))
                 sess.rollback()
                 if self.reraise:
@@ -560,19 +578,12 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
 
     def _add_unique(self, item, attr, name):
         nitem = getattr(self, 'get_{}'.format(attr))(name)
-        if nitem is None:  # or isinstance(nitem, (str, unicode)):
+        if nitem is None:
             self.info('adding {}= {}'.format(attr, name))
             self._add_item(item)
             nitem = item
 
         return nitem
-
-    def _get_path_keywords(self, path, args):
-        n = os.path.basename(path)
-        r = os.path.dirname(path)
-        args['root'] = r
-        args['filename'] = n
-        return args
 
     def _get_date_range(self, q, asc, desc, hours=0):
         lan = q.order_by(asc).first()
@@ -686,7 +697,6 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
         q = q.limit(1)
         return self._query(q, 'one', **kw)
 
-    # @conditional_caller
     def _query(self, q, func, reraise=False, verbose_query=False):
         if verbose_query:
             self.debug(compile_query(q))
@@ -738,9 +748,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
     def _retrieve_item(self, table, value, key='name', last=None,
                        joins=None, filters=None, options=None, verbose=True,
                        verbose_query=False):
-        #         sess = self.get_session()
-        #         if sess is None:
-        #             return
+
         if not isinstance(value, (str, int, six.text_type, int, float, list, tuple)):
             return value
 
@@ -752,9 +760,6 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
 
         def __retrieve(s):
             q = s.query(table)
-
-            #             if options:
-            #                 q = q.options(subqueryload(options))
 
             if joins:
                 try:
@@ -818,7 +823,6 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
             self.close_session()
         return ret
 
-    # @deprecated
     def _get_items(self, table, gtables,
                    join_table=None, filter_str=None,
                    limit=None,
@@ -849,20 +853,6 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
             return [getattr(ri, key) for ri in res]
         return res
 
-        # def selector_factory(self, **kw):
-        #     sel = self._selector_factory(**kw)
-        #     self.selector = weakref.ref(sel)()
-        #     return self.selector
-        #
-        # def _selector_default(self):
-        #     return self._selector_factory()
-        #
-        # def _selector_factory(self, **kw):
-        #     if self.selector_klass:
-        #         s = self.selector_klass(db=self, **kw)
-        #         #            s.load_recent()
-        #         return s
-
 
 class PathDatabaseAdapter(DatabaseAdapter):
     path_table = None
@@ -874,6 +864,13 @@ class PathDatabaseAdapter(DatabaseAdapter):
         p = self.path_table(**kw)
         rec.path = p
         return p
+
+    def _get_path_keywords(self, path, args):
+        n = os.path.basename(path)
+        r = os.path.dirname(path)
+        args['root'] = r
+        args['filename'] = n
+        return args
 
 
 class SQLiteDatabaseAdapter(DatabaseAdapter):

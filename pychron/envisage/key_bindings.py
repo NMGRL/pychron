@@ -29,6 +29,8 @@ from traits.api import HasTraits, Str
 # ============= local library imports  ==========================
 import yaml
 from pychron.paths import paths
+
+
 # from pychron.core.ui.keybinding_editor import KeyBindingEditor
 
 # default_key_map = {'pychron.open_experiment': ('O', 'Open Experiment'),
@@ -44,25 +46,25 @@ def key_bindings_path():
 
 def load_key_map():
     p = key_bindings_path()
-    # if not os.path.isfile(p):
-    # dump_key_bindings(default_key_map)
-    return yload(p)
-    # if os.path.isfile(p):
-    #     with open(p, 'r') as rfile:
-    #         return yaml.load(rfile)
-    # else:
-    #     return {}
+    if os.path.isfile(p):
+        return yload(p)
+    else:
+        return {}
 
 
 user_key_map = load_key_map()
 
 
 def update_key_bindings(actions):
-    for aid, b, d in actions:
-        if not aid in user_key_map:
-            user_key_map[aid] = (b, d)
+    if isinstance(user_key_map, dict):
+        for aid, b, d in actions:
+            if aid not in user_key_map:
+                user_key_map[aid] = (b, d)
 
-    dump_key_bindings(user_key_map)
+        dump_key_bindings(user_key_map)
+    else:
+        # corrupted keybindings file. writing an empty one
+        dump_key_bindings({})
 
 
 def dump_key_bindings(obj):
@@ -134,6 +136,3 @@ def edit_key_bindings():
 if __name__ == '__main__':
     edit_key_bindings()
 # ============= EOF =============================================
-
-
-

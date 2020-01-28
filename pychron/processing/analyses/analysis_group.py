@@ -79,6 +79,7 @@ class AnalysisGroup(IdeogramPlotable):
     mswd = Property
 
     isochron_age_error_kind = Str
+    isochron_method = Str('York')
 
     identifier = Any
     aliquot = Any
@@ -242,7 +243,7 @@ class AnalysisGroup(IdeogramPlotable):
 
         exclude = [i for i, x in enumerate(ans) if test(x)]
         if ans:
-            return calculate_isochron(ans, self.isochron_age_error_kind, exclude=exclude)
+            return calculate_isochron(ans, self.isochron_age_error_kind, reg=self.isochron_method, exclude=exclude)
 
     def calculate_isochron_age(self, exclude_non_plateau=False):
         args = self.get_isochron_data(exclude_non_plateau)
@@ -545,7 +546,7 @@ class AnalysisGroup(IdeogramPlotable):
                 return v
 
             if attr in ('kca', 'kcl', 'signal_k39'):
-                ks = array([ai.get_computed_value('k39') for ai in ans])
+                ks = array([ai.k39 for ai in ans])
 
                 if attr == 'kca':
                     cas = array([ai.get_non_ar_isotope('ca37') for ai in ans])
@@ -587,7 +588,7 @@ class AnalysisGroup(IdeogramPlotable):
                 weighting = self.integrated_age_weighting
 
             rs = array([a.get_computed_value('rad40') for a in ans])
-            ks = array([a.get_computed_value('k39') for a in ans])
+            ks = array([a.k39 for a in ans])
             f = self._calculate_integrated_mean_error(weighting, ks, rs)
 
             j = self.j
@@ -659,15 +660,15 @@ class StepHeatAnalysisGroup(AnalysisGroup):
 
     @cached_property
     def _get_total_ar39(self):
-        total = sum([a.get_computed_value('k39') for a in self.analyses])
+        total = sum([a.k39 for a in self.analyses])
         return nominal_value(total)
 
     def plateau_total_ar39(self):
-        ptotal = sum([a.get_computed_value('k39') for a in self.plateau_analyses()])
+        ptotal = sum([a.k39 for a in self.plateau_analyses()])
         return nominal_value(ptotal / self.total_ar39 * 100)
 
     def valid_total_ar39(self):
-        cleantotal = sum([a.get_computed_value('k39') for a in self.clean_analyses()])
+        cleantotal = sum([a.k39 for a in self.clean_analyses()])
         return nominal_value(cleantotal / self.total_ar39 * 100)
 
     def cumulative_ar39(self, idx):
@@ -675,7 +676,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
         for i, a in enumerate(self.analyses):
             if i > idx:
                 break
-            cum += a.get_computed_value('k39')
+            cum += a.k39
 
         return nominal_value(cum / self.total_ar39 * 100)
 
@@ -736,7 +737,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
                 ages = [ai.age for ai in ans]
                 errors = [ai.age_err for ai in ans]
 
-                k39 = [nominal_value(ai.get_computed_value('k39')) for ai in ans]
+                k39 = [nominal_value(ai.k39) for ai in ans]
 
                 options = {'nsteps': self.plateau_nsteps,
                            'gas_fraction': self.plateau_gas_fraction,

@@ -67,7 +67,8 @@ def calculate_isochron(analyses, error_calc_kind, exclude=None, reg='NewYork', i
     xns, xnes = unpack_value_error(a39)
 
     regx = isochron_regressor(ys, yerrs, xs, xerrs,
-                              xds, xdes, yns, ynes, xns, xnes)
+                              xds, xdes, yns, ynes, xns, xnes,
+                              reg)
     regx.user_excluded = exclude
 
     reg = isochron_regressor(xs, xerrs, ys, yerrs,
@@ -96,10 +97,14 @@ def calculate_isochron(analyses, error_calc_kind, exclude=None, reg='NewYork', i
 
 
 def isochron_regressor(xs, xes, ys, yes, xds, xdes, xns, xnes, yns, ynes, reg='NewYork'):
-    if reg.lower() in ('newyork', 'new_york'):
+    reg = reg.lower()
+    if reg in ('newyork', 'new_york'):
         from pychron.core.regression.new_york_regressor import NewYorkRegressor as klass
+    elif reg == 'york':
+        from pychron.core.regression.new_york_regressor import YorkRegressor as klass
     else:
         from pychron.core.regression.new_york_regressor import ReedYorkRegressor as klass
+
     reg = klass(xs=xs, ys=ys,
                 xserr=xes, yserr=yes,
                 xds=xds, xdes=xdes,

@@ -447,6 +447,7 @@ class AutomatedRun(Loggable):
                 self.info(msg)
                 if self.plot_panel:
                     self.plot_panel.total_counts += settling_time
+                    self.plot_panel.total_seconds += settling_time
 
                 self.wait(settling_time, msg)
 
@@ -1466,9 +1467,8 @@ anaylsis_type={}
         self._alive = True
 
         if self.plot_panel:
-            self.plot_panel.total_counts = 0
-            self.plot_panel.is_peak_hop = False
-            self.plot_panel.is_baseline = False
+            self.plot_panel.start()
+
             # self.plot_panel.set_analysis_view(self.experiment_type)
 
         self.multi_collector.canceled = False
@@ -2260,7 +2260,6 @@ anaylsis_type={}
         if self.plot_panel:
             self.plot_panel.integration_time = period
             self.plot_panel.set_ncounts(ncounts)
-            self.plot_panel.total_counts += ncounts
 
             if grpname == 'sniff':
                 self._setup_isotope_graph(starttime_offset, color, grpname)
@@ -2303,16 +2302,17 @@ anaylsis_type={}
     def _update_limits(self, graph, starttime_offset):
         # update limits
         mi, ma = graph.get_x_limits()
+        max_ = ma
+        min_ = mi
 
-        new_max = self.plot_panel.total_counts * self._integration_seconds
-        if not ma == Inf:
-            new_max = max(new_max, ma)
+        tc = self.plot_panel.total_seconds
+        if tc > ma or ma == Inf:
+            max_ = tc
 
-        new_min = mi
         if starttime_offset > mi:
-            new_min = -starttime_offset
+            min_ = -starttime_offset
 
-        graph.set_x_limits(min_=new_min, max_=new_max * 1.25)
+        graph.set_x_limits(min_=min_, max_=max_ * 1.25)
 
     def _setup_baseline_graph(self, starttime_offset, color):
         graph = self.plot_panel.baseline_graph

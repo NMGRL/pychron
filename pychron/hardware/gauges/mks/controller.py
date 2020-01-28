@@ -15,8 +15,9 @@
 # ===============================================================================
 
 import re
+
 import six
-from traitsui.api import View, Item, HGroup, Group, ListEditor, InstanceEditor
+from traitsui.api import View, Item, HGroup
 
 from pychron.core.ui.color_map_bar_editor import BarGaugeEditor
 from pychron.hardware.core.core_device import CoreDevice
@@ -49,10 +50,10 @@ class Gauge(BaseGauge):
 
 
 class MKSController(BaseGaugeController, CoreDevice):
-    gauge_klass = Gauge
-    scan_func = 'update_pressures'
 
     def initialize(self, *args, **kw):
+        BaseGaugeController.initialize(self, *args, **kw)
+
         for g in self.gauges:
             if int(g.channel) in (1, 3, 5):
                 self._power_onoff(g.channel, True, verbose=True)

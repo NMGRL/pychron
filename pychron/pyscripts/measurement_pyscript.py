@@ -408,6 +408,7 @@ class MeasurementPyScript(ValvePyScript):
             self.activate_detectors(*detectors)
             try:
                 self.automated_run.plot_panel.total_counts = 0
+                self.automated_run.plot_panel.total_seconds = 0
             except AttributeError:
                 pass
 

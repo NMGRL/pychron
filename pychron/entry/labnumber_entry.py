@@ -33,6 +33,7 @@ from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.progress import open_progress
 from pychron.core.yaml import yload
 from pychron.dvc.dvc_irradiationable import DVCIrradiationable
+from pychron.dvc.meta_object import MetaObjectException
 from pychron.entry.editors.irradiation_editor import IrradiationEditor
 from pychron.entry.editors.level_editor import LevelEditor, load_holder_canvas
 from pychron.entry.identifier_generator import IdentifierGenerator
@@ -774,10 +775,13 @@ THIS CHANGE CANNOT BE UNDONE')
 
         # self.level_note = level.note.decode('utf-8') or ''
         # self.level_production_name = level.production.name if level.production else ''
+        try:
+            pname, prod = meta_repo.get_production(self.irradiation, name)
 
-        pname, prod = meta_repo.get_production(self.irradiation, name)
-        self.level_production_name = prod.name
-        self.level_note = prod.note
+            self.level_production_name = prod.name
+            self.level_note = prod.note
+        except MetaObjectException:
+            self.warning_dialog('Failed loading the Irradiation Production values from file. Contact an expert.')
 
         self.monitor_age, self.monitor_decay_constant = meta_repo.get_monitor_info(self.irradiation, name)
 

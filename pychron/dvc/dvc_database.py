@@ -219,6 +219,14 @@ class DVCDatabase(DatabaseAdapter):
                     if not self.get_users():
                         self.add_user('root')
 
+    def add_default_version(self, v):
+        v = VersionTbl(version=str(v))
+        self.add_item(v)
+
+    def get_versions(self, **kw):
+        q = self.session.query(VersionTbl)
+        return [r.version for r in q.all()]
+
     def modify_aliquot_step(self, uuid, aliquot, increment):
         with self.session_ctx() as sess:
             a = self.get_analysis_uuid(uuid)

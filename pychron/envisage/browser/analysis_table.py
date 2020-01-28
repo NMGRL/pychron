@@ -143,7 +143,9 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
                 else:
                     name = aset[0][1]
 
+            # sort by uuid, calculate md5 hash
             h = md5(''.join(sorted((ai[0] for ai in aset))).encode('utf-8')).hexdigest()
+
             if h not in self._analysis_sets:
                 name = '{} ({})'.format(name, datetime.now().strftime('%m/%d/%y'))
                 self._analysis_sets[h] = (name, aset)
@@ -297,6 +299,7 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
 
     def _analysis_set_changed(self, new):
         if self.suppress_load_analysis_set:
+            self.debug('suppressing loading analysis set')
             return
 
         try:
