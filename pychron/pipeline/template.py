@@ -25,6 +25,7 @@ from traitsui.api import UItem
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.strings import PascalCase
 from pychron.core.yaml import yload
+from pychron.envisage.resources import icon
 from pychron.paths import paths
 from pychron.pipeline.nodes.data import DataNode, UnknownNode, DVCNode, InterpretedAgeNode, ListenUnknownNode, \
     BaseDVCNode
@@ -80,9 +81,11 @@ class PipelineTemplateRoot(HasTraits):
 class PipelineTemplateGroup(HasTraits):
     name = Str
     templates = List
+    icon = None
 
 
 class PipelineTemplate(HasTraits):
+    icon = None
     def __init__(self, name, path, nodes, factories, *args, **kw):
         super(PipelineTemplate, self).__init__(*args, **kw)
 
@@ -90,6 +93,12 @@ class PipelineTemplate(HasTraits):
         self.path = path
         self.nodes = nodes
         self.node_factories = factories
+
+        self._yd = yload(self.path)
+
+        ico = self._yd.get('icon')
+        if ico:
+            self.icon = icon(ico)
 
     def render(self, application, pipeline, bmodel, iabmodel, dvc, clear=True, exclude_klass=None):
         # if first node is an unknowns node
@@ -115,7 +124,7 @@ class PipelineTemplate(HasTraits):
         # else:
         #     yd = yaml.load(self.path)
 
-        yd = yload(self.path)
+        yd = self._yd
         nodes = yd['nodes']
 
         if exclude_klass is None:

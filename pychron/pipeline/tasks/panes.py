@@ -53,6 +53,15 @@ from pychron.pipeline.template import PipelineTemplate, PipelineTemplateGroup, P
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, LIGHT_RED, LIGHT_YELLOW
 
 
+class TemplateTreeNode(TreeNode):
+    def get_icon(self, obj, is_expanded):
+        icon = obj.icon
+
+        if not icon:
+            icon = super(TemplateTreeNode, self).get_icon(obj, is_expanded)
+        return icon
+
+
 def node_adder(name):
     def wrapper(obj, info, o):
         # print name, info.object
@@ -269,9 +278,7 @@ class PipelinePane(TraitsDockPane):
 
         nodes = [PipelineGroupTreeNode(node_for=[PipelineGroup],
                                        children='pipelines',
-                                       auto_open=True
-                                       ),
-
+                                       auto_open=True),
                  PipelineTreeNode(node_for=[Pipeline],
                                   children='nodes',
                                   icon_open='',
@@ -309,11 +316,11 @@ class PipelinePane(TraitsDockPane):
 
         tnodes = [TreeNode(node_for=[PipelineTemplateRoot],
                            children='groups'),
-                  TreeNode(node_for=[PipelineTemplateGroup],
-                           label='name',
-                           children='templates'),
-                  TreeNode(node_for=[PipelineTemplate, ],
-                           label='name')]
+                  TemplateTreeNode(node_for=[PipelineTemplateGroup],
+                                   label='name',
+                                   children='templates'),
+                  TemplateTreeNode(node_for=[PipelineTemplate, ],
+                                   label='name')]
 
         teditor = TreeEditor(nodes=tnodes,
                              editable=False,

@@ -43,6 +43,7 @@ class PipelinePlugin(BaseTaskPlugin):
     nodes = ExtensionPoint(List, id='pychron.pipeline.nodes')
     node_factories = ExtensionPoint(List, id='pychron.pipeline.node_factories')
     predefined_templates = ExtensionPoint(List, id='pychron.pipeline.predefined_templates')
+    pipeline_group_icon_map = ExtensionPoint(List, id='pychron.pipeline.pipeline_group_icon_map')
 
     def _help_tips_default(self):
         return []
@@ -65,6 +66,18 @@ class PipelinePlugin(BaseTaskPlugin):
         t.engine.nodes = self.nodes
         t.engine.node_factories = self.node_factories
         t.engine.predefined_templates = self.predefined_templates
+
+        im = {'Table': 'table',
+              'Plot': 'chart_curve',
+              'Scripting': 'script',
+              'Edit': 'toolbox',
+              'Fit': '',
+              'Transfer': 'bucket_truck',
+              'History': 'edit-history-2',
+              'Share': 'share'}
+        # convert the extension point into a dict
+        im.update(self.pipeline_group_icon_map)
+        t.engine.pipeline_group_icon_map = im
         t.engine.load_predefined_templates()
         return t
 

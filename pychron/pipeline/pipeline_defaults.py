@@ -89,6 +89,7 @@ nodes:
 """
 
 CSV_IDEO = """
+icon: histogram
 required:
 nodes:
   - klass: CSVNode
@@ -384,6 +385,7 @@ nodes:
 """
 
 PYSCRIPT = """
+icon: script
 required:
 nodes:
   - klass: UnknownNode
@@ -391,4 +393,11 @@ nodes:
   - klass: PyScriptNode
 """
 
+RUNID_EDIT = """
+icon: hammer
+required:
+nodes: 
+  - klass: UnknownNode
+  - klass: RunIDEditNode
+"""
 # ============= EOF =============================================
