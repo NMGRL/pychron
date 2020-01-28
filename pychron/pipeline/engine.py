@@ -1054,12 +1054,15 @@ class PipelineEngine(Loggable):
 
     def _handle_figure_event(self, evt):
         kind = evt[0]
+        print('fiafsfdasfsa', evt, kind)
         if kind == 'alternate_figure':
             self._make_alternate_figure(evt)
         elif kind == 'tag':
             self.tag_event = evt[1]
         elif kind == 'identify_peaks':
             self._identify_peaks(evt[1])
+        elif kind == 'plot_on_map':
+            self._plot_on_map()
 
     def _identify_peaks(self, ps):
         from pychron.pipeline.identify_peak_view import IdentifyPeakView
@@ -1074,6 +1077,9 @@ class PipelineEngine(Loggable):
             open_view(ipv)
         else:
             self.warning_dialog('Failed to connect to a relevant datasource')
+
+    def _plot_on_map(self):
+        self.information_dialog('Psyche.  Plot on Map not yet implemented')
 
     def _make_alternate_figure(self, evt):
         self.add_pipeline = True

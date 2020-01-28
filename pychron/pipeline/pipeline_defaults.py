@@ -89,7 +89,7 @@ nodes:
 """
 
 CSV_IDEO = """
-icon: histogram
+icon: ideo
 required:
 nodes:
   - klass: CSVNode
@@ -98,7 +98,7 @@ nodes:
 """
 
 ARAR_IDEO = """
-icon: ideogram
+icon: ideo
 required:
 nodes:
   - klass: UnknownNode
@@ -247,6 +247,7 @@ nodes:
 """
 
 INTERPRETED_AGE_IDEOGRAM = """
+icon: ideo
 required:
 nodes:
   - klass: InterpretedAgeNode
@@ -254,6 +255,7 @@ nodes:
 """
 
 HYBRID_IDEOGRAM = """
+icon: ideo
 required:
 nodes:
   - klass: UnknownNode
@@ -263,6 +265,7 @@ nodes:
 """
 
 SUBGROUP_IDEOGRAM = """
+icon: ideo
 required:
 nodes:
   - klass: UnknownNode
@@ -274,6 +277,7 @@ nodes:
 """
 
 HISTORY_IDEOGRAM = """
+icon: ideo
 required:
 nodes:
   - klass: UnknownNode

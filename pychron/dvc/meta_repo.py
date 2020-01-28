@@ -17,7 +17,6 @@ import os
 import shutil
 from datetime import datetime
 
-# ============= enthought library imports =======================
 from traits.api import Bool
 from uncertainties import ufloat
 
@@ -30,6 +29,9 @@ from pychron.dvc.meta_object import IrradiationGeometry, Chronology, Production,
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths, r_mkdir
 from pychron.pychron_constants import INTERFERENCE_KEYS, RATIO_KEYS, DEFAULT_MONITOR_NAME, DATE_FORMAT, NULL_STR
+
+
+# ============= enthought library imports =======================
 
 
 def irradiation_geometry(name):
@@ -536,10 +538,10 @@ class MetaRepo(GitRepoManager):
                 p = os.path.join(root, p)
                 obj = dvc_load(p)
 
-                specs[name] = obj
                 for r in obj:
                     if r['create_date']:
                         r['create_date'] = datetime.strptime(r['create_date'], DATE_FORMAT)
+                specs[name] = obj
 
         return specs
 
@@ -548,7 +550,10 @@ class MetaRepo(GitRepoManager):
         spec = sens.get(name)
         v = 1
         if spec:
-            v = spec.get('sensitivity', 1)
+            # get most recent sensitivity
+            record = spec[-1]
+
+            v = record.get('sensitivity', 1)
         return v
 
     @cached('clear_cache')

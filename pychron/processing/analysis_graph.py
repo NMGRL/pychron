@@ -70,16 +70,24 @@ class SpectrumGraph(AnalysisStackedGraph):
 
 
 class IdeogramGraph(AnalysisStackedGraph):
+    """
+    figure_events get handled by the Panel. The Panel then fires a new figure_event that is handled by the
+    PipelineEngine
 
+    """
     def get_child_context_menu_actions(self):
         return [self.action_factory('Correlation...', 'make_correlation'),
-                self.action_factory('Identify Peaks', 'identify_peaks')]
+                self.action_factory('Identify Peaks', 'identify_peaks'),
+                self.action_factory('Plot On Map', 'plot_on_map')]
 
     def make_correlation(self):
         self.figure_event = ('correlation', (self.selected_plotid, self.selected_plot.y_axis.title))
 
     def identify_peaks(self):
         self.figure_event = ('identify_peaks', None)
+
+    def plot_on_map(self):
+        self.figure_event = ('plot_on_map', None)
 
 
 class ReferencesGraph(AnalysisStackedRegressionGraph):

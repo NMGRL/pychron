@@ -83,6 +83,7 @@ MSE = 'SE but if MSWD>1 use SE * sqrt(MSWD)'
 
 ERROR_TYPES = [MSEM, SEM, SD]
 SIG_FIGS = range(0, 15)
+STD_SIG_FIGS = ['Std', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
 
 WEIGHTED_MEAN = 'Weighted Mean'
 PLATEAU = 'Plateau'

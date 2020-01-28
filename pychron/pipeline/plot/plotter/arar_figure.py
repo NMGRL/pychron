@@ -26,7 +26,7 @@ from traits.api import HasTraits, Any, Int, Str, Property, \
 from uncertainties import std_dev, nominal_value, ufloat
 
 from pychron.core.filtering import filter_ufloats, sigma_filter
-from pychron.core.helpers.formatting import floatfmt, format_percent_error
+from pychron.core.helpers.formatting import floatfmt, format_percent_error, standard_sigfigsfmt
 from pychron.graph.error_bar_overlay import ErrorBarOverlay
 from pychron.graph.ticks import SparseLogTicks
 from pychron.graph.ticks import SparseTicks
@@ -580,7 +580,8 @@ class BaseArArFigure(SelectionFigure):
                           display_mswd=True,
                           display_mswd_pvalue=False,
                           percent_error=False,
-                          sig_figs=3):
+                          sig_figs=3,
+                          mswd_sig_figs=3):
 
         display_mswd = n >= 2 and display_mswd
 
@@ -594,14 +595,17 @@ class BaseArArFigure(SelectionFigure):
 
         if mswd_args and display_mswd:
             mswd, valid_mswd, _, pvalue = mswd_args
-            mswd = format_mswd(mswd, valid_mswd, include_tag=True)
+            mswd = format_mswd(mswd, valid_mswd, n=mswd_sig_figs, include_tag=True)
             if display_mswd_pvalue:
                 mswd = '{} pvalue={:0.2f}'.format(mswd, pvalue)
         else:
             mswd = ''
 
-        sx = floatfmt(x, sig_figs)
-        swe = floatfmt(we, sig_figs)
+        if sig_figs == 'Std':
+            sx, swe = standard_sigfigsfmt(x, we)
+        else:
+            sx = floatfmt(x, sig_figs)
+            swe = floatfmt(we, sig_figs)
 
         if self.options.index_attr in ('uF', 'Ar40/Ar36'):
             me = u'{} {}{}'.format(sx, PLUSMINUS, swe)

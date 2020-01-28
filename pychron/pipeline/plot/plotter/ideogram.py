@@ -771,6 +771,7 @@ class Ideogram(BaseArArFigure):
         text = self._build_label_text(wm, we, n,
                                       total_n=total_n,
                                       mswd_args=mswd_args,
+                                      mswd_sig_figs=self.options.mswd_sig_figs,
                                       sig_figs=self.options.mean_sig_figs,
                                       percent_error=self.options.display_percent_error,
                                       display_n=self.options.display_mean_n,
