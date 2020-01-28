@@ -216,8 +216,8 @@ class InverseIsochron(Isochron):
     def _plot_inverse_isochron(self, po, plot, pid):
         opt = self.options
         self.analysis_group.isochron_age_error_kind = opt.error_calc_method
+        self.analysis_group.isochron_method = opt.regressor_kind
         _, _, reg = self.analysis_group.get_isochron_data(exclude_non_plateau=opt.exclude_non_plateau)
-
         graph = self.graph
 
         xtitle = '<sup>39</sup>Ar/<sup>40</sup>Ar'
@@ -532,7 +532,6 @@ class InverseIsochron(Isochron):
             self.analysis_group.calculate_isochron()
 
         reg = self.analysis_group.isochron_regressor
-
         fit = self.graph.plots[0].plots['fit{}'.format(self.group_id)][0]
 
         mi, ma = self.graph.get_x_limits()

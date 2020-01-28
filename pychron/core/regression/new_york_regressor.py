@@ -24,7 +24,7 @@ from uncertainties import std_dev, ufloat
 from pychron.core.regression.ols_regressor import OLSRegressor
 from pychron.core.stats import calculate_mswd2
 from pychron.core.stats.core import validate_mswd
-from pychron.pychron_constants import SEM, MSEM, MSE, SE
+from pychron.pychron_constants import MSE, SE
 
 
 def kron(i, j):
@@ -39,6 +39,7 @@ def kron(i, j):
 
 
 class YorkRegressor(OLSRegressor):
+    """ York 1969, Mahon 1996"""
     xns = Array
     xds = Array
 
@@ -56,6 +57,7 @@ class YorkRegressor(OLSRegressor):
 
     intercept = Property
     _intercept = Float
+    _intercept_variance = None
 
     x_intercept = Property
     x_intercept_error = Property
@@ -102,12 +104,6 @@ class YorkRegressor(OLSRegressor):
         else:
             return zeros_like(self.clean_xs)
 
-    def _calculate(self):
-        raise NotImplementedError
-
-    def _calculate_W(self, *args, **kw):
-        raise NotImplementedError
-
     def _get_weights(self):
         ex = self.clean_xserr
         ey = self.clean_yserr
@@ -149,14 +145,32 @@ class YorkRegressor(OLSRegressor):
 
         if self.error_calc_type == 'CI':
             e = self.calculate_ci_error(0)[0]
-        elif self.error_calc_type in (SEM, MSEM):
-            e = (self.get_intercept_variance() ** 0.5) * self.n ** -0.5
+        # elif self.error_calc_type in (SEM, MSEM):
+        #     e = (self.get_intercept_variance() ** 0.5) * self.n ** -0.5
         elif self.error_calc_type in (SE, MSE):
             e = self.get_intercept_variance() ** 0.5
         else:
             e = 0
 
         return e
+
+    def get_intercept_variance(self):
+        if self._intercept_variance is None:
+            self.get_slope_variance()
+
+        return self._intercept_variance
+
+    def get_slope_variance(self):
+        b = self._slope
+        W = self._calculate_W(b)
+        U, V = self._calculate_UV(W)
+
+        sigbsq = 1/sum(W*U**2)
+
+        sigasq = sigbsq*sum(W*self.clean_xs**2)/sum(W)
+
+        self._intercept_variance = sigasq
+        return sigbsq
 
     def get_slope_error(self):
         return self.get_slope_variance() ** 0.5
@@ -177,16 +191,16 @@ class YorkRegressor(OLSRegressor):
         v = -self.intercept / self.slope
         return v
 
-    def _get_x_intercept_error(self):
-        """
-            this method for calculating the x intercept error is incorrect.
-            the current solution is to swap xs and ys and calculate the y intercept error
-        """
-        # v = self.x_intercept
-        # e = self.get_intercept_error() * v ** 0.5
-
-        e = 0
-        return e
+    # def _get_x_intercept_error(self):
+    #     """
+    #         this method for calculating the x intercept error is incorrect.
+    #         the current solution is to swap xs and ys and calculate the y intercept error
+    #     """
+    #     # v = self.x_intercept
+    #     # e = self.get_intercept_error() * v ** 0.5
+    #
+    #     e = 0
+    #     return e
 
     def _get_mswd(self):
         if not self._slope:
@@ -199,12 +213,15 @@ class YorkRegressor(OLSRegressor):
         self.valid_mswd = validate_mswd(v, len(x), k=2)
         return v
 
+    def _calculate_W(self, b):
+        sig_x = self.clean_xserr
+        sig_y = self.clean_yserr
 
-class NewYorkRegressor(YorkRegressor):
-    """
-        mahon 1996
-    """
-    _intercept_variance = None
+        var_x = sig_x ** 2
+        var_y = sig_y ** 2
+        r = self.calculate_correlation_coefficients()
+        # print var_x.shape, var_y.shape, r.shape, b
+        return (var_y + b ** 2 * var_x - 2 * b * r * sig_x * sig_y) ** -1
 
     def _calculate(self):
         b = 0
@@ -219,7 +236,7 @@ class NewYorkRegressor(YorkRegressor):
         self._slope = b
         self._intercept = a
 
-    def _calculate_slope_intercept(self, pb, b, cnt, total=500, tol=1e-15):
+    def _calculate_slope_intercept(self, pb, b, cnt, total=1000, tol=1e-10):
         """
             recursively calculate slope
             b=slope
@@ -253,21 +270,16 @@ class NewYorkRegressor(YorkRegressor):
 
         return b, a, cnt
 
-    def _calculate_W(self, b):
-        sig_x = self.clean_xserr
-        sig_y = self.clean_yserr
+    def predict(self, x):
+        m, b = self._slope, self._intercept
+        return m * x + b
 
-        var_x = sig_x ** 2
-        var_y = sig_y ** 2
-        r = self.calculate_correlation_coefficients()
-        # print var_x.shape, var_y.shape, r.shape, b
-        return (var_y + b ** 2 * var_x - 2 * b * r * sig_x * sig_y) ** -1
 
-    def get_intercept_variance(self):
-        if self._intercept_variance is None:
-            self.get_slope_variance()
+class NewYorkRegressor(YorkRegressor):
+    """
+        mahon 1996
+    """
 
-        return self._intercept_variance
 
     def get_slope_variance(self):
         """
@@ -374,9 +386,6 @@ class NewYorkRegressor(YorkRegressor):
         # self._intercept_variance = var_a
         # return var_b
 
-    def predict(self, x):
-        m, b = self._slope, self._intercept
-        return m * x + b
 
 
 class ReedYorkRegressor(YorkRegressor):
