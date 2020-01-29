@@ -84,6 +84,14 @@ class EColumn(Column):
         return error
 
 
+class SigFigColumn(VColumn):
+    pass
+
+
+class SigFigEColumn(EColumn):
+    pass
+
+
 class AEColumn(Column):
     def __init__(self, nsigma, *args, **kw):
         self.label = PLUSMINUS_NSIGMA.format(nsigma)

@@ -122,97 +122,20 @@ class OptionsUnpickler(pickle.Unpickler):
                     setattr(inst, k, v)
 
 
-class OptionsManager(Loggable):
-    selected = Str
-    delete_enabled = Property(depends_on='names')
+class BaseOptionsManager(Loggable):
     names = List
-    subview_names = Tuple
-    subview = Instance(SubOptions)
-    selected_subview = Str
-    selected_options = Instance(BaseOptions)
-    options_klass = None
+    selected = Str
+    _defaults = None
     new_name = Property
     _new_name = Str
+    delete_enabled = Property(depends_on='names')
+
     id = ''
-    # _defaults_path = Str
-    _defaults = None
-
-    _cached_names = List
-    _cached_detectors = List
-    _cached_atypes = List
-    _cached_reference_types = List
-    _cached_options = None
-
-    _default_options_txt = None
 
     def __init__(self, *args, **kw):
-        super(OptionsManager, self).__init__(*args, **kw)
+        super(BaseOptionsManager, self).__init__(*args, **kw)
         self._populate()
         self._initialize()
-
-    @cached_property
-    def _get_delete_enabled(self):
-        return len(self.names) > 1
-
-    def _get_new_name(self):
-        return self._new_name
-
-    def _set_new_name(self, v):
-        self._new_name = v
-
-    def _validate_new_name(self, v):
-        if all((a not in v) for a in ('\\', ' ', '/')):
-            if v not in self.names:
-                return v
-
-    def set_detectors(self, dets):
-        self._cached_detectors = dets
-        if self.selected_options:
-            self.selected_options.set_detectors(dets)
-
-    def set_names(self, names, *args, **kw):
-        self._cached_names = names
-        if self.selected_options:
-            self.selected_options.set_names(names, *args, **kw)
-
-            # for p in self.plotter_options_list:
-            #     p.set_names(names)
-    def set_outside_options(self, options):
-        self._cached_options = options
-        if self.selected_options:
-            options.clone_to(self.selected_options)
-
-    def set_analysis_types(self, atypes):
-        self._cached_atypes = atypes
-        if self.selected_options:
-            self.selected_options.set_analysis_types(atypes)
-
-    def set_reference_types(self, atypes):
-        self._cached_reference_types = atypes
-        if self.selected_options:
-            self.selected_options.set_reference_types(atypes)
-
-    def _selected_options_changed(self, new):
-        if new:
-            if self._cached_names:
-                new.set_names(self._cached_names)
-
-            if self._cached_detectors:
-                new.set_detectors(self._cached_detectors)
-
-            if self._cached_atypes:
-                new.set_analysis_types(self._cached_atypes)
-
-            if self._cached_reference_types:
-                new.set_reference_types(self._cached_reference_types)
-
-            if self._cached_options:
-                self._cached_options.clone_to(new)
-
-    def set_selected(self, obj):
-        for name in self.names:
-            if obj.name == name:
-                self.selected_options = obj
 
     def delete_selected(self):
         if self.confirmation_dialog('Are you sure you want to delete "{}"'.format(self.selected)):
@@ -262,53 +185,11 @@ class OptionsManager(Loggable):
                 name = self.selected
 
         self._save(name, obj)
-
-    def _save(self, name, obj):
-        p = self._pname(name, '.json')
-        with open(p, 'w') as wfile:
-            obj.dump(wfile)
-
-        # for backwards compatiblity keep this for now
-        p = self._pname(name)
-        if os.path.isfile(p):
-            dp = self._pname(name, '.p.bak')
-            shutil.move(p, dp)
-
-        # p = self._pname(name)
-        # with open(p, 'wb') as wfile:
-        #     spickle.dump(obj, wfile)
-
-    def add(self, name):
-        p = self.options_klass()
-        p.load_factory_defaults(self._default_options_txt)
-        self.save(name, p)
         self._load_names()
 
-        self.selected = name
-
-    def factory_default(self):
-        self.debug('set factory default')
-        if self._defaults:
-            options_name = self.selected.lower()
-            for name, txt in self._defaults:
-                if name == options_name:
-                    self.selected = ''
-                    self.debug('set factory default for {}'.format(name))
-                    dp = self._pname(name)
-                    os.remove(dp)
-
-                    p = self.options_klass()
-                    p.load_factory_defaults(txt)
-                    self.save(name, p)
-
-                    self.selected = name
-                    break
-            else:
-                self.information_dialog('Factory Defaults not available for "{}". '
-                                        'Not a factory provided options set'.format(options_name))
-
-        else:
-            self.information_dialog('Not Factory Defaults available')
+    def _pname(self, name, ext='.p'):
+        name = add_extension(name, ext)
+        return os.path.join(self.persistence_root, name)
 
     def _initialize(self):
         p = self._pname('selected', '.json')
@@ -347,10 +228,143 @@ class OptionsManager(Loggable):
         ps.extend(js)
         self.names = [ni for ni in ps if ni != 'selected']
 
+    @cached_property
+    def _get_delete_enabled(self):
+        return len(self.names) > 1
+
+    def _get_new_name(self):
+        return self._new_name
+
+    def _set_new_name(self, v):
+        self._new_name = v
+
+    def _validate_new_name(self, v):
+        if all((a not in v) for a in ('\\', ' ', '/')):
+            if v not in self.names:
+                return v
+
+    @property
+    def persistence_root(self):
+        return os.path.join(paths.appdata_dir, globalv.username, self.id)
+
+
+class OptionsManager(BaseOptionsManager):
+
+    subview_names = Tuple
+    subview = Instance(SubOptions)
+    selected_subview = Str
+    selected_options = Instance(BaseOptions)
+    options_klass = None
+
+    _cached_names = List
+    _cached_detectors = List
+    _cached_atypes = List
+    _cached_reference_types = List
+    _cached_options = None
+
+    _default_options_txt = None
+
+    def set_detectors(self, dets):
+        self._cached_detectors = dets
+        if self.selected_options:
+            self.selected_options.set_detectors(dets)
+
+    def set_names(self, names, *args, **kw):
+        self._cached_names = names
+        if self.selected_options:
+            self.selected_options.set_names(names, *args, **kw)
+
+            # for p in self.plotter_options_list:
+            #     p.set_names(names)
+
+    def set_outside_options(self, options):
+        self._cached_options = options
+        if self.selected_options:
+            options.clone_to(self.selected_options)
+
+    def set_analysis_types(self, atypes):
+        self._cached_atypes = atypes
+        if self.selected_options:
+            self.selected_options.set_analysis_types(atypes)
+
+    def set_reference_types(self, atypes):
+        self._cached_reference_types = atypes
+        if self.selected_options:
+            self.selected_options.set_reference_types(atypes)
+
+    def _selected_options_changed(self, new):
+        if new:
+            if self._cached_names:
+                new.set_names(self._cached_names)
+
+            if self._cached_detectors:
+                new.set_detectors(self._cached_detectors)
+
+            if self._cached_atypes:
+                new.set_analysis_types(self._cached_atypes)
+
+            if self._cached_reference_types:
+                new.set_reference_types(self._cached_reference_types)
+
+            if self._cached_options:
+                self._cached_options.clone_to(new)
+
+    def set_selected(self, obj):
+        for name in self.names:
+            if obj.name == name:
+                self.selected_options = obj
+
+    def add(self, name):
+        p = self.options_klass()
+        p.load_factory_defaults(self._default_options_txt)
+        self.save(name, p)
+        self._load_names()
+
+        self.selected = name
+
+    def factory_default(self):
+        self.debug('set factory default')
+        if self._defaults:
+            options_name = self.selected.lower()
+            for name, txt in self._defaults:
+                if name == options_name:
+                    self.selected = ''
+                    self.debug('set factory default for {}'.format(name))
+                    dp = self._pname(name)
+                    os.remove(dp)
+
+                    p = self.options_klass()
+                    p.load_factory_defaults(txt)
+                    self.save(name, p)
+
+                    self.selected = name
+                    break
+            else:
+                self.information_dialog('Factory Defaults not available for "{}". '
+                                        'Not a factory provided options set'.format(options_name))
+
+        else:
+            self.information_dialog('Not Factory Defaults available')
+
     def _selected_subview_changed(self, new):
         if new:
             v = self.selected_options.get_subview(new)
             self.subview = v
+
+    def _save(self, name, obj):
+        p = self._pname(name, '.json')
+        with open(p, 'w') as wfile:
+            obj.dump(wfile)
+
+        # for backwards compatiblity keep this for now
+        p = self._pname(name)
+        if os.path.isfile(p):
+            dp = self._pname(name, '.p.bak')
+            shutil.move(p, dp)
+
+        # p = self._pname(name)
+        # with open(p, 'wb') as wfile:
+        #     spickle.dump(obj, wfile)
 
     def _load_json(self, p):
         with open(p, 'r') as rfile:
@@ -415,10 +429,6 @@ class OptionsManager(Loggable):
 
         else:
             self.selected_options = None
-
-    def _pname(self, name, ext='.p'):
-        name = add_extension(name, ext)
-        return os.path.join(self.persistence_root, name)
 
     @property
     def persistence_root(self):

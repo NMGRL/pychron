@@ -16,18 +16,21 @@
 
 # ============= enthought library imports =======================
 from traits.api import Str, Instance
-from traitsui.api import Item
+from traitsui.api import Item, HGroup, EnumEditor, View, VGroup, UItem
 from traitsui.editors import DirectoryEditor
 from uncertainties import ufloat, std_dev, nominal_value
 
 from pychron.core.confirmation import confirmation_dialog
 from pychron.core.helpers.filetools import unique_path2
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.progress import progress_iterator, progress_loader
+from pychron.envisage.icon_button_editor import icon_button_editor
+from pychron.options.options_manager import OptionsController
 from pychron.paths import paths
 from pychron.pipeline.editors.set_ia_editor import SetInterpretedAgeEditor
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.nodes.data import BaseDVCNode
-from pychron.pipeline.tables.xlsx_table_options import XLSXAnalysisTableWriterOptions
+from pychron.pipeline.tables.table_options_manager import TableOptionsManager
 from pychron.pipeline.tables.xlsx_table_writer import XLSXAnalysisTableWriter
 
 
@@ -270,12 +273,37 @@ class XLSXAnalysisTablePersistNode(BaseNode):
     # auto_configure = False
     # configurable = False
 
-    options_klass = XLSXAnalysisTableWriterOptions
+    # options_klass = XLSXAnalysisTableWriterOptions
+    options_klass = TableOptionsManager
+    options_view = Instance(View)
+
+    def configure(self, refresh=True, pre_run=False, **kw):
+        if not pre_run:
+            self._manual_configured = True
+
+        # pom = self.plotter_options_manager
+        # if self.editor:
+        #     pom.set_selected(self.editor.plotter_options)
+
+        self._configure_hook()
+        info = OptionsController(model=self.options).edit_traits(view=self.options_view, kind='livemodal')
+        if info.result:
+            # self.plotter_options = pom.selected_options
+            # for e in self.editors.values():
+            #     e.plotter_options = pom.selected_options
+
+            # if refresh:
+            #     self.refresh()
+
+            return True
 
     def _pre_run_hook(self, state):
         if state.unknowns:
             ri = tuple({ai.repository_identifier for ai in state.unknowns})
-            self.options.root_name = ri[0]
+            options = self.options.selected_options
+
+            if not options.root_name:
+                options.root_name = ri[0]
 
     def _finish_configure(self):
         self.options.dump()
@@ -283,7 +311,31 @@ class XLSXAnalysisTablePersistNode(BaseNode):
     def run(self, state):
         if state.unknowns and state.run_groups:
             writer = XLSXAnalysisTableWriter()
-            writer.build(state.run_groups, options=self.options)
+            writer.build(state.run_groups, options=self.options.selected_options)
+
+    def _options_view_default(self):
+        agrp = HGroup(Item('selected', show_label=False,
+                           editor=EnumEditor(name='names'),
+                           tooltip='List of available plot options'),
+                      icon_button_editor('controller.save_options', 'disk',
+                                         tooltip='Save changes to options'),
+                      icon_button_editor('controller.save_as_options', 'save_as',
+                                         tooltip='Save options with a new name'),
+                      icon_button_editor('controller.add_options',
+                                         'add',
+                                         tooltip='Add new plot options'),
+                      icon_button_editor('controller.delete_options',
+                                         'delete',
+                                         tooltip='Delete current plot options',
+                                         enabled_when='delete_enabled'),
+                      icon_button_editor('controller.factory_default', 'edit-bomb',
+                                         enabled_when='selected',
+                                         tooltip='Apply factory defaults'))
+
+        return okcancel_view(VGroup(agrp, UItem('selected_options', style='custom')),
+                             title='XLS Table Options',
+                             height=0.75,
+                             resizable=True)
 
 
 class InterpretedAgePersistNode(BaseDVCNode):
@@ -297,7 +349,6 @@ class InterpretedAgePersistNode(BaseDVCNode):
                 for ia in e.groups:
                     if ia.use:
                         dvc.add_interpreted_age(ia)
-
 
 # class TablePersistNode(FileNode):
 #     pass

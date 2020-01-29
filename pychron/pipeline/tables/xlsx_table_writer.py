@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+import math
 import os
 
 import six
@@ -28,7 +29,7 @@ from pychron.core.helpers.formatting import floatfmt
 from pychron.core.helpers.isotope_utils import sort_detectors
 from pychron.paths import paths, r_mkdir
 from pychron.pipeline.tables.base_table_writer import BaseTableWriter
-from pychron.pipeline.tables.column import Column, EColumn, VColumn, AEColumn
+from pychron.pipeline.tables.column import Column, EColumn, VColumn, AEColumn, SigFigColumn, SigFigEColumn
 from pychron.pipeline.tables.util import iso_value, icf_value, icf_error, correction_value, age_value, supreg, \
     subreg, interpolate_noteline, value
 from pychron.pipeline.tables.xlsx_table_options import XLSXAnalysisTableWriterOptions
@@ -155,14 +156,14 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                    Column(label='N', attr='aliquot_step_str', enabled=options.analysis_label_enabled),
                    Column(label='Tag', attr='tag', enabled=options.tag_enabled),
                    Column(visible=ubit, label='Power', units=options.power_units, attr='extract_value'),
-                   Column(visible=ubit, label='Age', units=age_units, attr='age', func=age_func),
-                   EColumn(visible=ubit, units=age_units, attr='age_err_wo_j', func=age_func,
-                           sigformat='age'),
+                   SigFigColumn(visible=ubit, label='Age', units=age_units, attr='age', func=age_func),
+                   SigFigEColumn(visible=ubit, units=age_units, attr='age_err_wo_j', func=age_func,
+                                 sigformat='age'),
 
-                   VColumn(visible=kcabit, label=kca_label, attr=kca_attr),
-                   EColumn(visible=ubit, attr=kca_attr),
-                   VColumn(visible=kclbit, label=kcl_label, attr=kcl_attr),
-                   EColumn(visible=ubit, attr=kcl_attr),
+                   SigFigColumn(visible=kcabit, label=kca_label, attr=kca_attr),
+                   SigFigEColumn(visible=ubit, attr=kca_attr),
+                   SigFigColumn(visible=kclbit, label=kcl_label, attr=kcl_attr),
+                   SigFigEColumn(visible=ubit, attr=kcl_attr),
 
                    VColumn(visible=ubit and options.include_percent_ar39,
                            label=('Cum. %', '<sup>39</sup>', 'Ar'),
@@ -170,10 +171,10 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                    VColumn(visible=ubit and options.include_radiogenic_yield,
                            label=('%', '<sup>40</sup>', 'Ar'),
                            units='(%)', attr='radiogenic_yield'),
-                   VColumn(visible=ubit and options.include_F,
-                           label=('<sup>40</sup>', 'Ar*/', '<sup>39</sup>', 'Ar', '<sub>K</sub>'),
-                           attr='uF'),
-                   EColumn(visible=ubit and options.include_F, attr='uF'),
+                   SigFigColumn(visible=ubit and options.include_F,
+                                label=('<sup>40</sup>', 'Ar*/', '<sup>39</sup>', 'Ar', '<sub>K</sub>'),
+                                attr='uF'),
+                   SigFigEColumn(visible=ubit and options.include_F, attr='uF'),
                    VColumn(visible=ubit and options.include_k2o,
                            label=('K', '<sub>2</sub>', 'O'),
                            sigformat='k2o',
@@ -185,16 +186,16 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                            use_scientific=True,
                            sigformat='sens'),
 
-                   VColumn(visible=ubit and options.include_isochron_ratios,
-                           label=('<sup>39</sup>', 'Ar/', '<sup>40</sup>', 'Ar'),
-                           attr='isochron3940'),
-                   EColumn(visible=ubit and options.include_isochron_ratios,
-                           attr='isochron3940'),
-                   VColumn(visible=ubit and options.include_isochron_ratios,
-                           label=('<sup>36</sup>', 'Ar/', '<sup>40</sup>', 'Ar'),
-                           attr='isochron3640'),
-                   EColumn(visible=ubit and options.include_isochron_ratios,
-                           attr='isochron3640'),
+                   SigFigColumn(visible=ubit and options.include_isochron_ratios,
+                                label=('<sup>39</sup>', 'Ar/', '<sup>40</sup>', 'Ar'),
+                                attr='isochron3940'),
+                   SigFigEColumn(visible=ubit and options.include_isochron_ratios,
+                                 attr='isochron3940'),
+                   SigFigColumn(visible=ubit and options.include_isochron_ratios,
+                                label=('<sup>36</sup>', 'Ar/', '<sup>40</sup>', 'Ar'),
+                                attr='isochron3640'),
+                   SigFigEColumn(visible=ubit and options.include_isochron_ratios,
+                                 attr='isochron3640'),
                    ]
 
         # setup formats
@@ -259,42 +260,42 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                                label=(u'\u0394t', '<sup>3</sup>'),
                                units='(days)',
                                attr='decay_days'),
-                        VColumn(visible=ubit, label='J', attr='j', sigformat='j'),
-                        EColumn(visible=ubit, attr='j'),
+                        SigFigColumn(visible=ubit, label='J', attr='j', sigformat='j'),
+                        SigFigEColumn(visible=ubit, attr='j'),
                         VColumn(visible=ubit, label=('<sup>39</sup>', 'Ar Decay'),
                                 attr='ar39decayfactor', sigformat='decay'),
                         VColumn(visible=ubit, label=('<sup>37</sup>', 'Ar Decay'),
                                 attr='ar37decayfactor', sigformat='decay')])
 
     def _intercalibration_columns(self, columns, detectors, ic_visible=True, disc_visible=True):
-        disc = [VColumn(label='Disc', attr='discrimination', sigformat='disc',
-                        visible=disc_visible),
-                EColumn(attr='discrimination', sigformat='disc',
-                        visible=disc_visible)]
+        disc = [SigFigColumn(label='Disc', attr='discrimination', sigformat='disc',
+                             visible=disc_visible),
+                SigFigEColumn(attr='discrimination', sigformat='disc',
+                              visible=disc_visible)]
         columns.extend(disc)
 
         for det in detectors:
             tag = '{}_ic_factor'.format(det)
-            columns.extend([Column(label=('IC', '<sup>{}</sup>'.format(det)),
-                                   visible=ic_visible,
-                                   attr=tag, func=icf_value, sigformat='ic'),
-                            EColumn(attr=tag,
-                                    visible=ic_visible,
-                                    func=icf_error, sigformat='ic')])
+            columns.extend([SigFigColumn(label=('IC', '<sup>{}</sup>'.format(det)),
+                                         visible=ic_visible,
+                                         attr=tag, func=icf_value, sigformat='ic'),
+                            SigFigEColumn(attr=tag,
+                                          visible=ic_visible,
+                                          func=icf_error, sigformat='ic')])
 
     def _signal_columns(self, columns, ibit, bkbit):
         isos = (('Ar', 40), ('Ar', 39), ('Ar', 38), ('Ar', 37), ('Ar', 36))
         for bit, tag in ((True, 'disc_ic_corrected'), (ibit, 'intercept'), (bkbit, 'blank')):
             cols = [c for iso, mass in isos
-                    for c in (Column(visible=bit, attr='{}{}'.format(iso, mass),
-                                     label=('<sup>{}</sup>'.format(mass), iso),
-                                     units='({})'.format(self._options.intensity_units),
-                                     func=iso_value(tag),
-                                     sigformat='signal'),
-                              EColumn(visible=bit,
-                                      attr='{}{}'.format(iso, mass),
-                                      func=iso_value(tag, ve='error'),
-                                      sigformat='signal'))]
+                    for c in (SigFigColumn(visible=bit, attr='{}{}'.format(iso, mass),
+                                           label=('<sup>{}</sup>'.format(mass), iso),
+                                           units='({})'.format(self._options.intensity_units),
+                                           func=iso_value(tag),
+                                           sigformat='signal'),
+                              SigFigEColumn(visible=bit,
+                                            attr='{}{}'.format(iso, mass),
+                                            func=iso_value(tag, ve='error'),
+                                            sigformat='signal'))]
             columns.extend(cols)
 
     def _get_machine_columns(self, name, grps):
@@ -423,16 +424,18 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             return ag.plateau_total_ar39()
 
         def get_trapped_ratio_error(ag, *args):
-            return std_dev(ag.isochron_4036)*opt.summary_trapped_ratio_nsigma
+            return std_dev(ag.isochron_4036) * opt.summary_trapped_ratio_nsigma
 
         def get_age(attr):
             def f(ag, *args):
                 return ag.scaled_age(nominal_value(getattr(ag, attr)), opt.age_units)
+
             return f
 
         def get_age_error(attr):
             def f(ag, *args):
-                return ag.scaled_age(std_dev(getattr(ag, attr)), opt.age_units)*opt.summary_age_nsigma
+                return ag.scaled_age(std_dev(getattr(ag, attr)), opt.age_units) * opt.summary_age_nsigma
+
             return f
 
         cols = [Column(visible=opt.include_summary_sample, label='Sample', attr='sample'),
@@ -875,6 +878,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         if use_scientific:
             fmt = '0.0E+00'
         else:
+
             fmt = '0.{}'.format('0' * sig_figs)
 
         if not self._options.ensure_trailing_zeros:
@@ -899,12 +903,24 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 status = 'pX'
 
         sh.write(row, 0, status, fmt)
+
+        pcfmt = None
         for j, c in enumerate(cols[1:]):
-            cfmt = self._get_fmt(c)
             if c.attr == 'cumulative_ar39':
                 txt = cum
             else:
                 txt = self._get_txt(item, c)
+
+            if self._options.use_standard_sigfigs:
+                if isinstance(c, SigFigColumn):
+                    # get the txt from the next column to determine number of sigfigs
+                    cfmt = pcfmt = self._get_standard_sigfig_fmt(c, self._get_txt(item, cols[j + 2]))
+                elif isinstance(c, SigFigEColumn):
+                    cfmt = pcfmt
+                else:
+                    cfmt = self._get_fmt(c)
+            else:
+                cfmt = self._get_fmt(c)
 
             if cfmt:
                 if is_plateau_step is False:
@@ -1130,6 +1146,21 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         names = [c.label for c in cols]
         units = [c.units for c in cols]
         return names, units
+
+    def _get_standard_sigfig_fmt(self, col, txt):
+        try:
+            kind = None
+            sf = math.ceil((abs(math.log10(txt))))
+        except ValueError:
+            kind = col.sigformat
+            sf = 2
+
+        fmt = self._get_number_format(kind=kind, use_scientific=col.use_scientific, sig_figs=sf)
+
+        if txt >= 1:
+            fmt.set_num_format('0')
+
+        return fmt
 
     def _get_fmt(self, col):
         fmt = None

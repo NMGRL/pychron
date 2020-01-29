@@ -54,6 +54,7 @@ class XLSXAnalysisTableWriterOptions(BasePersistenceOptions, JErrorMixin):
     sens_sig_figs = dumpable(Int(2))
     k2o_sig_figs = dumpable(Int(3))
 
+    use_standard_sigfigs = dumpable(Bool(True))
     ensure_trailing_zeros = dumpable(Bool(False))
 
     power_units = dumpable(Enum('W', 'C', '%'))
@@ -90,12 +91,12 @@ class XLSXAnalysisTableWriterOptions(BasePersistenceOptions, JErrorMixin):
     # use_weighted_kca = dumpable(Bool(True))
     # kca_error_kind = dumpable(Enum(*ERROR_TYPES))
     repeat_header = dumpable(Bool(False))
-    highlight_non_plateau = Bool(True)
+    highlight_non_plateau = dumpable(Bool(True))
     highlight_color = dumpable(Color)
 
-    root_name = Str
+    root_name = dumpable(Str)
     root_names = List
-    root_directory = Directory
+    root_directory = dumpable(Directory)
     name = dumpable(Str('Untitled'))
     auto_view = dumpable(Bool(False))
 
@@ -177,7 +178,9 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
 
     include_decay_error = dumpable(Bool(False))
 
-    def __init__(self, *args, **kw):
+    def __init__(self, name, *args, **kw):
+        self._persistence_name = name
+
         super(XLSXAnalysisTableWriterOptions, self).__init__(*args, **kw)
         # self.load_notes()
         # self._load_note_names()
@@ -300,7 +303,8 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
         def isigfig(k, label, **kw):
             return Item(sigfig(k), width=-40, label=label, **kw)
 
-        sig_figs_grp = BorderVGroup(Item('sig_figs', label='Default'),
+        sig_figs_grp = BorderVGroup(Item('use_standard_sigfigs'),
+                                    VGroup(Item('sig_figs', label='Default'),
                                     HGroup(isigfig('age', 'Age'),
                                            isigfig('summary_age', 'Summary Age')),
                                     HGroup(isigfig('kca', 'K/Ca'),
@@ -316,7 +320,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                                     HGroup(isigfig('decay', 'Decay'),
                                            isigfig('correction', 'Correction Factors')),
                                     HGroup(isigfig('sens', 'Sensitivity'),
-                                           isigfig('k2o', 'K2O')),
+                                           isigfig('k2o', 'K2O')), enabled_when='not use_standard_sigfigs'),
                                     Item('ensure_trailing_zeros', label='Ensure Trailing Zeros'),
                                     label='Significant Figures')
 
