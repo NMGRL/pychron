@@ -66,6 +66,7 @@ class ScanableDevice(ViewableDevice):
     dm_kind = 'csv'
     use_db = False
     _auto_started = False
+    graph_klass = None
 
     def is_scanning(self):
         return self._scanning
@@ -285,7 +286,11 @@ class ScanableDevice(ViewableDevice):
     def _graph_default(self):
         from pychron.graph.time_series_graph import TimeSeriesStreamGraph
 
-        g = TimeSeriesStreamGraph()
+        klass = self.graph_klass
+        if not klass:
+            klass =TimeSeriesStreamGraph
+
+        g = klass()
         self.graph_builder(g)
 
         return g

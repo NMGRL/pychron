@@ -32,7 +32,7 @@ class WaitControl(Loggable):
     message = Str
     message_color = Color('black')
 
-    high = Int
+    high = Int(auto_set=False, enter_set=True)
     duration = Float(10)
 
     current_time = Float
@@ -43,7 +43,8 @@ class WaitControl(Loggable):
     end_evt = None
 
     continue_button = Button('Continue')
-    pause_button = Button('Pause')
+    pause_button = Event
+    pause_label = Property(depends_on='_paused')
     _paused = Bool
     _continued = Bool
     _canceled = Bool
@@ -162,6 +163,9 @@ class WaitControl(Loggable):
 
     def _get_current_display_time(self):
         return '{:03d}'.format(int(self.current_time))
+
+    def _get_pause_label(self):
+        return 'Unpause' if self._paused else 'Pause'
 
     # ===============================================================================
     # handlers

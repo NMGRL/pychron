@@ -57,14 +57,17 @@ class SerialDeviceMixin(RemoteDeviceMixin):
     parity = Str
     stopbits = Str
     read_delay = CInt
+    timeout = CInt
+
     def setup_communicator(self):
         from pychron.hardware.core.communicators.serial_communicator import SerialCommunicator
         self.communicator = ec = SerialCommunicator(port=self.port,
                                                     baudrate=self.baudrate,
-                                                    read_delay=self.read_delay)
+                                                    read_delay=self.read_delay,
+                                                    )
         ec.set_parity(self.parity)
         ec.set_stopbits(self.stopbits)
-        r = ec.open()
+        r = ec.open(timeout=self.timeout)
         # if r:
         #     r = self.opened()
         #     self.connected = bool(r)
