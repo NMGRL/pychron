@@ -80,6 +80,6 @@ class SpectrometerTask(Loggable):
         sign = 1 if start < end else -1
         nsteps = abs(end - start + width * sign) / width
         self.debug('calculated step values: start={}, end={}, width={}, nsteps={}'.format(start, end, width, nsteps))
-        return linspace(start, end, nsteps)
+        return linspace(start, end, int(nsteps))
 
 # ============= EOF =============================================

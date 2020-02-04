@@ -43,7 +43,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
     # password = Str('')
 
     _test_connect_command = 'GETMASS'
-
+    _read_enabled = True
     use_deflection_correction = False
     use_hv_correction = False
 
@@ -79,16 +79,20 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                 self.debug('updating mftable name {}'.format(mftable_name))
                 self.magnet.field_table.path = mftable_name
                 self.magnet.field_table.load_table(load_items=True)
-                
-    def initialize_scan(self):
-        self.ask('StopAcq')
-        #self.ask(f'StartAcq -1, {self.rcs_id}')
-        self.trigger_acq()
-        
+
     def _send_configuration(self, **kw):
         pass
-        
-    def trigger_acq(self):
+
+    def get_update_period(self, it=None, is_scan=False):
+        """
+        """
+
+        if is_scan:
+            return 0.1
+
+        return self.integration_time * 0.95
+
+    def trigger_acq(self, verbose=False):
         # self.debug('trigger acquie {}'.format(self.microcontroller.lock))
         # locking the microcontroller not necessary and detrimental when doing long integration times
         # other commands can be executed when waiting 10-20 sec integration period.
@@ -98,81 +102,89 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
 
         # another trick could be to make it an rlock. if lock is acquired by reading data then valve commands ok.
         # but not vis versa.
-        #while self.microcontroller.lock.locked():
+        # while self.microcontroller.lock.locked():
         #    time.sleep(0.25)
-        
-        
-        #self.ask('StopAcq')
-        return self.ask('StartAcq 1,{}'.format(self.rcs_id), verbose=False)
-        # return True
+
+        self.ask('StopAcq', verbose=verbose)
+        return self.ask('StartAcq 1,{}'.format(self.rcs_id), verbose=verbose)
+
+    def readline(self, verbose=False):
+        if verbose:
+            self.debug('readline')
+        st = time.time()
+        ds = ''
+        while 1:
+            if time.time() - st > (1.25 * self.integration_time):
+                if verbose:
+                    self.debug('readline timeout')
+                return
+
+            if not self._read_enabled:
+                self.debug('readline canceled')
+                return
+
+            try:
+                ds += self.read(16)
+            except BaseException:
+                self.debug_exception()
+                self.debug(f'data left: {ds}')
+
+            if ds.endswith('\r\n'):
+                return ds.strip()
+
+    def cancel(self):
+        self.debug('canceling')
+        self._read_enabled = False
 
     def read_intensities(self, timeout=60, trigger=False, target='ACQ.B', verbose=False):
+        self._read_enabled = True
+        if verbose:
+            self.debug('read intensities')
         resp = True
-        #if trigger:
-        #    resp = self.trigger_acq()
-            #if resp is not None:
-            #    time.sleep(self.integration_time)
+        if trigger:
+            resp = self.trigger_acq()
+            if resp is not None:
+                if verbose:
+                    self.debug(f'waiting {self.integration_time * 0.95} before trying to get data')
+                time.sleep(self.integration_time * 0.95)
+                if verbose:
+                    self.debug('trigger wait finished')
 
         keys = []
         signals = []
         collection_time = None
-        verbose=False
-        
-        self.microcontroller.lock.acquire()
+
+        # self.microcontroller.lock.acquire()
         # self.debug(f'acquired mcir lock {self.microcontroller.lock}')
+        target = f'#EVENT:{target},{self.rcs_id}'
         if resp is not None:
             keys = self.detector_names[::-1]
-            ds = ''
-            for k in ('ACQ', 'ACQ.B'):
-                tag = 'EVENT:{},{}'.format(k, self.rcs_id)
-                st = time.time()
+            while 1:
+                line = self.readline()
+                if line is None:
+                    break
 
-                while 1:
-                    
-                    try:
-                        ds += self.read(1024)
-                    except BaseException as e:
-                        print('in buffer', ds)
-                        self.debug_exception()
-                        break
-                            
-                    if time.time() - st > timeout:
-                        break
-                    
-                    # print('asdf', ds.split('#'))
-                    if tag in ds and ds.endswith('\r\n'):
-                        args = ds.split('#')
-                        datastr = None
-                        for a in args:
-                            if a.startswith(tag):
-                                datastr = a
-                                break
-                        if verbose:
-                            self.debug('datastr {} = {}'.format(k, datastr))
+                if verbose:
+                    self.debug(f'raw: {line}')
+                if line and line.startswith(target):
+                    args = line[:-1].split(',')
+                    ct = datetime.strptime(args[4], '%H:%M:%S.%f')
 
-                        if datastr:
-                            if k == target:
-                                args = datastr.split(',')
-                                # self.debug(f'args {args}')
-                                ct = datetime.strptime(args[4], '%H:%M:%S.%f')
-                                collection_time = datetime.now()
-                                
-                                # copy to collection time
-                                collection_time.replace(hour=ct.hour, minute=ct.minute, second=ct.second,
-                                                       microsecond=ct.microsecond)
-                                signals = [float(i) for i in args[5:]]
-                            break
-                        
-                       
+                    collection_time = datetime.now()
 
-        # self.debug('lock released')
-        self.microcontroller.lock.release()
-        # print('read', keys, signals)
+                    # copy to collection time
+                    collection_time.replace(hour=ct.hour, minute=ct.minute, second=ct.second,
+                                            microsecond=ct.microsecond)
+                    signals = [float(i) for i in args[5:]]
+                    if verbose:
+                        self.debug(f'line: {line[:15]}')
+                    break
+
+        # self.microcontroller.lock.release()
         if len(signals) != len(keys):
             keys, signals = [], []
-
         return keys, signals, collection_time
-    
+
     def read_integration_time(self):
         return self.integration_time
 
@@ -183,11 +195,10 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         :param force: set integration even if "it" is not different than self.integration_time
         :return: float, integration time
         """
-        # it = normalize_integration_time(it)
         if self.integration_time != it or force:
             self.ask('StopAcq')
             self.debug('setting integration time = {}'.format(it))
-            self.ask('SetAcqPeriod {}'.format(it * 1000))
+            self.ask('SetAcqPeriod {}'.format(int(it * 1000)))
             self.trait_setq(integration_time=it)
 
         return it

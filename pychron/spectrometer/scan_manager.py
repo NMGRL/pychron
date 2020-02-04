@@ -167,7 +167,10 @@ class ScanManager(StreamGraphManager):
         bind_preference(self, 'default_isotope', '{}.default_isotope'.format(pref_id))
 
     def setup_scan(self):
-        self.spectrometer.initialize_scan()
+        # force position update
+        self._set_position()
+        self.log_events_enabled = True
+        
         # force update
         self.load_settings()
 
@@ -179,13 +182,7 @@ class ScanManager(StreamGraphManager):
 
         # bind
         self._bind_listeners()
-
-        # force position update
-        self._set_position()
-        self.log_events_enabled = True
         
-        
-
     def add_spec_event_marker(self, msg, mode=None, extra=None, bgcolor='white'):
         if self.use_log_events and self.log_events_enabled:
             if mode == 'valve' and self._valve_event_list:
@@ -353,14 +350,20 @@ class ScanManager(StreamGraphManager):
                                     'Check Qtegra and RemoteControlServer.\n\n'
                                     'Scan is stopped! Close and reopen window to restart')
                 self._stop_timer()
-                
+    
+    _integration_time_flag = False
     def _update_scan_graph(self):
+        self.debug(f'update graph {self.update_period}')
         if self.scan_enabled:
+            if self._integration_time_flag:
+                self._integration_time_flag = False
+                self.spectrometer.set_integration_time(self.integration_time, force=True)
+                return
+                
             try:
-                data = self.spectrometer.get_intensities(trigger=False, target='ACQ.B')
+                data = self.spectrometer.get_intensities(trigger=True)
                 if data:
                     self._update(data)
-                self.spectrometer.trigger_acq()
                     
             except NoIntensityChange:
                 self.warning_dialog('Something appears to be wrong.\n\n'
@@ -445,7 +448,7 @@ class ScanManager(StreamGraphManager):
 
     @property
     def update_period(self):
-        return self.integration_time * 1.1
+        return self.spectrometer.get_update_period(is_scan=True)# self.integration_time
 
     # ===============================================================================
     # handlers
@@ -524,9 +527,13 @@ class ScanManager(StreamGraphManager):
     def _integration_time_changed(self):
         if self.integration_time:
             self.debug('setting integration time={}'.format(self.integration_time))
-            self.spectrometer.set_integration_time(self.integration_time, force=True)
-            self.reset_scan_timer()
-
+            
+            if not self.timer:
+                self.spectrometer.set_integration_time(self.integration_time, force=True)
+                self.reset_scan_timer()
+            else:
+                self._integration_time_flag = True
+            
     def _consume(self, dm):
         self._consuming = True
         _first_recording = True

@@ -30,6 +30,7 @@ class NGXSource(IsotopxSource):
 
     def read_hv(self):
         resp = self.ask('GSO IE', verbose=True)
+
         actual = 0
         if ',' in resp:
             setpoint, actual = csv_to_floats(resp)
@@ -37,15 +38,16 @@ class NGXSource(IsotopxSource):
 
     def read_trap_current(self):
         resp = self.ask('GSO TC')
+
         actual = 0
-        if ',' in resp:
+        if resp is not None and ',' in resp:
             setpoint, actual = csv_to_floats(resp)
         return actual
 
     def read_emission(self):
         resp = self.ask('GSO EC')
         actual = 0
-        if ',' in resp:
+        if resp is not None and ',' in resp:
             setpoint, actual = csv_to_floats(resp)
         return actual
         # return self.ask('GSO ')

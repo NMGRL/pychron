@@ -69,7 +69,12 @@ class WiscArGPActuator(ASCIIGPActuator, ClientMixin):
             args = resp.split(',')
             # remove the command header args
             args = args[3:]
-            worddict = {args[i]:args[i+1]=='Open' for i in range(0, len(args), 2)}
+            try:
+                worddict = {args[i]:args[i+1]=='Open' for i in range(0, len(args), 2)}
+            except IndexError:
+                self.debug(f'failed parsing get,valve,all response={resp}')
+                return
+            
             return worddict
 
     def get_channel_state(self, obj, *args, **kw):
