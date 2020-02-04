@@ -43,6 +43,7 @@ from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pychron_constants import SPECTROMETER_PROTOCOL, DVC_PROTOCOL, COCKTAIL, AIR, BLANK
 from pychron.globals import globalv
 
+
 class ExperimentEditorTask(EditorTask):
     id = 'pychron.experiment.task'
     name = 'Experiment'
