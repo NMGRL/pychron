@@ -88,7 +88,12 @@ class DataCollector(Consoleable):
         self._alive = False
         if self._evt:
             self._evt.set()
-
+    
+    def set_starttime(self, s):
+        self.starttime = s
+        # convert s (result of time.time()) to a datetime object
+        self.starttime_abs = datetime.fromtimestamp(s)
+        
     def measure(self):
         if self.canceled:
             return
@@ -99,9 +104,8 @@ class DataCollector(Consoleable):
         self._warned_no_fit = []
         self._warned_no_det = []
 
-        st = time.time()
         if self.starttime is None:
-            self.starttime = st
+            self.starttime = time.time()
             self.starttime_abs = datetime.now()
 
         et = self.ncounts * self.period_ms * 0.001
@@ -120,7 +124,7 @@ class DataCollector(Consoleable):
 
         self._measure()
 
-        tt = time.time() - st
+        tt = time.time() - self.starttime
         self.debug('estimated time: {:0.3f} actual time: :{:0.3f}'.format(et, tt))
 
     def plot_data(self, *args, **kw):
@@ -186,7 +190,7 @@ class DataCollector(Consoleable):
         t.join()
 
         self.debug('measurement finished')
-
+        
     def _pre_trigger_hook(self):
         return True
 

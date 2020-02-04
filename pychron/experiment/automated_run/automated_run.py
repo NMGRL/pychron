@@ -775,7 +775,10 @@ class AutomatedRun(Loggable):
         if self.peak_center:
             self.debug('cancel peak center')
             self.peak_center.cancel()
-
+            
+        if self.spectrometer_manager:
+            self.spectrometer_manager.spectrometer.cancel()
+            
         self.do_post_termination(do_post_equilibration=do_post_equilibration)
 
         self.finish()
@@ -2099,7 +2102,7 @@ anaylsis_type={}
             self._intensities = {}
             while 1:
                 try:
-                    k, s, t = spec.get_intensities(tagged=True)
+                    k, s, t = spec.get_intensities(tagged=True,trigger=False)
                 except NoIntensityChange:
                     self.warning('Canceling Run. Intensity from mass spectrometer not changing')
 
@@ -2237,7 +2240,7 @@ anaylsis_type={}
         if debug:
             period = 1
         else:
-            period = self._integration_seconds
+            period = self.spectrometer_manager.spectrometer.get_update_period(it=self._integration_seconds)
 
         m = self.collector
 
@@ -2250,10 +2253,10 @@ anaylsis_type={}
                     period_ms=period * 1000,
                     data_generator=get_data,
                     data_writer=data_writer,
-                    starttime=starttime,
+                    #starttime=starttime,
                     experiment_type=self.experiment_type,
                     refresh_age=self.spec.analysis_type in ('unknown', 'cocktail'))
-
+        m.set_starttime(starttime)
         if hasattr(self.spectrometer_manager.spectrometer, 'trigger_acq'):
             m.trait_set(trigger=self.spectrometer_manager.spectrometer.trigger_acq)
 

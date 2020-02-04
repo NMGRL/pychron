@@ -68,7 +68,10 @@ class BaseSpectrometer(SpectrometerDevice):
     _prev_signals = None
     _no_intensity_change_cnt = 0
     active_detectors = List
-
+    
+    def cancel(self):
+        pass
+    
     def convert_to_axial(self, det, v):
         return v
 
@@ -154,7 +157,12 @@ class BaseSpectrometer(SpectrometerDevice):
         if self._saved_integration:
             self.set_integration_time(self._saved_integration)
             self._saved_integration = None
-
+    
+    def get_update_period(self, it=None):
+        if it is None:
+            it = self.integration_time
+        return it
+    
     def correct_dac(self, det, dac, current=True):
         """
             correct for deflection
