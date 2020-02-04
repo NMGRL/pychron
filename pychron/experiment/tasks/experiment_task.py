@@ -37,6 +37,7 @@ from pychron.experiment.tasks.experiment_panes import ExperimentFactoryPane, Sta
     ControlsPane, IsotopeEvolutionPane, ConnectionStatusPane, LoggerPane, ExplanationPane
 from pychron.experiment.utilities.identifier import convert_extract_device, is_special
 from pychron.experiment.utilities.save_dialog import ExperimentSaveDialog
+from pychron.globals import globalv
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.paths import paths
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
