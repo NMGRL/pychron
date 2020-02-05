@@ -57,6 +57,7 @@ def view(title):
     sgrp = UItem('subview_names',
                  width=-120,
                  editor=TabularEditor(editable=False,
+                                      stretch_last_section=False,
                                       adapter=SubviewAdapter(),
                                       selected='selected_subview'))
 

@@ -170,6 +170,7 @@ class BaseSeries(BaseArArFigure):
                                     add_point_inspector=False,
                                     marker=po.marker,
                                     marker_size=po.marker_size,
+                                    color=po.marker_color,
                                     **kw)
             if len(args) == 2:
                 scatter, p = args

@@ -219,6 +219,7 @@ class MainOptions(SubOptions):
     def _get_marker_group(self):
         g = BorderHGroup(UItem('marker', editor=EnumEditor(values=marker_names)),
                          Item('marker_size', label='Size'),
+                         UItem('marker_color'),
                          label='Marker')
         return g
 

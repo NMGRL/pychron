@@ -22,7 +22,7 @@ from pychron.pipeline.results.base_matrix_result import BaseMatrixResult
 
 class Results(BaseMatrixResult):
     def _format_value(self, v):
-        return '{:0.4f}'.format(v)
+        return '{:0.7f}'.format(v)
 
     def _calculate_values(self, ag, others):
         vs = ['']
