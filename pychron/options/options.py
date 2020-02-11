@@ -270,13 +270,13 @@ class BaseOptions(HasTraits):
     _subview_cache = None
 
     def dump(self, wfile):
-        def convert_color(s):
+        def convert_color(ss):
             from pyface.qt.QtGui import QColor
             nd = {}
-            for k, v in s.items():
+            for k, v in ss.items():
                 if isinstance(v, QColor):
                     nd[k] = v.rgba()
-            s.update(**nd)
+            ss.update(**nd)
 
         state = self.__getstate__()
         state['klass'] = str(self.__class__)
@@ -288,28 +288,21 @@ class BaseOptions(HasTraits):
         except KeyError:
             pass
 
-        try:
-            groups = state.pop('groups')
-            if groups:
-                def func(gi):
-                    s = gi.__getstate__()
-                    convert_color(s)
-                    return str(gi.__class__), s
+        for tag in ('groups', 'aux_plots', 'selected'):
+            try:
+                items = state.pop(tag)
+                if items:
+                    def func(gi):
+                        s = gi.__getstate__()
+                        convert_color(s)
+                        return str(gi.__class__), s
 
-                ngs = [func(gi) for gi in groups]
-                state['groups'] = ngs
-        except KeyError:
-            pass
+                    ngs = [func(gi) for gi in items]
+                    state[tag] = ngs
+            except KeyError as e:
+                pass
 
         convert_color(state)
-
-        if 'aux_plots' in state:
-            state['aux_plots'] = [(str(a.__class__), a.__getstate__())
-                                  for a in state.pop('aux_plots')]
-
-        if 'selected' in state:
-            state['selected'] = [(str(s.__class__), s.__getstate__())
-                                 for s in state.pop('selected')]
         json.dump(state, wfile, indent=4, sort_keys=True)
 
     def load(self, state):
