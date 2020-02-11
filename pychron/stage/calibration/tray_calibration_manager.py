@@ -188,8 +188,8 @@ class TrayCalibrationManager(Loggable):
         x, y = self.parent.get_current_position()
         self.rotation = 0
         if self.calibrator is None:
-            # self.style = ''
             self.style = 'Tray'
+            self.calibrator = self._calibrator_factory()
 
         kw = self.calibrator.handle(self.calibration_step,
                                     x, y, self.canvas)
