@@ -607,7 +607,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     plateau_age = AGProperty()
     integrated_age = AGProperty()
 
-    integrated_include_omitted = Bool(False)
+    integrated_include_omitted = Bool(True)
     include_j_error_in_plateau = Bool(True)
     plateau_steps_str = Str
     plateau_steps = None
