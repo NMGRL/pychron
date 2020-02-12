@@ -236,8 +236,10 @@ class DVCDatabase(DatabaseAdapter):
 
     def sync_ia_metadata(self, ia):
         identifier = ia.identifier
+        self.debug(f'sync metadata for {identifier}')
         info = self.get_identifier_info(identifier)
         if info:
+            self.debug(f'metadata: {info}')
             for attr in SAMPLE_METADATA:
                 try:
                     setattr(ia, attr, info.get(attr))

@@ -170,6 +170,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
     tag_enabled = dumpable(Bool(True))
     analysis_label_enabled = dumpable(Bool(True))
 
+    use_sample_metadata_saved_with_run = dumpable(Bool(True))
     _persistence_name = 'xlsx_table_options'
 
     # include_j_error_in_individual_analyses = dumpable(Bool(False))
@@ -356,6 +357,10 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                                  iinc('intercepts', 'Intercepts'),
                                  iinc('icfactors', 'ICFactors'),
                                  iinc('discrimination', 'Discrimination'),
+                                 Item('use_sample_metadata_saved_with_run',
+                                      label='Use Sample Metadata Saved with Run',
+                                      tooltip='If checked use the sample metadata saved with the run at the time of '
+                                              'analysis otherwise query the database to sync metadata'),
                                  label='General')
 
         summary_rows_grp = BorderVGroup(iinc('summary_kca', 'Integrated K/Ca'),

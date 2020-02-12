@@ -27,7 +27,7 @@ from uncertainties.core import Variable
 from pychron.core.helpers.filetools import add_extension, view_file
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.helpers.isotope_utils import sort_detectors
-from pychron.paths import paths, r_mkdir
+from pychron.paths import r_mkdir
 from pychron.pipeline.tables.base_table_writer import BaseTableWriter
 from pychron.pipeline.tables.column import Column, EColumn, VColumn, AEColumn, SigFigColumn, SigFigEColumn
 from pychron.pipeline.tables.util import iso_value, icf_value, icf_error, correction_value, age_value, supreg, \
@@ -1187,129 +1187,128 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             v = nominal_value(v)
         return v
 
-
-if __name__ == '__main__':
-    x = XLSXAnalysisTableWriter()
-
-    from random import random
-    from datetime import datetime
-
-
-    def frand(digits, scalar=1):
-        return round(scalar * random(), digits)
-
-
-    class Iso:
-        def __init__(self, name):
-            self.name = name
-            self.uvalue = ufloat(frand(10, 10), frand(10))
-            self.blank = Blank(name)
-            self.detector = 'CDD'
-
-        def get_intensity(self):
-            return ufloat(frand(10, 10), frand(10))
-
-
-    class Blank:
-        def __init__(self, name):
-            self.name = name
-            self.uvalue = ufloat(frand(10, 1), frand(10))
-
-        def get_intensity(self):
-            return ufloat(frand(10, 1), frand(10))
-
-
-    class AC:
-        age_units = 'Ma'
-        ma_age_scalar = 1
-
-
-    class A:
-        def is_omitted(self):
-            return False
-
-        def __init__(self, a):
-            self.identifier = 'Foo'
-            self.project = 'Bar'
-            self.material = 'Moo'
-            self.sample = 'Bat'
-            self.aliquot_step_str = a
-            self.isotopes = {'Ar40': Iso('Ar40'),
-                             'Ar39': Iso('Ar39'),
-                             'Ar38': Iso('Ar38'),
-                             'Ar37': Iso('Ar37'),
-                             'Ar36': Iso('Ar36')}
-            self.arar_constants = AC()
-            self.tag = 'ok'
-            self.aliquot_step_str = '01'
-            self.extract_value = frand(1)
-            self.kca = ufloat(frand(2), frand(2))
-            self.age = frand(10, 10)
-            self.age_err_wo_j = frand(10)
-            self.discrimination = 0
-            self.j = 0
-
-            self.ar39decayfactor = 0
-            self.ar37decayfactor = 0
-            self.interference_corrections = {}
-            self.production_ratios = {'Ca_K': 1.312}
-            self.uF = ufloat(frand(10, 10), frand(10))
-            self.radiogenic_yield = frand(3, 100)
-            self.rundate = datetime.now()
-            self.decay_days = frand(2, 200)
-            self.k2o = frand(2)
-            self.irradiation_label = 'NM-284 E9o'
-            self.irradiation = 'NM-284'
-            self.isochron3940 = ufloat(frand(10), frand(10))
-            self.isochron3640 = ufloat(frand(10), frand(10))
-
-        def get_ic_factor(self, det):
-            return 1
-            # def __getattr__(self, item):
-            #     return 0
-
-
-    class G:
-        sample = 'MB-1234'
-        material = 'Groundmass'
-        identifier = '13234'
-        analyses = [A('01'), A('02')]
-        arith_age = 132
-        weighted_age = 10.01
-        plateau_age = 123
-        integrated_age = 1231
-        plateau_steps_str = 'A-F'
-        isochron_age = 123323
-        weighted_kca = 1412
-        arith_kca = 0.123
-        preferred_age = 1213.123
-        unit = ''
-        location = ''
-        mswd = frand(10)
-        irradiation_label = 'Foo'
-        preferred_age_kind = 'Plateau'
-        nanalyses = 2
-        percent_39Ar = 0.1234
-        total_n = 2
-        comments = ''
-
-        def set_temporary_age_units(self, *args):
-            pass
-
-
-    g = G()
-    p = '/Users/ross/Sandbox/testtable.xlsx'
-    paths.build('_dev')
-    options = XLSXAnalysisTableWriterOptions()
-    options.configure_traits()
-    x.build(groups={'unknowns': [g, g],
-                    'machine_unknowns': [g, g]},
-            path=p, options=options)
-    options.dump()
-    # app_path = '/Applications/Microsoft Office 2011/Microsoft Excel.app'
-    #
-    # try:
-    #     subprocess.call(['open', '-a', app_path, p])
-    # except OSError:
-    #     subprocess.call(['open', p])
 # ============= EOF =============================================
+# if __name__ == '__main__':
+#     x = XLSXAnalysisTableWriter()
+#
+#     from random import random
+#     from datetime import datetime
+#
+#
+#     def frand(digits, scalar=1):
+#         return round(scalar * random(), digits)
+#
+#
+#     class Iso:
+#         def __init__(self, name):
+#             self.name = name
+#             self.uvalue = ufloat(frand(10, 10), frand(10))
+#             self.blank = Blank(name)
+#             self.detector = 'CDD'
+#
+#         def get_intensity(self):
+#             return ufloat(frand(10, 10), frand(10))
+#
+#
+#     class Blank:
+#         def __init__(self, name):
+#             self.name = name
+#             self.uvalue = ufloat(frand(10, 1), frand(10))
+#
+#         def get_intensity(self):
+#             return ufloat(frand(10, 1), frand(10))
+#
+#
+#     class AC:
+#         age_units = 'Ma'
+#         ma_age_scalar = 1
+#
+#
+#     class A:
+#         def is_omitted(self):
+#             return False
+#
+#         def __init__(self, a):
+#             self.identifier = 'Foo'
+#             self.project = 'Bar'
+#             self.material = 'Moo'
+#             self.sample = 'Bat'
+#             self.aliquot_step_str = a
+#             self.isotopes = {'Ar40': Iso('Ar40'),
+#                              'Ar39': Iso('Ar39'),
+#                              'Ar38': Iso('Ar38'),
+#                              'Ar37': Iso('Ar37'),
+#                              'Ar36': Iso('Ar36')}
+#             self.arar_constants = AC()
+#             self.tag = 'ok'
+#             self.aliquot_step_str = '01'
+#             self.extract_value = frand(1)
+#             self.kca = ufloat(frand(2), frand(2))
+#             self.age = frand(10, 10)
+#             self.age_err_wo_j = frand(10)
+#             self.discrimination = 0
+#             self.j = 0
+#
+#             self.ar39decayfactor = 0
+#             self.ar37decayfactor = 0
+#             self.interference_corrections = {}
+#             self.production_ratios = {'Ca_K': 1.312}
+#             self.uF = ufloat(frand(10, 10), frand(10))
+#             self.radiogenic_yield = frand(3, 100)
+#             self.rundate = datetime.now()
+#             self.decay_days = frand(2, 200)
+#             self.k2o = frand(2)
+#             self.irradiation_label = 'NM-284 E9o'
+#             self.irradiation = 'NM-284'
+#             self.isochron3940 = ufloat(frand(10), frand(10))
+#             self.isochron3640 = ufloat(frand(10), frand(10))
+#
+#         def get_ic_factor(self, det):
+#             return 1
+#             # def __getattr__(self, item):
+#             #     return 0
+#
+#
+#     class G:
+#         sample = 'MB-1234'
+#         material = 'Groundmass'
+#         identifier = '13234'
+#         analyses = [A('01'), A('02')]
+#         arith_age = 132
+#         weighted_age = 10.01
+#         plateau_age = 123
+#         integrated_age = 1231
+#         plateau_steps_str = 'A-F'
+#         isochron_age = 123323
+#         weighted_kca = 1412
+#         arith_kca = 0.123
+#         preferred_age = 1213.123
+#         unit = ''
+#         location = ''
+#         mswd = frand(10)
+#         irradiation_label = 'Foo'
+#         preferred_age_kind = 'Plateau'
+#         nanalyses = 2
+#         percent_39Ar = 0.1234
+#         total_n = 2
+#         comments = ''
+#
+#         def set_temporary_age_units(self, *args):
+#             pass
+#
+#
+#     g = G()
+#     p = '/Users/ross/Sandbox/testtable.xlsx'
+#     paths.build('_dev')
+#     options = XLSXAnalysisTableWriterOptions()
+#     options.configure_traits()
+#     x.build(groups={'unknowns': [g, g],
+#                     'machine_unknowns': [g, g]},
+#             path=p, options=options)
+#     options.dump()
+#     # app_path = '/Applications/Microsoft Office 2011/Microsoft Excel.app'
+#     #
+#     # try:
+#     #     subprocess.call(['open', '-a', app_path, p])
+#     # except OSError:
+#     #     subprocess.call(['open', p])

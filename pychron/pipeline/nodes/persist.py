@@ -268,7 +268,7 @@ class FluxPersistNode(DVCPersistNode):
                 i.recalculate_age()
 
 
-class XLSXAnalysisTablePersistNode(BaseNode):
+class XLSXAnalysisTablePersistNode(BaseDVCNode):
     name = 'Excel Analysis Table'
     # auto_configure = False
     # configurable = False
@@ -281,20 +281,9 @@ class XLSXAnalysisTablePersistNode(BaseNode):
         if not pre_run:
             self._manual_configured = True
 
-        # pom = self.plotter_options_manager
-        # if self.editor:
-        #     pom.set_selected(self.editor.plotter_options)
-
         self._configure_hook()
         info = OptionsController(model=self.options).edit_traits(view=self.options_view, kind='livemodal')
         if info.result:
-            # self.plotter_options = pom.selected_options
-            # for e in self.editors.values():
-            #     e.plotter_options = pom.selected_options
-
-            # if refresh:
-            #     self.refresh()
-
             return True
 
     def _pre_run_hook(self, state):
@@ -311,6 +300,10 @@ class XLSXAnalysisTablePersistNode(BaseNode):
     def run(self, state):
         if state.unknowns and state.run_groups:
             writer = XLSXAnalysisTableWriter()
+            if not self.options.selected_options.use_sample_metadata_saved_with_run:
+                for gi in state.run_groups.get('unknowns', []):
+                    self.dvc.sync_ia_metadata(gi)
+
             writer.build(state.run_groups, options=self.options.selected_options)
 
     def _options_view_default(self):
