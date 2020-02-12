@@ -76,11 +76,11 @@ class ThermoSource(BaseSource):
     def _read_value(self, name, value):
         r = self.ask(name, verbose=False)
         try:
-            r = float('{:0.3f}'.format(float(r)))
+            r = round(float(r), 3)
             setattr(self, value, r)
             return getattr(self, value)
         except (ValueError, TypeError):
-            pass
+            return 0
 
     def sync_parameters(self):
         self.read_y_symmetry()

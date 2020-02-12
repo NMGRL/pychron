@@ -103,9 +103,10 @@ class BaseSpectrometer(SpectrometerDevice):
         if self.microcontroller:
             self.name = self.microcontroller.name
 
-        self.magnet.finish_loading()
-        self.source.finish_loading()
-        self.test_connection()
+        ret, err = self.test_connection()
+        if ret:
+            self.magnet.finish_loading()
+            self.source.finish_loading()
 
     def test_connection(self, force=True):
         """
