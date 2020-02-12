@@ -32,7 +32,8 @@ from pychron.core.helpers.filetools import remove_extension, list_subdirectories
 from pychron.core.helpers.iterfuncs import groupby_key, groupby_repo
 from pychron.core.i_datastore import IDatastore
 from pychron.core.progress import progress_loader, progress_iterator, open_progress
-from pychron.dvc import dvc_dump, dvc_load, analysis_path, repository_path, AnalysisNotAnvailableError, PATH_MODIFIERS
+from pychron.dvc import dvc_dump, dvc_load, analysis_path, repository_path, AnalysisNotAnvailableError, PATH_MODIFIERS, \
+    USE_GIT_TAGGING
 from pychron.dvc.cache import DVCCache
 from pychron.dvc.defaults import TRIGA, HOLDER_24_SPOKES, LASER221, LASER65
 from pychron.dvc.dvc_analysis import DVCAnalysis
@@ -53,6 +54,7 @@ from pychron.processing.interpreted_age import InterpretedAge
 from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS, STARTUP_MESSAGE_POSITION
 
 HOST_WARNING_MESSAGE = 'GitLab or GitHub or LocalGit plugin is required'
+
 
 
 @provides(IDatastore)
@@ -1423,9 +1425,11 @@ class DVC(Loggable):
 
     def tag_items(self, tag, items, note=''):
         self.debug('tag items with "{}"'.format(tag))
+
         with self.db.session_ctx() as sess:
             for expid, ans in groupby_repo(items):
-                self.sync_repo(expid)
+                if USE_GIT_TAGGING:
+                    self.sync_repo(expid)
 
                 cs = []
                 ps = []
@@ -1443,12 +1447,13 @@ class DVC(Loggable):
 
                         it.set_tag({'name': tag, 'note': note or ''})
 
-                        path = self.update_tag(it, add=False)
-                        ps.append(path)
-                        cs.append(it)
+                        if USE_GIT_TAGGING:
+                            path = self.update_tag(it, add=False)
+                            ps.append(path)
+                            cs.append(it)
 
                 sess.commit()
-                if ps:
+                if USE_GIT_TAGGING and ps:
                     if self.repository_add_paths(expid, ps):
                         self._commit_tags(cs, expid, '<TAG> {:<6s}'.format(tag))
 
@@ -1657,6 +1662,7 @@ class DVC(Loggable):
                     return
 
             a.group_id = record.group_id
+            a.set_tag(record.tag)
 
             if not quick:
                 a.load_name = record.load_name

@@ -32,6 +32,8 @@ __version__ = '2.1'
 # changelog
 # 2.1 added pre/post cleanup
 
+USE_GIT_TAGGING = False
+
 MASS_SPEC_REDUCED = 'MASS SPEC REDUCED'
 HISTORY_TAGS = ('TAG', 'ISOEVO', 'BLANKS', 'ICFactor', 'DEFINE EQUIL', MASS_SPEC_REDUCED, 'COLLECTION', 'IMPORT',
                 'MANUAL')

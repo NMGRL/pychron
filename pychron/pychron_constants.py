@@ -131,7 +131,7 @@ OMIT_ISOCHRON = 'omit_isochron'
 
 EXCLUDE_TAGS = (OMIT, INVALID, OUTLIER, SKIP)
 
-WEIGHTINGS = (NULL_STR, 'Volume', 'Variance')
+WEIGHTINGS = ('None - Iso. Recombination', 'Volume', 'Variance')
 
 INVALID_MSWD_CHR = '*'
 
