@@ -36,11 +36,10 @@ class RegressionView(HasTraits):
 
         container_dict = {'spacing': 5, 'stack_order': 'top_to_bottom'}
         sg = StackedGraph(container_dict=container_dict)
-        sg.plotcontainer.spacing = 5
-        sg.plotcontainer.stack_order = 'top_to_bottom'
+        bg = StackedRegressionGraph(container_dict=container_dict)
+        ig = StackedRegressionGraph(container_dict=container_dict)
 
         isos = an.sorted_values(reverse=False)
-        add_sniff = True
 
         sisos = [iso for iso in isos if iso.sniff.offset_xs.shape[0]]
         for i, iso in enumerate(sisos):
@@ -49,11 +48,6 @@ class RegressionView(HasTraits):
             sg.new_series(sniff.offset_xs, sniff.ys, marker='circle', type='scatter')
             sg.set_y_limits(pad='0.1', plotid=i)
             sg.set_x_limits(min_=0, max_=max(sniff.offset_xs) * 1.05, plotid=i)
-
-        bg = StackedRegressionGraph(container_dict=container_dict)
-        add_baseline = True
-
-        ig = StackedRegressionGraph(container_dict=container_dict)
 
         iisos = [iso for iso in isos if iso.offset_xs.shape[0]]
         baselines = []
@@ -71,15 +65,6 @@ class RegressionView(HasTraits):
 
         ig.refresh()
 
-        # bisos = [iso for iso in isos if iso.baseline.offset_xs.shape[0]]
-        # plotted_baselines = []
-        # for i, iso in enumerate(bisos):
-            # baseline = iso.baseline
-            # if baseline.detector in plotted_baselines:
-            #     continue
-            # plotted_baselines.append(baseline.detector)
-
-        # for iso in bisos:
         for i, baseline in enumerate(baselines):
 
             bg.new_plot(ytitle=baseline.detector, xtitle='Time (s)', title='Baseline')

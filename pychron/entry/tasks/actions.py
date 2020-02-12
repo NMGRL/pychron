@@ -317,6 +317,12 @@ class SyncMetaDataAction(TaskAction):
     name = 'Sync Repo/DB Metadata'
     method = 'sync_metadata'
 
+
+class ManualEditIdentifierAction(TaskAction):
+    name = 'Manual Edit'
+    method = 'manual_edit_identifier'
+    image = 'add'
+
     # def perform(self, event):
     #     app = event.task.window.application
     #     app.information_dialog('Sync Repo disabled')
