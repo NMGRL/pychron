@@ -1804,7 +1804,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         """
             return True to stop execution loop
         """
-        self.debug(f'pre queue check: tray={exp.tray}')
+        self.debug('pre queue check: tray={}'.format(exp.tray))
         if exp.tray and exp.tray != NULL_STR:
             ed = next((ci for ci in self.connectables if ci.name == exp.extract_device), None)
             if ed and ed.connected:
