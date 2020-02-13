@@ -1823,7 +1823,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                                       'Would you like to set the laser to use "{}"'.format(ed_tray, exp.tray, exp.tray)
                                 if self.confirmation_dialog(msg):
                                     man.set_tray(exp.tray)
-
+                                    ret = False
                                 else:
                                     if self.confirmation_dialog('Laser tray not necessarily setup correctly.'
                                                                 '\n\nAre you sure you want to continue?'):
