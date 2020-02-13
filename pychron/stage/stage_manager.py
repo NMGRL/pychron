@@ -125,11 +125,8 @@ class BaseStageManager(Manager):
             cpos = ca.center
             scale = ca.scale
 
-            self.debug('Calibration parameters: '
-                       'rot={:0.3f}, cpos={} scale={:0.3f}'.format(rot, cpos,
-                                                                   scale))
-            pos = smap.map_to_calibration(pos, cpos, rot,
-                                          scale=scale)
+            self.debug('Calibration parameters: rot={:0.3f}, cpos={} scale={:0.3f}'.format(rot, cpos, scale))
+            pos = smap.map_to_calibration(pos, cpos=cpos, rot=rot, scale=scale)
 
         return pos
 

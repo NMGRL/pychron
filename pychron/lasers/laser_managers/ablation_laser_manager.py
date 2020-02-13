@@ -28,6 +28,10 @@ class AblationCO2Manager(SerialLaserManager):
     configuration_dir_name = 'ablation'
     read_delay = 25
 
+    def set_tray(self, t):
+        if self.stage_manager:
+            self.stage_manager.stage_map_name = t
+
     def _test_connection_hook(self):
         re = self._ask('GetVersion')
         self.connected = bool(re)

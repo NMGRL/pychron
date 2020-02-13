@@ -1815,7 +1815,16 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     self.debug('{} service found {}'.format(name, man))
                     if hasattr(man, 'get_tray'):
                         ed_tray = man.get_tray()
-                        return ed_tray != exp.tray
+                        ret = ed_tray != exp.tray
+                        if ret:
+                            if hasattr(man, 'set_tray'):
+                                msg = 'The laser is configured to use tray: "{}" but the experiment is set to use ' \
+                                      'tray: "{}".\n\n' \
+                                      'Would you like to set the laser to use "{}"'.format(ed_tray, exp.tray, ed_tray)
+                                if self.confirmation_dialog(msg):
+                                    man.set_tray(exp.tray)
+
+                        return ret
 
     def _pre_run_check(self, spec, inform=False):
         """

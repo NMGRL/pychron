@@ -42,8 +42,10 @@ class NonPychronClientPane(ClientPane):
         return v
 
     def _get_calibration_group(self):
-        calibration_grp = VGroup(UItem('tray_calibration.style',
-                                       enabled_when='not tray_calibration.isCalibrating()'),
+        calibration_grp = VGroup(HGroup(UItem('tray_calibration.style',
+                                              enabled_when='not tray_calibration.isCalibrating()'),
+                                        UItem('stage_manager.stage_map_name',
+                                              editor=EnumEditor(name='stage_manager.stage_map_names'))),
                                  UItem('tray_calibration.calibrate',
                                        editor=ButtonEditor(label_value='tray_calibration.calibration_step')),
                                  HGroup(Item('tray_calibration.cx', format_str='%0.3f', style='readonly'),
@@ -62,7 +64,10 @@ class NonPychronClientPane(ClientPane):
         pos_grp = VGroup(HGroup(UItem('move_enabled_button',
                                       editor=ButtonEditor(label_value='move_enabled_label')),
                                 icon_button_editor('update_position_button',
-                                                   'arrow_refresh', enabled_when='not _is_moving')),
+                                                   'arrow_refresh',
+                                                   tooltip='Update position. Query laser for current '
+                                                           'xyz position',
+                                                   enabled_when='not _is_moving')),
                          VGroup(HGroup(Item('position', enabled_when='not _is_moving'),
                                        UItem('stage_manager.stage_map_name',
                                              editor=EnumEditor(name='stage_manager.stage_map_names')),
