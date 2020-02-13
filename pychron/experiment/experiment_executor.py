@@ -2149,7 +2149,7 @@ Use Last "blank_{}"= {}
         if dbr is None:
             selected = True
             from pychron.experiment.utilities.reference_analysis_selector import ReferenceAnalysisSelector
-            selector = ReferenceAnalysisSelector('Select a Blank')
+            selector = ReferenceAnalysisSelector(title='Select a Blank')
             info = selector.edit_traits(kind='livemodal')
             dbs = db.get_blanks(ms)
             selector.init('Select Default Blank', dbs)
