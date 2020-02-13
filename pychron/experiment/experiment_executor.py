@@ -1820,9 +1820,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                             if hasattr(man, 'set_tray'):
                                 msg = 'The laser is configured to use tray: "{}" but the experiment is set to use ' \
                                       'tray: "{}".\n\n' \
-                                      'Would you like to set the laser to use "{}"'.format(ed_tray, exp.tray, ed_tray)
+                                      'Would you like to set the laser to use "{}"'.format(ed_tray, exp.tray, exp.tray)
                                 if self.confirmation_dialog(msg):
                                     man.set_tray(exp.tray)
+                                else:
+                                    ret = False
 
                         return ret
 
