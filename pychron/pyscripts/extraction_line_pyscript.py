@@ -488,7 +488,7 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def move_to_position(self, position='', autocenter=True):
+    def move_to_position(self, position='', autocenter=True, block=True):
         if position == '':
             position = self.position
 
@@ -503,7 +503,7 @@ class ExtractionPyScript(ValvePyScript):
             ed = self.extract_device
             self.console_info('{} move to position {}'.format(ed, position))
             success = self._extraction_action(('move_to_position',
-                                              (position, autocenter), {}))
+                                              (position,), {'autocenter': autocenter, 'block': block}))
 
             if not success:
                 self.info('{} move to position failed'.format(ed))
