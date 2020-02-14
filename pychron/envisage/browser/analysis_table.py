@@ -297,6 +297,10 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
     def _refresh_analysis_set_button_fired(self):
         self._analysis_set_changed(self.analysis_set)
 
+        # hack to get the analyses to display
+        self.analysis_filter = 'a'
+        self.analysis_filter = ''
+
     def _analysis_set_changed(self, new):
         if self.suppress_load_analysis_set:
             self.debug('suppressing loading analysis set')

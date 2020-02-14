@@ -881,15 +881,13 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
             fmt = '0.{}'.format('0' * sig_figs)
 
-        if not self._options.ensure_trailing_zeros:
-            fmt = '{}#'.format(fmt)
+        # if not self._options.ensure_trailing_zeros:
+        #     fmt = '{}#'.format(fmt)
 
         fn.set_num_format(fmt)
         return fn
 
     def _make_analysis(self, sh, cols, item, is_last=False, is_plateau_step=None, cum=''):
-        # item.arar_constants.age_units = self._options.age_units
-
         row = self._current_row
 
         fmt = self._workbook.add_format()

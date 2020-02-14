@@ -322,7 +322,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                                            isigfig('correction', 'Correction Factors')),
                                     HGroup(isigfig('sens', 'Sensitivity'),
                                            isigfig('k2o', 'K2O')), enabled_when='not use_standard_sigfigs'),
-                                    Item('ensure_trailing_zeros', label='Ensure Trailing Zeros'),
+                                    # Item('ensure_trailing_zeros', label='Ensure Trailing Zeros'),
                                     label='Significant Figures')
 
         def inc(k):
