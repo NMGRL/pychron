@@ -125,18 +125,25 @@ class IdeogramEditor(InterpretedAgeEditor):
 
     def traits_view(self):
         tbl_grp = VGroup(listeditor('results_tables',
-                                    height=0.2),
+                                    # height=0.2
+                                    ),
                          scrollable=True,
                          visible_when='results_tables')
 
-        ttest_grp = VGroup(listeditor('ttest_tables', height=0.2),
+        ttest_grp = VGroup(listeditor('ttest_tables',
+                                      # height=0.2
+                                      ),
+                           scrollable=True,
                            visible_when='ttest_tables')
 
-        rvalues_grp = VGroup(listeditor('rvalues_tables', height=0.2),
+        rvalues_grp = VGroup(listeditor('rvalues_tables',
+                                        # height=0.2
+                                        ),
+                             scrollable=True,
                              visible_when='rvalues_tables')
 
         g = self.get_component_view()
-        g.height = 0.8
+        g.height = 750
 
         v = View(VSplit(g,
                         HSplit(tbl_grp,
