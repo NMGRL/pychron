@@ -16,17 +16,19 @@
 
 from apptools.preferences.preference_binding import bind_preference
 from pyface.action.menu_manager import MenuManager
-from traits.api import Property, Str, Int, List, on_trait_change
-from traitsui.api import View, UItem, VGroup, Handler, InstanceEditor
+from traits.api import Property, Str, Int, List, on_trait_change, Bool
+from traitsui.api import View, UItem, VGroup, Handler, InstanceEditor, Item
 from traitsui.menu import Action
 
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.core.pychron_traits import BorderVGroup
 from pychron.core.ui.tabular_editor import myTabularEditor
+from pychron.persistence_loggable import PersistenceMixin
 from pychron.pipeline.editors.base_adapter import BaseAdapter
 from pychron.pipeline.editors.base_table_editor import BaseTableEditor
 from pychron.pipeline.subgrouping import compress_groups, make_interpreted_age_groups, make_interpreted_age_group
+from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
 from pychron.processing.analyses.preferred import get_preferred_grp
 
 
@@ -130,7 +132,7 @@ def gchange(obj, gs):
         g.set_preferred_kind(obj.attr, obj.kind, obj.error_kind)
 
 
-class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
+class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin, PersistenceMixin):
     help_str = Str('Right-click to subgroup analyses and calculate an age')
     groups = List
     selected_group = List
@@ -140,11 +142,18 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
     unknowns = List
 
     arar_calculation_options = None
+
     # integrated_include_omitted = Bool(False)
     # omit_non_plateau = Bool(False)
 
-    # persistence_name = 'group_age_editor'
-    # pattributes = ['integrated_include_omitted', 'omit_non_plateau']
+    persistence_name = 'group_age_editor'
+    pattributes = ['include_j_position_error',
+                   'include_j_error_in_mean',
+                   'include_decay_error_in_mean']
+
+    include_j_position_error = Bool(False)
+    include_j_error_in_mean = Bool(False)
+    include_decay_error_in_mean = Bool(False)
 
     def make_groups(self, bind=True):
         if bind:
@@ -159,9 +168,8 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
                     ans = [ai for ai in ans if ai.tag.lower() != 'skip']
 
             unks.extend(ans)
-            ag = make_interpreted_age_group(ans, gid)
-            # if self.omit_non_plateau:
-            #     ag.do_omit_non_plateau()
+
+            ag = InterpretedAgeGroup(analyses=ans, group_id=gid)
 
             acopt = self.arar_calculation_options
             if acopt:
@@ -170,7 +178,12 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
                     ag.exclude_non_plateau = acopt.isochron_exclude_non_plateau
                 elif acopt.isochron_omit_non_plateau:
                     ag.do_omit_non_plateau()
+            else:
+                ag.set_external_error(self.include_j_position_error,
+                                      self.include_j_error_in_mean,
+                                      self.include_decay_error_in_mean, dirty=True)
 
+            ag.set_preferred_kinds()
             gs.append(ag)
 
         self.groups = gs
@@ -192,6 +205,12 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
         self.make_groups(False)
 
     # private
+    def _include_j_error_in_mean_changed(self):
+        for a in self.groups:
+            a.set_external_error(self.include_j_position_error, self.include_j_error_in_mean,
+                                 self.include_decay_error_in_mean, dirty=True)
+            a.set_preferred_kinds()
+
     def _subgroup_subgroup_sort_key(self, x):
         if hasattr(x, 'subgroup'):
             if x.subgroup:
@@ -236,7 +255,12 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
                             label='Groups')
         return ggrp
 
-    # def get_options_group(self):
+    def get_options_group(self):
+        return BorderVGroup(#Item('include_j_position_error'),
+                            Item('include_j_error_in_mean'),
+                            #Item('include_decay_error_in_mean'),
+                            label='Options')
+
     #     return BorderVGroup(HGroup(BorderVGroup(Item('integrated_include_omitted',
     #                                           tooltip='Include omitted steps in the integrated age',
     #                                           label='Include Omitted'),
@@ -250,9 +274,9 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
     def traits_view(self):
         agrp = self.get_analyses_group()
         ggrp = self.get_groups_group()
-        # optsgrp = self.get_options_group()
+        optsgrp = self.get_options_group()
 
-        v = View(VGroup(agrp, ggrp),
+        v = View(VGroup(optsgrp, agrp, ggrp),
                  handler=THandler())
         return v
 

@@ -194,7 +194,7 @@ class AnalysisGroup(IdeogramPlotable):
     def get_mswd_tuple(self):
         mswd = self.mswd
         valid_mswd = validate_mswd(mswd, self.nanalyses)
-        return mswd, valid_mswd, self.nanalyses, calculate_mswd_probability(mswd, self.nanalyses-1)
+        return mswd, valid_mswd, self.nanalyses, calculate_mswd_probability(mswd, self.nanalyses - 1)
 
     def set_external_error(self, individual, mean, decay, dirty=False):
         self.include_j_position_error = individual
@@ -398,18 +398,22 @@ class AnalysisGroup(IdeogramPlotable):
         return m
 
     def _apply_external_err(self, wa, force=False):
-        v, e = nominal_value(wa), std_dev(wa)
-        v = abs(v)
-        try:
-            pa = e / v
-        except ZeroDivisionError:
-            pa = 0
+        def func(aa):
+            v, e = nominal_value(aa), std_dev(aa)
+            v = abs(v)
+            try:
+                pa = e / v
+            except ZeroDivisionError:
+                pa = 0
+            return v, e, pa
 
-        if self.include_j_error_in_mean or force:
+        if self.include_j_error_in_mean:
+            v, e, pa = func(wa)
             ne = (pa ** 2 + self.j_err ** 2) ** 0.5
             wa = ufloat(v, ne * v)
 
-        if self.include_decay_error_mean or force:
+        if self.include_decay_error_mean:
+            v, e, pa = func(wa)
             k = self.arar_constants.lambda_k
             de = 0
             try:
@@ -417,8 +421,8 @@ class AnalysisGroup(IdeogramPlotable):
             except ZeroDivisionError:
                 pass
 
-            ne = (pa**2 + de**2)**0.5
-            wa = ufloat(v, ne*v)
+            ne = (pa ** 2 + de ** 2) ** 0.5
+            wa = ufloat(v, ne * v)
 
         return wa
 
@@ -482,7 +486,7 @@ class AnalysisGroup(IdeogramPlotable):
             else:
                 av = vs.mean()
                 werr = vs.std(ddof=1)
-                sem = werr/len(vs)**0.5
+                sem = werr / len(vs) ** 0.5
         else:
             av, werr = 0, 0
 
@@ -688,7 +692,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
 
     def get_plateau_mswd_tuple(self):
         return self.plateau_mswd, self.plateau_mswd_valid, \
-               self.nsteps, calculate_mswd_probability(self.plateau_mswd, self.nsteps-1)
+               self.nsteps, calculate_mswd_probability(self.plateau_mswd, self.nsteps - 1)
 
     def calculate_plateau(self):
         return self.plateau_age
