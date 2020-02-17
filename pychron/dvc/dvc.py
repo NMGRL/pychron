@@ -43,6 +43,7 @@ from pychron.dvc.meta_repo import MetaRepo, get_frozen_flux, get_frozen_producti
 from pychron.dvc.tasks.dvc_preferences import DVCConnectionItem
 from pychron.dvc.util import Tag, DVCInterpretedAge
 from pychron.envisage.browser.record_views import InterpretedAgeRecordView
+from pychron.experiment.utilities.identifier import make_increment
 from pychron.git.hosts import IGitHost
 from pychron.git.hosts.local import LocalGitHostService
 from pychron.git_archive.repo_manager import GitRepoManager, format_date, get_repository_branch
@@ -115,54 +116,50 @@ class DVC(Loggable):
         if self.db.connect():
             return True
 
-    def fix_identifier(self, src_id, dest_id, repo, identifier, new_aliquot=None):
-        dry = True
+    def fix_identifier(self, src_id, dest_id, repo_identifier, dest_identifier, dest_aliquot, dest_step):
+        self.info('converting {} to {}'.format(src_id, dest_id))
+        err = self.db.map_runid(src_id, dest_id)
 
-        repo = self._get_repository(repo)
+        if err:
+            self.warning_dialog(err)
+            return
 
         # fix git files
         root = paths.repository_dataset_dir
 
-        sp = analysis_path(src_id, repo, root=root)
-        dp = analysis_path(dest_id, repo, root=root, mode='w')
-
-        if os.path.isfile(dp):
-            self.info('Already an analysis. {} {}'.format(dest_id, dp))
-            return
+        sp = analysis_path(src_id, repo_identifier, root=root)
+        dp = analysis_path(dest_id, repo_identifier, root=root, mode='w', is_temp=True)
+        temps = [dp]
 
         if not os.path.isfile(sp):
             self.info('not a file. {}'.format(sp))
             return
 
         jd = dvc_load(sp)
-        jd['identifier'] = identifier
-        if new_aliquot:
-            jd['aliquot'] = new_aliquot
+        jd['identifier'] = dest_identifier
+        if dest_aliquot:
+            jd['aliquot'] = dest_aliquot
+        if dest_step:
+            jd['increment'] = make_increment(dest_step)
 
         self.debug('{}>>{}'.format(sp, dp))
-        if not dry:
-            repo.add(sp)
-            repo.add(dp)
 
-            dvc_dump(jd, dp)
-            os.remove(sp)
+        dvc_dump(jd, dp)
+
+        os.remove(sp)
 
         for modifier in ('baselines', 'blanks', 'extraction',
                          'intercepts', 'icfactors', 'peakcenter', '.data'):
-            sp = analysis_path(src_id, repo, modifier=modifier, root=root)
-            dp = analysis_path(dest_id, repo, modifier=modifier, root=root, mode='w')
-            self.debug('{}>>{}'.format(sp, dp))
+            sp = analysis_path(src_id, repo_identifier, modifier=modifier, root=root)
+
+            dp = analysis_path(dest_id, repo_identifier, modifier=modifier, root=root, mode='w', is_temp=True)
+
             if sp and os.path.isfile(sp):
-                if not dry:
-                    repo.add(sp)
-                    repo.add(dp)
-                    shutil.move(sp, dp)
+                self.debug('{}>>{}'.format(sp, dp))
+                shutil.move(sp, dp)
+                temps.append(dp)
 
-
-        # fix database
-
-
-        # c
+        return temps
 
     def generate_currents(self):
         if not self.update_currents_enabled:

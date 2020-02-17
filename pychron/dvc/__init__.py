@@ -151,11 +151,15 @@ def analysis_path(analysis, *args, **kw):
 UUID_RE = re.compile(r'^[0-9a-f]{8}\-[0-9a-f]{4}\-4[0-9a-f]{3}\-[89ab][0-9a-f]{3}\-[0-9a-f]{12}$', re.IGNORECASE)
 
 
-def _analysis_path(runid, repository, modifier=None, extension='.json', mode='r', root=None):
+def _analysis_path(runid, repository, modifier=None, extension='.json', mode='r', root=None, is_temp=False):
     if root is None:
         root = paths.repository_dataset_dir
 
     root = os.path.join(root, repository)
+    if is_temp:
+        root = os.path.join(root, 'temp')
+        if not os.path.isdir(root):
+            os.mkdir(root)
 
     if UUID_RE.match(runid):
         sublen = 5

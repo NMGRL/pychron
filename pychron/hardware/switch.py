@@ -40,6 +40,7 @@ class BaseSwitch(Loggable):
     actuations = Int
     last_actuation = Str
     explain_enabled = Bool(False)
+    use_state_word = Bool(False)
 
     def __init__(self, name, *args, **kw):
         """
@@ -103,7 +104,6 @@ class Switch(BaseSwitch):
 
     state_address = Str
     query_state = Bool(True)
-    use_state_word = Bool(False)
 
     prefix_name = 'SWITCH'
     parent = Str

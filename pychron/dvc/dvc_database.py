@@ -366,8 +366,8 @@ class DVCDatabase(DatabaseAdapter):
     def map_runid(self, src, dst):
         with self.session_ctx() as sess:
             dl, da, ds = strip_runid(dst)
-            if self.get_analysis_runid(dl, da, ds):
-                return '"{}" already exists'.format(dst)
+            # if self.get_analysis_runid(dl, da, ds):
+            #     return '"{}" already exists'.format(dst)
 
             ip = self.get_identifier(dl)
             if not ip:

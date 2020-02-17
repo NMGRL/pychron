@@ -66,6 +66,21 @@ class Fork(QPrimitive, Bordered, ConnectionMixin):
     height = 10
     inverted = False
 
+    def set_midpoint(self, p1, **kw):
+        if isinstance(p1, tuple):
+            p1 = Point(*p1, **kw)
+        self.mid = p1
+
+    def set_leftpoint(self, p1, **kw):
+        if isinstance(p1, tuple):
+            p1 = Point(*p1, **kw)
+        self.left = p1
+
+    def set_rightpoint(self, p1, **kw):
+        if isinstance(p1, tuple):
+            p1 = Point(*p1, **kw)
+        self.right = p1
+
     def get_midx(self):
         lx, ly = self.left.get_xy()
         rx, ry = self.right.get_xy()
@@ -136,6 +151,7 @@ def tee_v(gc, x1, y1, x2, mx, y2):
 
 class Tee(Fork):
     tag = 'tee'
+
     def _render(self, gc):
         lx, ly = self.left.get_xy()
         rx, ry = self.right.get_xy()
