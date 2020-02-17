@@ -25,7 +25,7 @@ from traitsui.table_column import ObjectColumn
 
 from pychron.core.helpers.iterfuncs import groupby_repo
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
-from pychron.experiment.utilities.identifier import make_runid, make_step
+from pychron.experiment.utilities.identifier import make_runid
 from pychron.paths import paths
 from pychron.pipeline.nodes.data import BaseDVCNode
 
@@ -40,13 +40,8 @@ class RunIDEditItem(HasTraits):
         super(RunIDEditItem, self).__init__(*args, **kw)
         self.src_record_id = a.record_id
         self.dest_identifier = a.identifier
-        # self.dest_aliquot = a.aliquot
-        # self.dest_step = a.step
-        self.dest_aliquot = 3
-        if '-05' not in self.src_record_id:
-            self.dest_step = make_step(a.increment+3)
-        else:
-            self.dest_step = a.step
+        self.dest_aliquot = a.aliquot
+        self.dest_step = a.step
         self.repository_identifier = a.repository_identifier
 
     @property
