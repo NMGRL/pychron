@@ -766,7 +766,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     def _do_run(self, run):
         self._set_thread_name(run.runid)
         # add a new log handler
-        p, _ = unique_path2(paths.log_dir, run.runid, extension='.log')
+
+        name = run.runid.replace(':', '_')
+        p, _ = unique_path2(paths.log_dir, name, extension='.log')
         handler = add_root_handler(p)
         run.log_path = p
 
