@@ -159,7 +159,7 @@ class BaseSpectrometer(SpectrometerDevice):
             self.set_integration_time(self._saved_integration)
             self._saved_integration = None
     
-    def get_update_period(self, it=None):
+    def get_update_period(self, it=None, *args, **kw):
         if it is None:
             it = self.integration_time
         return it
