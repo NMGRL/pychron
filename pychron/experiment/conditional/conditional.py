@@ -364,6 +364,11 @@ class TruncationConditional(AutomatedRunConditional):
     """
     abbreviated_count_ratio = 1.0
 
+    def _from_dict_hook(self, cd):
+        for tag in ('abbreviated_count_ratio',):
+            if tag in cd:
+                setattr(self, tag, cd[tag])
+
 
 class TerminationConditional(AutomatedRunConditional):
     """
