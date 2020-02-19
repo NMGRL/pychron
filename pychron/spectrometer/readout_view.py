@@ -295,25 +295,6 @@ class ReadoutView(PersistenceLoggable):
             for d, r in zip(ds, deflections):
                 r.set_value(d)
 
-        # if self.use_word_query:
-        #
-        #     for func, rs in ((spec.get_parameter_word, readouts),
-        #                      (spec.read_deflection_word, deflections)):
-        #
-        #         keys = [r.name for r in rs]
-        #         if keys:
-        #             ds = func(keys)
-        #             for d, r in zip(ds, rs):
-        #                 r.set_value(d)
-        #     for rd in self.readouts:
-        #         if rd.compare and not rd.use_word:
-        #             rd.query_value()
-        #
-        # else:
-        #     for rs in (self.readouts, self.deflections):
-        #         for rd in rs:
-        #             rd.query_value()
-
         st = time.time()
         timeout = self.refresh_period*0.95
         for rd in self.readouts:

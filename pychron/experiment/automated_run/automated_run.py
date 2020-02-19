@@ -425,7 +425,8 @@ class AutomatedRun(Loggable):
             return True
 
     def py_baselines(self, ncounts, starttime, starttime_offset, mass, detector,
-                     series=0, fit_series=0, settling_time=4, integration_time=None, use_dac=False):
+                     series=0, fit_series=0, settling_time=4, integration_time=None, use_dac=False,
+                     check_conditionals=True):
 
         if not self._alive:
             return
@@ -458,7 +459,6 @@ class AutomatedRun(Loggable):
 
         self.multi_collector.is_baseline = True
         self.multi_collector.fit_series_idx = fit_series
-        check_conditionals = True
 
         self.collector.for_peak_hop = self.plot_panel.is_peak_hop
         self.plot_panel.is_peak_hop = False
@@ -2253,9 +2253,9 @@ anaylsis_type={}
                     period_ms=period * 1000,
                     data_generator=get_data,
                     data_writer=data_writer,
-                    #starttime=starttime,
                     experiment_type=self.experiment_type,
                     refresh_age=self.spec.analysis_type in ('unknown', 'cocktail'))
+
         m.set_starttime(starttime)
         if hasattr(self.spectrometer_manager.spectrometer, 'trigger_acq'):
             m.trait_set(trigger=self.spectrometer_manager.spectrometer.trigger_acq)
