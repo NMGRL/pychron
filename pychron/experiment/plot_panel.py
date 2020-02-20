@@ -194,19 +194,6 @@ class PlotPanel(Loggable):
         else:
             self.isotope_graph.refresh()
 
-        # if self.figure and isinstance(self.isotope_group, ArArAge):
-        #     age = self.isotope_group.uage
-        #     k39 = self.isotope_group.get_computed_value('k39')
-        #     v, e = nominal_value(age), std_dev(age)
-        #
-        #     self.debug('update figure age={} +/- {}. k39={}'.format(v, e, nominal_value(k39)))
-        #
-        #     a = self.figure.analyses[-1]
-        #     a.uage = age
-        #     a.k39 = k39
-        #
-        #     self.figure.replot()
-
     def new_isotope_plot(self, **kw):
         plots = self._new_plot(isotope_only=True, **kw)
         return plots['isotope']

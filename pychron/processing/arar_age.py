@@ -339,7 +339,7 @@ class ArArAge(IsotopeGroup):
     def calculate_no_interference(self):
         self._calculate_age(interferences={})
 
-    def calculate_age(self, use_display_age=False, force=False, **kw):
+    def calculate_age(self, force=False, **kw):
         """
             force: force recalculation of age. necessary if you want error components
         """
@@ -347,7 +347,7 @@ class ArArAge(IsotopeGroup):
         if not self.age or force:
             self.calculate_decay_factors()
 
-            self._calculate_age(use_display_age=use_display_age, **kw)
+            self._calculate_age(**kw)
             self._calculate_kca()
             self._calculate_kcl()
 
@@ -457,7 +457,7 @@ class ArArAge(IsotopeGroup):
             self.F_err_wo_irrad = std_dev(f_wo_irrad)
             return f, f_wo_irrad, non_ar, computed, interference_corrected
 
-    def _calculate_age(self, use_display_age=False, include_decay_error=None, interferences=None):
+    def _calculate_age(self, include_decay_error=None, interferences=None):
         """
             approx 2/3 of the calculation time is in _assemble_ar_ar_isotopes.
             Isotope.get_intensity takes about 5ms.
