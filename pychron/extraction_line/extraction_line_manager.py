@@ -737,9 +737,10 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def _set_logger_level(self, obj=None):
         level = LOG_LEVELS.get(self.logging_level, logging.DEBUG)
-        getattr(obj, 'logger').setLevel(level)
-        if hasattr(obj, 'set_logger_level_hook'):
-            obj.set_logger_level_hook(level)
+        if obj:
+            getattr(obj, 'logger').setLevel(level)
+            if hasattr(obj, 'set_logger_level_hook'):
+                obj.set_logger_level_hook(level)
 
     # ===============================================================================
     # handlers

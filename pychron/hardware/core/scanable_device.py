@@ -122,7 +122,6 @@ class ScanableDevice(ViewableDevice):
 
                 x = None
                 if self.graph_scan_data:
-                    self.debug('graphing scan data')
                     if isinstance(v, tuple):
                         x = self.graph.record_multiple(v)
                     elif isinstance(v, PlotRecord):
@@ -196,7 +195,8 @@ class ScanableDevice(ViewableDevice):
         # print self.scan_width, self.scan_period
         if self.graph_scan_data:
             self.info('Graph recording enabled')
-            self.graph.set_scan_width(d)
+            self.debug('scan width ={}'.format(d))
+            self.graph.set_scan_widths(d)
 
         if self.record_scan_data:
             self.info('Recording scan enabled')

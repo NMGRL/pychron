@@ -114,6 +114,8 @@ class Switch(BaseSwitch):
     state_invert = Bool(False)
     settling_time = Float(0)
 
+    inverted_logic = Bool(False)
+
     def summary(self, widths, keys):
         vs = (getattr(self, k) for k in keys)
         args = ['{{:<{}s}}'.format(w).format(str(v) if v not in (None, '') else NULL_STR) for w,v in zip(widths, vs)]
@@ -147,7 +149,7 @@ class Switch(BaseSwitch):
             self.debug('{}: {}'.format(msg, result))
             s = None
         else:
-            if self.state_invert:
+            if self.state_invert or self.inverted_logic:
                 s = not s
 
         if s is None and globalv.communication_simulation:
@@ -212,12 +214,14 @@ class Switch(BaseSwitch):
     def _open(self, mode='normal', force=False):
         """
         """
-        return self._act(mode, 'open_channel', not self.state or force)
+        cmd = 'close_channel' if self.inverted_logic else 'open_channel'
+        return self._act(mode, cmd, not self.state or force)
 
     def _close(self, mode='normal', force=False):
         """
         """
-        return self._act(mode, 'close_channel', self.state or force)
+        cmd = 'open_channel' if self.inverted_logic else 'close_channel'
+        return self._act(mode, cmd, self.state or force)
 
     def _act(self, mode, func, do_actuation):
         """

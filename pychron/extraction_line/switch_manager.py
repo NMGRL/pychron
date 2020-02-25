@@ -1066,6 +1066,7 @@ class SwitchManager(Manager):
             parent_inverted = to_bool(parent.get('inverted'))
 
         ctx = dict(name=name,
+                   inverted_logic=to_bool(vobj.get('inverted_logic', False)),
                    track_actuation=to_bool(vobj.get('track', True)),
                    address=address,
                    parent=parent_name,

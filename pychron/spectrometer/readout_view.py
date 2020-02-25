@@ -237,7 +237,11 @@ class ReadoutView(PersistenceLoggable):
     def _load_yaml(self, path):
         yt = yload(path)
         if yt:
-            yl, yd = yt
+            try:
+                yl, yd = yt
+            except ValueError:
+                yl = yt
+                yd = []
 
             for rd in yl:
                 rr = Readout(spectrometer=self.spectrometer,

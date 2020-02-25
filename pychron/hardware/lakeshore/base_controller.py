@@ -88,6 +88,7 @@ class BaseLakeShoreController(CoreDevice):
                     self.iomap.append(mapsetpoint)
         else:
             self.num_inputs = 2
+            self.iolist = ['input_a', 'input_b']
             self.ionames = ['', '', '', '']
             self.iomap = ['setpoint1', 'setpoint2', 'setpoint3', 'setpoint4']
 
@@ -111,7 +112,9 @@ class BaseLakeShoreController(CoreDevice):
         for tag in self.iomap:
             v = self.read_setpoint(tag)
             setattr(self, '{}_readback'.format(tag), v)
+        return self._update_hook()
 
+    def _update_hook(self):
         return self.input_a
 
     def setpoints_achieved(self, tol=1):
