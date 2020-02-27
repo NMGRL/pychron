@@ -42,7 +42,7 @@ class Model335TemperatureController(BaseLakeShoreController):
         return grp
 
     def graph_builder(self, g, **kw):
-        g.plotcontainer.spacing=10
+        g.plotcontainer.spacing = 10
         g.new_plot(xtitle='Time (s)', ytitle='InputA',
                    padding=[100, 10, 0, 60])
         g.new_series()

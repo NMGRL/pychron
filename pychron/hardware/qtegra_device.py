@@ -53,7 +53,7 @@ class QtegraDevice(CoreDevice):
               period: on_change
     """
     _parameters = Dict
-    # auto_handle_response = False
+
     def load_additional_args(self, config):
 
         section = 'Parameters'
@@ -66,14 +66,11 @@ class QtegraDevice(CoreDevice):
 
     def __getattr__(self, item):
         if item.startswith('read_'):
-            tag = item[5:]
-            param = self._parameters.get(tag)
+            param = self._parameters.get(item[5:])
             if param:
                 return self.get_parameter(param)
 
     def read_decabin_temperature(self, **kw):
-        # v = self.ask('GetParameter Temp1')
-        # v = self._parse_response(v)
         v = self.get_parameter('Temp1')
         if v is not None:
             self.last_response = str(round(v, 1))
@@ -99,7 +96,5 @@ class QtegraDevice(CoreDevice):
             return float(v)
         except (ValueError, TypeError):
             return self.get_random_value()
-
-
 
 # ============= EOF =============================================
