@@ -236,9 +236,20 @@ class DataCollector(Consoleable):
             return
 
         if data:
+            keys, signals, ct = data
             if detectors:
-                data = list(zip(*(d for d in zip(*data) if d[0] in detectors)))
-            self._data = data
+                # data = list(zip(*(d for d in zip(*data) if d[0] in detectors)))
+                nkeys, nsignals = [], []
+                for k, s in zip(keys, signals):
+                    if k in detectors:
+                        nkeys.append(k)
+                        nsignals.append(s)
+
+                data = (nkeys, nsignals, ct)
+                self._data = (nkeys, nsignals)
+            else:
+                self._data = (keys, signals)
+
             return data
 
     def _save_data(self, x, keys, signals):
