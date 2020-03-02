@@ -411,17 +411,9 @@ class PatternExecutor(Patternable):
                     sleep(update_period / 5)
                     continue
 
-                sleep(update_period)
-
                 pt, peakcol, peakrow, peak_img, sat, src = args
 
                 sats.append(sat)
-                # if peak is None:
-                #     peak = peak_img
-                # else:
-                #     peak = ((peak.astype('int16') - 2) + peak_img).clip(0, 255)
-
-                # img = gray2rgb(peak).astype(uint8)
                 src = gray2rgb(src).astype(uint8)
                 if pt:
                     pts.append(pt)
@@ -429,9 +421,9 @@ class PatternExecutor(Patternable):
                     # img[c] = (255, 0, 0)
                     src[c] = (255, 0, 0)
 
-                # set_data('imagedata', src)
                 set_data2('imagedata', src)
-                # set_data('imagedata', img)
+
+                sleep(update_period)
 
             self.debug('iteration {} finished, npts={}'.format(cnt, len(pts)))
 
@@ -465,15 +457,15 @@ class PatternExecutor(Patternable):
 
                 point_gen = None
 
-                # wait = True
-                if npt is None:
-                    block = total_duration - (time.time() - st) < duration
-                    linear_move(cx, cy, source='recenter_dragonfly{}'.format(cnt), block=block,
-                                velocity=pattern.velocity,
-                                use_calibration=False)
-                    pattern.position_str = 'Return to Center'
-                    px, py = cx, cy
-                    continue
+                # # wait = True
+                # if npt is None:
+                #     block = total_duration - (time.time() - st) < duration
+                #     linear_move(cx, cy, source='recenter_dragonfly{}'.format(cnt), block=block,
+                #                 velocity=pattern.velocity,
+                #                 use_calibration=False)
+                #     pattern.position_str = 'Return to Center'
+                #     px, py = cx, cy
+                #     continue
 
                 try:
                     scalar = npt[2]

@@ -21,6 +21,7 @@ from traits.api import Bool, Str, Enum, File, Directory, \
     Color, Range, Float, Int
 from traitsui.api import View, Item, VGroup, HGroup, Group, UItem
 
+from pychron.core.pychron_traits import BorderVGroup
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 from pychron.pychron_constants import SIZES
 
