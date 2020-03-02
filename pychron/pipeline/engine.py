@@ -317,6 +317,13 @@ class PipelineEngine(Loggable):
 
         self._set_grouping(self.selected_unknowns, max_gid, attr=key)
 
+    def unknowns_toggle_status(self):
+        for i in self.selected_unknowns:
+            # print('asdf', i.temp_status)
+            i.temp_status = 'ok' if i.temp_status == 'omit' else 'omit'
+            if hasattr(self.selected, 'editor') and self.selected.editor:
+                self.selected.editor.refresh_needed = True
+
     def recall_unknowns(self):
         self.debug('recall unks')
         self.recall_analyses_needed = self.selected_unknowns
