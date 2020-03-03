@@ -49,6 +49,8 @@ class AutoCenterManager(MachineVisionManager):
 
     display_image = Instance(FrameImage, ())
 
+    locator = None
+
     def bind_preferences(self, pref_id):
         bind_preference(self, 'use_autocenter', '{}.use_autocenter'.format(pref_id))
         bind_preference(self, 'blur', '{}.autocenter_blur'.format(pref_id))
@@ -60,9 +62,15 @@ class AutoCenterManager(MachineVisionManager):
         bind_preference(self, 'blocksize', '{}.autocenter_blocksize'.format(pref_id))
         bind_preference(self, 'blocksize_step', '{}.autocenter_blocksize_step'.format(pref_id))
 
+    def cancel(self):
+        self.debug('canceling')
+        if self.locator:
+            self.locator.cancel()
+
     def calculate_new_center(self, cx, cy, offx, offy, dim=1.0, shape='circle'):
         frame = self.new_image_frame()
         loc = self._get_locator(shape=shape)
+        self.locator = loc
 
         cropdim = ceil(dim * 2.55)
 

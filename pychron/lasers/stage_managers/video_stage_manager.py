@@ -397,6 +397,10 @@ class VideoStageManager(StageManager):
     def is_auto_correcting(self):
         return self._auto_correcting
 
+    def cancel_auto_correcting(self):
+        self.autocenter_manager.cancel()
+        return True
+
     crop_width = 5
     crop_height = 5
 
@@ -449,7 +453,7 @@ class VideoStageManager(StageManager):
         dim = self.stage_map.g_dimension
         if hole:
             if isinstance(hole, int):
-                hole = sm.get_hole(holenum)
+                hole = self.stage_map.get_hole(hole)
             dim = hole.dimension
 
         return dim * self.dimension_multiplier

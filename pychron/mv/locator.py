@@ -65,6 +65,12 @@ class Locator(Loggable):
     step_signal = None
     pixel_depth = 255
 
+    alive = True
+
+    def cancel(self):
+        self.debug('canceling')
+        self.alive = False
+
     def wait(self):
         if self.step_signal:
             self.step_signal.wait()
@@ -99,6 +105,7 @@ class Locator(Loggable):
             1. find polygons
 
         """
+        self.alive = True
         dx, dy = None, None
 
         targets = self._find_targets(image, frame, dim, shape=shape, **kw)
@@ -150,7 +157,7 @@ class Locator(Loggable):
             src = grayspace(frame)
 
         if src is None:
-            print('Locator: src is None')
+            self.debug('Locator: src is None')
             return
 
         if mask:
@@ -166,6 +173,10 @@ class Locator(Loggable):
         phigh, plow = None, None
 
         for low, high in self._generate_steps(src, search)():
+            if not self.alive:
+                self.debug('canceled')
+                return
+
             self.debug('bandwidth low={}, high={}'.format(low, high))
 
             if inverted:
@@ -176,7 +187,7 @@ class Locator(Loggable):
             seg.threshold_high = high
 
             if seg.threshold_low == plow and seg.threshold_high == phigh:
-                break
+                return
 
             plow = seg.threshold_low
             phigh = seg.threshold_high
