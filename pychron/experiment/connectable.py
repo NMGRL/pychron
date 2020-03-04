@@ -18,10 +18,10 @@
 from __future__ import absolute_import
 
 from traits.api import HasTraits, Int, Bool, Str, Any
-
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from traits.trait_errors import TraitError
+
 
 class Connectable(HasTraits):
     name = Str
@@ -40,7 +40,10 @@ class Connectable(HasTraits):
             com = obj.communicator
             for attr in 'host', 'port', 'kind':
                 if hasattr(com, attr):
-                    setattr(self, attr, getattr(com, attr))
+                    try:
+                        setattr(self, attr, getattr(com, attr))
+                    except TraitError:
+                        pass
 
             self.monitorable = True
 
