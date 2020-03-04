@@ -16,7 +16,10 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traits.api import HasTraits, Int, Bool, Str, Any
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -35,10 +38,10 @@ class Connectable(HasTraits):
     def set_connection_parameters(self, obj):
         if hasattr(obj, 'communicator'):
             com = obj.communicator
-            self.host = com.host
-            self.port = com.port
-            self.kind = com.kind
-            self.monitorable = True
+            for attr in 'host', 'port', 'kind':
+                if hasattr(com, attr):
+                    setattr(self, attr, getattr(com, attr))
 
+            self.monitorable = True
 
 # ============= EOF =============================================
