@@ -69,7 +69,8 @@ class GroupedPositionsAdapter(TabularAdapter, ConfigurableMixin):
                    ('Irradiation', 'irradiation_str'),
                    ('Sample', 'sample'),
                    ('Material', 'material'),
-                   ('Positions', 'position_str')]
+                   ('Positions', 'position_str'),
+                   ('Packet', 'packet')]
     font = 'arial 12'
     identifier_width = Int(80)
     irradiation_str_width = Int(80)
