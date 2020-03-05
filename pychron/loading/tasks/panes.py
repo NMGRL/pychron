@@ -43,6 +43,7 @@ class PositionsAdapter(TabularAdapter, ConfigurableMixin):
                ('N. Xtals', 'nxtals'),
                ('Note', 'note')]
     all_columns = [('Identifier', 'identifier'),
+                   ('Packet', 'packet'),
                    ('Irradiation', 'irradiation_str'),
                    ('Sample', 'sample'),
                    ('Material', 'material'),
@@ -66,11 +67,11 @@ class GroupedPositionsAdapter(TabularAdapter, ConfigurableMixin):
                ('Positions', 'position_str')]
 
     all_columns = [('Identifier', 'identifier'),
+                   ('Packet', 'packet'),
                    ('Irradiation', 'irradiation_str'),
                    ('Sample', 'sample'),
                    ('Material', 'material'),
-                   ('Positions', 'position_str'),
-                   ('Packet', 'packet')]
+                   ('Positions', 'position_str')]
     font = 'arial 12'
     identifier_width = Int(80)
     irradiation_str_width = Int(80)

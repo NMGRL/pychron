@@ -80,6 +80,7 @@ class LoadPosition(HasTraits):
     note = Str
     nxtals = Int
     material = Str
+    packet = Str
 
     level = Str
     irradiation = Str
@@ -273,6 +274,7 @@ class LoadingManager(DVCIrradiationable):
             irrad = dblevel.irradiation.name
             level = dblevel.name
             irradpos = dbpos.position
+            packet = dbpos.packet
 
             for pi in poss:
                 item = self.canvas.scene.get_item(str(pi.position))
@@ -300,7 +302,8 @@ class LoadingManager(DVCIrradiationable):
                                      irradiation=irrad,
                                      level=level,
                                      irrad_position=int(irradpos),
-                                     position=pi.position)
+                                     position=pi.position,
+                                     packet=packet)
                     pos.append(p)
 
         self.positions = pos
