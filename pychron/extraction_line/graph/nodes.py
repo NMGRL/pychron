@@ -16,10 +16,13 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traits.api import HasTraits, List, Str, Float, Property
 
+
 # ============= standard library imports ========================
-import weakref
+
+
 # ============= local library imports  ==========================
 
 
@@ -49,8 +52,7 @@ class Edge(HasTraits):
     #     return self.a_node, self.b_node
 
     def get_nodes(self, n):
-        return [ni for ni in self.nodes if ni!=n]
-
+        return [ni for ni in self.nodes if ni != n]
 
         # return self.b_node if self.a_node == n else self.a_node
 
@@ -63,9 +65,11 @@ class Node(HasTraits):
     visited = False
     f_visited = False
     volume = Float
+    precedence = 0
 
     def add_edge(self, n):
-        self.edges.append(weakref.ref(n)())
+        # self.edges.append(weakref.ref(n)())
+        self.edges.append(n)
 
     def __iter__(self):
         for ei in self.edges:
@@ -101,31 +105,35 @@ class RootNode(Node):
 
 
 class GaugeNode(RootNode):
-    pass
+    tag = 'gauge'
 
 
 class GetterNode(RootNode):
-    pass
+    tag = 'getter'
+    precedence = 70
 
 
 class PumpNode(RootNode):
-    pass
+    tag = 'pump'
 
 
 class SpectrometerNode(RootNode):
-    pass
+    tag = 'spectrometer'
+    precedence = 80
 
 
 class TankNode(RootNode):
-    pass
+    tag = 'tank'
+    precedence = 90
 
 
 class PipetteNode(RootNode):
-    pass
+    tag = 'pipette'
+    precedence = 100
 
 
 class LaserNode(RootNode):
-    pass
-
+    tag = 'laser'
+    precedence = 100
 
 # ============= EOF =============================================

@@ -38,9 +38,38 @@ KLASS_MAP = {'turbo': Turbo, 'laser': Laser, 'circle_stage': CircleStage, 'circl
 
 RECT_TAGS = ('stage', 'laser', 'spectrometer',
              'turbo', 'getter', 'tank',
-             'ionpump', 'gauge', 'rectangle', 'circle_stage', 'circle_laser')
+             'ionpump', 'gauge', 'rectangle',
+             'circle_stage', 'circle_laser')
 
 SWITCH_TAGS = ('switch', 'valve', 'rough_valve', 'manual_valve')
+
+
+def get_offset(elem, default=None):
+    offset = elem.get('offset')
+    if default is None:
+        default = 0, 0
+
+    if offset:
+        x, y = floatify(offset)
+    else:
+        x, y = default
+    return x, y
+
+
+def floatify(a, delim=','):
+    if not isinstance(a, str):
+        a = a.text.strip()
+
+    return [float(i) for i in a.split(delim)]
+
+
+def colorify(a):
+    if not isinstance(a, str):
+        a = a.text.strip()
+
+    if a.startswith('0x'):
+        a = int(a, 16)
+    return a
 
 
 class ExtractionLineScene(Scene):
@@ -130,6 +159,10 @@ class ExtractionLineScene(Scene):
             cobj = self.get_item(c)
             if cobj is not None:
                 c = cobj.default_color
+            else:
+                print('asdf', c)
+                c = colorify(c)
+
         else:
             c = self._make_color(c)
         # if type_tag == 'turbo':
@@ -184,11 +217,8 @@ class ExtractionLineScene(Scene):
         mm.connections.append(('mid', tt))
 
         def get_xy(item, elem):
-            offset = elem.get('offset')
-            ox, oy = 0, 0
-            if offset:
-                ox, oy = list(map(float, offset.split(',')))
-
+            default = item.width / 2., item.height / 2.
+            ox, oy = get_offset(elem, default=default)
             return item.x + ox, item.y + oy
 
         lx, ly = get_xy(lf, left)
@@ -197,7 +227,7 @@ class ExtractionLineScene(Scene):
         tt.set_points(lx, ly, rx, ry, mx, my)
         self.add_item(tt, layer=0)
 
-    def _new_connection(self, conn, klass=None):
+    def _new_connection(self, conn, klass=None, orientation_default=None):
         if klass is None:
             klass = Connection
 
@@ -207,20 +237,23 @@ class ExtractionLineScene(Scene):
 
         skey = start.text.strip()
         ekey = end.text.strip()
-        try:
-            orient = conn.get('orientation')
-        except AttributeError:
-            orient = None
+
+        orient = conn.get('orientation')
+        if orient is None:
+            orient = orientation_default
 
         x, y = 0, 0
         sanchor = self.get_item(skey)
         if sanchor:
             x, y = sanchor.x, sanchor.y
-            try:
-                ox, oy = list(map(float, start.get('offset').split(',')))
-            except AttributeError:
-                ox = sanchor.width / 2.0
-                oy = sanchor.height / 2.0
+            # try:
+            #     ox, oy = list(map(float, start.get('offset').split(',')))
+            # except AttributeError:
+            #     ox = sanchor.width / 2.0
+            #     oy = sanchor.height / 2.0
+
+            default = sanchor.width / 2.0, sanchor.height / 2.0
+            ox, oy = get_offset(start, default=default)
 
             x += ox
             y += oy
@@ -230,11 +263,13 @@ class ExtractionLineScene(Scene):
         if eanchor:
             x1, y1 = eanchor.x, eanchor.y
 
-            try:
-                ox, oy = list(map(float, end.get('offset').split(',')))
-            except AttributeError:
-                ox = eanchor.width / 2.0
-                oy = eanchor.height / 2.0
+            # try:
+            #     ox, oy = list(map(float, end.get('offset').split(',')))
+            # except AttributeError:
+            #     ox = eanchor.width / 2.0
+            #     oy = eanchor.height / 2.0
+            default = eanchor.width / 2.0, eanchor.height / 2.0
+            ox, oy = get_offset(end, default=default)
 
             x1 += ox
             y1 += oy
@@ -244,19 +279,18 @@ class ExtractionLineScene(Scene):
         elif orient == 'horizontal':
             y1 = y
 
-        # klass = BorderLine
-        l = klass((x, y), (x1, y1),
-                  default_color=(204, 204, 204),
-                  name=key,
-                  width=10)
+        connection = klass((x, y), (x1, y1),
+                           default_color=(204, 204, 204),
+                           name=key,
+                           width=10)
 
         if sanchor:
-            sanchor.connections.append(('start', l))
+            sanchor.connections.append(('start', connection))
         if eanchor:
-            eanchor.connections.append(('end', l))
+            eanchor.connections.append(('end', connection))
 
-        self.add_item(l, layer=0)
-        return l
+        self.add_item(connection, layer=0)
+        return connection
 
     def _new_line(self, line, name,
                   color=(0, 0, 0), width=2,
@@ -271,14 +305,14 @@ class ExtractionLineScene(Scene):
         if start is not None:
             end = line.find('end')
             if end is not None:
-                x, y = list(map(float, start.text.split(',')))
-                x1, y1 = list(map(float, end.text.split(',')))
+                x, y = [float(i) for i in start.text.split(',')]
+                x1, y1 = [float(i) for i in end.text.split(',')]
 
-                l = Line((x + ox, y + oy), (x1 + ox, y1 + oy),
-                         default_color=color,
-                         name=name,
-                         width=width)
-                self.add_item(l, layer=layer)
+                line = Line((x + ox, y + oy), (x1 + ox, y1 + oy),
+                            default_color=color,
+                            name=name,
+                            width=width)
+                self.add_item(line, layer=layer)
 
     def _new_label(self, cp, label, name, c,
                    layer=1,
@@ -348,11 +382,12 @@ class ExtractionLineScene(Scene):
             l = s.find('slabel')
             if l is not None:
                 label = l.text.strip()
-                if l.get('offset'):
-                    x, y = list(map(float, l.get('offset').split(',')))
-                else:
-                    x = 0
-                    y = 22
+                # if l.get('offset'):
+                #     x, y = list(map(float, l.get('offset').split(',')))
+                # else:
+                #     x = 0
+                #     y = 22
+                x, y = get_offset(l, default=(0, 22))
                 v.set_label(label, x, y)
 
             associations = s.findall('association')
@@ -439,8 +474,12 @@ class ExtractionLineScene(Scene):
             self._new_image(cp, image)
 
     def _load_connections(self, cp, origin, color_dict):
-        for i, conn in enumerate(cp.get_elements('connection')):
-            self._new_connection(conn)
+        for tag, od in (('connection', None),
+                        ('hconnection', 'horizontal'),
+                        ('vconnection', 'vertical')):
+            for conn in cp.get_elements(tag):
+                self._new_connection(conn, orientation_default=od)
+
         for i, conn in enumerate(cp.get_elements('elbow')):
             l = self._new_connection(conn, Elbow)
             corner = conn.find('corner')
@@ -449,10 +488,9 @@ class ExtractionLineScene(Scene):
                 c = corner.text.strip()
             l.corner = c
 
-        for i, conn in enumerate(cp.get_elements('tee_connection')):
-            self._new_fork(Tee, conn)
-        for i, conn in enumerate(cp.get_elements('fork_connection')):
-            self._new_fork(Fork, conn)
+        for tag, klass in (('tee', Tee), ('fork', Fork)):
+            for conn in cp.get_elements('{}_connection'.format(tag)):
+                self._new_fork(klass, conn)
 
     def _load_rects(self, cp, origin, color_dict):
         for key in RECT_TAGS:
@@ -554,7 +592,7 @@ class ExtractionLineScene(Scene):
                 canvas.view_y_range = yv
                 dim = tree.find('valve_dimension')
                 if dim is not None:
-                    self.valve_dimension = list(map(float, dim.text.split(',')))
+                    self.valve_dimension = floatify(dim)
 
                 # get label font
                 font = tree.find('font')
@@ -563,21 +601,23 @@ class ExtractionLineScene(Scene):
 
                 # get default colors
                 for c in tree.findall('color'):
-                    t = c.text.strip()
                     k = c.get('tag')
 
-                    t = list(map(float, t.split(','))) if ',' in t else t
-
+                    color = colorify(c)
                     if k == 'bgcolor':
-                        canvas.bgcolor = t
+                        if ',' in color:
+                            color = [i / 255. for i in floatify(color)]
+                        # if isinstance(color, list):
+                        #     color = [ti / 255. for ti in color]
+                        canvas.bgcolor = color
                     else:
-                        color_dict[k] = t
+                        color_dict[k] = color
 
                 # get an origin offset
 
                 o = tree.find('origin')
                 if o is not None:
-                    ox, oy = list(map(float, o.text.split(',')))
+                    ox, oy = floatify(o)
 
                 for i, image in enumerate(cp.get_elements('image')):
                     self._new_image(cp, image)

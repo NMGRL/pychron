@@ -213,7 +213,7 @@ class Scene(HasTraits):
                 ci.render(gc)
 
     def _get_floats(self, elem, name):
-        return list(map(float, elem.find(name).text.split(',')))
+        return [float(i) for i in elem.find(name).text.split(',')]
 
     def _get_translation(self, cp, elem, name='translation'):
         x, y = elem.find(name).text.split(',')

@@ -124,6 +124,7 @@ class Switch(BaseSwitch):
 
     def _state_call(self, func, *args, **kw):
         result = None
+        dev = None
         if self.state_device is not None:
             dev = self.state_device
             address = self.state_address

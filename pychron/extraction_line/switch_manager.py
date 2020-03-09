@@ -1065,9 +1065,9 @@ class SwitchManager(Manager):
             parent_name = parent.get('name', '')
             parent_inverted = to_bool(parent.get('inverted'))
 
-        ctx = dict(name=name,
+        ctx = dict(name=str(name),
                    track_actuation=to_bool(vobj.get('track', True)),
-                   address=address,
+                   address=str(address),
                    parent=parent_name,
                    parent_inverted=parent_inverted,
                    check_actuation_enabled=to_bool(vobj.get('check_actuation_enabled', True)),
@@ -1076,7 +1076,7 @@ class SwitchManager(Manager):
                    state_device_name=state_dev_name,
                    state_address=state_address,
                    state_invert=state_invert,
-                   description=vobj.get('description', ''),
+                   description=str(vobj.get('description', '')),
                    query_state=to_bool(vobj.get('query_state', True)),
                    ignore_lock_warning=to_bool(vobj.get('ignore_lock_warning', False)),
                    positive_interlocks=parse_interlocks(vobj, 'positive_interlock'),

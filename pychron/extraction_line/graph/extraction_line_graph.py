@@ -107,7 +107,7 @@ class ExtractionLineGraph(HasTraits):
         # =======================================================================
         # load edges
         # =======================================================================
-        for tag in ('connection', 'elbow'):
+        for tag in ('connection', 'elbow', 'vconnection', 'hconnection'):
             for ei in cp.get_elements(tag):
                 sa = ei.find('start')
                 ea = ei.find('end')
@@ -262,27 +262,29 @@ class ExtractionLineGraph(HasTraits):
             use a Breadth-First Traverse
             acumulate the max state at each node
         """
-        m_state, term = False, ''
+        m_state, term, p = False, '', 0
 
         for ni in bft(self, node):
-
             if isinstance(ni, PumpNode):
                 return 'pump', ni.name
 
-            if isinstance(ni, LaserNode):
-                m_state, term = 'laser', ni.name
-            elif isinstance(ni, PipetteNode):
-                m_state, term = 'pipette', ni.name
+            if ni.precedence > p:
+                p = ni.precedence
+                m_state, term = ni.tag, ni.name
 
-            if m_state not in ('laser', 'pipette'):
-                if isinstance(ni, SpectrometerNode):
-                    m_state, term = 'spectrometer', ni.name
-                elif isinstance(ni, TankNode):
-                    m_state, term = 'tank', ni.name
-                elif isinstance(ni, GetterNode):
-                    m_state, term = 'getter', ni.name
+            # if isinstance(ni, LaserNode):
+            #     m_state, term = 'laser', ni.name
+            # elif isinstance(ni, PipetteNode):
+            #     m_state, term = 'pipette', ni.name
+            #
+            # if m_state not in ('laser', 'pipette'):
+            #     if isinstance(ni, SpectrometerNode):
+            #         m_state, term = 'spectrometer', ni.name
+            #     elif isinstance(ni, TankNode):
+            #         m_state, term = 'tank', ni.name
+            #     elif isinstance(ni, GetterNode):
+            #         m_state, term = 'getter', ni.name
         else:
-
             return m_state, term
 
     def fill(self, scene, root, state, term):
