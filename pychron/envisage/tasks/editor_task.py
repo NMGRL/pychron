@@ -16,12 +16,14 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
+# ============= standard library imports ========================
+import os
+
 from pyface.tasks.api import IEditor, IEditorAreaPane
 from pyface.tasks.task_layout import PaneItem, Splitter
 from traits.api import Property, Instance
 
-# ============= standard library imports ========================
-import os
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.advanced_editor_area_pane import myAdvancedEditorAreaPane
 from pychron.envisage.tasks.base_task import BaseManagerTask, BaseExtractionLineTask
@@ -135,7 +137,7 @@ class BaseEditorTask(BaseManagerTask):
                 return True
 
     def close_all(self):
-        for e in self.editor_area.editors:
+        for e in self.editor_area.editors[:]:
             self.close_editor(e)
 
     # private

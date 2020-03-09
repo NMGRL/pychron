@@ -135,6 +135,7 @@ class AnalysisAdapter(BrowserAdapter):
                    ('Dur', 'duration'),
                    ('Position', 'position'),
                    ('Device', 'extract_device'),
+                   ('Load Name', 'load_name'),
                    ('Comment', 'comment')]
 
     columns = [('Run ID', 'record_id'),
@@ -165,6 +166,7 @@ class AnalysisAdapter(BrowserAdapter):
     position_width = Int
     extract_device_width = Int
     comment_width = Int
+    load_name_width = Int
 
     review_status_image = Property
     review_status_text = Str('')
