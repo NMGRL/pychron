@@ -157,7 +157,7 @@ def ask_config():
                 ask(config, 'mac_app_name', 'Application name')
 
         ask(config, 'app_id', 'Application ID')
-        ask(config, 'pychron_data_dir', 'Pychron Data directory')
+        ask(config, 'pychron_data_dir', 'Pychron directory')
         ask(config, 'conda_distro', 'Conda Distro Path')
         ask(config, 'conda_env_name', 'Conda environment name')
         ask(config, 'update_db', 'Update Database automatically')
@@ -187,10 +187,7 @@ def ask_config():
 
 
 def yes(msg):
-    return input(msg) in (
-        
-        
-        '', 'y', 'yes', 'Yes', 'YES')
+    return input(msg) in ('', 'y', 'yes', 'Yes', 'YES')
 
 
 def install_src(cfg):

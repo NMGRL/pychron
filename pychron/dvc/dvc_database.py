@@ -392,6 +392,12 @@ class DVCDatabase(DatabaseAdapter):
             q = q.order_by(AnalysisTbl.timestamp.desc())
             return self._query_all(q)
 
+    def archive_loads(self, names):
+        self._archive_loads(names, True)
+
+    def unarchive_loads(self, names):
+        self._archive_loads(names, False)
+
     # adders
     def add_simple_identifier(self, sid):
         with self.session_ctx():
@@ -1913,23 +1919,28 @@ class DVCDatabase(DatabaseAdapter):
             q = q.limit(limit)
             return [ni.identifier for ni in self._query_all(q)]
 
-    def get_loads(self):
-        return self._retrieve_items(LoadTbl, order=LoadTbl.create_date.desc())
+    def get_load_names(self, *args, **kw):
+        with self.session_ctx():
+            loads = self.get_loads(*args, **kw)
+            if loads:
+                return [ui.name for ui in loads]
 
-    def get_load_names(self, names=None, exclude_archived=True, **kw):
+    def get_loads(self, names=None, exclude_archived=True, archived_only=False, **kw):
         with self.session_ctx():
             if 'order' not in kw:
                 kw['order'] = LoadTbl.create_date.desc()
 
-            if exclude_archived:
-                kw = self._append_filters(not_(LoadTbl.archived), kw)
+            if archived_only:
+                kw = self._append_filters(LoadTbl.archived, kw)
+            else:
+                if exclude_archived:
+                    kw = self._append_filters(not_(LoadTbl.archived), kw)
 
-            if names:
-                kw = self._append_filters(LoadTbl.name.in_(names), kw)
+                if names:
+                    kw = self._append_filters(LoadTbl.name.in_(names), kw)
 
             loads = self._retrieve_items(LoadTbl, **kw)
-            if loads:
-                return [ui.name for ui in loads]
+            return loads
 
     def get_extraction_devices(self):
         return self.get_extract_devices()
@@ -2367,5 +2378,12 @@ class DVCDatabase(DatabaseAdapter):
                 else:
                     ret = [ni.name for ni in names or []]
             return ret
+
+    def _archive_loads(self, names, state):
+        with self.session_ctx():
+            loads = self.get_loads(names=names, exclude_archived=state)
+            for li in loads:
+                li.archived = state
+            self.commit()
 
 # ============= EOF =============================================
