@@ -2093,18 +2093,31 @@ anaylsis_type={}
 
         return change
 
-    def _get_data_generator(self):
-        def gen():
-            cnt = 0
-            fcnt = self.failed_intensity_count_threshold
+    def _data_generator(self):
+        cnt = 0
+        fcnt = self.failed_intensity_count_threshold
 
-            spec = self.spectrometer_manager.spectrometer
-            self._intensities = {}
-            while 1:
+        spec = self.spectrometer_manager.spectrometer
+        self._intensities = {}
+        while 1:
+            try:
+                k, s, t = spec.get_intensities(tagged=True, trigger=False)
+            except NoIntensityChange:
+                self.warning('Canceling Run. Intensity from mass spectrometer not changing')
+
                 try:
-                    k, s, t = spec.get_intensities(tagged=True,trigger=False)
-                except NoIntensityChange:
-                    self.warning('Canceling Run. Intensity from mass spectrometer not changing')
+                    self.info('Saving run. Analysis did not complete successfully')
+                    self.save()
+                except BaseException:
+                    self.warning('Failed to save run')
+
+                self.cancel_run(state='failed')
+                yield None
+
+            if not k:
+                cnt += 1
+                self.info('Failed getting intensity from mass spectrometer {}/{}'.format(cnt, fcnt))
+                if cnt >= fcnt:
 
                     try:
                         self.info('Saving run. Analysis did not complete successfully')
@@ -2112,40 +2125,26 @@ anaylsis_type={}
                     except BaseException:
                         self.warning('Failed to save run')
 
+                    self.warning('Canceling Run. Failed getting intensity from mass spectrometer')
+
+                    # do we need to cancel the experiment or will the subsequent pre run
+                    # checks sufficient to catch spectrometer communication errors.
                     self.cancel_run(state='failed')
                     yield None
-
-                if not k:
-                    cnt += 1
-                    self.info('Failed getting intensity from mass spectrometer {}/{}'.format(cnt, fcnt))
-                    if cnt >= fcnt:
-
-                        try:
-                            self.info('Saving run. Analysis did not complete successfully')
-                            self.save()
-                        except BaseException:
-                            self.warning('Failed to save run')
-
-                        self.warning('Canceling Run. Failed getting intensity from mass spectrometer')
-
-                        # do we need to cancel the experiment or will the subsequent pre run
-                        # checks sufficient to catch spectrometer communication errors.
-                        self.cancel_run(state='failed')
-                        yield None
-                    else:
-                        yield None, None, None
                 else:
-                    # reset the counter
-                    cnt = 0
-                    if self.intensity_scalar:
-                        s = [si * self.intensity_scalar for si in s]
+                    yield None, None, None
+            else:
+                # reset the counter
+                cnt = 0
+                if self.intensity_scalar:
+                    s = [si * self.intensity_scalar for si in s]
 
-                    self._intensities['tags'] = k
-                    self._intensities['signals'] = s
+                self._intensities['tags'] = k
+                self._intensities['signals'] = s
 
-                    yield k, s, t
+                yield k, s, t
 
-        return gen()
+        # return gen()
 
     def _whiff(self, ncounts, conditionals, starttime, starttime_offset, series, fit_series):
         """
@@ -2231,13 +2230,9 @@ anaylsis_type={}
             self.warning('no spectrometer manager')
             return True
 
-        self.info('measuring {}. ncounts={}'.format(grpname, ncounts),
-                  color=MEASUREMENT_COLOR)
+        self.info('measuring {}. ncounts={}'.format(grpname, ncounts), color=MEASUREMENT_COLOR)
 
-        get_data = self._get_data_generator()
-        debug = globalv.experiment_debug
-
-        if debug:
+        if globalv.experiment_debug:
             period = 1
         else:
             period = self.spectrometer_manager.spectrometer.get_update_period(it=self._integration_seconds)
@@ -2251,7 +2246,7 @@ anaylsis_type={}
                     check_conditionals=check_conditionals,
                     ncounts=ncounts,
                     period_ms=period * 1000,
-                    data_generator=get_data,
+                    data_generator=self._data_generator,
                     data_writer=data_writer,
                     experiment_type=self.experiment_type,
                     refresh_age=self.spec.analysis_type in ('unknown', 'cocktail'))

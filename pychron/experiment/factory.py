@@ -38,6 +38,7 @@ class ExperimentFactory(DVCAble):
 
     generate_queue_button = Button
     edit_queue_config_button = Button
+    loading_manager = Instance('pychron.loading.loading_manager.LoadingManager')
 
     add_button = Button('Add')
     clear_button = Button('Clear')
@@ -154,8 +155,6 @@ class ExperimentFactory(DVCAble):
         positions = [str(pi.positions[0]) for pi in self.selected_positions]
         self.debug('add run positions= {}'.format(positions))
 
-        # load_name = self.queue_factory.load_name
-
         q = self.queue
         rf = self.run_factory
         new_runs, freq = rf.new_runs(q, positions=positions,
@@ -238,19 +237,31 @@ class ExperimentFactory(DVCAble):
     # ===============================================================================
     # handlers
     # ===============================================================================
+    def _generate_queue_button_fired(self):
+        """
+
+        :return:
+        """
+        lm = self.loading_manager
+        if lm:
+            if self.load_name:
+                positions = lm.get_positions_for_load(self.load_name)
+                if positions:
+                    runs = [self.run_factory.new_run_simple(*p) for p in positions]
+                    self.queue.extend(runs)
+            else:
+                self.warning_dialog('Please set a load')
+        else:
+            self.warning_dialog('Loading Plugin required to auto generate queues')
+
     def _clear_button_fired(self):
         self.queue.clear_frequency_runs()
 
     def _add_button_fired(self):
         """
-            only allow add button to be fired every 0.5s
-
-            use consumermixin.add_consumable instead of frequency limiting
         """
         self.debug('add run fired')
         self._add_run()
-        # self.add_consumable(5)
-        # do_later(self._add_run)
 
     def _edit_mode_button_fired(self):
         self.run_factory.edit_mode = not self.run_factory.edit_mode

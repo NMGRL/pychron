@@ -241,6 +241,15 @@ class LoadingManager(DVCIrradiationable):
         else:
             self.warning_dialog('No Loads available')
 
+    def get_positions_for_load(self, name):
+        self.debug('get positions for load "{}"'.format(name))
+        with self.dvc.session_ctx():
+            loadtable = self.dvc.get_loadtable(name)
+            if loadtable:
+                return [(p.identifier, p.position) for p in loadtable.loaded_positions if p.identifier and p.position]
+            else:
+                self.warning_dialog('No Positions specified in load "{}"'.format(name))
+
     def load_load_by_name(self):
         self.tray = ''
 

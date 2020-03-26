@@ -530,12 +530,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         """
 
         self.experiment_queue = exp
-        exp.stats.reset()
 
         self.info('Starting automated runs set={:02d} {}'.format(i, exp.name))
         self.debug('reset stats: {}'.format(self.stats))
 
         self.stats.experiment_queues = self.experiment_queues
+        self.stats.active_queue = exp
         self.stats.reset()
         self.stats.start_timer()
 
