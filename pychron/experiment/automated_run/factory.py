@@ -380,6 +380,10 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         for s in self._iter_scripts():
             s.extract_device = new
 
+    def new_run_simple(self, idn, position):
+        rs = self._spec_klass(identifier=idn, position=position)
+        return rs
+
     def new_runs(self, exp_queue, positions=None, auto_increment_position=False,
                  auto_increment_id=False):
         """

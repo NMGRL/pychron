@@ -428,6 +428,7 @@ class UnknownsAdapter(BaseAnalysesAdapter):
         return MenuManager(Action(name='Recall', action='recall_unknowns'),
                            Action(name='Graph Group Selected', action='unknowns_graph_group_by_selected'),
                            Action(name='Save Analysis Group', action='save_analysis_group'),
+                           Action(name='Toggle Status', action='unknowns_toggle_status'),
                            Action(name='Configure', action='configure_unknowns'),
                            grp)
 
@@ -531,6 +532,10 @@ class AnalysesPaneHandler(Handler):
     def unknowns_clear_all_grouping(self, info, obj):
         obj = info.ui.context['object']
         obj.unknowns_clear_all_grouping()
+
+    def unknowns_toggle_status(self, info, obj):
+        obj = info.ui.context['object']
+        obj.unknowns_toggle_status()
 
     def save_analysis_group(self, info, obj):
         obj = info.ui.context['object']

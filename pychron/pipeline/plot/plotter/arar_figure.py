@@ -170,6 +170,7 @@ class BaseArArFigure(SelectionFigure):
             if p.value_scale == 'log':
                 if p.value_mapper.range.low < 0:
                     ys = self.graph.get_data(plotid=i, axis=1)
+                    ys = ys[ys > 0]
                     m = 10 ** math.floor(math.log10(min(ys)))
                     p.value_mapper.range.low = m
 

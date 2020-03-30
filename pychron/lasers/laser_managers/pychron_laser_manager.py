@@ -30,7 +30,6 @@ from traits.api import Str, String, on_trait_change, Float, \
 
 from pychron import json
 # ============= local library imports  ==========================
-from pychron.core.helpers.binpack import format_blob
 from pychron.core.helpers.strtools import to_bool, csv_to_floats
 from pychron.envisage.view_util import open_view
 from pychron.globals import globalv
@@ -401,6 +400,7 @@ class PychronLaserManager(EthernetLaserManager):
         time.sleep(0.5)
         if autocenter:
             r = self._block(cmd='GetAutoCorrecting', period=0.5)
+            self._ask('CancelAutoCorrecting')
 
         self.update_position()
         return r

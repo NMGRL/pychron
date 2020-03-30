@@ -208,7 +208,13 @@ def get_user_plugins():
         if plugin:
             plugins.append(plugin)
 
-    return sorted(plugins, key=attrgetter('name'))
+    plugins = list(sorted(plugins, key=attrgetter('name')))
+    idx = next((p for p in plugins if p.name == 'UpdatePlugin'), None)
+    if idx is not None:
+        p = plugins.pop(idx)
+        plugins.insert(0, p)
+
+    return plugins
 
 
 def app_factory(klass):
@@ -224,8 +230,8 @@ def app_factory(klass):
                LoggerPlugin(),
                UsersPlugin()]
 
-    plugins += get_hardware_plugins()
-    plugins += get_user_plugins()
+    plugins.extend(get_hardware_plugins())
+    plugins.extend(get_user_plugins())
 
     app = klass(plugins=plugins)
 

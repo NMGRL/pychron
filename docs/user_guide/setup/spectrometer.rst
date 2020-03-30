@@ -5,6 +5,7 @@ Argus
 -----------------
 
 1. Set the values in ``~/Pychron/setupfiles/spectrometer/config.cfg``
+
  ::
 
     [General]

@@ -156,7 +156,8 @@ class CanvasEditor(Loggable):
                     t = elem.find('dimension')
                     t.text = '{},{}'.format(o.width, o.height)
                     t = elem.find('color')
-                    t.text = '{},{},{}'.format(*o.default_color.getRgb())
+                    if t:
+                        t.text = '{},{},{}'.format(*o.default_color.getRgb())
                     break
 
         cp.save()

@@ -392,6 +392,12 @@ class DVCDatabase(DatabaseAdapter):
             q = q.order_by(AnalysisTbl.timestamp.desc())
             return self._query_all(q)
 
+    def archive_loads(self, names):
+        self._archive_loads(names, True)
+
+    def unarchive_loads(self, names):
+        self._archive_loads(names, False)
+
     # adders
     def add_simple_identifier(self, sid):
         with self.session_ctx():
@@ -706,6 +712,45 @@ class DVCDatabase(DatabaseAdapter):
             q = q.filter(f)
             return self._query_all(q)
 
+    def _fuzzy_sample_comps(self, name):
+        oname = name
+        likes = ['{}%'.format(oname)]
+
+        regexp = ''
+        was_letter = False
+        for c in oname:
+            if c in digits:
+                if was_letter:
+                    c = '[-_ ]*{}'.format(c)
+                    was_letter = False
+            elif c in ascii_letters:
+                was_letter = True
+            else:
+                was_letter = False
+
+            regexp += c
+
+        # %FC-2%
+        for r in '_- ':
+            name = name.replace(r, '%')
+
+        # FC%2
+        likes.append(name)
+
+        # %FC%2%
+        likes.append('{}%'.format(name))
+
+        comps = [func.lower(SampleTbl.name.like(like)) for like in likes]
+        comps.append(func.lower(SampleTbl.name.op('regexp')(regexp)))
+        return comps
+
+    def get_fuzzy_samples(self, name):
+        with self.session_ctx() as sess:
+            q = sess.query(SampleTbl)
+            comps = self._fuzzy_sample_comps(name)
+            q = q.filter(or_(*comps))
+            return self._query_all(q, verbose_query=True)
+
     def get_fuzzy_labnumbers(self, search_str):
         with self.session_ctx() as sess:
             q = sess.query(IrradiationPositionTbl)
@@ -713,10 +758,12 @@ class DVCDatabase(DatabaseAdapter):
             q = q.join(ProjectTbl)
 
             q = q.distinct(IrradiationPositionTbl.id)
-            f = or_(IrradiationPositionTbl.identifier.like('{}%'.format(search_str)),
-                    SampleTbl.name.like('{}%'.format(search_str)),
-                    ProjectTbl.name == search_str,
-                    ProjectTbl.id == search_str)
+
+            comps = [IrradiationPositionTbl.identifier.like('{}%'.format(search_str)),
+                     ProjectTbl.name == search_str,
+                     ProjectTbl.id == search_str] + self._fuzzy_sample_comps(search_str)
+
+            f = or_(*comps)
             q = q.filter(f)
             ips = self._query_all(q)
 
@@ -1872,23 +1919,28 @@ class DVCDatabase(DatabaseAdapter):
             q = q.limit(limit)
             return [ni.identifier for ni in self._query_all(q)]
 
-    def get_loads(self):
-        return self._retrieve_items(LoadTbl, order=LoadTbl.create_date.desc())
+    def get_load_names(self, *args, **kw):
+        with self.session_ctx():
+            loads = self.get_loads(*args, **kw)
+            if loads:
+                return [ui.name for ui in loads]
 
-    def get_load_names(self, names=None, exclude_archived=True, **kw):
+    def get_loads(self, names=None, exclude_archived=True, archived_only=False, **kw):
         with self.session_ctx():
             if 'order' not in kw:
                 kw['order'] = LoadTbl.create_date.desc()
 
-            if exclude_archived:
-                kw = self._append_filters(not_(LoadTbl.archived), kw)
+            if archived_only:
+                kw = self._append_filters(LoadTbl.archived, kw)
+            else:
+                if exclude_archived:
+                    kw = self._append_filters(not_(LoadTbl.archived), kw)
 
-            if names:
-                kw = self._append_filters(LoadTbl.name.in_(names), kw)
+                if names:
+                    kw = self._append_filters(LoadTbl.name.in_(names), kw)
 
             loads = self._retrieve_items(LoadTbl, **kw)
-            if loads:
-                return [ui.name for ui in loads]
+            return loads
 
     def get_extraction_devices(self):
         return self.get_extract_devices()
@@ -1942,42 +1994,6 @@ class DVCDatabase(DatabaseAdapter):
             q = sess.query(distinct(MaterialTbl.grainsize))
             gs = self._query_all(q)
             return [g[0] for g in gs if g[0]]
-
-    def get_fuzzy_samples(self, name):
-        with self.session_ctx() as sess:
-            q = sess.query(SampleTbl)
-
-            oname = name
-            likes = ['{}%'.format(oname)]
-
-            regexp = ''
-            was_letter = False
-            for c in oname:
-                if c in digits:
-                    if was_letter:
-                        c = '[-_ ]*{}'.format(c)
-                        was_letter = False
-                elif c in ascii_letters:
-                    was_letter = True
-                else:
-                    was_letter = False
-
-                regexp += c
-
-            # %FC-2%
-            for r in '_- ':
-                name = name.replace(r, '%')
-
-            # FC%2
-            likes.append(name)
-
-            # %FC%2%
-            likes.append('{}%'.format(name))
-
-            comps = [func.lower(SampleTbl.name.like(like)) for like in likes]
-            comps.append(func.lower(SampleTbl.name.op('regexp')(regexp)))
-            q = q.filter(or_(*comps))
-            return self._query_all(q, verbose_query=True)
 
     def get_samples_by_name(self, name):
         with self.session_ctx() as sess:
@@ -2362,5 +2378,12 @@ class DVCDatabase(DatabaseAdapter):
                 else:
                     ret = [ni.name for ni in names or []]
             return ret
+
+    def _archive_loads(self, names, state):
+        with self.session_ctx():
+            loads = self.get_loads(names=names, exclude_archived=state)
+            for li in loads:
+                li.archived = state
+            self.commit()
 
 # ============= EOF =============================================

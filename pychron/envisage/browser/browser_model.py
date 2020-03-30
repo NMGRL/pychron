@@ -135,6 +135,7 @@ class BrowserModel(BaseBrowserModel):
 
     # handlers
     def _execute_fuzzy_search_fired(self):
+        self.debug('execute fuzzy search')
         if self.fuzzy_search_entry:
             if len(self.fuzzy_search_entry) < 2:
                 self.warning_dialog('At least two (2) characters are required for "Search"')
@@ -145,6 +146,13 @@ class BrowserModel(BaseBrowserModel):
                 ps1 = db.get_fuzzy_projects(self.fuzzy_search_entry)
 
                 ss, ps2 = db.get_fuzzy_labnumbers(self.fuzzy_search_entry)
+
+                # ss2, ps3 = db.get_fuzzy_samples(self.fuzzy_search_entry, include_projects=True)
+                # if ss:
+                #     ss.extend(ss2)
+                # else:
+                #     ss = ss2
+
                 sams = self._load_sample_record_views(ss)
 
                 ps = set(ps1 + ps2)

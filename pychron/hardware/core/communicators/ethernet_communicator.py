@@ -370,14 +370,15 @@ class EthernetCommunicator(Communicator):
     def tell(self, cmd, verbose=True, quiet=False, info=None):
         with self._lock:
             handler = self.get_handler()
-            try:
-                cmd = '{}{}'.format(cmd, self.write_terminator)
-                handler.send_packet(cmd)
-                if verbose or self.verbose and not quiet:
-                    self.log_tell(cmd, info)
-            except socket.error as e:
-                self.warning('tell. send packet. error: {}'.format(e))
-                self.error_mode = True
+            if handler:
+                try:
+                    cmd = '{}{}'.format(cmd, self.write_terminator)
+                    handler.send_packet(cmd)
+                    if verbose or self.verbose and not quiet:
+                        self.log_tell(cmd, info)
+                except socket.error as e:
+                    self.warning('tell. send packet. error: {}'.format(e))
+                    self.error_mode = True
 
     # private
     def _reset_connection(self):

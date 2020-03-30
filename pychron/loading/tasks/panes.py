@@ -22,6 +22,7 @@ from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Int, Property, Instance
 from traitsui.api import View, UItem, Item, VGroup, TabularEditor, HGroup, spring, \
     EnumEditor, Tabbed, Handler, CheckListEditor
+from traitsui.group import VFold
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
@@ -29,6 +30,7 @@ from traitsui.tabular_adapter import TabularAdapter
 # ============= local library imports  ==========================
 from pychron.core.configurable_tabular_adapter import ConfigurableMixin
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+from pychron.core.ui.qt.tabular_editors import FilterTabularEditor
 from pychron.core.ui.table_configurer import TableConfigurer, TableConfigurerHandler
 from pychron.envisage.icon_button_editor import icon_button_editor
 
@@ -43,6 +45,7 @@ class PositionsAdapter(TabularAdapter, ConfigurableMixin):
                ('N. Xtals', 'nxtals'),
                ('Note', 'note')]
     all_columns = [('Identifier', 'identifier'),
+                   ('Packet', 'packet'),
                    ('Irradiation', 'irradiation_str'),
                    ('Sample', 'sample'),
                    ('Material', 'material'),
@@ -66,6 +69,7 @@ class GroupedPositionsAdapter(TabularAdapter, ConfigurableMixin):
                ('Positions', 'position_str')]
 
     all_columns = [('Identifier', 'identifier'),
+                   ('Packet', 'packet'),
                    ('Irradiation', 'irradiation_str'),
                    ('Sample', 'sample'),
                    ('Material', 'material'),
@@ -103,10 +107,10 @@ class BaseLoadPane(TraitsDockPane):
     # display_tray_name = Property(depends_on='model.tray')
 
     def _get_display_load_name(self):
-        if self.model.load_name:
-            ret = '<font size=12 color="blue"><b>{} ({}) {}</b></font>'.format(self.model.load_name,
+        if self.model.load_instance:
+            ret = '<font size=12 color="blue"><b>{} ({}) {}</b></font>'.format(self.model.load_instance.name,
                                                                                self.model.tray,
-                                                                               self.model.load_create_date)
+                                                                               self.model.load_instance.create_date)
         else:
             ret = ''
         return ret
@@ -197,6 +201,12 @@ class LoadTablePane(BaseLoadPane):
         return v
 
 
+class LoadInstanceAdapter(TabularAdapter):
+    columns = [('Load', 'name'),
+               ('Create Date', 'create_date')]
+    font = 'modern 10'
+
+
 class LoadPane(TraitsTaskPane):
     def traits_view(self):
         v = View(VGroup(UItem('canvas',
@@ -233,25 +243,32 @@ class LoadControlPane(TraitsDockPane):
 
         viewgrp = VGroup(HGroup(Item('use_cmap', label='Color Map'),
                                 UItem('cmap_name', enabled_when='use_cmap')),
-                         Item('show_hole_numbers'),
-                         Item('show_identifiers'),
+                         HGroup(Item('show_hole_numbers'), Item('show_identifiers', label='Identifiers')),
+                         HGroup(Item('show_weights'), Item('show_nxtals', label='N. Xtals')),
                          Item('show_samples'),
-                         Item('show_weights'),
-                         Item('show_nxtals'),
                          # Item('show_spans'),
                          show_border=True,
                          label='View')
 
-        load_grp = VGroup(Item('username', label='User', editor=EnumEditor(name='available_user_names')),
-                          HGroup(Item('load_name',
-                                      editor=EnumEditor(name='loads'),
-                                      label='Loads'),
+        load_grp = VGroup(HGroup(Item('username', label='User', editor=EnumEditor(name='available_user_names')),
                                  icon_button_editor('add_button', 'add', tooltip='Add a load'),
                                  icon_button_editor('delete_button', 'delete', tooltip='Delete selected load'),
                                  icon_button_editor('archive_button', 'application-x-archive',
-                                                    tooltip='Archive a set of loads')),
+                                                    tooltip='Archive a set of loads'),
+                                 icon_button_editor('unarchive_button', 'application-x-archive',
+                                                    tooltip='Unarchive a set of loads'),
+                                 ),
+                          UItem('loads',
+                                editor=FilterTabularEditor(adapter=LoadInstanceAdapter(),
+                                                           use_fuzzy=True,
+                                                           editable=False,
+                                                           multi_select=True,
+                                                           selected='selected_instances',
+                                                           stretch_last_section=False),
+                                height=250),
                           label='Load',
                           show_border=True)
+
         samplegrp = VGroup(HGroup(UItem('irradiation', editor=EnumEditor(name='irradiations')),
                                   UItem('level', editor=EnumEditor(name='levels')),
                                   UItem('identifier', editor=EnumEditor(name='identifiers'))),
@@ -269,10 +286,10 @@ class LoadControlPane(TraitsDockPane):
                            show_border=True,
                            label='Sample')
 
-        v = View(VGroup(load_grp,
-                        samplegrp,
-                        notegrp,
-                        viewgrp))
+        v = View(VFold(load_grp,
+                       samplegrp,
+                       notegrp,
+                       viewgrp))
         return v
 
 # ============= EOF =============================================
