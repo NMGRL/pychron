@@ -13,21 +13,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from __future__ import absolute_import
 
-from traits.api import Float
+from traits.api import Float, CFloat
 
 from pychron.spectrometer.fieldmixin import FieldMixin
 from pychron.spectrometer.spectrometer_device import SpectrometerDevice
 
 
 class BaseSource(SpectrometerDevice, FieldMixin):
-    nominal_hv = Float(4500)
-    current_hv = Float(4500)
+    nominal_hv = CFloat(4500)
+    current_hv = CFloat(4500)
 
     def finish_loading(self):
         self.field_table_setup()
-        self.current_hv = self.read_hv()
+        chv = self.read_hv()
+        if chv is not None:
+            self.current_hv = chv
+        else:
+            self.current_hv = 0
 
     def map_mass_to_hv(self, mass):
         return self.field_table.map_mass_to_dac(mass)

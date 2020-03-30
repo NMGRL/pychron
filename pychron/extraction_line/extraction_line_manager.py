@@ -58,6 +58,8 @@ class ExtractionLineManager(Manager, Consoleable):
     gauge_manager = Any
     cryo_manager = Any
     multiplexer_manager = Any
+    manometer_manager = Any
+
     network = Instance(ExtractionLineGraph)
     readback_items = List
 
@@ -230,7 +232,7 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def test_valve_communication(self):
         self.info('test valve communication')
-        print('asdf', self.switch_manager,  hasattr(self.switch_manager, 'get_state_checksum'))
+        print('asdf', self.switch_manager, hasattr(self.switch_manager, 'get_state_checksum'))
         ret, err = True, ''
         if self.switch_manager:
             if hasattr(self.switch_manager, 'get_state_checksum'):
@@ -496,6 +498,12 @@ class ExtractionLineManager(Manager, Consoleable):
             wd = self.wait_group.add_control()
         return wd
 
+    def set_experiment_type(self, v):
+        self.debug('setting experiment type={}'.format(v))
+        if self.cryo_manager:
+            self.cryo_manager.species = v
+
+    # =========== Cryo ==============================================================
     def set_cryo(self, v, v2=None):
         self.debug('setting cryo to {}, {}'.format(v, v2))
         if self.cryo_manager:
@@ -511,11 +519,19 @@ class ExtractionLineManager(Manager, Consoleable):
         else:
             self.warning('cryo manager not available')
             return 0
+    # ===============================================================================
 
-    def set_experiment_type(self, v):
-        self.debug('setting experiment type={}'.format(v))
-        if self.cryo_manager:
-            self.cryo_manager.species = v
+    # ============= Manometer =======================================================
+    def get_manometer_pressure(self, idx=0):
+        self.debug('get manometer pressure')
+        ret = 0
+        if self.manometer_manager:
+            ret = self.manometer_manager.get_pressure(idx)
+        else:
+            self.warning('manometer manager not available')
+        return ret
+
+    # ===============================================================================
 
     # ===============================================================================
     # private
@@ -714,7 +730,7 @@ class ExtractionLineManager(Manager, Consoleable):
         else:
             package = 'pychron.managers.{}'.format(manager)
 
-        if manager in ('switch_manager', 'gauge_manager', 'multiplexer_manager', 'cryo_manager'):
+        if manager in ('switch_manager', 'gauge_manager', 'multiplexer_manager', 'cryo_manager', 'manometer_manager'):
             if manager == 'switch_manager':
                 man = self._switch_manager_factory()
                 self.switch_manager = man
@@ -737,9 +753,10 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def _set_logger_level(self, obj=None):
         level = LOG_LEVELS.get(self.logging_level, logging.DEBUG)
-        getattr(obj, 'logger').setLevel(level)
-        if hasattr(obj, 'set_logger_level_hook'):
-            obj.set_logger_level_hook(level)
+        if obj:
+            getattr(obj, 'logger').setLevel(level)
+            if hasattr(obj, 'set_logger_level_hook'):
+                obj.set_logger_level_hook(level)
 
     # ===============================================================================
     # handlers
