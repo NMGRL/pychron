@@ -51,13 +51,19 @@ class ICFactorMainOptions(RatioSeriesMainOptions):
 
 class ICFactorSubOptions(SubOptions):
     def traits_view(self):
+
+        src = BorderVGroup(Item('use_source_correction', label='Use Source Correction'),
+                           Item('source_correction_kind', label='Kind'),
+                           label='Source')
         v = View(VGroup(Item('delete_existing', label='Delete Existing',
                              tooltip='Delete existing icfactors. Only necessary if you have '
                                      'redefined how you are handling the IC factor correction. '),
                         Item('show_statistics'),
                         Item('link_plots', label='Link Plots', tooltip='Link plots together so that omitting an '
                                                                        'analysis from any plot omits the analysis on '
-                                                                       'all other plots')))
+                                                                       'all other plots'),
+                        src
+                        ))
         return v
 
 

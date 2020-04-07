@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str, List, Bool
+from traits.api import Str, List, Bool, Enum
 
 from pychron.options.ratio_series import RatioSeriesOptions, RatioSeriesAuxPlot
 from pychron.options.views.icfactor_views import VIEWS
@@ -35,9 +35,12 @@ class ICFactorAuxPlot(RatioSeriesAuxPlot):
 class ICFactorOptions(RatioSeriesOptions):
     aux_plot_klass = ICFactorAuxPlot
     delete_existing = Bool
+    use_source_correction = Bool  # this is experimental and should be removed? requested by WiscAr to correct for
+                                  # source bias
+    source_correction_kind = Enum('Exponential')
 
     def initialize(self):
-        self.subview_names = [MAIN, 'ICFactor', APPEARANCE]
+        self.subview_names = [MAIN, 'ICFactor', APPEARANCE, 'Source']
 
     def set_detectors(self, dets):
         dets = [NULL_STR, 'age'] + dets

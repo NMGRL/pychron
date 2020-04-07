@@ -78,7 +78,6 @@ class ArArAge(IsotopeGroup):
     F_err = None
     F_err_wo_irrad = None
 
-
     uage = None
     uage_w_j_err = None
     uage_w_position_err = None
@@ -302,6 +301,15 @@ class ArArAge(IsotopeGroup):
     def set_temporary_uic_factor(self, k, uv):
         self.temporary_ic_factors[k] = uv
 
+    def set_alpha(self, a):
+        n = {'Ar39': 1, 'Ar38': 2, 'Ar37': 3, 'Ar36': 4}
+        for k in self.isotope_keys:
+            iso = self.isotopes[k]
+            try:
+                self.temporary_ic_factors[k] = a * n[iso.name]
+            except KeyError:
+                pass
+
     def set_temporary_ic_factor(self, k, v, e, tag=None):
         self.temporary_ic_factors[k] = uv = ufloat(v, e, tag=tag)
         return uv
@@ -380,7 +388,7 @@ class ArArAge(IsotopeGroup):
 
         try:
             self.kca = k / ca * k_ca_pr
-            self.cak = 1/self.kca
+            self.cak = 1 / self.kca
         except ZeroDivisionError:
             self.kca = ufloat(0, 0)
             if not self._kca_warning:
@@ -401,7 +409,7 @@ class ArArAge(IsotopeGroup):
             k_cl_pr = 1 / clk
         try:
             self.kcl = k / cl * k_cl_pr
-            self.clk = 1/self.kcl
+            self.clk = 1 / self.kcl
         except ZeroDivisionError:
             self.kcl = ufloat(0, 0)
             if not self._kcl_warning:
