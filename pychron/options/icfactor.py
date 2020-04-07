@@ -40,7 +40,7 @@ class ICFactorOptions(RatioSeriesOptions):
     source_correction_kind = Enum('Exponential')
 
     def initialize(self):
-        self.subview_names = [MAIN, 'ICFactor', APPEARANCE, 'Source']
+        self.subview_names = [MAIN, 'ICFactor', APPEARANCE]
 
     def set_detectors(self, dets):
         dets = [NULL_STR, 'age'] + dets
