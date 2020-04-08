@@ -37,9 +37,8 @@ from pychron.dvc.meta_object import MetaObjectException
 from pychron.envisage.view_util import open_view
 from pychron.loading.loading_pdf_writer import LoadingPDFWriter
 from pychron.paths import paths
-
-
 # ============= enthought library imports =======================
+from pychron.pychron_constants import NULL_STR
 
 
 def make_bound(st):
@@ -81,6 +80,7 @@ class LoadPosition(HasTraits):
     note = Str
     nxtals = Int
     material = Str
+    packet = Str
 
     level = Str
     irradiation = Str
@@ -162,7 +162,10 @@ class LoadingManager(DVCIrradiationable):
     scroll_to_row = Int
     selected_positions = List
 
-    display_load_name = Str
+    load_create_date = Str
+    # display_load_name = Str
+    # display_load_date = Str
+
     load_name = Str
     loads = List
 
@@ -247,6 +250,13 @@ class LoadingManager(DVCIrradiationable):
         if not loadtable:
             return
 
+        self.load_create_date = NULL_STR
+        try:
+            self.load_create_date = loadtable.create_date.strftime('%m/%d/%Y')
+        except BaseException:
+            self.debug_exception()
+            self.debug('failed reading LoadTbl create_date from database')
+
         pos = []
         for ln, poss in groupby_key(loadtable.loaded_positions, 'identifier'):
             dbpos = self.dvc.db.get_identifier(ln)
@@ -264,6 +274,7 @@ class LoadingManager(DVCIrradiationable):
             irrad = dblevel.irradiation.name
             level = dblevel.name
             irradpos = dbpos.position
+            packet = dbpos.packet
 
             for pi in poss:
                 item = self.canvas.scene.get_item(str(pi.position))
@@ -291,7 +302,8 @@ class LoadingManager(DVCIrradiationable):
                                      irradiation=irrad,
                                      level=level,
                                      irrad_position=int(irradpos),
-                                     position=pi.position)
+                                     position=pi.position,
+                                     packet=packet)
                     pos.append(p)
 
         self.positions = pos
@@ -783,7 +795,8 @@ class LoadingManager(DVCIrradiationable):
         if self.load_name:
             self.tray = ''
             self.load_load_by_name(self.load_name)
-            self.display_load_name = self.load_name
+            # self.display_load_name = self.load_name
+            # self.display_load_date = ''
 
     def _show_samples_changed(self, new):
         if self.canvas:

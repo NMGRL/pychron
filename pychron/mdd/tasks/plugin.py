@@ -27,6 +27,7 @@ from pychron.paths import paths
 class MDDPlugin(BaseTaskPlugin):
     nodes = List(contributes_to='pychron.pipeline.nodes')
     predefined_templates = List(contributes_to='pychron.pipeline.predefined_templates')
+    pipeline_group_icon_map = List(contributes_to='pychron.pipeline.pipeline_group_icon_map')
 
     def _preferences_panes_default(self):
         return [MDDPreferencesPane]
@@ -34,6 +35,9 @@ class MDDPlugin(BaseTaskPlugin):
     def _executable_path_changed(self, new):
         if new:
             paths.clovera_root = new
+
+    def _pipeline_group_icon_map_default(self):
+        return [('MDD', 'bricks')]
 
     def _predefined_templates_default(self):
         return [('MDD', (('LabTable', LABTABLE),

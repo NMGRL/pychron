@@ -23,8 +23,8 @@ from traits.api import Str, Bool, Float, Property, Enum, Range, Int
 from pychron.options.group.inverse_isochron_group_options import InverseIsochronGroupOptions
 from pychron.options.spectrum import PlateauOptions
 from pychron.options.views.isochron_views import INVERSE_ISOCHRON_VIEWS, ISOCHRON_VIEWS
-from pychron.pychron_constants import FIT_ERROR_TYPES, ELLIPSE_KINDS, FONTS, SIZES, MAIN, APPEARANCE, GROUPS, \
-    CALCULATIONS, INSET
+from pychron.pychron_constants import ELLIPSE_KINDS, FONTS, SIZES, MAIN, APPEARANCE, GROUPS, \
+    CALCULATIONS, INSET, ISOCHRON_ERROR_TYPES
 
 
 class IsochronOptions(PlateauOptions):
@@ -48,7 +48,7 @@ class IsochronOptions(PlateauOptions):
 
 
 class InverseIsochronOptions(IsochronOptions):
-    error_calc_method = Enum(*FIT_ERROR_TYPES)
+    error_calc_method = Enum(*ISOCHRON_ERROR_TYPES)
     fill_ellipses = Bool(False)
     ellipse_kind = Enum(ELLIPSE_KINDS)
 
@@ -65,7 +65,7 @@ class InverseIsochronOptions(IsochronOptions):
     inset_ellipse_kind = Enum(ELLIPSE_KINDS)
     inset_link_status = Bool(True)
 
-    regressor_kind = Enum('Reed', 'NewYork')
+    regressor_kind = Enum('York', 'NewYork', 'Reed')
     group_options_klass = InverseIsochronGroupOptions
 
     results_font = Property

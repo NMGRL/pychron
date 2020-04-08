@@ -30,6 +30,9 @@ class NGXGPActuator(ASCIIGPActuator):
     close_cmd = 'CloseValve'
     affirmative = 'E00'
 
+    communicator = None
+    _lock = None
+
     def initialize(self, *args, **kw):
         service = 'pychron.hardware.isotopx_spectrometer_controller.NGXController'
         s = self.application.get_service(service)
@@ -44,24 +47,31 @@ class NGXGPActuator(ASCIIGPActuator):
         if delay:
             if not isinstance(delay, (float, int)):
                 delay = 0.25
-                
-        time.sleep(delay)
+        if delay:      
+            time.sleep(delay)
+            
         with self._lock:
-            return self._get_channel_state(obj, verbose=verbose, **kw)
+            self.debug(f'acquired lock {self._lock}')
+            r = self._get_channel_state(obj, verbose=True, **kw)
+        self.debug(f'lock released')
+        return r
     
     def _get_channel_state(self, obj, verbose=False, **kw):
-        
 
         cmd = 'GetValveStatus {}'.format(get_switch_address(obj))
         s = self.ask(cmd, verbose=verbose)
 
         if s is not None:
-            if s.strip() == 'E00':
-                # time.sleep(0.2)
-                # recusively call get_channel_state
-                return self._get_channel_state(obj, verbose=verbose, **kw)
-
-            return s.strip() == 'OPEN'
+            for si in s.split('\r\n'):
+                if si.strip() == 'E00':
+                    # time.sleep(0.2)
+                    # recursively call get_channel_state
+                    return self._get_channel_state(obj, verbose=verbose, **kw)
+            for si in s.split('\r\n'):
+                if si.strip() == 'OPEN':
+                    return True
+            else:
+                return False
 
         else:
             return False

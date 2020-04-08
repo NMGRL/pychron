@@ -68,7 +68,10 @@ class BaseSpectrometer(SpectrometerDevice):
     _prev_signals = None
     _no_intensity_change_cnt = 0
     active_detectors = List
-
+    
+    def cancel(self):
+        pass
+    
     def convert_to_axial(self, det, v):
         return v
 
@@ -100,9 +103,10 @@ class BaseSpectrometer(SpectrometerDevice):
         if self.microcontroller:
             self.name = self.microcontroller.name
 
-        self.magnet.finish_loading()
-        self.source.finish_loading()
-        self.test_connection()
+        ret, err = self.test_connection()
+        if ret:
+            self.magnet.finish_loading()
+            self.source.finish_loading()
 
     def test_connection(self, force=True):
         """
@@ -154,7 +158,12 @@ class BaseSpectrometer(SpectrometerDevice):
         if self._saved_integration:
             self.set_integration_time(self._saved_integration)
             self._saved_integration = None
-
+    
+    def get_update_period(self, it=None, *args, **kw):
+        if it is None:
+            it = self.integration_time
+        return it
+    
     def correct_dac(self, det, dac, current=True):
         """
             correct for deflection
@@ -305,7 +314,7 @@ class BaseSpectrometer(SpectrometerDevice):
                 self.debug('molweights={}'.format(self.molecular_weights))
 
                 try:
-                    self._update_isotope_hook(isotope, det.index)
+                    self._update_isotopes_hook(isotope, det.index)
                 except BaseException as e:
                     self.warning(
                         'Cannot update isotopes. isotope={}, detector={}. error:{}'.format(isotope, detector, e))
@@ -520,7 +529,7 @@ class BaseSpectrometer(SpectrometerDevice):
                                kind=kind,
                                ypadding=ypadding)
 
-    def get_intensities(self, tagged=True, trigger=False):
+    def get_intensities(self, tagged=True, trigger=False, **kw):
         """
         keys, list of strings
         signals, list of floats::
@@ -534,10 +543,10 @@ class BaseSpectrometer(SpectrometerDevice):
         keys = []
         signals = []
         if self.microcontroller and not self.microcontroller.simulation:
-            keys, signals = self.read_intensities(trigger=trigger)
+            keys, signals, t = self.read_intensities(trigger=trigger, **kw)
 
         if not keys and globalv.communication_simulation:
-            keys, signals = self._get_simulation_data()
+            keys, signals, t = self._get_simulation_data()
 
         signals = array(signals)
 
@@ -549,7 +558,7 @@ class BaseSpectrometer(SpectrometerDevice):
             det.set_intensity(v)
             gsignals.append(v * det.software_gain)
 
-        return keys, array(gsignals)
+        return keys, array(gsignals), t
 
     def _check_intensity_no_change(self, signals):
         if self.simulation:
@@ -594,18 +603,20 @@ class BaseSpectrometer(SpectrometerDevice):
             dkeys: str or tuple of strs
 
         """
-        data = self.get_intensities(**kw)
-        if data is not None:
+        try:
+            keys, signals, t = self.get_intensities()
+        except ValueError:
+            self.debug('failed getting intensities')
+            self.debug_exception()
+            return
 
-            keys, signals = data
+        def func(k):
+            return signals[keys.index(k)] if k in keys else 0
 
-            def func(k):
-                return signals[keys.index(k)] if k in keys else 0
-
-            if isinstance(dkeys, (tuple, list)):
-                return [func(key) for key in dkeys]
-            else:
-                return func(dkeys)
+        if isinstance(dkeys, (tuple, list)):
+            return [func(key) for key in dkeys]
+        else:
+            return func(dkeys)
 
     def get_detector(self, name):
         """

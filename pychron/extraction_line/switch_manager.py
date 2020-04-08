@@ -966,7 +966,7 @@ class SwitchManager(Manager):
         widths = []
         keys = ['name', 'address', 'state_address', 'actuator_name', 'actuator_obj',
                 'state_device_name',
-                'state_device_obj', 'state_invert']
+                'state_device_obj', 'state_invert', 'query_state']
         for k in keys:
             vs = [getattr(v, k) if hasattr(v, k) else '---' for v in self.switches.values()]
             vs = [len(str(vi) if vi else k) for vi in vs]
@@ -1065,9 +1065,9 @@ class SwitchManager(Manager):
             parent_name = parent.get('name', '')
             parent_inverted = to_bool(parent.get('inverted'))
 
-        ctx = dict(name=name,
+        ctx = dict(name=str(name),
                    track_actuation=to_bool(vobj.get('track', True)),
-                   address=address,
+                   address=str(address),
                    parent=parent_name,
                    parent_inverted=parent_inverted,
                    check_actuation_enabled=to_bool(vobj.get('check_actuation_enabled', True)),
@@ -1076,7 +1076,7 @@ class SwitchManager(Manager):
                    state_device_name=state_dev_name,
                    state_address=state_address,
                    state_invert=state_invert,
-                   description=vobj.get('description', ''),
+                   description=str(vobj.get('description', '')),
                    query_state=to_bool(vobj.get('query_state', True)),
                    ignore_lock_warning=to_bool(vobj.get('ignore_lock_warning', False)),
                    positive_interlocks=parse_interlocks(vobj, 'positive_interlock'),
@@ -1130,9 +1130,9 @@ class SwitchManager(Manager):
                     state_invert = to_bool(si.text.strip())
 
         qs = True
-        vqs = v_elem.get('query_state')
-        if vqs:
-            qs = vqs == 'true'
+        vqs = v_elem.find('query_state')
+        if vqs is not None:
+            qs = to_bool(vqs.text.strip())
 
         parent = v_elem.find('parent')
 

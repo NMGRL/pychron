@@ -43,6 +43,7 @@ class PositionsAdapter(TabularAdapter, ConfigurableMixin):
                ('N. Xtals', 'nxtals'),
                ('Note', 'note')]
     all_columns = [('Identifier', 'identifier'),
+                   ('Packet', 'packet'),
                    ('Irradiation', 'irradiation_str'),
                    ('Sample', 'sample'),
                    ('Material', 'material'),
@@ -66,10 +67,11 @@ class GroupedPositionsAdapter(TabularAdapter, ConfigurableMixin):
                ('Positions', 'position_str')]
 
     all_columns = [('Identifier', 'identifier'),
-               ('Irradiation', 'irradiation_str'),
-               ('Sample', 'sample'),
-               ('Material', 'material'),
-               ('Positions', 'position_str')]
+                   ('Packet', 'packet'),
+                   ('Irradiation', 'irradiation_str'),
+                   ('Sample', 'sample'),
+                   ('Material', 'material'),
+                   ('Positions', 'position_str')]
     font = 'arial 12'
     identifier_width = Int(80)
     irradiation_str_width = Int(80)
@@ -99,12 +101,14 @@ class GroupedPositionsAdapter(TabularAdapter, ConfigurableMixin):
 
 class BaseLoadPane(TraitsDockPane):
     display_load_name = Property(depends_on='model.load_name')
-    display_tray_name = Property(depends_on='model.tray')
+
+    # display_tray_name = Property(depends_on='model.tray')
 
     def _get_display_load_name(self):
         if self.model.load_name:
-            ret = '<font size=12 color="blue"><b>{} ({})</b></font>'.format(self.model.load_name,
-                                                                             self.model.tray)
+            ret = '<font size=12 color="blue"><b>{} ({}) {}</b></font>'.format(self.model.load_name,
+                                                                               self.model.tray,
+                                                                               self.model.load_create_date)
         else:
             ret = ''
         return ret

@@ -27,11 +27,10 @@ from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.yaml import yload
 from pychron.paths import paths
 from pychron.persistence_loggable import dumpable
-from pychron.processing.j_error_mixin import JErrorMixin, J_ERROR_GROUP
 from pychron.pychron_constants import SIGMA, AGE_SORT_KEYS
 
 
-class XLSXAnalysisTableWriterOptions(BasePersistenceOptions, JErrorMixin):
+class XLSXAnalysisTableWriterOptions(BasePersistenceOptions):
     sig_figs = dumpable(Int(6))
     j_sig_figs = dumpable(Int(6))
     ic_sig_figs = dumpable(Int(6))
@@ -54,6 +53,7 @@ class XLSXAnalysisTableWriterOptions(BasePersistenceOptions, JErrorMixin):
     sens_sig_figs = dumpable(Int(2))
     k2o_sig_figs = dumpable(Int(3))
 
+    use_standard_sigfigs = dumpable(Bool(True))
     ensure_trailing_zeros = dumpable(Bool(False))
 
     power_units = dumpable(Enum('W', 'C', '%'))
@@ -90,12 +90,12 @@ class XLSXAnalysisTableWriterOptions(BasePersistenceOptions, JErrorMixin):
     # use_weighted_kca = dumpable(Bool(True))
     # kca_error_kind = dumpable(Enum(*ERROR_TYPES))
     repeat_header = dumpable(Bool(False))
-    highlight_non_plateau = Bool(True)
+    highlight_non_plateau = dumpable(Bool(True))
     highlight_color = dumpable(Color)
 
-    root_name = Str
+    root_name = dumpable(Str)
     root_names = List
-    root_directory = Directory
+    root_directory = dumpable(Directory)
     name = dumpable(Str('Untitled'))
     auto_view = dumpable(Bool(False))
 
@@ -169,6 +169,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
     tag_enabled = dumpable(Bool(True))
     analysis_label_enabled = dumpable(Bool(True))
 
+    use_sample_metadata_saved_with_run = dumpable(Bool(True))
     _persistence_name = 'xlsx_table_options'
 
     # include_j_error_in_individual_analyses = dumpable(Bool(False))
@@ -177,7 +178,9 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
 
     include_decay_error = dumpable(Bool(False))
 
-    def __init__(self, *args, **kw):
+    def __init__(self, name, *args, **kw):
+        self._persistence_name = name
+
         super(XLSXAnalysisTableWriterOptions, self).__init__(*args, **kw)
         # self.load_notes()
         # self._load_note_names()
@@ -300,7 +303,8 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
         def isigfig(k, label, **kw):
             return Item(sigfig(k), width=-40, label=label, **kw)
 
-        sig_figs_grp = BorderVGroup(Item('sig_figs', label='Default'),
+        sig_figs_grp = BorderVGroup(Item('use_standard_sigfigs'),
+                                    VGroup(Item('sig_figs', label='Default'),
                                     HGroup(isigfig('age', 'Age'),
                                            isigfig('summary_age', 'Summary Age')),
                                     HGroup(isigfig('kca', 'K/Ca'),
@@ -316,8 +320,8 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                                     HGroup(isigfig('decay', 'Decay'),
                                            isigfig('correction', 'Correction Factors')),
                                     HGroup(isigfig('sens', 'Sensitivity'),
-                                           isigfig('k2o', 'K2O')),
-                                    Item('ensure_trailing_zeros', label='Ensure Trailing Zeros'),
+                                           isigfig('k2o', 'K2O')), enabled_when='not use_standard_sigfigs'),
+                                    # Item('ensure_trailing_zeros', label='Ensure Trailing Zeros'),
                                     label='Significant Figures')
 
         def inc(k):
@@ -352,6 +356,10 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                                  iinc('intercepts', 'Intercepts'),
                                  iinc('icfactors', 'ICFactors'),
                                  iinc('discrimination', 'Discrimination'),
+                                 Item('use_sample_metadata_saved_with_run',
+                                      label='Use Sample Metadata Saved with Run',
+                                      tooltip='If checked use the sample metadata saved with the run at the time of '
+                                              'analysis otherwise query the database to sync metadata'),
                                  label='General')
 
         summary_rows_grp = BorderVGroup(iinc('summary_kca', 'Integrated K/Ca'),
@@ -402,11 +410,11 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                                           label='Notes'),
                              label='Summary')
 
-        calc_grp = VGroup(J_ERROR_GROUP,
-                          Item('include_decay_error', label='Include Decay Error in Wt. Mean'),
-                          label='Calc.')
+        # calc_grp = VGroup(J_ERROR_GROUP,
+        #                   Item('include_decay_error', label='Include Decay Error in Wt. Mean'),
+        #                   label='Calc.')
 
-        v = okcancel_view(Tabbed(g1, unk_columns_grp, unknown_grp, calc_grp, blank_grp, air_grp, monitor_grp,
+        v = okcancel_view(Tabbed(g1, unk_columns_grp, unknown_grp, blank_grp, air_grp, monitor_grp,
                                  summary_grp),
                           resizable=True,
                           width=775,

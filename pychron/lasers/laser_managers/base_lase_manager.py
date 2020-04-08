@@ -201,6 +201,11 @@ class BaseLaserManager(Manager):
             self.info('using power coefficients  (e.g. ax2+bx+c) {}'.format(mc.print_string()))
         return mc.get_input(request)
 
+    def get_tray(self):
+        sm = self.stage_manager
+        if sm:
+            return sm.stage_map_name
+
     # private
     def _move_to_position(self, *args, **kw):
         pass

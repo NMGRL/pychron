@@ -74,6 +74,7 @@ PACKAGE_DICT = dict(
     FusionsUVPlugin='pychron.lasers.tasks.plugins.uv',
     LoadingPlugin='pychron.loading.tasks.loading_plugin',
     CoreLaserPlugin='pychron.lasers.tasks.plugins.laser_plugin',
+    CoreClientLaserPlugin='pychron.lasers.tasks.plugins.laser_plugin',
     NMGRLFurnacePlugin='pychron.furnace.tasks.nmgrl.furnace_plugin',
     NMGRLFurnaceControlPlugin='pychron.furnace.tasks.nmgrl.furnace_control_plugin',
     LDEOFurnacePlugin='pychron.furnace.tasks.ldeo.furnace_plugin',

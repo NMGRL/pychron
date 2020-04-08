@@ -15,10 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traitsui.api import View, UItem, Item, HGroup, VGroup, spring, Spring, \
-    ListEditor, InstanceEditor
+    ListEditor, InstanceEditor, ButtonEditor
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -42,7 +41,9 @@ class WaitPane(TraitsDockPane):
                    CustomLabel('current_display_time',
                                size=24,
                                weight='bold'),
-                   UItem('pause_button'),
+                   UItem('pause_button',
+                         tooltip='Click to pause. Click again to unpause',
+                         editor=ButtonEditor(label_value='pause_label')),
                    UItem('continue_button'))))
 
         # HGroup(Spring(width=-5, springy=False),

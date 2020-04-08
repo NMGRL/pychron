@@ -70,6 +70,8 @@ class IdeogramPanel(FigurePanel):
                 if fi.peaks is not None:
                     ps.extend(fi.peaks)
             self.figure_event = ('identify_peaks', ps)
+        elif kind == 'plot_on_map':
+            self.figure_event = ('plot_on_map', None)
 
     def _make_graph_hook(self, g):
         g.on_trait_change(self._handle_figure_event, 'figure_event')

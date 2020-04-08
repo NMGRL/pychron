@@ -20,6 +20,7 @@
 import math
 from functools import partial
 
+
 # ============= local library imports  ==========================
 
 
@@ -49,6 +50,15 @@ def calc_percent_error(v, e, scale=100):
 def errorfmt(v, e):
     pe = format_percent_error(v, e)
     return '{} ({}%)'.format(floatfmt(e), pe)
+
+
+def standard_sigfigsfmt(v, e):
+    sf = 0
+    if abs(e) < 1:
+        sf = math.ceil((abs(math.log10(e))))
+
+    fmt = '{{:0.{}f}}'.format(sf)
+    return fmt.format(v), fmt.format(e)
 
 
 def floatfmt(f, n=4, s=4, max_width=None, default='NaN', use_scientific=False):

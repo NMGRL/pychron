@@ -108,6 +108,7 @@ class PreferencesDialog(PD):
                                          row_height=32,
                                          editable=False,
                                          horizontal_lines=False,
+                                         stretch_last_section=False,
                                          selected='_selected'))
         b = UItem('_selected', style='custom')
         v = okcancel_view(HGroup(a, b),

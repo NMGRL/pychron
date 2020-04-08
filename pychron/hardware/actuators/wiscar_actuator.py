@@ -48,7 +48,10 @@ def validate_response(resp, cmd):
         # print('casd', cmd_args)
         # print('aaaa', args)
         # return all([c == a for c, a in zip(cmd_args, args)])
-        return cmd_args[2].lower() == args[2].lower()
+        try:
+            return cmd_args[2].lower() == args[2].lower()
+        except IndexError:
+            print('too few arguments to compare. cmd={}, resp={}'.format(cmd, resp))
 
 
 class WiscArGPActuator(ASCIIGPActuator, ClientMixin):
@@ -66,7 +69,12 @@ class WiscArGPActuator(ASCIIGPActuator, ClientMixin):
             args = resp.split(',')
             # remove the command header args
             args = args[3:]
-            worddict = {args[i]:args[i+1]=='Open' for i in range(0, len(args), 2)}
+            try:
+                worddict = {args[i]:args[i+1]=='Open' for i in range(0, len(args), 2)}
+            except IndexError:
+                self.debug(f'failed parsing get,valve,all response={resp}')
+                return
+            
             return worddict
 
     def get_channel_state(self, obj, *args, **kw):

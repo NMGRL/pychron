@@ -22,13 +22,14 @@ import yaml
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
 from pyface.timer.do_later import do_later
-from traits.api import HasTraits, Str, Instance, List, Event, on_trait_change, Any, Bool
+from traits.api import HasTraits, Str, Instance, List, Event, on_trait_change, Any, Bool, Dict
 
 from pychron.core.confirmation import remember_confirmation_dialog
 from pychron.core.helpers.filetools import glob_list_directory, add_extension
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.yaml import yload
 from pychron.dvc.tasks.repo_task import RepoItem
+from pychron.envisage.resources import icon
 from pychron.envisage.view_util import open_view
 from pychron.globals import globalv
 from pychron.loggable import Loggable
@@ -53,7 +54,7 @@ from pychron.pipeline.pipeline_defaults import ISOEVO, BLANKS, ICFACTOR, IDEO, S
     CSV_ANALYSES_EXPORT, BULK_EDIT, HISTORY_IDEOGRAM, HISTORY_SPECTRUM, AUDIT, SUBGROUP_IDEOGRAM, HYBRID_IDEOGRAM, \
     MASSSPEC_REDUCED, DEFINE_EQUILIBRATION, CA_CORRECTION_FACTORS, K_CORRECTION_FACTORS, \
     FLUX_VISUALIZATION, CSV_RAW_DATA_EXPORT, COMPOSITE, SIMPLE_ANALYSIS_TABLE, MASS_SPEC_FLUX, PYSCRIPT, RATIO_SERIES, \
-    CSV_SPEC, ARAR_IDEO, ARAR_SPEC, ARAR_INVERSE_ISOCHRON, ARAR_SIMPLE_ANALYSIS_TABLE
+    CSV_SPEC, ARAR_IDEO, ARAR_SPEC, ARAR_INVERSE_ISOCHRON, ARAR_SIMPLE_ANALYSIS_TABLE, RUNID_EDIT
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
 from pychron.pipeline.plot.editors.spectrum_editor import SpectrumEditor
@@ -209,7 +210,8 @@ class PipelineEngine(Loggable):
     pipeline_group = Instance(PipelineGroup, ())
     nodes = List
     node_factories = List
-    predefined_templates = List
+    predefined_templates = List  # contributed to by other plugins. passed in by PipelinePlugin
+    pipeline_group_icon_map = Dict  # contributed to by other plugins. passed in by PipelinePlugin
 
     selected = Instance(BaseNode, ())
 
@@ -314,6 +316,13 @@ class PipelineEngine(Loggable):
         max_gid = max([getattr(si, key) for si in items]) + 1
 
         self._set_grouping(self.selected_unknowns, max_gid, attr=key)
+
+    def unknowns_toggle_status(self):
+        for i in self.selected_unknowns:
+            # print('asdf', i.temp_status)
+            i.temp_status = 'ok' if i.temp_status == 'omit' else 'omit'
+            if hasattr(self.selected, 'editor') and self.selected.editor:
+                self.selected.editor.refresh_needed = True
 
     def recall_unknowns(self):
         self.debug('recall unks')
@@ -828,7 +837,7 @@ class PipelineEngine(Loggable):
         groups = []
 
         if self.use_arar_calculations:
-            plots = (('Ideogram', ARAR_IDEO),
+            plots = (('Ideogram', ARAR_IDEO, 'histogram'),
                      ('CSV Ideogram', CSV_IDEO),
                      ('Interpreted Age Ideogram', INTERPRETED_AGE_IDEOGRAM),
                      ('Hybrid Ideogram', HYBRID_IDEOGRAM),
@@ -876,7 +885,8 @@ class PipelineEngine(Loggable):
                             ('Ca Correction Factors', CA_CORRECTION_FACTORS),
                             ('K Correction Factors', K_CORRECTION_FACTORS),
                             ('Audit', AUDIT))),
-                   ('Edit', (('Bulk Edit', BULK_EDIT),)),
+                   ('Edit', (('Bulk Edit', BULK_EDIT),
+                             ('RunID Edit', RUNID_EDIT))),
                    ('Plot', plots),
                    ('Table', tables),
                    ('History', (('Ideogram', HISTORY_IDEOGRAM),
@@ -888,12 +898,12 @@ class PipelineEngine(Loggable):
                    ('Scripting', (('PyScript', PYSCRIPT),))]
 
         # predefined_templates contributed to by other plugins
-        for name, gs in groupby_key(default + self.predefined_templates, key=itemgetter(0)):
-            grp = PipelineTemplateGroup(name=name)
+        for grp_name, gs in groupby_key(default + self.predefined_templates, key=itemgetter(0)):
+            grp = PipelineTemplateGroup(name=grp_name, icon=icon(self.pipeline_group_icon_map.get(grp_name, '')))
 
-            templates = [PipelineTemplate(n, t, nodes, node_factories) for nn, gg in gs for n, t in gg]
+            templates = [PipelineTemplate(n, text, nodes, node_factories) for nn, gg in gs for n, text in gg]
 
-            pp = os.path.join(paths.user_pipeline_template_dir, name.lower())
+            pp = os.path.join(paths.user_pipeline_template_dir, grp_name.lower())
             # add templates from named user directory
             for temp in glob_list_directory(pp, extension='.yaml', remove_extension=True):
                 path = os.path.join(pp, '{}.yaml'.format(temp))
@@ -903,7 +913,7 @@ class PipelineEngine(Loggable):
             groups.append(grp)
 
         # add user templates from user directory
-        grp = PipelineTemplateGroup(name='User')
+        grp = PipelineTemplateGroup(name='User', icon=icon('user_suit'))
         user_templates = []
         for temp in glob_list_directory(paths.user_pipeline_template_dir, extension='.yaml', remove_extension=True):
             path = os.path.join(paths.user_pipeline_template_dir, '{}.yaml'.format(temp))
@@ -1051,12 +1061,15 @@ class PipelineEngine(Loggable):
 
     def _handle_figure_event(self, evt):
         kind = evt[0]
+        print('fiafsfdasfsa', evt, kind)
         if kind == 'alternate_figure':
             self._make_alternate_figure(evt)
         elif kind == 'tag':
             self.tag_event = evt[1]
         elif kind == 'identify_peaks':
             self._identify_peaks(evt[1])
+        elif kind == 'plot_on_map':
+            self._plot_on_map()
 
     def _identify_peaks(self, ps):
         from pychron.pipeline.identify_peak_view import IdentifyPeakView
@@ -1071,6 +1084,9 @@ class PipelineEngine(Loggable):
             open_view(ipv)
         else:
             self.warning_dialog('Failed to connect to a relevant datasource')
+
+    def _plot_on_map(self):
+        self.information_dialog('Psyche.  Plot on Map not yet implemented')
 
     def _make_alternate_figure(self, evt):
         self.add_pipeline = True

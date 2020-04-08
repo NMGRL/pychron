@@ -1,4 +1,3 @@
-# ===============================================================================
 # Copyright 2015 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -82,7 +81,8 @@ class DisplaySubOptions(TitleSubOptions):
                          VGroup(Item('display_mean_mswd', label='MSWD', ),
                                 Item('display_mean_n', label='N'),
                                 Item('display_mswd_pvalue', label='P-Value')),
-                         Item('mean_sig_figs', label='SigFigs'),
+                         VGroup(Item('mean_sig_figs', label='Mean SigFigs'),
+                                Item('mswd_sig_figs', label='MSWD SigFigs')),
                          enabled_when='display_mean_indicator')
 
         mean_grp = VGroup(Item('display_mean_indicator', label='Indicator'),

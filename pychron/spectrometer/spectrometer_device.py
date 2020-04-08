@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traits.api import Any, Property
 
 # ============= local library imports  ==========================
@@ -42,9 +43,18 @@ class SpectrometerDevice(ConfigLoadable):
 
     def ask(self, cmd, *args, **kw):
         if self.microcontroller:
-            resp = self.microcontroller.ask(cmd, *args, **kw)
-            if hasattr(self, 'handle_response'):
-                resp = self.handle_response(cmd, resp)
+            def func():
+                r = self.microcontroller.ask(cmd, *args, **kw)
+                if hasattr(self, 'handle_response'):
+                    r = self.handle_response(cmd, r)
+                return r
+
+            if hasattr(self.microcontroller, 'lock'):
+                with self.microcontroller.lock:
+                    resp = func()
+            else:
+                resp = func()
+
             return resp
 
     def read(self, *args, **kw):

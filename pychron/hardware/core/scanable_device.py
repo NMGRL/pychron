@@ -16,23 +16,24 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
-import time
 
+import os
+import time
+# ============= standard library imports ========================
+from threading import Lock
+
+from six.moves import zip
 from traits.api import Event, Property, Any, Bool, Float, Str, Instance, List
 from traitsui.api import HGroup, VGroup, Item, spring, ButtonEditor
 
-# ============= standard library imports ========================
-from threading import Lock
-import os
+from pychron.core.helpers.datetime_tools import generate_datetimestamp
+from pychron.database.data_warehouse import DataWarehouse
+from pychron.graph.plot_record import PlotRecord
+from pychron.hardware.core.alarm import Alarm
 # ============= local library imports  ==========================
 from pychron.hardware.core.viewable_device import ViewableDevice
-from pychron.graph.plot_record import PlotRecord
-from pychron.paths import paths
-from pychron.database.data_warehouse import DataWarehouse
 from pychron.managers.data_managers.csv_data_manager import CSVDataManager
-from pychron.core.helpers.datetime_tools import generate_datetimestamp
-from pychron.hardware.core.alarm import Alarm
-from six.moves import zip
+from pychron.paths import paths
 
 
 class ScanableDevice(ViewableDevice):
@@ -65,6 +66,7 @@ class ScanableDevice(ViewableDevice):
     dm_kind = 'csv'
     use_db = False
     _auto_started = False
+    graph_klass = None
 
     def is_scanning(self):
         return self._scanning
@@ -229,7 +231,7 @@ class ScanableDevice(ViewableDevice):
 
         from pychron.core.helpers.timer import Timer
         self.timer = Timer(period, self.scan)
-        self.info('Scan started {} period={}'.format(self.scan_func, period))
+        self.info('Scan started func={} period={}'.format(self.scan_func, period))
 
     def save_scan_to_db(self):
         from pychron.database.adapters.device_scan_adapter import DeviceScanAdapter
@@ -284,7 +286,11 @@ class ScanableDevice(ViewableDevice):
     def _graph_default(self):
         from pychron.graph.time_series_graph import TimeSeriesStreamGraph
 
-        g = TimeSeriesStreamGraph()
+        klass = self.graph_klass
+        if not klass:
+            klass =TimeSeriesStreamGraph
+
+        g = klass()
         self.graph_builder(g)
 
         return g

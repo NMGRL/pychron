@@ -40,6 +40,7 @@ class BaseSwitch(Loggable):
     actuations = Int
     last_actuation = Str
     explain_enabled = Bool(False)
+    use_state_word = Bool(False)
 
     def __init__(self, name, *args, **kw):
         """
@@ -103,7 +104,6 @@ class Switch(BaseSwitch):
 
     state_address = Str
     query_state = Bool(True)
-    use_state_word = Bool(False)
 
     prefix_name = 'SWITCH'
     parent = Str
@@ -124,6 +124,7 @@ class Switch(BaseSwitch):
 
     def _state_call(self, func, *args, **kw):
         result = None
+        dev = None
         if self.state_device is not None:
             dev = self.state_device
             address = self.state_address

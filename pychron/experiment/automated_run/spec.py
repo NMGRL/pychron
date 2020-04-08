@@ -590,6 +590,23 @@ post_equilibration_script, extraction_script, script_options, position, duration
     def extract_duration(self):
         return self.duration
 
+    
+    @property
+    def pre_cleanup_duration(self):
+        return self.pre_cleanup
+
+    @pre_cleanup_duration.setter
+    def pre_cleanup_duration(self, v):
+        self.pre_cleanup = v
+        
+    @property
+    def post_cleanup_duration(self):
+        return self.post_cleanup
+
+    @post_cleanup_duration.setter
+    def post_cleanup_duration(self, v):
+        self.post_cleanup = v
+    
     @property
     def cleanup_duration(self):
         return self.cleanup

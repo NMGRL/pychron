@@ -22,7 +22,7 @@ from pychron.options.aux_plot import AuxPlot
 from pychron.options.group.ideogram_group_options import IdeogramGroupOptions
 from pychron.options.options import AgeOptions
 from pychron.options.views.ideogram_views import VIEWS
-from pychron.pychron_constants import NULL_STR, FONTS, SIZES, SIG_FIGS, MAIN, APPEARANCE, DISPLAY, GROUPS
+from pychron.pychron_constants import NULL_STR, FONTS, SIZES, SIG_FIGS, MAIN, APPEARANCE, DISPLAY, GROUPS, STD_SIG_FIGS
 
 
 class IdeogramAuxPlot(AuxPlot):
@@ -83,7 +83,8 @@ class IdeogramOptions(AgeOptions):
     mean_indicator_font = Property
     mean_indicator_fontname = Enum(*FONTS)
     mean_indicator_fontsize = Enum(*SIZES)
-    mean_sig_figs = Enum(*SIG_FIGS)
+    mean_sig_figs = Enum(*STD_SIG_FIGS)
+    mswd_sig_figs = Enum(*SIG_FIGS)
 
     use_cmap_analysis_number = Bool(False)
     cmap_analysis_number = Enum(list(color_map_name_dict.keys()))

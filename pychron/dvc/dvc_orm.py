@@ -26,7 +26,6 @@ from sqlalchemy.orm import relationship
 from pychron.core.helpers.datetime_tools import make_timef
 from pychron.core.utils import alphas
 from pychron.database.orms import stringcolumn, primary_key
-# from pychron.database.records.isotope_record import DVCIsotopeRecordView
 from pychron.experiment.utilities.identifier import make_runid
 
 Base = declarative_base()
@@ -106,8 +105,8 @@ class AnalysisTbl(Base, IDMixin):
     extract_value = Column(Float)
     extract_units = stringcolumn(45)
     cleanup = Column(Float)
-    # pre_cleanup = Column(Float)
-    # post_cleanup = Column(Float)
+    pre_cleanup = Column(Float)
+    post_cleanup = Column(Float)
     duration = Column(Float)
 
     weight = Column(Float)

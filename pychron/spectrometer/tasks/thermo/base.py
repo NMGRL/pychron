@@ -24,90 +24,15 @@ from pychron.spectrometer.tasks.base_spectrometer_plugin import BaseSpectrometer
 
 
 class ThermoSpectrometerPlugin(BaseSpectrometerPlugin):
-    # id = 'pychron.spectrometer.argus'
-    # spectrometer_manager_klass = ArgusSpectrometerManager
-    # manager_name = 'argus_spectrometer_manager'
-    # name = 'ArgusSpectrometer'
 
     def start(self):
         super(ThermoSpectrometerPlugin, self).start()
 
         if to_bool(self.application.preferences.get('pychron.spectrometer.auto_open_readout')):
             from pychron.spectrometer.readout_view import new_readout_view
-            #
-            # spec = self.application.get_service(
-            #     'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager')
-            # ro, v = new_readout_view(spectrometer=spec.spectrometer)
+
             rv = self.application.get_service(ReadoutView)
             v = new_readout_view(rv)
             open_view(rv, view=v)
-
-
-    # ===============================================================================
-    # defaults
-    # ===============================================================================
-
-    # def _task_extensions_default(self):
-    #
-    #     ext = []
-    #     hopext = self._hops_ext()
-    #     if hopext:
-    #         ext.append(hopext)
-    #
-    #     scriptext = self._scripts_ext()
-    #     if scriptext:
-    #         ext.append(scriptext)
-    #
-    #     ta1 = TaskExtension(actions=[SchemaAddition(id='spectrometer.menu',
-    #                                                 factory=lambda: SMenu(id='spectrometer.menu',
-    #                                                                       name='Spectrometer'),
-    #                                                 path='MenuBar',
-    #                                                 before='window.menu',
-    #                                                 after='tools.menu'),
-    #                                  SchemaAddition(id='update_mftable',
-    #                                                 path='MenuBar/spectrometer.menu',
-    #                                                 factory=PopulateMFTableAction),
-    #                                  SchemaAddition(id='send_config',
-    #                                                 factory=SendConfigAction,
-    #                                                 path='MenuBar/spectrometer.menu'),
-    #                                  SchemaAddition(id='view_readout',
-    #                                                 factory=ViewReadoutAction,
-    #                                                 path='MenuBar/spectrometer.menu'),
-    #                                  SchemaAddition(id='edit_gains',
-    #                                                 factory=EditGainsAction,
-    #                                                 path='MenuBar/spectrometer.menu'),
-    #                                  SchemaAddition(id='relood_table',
-    #                                                 factory=ReloadMFTableAction,
-    #                                                 path='MenuBar/spectrometer.menu'),
-    #                                  SchemaAddition(id='mftable',
-    #                                                 factory=MagnetFieldTableAction,
-    #                                                 path='MenuBar/spectrometer.menu'),
-    #                                  SchemaAddition(id='mftable_history',
-    #                                                 factory=MagnetFieldTableHistoryAction,
-    #                                                 path='MenuBar/spectrometer.menu')])
-    #     si = TaskExtension(task_id='pychron.spectrometer.scan_inspector',
-    #                        actions=[SchemaAddition(id='toggle_spectrometer_task',
-    #                                                factory=ToggleSpectrometerTask,
-    #                                                path='MenuBar/spectrometer.menu')])
-    #
-    #     sp = TaskExtension(task_id='pychron.spectrometer',
-    #                        actions=[SchemaAddition(id='toggle_spectrometer_task',
-    #                                                factory=ToggleSpectrometerTask,
-    #                                                path='MenuBar/spectrometer.menu'),
-    #                                 SchemaAddition(id='peak_center',
-    #                                                factory=PeakCenterAction,
-    #                                                path='MenuBar/spectrometer.menu'),
-    #                                 SchemaAddition(id='define_peak_center',
-    #                                                factory=DefinePeakCenterAction,
-    #                                                path='MenuBar/spectrometer.menu'),
-    #                                 SchemaAddition(id='coincidence',
-    #                                                factory=CoincidenceScanAction,
-    #                                                path='MenuBar/spectrometer.menu'),
-    #                                 SchemaAddition(id='parameters',
-    #                                                factory=SpectrometerParametersAction,
-    #                                                path='MenuBar/spectrometer.menu')])
-    #
-    #     ext.extend((ta1, si, sp))
-    #     return ext
 
 # ============= EOF =============================================

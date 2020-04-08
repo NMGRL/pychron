@@ -54,8 +54,19 @@ class InverseIsochronCalculationOptions(SubOptions):
                                        visible_when='omit_non_plateau'),
                                 label='Plateau')
 
-        g = BorderHGroup(Item('regressor_kind', label='Method'),
+        g = BorderHGroup(Item('regressor_kind',
+                              tooltip='''York:  York 1969 typo corrected
+New York:  York regression with correlated errors. (Mahon 1996)
+Reed:  York regression without correlated errors. (Reed 1990,1992) Should not be used for publication. The current 
+algorithm is not correctly calculation the regression parameter uncertainties. The slope and intercept are correct, 
+the uncertainty calculation however follows the erroneous equations of York 1966.  
+                              ''',
+                              label='Method'),
                          Item('error_calc_method',
+                              tooltip='''SE:  Standard Error
+SEM: Standard Error / sqrt(N)
+MSE: Modified Standard Error  e.g SE * sqrt(MSWD)
+MSEM: Modified SEM ''',
                               width=-150,
                               label='Error Calculation Method'),
                          label='Regression')

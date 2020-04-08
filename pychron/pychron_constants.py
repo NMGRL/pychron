@@ -75,11 +75,15 @@ SCRIPT_KEYS = [MEASUREMENT, POST_MEASUREMENT, EXTRACTION, POST_EQUILIBRATION]
 
 SCRIPT_NAMES = ['{}_script'.format(si) for si in SCRIPT_KEYS]
 
+SE = 'SE'
 SD = 'SD'
 SEM = 'SEM'
 MSEM = 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)'
+MSE = 'SE but if MSWD>1 use SE * sqrt(MSWD)'
+
 ERROR_TYPES = [MSEM, SEM, SD]
 SIG_FIGS = range(0, 15)
+STD_SIG_FIGS = ['Std', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
 
 WEIGHTED_MEAN = 'Weighted Mean'
 PLATEAU = 'Plateau'
@@ -93,6 +97,7 @@ FIT_TYPES = ['Linear', 'Parabolic', 'Cubic',
 
 FIT_ERROR_TYPES = [SD, SEM, MSEM, 'CI', 'MonteCarlo']
 SERIES_FIT_TYPES = [NULL_STR] + FIT_TYPES
+ISOCHRON_ERROR_TYPES = [SE, MSE]
 
 INTERPOLATE_TYPES = ['Preceding', 'Bracketing Interpolate', 'Bracketing Average', 'Succeeding']
 FIT_TYPES_INTERPOLATE = FIT_TYPES + INTERPOLATE_TYPES
@@ -126,7 +131,7 @@ OMIT_ISOCHRON = 'omit_isochron'
 
 EXCLUDE_TAGS = (OMIT, INVALID, OUTLIER, SKIP)
 
-WEIGHTINGS = (NULL_STR, 'Volume', 'Variance')
+WEIGHTINGS = ('None - Iso. Recombination', 'Volume', 'Variance')
 
 INVALID_MSWD_CHR = '*'
 
@@ -231,7 +236,8 @@ QTEGRA_INTEGRATION_TIMES = [0.065536, 0.131072, 0.262144, 0.524288,
                             1.048576, 2.097152, 4.194304, 8.388608,
                             16.777216, 33.554432, 67.108864]
 QTEGRA_DEFAULT_INTEGRATION_TIME = 1.048576
-ISOTOPX_INTEGRATION_TIMES = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 2.0, 3.0, 4.0, 5.0, 10.0]
+#ISOTOPX_INTEGRATION_TIMES = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 2.0, 3.0, 4.0, 5.0, 10.0, 20.0]
+ISOTOPX_INTEGRATION_TIMES = [1.0, 2.0, 3.0, 4.0, 5.0, 10.0, 20.0, 100.0]
 ISOTOPX_DEFAULT_INTEGRATION_TIME = 1
 
 DEFAULT_INTEGRATION_TIME = 1

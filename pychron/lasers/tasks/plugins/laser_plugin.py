@@ -106,7 +106,7 @@ class BaseLaserPlugin(BaseTaskPlugin):
         if mode == 'client':
             try:
                 tag = ip.get_parameter(plugin, 'communications', element=True)
-                for attr in ['host', 'port', 'kind',
+                for attr in ['host', 'port', 'kind', 'timeout',
                              'baudrate',
                              'parity',
                              'stopbits',

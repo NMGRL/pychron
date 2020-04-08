@@ -425,7 +425,8 @@ class AutomatedRun(Loggable):
             return True
 
     def py_baselines(self, ncounts, starttime, starttime_offset, mass, detector,
-                     series=0, fit_series=0, settling_time=4, integration_time=None, use_dac=False):
+                     series=0, fit_series=0, settling_time=4, integration_time=None, use_dac=False,
+                     check_conditionals=True):
 
         if not self._alive:
             return
@@ -447,6 +448,7 @@ class AutomatedRun(Loggable):
                 self.info(msg)
                 if self.plot_panel:
                     self.plot_panel.total_counts += settling_time
+                    self.plot_panel.total_seconds += settling_time
 
                 self.wait(settling_time, msg)
 
@@ -457,7 +459,6 @@ class AutomatedRun(Loggable):
 
         self.multi_collector.is_baseline = True
         self.multi_collector.fit_series_idx = fit_series
-        check_conditionals = True
 
         self.collector.for_peak_hop = self.plot_panel.is_peak_hop
         self.plot_panel.is_peak_hop = False
@@ -774,7 +775,10 @@ class AutomatedRun(Loggable):
         if self.peak_center:
             self.debug('cancel peak center')
             self.peak_center.cancel()
-
+            
+        if self.spectrometer_manager:
+            self.spectrometer_manager.spectrometer.cancel()
+            
         self.do_post_termination(do_post_equilibration=do_post_equilibration)
 
         self.finish()
@@ -1466,9 +1470,8 @@ anaylsis_type={}
         self._alive = True
 
         if self.plot_panel:
-            self.plot_panel.total_counts = 0
-            self.plot_panel.is_peak_hop = False
-            self.plot_panel.is_baseline = False
+            self.plot_panel.start()
+
             # self.plot_panel.set_analysis_view(self.experiment_type)
 
         self.multi_collector.canceled = False
@@ -2099,7 +2102,7 @@ anaylsis_type={}
             self._intensities = {}
             while 1:
                 try:
-                    k, s = spec.get_intensities(tagged=True)
+                    k, s, t = spec.get_intensities(tagged=True,trigger=False)
                 except NoIntensityChange:
                     self.warning('Canceling Run. Intensity from mass spectrometer not changing')
 
@@ -2130,7 +2133,7 @@ anaylsis_type={}
                         self.cancel_run(state='failed')
                         yield None
                     else:
-                        yield None, None
+                        yield None, None, None
                 else:
                     # reset the counter
                     cnt = 0
@@ -2140,7 +2143,7 @@ anaylsis_type={}
                     self._intensities['tags'] = k
                     self._intensities['signals'] = s
 
-                    yield k, s
+                    yield k, s, t
 
         return gen()
 
@@ -2237,7 +2240,7 @@ anaylsis_type={}
         if debug:
             period = 1
         else:
-            period = self._integration_seconds
+            period = self.spectrometer_manager.spectrometer.get_update_period(it=self._integration_seconds)
 
         m = self.collector
 
@@ -2250,17 +2253,16 @@ anaylsis_type={}
                     period_ms=period * 1000,
                     data_generator=get_data,
                     data_writer=data_writer,
-                    starttime=starttime,
                     experiment_type=self.experiment_type,
                     refresh_age=self.spec.analysis_type in ('unknown', 'cocktail'))
 
+        m.set_starttime(starttime)
         if hasattr(self.spectrometer_manager.spectrometer, 'trigger_acq'):
             m.trait_set(trigger=self.spectrometer_manager.spectrometer.trigger_acq)
 
         if self.plot_panel:
             self.plot_panel.integration_time = period
             self.plot_panel.set_ncounts(ncounts)
-            self.plot_panel.total_counts += ncounts
 
             if grpname == 'sniff':
                 self._setup_isotope_graph(starttime_offset, color, grpname)
@@ -2305,9 +2307,10 @@ anaylsis_type={}
         mi, ma = graph.get_x_limits()
         max_ = ma
         min_ = mi
-        tc = self.plot_panel.total_counts
+
+        tc = self.plot_panel.total_seconds
         if tc > ma or ma == Inf:
-            max_ = tc * self._integration_seconds
+            max_ = tc
 
         if starttime_offset > mi:
             min_ = -starttime_offset

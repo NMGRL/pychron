@@ -22,11 +22,14 @@ from pychron.pipeline.results.base_matrix_result import BaseMatrixResult
 
 class Results(BaseMatrixResult):
     def _format_value(self, v):
-        return '{:0.4f}'.format(v)
+        return '{:0.7f}'.format(v)
 
     def _calculate_values(self, ag, others):
         vs = ['']
-        fstd = ag.weighted_mean_f
+        try:
+            fstd = ag.weighted_mean_f
+        except TypeError:
+            fstd = 0
 
         for other in others:
             if other == ag:
@@ -34,7 +37,7 @@ class Results(BaseMatrixResult):
             else:
                 try:
                     pv = other.weighted_mean_f / fstd
-                except ZeroDivisionError:
+                except (TypeError, ZeroDivisionError):
                     pv = ''
 
             vs.append(pv)

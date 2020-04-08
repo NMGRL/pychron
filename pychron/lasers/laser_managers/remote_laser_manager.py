@@ -40,11 +40,14 @@ class RemoteLaserManager(BaseLaserManager):
 
     _patterning = False
     _firing = Bool(False)
+    _is_moving = Bool(False)
 
     stage_stop_button = Button('Stage Stop')
     move_enabled_button = Button('Enable Move')
     move_enabled_label = Property(depends_on='_move_enabled')
     _move_enabled = Bool(False)
+
+    update_position_button = Button
 
     def open(self, *args, **kw):
         raise NotImplementedError
@@ -62,6 +65,10 @@ class RemoteLaserManager(BaseLaserManager):
             return True
 
     # private
+    def _update_position_button_fired(self):
+        if not self.simulation:
+            self.update_position()
+
     def _test_connection_button_fired(self):
         self.test_connection()
         if self.connected:

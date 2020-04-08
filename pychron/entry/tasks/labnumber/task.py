@@ -24,7 +24,7 @@ from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pychron_traits import PacketStr
 from pychron.entry.labnumber_entry import LabnumberEntry
 from pychron.entry.tasks.actions import SavePDFAction, DatabaseSaveAction, PreviewGenerateIdentifiersAction, \
-    GenerateIdentifiersAction, ClearSelectionAction, RecoverAction, SyncMetaDataAction
+    GenerateIdentifiersAction, ClearSelectionAction, RecoverAction, SyncMetaDataAction, ManualEditIdentifierAction
 from pychron.entry.tasks.labnumber.panes import LabnumbersPane, \
     IrradiationPane, IrradiationEditorPane, IrradiationCanvasPane, LevelInfoPane, ChronologyPane, FluxHistoryPane, \
     IrradiationMetadataEditorPane
@@ -42,6 +42,9 @@ ATTRS = (('sample', ''),
          ('weight', 0),
          ('j', 0,),
          ('j_err', 0))
+
+
+MANUAL_EDIT_VIEW = okcancel_view(Item('edit_identifier_entry', label='Identifier'), title='Manual Edit Identifier')
 
 
 class ClearSelectionView(HasTraits):
@@ -87,6 +90,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     name = 'Irradiation'
     id = 'pychron.entry.irradiation.task'
 
+    edit_identifier_entry = Str
     clear_sample_button = Button
     refresh_needed = Event
     dclicked = Event
@@ -100,7 +104,8 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
                           image_size=(16, 16)),
                  SToolBar(ClearSelectionAction()),
                  SToolBar(RecoverAction(),
-                          SyncMetaDataAction())]
+                          SyncMetaDataAction(),
+                          ManualEditIdentifierAction())]
 
     invert_flag = Bool
     selection_freq = Int
@@ -181,6 +186,23 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     def transfer_j(self):
         self.info('Transferring J Data')
         self.manager.transfer_j()
+
+    def manual_edit_identifier(self):
+        if not self.manager.selected:
+            self.information_dialog('Please select an existing irradiation position to edit')
+            return
+
+        if not self.confirmation_dialog('Please be very careful editing identifiers. Serious unintended consequences '
+                                        'may result from changing an identifier. This function should only be used by '
+                                        'users with a deep understanding of how pychron handles irradiations. \n\nAre '
+                                        'you sure you want to continue?'):
+            return
+
+        self.info('Manual edit identifier')
+        self.edit_identifier_entry = self.manager.selected[0].identifier
+        info = self.edit_traits(view=MANUAL_EDIT_VIEW, kind='livemodal')
+        if info and self.edit_identifier_entry:
+            self.manager.selected[0].identifier = self.edit_identifier_entry
 
     # def import_irradiation(self):
     #     self.info('Import irradiation')

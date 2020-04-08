@@ -66,10 +66,10 @@ class StreamGraphManager(Manager):
     update_period = 2
     _signal_failed_cnt = 0
 
-    def reset_scan_timer(self, func=None):
+    def reset_scan_timer(self, func=None, wait=True):
         self.info('reset scan timer')
         self._signal_failed_cnt = 0
-        self.timer = self._timer_factory(func=func)
+        self.timer = self._timer_factory(func=func, wait=wait)
 
     def load_settings(self):
         self.info('load scan settings')
@@ -121,14 +121,15 @@ class StreamGraphManager(Manager):
     def _update_scan_graph(self):
         pass
 
-    def _timer_factory(self, func=None):
+    def _timer_factory(self, func=None, wait=True):
 
         if func is None:
             func = self._update_scan_graph
 
         if self.timer:
             self.timer.Stop()
-            self.timer.wait_for_completion()
+            if wait:
+                self.timer.wait_for_completion()
 
         mult = 1000
         return Timer(self.update_period * mult, func)

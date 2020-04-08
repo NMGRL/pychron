@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
+import sys
 from datetime import timedelta, datetime
 from string import digits, ascii_letters
 
@@ -25,6 +25,7 @@ from sqlalchemy.util import OrderedSet
 from traits.api import HasTraits, Str, List, TraitError
 from traitsui.api import Item
 
+from pychron import version
 from pychron.core.helpers.datetime_tools import bin_datetimes
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.spell_correct import correct
@@ -43,7 +44,7 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
 from pychron.experiment.utilities.identifier import strip_runid
 from pychron.globals import globalv
 from pychron.pychron_constants import NULL_STR, EXTRACT_DEVICE, NO_EXTRACT_DEVICE, \
-    SAMPLE_PREP_STEPS, SAMPLE_METADATA
+    SAMPLE_PREP_STEPS, SAMPLE_METADATA, STARTUP_MESSAGE_POSITION
 
 
 def listify(obj):
@@ -219,6 +220,14 @@ class DVCDatabase(DatabaseAdapter):
                     if not self.get_users():
                         self.add_user('root')
 
+    def add_default_version(self, v):
+        v = VersionTbl(version=str(v))
+        self.add_item(v)
+
+    def get_versions(self, **kw):
+        q = self.session.query(VersionTbl)
+        return [r.version for r in q.all()]
+
     def modify_aliquot_step(self, uuid, aliquot, increment):
         with self.session_ctx() as sess:
             a = self.get_analysis_uuid(uuid)
@@ -228,8 +237,10 @@ class DVCDatabase(DatabaseAdapter):
 
     def sync_ia_metadata(self, ia):
         identifier = ia.identifier
+        self.debug('sync metadata for {}'.format(identifier))
         info = self.get_identifier_info(identifier)
         if info:
+            self.debug('metadata: {}'.format(info))
             for attr in SAMPLE_METADATA:
                 try:
                     setattr(ia, attr, info.get(attr))
@@ -356,8 +367,8 @@ class DVCDatabase(DatabaseAdapter):
     def map_runid(self, src, dst):
         with self.session_ctx() as sess:
             dl, da, ds = strip_runid(dst)
-            if self.get_analysis_runid(dl, da, ds):
-                return '"{}" already exists'.format(dst)
+            # if self.get_analysis_runid(dl, da, ds):
+            #     return '"{}" already exists'.format(dst)
 
             ip = self.get_identifier(dl)
             if not ip:
@@ -696,6 +707,45 @@ class DVCDatabase(DatabaseAdapter):
             q = q.filter(f)
             return self._query_all(q)
 
+    def _fuzzy_sample_comps(self, name):
+        oname = name
+        likes = ['{}%'.format(oname)]
+
+        regexp = ''
+        was_letter = False
+        for c in oname:
+            if c in digits:
+                if was_letter:
+                    c = '[-_ ]*{}'.format(c)
+                    was_letter = False
+            elif c in ascii_letters:
+                was_letter = True
+            else:
+                was_letter = False
+
+            regexp += c
+
+        # %FC-2%
+        for r in '_- ':
+            name = name.replace(r, '%')
+
+        # FC%2
+        likes.append(name)
+
+        # %FC%2%
+        likes.append('{}%'.format(name))
+
+        comps = [func.lower(SampleTbl.name.like(like)) for like in likes]
+        comps.append(func.lower(SampleTbl.name.op('regexp')(regexp)))
+        return comps
+
+    def get_fuzzy_samples(self, name):
+        with self.session_ctx() as sess:
+            q = sess.query(SampleTbl)
+            comps = self._fuzzy_sample_comps(name)
+            q = q.filter(or_(*comps))
+            return self._query_all(q, verbose_query=True)
+
     def get_fuzzy_labnumbers(self, search_str):
         with self.session_ctx() as sess:
             q = sess.query(IrradiationPositionTbl)
@@ -703,10 +753,12 @@ class DVCDatabase(DatabaseAdapter):
             q = q.join(ProjectTbl)
 
             q = q.distinct(IrradiationPositionTbl.id)
-            f = or_(IrradiationPositionTbl.identifier.like('{}%'.format(search_str)),
-                    SampleTbl.name.like('{}%'.format(search_str)),
-                    ProjectTbl.name == search_str,
-                    ProjectTbl.id == search_str)
+
+            comps = [IrradiationPositionTbl.identifier.like('{}%'.format(search_str)),
+                     ProjectTbl.name == search_str,
+                     ProjectTbl.id == search_str] + self._fuzzy_sample_comps(search_str)
+
+            f = or_(*comps)
             q = q.filter(f)
             ips = self._query_all(q)
 
@@ -1933,42 +1985,6 @@ class DVCDatabase(DatabaseAdapter):
             gs = self._query_all(q)
             return [g[0] for g in gs if g[0]]
 
-    def get_fuzzy_samples(self, name):
-        with self.session_ctx() as sess:
-            q = sess.query(SampleTbl)
-
-            oname = name
-            likes = ['{}%'.format(oname)]
-
-            regexp = ''
-            was_letter = False
-            for c in oname:
-                if c in digits:
-                    if was_letter:
-                        c = '[-_ ]*{}'.format(c)
-                        was_letter = False
-                elif c in ascii_letters:
-                    was_letter = True
-                else:
-                    was_letter = False
-
-                regexp += c
-
-            # %FC-2%
-            for r in '_- ':
-                name = name.replace(r, '%')
-
-            # FC%2
-            likes.append(name)
-
-            # %FC%2%
-            likes.append('{}%'.format(name))
-
-            comps = [func.lower(SampleTbl.name.like(like)) for like in likes]
-            comps.append(func.lower(SampleTbl.name.op('regexp')(regexp)))
-            q = q.filter(or_(*comps))
-            return self._query_all(q, verbose_query=True)
-
     def get_samples_by_name(self, name):
         with self.session_ctx() as sess:
             q = sess.query(SampleTbl)
@@ -2353,4 +2369,30 @@ class DVCDatabase(DatabaseAdapter):
                     ret = [ni.name for ni in names or []]
             return ret
 
+    def _version_warn_hook(self, vers):
+        # ver = ver.version_num
+        # aver = version.__alembic__
+
+        # vers is a list of all the supported versions of pychron for this database
+
+        lver = version.__version__
+
+        self.debug('testing database versions. pychron version={}, db_versions={}'.format(lver, vers))
+        if not vers:
+            self.debug('not versions in the database. added a default one')
+            self.add_default_version('19.6')
+            # self.warning_dialog('Please add at least one record to the VersionTbl table. e.g. version=20.1')
+
+        else:
+            if lver not in vers:
+                if not self.confirmation_dialog(
+                        'Your database is out of date and it MAY not work correctly with '
+                        'this version of Pychron. Contact admin to update db.\n\n'
+                        'Continue with Pychron despite out of date db?',
+                        position=STARTUP_MESSAGE_POSITION):
+
+                    self.debug('exiting application')
+                    if self.application:
+                        self.application.stop()
+                    sys.exit()
 # ============= EOF =============================================

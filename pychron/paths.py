@@ -79,7 +79,7 @@ class Paths(object):
 
     root = None
     bundle_root = None
-    home = None
+    home = path.expanduser('~')
 
     icons = ''
     images = ''
@@ -125,6 +125,7 @@ class Paths(object):
     preferences_dir = None
     comment_templates_dir = None
     plotter_options_dir = None
+    table_options_dir = None
     test_dir = None
     custom_queries_dir = None
     log_dir = None
@@ -313,7 +314,6 @@ class Paths(object):
     def build(self, root):
         join = path.join
 
-        self.home = path.expanduser('~')
         # self.version = version
         if root.startswith('_'):
             root = join(self.home, 'Pychron{}'.format(root))
@@ -366,6 +366,7 @@ class Paths(object):
         self.labspy_dir = join(self.appdata_dir, 'labspy')
         self.labspy_context_dir = join(self.labspy_dir, 'context')
 
+        self.table_options_dir = join(self.appdata_dir, 'table_options')
         self.plotter_options_dir = join(self.appdata_dir, 'plotter_options')
         self.comment_templates_dir = join(self.appdata_dir, 'comment_templates')
 

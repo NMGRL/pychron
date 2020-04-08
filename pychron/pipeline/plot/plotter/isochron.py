@@ -35,7 +35,7 @@ from pychron.graph.ml_label import tokenize
 from pychron.pipeline.plot.overlays.isochron_inset import InverseIsochronPointsInset, InverseIsochronLineInset
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 from pychron.processing.analyses.analysis_group import StepHeatAnalysisGroup
-from pychron.pychron_constants import PLUSMINUS, SIGMA, MSEM, SEM
+from pychron.pychron_constants import PLUSMINUS, SIGMA, MSEM, SEM, SE, MSE
 
 
 class MLTextLabel(Label):
@@ -216,8 +216,8 @@ class InverseIsochron(Isochron):
     def _plot_inverse_isochron(self, po, plot, pid):
         opt = self.options
         self.analysis_group.isochron_age_error_kind = opt.error_calc_method
+        self.analysis_group.isochron_method = opt.regressor_kind
         _, _, reg = self.analysis_group.get_isochron_data(exclude_non_plateau=opt.exclude_non_plateau)
-
         graph = self.graph
 
         xtitle = '<sup>39</sup>Ar/<sup>40</sup>Ar'
@@ -455,9 +455,10 @@ class InverseIsochron(Isochron):
 
         v = nominal_value(age)
         e = std_dev(age) * opt.nsigma
-        if ag.isochron_age_error_kind == MSEM:
+
+        if ag.isochron_age_error_kind in (MSE, MSEM):
             mse_age = e
-        elif ag.isochron_age_error_kind == SEM:
+        elif ag.isochron_age_error_kind in (SE, SEM):
             mse_age = e * mswd ** 0.5
         else:
             mse_age = 0
@@ -507,8 +508,11 @@ class InverseIsochron(Isochron):
 
     def replot(self):
         sel = self.analysis_group.get_omitted_by_tag(self.analyses)
-        if len(sel) < self.analysis_group.nanalyses:
-            self._rebuild_iso(sel)
+        self._rebuild_iso(sel)
+
+        # this is nonsensical and unnecessar
+        # if len(sel) < self.analysis_group.nanalyses:s
+        #     self._rebuild_iso(sel)
 
     def _rebuild_iso(self, sel=None):
         if not self.graph:
@@ -528,7 +532,6 @@ class InverseIsochron(Isochron):
             self.analysis_group.calculate_isochron()
 
         reg = self.analysis_group.isochron_regressor
-
         fit = self.graph.plots[0].plots['fit{}'.format(self.group_id)][0]
 
         mi, ma = self.graph.get_x_limits()

@@ -16,8 +16,6 @@
 # =============enthought library imports=======================
 
 # =============standard library imports ========================
-from __future__ import absolute_import
-from __future__ import print_function
 
 import codecs
 import glob
@@ -26,7 +24,6 @@ import sys
 import time
 
 import serial
-from six.moves import range
 
 # =============local library imports  ==========================
 from .communicator import Communicator, process_response, prep_str, remove_eol_func

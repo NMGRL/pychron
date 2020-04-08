@@ -107,22 +107,6 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
         cs = glob_list_directory(root, remove_extension=True)
         self.available_conditionals = [NULL_STR] + cs
 
-    def _select_existing_load_name_button_fired(self):
-        db = self.get_database()
-        if db is None or not db.connect():
-            self.warning_dialog('Not connected to a database')
-
-        else:
-            with db.session_ctx(use_parent_session=False):
-                loads = db.get_loads()
-
-                from pychron.database.views.load_view import LoadView
-                lv = LoadView(records = loads)
-                info = lv.edit_traits()
-                if info.result:
-                    self.load_name = lv.selected.name
-                    self.tray = lv.selected.holderName
-
     # ===============================================================================
     # property get/set
     # ===============================================================================
@@ -223,6 +207,22 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
             return [config.get(section, option) for option in config.options(section)]
 
     # handlers
+    def _select_existing_load_name_button_fired(self):
+        db = self.get_database()
+        if db is None or not db.connect():
+            self.warning_dialog('Not connected to a database')
+
+        else:
+            with db.session_ctx(use_parent_session=False):
+                loads = db.get_loads()
+
+                from pychron.database.views.load_view import LoadView
+                lv = LoadView(records=loads)
+                info = lv.edit_traits()
+                if info.result:
+                    self.load_name = lv.selected.name
+                    self.tray = lv.selected.holderName
+
     def _edit_user_fired(self):
         a = UserEntry(dvc=self.dvc)
 

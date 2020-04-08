@@ -18,6 +18,7 @@ from traits.api import HasTraits, List, Str, Float, Int
 from traitsui.api import View, HGroup, Item, Group, InstanceEditor, ListEditor
 
 from pychron.core.ui.color_map_bar_editor import BarGaugeEditor
+from pychron.graph.time_series_graph import TimeSeriesStreamStackedGraph
 
 
 class BaseGauge(HasTraits):
@@ -53,15 +54,20 @@ class BaseGaugeController(HasTraits):
     gauges = List
     display_name = Str
     gauge_klass = BaseGauge
+    graph_klass = TimeSeriesStreamStackedGraph
 
-    scan_func = 'update_pressures'
+    def initialize(self):
+        self.scan_func = 'update_pressures'
+        self.graph_y_title = 'Pressure (torr)'
+
+        return True
 
     def update_pressures(self, verbose=False):
         if verbose:
             self.debug('update pressures')
 
         resps = [self._update_pressure(g, verbose) for g in self.gauges]
-        return any(resps)
+        return tuple(resps)
 
     def get_gauge(self, name):
         return next((gi for gi in self.gauges
@@ -115,7 +121,7 @@ class BaseGaugeController(HasTraits):
         if gauge:
             p = self._read_pressure(gauge, verbose)
             if self._set_gauge_pressure(gauge, p):
-                return True
+                return p
 
     def _load_gauges(self, config, *args, **kw):
         ns = self.config_get(config, 'Gauges', 'names')
@@ -166,4 +172,17 @@ class BaseGaugeController(HasTraits):
                        show_border=True,
                        label=self.display_name))
         return v
+
+    def graph_builder(self, g):
+        for i, gi in enumerate(self.gauges):
+            g.new_plot(padding=[50, 5, 5, 35],
+                       zoom=True,
+                       pan=True)
+
+            g.set_y_title(self.graph_ytitle, plotid=i)
+            g.set_x_title('Time')
+            g.new_plot()
+            g.new_series()
+            g.set_series_label(gi.display_name, plotid=i)
+
 # ============= EOF =============================================

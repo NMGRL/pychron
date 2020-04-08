@@ -21,6 +21,7 @@ import json
 from chaco.axis import DEFAULT_TICK_FORMATTER
 from chaco.axis_view import float_or_auto
 from enable.markers import marker_names
+from pyface.message_dialog import warning
 from traits.api import HasTraits, Str, Int, Bool, Float, Property, Enum, List, Range, \
     Color, Button, Instance
 from traitsui.api import View, Item, HGroup, VGroup, EnumEditor, Spring, Group, \
@@ -218,6 +219,7 @@ class MainOptions(SubOptions):
     def _get_marker_group(self):
         g = BorderHGroup(UItem('marker', editor=EnumEditor(values=marker_names)),
                          Item('marker_size', label='Size'),
+                         UItem('marker_color'),
                          label='Marker')
         return g
 
@@ -268,13 +270,13 @@ class BaseOptions(HasTraits):
     _subview_cache = None
 
     def dump(self, wfile):
-        def convert_color(s):
+        def convert_color(ss):
             from pyface.qt.QtGui import QColor
             nd = {}
-            for k, v in s.items():
+            for k, v in ss.items():
                 if isinstance(v, QColor):
                     nd[k] = v.rgba()
-            s.update(**nd)
+            ss.update(**nd)
 
         state = self.__getstate__()
         state['klass'] = str(self.__class__)
@@ -286,28 +288,21 @@ class BaseOptions(HasTraits):
         except KeyError:
             pass
 
-        try:
-            groups = state.pop('groups')
-            if groups:
-                def func(gi):
-                    s = gi.__getstate__()
-                    convert_color(s)
-                    return str(gi.__class__), s
+        for tag in ('groups', 'aux_plots', 'selected'):
+            try:
+                items = state.pop(tag)
+                if items:
+                    def func(gi):
+                        s = gi.__getstate__()
+                        convert_color(s)
+                        return str(gi.__class__), s
 
-                ngs = [func(gi) for gi in groups]
-                state['groups'] = ngs
-        except KeyError:
-            pass
+                    ngs = [func(gi) for gi in items]
+                    state[tag] = ngs
+            except KeyError as e:
+                pass
 
         convert_color(state)
-
-        if 'aux_plots' in state:
-            state['aux_plots'] = [(str(a.__class__), a.__getstate__())
-                                  for a in state.pop('aux_plots')]
-
-        if 'selected' in state:
-            state['selected'] = [(str(s.__class__), s.__getstate__())
-                                 for s in state.pop('selected')]
         json.dump(state, wfile, indent=4, sort_keys=True)
 
     def load(self, state):
@@ -334,7 +329,30 @@ class BaseOptions(HasTraits):
             if key in state:
                 state[key] = [inst(a, key) for a in state.pop(key)]
 
-        self.__setstate__(state)
+        try:
+            self.__setstate__(state)
+        except BaseException:
+            try:
+                self._setstate(state)
+            except BaseException:
+                warning(None, 'Pychron options changed and your saved options are incompatible.  Unable to fully load. '
+                              'You will need to check/rebuild this saved options set')
+
+    def _setstate(self, state):
+
+        # see self.__setstate___
+
+        self._init_trait_listeners()
+        for k, v in state.items():
+            try:
+                self.trait_set(trait_change_notify=True, **{k: v})
+            except BaseException:
+                continue
+
+        self._post_init_trait_listeners()
+        self.traits_init()
+
+        self.traits_inited(True)
 
     def get_cached_subview(self, name):
         if self._subview_cache is None:

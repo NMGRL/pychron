@@ -27,7 +27,12 @@ from pychron.core.helpers.filetools import subdirize, add_extension
 from pychron.paths import paths
 from pychron.wisc_ar_constants import WISCAR_ID_RE
 
-__version__ = '2.0'
+__version__ = '2.1'
+
+# changelog
+# 2.1 added pre/post cleanup
+
+USE_GIT_TAGGING = False
 
 MASS_SPEC_REDUCED = 'MASS SPEC REDUCED'
 HISTORY_TAGS = ('TAG', 'ISOEVO', 'BLANKS', 'ICFactor', 'DEFINE EQUIL', MASS_SPEC_REDUCED, 'COLLECTION', 'IMPORT',
@@ -146,11 +151,15 @@ def analysis_path(analysis, *args, **kw):
 UUID_RE = re.compile(r'^[0-9a-f]{8}\-[0-9a-f]{4}\-4[0-9a-f]{3}\-[89ab][0-9a-f]{3}\-[0-9a-f]{12}$', re.IGNORECASE)
 
 
-def _analysis_path(runid, repository, modifier=None, extension='.json', mode='r', root=None):
+def _analysis_path(runid, repository, modifier=None, extension='.json', mode='r', root=None, is_temp=False):
     if root is None:
         root = paths.repository_dataset_dir
 
     root = os.path.join(root, repository)
+    if is_temp:
+        root = os.path.join(root, 'temp')
+        if not os.path.isdir(root):
+            os.mkdir(root)
 
     if UUID_RE.match(runid):
         sublen = 5

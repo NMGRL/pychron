@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Int, Bool, \
-    Float, Property, on_trait_change, Dict, Tuple, Enum, List, Any, Trait, Button
+    Float, Property, on_trait_change, Dict, Tuple, Enum, List, Any, Trait, Button, Color
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -76,6 +76,7 @@ class AuxPlot(HasTraits):
 
     marker = Str('circle')
     marker_size = Float(2)
+    marker_color = Color('black')
 
     calculated_ymax = Any(transient=True)
     calculated_ymin = Any(transient=True)

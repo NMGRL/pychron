@@ -1,20 +1,40 @@
-from __future__ import absolute_import
 __author__ = 'ross'
 
 import unittest
 
-from pychron.core.helpers.formatting import floatfmt
+from pychron.core.helpers.formatting import floatfmt, standard_sigfigsfmt
 
 DEBUG = True
 
+
+class SigFigStdFmtTestCase(unittest.TestCase):
+    def test_ones(self):
+        self.assertEqual(('123', '1'), standard_sigfigsfmt(123.456, 1))
+
+    def test_tens(self):
+        self.assertEqual(('123', '12'), standard_sigfigsfmt(123.456, 12.123))
+
+    def test_tenths(self):
+        self.assertEqual(('123.5', '0.1'), standard_sigfigsfmt(123.456, 0.1))
+
+    def test_hundreths(self):
+        self.assertEqual(('123.46', '0.01'), standard_sigfigsfmt(123.456, 0.01))
+
+    def test_hundreths2(self):
+        self.assertEqual(('123.46', '0.02'), standard_sigfigsfmt(123.456, 0.02))
+
+    def test_hundreths3(self):
+        self.assertEqual(('123.46', '0.08'), standard_sigfigsfmt(123.456, 0.08))
+
+
 class FloatfmtTestCase(unittest.TestCase):
     def test_rounding(self):
-        x=0.007
+        x = 0.007
         fx = floatfmt(x, n=2)
         self.assertEqual('0.01', fx)
 
     def test_rounding2(self):
-        x=0.007
+        x = 0.007
         fx = floatfmt(x, n=2)
         self.assertEqual('0.01', fx)
 
@@ -63,4 +83,3 @@ class FloatfmtTestCase(unittest.TestCase):
         x = 0.001
         fx = floatfmt(x)
         self.assertEqual('0.0010', fx)
-

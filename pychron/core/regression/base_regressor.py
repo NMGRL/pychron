@@ -86,15 +86,24 @@ class BaseRegressor(HasTraits):
 
     @property
     def min(self):
-        return self.clean_ys.min()
+        ret = 0
+        if len(self.clean_ys):
+            ret = self.clean_ys.min()
+        return ret
 
     @property
     def max(self):
-        return self.clean_ys.max()
+        ret = 1
+        if len(self.clean_ys):
+            ret = self.clean_ys.max()
+        return ret
 
     @property
     def mean(self):
-        return self.clean_ys.mean()
+        ret = 0
+        if len(self.clean_ys):
+            ret = self.clean_ys.mean()
+        return ret
 
     @property
     def mean_mswd(self):

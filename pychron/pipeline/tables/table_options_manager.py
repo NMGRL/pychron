@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2016 ross
+# Copyright 2020 ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,25 +15,29 @@
 # ===============================================================================
 import os
 
-from traits.api import HasTraits
+from traits.api import Instance
 
+from pychron.globals import globalv
+from pychron.options.options_manager import BaseOptionsManager
 from pychron.paths import paths
-from pychron.persistence_loggable import PersistenceMixin
+from pychron.pipeline.tables.xlsx_table_options import XLSXAnalysisTableWriterOptions
 
-try:
-    class BasePersistenceOptions(HasTraits, PersistenceMixin):
-        def __init__(self, *args, **kw):
-            self.set_persistence_path()
-            self.load()
 
-        def set_persistence_path(self, name=None):
-            if not name:
-                name = self._persistence_name
+class TableOptionsManager(BaseOptionsManager):
+    selected_options = Instance(XLSXAnalysisTableWriterOptions)
+    options_klass = XLSXAnalysisTableWriterOptions
 
-            self.persistence_path = os.path.join(paths.appdata_dir, name)
+    def _save(self, name, obj):
+        obj.set_persistence_path(self._pname(name))
+        obj.dump()
 
-except TypeError:
-    # documentation auto doc hack
-    class BasePersistenceOptions:
-        pass
+    def _selected_changed(self, new):
+        if new:
+            obj = self.options_klass(self._pname(new))
+            self.selected_options = obj
+
+    @property
+    def persistence_root(self):
+        return os.path.join(paths.table_options_dir, globalv.username)
+
 # ============= EOF =============================================

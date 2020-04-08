@@ -186,7 +186,9 @@ class BaseStageMap(Loggable):
     def map_to_calibration(self, pos, cpos=None, rot=None, scale=None):
         cpos, rot, scale = self._get_calibration_params(cpos, rot, scale)
 
-        return transform_point(pos, cpos, rot, scale)
+        pt = transform_point(pos, cpos, rot, scale)
+        self.debug('map to calibration. pos={}, cpos={}, rot={}. new pos={}'.format(pos, cpos, rot, pt))
+        return pt
 
     def get_hole(self, key):
         return next((h for h in self.sample_holes if h.id == str(key)), None)

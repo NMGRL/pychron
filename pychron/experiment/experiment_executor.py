@@ -62,7 +62,7 @@ from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
 from pychron.globals import globalv
 from pychron.paths import paths
 from pychron.pychron_constants import DEFAULT_INTEGRATION_TIME, LINE_STR, AR_AR, DVC_PROTOCOL, DEFAULT_MONITOR_NAME, \
-    SCRIPT_NAMES, EM_SCRIPT_KEYS
+    SCRIPT_NAMES, EM_SCRIPT_KEYS, NULL_STR
 
 
 def remove_backup(uuid_str):
@@ -766,7 +766,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     def _do_run(self, run):
         self._set_thread_name(run.runid)
         # add a new log handler
-        p, _ = unique_path2(paths.log_dir, run.runid, extension='.log')
+
+        name = run.runid.replace(':', '_')
+        p, _ = unique_path2(paths.log_dir, name, extension='.log')
         handler = add_root_handler(p)
         run.log_path = p
 
@@ -1412,7 +1414,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
                 dev = abs(cur - nominal_ratio)
                 if pthreshold:
-                    dev = (dev/nominal_ratio)*100
+                    dev = (dev / nominal_ratio) * 100
                     threshold = pthreshold
                 msg = 'nominal_ratio={}, cur={}, dev={}, threshold={}'.format(nominal_ratio, cur, dev, threshold)
             else:
@@ -1431,7 +1433,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     dev = abs(wm - cur)
                     if pthreshold:
                         threshold = pthreshold
-                        dev = (dev/wm)*100
+                        dev = (dev / wm) * 100
 
                     if not threshold:
                         threshold = nsigma * werr
@@ -1445,7 +1447,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     excluded.append(ratios[-1][0])
                     self._excluded_uuids[atype] = excluded
 
-                fc = self._failure_counts.get(atype, 0)+1
+                fc = self._failure_counts.get(atype, 0) + 1
                 self._failure_counts[atype] = fc
                 msg = 'Ratio change detected. {}, Total failures={}/{}'.format(msg, fc, failure_cnt)
                 self.debug(msg)
@@ -1804,7 +1806,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         """
             return True to stop execution loop
         """
-        if exp.tray:
+        self.debug('pre queue check: tray={}'.format(exp.tray))
+        if exp.tray and exp.tray != NULL_STR:
             ed = next((ci for ci in self.connectables if ci.name == exp.extract_device), None)
             if ed and ed.connected:
                 name = convert_extract_device(ed.name)
@@ -1812,8 +1815,23 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 self.debug('Get service {}. name=="{}"'.format(ed.protocol, name))
                 if man:
                     self.debug('{} service found {}'.format(name, man))
-                    ed_tray = man.get_tray()
-                    return ed_tray != exp.tray
+                    if hasattr(man, 'get_tray'):
+                        ed_tray = man.get_tray()
+                        ret = ed_tray != exp.tray
+                        if ret:
+                            if hasattr(man, 'set_tray'):
+                                msg = 'The laser is configured to use tray: "{}" but the experiment is set to use ' \
+                                      'tray: "{}".\n\n' \
+                                      'Would you like to set the laser to use "{}"'.format(ed_tray, exp.tray, exp.tray)
+                                if self.confirmation_dialog(msg):
+                                    man.set_tray(exp.tray)
+                                    ret = False
+                                else:
+                                    if self.confirmation_dialog('Laser tray not necessarily setup correctly.'
+                                                                '\n\nAre you sure you want to continue?'):
+                                        ret = False
+
+                        return ret
 
     def _pre_run_check(self, spec, inform=False):
         """
@@ -2138,7 +2156,7 @@ Use Last "blank_{}"= {}
         if dbr is None:
             selected = True
             from pychron.experiment.utilities.reference_analysis_selector import ReferenceAnalysisSelector
-            selector = ReferenceAnalysisSelector()
+            selector = ReferenceAnalysisSelector(title='Select a Blank')
             info = selector.edit_traits(kind='livemodal')
             dbs = db.get_blanks(ms)
             selector.init('Select Default Blank', dbs)

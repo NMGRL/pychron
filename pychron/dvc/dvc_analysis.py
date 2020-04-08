@@ -28,6 +28,7 @@ from pychron.core.helpers.datetime_tools import make_timef
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.iterfuncs import partition
 from pychron.core.helpers.strtools import to_csv_str
+from pychron.dvc import USE_GIT_TAGGING
 from pychron.dvc import dvc_dump, dvc_load, analysis_path, make_ref_list, get_spec_sha, get_masses, repository_path, \
     AnalysisNotAnvailableError
 from pychron.experiment.utilities.environmentals import set_environmentals
@@ -182,7 +183,10 @@ class DVCAnalysis(Analysis):
 
     def load_paths(self, modifiers=None):
         if modifiers is None:
-            modifiers = ('intercepts', 'baselines', 'blanks', 'icfactors', 'tags', 'peakcenter')
+            modifiers = ('intercepts', 'baselines', 'blanks', 'icfactors', 'peakcenter')
+
+        if USE_GIT_TAGGING:
+            modifiers += ('tags', )
 
         for modifier in modifiers:
             path = self._analysis_path(modifier=modifier)

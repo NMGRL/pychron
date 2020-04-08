@@ -40,30 +40,36 @@ SPECIAL_NAMES = [SPECIAL_IDENTIFIER, LINE_STR]  # 'Blank Air'
 SPECIAL_KEYS = []  # ba
 
 
-p = os.path.join(paths.hidden_dir, 'identifiers.yaml')
-if os.path.isfile(p):
-    yd = yload(p)
-else:
-    yd = yload(IDENTIFIERS_DEFAULT)
+def load_identifiers_file():
+    p = os.path.join(paths.hidden_dir, 'identifiers.yaml')
+    if os.path.isfile(p):
+        yd = yload(p)
+    else:
+        yd = yload(IDENTIFIERS_DEFAULT)
+
+    for i, idn_d in enumerate(yd):
+        key = idn_d['shortname']
+        value = idn_d['name']
+        ANALYSIS_MAPPING[key] = value
+
+        underscore_name = value.lower().replace(' ', '_')
+
+        ANALYSIS_MAPPING_INTS[underscore_name] = i
+        ANALYSIS_MAPPING_UNDERSCORE_KEY[underscore_name] = key
+
+        if not idn_d['extractable']:
+            NON_EXTRACTABLE[key] = value
+
+        if idn_d['special']:
+            SPECIAL_MAPPING[underscore_name] = key
+            SPECIAL_NAMES.append(value)
+            SPECIAL_KEYS.append(key)
 
 
-for i, idn_d in enumerate(yd):
-    key = idn_d['shortname']
-    value = idn_d['name']
-    ANALYSIS_MAPPING[key] = value
-
-    underscore_name = value.lower().replace(' ', '_')
-
-    ANALYSIS_MAPPING_INTS[underscore_name] = i
-    ANALYSIS_MAPPING_UNDERSCORE_KEY[underscore_name] = key
-
-    if not idn_d['extractable']:
-        NON_EXTRACTABLE[key] = value
-
-    if idn_d['special']:
-        SPECIAL_MAPPING[underscore_name] = key
-        SPECIAL_NAMES.append(value)
-        SPECIAL_KEYS.append(key)
+try:
+    load_identifiers_file()
+except BaseException:
+    print('failed loading identifier file')
 
 
 def convert_identifier_to_int(ln):

@@ -41,6 +41,7 @@ from pychron.experiment.datahub import Datahub
 from pychron.experiment.queue.increment_heat_template import LaserIncrementalHeatTemplate, BaseIncrementalHeatTemplate
 from pychron.experiment.queue.run_block import RunBlock
 from pychron.experiment.script.script import Script, ScriptOptions
+from pychron.experiment.utilities.comment_template import CommentTemplater
 from pychron.experiment.utilities.frequency_edit_view import FrequencyModel
 from pychron.experiment.utilities.identifier import convert_special_name, ANALYSIS_MAPPING, NON_EXTRACTABLE, \
     make_special_identifier, make_standard_identifier, SPECIAL_KEYS
@@ -71,10 +72,6 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     default_fits_enabled = Bool
     # ===================================
     simple_identifier_manager = Instance('pychron.entry.simple_identifier_manager.SimpleIdentifierManager')
-    # selected_project = Any
-    # selected_sample = Any
-    # projects = List
-    # samples = List
 
     factory_view = Instance(FactoryView)
     factory_view_klass = FactoryView
@@ -124,6 +121,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     comment = String(auto_set=False, enter_set=True, maxlen=200)
     auto_fill_comment = Bool
     edit_comment_template = Button
+    apply_comment_button = Event
+
     _comment_templater = None
 
     position = Property(depends_on='_position')
@@ -412,10 +411,49 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         self.refresh_table_needed = True
         self._auto_save()
 
+    def do_apply_stepheat(self, queue):
+        dh = self.datahub
+        aliquots = {}
+
+        sruns = self._selected_runs
+        aruns = queue.automated_runs
+
+        for ln, runs in groupby_key(sruns, 'identifier'):
+            gal = dh.get_greatest_aliquot(ln)
+            rgal = max([r.aliquot for r in aruns if r.identifier == ln])
+            aliquot = max(gal, rgal)
+            aliquots[ln] = aliquot
+
+        template = self._new_template()
+        new_runs = []
+        for r in sruns:
+            gal = aliquots[r.identifier]
+            aliquot = gal + 1
+            aliquots[r.identifier] = aliquot
+
+            idx = aruns.index(r)
+            i = 0
+            for st in template.steps:
+                if st.value and (st.duration or st.cleanup):
+                    if i == 0:
+                        arv = r
+                    else:
+                        arv = self._new_run(position=r.position,
+                                            excludes=['position'])
+
+                    arv.trait_set(user_defined_aliquot=aliquot,
+                                  **st.make_dict(self.duration, self.cleanup))
+                    new_runs.append((idx, arv))
+                    i += 1
+
+        for idx, r in reversed(new_runs):
+            if r in aruns:
+                aruns.remove(r)
+            aruns.insert(idx, r)
+
     # ===============================================================================
     # private
     # ===============================================================================
-
     def _auto_save(self):
         self.auto_save_needed = True
 
@@ -1245,6 +1283,32 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         else:
             self.warning_dialog('DVC Plugin not enabled')
 
+    def _apply_comment_template(self):
+        ct = self._comment_templater
+        if not ct:
+            ct = CommentTemplater()
+
+        for idn, runs in groupby_key(self._selected_runs, 'identifier'):
+
+            with self.db.session_ctx():
+                ipos = self.db.get_identifier(idn)
+
+                if ipos:
+                    level = ipos.level
+                    if level:
+                        pos = ipos.position
+
+                        obj = {'irrad_level': level.name, 'irrad_hole': pos}
+                        cmt = ct.render(obj)
+                        for ri in runs:
+                            ri.comment = cmt
+
+    def _edit_run_blocks(self):
+        from pychron.experiment.queue.run_block import RunBlockEditView
+
+        rbev = RunBlockEditView()
+        rbev.edit_traits()
+
     # ===============================================================================
     # handlers
     # ===============================================================================
@@ -1273,12 +1337,6 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     def _handle_prefix(self, name, new):
         for si in self._iter_scripts():
             setattr(si, name, new)
-
-    def _edit_run_blocks(self):
-        from pychron.experiment.queue.run_block import RunBlockEditView
-
-        rbev = RunBlockEditView()
-        rbev.edit_traits()
 
     def _edit_frequency_button_fired(self):
         from pychron.experiment.utilities.frequency_edit_view import FrequencyEditView
@@ -1489,46 +1547,6 @@ post_equilibration_script:name''')
         else:
             self.comment = ''
 
-    def do_apply_stepheat(self, queue):
-        dh = self.datahub
-        aliquots = {}
-
-        sruns = self._selected_runs
-        aruns = queue.automated_runs
-
-        for ln, runs in groupby_key(sruns, 'identifier'):
-            gal = dh.get_greatest_aliquot(ln)
-            rgal = max([r.aliquot for r in aruns if r.identifier == ln])
-            aliquot = max(gal, rgal)
-            aliquots[ln] = aliquot
-
-        template = self._new_template()
-        new_runs = []
-        for r in sruns:
-            gal = aliquots[r.identifier]
-            aliquot = gal + 1
-            aliquots[r.identifier] = aliquot
-
-            idx = aruns.index(r)
-            i = 0
-            for st in template.steps:
-                if st.value and (st.duration or st.cleanup):
-                    if i == 0:
-                        arv = r
-                    else:
-                        arv = self._new_run(position=r.position,
-                                            excludes=['position'])
-
-                    arv.trait_set(user_defined_aliquot=aliquot,
-                                  **st.make_dict(self.duration, self.cleanup))
-                    new_runs.append((idx, arv))
-                    i += 1
-
-        for idx, r in reversed(new_runs):
-            if r in aruns:
-                aruns.remove(r)
-            aruns.insert(idx, r)
-
     def _edit_template_fired(self):
         temp = self._new_template()
         temp.names = list_directory(paths.incremental_heat_template_dir, extension='.txt')
@@ -1569,6 +1587,11 @@ post_equilibration_script:name''')
         self.aliquot = 0
         self.suppress_update = False
 
+    def _apply_comment_button_fired(self):
+        if self._selected_runs and self.edit_mode:
+            self._apply_comment_template()
+        else:
+            self.warning_dialog('Please select one or more runs')
     # ===============================================================================
     # defaults
     # ================================================================================

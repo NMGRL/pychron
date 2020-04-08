@@ -1,6 +1,7 @@
 import os
 import unittest
 
+from pychron.core.helpers.tests.floatfmt import SigFigStdFmtTestCase
 from pychron.core.stats.tests.mswd_tests import MSWDTestCase
 from pychron.pyscripts.tests.extraction_script import WaitForTestCase
 
@@ -82,6 +83,7 @@ def suite():
         FilteringTestCase,
         MultiPeakDetectionTestCase,
         FloatfmtTestCase,
+        SigFigStdFmtTestCase,
         CamelCaseTestCase,
         RatioTestCase,
         XMLParserTestCase,

@@ -28,6 +28,10 @@ class ChromiumLaserManager(EthernetLaserManager):
     configuration_dir_name = 'chromium'
     _alive = False
 
+    def set_tray(self, t):
+        if self.stage_manager:
+            self.stage_manager.stage_map_name = t
+
     def end_extract(self, *args, **kw):
         self.ask('laser.stop')
 

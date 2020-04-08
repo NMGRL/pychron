@@ -121,6 +121,7 @@ class PlotPanel(Loggable):
     series_cnt = 0
 
     total_counts = CInt
+    total_seconds = CInt
 
     is_baseline = Bool(False)
     is_peak_hop = Bool(False)
@@ -157,6 +158,12 @@ class PlotPanel(Loggable):
         else:
             super(PlotPanel, self).info(*args, **kw)
 
+    def start(self):
+        self.total_counts = 0
+        self.total_seconds = 0
+        self.is_peak_hop = False
+        self.is_baseline = False
+
     def reset(self):
         self.debug('clearing graphs')
         # self.isotope_graph.clear()
@@ -186,19 +193,6 @@ class PlotPanel(Loggable):
             self.baseline_graph.refresh()
         else:
             self.isotope_graph.refresh()
-
-        # if self.figure and isinstance(self.isotope_group, ArArAge):
-        #     age = self.isotope_group.uage
-        #     k39 = self.isotope_group.get_computed_value('k39')
-        #     v, e = nominal_value(age), std_dev(age)
-        #
-        #     self.debug('update figure age={} +/- {}. k39={}'.format(v, e, nominal_value(k39)))
-        #
-        #     a = self.figure.analyses[-1]
-        #     a.uage = age
-        #     a.k39 = k39
-        #
-        #     self.figure.replot()
 
     def new_isotope_plot(self, **kw):
         plots = self._new_plot(isotope_only=True, **kw)
@@ -282,6 +276,8 @@ class PlotPanel(Loggable):
 
     def set_ncounts(self, v):
         self._ncounts = v
+        self.total_seconds += (self.integration_time*v)
+        self.total_counts += v
 
     def _set_ncounts(self, v):
 

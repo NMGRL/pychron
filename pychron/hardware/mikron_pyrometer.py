@@ -15,18 +15,17 @@
 # ===============================================================================
 
 
-
 # =============enthought library imports=======================
-from __future__ import absolute_import
 from traits.api import Float, Property, Button, Bool, Str, String
 from traitsui.api import Item, spring, Group, HGroup, \
     RangeEditor, ButtonEditor, UItem, EnumEditor
-# =============standard library imports ========================
 
-# =============local library imports  ==========================
-from .core.core_device import CoreDevice
 # from pychron.core import Q_
 from pychron.core.ui.color_map_bar_editor import BarGaugeEditor
+# =============local library imports  ==========================
+from .core.core_device import CoreDevice
+
+# =============standard library imports ========================
 
 TIME_CONSTANTS = {'0': 'Intrinsic', '1': '0.01 s',
                   '2': '0.05 s', '3': '0.25', '4': '1.00 s',
@@ -66,7 +65,7 @@ class MikronGA140Pyrometer(CoreDevice):
     temperature = Float
     qtemperature = None
 
-    char_write = True
+    # char_write = True
     scan_func = 'read_temperature'
 
     def initialize(self, *args, **kw):
@@ -81,10 +80,10 @@ class MikronGA140Pyrometer(CoreDevice):
         """
 
         """
-        self.communicator.char_write = True
+        # self.communicator.char_write = True
         return True
 
-    #REsponseRecorder Interface
+    # ResponseRecorder Interface
     def get_response(self, **kw):
         return self.temperature
 

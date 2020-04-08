@@ -22,4 +22,7 @@ class EthernetLaserManager(RemoteLaserManager, EthernetDeviceMixin):
     def open(self, *args, **kw):
         return EthernetDeviceMixin.open(self)
 
+    def _test_connection_hook(self):
+        r = self.opened()
+        self.connected = bool(r)
 # ============= EOF =============================================

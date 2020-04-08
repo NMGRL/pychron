@@ -355,6 +355,7 @@ class StageManager(BaseStageManager):
 
     def get_hole_xy(self, key):
         pos = self.stage_map.get_hole_pos(key)
+        self.debug('hole: {} original x,y = {}'.format(key, pos))
         if pos:
             # map the position to calibrated space
             pos = self.get_calibrated_position(pos)

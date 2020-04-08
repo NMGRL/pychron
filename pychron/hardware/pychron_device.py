@@ -19,8 +19,6 @@ from traits.api import CInt, Str, Bool
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.hardware.core.communicators.ethernet_communicator import EthernetCommunicator
-from pychron.hardware.core.communicators.serial_communicator import SerialCommunicator
 from pychron.loggable import Loggable
 
 
@@ -59,13 +57,17 @@ class SerialDeviceMixin(RemoteDeviceMixin):
     parity = Str
     stopbits = Str
     read_delay = CInt
+    timeout = CInt
+
     def setup_communicator(self):
+        from pychron.hardware.core.communicators.serial_communicator import SerialCommunicator
         self.communicator = ec = SerialCommunicator(port=self.port,
                                                     baudrate=self.baudrate,
-                                                    read_delay=self.read_delay)
+                                                    read_delay=self.read_delay,
+                                                    )
         ec.set_parity(self.parity)
         ec.set_stopbits(self.stopbits)
-        r = ec.open()
+        r = ec.open(timeout=self.timeout)
         # if r:
         #     r = self.opened()
         #     self.connected = bool(r)
@@ -78,6 +80,7 @@ class EthernetDeviceMixin(RemoteDeviceMixin):
     host = Str
 
     def setup_communicator(self):
+        from pychron.hardware.core.communicators.ethernet_communicator import EthernetCommunicator
         self.communicator = ec = EthernetCommunicator(host=self.host,
                                                       port=self.port,
                                                       kind=self.kind,

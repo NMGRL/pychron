@@ -32,7 +32,7 @@ from pychron.processing.arar_age import ArArAge
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
 from pychron.pychron_constants import MSEM, SD, SUBGROUPING_ATTRS, ERROR_TYPES, WEIGHTED_MEAN, \
     DEFAULT_INTEGRATED, SUBGROUPINGS, ARITHMETIC_MEAN, PLATEAU_ELSE_WEIGHTED_MEAN, WEIGHTINGS, FLECK, NULL_STR, \
-    ISOCHRON
+    ISOCHRON, MSE, SE
 
 
 def AGProperty(*depends):
@@ -78,7 +78,8 @@ class AnalysisGroup(IdeogramPlotable):
 
     mswd = Property
 
-    isochron_age_error_kind = Str
+    isochron_age_error_kind = Str(SE)
+    isochron_method = Str('York')
 
     identifier = Any
     aliquot = Any
@@ -193,7 +194,7 @@ class AnalysisGroup(IdeogramPlotable):
     def get_mswd_tuple(self):
         mswd = self.mswd
         valid_mswd = validate_mswd(mswd, self.nanalyses)
-        return mswd, valid_mswd, self.nanalyses, calculate_mswd_probability(mswd, self.nanalyses-1)
+        return mswd, valid_mswd, self.nanalyses, calculate_mswd_probability(mswd, self.nanalyses - 1)
 
     def set_external_error(self, individual, mean, decay, dirty=False):
         self.include_j_position_error = individual
@@ -242,7 +243,7 @@ class AnalysisGroup(IdeogramPlotable):
 
         exclude = [i for i, x in enumerate(ans) if test(x)]
         if ans:
-            return calculate_isochron(ans, self.isochron_age_error_kind, exclude=exclude)
+            return calculate_isochron(ans, self.isochron_age_error_kind, reg=self.isochron_method, exclude=exclude)
 
     def calculate_isochron_age(self, exclude_non_plateau=False):
         args = self.get_isochron_data(exclude_non_plateau)
@@ -397,18 +398,22 @@ class AnalysisGroup(IdeogramPlotable):
         return m
 
     def _apply_external_err(self, wa, force=False):
-        v, e = nominal_value(wa), std_dev(wa)
-        v = abs(v)
-        try:
-            pa = e / v
-        except ZeroDivisionError:
-            pa = 0
+        def func(aa):
+            v, e = nominal_value(aa), std_dev(aa)
+            v = abs(v)
+            try:
+                pa = e / v
+            except ZeroDivisionError:
+                pa = 0
+            return v, e, pa
 
-        if self.include_j_error_in_mean or force:
+        if self.include_j_error_in_mean:
+            v, e, pa = func(wa)
             ne = (pa ** 2 + self.j_err ** 2) ** 0.5
             wa = ufloat(v, ne * v)
 
-        if self.include_decay_error_mean or force:
+        if self.include_decay_error_mean:
+            v, e, pa = func(wa)
             k = self.arar_constants.lambda_k
             de = 0
             try:
@@ -416,8 +421,8 @@ class AnalysisGroup(IdeogramPlotable):
             except ZeroDivisionError:
                 pass
 
-            ne = (pa**2 + de**2)**0.5
-            wa = ufloat(v, ne*v)
+            ne = (pa ** 2 + de ** 2) ** 0.5
+            wa = ufloat(v, ne * v)
 
         return wa
 
@@ -426,7 +431,7 @@ class AnalysisGroup(IdeogramPlotable):
         if mswd is None:
             mswd = self.mswd
 
-        if kind == MSEM:
+        if kind in (MSE, MSEM):
             e *= mswd ** 0.5 if mswd > 1 else 1
 
         return e
@@ -481,7 +486,7 @@ class AnalysisGroup(IdeogramPlotable):
             else:
                 av = vs.mean()
                 werr = vs.std(ddof=1)
-                sem = werr/len(vs)**0.5
+                sem = werr / len(vs) ** 0.5
         else:
             av, werr = 0, 0
 
@@ -545,17 +550,23 @@ class AnalysisGroup(IdeogramPlotable):
                 return v
 
             if attr in ('kca', 'kcl', 'signal_k39'):
-                ks = array([ai.get_computed_value('k39') for ai in ans])
+                ks = array([ai.k39 for ai in ans])
 
                 if attr == 'kca':
                     cas = array([ai.get_non_ar_isotope('ca37') for ai in ans])
                     f = self._calculate_integrated_mean_error(weighting, ks, cas)
-                    uv = 1 / apply_pr(f, 'Ca_K')
+                    try:
+                        uv = 1 / apply_pr(f, 'Ca_K')
+                    except ZeroDivisionError:
+                        uv = 0
 
                 elif attr == 'kcl':
                     cls = array([ai.get_non_ar_isotope('cl38') for ai in ans])
                     f = self._calculate_integrated_mean_error(weighting, ks, cls)
-                    uv = 1 / apply_pr(f, 'Cl_K')
+                    try:
+                        uv = 1 / apply_pr(f, 'Cl_K')
+                    except ZeroDivisionError:
+                        uv = 0
 
                 elif attr == 'signal_k39':
                     uv = ks.sum()
@@ -587,7 +598,7 @@ class AnalysisGroup(IdeogramPlotable):
                 weighting = self.integrated_age_weighting
 
             rs = array([a.get_computed_value('rad40') for a in ans])
-            ks = array([a.get_computed_value('k39') for a in ans])
+            ks = array([a.k39 for a in ans])
             f = self._calculate_integrated_mean_error(weighting, ks, rs)
 
             j = self.j
@@ -606,7 +617,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     plateau_age = AGProperty()
     integrated_age = AGProperty()
 
-    integrated_include_omitted = Bool(False)
+    integrated_include_omitted = Bool(True)
     include_j_error_in_plateau = Bool(True)
     plateau_steps_str = Str
     plateau_steps = None
@@ -659,15 +670,15 @@ class StepHeatAnalysisGroup(AnalysisGroup):
 
     @cached_property
     def _get_total_ar39(self):
-        total = sum([a.get_computed_value('k39') for a in self.analyses])
+        total = sum([a.k39 for a in self.analyses])
         return nominal_value(total)
 
     def plateau_total_ar39(self):
-        ptotal = sum([a.get_computed_value('k39') for a in self.plateau_analyses()])
+        ptotal = sum([a.k39 for a in self.plateau_analyses()])
         return nominal_value(ptotal / self.total_ar39 * 100)
 
     def valid_total_ar39(self):
-        cleantotal = sum([a.get_computed_value('k39') for a in self.clean_analyses()])
+        cleantotal = sum([a.k39 for a in self.clean_analyses()])
         return nominal_value(cleantotal / self.total_ar39 * 100)
 
     def cumulative_ar39(self, idx):
@@ -675,13 +686,13 @@ class StepHeatAnalysisGroup(AnalysisGroup):
         for i, a in enumerate(self.analyses):
             if i > idx:
                 break
-            cum += a.get_computed_value('k39')
+            cum += a.k39
 
         return nominal_value(cum / self.total_ar39 * 100)
 
     def get_plateau_mswd_tuple(self):
         return self.plateau_mswd, self.plateau_mswd_valid, \
-               self.nsteps, calculate_mswd_probability(self.plateau_mswd, self.nsteps-1)
+               self.nsteps, calculate_mswd_probability(self.plateau_mswd, self.nsteps - 1)
 
     def calculate_plateau(self):
         return self.plateau_age
@@ -736,7 +747,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
                 ages = [ai.age for ai in ans]
                 errors = [ai.age_err for ai in ans]
 
-                k39 = [nominal_value(ai.get_computed_value('k39')) for ai in ans]
+                k39 = [nominal_value(ai.k39) for ai in ans]
 
                 options = {'nsteps': self.plateau_nsteps,
                            'gas_fraction': self.plateau_gas_fraction,

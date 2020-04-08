@@ -37,10 +37,12 @@ from pychron.experiment.tasks.experiment_panes import ExperimentFactoryPane, Sta
     ControlsPane, IsotopeEvolutionPane, ConnectionStatusPane, LoggerPane, ExplanationPane
 from pychron.experiment.utilities.identifier import convert_extract_device, is_special
 from pychron.experiment.utilities.save_dialog import ExperimentSaveDialog
+from pychron.globals import globalv
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.paths import paths
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pychron_constants import SPECTROMETER_PROTOCOL, DVC_PROTOCOL, COCKTAIL, AIR, BLANK
+from pychron.globals import globalv
 
 
 class ExperimentEditorTask(EditorTask):
@@ -606,7 +608,12 @@ class ExperimentEditorTask(EditorTask):
                 break
 
     def execute(self):
-        # self.debug('execute event {} {}'.format(id(self), id(obj)))
+        # self.debug('execute event {} {}'.format(id(self), id(obj))
+        if globalv.experiment_debug:
+            if not self.confirmation_dialog('The Experiment Debug global flag is set. Are you sure you want to '
+                                            'continue? If you have do not know what this means you likely do not want '
+                                            'to continue and should contact an expert.'):
+                return
 
         if self.editor_area.editors:
             try:
