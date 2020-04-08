@@ -18,15 +18,41 @@
 # ============= standard library imports ========================
 from __future__ import absolute_import
 
+import math
+
 from numpy import array
 from six.moves import zip
 # ============= local library imports  ==========================
-from uncertainties import std_dev, nominal_value
+from uncertainties import std_dev, nominal_value, ufloat
 
 from pychron.pipeline.plot.plotter.references_series import ReferencesSeries
 
 
 class ICFactor(ReferencesSeries):
+    # def set_interpolated_values(self, iso, reg, fit):
+    # if self.options.use_source_correction:
+    #     for a in self.sorted_analyses:
+    #
+    #         a.set_air_source_correction(r)
+    # else:
+    #     return super(ICFactor, self).set_interpolated_values(iso, reg, fit)
+    # mi, ma = self._get_min_max()
+    # # mi =
+    # ans = self.sorted_analyses
+    #
+    # xs = [(ai.timestamp - ma) / self._normalization_factor for ai in ans]
+    # p_uys = reg.predict(xs)
+    # p_ues = reg.predict_error(xs)
+    #
+    # if p_ues is None or any(isnan(p_ues)) or any(isinf(p_ues)):
+    #     p_ues = zeros_like(xs)
+    #
+    # if p_uys is None or any(isnan(p_uys)) or any(isinf(p_uys)):
+    #     p_uys = zeros_like(xs)
+    #
+    # self._set_interpolated_values(iso, fit, ans, p_uys, p_ues)
+    # return asarray(p_uys), asarray(p_ues)
+
     def _get_plot_label_text(self, po):
         n, d = po.name.split('/')
 
@@ -39,7 +65,7 @@ class ICFactor(ReferencesSeries):
 
     def _get_interpolated_value(self, po, analysis):
         n, d = po.name.split('/')
-        #iso = next((i for i in analysis.isotopes.itervalues() if i.detector == d), None)
+        # iso = next((i for i in analysis.isotopes.itervalues() if i.detector == d), None)
         v, e = 0, 0
         if d in analysis.temporary_ic_factors:
             ic = analysis.temporary_ic_factors[d]
@@ -51,7 +77,16 @@ class ICFactor(ReferencesSeries):
         n, d = iso.split('/')
         for ui, v, e in zip(ans, p_uys, p_ues):
             if v is not None and e is not None:
-                ui.set_temporary_ic_factor(d, v, e)
+                if self.options.use_source_correction:
+                    # this is all hard coded stuff and would need to be
+                    # made much more configurable in the future
+                    m36 = 35.967545105
+                    m40 = 39.9623831238
+                    ic = 1 / ufloat(v, e)
+                    alpha = 0.25 * math.log(ic) / math.log(m40/m36)
+                    ui.set_alpha(alpha)
+                else:
+                    ui.set_temporary_ic_factor(d, v, e)
 
     def _get_current_data(self, po):
         if '/' in po.name:
