@@ -45,6 +45,7 @@ class Globals(object):
     ignore_initialization_required = False
     ignore_initialization_questions = False
     ignore_shareable = False
+    ignore_plugin_warnings = False
 
     video_test = False
     #    video_test = True
@@ -114,6 +115,7 @@ class Globals(object):
 
     def build(self, ip):
         for attr, func in [('use_ipc', to_bool),
+                           ('ignore_plugin_warnings', to_bool),
                            ('ignore_initialization_warnings', to_bool),
                            ('ignore_connection_warnings', to_bool),
                            ('ignore_chiller_unavailable', to_bool),

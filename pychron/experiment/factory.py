@@ -144,7 +144,7 @@ class ExperimentFactory(DVCAble):
                     missing.append('"Load"')
             if self.run_factory.run_block in ('RunBlock', LINE_STR):
                 if not self.labnumber:
-                    missing.append('"Labnumber"')
+                    missing.append('"Identifier"')
 
             f = 'a value'
             if len(missing) > 1:

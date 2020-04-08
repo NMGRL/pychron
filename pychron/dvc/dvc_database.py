@@ -857,6 +857,12 @@ class DVCDatabase(DatabaseAdapter):
     def get_simple_identifier(self, sid):
         with self.session_ctx() as sess:
             q = sess.query(SimpleIdentifierTbl)
+            q = q.filter(SimpleIdentifierTbl.id == sid)
+            return self._query_one(q)
+
+    def get_simple_identifier_by_sample(self, sid):
+        with self.session_ctx() as sess:
+            q = sess.query(SimpleIdentifierTbl)
             q = q.join(SampleTbl)
             q = q.filter(SampleTbl.id == sid)
             return self._query_one(q)
