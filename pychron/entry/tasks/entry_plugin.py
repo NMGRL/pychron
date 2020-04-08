@@ -29,6 +29,7 @@ from pychron.entry.tasks.actions import MakeIrradiationBookPDFAction, MakeIrradi
     ImportIrradiationGeometryAction, ExportIrradiationAction, ImportIrradiationAction, \
     TransferJAction, ImportIrradiationFileAction, GetIGSNAction, GenerateIrradiationTableAction, \
     GenerateStatusReportAction, ImportAnalysesAction, EditIrradiationGeometryAction
+from pychron.entry.tasks.basic.actions import BasicEntryAction
 from pychron.entry.tasks.labnumber.actions import LabnumberEntryAction
 from pychron.entry.tasks.preferences import LabnumberEntryPreferencesPane, SamplePrepPreferencesPane, \
     SampleEntryPreferencesPane
@@ -126,6 +127,8 @@ class EntryPlugin(BaseTaskPlugin):
                                  path=spath, after='pychron.entry1.sample_prep'),
                   SchemaAddition(id='pychron.entry1.project', factory=ProjectAction,
                                  path=gpath),
+                  SchemaAddition(id='pychron.entry1.basic', factory=BasicEntryAction,
+                                 path=gpath),
                   SchemaAddition(id='pychron.entry2.import_analyses', factory=ImportAnalysesAction, path=g2path),
                   SchemaAddition(id='pychron.entry2.import_irradiation', factory=ImportIrradiationAction, path=g2path),
                   SchemaAddition(id='pychron.entry1.make_template', factory=MakeIrradiationTemplateAction,
@@ -161,7 +164,11 @@ class EntryPlugin(BaseTaskPlugin):
                             include_view_menu=False),
                 TaskFactory(id='pychron.entry.project.task',
                             factory=self._project_task_factory,
-                            include_view_menu=False)]
+                            include_view_menu=False),
+                TaskFactory(id='pychron.entry.basic.task',
+                            factory=self._basic_task_factory,
+                            include_view_menu=False),
+                ]
 
     def _project_task_factory(self):
         from pychron.entry.tasks.project.task import ProjectTask
@@ -183,8 +190,11 @@ class EntryPlugin(BaseTaskPlugin):
 
     def _sensitivity_entry_task_factory(self):
         from pychron.entry.tasks.sensitivity.task import SensitivityEntryTask
-
         return SensitivityEntryTask(application=self.application)
+
+    def _basic_task_factory(self):
+        from pychron.entry.tasks.basic.task import BasicEntryTask
+        return BasicEntryTask(application=self.application)
 
     def _preferences_panes_default(self):
         return [LabnumberEntryPreferencesPane,

@@ -21,7 +21,6 @@ from pychron.spectrometer.thermo.source.base import ThermoSource
 
 
 class HelixSource(ThermoSource):
-    nominal_hv = 9900
 
     _flatapole = Float
     _rotation_quad = Float
@@ -32,6 +31,9 @@ class HelixSource(ThermoSource):
     rotation_quad = Property(depends_on='_rotation_quad')
     vertical_deflection_n = Property(depends_on='_vertical_deflection_n')
     vertical_deflection_s = Property(depends_on='_vertical_deflection_s')
+
+    def _nominal_hv_default(self):
+        return 9900
 
     def read_flatapole(self):
         return self._read_value('GetParameter DAC_1_0_(Flata-Pole)', '_flatapole')

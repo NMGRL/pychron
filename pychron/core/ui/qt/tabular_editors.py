@@ -19,7 +19,7 @@ from __future__ import absolute_import
 
 from pyface.qt.QtCore import QRegExp, Qt
 from pyface.qt.QtGui import QHBoxLayout, QPushButton, QSizePolicy, QLineEdit, QCheckBox, \
-    QSortFilterProxyModel, QItemSelectionModel
+    QSortFilterProxyModel
 from traits.trait_types import Str, Bool, Any, Int
 
 from pychron.core.ui.qt.tabular_editor import myTabularEditor, _TableView, _TabularEditor
@@ -210,12 +210,8 @@ class _FilterTabularEditor(_TabularEditor):
         """
         self._no_update = True
         try:
-            index = None
-            indexes = self.control.selectionModel()
-            if isinstance(indexes, QItemSelectionModel):
-                index = self.proxyModel.mapFromSource(indexes.currentIndex())
-            elif len(indexes):
-                index = self.proxyModel.mapToSource(indexes[0])
+            indexes = self.control.selectionModel().selectedRows()
+            index = self.proxyModel.mapToSource(indexes[0])
 
             if index:
                 self.selected_row = index.row()

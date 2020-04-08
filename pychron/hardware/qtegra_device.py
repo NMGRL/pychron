@@ -15,9 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import Dict
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from __future__ import absolute_import
 from pychron.hardware.core.core_device import CoreDevice
 
 
@@ -31,6 +31,8 @@ class QtegraDevice(CoreDevice):
         type=ethernet
         host=localhost
         port=1069
+        [Parameters]
+        manometer=MKS 1000
 
         dashboard.yaml
         - name: JanMonitor
@@ -50,27 +52,43 @@ class QtegraDevice(CoreDevice):
               enabled: True
               period: on_change
     """
+    _parameters = Dict
 
-    # auto_handle_response = False
+    def load_additional_args(self, config):
+
+        section = 'Parameters'
+        if config.has_section(section):
+            for opt in config.options(section):
+                v = config.get(section, opt)
+                self._parameters[opt] = v
+
+        return True
+
+    def __getattr__(self, item):
+        if item.startswith('read_'):
+            param = self._parameters.get(item[5:])
+            if param:
+                return self.get_parameter(param)
 
     def read_decabin_temperature(self, **kw):
-        v = self.ask('GetParameter Temp1')
-        v = self._parse_response(v)
+        v = self.get_parameter('Temp1')
         if v is not None:
             self.last_response = str(round(v, 1))
 
         return v
 
     def read_trap_current(self, **kw):
-        v = self.ask('GetParameter Trap Current Readback')
-        return self._parse_response(v)
+        return self.get_parameter('Trap Current Readback')
 
     def read_emission(self, **kw):
-        v = self.ask('GetParameter Source Current Readback')
-        return self._parse_response(v)
+        return self.get_parameter('Source Current Readback')
 
     def read_hv(self):
         v = self.ask('GetHV')
+        return self._parse_response(v)
+
+    def get_parameter(self, m):
+        v = self.ask('GetParameter {}'.format(m))
         return self._parse_response(v)
 
     def _parse_response(self, v):

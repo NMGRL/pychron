@@ -42,7 +42,6 @@ from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.paths import paths
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pychron_constants import SPECTROMETER_PROTOCOL, DVC_PROTOCOL, COCKTAIL, AIR, BLANK
-from pychron.globals import globalv
 
 
 class ExperimentEditorTask(EditorTask):
@@ -153,6 +152,7 @@ class ExperimentEditorTask(EditorTask):
                 self._open_editor(editor)
                 if self.loading_manager:
                     self.loading_manager.clear()
+                    self.manager.experiment_factory.loading_manager = self.loading_manager
 
                 if not self.manager.executor.is_alive():
                     self.manager.executor.executable = False

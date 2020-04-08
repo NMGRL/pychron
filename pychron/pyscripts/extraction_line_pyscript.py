@@ -179,6 +179,12 @@ class ExtractionPyScript(ValvePyScript):
     # ==========================================================================
     @verbose_skip
     @command_register
+    def get_manometer_pressure(self, idx=0):
+        result = self._manager_action(('get_manometer_pressure', (), {'idx': idx}), protocol=EL_PROTOCOL)
+        return result
+
+    @verbose_skip
+    @command_register
     def get_pressure(self, controller, gauge):
         result = self._manager_action(('get_pressure', (controller, gauge), {}), protocol=EL_PROTOCOL)
         return result
@@ -411,7 +417,7 @@ class ExtractionPyScript(ValvePyScript):
 
         name = '{}{}'.format(prefix, name)
         snap = self._extraction_action(('take_snapshot', (name, pic_format),
-                                       {'view_snapshot': view_snapshot}))
+                                        {'view_snapshot': view_snapshot}))
         if snap:
             self.snapshots.append(snap)
 
@@ -503,7 +509,7 @@ class ExtractionPyScript(ValvePyScript):
             ed = self.extract_device
             self.console_info('{} move to position {}'.format(ed, position))
             success = self._extraction_action(('move_to_position',
-                                              (position,), {'autocenter': autocenter, 'block': block}))
+                                               (position,), {'autocenter': autocenter, 'block': block}))
 
             if not success:
                 self.info('{} move to position failed'.format(ed))

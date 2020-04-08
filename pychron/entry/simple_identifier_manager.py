@@ -47,7 +47,7 @@ class SimpleIdentifierManager(Loggable):
 
     def set_identifier(self):
         self.debug('set identifier {}'.format(self.selected_sample))
-        identifier = self.dvc.get_simple_identifier(self.selected_sample.id)
+        identifier = self.dvc.get_simple_identifier_by_sample(self.selected_sample.id)
         if not identifier:
             self.debug('no identifier. adding simple identifier for {}'.format(self.selected_sample))
             self.dvc.add_simple_identifier(self.selected_sample.id)
@@ -59,9 +59,9 @@ class SimpleIdentifierManager(Loggable):
     # handlers
     def _selected_sample_changed(self, new):
         if new and self.factory:
-            identifiers = [i.identifier for i in self.dvc.db.get_sample_simple_identifiers(new.id)]
+            identifiers = [str(i.identifier) for i in self.dvc.db.get_sample_simple_identifiers(new.id)]
             self.factory.set_identifiers(identifiers)
-            self.factory.labnumber = new.identifier
+            self.factory.labnumber = str(new.identifier)
 
     def _project_filter_changed(self, new):
         if new:

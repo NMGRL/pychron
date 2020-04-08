@@ -19,11 +19,9 @@ import os
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from git import Repo, GitCommandError
+from git import Repo
 from git.exc import InvalidGitRepositoryError
-from pyface.confirmation_dialog import confirm
-from pyface.constant import YES
-from pyface.message_dialog import warning, information
+from pyface.message_dialog import warning
 from traits.api import Str, Bool, List, Button, Instance, Directory
 from traitsui.api import View, Item, EnumEditor, VGroup, HGroup
 
@@ -111,7 +109,8 @@ class UpdatePreferencesHelper(GitRepoPreferencesHelper):
 
             bs = get_branches(new)
 
-            remotes = [bi for bi in bs if bi.startswith('release') or bi in ('develop', 'master')]
+            remotes = [bi for bi in bs if bi.startswith('release') or bi.startswith('dev') or bi in ('develop', ' \
+                                                                                                            ''master')]
 
             localbranches = []
             if os.path.isdir(os.path.join(self.build_repo, '.git')):

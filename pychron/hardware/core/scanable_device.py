@@ -14,23 +14,17 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
-
-import os
-import time
-# ============= standard library imports ========================
-from threading import Lock
-
-from six.moves import zip
 from traits.api import Event, Property, Any, Bool, Float, Str, Instance, List
 from traitsui.api import HGroup, VGroup, Item, spring, ButtonEditor
-
+# ============= standard library imports ========================
+import os
+import time
+from threading import Lock
+# ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import generate_datetimestamp
 from pychron.database.data_warehouse import DataWarehouse
 from pychron.graph.plot_record import PlotRecord
 from pychron.hardware.core.alarm import Alarm
-# ============= local library imports  ==========================
 from pychron.hardware.core.viewable_device import ViewableDevice
 from pychron.managers.data_managers.csv_data_manager import CSVDataManager
 from pychron.paths import paths
@@ -39,7 +33,6 @@ from pychron.paths import paths
 class ScanableDevice(ViewableDevice):
     scan_button = Event
     scan_label = Property(depends_on='_scanning')
-    _scanning = Bool(False)
 
     alarms = List(Alarm)
 
@@ -59,14 +52,13 @@ class ScanableDevice(ViewableDevice):
 
     graph = Instance('pychron.graph.graph.Graph')
     graph_ytitle = Str
-
-    data_manager = None
-    time_dict = dict(ms=1, s=1000, m=60.0 * 1000, h=60.0 * 60.0 * 1000)
-
-    dm_kind = 'csv'
-    use_db = False
-    _auto_started = False
     graph_klass = None
+
+    data_manager = Instance(CSVDataManager)
+    time_dict = dict(ms=1, s=1000, m=60000, h=3600000)
+
+    _scanning = Bool(False)
+    _auto_started = False
 
     def is_scanning(self):
         return self._scanning
@@ -91,8 +83,10 @@ class ScanableDevice(ViewableDevice):
                 self.set_attribute(config, 'scan_units', 'Scan', 'units')
                 self.set_attribute(config, 'record_scan_data', 'Scan', 'record', cast='boolean')
                 self.set_attribute(config, 'graph_scan_data', 'Scan', 'graph', cast='boolean')
-                # self.set_attribute(config, 'use_db', 'DataManager', 'use_db', cast='boolean', default=False)
-                # self.set_attribute(config, 'dm_kind', 'DataManager', 'kind', default='csv')
+
+                func = self.config_get(config, 'Scan', 'function', optional=True)
+                if func:
+                    self.scan_func = func
 
     def setup_alarms(self):
         config = self.get_configuration()
@@ -122,7 +116,6 @@ class ScanableDevice(ViewableDevice):
 
                 x = None
                 if self.graph_scan_data:
-                    self.debug('graphing scan data')
                     if isinstance(v, tuple):
                         x = self.graph.record_multiple(v)
                     elif isinstance(v, PlotRecord):
@@ -137,23 +130,14 @@ class ScanableDevice(ViewableDevice):
                     else:
                         x = self.graph.record(v)
                         v = (v,)
+
                 if self.record_scan_data:
                     self.debug('recording scan data')
                     if x is None:
                         x = time.time()
 
-                    if self.dm_kind == 'csv':
-                        ts = generate_datetimestamp()
-
-                        self.data_manager.write_to_frame((ts, '{:<8s}'.format('{:0.2f}'.format(x))) + v)
-                    else:
-                        tab = self.data_manager.get_table('scan1', '/scans')
-                        if tab is not None:
-                            r = tab.row
-                            r['time'] = x
-                            r['value'] = v[0]
-                            r.append()
-                            tab.flush()
+                    ts = generate_datetimestamp()
+                    self.data_manager.write_to_frame((ts, '{:<8s}'.format('{:0.2f}'.format(x))) + v)
 
                 self._scan_hook(v)
 
@@ -196,20 +180,11 @@ class ScanableDevice(ViewableDevice):
         # print self.scan_width, self.scan_period
         if self.graph_scan_data:
             self.info('Graph recording enabled')
-            self.graph.set_scan_width(d)
+            self.debug('scan width ={}'.format(d))
+            self.graph.set_scan_widths(d)
 
         if self.record_scan_data:
             self.info('Recording scan enabled')
-            if self.dm_kind == 'h5':
-                from pychron.managers.data_managers.h5_data_manager import H5DataManager
-
-                klass = H5DataManager
-            else:
-                klass = CSVDataManager
-
-            dm = self.data_manager
-            if dm is None:
-                self.data_manager = dm = klass()
 
             dm.delimiter = '\t'
 
@@ -219,13 +194,6 @@ class ScanableDevice(ViewableDevice):
             dm.new_frame(base_frame_name=self.name, directory=dw.get_current_dir())
             self.scan_path = dm.get_current_path()
 
-            if self.dm_kind == 'h5':
-                g = dm.new_group('scans')
-                dm.new_table(g, 'scan1')
-
-            if self.auto_start:
-                self.save_scan_to_db()
-
         if period is None:
             period = self.scan_period * self.time_dict[self.scan_units]
 
@@ -233,35 +201,12 @@ class ScanableDevice(ViewableDevice):
         self.timer = Timer(period, self.scan)
         self.info('Scan started func={} period={}'.format(self.scan_func, period))
 
-    def save_scan_to_db(self):
-        from pychron.database.adapters.device_scan_adapter import DeviceScanAdapter
-
-        db = DeviceScanAdapter(name=paths.device_scan_db,
-                               kind='sqlite')
-        db.connect()
-        dev = db.add_device(self.name, klass=self.__class__.__name__)
-        s = db.add_scan(dev)
-
-        path = self.scan_path
-        db.add_path(s, path)
-        self.info('saving scan {} to database {}'.format(path, paths.device_scan_db))
-
-        db.commit()
-
     def stop_scan(self):
         self.info('Stoppiing scan')
 
         self._scanning = False
         if self.timer is not None:
             self.timer.Stop()
-
-        if self.record_scan_data and not self._auto_started:
-            if self.use_db:
-                if self.confirmation_dialog('Save to Database'):
-                    self.save_scan_to_db()
-                else:
-                    if self.data_manager:
-                        self.data_manager.delete_frame()
 
         if self.data_manager:
             self.data_manager.close_file()
@@ -283,12 +228,15 @@ class ScanableDevice(ViewableDevice):
             self.stop_scan()
             self.start_scan()
 
+    def _data_manager_default(self):
+        return CSVDataManager()
+
     def _graph_default(self):
         from pychron.graph.time_series_graph import TimeSeriesStreamGraph
 
         klass = self.graph_klass
         if not klass:
-            klass =TimeSeriesStreamGraph
+            klass = TimeSeriesStreamGraph
 
         g = klass()
         self.graph_builder(g)

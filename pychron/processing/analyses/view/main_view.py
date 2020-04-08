@@ -237,7 +237,7 @@ class MainView(HasTraits):
             n, d = nd.split('/')
             ns = [i for i in self.isotopes if i.name == n]
             ds = [i for i in self.isotopes if i.name == d]
-
+            tag = name
             add_det_names = len(ns) > 1 or len(ds) > 1
             for ni in ns:
                 for di in ds:
@@ -246,6 +246,7 @@ class MainView(HasTraits):
                         name = '{}({})/{}({})'.format(ni.name, ni.detector, di.name, di.detector)
 
                     dr = DetectorRatio(name=name,
+                                       tag=tag,
                                        value='',
                                        error='',
                                        noncorrected_value=0,
@@ -352,19 +353,21 @@ class MainView(HasTraits):
             self._update_ratios()
 
             try:
-                niso, diso = self._get_ratio('Ar40/Ar36')
-                if niso and diso:
-                    noncorrected = self._get_non_corrected_ratio(niso, diso)
-                    v, e = nominal_value(noncorrected), std_dev(noncorrected)
-                    ref = 295.5
-                    ss = u'Ar40/Ar36={} {}{}({}%) IC={:0.5f}'.format(floatfmt(v),
-                                                                     PLUSMINUS, floatfmt(e),
-                                                                     format_percent_error(v, e),
-                                                                     nominal_value(noncorrected / ref))
+                # niso, diso = self._get_ratio('Ar40/Ar36')
+                # if niso and diso:
+                #     noncorrected = self._get_non_corrected_ratio(niso, diso)
+                #     v, e = nominal_value(noncorrected), std_dev(noncorrected)
+                ci = self.computed_values[0]
+                v = ci.value
+                e = ci.error
+                ss = u'Ar40/Ar36={} {}{}({}%) IC={:0.5f}'.format(floatfmt(v),
+                                                                 PLUSMINUS, floatfmt(e),
+                                                                 format_percent_error(v, e),
+                                                                 ci.calc_ic)
 
-                    self._set_summary_str(ss)
-            except:
-                pass
+                self._set_summary_str(ss)
+            except BaseException as exc:
+                print('load air computed', exc)
         else:
             # todo add ratios for other isotopes. e.g Ne
             pass

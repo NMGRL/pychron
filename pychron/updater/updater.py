@@ -350,7 +350,7 @@ class Updater(Loggable):
 
             p = self.build_repo
             if not p:
-                self.information_dialog('Please set "build repo" in Updater Preferences',
+                self.information_dialog('Please set "Build Directory" in Update Preferences',
                                         position=STARTUP_MESSAGE_POSITION)
                 return
 
@@ -360,7 +360,7 @@ class Updater(Loggable):
                     url = 'https://github.com/{}.git'.format(self.remote)
                     repo = Repo.clone_from(url, p)
                 else:
-                    self.information_dialog('Please set "remote" in Updater Preferences',
+                    self.information_dialog('Please set the Update Repo "Name" in Update Preferences',
                                             position=STARTUP_MESSAGE_POSITION)
                     return
             else:

@@ -67,7 +67,7 @@ class LoadSelection(HasTraits):
                                                               multi_select=True,
                                                               editable=False)),
                           width=300,
-                          title='Select Loads to Archive')
+                          title='Select Loads to Unarchive')
         return v
 
 
@@ -133,6 +133,11 @@ class GroupedPosition(LoadPosition):
         return make_position_str(self.positions)
 
 
+class Load(HasTraits):
+    name = Str
+    create_date = Str
+
+
 class LoadingManager(DVCIrradiationable):
     _pdf_writer = Instance(LoadingPDFWriter, ())
     dirty = Bool(False)
@@ -162,18 +167,16 @@ class LoadingManager(DVCIrradiationable):
     scroll_to_row = Int
     selected_positions = List
 
-    load_create_date = Str
-    # display_load_name = Str
-    # display_load_date = Str
-
-    load_name = Str
     loads = List
+    load_instance = Instance(Load)
+    selected_instances = List
 
     canvas = Any
 
     add_button = Button
     delete_button = Button
     archive_button = Button
+    unarchive_button = Button
 
     new_load_name = Str
     tray = Str
@@ -216,7 +219,6 @@ class LoadingManager(DVCIrradiationable):
         return True
 
     def clear(self):
-        self.load_name = ''
         if self.canvas:
             self.canvas.clear_all()
 
@@ -226,7 +228,7 @@ class LoadingManager(DVCIrradiationable):
         self.setup()
         if self.loads:
             self.use_measured = True
-            self.load_name = self.loads[-1]
+            self.load_instance = self.loads[-1]
             oeditable = self.canvas.editable
             self.canvas.editable = False
             lvsm = LoadViewSelectionModel(manager=self)
@@ -239,23 +241,31 @@ class LoadingManager(DVCIrradiationable):
         else:
             self.warning_dialog('No Loads available')
 
-    def load_load_by_name(self, loadtable):
+    def get_positions_for_load(self, name):
+        self.debug('get positions for load "{}"'.format(name))
+        with self.dvc.session_ctx():
+            loadtable = self.dvc.get_loadtable(name)
+            if loadtable:
+                return [(p.identifier, p.position) for p in loadtable.loaded_positions if p.identifier and p.position]
+            else:
+                self.warning_dialog('No Positions specified in load "{}"'.format(name))
 
-        self.canvas = self.make_canvas(loadtable)
+    def load_load_by_name(self):
+        self.tray = ''
 
-        if isinstance(loadtable, str):
-            loadtable = self.dvc.db.get_loadtable(loadtable)
-
+        load_name = self.load_instance.name
+        self.canvas = self.make_canvas(load_name)
+        loadtable = self.dvc.db.get_loadtable(load_name)
         self.positions = []
         if not loadtable:
             return
 
-        self.load_create_date = NULL_STR
-        try:
-            self.load_create_date = loadtable.create_date.strftime('%m/%d/%Y')
-        except BaseException:
-            self.debug_exception()
-            self.debug('failed reading LoadTbl create_date from database')
+        # self.load_instance.create_date = NULL_STR
+        # try:
+        #     self.load_instance.create_date = loadtable.create_date.strftime('%m/%d/%Y')
+        # except BaseException:
+        #     self.debug_exception()
+        #     self.debug('failed reading LoadTbl create_date from database')
 
         pos = []
         for ln, poss in groupby_key(loadtable.loaded_positions, 'identifier'):
@@ -320,8 +330,7 @@ class LoadingManager(DVCIrradiationable):
                               view_y_range=(-2, 2),
                               bgcolor='lightgray',
                               editable=editable)
-
-        if lt and lt.holderName:
+        if lt and lt.holderName and lt.holderName != NULL_STR:
             self.tray = lt.holderName
             holes = self.dvc.get_load_holder_holes(lt.holderName)
             load_holder_canvas(c, holes,
@@ -342,6 +351,8 @@ class LoadingManager(DVCIrradiationable):
                         item.degas_indicator = True
                     else:
                         item.measured_indicator = True
+        else:
+            c.clear_all()
 
         self._set_group_colors(c)
         return c
@@ -349,9 +360,7 @@ class LoadingManager(DVCIrradiationable):
     def setup(self):
         db = self.dvc.db
         if db.connected:
-            ls = self._get_load_names()
-            if ls:
-                self.loads = ls
+            self._refresh_loads()
 
             ts = self.dvc.get_load_holders()
             self.debug('Found load holders={}'.format(ts))
@@ -429,9 +438,8 @@ class LoadingManager(DVCIrradiationable):
     def save_pdf(self):
         self.debug('save pdf')
 
-        # p = LoadingPDFWriter()
-        ln = self.load_name
-        if ln:
+        if self.load_instance:
+            ln = self.load_instance.name
             root = self.save_directory
             if not root or not os.path.isdir(root):
                 root = paths.loading_dir
@@ -463,10 +471,13 @@ class LoadingManager(DVCIrradiationable):
             self._pdf_writer.build(path, self.positions, self.grouped_positions, self.canvas, meta)
             if options.view_pdf:
                 view_file(path)
-            on = self.load_name
-            self.canvas = None
-            self.load_name = ''
-            self.load_name = on
+
+            # old refresh code after a save
+            # on = self.load_name
+            # self.canvas = None
+            # self.load_name = ''
+            # self.load_name = on
+            self._refresh()
 
             self.show_identifiers = osl
             self.show_weights = osw
@@ -486,11 +497,11 @@ class LoadingManager(DVCIrradiationable):
         self.debug('saving load to database')
         self._save_load()
         if save_positions:
-            self._save_positions(self.load_name)
+            self._save_positions(self.load_instance.name)
         self.dirty = False
 
         if inform:
-            msg = 'Saved {} to database'.format(self.load_name)
+            msg = 'Saved {} to database'.format(self.load_instance.name)
             self.information_dialog(msg)
 
         return True
@@ -526,18 +537,19 @@ class LoadingManager(DVCIrradiationable):
                                     'Holder unavailable until its fixed'.format(ti))
         return ns
 
-    def _get_load_names(self):
-        loads = self.dvc.db.get_load_names()
+    def _get_load_instances(self):
+        loads = self.dvc.db.get_loads()
         if loads is None:
             loads = []
-        return loads
 
-    def _get_last_load(self):
-        lt = self.dvc.db.get_loadtable()
-        if lt:
-            self.load_name = lt.name
+        return [Load(name=li.name, create_date=li.create_date.strftime('%m/%d/%Y')) for li in loads]
 
-        return self.load_name
+    # def _get_last_load(self):
+    #     lt = self.dvc.db.get_loadtable()
+    #     if lt:
+    #         self.load_name = lt.name
+    #
+    #     return self.load_name
 
     def _set_canvas_hole_selected(self, item):
         item.fill = True
@@ -621,9 +633,9 @@ class LoadingManager(DVCIrradiationable):
             db.add_load(nln, holder=self.tray, username=self.username)
             db.flush()
 
-            ls = self._get_load_names()
-            self.loads = ls
-            self._get_last_load()
+            self._refresh_loads()
+
+            # self._get_last_load()
             self.new_load_name = ''
 
     def _save_positions(self, name):
@@ -655,8 +667,8 @@ class LoadingManager(DVCIrradiationable):
         return v
 
     def _refresh_loads(self):
-        self.loads = self._get_load_names()
-        self.load_name = self.loads[0]
+        self.loads = self._get_load_instances()
+        self.load_instance = self.loads[-1]
 
     def _set_group_colors(self, canvas=None):
         if canvas is None:
@@ -740,15 +752,33 @@ class LoadingManager(DVCIrradiationable):
             self.irradiation_hole = 0
 
     def _archive_button_fired(self):
-        ls = LoadSelection(loads=self.loads)
+        # ls = LoadSelection(loads=self.loads)
+        # info = ls.edit_traits()
+        # if info.result:
+        #
+        #     db = self.dvc.db
+        #     loads = db.get_load_names(names=ls.selected)
+        #     for li in loads:
+        #         li.archived = True
+        #     db.commit()
+        #     self.loads = self._get_load_instances()
+
+        if not self.selected_instances:
+            self.information_dialog('Please select a set of loads to archive')
+            return
+
+        if self.confirmation_dialog('Are you sure you want to Archive the selected Loads?'):
+            self.dvc.archive_loads([li.name for li in self.selected_instances])
+            self._refresh_loads()
+
+    def _unarchive_button_fired(self):
+        db = self.dvc.db
+        loads = db.get_load_names(archived_only=True)
+        ls = LoadSelection(loads=loads)
         info = ls.edit_traits()
         if info.result:
-            db = self.dvc.db
-            loads = db.get_load_names(names=ls.selected)
-            for li in loads:
-                li.archived = True
-            db.commit()
-            self.loads = self._get_load_names()
+            db.unarchive_loads(ls.selected)
+            self._refresh_loads()
 
     def _add_button_fired(self):
         db = self.dvc.db
@@ -770,8 +800,8 @@ class LoadingManager(DVCIrradiationable):
             self._refresh_loads()
 
     def _delete_button_fired(self):
-        ln = self.load_name
-        if ln:
+        if self.load_instance:
+            ln = self.load_instance.name
             if not self.confirmation_dialog(
                     'Are you sure you want to delete {}?'.format(ln)):
                 return
@@ -790,13 +820,13 @@ class LoadingManager(DVCIrradiationable):
 
             self._refresh_loads()
 
-    @on_trait_change('load_name')
-    def _fetch_load(self):
-        if self.load_name:
-            self.tray = ''
-            self.load_load_by_name(self.load_name)
-            # self.display_load_name = self.load_name
-            # self.display_load_date = ''
+    # @on_trait_change('load_instance')
+    # def _fetch_load(self):
+    def _selected_instances_changed(self, new):
+        # print('lads', self.load_instance, self.load_instance.name, self.load_instance.create_date)
+        if new:
+            self.load_instance = new[0]
+            self.load_load_by_name()
 
     def _show_samples_changed(self, new):
         if self.canvas:
@@ -882,7 +912,7 @@ class LoadingManager(DVCIrradiationable):
         if not new:
             return
 
-        if not self.load_name:
+        if not self.load_instance:
             self.warning_dialog('Select a load')
             return
 

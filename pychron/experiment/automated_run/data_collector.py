@@ -74,13 +74,13 @@ class DataCollector(Consoleable):
         super(DataCollector, self).__init__(*args, **kw)
         bind_preference(self, 'plot_panel_update_period', 'pychron.experiment.plot_panel_update_period')
 
-    def wait(self):
-        st = time.time()
-        self.debug('wait started')
-        while 1:
-            if self._evt and self._evt.set():
-                break
-        self.debug('wait complete {:0.1f}s'.format(time.time() - st))
+    # def wait(self):
+    #     st = time.time()
+    #     self.debug('wait started')
+    #     while 1:
+    #         if self._evt and self._evt.set():
+    #             break
+    #     self.debug('wait complete {:0.1f}s'.format(time.time() - st))
 
     def set_truncated(self):
         self._truncate_signal = True
@@ -118,9 +118,9 @@ class DataCollector(Consoleable):
         tt = time.time() - self.starttime
         self.debug('estimated time: {:0.3f} actual time: :{:0.3f}'.format(et, tt))
 
-    def plot_data(self, *args, **kw):
-        from pychron.core.ui.gui import invoke_in_main_thread
-        invoke_in_main_thread(self._plot_data, *args, **kw)
+    # def plot_data(self, *args, **kw):
+    #     from pychron.core.ui.gui import invoke_in_main_thread
+    #     invoke_in_main_thread(self._plot_data, *args, **kw)
 
     def set_temporary_conditionals(self, cd):
         self._temp_conds = cd
@@ -132,8 +132,7 @@ class DataCollector(Consoleable):
     def _measure(self):
         self.debug('starting measurement')
 
-        self._evt = Event()
-        evt = self._evt
+        self._evt = evt = Event()
 
         # self._queue = q = Queue()
         # def writefunc():
@@ -152,7 +151,7 @@ class DataCollector(Consoleable):
         self.debug('measurement period (ms) = {}'.format(self.period_ms))
         period = self.period_ms * 0.001
         i = 1
-        # elapsed = 0
+
         while not evt.is_set():
             result = self._check_iteration(i)
             if not result:
@@ -177,7 +176,7 @@ class DataCollector(Consoleable):
                 break
 
         evt.set()
-        self.debug('waiting for write to finish')
+        # self.debug('waiting for write to finish')
         # t.join()
 
         self.debug('measurement finished')
@@ -305,32 +304,33 @@ class DataCollector(Consoleable):
         for dn, signal in zip(keys, signals):
             det = self._get_detector(dn)
             if det:
-                self._set_plot_data(cnt, det.isotope, det.name, x, signal)
+                self._set_plot_data(cnt, det, x, signal)
 
         if not cnt % self.plot_panel_update_period:
             self.plot_panel.update()
 
-    def _set_plot_data(self, cnt, iso, det, x, signal):
+    def _set_plot_data(self, cnt, det, x, signal):
+
+        iso = det.isotope
+        detname = det.name
+        ypadding = det.ypadding
 
         if self.collection_kind == SNIFF:
             gs = [(self.plot_panel.sniff_graph, iso, None, 0, 0),
                   (self.plot_panel.isotope_graph, iso, None, 0, 0)]
 
         elif self.collection_kind == BASELINE:
-            iso = self.isotope_group.get_isotope(detector=det, kind='baseline')
+            iso = self.isotope_group.get_isotope(detector=detname, kind='baseline')
             if iso is not None:
                 fit = iso.get_fit(cnt)
             else:
                 fit = 'average'
             gs = [(self.plot_panel.baseline_graph, det, fit, 0, 0)]
         else:
-            title = self.isotope_group.get_isotope_title(name=iso, detector=det)
-            iso = self.isotope_group.get_isotope(name=iso, detector=det)
+            title = self.isotope_group.get_isotope_title(name=iso, detector=detname)
+            iso = self.isotope_group.get_isotope(name=iso, detector=detname)
             fit = iso.get_fit(cnt)
             gs = [(self.plot_panel.isotope_graph, title, fit, self.series_idx, self.fit_series_idx)]
-
-        dd = self._get_detector(det)
-        ypadding = dd.ypadding
 
         for g, name, fit, series, fit_series in gs:
 

@@ -380,6 +380,10 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         for s in self._iter_scripts():
             s.extract_device = new
 
+    def new_run_simple(self, idn, position):
+        rs = self._spec_klass(identifier=idn, position=position)
+        return rs
+
     def new_runs(self, exp_queue, positions=None, auto_increment_position=False,
                  auto_increment_id=False):
         """
@@ -493,7 +497,11 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     def _make_irrad_level(self, ipos):
         il = ''
         if ipos is not None:
-            level = ipos.level
+            try:
+                level = ipos.level
+            except AttributeError:
+                level = ''
+
             if level:
                 irrad = level.irradiation
                 hole = ipos.position
@@ -920,61 +928,67 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 self.repository_identifier = repo
 
             return True
+            self.debug('using simple identifiers')
+
         else:
             # get a default repository_identifier
-
             d = dict(sample='')
             db = self.get_database()
             # convert labnumber (a, bg, or 10034 etc)
             self.debug('load meta for {}'.format(labnumber))
             with db.session_ctx():
-                ip = db.get_identifier(labnumber)
-                if ip:
-                    pos = ip.position
-                    # set sample and irrad info
-                    try:
-                        self.sample = ip.sample.name
-                        d['sample'] = self.sample
+                if labnumber in self._identifiers:
+                    ip = db.get_simple_identifier(labnumber)
+                else:
+                    ip = db.get_identifier(labnumber)
+                    if ip:
+                        pos = ip.position
+                        # set sample and irrad info
+                    else:
+                        self.warning_dialog('{} does not exist.\n\n'
+                                            'Add using "Entry>>Labnumber"\n'
+                                            'or "Utilities>>Import"\n'
+                                            'or manually'.format(labnumber))
+                        return
 
-                        project = ip.sample.project
-                        project_name = project.name
-                        try:
-                            pi_name = project.principal_investigator.name
-                        except (AttributeError, TypeError):
-                            print('project has pi issue. {}'.format(project_name))
-                            pass
+                self.sample = ip.sample.name
 
-                        ipp = self.irradiation_project_prefix
-                        d['project'] = project_name
+                project = ip.sample.project
+                project_name = project.name
+                try:
+                    pi_name = project.principal_investigator.name
+                except (AttributeError, TypeError):
+                    print('project has pi issue. {}'.format(project_name))
+                    pass
 
-                        self.debug('trying to set repository based on project name={}'.format(project_name))
-                        if project_name == 'J-Curve':
-                            irrad = ip.level.irradiation.name
-                            self.repository_identifier = '{}{}'.format(ipp, irrad)
-                        elif project_name != 'REFERENCES':
-                            if self.use_project_based_repository_identifier:
-                                if ipp and project_name.startswith(ipp):
-                                    repo = project_name
+                ipp = self.irradiation_project_prefix
+                d['project'] = project_name
+
+                self.debug('trying to set repository based on project name={}'.format(project_name))
+                if project_name == 'J-Curve':
+                    irrad = ip.level.irradiation.name
+                    self.repository_identifier = '{}{}'.format(ipp, irrad)
+                elif project_name != 'REFERENCES':
+                    if self.use_project_based_repository_identifier:
+                        if ipp and project_name.startswith(ipp):
+                            repo = project_name
+                        else:
+                            repo = camel_case(project_name)
+                        self.debug('setting repository to {}'.format(repo))
+
+                        self.repository_identifier = repo
+                        if not self.dvc.check_remote_repository_exists(repo):
+                            self.repository_identifier = ''
+                            if self.confirmation_dialog('Repository Identifier "{}" does not exist. Would you '
+                                                        'like to add it?'.format(repo)):
+
+                                m = 'Repository "{}({})"'.format(repo, pi_name)
+                                # this will set self.repository_identifier
+                                if self._add_repository(repo, pi_name):
+                                    self.information_dialog('{} added successfully'.format(m))
                                 else:
-                                    repo = camel_case(project_name)
-                                self.debug('setting repository to {}'.format(repo))
-
-                                self.repository_identifier = repo
-                                if not self.dvc.check_remote_repository_exists(repo):
-                                    self.repository_identifier = ''
-                                    if self.confirmation_dialog('Repository Identifier "{}" does not exist. Would you '
-                                                                'like to add it?'.format(repo)):
-
-                                        m = 'Repository "{}({})"'.format(repo, pi_name)
-                                        # this will set self.repository_identifier
-                                        if self._add_repository(repo, pi_name):
-                                            self.information_dialog('{} added successfully'.format(m))
-                                        else:
-                                            self.warning_dialog('Failed to add {}.'
-                                                                '\nResolve issue before proceeding!!'.format(m))
-
-                    except AttributeError as e:
-                        print(e)
+                                    self.warning_dialog('Failed to add {}.'
+                                                        '\nResolve issue before proceeding!!'.format(m))
 
                     d['repository_identifier'] = self.repository_identifier
 
@@ -984,16 +998,13 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                     d['irradiation_level'] = self.selected_level
 
                     d['display_irradiation'] = self.display_irradiation
-                    if self.auto_fill_comment:
-                        self._set_auto_comment()
-                    d['comment'] = self.comment
-                    self._meta_cache[labnumber] = d
-                    return True
-                else:
-                    self.warning_dialog('{} does not exist.\n\n'
-                                        'Add using "Entry>>Labnumber"\n'
-                                        'or "Utilities>>Import"\n'
-                                        'or manually'.format(labnumber))
+
+                d['sample'] = self.sample
+                if self.auto_fill_comment:
+                    self._set_auto_comment()
+                d['comment'] = self.comment
+                self._meta_cache[labnumber] = d
+                return True
 
     def _load_labnumber_defaults(self, old, labnumber, special):
         self.debug('load labnumber defaults {} {}'.format(labnumber, special))
