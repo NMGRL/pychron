@@ -30,14 +30,16 @@ class BaseVarianGaugeController(BaseGaugeController, CoreDevice):
 
 class XGS600GaugeController(BaseVarianGaugeController):
     def _read_pressure(self, name=None, verbose=False):
+        if isinstance(name, str):
+            gauge = self.get_gauge(name)
+            name = gauge.channel
+        else:
+            name = name.channel
+
         pressure = 'err'
         if name is not None:
-            gauge = name
-            if isinstance(gauge, str):
-                gauge = self.get_gauge(name)
-            channel = gauge.channel
-            cmd = '#{}02U{}'.format(self.address, channel)
-            pressure = self.ask(cmd, verbose=verbose)
+            cmd = '#{}02U{}'.format(self.address, name)
+            pressure = self.ask(cmd, verbose=True)
             if pressure and pressure.startswith('>'):
                 pressure = pressure[1:]
 
