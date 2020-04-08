@@ -16,7 +16,6 @@
 
 # =============enthought library imports=======================
 import os
-import sys
 from datetime import datetime, timedelta
 from threading import Lock
 
@@ -28,11 +27,9 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 from traits.api import Password, Bool, Str, on_trait_change, Any, Property, cached_property, Int
 
-from pychron import version
 from pychron.database.core.base_orm import AlembicVersionTable
 from pychron.database.core.query import compile_query
 from pychron.loggable import Loggable
-from pychron.pychron_constants import STARTUP_MESSAGE_POSITION
 from pychron.regex import IPREGEX
 
 
@@ -503,31 +500,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
             self.info('testing database connection {}'.format(self.test_func))
             vers = getattr(self, self.test_func)(reraise=True)
             if version_warn:
-                # ver = ver.version_num
-                # aver = version.__alembic__
-
-                # vers is a list of all the supported versions of pychron for this database
-
-                lver = version.__version__
-
-                self.debug('testing database versions. pychron version={}, db_versions={}'.format(lver, vers))
-                if not vers:
-                    self.debug('not versions in the database. added a default one')
-                    self.add_default_version('19.6')
-                    # self.warning_dialog('Please add at least one record to the VersionTbl table. e.g. version=20.1')
-
-                else:
-                    if lver not in vers:
-                        if not self.confirmation_dialog(
-                                'Your database is out of date and it MAY not work correctly with '
-                                'this version of Pychron. Contact admin to update db.\n\n'
-                                'Continue with Pychron despite out of date db?',
-                                position=STARTUP_MESSAGE_POSITION):
-
-                            self.debug('exiting application')
-                            if self.application:
-                                self.application.stop()
-                            sys.exit()
+                self._version_warn_hook(vers)
 
             connected = True
         except OperationalError:
@@ -546,6 +519,8 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
 
         return connected
 
+    def _version_warn_hook(self, vers):
+        pass
     # def test_version(self):
     #     ver = getattr(self, self.version_func)()
     #     ver = ver.version_num
