@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance, Button, Bool, Property, DelegatesTo, List, Str, on_trait_change
+from traits.api import Instance, Button, Bool, Property, DelegatesTo, List, Str, on_trait_change, Any
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -33,12 +33,13 @@ from pychron.pychron_constants import LINE_STR
 class ExperimentFactory(DVCAble):
     run_factory = Instance(AutomatedRunFactory)
     queue_factory = Instance(ExperimentQueueFactory)
-
+    simple_identifier = Any
     undoer = Instance(ExperimentUndoer)
 
     generate_queue_button = Button
     edit_queue_config_button = Button
     loading_manager = Instance('pychron.loading.loading_manager.LoadingManager')
+    simple_identifier_manager = Instance('pychron.entry.simple_identifier_manager.SimpleIdentifierManager')
 
     add_button = Button('Add')
     clear_button = Button('Clear')
@@ -320,11 +321,22 @@ class ExperimentFactory(DVCAble):
 
         rf.on_trait_change(self._update_end_after, 'end_after')
         rf.on_trait_change(self._auto_save, 'auto_save_needed')
+
+        if self.simple_identifier_manager:
+            self.simple_identifier_manager.factory = rf
+
         return rf
 
     # ===============================================================================
     # defaults
     # ===============================================================================
+    def _simple_identifier_manager_default(self):
+        sm = self.application.get_service('pychron.entry.simple_identifier_manager.SimpleIdentifierManager')
+        if sm is not None:
+            sm.factory = self.run_factory
+            sm.activated()
+        return sm
+
     def _undoer_default(self):
         return ExperimentUndoer(run_factory=self.run_factory, queue=self.queue)
 

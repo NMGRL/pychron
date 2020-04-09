@@ -58,6 +58,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     datahub = Instance(Datahub)
     undoer = Any
     edit_event = Event
+    mode = None
 
     # ============== scripts =============
     extraction_script = Instance(Script)
@@ -71,7 +72,6 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     default_fits_button = Button
     default_fits_enabled = Bool
     # ===================================
-    simple_identifier_manager = Instance('pychron.entry.simple_identifier_manager.SimpleIdentifierManager')
 
     factory_view = Instance(FactoryView)
     factory_view_klass = FactoryView
@@ -928,8 +928,6 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 self.repository_identifier = repo
 
             return True
-            self.debug('using simple identifiers')
-
         else:
             # get a default repository_identifier
             d = dict(sample='')
@@ -937,7 +935,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             # convert labnumber (a, bg, or 10034 etc)
             self.debug('load meta for {}'.format(labnumber))
             with db.session_ctx():
-                if labnumber in self._identifiers:
+                if self.mode == 'simple_identifier':
+                    self.debug('using simple identifiers')
                     ip = db.get_simple_identifier(labnumber)
                 else:
                     ip = db.get_identifier(labnumber)
@@ -992,12 +991,12 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
                     d['repository_identifier'] = self.repository_identifier
 
-                    self._make_irrad_level(ip)
-                    d['irradiation'] = self.selected_irradiation
-                    d['irradiation_position'] = pos
-                    d['irradiation_level'] = self.selected_level
-
-                    d['display_irradiation'] = self.display_irradiation
+                    if self.mode != 'simple_identifier':
+                        self._make_irrad_level(ip)
+                        d['irradiation'] = self.selected_irradiation
+                        d['irradiation_position'] = pos
+                        d['irradiation_level'] = self.selected_level
+                        d['display_irradiation'] = self.display_irradiation
 
                 d['sample'] = self.sample
                 if self.auto_fill_comment:
@@ -1008,15 +1007,18 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
     def _load_labnumber_defaults(self, old, labnumber, special):
         self.debug('load labnumber defaults {} {}'.format(labnumber, special))
+        kw = {}
         if special:
             ln = labnumber.split('-')[0]
             if ln == 'dg':
-                self._load_defaults(ln, attrs=('extract_value', 'extract_units'))
+                kw['attrs'] = ('extract_value', 'extract_units')
             else:
-                self._load_defaults(ln, attrs=('cleanup', 'pre_cleanup', 'post_cleanup', 'duration'), overwrite=False)
+                kw['attrs'] = ('cleanup', 'pre_cleanup', 'post_cleanup', 'duration')
+                kw['overwrite'] = False
         else:
-            self._load_defaults(labnumber if special else 'u')
+            ln = 'u'
 
+        self._load_defaults(ln, **kw)
         self._load_scripts(old, labnumber)
         self._load_extraction_info()
 
@@ -1603,6 +1605,7 @@ post_equilibration_script:name''')
             self._apply_comment_template()
         else:
             self.warning_dialog('Please select one or more runs')
+
     # ===============================================================================
     # defaults
     # ================================================================================
@@ -1645,14 +1648,6 @@ post_equilibration_script:name''')
         dh.mainstore = self.application.get_service(DVC_PROTOCOL)
         dh.bind_preferences()
         return dh
-
-    def _simple_identifier_manager_default(self):
-        sm = self.application.get_service('pychron.entry.simple_identifier_manager.SimpleIdentifierManager')
-        if sm is not None:
-            sm.activated()
-            sm.factory = self
-
-        return sm
 
     @property
     def run_block_enabled(self):

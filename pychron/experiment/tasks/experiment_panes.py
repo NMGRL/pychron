@@ -70,6 +70,19 @@ def run_factory_uitem(name, **kw):
     return run_factory_item(name, **kw)
 
 
+def si_name(name):
+    return 'object.simple_identifier_manager.{}'.format(name)
+
+
+def si_item(name, **kw):
+    return Item(si_name(name), **kw)
+
+
+def si_uitem(name, **kw):
+    kw['show_label'] = False
+    return si_item(name, **kw)
+
+
 class ExperimentFactoryPane(TraitsDockPane):
     id = 'pychron.experiment.factory'
     name = 'Experiment Editor'
@@ -188,15 +201,15 @@ class ExperimentFactoryPane(TraitsDockPane):
                                      editor=myEnumEditor(name=run_factory_name('irradiations'))),
                    run_factory_uitem('selected_level',
                                      editor=myEnumEditor(name=run_factory_name('levels'))),
-                   defined_when='not object.run_factory.simple_identifier_manager')
+                   defined_when='not object.simple_identifier_manager')
 
-        b = HGroup(run_factory_item('simple_identifier_manager.project_filter'),
-                   run_factory_uitem('simple_identifier_manager.selected_project',
-                                     editor=myEnumEditor(name=run_factory_name('simple_identifier_manager.projects'))),
-                   run_factory_item('simple_identifier_manager.selected_sample',
-                                    label='Sample',
-                                    editor=myEnumEditor(name=run_factory_name('simple_identifier_manager.samples'))),
-                   defined_when='object.run_factory.simple_identifier_manager')
+        b = HGroup(si_item('project_filter'),
+                   si_uitem('selected_project',
+                            editor=myEnumEditor(name=si_name('projects'))),
+                   si_item('selected_sample',
+                           label='Sample',
+                           editor=myEnumEditor(name=si_name('samples'))),
+                   defined_when='object.simple_identifier_manager')
 
         grp = BorderVGroup(a, b,
                            HGroup(run_factory_uitem('special_labnumber',

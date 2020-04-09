@@ -884,44 +884,51 @@ class DVCDatabase(DatabaseAdapter):
             r = self.get_repository(repo)
             return [a.analysis for a in r.repository_associations]
 
-    def get_identifier_info(self, li):
+    def get_identifier_info(self, li, mode=None):
         with self.session_ctx():
-            dbpos = self.get_identifier(li)
-            if not dbpos:
-                self.warning('{} is not an identifier in the database'.format(li))
-                return None
+            info = {}
+
+            if mode == 'simple':
+                dbpos = self.get_simple_identifier(li)
+                if not dbpos:
+                    self.warning('{} is not an simple identifier in the database'.format(li))
+                    return None
             else:
-                info = {}
-                sample = dbpos.sample
-                if sample:
-                    if sample.project:
-                        project = sample.project.name
-                        info['project'] = project
-                        if sample.project.principal_investigator:
-                            pi = sample.project.principal_investigator.name
-                            info['principal_investigator'] = pi
-
-                    if sample.material:
-                        material = sample.material.name
-                        info['material'] = material
-                        info['grainsize'] = sample.material.grainsize or ''
-
-                    info['sample'] = sample.name
-                    info['latitude'] = sample.lat
-                    info['longitude'] = sample.lon
-                    info['unit'] = sample.unit
-                    info['lithology'] = sample.lithology
-                    info['lithology_class'] = sample.lithology_class
-                    info['lithology_type'] = sample.lithology_type
-                    info['lithology_group'] = sample.lithology_group
-
-                    # todo: add rlocatiion/reference to database
-                    info['rlocation'] = ''
-                    info['reference'] = ''
+                dbpos = self.get_identifier(li)
+                if not dbpos:
+                    self.warning('{} is not an identifier in the database'.format(li))
+                    return None
 
                 info['irradiation_level'] = dbpos.level.name
                 info['irradiation_position'] = dbpos.position
                 info['irradiation'] = dbpos.level.irradiation.name
+
+            sample = dbpos.sample
+            if sample:
+                if sample.project:
+                    project = sample.project.name
+                    info['project'] = project
+                    if sample.project.principal_investigator:
+                        pi = sample.project.principal_investigator.name
+                        info['principal_investigator'] = pi
+
+                if sample.material:
+                    material = sample.material.name
+                    info['material'] = material
+                    info['grainsize'] = sample.material.grainsize or ''
+
+                info['sample'] = sample.name
+                info['latitude'] = sample.lat
+                info['longitude'] = sample.lon
+                info['unit'] = sample.unit
+                info['lithology'] = sample.lithology
+                info['lithology_class'] = sample.lithology_class
+                info['lithology_type'] = sample.lithology_type
+                info['lithology_group'] = sample.lithology_group
+
+                # todo: add rlocatiion/reference to database
+                info['rlocation'] = ''
+                info['reference'] = ''
 
             return info
 
