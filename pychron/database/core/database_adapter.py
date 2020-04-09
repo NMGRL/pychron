@@ -266,8 +266,10 @@ class DatabaseAdapter(Loggable):
 
         if not self.connected or force:
             self.connected = True if self.kind == 'sqlite' else False
+            pool_recycle = 600
             if self.kind == 'sqlite':
                 test = False
+                pool_recycle = -1
 
             self.connection_error = 'Database "{}" kind not set. ' \
                                     'Set in Preferences. current kind="{}"'.format(self.name, self.kind)
@@ -279,13 +281,11 @@ class DatabaseAdapter(Loggable):
                 url = self.url
                 if url is not None:
                     self.info('{} connecting to database {}'.format(id(self), self.public_url))
-                    engine = create_engine(url, echo=self.echo, pool_recycle=600)
-                    #                     Session.configure(bind=engine)
+                    engine = create_engine(url, echo=self.echo, pool_recycle=pool_recycle)
 
                     self.session_factory = sessionmaker(bind=engine, autoflush=self.autoflush,
                                                         expire_on_commit=False,
                                                         autocommit=self.autocommit)
-                    # self.session_factory = scoped_session(sessionmaker(bind=engine, autoflush=self.autoflush))
                     if test:
                         if not self._test_connection_enabled:
                             warn = False
