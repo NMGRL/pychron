@@ -160,8 +160,9 @@ class DatabaseAdapter(Loggable):
     _trying_to_add = False
     _test_connection_enabled = True
 
-    # def __init__(self, *args, **kw):
-    #     super(DatabaseAdapter, self).__init__(*args, **kw)
+    def __init__(self, *args, **kw):
+        super(DatabaseAdapter, self).__init__(*args, **kw)
+        self._session_lock = Lock()
 
     def create_all(self, metadata):
         """
@@ -250,8 +251,6 @@ class DatabaseAdapter(Loggable):
         :return: True if connected else False
         :rtype: bool
         """
-        self._session_lock = Lock()
-
         self.connection_error = ''
         if force:
             self.debug('forcing database connection')
@@ -266,8 +265,10 @@ class DatabaseAdapter(Loggable):
 
         if not self.connected or force:
             self.connected = True if self.kind == 'sqlite' else False
+            pool_recycle = 600
             if self.kind == 'sqlite':
                 test = False
+                pool_recycle = -1
 
             self.connection_error = 'Database "{}" kind not set. ' \
                                     'Set in Preferences. current kind="{}"'.format(self.name, self.kind)
@@ -279,13 +280,11 @@ class DatabaseAdapter(Loggable):
                 url = self.url
                 if url is not None:
                     self.info('{} connecting to database {}'.format(id(self), self.public_url))
-                    engine = create_engine(url, echo=self.echo, pool_recycle=600)
-                    #                     Session.configure(bind=engine)
+                    engine = create_engine(url, echo=self.echo, pool_recycle=pool_recycle)
 
                     self.session_factory = sessionmaker(bind=engine, autoflush=self.autoflush,
                                                         expire_on_commit=False,
                                                         autocommit=self.autocommit)
-                    # self.session_factory = scoped_session(sessionmaker(bind=engine, autoflush=self.autoflush))
                     if test:
                         if not self._test_connection_enabled:
                             warn = False
