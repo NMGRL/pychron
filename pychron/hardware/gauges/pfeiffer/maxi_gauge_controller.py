@@ -22,32 +22,31 @@ from pychron.hardware.gauges.base_controller import BaseGauge, BaseGaugeControll
 
 class PfeifferMaxiGaugeController(BaseGaugeController, CoreDevice):
     def _read_pressure(self, name=None, verbose=False):
-        if name is not None:
-            gauge = name
-            if isinstance(gauge, (str, six.text_type)):
+        if name is None:
+            name = 'Z'
+        else:
+            if isinstance(name, str):
                 gauge = self.get_gauge(name)
-            channel = gauge.channel
-        else:
-            channel = 'Z'
+                name = gauge.channel
+            else:
+                name = name.channel
 
-        key = 'PR'
-        # cmd = '%s%s\r' % (key, channel)
-
-        cmd = '{}{}'.format(key, channel)
-        r = self.ask(cmd, verbose=verbose)
-        if chr(6) in r:
-            cmd = '\x05'
-            oterminator = self.communicator.write_terminator
-            self.communicator.write_terminator = None
+        pressure = 'err'
+        if name:
+            cmd = 'PR{}'.format(name)
             r = self.ask(cmd, verbose=verbose)
-            self.communicator.write_terminator = oterminator
-            # pressure = r.split(',')[1].rstrip('\r\n')
-            try:
-                pressure = r.split(',')[1].rstrip()
-            except IndexError:
-                pressure = 'err'
-        else:
-            pressure = 'err'
+            if chr(6) in r:
+                cmd = '\x05'
+                oterminator = self.communicator.write_terminator
+                self.communicator.write_terminator = None
+                r = self.ask(cmd, verbose=verbose)
+                self.communicator.write_terminator = oterminator
+                # pressure = r.split(',')[1].rstrip('\r\n')
+                try:
+                    pressure = r.split(',')[1].rstrip()
+                except IndexError:
+                    pressure = 'err'
+
         return pressure
 
     def load_additional_args(self, config, *args, **kw):

@@ -606,7 +606,8 @@ class LabnumberEntry(DVCIrradiationable):
             irradiation = self.irradiation
         dvc = self.dvc
         with dvc.session_ctx():
-            for ir in self.irradiated_positions:
+            n = len(self.irradiated_positions)
+            for i, ir in enumerate(self.irradiated_positions):
                 sam = ir.sample
 
                 if not sam:
@@ -642,8 +643,10 @@ class LabnumberEntry(DVCIrradiationable):
                     else:
                         dbpos.identifier = ln
 
+                # add the flux file to the index only on the last iteration
                 self.dvc.meta_repo.update_flux(irradiation, level,
-                                               ir.hole, ir.identifier, ir.j, ir.j_err, 0, 0)
+                                               ir.hole, ir.identifier, ir.j, ir.j_err, 0, 0,
+                                               add=i == n - 1)
 
                 dbpos.weight = float(ir.weight or 0)
                 dbpos.note = ir.note
@@ -667,7 +670,7 @@ class LabnumberEntry(DVCIrradiationable):
                     dbpos.sample = sam
 
                 prog.change_message('Saving {}{}{} identifier={}'.format(irradiation, level, ir.hole, ln))
-                db.commit()
+            db.commit()
 
         prog.close()
 
