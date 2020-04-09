@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
+import sys
 from datetime import timedelta, datetime
 from string import digits, ascii_letters
 
@@ -25,6 +25,7 @@ from sqlalchemy.util import OrderedSet
 from traits.api import HasTraits, Str, List, TraitError
 from traitsui.api import Item
 
+from pychron import version
 from pychron.core.helpers.datetime_tools import bin_datetimes
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.spell_correct import correct
@@ -43,7 +44,7 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
 from pychron.experiment.utilities.identifier import strip_runid
 from pychron.globals import globalv
 from pychron.pychron_constants import NULL_STR, EXTRACT_DEVICE, NO_EXTRACT_DEVICE, \
-    SAMPLE_PREP_STEPS, SAMPLE_METADATA
+    SAMPLE_PREP_STEPS, SAMPLE_METADATA, STARTUP_MESSAGE_POSITION
 
 
 def listify(obj):
@@ -2392,4 +2393,30 @@ class DVCDatabase(DatabaseAdapter):
                 li.archived = state
             self.commit()
 
+    def _version_warn_hook(self, vers):
+        # ver = ver.version_num
+        # aver = version.__alembic__
+
+        # vers is a list of all the supported versions of pychron for this database
+
+        lver = version.__version__
+
+        self.debug('testing database versions. pychron version={}, db_versions={}'.format(lver, vers))
+        if not vers:
+            self.debug('not versions in the database. added a default one')
+            self.add_default_version('19.6')
+            # self.warning_dialog('Please add at least one record to the VersionTbl table. e.g. version=20.1')
+
+        else:
+            if lver not in vers:
+                if not self.confirmation_dialog(
+                        'Your database is out of date and it MAY not work correctly with '
+                        'this version of Pychron. Contact admin to update db.\n\n'
+                        'Continue with Pychron despite out of date db?',
+                        position=STARTUP_MESSAGE_POSITION):
+
+                    self.debug('exiting application')
+                    if self.application:
+                        self.application.stop()
+                    sys.exit()
 # ============= EOF =============================================

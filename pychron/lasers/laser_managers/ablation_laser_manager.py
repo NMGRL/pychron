@@ -33,8 +33,18 @@ class AblationCO2Manager(SerialLaserManager):
             self.stage_manager.stage_map_name = t
 
     def _test_connection_hook(self):
-        re = self._ask('GetVersion')
-        self.connected = bool(re)
+        i = 0
+        n = 3
+        while 1:
+            re = self._ask('GetVersion')
+            if re:
+                self.connected = True
+                return
+            elif i > n:
+                self.connected = False
+                return
+            time.sleep(1)
+            i += 1
 
     def end_extract(self, *args, **kw):
 
