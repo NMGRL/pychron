@@ -270,8 +270,9 @@ class IdeogramPlotable(HasTraits):
 
     def is_omitted(self, tags=None, omit_by_tag=True):
         ret = False
+        # if omit_by_tag and not self.otemp_status is not None:
         if omit_by_tag and self.otemp_status is None:
-            # if otemp_status is None then user toggled this point and we are no longer going to respect the tag
+            # if otemp_status is not None then user toggled this point and we are no longer going to respect the tag
             # omission
             ret = self.is_omitted_by_tag(tags)
 
