@@ -98,8 +98,6 @@ class ExperimentPreferences(BasePreferencesHelper):
     ratio_change_detection_enabled = Bool(False)
     plot_panel_update_period = PositiveInteger(1)
 
-    execute_open_queues = Bool
-
     def _get_memory_threshold(self):
         return self._memory_threshold
 
@@ -171,9 +169,6 @@ class ExperimentPreferencesPane(PreferencesPane):
                                          ' before saving or canceling'),
                             Item('bg_color', label='Background'),
                             Item('even_bg_color', label='Even Row'),
-                            Item('execute_open_queues', label='Execute Open Queues',
-                                 tooltip='Continue running any open queues (aka experiment tabs). If not selected '
-                                         'stop running at the end of the active queue'),
                             label='Editor')
 
         color_group = VGroup(VGroup(Item('sniff_color', label='Equilibration'),

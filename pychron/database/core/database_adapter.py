@@ -160,8 +160,9 @@ class DatabaseAdapter(Loggable):
     _trying_to_add = False
     _test_connection_enabled = True
 
-    # def __init__(self, *args, **kw):
-    #     super(DatabaseAdapter, self).__init__(*args, **kw)
+    def __init__(self, *args, **kw):
+        super(DatabaseAdapter, self).__init__(*args, **kw)
+        self._session_lock = Lock()
 
     def create_all(self, metadata):
         """
@@ -250,8 +251,6 @@ class DatabaseAdapter(Loggable):
         :return: True if connected else False
         :rtype: bool
         """
-        self._session_lock = Lock()
-
         self.connection_error = ''
         if force:
             self.debug('forcing database connection')
