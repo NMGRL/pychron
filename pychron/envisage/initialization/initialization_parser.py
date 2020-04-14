@@ -64,23 +64,10 @@ class InitializationParser(XMLParser):
     """
 
     def __init__(self, *args, **kw):
-        ver = '_proc'
-        # ver = '_valve'
-        # ver ='_apis'
-        # ver = '_uv'
-        ver = '_exp'
-        # ver = '_exp_uv'
-        # ver= '_spec'
-        # ver = '_diode'
-        # ver = '_dash'
-        # ver = '_dash_client'
-        # ver = ''
-        p = os.path.join(paths.setup_dir, 'initialization{}.xml'.format(ver))
+        p = os.path.join(paths.setup_dir, 'initialization.xml')
         if not os.path.isfile(p):
-            p = os.path.join(paths.setup_dir, 'initialization.xml')
-            if not os.path.isfile(p):
-                warning(None, 'No initialization file.\n{} is not a valid file'.format(p))
-                sys.exit()
+            warning(None, 'No initialization file.\n{} is not a valid file'.format(p))
+            sys.exit()
 
         super(InitializationParser, self).__init__(p, *args, **kw)
 

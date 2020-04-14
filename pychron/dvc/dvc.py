@@ -290,9 +290,15 @@ class DVC(Loggable):
                 mrepo.open_repo(root)
             else:
                 url = self.make_url(self.meta_repo_name)
-                self.debug('cloning meta repo url={}'.format(url))
-                path = os.path.join(paths.dvc_dir, name)
-                self.meta_repo.clone(url, path)
+                if url:
+                    self.debug('cloning meta repo url={}'.format(url))
+                    path = os.path.join(paths.dvc_dir, name)
+                    self.meta_repo.clone(url, path)
+                else:
+                    self.debug('no url returned for MetaData repository. You need to clone your MetaData repository '
+                               'manually')
+                    return False
+
             return True
 
     def synchronize(self, pull=True):

@@ -94,6 +94,9 @@ class BaseGitHostService(Loggable):
     default_remote_name = Str('origin')
     remote_url = Str
 
+    def make_url(self, *args, **kw):
+        raise NotImplementedError
+
     def push(self, *args, **kw):
         pass
 
@@ -171,9 +174,6 @@ class GitHostService(BaseGitHostService):
         raise NotImplementedError
 
     def test_api(self):
-        raise NotImplementedError
-
-    def make_url(self, *args, **kw):
         raise NotImplementedError
 
     def get_repository_names(self, organization):

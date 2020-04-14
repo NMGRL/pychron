@@ -191,7 +191,7 @@ class DatabaseAdapter(Loggable):
             return SessionCTX(self, use_parent_session)
 
     def create_session(self, force=False):
-        if self.connected:
+        if self.connect(test=False):
             if self.session_factory:
                 if force:
                     self.debug('force create new session {}'.format(id(self)))

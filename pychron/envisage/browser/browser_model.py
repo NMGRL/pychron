@@ -87,7 +87,9 @@ class BrowserModel(BaseBrowserModel):
     def activate_browser(self, force=False):
         db = self.db
         self.datasource_url = db.datasource_url
-        self.debug('activate browser'.format(self.auto_load_database, self.load_selection_enabled))
+        self.debug('activate browser autoload={} '
+                   'load_selection_enabled={}'.format(self.auto_load_database,
+                                                      self.load_selection_enabled))
 
         if not self.is_activated or force:
 
@@ -166,7 +168,6 @@ class BrowserModel(BaseBrowserModel):
         # self._fuzzy_search_entry_changed(self.fuzzy_search_entry)
 
     # def _fuzzy_search_entry_changed(self, new):
-
 
     def _irradiation_enabled_changed(self, new):
         if not new:

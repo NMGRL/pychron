@@ -14,16 +14,21 @@
 # limitations under the License.
 # ===============================================================================
 
+# ============= standard library imports ========================
+import hashlib
 # ============= enthought library imports =======================
+import os
+import shutil
 
+import yaml
 from traits.api import HasTraits, Str, Bool, List, Instance
 from traitsui.tree_node import TreeNode
 
-# ============= standard library imports ========================
-import hashlib
 # ============= local library imports  ==========================
+from pychron.core.yaml import yload
 from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.envisage.resources import icon
+from pychron.paths import paths
 
 
 class GlobalsTreeNode(TreeNode):
@@ -50,7 +55,14 @@ class BaseNode(HasTraits):
 
 
 class Plugin(BaseNode):
-    pass
+
+    def __init__(self, factory=None, *args, **kw):
+        super(Plugin, self).__init__(*args, **kw)
+        if factory:
+            if isinstance(factory, tuple):
+                self.name, self.tests = factory
+            else:
+                self.name, self.tests = factory, []
 
 
 class PluginTree(Plugin):
@@ -87,6 +99,39 @@ class GlobalTree(BaseNode):
         return next((ni for ni in self.values if ni.tag == tag), None)
 
 
+class StartupTesterParser:
+    def __init__(self):
+        self._st = self._get_st()
+
+    def enable_plugin(self, plugin):
+        for sti in self._st:
+            if sti['plugin'] == plugin.name:
+                sti['tests'] = plugin.tests
+                break
+        else:
+           self._st.append({'plugin': plugin.name, 'tests': plugin.tests})
+
+    def disable_plugin(self, plugin):
+        for sti in self._st[:]:
+            if sti['plugin'] == plugin.name:
+                self._st.remove(sti)
+
+    def backup(self):
+        shutil.copyfile(paths.startup_tests, '{}.bk'.format(paths.startup_tests))
+
+    def save(self):
+        with open(paths.startup_tests, 'w') as wfile:
+            yaml.dump(self._st, wfile)
+
+    def _get_st(self):
+        if os.path.isfile(paths.startup_tests):
+            yd = yload(paths.startup_tests)
+        else:
+            yd = {}
+
+        return yd
+
+
 class InitializationModel(BaseNode):
     name = 'Initalization'
     trees = List  # (PluginTree)
@@ -109,20 +154,21 @@ class InitializationModel(BaseNode):
 
     def update(self):
         ip = self.parser
+        sut = StartupTesterParser()
+        sut.backup()
         for ptree in self.trees:
             if hasattr(ptree, 'plugins'):
                 for pt in ptree.plugins:
                     for plugin in pt.plugins:
-
                         if plugin.enabled:
                             ip.enable_plugin(plugin.name, pt.name.lower(), save=False)
+                            sut.enable_plugin(plugin)
                         else:
                             ip.disable_plugin(plugin.name, pt.name.lower(), save=False)
+                            sut.disable_plugin(plugin)
             else:
                 for vi in ptree.values:
                     ip.set_bool_tag(vi.tag, str(vi.enabled))
 
+        sut.save()
 # ============= EOF =============================================
-
-
-
