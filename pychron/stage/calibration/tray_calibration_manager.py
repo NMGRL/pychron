@@ -232,6 +232,8 @@ class TrayCalibrationManager(Loggable):
         cal.on_trait_change(self._handle_step, 'calibration_step')
         cal.on_trait_change(self._handle_rotation, 'rotation')
         cal.on_trait_change(self._handle_save, 'save_event')
+        cal.manager = self.parent
+
         return cal
 
     def _handle_save(self, obj):

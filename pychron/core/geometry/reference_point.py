@@ -16,8 +16,10 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traits.api import HasTraits, Float, String, List, Property, Str
 from traitsui.api import View, HGroup, Item
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
@@ -40,8 +42,8 @@ class ReferencePoint(HasTraits):
 
     def traits_view(self):
         v = View(CustomLabel('help_tag',
-                             top_padding=10,
-                             left_padding=10,
+                             # top_padding=10,
+                             # left_padding=10,
                              color='maroon'),
                  HGroup('x', 'y'),
                  buttons=['OK', 'Cancel'],
@@ -69,8 +71,8 @@ class ReferenceHole(ReferencePoint):
     def traits_view(self):
         v = View(
             CustomLabel('help_tag',
-                        top_padding=10,
-                        left_padding=10,
+                        # top_padding=10,
+                        # left_padding=10,
                         color='maroon'),
             Item('hole'),
             buttons=['OK', 'Cancel'],
