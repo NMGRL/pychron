@@ -569,7 +569,8 @@ class ExperimentEditorTask(EditorTask):
             #
             # lm.load_load_by_name(new)
             lm.set_load_by_name(new)
-            lm.canvas.editable = False
+            if lm.canvas:
+                lm.canvas.editable = False
 
     @on_trait_change('active_editor:queue:refresh_blocks_needed')
     def _update_blocks(self):
