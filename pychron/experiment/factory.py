@@ -282,6 +282,11 @@ class ExperimentFactory(DVCAble):
         self.run_factory.application = self.application
         self.queue_factory.application = self.application
 
+        sm = self.application.get_service('pychron.entry.simple_identifier_manager.SimpleIdentifierManager')
+        if sm is not None:
+            sm.factory = self.run_factory
+            sm.activated()
+
     def _default_mass_spectrometer_changed(self):
         self.debug('default mass spec changed "{}"'.format(self.default_mass_spectrometer))
         self.run_factory.set_mass_spectrometer(self.default_mass_spectrometer)
@@ -322,6 +327,7 @@ class ExperimentFactory(DVCAble):
         rf.on_trait_change(self._update_end_after, 'end_after')
         rf.on_trait_change(self._auto_save, 'auto_save_needed')
         rf.on_trait_change(self._apply_stepheat, 'apply_stepheat')
+
         if self.simple_identifier_manager:
             self.simple_identifier_manager.factory = rf
 
@@ -331,12 +337,12 @@ class ExperimentFactory(DVCAble):
     # defaults
     # ===============================================================================
     def _simple_identifier_manager_default(self):
-
-        sm = self.application.get_service('pychron.entry.simple_identifier_manager.SimpleIdentifierManager')
-        if sm is not None:
-            sm.factory = self.run_factory
-            sm.activated()
-        return sm
+        if self.application:
+            sm = self.application.get_service('pychron.entry.simple_identifier_manager.SimpleIdentifierManager')
+            if sm is not None:
+                sm.factory = self.run_factory
+                sm.activated()
+            return sm
 
     def _undoer_default(self):
         return ExperimentUndoer(run_factory=self.run_factory, queue=self.queue)
