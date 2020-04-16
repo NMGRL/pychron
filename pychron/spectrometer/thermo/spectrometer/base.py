@@ -112,7 +112,7 @@ class ThermoSpectrometer(BaseSpectrometer):
         :param dname:
         :return:
         """
-        keys, prev = self.get_intensities()
+        keys, prev, _ = self.get_intensities()
         return dname in keys
 
     def test_intensity(self):
@@ -123,18 +123,18 @@ class ThermoSpectrometer(BaseSpectrometer):
         :return:
         """
         ret, err = True, ''
-        keys, one = self.get_intensities()
+        keys, one, _ = self.get_intensities()
         it = 0.1 if self.simulation else self.integration_time
 
         time.sleep(it)
-        keys, two = self.get_intensities()
+        keys, two, _ = self.get_intensities()
 
         if all(one == two):
             time.sleep(it)
-            keys, three = self.get_intensities()
+            keys, three, _ = self.get_intensities()
             if all(two == three):
                 time.sleep(it)
-                keys, four = self.get_intensities()
+                keys, four, _ = self.get_intensities()
                 if all(three == four):
                     ret = False
         return ret, err
@@ -363,7 +363,7 @@ class ThermoSpectrometer(BaseSpectrometer):
         data = self.get_intensities()
         if data is not None:
 
-            keys, signals = data
+            keys, signals, _ = data
 
             def func(k):
                 return signals[keys.index(k)] if k in keys else 0
