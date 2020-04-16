@@ -353,7 +353,7 @@ class ThermoSpectrometer(BaseSpectrometer):
 
             signals = [float(s) for s in signals]
 
-        return keys, signals
+        return keys, signals, None
 
     def get_intensity(self, dkeys):
         """
