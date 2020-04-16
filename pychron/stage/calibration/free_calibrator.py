@@ -15,16 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from traits.api import Button, Bool, Any, List
 from traitsui.api import Item, HGroup
 # from pychron.core.ui.custom_label_editor import CustomLabel
 # from pychron.core.geometry.geometry import calculate_reference_frame_center, calc_length
 from traitsui.view import View
-from pychron.stage.calibration.calibrator import TrayCalibrator
+
+from pychron.core.geometry.affine import calculate_rigid_itransform
 from pychron.core.geometry.reference_point import ReferencePoint
-from pychron.core.geometry.affine import calculate_rigid_transform, calculate_rigid_itransform
-from six.moves import zip
+from pychron.stage.calibration.calibrator import TrayCalibrator
 
 
 # ============= standard library imports ========================
@@ -82,24 +81,23 @@ class FreeCalibrator(TrayCalibrator):
             d = dict(calibration_step='Calibrate')
             self.calibrating = False
 
-            refpoints, points = list(zip(*self.points))
+            return self._handle_end_calibrate(d, x, y, canvas)
 
-            # scale, theta, (tx, ty), err = calculate_rigid_transform(refpoints,
-            #                                                         points)
-            scale, theta, tx, ty, err = calculate_rigid_itransform(refpoints,
-                                                                    points)
+    def _handle_end_calibrate(self, d, x, y, canvas):
+        refpoints, points = list(zip(*self.points))
 
-            # set canvas calibration
-            ca = canvas.calibration_item
-            ca.cx, ca.cy = tx, ty
-            ca.rotation = theta
-            ca.scale = scale
-            d.update(dict(cx=tx, cy=ty, rotation=theta, scale=scale, error=err))
-            return d
-            # return 'Calibrate', tx, ty, theta, 1 / scale, err
-            # else:
-            #                return dict(calibration_step='Calibrate')
-            #                return 'Calibrate', None, None, None, None, None
+        # scale, theta, (tx, ty), err = calculate_rigid_transform(refpoints,
+        #                                                         points)
+        scale, theta, tx, ty, err = calculate_rigid_itransform(refpoints,
+                                                               points)
+
+        # set canvas calibration
+        ca = canvas.calibration_item
+        ca.cx, ca.cy = tx, ty
+        ca.rotation = theta
+        ca.scale = scale
+        d.update(dict(cx=tx, cy=ty, rotation=theta, scale=scale, error=err))
+        return d
 
     def _accept_point(self):
         sp = self.manager.get_current_position()

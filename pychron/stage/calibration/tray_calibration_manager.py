@@ -30,6 +30,7 @@ from pychron.stage.calibration.calibrator import TrayCalibrator, \
     LinearCalibrator, BaseCalibrator
 from pychron.stage.calibration.free_calibrator import FreeCalibrator
 from pychron.stage.calibration.hole_calibrator import HoleCalibrator
+from pychron.stage.calibration.irregular_hole_calibrator import IrregularHoleCalibrator
 
 TRAY_HELP = '''1. Locate center hole
 2. Locate right hole
@@ -47,6 +48,7 @@ HELP_DICT = {
 
 STYLE_DICT = {'Free': FreeCalibrator,
               'Hole': HoleCalibrator,
+              'Irregular': IrregularHoleCalibrator,
               'Linear': LinearCalibrator,
               'SemiAuto': SemiAutoCalibrator,
               'Auto': AutoCalibrator}
@@ -73,7 +75,7 @@ class TrayCalibrationManager(Loggable):
     calibrate = Event
     calibration_step = String('Calibrate')
     calibration_help = String(TRAY_HELP)
-    style = Enum('Tray', 'Free', 'Hole', 'Linear', 'SemiAuto')
+    style = Enum('Tray', 'Free', 'Hole', 'Irregular', 'Linear', 'SemiAuto')
     canvas = Any
     calibrator = Instance(BaseCalibrator)
     # calibrator = Property(depends_on='style')
