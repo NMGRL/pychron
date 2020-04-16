@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance, Button, Bool, Property, DelegatesTo, List, Str, on_trait_change, Any
+from traits.api import Instance, Button, Bool, Property, DelegatesTo, List, Str, Any
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -70,8 +70,8 @@ class ExperimentFactory(DVCAble):
     # max_allowable_runs = Int(10000)
     # can_edit_scripts = Bool(True)
 
-    def __init__(self, *args, **kw):
-        super(ExperimentFactory, self).__init__(auto_setup=False, *args, **kw)
+    # def __init__(self, *args, **kw):
+    #     super(ExperimentFactory, self).__init__(auto_setup=False, *args, **kw)
 
     def activate(self, load_persistence=True):
         self._load_persistence_flag = load_persistence
@@ -267,7 +267,7 @@ class ExperimentFactory(DVCAble):
     def _edit_mode_button_fired(self):
         self.run_factory.edit_mode = not self.run_factory.edit_mode
 
-    @on_trait_change('run_factory.apply_stepheat')
+    # @on_trait_change('run_factory.apply_stepheat')
     def _apply_stepheat(self):
         self.run_factory.do_apply_stepheat(self.queue)
 
@@ -321,7 +321,7 @@ class ExperimentFactory(DVCAble):
 
         rf.on_trait_change(self._update_end_after, 'end_after')
         rf.on_trait_change(self._auto_save, 'auto_save_needed')
-
+        rf.on_trait_change(self._apply_stepheat, 'apply_stepheat')
         if self.simple_identifier_manager:
             self.simple_identifier_manager.factory = rf
 
@@ -331,6 +331,7 @@ class ExperimentFactory(DVCAble):
     # defaults
     # ===============================================================================
     def _simple_identifier_manager_default(self):
+
         sm = self.application.get_service('pychron.entry.simple_identifier_manager.SimpleIdentifierManager')
         if sm is not None:
             sm.factory = self.run_factory
