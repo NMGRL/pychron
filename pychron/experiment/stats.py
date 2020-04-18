@@ -130,19 +130,19 @@ class StatsGroup(Loggable):
         queue = self.active_queue
         if queue is None:
             queue = self.experiment_queues[0]
-        return queue.calculate_duration(*args, **kw)
+        return queue.stats.calculate_duration(*args, **kw)
 
     def get_run_duration(self, *args, **kw):
         queue = self.active_queue
         if queue is None:
             queue = self.experiment_queues[0]
-        return queue.get_run_duration(*args, **kw)
+        return queue.stats.get_run_duration(*args, **kw)
 
     def update_run_duration(self, *args, **kw):
         queue = self.active_queue
         if queue is None:
             queue = self.experiment_queues[0]
-        queue.update_run_duration(*args, **kw)
+        queue.stats.update_run_duration(*args, **kw)
     # ====================================
 
     def start_timer(self):
