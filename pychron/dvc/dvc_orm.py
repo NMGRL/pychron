@@ -19,7 +19,9 @@
 
 from sqlalchemy import Column, Integer, String, TIMESTAMP, Float, func, Boolean, ForeignKey, DATE, DATETIME, TEXT, \
     DateTime
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import object_session, deferred
 from sqlalchemy.orm import relationship
 
@@ -27,6 +29,7 @@ from pychron.core.helpers.datetime_tools import make_timef
 from pychron.core.utils import alphas
 from pychron.database.orms import stringcolumn, primary_key
 from pychron.experiment.utilities.identifier import make_runid
+from pychron.pychron_constants import NULL_STR
 
 Base = declarative_base()
 
@@ -105,8 +108,7 @@ class AnalysisTbl(Base, IDMixin):
     extract_value = Column(Float)
     extract_units = stringcolumn(45)
     cleanup = Column(Float)
-    pre_cleanup = Column(Float)
-    post_cleanup = Column(Float)
+
     duration = Column(Float)
 
     weight = Column(Float)
@@ -132,6 +134,32 @@ class AnalysisTbl(Base, IDMixin):
     load_name = ''
     load_holder = ''
     _temporary_tag = None
+
+    # hybrids
+    _pre_cleanup = Column('pre_cleanup', Float)
+    _post_cleanup = Column('post_cleanup', Float)
+
+    @hybrid_property
+    def pre_cleanup(self):
+        try:
+            return self._pre_cleanup or NULL_STR
+        except OperationalError:
+            return 0
+
+    @hybrid_property
+    def post_cleanup(self):
+        try:
+            return self._post_cleanup or NULL_STR
+        except OperationalError:
+            return 0
+
+    @pre_cleanup.setter
+    def pre_cleanup(self, v):
+        self._pre_cleanup = v
+
+    @post_cleanup.setter
+    def post_cleanup(self,v):
+        self._post_cleanup = v
 
     @property
     def step(self):
