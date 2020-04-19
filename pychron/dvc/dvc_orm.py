@@ -153,6 +153,14 @@ class AnalysisTbl(Base, IDMixin):
         except OperationalError:
             return 0
 
+    @pre_cleanup.setter
+    def pre_cleanup(self, v):
+        self._pre_cleanup = v
+
+    @post_cleanup.setter
+    def post_cleanup(self,v):
+        self._post_cleanup = v
+
     @property
     def step(self):
         print(self.increment, alphas(self.increment))
