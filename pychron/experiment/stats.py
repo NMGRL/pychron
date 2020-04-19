@@ -179,7 +179,7 @@ class StatsGroup(Loggable):
 
     def start_run(self, run):
         self._run_start = time.time()
-        self.current_run_duration = self.active_queue.get_run_duration(run.spec, as_str=True)
+        self.current_run_duration = self.active_queue.stats.get_run_duration(run.spec, as_str=True)
 
     def finish_run(self):
         self._run_start = 0
