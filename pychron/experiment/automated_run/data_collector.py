@@ -325,7 +325,7 @@ class DataCollector(Consoleable):
                 fit = iso.get_fit(cnt)
             else:
                 fit = 'average'
-            gs = [(self.plot_panel.baseline_graph, det, fit, 0, 0)]
+            gs = [(self.plot_panel.baseline_graph, detname, fit, 0, 0)]
         else:
             title = self.isotope_group.get_isotope_title(name=iso, detector=detname)
             iso = self.isotope_group.get_isotope(name=iso, detector=detname)
