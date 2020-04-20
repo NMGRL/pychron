@@ -39,8 +39,11 @@ def normalize_integration_time(it):
     """
         find the integration time closest to "it"
     """
-    x = array(QTEGRA_INTEGRATION_TIMES)
-    return x[argmin(abs(x - it))]
+    try:
+        x = array(QTEGRA_INTEGRATION_TIMES)
+        return x[argmin(abs(x - it))]
+    except TypeError:
+        return 1.0
 
 
 def calculate_radius(m_e, hv, mfield):
