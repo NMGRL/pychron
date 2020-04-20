@@ -24,7 +24,8 @@ from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pychron_traits import PacketStr
 from pychron.entry.labnumber_entry import LabnumberEntry
 from pychron.entry.tasks.actions import SavePDFAction, DatabaseSaveAction, PreviewGenerateIdentifiersAction, \
-    GenerateIdentifiersAction, ClearSelectionAction, RecoverAction, SyncMetaDataAction, ManualEditIdentifierAction
+    GenerateIdentifiersAction, ClearSelectionAction, RecoverAction, SyncMetaDataAction, ManualEditIdentifierAction, \
+    EditMaterialAction
 from pychron.entry.tasks.labnumber.panes import LabnumbersPane, \
     IrradiationPane, IrradiationEditorPane, IrradiationCanvasPane, LevelInfoPane, ChronologyPane, FluxHistoryPane, \
     IrradiationMetadataEditorPane
@@ -105,7 +106,8 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
                  SToolBar(ClearSelectionAction()),
                  SToolBar(RecoverAction(),
                           SyncMetaDataAction(),
-                          ManualEditIdentifierAction())]
+                          ManualEditIdentifierAction(),
+                          EditMaterialAction())]
 
     invert_flag = Bool
     selection_freq = Int
@@ -186,6 +188,15 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     def transfer_j(self):
         self.info('Transferring J Data')
         self.manager.transfer_j()
+
+    def manual_edit_material(self):
+        if not self.manager.selected:
+            self.information_dialog('Please select an existing irradiation position to edit')
+            return
+
+        self.manager.edit_material()
+        # if self.manager.edit_material():
+        #     self.refresh_needed = True
 
     def manual_edit_identifier(self):
         if not self.manager.selected:

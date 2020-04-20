@@ -18,12 +18,10 @@
 # ============= standard library imports ========================
 from __future__ import absolute_import
 
-import math
-
 from numpy import array
 from six.moves import zip
 # ============= local library imports  ==========================
-from uncertainties import std_dev, nominal_value, ufloat
+from uncertainties import std_dev, nominal_value, ufloat, umath
 
 from pychron.pipeline.plot.plotter.references_series import ReferencesSeries
 
@@ -83,7 +81,7 @@ class ICFactor(ReferencesSeries):
                     m36 = 35.967545105
                     m40 = 39.9623831238
                     ic = 1 / ufloat(v, e)
-                    alpha = 0.25 * math.log(ic) / math.log(m40/m36)
+                    alpha = 0.25 * umath.log(ic) / umath.log(m40/m36)
                     ui.set_alpha(alpha)
                 else:
                     ui.set_temporary_ic_factor(d, v, e)

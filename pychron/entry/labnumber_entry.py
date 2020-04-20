@@ -168,6 +168,15 @@ class LabnumberEntry(DVCIrradiationable):
         # if self.irradiation and self.level:
         #     self.dvc.repository_db_sync(self.irradiation, self.level, dry_run=False)
 
+    def edit_material(self):
+        from pychron.entry.editors.material_editor import MaterialEditor
+        material_editor = MaterialEditor(dvc=self.dvc)
+        material_editor.activate(self.selected[0])
+        info = material_editor.edit_traits()
+        if info.result:
+            material_editor.save(self.irradiation, self.level, self.selected[0])
+            self._update_positions()
+
     def generate_status_report(self):
         irradname = self.irradiation
         self.info('generate irradiation status report for {}'.format(irradname))
@@ -794,13 +803,22 @@ THIS CHANGE CANNOT BE UNDONE')
             self._load_holder_positions(holes)
             self._load_holder_canvas(holes)
 
+        self._update_positions(name, level)
+
+    def _update_positions(self, name=None, level=None):
+        if name is None:
+            name = self.level
+
+        if level is None:
+            level = self.dvc.db.get_irradiation_level(self.irradiation, name)
+
         try:
             positions = level.positions
             pn = len(positions)
             ipn = len(self.irradiated_positions)
 
             self.debug('positions in level {}.  \
-available holder positions {}'.format(pn, ipn))
+        available holder positions {}'.format(pn, ipn))
             if positions:
                 with dirty_ctx(self):
                     self._make_positions(ipn, positions)
@@ -808,7 +826,6 @@ available holder positions {}'.format(pn, ipn))
             import traceback
             traceback.print_exc()
             self.warning_dialog('Failed loading Irradiation level="{}"'.format(name))
-
     # @simple_timer()
     def _make_positions(self, n, positions):
         with no_update(self):
