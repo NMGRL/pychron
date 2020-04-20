@@ -1247,12 +1247,11 @@ class DVC(Loggable):
 
     def add_material(self, name, grainsize=None):
         db = self.db
-        added = False
-        if not db.get_material(name, grainsize):
-            added = True
-            db.add_material(name, grainsize)
+        mat = db.get_material(name, grainsize)
+        if not mat:
+            mat = db.add_material(name, grainsize)
 
-        return added
+        return mat
 
     def add_project(self, name, principal_investigator=None, **kw):
         added = False
@@ -1263,12 +1262,11 @@ class DVC(Loggable):
         return added
 
     def add_sample(self, name, project, pi, material, grainsize=None, note=None, **kw):
-        added = False
         db = self.db
-        if not db.get_sample(name, project, pi, material, grainsize):
-            added = True
-            db.add_sample(name, project, pi, material, grainsize, note=note, **kw)
-        return added
+        sam = db.get_sample(name, project, pi, material, grainsize)
+        if not sam:
+            sam = db.add_sample(name, project, pi, material, grainsize, note=note, **kw)
+        return sam
 
     def add_principal_investigator(self, name, **kw):
         added = False

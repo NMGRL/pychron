@@ -331,4 +331,10 @@ class ManualEditIdentifierAction(TaskAction):
     #     dvc = app.get_service('pychron.dvc.dvc.DVC')
     #     if dvc:
     #         dvc.repository_db_sync('IR986', dry_run=False)
+
+
+class EditMaterialAction(TaskAction):
+    name = 'Edit Material'
+    method = 'manual_edit_material'
+
 # ============= EOF =============================================

@@ -2059,7 +2059,8 @@ class DVCDatabase(DatabaseAdapter):
 
             return self._query_all(q, verbose_query=False, **kw)
 
-    def get_samples(self, projects=None, principal_investigators=None, project_like=None, name_like=None, **kw):
+    def get_samples(self, projects=None, principal_investigators=None, project_like=None, name_like=None,
+                    name=None, **kw):
         with self.session_ctx() as sess:
             q = sess.query(SampleTbl)
             if projects or project_like:
@@ -2094,6 +2095,8 @@ class DVCDatabase(DatabaseAdapter):
                         like = '{}%'.format(ni)
                     clauses.append(SampleTbl.name.like(like))
                 q = q.filter(or_(*clauses))
+            elif name:
+                q = q.filter(SampleTbl.name == name)
 
             return self._query_all(q, **kw)
 
