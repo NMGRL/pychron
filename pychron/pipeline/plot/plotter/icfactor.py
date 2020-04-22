@@ -80,7 +80,8 @@ class ICFactor(ReferencesSeries):
                     # made much more configurable in the future
                     m36 = 35.967545105
                     m40 = 39.9623831238
-                    ic = 1 / ufloat(v, e)
+                    # ic = 1 / ufloat(v, e)
+                    ic = ufloat(v, e)
                     alpha = 0.25 * umath.log(ic) / umath.log(m40/m36)
                     ui.set_alpha(alpha)
                 else:
