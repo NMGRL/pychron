@@ -29,7 +29,7 @@ def parse_hop(args):
         dets = [ci['detector'] for ci in cc]
         defls = [ci.get('deflection') for ci in cc]
         pdets = [ci['detector'] for ci in cc if ci.get('protect', False)]
-        is_baselines = [ci['is_baseline'] for ci in cc]
+        is_baselines = [ci.get('is_baseline', False) for ci in cc]
         active_detectors = [ci['detector'] for ci in cc if ci.get('active', False)]
         pos = args['positioning']
 

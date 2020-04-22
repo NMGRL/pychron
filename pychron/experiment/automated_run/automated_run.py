@@ -301,7 +301,7 @@ class AutomatedRun(Loggable):
         if not fits:
             fits = self._get_default_fits()
         elif len(fits) == 1:
-            fits = {i: fits for i in isotopes}
+            fits = {i: fits[0] for i in isotopes}
         else:
             fits = dict([f.split(':') for f in fits])
 
