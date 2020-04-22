@@ -82,6 +82,7 @@ class ICFactor(ReferencesSeries):
                     m40 = 39.9623831238
                     ic = 1 / ufloat(v, e)
                     alpha = 0.25 * umath.log(ic) / umath.log(m40/m36)
+                    self.info('calculated alpha value={}'.format(alpha))
                     ui.set_alpha(alpha)
                 else:
                     ui.set_temporary_ic_factor(d, v, e)

@@ -306,7 +306,9 @@ class ArArAge(IsotopeGroup):
         for k in self.isotope_keys:
             iso = self.isotopes[k]
             try:
-                self.temporary_ic_factors[k] = a * n[iso.name]
+                v = a * n[iso.name]
+                self.temporary_ic_factors[iso.detector] = v
+                self.info('setting ic factor={} to {}'.format(iso.detector, v))
             except KeyError:
                 pass
 
