@@ -302,6 +302,7 @@ class ArArAge(IsotopeGroup):
         self.temporary_ic_factors[k] = uv
 
     def set_alpha(self, a):
+        self.info('calculated alpha value={}'.format(a))
         n = {'Ar39': 1, 'Ar38': 2, 'Ar37': 3, 'Ar36': 4}
         for k in self.isotope_keys:
             iso = self.isotopes[k]
