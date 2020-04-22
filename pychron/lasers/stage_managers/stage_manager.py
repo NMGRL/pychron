@@ -354,12 +354,26 @@ class StageManager(BaseStageManager):
                          if abs(hole.x - xx) < tol and abs(hole.y - yy) < tol), None)
 
     def get_hole_xy(self, key):
-        pos = self.stage_map.get_hole_pos(key)
-        self.debug('hole: {} original x,y = {}'.format(key, pos))
-        if pos:
-            # map the position to calibrated space
-            pos = self.get_calibrated_position(pos)
+        hole = self.stage_map.get_hole(key)
+        self.debug('hole {} for {}'.format(hole, key))
+        if hole:
+            if hole.has_correction():
+                pos = hole.corrected_position
+                style = 'corrected'
+            else:
+                style = 'calibrated'
+                pos = hole.nominal_position
+                pos = self.get_calibrated_position(pos)
+
+            self.debug('using {} position={}'.format(style, pos))
             return pos
+        # pos = self.stage_map.get_corrected_hole_pos(key)
+        # pos = self.stage_map.get_hole_pos(key)
+        # self.debug('hole: {} original x,y = {}'.format(key, pos))
+        # if pos:
+            # map the position to calibrated space
+            # pos = self.get_calibrated_position(pos)
+            # return pos
 
     def finish_move_to_hole(self, user_entry):
         pass
