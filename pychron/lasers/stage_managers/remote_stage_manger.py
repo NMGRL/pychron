@@ -50,8 +50,14 @@ class RemoteStageManager(StageManager):
 
         return super(RemoteStageManager, self).load()
 
-    def get_current_position(self):
-        self.parent.update_position()
+    def get_current_position(self, warn=False):
+        try:
+            self.parent.update_position()
+        except BaseException:
+            if warn:
+                self.warning_dialog('Failed updated the position from the laser.')
+                return
+
         self.debug('get_current_position {},{}'.format(self.parent.x, self.parent.y))
         return self.parent.x, self.parent.y
 

@@ -120,7 +120,7 @@ class StageManager(BaseStageManager):
         else:
             self.move_to_hole(v, user_entry=True, **kw)
 
-    def get_current_position(self):
+    def get_current_position(self, **kw):
         if self.stage_controller:
             x = self.stage_controller.x
             y = self.stage_controller.y

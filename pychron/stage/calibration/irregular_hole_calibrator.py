@@ -18,6 +18,10 @@ from pychron.stage.calibration.hole_calibrator import HoleCalibrator
 
 
 class IrregularHoleCalibrator(HoleCalibrator):
+    def _get_current_position(self):
+        sp = self.manager.get_current_position(warn=True)
+        return sp
+
     def _handle_end_calibrate(self, d, x, y, canvas):
 
         sm = self.stage_map

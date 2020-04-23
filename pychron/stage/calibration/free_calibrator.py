@@ -100,10 +100,17 @@ class FreeCalibrator(TrayCalibrator):
         return d
 
     def _accept_point(self):
+        sp = self._get_current_position()
+        if sp:
+            npt = self._get_point(sp)
+            if npt:
+                self.points.append(npt)
+        else:
+            self.warning_dialog('Position not retrieved correctly. Point not accepted')
+
+    def _get_current_position(self):
         sp = self.manager.get_current_position()
-        npt = self._get_point(sp)
-        if npt:
-            self.points.append(npt)
+        return sp
 
     def _get_point(self, sp):
         rp = ReferencePoint(sp)
