@@ -205,7 +205,7 @@ class ICFactorPersistNode(DVCPersistNode):
         if prog:
             prog.change_message('Save IC Factor for {} {}/{}'.format(ai.record_id, i, n))
 
-        if state.delete_existing:
+        if state.delete_existing_icfactors:
             self.dvc.delete_existing_icfactors(ai, state.saveable_keys)
 
         self.dvc.save_icfactors(ai, state.saveable_keys, state.saveable_fits,
