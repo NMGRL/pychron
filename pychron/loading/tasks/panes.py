@@ -22,14 +22,13 @@ from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Int, Property, Instance
 from traitsui.api import View, UItem, Item, VGroup, TabularEditor, HGroup, spring, \
     EnumEditor, Tabbed, Handler, CheckListEditor
-from traitsui.group import VFold
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.configurable_tabular_adapter import ConfigurableMixin
-from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view, VFold
 from pychron.core.ui.qt.tabular_editors import FilterTabularEditor
 from pychron.core.ui.table_configurer import TableConfigurer, TableConfigurerHandler
 from pychron.envisage.icon_button_editor import icon_button_editor

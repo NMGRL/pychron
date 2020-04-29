@@ -15,11 +15,18 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traitsui.api import Item, ListEditor, InstanceEditor, View
+from os import environ
+
+from traitsui.api import Item, ListEditor, InstanceEditor, View, VGroup, VFold as _VFold
+from traitsui.menu import OKButton
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from traitsui.menu import OKButton
+
+if not environ.get('VFOLD_ENABLED', True):
+    VFold = VGroup
+else:
+    VFold = _VFold
 
 
 def instance_item(name, **kw):

@@ -48,20 +48,23 @@ class BaseTasksApplication(TasksApplication, Loggable):
 
     def _application_initialized_fired(self):
         if globalv.use_startup_tests:
-            st = StartupTester()
-            for plugin in iter(self.plugin_manager):
-                st.test_plugin(plugin)
-
-            if st.results:
-                if globalv.show_startup_results or not st.all_passed:
-                    v = ResultsView(model=st)
-                    open_view(v)
+            self.do_startup_tests()
 
         if globalv.use_testbot:
             from pychron.testbot.testbot import TestBot
 
             testbot = TestBot(application=self)
             testbot.run()
+
+    def do_startup_tests(self, force_show_results=False, **kw):
+        st = StartupTester()
+        for plugin in iter(self.plugin_manager):
+            st.test_plugin(plugin)
+
+        if st.results:
+            if force_show_results or (globalv.show_startup_results or not st.all_passed):
+                v = ResultsView(model=st, **kw)
+                open_view(v)
 
     def get_boolean_preference(self, pid, default=None):
         return to_bool(self.preferences.get(pid, default))

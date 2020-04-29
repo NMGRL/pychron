@@ -18,10 +18,11 @@
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traits.api import Color, Instance, DelegatesTo, List, Any, Property, Button, Event
 from traitsui.api import View, Item, UItem, VGroup, HGroup, spring, \
-    Group, Spring, VFold, Label, VSplit, UReadonly, ListEditor, Readonly
+    Group, Spring, Label, VSplit, UReadonly, ListEditor, Readonly
 from traitsui.editors import TableEditor, EnumEditor
 from traitsui.table_column import ObjectColumn
 
+from pychron.core.helpers.traitsui_shortcuts import VFold
 from pychron.core.pychron_traits import BorderHGroup, BorderVGroup
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.ui.custom_label_editor import CustomLabel

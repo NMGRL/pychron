@@ -97,6 +97,7 @@ class ExperimentPreferences(BasePreferencesHelper):
     failed_intensity_count_threshold = PositiveInteger(3)
     ratio_change_detection_enabled = Bool(False)
     plot_panel_update_period = PositiveInteger(1)
+    execute_open_queues = Bool
 
     def _get_memory_threshold(self):
         return self._memory_threshold
@@ -157,6 +158,23 @@ class ExperimentPreferencesPane(PreferencesPane):
     category = 'Experiment'
 
     def traits_view(self):
+        general_grp = VGroup(Item('execute_open_queues', label='Execute Open Queues',
+                                  tooltip='After the active queue finishes continue running any other open tabs '
+                                          'in order from left to right'),
+                             Item('experiment_type', label='Experiment Type'),
+                             Item('send_config_before_run',
+                                  tooltip='Set the spectrometer configuration before each analysis',
+                                  label='Set Spectrometer Configuration on Start'),
+                             Item('verify_spectrometer_configuration',
+                                  enabled_when='send_config_before_run',
+                                  tooltip='Verify spectrometer configuration is properly set, '
+                                          'otherwise cancel experiment'),
+                             Item('default_integration_time',
+                                  enabled_when='set_integration_time_on_start'),
+                             Item('n_executed_display',
+                                  label='N. Executed',
+                                  tooltip='Number of analyses to display in the "Executed" table'),
+                             label='General')
         editor_grp = VGroup(Item('automated_runs_editable',
                                  label='Direct editing',
                                  tooltip='Allow user to edit Automated Runs directly within table. '
@@ -215,22 +233,9 @@ class ExperimentPreferencesPane(PreferencesPane):
                        show_border=True,
                        label='Peak Center')
 
-        automated_grp = Group(VGroup(Item('experiment_type', label='Experiment Type'),
-                                     Item('send_config_before_run',
-                                          tooltip='Set the spectrometer configuration before each analysis',
-                                          label='Set Spectrometer Configuration on Start'),
-                                     Item('verify_spectrometer_configuration',
-                                          enabled_when='send_config_before_run',
-                                          tooltip='Verify spectrometer configuration is properly set, '
-                                                  'otherwise cancel experiment'),
-                                     Item('set_integration_time_on_start',
+        automated_grp = Group(VGroup(Item('set_integration_time_on_start',
                                           tooltip='Set integration time on start of analysis',
                                           label='Set Integration Time on Start'),
-                                     Item('default_integration_time',
-                                          enabled_when='set_integration_time_on_start'),
-                                     Item('n_executed_display',
-                                          label='N. Executed',
-                                          tooltip='Number of analyses to display in the "Executed" table'),
                                      Item('use_equilibration_analysis',
                                           label='Do Equilibration Analysis',
                                           tooltip='Analyze and display equilibration results'),
@@ -250,7 +255,8 @@ class ExperimentPreferencesPane(PreferencesPane):
                                      monitor_grp, overlap_grp),
                               label='Automated Run')
 
-        return View(color_group,
+        return View(general_grp,
+                    color_group,
                     automated_grp,
                     # notification_grp,
                     editor_grp)
