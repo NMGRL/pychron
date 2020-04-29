@@ -75,15 +75,15 @@ class ResultsView(Controller):
     model = Instance('pychron.startup_test.tester.StartupTester')
     auto_close = 5
     selected = Instance(TestResult, ())
+    cancel_auto_close = Bool(False)
 
     base_help_str = 'Select any row to cancel auto close. Auto close in {}'
     help_str = String
     _auto_closed = False
-    _cancel_auto_close = False
     can_cancel = Bool(True)
 
     def _selected_changed(self, new):
-        self._cancel_auto_close = bool(new)
+        self.cancel_auto_close = bool(new)
 
     def _timer_func(self):
         delay = self.auto_close
@@ -91,11 +91,11 @@ class ResultsView(Controller):
         while 1:
             time.sleep(0.25)
             ct = time.time() - st
-            if ct > delay or self._cancel_auto_close:
+            if ct > delay or self.cancel_auto_close:
                 break
             self.help_str = self.base_help_str.format(delay - int(ct))
 
-        if self._cancel_auto_close:
+        if self.cancel_auto_close:
             self.help_str = 'Auto close canceled'
         else:
             invoke_in_main_thread(self._do_auto_close)
@@ -124,7 +124,7 @@ class ResultsView(Controller):
                     sys.exit()
 
     def _do_auto_close(self):
-        if not self._cancel_auto_close:
+        if not self.cancel_auto_close:
             self._auto_closed = True
             try:
                 self.info.ui.dispose()

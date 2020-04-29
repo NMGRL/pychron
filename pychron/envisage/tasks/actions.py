@@ -109,26 +109,10 @@ class StartupTestsAction(Action):
 
     def perform(self, event):
         app = event.task.application
-        from pychron.globals import globalv
 
-        ov = globalv.use_startup_tests
-        globalv.use_startup_tests = True
-
-        st = app.startup_tester
-        st.results = []
-        for plugin in app.plugin_manager:
-            if hasattr(plugin, 'startup_test'):
-                plugin.startup_test()
-
-        globalv.use_startup_tests = ov
-
-        if st.results:
-            from pychron.startup_test.results_view import ResultsView
-
-            v = ResultsView(model=st,
-                            _cancel_auto_close=True,
-                            can_cancel=False)
-            app.open_view(v)
+        app.do_startup_tests(force_show_results=True,
+                             cancel_auto_close=True,
+                             can_cancel=False)
 
 
 class KeyBindingsAction(PAction):
