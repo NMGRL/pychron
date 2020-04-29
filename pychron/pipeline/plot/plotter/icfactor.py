@@ -78,12 +78,12 @@ class ICFactor(ReferencesSeries):
                 if self.options.use_source_correction:
                     # this is all hard coded stuff and would need to be
                     # made much more configurable in the future
-                    m36 = 35.967545105
-                    m40 = 39.9623831238
-                    # ic = 1 / ufloat(v, e)
-                    ic = ufloat(v, e)
-                    alpha = 0.25 * umath.log(ic) / umath.log(m40/m36)
-                    ui.set_alpha(alpha)
+                    m40 = 39.9624
+                    m36 = 35.9675
+                    ic = 1 / ufloat(v, e)
+                    # ic = ufloat(v, e)
+                    beta = umath.log(ic) / umath.log(m40/m36)
+                    ui.set_beta(beta)
                 else:
                     ui.set_temporary_ic_factor(d, v, e)
 
