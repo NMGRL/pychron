@@ -188,27 +188,28 @@ class ICFactorPersistNode(DVCPersistNode):
 
     def run(self, state):
         wrapper = lambda ai, prog, i, n: self._save_icfactors(ai, prog, i, n,
-                                                              state.saveable_keys,
-                                                              state.saveable_fits,
-                                                              state.references,
-                                                              state.delete_existing_icfactors)
+                                                              state)
         progress_iterator(state.unknowns, wrapper, threshold=1)
 
-        msg = self.commit_message
-        if not msg:
-            f = ','.join('{}({})'.format(x, y) for x, y in zip(state.saveable_keys, state.saveable_fits))
-            msg = 'auto update ic_factors, fits={}'.format(f)
+        if state.use_source_correction:
+            msg = 'source correction ic_factors'
+        else:
+            msg = self.commit_message
+            if not msg:
+                f = ','.join('{}({})'.format(x, y) for x, y in zip(state.saveable_keys, state.saveable_fits))
+                msg = 'auto update ic_factors, fits={}'.format(f)
 
         self._persist(state, msg)
 
-    def _save_icfactors(self, ai, prog, i, n, saveable_keys, saveable_fits, reference, delete_existing):
+    def _save_icfactors(self, ai, prog, i, n, state):
         if prog:
             prog.change_message('Save IC Factor for {} {}/{}'.format(ai.record_id, i, n))
 
-        if delete_existing:
-            self.dvc.delete_existing_icfactors(ai, saveable_keys)
+        if state.delete_existing_icfactors:
+            self.dvc.delete_existing_icfactors(ai, state.saveable_keys)
 
-        self.dvc.save_icfactors(ai, saveable_keys, saveable_fits, reference)
+        self.dvc.save_icfactors(ai, state.saveable_keys, state.saveable_fits,
+                                state.references, state.use_source_correction)
 
 
 class FluxPersistNode(DVCPersistNode):

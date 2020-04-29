@@ -613,14 +613,17 @@ class DVC(Loggable):
 
             self._update_current_age(ai)
 
-    def save_icfactors(self, ai, dets, fits, refs):
-        if fits and dets:
-            self.info('Saving icfactors for {}'.format(ai))
-            ai.dump_icfactors(dets, fits, refs, reviewed=True)
-            if self._cache:
-                self._cache.remove(ai.uiid)
+    def save_icfactors(self, ai, dets, fits, refs, use_source_correction):
+        if use_source_correction:
+            ai.dump_source_correction_icfactors(refs)
+        else:
+            if fits and dets:
+                self.info('Saving icfactors for {}'.format(ai))
+                ai.dump_icfactors(dets, fits, refs, reviewed=True)
 
-            self._update_current_age(ai)
+        if self._cache:
+            self._cache.remove(ai.uiid)
+        self._update_current_age(ai)
 
     def save_blanks(self, ai, keys, refs):
         if keys:

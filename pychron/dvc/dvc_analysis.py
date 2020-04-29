@@ -186,7 +186,7 @@ class DVCAnalysis(Analysis):
             modifiers = ('intercepts', 'baselines', 'blanks', 'icfactors', 'peakcenter')
 
         if USE_GIT_TAGGING:
-            modifiers += ('tags', )
+            modifiers += ('tags',)
 
         for modifier in modifiers:
             path = self._analysis_path(modifier=modifier)
@@ -487,6 +487,16 @@ class DVCAnalysis(Analysis):
                       'reviewed': reviewed,
                       'fit': fi,
                       'references': make_ref_list(refs)}
+        self._dump(jd, path)
+
+    def dump_source_correction_icfactors(self, refs=None):
+        jd, path = self._get_json('icfactors')
+        for det, value in self.temporary_ic_factors.items():
+            v, e = nominal_value(value), std_dev(value)
+            jd[det] = {'value': float(v), 'error': float(e), 'reviewed': True,
+                       'fit': 'exponential',
+                       'references': make_ref_list(refs)
+                       }
         self._dump(jd, path)
 
     def make_path(self, modifier):
