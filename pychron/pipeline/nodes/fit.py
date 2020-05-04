@@ -32,7 +32,7 @@ from pychron.pipeline.editors.results_editor import IsoEvolutionResultsEditor
 from pychron.pipeline.nodes.figure import FigureNode
 from pychron.pipeline.results.define_equilibration import DefineEquilibrationResult
 from pychron.pipeline.results.iso_evo import IsoEvoResult
-from pychron.pipeline.state import get_detector_set
+from pychron.pipeline.state import get_detector_set, get_isotope_pairs_set
 from pychron.pychron_constants import NULL_STR
 
 
@@ -181,9 +181,15 @@ class FitICFactorNode(FitReferencesNode):
         return view('ICFactor Options')
 
     def _configure_hook(self):
+        udets = get_isotope_pairs_set(self.unknowns)
+        rdets = get_isotope_pairs_set(self.references)
+        dets = list(udets.union(rdets))
+
         udets = get_detector_set(self.unknowns)
         rdets = get_detector_set(self.references)
-        dets = list(udets.union(rdets))
+
+        dets.extend(list(udets.union(rdets)))
+
         self.plotter_options_manager.set_detectors(dets)
 
     def _set_additional_options(self, state):

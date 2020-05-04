@@ -24,6 +24,10 @@ def get_detector_set(ans):
     return {iso.detector for ai in ans for iso in ai.itervalues()}
 
 
+def get_isotope_pairs_set(ans):
+    return {'{}:{}'.format(iso.name, iso.detector) for ai in ans for iso in ai.itervalues()}
+
+
 def get_isotope_set(ans):
     return {k for ai in ans for k in ai.isotope_keys}
 
@@ -65,6 +69,5 @@ class EngineState(HasTraits):
 
     mdd_workspace = None
     arar_calculation_options = None
-
 
 # ============= EOF =============================================

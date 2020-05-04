@@ -220,10 +220,15 @@ class CSVSpectrumNode(CSVNode):
     def _analysis_factory(self, d):
         f = super(CSVSpectrumNode, self)._analysis_factory(d)
 
-        f.k39 = float(get_case_insensitive(d, 'k39'))
-        f.k39_err = float(get_case_insensitive(d, 'k39_err'))
-        f.rad40 = float(get_case_insensitive(d, 'rad40'))
-        f.rad40_err = float(get_case_insensitive(d, 'rad40_err'))
+        for k in ('k39', 'rad40'):
+            for kk in ('', '_err'):
+                kk = '{}{}'.format(k, kk)
+                setattr(f, kk, float(get_case_insensitive(d, kk)))
+
+        # f.k39 = float(get_case_insensitive(d, 'k39'))
+        # f.k39_err = float(get_case_insensitive(d, 'k39_err'))
+        # f.rad40 = float(get_case_insensitive(d, 'rad40'))
+        # f.rad40_err = float(get_case_insensitive(d, 'rad40_err'))
         return f
 
 

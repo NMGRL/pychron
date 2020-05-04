@@ -505,7 +505,8 @@ class Analysis(ArArAge, IdeogramPlotable):
         return self._get_isotope_dict(get)
 
     def get_ic_factor(self, det):
-        iso = next((i for i in self.isotopes.values() if i.detector == det), None)
+        # iso = next((i for i in self.isotopes.values() if i.detector == det), None)
+        iso = self.get_isotope(detector=det)
         if iso:
             r = iso.ic_factor
         else:
