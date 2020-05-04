@@ -331,9 +331,14 @@ class IsotopeGroup(HasTraits):
     def get_isotope(self, name=None, detector=None, kind=None):
         if name is None and detector is None:
             raise NotImplementedError('name or detector required')
+        if detector and ':' in detector:
+            name, detector = detector.split(':')
 
         iso = None
         if name:
+            if ':' in name:
+                name, detector = name.split(':')
+
             try:
                 iso = self.isotopes[name]
                 if detector:
