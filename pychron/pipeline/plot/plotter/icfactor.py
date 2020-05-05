@@ -73,6 +73,15 @@ class ICFactor(ReferencesSeries):
 
     def _set_interpolated_values(self, iso, fit, ans, p_uys, p_ues):
         n, d = iso.split('/')
+
+        is_peak_hop = False
+        for ai in ans:
+            dets = ai.detectors()
+            # a detector is used more than once
+            if len(dets) > len(set(dets)):
+                is_peak_hop = True
+                break
+
         for ui, v, e in zip(ans, p_uys, p_ues):
             if v is not None and e is not None:
                 if self.options.use_source_correction:
@@ -82,8 +91,8 @@ class ICFactor(ReferencesSeries):
                     m36 = 35.9675
                     ic = 1 / ufloat(v, e)
                     # ic = ufloat(v, e)
-                    beta = umath.log(ic) / umath.log(m40/m36)
-                    ui.set_beta(beta)
+                    beta = umath.log(ic) / umath.log(m40 / m36)
+                    ui.set_beta(beta, is_peak_hop)
                 else:
                     ui.set_temporary_ic_factor(d, v, e)
 

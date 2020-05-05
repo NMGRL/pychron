@@ -281,6 +281,9 @@ class IsotopeGroup(HasTraits):
     def isotope_factory(self, **kw):
         return Isotope(**kw)
 
+    def detectors(self):
+        return [v.detector for k, v in self.isotopes.items()]
+
     def pairs(self):
         return [(k, v.name, v.detector) for k, v in self.isotopes.items()]
 

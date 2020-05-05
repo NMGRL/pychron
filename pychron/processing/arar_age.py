@@ -301,20 +301,22 @@ class ArArAge(IsotopeGroup):
     def set_temporary_uic_factor(self, k, uv):
         self.temporary_ic_factors[k] = uv
 
-    def set_beta(self, beta):
+    def set_beta(self, beta, is_peak_hop):
         self.info('calculated beta value={}'.format(beta))
 
         m40 = 39.9624
 
-        for k, m in (('Ar36', 35.9675),
-                     ('Ar37', 36.9668),
-                     ('Ar38', 37.9627),
-                     ('Ar39', 38.964)):
+        for k, m, di in (('Ar36', 35.9675, 'L2'),
+                         ('Ar37', 36.9668, 'L1'),
+                         ('Ar38', 37.9627, 'AX'),
+                         ('Ar39', 38.964, 'H1')):
             iso = self.get_isotope(k)
             b = (m40 / m) ** beta
             v = 1 / b
-            self.temporary_ic_factors[iso.detector] = v
-            self.info('setting ic factor={} to {}'.format(iso.detector, v))
+
+            det = di if is_peak_hop else iso.detector
+            self.temporary_ic_factors[det] = v
+            self.info('setting ic factor={} to {}'.format(det, v))
 
         # for k in self.isotope_keys:
         #     iso = self.isotopes[k]
