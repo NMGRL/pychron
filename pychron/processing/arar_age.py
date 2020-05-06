@@ -306,26 +306,26 @@ class ArArAge(IsotopeGroup):
 
         m40 = 39.9624
 
-        for k, m, di in (('Ar36', 35.9675, 'L2'),
-                         ('Ar37', 36.9668, 'L1'),
-                         ('Ar38', 37.9627, 'AX'),
-                         ('Ar39', 38.964, 'H1')):
-            iso = self.get_isotope(k)
+        if is_peak_hop:
+            items = (('L2', 36.9668),
+                     ('L1', 37.9627),
+                     ('AX', 38.964))
+        else:
+            items = (('Ar36', 35.9675),
+                     ('Ar37', 36.9668),
+                     ('Ar38', 37.9627),
+                     ('Ar39', 38.964))
+
+        for k, m in items:
             b = (m40 / m) ** beta
             v = 1 / b
-
-            det = di if is_peak_hop else iso.detector
+            if is_peak_hop:
+                iso = self.get_isotope(detector=k)
+            else:
+                iso = self.get_isotope(k)
+            det = iso.detector
             self.temporary_ic_factors[det] = v
             self.info('setting ic factor={} to {}'.format(det, v))
-
-        # for k in self.isotope_keys:
-        #     iso = self.isotopes[k]
-        #     try:
-        #         v = a * n[iso.name]
-        #         self.temporary_ic_factors[iso.detector] = v
-        #         self.info('setting ic factor={} to {}'.format(iso.detector, v))
-        #     except KeyError:
-        #         pass
 
     def set_temporary_ic_factor(self, k, v, e, tag=None):
         self.temporary_ic_factors[k] = uv = ufloat(v, e, tag=tag)
