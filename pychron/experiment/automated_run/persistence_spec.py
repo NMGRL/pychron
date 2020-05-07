@@ -94,6 +94,7 @@ class PersistenceSpec(HasTraits):
     setpoint_blob = Bytes
     snapshots = List
     videos = List
+    extraction_context = Dict
 
     conditionals = List
     tripped_conditional = None
