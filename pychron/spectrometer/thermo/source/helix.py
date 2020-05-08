@@ -93,4 +93,9 @@ class HelixSource(ThermoSource):
                     label='Multipole')
         v = View(Tabbed(self._get_default_group('General'), gg))
         return v
+    
+    
+class HelixSFTSource(HelixSource):
+    def _nominal_hv_default(self):
+        return 4500
 # ============= EOF =============================================

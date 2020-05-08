@@ -29,7 +29,7 @@ def make_categories(c, av):
 
 
 def parse_categories(cint, av):
-    v = map(int, make_bitarray(cint))[::-1]
+    v = [int(b) for b in make_bitarray(cint)][::-1]
     cs = [av[i] for i, vi in enumerate(v) if vi]
 
     return cs
@@ -79,6 +79,8 @@ class UserEntry(BaseEntry):
         self.email = dbuser.email or ''
         self.affiliation = dbuser.affiliation or ''
         category = dbuser.category or 0
+
+        print('ca', category, self.available_categories)
         self.categories = parse_categories(category, self.available_categories)
         info = self.edit_traits()
         if info.result:

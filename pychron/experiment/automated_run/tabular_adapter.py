@@ -63,7 +63,7 @@ blocks = MenuManager(Action(name='Make Block', action='make_block'),
                      name='Blocks')
 
 selects = MenuManager(Action(name='Select Unknowns', action='select_unknowns'),
-                      Action(name='Select Same Labnumber', action='select_same'),
+                      Action(name='Select Same Identifier', action='select_same'),
                       Action(name='Select Same Attributes...', action='select_same_attr'),
                       name='Select')
 
@@ -88,7 +88,7 @@ EDIT_MENU = MenuManager(move, copy, jump, blocks, selects, group_e,
 class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     all_columns = [
         ('-', 'result_str'),
-        ('Labnumber', 'labnumber'),
+        ('Identifier', 'labnumber'),
         ('Aliquot', 'aliquot'),
         ('Sample', 'sample'),
         ('Project', 'project'),
@@ -118,7 +118,7 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
         ('Weight', 'weight'),
         ('Delay After', 'delay_after')]
 
-    columns = [('Labnumber', 'labnumber'),
+    columns = [('Identifier', 'labnumber'),
                ('Aliquot', 'aliquot'), ]
     font = 'arial 10'
     # all_columns = List
@@ -336,7 +336,7 @@ class AutomatedRunSpecAdapter(ExecutedAutomatedRunSpecAdapter):
 
 class RunBlockAdapter(AutomatedRunSpecAdapter):
     columns = [
-        ('Labnumber', 'labnumber'),
+        ('Identifier', 'labnumber'),
         # ('Aliquot', 'aliquot'),
         ('Sample', 'sample'),
         ('Position', 'position'),
@@ -366,7 +366,7 @@ class RunBlockAdapter(AutomatedRunSpecAdapter):
 class ExecutedUVAutomatedRunSpecAdapter(ExecutedAutomatedRunSpecAdapter):
     columns = [
         # ('', 'state'),
-        ('Labnumber', 'labnumber'),
+        ('Identifier', 'labnumber'),
         ('Aliquot', 'aliquot'),
         ('Sample', 'sample'),
         ('Position', 'position'),

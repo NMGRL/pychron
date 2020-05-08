@@ -23,7 +23,7 @@
 
 
 def make_bitarray(data, width=8):
-    ba = '{{:0{}b}}'.format(width).format(data)
+    ba = '{{:0{}b}}'.format(width).format(int(data))
     return ba
 
 # ============= EOF =====================================

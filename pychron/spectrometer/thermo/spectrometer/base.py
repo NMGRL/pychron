@@ -356,7 +356,7 @@ class ThermoSpectrometer(BaseSpectrometer):
 
             signals = [float(s) for s in signals]
 
-        return keys, signals
+        return keys, signals, None
 
     def get_intensity(self, dkeys):
         """
@@ -366,7 +366,7 @@ class ThermoSpectrometer(BaseSpectrometer):
         data = self.get_intensities()
         if data is not None:
 
-            keys, signals = data
+            keys, signals, _ = data
 
             def func(k):
                 return signals[keys.index(k)] if k in keys else 0
