@@ -166,7 +166,8 @@ class DACScanner(BaseScanner):
     help_str = 'Drag the green rulers to define the scan limits'
 
     pattributes = ('step', 'scan_min_dac', 'scan_max_dac', 'min_dac', 'max_dac')
-
+    tool = None
+    
     def __init__(self, *args, **kw):
         super(DACScanner, self).__init__(*args, **kw)
         # graph = Graph()
@@ -233,8 +234,11 @@ class DACScanner(BaseScanner):
 
     def _add_mftable_overlay(self, plot):
         mft = self.spectrometer.magnet.field_table.get_table()
-        isos, mws, dacs, coeffs = mft[self.spectrometer.reference_detector]
-
+        try:
+            isos, mws, dacs, coeffs = mft[self.spectrometer.reference_detector]
+        except KeyError:
+            return
+        
         d = (dacs[1] - dacs[0]) / (mws[1] - mws[0])
 
         o = MFTableOverlay(dacs=list(dacs),
@@ -280,7 +284,7 @@ class DACScanner(BaseScanner):
         try:
             isos, mws, dacs, coeffs = mft[self.spectrometer.reference_detector]
         except KeyError:
-            self.warning('{} not in mftable'.format(mft))
+            self.warning('{} not in mftable'.format(self.spectrometer.reference_detector))
             return
 
         mi = min(dacs)
@@ -312,14 +316,16 @@ class DACScanner(BaseScanner):
             self._scan_time_length_changed()
 
     def _scan_min_dac_changed(self):
-        self.tool.low = self.scan_min_dac
-        self.tool.overlay.low = self.scan_min_dac
+        if self.tool:
+            self.tool.low = self.scan_min_dac
+            self.tool.overlay.low = self.scan_min_dac
         self._scan_time_length_changed()
         self.graph.redraw()
 
     def _scan_max_dac_changed(self):
-        self.tool.high = self.scan_max_dac
-        self.tool.overlay.high = self.scan_max_dac
+        if self.tool:
+            self.tool.high = self.scan_max_dac
+            self.tool.overlay.high = self.scan_max_dac
         self._scan_time_length_changed()
         self.graph.redraw()
 

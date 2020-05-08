@@ -935,7 +935,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             # convert labnumber (a, bg, or 10034 etc)
             self.debug('load meta for {}'.format(labnumber))
             with db.session_ctx():
-                if self.mode == 'simple_identifier':
+                if self.mode == 'simple':
                     self.debug('using simple identifiers')
                     ip = db.get_simple_identifier(labnumber)
                 else:

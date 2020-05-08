@@ -21,7 +21,7 @@ class ManometerManager(Manager):
         try:
             d = self.devices[idx]
             self.debug('get pressure, idx={}, device={}'.format(idx, d))
-            return d.read_manometer()
+            return d.read_manometer
         except IndexError:
             self.warning('Invalid device index={}, totals devices={}'.format(idx, len(self.devices)))
             return 0

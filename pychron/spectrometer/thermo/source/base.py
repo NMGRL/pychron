@@ -74,7 +74,7 @@ class ThermoSource(BaseSource):
                 return True
 
     def _read_value(self, name, value):
-        r = self.ask(name, verbose=False)
+        r = self.ask(name, verbose=True)
         try:
             r = round(float(r), 3)
             setattr(self, value, r)

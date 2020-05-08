@@ -35,12 +35,11 @@ class SimpleIdentifierManager(Loggable):
 
     def activated(self):
         self.debug('activated')
-        self.dvc.create_session()
+        self.dvc.create_session(force=True)
 
         self.items = self.dvc.db.get_simple_identifiers()
         self.oprojects = self.dvc.db.get_project_names()
         self.projects = self.oprojects
-        self.factory.mode = 'simple_identifier'
 
     def prepare_destroy(self):
         self.debug('prepare destroy')

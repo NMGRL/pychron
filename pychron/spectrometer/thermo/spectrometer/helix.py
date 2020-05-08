@@ -21,7 +21,7 @@
 from pychron.hardware.thermo_spectrometer_controller import HelixController
 from pychron.spectrometer.thermo.detector.helix import HelixDetector
 from pychron.spectrometer.thermo.magnet.helix import HelixMagnet
-from pychron.spectrometer.thermo.source.helix import HelixSource
+from pychron.spectrometer.thermo.source.helix import HelixSource, HelixSFTSource
 from pychron.spectrometer.thermo.spectrometer.base import ThermoSpectrometer
 
 
@@ -52,5 +52,5 @@ class HelixPlusSpectrometer(HelixSpectrometer):
 
 
 class HelixSFTSpectrometer(HelixSpectrometer):
-    pass
+    source_klass=HelixSFTSource
 # ============= EOF =============================================

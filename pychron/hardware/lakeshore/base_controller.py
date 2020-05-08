@@ -35,7 +35,7 @@ class RangeTest:
             self._attr = match.group('name')
 
     def test(self, v):
-        if self._attr and eval(self._test, {self._attr: v}):
+        if self._attr and eval(self._test, {self._attr: float(v)}):
             return self._r
 
 
