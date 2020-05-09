@@ -483,6 +483,10 @@ class DVCAnalysis(Analysis):
             else:
                 v, e = nominal_value(v), std_dev(v)
 
+            # hack for peakhopped data
+            if ':' in dk:
+                _, dk = dk.split(':')
+
             jd[dk] = {'value': float(v), 'error': float(e),
                       'reviewed': reviewed,
                       'fit': fi,
