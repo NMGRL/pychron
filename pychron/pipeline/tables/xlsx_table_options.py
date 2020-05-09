@@ -57,7 +57,7 @@ class XLSXAnalysisTableWriterOptions(BasePersistenceOptions):
     ensure_trailing_zeros = dumpable(Bool(False))
 
     power_units = dumpable(Enum('W', 'C', '%'))
-    intensity_units = dumpable(Enum('fA', 'cps'))
+    intensity_units = dumpable(Enum('fA', 'cps', 'Volts'))
     age_units = dumpable(Enum('Ma', 'Ga', 'ka', 'a'))
     hide_gridlines = dumpable(Bool(False))
     include_F = dumpable(Bool(True))
