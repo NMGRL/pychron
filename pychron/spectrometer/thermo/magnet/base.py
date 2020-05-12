@@ -69,6 +69,9 @@ class ThermoMagnet(BaseMagnet):
                 if verbose:
                     self.debug('Checking detector "{}". '
                                'Protection Threshold: {} (V)'.format(pd, det.protection_threshold))
+                if det is None:
+                    self.warning('Invalid detector to protect: {}'.format(pd))
+                    continue
                 if det.protection_threshold and dv > det.protection_threshold:
                     self.ask('ProtectDetector {},On'.format(pd), verbose=verbose)
                     resp = self.ask('GetDeflection {}'.format(pd), verbose=verbose)

@@ -20,7 +20,7 @@ import time
 from threading import Event
 from threading import Thread
 
-from traits.api import List
+from traits.api import List, Dict
 
 from pychron.core.ramper import Ramper
 from pychron.external_pipette.protocol import IPipetteManager
@@ -52,6 +52,7 @@ class ExtractionPyScript(ValvePyScript):
     info_color = EXTRACTION_COLOR
     snapshots = List
     videos = List
+    extraction_context = Dict
 
     _extraction_positions = List
     _grain_polygons = List
@@ -177,6 +178,13 @@ class ExtractionPyScript(ValvePyScript):
     # ==========================================================================
     # commands
     # ==========================================================================
+    @verbose_skip
+    @command_register
+    def store_manometer_pressure(self, idx=0):
+        result = self._manager_action(('get_manometer_pressure', (), {'idx': idx}), protocol=EL_PROTOCOL)
+        self.extraction_context['manometer_pressure{}'.format(idx)] = result
+        return result
+
     @verbose_skip
     @command_register
     def get_manometer_pressure(self, idx=0):

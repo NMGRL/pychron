@@ -858,7 +858,7 @@ class DVCDatabase(DatabaseAdapter):
     def get_simple_identifier(self, sid):
         with self.session_ctx() as sess:
             q = sess.query(SimpleIdentifierTbl)
-            q = q.filter(SimpleIdentifierTbl.id == sid)
+            q = q.filter(SimpleIdentifierTbl.identifier == sid)
             return self._query_one(q)
 
     def get_simple_identifier_by_sample(self, sid):
@@ -884,11 +884,11 @@ class DVCDatabase(DatabaseAdapter):
             r = self.get_repository(repo)
             return [a.analysis for a in r.repository_associations]
 
-    def get_identifier_info(self, li, mode=None):
+    def get_identifier_info(self, li, simple=None):
         with self.session_ctx():
             info = {}
 
-            if mode == 'simple':
+            if simple:
                 dbpos = self.get_simple_identifier(li)
                 if not dbpos:
                     self.warning('{} is not an simple identifier in the database'.format(li))

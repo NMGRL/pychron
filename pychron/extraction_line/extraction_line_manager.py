@@ -837,6 +837,10 @@ class ExtractionLineManager(Manager, Consoleable):
     # ===============================================================================
     # defaults
     # ===============================================================================
+    def _manometer_manager_default(self):
+        from pychron.extraction_line.manometer_manager import ManometerManager
+        return ManometerManager(application=self.application)
+    
     def _cryo_manager_default(self):
         from pychron.extraction_line.cryo_manager import CryoManager
         return CryoManager(application=self.application)

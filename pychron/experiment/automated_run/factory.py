@@ -910,7 +910,11 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             self.debug('using cached meta values for {}'.format(labnumber))
             d = self._meta_cache[labnumber]
             for attr in ('sample', 'comment', 'repository_identifier', 'display_irradiation'):
-                setattr(self, attr, d[attr])
+                try:
+                    setattr(self, attr, d[attr])
+                except KeyError:
+                    self.debug('failed setting attr from cache: key={}, labnumber={}'.format(attr, labnumber))
+                    self.debug('cache={}'.format(d))
 
             self.selected_irradiation = d['irradiation']
             self.selected_level = d['irradiation_level']
@@ -935,7 +939,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             # convert labnumber (a, bg, or 10034 etc)
             self.debug('load meta for {}'.format(labnumber))
             with db.session_ctx():
-                if self.mode == 'simple_identifier':
+                if self.mode == 'simple':
                     self.debug('using simple identifiers')
                     ip = db.get_simple_identifier(labnumber)
                 else:
@@ -964,10 +968,10 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 d['project'] = project_name
 
                 self.debug('trying to set repository based on project name={}'.format(project_name))
-                if project_name == 'J-Curve':
-                    irrad = ip.level.irradiation.name
-                    self.repository_identifier = '{}{}'.format(ipp, irrad)
-                elif project_name != 'REFERENCES':
+                # if project_name == 'J-Curve':
+                #     irrad = ip.level.irradiation.name
+                #     self.repository_identifier = '{}{}'.format(ipp, irrad)
+                if project_name != 'REFERENCES':
                     if self.use_project_based_repository_identifier:
                         if ipp and project_name.startswith(ipp):
                             repo = project_name
@@ -989,14 +993,14 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                                     self.warning_dialog('Failed to add {}.'
                                                         '\nResolve issue before proceeding!!'.format(m))
 
-                    d['repository_identifier'] = self.repository_identifier
+                d['repository_identifier'] = self.repository_identifier
 
-                    if self.mode != 'simple_identifier':
-                        self._make_irrad_level(ip)
-                        d['irradiation'] = self.selected_irradiation
-                        d['irradiation_position'] = pos
-                        d['irradiation_level'] = self.selected_level
-                        d['display_irradiation'] = self.display_irradiation
+                if self.mode != 'simple_identifier':
+                    self._make_irrad_level(ip)
+                    d['irradiation'] = self.selected_irradiation
+                    d['irradiation_position'] = pos
+                    d['irradiation_level'] = self.selected_level
+                    d['display_irradiation'] = self.display_irradiation
 
                 d['sample'] = self.sample
                 if self.auto_fill_comment:

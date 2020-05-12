@@ -1186,6 +1186,7 @@ class AutomatedRun(Loggable):
             sblob = script.get_setpoint_blob()
             snapshots = script.snapshots
             videos = script.videos
+            extraction_context = script.extraction_context
             grain_polygons = script.get_grain_polygons() or []
             self.debug('grain polygons n={}'.format(len(grain_polygons)))
 
@@ -1197,7 +1198,8 @@ class AutomatedRun(Loggable):
                                         output_blob=oblob,
                                         setpoint_blob=sblob,
                                         snapshots=snapshots,
-                                        videos=videos)
+                                        videos=videos,
+                                        extraction_context=extraction_context)
 
             self._persister_save_action('post_extraction_save')
 

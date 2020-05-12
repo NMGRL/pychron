@@ -20,7 +20,7 @@
 import re
 # ============= local library imports  ==========================
 
-ALIQUOT_REGEX = re.compile('\d+-+\d+$')
+ALIQUOT_REGEX = re.compile('\S+-+\d+$')
 
 
 def make_image_regex(ext):

@@ -33,7 +33,6 @@ from pychron.pychron_constants import LINE_STR
 class ExperimentFactory(DVCAble):
     run_factory = Instance(AutomatedRunFactory)
     queue_factory = Instance(ExperimentQueueFactory)
-    simple_identifier = Any
     undoer = Instance(ExperimentUndoer)
 
     generate_queue_button = Button
@@ -211,6 +210,9 @@ class ExperimentFactory(DVCAble):
     def _set_extract_device(self, ed):
         self.debug('setting extract dev="{}" mass spec="{}"'.format(ed, self.mass_spectrometer))
         self.run_factory = self._run_factory_factory()
+        if self.simple_identifier_manager:
+            self.simple_identifier_manager.factory = self.run_factory
+            self.run_factory.mode = 'simple'
 
         self.run_factory.remote_patterns = patterns = self._get_patterns(ed)
         self.run_factory.setup_files()
@@ -328,8 +330,8 @@ class ExperimentFactory(DVCAble):
         rf.on_trait_change(self._auto_save, 'auto_save_needed')
         rf.on_trait_change(self._apply_stepheat, 'apply_stepheat')
 
-        if self.simple_identifier_manager:
-            self.simple_identifier_manager.factory = rf
+        #if self.simple_identifier_manager:
+        #    self.simple_identifier_manager.factory = rf
 
         return rf
 

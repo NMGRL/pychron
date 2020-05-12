@@ -81,7 +81,7 @@ class DetectorRatioTabularAdapter(BaseTabularAdapter):
     def _get_perror_text(self):
         try:
             return floatfmt(float(self.item.error) / float(self.item.value) * 100)
-        except ZeroDivisionError:
+        except (ZeroDivisionError, ValueError):
             return 'nan'
 
     def _get_value_text(self):
