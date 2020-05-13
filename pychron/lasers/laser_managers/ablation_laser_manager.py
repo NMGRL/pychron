@@ -131,8 +131,13 @@ class AblationCO2Manager(SerialLaserManager):
 
         return x, y, z
 
-    # def ask(self, cmd, **kw):
-    #     return self._ask('{}\r'.format(cmd), **kw)
+    def _ask(self, cmd, retry=3):
+        resp = super(AblationCO2Manager, self)._ask(cmd)
+        if not resp or (resp and resp.strip().startswith('ERROR')):
+            if retry:
+                resp = self._ask(cmd, retry-1)
+
+        return resp
 
     def linear_move(self, x, y, block=False, *args, **kw):
         self._move_to_position((x, y), block=block)
