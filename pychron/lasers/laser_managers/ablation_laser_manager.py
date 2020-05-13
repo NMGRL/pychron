@@ -23,6 +23,17 @@ from pychron.core.helpers.strtools import csv_to_floats
 from pychron.lasers.laser_managers.serial_laser_manager import SerialLaserManager
 
 
+class ReadPositionError(BaseException):
+    def __init__(self, xyz):
+        self._msg = 'ReadPosition error. Laser responded={}'.format(xyz)
+
+    def __str__(self):
+        return self._msg
+
+    def __repr__(self):
+        return self._msg
+
+
 class AblationCO2Manager(SerialLaserManager):
     stage_manager_id = 'ablation.pychron'
     configuration_dir_name = 'ablation'
@@ -100,7 +111,7 @@ class AblationCO2Manager(SerialLaserManager):
         self._ask('SetLaserOn 0')
         self.enabled = False
 
-    def get_position(self):
+    def get_position(self, retry=True):
         x, y, z = self._x, self._y, self._z
         xyz = self._ask('ReadPosition')
         if xyz:
@@ -112,11 +123,21 @@ class AblationCO2Manager(SerialLaserManager):
                     z = z * self.stage_manager.z_sign
             except ValueError:
                 self.warning('failed parsing position: {}'.format(xyz))
+                if retry:
+                    time.sleep(0.5)
+                    x, y, z = self.get_position(retry=False)
+                else:
+                    raise ReadPositionError(xyz)
 
         return x, y, z
 
-    # def ask(self, cmd, **kw):
-    #     return self._ask('{}\r'.format(cmd), **kw)
+    def _ask(self, cmd, retry=3):
+        resp = super(AblationCO2Manager, self)._ask(cmd)
+        if not resp or (resp and resp.strip().startswith('ERROR')):
+            if retry:
+                resp = self._ask(cmd, retry-1)
+
+        return resp
 
     def linear_move(self, x, y, block=False, *args, **kw):
         self._move_to_position((x, y), block=block)
