@@ -24,7 +24,7 @@ from operator import itemgetter
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
 from git import Repo, GitCommandError, NoSuchPathError
-from traits.api import Instance, Str, Set, List, provides, Bool, Int
+from traits.api import Instance, Str, Set, List, provides, Bool, Int, HasTraits
 from uncertainties import ufloat, std_dev, nominal_value
 
 from pychron import json
@@ -52,10 +52,13 @@ from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.paths import paths, r_mkdir
 from pychron.processing.interpreted_age import InterpretedAge
-from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS, STARTUP_MESSAGE_POSITION
+from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS, STARTUP_MESSAGE_POSITION, DVC_PROTOCOL
 
 HOST_WARNING_MESSAGE = 'GitLab or GitHub or LocalGit plugin is required'
 
+
+class DVCMixin(HasTraits):
+    dvc = Instance(DVC_PROTOCOL)
 
 
 @provides(IDatastore)

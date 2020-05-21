@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,37 +15,19 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from __future__ import absolute_import
-from pychron.loggable import Loggable
+from pychron.entry.interpreted.etl import InterpretedETL
+from pychron.envisage.tasks.actions import PAction as Action
+from pychron.pychron_constants import DVC_PROTOCOL
 
 
-class BaseImportMapper(Loggable):
-    """
-        base class for mapping between two data sources
-        use this to fix/change run info on import
+class ImportInterpretedAction(Action):
+    name = 'Import Interpreted File'
 
-        fix typos
-        e.g change Mina Bluff > Minna Bluff
-    """
-
-
-class MinnaBluffMapper(BaseImportMapper):
-    def map_project(self, project):
-        pl = project.lower()
-        if pl in ('mina bluff', 'minna bluff'):
-            project = 'Minna Bluff'
-        elif pl in ('j', 'j-curve'):
-            project = 'J'
-        return project
-
-    def map_material(self, mat):
-        #ml=mat.lower()
-        #if ml in ('gmc', 'groundmass', 'groundmass conc'):
-        #    mat='Groundmass'
-
-        return mat.capitalize()
+    def perform(self, event):
+        dvc = event.task.application.get_service(DVC_PROTOCOL)
+        s = InterpretedETL(dvc=dvc)
+        s.etl()
 
 # ============= EOF =============================================

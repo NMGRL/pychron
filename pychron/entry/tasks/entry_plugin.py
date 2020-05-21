@@ -30,6 +30,7 @@ from pychron.entry.tasks.actions import MakeIrradiationBookPDFAction, MakeIrradi
     TransferJAction, ImportIrradiationFileAction, GetIGSNAction, GenerateIrradiationTableAction, \
     GenerateStatusReportAction, ImportAnalysesAction, EditIrradiationGeometryAction
 from pychron.entry.tasks.basic.actions import BasicEntryAction
+from pychron.entry.tasks.interpreted.actions import ImportInterpretedAction
 from pychron.entry.tasks.labnumber.actions import LabnumberEntryAction
 from pychron.entry.tasks.preferences import LabnumberEntryPreferencesPane, SamplePrepPreferencesPane, \
     SampleEntryPreferencesPane
@@ -112,7 +113,8 @@ class EntryPlugin(BaseTaskPlugin):
                                  path=g2path),
                   SchemaAddition(id='pychron.entry2.run_report', factory=GenerateStatusReportAction,
                                  path=gpath),
-                  SchemaAddition(id='pychron.entry2.save_labbook', factory=MakeIrradiationBookPDFAction, path=g2path)]),
+                  SchemaAddition(id='pychron.entry2.save_labbook', factory=MakeIrradiationBookPDFAction,
+                                 path=g2path)]),
                 ('{}.sample_entry'.format(self.id),
                  'pychron.entry.sample.task',
                  'Sample',
@@ -146,7 +148,7 @@ class EntryPlugin(BaseTaskPlugin):
                   SchemaAddition(id='pychron.entry1.flux_monitor', factory=AddFluxMonitorAction,
                                  path=gpath),
                   SchemaAddition(id='pychron.entry2.generate_tray', factory=GenerateTrayAction, path=g2path),
-
+                  SchemaAddition(id='pychron.entry2.import_interpreted', factory=ImportInterpretedAction, path=g2path)
                   ])]
 
     def _tasks_default(self):
