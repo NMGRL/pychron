@@ -130,15 +130,13 @@ class DataNode(DVCNode):
         return self.set_browser_analyses()
 
 
-class CSVNode(BaseDVCNode):
+class BaseCSVNode(BaseDVCNode):
     path = Str
-    name = 'CSV Data'
-    required_columns = ('runid', 'age', 'age_err')
-
     _factory_klass = CSVDataSetFactory
+    required_columns = None
 
     def reset(self):
-        super(CSVNode, self).reset()
+        super(BaseCSVNode, self).reset()
         self.path = ''
         self.unknowns = []
 
@@ -147,6 +145,7 @@ class CSVNode(BaseDVCNode):
             self.path = '/Users/ross/PychronDev/data/csv/Murphy ideo ages2.csv'
             self.path = '/Users/ross/Downloads/Takahe_Ideo.csv'
             self.path = '/Users/ross/Downloads/VallesTest.csv'
+            self.path = '/Users/ross/Sandbox/cluster.csv'
 
         ret = bool(self.path)
         if not pre_run:
@@ -186,10 +185,16 @@ class CSVNode(BaseDVCNode):
 
         par = CSVColumnParser(delimiter=',')
         par.load(self.path)
+
         if par.check(self.required_columns):
             return self._get_items_from_file(par)
         else:
-            warning(None, 'Invalid file format. Minimum columns required are "runid", "age", "age_err"')
+            warning(None, 'Invalid file format. Minimum columns required are {}'.format(self.required_columns))
+
+
+class CSVNode(BaseCSVNode):
+    name = 'CSV Data'
+    required_columns = ('runid', 'age', 'age_err')
 
     def _get_items_from_file(self, parser):
         try:

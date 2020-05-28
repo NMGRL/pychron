@@ -15,8 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import string
 
-from numpy import asarray, sqrt, matrix, diagonal, array, exp
+from numpy import asarray, sqrt, matrix, diagonal, array, exp, zeros
 # ============= standard library imports ========================
 from scipy import optimize
 from traits.api import Callable, List
@@ -36,27 +37,19 @@ class LeastSquaresRegressor(BaseRegressor):
     initial_guess = List
 
     _covariance = None
+    _nargs = 2
 
-    # def make_equation(self):
-    #     import inspect
-    #     eq = inspect.getsource(self.fitfunc).strip()
-    #
-    #     def func(match):
-    #         m = match.group(0)
-    #         idx = int(m[2:-1])
-    #         return floatfmt(self._coefficients[idx])
-    #
-    #     for ci in self._coefficients:
-    #         eq = re.sub(r'p\[\d]', func, eq)
-    #
-    #     h, t = eq.split(':')
-    #     return 'fitfunc={}'.format(t)
+    def construct_fitfunc(self, fitstr):
+        fitstr = fitstr.lstrip('custom:').lower().split('_')[0]
+        import numexpr as ne
 
-    # def _fitfunc_changed(self):
-    #     self.calculate()
+        def func(x, *args):
+            ctx = dict(zip(string.ascii_lowercase[:len(args)][::-1], args))
+            ctx['x'] = x
+            return ne.evaluate(fitstr, local_dict=ctx)
 
-    # def _initial_guess_changed(self):
-    #     self._degree = len(self.initial_guess) - 1
+        self._nargs = 2
+        self.fitfunc = func
 
     def calculate(self, filtering=False):
         cxs = self.pre_clean_xs
@@ -84,6 +77,9 @@ class LeastSquaresRegressor(BaseRegressor):
                 from pyface.message_dialog import warning
                 warning(None, 'Exponential failed to converge. Choose a different fit')
             raise FitError()
+
+    def _calculate_initial_guess(self):
+        return zeros(self._nargs)
 
     def _calculate_coefficients(self):
         return self._coefficients

@@ -125,7 +125,7 @@ class CSVColumnParser(BaseColumnParser):
         :param keys:
         :return:
         """
-        return all(k in self._header for k in keys)
+        return all(k in self._header for k in keys) if keys else True
 
     @property
     def nrows(self):

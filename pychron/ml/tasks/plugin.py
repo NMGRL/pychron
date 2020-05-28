@@ -15,25 +15,29 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import List, Int, HasTraits, Str, Bool
-from traitsui.api import View, UItem, Item, HGroup, VGroup
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-
-from envisage.ui.tasks.task_extension import TaskExtension
-from envisage.ui.tasks.task_factory import TaskFactory
-from pyface.tasks.action.schema_addition import SchemaAddition
+from traits.api import List
 
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.ml.nodes.cluster import ClusterNode
+from pychron.ml.nodes.data import CSVClusterNode
 from pychron.ml.tasks.preferences import MachineLearningPreferencesPane
 from pychron.pipeline.nodes import NodeFactory
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 CLUSTER = '''required:
 nodes:
  - klass: UnknownNode
  - klass: ClusterNode
  '''
+
+CSVCLUSTER = '''
+required:
+nodes:
+  - klass: CSVClusterNode
+  - klass: ClusterNode
+'''
 
 
 class MachineLearningPlugin(BaseTaskPlugin):
@@ -54,10 +58,11 @@ class MachineLearningPlugin(BaseTaskPlugin):
             # node.trait_set(service=service)
             return node
 
-        return [NodeFactory('ClusterNode', cluster_factory), ]
+        return [NodeFactory('ClusterNode', cluster_factory),
+                NodeFactory('CSVClusterNode', CSVClusterNode)]
 
     def _predefined_templates_default(self):
-        return [('MachineLearning', (('Cluster', CLUSTER),))]
+        return [('MachineLearning', (('Cluster', CLUSTER),('CSV Cluster', CSVCLUSTER)))]
 
     # def _preferences_default(self):
     #     return ['file://']

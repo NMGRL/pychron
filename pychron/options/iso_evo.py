@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Float, Bool, Int, Range, Enum, cached_property
+from traits.api import Float, Bool, Int, Range, Enum, cached_property, Str
 
 from pychron.core.fits.fit import IsoFilterFit
 from pychron.options.aux_plot import AuxPlot
@@ -35,6 +35,7 @@ class IsoFilterFitAuxPlot(AuxPlot, IsoFilterFit):
     curvature_goodness_at = Float
     rsquared_goodness = Range(0.0, 1.0, 0.95)
     signal_to_blank_goodness = Float
+    fitfunc = Str
 
     n_threshold = Int
     n_true = Enum(FIT_TYPES)

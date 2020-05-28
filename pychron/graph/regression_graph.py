@@ -442,6 +442,8 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
             r = self._poly_regress(scatter, r, fit)
         elif fit == 'exponential':
             r = self._exponential_regress(scatter, r, fit)
+        elif fit.startswith('custom:'):
+            r = self._least_square_regress(scatter, r, fit)
         elif isinstance(fit, tuple):
             r = self._least_square_regress(scatter, r, fit)
         elif isinstance(fit, BaseRegressor):
@@ -567,14 +569,17 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
     def _least_square_regress(self, scatter, r, fit):
         from pychron.core.regression.least_squares_regressor import LeastSquaresRegressor
 
-        func, initial_guess = fit
         if r is None or not isinstance(r, LeastSquaresRegressor):
             r = LeastSquaresRegressor()
 
         self._set_regressor(scatter, r)
-        r.trait_set(fitfunc=func,
-                    initial_guess=initial_guess,
-                    trait_change_notify=False)
+        if isinstance(fit, tuple):
+            func, initial_guess = fit
+            r.trait_setq(fitfunc=func,
+                         initial_guess=initial_guess)
+        else:
+            r.construct_fitfunc(fit)
+
         r.calculate()
         self._set_excluded(scatter, r)
         return r

@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from numpy import array, column_stack
+from sklearn.cluster import KMeans, AffinityPropagation, MeanShift, estimate_bandwidth, DBSCAN
 from sklearn.preprocessing import StandardScaler
 from traits.api import List, Instance
 from traitsui.api import View, UItem
@@ -20,10 +22,6 @@ from uncertainties import nominal_value
 
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.graph.graph import Graph
-
-from numpy import array, column_stack
-
-from sklearn.cluster import KMeans, AffinityPropagation, MeanShift, estimate_bandwidth, DBSCAN
 
 
 class ClusterEditor(BaseTraitsEditor):
@@ -38,9 +36,12 @@ class ClusterEditor(BaseTraitsEditor):
         p = g.new_plot()
         p.value_range.tight_bounds = False
         p.index_range.tight_bounds = False
-
         xattr = 'age'
         yattr = 'kca'
+
+        g.set_x_title('Age')
+        g.set_y_title('K/Ca')
+
         cluster_kind = self.plotter_options.cluster_kind
 
         xs = self._extract_attr(items, xattr)
@@ -63,7 +64,6 @@ class ClusterEditor(BaseTraitsEditor):
             kw = {'preference': -50}
 
         cs = clusterer(**kw).fit_predict(xx)
-        print(clusterer)
         g.new_series(xs, ys, colors=cs, type='cmap_scatter')
 
     def _extract_attr(self, items, attr):

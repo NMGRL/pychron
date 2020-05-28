@@ -93,7 +93,7 @@ VALID_INTEGRATED = 'Valid Integrated'
 PLATEAU_INTEGRATED = '{} Integrated'.format(PLATEAU)
 
 FIT_TYPES = ['Linear', 'Parabolic', 'Cubic',
-             'Average', 'Exponential', WEIGHTED_MEAN]
+             'Average', 'Exponential', WEIGHTED_MEAN, 'Custom']
 
 FIT_ERROR_TYPES = [SD, SEM, MSEM, 'CI', 'MonteCarlo']
 SERIES_FIT_TYPES = [NULL_STR] + FIT_TYPES

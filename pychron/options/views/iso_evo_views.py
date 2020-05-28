@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Bool, Enum, on_trait_change, Float, Int, Range
+from traits.api import Bool, Enum, on_trait_change, Float, Int, Range, Str
 from traitsui.api import EnumEditor, Item, HGroup, UItem, View, VGroup, Tabbed
 
 from pychron.core.pychron_traits import BorderVGroup, BorderHGroup
@@ -37,6 +37,7 @@ class IsoEvoMainOptions(MainOptions):
     fit = Enum(FIT_TYPES)
     error_type = Enum(FIT_ERROR_TYPES)
     filter_outliers = Bool
+    fitfunc = Str
 
     goodness_threshold = Float  # in percent
     slope_goodness = Float
@@ -51,7 +52,9 @@ class IsoEvoMainOptions(MainOptions):
     def _get_edit_view(self):
         main = VGroup(HGroup(Item('name', editor=EnumEditor(name='names')),
                              Item('fit', editor=EnumEditor(values=FIT_TYPES)),
-                             UItem('error_type', editor=EnumEditor(values=FIT_ERROR_TYPES))),
+                             UItem('error_type', editor=EnumEditor(values=FIT_ERROR_TYPES)),
+                             ),
+                      Item('fitfunc', visible_when='fit=="Custom"'),
                       label='Fits')
 
         goodness = VGroup(Item('goodness_threshold', label='Intercept',

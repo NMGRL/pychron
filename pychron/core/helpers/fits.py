@@ -39,9 +39,7 @@ def convert_fit(f):
         f, err = f
     if isinstance(f, (str, six.text_type)):
         f = f.lower()
-
         if '_' in f:
-
             try:
                 f, err = f.split('_')
                 err = err.upper()
@@ -50,15 +48,7 @@ def convert_fit(f):
 
         if f in FITS:
             f = FITS.index(f) + 1
-        # elif f.startswith('average'):
-        #     f = 'average'
-        #     if not err:
-        #         err = 'SEM' if 'sem' in f else 'SD'
-        # elif f.startswith('weighted mean'):
-        #     f = 'weighted mean'
-        #     if not err:
-        #         err = 'SEM' if 'sem' in f else 'SD'
-        elif f in ('average', 'weighted mean', 'exponential'):
+        elif f in ('average', 'weighted mean', 'exponential') or f.startswith('custom:'):
             if not err:
                 err = 'SEM' if 'sem' in f else 'SD'
         else:
