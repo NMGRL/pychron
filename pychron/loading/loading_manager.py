@@ -168,7 +168,7 @@ class LoadingManager(DVCIrradiationable):
     selected_positions = List
 
     loads = List
-    load_instance = Instance(Load)
+    load_instance = Any
     selected_instances = List
 
     canvas = Any
@@ -250,8 +250,14 @@ class LoadingManager(DVCIrradiationable):
             else:
                 self.warning_dialog('No Positions specified in load "{}"'.format(name))
 
+    def set_load_by_name(self, name):
+        self.load_instance = next((l for l in self.loads if l.name == name), None)
+        self.load_load_by_name()
+
     def load_load_by_name(self):
         self.tray = ''
+        if not self.load_instance:
+            return
 
         load_name = self.load_instance.name
         self.canvas = self.make_canvas(load_name)

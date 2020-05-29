@@ -15,11 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance, Button, Bool, Property, DelegatesTo, List, Str, on_trait_change, Any
+from traits.api import Instance, Button, Bool, Property, DelegatesTo, List, Str, on_trait_change
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.dvc.dvc_irradiationable import DVCAble
+from pychron.experiment.automated_run.cryo.factory import CryoAutomatedRunFactory
 from pychron.experiment.automated_run.factory import AutomatedRunFactory
 from pychron.experiment.automated_run.uv.factory import UVAutomatedRunFactory
 from pychron.experiment.queue.experiment_queue import ExperimentQueue
@@ -101,6 +102,7 @@ class ExperimentFactory(DVCAble):
             if not self._sync_queue_to_factory(eq, qf, a):
                 self._sync_factory_to_queue(eq, qf, a)
 
+        print('moasdf', self.run_factory.mode)
         self.debug('run factory set mass spec {}'.format(self.mass_spectrometer))
         self.run_factory.set_mass_spectrometer(self.mass_spectrometer)
 
@@ -201,6 +203,10 @@ class ExperimentFactory(DVCAble):
 
         elif name == 'extract_device':
             self._set_extract_device(new)
+
+        if self.simple_identifier_manager:
+            self.simple_identifier_manager.factory = self.run_factory
+            self.run_factory.mode = 'simple'
 
         self._auto_save()
 
@@ -313,6 +319,8 @@ class ExperimentFactory(DVCAble):
     def _run_factory_factory(self):
         if self.extract_device == 'Fusions UV':
             klass = UVAutomatedRunFactory
+        elif self.extract_device == 'Cryo':
+            klass = CryoAutomatedRunFactory
         else:
             klass = AutomatedRunFactory
 
@@ -323,9 +331,6 @@ class ExperimentFactory(DVCAble):
 
         rf.on_trait_change(self._update_end_after, 'end_after')
         rf.on_trait_change(self._auto_save, 'auto_save_needed')
-
-        #if self.simple_identifier_manager:
-        #    self.simple_identifier_manager.factory = rf
 
         return rf
 

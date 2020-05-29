@@ -607,8 +607,8 @@ class MediaTbl(Base, IDMixin):
 
 
 # ======================= Simple Identifier ================================
-class SimpleIdentifierTbl(Base, BaseMixin):
-    identifier = Column(Integer, primary_key=True)
+class SimpleIdentifierTbl(Base, IDMixin):
+    identifier = Column(String(140), unique=True)
     sampleID = Column(Integer, ForeignKey('SampleTbl.id'))
 
     sample = relationship('SampleTbl', uselist=False)

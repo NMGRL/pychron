@@ -51,7 +51,7 @@ from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceLoggable
 from pychron.pychron_constants import NULL_STR, SCRIPT_KEYS, SCRIPT_NAMES, LINE_STR, DVC_PROTOCOL, SPECIAL_IDENTIFIER, \
-    BLANK_UNKNOWN, BLANK_EXTRACTIONLINE, UNKNOWN, PAUSE, DEGAS
+    BLANK_UNKNOWN, BLANK_EXTRACTIONLINE, UNKNOWN, PAUSE, DEGAS, SIMPLE
 
 
 class AutomatedRunFactory(DVCAble, PersistenceLoggable):
@@ -939,7 +939,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             # convert labnumber (a, bg, or 10034 etc)
             self.debug('load meta for {}'.format(labnumber))
             with db.session_ctx():
-                if self.mode == 'simple':
+                if self.mode == SIMPLE:
                     self.debug('using simple identifiers')
                     ip = db.get_simple_identifier(labnumber)
                 else:
@@ -995,7 +995,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
                 d['repository_identifier'] = self.repository_identifier
 
-                if self.mode != 'simple_identifier':
+                if self.mode != SIMPLE:
                     self._make_irrad_level(ip)
                     d['irradiation'] = self.selected_irradiation
                     d['irradiation_position'] = pos

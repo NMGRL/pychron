@@ -400,11 +400,15 @@ class DVCDatabase(DatabaseAdapter):
         self._archive_loads(names, False)
 
     # adders
-    def add_simple_identifier(self, sid):
+    def add_simple_identifier(self, sid, identifier=''):
         with self.session_ctx():
             obj = SimpleIdentifierTbl()
             obj.sampleID = sid
+            obj.identifier = identifier
             self._add_item(obj)
+            if not identifier:
+                obj.identifier = str(obj.id)
+                self.commit()
 
     def add_sample_prep_choice(self, tag, value):
         with self.session_ctx() as sess:
@@ -871,8 +875,9 @@ class DVCDatabase(DatabaseAdapter):
     def get_sample_simple_identifiers(self, sid):
         with self.session_ctx() as sess:
             q = sess.query(SimpleIdentifierTbl)
+            q = q.join(SampleTbl)
             q = q.filter(SampleTbl.id == sid)
-            return self._query_all(q)
+            return self._query_all(q, verbose_query=True)
 
     def get_simple_identifiers(self):
         with self.session_ctx() as sess:
