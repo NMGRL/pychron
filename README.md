@@ -23,7 +23,7 @@ Pychron aims to augment and replace the current widely used program Mass Spec by
 Who's Using Pychron
 ====================
 
-A number of Ar/Ar Geochronology laboratories are using Pychron to various degrees. These include 
+A number of Ar/Ar Geochronology and noble gas laboratories are using Pychron to various degrees. These include 
 
  - New Mexico Geochronology Research Laboratory
  - University of Manitoba
