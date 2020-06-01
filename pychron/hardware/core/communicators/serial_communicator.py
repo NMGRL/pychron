@@ -246,9 +246,6 @@ class SerialCommunicator(Communicator):
             pre = process_response(re, replace, remove_eol=not is_hex)
             self.log_response(cmd, pre, info)
 
-        # if is_hex:
-        #     re = binascii.hexlify(re).decode('utf-8')
-
         return re
 
     def open(self, **kw):
@@ -378,13 +375,6 @@ class SerialCommunicator(Communicator):
                     self.warning(v)
                 self.warning('=============================')
 
-                # wmsg = '\n'.join(valid)
-            # if not globalv.ignore_connection_warnings:
-            #
-            #     if self.confirmation_dialog('{}\n{}\n\nQuit Pychron?'.format(msg, wmsg),
-            #                                 title='Quit Pychron'):
-            #         os._exit(0)
-
     def _write(self, cmd, is_hex=False):
         """
             use the serial handle to write the cmd to the serial buffer
@@ -413,13 +403,11 @@ class SerialCommunicator(Communicator):
 
         return cmd
 
-    def _read_nchars(self, n, timeout=1, delay=None):
-        func = lambda r: self._get_nchars(n, r)
-        return self._read_loop(func, delay, timeout)
+    def _read_nchars(self, nchars, timeout=1, delay=None):
+        return self._read_loop(lambda r: self._get_nchars(nchars, r), delay, timeout)
 
     def _read_hex(self, nbytes=8, timeout=1, delay=None):
-        func = lambda r: self._get_nbytes(nbytes, r)
-        return self._read_loop(func, delay, timeout)
+        return self._read_loop(lambda r: self._get_nbytes(nbytes, r), delay, timeout)
 
     def _read_handshake(self, handshake, handshake_only, timeout=1, delay=None):
         def hfunc(r):
@@ -442,25 +430,37 @@ class SerialCommunicator(Communicator):
         if terminator_position is None:
             terminator_position = self.read_terminator_position
 
+        if terminator is None:
+            terminator = (b'\r\x00', b'\r\n', b'\r', b'\n')
+        if not isinstance(terminator, (list, tuple)):
+            terminator = (terminator,)
+
         def func(r):
-            return self._get_isterminated(r, terminator, terminator_position)
+            terminated = False
+            try:
+                inw = self.handle.inWaiting()
+                r += self.handle.read(inw)
+                if r and r.strip():
+                    for ti in terminator:
+                        if terminator_position:
+                            terminated = r[terminator_position] == ti
+                        else:
+                            if isinstance(ti, str):
+                                ti = ti.encode()
+                            terminated = r.endswith(ti)
+                        if terminated:
+                            break
+            except BaseException as e:
+                self.warning(e)
+            return r, terminated
 
         return self._read_loop(func, delay, timeout)
 
-    def _get_nbytes(self, nchars, r):
+    def _get_nbytes(self, *args, **kw):
         """
             1 byte == 2 chars
         """
-        handle = self.handle
-        inw = handle.inWaiting()
-        c = min(inw, nchars - len(r))
-        re = handle.read(c)
-        # print('inw', inw, 'c', c, re)
-        r += re
-        # print('r', r, len(r), nchars)
-        # r += b''.join(map('{:02X}'.format, map(ord, handle.read(c)))))
-        # print('r', r)
-        return r[:nchars], len(r) >= nchars
+        return self._get_nchars(*args, **kw)
 
     def _get_nchars(self, nchars, r):
         handle = self.handle
@@ -476,36 +476,6 @@ class SerialCommunicator(Communicator):
         if r:
             return ack == r[0], r[1:]
         return False, None
-
-    def _get_isterminated(self, r, terminator=None, pos=None):
-        terminated = False
-        try:
-            inw = self.handle.inWaiting()
-            r += self.handle.read(inw)
-            # r += chrs.decode('utf-8')
-            #            print 'inw', inw, r, terminator
-            if terminator is None:
-                terminator = (b'\r\x00', b'\r\n', b'\r', b'\n')
-            if not isinstance(terminator, (list, tuple)):
-                terminator = (terminator,)
-
-            if r and r.strip():
-                for ti in terminator:
-                    if pos:
-                        t = r[pos] == ti
-                    else:
-
-                        if isinstance(ti, str):
-                            ti = ti.encode()
-
-                        t = r.endswith(ti)
-
-                    if t:
-                        terminated = True
-                        break
-        except BaseException as e:
-            self.warning(e)
-        return r, terminated
 
     def _read_loop(self, func, delay, timeout=1):
         if delay is not None:
