@@ -625,10 +625,11 @@ class UnitsTbl(Base, IDMixin):
     name = stringcolumn(40)
 
 
-# ======================== interpreted age =========================
+# ======================== interpreted =========================
 class InterpretedTbl(Base, IDMixin):
     sampleID = Column(Integer, ForeignKey('SampleTbl.id'))
-    identifier = Column(String(32))
+    identifier = Column(String(40))
+    create_date = Column(DateTime)
 
     sample = relationship('SampleTbl', uselist=False)
     parameters = relationship('InterpretedParameterTbl', backref='interpreted')
@@ -644,6 +645,6 @@ class InterpretedParameterTbl(Base, IDMixin):
 
     value = Column(Float(32))
     error = Column(Float(32))
-
+    text = Column(TEXT)
 
 # ============= EOF =============================================
