@@ -25,20 +25,20 @@ Who's Using Pychron
 
 A number of Ar/Ar Geochronology and noble gas laboratories are using Pychron to various degrees. These include 
 
- - New Mexico Geochronology Research Laboratory
+ - New Mexico Geochronology Research Laboratory, New Mexico Bureau of Geology
  - University of Manitoba
- - University of Wisconsin
- - US Geological Survey - Denver, South West Isotope Research Laboratory
- - Lamont-Doherty Earth Observatory, AGES
+ - WiscAR, University of Wisconsin
+ - SWIRL, US Geological Survey - Denver
+ - AGES, Lamont-Doherty Earth Observatory, AGES
  - US Geological Survey - Menlo Park
- - NASA - MNGRL, Goddard Space Flight Center
+ - MNGRL, NASA-Goddard Space Flight Center
  - AEL-AMS, Ottawa
- - University of Arizona
+ - ANGL, University of Arizona
+ - TAP, Purdue University
 
 Installation of Pychron at other laboratories is ongoing. Current interested labs are
   
   - University of Florida
-  - Purdue University
   - CAMS, Lawrence Livermore National Laboratory
   - University of Alaska, Fairbanks
 
