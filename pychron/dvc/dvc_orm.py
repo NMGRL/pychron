@@ -19,9 +19,7 @@
 
 from sqlalchemy import Column, Integer, String, TIMESTAMP, Float, func, Boolean, ForeignKey, DATE, DATETIME, TEXT, \
     DateTime
-from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
-from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import object_session, deferred
 from sqlalchemy.orm import relationship
 
@@ -135,31 +133,8 @@ class AnalysisTbl(Base, IDMixin):
     load_holder = ''
     _temporary_tag = None
 
-    # hybrids
-    _pre_cleanup = Column('pre_cleanup', Float)
-    _post_cleanup = Column('post_cleanup', Float)
-
-    @hybrid_property
-    def pre_cleanup(self):
-        try:
-            return self._pre_cleanup or NULL_STR
-        except OperationalError:
-            return 0
-
-    @hybrid_property
-    def post_cleanup(self):
-        try:
-            return self._post_cleanup or NULL_STR
-        except OperationalError:
-            return 0
-
-    @pre_cleanup.setter
-    def pre_cleanup(self, v):
-        self._pre_cleanup = v
-
-    @post_cleanup.setter
-    def post_cleanup(self,v):
-        self._post_cleanup = v
+    pre_cleanup = Column('pre_cleanup', Float)
+    post_cleanup = Column('post_cleanup', Float)
 
     @property
     def step(self):

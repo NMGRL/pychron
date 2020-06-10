@@ -254,19 +254,17 @@ class DatabaseAdapter(Loggable):
         self.connection_error = ''
         if force:
             self.debug('forcing database connection')
-            # self.reset()
-        # self.session_factory = None
 
         if self.connection_parameters_changed:
             self._test_connection_enabled = True
             force = True
 
-        # print not self.isConnected() or force, self.connection_parameters_changed
-
         if not self.connected or force:
-            self.connected = True if self.kind == 'sqlite' else False
+            # self.connected = True if self.kind == 'sqlite' else False
+            self.connected = False
             pool_recycle = 600
             if self.kind == 'sqlite':
+                self.connected = True
                 test = False
                 pool_recycle = -1
 

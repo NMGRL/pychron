@@ -837,7 +837,7 @@ class PipelineEngine(Loggable):
         groups = []
 
         if self.use_arar_calculations:
-            plots = (('Ideogram', ARAR_IDEO, 'histogram'),
+            plots = (('Ideogram', ARAR_IDEO),
                      ('CSV Ideogram', CSV_IDEO),
                      ('Interpreted Age Ideogram', INTERPRETED_AGE_IDEOGRAM),
                      ('Hybrid Ideogram', HYBRID_IDEOGRAM),

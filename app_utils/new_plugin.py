@@ -48,7 +48,7 @@ def new_plugin(root, options):
 
 
 BOILER_PLATE = '''# ===============================================================================
-# Copyright 2015 Jake Ross
+# Copyright 2019 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -71,11 +71,12 @@ from traitsui.api import View, UItem, Item, HGroup, VGroup
 {}
 # ============= EOF =============================================
 '''
+NAME = 'MachineLearning'
 
 TASK_TXT = '''
 from pyface.tasks.task_layout import TaskLayout, PaneItem
-class FurnaceTask(BaseManagerTask):
-    id = 'pychron.furnace.task'
+class {}Task(BaseManagerTask):
+    id = 'pychron.{}.task'
     def activated(self):
         pass
 
@@ -90,7 +91,7 @@ class FurnaceTask(BaseManagerTask):
 
     def _default_layout_default(self):
         return TaskLayout()
-'''
+'''.format(NAME, NAME.lower())
 
 PANES_TXT = '''
 from traitsui.api import View, UItem, Item, VGroup, HGroup
@@ -106,19 +107,20 @@ PREF_TXT = '''
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
-class GCalPreferencesPreferences(BasePreferencesHelper):
+class {}Preferences(BasePreferencesHelper):
     pass
 
 
-class GCalPreferencesPreferencesPane(PreferencesPane):
-    category = 'Google Calendar'
-    model_factory = GCalPreferencesPreferences
+class {}gPreferencesPane(PreferencesPane):
+    category = 'MachineLearning'
+    model_factory = MachineLearningPreferences
 
     def traits_view(self):
         v = View()
         return v
 
-'''
+'''.format(NAME, NAME)
+
 PLUGIN_TXT = '''
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
@@ -127,8 +129,8 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 
-class GoogleCalendarPlugin(BaseTaskPlugin):
-    id = 'pychron.gcal.plugin'
+class {}Plugin(BaseTaskPlugin):
+    id = 'pychron.{}.plugin'
 
     def _service_offers_default(self):
         """
@@ -137,7 +139,7 @@ class GoogleCalendarPlugin(BaseTaskPlugin):
         return []
 
     # def _preferences_default(self):
-    #     return ['file://{}'.format('')]
+    #     return ['file://']
     #
     # def _task_extensions_default(self):
     #
@@ -147,11 +149,11 @@ class GoogleCalendarPlugin(BaseTaskPlugin):
     #                         protocol=FurnaceTask)]
 
     def _preferences_panes_default(self):
-        return [GCalPreferencesPreferencesPane]
-'''
+        return [{}PreferencesPane]
+'''.format(NAME, NAME.lower(), NAME)
 
 if __name__ == '__main__':
-    root = '/Users/ross/Programming/github/pychron_dev/pychron/gcal'
+    root = '/Users/ross/Programming/github/pychron_dev/pychron/ml'
     # root = '/Users/ross/Sandbox/furnace'
 
     options = {'plugin_txt': PLUGIN_TXT, 'panes_txt': PANES_TXT,

@@ -30,7 +30,7 @@ from uncertainties import ufloat, nominal_value, std_dev
 from pychron.core.geometry.geometry import curvature_at
 from pychron.core.helpers.binpack import unpack
 from pychron.core.helpers.fits import natural_name_fit, fit_to_degree
-from pychron.core.regression.least_squares_regressor import ExponentialRegressor
+from pychron.core.regression.least_squares_regressor import ExponentialRegressor, FitError, LeastSquaresRegressor
 from pychron.core.regression.mean_regressor import MeanRegressor
 from pychron.core.regression.ols_regressor import PolynomialRegressor
 
@@ -346,6 +346,8 @@ class IsotopicMeasurement(BaseMeasurement):
                 fitname = fit.fit
                 if fitname == 'Auto':
                     fitname = fit.auto_fit(self.n)
+                elif fitname == 'Custom':
+                    fitname = 'custom:{}'.format(fit.fitfunc)
 
                 self.attr_set(fit=fitname,
                               time_zero_offset=fit.time_zero_offset or self.time_zero_offset,
@@ -386,6 +388,7 @@ class IsotopicMeasurement(BaseMeasurement):
         #     return self._value
 
         if not self.use_stored_value and not self.user_defined_value and self.xs.shape[0] > 1:
+            print('prediticasd', self.regressor)
             v = self.regressor.predict(0)
 
             if isnan(v) or isinf(v):
@@ -433,28 +436,25 @@ class IsotopicMeasurement(BaseMeasurement):
         if fit is None:
             fit = 'linear'
             self.fit = fit
+        return self._regressor_factory(fit)
 
+    def _regressor_factory(self, fit):
         lfit = fit.lower()
-        is_mean = 'average' in lfit
-        is_expo = lfit == 'exponential'
-        is_poly = not (is_mean or is_expo)
 
         reg = self._regressor
-        if reg is None:
-            if is_mean:
-                reg = MeanRegressor()
-            elif is_expo:
-                reg = ExponentialRegressor()
-            else:
-                reg = PolynomialRegressor()
-        elif is_poly and not isinstance(reg, PolynomialRegressor):
-            reg = PolynomialRegressor()
-        elif is_mean and not isinstance(reg, MeanRegressor):
-            reg = MeanRegressor()
-        elif is_expo and not isinstance(reg, ExponentialRegressor):
-            reg = ExponentialRegressor()
 
-        if is_poly:
+        if 'average' in lfit:
+            if not isinstance(reg, MeanRegressor):
+                reg = MeanRegressor()
+        elif lfit == 'exponential':
+            if not isinstance(reg, ExponentialRegressor):
+                reg = ExponentialRegressor()
+        elif lfit.startswith('custom:'):
+            if not isinstance(reg, LeastSquaresRegressor):
+                reg = LeastSquaresRegressor()
+                reg.construct_fitfunc(lfit)
+        elif not isinstance(reg, PolynomialRegressor):
+            reg = PolynomialRegressor()
             reg.set_degree(fit_to_degree(fit), refresh=False)
 
         xs, ys = self.get_data()
@@ -465,7 +465,10 @@ class IsotopicMeasurement(BaseMeasurement):
 
         if self.truncate:
             reg.set_truncate(self.truncate)
-        reg.calculate()
+        try:
+            reg.calculate()
+        except FitError as e:
+            reg = self._regressor_factory('average')
 
         self._regressor = reg
         return reg

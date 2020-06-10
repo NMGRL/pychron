@@ -6,6 +6,7 @@ from pychron.core.progress import progress_loader
 
 def progress_bind_records(ans):
     def func(xi, prog, i, n):
+        xi.bind()
         if prog:
             if i == 0:
                 prog.change_message('Loading')
@@ -13,7 +14,6 @@ def progress_bind_records(ans):
                 prog.change_message('Finished')
             if prog and i % 25 == 0:
                 prog.change_message('Loading {}'.format(xi.record_id))
-        xi.bind()
         return xi
 
     return progress_loader(ans, func, threshold=100, step=20)

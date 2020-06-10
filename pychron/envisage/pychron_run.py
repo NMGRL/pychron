@@ -51,6 +51,7 @@ PACKAGE_DICT = dict(
     ClassifierPlugin='pychron.classifier.tasks.plugin',
     MDDPlugin='pychron.mdd.tasks.plugin',
     AutoPlugin='pychron.pipeline.tasks.auto_plugin',
+    MachineLearningPlugin='pychron.ml.tasks.plugin',
 
     # data mappers
     USGSVSCDataPlugin='pychron.data_mapper.tasks.usgs_vsc.plugin',
@@ -101,6 +102,7 @@ PACKAGE_DICT = dict(
     EmailPlugin='pychron.social.email.tasks.plugin',
     GoogleCalendarPlugin='pychron.social.google_calendar.tasks.plugin',
     TwitterPlugin='pychron.social.twitter.plugin'
+
     # WorkspacePlugin='pychron.workspace.tasks.workspace_plugin',
 
     # LabBookPlugin='pychron.labbook.tasks.labbook_plugin',
