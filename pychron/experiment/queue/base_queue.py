@@ -27,7 +27,7 @@ from pychron.core.yaml import yload
 from pychron.experiment.queue.run_block import RunBlock
 from pychron.experiment.stats import ExperimentStats
 from pychron.experiment.utilities.frequency_generator import frequency_index_gen
-from pychron.pychron_constants import NULL_STR, LINE_STR
+from pychron.pychron_constants import NULL_STR, LINE_STR, FUSIONS_UV
 
 
 def extract_meta(line_gen):
@@ -375,7 +375,7 @@ class BaseExperimentQueue(RunBlock):
                'repository_identifier',
                'delay_after']
 
-        if self.extract_device == 'Fusions UV':
+        if self.extract_device == FUSIONS_UV:
             seq.extend(('reprate', 'mask', 'attenuator', 'image'))
 
         seq = [(v, v) if not isinstance(v, tuple) else v for v in seq]

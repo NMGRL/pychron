@@ -30,7 +30,7 @@ from pychron.entry.entry_views.user_entry import UserEntry
 from pychron.globals import globalv
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceLoggable
-from pychron.pychron_constants import NULL_STR, LINE_STR
+from pychron.pychron_constants import NULL_STR, LINE_STR, EXTRACT_DEVICE, FUSIONS
 
 
 class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
@@ -174,8 +174,8 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
         elif os.path.isfile(cp):
             names = self._get_names_from_config(cp, 'Extraction Devices')
         else:
-            names = ['Fusions Diode', 'Fusions UV', 'Fusions CO2']
-        return ['Extract Device', LINE_STR] + names
+            names = FUSIONS
+        return [EXTRACT_DEVICE, LINE_STR] + names
 
     @cached_property
     def _get_mass_spectrometers(self):

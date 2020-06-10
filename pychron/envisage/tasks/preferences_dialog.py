@@ -30,6 +30,7 @@ from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.resources import icon
+from pychron.pychron_constants import FUSIONS_CO2, FUSIONS_UV, FUSIONS_DIODE
 
 ICON_MAP = {'Database': icon('database'),
             'Social': icon('edit-group'),
@@ -50,9 +51,9 @@ ICON_MAP = {'Database': icon('database'),
             # 'Constants': icon('applications-education-mathematics'),
             'Constants': icon('lambda'),
             'Labspy': icon('labspy'),
-            'Fusions Diode': icon('laser'),
-            'Fusions UV': icon('laser'),
-            'Fusions CO2': icon('laser'),
+            FUSIONS_DIODE: icon('laser'),
+            FUSIONS_UV: icon('laser'),
+            FUSIONS_CO2: icon('laser'),
             'ExtractionLine': icon('motherboard'),
             'ClientExtractionLine': icon('motherboard'),
             'Entry': icon('radioactivity'),

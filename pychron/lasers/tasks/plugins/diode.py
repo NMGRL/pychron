@@ -25,18 +25,17 @@ from pychron.lasers.tasks.laser_actions import PowerMapAction, PowerCalibrationA
     PIDTuningAction
 from pychron.lasers.tasks.laser_preferences import FusionsDiodePreferencesPane
 from pychron.lasers.tasks.plugins.laser_plugin import FusionsPlugin
-
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.pychron_constants import FUSIONS_DIODE
 
 
 class FusionsDiodePlugin(FusionsPlugin):
     id = 'pychron.fusions.diode'
-    name = 'FusionsDiode'
+    name = FUSIONS_DIODE.replace(' ', '')
 
     klass = ('pychron.lasers.laser_managers.fusions_diode_manager', 'FusionsDiodeManager')
-    task_name = 'Fusions Diode'
+    task_name = FUSIONS_DIODE
     accelerator = 'Ctrl+Shift+['
 
     def _task_extensions_default(self):

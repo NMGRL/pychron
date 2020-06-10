@@ -16,13 +16,14 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import Bool, Str, Enum, File, Directory, \
+from traits.api import Bool, Enum, Directory, \
     Color, Range, Float, Int
 from traitsui.api import View, Item, VGroup, HGroup, Group, UItem
 
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
-from pychron.pychron_constants import SIZES
+from pychron.pychron_constants import SIZES, FUSIONS_DIODE, FUSIONS_CO2, FUSIONS_UV
 
 
 class LaserPreferences(BasePreferencesHelper):
@@ -107,12 +108,12 @@ class FusionsLaserPreferences(LaserPreferences):
 
 
 class FusionsDiodePreferences(FusionsLaserPreferences):
-    name = 'Fusions Diode'
+    name = FUSIONS_DIODE
     preferences_path = 'pychron.fusions.diode'
 
 
 class FusionsCO2Preferences(FusionsLaserPreferences):
-    name = 'Fusions CO2'
+    name = FUSIONS_CO2
     preferences_path = 'pychron.fusions.co2'
 
 
@@ -222,17 +223,17 @@ class FusionsLaserPreferencesPane(PreferencesPane):
 
 
 class FusionsDiodePreferencesPane(FusionsLaserPreferencesPane):
-    category = 'Fusions Diode'
+    category = FUSIONS_DIODE
     model_factory = FusionsDiodePreferences
 
 
 class FusionsCO2PreferencesPane(FusionsLaserPreferencesPane):
-    category = 'Fusions CO2'
+    category = FUSIONS_CO2
     model_factory = FusionsCO2Preferences
 
 
 class FusionsUVPreferencesPane(FusionsLaserPreferencesPane):
-    category = 'Fusions UV'
+    category = FUSIONS_UV
     model_factory = FusionsUVPreferences
 
 # ============= EOF =============================================

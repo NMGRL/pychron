@@ -21,10 +21,9 @@ from traits.api import Property
 from pychron.envisage.tasks.base_task import BaseHardwareTask
 from pychron.envisage.view_util import open_view
 from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
-
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.pychron_constants import FUSIONS_CO2, FUSIONS_DIODE
 
 
 class BaseLaserTask(BaseHardwareTask):
@@ -147,7 +146,7 @@ class ChromiumDiodeTask(FusionsTask):
 
 class FusionsCO2Task(FusionsTask):
     id = 'pychron.fusions.co2'
-    name = 'Fusions CO2'
+    name = FUSIONS_CO2
 
     def create_central_pane(self):
         if self.manager.mode == 'client':
@@ -181,7 +180,7 @@ class FusionsCO2Task(FusionsTask):
 
 class FusionsDiodeTask(FusionsTask):
     id = 'fusions.diode'
-    name = 'Fusions Diode'
+    name = FUSIONS_DIODE
 
     def create_central_pane(self):
         if self.manager.mode == 'client':

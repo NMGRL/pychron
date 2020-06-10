@@ -41,7 +41,7 @@ from pychron.globals import globalv
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.paths import paths
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
-from pychron.pychron_constants import SPECTROMETER_PROTOCOL, DVC_PROTOCOL, COCKTAIL, AIR, BLANK
+from pychron.pychron_constants import SPECTROMETER_PROTOCOL, DVC_PROTOCOL, COCKTAIL, AIR, BLANK, FUSIONS_UV
 
 
 class ExperimentEditorTask(EditorTask):
@@ -349,7 +349,7 @@ class ExperimentEditorTask(EditorTask):
             attr = sh.cell_value(r, 0)
             v = sh.cell_value(r, 1)
             if attr == 'extract_device':
-                is_uv = v == 'Fusions UV'
+                is_uv = v == FUSIONS_UV
 
             rows.append('{}: {}'.format(attr,
                                         v))
@@ -372,7 +372,7 @@ class ExperimentEditorTask(EditorTask):
             meta, metastr = extract_meta(f)
             is_uv = False
             if 'extract_device' in meta:
-                is_uv = meta['extract_device'] in ('Fusions UV',)
+                is_uv = meta['extract_device'] in (FUSIONS_UV,)
 
         return txt, is_uv
 
@@ -534,7 +534,7 @@ class ExperimentEditorTask(EditorTask):
                     if self.laser_control_client_pane:
                         self.laser_control_client_pane.model = man
 
-        if new == 'Fusions UV':
+        if new == FUSIONS_UV:
             if self.active_editor and not isinstance(self.active_editor, UVExperimentEditor):
                 editor = UVExperimentEditor()
 

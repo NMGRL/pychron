@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance, Button, Bool, Property, DelegatesTo, List, Str, Any
+from traits.api import Instance, Button, Bool, Property, DelegatesTo, List, Str
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -28,7 +28,7 @@ from pychron.experiment.queue.factory import ExperimentQueueFactory
 from pychron.experiment.undoer import ExperimentUndoer
 from pychron.experiment.utilities.identifier import convert_extract_device
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
-from pychron.pychron_constants import LINE_STR
+from pychron.pychron_constants import LINE_STR, CRYO
 
 
 class ExperimentFactory(DVCAble):
@@ -323,9 +323,9 @@ class ExperimentFactory(DVCAble):
     #
     # ===============================================================================
     def _run_factory_factory(self):
-        if self.extract_device == 'Fusions UV':
+        if self.extract_device == FUSIONS_UV:
             klass = UVAutomatedRunFactory
-        elif self.extract_device == 'Cryo':
+        elif self.extract_device == CRYO:
             klass = CryoAutomatedRunFactory
         else:
             klass = AutomatedRunFactory

@@ -35,6 +35,7 @@ from pychron.experiment.automated_run.uv.spec import UVAutomatedRunSpec
 from pychron.experiment.queue.parser import RunParser, UVRunParser
 from pychron.loggable import Loggable
 from pychron.paths import paths
+from pychron.pychron_constants import FUSIONS_UV
 
 
 class RunBlock(Loggable):
@@ -61,7 +62,7 @@ class RunBlock(Loggable):
 
         header = [l.strip() for l in next(line_gen).split(delim)]
         pklass = RunParser
-        if self.extract_device == 'Fusions UV':
+        if self.extract_device == FUSIONS_UV:
             pklass = UVRunParser
         parser = pklass()
         for linenum, line in enumerate(line_gen):
@@ -88,7 +89,7 @@ class RunBlock(Loggable):
                     params['repository_identifier'] = self.repository_identifier
 
                 klass = AutomatedRunSpec
-                if self.extract_device == 'Fusions UV':
+                if self.extract_device == FUSIONS_UV:
                     klass = UVAutomatedRunSpec
 
                 arun = klass()
