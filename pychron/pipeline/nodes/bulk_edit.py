@@ -25,7 +25,7 @@ from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pychron_traits import BorderVGroup, StepStr
 from pychron.core.utils import alpha_to_int
 from pychron.dvc import NPATH_MODIFIERS, analysis_path, dvc_load, dvc_dump
-from pychron.experiment.utilities.identifier import make_runid
+from pychron.experiment.utilities.runid import make_runid
 from pychron.pipeline.nodes.data import BaseDVCNode
 from pychron.pychron_constants import PLUSMINUS
 

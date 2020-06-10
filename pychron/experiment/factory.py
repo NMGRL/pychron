@@ -257,7 +257,9 @@ class ExperimentFactory(DVCAble):
                 positions = lm.get_positions_for_load(self.load_name)
                 if positions:
                     runs = [self.run_factory.new_run_simple(*p) for p in positions]
-                    self.queue.extend(runs)
+                    self.queue.extend_runs(runs)
+                    self.queue.changed = True
+
             else:
                 self.warning_dialog('Please set a load')
         else:

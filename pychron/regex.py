@@ -56,4 +56,6 @@ TAG_PATH_REGEX = re.compile(r'^(?P<head>\w{5})\/tags\/(?P<tail>[\w-]*).tags.json
 
 
 ORDER_PREFIX_REGEX = re.compile(r'^(?P<prefix>\d+:)(?P<label>.*)$')
+
+LOAD_REGEX = re.compile(r'^(?P<prefix>.*?)(?P<inc>\d+)$')
 # ============= EOF =============================================

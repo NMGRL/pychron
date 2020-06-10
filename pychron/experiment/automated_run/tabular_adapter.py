@@ -23,7 +23,7 @@ from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 from pychron.core.configurable_tabular_adapter import ConfigurableMixin
 from pychron.envisage.resources import icon
-from pychron.experiment.utilities.identifier import make_aliquot_step
+from pychron.experiment.utilities.runid import make_aliquot_step
 from pychron.pychron_constants import EXTRACTION_COLOR, MEASUREMENT_COLOR, SUCCESS_COLOR, \
     SKIP_COLOR, NOT_EXECUTABLE_COLOR, CANCELED_COLOR, TRUNCATED_COLOR, \
     FAILED_COLOR, END_AFTER_COLOR, BLANK_UNKNOWN, DEGAS, UNKNOWN

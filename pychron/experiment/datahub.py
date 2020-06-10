@@ -15,17 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Instance, Bool, Dict
 
 from pychron.dvc.dvc import DVC
-from pychron.experiment.utilities.identifier import make_aliquot_step, make_step, get_analysis_type
+from pychron.experiment.utilities.identifier import get_analysis_type
+from pychron.experiment.utilities.runid import make_aliquot_step, make_step
 from pychron.loggable import Loggable
 from pychron.mass_spec.database.massspec_database_adapter import MissingAliquotPychronException
 from pychron.pychron_constants import DETECTOR_IC
-import six
-from six.moves import zip
 
 
 def check_list(lst):

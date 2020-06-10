@@ -43,7 +43,7 @@ from pychron.dvc.meta_repo import MetaRepo, get_frozen_flux, get_frozen_producti
 from pychron.dvc.tasks.dvc_preferences import DVCConnectionItem
 from pychron.dvc.util import Tag, DVCInterpretedAge
 from pychron.envisage.browser.record_views import InterpretedAgeRecordView
-from pychron.experiment.utilities.identifier import make_increment
+from pychron.experiment.utilities.runid import make_increment
 from pychron.git.hosts import IGitHost
 from pychron.git.hosts.local import LocalGitHostService
 from pychron.git_archive.repo_manager import GitRepoManager, format_date, get_repository_branch

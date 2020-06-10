@@ -254,22 +254,22 @@ class StatsGroup(Loggable):
         et = 0
         st = 0
         for ei in self.experiment_queues:
+            stats = ei.stats
             if sel in ei.cleaned_automated_runs:
 
                 si = ei.cleaned_automated_runs.index(sel)
 
-                st += ei.stats.calculate_duration(
-                    ei.executed_runs + ei.cleaned_automated_runs[:si]) + ei.delay_between_analyses
+                st += stats.calculate_duration(ei.executed_runs + ei.cleaned_automated_runs[:si]) + \
+                      ei.delay_between_analyses
 
-                rd = self.get_run_duration(sel)
+                rd = stats.get_run_duration(sel)
                 et = st + rd
 
                 rd = timedelta(seconds=round(rd))
                 self.run_duration = str(rd)
-
                 break
             else:
-                et += ei.stats.calculate_duration()
+                et += stats.calculate_duration()
         return st, et
 
     def _get_run_elapsed(self):

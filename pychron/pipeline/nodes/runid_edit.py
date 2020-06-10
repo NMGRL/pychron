@@ -25,7 +25,7 @@ from traitsui.table_column import ObjectColumn
 
 from pychron.core.helpers.iterfuncs import groupby_repo
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
-from pychron.experiment.utilities.identifier import make_runid
+from pychron.experiment.utilities.runid import make_runid
 from pychron.paths import paths
 from pychron.pipeline.nodes.data import BaseDVCNode
 
@@ -68,9 +68,9 @@ class RunIDEditNode(BaseDVCNode):
         self.items = [RunIDEditItem(a) for a in state.unknowns]
 
     def run(self, state):
-        if confirm('This is only for advanced users. Serious unintended consequences may occur if not used properly. '
-                   'Please do not use unless you are capable of manually fixing database/repository issues. \n\n'
-                   'Are you sure you want to continue') != YES:
+        if confirm(None, 'This is only for advanced users. Serious unintended consequences may occur if not used '
+                         'properly. Please do not use unless you are capable of manually fixing database/repository '
+                         'issues. \n\n Are you sure you want to continue') != YES:
             return
 
         for repo, items in groupby_repo(self.items):
@@ -102,6 +102,5 @@ class RunIDEditNode(BaseDVCNode):
             # add all the temps to the git index
             # commit the changes
 
-        warning(None, 'This process is not fully complete. You need to manual add/commit and manually modify the '
-                      'database')
+        warning(None, 'This process is not fully complete. You need to manual add/commit modified files')
 # ============= EOF =============================================

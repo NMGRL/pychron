@@ -242,8 +242,8 @@ IC_ANALYSIS_TYPE_MAP = {'air': 0, 'cocktail': 1}
 QTEGRA_INTEGRATION_TIMES = [0.065536, 0.131072, 0.262144, 0.524288,
                             1.048576, 2.097152, 4.194304, 8.388608,
                             16.777216, 33.554432, 67.108864]
+
 QTEGRA_DEFAULT_INTEGRATION_TIME = 1.048576
-#ISOTOPX_INTEGRATION_TIMES = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 2.0, 3.0, 4.0, 5.0, 10.0, 20.0]
 ISOTOPX_INTEGRATION_TIMES = [1.0, 2.0, 3.0, 4.0, 5.0, 10.0, 20.0, 100.0]
 ISOTOPX_DEFAULT_INTEGRATION_TIME = 1
 
@@ -340,8 +340,7 @@ META_ATTRS = ('analysis_type', 'uuid', 'identifier', 'aliquot', 'increment',
               'username', 'queue_conditionals_name',
               'repository_identifier',
               'acquisition_software',
-              'data_reduction_software', 'instrument_name', 'laboratory', 'experiment_queue_name', 'experiment_type',
-
-              ) + SAMPLE_METADATA
+              'data_reduction_software', 'instrument_name', 'laboratory',
+              'experiment_queue_name', 'experiment_type') + SAMPLE_METADATA
 
 # ============= EOF =============================================

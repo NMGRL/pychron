@@ -627,7 +627,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 # self.debug('setting {}={}'.format(attr, v))
                 setattr(self, attr, v)
             except TraitError as e:
-                self.debug(e)
+                self.debug('clone_run', e)
 
         for si in SCRIPT_KEYS:
             skey = '{}_script'.format(si)

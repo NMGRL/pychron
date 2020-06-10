@@ -30,9 +30,9 @@ from uncertainties import nominal_value, std_dev
 from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.core.i_datastore import IDatastore
 from pychron.core.utils import alpha_to_int
-from pychron.experiment.utilities.identifier import make_runid
 from pychron.experiment.utilities.identifier_mapper import IdentifierMapper
 from pychron.experiment.utilities.info_blob import encode_infoblob
+from pychron.experiment.utilities.runid import make_runid
 from pychron.loggable import Loggable
 from pychron.mass_spec.database.massspec_database_adapter import MassSpecDatabaseAdapter
 

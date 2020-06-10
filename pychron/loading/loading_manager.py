@@ -39,6 +39,7 @@ from pychron.loading.loading_pdf_writer import LoadingPDFWriter
 from pychron.paths import paths
 # ============= enthought library imports =======================
 from pychron.pychron_constants import NULL_STR
+from pychron.regex import LOAD_REGEX
 
 
 def make_bound(st):
@@ -246,7 +247,8 @@ class LoadingManager(DVCIrradiationable):
         with self.dvc.session_ctx():
             loadtable = self.dvc.get_loadtable(name)
             if loadtable:
-                return [(p.identifier, p.position) for p in loadtable.loaded_positions if p.identifier and p.position]
+                return [(p.identifier, str(p.position)) for p in loadtable.loaded_positions
+                        if p.identifier and p.position]
             else:
                 self.warning_dialog('No Positions specified in load "{}"'.format(name))
 
@@ -366,7 +368,7 @@ class LoadingManager(DVCIrradiationable):
     def setup(self):
         db = self.dvc.db
         if db.connected:
-            self._refresh_loads()
+            self._refresh_loads(select=False)
 
             ts = self.dvc.get_load_holders()
             self.debug('Found load holders={}'.format(ts))
@@ -381,51 +383,10 @@ class LoadingManager(DVCIrradiationable):
 
             return True
 
-    # actions
-    # def generate_results(self):
-    #     self.debug('generate results')
-    #     dvc = self.dvc
-    #     db = dvc.db
-    #
-    #     positions = sorted([pp for p in self.positions
-    #                         for pp in p.positions])
-    #
-    #     wb = Workbook()
-    #     sh = wb.add_sheet('Results')
-    #
-    #     for i, attr in enumerate(('Analysis', 'Position', 'Age',
-    #                               'Error', 'Weight', 'Note')):
-    #         wb.sheet(0, i, attr)
-    #
-    #     wb.nrows = 1
-    #
-    #     def func(x, prog, i, n):
-    #         dbmps = db.get_measured_positions(self.load_name, x)
-    #         dbpos = db.get_load_position(self.load_name, x)
-    #
-    #         weight, note = dbpos.weight, dbpos.note
-    #
-    #         for dbmp in dbmps:
-    #             rid = dbmp.analysis.record_id
-    #             # rid = 1
-    #             if prog:
-    #                 prog.change_message('Write results for {},{}'.format(rid, x))
-    #
-    #             # ai = dvc.make_analyses((rid,))
-    #             age, error = 0, 0
-    #
-    #             sh.write(wb.nrows, 0, rid)
-    #             sh.write(wb.nrows, 1, x)
-    #             sh.write(wb.nrows, 2, age)
-    #             sh.write(wb.nrows, 3, error)
-    #             sh.write(wb.nrows, 4, weight)
-    #             sh.write(wb.nrows, 5, note)
-    #             wb.nrows += 1
-    #
-    #     progress_iterator(positions, func, threshold=1)
-    #
-    #     path, _ = unique_path(paths.load_results_dir, self.load_name, extension='.xls')
-    #     wb.save(path)
+    def set_load_name(self, name):
+        load_instance = next((i for i in self.loads if i.name == name), None)
+        if load_instance:
+            self.selected_instances = [load_instance]
 
     def configure_pdf(self):
         options = self._pdf_writer.options
@@ -511,23 +472,6 @@ class LoadingManager(DVCIrradiationable):
             self.information_dialog(msg)
 
         return True
-
-    # def set_edit(self):
-    #     if self.canvas:
-    #         self.canvas.event_state = 'edit'
-    #     self.interaction_mode = 'Edit'
-    #
-    # def set_entry(self):
-    #
-    #     if self.canvas:
-    #         self.canvas.event_state = 'normal'
-    #     self.interaction_mode = 'Entry'
-    #
-    # def set_info(self):
-    #
-    #     if self.canvas:
-    #         self.canvas.event_state = 'info'
-    #     self.interaction_mode = 'Info'
 
     # private
     def _check_load_holders(self, ts):
@@ -672,9 +616,10 @@ class LoadingManager(DVCIrradiationable):
                           width=300)
         return v
 
-    def _refresh_loads(self):
+    def _refresh_loads(self, select=True):
         self.loads = self._get_load_instances()
-        self.load_instance = self.loads[-1]
+        if self.loads and select:
+            self.selected_instances = self.loads[-1:]
 
     def _set_group_colors(self, canvas=None):
         if canvas is None:
@@ -790,14 +735,14 @@ class LoadingManager(DVCIrradiationable):
         db = self.dvc.db
         ln = db.get_latest_load()
 
-        try:
-            ln = ln.name
-            nv = int(ln) + 1
-        except (ValueError, IndexError, AttributeError) as e:
-            print('lm add button exception', e)
-            nv = 1
-
-        self.new_load_name = str(nv)
+        if ln is not None:
+            # try to extract an increment from the name
+            m = LOAD_REGEX.match(ln.name)
+            if m:
+                prefix = m.group('prefix')
+                inc = m.group('inc')
+                nv = '{{:0{}n}}'.format(len(inc)).format(int(inc) + 1)
+                self.new_load_name = '{}{}'.format(prefix, nv)
 
         info = self.edit_traits(view='_new_load_view')
 
@@ -988,3 +933,49 @@ class LoadingManager(DVCIrradiationable):
         self.canvas.request_redraw()
 
 # ============= EOF =============================================
+
+# actions
+# def generate_results(self):
+#     self.debug('generate results')
+#     dvc = self.dvc
+#     db = dvc.db
+#
+#     positions = sorted([pp for p in self.positions
+#                         for pp in p.positions])
+#
+#     wb = Workbook()
+#     sh = wb.add_sheet('Results')
+#
+#     for i, attr in enumerate(('Analysis', 'Position', 'Age',
+#                               'Error', 'Weight', 'Note')):
+#         wb.sheet(0, i, attr)
+#
+#     wb.nrows = 1
+#
+#     def func(x, prog, i, n):
+#         dbmps = db.get_measured_positions(self.load_name, x)
+#         dbpos = db.get_load_position(self.load_name, x)
+#
+#         weight, note = dbpos.weight, dbpos.note
+#
+#         for dbmp in dbmps:
+#             rid = dbmp.analysis.record_id
+#             # rid = 1
+#             if prog:
+#                 prog.change_message('Write results for {},{}'.format(rid, x))
+#
+#             # ai = dvc.make_analyses((rid,))
+#             age, error = 0, 0
+#
+#             sh.write(wb.nrows, 0, rid)
+#             sh.write(wb.nrows, 1, x)
+#             sh.write(wb.nrows, 2, age)
+#             sh.write(wb.nrows, 3, error)
+#             sh.write(wb.nrows, 4, weight)
+#             sh.write(wb.nrows, 5, note)
+#             wb.nrows += 1
+#
+#     progress_iterator(positions, func, threshold=1)
+#
+#     path, _ = unique_path(paths.load_results_dir, self.load_name, extension='.xls')
+#     wb.save(path)

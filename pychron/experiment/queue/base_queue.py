@@ -182,6 +182,10 @@ class BaseExperimentQueue(RunBlock):
                                    if not ri.frequency_group == self._frequency_group_counter]
             self._frequency_group_counter -= 1
 
+    def extend_runs(self, runs):
+        self.automated_runs.extend(runs)
+        self.refresh_table_needed = True
+
     def add_runs(self, runspecs, freq=None, freq_before=True, freq_after=False,
                  is_run_block=False, is_repeat_block=False):
         """

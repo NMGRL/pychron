@@ -33,7 +33,7 @@ from pychron.core.helpers.formatting import format_percent_error, floatfmt
 from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.core.helpers.logger_setup import new_logger
 from pychron.envisage.view_util import open_view
-from pychron.experiment.utilities.identifier import make_runid, make_aliquot_step
+from pychron.experiment.utilities.runid import make_runid, make_aliquot_step
 from pychron.graph.stacked_regression_graph import ColumnStackedRegressionGraph, StackedRegressionGraph
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.arar_constants import ArArConstants

@@ -39,7 +39,8 @@ from pychron.dvc.pychrondata_transfer_helpers import get_irradiation_timestamps,
     set_spectrometer_files
 from pychron.experiment.automated_run.persistence_spec import PersistenceSpec
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
-from pychron.experiment.utilities.identifier import make_runid, IDENTIFIER_REGEX, SPECIAL_IDENTIFIER_REGEX
+from pychron.experiment.utilities.identifier import IDENTIFIER_REGEX, SPECIAL_IDENTIFIER_REGEX
+from pychron.experiment.utilities.runid import make_runid
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.github import Organization
 from pychron.loggable import Loggable

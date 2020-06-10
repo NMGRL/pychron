@@ -163,7 +163,7 @@ class ExtractionPyScript(ValvePyScript):
                            extract_value=0,
                            extract_units='',
                            tray='',
-                           ramp_rate='',
+                           ramp_rate=0,
                            ramp_duration=0,
                            duration=0,
                            delay_after=0,
