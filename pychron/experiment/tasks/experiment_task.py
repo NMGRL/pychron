@@ -562,12 +562,6 @@ class ExperimentEditorTask(EditorTask):
     def _update_load(self, new):
         lm = self.loading_manager
         if lm is not None:
-            # lm.suppress_update = True
-            # lm.load_name = ''
-            # lm.load_name = new
-            # lm.suppress_update = False
-            #
-            # lm.load_load_by_name(new)
             lm.set_load_by_name(new)
             if lm.canvas:
                 lm.canvas.editable = False

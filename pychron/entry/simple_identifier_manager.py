@@ -46,22 +46,39 @@ class SimpleIdentifierManager(Loggable):
         self.dvc.close_session()
 
     def set_identifier(self):
+        add = False
+
         self.debug('set identifier {}'.format(self.selected_sample))
         identifier = self.dvc.get_simple_identifier_by_sample(self.selected_sample.id)
         if not identifier:
             self.debug('no identifier. adding simple identifier for {}'.format(self.selected_sample))
+            add = True
+        else:
+            if self.confirmation_dialog('"{}" already has an identifier "{}". '
+                                        'Would you like to add another?'.format(self.selected_sample,
+                                                                                identifier.identifier)):
+                add = True
+
+        if add:
             self.dvc.add_simple_identifier(self.selected_sample.id)
             self.items = self.dvc.db.get_simple_identifiers()
-        else:
-            self.information_dialog('"{}" already has an identifier "{}"'.format(self.selected_sample,
-                                                                                 identifier.identifier))
 
     # handlers
     def _selected_sample_changed(self, new):
         if new and self.factory:
             identifiers = [str(i.identifier) for i in self.dvc.db.get_sample_simple_identifiers(new.id)]
-            self.factory.set_identifiers(identifiers)
-            self.factory.labnumber = str(new.identifier)
+            if not identifiers:
+                if self.confirmation_dialog('Simple Identifier for {} does not exist. Would you like to add '
+                                            'it?'.format(new.name)):
+                    self.dvc.add_simple_identifier(new.id)
+                    identifiers = [str(i.identifier) for i in self.dvc.db.get_sample_simple_identifiers(new.id)]
+                    idn = identifiers[-1]
+            else:
+                idn = str(new.identifier)
+
+            if identifiers:
+                self.factory.set_identifiers(identifiers)
+                self.factory.labnumber = idn
 
     def _project_filter_changed(self, new):
         if new:

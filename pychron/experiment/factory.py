@@ -20,6 +20,7 @@ from traits.api import Instance, Button, Bool, Property, DelegatesTo, List, Str,
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.dvc.dvc_irradiationable import DVCAble
+from pychron.experiment.automated_run.cryo.factory import CryoAutomatedRunFactory
 from pychron.experiment.automated_run.factory import AutomatedRunFactory
 from pychron.experiment.automated_run.uv.factory import UVAutomatedRunFactory
 from pychron.experiment.queue.experiment_queue import ExperimentQueue
@@ -202,6 +203,10 @@ class ExperimentFactory(DVCAble):
         elif name == 'extract_device':
             self._set_extract_device(new)
 
+        if self.simple_identifier_manager:
+            self.simple_identifier_manager.factory = self.run_factory
+            self.run_factory.mode = 'simple'
+
         self._auto_save()
 
     def _auto_save(self):
@@ -251,7 +256,9 @@ class ExperimentFactory(DVCAble):
                 positions = lm.get_positions_for_load(self.load_name)
                 if positions:
                     runs = [self.run_factory.new_run_simple(*p) for p in positions]
-                    self.queue.extend(runs)
+                    self.queue.extend_runs(runs)
+                    self.queue.changed = True
+
             else:
                 self.warning_dialog('Please set a load')
         else:
@@ -318,6 +325,8 @@ class ExperimentFactory(DVCAble):
     def _run_factory_factory(self):
         if self.extract_device == 'Fusions UV':
             klass = UVAutomatedRunFactory
+        elif self.extract_device == 'Cryo':
+            klass = CryoAutomatedRunFactory
         else:
             klass = AutomatedRunFactory
 
@@ -329,9 +338,6 @@ class ExperimentFactory(DVCAble):
         rf.on_trait_change(self._update_end_after, 'end_after')
         rf.on_trait_change(self._auto_save, 'auto_save_needed')
         rf.on_trait_change(self._apply_stepheat, 'apply_stepheat')
-
-        #if self.simple_identifier_manager:
-        #    self.simple_identifier_manager.factory = rf
 
         return rf
 

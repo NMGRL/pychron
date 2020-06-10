@@ -104,7 +104,8 @@ class FactoryView(HasTraits):
                           editor=ButtonEditor(label_value='edit_template_label')),
                      icon_button_editor('apply_stepheat', 'arrow_right',
                                         enabled_when='_selected_runs',
-                                        tooltip='Apply step heat template to selected'))
+                                        tooltip='Apply step heat template to selected'),
+                     )
         return grp
 
         # ============= EOF =============================================

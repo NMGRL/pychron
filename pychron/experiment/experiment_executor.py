@@ -60,8 +60,9 @@ from pychron.experiment.utilities.repository_identifier import retroactive_repos
 from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
 from pychron.globals import globalv
 from pychron.paths import paths
-from pychron.pychron_constants import DEFAULT_INTEGRATION_TIME, LINE_STR, AR_AR, DVC_PROTOCOL, DEFAULT_MONITOR_NAME, \
-    SCRIPT_NAMES, EM_SCRIPT_KEYS, NULL_STR
+from pychron.pychron_constants import DEFAULT_INTEGRATION_TIME, AR_AR, DVC_PROTOCOL, DEFAULT_MONITOR_NAME, \
+    SCRIPT_NAMES, EM_SCRIPT_KEYS, NULL_STR, NULL_EXTRACT_DEVICES, IPIPETTE_PROTOCOL, ILASER_PROTOCOL, IFURNACE_PROTOCOL, \
+    CRYO_PROTOCOL
 
 
 def remove_backup(uuid_str):
@@ -1558,16 +1559,14 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             else:
                 elm_connectable.connected = True
 
-        if exp.extract_device and exp.extract_device not in ('Extract Device', LINE_STR, 'No Extract Device'):
+        if exp.extract_device and exp.extract_device not in NULL_EXTRACT_DEVICES:
             # extract_device = convert_extract_device(exp.extract_device)
             extract_device = exp.extract_device.replace(' ', '')
             ed_connectable = Connectable(name=extract_device)
             man = None
             if self.application:
                 self.debug('get service name={}'.format(extract_device))
-                for protocol in ('pychron.lasers.laser_managers.ilaser_manager.ILaserManager',
-                                 'pychron.furnace.ifurnace_manager.IFurnaceManager',
-                                 'pychron.external_pipette.protocol.IPipetteManager'):
+                for protocol in (ILASER_PROTOCOL, IFURNACE_PROTOCOL, IPIPETTE_PROTOCOL, CRYO_PROTOCOL):
 
                     man = self.application.get_service(protocol, 'name=="{}"'.format(extract_device))
                     if man:

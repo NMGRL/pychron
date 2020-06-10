@@ -31,6 +31,10 @@ SCAN_PROTOCOL = 'pychron.spectrometer.scan_manager.ScanManager'
 EL_PROTOCOL = 'pychron.extraction_line.extraction_line_manager.ExtractionLineManager'
 DVC_PROTOCOL = 'pychron.dvc.dvc.DVC'
 FURNACE_PROTOCOL = 'pychron.furnace.furnace_manager.BaseFurnaceManager'
+ILASER_PROTOCOL = 'pychron.lasers.laser_managers.ilaser_manager.ILaserManager'
+IFURNACE_PROTOCOL = 'pychron.furnace.ifurnace_manager.IFurnaceManager',
+IPIPETTE_PROTOCOL = 'pychron.external_pipette.protocol.IPipetteManager'
+CRYO_PROTOCOL = 'pychron.extraction_line.cryo_manager.CryoManager'
 
 TTF_FONTS = ['Andale Mono', 'Arial', 'Arial Black',
              'Calibri', 'Cambria', 'Comic Sans MS', 'Consolas', 'Courier New',
@@ -74,6 +78,8 @@ EM_SCRIPT_KEYS = (EXTRACTION, MEASUREMENT)
 SCRIPT_KEYS = [MEASUREMENT, POST_MEASUREMENT, EXTRACTION, POST_EQUILIBRATION]
 
 SCRIPT_NAMES = ['{}_script'.format(si) for si in SCRIPT_KEYS]
+
+SIMPLE = 'simple'
 
 SE = 'SE'
 SD = 'SD'
@@ -176,6 +182,7 @@ WHIFF = 'whiff'
 
 EXTRACT_DEVICE = 'Extract Device'
 NO_EXTRACT_DEVICE = 'No Extract Device'
+NULL_EXTRACT_DEVICES = [EXTRACT_DEVICE, LINE_STR, NO_EXTRACT_DEVICE, None, '']
 
 NO_BLANK_CORRECT = (BLANK, DETECTOR_IC, BACKGROUND)
 
@@ -235,8 +242,8 @@ IC_ANALYSIS_TYPE_MAP = {'air': 0, 'cocktail': 1}
 QTEGRA_INTEGRATION_TIMES = [0.065536, 0.131072, 0.262144, 0.524288,
                             1.048576, 2.097152, 4.194304, 8.388608,
                             16.777216, 33.554432, 67.108864]
+
 QTEGRA_DEFAULT_INTEGRATION_TIME = 1.048576
-#ISOTOPX_INTEGRATION_TIMES = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 2.0, 3.0, 4.0, 5.0, 10.0, 20.0]
 ISOTOPX_INTEGRATION_TIMES = [1.0, 2.0, 3.0, 4.0, 5.0, 10.0, 20.0, 100.0]
 ISOTOPX_DEFAULT_INTEGRATION_TIME = 1
 
@@ -333,8 +340,7 @@ META_ATTRS = ('analysis_type', 'uuid', 'identifier', 'aliquot', 'increment',
               'username', 'queue_conditionals_name',
               'repository_identifier',
               'acquisition_software',
-              'data_reduction_software', 'instrument_name', 'laboratory', 'experiment_queue_name', 'experiment_type',
-
-              ) + SAMPLE_METADATA
+              'data_reduction_software', 'instrument_name', 'laboratory',
+              'experiment_queue_name', 'experiment_type') + SAMPLE_METADATA
 
 # ============= EOF =============================================

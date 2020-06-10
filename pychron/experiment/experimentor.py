@@ -116,6 +116,7 @@ class Experimentor(DVCIrradiationable):
 
         self.debug('executor executable {}'.format(self.executor.executable))
         self.debug('updating stats, ')
+        self.executor.stats.experiment_queues = queues
         self.executor.stats.calculate()
 
         self.refresh_executable(queues)

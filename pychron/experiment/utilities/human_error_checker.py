@@ -24,7 +24,7 @@ from traits.api import Bool
 from pychron.core.ui.preference_binding import bind_preference
 from pychron.experiment.utilities.identifier import get_analysis_type
 from pychron.loggable import Loggable
-from pychron.pychron_constants import LINE_STR, SCRIPT_NAMES, NULL_STR
+from pychron.pychron_constants import SCRIPT_NAMES, NULL_STR, NULL_EXTRACT_DEVICES
 
 
 class HumanErrorChecker(Loggable):
@@ -122,7 +122,7 @@ class HumanErrorChecker(Loggable):
 
         ed = run.extract_device
         if self.extraction_script_enabled:
-            if run.analysis_type == 'unknown' and ed not in ('Extract Device', LINE_STR, 'No Extract Device') and es:
+            if run.analysis_type == 'unknown' and ed not in NULL_EXTRACT_DEVICES and es:
                 ds = ed.split(' ')[1].lower()
                 if ds not in es:
                     return 'Extraction script "{}" does not match the default "{}". An easy solution is to make sure ' \

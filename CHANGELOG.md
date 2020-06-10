@@ -1,5 +1,13 @@
 CHANGELOG
 =========
+3/27/2020
+### Maintenance ###
+* cleaned up ExperimentStats
+* moved runid functions to pychron.experiments.utilities.runid
+
+### Features ###
+* reimplemented Generate Queue.  simply adds positions in a Load to the queue 
+
 
 6/14/2019
 ### Features ###

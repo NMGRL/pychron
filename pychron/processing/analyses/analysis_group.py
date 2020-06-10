@@ -25,7 +25,7 @@ from uncertainties import ufloat, nominal_value, std_dev
 from pychron.core.stats import calculate_mswd_probability
 from pychron.core.stats.core import calculate_mswd, calculate_weighted_mean, validate_mswd
 from pychron.core.utils import alphas
-from pychron.experiment.utilities.identifier import make_aliquot
+from pychron.experiment.utilities.runid import make_aliquot
 from pychron.processing.analyses.analysis import IdeogramPlotable
 from pychron.processing.analyses.preferred import Preferred
 from pychron.processing.arar_age import ArArAge

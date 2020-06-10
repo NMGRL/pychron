@@ -28,7 +28,7 @@ from sqlalchemy.orm import relationship
 from pychron.core.helpers.datetime_tools import make_timef
 from pychron.core.utils import alphas
 from pychron.database.orms import stringcolumn, primary_key
-from pychron.experiment.utilities.identifier import make_runid
+from pychron.experiment.utilities.runid import make_runid
 from pychron.pychron_constants import NULL_STR
 
 Base = declarative_base()
@@ -607,8 +607,8 @@ class MediaTbl(Base, IDMixin):
 
 
 # ======================= Simple Identifier ================================
-class SimpleIdentifierTbl(Base, BaseMixin):
-    identifier = Column(Integer, primary_key=True)
+class SimpleIdentifierTbl(Base, IDMixin):
+    identifier = Column(String(140), unique=True)
     sampleID = Column(Integer, ForeignKey('SampleTbl.id'))
 
     sample = relationship('SampleTbl', uselist=False)

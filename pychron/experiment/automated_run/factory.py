@@ -51,7 +51,7 @@ from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceLoggable
 from pychron.pychron_constants import NULL_STR, SCRIPT_KEYS, SCRIPT_NAMES, LINE_STR, DVC_PROTOCOL, SPECIAL_IDENTIFIER, \
-    BLANK_UNKNOWN, BLANK_EXTRACTIONLINE, UNKNOWN, PAUSE, DEGAS
+    BLANK_UNKNOWN, BLANK_EXTRACTIONLINE, UNKNOWN, PAUSE, DEGAS, SIMPLE, NULL_EXTRACT_DEVICES
 
 
 class AutomatedRunFactory(DVCAble, PersistenceLoggable):
@@ -627,7 +627,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 # self.debug('setting {}={}'.format(attr, v))
                 setattr(self, attr, v)
             except TraitError as e:
-                self.debug(e)
+                self.debug('clone_run', e)
 
         for si in SCRIPT_KEYS:
             skey = '{}_script'.format(si)
@@ -814,19 +814,23 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             this preserves the users changes
         """
         tag = new
+        # tag = 2000-01 or  ba-01..
         if '-' in new:
             tag = new.split('-')[0]
+            # tag = 2000 or ba
 
         abit = tag in ANALYSIS_MAPPING
-        bbit = False
-        if not abit:
-            try:
-                int(tag)
-                bbit = True
-            except ValueError:
-                pass
-
-        if abit or bbit:  # or old in ANALYSIS_MAPPING or not old and new:
+        # bbit = False
+        # if not abit:
+        #     # labnumber is not special
+        #     try:
+        #         int(tag)
+        #         bbit = True
+        #         # labnumber is an unknown
+        #     except ValueError:
+        #         pass
+        # if abit or bbit:  # or old in ANALYSIS_MAPPING or not old and new:
+        if abit or old in ANALYSIS_MAPPING or not old:
             # set default scripts
             self._load_default_scripts(tag, new)
 
@@ -835,53 +839,49 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         # if labnumber is int use key='U'
         try:
             _ = int(labnumber_tag)
+            tags = [labnumber_tag, 'u']
             labnumber_tag = 'u'
         except ValueError:
-            pass
+            tags = [labnumber_tag]
 
-        labnumber_tag = str(labnumber_tag).lower()
-        if self._current_loaded_default_scripts_key == labnumber:
+        extract_device = self.extract_device.replace(' ', '')
+
+        is_extractable = labnumber_tag in ('u', 'bu', 'dg') and extract_device not in NULL_EXTRACT_DEVICES or \
+                         extract_device != 'ExternalPipette'
+
+        # labnumber_tag = str(labnumber_tag).lower()
+        if self._current_loaded_default_scripts_key in tags:
             self.debug('Scripts for {} already loaded'.format(labnumber))
             return
 
-        self.debug('load default scripts for {}'.format(labnumber_tag))
+        self.debug('load default scripts for {}'.format(tags))
 
         self._current_loaded_default_scripts_key = None
         defaults = self._load_default_file()
         if defaults:
-            if labnumber_tag in defaults:
-                self._current_loaded_default_scripts_key = labnumber
+            labnumber_tag = next((lt for lt in tags
+                                  if lt in defaults), None)
+            if labnumber_tag:
                 default_scripts = defaults[labnumber_tag]
-                keys = SCRIPT_KEYS
-                if labnumber_tag == 'dg':
-                    keys = ['extraction']
+                self._current_loaded_default_scripts_key = labnumber_tag
+                keys = ['extraction'] if labnumber_tag == 'dg' else SCRIPT_KEYS
 
                 # set options
                 self.script_options.name = default_scripts.get('options', '')
 
                 for skey in keys:
-                    new_script_name = default_scripts.get(skey) or ''
-
+                    new_script_name = default_scripts.get(skey, '')
                     new_script_name = remove_file_extension(new_script_name)
-                    if labnumber_tag in ('u', 'bu') and self.extract_device not in (NULL_STR, 'ExternalPipette'):
-
-                        # the default value trumps pychron's
-                        if self.extract_device:
-                            if ' ' in self.extract_device:
-                                e = self.extract_device.split(' ')[1].lower()
-                                if skey == 'extraction':
-                                    new_script_name = e
-                                    try:
-                                        d = default_scripts[self.extract_device.replace(' ', '')]
-                                        new_script_name = d['extraction']
-                                    except KeyError:
-                                        pass
-                                elif skey == 'post_equilibration':
-                                    new_script_name = default_scripts.get(skey, 'pump_{}'.format(e))
-
-                    elif labnumber_tag == 'dg':
-                        e = self.extract_device.split(' ')[1].lower()
-                        new_script_name = '{}_{}'.format(e, new_script_name)
+                    if is_extractable:
+                        if skey == 'extraction':
+                            new_script_name = extract_device
+                            try:
+                                d = default_scripts[extract_device]
+                                new_script_name = d['extraction']
+                            except KeyError:
+                                pass
+                        elif skey == 'post_equilibration':
+                            new_script_name = default_scripts.get(skey, 'pump_{}'.format(extract_device))
 
                     script = getattr(self, '{}_script'.format(skey))
                     script.name = new_script_name
@@ -916,9 +916,10 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                     self.debug('failed setting attr from cache: key={}, labnumber={}'.format(attr, labnumber))
                     self.debug('cache={}'.format(d))
 
-            self.selected_irradiation = d['irradiation']
-            self.selected_level = d['irradiation_level']
-            self.irrad_hole = d['irradiation_position']
+            if self.mode != SIMPLE:
+                self.selected_irradiation = d['irradiation']
+                self.selected_level = d['irradiation_level']
+                self.irrad_hole = d['irradiation_position']
 
             if self.use_project_based_repository_identifier:
                 ipp = self.irradiation_project_prefix
@@ -934,12 +935,12 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             return True
         else:
             # get a default repository_identifier
-            d = dict(sample='')
+            d = dict(sample='', display_irradiation='')
             db = self.get_database()
             # convert labnumber (a, bg, or 10034 etc)
             self.debug('load meta for {}'.format(labnumber))
             with db.session_ctx():
-                if self.mode == 'simple':
+                if self.mode == SIMPLE:
                     self.debug('using simple identifiers')
                     ip = db.get_simple_identifier(labnumber)
                 else:
@@ -995,7 +996,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
                 d['repository_identifier'] = self.repository_identifier
 
-                if self.mode != 'simple_identifier':
+                if self.mode != SIMPLE:
                     self._make_irrad_level(ip)
                     d['irradiation'] = self.selected_irradiation
                     d['irradiation_position'] = pos

@@ -25,7 +25,7 @@ from traitsui.api import View, UItem
 # ============= local library imports  ==========================
 from uncertainties import ufloat, nominal_value, std_dev
 
-from pychron.experiment.utilities.identifier import make_runid
+from pychron.experiment.utilities.runid import make_runid
 from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.analyses.view.main_view import MainView
 

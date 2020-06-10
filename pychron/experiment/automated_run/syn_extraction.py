@@ -28,7 +28,7 @@ from traits.api import HasTraits, Instance, Str, Dict, Property, Bool, Float
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.yaml import yload
-from pychron.experiment.utilities.identifier import make_runid
+from pychron.experiment.utilities.runid import make_runid
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript

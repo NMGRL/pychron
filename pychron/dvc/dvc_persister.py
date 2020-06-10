@@ -32,8 +32,8 @@ from pychron.dvc import dvc_dump, analysis_path, repository_path, NPATH_MODIFIER
 from pychron.experiment.automated_run.persistence import BasePersister
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths
-from pychron.pychron_constants import DVC_PROTOCOL, LINE_STR, NULL_STR, ARGON_KEYS, ARAR_MAPPING, EXTRACTION_ATTRS, \
-    META_ATTRS
+from pychron.pychron_constants import DVC_PROTOCOL, NULL_STR, ARGON_KEYS, ARAR_MAPPING, EXTRACTION_ATTRS, \
+    META_ATTRS, NULL_EXTRACT_DEVICES
 
 
 def format_repository_identifier(project):
@@ -365,7 +365,7 @@ class DVCPersister(BasePersister):
         d['comment'] = rs.comment[:200] if rs.comment else ''
 
         ed = rs.extract_device
-        if ed in (None, '', NULL_STR, LINE_STR, 'Extract Device'):
+        if ed in NULL_EXTRACT_DEVICES:
             d['extract_device'] = 'No Extract Device'
         else:
             d['extract_device'] = ed
