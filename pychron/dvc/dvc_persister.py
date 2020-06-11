@@ -33,7 +33,7 @@ from pychron.experiment.automated_run.persistence import BasePersister
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths
 from pychron.pychron_constants import DVC_PROTOCOL, NULL_STR, ARGON_KEYS, ARAR_MAPPING, EXTRACTION_ATTRS, \
-    META_ATTRS, NULL_EXTRACT_DEVICES
+    META_ATTRS, NULL_EXTRACT_DEVICES, POSTCLEANUP, PRECLEANUP, CLEANUP, EXTRACT_UNITS, EXTRACT_VALUE, DURATION, WEIGHT
 
 
 def format_repository_identifier(project):
@@ -359,9 +359,10 @@ class DVCPersister(BasePersister):
         ps = self.per_spec
         rs = ps.run_spec
         d = {k: getattr(rs, k) for k in ('uuid', 'analysis_type', 'aliquot',
-                                         'increment', 'mass_spectrometer', 'weight',
-                                         'cleanup', 'pre_cleanup', 'post_cleanup',
-                                         'duration', 'extract_value', 'extract_units')}
+                                         'increment', 'mass_spectrometer',
+                                         WEIGHT,
+                                         CLEANUP, PRECLEANUP, POSTCLEANUP,
+                                         DURATION, EXTRACT_VALUE, EXTRACT_UNITS)}
         d['comment'] = rs.comment[:200] if rs.comment else ''
 
         ed = rs.extract_device

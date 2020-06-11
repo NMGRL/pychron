@@ -19,6 +19,9 @@
 # ============= local library imports  ==========================
 from pychron.core.helpers.strtools import to_bool
 from pychron.loggable import Loggable
+from pychron.pychron_constants import EXTRACT_VALUE, COLLECTION_TIME_ZERO_OFFSET, DELAY_AFTER, WEIGHT, RAMP_DURATION, \
+    POSTCLEANUP, PRECLEANUP, CLEANUP, DURATION, LIGHT_VALUE, BEAM_DIAMETER, USE_CDD_WARMING, POSITION, PATTERN, COMMENT, \
+    REPOSITORY_IDENTIFIER, OVERLAP, EXTRACT_UNITS
 from pychron.regex import ALIQUOT_REGEX
 
 
@@ -77,31 +80,31 @@ class RunParser(Loggable):
                     # print 'exception', e, attr, idx, args
 
     def _load_strings(self, header, args, params):
-        for attr in ['pattern',
-                     'position',
-                     'comment',
+        for attr in [PATTERN,
+                     POSITION,
+                     COMMENT,
                      'syn_extraction',
-                     'overlap',
-                     'repository_identifier',
+                     OVERLAP,
+                     REPOSITORY_IDENTIFIER
                      ('conditionals', 'truncate'),
-                     ('extract_units', 'e_units')]:
+                     (EXTRACT_UNITS, 'e_units')]:
             v = self._get_attr_value(header, args, attr)
             # print attr, v
             if v is not None:
                 params[v[0]] = v[1]
 
     def _load_numbers(self, header, args, params):
-        for attr in ['duration',
-                     'cleanup',
-                     'pre_cleanup',
-                     'post_cleanup',
-                     ('ramp_duration', 'ramp'),
-                     'weight',
-                     'delay_after',
-                     ('time_zero_offset', 't_o'),
-                     ('extract_value', 'e_value'),
-                     ('beam_diameter', 'beam_diam'),
-                     'light_value',
+        for attr in [DURATION,
+                     CLEANUP,
+                     PRECLEANUP,
+                     POSTCLEANUP,
+                     (RAMP_DURATION, 'ramp'),
+                     WEIGHT,
+                     DELAY_AFTER,
+                     (COLLECTION_TIME_ZERO_OFFSET, 't_o'),
+                     (EXTRACT_VALUE, 'e_value'),
+                     (BEAM_DIAMETER, 'beam_diam'),
+                     LIGHT_VALUE,
                      'frequency_group', ]:
 
             v = self._get_attr_value(header, args, attr, cast=float)
@@ -111,7 +114,7 @@ class RunParser(Loggable):
     def _load_booleans(self, header, args, params):
 
         for attr in ['autocenter',
-                     'use_cdd_warming',
+                     USE_CDD_WARMING,
                      ('disable_between_positions', 'dis_btw_pos')]:
             v = self._get_attr_value(header, args, attr, cast=lambda x: to_bool(x.strip()))
             if v is not None:

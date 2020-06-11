@@ -31,7 +31,10 @@ from pychron.experiment.utilities.identifier import get_analysis_type, is_specia
 from pychron.experiment.utilities.position_regex import XY_REGEX
 from pychron.experiment.utilities.repository_identifier import make_references_repository_identifier
 from pychron.experiment.utilities.runid import make_rid, make_runid
-from pychron.pychron_constants import SCRIPT_KEYS, SCRIPT_NAMES, DETECTOR_IC
+from pychron.pychron_constants import SCRIPT_KEYS, SCRIPT_NAMES, DETECTOR_IC, DURATION, EXTRACT_VALUE, EXTRACT_UNITS, \
+    RAMP_RATE, RAMP_DURATION, BEAM_DIAMETER, PRECLEANUP, CLEANUP, POSTCLEANUP, DELAY_AFTER, PATTERN, LIGHT_VALUE, TRAY, \
+    MASS_SPECTROMETER, POSITION, USE_CDD_WARMING, EXTRACT_DEVICE, COLLECTION_TIME_ZERO_OFFSET, WEIGHT, COMMENT, PROJECT, \
+    SAMPLE, MATERIAL, REPOSITORY_IDENTIFIER, DISABLE_BETWEEN_POSITIONS, USERNAME
 
 logger = new_logger('AutomatedRunSpec')
 
@@ -302,10 +305,11 @@ class AutomatedRunSpec(HasTraits):
                    analysis_type=an)
 
         for attr in ('disable_between_positions',
-                     'tray', 'duration', 'extract_value', 'extract_units',
-                     'pre_cleanup', 'cleanup', 'post_cleanup', 'delay_after',
-                     'pattern', 'light_value',
-                     'beam_diameter', 'ramp_duration', 'ramp_rate'):
+                     TRAY,
+                     DURATION, EXTRACT_VALUE, EXTRACT_UNITS,
+                     CLEANUP, PRECLEANUP, POSTCLEANUP, DELAY_AFTER,
+                     PATTERN, LIGHT_VALUE,
+                     BEAM_DIAMETER, RAMP_DURATION, RAMP_RATE):
             ctx[attr] = getattr(self, attr)
 
         return ctx
@@ -414,10 +418,10 @@ class AutomatedRunSpec(HasTraits):
         self._step = -1
 
     def tocopy(self, verbose=False):
-        traits = ['mass_spectrometer',
-                  'extract_device',
-                  'username',
-                  'tray',
+        traits = [MASS_SPECTROMETER,
+                  EXTRACT_DEVICE,
+                  USERNAME,
+                  TRAY,
                   'queue_conditionals_name',
                   'labnumber',
                   'user_defined_aliquot',
@@ -425,41 +429,42 @@ class AutomatedRunSpec(HasTraits):
                   'post_measurement_script',
                   'post_equilibration_script',
                   'extraction_script',
-                  'script_options', 'use_cdd_warming',
-                  'extract_value',
-                  'extract_units',
-                  'position',
+                  'script_options',
+                  USE_CDD_WARMING,
+                  EXTRACT_VALUE,
+                  EXTRACT_UNITS,
+                  POSITION,
                   'xyz_position',
-                  'duration',
+                  DURATION,
                   'cleanup',
-                  'pre_cleanup',
-                  'post_cleanup',
-                  'pattern',
-                  'beam_diameter',
-                  'ramp_duration',
-                  'ramp_rate',
-                  'disable_between_positions',
+                  PRECLEANUP,
+                  POSTCLEANUP,
+                  PATTERN,
+                  BEAM_DIAMETER,
+                  RAMP_DURATION,
+                  RAMP_RATE,
+                  DISABLE_BETWEEN_POSITIONS,
                   '_overlap',
                   '_min_ms_pumptime',
                   'conditionals',
                   'syn_extraction',
-                  'collection_time_zero_offset',
-                  'weight',
-                  'comment',
-                  'project',
-                  'sample',
+                  COLLECTION_TIME_ZERO_OFFSET,
+                  WEIGHT,
+                  COMMENT,
+                  PROJECT,
+                  SAMPLE,
                   'irradiation',
                   'irradiation_level',
                   'irradiation_position',
-                  'material',
+                  MATERIAL,
                   'data_reduction_tag',
-                  'delay_after']
+                  DELAY_AFTER]
 
         if self.is_step_heat():
             traits.append('aliquot')
 
         if not self.is_special():
-            traits.append('repository_identifier')
+            traits.append(REPOSITORY_IDENTIFIER)
 
         if verbose:
             for t in traits:
@@ -590,7 +595,6 @@ post_equilibration_script, extraction_script, script_options, position, duration
     def extract_duration(self):
         return self.duration
 
-    
     @property
     def pre_cleanup_duration(self):
         return self.pre_cleanup
@@ -598,7 +602,7 @@ post_equilibration_script, extraction_script, script_options, position, duration
     @pre_cleanup_duration.setter
     def pre_cleanup_duration(self, v):
         self.pre_cleanup = v
-        
+
     @property
     def post_cleanup_duration(self):
         return self.post_cleanup
@@ -606,7 +610,7 @@ post_equilibration_script, extraction_script, script_options, position, duration
     @post_cleanup_duration.setter
     def post_cleanup_duration(self, v):
         self.post_cleanup = v
-    
+
     @property
     def cleanup_duration(self):
         return self.cleanup
@@ -647,14 +651,14 @@ post_equilibration_script, extraction_script, script_options, position, duration
                    measurement=self.measurement_script,
                    extraction=self.extraction_script)
 
-        for a in ('disable_between_positions',
-                  'duration',
-                  'cleanup',
-                  'pre_cleanup',
-                  'post_cleanup',
-                  'ramp_rate',
-                  'pattern',
-                  'ramp_duration'):
+        for a in (DISABLE_BETWEEN_POSITIONS,
+                  DURATION,
+                  CLEANUP,
+                  PRECLEANUP,
+                  POSTCLEANUP,
+                  RAMP_RATE,
+                  PATTERN,
+                  RAMP_DURATION):
             ctx[a] = getattr(self, a)
 
         md5 = hashlib.md5()

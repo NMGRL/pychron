@@ -26,7 +26,9 @@ from pychron.envisage.resources import icon
 from pychron.experiment.utilities.runid import make_aliquot_step
 from pychron.pychron_constants import EXTRACTION_COLOR, MEASUREMENT_COLOR, SUCCESS_COLOR, \
     SKIP_COLOR, NOT_EXECUTABLE_COLOR, CANCELED_COLOR, TRUNCATED_COLOR, \
-    FAILED_COLOR, END_AFTER_COLOR, BLANK_UNKNOWN, DEGAS, UNKNOWN
+    FAILED_COLOR, END_AFTER_COLOR, BLANK_UNKNOWN, DEGAS, UNKNOWN, PRECLEANUP, WEIGHT, POSTCLEANUP, CLEANUP, DURATION, \
+    BEAM_DIAMETER, EXTRACT_VALUE, RAMP_DURATION, EXTRACT_UNITS, POSITION, REPOSITORY_IDENTIFIER, MATERIAL, PROJECT, \
+    SAMPLE, OVERLAP, PATTERN, USE_CDD_WARMING, DELAY_AFTER, COMMENT
 
 # ============= local library imports  ==========================
 COLORS = {'success': SUCCESS_COLOR,
@@ -90,33 +92,33 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
         ('-', 'result_str'),
         ('Identifier', 'labnumber'),
         ('Aliquot', 'aliquot'),
-        ('Sample', 'sample'),
-        ('Project', 'project'),
-        ('Material', 'material'),
-        ('RepositoryID', 'repository_identifier'),
-        ('Position', 'position'),
-        ('Extract', 'extract_value'),
-        ('Units', 'extract_units'),
-        ('Ramp (s)', 'ramp_duration'),
-        ('Duration (s)', 'duration'),
-        ('Cleanup (s)', 'cleanup'),
-        ('Pre Cleanup (s)', 'pre_cleanup'),
-        ('Post Cleanup (s)', 'post_cleanup'),
-        ('Overlap (s)', 'overlap'),
-        ('Beam (mm)', 'beam_diameter'),
-        ('Pattern', 'pattern'),
+        ('Sample', SAMPLE),
+        ('Project', PROJECT),
+        ('Material', MATERIAL),
+        ('RepositoryID', REPOSITORY_IDENTIFIER),
+        ('Position', POSITION),
+        ('Extract', EXTRACT_VALUE),
+        ('Units', EXTRACT_UNITS),
+        ('Ramp (s)', RAMP_DURATION),
+        ('Duration (s)', DURATION),
+        ('Cleanup (s)', CLEANUP),
+        ('Pre Cleanup (s)', PRECLEANUP),
+        ('Post Cleanup (s)', POSTCLEANUP),
+        ('Overlap (s)', OVERLAP),
+        ('Beam (mm)', BEAM_DIAMETER),
+        ('Pattern', PATTERN),
         ('Extraction', 'extraction_script'),
         ('T_o Offset', 'collection_time_zero_offset'),
         ('Measurement', 'measurement_script'),
         ('Conditionals', 'conditionals'),
         ('SynExtraction', 'syn_extraction'),
-        ('CDDWarm', 'use_cdd_warming'),
+        ('CDDWarm', USE_CDD_WARMING),
         ('Post Eq.', 'post_equilibration_script'),
         ('Post Meas.', 'post_measurement_script'),
         ('Options', 'script_options'),
-        ('Comment', 'comment'),
-        ('Weight', 'weight'),
-        ('Delay After', 'delay_after')]
+        ('Comment', COMMENT),
+        ('Weight', WEIGHT),
+        ('Delay After', DELAY_AFTER)]
 
     columns = [('Identifier', 'labnumber'),
                ('Aliquot', 'aliquot'), ]
@@ -289,28 +291,28 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
         return al
 
     def _get_ramp_duration_text(self):
-        return self._get_number('ramp_duration', fmt='{:n}')
+        return self._get_number(RAMP_DURATION, fmt='{:n}')
 
     def _get_beam_diameter_text(self):
-        return self._get_number('beam_diameter')
+        return self._get_number(BEAM_DIAMETER)
 
     def _get_extract_value_text(self):
-        return self._get_number('extract_value')
+        return self._get_number(EXTRACT_VALUE)
 
     def _get_duration_text(self):
-        return self._get_number('duration')
+        return self._get_number(DURATION)
 
     def _get_cleanup_text(self):
-        return self._get_number('cleanup')
+        return self._get_number(CLEANUP)
 
     def _get_pre_cleanup_text(self):
-        return self._get_number('pre_cleanup')
+        return self._get_number(PRECLEANUP)
 
     def _get_post_cleanup_text(self):
-        return self._get_number('post_cleanup')
+        return self._get_number(POSTCLEANUP)
 
     def _get_weight_text(self):
-        return self._get_number('weight')
+        return self._get_number(WEIGHT)
 
     def _get_use_cdd_warming_text(self):
         return 'Yes' if self.item.use_cdd_warming else 'No'

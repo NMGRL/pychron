@@ -51,7 +51,10 @@ from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceLoggable
 from pychron.pychron_constants import NULL_STR, SCRIPT_KEYS, SCRIPT_NAMES, LINE_STR, DVC_PROTOCOL, SPECIAL_IDENTIFIER, \
-    BLANK_UNKNOWN, BLANK_EXTRACTIONLINE, UNKNOWN, PAUSE, DEGAS, SIMPLE, NULL_EXTRACT_DEVICES
+    BLANK_UNKNOWN, BLANK_EXTRACTIONLINE, UNKNOWN, PAUSE, DEGAS, SIMPLE, NULL_EXTRACT_DEVICES, FUSIONS_CO2, \
+    FUSIONS_DIODE, CLEANUP, PRECLEANUP, POSTCLEANUP, EXTRACT_VALUE, EXTRACT_UNITS, DURATION, WEIGHT, POSITION, PATTERN, \
+    BEAM_DIAMETER, LIGHT_VALUE, COMMENT, DELAY_AFTER, EXTRACT_DEVICE, MATERIAL, PROJECT, SAMPLE, MASS_SPECTROMETER, \
+    COLLECTION_TIME_ZERO_OFFSET, USE_CDD_WARMING, SKIP, OVERLAP, REPOSITORY_IDENTIFIER, RAMP_DURATION
 
 
 class AutomatedRunFactory(DVCAble, PersistenceLoggable):
@@ -240,14 +243,15 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     persistence_name = 'run_factory'
     pattributes = ('collection_time_zero_offset',
                    'selected_irradiation', 'selected_level',
-                   'extract_value', 'extract_units',
-                   'cleanup',
-                   'pre_cleanup',
-                   'post_cleanup',
+                   CLEANUP, PRECLEANUP, POSTCLEANUP, EXTRACT_VALUE, EXTRACT_UNITS, DURATION, WEIGHT,
                    'light_value',
-                   'duration', 'beam_diameter', 'ramp_duration', 'overlap',
-                   'pattern', 'labnumber', 'position',
-                   'weight', 'comment', 'template',
+                   'beam_diameter',
+                   'ramp_duration',
+                   'overlap',
+                   'pattern',
+                   'position',
+                   'comment',
+                   'template',
                    'use_simple_truncation', 'conditionals_path',
                    'use_project_based_repository_identifier', 'delay_after')
 
@@ -269,7 +273,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     def __init__(self, *args, **kw):
         bind_preference(self, 'use_name_prefix', 'pychron.pyscript.use_name_prefix')
         bind_preference(self, 'name_prefix', 'pychron.pyscript.name_prefix')
-        bind_preference(self, 'laboratory', 'pychron.general.organiziation')
+        bind_preference(self, 'laboratory', 'pychron.general.organization')
 
         bind_preference(self, 'irradiation_project_prefix', 'pychron.entry.irradiation_project_prefix')
 
@@ -302,22 +306,6 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
     def update_selected_ctx(self):
         return UpdateSelectedCTX(self)
-
-    # def check_run_addition(self, runs, load_name):
-    #     """
-    #         check if its ok to add runs to the queue.
-    #         ie. do they have any missing values.
-    #             does the labnumber match the loading
-    #
-    #         return True if ok to add runs else False
-    #     """
-    #     hec = self.human_error_checker
-    #     ret = hec.check_runs(runs, test_all=True)
-    #     if ret:
-    #         hec.report_errors(ret)
-    #         return False
-    #
-    #     return True
 
     def load_run_blocks(self):
         self.run_blocks = get_run_blocks()
@@ -532,31 +520,61 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             excludes = []
 
         if arv.analysis_type in (BLANK_UNKNOWN, PAUSE, BLANK_EXTRACTIONLINE):
-            excludes.extend(('extract_value', 'extract_units', 'pattern', 'beam_diameter'))
+            excludes.extend((EXTRACT_VALUE, EXTRACT_UNITS, PATTERN, BEAM_DIAMETER))
             if arv.analysis_type == PAUSE:
-                excludes.extend(('cleanup', 'pre_cleanup', 'post_cleanup', 'position'))
+                excludes.extend((CLEANUP, PRECLEANUP, POSTCLEANUP, POSITION))
         elif arv.analysis_type not in (UNKNOWN, DEGAS):
-            excludes.extend(('position', 'extract_value', 'extract_units', 'pattern',
-                             'cleanup', 'pre_cleanup', 'post_cleanup', 'duration', 'beam_diameter'))
+            excludes.extend((POSITION, EXTRACT_VALUE, EXTRACT_UNITS, PATTERN,
+                             CLEANUP, PRECLEANUP, POSTCLEANUP, DURATION, BEAM_DIAMETER))
 
         self._set_run_values(arv, excludes=excludes)
         return arv
 
-    def _get_run_attr(self):
-        return ['position',
-                'extract_value', 'extract_units',
-                'cleanup', 'pre_cleanup', 'post_cleanup',
-                'duration',
-                'light_value',
+    def _get_clonable_attrs(self):
+        return ['labnumber',
+                EXTRACT_VALUE,
+                EXTRACT_UNITS,
+                CLEANUP,
+                PRECLEANUP,
+                POSTCLEANUP,
+                DURATION,
+                LIGHT_VALUE,
+                PATTERN,
+                BEAM_DIAMETER,
+                POSITION,
+                COLLECTION_TIME_ZERO_OFFSET,
                 'use_cdd_warming',
+                WEIGHT,
+                COMMENT,
+                DELAY_AFTER
+                ]
+
+    def _get_run_attr(self):
+        return [BEAM_DIAMETER,
+                DELAY_AFTER,
+                DURATION,
+                CLEANUP,
+                COMMENT,
                 'conditionals_str',
-                'collection_time_zero_offset',
-                'pattern', 'beam_diameter',
-                'weight', 'comment',
-                'sample', 'project', 'material', 'username',
+                COLLECTION_TIME_ZERO_OFFSET,
+                EXTRACT_DEVICE,
+                EXTRACT_VALUE,
+                EXTRACT_UNITS,
+                LIGHT_VALUE,
+                MASS_SPECTROMETER,
+                MATERIAL,
+                PATTERN,
+                POSITION,
+                POSTCLEANUP,
+                PRECLEANUP,
+                PROJECT,
                 'ramp_duration',
-                'skip', 'mass_spectrometer', 'extract_device', 'repository_identifier',
-                'delay_after']
+                'repository_identifier',
+                SAMPLE,
+                'skip',
+                'use_cdd_warming',
+                'username',
+                WEIGHT]
 
     def _set_run_values(self, arv, excludes=None):
         """
@@ -610,15 +628,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         if self.auto_fill_comment:
             excludes.append('comment')
 
-        for attr in ('labnumber',
-                     'extract_value', 'extract_units',
-                     'cleanup', 'pre_cleanup', 'post_cleanup',
-                     'duration', 'light_value',
-                     'pattern', 'beam_diameter',
-                     'position',
-                     'collection_time_zero_offset',
-                     'use_cdd_warming',
-                     'weight', 'comment', 'delay_after'):
+        for attr in self._get_clonable_attrs():
 
             if attr in excludes:
                 continue
@@ -650,8 +660,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             return pm
 
     def _new_template(self):
-
-        if self.extract_device in ('FusionsCO2', 'FusionsDiode'):
+        if self.extract_device in (FUSIONS_CO2, FUSIONS_DIODE):
             klass = LaserIncrementalHeatTemplate
         else:
             klass = BaseIncrementalHeatTemplate
@@ -782,8 +791,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     # ===============================================================================
     def _load_defaults(self, ln, attrs=None, overwrite=True):
         if attrs is None:
-            attrs = ('extract_value', 'extract_units',
-                     'cleanup', 'pre_cleanup', 'post_cleanup', 'duration', 'beam_diameter', 'light_value')
+            attrs = (EXTRACT_VALUE, EXTRACT_UNITS, CLEANUP, PRECLEANUP,
+                     POSTCLEANUP, DURATION, BEAM_DIAMETER, LIGHT_VALUE)
 
         self.debug('loading defaults for {}. ed={} attrs={}'.format(ln, self.extract_device, attrs))
         defaults = self._load_default_file()
@@ -820,15 +829,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             # tag = 2000 or ba
 
         abit = tag in ANALYSIS_MAPPING
-        # bbit = False
-        # if not abit:
-        #     # labnumber is not special
-        #     try:
-        #         int(tag)
-        #         bbit = True
-        #         # labnumber is an unknown
-        #     except ValueError:
-        #         pass
+
         # if abit or bbit:  # or old in ANALYSIS_MAPPING or not old and new:
         if abit or old in ANALYSIS_MAPPING or not old:
             # set default scripts
@@ -1016,9 +1017,9 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         if special:
             ln = labnumber.split('-')[0]
             if ln == 'dg':
-                kw['attrs'] = ('extract_value', 'extract_units')
+                kw['attrs'] = (EXTRACT_VALUE, EXTRACT_UNITS)
             else:
-                kw['attrs'] = ('cleanup', 'pre_cleanup', 'post_cleanup', 'duration')
+                kw['attrs'] = (CLEANUP, PRECLEANUP, POSTCLEANUP, DURATION)
                 kw['overwrite'] = False
         else:
             ln = 'u'
@@ -1448,15 +1449,31 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             t = self.conditionals_str
             self._set_conditionals(t)
 
-    @on_trait_change('''cleanup, pre_cleanup, post_cleanup, duration, extract_value, ramp_duration, light_value,
-collection_time_zero_offset,
-use_cdd_warming,
-extract_units,
-pattern,
-position,
-weight, comment, skip, overlap, repository_identifier, delay_after''')
+    # @on_trait_change('''
+    # cleanup,
+    # collection_time_zero_offset,
+    # comment,
+    # delay_after
+    # duration,
+    # extract_value,
+    # extract_units,
+    # light_value,
+    # overlap,
+    # pattern,
+    # pre_cleanup,
+    # position,
+    # post_cleanup,
+    # ramp_duration,
+    # repository_identifier,
+    # skip,
+    # use_cdd_warming,
+    # weight
+    # ''')
+    @on_trait_change(','.join((CLEANUP, COLLECTION_TIME_ZERO_OFFSET, COMMENT, DELAY_AFTER, DURATION, EXTRACT_VALUE,
+                               EXTRACT_UNITS, LIGHT_VALUE, OVERLAP, PATTERN, PRECLEANUP, POSITION, POSTCLEANUP,
+                               RAMP_DURATION, REPOSITORY_IDENTIFIER, SKIP, USE_CDD_WARMING, WEIGHT)))
     def _edit_handler(self, name, new):
-        if name == 'pattern':
+        if name == PATTERN:
             if not self._use_pattern():
                 new = ''
         self._update_run_values(name, new)

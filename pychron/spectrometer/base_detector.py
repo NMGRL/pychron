@@ -74,6 +74,24 @@ class BaseDetector(HasTraits):
     def get_deflection_correction(self, *args, **kw):
         return 0
 
+    def toyaml(self):
+        attrs = ('name',
+                 'index',
+                 'software_gain',
+                 'serial_id',
+                 'relative_position',
+                 'use_deflection',
+                 'protection_threshold',
+                 'deflection_correction_sign',
+                 'deflection_name',
+                 'color',
+                 'active',
+                 'isotope',
+                 'kind',
+                 'ypadding')
+
+        return {attr: getattr(self, attr) for attr in attrs}
+
     # private
     def _set_gain(self):
         raise NotImplementedError
