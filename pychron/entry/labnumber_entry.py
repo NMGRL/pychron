@@ -187,7 +187,7 @@ class LabnumberEntry(DVCIrradiationable):
 
             def factory(li, pp):
                 rri = IrradiatedPosition()
-                self._sync_position(pp, rri, include_canvas=False)
+                self._sync_position(pp, rri, li)
                 rri.level = li
                 rri.irradiation = irradname
                 return rri
@@ -800,7 +800,10 @@ THIS CHANGE CANNOT BE UNDONE')
         if level.holder:
             self.irradiation_tray = level.holder
             holes = meta_repo.get_irradiation_holder_holes(level.holder)
+
+            # populate self.irradiation_positions
             self._load_holder_positions(holes)
+
             self._load_holder_canvas(holes)
 
         self._update_positions(name, level)
@@ -821,34 +824,23 @@ THIS CHANGE CANNOT BE UNDONE')
         available holder positions {}'.format(pn, ipn))
             if positions:
                 with dirty_ctx(self):
-                    self._make_positions(ipn, positions)
+                    self._make_positions(ipn, positions, level)
         except BaseException as e:
             import traceback
             traceback.print_exc()
             self.warning_dialog('Failed loading Irradiation level="{}"'.format(name))
-    # @simple_timer()
-    def _make_positions(self, n, positions):
+
+    def _make_positions(self, n, positions, level):
         with no_update(self):
             for pi in positions:
                 hi = pi.position - 1
                 if hi < n:
                     ir = self.irradiated_positions[hi]
-                    self._sync_position(pi, ir)
+                    self._sync_position(pi, ir, level)
                 else:
                     self.debug('extra irradiation position for this tray {}'.format(hi))
 
-    def _sync_position(self, dbpos, ir, include_canvas=True):
-
-        # cgen = ('#{:02x}{:02x}{:02x}'.format(*ci) for ci in ((194, 194, 194),
-        #                                                      (255, 255, 160),
-        #                                                      (255, 255, 0),
-        #                                                      (25, 230, 25)))
-        #
-        # def set_color(ii, value):
-        #     if ii is not None:
-        #         if value:
-        #             ii.fill_color = next(cgen)
-
+    def _sync_position(self, dbpos, ir, level):
         if dbpos:
             markup_canvas_position(self.canvas, dbpos, self.monitor_name)
 
@@ -858,16 +850,13 @@ THIS CHANGE CANNOT BE UNDONE')
 
             ir.identifier = v
             ir.hole = dbpos.position
+            if not isinstance(level, str):
+                level = level.name
 
-            # item = None
-            # if include_canvas:
-            #     item = self.canvas.scene.get_item(str(ir.hole))
-            #     item.fill = True
-            #     if v:
-            #         set_color(item, v)
-
-            fd = self.dvc.meta_repo.get_flux(self.irradiation, self.level, ir.hole)
+            self.debug('sync position {}, {}, {}'.format(self.irradiation, level, ir.hole))
+            fd = self.dvc.meta_repo.get_flux(self.irradiation, level, ir.hole)
             j = fd['j']
+            self.debug('j= {}'.format(j))
             if j:
                 ir.j = nominal_value(j)
                 ir.j_err = std_dev(j)

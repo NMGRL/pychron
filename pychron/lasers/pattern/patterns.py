@@ -183,10 +183,10 @@ class Pattern(HasTraits):
     amplitude_graph = Instance(Graph, (), transient=True)
     cx = Float(transient=True)
     cy = Float(transient=True)
-    target_radius = Range(0.0, 3.0, 1)
+    target_radius = Range(0.0, 5.0, 1)
 
     show_overlap = Bool(False)
-    beam_radius = Range(0.0, 3.0, 1)
+    beam_radius = Range(0.0, 5.0, 1)
 
     path = Str
     name = Property(depends_on='path')
@@ -726,7 +726,7 @@ class RandomPattern(Pattern):
 
 class PolygonPattern(Pattern):
     nsides = Range(3, 200)
-    radius = Range(0.0, 4.0, 0.5)
+    radius = Range(0.0, 5.0, 0.5)
     rotation = Range(0.0, 360.0, 0.0)
     show_overlap = True
 
