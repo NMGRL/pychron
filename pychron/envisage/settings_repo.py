@@ -17,9 +17,10 @@ import os
 import shutil
 
 from traits.api import HasTraits, Str, List
-from traitsui.api import UItem, ListStrEditor
+from traitsui.api import UItem, ListStrEditor, VGroup
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+from pychron.core.ui.check_list_editor import CheckListEditor
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.globals import globalv
 from pychron.paths import paths
@@ -39,10 +40,24 @@ class NameEntry(HasTraits):
 class Selection(HasTraits):
     names = List
     selected = Str
+    option_names = List
+    available_option_names = List
+    path = Str
+    source = Str
 
     def traits_view(self):
-        return okcancel_view(UItem('names', editor=ListStrEditor(selected='selected')),
+        return okcancel_view(VGroup(UItem('names', editor=ListStrEditor(selected='selected', editable=False)),
+                                    UItem('option_names',
+                                          style='custom',
+                                          editor=CheckListEditor(name='available_option_names',
+                                                                 cols=3))),
                              title='Select Settings')
+
+    def _selected_changed(self, new):
+        if new:
+            self.source = src = os.path.join(self.path, 'settings', new, 'plotter_options')
+            self.option_names = [d for d in os.listdir(src) if os.path.isdir(os.path.join(src, d))]
+            self.available_option_names = self.option_names[:]
 
 
 class SettingsRepoManager(GitRepoManager):
@@ -55,20 +70,39 @@ class SettingsRepoManager(GitRepoManager):
 
         :return:
         """
-        select = Selection(names=self._get_existing_settings_names())
+        select = Selection(path=self.path, names=self._get_existing_settings_names())
         info = select.edit_traits()
         if info.result:
             name = select.selected
-            if name:
-                src = os.path.join(self.path, 'settings', name, 'plotter_options')
+            selected_options = select.option_names
+            if name and selected_options:
                 dest = os.path.join(paths.plotter_options_dir, globalv.username)
                 if os.path.isdir(dest):
-                    if not self.confirmation_dialog('You are about to overwrite your existing settings'
+                    if not self.confirmation_dialog('You are about to overwrite your existing settings\n'
                                                     'Are you sure you want to continue?'):
                         return
-                    shutil.rmtree(dest)
 
-                shutil.copytree(src, dest)
+                    self._rmtree(dest, selected_options)
+
+                self._copytree(select.source, dest, selected_options)
+
+    def _rmtree(self, dest, selected_options):
+        if selected_options is None:
+            shutil.rmtree(dest)
+        else:
+            for si in selected_options:
+                p = os.path.join(dest, si)
+                if os.path.isdir(p):
+                    shutil.rmtree(p)
+
+    def _copytree(self, src, dest, selected_options):
+        if selected_options is None:
+            shutil.copytree(src, dest)
+        else:
+            for si in selected_options:
+                ss = os.path.join(src, si)
+                dd = os.path.join(dest, si)
+                shutil.copytree(ss, dd)
 
     def share_settings(self):
         """
@@ -101,6 +135,8 @@ class SettingsRepoManager(GitRepoManager):
                         msg = 'Overwrote'
                         shutil.rmtree(os.path.join(settings_root, name))
                         break
+                    else:
+                        return
                 else:
                     break
             else:
@@ -109,7 +145,6 @@ class SettingsRepoManager(GitRepoManager):
         working_root = os.path.join(settings_root, name)
         os.mkdir(working_root)
 
-        # copy settings directories
         srctree = os.path.join(paths.plotter_options_dir, globalv.username)
         shutil.copytree(srctree, os.path.join(working_root, 'plotter_options'))
 

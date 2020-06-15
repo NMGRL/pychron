@@ -44,6 +44,7 @@ class MachineLearningPlugin(BaseTaskPlugin):
     id = 'pychron.machinelearning.plugin'
     node_factories = List(contributes_to='pychron.pipeline.node_factories')
     predefined_templates = List(contributes_to='pychron.pipeline.predefined_templates')
+    pipeline_group_icon_map = List(contributes_to='pychron.pipeline.pipeline_group_icon_map')
 
     def _service_offers_default(self):
         """
@@ -61,8 +62,12 @@ class MachineLearningPlugin(BaseTaskPlugin):
         return [NodeFactory('ClusterNode', cluster_factory),
                 NodeFactory('CSVClusterNode', CSVClusterNode)]
 
+    def _pipeline_group_icon_map_default(self):
+        return [('ML', 'bricks')]
+
     def _predefined_templates_default(self):
-        return [('MachineLearning', (('Cluster', CLUSTER),('CSV Cluster', CSVCLUSTER)))]
+        return [('ML', (('Cluster', CLUSTER),
+                        ('CSV Cluster', CSVCLUSTER)))]
 
     # def _preferences_default(self):
     #     return ['file://']

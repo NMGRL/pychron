@@ -14,18 +14,19 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from traits.api import List, Int, HasTraits, Str, Bool
-from traitsui.api import View, UItem, Item, HGroup, VGroup
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-
 from envisage.ui.tasks.preferences_pane import PreferencesPane
+# ============= enthought library imports =======================
+from traitsui.api import View
+
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+
+
 class MachineLearningPreferences(BasePreferencesHelper):
-    pass
+    preferences_path = 'pychron.ml'
 
 
 class MachineLearningPreferencesPane(PreferencesPane):

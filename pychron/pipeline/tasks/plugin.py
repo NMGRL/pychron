@@ -71,7 +71,7 @@ class PipelinePlugin(BaseTaskPlugin):
               'Plot': 'chart_curve',
               'Scripting': 'script',
               'Edit': 'toolbox',
-              'Fit': '',
+              'Fit': 'bricks',
               'Transfer': 'network-transmit',
               'History': 'edit-history-2',
               'Share': 'share'}
