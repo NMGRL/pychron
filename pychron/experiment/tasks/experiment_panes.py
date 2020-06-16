@@ -214,7 +214,7 @@ class ExperimentFactoryPane(TraitsDockPane):
                    si_item('selected_sample',
                            label='Sample',
                            editor=myEnumEditor(name=si_name('samples'))),
-                   visible_when=IS_SIMPLE)
+                   defined_when=IS_SIMPLE)
 
         grp = BorderVGroup(a, b,
                            HGroup(run_factory_uitem('special_labnumber',

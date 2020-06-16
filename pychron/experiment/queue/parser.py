@@ -85,7 +85,7 @@ class RunParser(Loggable):
                      COMMENT,
                      'syn_extraction',
                      OVERLAP,
-                     REPOSITORY_IDENTIFIER
+                     REPOSITORY_IDENTIFIER,
                      ('conditionals', 'truncate'),
                      (EXTRACT_UNITS, 'e_units')]:
             v = self._get_attr_value(header, args, attr)
