@@ -470,7 +470,7 @@ class ThermoSpectrometer(BaseSpectrometer):
     def _get_simulation_data(self):
         signals = [1, 100, 3, 0.01, 0.01, 0.01, 38, 38.5]  # + random(6)
         keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD', 'L2(CDD)', 'AX(CDD)']
-        return keys, signals
+        return keys, signals, None
 
     def _get_config_dev(self, current, v, comp):
         dev = False

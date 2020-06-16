@@ -84,13 +84,14 @@ class BaseDetector(HasTraits):
                  'protection_threshold',
                  'deflection_correction_sign',
                  'deflection_name',
-                 'color',
                  'active',
                  'isotope',
                  'kind',
                  'ypadding')
-
-        return {attr: getattr(self, attr) for attr in attrs}
+        yd = {attr: getattr(self, attr) for attr in attrs}
+        color = self.color
+        yd['color'] = int('0x{:02X}{:02X}{:02X}'.format(*color.getRgb()), 16)
+        return yd
 
     # private
     def _set_gain(self):
