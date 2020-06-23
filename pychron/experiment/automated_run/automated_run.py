@@ -1190,6 +1190,7 @@ class AutomatedRun(Loggable):
             grain_polygons = script.get_grain_polygons() or []
             self.debug('grain polygons n={}'.format(len(grain_polygons)))
 
+            ext_pos = script.get_extraction_positions()
             pid = script.get_active_pid_parameters()
             self._update_persister_spec(pid=pid or '',
                                         grain_polygons=grain_polygons,
@@ -1199,6 +1200,7 @@ class AutomatedRun(Loggable):
                                         setpoint_blob=sblob,
                                         snapshots=snapshots,
                                         videos=videos,
+                                        extraction_positions=ext_pos,
                                         extraction_context=extraction_context)
 
             self._persister_save_action('post_extraction_save')
