@@ -1198,17 +1198,20 @@ class DVCDatabase(DatabaseAdapter):
                     self.debug('no analyses for get_last_analysis')
 
                 return 0
-
-    def get_greatest_aliquot(self, identifier):
-        with self.session_ctx(use_parent_session=False) as sess:
-            if identifier:
-                if not self.get_identifier(identifier):
-                    return
-
+        
+    def get_greatest_aliquot(self, identifier):            
+        if identifier:
+            with self.session_ctx(use_parent_session=False) as sess:
                 q = sess.query(AnalysisTbl.aliquot)
-                q = q.join(IrradiationPositionTbl)
-
-                q = q.filter(IrradiationPositionTbl.identifier == identifier)
+                
+                idn = self.get_identifier(identifier)
+                print('-----------------idn', idn, identifier)
+                if not self.get_identifier(identifier):
+                    q = q.filter(AnalysisTbl.simple_identifier== int(identifier))
+                else:
+                    q = q.join(IrradiationPositionTbl)
+                    q = q.filter(IrradiationPositionTbl.identifier == identifier)
+                
                 q = q.order_by(AnalysisTbl.aliquot.desc())
                 result = self._query_one(q)
                 if result:

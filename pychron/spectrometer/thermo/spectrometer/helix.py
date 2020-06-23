@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import Str
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -53,4 +54,5 @@ class HelixPlusSpectrometer(HelixSpectrometer):
 
 class HelixSFTSpectrometer(HelixSpectrometer):
     source_klass=HelixSFTSource
+    reference_detector = Str('Cup')
 # ============= EOF =============================================

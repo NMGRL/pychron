@@ -215,9 +215,7 @@ class ExperimentFactory(DVCAble):
     def _set_extract_device(self, ed):
         self.debug('setting extract dev="{}" mass spec="{}"'.format(ed, self.mass_spectrometer))
         self.run_factory = self._run_factory_factory()
-        if self.simple_identifier_manager:
-            self.simple_identifier_manager.factory = self.run_factory
-            self.run_factory.mode = 'simple'
+
 
         self.run_factory.remote_patterns = patterns = self._get_patterns(ed)
         self.run_factory.setup_files()

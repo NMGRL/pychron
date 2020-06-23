@@ -26,7 +26,7 @@ from pychron.paths import paths
 
 class CryoManager(Manager):
     name = 'Cryo'
-    species = Enum('He', 'Ar/Ar', 'Ne')
+    species = Enum('He', 'Ar/Ar', 'Ne', 'Generic')
 
     def finish_loading(self, *args, **kw):
         pass

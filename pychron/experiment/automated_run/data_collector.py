@@ -93,7 +93,8 @@ class DataCollector(Consoleable):
     def set_starttime(self, s):
         self.starttime = s
         # convert s (result of time.time()) to a datetime object
-        self.starttime_abs = datetime.fromtimestamp(s)
+        if s is not None:
+            self.starttime_abs = datetime.fromtimestamp(s)
         
     def measure(self):
         if self.canceled:
