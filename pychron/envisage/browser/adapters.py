@@ -24,7 +24,7 @@ from pychron.core.configurable_tabular_adapter import ConfigurableMixin
 from pychron.core.helpers.color_generators import colornames
 from pychron.core.helpers.formatting import floatfmt
 from pychron.envisage.resources import icon
-from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
+from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, PRECLEANUP, POSTCLEANUP, CLEANUP, EXTRACT_VALUE, DURATION
 
 
 class BrowserAdapter(TabularAdapter, ConfigurableMixin):
@@ -128,11 +128,11 @@ class AnalysisAdapter(BrowserAdapter):
                    ('Spec.', 'mass_spectrometer'),
                    ('Meas.', 'meas_script_name'),
                    ('Ext.', 'extract_script_name'),
-                   ('EVal.', 'extract_value'),
-                   ('Cleanup', 'cleanup'),
-                   ('Pre Cleanup', 'pre_cleanup'),
-                   ('Post Cleanup', 'post_cleanup'),
-                   ('Dur', 'duration'),
+                   ('EVal.', EXTRACT_VALUE),
+                   ('Cleanup', CLEANUP),
+                   ('Pre Cleanup', PRECLEANUP),
+                   ('Post Cleanup', POSTCLEANUP),
+                   ('Dur', DURATION),
                    ('Position', 'position'),
                    ('Device', 'extract_device'),
                    ('Load Name', 'load_name'),

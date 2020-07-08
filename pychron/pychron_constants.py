@@ -311,10 +311,14 @@ IMAGE_STEPS = ('mount', 'us_wand', 'eds', 'cl', 'bse', 'se')
 
 SAMPLE_PREP_STEPS = INITIAL_STEPS + HIGH_GRADE_STEPS + IMAGE_STEPS
 
-SAMPLE_METADATA = ('sample',
-                   'material',
+PROJECT = 'project'
+SAMPLE = 'sample'
+MATERIAL = 'material'
+
+SAMPLE_METADATA = (SAMPLE,
+                   MATERIAL,
                    'grainsize',
-                   'project',
+                   PROJECT,
                    'principal_investigator',
                    'latitude',
                    'longitude',
@@ -328,22 +332,45 @@ SAMPLE_METADATA = ('sample',
                    'irradiation_level',
                    'irradiation_position')
 
-EXTRACTION_ATTRS = ('weight', 'extract_device', 'tray',
-                    'extract_value',
-                    'extract_units',
+CLEANUP = 'cleanup'
+PRECLEANUP = 'pre_cleanup'
+POSTCLEANUP = 'post_cleanup'
+EXTRACT_VALUE = 'extract_value'
+EXTRACT_UNITS = 'extract_units'
+EXTRACT_DEVICE = 'extract_device'
+MASS_SPECTROMETER = 'mass_spectrometer'
+COLLECTION_TIME_ZERO_OFFSET = 'collection_time_zero_offset'
+DURATION = 'duration'
+WEIGHT = 'weight'
+POSITION = 'position'
+LIGHT_VALUE = 'light_value'
+PATTERN = 'pattern'
+BEAM_DIAMETER = 'beam_diameter'
+COMMENT = 'comment'
+DELAY_AFTER = 'delay_after'
+OVERLAP = 'overlap'
+REPOSITORY_IDENTIFIER = 'repository_identifier'
+USE_CDD_WARMING = 'use_cdd_warming'
+RAMP_DURATION = 'ramp_duration'
+RAMP_RATE = 'ramp_rate'
+TRAY = 'tray'
+USERNAME = 'username'
+DISABLE_BETWEEN_POSITIONS = 'disable_between_positions'
+EXTRACTION_ATTRS = (WEIGHT, EXTRACT_DEVICE, 'tray',
+                    EXTRACT_VALUE, EXTRACT_UNITS,
                     'load_name',
                     'load_holder',
                     'extract_duration',
                     'cleanup_duration',
                     'pre_cleanup_duration',
                     'post_cleanup_duration',
-                    'light_value',
-                    'pattern', 'beam_diameter', 'ramp_duration', 'ramp_rate')
+                    LIGHT_VALUE,
+                    PATTERN, BEAM_DIAMETER, RAMP_DURATION, RAMP_RATE)
 
 META_ATTRS = ('analysis_type', 'uuid', 'identifier', 'aliquot', 'increment',
               'comment', 'mass_spectrometer',
               'username', 'queue_conditionals_name',
-              'repository_identifier',
+              REPOSITORY_IDENTIFIER,
               'acquisition_software',
               'data_reduction_software', 'instrument_name', 'laboratory',
               'experiment_queue_name', 'experiment_type') + SAMPLE_METADATA

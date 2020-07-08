@@ -28,7 +28,7 @@ from pychron.experiment.queue.factory import ExperimentQueueFactory
 from pychron.experiment.undoer import ExperimentUndoer
 from pychron.experiment.utilities.identifier import convert_extract_device
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
-from pychron.pychron_constants import LINE_STR, CRYO
+from pychron.pychron_constants import LINE_STR, CRYO, FUSIONS_UV
 
 
 class ExperimentFactory(DVCAble):

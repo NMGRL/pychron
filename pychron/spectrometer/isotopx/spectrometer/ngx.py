@@ -18,6 +18,7 @@ from __future__ import print_function
 
 import time
 from datetime import datetime
+
 from traits.api import List
 
 from pychron.hardware.isotopx_spectrometer_controller import NGXController
@@ -85,12 +86,14 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
 
     def get_update_period(self, it=None, is_scan=False):
         """
+        acquisition period is always set to 1s so update period always needs to be <1s
         """
 
         if is_scan:
             return 0.1
 
-        return self.integration_time * 0.95
+        return 0.95
+        # return self.integration_time * 0.95
 
     def trigger_acq(self, verbose=False):
         # self.debug('trigger acquie {}'.format(self.microcontroller.lock))
@@ -106,7 +109,8 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         #    time.sleep(0.25)
 
         self.ask('StopAcq', verbose=verbose)
-        return self.ask('StartAcq 1,{}'.format(self.rcs_id), verbose=verbose)
+        # return self.ask('StartAcq 1,{}'.format(self.rcs_id), verbose=verbose)
+        return self.ask('StartAcq {},{}'.format(int(self.integration_time), self.rcs_id))
 
     def readline(self, verbose=False):
         if verbose:
@@ -144,11 +148,12 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         if trigger:
             resp = self.trigger_acq()
             if resp is not None:
-                if verbose:
-                    self.debug(f'waiting {self.integration_time * 0.95} before trying to get data')
-                time.sleep(self.integration_time * 0.95)
-                if verbose:
-                    self.debug('trigger wait finished')
+                # if verbose:
+                #     self.debug(f'waiting {self.integration_time * 0.95} before trying to get data')
+                # time.sleep(self.integration_time * 0.95)
+                time.sleep(0.95)
+                # if verbose:
+                #     self.debug('trigger wait finished')
 
         keys = []
         signals = []
@@ -195,11 +200,16 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         :param force: set integration even if "it" is not different than self.integration_time
         :return: float, integration time
         """
-        if self.integration_time != it or force:
-            self.ask('StopAcq')
-            self.debug('setting integration time = {}'.format(it))
-            self.ask('SetAcqPeriod {}'.format(int(it * 1000)))
-            self.trait_setq(integration_time=it)
+        self.debug('acquisition period set to 1 second.  integration time set to {}'.format(it))
+        self.ask('SetAcqPeriod 1000')
+        self.integration_time = it
+
+        # if self.integration_time != it or force:
+        #     self.ask('StopAcq')
+        #     self.debug('setting integration time = {}'.format(it))
+        #
+        #     self.ask('SetAcqPeriod {}'.format(int(it * 1000)))
+        #     self.trait_setq(integration_time=it)
 
         return it
 

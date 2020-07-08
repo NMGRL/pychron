@@ -27,7 +27,9 @@ from pychron.core.yaml import yload
 from pychron.experiment.queue.run_block import RunBlock
 from pychron.experiment.stats import ExperimentStats
 from pychron.experiment.utilities.frequency_generator import frequency_index_gen
-from pychron.pychron_constants import NULL_STR, LINE_STR, FUSIONS_UV
+from pychron.pychron_constants import NULL_STR, LINE_STR, FUSIONS_UV, COLLECTION_TIME_ZERO_OFFSET, USE_CDD_WARMING, \
+    REPOSITORY_IDENTIFIER, DELAY_AFTER, COMMENT, WEIGHT, RAMP_DURATION, LIGHT_VALUE, PATTERN, BEAM_DIAMETER, OVERLAP, \
+    PRECLEANUP, POSTCLEANUP, CLEANUP, DURATION, EXTRACT_UNITS, EXTRACT_VALUE, POSITION, SAMPLE
 
 
 def extract_meta(line_gen):
@@ -350,30 +352,31 @@ class BaseExperimentQueue(RunBlock):
         setattr(self, attr, v)
 
     def _get_dump_attrs(self):
-        seq = ['labnumber', 'sample', 'position',
-               ('e_value', 'extract_value'),
-               ('e_units', 'extract_units'),
-               'duration',
-               'cleanup', 'pre_cleanup', 'post_cleanup',
-               'overlap',
-               ('beam_diam', 'beam_diameter'),
-               'pattern',
-               'light_value',
+        seq = ['labnumber', SAMPLE, POSITION,
+               ('e_value', EXTRACT_VALUE),
+               ('e_units', EXTRACT_UNITS),
+               DURATION,
+               CLEANUP,
+               PRECLEANUP, POSTCLEANUP,
+               OVERLAP,
+               ('beam_diam', BEAM_DIAMETER),
+               PATTERN,
+               LIGHT_VALUE,
                ('extraction', 'extraction_script'),
-               ('ramp', 'ramp_duration'),
-               ('t_o', 'collection_time_zero_offset'),
+               ('ramp', RAMP_DURATION),
+               ('t_o', COLLECTION_TIME_ZERO_OFFSET),
                ('measurement', 'measurement_script'),
                ('conditionals', 'conditionals'),
                'syn_extraction',
-               'use_cdd_warming',
+               USE_CDD_WARMING,
                ('post_meas', 'post_measurement_script'),
                ('post_eq', 'post_equilibration_script'),
                ('s_opt', 'script_options'),
                ('dis_btw_pos', 'disable_between_positons'),
-               'weight', 'comment',
+               WEIGHT, COMMENT,
                'autocenter', 'frequency_group',
-               'repository_identifier',
-               'delay_after']
+               REPOSITORY_IDENTIFIER,
+               DELAY_AFTER]
 
         if self.extract_device == FUSIONS_UV:
             seq.extend(('reprate', 'mask', 'attenuator', 'image'))

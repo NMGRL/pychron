@@ -331,7 +331,7 @@ class ThermoSpectrometer(BaseSpectrometer):
     def start(self):
         self.debug('********** Spectrometer start. send configuration: {}'.format(self.send_config_on_startup))
         if self.send_config_on_startup:
-            self.send_configuration(use_ramp=True)
+            self.send_configuration(use_ramp=True, ramp_confirm=True)
 
     def settle(self):
         time.sleep(self.integration_time * 2)
@@ -470,7 +470,7 @@ class ThermoSpectrometer(BaseSpectrometer):
     def _get_simulation_data(self):
         signals = [1, 100, 3, 0.01, 0.01, 0.01, 38, 38.5]  # + random(6)
         keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD', 'L2(CDD)', 'AX(CDD)']
-        return keys, signals
+        return keys, signals, None
 
     def _get_config_dev(self, current, v, comp):
         dev = False
@@ -479,7 +479,7 @@ class ThermoSpectrometer(BaseSpectrometer):
             tol = comp.get('percent_tol')
             if not tol:
                 tol = comp.get('tolerance', 0.01)
-                delta = abs(current-v)
+                delta = abs(current - v)
                 dev = delta > tol
                 self.debug('abs tolerance={}, delta={}'.format(tol, delta))
             else:
@@ -508,7 +508,7 @@ class ThermoSpectrometer(BaseSpectrometer):
 
         return readouts, deflections
 
-    def _send_configuration(self, use_ramp=True):
+    def _send_configuration(self, use_ramp=True, ramp_confirm=False):
         self.debug('======== Sending configuration ========')
 
         if self.force_send_configuration:
@@ -595,7 +595,7 @@ class ThermoSpectrometer(BaseSpectrometer):
                     step = trap.get('ramp_step', 1)
                     period = trap.get('ramp_period', 1)
                     tol = trap.get('ramp_tolerance', 10)
-                    self._ramp_trap_current(v, step, period, use_ramp, tol)
+                    self._ramp_trap_current(v, step, period, use_ramp, tol, ramp_confirm)
 
                 # set the mftable
                 mftable_name = magnet.get('mftable')
@@ -608,7 +608,7 @@ class ThermoSpectrometer(BaseSpectrometer):
                 self.debug('======== Configuration Finished ========')
                 self.source.sync_parameters()
 
-    def _ramp_trap_current(self, v, step, period, use_ramp=False, tol=10):
+    def _ramp_trap_current(self, v, step, period, use_ramp=False, tol=10, confirm=False):
         if use_ramp:
             self.debug('ramping trap current')
             current = self.source.read_trap_current()
@@ -617,8 +617,11 @@ class ThermoSpectrometer(BaseSpectrometer):
                 return
 
             if v - current >= tol:
-                if self.confirmation_dialog('Would you like to ramp up the '
-                                            'Trap current from {} to {}'.format(current, v)):
+                ok = True
+                if confirm:
+                    ok = self.confirmation_dialog('Would you like to ramp up the '
+                                                  'Trap current from {} to {}'.format(current, v))
+                if ok:
                     prog = open_progress(1)
 
                     def func(x):

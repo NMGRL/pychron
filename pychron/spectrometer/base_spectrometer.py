@@ -16,8 +16,10 @@
 import os
 from random import random
 
+import yaml
 from numpy import array
 from traits.api import Any, cached_property, List, TraitError, Str, Property, Bool
+from yaml import FullLoader
 
 from pychron.core.helpers.filetools import glob_list_directory
 from pychron.core.yaml import yload
@@ -68,10 +70,10 @@ class BaseSpectrometer(SpectrometerDevice):
     _prev_signals = None
     _no_intensity_change_cnt = 0
     active_detectors = List
-    
+
     def cancel(self):
         pass
-    
+
     def convert_to_axial(self, det, v):
         return v
 
@@ -158,12 +160,12 @@ class BaseSpectrometer(SpectrometerDevice):
         if self._saved_integration:
             self.set_integration_time(self._saved_integration)
             self._saved_integration = None
-    
+
     def get_update_period(self, it=None, *args, **kw):
         if it is None:
             it = self.integration_time
         return it
-    
+
     def correct_dac(self, det, dac, current=True):
         """
             correct for deflection
@@ -473,12 +475,63 @@ class BaseSpectrometer(SpectrometerDevice):
         populates self.detectors
         :return:
         """
+        ypath = os.path.join(paths.spectrometer_dir, 'detectors.yaml')
+        if not os.path.isfile(ypath):
+            cpath = os.path.join(paths.spectrometer_dir, 'detectors.cfg')
+            if not os.path.isfile(cpath):
+                self.warning_dialog('Could not find a detectors file. Please add "{}"'.format(ypath))
+                return
+            else:
+                self._load_detectors_cfg(cpath)
+                self._dump_detectors_yaml(ypath)
+        else:
+            self._load_detectors_yaml(ypath)
 
-        path = os.path.join(paths.spectrometer_dir, 'detectors.cfg')
-        if not os.path.isfile(path):
-            self.warning_dialog('Could not find a detectors file. Please add "{}"'.format(path))
-            return
+    def _dump_detectors_yaml(self, ypath):
+        self.information_dialog('Automatically migrating "detectors.cfg" to "detectors.yaml"')
+        with open(ypath, 'w') as wfile:
+            dets = [di.toyaml() for di in self.detectors]
+            yaml.dump(dets, wfile)
 
+    def _load_detectors_yaml(self, ypath):
+        with open(ypath, 'r') as rfile:
+            for i, det in enumerate(yaml.load(rfile, Loader=FullLoader)):
+                name = det.get('name')
+                relative_position = float(det.get('relative_position', 0))
+                software_gain = float(det.get('software_gain', 1.0))
+
+                color = det.get('color', 'black')
+                default_state =bool(det.get('default_state',True))
+                isotope = det.get('isotope', '')
+                kind = det.get('kind', 'Faraday')
+                pt = det.get('protection_threshold', 0)
+                serial_id = str(det.get('serial_id', '00000'))
+                index = float(det.get('index', i))
+
+                use_deflection = bool(det.get('use_deflection', True))
+                deflection_correction_sign = 1
+                if use_deflection:
+                    deflection_correction_sign = det.get('deflection_correction_sign', 1)
+
+                deflection_name = det.get('deflection_name', name)
+                ypadding = str(det.get('ypadding', '0.1'))
+
+                self._add_detector(name=name,
+                                   index=index,
+                                   software_gain=software_gain,
+                                   serial_id=serial_id,
+                                   relative_position=relative_position,
+                                   use_deflection=use_deflection,
+                                   protection_threshold=pt,
+                                   deflection_correction_sign=deflection_correction_sign,
+                                   deflection_name=deflection_name,
+                                   color=color,
+                                   active=default_state,
+                                   isotope=isotope,
+                                   kind=kind,
+                                   ypadding=ypadding)
+
+    def _load_detectors_cfg(self, path):
         try:
             config = self.get_configuration(path=path)
         except BaseException:

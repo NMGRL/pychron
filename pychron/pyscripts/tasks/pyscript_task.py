@@ -44,6 +44,14 @@ from pychron.pyscripts.tasks.pyscript_panes import CommandsPane, DescriptionPane
 class ScriptExecutorMixin(ExecuteMixin):
     _current_script = Any
 
+    def _cancel_execute(self):
+        self.debug('cancel execute')
+        if self._current_script:
+            self._current_script.cancel()
+
+    def cancel(self):
+        self._cancel_execute()
+
     def execute_script(self, *args, **kw):
         return self._do_execute(*args, **kw)
 
@@ -347,11 +355,6 @@ class PyScriptTask(EditorTask, ScriptExecutorMixin):
     #     else:
     #         self._runner = runner
     #         return True
-
-    def _cancel_execute(self):
-        self.debug('cancel execute')
-        if self._current_script:
-            self._current_script.cancel()
 
     def _default_directory_default(self):
         return paths.scripts_dir
