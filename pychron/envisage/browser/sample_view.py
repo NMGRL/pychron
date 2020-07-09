@@ -411,29 +411,4 @@ class BrowserInterpretedAgeView(BaseBrowserSampleView):
         obj.delete()
 
 
-class SimpleIdentifierGroupView(GroupView):
-    def traits_view(self):
-        top_level_filter_grp = VGroup(HGroup(search_grp,
-                                             simple_mass_spectrometer_grp,
-                                             simple_analysis_type_grp,
-                                             simple_date_grp),
-                                      HGroup(VGroup(pi_grp, project_grp),
-                                             VGroup(load_grp)))
-
-        sample_table = BorderVGroup(sample_tools,
-                                    UItem('samples',
-                                          editor=myTabularEditor(adapter=self.model.labnumber_tabular_adapter,
-                                                                 editable=False,
-                                                                 selected='selected_samples',
-                                                                 multi_select=True,
-                                                                 dclicked='dclicked_sample',
-                                                                 column_clicked='column_clicked',
-                                                                 stretch_last_section=False)),
-                                    label='Samples')
-        grp = VGroup(top_level_filter_grp, Tabbed(sample_table, analysis_grp_table))
-        return View(grp)
-
-
-class BrowserSimpleIdentifierView(BaseBrowserSampleView):
-    pass
 # ============= EOF =============================================

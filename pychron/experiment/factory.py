@@ -39,7 +39,6 @@ class ExperimentFactory(DVCAble):
     generate_queue_button = Button
     edit_queue_config_button = Button
     loading_manager = Instance('pychron.loading.loading_manager.LoadingManager')
-    simple_identifier_manager = Instance('pychron.entry.simple_identifier_manager.SimpleIdentifierManager')
 
     add_button = Button('Add')
     clear_button = Button('Clear')
@@ -203,10 +202,6 @@ class ExperimentFactory(DVCAble):
         elif name == 'extract_device':
             self._set_extract_device(new)
 
-        if self.simple_identifier_manager:
-            self.simple_identifier_manager.factory = self.run_factory
-            self.run_factory.mode = 'simple'
-
         self._auto_save()
 
     def _auto_save(self):
@@ -215,9 +210,6 @@ class ExperimentFactory(DVCAble):
     def _set_extract_device(self, ed):
         self.debug('setting extract dev="{}" mass spec="{}"'.format(ed, self.mass_spectrometer))
         self.run_factory = self._run_factory_factory()
-        if self.simple_identifier_manager:
-            self.simple_identifier_manager.factory = self.run_factory
-            self.run_factory.mode = 'simple'
 
         self.run_factory.remote_patterns = patterns = self._get_patterns(ed)
         self.run_factory.setup_files()
@@ -291,11 +283,6 @@ class ExperimentFactory(DVCAble):
         self.run_factory.application = self.application
         self.queue_factory.application = self.application
 
-        sm = self.application.get_service('pychron.entry.simple_identifier_manager.SimpleIdentifierManager')
-        if sm is not None:
-            sm.factory = self.run_factory
-            sm.activated()
-
     def _default_mass_spectrometer_changed(self):
         self.debug('default mass spec changed "{}"'.format(self.default_mass_spectrometer))
         self.run_factory.set_mass_spectrometer(self.default_mass_spectrometer)
@@ -344,14 +331,6 @@ class ExperimentFactory(DVCAble):
     # ===============================================================================
     # defaults
     # ===============================================================================
-    def _simple_identifier_manager_default(self):
-        if self.application:
-            sm = self.application.get_service('pychron.entry.simple_identifier_manager.SimpleIdentifierManager')
-            if sm is not None:
-                sm.factory = self.run_factory
-                sm.activated()
-            return sm
-
     def _undoer_default(self):
         return ExperimentUndoer(run_factory=self.run_factory, queue=self.queue)
 

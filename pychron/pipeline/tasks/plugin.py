@@ -24,7 +24,6 @@ from traits.api import List
 from pychron.dvc.dvc import DVC
 from pychron.envisage.browser.interpreted_age_browser_model import InterpretedAgeBrowserModel
 from pychron.envisage.browser.sample_browser_model import SampleBrowserModel
-from pychron.envisage.browser.simple_identifier_browser_model import SimpleIdentifierBrowserModel
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.pipeline.tasks.actions import ConfigureRecallAction, IdeogramAction, SpectrumAction, \
     SeriesAction, BlanksAction, ICFactorAction, ResetFactoryDefaultsAction, \
@@ -54,9 +53,7 @@ class PipelinePlugin(BaseTaskPlugin):
         return files
 
     def _pipeline_factory(self):
-        model = self.application.get_service(SimpleIdentifierBrowserModel)
-        if model is None:
-            model = self.application.get_service(SampleBrowserModel)
+        model = self.application.get_service(SampleBrowserModel)
         iamodel = self.application.get_service(InterpretedAgeBrowserModel)
         dvc = self.application.get_service(DVC)
 

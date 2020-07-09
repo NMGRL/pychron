@@ -33,7 +33,7 @@ from pychron.experiment.plot_panel import PlotPanel
 from pychron.experiment.utilities.identifier import SPECIAL_NAMES
 from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR, \
     NOT_EXECUTABLE_COLOR, SKIP_COLOR, SUCCESS_COLOR, CANCELED_COLOR, \
-    TRUNCATED_COLOR, FAILED_COLOR, END_AFTER_COLOR, SPECIAL_IDENTIFIER, SIMPLE
+    TRUNCATED_COLOR, FAILED_COLOR, END_AFTER_COLOR, SPECIAL_IDENTIFIER
 
 
 # ===============================================================================
@@ -70,22 +70,6 @@ def run_factory_uitem(name, **kw):
     kw['show_label'] = False
     return run_factory_item(name, **kw)
 
-
-def si_name(name):
-    return 'object.simple_identifier_manager.{}'.format(name)
-
-
-def si_item(name, **kw):
-    return Item(si_name(name), **kw)
-
-
-def si_uitem(name, **kw):
-    kw['show_label'] = False
-    return si_item(name, **kw)
-
-
-IS_SIMPLE = 'object.run_factory.mode=="{}"'.format(SIMPLE)
-NOT_IS_SIMPLE = 'object.run_factory.mode!="{}"'.format(SIMPLE)
 
 
 class ExperimentFactoryPane(TraitsDockPane):
@@ -205,21 +189,10 @@ class ExperimentFactoryPane(TraitsDockPane):
         a = HGroup(run_factory_uitem('selected_irradiation',
                                      editor=myEnumEditor(name=run_factory_name('irradiations'))),
                    run_factory_uitem('selected_level',
-                                     editor=myEnumEditor(name=run_factory_name('levels'))),
-                   visible_when=NOT_IS_SIMPLE)
-
-        b = HGroup(si_item('project_filter'),
-                   si_uitem('selected_project',
-                            editor=myEnumEditor(name=si_name('projects'))),
-                   si_item('selected_sample',
-                           label='Sample',
-                           editor=myEnumEditor(name=si_name('samples'))),
-                   defined_when=IS_SIMPLE)
-
-        grp = BorderVGroup(a, b,
+                                     editor=myEnumEditor(name=run_factory_name('levels'))))
+        grp = BorderVGroup(a,
                            HGroup(run_factory_uitem('special_labnumber',
-                                                    editor=myEnumEditor(values=SPECIAL_NAMES),
-                                                    visible_when=NOT_IS_SIMPLE),
+                                                    editor=myEnumEditor(values=SPECIAL_NAMES)),
                                   run_factory_uitem('run_block',
                                                     editor=myEnumEditor(name=run_factory_name('run_blocks'))),
                                   icon_button_editor(run_factory_name('edit_run_blocks'), 'cog'),
@@ -273,8 +246,7 @@ class ExperimentFactoryPane(TraitsDockPane):
                                   icon_button_editor(run_factory_name('save_flux_button'),
                                                      'database_save',
                                                      tooltip='Save flux to database'),
-                                  enabled_when=run_factory_name('labnumber'),
-                                  visible_when=NOT_IS_SIMPLE),
+                                  enabled_when=run_factory_name('labnumber')),
 
                            label='Sample Info')
         return grp

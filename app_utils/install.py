@@ -350,7 +350,6 @@ def install_setupfiles(cfg):
             <plugin enabled="false">RemoteExperiment</plugin>
             <plugin enabled="false">Experiment</plugin>
             <plugin enabled="false">LabspyClient</plugin>
-            <plugin enabled="false">SimpleIdentifier</plugin>
             <plugin enabled="false">Classifier</plugin>
             <plugin enabled="false">Auto</plugin>
             <plugin enabled="false">MDD</plugin>

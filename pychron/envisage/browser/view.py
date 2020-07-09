@@ -20,8 +20,7 @@ from traitsui.api import View, UItem, HGroup, VGroup, Group, spring, EnumEditor
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.custom_label_editor import CustomLabel
-from pychron.envisage.browser.sample_view import BrowserSampleView, BrowserInterpretedAgeView, \
-    BrowserSimpleIdentifierView
+from pychron.envisage.browser.sample_view import BrowserSampleView, BrowserInterpretedAgeView
 from pychron.envisage.icon_button_editor import icon_button_editor
 
 
@@ -30,6 +29,7 @@ class BrowserView(HasTraits):
     id = 'pychron.browser'
     multi_select = True
     analyses_defined = Str('1')
+    is_append = False
 
     model = Instance(HasTraits)
     _view = Instance(HasTraits)
@@ -92,18 +92,12 @@ class PaneBrowserView(BaseSampleBrowserView):
     def traits_view(self):
         main_grp = self._get_browser_group()
         tool_grp = self._get_browser_tool_group()
-
         v = View(VGroup(tool_grp, main_grp))
         return v
 
 
 class SampleBrowserView(BaseSampleBrowserView):
-    is_append = False
-
-
-class SimpleIdentifierBrowserView(BrowserView):
-    _view_klass = BrowserSimpleIdentifierView
-    name = 'Simple Identifier Browser'
+    pass
 
 
 class InterpretedAgeBrowserView(BrowserView):

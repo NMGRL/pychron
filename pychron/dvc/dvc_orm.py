@@ -94,7 +94,6 @@ class AnalysisTbl(Base, IDMixin):
     increment = Column(Integer)
 
     irradiation_positionID = Column(Integer, ForeignKey('IrradiationPositionTbl.id'))
-    simple_identifier = Column(Integer, ForeignKey('SimpleIdentifierTbl.id'))
     measurementName = stringcolumn(45)
     extractionName = stringcolumn(45)
     postEqName = stringcolumn(45)
@@ -578,29 +577,6 @@ class MediaTbl(Base, IDMixin):
 
     username = Column(String(140), ForeignKey('UserTbl.name'))
     create_date = Column(TIMESTAMP, default=func.now())
-
-
-# ======================= Simple Identifier ================================
-class SimpleIdentifierTbl(Base, IDMixin):
-    identifier = Column(String(140), unique=True)
-    sampleID = Column(Integer, ForeignKey('SampleTbl.id'))
-
-    sample = relationship('SampleTbl', uselist=False)
-
-    @property
-    def sample_name(self):
-        if self.sample:
-            return self.sample.name
-
-    @property
-    def project_name(self):
-        if self.sample and self.sample.project:
-            return self.sample.project.name
-
-    @property
-    def principal_investigator_name(self):
-        if self.sample and self.sample.project and self.sample.project.principal_investigator:
-            return self.sample.project.principal_investigator.name
 
 
 # ======================= Current ================================

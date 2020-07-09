@@ -47,7 +47,7 @@ class DVCNode(BaseDVCNode):
     browser_model = Instance('pychron.envisage.browser.browser_model.BrowserModel')
 
     def get_browser_analyses(self, irradiation=None, level=None):
-        from pychron.envisage.browser.view import SampleBrowserView
+        # from pychron.envisage.browser.view import SampleBrowserView
 
         self.browser_model.activated()
         # self.browser_model.do_filter()
@@ -58,8 +58,8 @@ class DVCNode(BaseDVCNode):
             if level:
                 self.browser_model.level = level
 
-        browser_view = SampleBrowserView(model=self.browser_model)
-        info = browser_view.edit_traits(kind='livemodal')
+        # browser_view = SampleBrowserView(model=self.browser_model)
+        info = self.browser_model.browser_view.edit_traits(kind='livemodal')
         records = None
         if info.result:
             self.browser_model.add_analysis_set()
@@ -68,7 +68,7 @@ class DVCNode(BaseDVCNode):
             records = self.browser_model.get_analysis_records()
             if records:
                 records = self.dvc.make_analyses(records)
-        return browser_view.is_append, records
+        return self.browser_model.browser_view.is_append, records
 
     def set_browser_analyses(self):
         is_append, analyses = self.get_browser_analyses()

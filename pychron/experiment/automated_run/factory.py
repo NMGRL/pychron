@@ -941,20 +941,16 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             # convert labnumber (a, bg, or 10034 etc)
             self.debug('load meta for {}'.format(labnumber))
             with db.session_ctx():
-                if self.mode == SIMPLE:
-                    self.debug('using simple identifiers')
-                    ip = db.get_simple_identifier(labnumber)
+                ip = db.get_identifier(labnumber)
+                if ip:
+                    pos = ip.position
+                    # set sample and irrad info
                 else:
-                    ip = db.get_identifier(labnumber)
-                    if ip:
-                        pos = ip.position
-                        # set sample and irrad info
-                    else:
-                        self.warning_dialog('{} does not exist.\n\n'
-                                            'Add using "Entry>>Labnumber"\n'
-                                            'or "Utilities>>Import"\n'
-                                            'or manually'.format(labnumber))
-                        return
+                    self.warning_dialog('{} does not exist.\n\n'
+                                        'Add using "Entry>>Labnumber"\n'
+                                        'or "Utilities>>Import"\n'
+                                        'or manually'.format(labnumber))
+                    return
 
                 self.sample = ip.sample.name
 
