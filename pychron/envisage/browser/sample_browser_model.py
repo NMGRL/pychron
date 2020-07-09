@@ -19,31 +19,17 @@ from operator import attrgetter
 
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
-from traits.api import Button, Instance, Str, Property
+from traits.api import Str
 
-from pychron.core.helpers.isotope_utils import sort_isotopes
-from pychron.envisage.browser.advanced_filter_view import AdvancedFilterView
-from pychron.envisage.browser.analysis_table import AnalysisTable
-from pychron.envisage.browser.browser_model import BrowserModel
+from pychron.envisage.browser.analysis_browser_model import AnalysisBrowserModel
 from pychron.envisage.browser.find_references_config import FindReferencesConfigModel, FindReferencesConfigView
-from pychron.envisage.browser.time_view import TimeViewModel
 from pychron.envisage.browser.util import get_pad
+from pychron.envisage.browser.view import SampleBrowserView
 
 
-class SampleBrowserModel(BrowserModel):
-    advanced_filter = Instance(AdvancedFilterView, ())
-    analysis_table = Instance(AnalysisTable)
-    time_view_model = Instance(TimeViewModel)
+class SampleBrowserModel(AnalysisBrowserModel):
 
-    load_recent_button = Button
-    toggle_view = Button
-    graphical_filter_button = Button
-    find_references_button = Button
-    advanced_filter_button = Button
-    add_analysis_group_button = Button
-
-    find_references_enabled = Property(depends_on='analysis_table:analyses[]')
-
+    # time_view_model = Instance(TimeViewModel)
     monitor_sample_name = Str
 
     def __init__(self, *args, **kw):
@@ -82,8 +68,8 @@ class SampleBrowserModel(BrowserModel):
                 self.activate_browser(force)
                 # self.filter_focus = True
                 self.is_activated = True
-            else:
-                self.time_view_model.load()
+            # else:
+            #     self.time_view_model.load()
 
             self._top_level_filter = None
 
@@ -91,18 +77,19 @@ class SampleBrowserModel(BrowserModel):
         self.analysis_table.load_review_status()
 
     def get_analysis_records(self):
-        if not self.sample_view_active:
-            return self.time_view_model.get_analysis_records()
-        else:
-            return self.analysis_table.get_analysis_records()
+        # if not self.sample_view_active:
+        #     return self.time_view_model.get_analysis_records()
+        # else:
+        #     return self.analysis_table.get_analysis_records()
+        return self.analysis_table.get_analysis_records()
 
     def get_selection(self, low_post, high_post, unks=None, selection=None, make_records=True):
         ret = None
         if selection is None:
             if self.analysis_table.selected:
                 ret = self.analysis_table.selected
-            elif self.time_view_model.selected:
-                ret = self.time_view_model.selected
+            # elif self.time_view_model.selected:
+            #     ret = self.time_view_model.selected
             else:
                 selection = self.selected_samples
 
@@ -194,93 +181,16 @@ class SampleBrowserModel(BrowserModel):
             self.dvc.tag_items(tagname, items)
         return items
 
-    def dump(self):
-        self.time_view_model.dump_filter()
-        self.analysis_table.dump()
-        super(SampleBrowserModel, self).dump()
-
-    def add_analysis_set(self):
-        self.analysis_table.add_analysis_set()
-
     # handlers
-    def _advanced_filter_button_fired(self):
-        self.debug('advanced filter')
-        # self.warning_dialog('Advanced filtering currently disabled')
-        attrs = self.dvc.get_search_attributes()
-        if attrs:
-            attrs = sort_isotopes(list({a[0].split('_')[0] for a in attrs}))
-
-        m = self.advanced_filter
-        m.attributes = attrs
-        m.demo()
-        info = m.edit_traits(kind='livemodal')
-        if info.result:
-            uuids = None
-            at = self.analysis_table
-            if not m.apply_to_current_selection and not m.apply_to_current_samples:
-                lns = self.dvc.get_analyses_advanced(m, return_labnumbers=True)
-                sams = self._load_sample_record_views(lns)
-                self.samples = sams
-                self.osamples = sams
-            elif m.apply_to_current_selection:
-                ans = self.analysis_table.get_selected_analyses()
-                if ans:
-                    uuids = [ai.uuid for ai in ans]
-
-            identifiers = None
-            if m.apply_to_current_samples:
-                identifiers = [si.identifier for si in self.samples]
-
-            ans = self.dvc.get_analyses_advanced(m, uuids=uuids, identifiers=identifiers,
-                                                 include_invalid=not m.omit_invalid,
-                                                 limit=m.limit)
-            if m.apply_to_current_selection and not ans:
-                self.warning_dialog('No analyses match criteria')
-                return
-
-            ans = self._make_records(ans)
-            self.analysis_table.set_analyses(ans)
-
-    def _add_analysis_group_button_fired(self):
-        ans = self.analysis_table.get_selected_analyses()
-        if ans:
-            self.add_analysis_group(ans)
-
-    # def _analysis_set_changed(self, new):
-    #     if self.analysis_table.suppress_load_analysis_set:
-    #         return
+    # def _toggle_view_fired(self):
+    #     self.debug('toggle view fired')
+    #     self.sample_view_active = not self.sample_view_active
+    #     if not self.sample_view_active:
+    #         self.time_view_model.load()
+    #     else:
+    #         self.activate_browser()
     #
-    #     self.debug('analysis set changed={}'.format(new))
-    #     try:
-    #         ans = self.analysis_table.get_analysis_set(new)
-    #         ans = self.db.get_analyses_uuid([a[0] for a in ans])
-    #         xx = self._make_records(ans)
-    #
-    #         # for a in (xx[0], xx[-1]):
-    #         #     print('ab', a.record_id, a.timestampf)
-    #
-    #         self.analysis_table.set_analyses(xx)
-    #     except StopIteration:
-    #         pass
-
-    def _find_references_button_fired(self):
-        self.debug('find references button fired')
-        if self.sample_view_active:
-            self._find_references_hook()
-
-    def _load_recent_button_fired(self):
-        self.debug('load recent button fired')
-        self._load_recent()
-
-    def _toggle_view_fired(self):
-        self.debug('toggle view fired')
-        self.sample_view_active = not self.sample_view_active
-        if not self.sample_view_active:
-            self.time_view_model.load()
-        else:
-            self.activate_browser()
-
-        self.dump()
+    #     self.dump()
 
     def _selected_samples_changed_hook(self, new):
         self.analysis_table.selected = []
@@ -437,28 +347,10 @@ class SampleBrowserModel(BrowserModel):
 
         self.irradiations = [i.name for i in irrads]
 
-    def _get_find_references_enabled(self):
-        return bool(self.analysis_table.analyses)
+    # def _time_view_model_default(self):
+    #     return TimeViewModel(db=self.db)
 
-    def _time_view_model_default(self):
-        return TimeViewModel(db=self.db)
-
-    def _analysis_table_default(self):
-        at = AnalysisTable(dvc=self.dvc)
-        # at.on_trait_change(self._analysis_set_changed, 'analysis_set')
-        # at.load()
-        prefid = 'pychron.browser'
-        bind_preference(at, 'max_history', '{}.max_history'.format(prefid))
-
-        bind_preference(at.tabular_adapter,
-                        'unknown_color', '{}.unknown_color'.format(prefid))
-        bind_preference(at.tabular_adapter,
-                        'blank_color', '{}.blank_color'.format(prefid))
-        bind_preference(at.tabular_adapter,
-                        'air_color', '{}.air_color'.format(prefid))
-
-        bind_preference(at.tabular_adapter,
-                        'use_analysis_colors', '{}.use_analysis_colors'.format(prefid))
-        return at
+    def _browser_view_default(self):
+        return SampleBrowserView(model=self)
 
 # ============= EOF =============================================

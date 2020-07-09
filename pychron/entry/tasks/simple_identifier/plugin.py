@@ -20,6 +20,7 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 from pychron.entry.simple_identifier_manager import SimpleIdentifierManager
 from pychron.entry.tasks.simple_identifier.actions import SimpleIdentifierAction
 from pychron.entry.tasks.simple_identifier.task import SimpleIdentifierTask
+from pychron.envisage.browser.simple_identifier_browser_model import SimpleIdentifierBrowserModel
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 
 
@@ -27,7 +28,9 @@ class SimpleIdentifierPlugin(BaseTaskPlugin):
     def _service_offers_default(self):
         so = self.service_offer_factory(factory=self._manager_factory,
                                         protocol=SimpleIdentifierManager)
-        return [so, ]
+        so1 = self.service_offer_factory(factory=self._browser_model_factory,
+                                         protocol=SimpleIdentifierBrowserModel)
+        return [so, so1]
 
     def _task_extensions_default(self):
         actions = [SchemaAddition(factory=SimpleIdentifierAction,
@@ -39,6 +42,9 @@ class SimpleIdentifierPlugin(BaseTaskPlugin):
         return [TaskFactory(id='pychron.entry.simple_identifier.task',
                             factory=self._simple_identifier_task_factory,
                             include_view_menu=False), ]
+
+    def _browser_model_factory(self):
+        return SimpleIdentifierBrowserModel(application=self.application)
 
     def _manager_factory(self):
         dvc = self.application.get_service('pychron.dvc.dvc.DVC')

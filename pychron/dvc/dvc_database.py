@@ -44,7 +44,7 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
 from pychron.experiment.utilities.identifier import strip_runid
 from pychron.globals import globalv
 from pychron.pychron_constants import NULL_STR, EXTRACT_DEVICE, NO_EXTRACT_DEVICE, \
-    SAMPLE_PREP_STEPS, SAMPLE_METADATA, STARTUP_MESSAGE_POSITION
+    SAMPLE_PREP_STEPS, SAMPLE_METADATA, STARTUP_MESSAGE_POSITION, SIMPLE
 
 
 def listify(obj):
@@ -1564,19 +1564,25 @@ class DVCDatabase(DatabaseAdapter):
             q = q.order_by(LevelTbl.name.asc())
             return self._query_all(q)
 
-    def get_labnumbers(self, principal_investigators=None,
-                       samples=None,
-                       project_ids=None,
-                       projects=None, repositories=None,
-                       mass_spectrometers=None,
-                       irradiation=None, level=None,
-                       analysis_types=None,
-                       high_post=None,
-                       low_post=None,
-                       loads=None,
-                       filter_non_run=False):
+    def get_simple_identifiers(self, **kw):
+        return self._get_lab_identifiers(SIMPLE, **kw)
 
-        self.debug('------- Get Labnumbers {}-------'.format(id(self)))
+    def get_labnumbers(self, **kw):
+        return self._get_lab_identifiers('irradiation_positions', **kw)
+
+    def _get_lab_identifiers(self, mode, principal_investigators=None,
+                             samples=None,
+                             project_ids=None,
+                             projects=None, repositories=None,
+                             mass_spectrometers=None,
+                             irradiation=None, level=None,
+                             analysis_types=None,
+                             high_post=None,
+                             low_post=None,
+                             loads=None,
+                             filter_non_run=False):
+
+        self.debug('------- Get Identifiers: mode={},  {}-------'.format(mode, id(self)))
         self.debug('------- samples: {}'.format(samples))
         self.debug('------- principal_investigators: {}'.format(principal_investigators))
         self.debug('------- projects: {}'.format(projects))
@@ -1592,7 +1598,8 @@ class DVCDatabase(DatabaseAdapter):
         self.debug('------------------------------')
 
         with self.session_ctx() as sess:
-            q = sess.query(distinct(IrradiationPositionTbl.id))
+            tbl = SimpleIdentifierTbl if mode == SIMPLE else IrradiationPositionTbl
+            q = sess.query(distinct(tbl.id))
 
             # joins
             at = False
@@ -1627,7 +1634,7 @@ class DVCDatabase(DatabaseAdapter):
                     q = q.join(AnalysisTbl)
                 q = q.join(MeasuredPositionTbl)
 
-            if irradiation:
+            if mode != SIMPLE and irradiation:
                 if not at:
                     q = q.join(AnalysisTbl)
                 q = q.join(LevelTbl, IrradiationTbl)
@@ -1672,7 +1679,7 @@ class DVCDatabase(DatabaseAdapter):
                 has_filter = True
                 q = analysis_type_filter(q, analysis_types)
 
-            if irradiation:
+            if mode != SIMPLE and irradiation:
                 has_filter = True
                 q = q.filter(IrradiationTbl.name == irradiation)
                 q = q.filter(LevelTbl.name == level)
@@ -1681,15 +1688,15 @@ class DVCDatabase(DatabaseAdapter):
                 q = q.filter(MeasuredPositionTbl.loadName.in_(loads))
 
             if filter_non_run:
-                q = q.group_by(IrradiationPositionTbl.id)
+                q = q.group_by(tbl.id)
                 q = q.having(count(AnalysisTbl.id) > 0)
 
             if has_filter:
                 res = self._query_all(q, verbose_query=True)
                 if res:
                     ids = [r[0] for r in res]
-                    q = sess.query(IrradiationPositionTbl)
-                    q = q.filter(IrradiationPositionTbl.id.in_(ids))
+                    q = sess.query(tbl)
+                    q = q.filter(tbl.id.in_(ids))
                     return self._query_all(q, verbose_query=False)
 
     def get_analysis_groups(self, project_ids, **kw):

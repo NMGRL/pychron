@@ -28,7 +28,7 @@ from pychron.dvc.func import repository_has_staged
 from pychron.dvc.util import DVCInterpretedAge
 from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.envisage.browser.recall_editor import RecallEditor
-from pychron.envisage.browser.view import BrowserView, InterpretedAgeBrowserView
+from pychron.envisage.browser.view import InterpretedAgeBrowserView
 from pychron.globals import globalv
 from pychron.paths import paths
 from pychron.pipeline.engine import PipelineEngine, Pipeline, NodeGroup
@@ -184,8 +184,10 @@ class PipelineTask(BaseBrowserTask):
         self.dvc.create_session(force=True)
 
         self.browser_model.activated()
-        browser_view = BrowserView(model=self.browser_model)
-        info = browser_view.edit_traits(kind='live')
+
+        # browser_view = SampleBrowserView(model=self.browser_model)
+
+        info = self.browser_model.browser_view.edit_traits(kind='live')
         self._browser_info = info
 
     def pipeline_interpreted_age_recall(self):

@@ -27,7 +27,6 @@ from pychron.core.helpers.datetime_tools import make_timef
 from pychron.core.utils import alphas
 from pychron.database.orms import stringcolumn, primary_key
 from pychron.experiment.utilities.runid import make_runid
-from pychron.pychron_constants import NULL_STR
 
 Base = declarative_base()
 
@@ -95,7 +94,7 @@ class AnalysisTbl(Base, IDMixin):
     increment = Column(Integer)
 
     irradiation_positionID = Column(Integer, ForeignKey('IrradiationPositionTbl.id'))
-    # simple_identifier = Column(Integer, ForeignKey('SimpleIdentifier.identifier'))
+    simple_identifier = Column(Integer, ForeignKey('SimpleIdentifierTbl.id'))
     measurementName = stringcolumn(45)
     extractionName = stringcolumn(45)
     postEqName = stringcolumn(45)
