@@ -97,6 +97,10 @@ def get_frozen_flux(repo, irradiation):
 class MetaRepo(GitRepoManager):
     clear_cache = Bool
 
+    def get_correlation_ellipses(self):
+        p = os.path.join(paths.meta_root, 'correlation_ellipses.json')
+        return dvc_load(p)
+
     def get_monitor_info(self, irrad, level):
         age, decay = NULL_STR, NULL_STR
         positions = self._get_level_positions(irrad, level)

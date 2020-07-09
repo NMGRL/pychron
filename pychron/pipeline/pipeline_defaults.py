@@ -107,6 +107,15 @@ nodes:
   - klass: IdeogramNode
 """
 
+CORRELATION_IDEO = """
+icon: ideo
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: DSCorrelationNode
+  - klass: IdeogramNode
+"""
+
 IDEO = """
 icon: ideo
 required:
