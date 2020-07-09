@@ -88,7 +88,7 @@ class ClearSelectionView(HasTraits):
 
 
 class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
-    name = 'Irradiation'
+    name = 'Package'
     id = 'pychron.entry.irradiation.task'
 
     edit_identifier_entry = Str

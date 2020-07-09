@@ -19,25 +19,21 @@ import os
 # ============= enthought library imports =======================
 from enable.component_editor import ComponentEditor
 from pyface.constant import YES, NO
-from traits.api import List, Instance, Str, Float, Any, Button, Property, HasTraits, Dict, Enum
+from traits.api import List, Instance, Str, Button, Property, HasTraits, Dict, Enum
 from traitsui.api import View, Item, TabularEditor, HGroup, UItem, Group, VGroup, \
     HSplit, EnumEditor
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron import json
-from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
-from pychron.canvas.utils import load_holder_canvas
 from pychron.core.helpers.logger_setup import logging_setup
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pychron_traits import BorderHGroup, BorderVGroup
 from pychron.core.ui.combobox_editor import ComboboxEditor
-from pychron.core.ui.strings import SpacelessStr
-from pychron.core.utils import alphas, alpha_to_int
 from pychron.dvc.meta_repo import MetaRepo
 from pychron.entry.editors.base_editor import ModelView
+from pychron.entry.editors.package_level_editor import PackageLevelEditor, TrayAdapter
 from pychron.entry.editors.production import IrradiationProduction
 from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pychron_constants import FLUX_CONSTANTS
 
@@ -62,14 +58,6 @@ class NewProduction(HasTraits):
 class ProductionAdapter(TabularAdapter):
     columns = [('Name', 'name'), ('Reactor', 'reactor'), ('Last Modified', 'last_modified')]
     font = '10'
-
-
-class TrayAdapter(TabularAdapter):
-    columns = [('Name', 'name')]
-    name_text = Property
-
-    def _get_name_text(self):
-        return self.item
 
 
 class EditView(ModelView):
@@ -141,15 +129,8 @@ class UpdateReactorView(ModelView):
         return v
 
 
-class LevelEditor(Loggable):
-    db = Any
-
-    level_note = Str
-    name = SpacelessStr
-    selected_tray = Str
-    z = Float
+class IrradiationLevelEditor(PackageLevelEditor):
     selected_production = Instance(IrradiationProduction, ())
-    irradiation = Str
 
     new_production_name = Str
 
@@ -157,17 +138,12 @@ class LevelEditor(Loggable):
     production_names = List
     selected_production_name = Str
 
-    trays = List
-
     reactors = Dict
     reactor_names = List
     selected_reactor_name = Str
 
-    canvas = Instance(IrradiationCanvas, ())
-
     add_production_button = Button
     edit_production_button = Button
-    add_tray_button = Button
 
     apply_selected_reactor = Button
     apply_selected_production = Button
@@ -183,6 +159,15 @@ class LevelEditor(Loggable):
     monitor_age = Property(depends_on='selected_monitor')
     monitor_material = Property(depends_on='selected_monitor')
     lambda_k = Property(depends_on='selected_monitor')
+
+    _check_attrs = (('name', 'No name enter for this level. Would you like to enter one?'),
+                    ('selected_production',
+                     'No Production Ratios selected for this level. Would you like to select one?'),
+                    ('selected_tray', 'No tray selected for this level. Would like to select one?'))
+    _tagname = 'Irradiation'
+
+    _add_view_klass = AddView
+    _edit_view_klass = EditView
 
     def edit(self):
         self._load_productions()
@@ -313,55 +298,31 @@ class LevelEditor(Loggable):
         print(level, level.holder, self.selected_tray)
         db.commit()
 
-    def _add_level(self):
-        irrad = self.irradiation
-        db = self.db
-
-        irrad = db.get_irradiation(irrad)
-        if irrad.levels:
-            level = irrad.levels[-1]
-
-            self.z = level.z or 0
-
-            if level.holder:
-                self.selected_tray = next((t for t in self.trays if t == level.holder), '')
-
-            nind = alpha_to_int(level.name) + 1
-            self.name = alphas(nind)
-
-        av = AddView(model=self)
-        info = av.edit_traits()
-        while 1:
-            if info.result:
-                for attr, msg in (('name', 'No name enter for this level. Would you like to enter one?'),
-                                  ('selected_production',
-                                   'No Production Ratios selected for this level. Would you like to select one?'),
-                                  ('selected_tray', 'No tray selected for this level. Would like to select one?')):
-                    info = self._check_attr_set(av, attr, msg)
-                    if info == 'break':
-                        break
-                    elif info is not None:
-                        continue
-
-                if not next((li for li in irrad.levels if li.name == self.name), None):
-
-                    if self._save_level():
-                        return self.name
-                    else:
-                        break
-                else:
-                    self.warning_dialog('Level {} already exists for Irradiation {}'.format(self.name,
-                                                                                            self.irradiation))
-            else:
-                break
-
-    def _check_attr_set(self, av, name, msg):
-        if not getattr(self, name):
-            if self.confirmation_dialog(msg):
-                info = av.edit_traits()
-                return info
-            else:
-                return 'break'
+    # def _add_level(self):
+    #
+    #     self._pre_add_level()
+    #
+    #     av = AddView(model=self)
+    #     info = av.edit_traits()
+    #     while 1:
+    #         if info.result:
+    #             for attr, msg in self._check_attrs:
+    #                 info = self._check_attr_set(av, attr, msg)
+    #                 if info == 'break':
+    #                     break
+    #                 elif info is not None:
+    #                     continue
+    #
+    #             if not next((li for li in self.irradiation.levels if li.name == self.name), None):
+    #                 if self._save_level():
+    #                     return self.name
+    #                 else:
+    #                     break
+    #             else:
+    #                 self.warning_dialog('Level {} already exists for Irradiation {}'.format(self.name,
+    #                                                                                         self.irradiation))
+    #         else:
+    #             break
 
     def _load_productions(self, load_reactors=True):
         self.meta_repo.smart_pull()
@@ -508,14 +469,6 @@ class LevelEditor(Loggable):
                                                          self.selected_reactor_name, prod.get_params())
             self._load_productions(load_reactors=False)
 
-    def _selected_tray_changed(self):
-        holes = self.meta_repo.get_irradiation_holder_holes(self.selected_tray)
-        if holes:
-            load_holder_canvas(self.canvas, holes)
-
-    def _add_tray_button_fired(self):
-        self.warning_dialog('Adding trays has been disabled. Contact pychron developers')
-
         # dlg = FileDialog(action='open', default_directory=paths.irradiation_tray_maps_dir)
         # if dlg.open() == OK:
         #     if dlg.path:
@@ -560,10 +513,10 @@ if __name__ == '__main__':
         traits_view = View('test')
 
         def _test_fired(self):
-            e = LevelEditor(db=dbt,
-                            meta_repo=mr,
-                            irradiation='NM-274',
-                            name='H')
+            e = IrradiationLevelEditor(db=dbt,
+                                       meta_repo=mr,
+                                       irradiation='NM-274',
+                                       name='H')
             e.edit()
 
 
