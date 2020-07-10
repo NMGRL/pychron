@@ -180,19 +180,19 @@ class IrradiationLevelEditor(PackageLevelEditor):
     # private
     def _select_production(self):
         self.selected_production_name = ''
-        pname, prod = self.meta_repo.get_production(self.irradiation, self.name)
+        pname, prod = self.dvc.meta_repo.get_production(self.irradiation, self.name)
         self.debug('select production={} for {},{}'.format(pname, self.irradiation, self.name))
         self.selected_production_name = pname
 
     def _refresh_production(self):
-        self.meta_repo.clear_cache = True
+        self.dvc.meta_repo.clear_cache = True
         self._load_productions()
         self._select_production()
 
     def _edit_level(self):
 
         orignal_name = self.name
-        db = self.db
+        db = self.dvc.db
         level = db.get_irradiation_level(self.irradiation, self.name)
 
         self.z = level.z or 0
@@ -231,7 +231,7 @@ class IrradiationLevelEditor(PackageLevelEditor):
                 level.z = self.z
 
                 # save z to meta repo
-                self.meta_repo.update_level_z(self.irradiation, self.name, self.z)
+                self.dvc.meta_repo.update_level_z(self.irradiation, self.name, self.z)
 
                 if self.selected_production:
                     self._save_production()
@@ -242,9 +242,9 @@ class IrradiationLevelEditor(PackageLevelEditor):
                     #     pr = db.add_production(prname)
                     # level.production = pr
 
-                    self.meta_repo.update_level_production(self.irradiation, self.name, prname, self.level_note)
+                    self.dvc.meta_repo.update_level_production(self.irradiation, self.name, prname, self.level_note)
                 if self.selected_monitor:
-                    self.meta_repo.update_level_monitor(self.irradiation,
+                    self.dvc.meta_repo.update_level_monitor(self.irradiation,
                                                         self.name,
                                                         self.monitor_name, self.monitor_material,
                                                         self.monitor_age,
@@ -257,12 +257,12 @@ class IrradiationLevelEditor(PackageLevelEditor):
             else:
                 break
 
-        changes = self.meta_repo.get_local_changes()
+        changes = self.dvc.meta_repo.get_local_changes()
         self.debug('changes {}'.format(changes))
         if changes:
-            self.meta_repo.smart_pull()
-            # self.meta_repo.commit('Edited level {}'.format(self.name))
-            # self.meta_repo.push()
+            self.dvc.meta_repo.smart_pull()
+            # self.dvc.meta_repo.commit('Edited level {}'.format(self.name))
+            # self.dvc.meta_repo.push()
             db.commit()
 
         self._refresh_production()
@@ -271,11 +271,11 @@ class IrradiationLevelEditor(PackageLevelEditor):
 
     def _save_tray(self, level, original_tray):
         self.debug('saving tray {}. original={}, current={}'.format(level.name, original_tray, self.selected_tray))
-        db = self.db
+        db = self.dvc.db
         # tr = db.get_irradiation_holder(self.selected_tray)
         # n = len(tuple(iter_geom(tr.geometry)))
 
-        n = len(self.meta_repo.get_irradiation_holder_holes(self.selected_tray))
+        n = len(self.dvc.meta_repo.get_irradiation_holder_holes(self.selected_tray))
         on = len(level.positions)
         if n < on:
             if any([p.labnumber.analyses for p in level.positions[n:]]):
@@ -325,7 +325,7 @@ class IrradiationLevelEditor(PackageLevelEditor):
     #             break
 
     def _load_productions(self, load_reactors=True):
-        self.meta_repo.smart_pull()
+        self.dvc.meta_repo.smart_pull()
         root = os.path.join(paths.meta_root, self.irradiation, 'productions')
         ps = {}
         keys = []
@@ -343,7 +343,6 @@ class IrradiationLevelEditor(PackageLevelEditor):
             self._load_reactors()
 
     def _load_reactors(self):
-
         p = os.path.join(paths.meta_root, 'reactors.json')
         reactors = {}
         if os.path.isfile(p):
@@ -375,24 +374,22 @@ class IrradiationLevelEditor(PackageLevelEditor):
 
             with open(p, 'w') as wfile:
                 obj['source_path'] = pp
-                obj['source_sha'] = self.meta_repo.get_sha(pp)
+                obj['source_sha'] = self.dvc.meta_repo.get_sha(pp)
 
                 reactors[self.update_reactor_name] = obj
 
                 json.dump(reactors, wfile)
 
-            self.meta_repo.add(p, commit=False)
-            self.meta_repo.commit('updated reactor default. {}'.format(self.update_reactor_name))
+            self.dvc.meta_repo.add(p, commit=False)
+            self.dvc.meta_repo.commit('updated reactor default. {}'.format(self.update_reactor_name))
 
     def _save_level(self):
-        # prname = self.new_production_name.replace(' ', '_')
         prname = self.selected_production_name
-        # prname = prep_prname(prname)
         if not prname:
             self.warning_dialog('SAVE CANCELED\n\nPlease select a set of Production Ratios for this level.')
             return
 
-        db = self.db
+        db = self.dvc.db
         # add to database
         db.add_irradiation_level(self.name, self.irradiation,
                                  self.selected_tray,
@@ -401,12 +398,12 @@ class IrradiationLevelEditor(PackageLevelEditor):
                                  self.level_note)
 
         # add to repository
-        self.meta_repo.add_level(self.irradiation, self.name)
-        self.meta_repo.update_productions(self.irradiation, self.name, prname)
-        self.meta_repo.add_production_to_irradiation(self.irradiation, prname,
+        self.dvc.meta_repo.add_level(self.irradiation, self.name)
+        self.dvc.meta_repo.update_productions(self.irradiation, self.name, prname)
+        self.dvc.meta_repo.add_production_to_irradiation(self.irradiation, prname,
                                                      self.selected_production.get_params())
 
-        self.meta_repo.commit('Added level {} to {}'.format(self.name, self.irradiation))
+        self.dvc.meta_repo.commit('Added level {} to {}'.format(self.name, self.irradiation))
 
         self._refresh_production()
         return True
@@ -420,14 +417,13 @@ class IrradiationLevelEditor(PackageLevelEditor):
             else:
                 prname = prod.name
 
-            # prname = prep_prname(prname)
             prod.name = prname
 
             self.debug('saving production {}'.format(prname))
 
-            self.meta_repo.add_production_to_irradiation(self.irradiation, prname,
+            self.dvc.meta_repo.add_production_to_irradiation(self.irradiation, prname,
                                                          self.selected_production.get_params())
-            self.meta_repo.commit('Edited production {} for Irradiation {}'.format(prname, self.irradiation))
+            self.dvc.meta_repo.commit('Edited production {} for Irradiation {}'.format(prname, self.irradiation))
 
     def _add_production_button_fired(self):
         v = okcancel_view(Item('new_production_name', label='Name'), title='New Production')
@@ -465,7 +461,7 @@ class IrradiationLevelEditor(PackageLevelEditor):
     def _add_reactor_button_fired(self):
         if self.selected_reactor_name:
             prod = self.reactors[self.selected_reactor_name]
-            self.meta_repo.add_production_to_irradiation(self.irradiation,
+            self.dvc.meta_repo.add_production_to_irradiation(self.irradiation,
                                                          self.selected_reactor_name, prod.get_params())
             self._load_productions(load_reactors=False)
 
