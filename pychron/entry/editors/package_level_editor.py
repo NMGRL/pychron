@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 from enable.component_editor import ComponentEditor
-from traits.api import Any, Str, List, Instance, Property, Button
+from traits.api import Str, List, Instance, Property, Button
 from traitsui.api import TabularEditor, VGroup, Item, UItem, HSplit, HGroup
 from traitsui.tabular_adapter import TabularAdapter
 
@@ -25,6 +25,7 @@ from pychron.core.pychron_traits import BorderVGroup
 from pychron.core.ui.strings import SpacelessStr
 from pychron.core.utils import alpha_to_int, alphas
 from pychron.entry.editors.base_editor import ModelView
+from pychron.entry.tray_maker import TrayMaker
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.loggable import Loggable
 
@@ -64,7 +65,7 @@ class AddView(EditView):
 
 
 class PackageLevelEditor(Loggable):
-    db = Any
+    dvc = Instance('pychron.dvc.dvc.DVC')
     level_note = Str
     name = SpacelessStr
     selected_tray = Str
@@ -88,7 +89,7 @@ class PackageLevelEditor(Loggable):
 
     def _save_level(self):
         prname = 'NoProduction'
-        db = self.db
+        db = self.dvc.db
         # add to database
         db.add_irradiation_level(self.name, self.irradiation,
                                  self.selected_tray,
@@ -97,11 +98,12 @@ class PackageLevelEditor(Loggable):
                                  self.level_note)
 
         # add to repository
-        self.meta_repo.add_level(self.irradiation, self.name)
-        self.meta_repo.update_productions(self.irradiation, self.name, prname)
-        self.meta_repo.add_production_to_irradiation(self.irradiation, prname, {})
+        meta_repo = self.dvc.meta_repo
+        meta_repo.add_level(self.irradiation, self.name)
+        meta_repo.update_productions(self.irradiation, self.name, prname)
+        meta_repo.add_production_to_irradiation(self.irradiation, prname, {})
 
-        self.meta_repo.commit('Added level {} to {}'.format(self.name, self.irradiation))
+        meta_repo.commit('Added level {} to {}'.format(self.name, self.irradiation))
         return True
 
     def _edit_level(self):
@@ -142,7 +144,7 @@ class PackageLevelEditor(Loggable):
 
     def _pre_add_level(self):
         irrad = self.irradiation
-        db = self.db
+        db = self.dvc.db
 
         irrad = db.get_irradiation(irrad)
         if irrad.levels:
@@ -158,11 +160,19 @@ class PackageLevelEditor(Loggable):
         return irrad
 
     def _selected_tray_changed(self):
-        holes = self.meta_repo.get_irradiation_holder_holes(self.selected_tray)
+        holes = self.dvc.meta_repo.get_irradiation_holder_holes(self.selected_tray)
         if holes:
             load_holder_canvas(self.canvas, holes)
 
     def _add_tray_button_fired(self):
-        self.warning_dialog('Adding trays has been disabled. Contact pychron developers')
+        # self.warning_dialog('Adding trays has been disabled. Contact pychron developers')
+        tm = TrayMaker(names=self.dvc.meta_repo.get_irradiation_holder_names())
+        info = tm.edit_traits()
+        print(info.result, tm.name)
+        if info.result and tm.name:
+            self.dvc.meta_repo.make_geometry_file(tm.name, tm.holes())
+            self.load_trays()
 
+    def load_trays(self):
+        self.trays = self.dvc.meta_repo.get_irradiation_holder_names()
 # ============= EOF =============================================

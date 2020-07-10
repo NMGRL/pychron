@@ -20,13 +20,13 @@ import yaml
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
 from pyface.constant import YES, CANCEL
-from traits.api import Property, Str, cached_property, List, Event, Button, Instance, Bool, on_trait_change, \
+from traits.api import Property, Str, List, Event, Button, Instance, Bool, on_trait_change, \
     Float, HasTraits, Any
 from uncertainties import nominal_value
 from uncertainties import std_dev
 
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
-from pychron.canvas.utils import markup_canvas_position
+from pychron.canvas.utils import markup_canvas_position, load_holder_canvas
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.helpers.iterfuncs import groupby_key
@@ -35,7 +35,7 @@ from pychron.core.yaml import yload
 from pychron.dvc.dvc_irradiationable import DVCIrradiationable
 from pychron.dvc.meta_object import MetaObjectException
 from pychron.entry.editors.irradiation_editor import IrradiationEditor, PackageEditor
-from pychron.entry.editors.level_editor import IrradiationLevelEditor, load_holder_canvas
+from pychron.entry.editors.level_editor import IrradiationLevelEditor
 from pychron.entry.editors.package_level_editor import PackageLevelEditor
 from pychron.entry.identifier_generator import IdentifierGenerator
 from pychron.entry.irradiated_position import IrradiatedPosition
@@ -69,7 +69,7 @@ class LabnumberEntry(DVCIrradiationable):
     mode = Str
 
     irradiation_tray = Str
-    trays = Property
+    # trays = Property
 
     edit_irradiation_button = Button('Edit')
     edit_level_enabled = Property(depends_on='level')
@@ -912,9 +912,8 @@ THIS CHANGE CANNOT BE UNDONE')
         ie = self._level_editor
         if ie is None:
             klass = IrradiationLevelEditor if self.mode == AR_AR else PackageLevelEditor
-            self._level_editor = ie = klass(db=self.dvc.db,
-                                            meta_repo=self.dvc.meta_repo,
-                                            trays=self.trays)
+            self._level_editor = ie = klass(dvc=self.dvc)
+            ie.load_trays()
 
         ie.trait_set(**kw)
         return ie
@@ -922,9 +921,9 @@ THIS CHANGE CANNOT BE UNDONE')
     # ===============================================================================
     # property get/set
     # ===============================================================================
-    @cached_property
-    def _get_trays(self):
-        return self.dvc.meta_repo.get_irradiation_holder_names()
+    # @cached_property
+    # def _get_trays(self):
+    #     return self.dvc.meta_repo.get_irradiation_holder_names()
 
     def _get_edit_irradiation_enabled(self):
         return self.irradiation is not None
