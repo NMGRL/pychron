@@ -811,8 +811,7 @@ class StageManager(BaseStageManager):
                 except ZeroDisplacementException:
                     correct_position = False
         try:
-            self._move_to_hole_hook(key, correct_position,
-                                autocentered_position)
+            self._move_to_hole_hook(key, correct_position, autocentered_position)
         except TargetPositionError as e:
             self.warning('(002) Move failed. {}'.format(e))
             self.parent.emergency_shutoff(str(e))
