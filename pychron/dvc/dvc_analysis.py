@@ -393,7 +393,9 @@ class DVCAnalysis(Analysis):
         isoks, dks = list(map(tuple, partition(keys, lambda x: x in sisos)))
 
         def update(d, i):
-            d.update(fit=i.fit, value=float(i.value), error=float(i.error),
+            d.update(fit=i.fit,
+                     error_type=i.error_type,
+                     value=float(i.value), error=float(i.error),
                      n=i.n, fn=i.fn,
                      reviewed=reviewed,
                      include_baseline_error=i.include_baseline_error,
