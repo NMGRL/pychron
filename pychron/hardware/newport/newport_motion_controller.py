@@ -249,10 +249,10 @@ class NewportMotionController(MotionController):
             # issue the first 10 points and wait
             cmd = ';'.join([self._build_command('HL', xx=gid,
                                                 nn='{:0.5f},{:0.5f}'.format(
-                                                        self._sign_correct(x,
-                                                                           'x'),
-                                                        self._sign_correct(y,
-                                                                           'y')))
+                                                    self._sign_correct(x,
+                                                                       'x'),
+                                                    self._sign_correct(y,
+                                                                       'y')))
                             for x, y in points[:avaliable_spaces]
                             ])
             self.tell(cmd, verbose=True)
@@ -440,9 +440,13 @@ class NewportMotionController(MotionController):
         return m
 
     def stop(self, ax_key=None, verbose=False):
+        if self.nonstoppable:
+            return
 
+        self._stopped = True
         if self.timer is not None:
-            self.timer.Stop()
+            self.timer.stop()
+            self.timer.wait_for_completion()
 
         if self.mode == 'grouped':
             # check group is moving
@@ -551,8 +555,8 @@ class NewportMotionController(MotionController):
                 else:
                     error = error_code
                     self.warning(
-                            'Newport Motion Controller:{} {}'.format(self.name,
-                                                                     r))
+                        'Newport Motion Controller:{} {}'.format(self.name,
+                                                                 r))
                     #                    gWarningDisplay.add_text('%s - %s' % (self.name, error_msg))
             except:
                 pass
@@ -606,7 +610,7 @@ class NewportMotionController(MotionController):
     def at_velocity(self, axkey, event, tol=0.25):
         if not self.simulation:
             desired_velocity = float(
-                    self.ask(self._build_query('VA', xx=self.axes[axkey].id)))
+                self.ask(self._build_query('VA', xx=self.axes[axkey].id)))
             av = self.read_actual_velocity(axkey)
             while av is not None and abs(abs(av) - desired_velocity) > tol:
                 av = self.read_actual_velocity(axkey)
@@ -829,11 +833,18 @@ class NewportMotionController(MotionController):
             self.info('move to {x:0.5f},{y:0.5f} complete'.format(**kwargs))
             self.update_axes()
 
-            tol = 0.1
-            x, y = self._x_position, self._y_position
+            if not self._stopped:
+                tol = 0.1
+                x, y = self._x_position, self._y_position
 
-            if abs(x - target_x) > tol or abs(y - target_y) > tol:
-                raise TargetPositionError(x, y, target_x, target_y)
+                if abs(x - target_x) > tol or abs(y - target_y) > tol:
+                    self.warning('TargetPosition warning:  '
+                                 'current={},{}  target={},{}'.format(x, y, target_x, target_y))
+                    tol = 0.5
+                    if abs(x - target_x) > tol or abs(y - target_y) > tol:
+                        raise TargetPositionError(x, y, target_x, target_y)
+            else:
+                self.debug('motion stopped. not checking for TargetPositionError')
 
     def start_timer(self):
         self.timer = self.timer_factory()
@@ -850,7 +861,6 @@ class NewportMotionController(MotionController):
         if update:
             func, update = update
             if update:
-
                 self.timer = self.timer_factory(func=func, period=update)
 
         if block:

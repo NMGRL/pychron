@@ -452,7 +452,7 @@ class VideoStageManager(StageManager):
     def get_target_dimension(self, hole=None):
         dim = self.stage_map.g_dimension
         if hole:
-            if isinstance(hole, int):
+            if isinstance(hole, (int, str)):
                 hole = self.stage_map.get_hole(hole)
             dim = hole.dimension
 

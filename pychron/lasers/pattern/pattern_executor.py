@@ -252,7 +252,10 @@ class PatternExecutor(Patternable):
                 self.info('doing pattern iteration {}'.format(ni))
                 self._execute_iteration(ni)
 
+            self.controller.nonstoppable = True
             self.controller.linear_move(pat.cx, pat.cy, block=True, source='execute_xy_pattern')
+            self.controller.nonstoppable = False
+
             if pat.disable_at_end:
                 self.laser_manager.disable_device()
 
@@ -514,8 +517,12 @@ class PatternExecutor(Patternable):
             # if there is less than 1 duration left then block is true
             block = total_duration - (time.time() - st) < duration
             self.debug('blocking ={}'.format(block))
-            linear_move(px, py, source='dragonfly{}'.format(cnt), block=block, velocity=pattern.velocity,
-                        use_calibration=False)
+
+            try:
+                linear_move(px, py, source='dragonfly{}'.format(cnt), block=block, velocity=pattern.velocity,
+                            use_calibration=False)
+            except TargetPositionError as e:
+                self.debug('Target position error: {}'.format(e))
 
             ay, ax = py - cy, px - cx
             # self.debug('position mm ax={},ay={}'.format(ax, ay))

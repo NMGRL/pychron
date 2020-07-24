@@ -15,15 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
+from traits.api import Property, Dict, Float, Any, Instance, Bool
+from traitsui.api import View, VGroup, Item, RangeEditor
 
-# from pyface.timer.api import Timer
 # ============= standard library imports ========================
 import os
 import time
-
-from traits.api import Property, Dict, Float, Any, Instance
-from traitsui.api import View, VGroup, Item, RangeEditor
 
 # ============= local library imports  ==========================
 from pychron.core.codetools.inspection import caller
@@ -93,6 +90,8 @@ class MotionController(CoreDevice):
     groupobj = None
     _not_moving_count = 0
     _homing = False
+    _stopped = True
+    nonstoppable = Bool(False)
 
     def update_position(self):
         pass
@@ -117,7 +116,7 @@ class MotionController(CoreDevice):
             reuse timer if func is the same
 
         """
-
+        self._stopped = False
         timer = self.timer
         if func is None:
             func = self._inprogress_update
