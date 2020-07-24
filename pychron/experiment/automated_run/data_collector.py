@@ -89,12 +89,12 @@ class DataCollector(Consoleable):
         self._alive = False
         if self._evt:
             self._evt.set()
-    
+
     def set_starttime(self, s):
         self.starttime = s
         # convert s (result of time.time()) to a datetime object
         self.starttime_abs = datetime.fromtimestamp(s)
-        
+
     def measure(self):
         if self.canceled:
             return
@@ -180,7 +180,7 @@ class DataCollector(Consoleable):
         # t.join()
 
         self.debug('measurement finished')
-        
+
     def _pre_trigger_hook(self):
         return True
 

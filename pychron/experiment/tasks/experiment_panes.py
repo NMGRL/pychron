@@ -166,7 +166,9 @@ class ExperimentFactoryPane(TraitsDockPane):
                                         color='red',
                                         width=40),
                             spring)
-        button_bar2 = HGroup(Item('auto_increment_id', label='Auto Increment L#'),
+        button_bar2 = HGroup(Item('auto_increment_id', label='Auto Increment Identifier'),
+                             Item('auto_increment_id_count', width=-100,
+                                  enabled_when='auto_increment_id', label='Increment'),
                              Item('auto_increment_position', label='Position'), )
         edit_grp = VFold(queue_grp,
                          VGroup(self._get_info_group(),

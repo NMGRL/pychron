@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import Float, Range, Property
+from traits.trait_errors import TraitError
 from traitsui.api import View, Item, RangeEditor, VGroup
 
 # ============= local library imports  ==========================
@@ -79,7 +80,7 @@ class ThermoSource(BaseSource):
             r = round(float(r), 3)
             setattr(self, value, r)
             return getattr(self, value)
-        except (ValueError, TypeError):
+        except (ValueError, TypeError, TraitError):
             return 0
 
     def sync_parameters(self):

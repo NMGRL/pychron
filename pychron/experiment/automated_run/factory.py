@@ -386,7 +386,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             arvs, freq = self._new_runs(exp_queue, positions=positions)
 
         if auto_increment_id:
-            v = increment_value(self.labnumber)
+            v = increment_value(self.labnumber, increment=auto_increment_id)
             self.debug('auto increment labnumber: prev={}, new={}'.format(self.labnumber, v))
             self.labnumber = v
 
@@ -847,7 +847,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
         extract_device = self.extract_device.replace(' ', '')
 
-        is_extractable = labnumber_tag in ('u', 'bu', 'dg') and extract_device not in NULL_EXTRACT_DEVICES or \
+        is_extractable = labnumber_tag in ('u', 'bu', 'dg') and \
+                         extract_device not in NULL_EXTRACT_DEVICES and \
                          extract_device != 'ExternalPipette'
 
         # labnumber_tag = str(labnumber_tag).lower()
@@ -1305,8 +1306,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
         for idn, runs in groupby_key(self._selected_runs, 'identifier'):
 
-            with self.db.session_ctx():
-                ipos = self.db.get_identifier(idn)
+            with self.dvc.session_ctx():
+                ipos = self.dvc.get_identifier(idn)
 
                 if ipos:
                     level = ipos.level
