@@ -146,10 +146,11 @@ def get_klass(package, name):
     except ImportError as e:
         import traceback
 
-        traceback.print_exc()
         klass = None
         logger.warning('****** {} could not be imported {} ******'.format(name, e),
                        extra={'threadName_': 'Launcher'})
+        logger.debug(traceback.format_exc())
+
     return klass
 
 

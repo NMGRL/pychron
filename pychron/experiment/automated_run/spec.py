@@ -591,10 +591,25 @@ post_equilibration_script, extraction_script, script_options, position, duration
     def sensitivity_units(self):
         return 'mV/mol'
 
+    # post
     @property
-    def extract_duration(self):
-        return self.duration
+    def post_cleanup_duration(self):
+        return self.post_cleanup
 
+    @post_cleanup_duration.setter
+    def post_cleanup_duration(self, v):
+        self.post_cleanup = v
+
+    # pre
+    @property
+    def pre_cleanup_duration(self):
+        return self.pre_cleanup
+
+    @pre_cleanup_duration.setter
+    def pre_cleanup_duration(self, v):
+        self.pre_cleanup = v
+
+    # clean
     @property
     def pre_cleanup_duration(self):
         return self.pre_cleanup
@@ -618,6 +633,11 @@ post_equilibration_script, extraction_script, script_options, position, duration
     @cleanup_duration.setter
     def cleanup_duration(self, v):
         self.cleanup = v
+
+    # extract
+    @property
+    def extract_duration(self):
+        return self.duration
 
     @extract_duration.setter
     def extract_duration(self, v):

@@ -352,6 +352,7 @@ class ScanManager(StreamGraphManager):
                 self._stop_timer()
 
     _integration_time_flag = False
+
     def _update_scan_graph(self):
         if self.scan_enabled:
             if self._integration_time_flag:
