@@ -1,9 +1,4 @@
-
-if "%1:~0,8%" == "username" (
-    echo %GIT_ASKPASS_USERNAME%
-)
-
-if "%1:~0,8%" == "password" (
-    echo %GIT_ASKPASS_PASSWORD%
-)
+@set arg=%~1
+@if (%arg:~0,8%)==(Username) echo %GIT_ASKPASS_USERNAME%
+@if (%arg:~0,8%)==(Password) echo %GIT_ASKPASS_PASSWORD%
 
