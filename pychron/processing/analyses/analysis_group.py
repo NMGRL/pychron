@@ -338,7 +338,11 @@ class AnalysisGroup(IdeogramPlotable):
 
     @cached_property
     def _get_isochron_age(self):
-        a = self.calculate_isochron_age()
+        try:
+            a = self.calculate_isochron_age()
+        except BaseException:
+            a = None
+
         if a is None:
             a = ufloat(0, 0)
 
