@@ -246,7 +246,11 @@ class AnalysisGroup(IdeogramPlotable):
             return calculate_isochron(ans, self.isochron_age_error_kind, reg=self.isochron_method, exclude=exclude)
 
     def calculate_isochron_age(self, exclude_non_plateau=False):
-        args = self.get_isochron_data(exclude_non_plateau)
+        try:
+            args = self.get_isochron_data(exclude_non_plateau)
+        except BaseException:
+            return
+
         if args:
             age = args[0]
             self.isochron_3640 = args[1]
