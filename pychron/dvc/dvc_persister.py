@@ -109,7 +109,11 @@ class DVCPersister(BasePersister):
         remote = 'origin'
         if repo.has_remote(remote) and pull:
             self.info('pulling changes from repo: {}'.format(repository))
-            self.active_repository.pull(remote=remote, use_progress=False)
+            try:
+                self.active_repository.pull(remote=remote, use_progress=False)
+            except GitCommandError:
+                self.warning('failed pulling changes')
+                self.debug_exception()
 
     def pre_extraction_save(self):
         pass

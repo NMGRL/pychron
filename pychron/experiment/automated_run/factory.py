@@ -92,6 +92,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     auto_save_needed = Event
 
     labnumbers = Property(depends_on='project, selected_level, _identifiers')
+    display_labnumbers = Property(depends_on='project, selected_level, _identifiers')
     _identifiers = List
 
     use_project_based_repository_identifier = Bool(True)
@@ -282,8 +283,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
         super(AutomatedRunFactory, self).__init__(*args, **kw)
 
-    def set_identifiers(self, v):
-        self._identifiers = v
+    # def set_identifiers(self, v):
+    #     self._identifiers = v
 
     def setup_files(self):
         self.load_templates()
@@ -1088,6 +1089,19 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             if self.selected_level and self.selected_level not in ('Level', LINE_STR):
                 with db.session_ctx(use_parent_session=False):
                     lns = db.get_level_identifiers(self.selected_irradiation, self.selected_level)
+
+        return lns
+
+    @cached_property
+    def _get_display_labnumbers(self):
+        lns = {}
+        if self.selected_level and self.selected_level not in ('Level', LINE_STR):
+            db = self.get_database()
+            if db is not None and db.connect():
+                with db.session_ctx(use_parent_session=False):
+                    lns = db.get_level_identifiers(self.selected_irradiation, self.selected_level, with_summary=True)
+                if lns:
+                    lns = dict(lns)
 
         return lns
 

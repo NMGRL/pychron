@@ -2074,14 +2074,21 @@ class DVCDatabase(DatabaseAdapter):
             q = in_func(q, RepositoryTbl.name, repositories)
             return self._query_all(q)
 
-    def get_level_identifiers(self, irrad, level):
+    def get_level_identifiers(self, irrad, level, with_summary=False):
         lns = []
         with self.session_ctx():
             level = self.get_irradiation_level(irrad, level)
             if level:
-                lns = [str(pi.identifier).strip()
-                       for pi in level.positions if pi.identifier]
-                lns = [li for li in lns if li]
+
+                if with_summary:
+                    lns = [(pi.identifier.strip(),
+                               '{} -- {}{:02n} -- {}'.format(pi.identifier.strip(), level.name, pi.position, pi.sample.name))
+                           for pi in level.positions if pi.identifier and pi.identifier.strip()]
+
+                else:
+                    lns = [pi.identifier.strip()
+                           for pi in level.positions if pi.identifier and pi.identifier.strip()]
+
                 lns = sorted(lns)
         return lns
 

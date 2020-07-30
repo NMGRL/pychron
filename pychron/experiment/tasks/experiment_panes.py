@@ -191,7 +191,15 @@ class ExperimentFactoryPane(TraitsDockPane):
         a = HGroup(run_factory_uitem('selected_irradiation',
                                      editor=myEnumEditor(name=run_factory_name('irradiations'))),
                    run_factory_uitem('selected_level',
-                                     editor=myEnumEditor(name=run_factory_name('levels'))))
+                                     editor=myEnumEditor(name=run_factory_name('levels'))),
+                   run_factory_item('labnumber',
+                                    tooltip='Enter a Identifier, aka L#',
+                                    width=-200,
+                                    label='Identifier',
+                                    enabled_when='{} == "{}"'.format(run_factory_name('special_labnumber'),
+                                                                     SPECIAL_IDENTIFIER),
+                                    editor=myEnumEditor(name=run_factory_name('display_labnumbers')))
+                   )
         grp = BorderVGroup(a,
                            HGroup(run_factory_uitem('special_labnumber',
                                                     editor=myEnumEditor(values=SPECIAL_NAMES)),
@@ -202,13 +210,7 @@ class ExperimentFactoryPane(TraitsDockPane):
                                   icon_button_editor(run_factory_name('edit_frequency_button'), 'cog'),
                                   spring),
 
-                           HGroup(run_factory_item('labnumber',
-                                                   tooltip='Enter a Identifier, aka L#',
-                                                   width=100,
-                                                   label='Identifier',
-                                                   enabled_when='object.run_factory.special_labnumber == "{}"'.format(
-                                                       SPECIAL_IDENTIFIER),
-                                                   editor=myEnumEditor(name=run_factory_name('labnumbers'))),
+                           HGroup(
                                   run_factory_item('aliquot',
                                                    width=50),
                                   run_factory_item('delay_after',
