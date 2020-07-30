@@ -344,6 +344,13 @@ class InterpretedAgePersistNode(BaseDVCNode):
                     if ia.use:
                         dvc.add_interpreted_age(ia)
 
+
+class CosmogenicCorrectionPersistNode(DVCPersistNode):
+    name = 'Save Cosmogenic Correction'
+
+    def run(self, state):
+        self.dvc.save_cosmogenic_correction(state.unknowns)
+
 # class TablePersistNode(FileNode):
 #     pass
 #
