@@ -15,33 +15,45 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Instance
+from traits.api import HasTraits, Str, Instance, Any
 from traitsui.api import View, UItem, HGroup, VGroup, Group, spring, EnumEditor
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.browser.sample_view import BrowserSampleView, BrowserInterpretedAgeView
-from pychron.envisage.browser.time_view import TimeViewModel
 from pychron.envisage.icon_button_editor import icon_button_editor
 
 
-class BaseBrowserView(HasTraits):
+class BrowserView(HasTraits):
     name = 'Browser'
     id = 'pychron.browser'
     multi_select = True
     analyses_defined = Str('1')
-
-    sample_view = Instance(BrowserSampleView)
-    time_view = Instance(TimeViewModel)
+    is_append = False
 
     model = Instance(HasTraits)
+    _view = Instance(HasTraits)
+    _view_klass = Any
+
+    def __view_default(self):
+        return self._view_klass(model=self.model, pane=self)
 
     def trait_context(self):
         """ Use the model object for the Traits UI context, if appropriate.
         """
         if self.model:
             return {'object': self.model, 'pane': self}
-        return super(BaseBrowserView, self).trait_context()
+        return super(BrowserView, self).trait_context()
+
+    def _get_browser_group(self):
+        # grp = Group(UItem('pane.sample_view',
+        #                   style='custom',
+        #                   visible_when='sample_view_active'),
+        #             UItem('time_view_model',
+        #                   style='custom',
+        #                   visible_when='not sample_view_active'))
+        # return grp
+        return Group(UItem('pane._view', style='custom'))
 
     def _get_browser_tool_group(self):
         hgrp = HGroup(icon_button_editor('filter_by_button',
@@ -63,75 +75,33 @@ class BaseBrowserView(HasTraits):
                       show_border=True)
         return hgrp
 
-    def _get_browser_group(self):
-        grp = Group(UItem('pane.sample_view',
-                          style='custom',
-                          visible_when='sample_view_active'),
-                    UItem('time_view_model',
-                          style='custom',
-                          visible_when='not sample_view_active'))
-        return grp
-
-    def _sample_view_default(self):
-        return BrowserSampleView(model=self.model, pane=self)
-
-
-# class StandaloneBrowserView(BaseBrowserView):
-#     def traits_view(self):
-#         main_grp = self._get_browser_group()
-#
-#         hgrp = HGroup(icon_button_editor('filter_by_button',
-#                                          'find',
-#                                          tooltip='Filter analyses using defined criteria'),
-#                       icon_button_editor('toggle_view',
-#                                          'arrow_switch',
-#                                          tooltip='Toggle between Sample and Time views'),
-#                       spring,
-#                       CustomLabel('datasource_url', color='maroon'),
-#                       show_border=True)
-#
-#         v = okcancel_view(VGroup(hgrp, main_grp),
-#                           title='Standalone Browser',
-#                           width=-900)
-#
-#         return v
-
-
-class PaneBrowserView(BaseBrowserView):
-    def traits_view(self):
-        main_grp = self._get_browser_group()
-        tool_grp = self._get_browser_tool_group()
-
-        v = View(VGroup(tool_grp, main_grp))
-
-        return v
-
-
-class BrowserView(BaseBrowserView):
-    is_append = False
-
     def traits_view(self):
         main_grp = self._get_browser_group()
         tool_grp = self._get_browser_tool_group()
         v = okcancel_view(VGroup(tool_grp, main_grp),
-                          title='Browser',
+                          title=self.name,
                           width=0.75)
-
         return v
 
 
-class InterpretedAgeBrowserView(HasTraits):
-    sample_view = Instance(BrowserInterpretedAgeView)
+class BaseSampleBrowserView(BrowserView):
+    _view_klass = BrowserSampleView
 
-    def _sample_view_default(self):
-        return BrowserInterpretedAgeView(model=self.model, pane=self)
 
-    def trait_context(self):
-        """ Use the model object for the Traits UI context, if appropriate.
-        """
-        if self.model:
-            return {'object': self.model, 'pane': self}
-        return super(InterpretedAgeBrowserView, self).trait_context()
+class PaneBrowserView(BaseSampleBrowserView):
+    def traits_view(self):
+        main_grp = self._get_browser_group()
+        tool_grp = self._get_browser_tool_group()
+        v = View(VGroup(tool_grp, main_grp))
+        return v
+
+
+class SampleBrowserView(BaseSampleBrowserView):
+    pass
+
+
+class InterpretedAgeBrowserView(BrowserView):
+    _view_klass = BrowserInterpretedAgeView
 
     def traits_view(self):
         tool_grp = HGroup(icon_button_editor('filter_by_button',

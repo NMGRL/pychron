@@ -551,7 +551,7 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
         return format_percent_error(b.value, b.error)
 
     @handle_error
-    def _get_value_percent_error_text(self):
+    def _get_value_percent_error_text(self, *args):
         cv = self.item.get_non_detector_corrected_value()
         return format_percent_error(cv.nominal_value, cv.std_dev)
 

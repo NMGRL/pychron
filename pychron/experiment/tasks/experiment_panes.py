@@ -33,7 +33,7 @@ from pychron.experiment.plot_panel import PlotPanel
 from pychron.experiment.utilities.identifier import SPECIAL_NAMES
 from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR, \
     NOT_EXECUTABLE_COLOR, SKIP_COLOR, SUCCESS_COLOR, CANCELED_COLOR, \
-    TRUNCATED_COLOR, FAILED_COLOR, END_AFTER_COLOR, SPECIAL_IDENTIFIER, SIMPLE
+    TRUNCATED_COLOR, FAILED_COLOR, END_AFTER_COLOR, SPECIAL_IDENTIFIER
 
 
 # ===============================================================================
@@ -70,22 +70,6 @@ def run_factory_uitem(name, **kw):
     kw['show_label'] = False
     return run_factory_item(name, **kw)
 
-
-def si_name(name):
-    return 'object.simple_identifier_manager.{}'.format(name)
-
-
-def si_item(name, **kw):
-    return Item(si_name(name), **kw)
-
-
-def si_uitem(name, **kw):
-    kw['show_label'] = False
-    return si_item(name, **kw)
-
-
-IS_SIMPLE = 'object.run_factory.mode=="{}"'.format(SIMPLE)
-NOT_IS_SIMPLE = 'object.run_factory.mode!="{}"'.format(SIMPLE)
 
 
 class ExperimentFactoryPane(TraitsDockPane):
@@ -182,7 +166,9 @@ class ExperimentFactoryPane(TraitsDockPane):
                                         color='red',
                                         width=40),
                             spring)
-        button_bar2 = HGroup(Item('auto_increment_id', label='Auto Increment L#'),
+        button_bar2 = HGroup(Item('auto_increment_id', label='Auto Increment Identifier'),
+                             Item('auto_increment_id_count', width=-100,
+                                  enabled_when='auto_increment_id', label='Increment'),
                              Item('auto_increment_position', label='Position'), )
         edit_grp = VFold(queue_grp,
                          VGroup(self._get_info_group(),
@@ -206,20 +192,17 @@ class ExperimentFactoryPane(TraitsDockPane):
                                      editor=myEnumEditor(name=run_factory_name('irradiations'))),
                    run_factory_uitem('selected_level',
                                      editor=myEnumEditor(name=run_factory_name('levels'))),
-                   visible_when=NOT_IS_SIMPLE)
-
-        b = HGroup(si_item('project_filter'),
-                   si_uitem('selected_project',
-                            editor=myEnumEditor(name=si_name('projects'))),
-                   si_item('selected_sample',
-                           label='Sample',
-                           editor=myEnumEditor(name=si_name('samples'))),
-                   defined_when=IS_SIMPLE)
-
-        grp = BorderVGroup(a, b,
+                   run_factory_item('labnumber',
+                                    tooltip='Enter a Identifier, aka L#',
+                                    width=-200,
+                                    label='Identifier',
+                                    enabled_when='{} == "{}"'.format(run_factory_name('special_labnumber'),
+                                                                     SPECIAL_IDENTIFIER),
+                                    editor=myEnumEditor(name=run_factory_name('display_labnumbers')))
+                   )
+        grp = BorderVGroup(a,
                            HGroup(run_factory_uitem('special_labnumber',
-                                                    editor=myEnumEditor(values=SPECIAL_NAMES),
-                                                    visible_when=NOT_IS_SIMPLE),
+                                                    editor=myEnumEditor(values=SPECIAL_NAMES)),
                                   run_factory_uitem('run_block',
                                                     editor=myEnumEditor(name=run_factory_name('run_blocks'))),
                                   icon_button_editor(run_factory_name('edit_run_blocks'), 'cog'),
@@ -227,13 +210,7 @@ class ExperimentFactoryPane(TraitsDockPane):
                                   icon_button_editor(run_factory_name('edit_frequency_button'), 'cog'),
                                   spring),
 
-                           HGroup(run_factory_item('labnumber',
-                                                   tooltip='Enter a Identifier, aka L#',
-                                                   width=100,
-                                                   label='Identifier',
-                                                   enabled_when='object.run_factory.special_labnumber == "{}"'.format(
-                                                       SPECIAL_IDENTIFIER),
-                                                   editor=myEnumEditor(name=run_factory_name('labnumbers'))),
+                           HGroup(
                                   run_factory_item('aliquot',
                                                    width=50),
                                   run_factory_item('delay_after',
@@ -273,8 +250,7 @@ class ExperimentFactoryPane(TraitsDockPane):
                                   icon_button_editor(run_factory_name('save_flux_button'),
                                                      'database_save',
                                                      tooltip='Save flux to database'),
-                                  enabled_when=run_factory_name('labnumber'),
-                                  visible_when=NOT_IS_SIMPLE),
+                                  enabled_when=run_factory_name('labnumber')),
 
                            label='Sample Info')
         return grp

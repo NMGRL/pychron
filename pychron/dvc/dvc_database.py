@@ -40,7 +40,7 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
     RepositoryTbl, AnalysisChangeTbl, \
     PrincipalInvestigatorTbl, SamplePrepWorkerTbl, SamplePrepSessionTbl, \
     SamplePrepStepTbl, SamplePrepImageTbl, RestrictedNameTbl, AnalysisGroupTbl, AnalysisGroupSetTbl, \
-    SimpleIdentifierTbl, SamplePrepChoicesTbl, CurrentTbl, ParameterTbl, UnitsTbl
+    SamplePrepChoicesTbl, CurrentTbl, ParameterTbl, UnitsTbl
 from pychron.experiment.utilities.identifier import strip_runid
 from pychron.globals import globalv
 from pychron.pychron_constants import NULL_STR, EXTRACT_DEVICE, NO_EXTRACT_DEVICE, \
@@ -400,15 +400,6 @@ class DVCDatabase(DatabaseAdapter):
         self._archive_loads(names, False)
 
     # adders
-    def add_simple_identifier(self, sid, identifier=''):
-        with self.session_ctx():
-            obj = SimpleIdentifierTbl()
-            obj.sampleID = sid
-            obj.identifier = identifier
-            self._add_item(obj)
-            if not identifier:
-                obj.identifier = str(obj.id)
-                self.commit()
 
     def add_sample_prep_choice(self, tag, value):
         with self.session_ctx() as sess:
@@ -859,54 +850,23 @@ class DVCDatabase(DatabaseAdapter):
             q = q.limit(limit)
             return self._query_all(q)
 
-    def get_simple_identifier(self, sid):
-        with self.session_ctx() as sess:
-            q = sess.query(SimpleIdentifierTbl)
-            q = q.filter(SimpleIdentifierTbl.identifier == sid)
-            return self._query_one(q)
-
-    def get_simple_identifier_by_sample(self, sid):
-        with self.session_ctx() as sess:
-            q = sess.query(SimpleIdentifierTbl)
-            q = q.join(SampleTbl)
-            q = q.filter(SampleTbl.id == sid)
-            return self._query_one(q)
-
-    def get_sample_simple_identifiers(self, sid):
-        with self.session_ctx() as sess:
-            q = sess.query(SimpleIdentifierTbl)
-            q = q.join(SampleTbl)
-            q = q.filter(SampleTbl.id == sid)
-            return self._query_all(q, verbose_query=True)
-
-    def get_simple_identifiers(self):
-        with self.session_ctx() as sess:
-            q = sess.query(SimpleIdentifierTbl)
-            return self._query_all(q)
-
     def get_repository_analyses(self, repo):
         with self.session_ctx():
             r = self.get_repository(repo)
             return [a.analysis for a in r.repository_associations]
 
-    def get_identifier_info(self, li, simple=None):
+    def get_identifier_info(self, li):
         with self.session_ctx():
             info = {}
 
-            if simple:
-                dbpos = self.get_simple_identifier(li)
-                if not dbpos:
-                    self.warning('{} is not an simple identifier in the database'.format(li))
-                    return None
-            else:
-                dbpos = self.get_identifier(li)
-                if not dbpos:
-                    self.warning('{} is not an identifier in the database'.format(li))
-                    return None
+            dbpos = self.get_identifier(li)
+            if not dbpos:
+                self.warning('{} is not an identifier in the database'.format(li))
+                return None
 
-                info['irradiation_level'] = dbpos.level.name
-                info['irradiation_position'] = dbpos.position
-                info['irradiation'] = dbpos.level.irradiation.name
+            info['irradiation_level'] = dbpos.level.name
+            info['irradiation_position'] = dbpos.position
+            info['irradiation'] = dbpos.level.irradiation.name
 
             sample = dbpos.sample
             if sample:
@@ -2117,14 +2077,21 @@ class DVCDatabase(DatabaseAdapter):
             q = in_func(q, RepositoryTbl.name, repositories)
             return self._query_all(q)
 
-    def get_level_identifiers(self, irrad, level):
+    def get_level_identifiers(self, irrad, level, with_summary=False):
         lns = []
         with self.session_ctx():
             level = self.get_irradiation_level(irrad, level)
             if level:
-                lns = [str(pi.identifier).strip()
-                       for pi in level.positions if pi.identifier]
-                lns = [li for li in lns if li]
+
+                if with_summary:
+                    lns = [(pi.identifier.strip(),
+                               '{} -- {}{:02n} -- {}'.format(pi.identifier.strip(), level.name, pi.position, pi.sample.name))
+                           for pi in level.positions if pi.identifier and pi.identifier.strip()]
+
+                else:
+                    lns = [pi.identifier.strip()
+                           for pi in level.positions if pi.identifier and pi.identifier.strip()]
+
                 lns = sorted(lns)
         return lns
 

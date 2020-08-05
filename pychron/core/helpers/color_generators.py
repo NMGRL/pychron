@@ -15,7 +15,6 @@
 # ===============================================================================
 
 
-
 '''
 Color generator methods
 utility functions for creating a series of colors
@@ -46,10 +45,12 @@ colors8i = dict(
 
 )
 
-colors1f = dict()
-for color in colors8i:
-    c = colors8i[color]
-    colors1f[color] = c[0] / 255., c[1] / 255., c[2] / 255.
+# colors1f = dict()
+# for color in colors8i:
+#     c = colors8i[color]
+#     colors1f[color] = c[0] / 255., c[1] / 255., c[2] / 255.
+
+colors1f = {k: (c[0] / 255., c[1] / 255., c[2] / 255.) for k, c in colors8i.items()}
 
 colornames = ['black',
               'limegreen',
@@ -168,8 +169,13 @@ def color1f_generator():
     """
     """
     i = 0
+    g = colors1f.items()
     while 1:
-        if i > len(colornames):
-            i = 0
-        yield colors1f[colornames[i]]
-        i += 1
+        yield next(g)
+
+        # if i > len(colornames):
+        #     i = 0
+        #
+        # print('aca', colornames[i], colors1f)
+        # yield colors1f[colornames[i]]
+        # i += 1

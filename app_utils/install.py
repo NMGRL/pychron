@@ -130,6 +130,7 @@ def ask_config():
               'branch': 'develop',
               'app_name': 'pyexperiment',
               'qt_bindings': 'pyqt=5',
+              'qt_api': 'pyqt5',
               'use_all_defaults': 'no',
               'mac_os_app': False,
               'mac_app_name': 'Pychron',
@@ -148,7 +149,7 @@ def ask_config():
         ask(config, 'fork', 'Pychron Fork')
         ask(config, 'branch', 'Pychron Branch')
         ask(config, 'app_name', 'Pychron Style')
-        ask(config, 'qt_bindings', 'Qt Bindings')
+        # ask(config, 'qt_bindings', 'Qt Bindings')
 
         if IS_MAC:
             ask(config, 'mac_os_app', 'Make a Mac OS application')
@@ -256,13 +257,13 @@ set MassSpecDBVersion={massspec_db_version:}
 set CONDA_ENV={conda_env_name:}
 set CONDA_DISTRO={conda_distro:}
 set APPLICATION_ID={app_id:}
-set QT_API={qt_bindings:}
+set QT_API={qt_api:}
 
 set PYCHRON_APPNAME={app_name:}
 set PYCHRON_DATABASE_UPDATE={update_db:}
 set PYCHRON_ALEMBIC_URL={alembic_url:}
 
-ROOT={pychron_path:}
+set ROOT={pychron_path:}
 set PYTHONPATH=%ROOT%
 
 {conda_distro:}\\envs\\{conda_env_name:}\\python.exe %ROOT%\\launchers\\launcher.py
@@ -277,7 +278,7 @@ export MassSpecDBVersion={massspec_db_version:}
 export CONDA_ENV={conda_env_name:}
 export CONDA_DISTRO={conda_distro:}
 export APPLICATION_ID={app_id:}
-export QT_API={qt_bindings:}
+export QT_API={qt_api:}
 
 export PYCHRON_APPNAME={app_name:}
 export PYCHRON_DATABASE_UPDATE={update_db:}
@@ -296,18 +297,77 @@ export PYTHONPATH=$ROOT
 
 
 def install_app(cfg):
-    info_header('Install App')
-    l = cfg['launcher']
-    if cfg['mac_os_app']:
-        d = os.path.join('{}.app'.format(cfg['mac_app_name']), 'Contents', 'MacOS')
-        subprocess.call(['mkdir', '-p', d])
-        dst = os.path.join(d, cfg['mac_app_name'])
-        shutil.copy(l, dst)
-        subprocess.call(['chmod', '+x', dst])
+    if IS_MAC:
+        info_header('Install App')
+        l = cfg['launcher']
+        if cfg['mac_os_app']:
+            d = os.path.join('{}.app'.format(cfg['mac_app_name']), 'Contents', 'MacOS')
+            subprocess.call(['mkdir', '-p', d])
+            dst = os.path.join(d, cfg['mac_app_name'])
+            shutil.copy(l, dst)
+            subprocess.call(['chmod', '+x', dst])
 
-    else:
-        subprocess.call(['chmod', '+x', l])
-        shutil.move(l, os.path.join(HOME, 'Desktop', l))
+        else:
+            subprocess.call(['chmod', '+x', l])
+            shutil.move(l, os.path.join(HOME, 'Desktop', l))
+
+
+def install_setupfiles(cfg):
+    root = os.path.join(HOME, cfg['pychron_data_dir'])
+
+    for d in (root, os.path.join(root, 'setupfiles')):
+        if not os.path.isdir(d):
+            os.mkdir(d)
+    p = os.path.join(root, 'setupfiles', 'initialization.xml')
+    if not os.path.isfile(p):
+        with open(p, 'w') as wfile:
+            wfile.write('''<root>
+    <globals>
+    </globals>
+    <plugins>
+        <general>
+            <plugin enabled="false">CanvasDesigner</plugin>
+            <plugin enabled="true">PyScript</plugin>
+            <plugin enabled="false">Video</plugin>
+            <plugin enabled="false">Database</plugin>
+            <plugin enabled="true">Entry</plugin>
+            <plugin enabled="false">SystemMonitor</plugin>
+            <plugin enabled="true">ArArConstants</plugin>
+            <plugin enabled="false">Loading</plugin>
+            <plugin enabled="false">LabBook</plugin>
+            <plugin enabled="false">DashboardServer</plugin>
+            <plugin enabled="false">DashboardClient</plugin>
+            <plugin enabled="true">Pipeline</plugin>
+            <plugin enabled="false">Geochron</plugin>
+            <plugin enabled="false">MediaStorage</plugin>
+            <plugin enabled="true">Update</plugin>
+            <plugin enabled="true">DVC</plugin>
+            <plugin enabled="false">MassSpec</plugin>
+            <plugin enabled="false">IGSN</plugin>
+            <plugin enabled="true">GitHub</plugin>
+            <plugin enabled="false">MachineLearning</plugin>
+            <plugin enabled="false">Image</plugin>
+            <plugin enabled="false">RemoteExperiment</plugin>
+            <plugin enabled="false">Experiment</plugin>
+            <plugin enabled="false">LabspyClient</plugin>
+            <plugin enabled="false">Classifier</plugin>
+            <plugin enabled="false">Auto</plugin>
+            <plugin enabled="false">MDD</plugin>
+            <plugin enabled="false">Query</plugin>
+            <plugin enabled="false">GitLab</plugin>
+        </general>
+        <hardware>
+        </hardware>
+        <social>
+        </social>
+        <data>
+            <plugin enabled="false">USGSVSCData</plugin>
+            <plugin enabled="false">WiscArData</plugin>
+            <plugin enabled="false">Sparrow</plugin>
+        </data>
+    </plugins>
+</root>
+''')
 
 
 def main():
@@ -318,6 +378,7 @@ def main():
     cfg = ask_config()
     if cfg:
         install_src(cfg)
+        install_setupfiles(cfg)
         install_conda(cfg)
         install_launcher_script(cfg)
         install_app(cfg)

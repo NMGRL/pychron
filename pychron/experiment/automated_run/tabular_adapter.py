@@ -65,6 +65,7 @@ blocks = MenuManager(Action(name='Make Block', action='make_block'),
                      name='Blocks')
 
 selects = MenuManager(Action(name='Select Unknowns', action='select_unknowns'),
+                      Action(name='Select Special', action='select_special'),
                       Action(name='Select Same Identifier', action='select_same'),
                       Action(name='Select Same Attributes...', action='select_same_attr'),
                       name='Select')

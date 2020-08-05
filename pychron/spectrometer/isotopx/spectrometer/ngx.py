@@ -180,7 +180,11 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                     # copy to collection time
                     collection_time.replace(hour=ct.hour, minute=ct.minute, second=ct.second,
                                             microsecond=ct.microsecond)
-                    signals = [float(i) for i in args[5:]]
+                    try:
+                        signals = [float(i) for i in args[5:]]
+                    except ValueError as e:
+                        self.warning(f'Failed getting data. error={e}')
+
                     if verbose:
                         self.debug(f'line: {line[:15]}')
                     break

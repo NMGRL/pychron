@@ -181,7 +181,7 @@ class DataCollector(Consoleable):
         # t.join()
 
         self.debug('measurement finished')
-        
+
     def _pre_trigger_hook(self):
         return True
 

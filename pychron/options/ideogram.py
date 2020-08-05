@@ -93,6 +93,10 @@ class IdeogramOptions(AgeOptions):
     show_ttest_table = Bool(False)
     show_rvalues = Bool(False)
 
+    # correlation
+    show_correlation_ellipses = Bool(False)
+    _correlation_ellipses = List
+
     group_options_klass = IdeogramGroupOptions
 
     include_group_legend = Bool(True)
@@ -121,6 +125,9 @@ class IdeogramOptions(AgeOptions):
 
     def to_dict_test(self, k):
         return k not in ('_suppress_xlimits_clear', 'aux_plots', 'groups', 'index_attrs')
+
+    def get_colors(self):
+        return [fg.color for fg in self.groups]
 
     def get_plot_dict(self, group_id, subgroup_id):
 

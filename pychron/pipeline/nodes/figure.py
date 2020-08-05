@@ -92,6 +92,10 @@ class FigureNode(SortableNode):
 
                 state.editors.append(editor)
                 self.editor = editor
+
+                if state.correlation_ellipses:
+                    editor.plotter_options._correlation_ellipses = state.correlation_ellipses
+
                 if self.auto_set_items:
                     if self.name in self.skip_meaning.split(','):
                         unks = [u for u in unks if u.tag.lower() != 'skip']

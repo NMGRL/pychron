@@ -130,7 +130,6 @@ class LoadingCanvas(SceneCanvas):
 
         self.view_x_range = scene.get_xrange()
         self.view_y_range = scene.get_yrange()
-
         self.scene = scene
         self.popup = LoadingOverlay()
         self.popup.visible = False
@@ -171,7 +170,7 @@ class LoadingCanvas(SceneCanvas):
             for li in self.scene.layers:
                 for it in li.components:
                     # it.canvas = self
-                    if it.is_in(event.x, event.y):
+                    if it.canvas and it.is_in(event.x, event.y):
                         return it
 
     def normal_mouse_leave(self, event):

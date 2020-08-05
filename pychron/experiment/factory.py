@@ -19,6 +19,7 @@ from traits.api import Instance, Button, Bool, Property, DelegatesTo, List, Str
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.pychron_traits import PositiveInteger
 from pychron.dvc.dvc_irradiationable import DVCAble
 from pychron.experiment.automated_run.cryo.factory import CryoAutomatedRunFactory
 from pychron.experiment.automated_run.factory import AutomatedRunFactory
@@ -39,7 +40,6 @@ class ExperimentFactory(DVCAble):
     generate_queue_button = Button
     edit_queue_config_button = Button
     loading_manager = Instance('pychron.loading.loading_manager.LoadingManager')
-    simple_identifier_manager = Instance('pychron.entry.simple_identifier_manager.SimpleIdentifierManager')
 
     add_button = Button('Add')
     clear_button = Button('Clear')
@@ -48,6 +48,7 @@ class ExperimentFactory(DVCAble):
     edit_enabled = DelegatesTo('run_factory')
 
     auto_increment_id = Bool(False)
+    auto_increment_id_count = PositiveInteger(1)
     auto_increment_position = Bool(False)
 
     queue = Instance(ExperimentQueue, ())
@@ -160,7 +161,7 @@ class ExperimentFactory(DVCAble):
         rf = self.run_factory
         new_runs, freq = rf.new_runs(q, positions=positions,
                                      auto_increment_position=self.auto_increment_position,
-                                     auto_increment_id=self.auto_increment_id)
+                                     auto_increment_id=self.auto_increment_id_count if self.auto_increment_id else 0)
 
         if new_runs:
             aruns = q.automated_runs
@@ -203,10 +204,6 @@ class ExperimentFactory(DVCAble):
         elif name == 'extract_device':
             self._set_extract_device(new)
 
-        if self.simple_identifier_manager:
-            self.simple_identifier_manager.factory = self.run_factory
-            self.run_factory.mode = 'simple'
-
         self._auto_save()
 
     def _auto_save(self):
@@ -215,7 +212,6 @@ class ExperimentFactory(DVCAble):
     def _set_extract_device(self, ed):
         self.debug('setting extract dev="{}" mass spec="{}"'.format(ed, self.mass_spectrometer))
         self.run_factory = self._run_factory_factory()
-
 
         self.run_factory.remote_patterns = patterns = self._get_patterns(ed)
         self.run_factory.setup_files()
@@ -289,11 +285,6 @@ class ExperimentFactory(DVCAble):
         self.run_factory.application = self.application
         self.queue_factory.application = self.application
 
-        sm = self.application.get_service('pychron.entry.simple_identifier_manager.SimpleIdentifierManager')
-        if sm is not None:
-            sm.factory = self.run_factory
-            sm.activated()
-
     def _default_mass_spectrometer_changed(self):
         self.debug('default mass spec changed "{}"'.format(self.default_mass_spectrometer))
         self.run_factory.set_mass_spectrometer(self.default_mass_spectrometer)
@@ -342,14 +333,6 @@ class ExperimentFactory(DVCAble):
     # ===============================================================================
     # defaults
     # ===============================================================================
-    def _simple_identifier_manager_default(self):
-        if self.application:
-            sm = self.application.get_service('pychron.entry.simple_identifier_manager.SimpleIdentifierManager')
-            if sm is not None:
-                sm.factory = self.run_factory
-                sm.activated()
-            return sm
-
     def _undoer_default(self):
         return ExperimentUndoer(run_factory=self.run_factory, queue=self.queue)
 

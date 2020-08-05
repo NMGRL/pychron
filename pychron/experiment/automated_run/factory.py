@@ -92,6 +92,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     auto_save_needed = Event
 
     labnumbers = Property(depends_on='project, selected_level, _identifiers')
+    display_labnumbers = Property(depends_on='project, selected_level, _identifiers')
     _identifiers = List
 
     use_project_based_repository_identifier = Bool(True)
@@ -282,8 +283,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
         super(AutomatedRunFactory, self).__init__(*args, **kw)
 
-    def set_identifiers(self, v):
-        self._identifiers = v
+    # def set_identifiers(self, v):
+    #     self._identifiers = v
 
     def setup_files(self):
         self.load_templates()
@@ -386,7 +387,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             arvs, freq = self._new_runs(exp_queue, positions=positions)
 
         if auto_increment_id:
-            v = increment_value(self.labnumber)
+            v = increment_value(self.labnumber, increment=auto_increment_id)
             self.debug('auto increment labnumber: prev={}, new={}'.format(self.labnumber, v))
             self.labnumber = v
 
@@ -847,7 +848,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
         extract_device = self.extract_device.replace(' ', '')
 
-        is_extractable = labnumber_tag in ('u', 'bu', 'dg') and extract_device not in NULL_EXTRACT_DEVICES or \
+        is_extractable = labnumber_tag in ('u', 'bu', 'dg') and \
+                         extract_device not in NULL_EXTRACT_DEVICES and \
                          extract_device != 'ExternalPipette'
 
         # labnumber_tag = str(labnumber_tag).lower()
@@ -941,20 +943,16 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             # convert labnumber (a, bg, or 10034 etc)
             self.debug('load meta for {}'.format(labnumber))
             with db.session_ctx():
-                if self.mode == SIMPLE:
-                    self.debug('using simple identifiers')
-                    ip = db.get_simple_identifier(labnumber)
+                ip = db.get_identifier(labnumber)
+                if ip:
+                    pos = ip.position
+                    # set sample and irrad info
                 else:
-                    ip = db.get_identifier(labnumber)
-                    if ip:
-                        pos = ip.position
-                        # set sample and irrad info
-                    else:
-                        self.warning_dialog('{} does not exist.\n\n'
-                                            'Add using "Entry>>Labnumber"\n'
-                                            'or "Utilities>>Import"\n'
-                                            'or manually'.format(labnumber))
-                        return
+                    self.warning_dialog('{} does not exist.\n\n'
+                                        'Add using "Entry>>Labnumber"\n'
+                                        'or "Utilities>>Import"\n'
+                                        'or manually'.format(labnumber))
+                    return
 
                 self.sample = ip.sample.name
 
@@ -1091,6 +1089,19 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             if self.selected_level and self.selected_level not in ('Level', LINE_STR):
                 with db.session_ctx(use_parent_session=False):
                     lns = db.get_level_identifiers(self.selected_irradiation, self.selected_level)
+
+        return lns
+
+    @cached_property
+    def _get_display_labnumbers(self):
+        lns = {}
+        if self.selected_level and self.selected_level not in ('Level', LINE_STR):
+            db = self.get_database()
+            if db is not None and db.connect():
+                with db.session_ctx(use_parent_session=False):
+                    lns = db.get_level_identifiers(self.selected_irradiation, self.selected_level, with_summary=True)
+                if lns:
+                    lns = dict(lns)
 
         return lns
 
@@ -1309,8 +1320,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
         for idn, runs in groupby_key(self._selected_runs, 'identifier'):
 
-            with self.db.session_ctx():
-                ipos = self.db.get_identifier(idn)
+            with self.dvc.session_ctx():
+                ipos = self.dvc.get_identifier(idn)
 
                 if ipos:
                     level = ipos.level

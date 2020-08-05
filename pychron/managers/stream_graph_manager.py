@@ -114,7 +114,7 @@ class StreamGraphManager(Manager):
                 try:
                     ma = max(ma, max(ys))
                     mi = min(mi, min(ys))
-                except ValueError:
+                except (ValueError, TypeError):
                     mi, ma = None, None
         return mi, ma
 

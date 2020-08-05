@@ -35,6 +35,7 @@ from pychron.core.stats.peak_detection import fast_find_peaks
 from pychron.core.stats.probability_curves import cumulative_probability, kernel_density
 from pychron.graph.explicit_legend import ExplicitLegend
 from pychron.graph.ticks import IntTickGenerator
+from pychron.pipeline.plot.overlays.correlation_ellipses_overlay import CorrelationEllipsesOverlay
 from pychron.pipeline.plot.overlays.ideogram_inset_overlay import IdeogramInset, IdeogramPointsInset
 from pychron.pipeline.plot.overlays.mean_indicator_overlay import MeanIndicatorOverlay
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
@@ -827,15 +828,18 @@ class Ideogram(BaseArArFigure):
                                 bind_id=self.group_id,
                                 plotid=pid, **kw)
 
+        if self.options.show_correlation_ellipses and title=='K/Ca':
+                o = CorrelationEllipsesOverlay(self.options._correlation_ellipses,
+                                               self.options.get_colors(),
+                                               component=s)
+                s.overlays.append(o)
+
         if es is not None:
             s.yerror = array(es)
 
         if not po.ytitle_visible:
             title = ''
 
-        # if '<sup>' in title or '<sub>' in title:
-        #     self._set_ml_title(title, pid, 'y')
-        # else:
         graph.set_y_title(title, plotid=pid)
         graph.set_series_label('{}-{}'.format(title, self.group_id + 1),
                                plotid=pid)

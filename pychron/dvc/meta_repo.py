@@ -97,6 +97,10 @@ def get_frozen_flux(repo, irradiation):
 class MetaRepo(GitRepoManager):
     clear_cache = Bool
 
+    def get_correlation_ellipses(self):
+        p = os.path.join(paths.meta_root, 'correlation_ellipses.json')
+        return dvc_load(p)
+
     def get_monitor_info(self, irrad, level):
         age, decay = NULL_STR, NULL_STR
         positions = self._get_level_positions(irrad, level)
@@ -277,7 +281,6 @@ class MetaRepo(GitRepoManager):
             self.add(p, commit=False)
 
     def add_irradiation_geometry_file(self, path):
-
         try:
             holder = IrradiationGeometry(path)
             if not holder.holes:
@@ -285,7 +288,27 @@ class MetaRepo(GitRepoManager):
         except BaseException:
             self.warning_dialog('Invalid Irradiation Geometry file. Failed to import')
             return
+        self.add_geometry_file(path)
 
+    def make_geometry_file(self, name, holes):
+        """
+        holes = [(x,y,r,id), ]
+        :param holes:
+        :return:
+        """
+        root = os.path.join(paths.meta_root, 'irradiation_holders')
+        if not os.path.isdir(root):
+            os.mkdir(root)
+
+        path = os.path.join(root, '{}.txt'.format(name))
+        if not os.path.isfile(path):
+            with open(path, 'w') as wfile:
+                lines = [','.join(map(str, h)) for h in holes]
+                wfile.writelines(lines)
+
+            self.add_geometry_file(path)
+
+    def add_geometry_file(self, path):
         self.smart_pull()
         root = os.path.join(paths.meta_root, 'irradiation_holders')
         if not os.path.isdir(root):
@@ -293,30 +316,16 @@ class MetaRepo(GitRepoManager):
 
         name = os.path.basename(path)
         dest = os.path.join(root, name)
-        shutil.copyfile(path, dest)
+        try:
+            shutil.copyfile(path, dest)
+        except shutil.SameFileError:
+            pass
+
         self.add(dest, commit=False)
         self.commit('added irradiation geometry file {}'.format(name))
 
         self.push()
         self.information_dialog('Irradiation Geometry "{}" added'.format(name))
-
-        # p = os.path.join(root, add_extension(name))
-
-    # def add_irradiation_holder(self, name, blob, commit=False, overwrite=False, add=True):
-    #     root = os.path.join(paths.meta_root, 'irradiation_holders')
-    #     if not os.path.isdir(root):
-    #         os.mkdir(root)
-    #     p = os.path.join(root, add_extension(name))
-    #
-    #     if not os.path.isfile(p) or overwrite:
-    #         with open(p, 'w') as wfile:
-    #             holes = list(iter_geom(blob))
-    #             n = len(holes)
-    #             wfile.write('{},0.0175\n'.format(n))
-    #             for idx, (x, y, r) in holes:
-    #                 wfile.write('{:0.4f},{:0.4f},{:0.4f}\n'.format(x, y, r))
-    #         if add:
-    #             self.add(p, commit=commit)
 
     def get_load_holders(self):
         p = os.path.join(paths.meta_root, 'load_holders')

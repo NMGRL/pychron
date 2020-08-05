@@ -106,6 +106,18 @@ class SingleStr(BaseStr):
             return value
 
 
+class RestrictedStr(BaseStr):
+    def __init__(self, name='names', *args, **kw):
+        self.name = name
+        super(RestrictedStr, self).__init__(*args, **kw)
+
+    def validate(self, obj, name, value):
+        if value in getattr(obj, self.name):
+            self.error(obj, name, value)
+        else:
+            return value
+
+
 class BorderVGroup(VGroup):
     def _show_border_default(self):
         return True

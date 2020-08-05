@@ -82,8 +82,8 @@ class RemoteLaserManager(BaseLaserManager):
             return globalv.communication_simulation, None
         else:
             self.connected = False
-            self.setup_communicator()
-            self._test_connection_hook()
+            if self.setup_communicator():
+                self._test_connection_hook()
 
             self.debug('test connection. connected= {}'.format(self.connected))
             return self.connected, None

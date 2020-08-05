@@ -33,7 +33,9 @@ from pychron.core.yaml import yload
 from pychron.experiment.automated_run.hop_util import parse_hop
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.paths import paths
-from pychron.pyscripts.tasks.pyscript_task import ScriptExecutor
+
+
+# from pychron.pyscripts.tasks.pyscript_task import ScriptExecutor
 
 
 class ShowMotionConfigureAction(TaskAction):
@@ -229,7 +231,8 @@ class ProcedureAction(ListAction):
         manager.info(info('Started Procedure "{}"'.format(name)))
 
         # task = app.get_task('pychron.pyscript.task', activate=False)
-        script_executor = ScriptExecutor(application=app)
+        # script_executor = ScriptExecutor(application=app)
+        script_executor = app.get_service('pychron.pyscripts.tasks.pyscript_task.ScriptExecutor')
         context = {'analysis_type': 'blank' if 'blank' in name else 'unknown'}
 
         script_executor.execute_script(name, root,
@@ -237,5 +240,12 @@ class ProcedureAction(ListAction):
                                        manager=manager,
                                        on_completion=lambda: manager.info(info('Finished Procedure "{}"'.format(name))),
                                        context=context)
+
+
+class CancelProcedureAction(TaskAction):
+    def perform(self, event):
+        app = event.task.application
+        script_executor = app.get_service('pychron.pyscripts.tasks.pyscript_task.ScriptExecutor')
+        script_executor.cancel()
 
 # ============= EOF =============================================

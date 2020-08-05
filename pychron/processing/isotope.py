@@ -388,7 +388,6 @@ class IsotopicMeasurement(BaseMeasurement):
         #     return self._value
 
         if not self.use_stored_value and not self.user_defined_value and self.xs.shape[0] > 1:
-            print('prediticasd', self.regressor)
             v = self.regressor.predict(0)
 
             if isnan(v) or isinf(v):

@@ -190,7 +190,10 @@ class IdeogramSubOptions(SubOptions):
                              Item('show_rvalues', label='Show R Values'),
                              label='Aux. Tables')
 
-        return self._make_view(VGroup(xgrp, tgrp, rtgrp))
+        cgrp = BorderVGroup(Item('show_correlation_ellipses'),
+                            label='Correlation')
+
+        return self._make_view(VGroup(xgrp, tgrp, rtgrp, cgrp))
 
 
 class IdeogramAppearance(AppearanceSubOptions):

@@ -16,11 +16,12 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import Str, Float, Password, Bool
+from traits.api import Str, Float, Password, Bool, Enum
 from traitsui.api import View, Item
 
 from pychron.core.pychron_traits import BorderHGroup, BorderVGroup
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
+from pychron.pychron_constants import SIMPLE, AR_AR
 
 
 class SampleEntryPreferences(BasePreferencesHelper):
@@ -49,6 +50,7 @@ class IrradiationEntryPreferences(BasePreferencesHelper):
     allow_multiple_null_identifiers = Bool
     use_packet_for_default_identifier = Bool
     use_consecutive_identifiers = Bool
+    mode = Enum(AR_AR, SIMPLE)
 
 
 class LabnumberEntryPreferencesPane(PreferencesPane):
@@ -79,8 +81,9 @@ class LabnumberEntryPreferencesPane(PreferencesPane):
                                             tooltip='If unchecked partition monitors and unknowns when generated '
                                                     'identifiers, otherwise identifiers are generated as '
                                                     'a continuous sequence'),
-                                       label='Irradiations')
-        v = View(irradiation_grp)
+                                       label='Irradiations',
+                                       visible_when='mode=="Ar/Ar"')
+        v = View(Item('mode'), irradiation_grp)
         return v
 
 
