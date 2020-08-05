@@ -296,7 +296,7 @@ class DVCPersister(BasePersister):
                         ret = False
 
         with dvc.session_ctx():
-            ret = self._save_analysis_db(timestamp)
+            ret = self._save_analysis_db(timestamp) and ret
 
         self.info('================= post measurement save finished =================')
         return ret
