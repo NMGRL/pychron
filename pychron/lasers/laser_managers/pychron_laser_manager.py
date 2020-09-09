@@ -302,12 +302,17 @@ class PychronLaserManager(EthernetLaserManager):
             return 0, 0, 0
 
     # handlers
-    @on_trait_change('pattern_executor:pattern:canceled')
-    def pattern_canceled(self):
-        """
-            this patterning window was closed so cancel the blocking loop
-        """
-        self._cancel_blocking = True
+    # @on_trait_change('pattern_executor:pattern:canceled')
+    # def pattern_canceled(self):
+    #     """
+    #         this patterning window was closed so cancel the blocking loop
+    #     """
+    #     self._cancel_blocking = True
+    def _pattern_executor_init_hook(self, pm):
+        def handle():
+            self._cancel_blocking = True
+
+        pm.on_trait_change(handle, 'pattern:canceled')
 
     def _snapshot_button_fired(self):
         self.take_snapshot('test', view_snapshot=True)

@@ -497,7 +497,6 @@ class BaseSpectrometer(SpectrometerDevice):
         with open(ypath, 'r') as rfile:
             for i, det in enumerate(yaml.load(rfile, Loader=SafeLoader)):
                 name = det.get('name')
-                relative_position = float(det.get('relative_position', 0))
                 software_gain = float(det.get('software_gain', 1.0))
 
                 color = det.get('color', 'black')
@@ -520,7 +519,6 @@ class BaseSpectrometer(SpectrometerDevice):
                                    index=index,
                                    software_gain=software_gain,
                                    serial_id=serial_id,
-                                   relative_position=relative_position,
                                    use_deflection=use_deflection,
                                    protection_threshold=pt,
                                    deflection_correction_sign=deflection_correction_sign,
