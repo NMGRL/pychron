@@ -144,6 +144,18 @@ class ChromiumDiodeTask(FusionsTask):
         return []
 
 
+class ChromiumUVTask(FusionsTask):
+    id = 'pychron.chromium.uv'
+    name = 'Chromium UV'
+
+    def create_central_pane(self):
+        from pychron.lasers.tasks.panes.chromium import ChromiumUVClientPane
+        return ChromiumUVClientPane(model=self.manager)
+
+    def create_dock_panes(self):
+        return []
+
+
 class FusionsCO2Task(FusionsTask):
     id = 'pychron.fusions.co2'
     name = FUSIONS_CO2

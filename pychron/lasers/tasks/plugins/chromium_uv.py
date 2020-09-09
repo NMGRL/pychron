@@ -18,7 +18,6 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from __future__ import absolute_import
 from pychron.lasers.tasks.plugins.laser_plugin import BaseLaserPlugin
 
 
@@ -26,6 +25,7 @@ class ChromiumUVPlugin(BaseLaserPlugin):
     id = 'pychron.chromium.uv'
     name = 'ChromiumUV'
     klass = ('pychron.lasers.laser_managers.chromium_laser_manager', 'ChromiumUVManager')
-
+    task_name = 'Chromium UV'
+    task_klass = ('pychron.lasers.tasks.laser_task', 'ChromiumUVTask')
 
 # ============= EOF =============================================

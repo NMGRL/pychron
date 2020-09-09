@@ -17,12 +17,13 @@
 # ============= enthought library imports =======================
 # from pyface.tasks.task import Task
 from __future__ import absolute_import
+
 from pyface.tasks.task_layout import PaneItem, TaskLayout, VSplitter, Tabbed
 from traits.api import Instance
 
 from pychron.envisage.tasks.base_task import BaseHardwareTask
-from pychron.hardware.tasks.hardware_pane import CurrentDevicePane, DevicesPane, InfoPane, ConfigurationPane
-
+from pychron.hardware.tasks.hardware_pane import CurrentDevicePane, DevicesPane, InfoPane, ConfigurationPane, \
+    TerminalPane
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.hardware.tasks.hardwarer import Hardwarer
@@ -47,7 +48,8 @@ class HardwareTask(BaseHardwareTask):
     def create_dock_panes(self):
         return [DevicesPane(model=self.manager),
                 InfoPane(model=self.manager),
-                ConfigurationPane(model=self.manager)]
+                ConfigurationPane(model=self.manager),
+                TerminalPane(model=self.manager)]
 
     def _default_layout_default(self):
         l = TaskLayout(left=VSplitter(

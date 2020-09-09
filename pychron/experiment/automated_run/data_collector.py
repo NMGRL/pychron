@@ -89,13 +89,13 @@ class DataCollector(Consoleable):
         self._alive = False
         if self._evt:
             self._evt.set()
-    
+
     def set_starttime(self, s):
         self.starttime = s
-        # convert s (result of time.time()) to a datetime object
         if s is not None:
+            # convert s (result of time.time()) to a datetime object
             self.starttime_abs = datetime.fromtimestamp(s)
-        
+
     def measure(self):
         if self.canceled:
             return

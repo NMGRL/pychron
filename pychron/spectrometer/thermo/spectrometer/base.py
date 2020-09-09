@@ -588,14 +588,14 @@ class ThermoSpectrometer(BaseSpectrometer):
                                 v = None
 
                         if v is not None:
-                            setattr(self.source, 'trap_{}'.format(tag), v)
-
-                v = trap.get('current')
-                if v is not None:
-                    step = trap.get('ramp_step', 1)
-                    period = trap.get('ramp_period', 1)
-                    tol = trap.get('ramp_tolerance', 10)
-                    self._ramp_trap_current(v, step, period, use_ramp, tol, ramp_confirm)
+                            if tag == 'current':
+                                step = trap.get('ramp_step', 1)
+                                period = trap.get('ramp_period', 1)
+                                tol = trap.get('ramp_tolerance', 10)
+                                use_ramp = use_ramp and trap.get('use_ramp', True)
+                                self._ramp_trap_current(v, step, period, use_ramp, tol, ramp_confirm)
+                            else:
+                                setattr(self.source, 'trap_{}'.format(tag), v)
 
                 # set the mftable
                 mftable_name = magnet.get('mftable')
@@ -622,7 +622,6 @@ class ThermoSpectrometer(BaseSpectrometer):
                     ok = self.confirmation_dialog('Would you like to ramp up the '
                                                   'Trap current from {} to {}'.format(current, v))
                 if ok:
-                    prog = open_progress(1)
 
                     def func(x):
                         prog.change_message('Set Trap Current {}'.format(x))
@@ -633,7 +632,7 @@ class ThermoSpectrometer(BaseSpectrometer):
                     r = StepRamper()
 
                     steps = (v - current) / step
-                    prog.max = int(steps)
+                    prog = open_progress(int(steps))
                     r.ramp(func, current, v, step, period)
                     prog.close()
                     return True
