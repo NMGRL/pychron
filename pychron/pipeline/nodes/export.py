@@ -22,6 +22,7 @@ from traitsui.api import VGroup, HGroup, UItem, Item, CheckListEditor, TableEdit
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 from uncertainties import nominal_value, std_dev
+from numpy import zeros
 
 from pychron.core.confirmation import confirmation_dialog
 from pychron.core.helpers.filetools import add_extension, view_file
@@ -142,8 +143,19 @@ class CSVRawDataExportNode(CSVExportNode):
                 if kiso.intensity:
                     ys = iso.ys
                     data.append(ys)
-
-        return zip(*data)
+        
+        newdata = []
+        n=0
+        for d in data:
+            if d.size:
+                n=len(d)
+        if n:
+            for d in data:
+                if not d.size:
+                    d = zeros(n)
+                newdata.append(d)
+        
+        return zip(*newdata)
 
     def _get_isotope(self, k):
         return next((i for i in self.available_isotopes if i.name == k), None)

@@ -621,10 +621,11 @@ class ThermoSpectrometer(BaseSpectrometer):
                 if confirm:
                     ok = self.confirmation_dialog('Would you like to ramp up the '
                                                   'Trap current from {} to {}'.format(current, v))
+                
                 if ok:
-
+                    
                     def func(x):
-                        prog.change_message('Set Trap Current {}'.format(x))
+                        #prog.change_message('Set Trap Current {}'.format(x))
                         self.source.trap_current = x
                         if not prog.accepted and not prog.canceled:
                             return True
@@ -632,9 +633,10 @@ class ThermoSpectrometer(BaseSpectrometer):
                     r = StepRamper()
 
                     steps = (v - current) / step
-                    prog = open_progress(int(steps))
+                    #prog = open_progress(int(steps))
+                    
                     r.ramp(func, current, v, step, period)
-                    prog.close()
+                    #prog.close()
                     return True
             else:
                 self.debug('trap current is up-to-date')
