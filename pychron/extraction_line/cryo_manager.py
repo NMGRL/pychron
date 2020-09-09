@@ -26,7 +26,7 @@ from pychron.paths import paths
 
 class CryoManager(Manager):
     name = 'Cryo'
-    species = Enum('He', 'Ar/Ar', 'Ne')
+    species = Enum('He', 'Ar/Ar', 'Ne', 'Generic')
 
     def finish_loading(self, *args, **kw):
         pass
@@ -42,10 +42,11 @@ class CryoManager(Manager):
     def test_connection(self):
         for di in self.devices:
             if not di.test_connection():
-                self.debug('Failed connection to "{}" '.format(di.name))
-                return False
+                msg = 'Failed connection to "{}" '.format(di.name)
+                self.debug(msg)
+                return False, msg
         else:
-            return True
+            return True, None
 
     # def stop_scans(self):
     #     for k in self.devices:

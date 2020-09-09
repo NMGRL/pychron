@@ -316,39 +316,40 @@ class DVC(Loggable):
         db = self.db
         with db.session_ctx():
             ip = db.get_identifier(ln)
-            dblevel = ip.level
-            irrad = dblevel.irradiation.name
-            level = dblevel.name
-            pos = ip.position
+            if ip is not None:
+                dblevel = ip.level
+                irrad = dblevel.irradiation.name
+                level = dblevel.name
+                pos = ip.position
 
-            fd = self.meta_repo.get_flux(irrad, level, pos)
-            _, prod = self.meta_repo.get_production(irrad, level, allow_null=True)
-            cs = self.meta_repo.get_chronology(irrad, allow_null=True)
+                fd = self.meta_repo.get_flux(irrad, level, pos)
+                _, prod = self.meta_repo.get_production(irrad, level, allow_null=True)
+                cs = self.meta_repo.get_chronology(irrad, allow_null=True)
 
-            x = datetime.now()
-            now = time.mktime(x.timetuple())
-            if fd['lambda_k']:
-                isotope_group.arar_constants.lambda_k = fd['lambda_k']
+                x = datetime.now()
+                now = time.mktime(x.timetuple())
+                if fd['lambda_k']:
+                    isotope_group.arar_constants.lambda_k = fd['lambda_k']
 
-            try:
-                pr = prod.to_dict(RATIO_KEYS)
-            except BaseException as e:
-                self.debug('invalid production. error={}'.format(e))
-                pr = {}
+                try:
+                    pr = prod.to_dict(RATIO_KEYS)
+                except BaseException as e:
+                    self.debug('invalid production. error={}'.format(e))
+                    pr = {}
 
-            try:
-                ic = prod.to_dict(INTERFERENCE_KEYS)
-            except BaseException as e:
-                self.debug('invalid production. error={}'.format(e))
-                ic = {}
+                try:
+                    ic = prod.to_dict(INTERFERENCE_KEYS)
+                except BaseException as e:
+                    self.debug('invalid production. error={}'.format(e))
+                    ic = {}
 
-            isotope_group.trait_set(j=fd['j'],
-                                    # lambda_k=lambda_k,
-                                    production_ratios=pr,
-                                    interference_corrections=ic,
-                                    chron_segments=cs.get_chron_segments(x),
-                                    irradiation_time=cs.irradiation_time,
-                                    timestamp=now)
+                isotope_group.trait_set(j=fd['j'],
+                                        # lambda_k=lambda_k,
+                                        production_ratios=pr,
+                                        interference_corrections=ic,
+                                        chron_segments=cs.get_chron_segments(x),
+                                        irradiation_time=cs.irradiation_time,
+                                        timestamp=now)
         return True
 
     def analyses_db_sync(self, ln, ais, reponame):
