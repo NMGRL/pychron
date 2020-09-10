@@ -586,6 +586,7 @@ class ThermoSpectrometer(BaseSpectrometer):
                             else:
                                 v = None
 
+<<<<<<< Updated upstream
                         if v is not None:
                             if tag == 'current':
                                 step = trap.get('ramp_step', 1)
@@ -595,6 +596,23 @@ class ThermoSpectrometer(BaseSpectrometer):
                                 self._ramp_trap_current(v, step, period, use_ramp, tol, ramp_confirm)
                             else:
                                 setattr(self.source, 'trap_{}'.format(tag), v)
+=======
+                        if v is not None:                            
+                            if tag=='current':
+                                step = trap.get('ramp_step', 1)
+                                period = trap.get('ramp_period', 1)
+                                tol = trap.get('ramp_tolerance', 10)
+                                self._ramp_trap_current(v, step, period, use_ramp, tol, ramp_confirm)
+                            else:
+                                setattr(self.source, 'trap_{}'.format(tag), v)
+
+                #v = trap.get('current')
+                #if v is not None:
+                #    step = trap.get('ramp_step', 1)
+                #    period = trap.get('ramp_period', 1)
+                #    tol = trap.get('ramp_tolerance', 10)
+                #    self._ramp_trap_current(v, step, period, use_ramp, tol)
+>>>>>>> Stashed changes
 
                 # set the mftable
                 mftable_name = magnet.get('mftable')
@@ -619,7 +637,11 @@ class ThermoSpectrometer(BaseSpectrometer):
                 ok = True
                 if confirm:
                     ok = self.confirmation_dialog('Would you like to ramp up the '
+<<<<<<< Updated upstream
                                                   'Trap current from {} to {}'.format(current, v))
+=======
+                                                'Trap current from {} to {}'.format(current, v))
+>>>>>>> Stashed changes
                 
                 if ok:
                     
