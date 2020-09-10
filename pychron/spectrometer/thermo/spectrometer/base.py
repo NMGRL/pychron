@@ -378,9 +378,6 @@ class ThermoSpectrometer(BaseSpectrometer):
                 return func(dkeys)
                 # return signals[keys.index(dkeys)] if dkeys in keys else 0
 
-    def clear_cached_config(self):
-        self._config = None
-
     def update_config(self, **kw):
         # p = os.path.join(paths.spectrometer_dir, 'config.cfg')
         p = get_spectrometer_config_path()

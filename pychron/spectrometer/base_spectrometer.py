@@ -696,10 +696,14 @@ class BaseSpectrometer(SpectrometerDevice):
     def read_parameter_word(self):
         pass
 
+    def clear_cached_config(self):
+        self._config = None
+
     # private
     def _spectrometer_configuration_changed(self, new):
         if new:
             set_spectrometer_config_name(new)
+            self.clear_cached_config()
 
     def _add_detector(self, **kw):
         d = self.detector_klass(spectrometer=self, microcontroller=self.microcontroller, **kw)
