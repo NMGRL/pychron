@@ -25,6 +25,7 @@ from traits.api import Int, Property, List, \
     Str, DelegatesTo, Bool, Float
 
 from pychron.core.helpers.strtools import csv_to_floats
+from pychron.core.progress import open_progress
 from pychron.core.ramper import StepRamper
 from pychron.core.yaml import yload
 from pychron.paths import paths
@@ -617,26 +618,32 @@ class ThermoSpectrometer(BaseSpectrometer):
 
             if abs(v - current) >= tol:
                 ok = True
+                show_progress = False
+
                 if confirm:
                     ok = self.confirmation_dialog('Would you like to ramp up the '
                                                   'Trap current from {} to {}'.format(current, v))
-                
+                    show_progress = True
+
                 if ok:
-                    
-                    def func(x):
-                        #prog.change_message('Set Trap Current {}'.format(x))
-                        self.source.trap_current = x
-                        return True
-                        # if not prog.accepted and not prog.canceled:
-                        #     return True
 
                     r = StepRamper()
+                    steps = abs(v - current) / step
+                    prog = open_progress(int(steps))
 
-                    steps = (v - current) / step
-                    #prog = open_progress(int(steps))
+                    def func(x):
+                        self.source.trap_current = x
+                        if show_progress:
+                            prog.change_message('Set Trap Current {}'.format(x))
+                            if not prog.accepted and not prog.canceled:
+                                return True
+                        else:
+                            return True
+
                     self.debug('current={}, target={}, step={}, period={}'.format(current, v, step, period))
                     r.ramp(func, current, v, step, period)
-                    #prog.close()
+                    if show_progress:
+                        prog.close()
                     return True
             else:
                 self.debug('trap current is up-to-date')
