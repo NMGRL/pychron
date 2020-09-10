@@ -42,7 +42,7 @@ class StepRamper(object):
         canceled = False
         while 1:
             ct = time.time()
-            if abs(current - end) > tolerance:
+            if abs(current - end) < tolerance:
                 break
 
             if not func(current):
