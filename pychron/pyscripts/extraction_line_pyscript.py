@@ -849,6 +849,11 @@ class ExtractionPyScript(ValvePyScript):
     def set_intensity_scalar(self, v):
         return self._automated_run_call('py_set_intensity_scalar', v)
 
+    @verbose_skip
+    @command_register
+    def get_device(self, name):
+        return self._get_device(name)
+
     # ==========================================================================
     # properties
     # ==========================================================================
