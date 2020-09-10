@@ -25,7 +25,6 @@ from traits.api import Int, Property, List, \
     Str, DelegatesTo, Bool, Float
 
 from pychron.core.helpers.strtools import csv_to_floats
-from pychron.core.progress import open_progress
 from pychron.core.ramper import StepRamper
 from pychron.core.yaml import yload
 from pychron.paths import paths
@@ -627,8 +626,8 @@ class ThermoSpectrometer(BaseSpectrometer):
                     def func(x):
                         #prog.change_message('Set Trap Current {}'.format(x))
                         self.source.trap_current = x
-                        if not prog.accepted and not prog.canceled:
-                            return True
+                        # if not prog.accepted and not prog.canceled:
+                        #     return True
 
                     r = StepRamper()
 
