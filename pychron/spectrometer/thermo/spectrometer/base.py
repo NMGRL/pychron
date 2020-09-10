@@ -27,6 +27,7 @@ from traits.api import Int, Property, List, \
 from pychron.core.helpers.strtools import csv_to_floats
 from pychron.core.progress import open_progress
 from pychron.core.ramper import StepRamper
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.yaml import yload
 from pychron.paths import paths
 from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES, \
@@ -629,12 +630,13 @@ class ThermoSpectrometer(BaseSpectrometer):
 
                     r = StepRamper()
                     steps = abs(v - current) / step
-                    prog = open_progress(int(steps))
+                    if show_progress:
+                        prog = open_progress(int(steps))
 
                     def func(x):
                         self.source.trap_current = x
                         if show_progress:
-                            prog.change_message('Set Trap Current {}'.format(x))
+                            invoke_in_main_thread(prog.change_message, 'Set Trap Current {}'.format(x))
                             if not prog.accepted and not prog.canceled:
                                 return True
                         else:
