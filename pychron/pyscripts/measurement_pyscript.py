@@ -656,6 +656,7 @@ class MeasurementPyScript(ValvePyScript):
     @command_register
     def set_spectrometer_configuration(self, name):
         set_spectrometer_config_name(name)
+        self._automated_run_call('py_clear_cached_configuration')
         self._automated_run_call('py_send_spectrometer_configuration')
 
     @verbose_skip

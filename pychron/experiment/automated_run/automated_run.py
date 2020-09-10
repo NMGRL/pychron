@@ -259,9 +259,11 @@ class AutomatedRun(Loggable):
         self.debug('reset data')
         self._persister_action('pre_measurement_save')
 
+    def py_clear_cached_configuration(self):
+        self.spectrometer_manager.spectrometer.clear_cached_config()
+
     def py_send_spectrometer_configuration(self):
         self.spectrometer_manager.spectrometer.send_configuration()
-        self.spectrometer_manager.spectrometer.clear_cached_config()
 
     def py_reload_mftable(self):
         self.spectrometer_manager.spectrometer.reload_mftable()
