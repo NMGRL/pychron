@@ -30,6 +30,10 @@ def calculate_steps(duration, period=1):
 
 class StepRamper(object):
     def ramp(self, func, start, end, step, period=1):
+        if start>end:
+            if step>0:
+                step = -step
+                
         current = start
         canceled = False
         while 1:
