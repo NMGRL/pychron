@@ -29,11 +29,16 @@ from pychron.pychron_constants import NULL_STR, ERROR_TYPES, SIZES, FONTS, SIG_F
 
 class SpectrumAuxPlot(AuxPlot):
     names = List([NULL_STR, 'Extract Value',
-                  'Radiogenic 40Ar', 'K/Ca', 'K/Cl', 'Mol Ar40', 'Mol Ar36', 'Mol K39', 'Age Spectrum'],
+                  'Radiogenic 40Ar',
+                  'K/Ca', 'K/Cl',
+                  'Ca/K', 'Cl/K',
+                  'Mol Ar40', 'Mol Ar36', 'Mol K39', 'Age Spectrum'],
                  transient=True)
     _plot_names = List(['', 'extract_value',
                         'radiogenic_yield',
-                        'kca', 'kcl', 'moles_ar40', 'moles_ar36', 'moles_k39', 'age_spectrum'],
+                        'kca', 'kcl',
+                        'cak', 'clk',
+                        'moles_ar40', 'moles_ar36', 'moles_k39', 'age_spectrum'],
                        transient=True)
 
 

@@ -701,7 +701,7 @@ class DVCPersister(BasePersister):
         repository_identifier = self.per_spec.run_spec.repository_identifier
 
         if self.use_uuid_path_name:
-            name = uuid, runid
+            name = uuid, uuid
         else:
             name = runid, runid
 

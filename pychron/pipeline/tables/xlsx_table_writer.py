@@ -584,8 +584,9 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         #         group = nitems[0]
         #
         #     return group.age
+
         def group_age(g):
-            return 0
+            return g.get_preferred_obj('age').value
 
         if self._options.group_age_sorting == NULL_STR:
             ngs = groups
@@ -620,10 +621,20 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 self._make_column_header(worksheet, cols, i)
 
             nsubgroups = len([a for a in ans if isinstance(a, InterpretedAgeGroup)])
+            sgsorting = self._options.subgroup_age_sorting
+            igsorting = self._options.individual_age_sorting
+            if self._options.individual_age_sorting:
+                ans = sorted(ans, key=lambda i: i.age,
+                             reverse=igsorting == DESCENDING)
 
             for j, a in enumerate(ans):
                 if isinstance(a, InterpretedAgeGroup):
                     items = a.analyses
+
+                    if sgsorting != NULL_STR:
+                        items = sorted(items,
+                                       key=lambda i: i.age,
+                                       reverse=sgsorting == DESCENDING)
 
                     pv = a.get_preferred_obj('age')
                     label = pv.computed_kind.lower()

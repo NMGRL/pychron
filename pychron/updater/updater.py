@@ -90,12 +90,13 @@ class Updater(Loggable):
         branch = self.branch
         remote = self.remote
 
+        repo = self._repo
+        if not repo:
+            return
+
         if self.use_tag:
             # check for new tags
             self._fetch(prune=True)
-            repo = self._repo
-            if not repo:
-                return
 
             tags = repo.tags
             ctag = tags[self.version_tag]
@@ -113,13 +114,20 @@ class Updater(Loggable):
                         lc, rc = self._check_for_updates()
                         hexsha = self._out_of_date(lc, rc)
                         if hexsha:
-                            origin = self._repo.remotes.origin
+                            # tag this commit so we can easily jump back
+                            # however since the update may break pychron
+                            # the only reliable way to revert is using an external process
+                            tagids = [int(t.split('/')[1]) for t in repo.tags if t.startswith('recovery')]
+                            rid = max(tagids)+1 if tagids else 1
+                            repo.create_tag('recovery/{}'.format(rid))
+
+                            origin = repo.remotes.origin
                             self.debug('pulling changes from {} to {}'.format(origin.url, branch))
 
                             try:
-                                with StashCTX(self._repo):
-                                    gitcommand(self._repo, self._repo.head.name, 'pull',
-                                               lambda: self._repo.git.pull(origin, hexsha))
+                                with StashCTX(repo):
+                                    gitcommand(repo, repo.head.name, 'pull',
+                                               lambda: repo.git.pull(origin, hexsha))
                             except BaseException:
                                 self.debug_exception()
                                 self.warning_dialog('Failed installing updates. Please contact pychron developers')

@@ -81,8 +81,8 @@ class WorkOffline(Loggable):
             if self._check_githost_connection():
                 repos = self.dvc.remote_repositories()
                 repos = [RepositoryRecordView(name=r['name'],
-                                              created_at=r['created_at'],
-                                              pushed_at=r['pushed_at']) for r in repos]
+                                              created_at=r.get('created_at', ''),
+                                              pushed_at=r.get('pushed_at', '')) for r in repos]
 
                 metaname = os.path.basename(paths.meta_root)
                 repos = sorted([ri for ri in repos if ri.name != metaname], key=attrgetter('name'))
@@ -225,6 +225,7 @@ class WorkOffline(Loggable):
                     progress.change_message('Assembling Analyses 2/5')
 
                 # at = time.time()
+                ans = [ai for ai in ans if ai is not None]
                 ans_c = [ai.change for ai in ans]
                 # self.debug('change time={}'.format(time.time()-at))
                 progress.change_message('Assembling Analyses 3/5')
