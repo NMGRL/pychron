@@ -20,6 +20,7 @@ import time
 
 # ============= local library imports  ==========================
 from pychron.core.helpers.strtools import csv_to_floats
+from pychron.experiment.utilities.position_regex import SCAN_REGEX
 from pychron.lasers.laser_managers.ethernet_laser_manager import EthernetLaserManager
 
 
@@ -251,5 +252,39 @@ class ChromiumCO2Manager(ChromiumLaserManager):
 
 class ChromiumDiodeManager(ChromiumLaserManager):
     pass
+
+
+class ChromiumUVManager(ChromiumLaserManager):
+
+    _active_scan = None
+
+    def extract(self, *args, **kw):
+        if self._active_scan:
+            self.ask('Scans.Run {}'.format(self._active_scan))
+            return True
+        else:
+            return super(ChromiumUVManager, self).extract(*args, **kw)
+
+    def _move_to_position(self, pos, *args, **kw):
+        # if position is a valid predefined scan list use it
+        # otherwise interpret as normal hole/x,y pos
+
+        scan_id = self._get_scan_id(pos)
+        if scan_id:
+            self._active_scan = scan_id
+            self.ask('Scans.MoveTo {}'.format(scan_id))
+        else:
+            self._active_scan = None
+            return super(ChromiumUVManager, self)._move_to_position(pos, *args, **kw)
+
+    def disable_laser(self):
+        self.ask('Scans.Stop')
+        super(ChromiumUVManager, self).disable_laser()
+
+    def _get_scan_id(self, pos):
+        m = SCAN_REGEX.match(pos)
+        if m:
+            return int(m.group('id')[1:])
+        return
 
 # ============= EOF =============================================

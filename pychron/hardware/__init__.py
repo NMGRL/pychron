@@ -56,7 +56,6 @@ HW_PACKAGE_MAP = {
     'PychronPneumatics': 'pychron.hardware.pneumatics',
     'PychronChiller': 'pychron.hardware.pychron_chiller',
 
-    # 'RemoteThermoRack': 'pychron.hardware.remote.thermorack',
     'RemoteNewportMotionController': 'pychron.hardware.remote.newport_motion_controller',
 
     'TempHumMicroServer': 'pychron.hardware.environmental_probe',
@@ -65,8 +64,10 @@ HW_PACKAGE_MAP = {
     'LamontFurnaceControl': 'pychron.hardware.labjack.ldeo_furnace',
 
     'Model335TemperatureController': 'pychron.hardware.lakeshore.model335',
-    'Model336TemperatureController': 'pychron.hardware.lakeshore.model336'
-    # 'ControlModule': 'pychron.hardware.fusions.vue_diode_control_module'
+    'Model336TemperatureController': 'pychron.hardware.lakeshore.model336',
+    'MKSSRG': 'pychron.hardware.gauges.mks.srg',
+
+    'GenericDevice': 'pychron.hardware.generic_device'
 }
 
 

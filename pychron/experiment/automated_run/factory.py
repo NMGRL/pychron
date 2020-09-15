@@ -46,7 +46,7 @@ from pychron.experiment.utilities.frequency_edit_view import FrequencyModel
 from pychron.experiment.utilities.identifier import convert_special_name, ANALYSIS_MAPPING, NON_EXTRACTABLE, \
     make_special_identifier, make_standard_identifier, SPECIAL_KEYS
 from pychron.experiment.utilities.position_regex import SLICE_REGEX, PSLICE_REGEX, \
-    SSLICE_REGEX, TRANSECT_REGEX, POSITION_REGEX, XY_REGEX
+    SSLICE_REGEX, TRANSECT_REGEX, POSITION_REGEX, XY_REGEX, SCAN_REGEX
 from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceLoggable
@@ -1119,7 +1119,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             return ''
 
         for r, _, _, name in (SLICE_REGEX, SSLICE_REGEX, PSLICE_REGEX,
-                              TRANSECT_REGEX, POSITION_REGEX, XY_REGEX):
+                              TRANSECT_REGEX, POSITION_REGEX, XY_REGEX, SCAN_REGEX):
             if r.match(pos):
                 self.debug('matched {} to {}'.format(name, pos))
                 return pos

@@ -652,10 +652,6 @@ class ExtractionPyScript(ValvePyScript):
         pos = self._extraction_action(('get_position', (), {}))
         self._extraction_positions.append(pos)
 
-        # set an experiment message
-        # if self.manager:
-        #     msg = '{} ON! {}({})'.format(ed, power, units)
-        #     self.manager.set_extract_state(msg, color='red')
         msg = '{} ON! {}({})'.format(ed, power, units)
         self._set_extraction_state(msg)
         self.console_info('extract sample to {} ({})'.format(power, units))
@@ -664,6 +660,7 @@ class ExtractionPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def end_extract(self):
+        self._set_extraction_state(False)
         self._extraction_action(('end_extract',))
 
     @verbose_skip
