@@ -22,7 +22,6 @@ import os
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
 
-from pychron.entry.edit_irradiation_geometry import EditIrradiationGeometry
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import PAction as Action, PTaskAction as TaskAction
 from pychron.pychron_constants import DVC_PROTOCOL
@@ -147,11 +146,24 @@ class ImportAnalysesAction(Action):
         do_import_analyses(dvc, sources)
 
 
+class CorrelationEllipsesAction(Action):
+    name = 'Edit Correlation Ellipses...'
+
+    def perform(self, event):
+        dvc = event.task.application.get_service(DVC_PROTOCOL)
+        if dvc is not None:
+            from pychron.entry.correlation_ellipses_editor import CorrelationEllipsesEditor
+            v = CorrelationEllipsesEditor(dvc=dvc)
+            v.load()
+            info = v.edit_traits()
+            if info.result:
+                v.dump()
+
+
 class GenerateTrayAction(Action):
     name = 'Generate Tray Image'
     image = icon('table_lightning')
 
-    # method = 'generate_tray'
     description = 'Make a irradiation tray image from an irradiation tray text file.'
 
     def perform(self, event):
@@ -174,32 +186,6 @@ class GenerateTrayAction(Action):
                                make=True,
                                rotate=0)
             info = gcc.edit_traits(kind='livemodal')
-
-            # from pychron.entry.graphic_generator import GraphicModel
-            # from pychron.entry.graphic_generator import GraphicGeneratorController
-            #
-            # gm = GraphicModel()
-            #
-            # # op='/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/newtrays/26_no_spokes.txt'
-            #
-            # gm.srcpath = p
-            # # gm.xmlpath=p
-            # # p = make_xml(p,
-            # # default_radius=radius,
-            # #              default_bounds=bounds,
-            # #              convert_mm=convert_mm,
-            # #              use_label=use_label,
-            # #              make=make,
-            # #              rotate=rotate)
-            # #
-            # # #    p = '/Users/ross/Sandbox/graphic_gen_from_csv.xml'
-            # # gm.load(p)
-            # gcc = GraphicGeneratorController(model=gm)
-            # info = gcc.edit_traits(kind='livemodal')
-            # if info.result:
-            #     if self.confirmation_dialog(
-            #             'Do you want to save this tray to the database. Saving tray as "{}"'.format(gm.name)):
-            #         self.manager.save_tray_to_db(gm.srcpath, gm.name)
 
 
 class ImportIrradiationFileAction(TaskAction):
@@ -288,14 +274,14 @@ class ImportIrradiationGeometryAction(Action):
                     dvc.meta_repo.add_irradiation_geometry_file(dialog.path)
 
 
-class EditIrradiationGeometryAction(Action):
-    name = 'Edit Irradiation Geometry'
-
-    def perform(self, event):
-        dvc = event.task.application.get_service(DVC_PROTOCOL)
-        if dvc is not None:
-            eiv = EditIrradiationGeometry(dvc=dvc)
-            eiv.edit_traits()
+# class EditIrradiationGeometryAction(Action):
+#     name = 'Edit Irradiation Geometry'
+#
+#     def perform(self, event):
+#         dvc = event.task.application.get_service(DVC_PROTOCOL)
+#         if dvc is not None:
+#             eiv = EditIrradiationGeometry(dvc=dvc)
+#             eiv.edit_traits()
 
 
 class TransferJAction(TaskAction):
