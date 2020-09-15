@@ -117,7 +117,7 @@ class Updater(Loggable):
                             # tag this commit so we can easily jump back
                             # however since the update may break pychron
                             # the only reliable way to revert is using an external process
-                            tagids = [int(t.split('/')[1]) for t in repo.tags if t.startswith('recovery')]
+                            tagids = [int(t.name.split('/')[1]) for t in repo.tags if t.name.startswith('recovery')]
                             rid = max(tagids)+1 if tagids else 1
                             repo.create_tag('recovery/{}'.format(rid))
 
