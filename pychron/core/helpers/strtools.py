@@ -85,12 +85,16 @@ def to_csv_str(iterable, delimiter=','):
     return delimiter.join([str(v) for v in iterable])
 
 
-def ratio(xs, ys=None):
+def ratio(xs, ys=None, invert=False):
     def r(a, b):
         return '{}/{}'.format(a, b)
 
     if ys is None:
         ys = xs
+
+    if invert:
+        xs = xs[::-1]
+        ys = ys[::-1]
 
     ret = []
     for iso in xs:

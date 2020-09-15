@@ -261,6 +261,7 @@ class SeriesNode(FigureNode):
                 names.extend(['{}ic'.format(ki) for ki in iso_keys])
 
                 names.extend(ratio(iso_keys))
+                names.extend(ratio(iso_keys, invert=True))
 
                 if unk.analysis_type in (UNKNOWN, COCKTAIL):
                     names.append(AGE)
