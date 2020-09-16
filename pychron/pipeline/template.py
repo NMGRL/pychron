@@ -86,6 +86,7 @@ class PipelineTemplateGroup(HasTraits):
 
 class PipelineTemplate(HasTraits):
     icon = None
+
     def __init__(self, name, path, nodes, factories, *args, **kw):
         super(PipelineTemplate, self).__init__(*args, **kw)
 
@@ -96,7 +97,7 @@ class PipelineTemplate(HasTraits):
 
         self._yd = yload(self.path)
 
-        ico = self._yd.get('icon')
+        ico = self._yd.get('icon', 'large_tiles')
         if ico:
             self.icon = icon(ico)
 
