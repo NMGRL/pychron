@@ -174,16 +174,16 @@ class BaseSpectrometerPlugin(BaseTaskPlugin):
                                           path='MenuBar/procedures.menu/hops.group'))
 
         if actions:
-            m = SchemaAddition(id='procedures.menu',
-                               before='window.menu',
-                               after='tools.menu',
-                               factory=lambda: SMenu(name='Procedures', id='procedures.menu'),
-                               path='MenuBar')
+            # m = SchemaAddition(id='procedures.menu',
+            #                    before='window.menu',
+            #                    after='tools.menu',
+            #                    factory=lambda: SMenu(name='Procedures', id='procedures.menu'),
+            #                    path='MenuBar')
             g = SchemaAddition(id='hops.group',
                                factory=lambda: SGroup(name='Hops', id='hops.group'),
                                path='MenuBar/procedures.menu')
             actions.insert(0, g)
-            actions.insert(0, m)
+            # actions.insert(0, m)
 
             ext = TaskExtension(actions=actions)
             return ext
@@ -203,18 +203,18 @@ class BaseSpectrometerPlugin(BaseTaskPlugin):
                                           factory=script_action(f),
                                           path='MenuBar/procedures.menu/spectrometer_script.group'))
         if actions:
-            m = SchemaAddition(id='procedures.menu',
-                               before='window.menu',
-                               after='tools.menu',
-                               factory=lambda: SMenu(name='Procedures', id='procedures.menu'),
-                               path='MenuBar')
+            # m = SchemaAddition(id='procedures.menu',
+            #                    before='window.menu',
+            #                    after='tools.menu',
+            #                    factory=lambda: SMenu(name='Procedures', id='procedures.menu'),
+            #                    path='MenuBar')
             g = SchemaAddition(id='spectrometer_script.group',
                                factory=lambda: SGroup(name='Spectrometer',
                                                       id='spectrometer_script.group'),
                                path='MenuBar/procedures.menu')
 
             actions.insert(0, g)
-            actions.insert(0, m)
+            # actions.insert(0, m)
 
             ext = TaskExtension(actions=actions)
             return ext
@@ -236,6 +236,11 @@ class BaseSpectrometerPlugin(BaseTaskPlugin):
                                                     path='MenuBar',
                                                     before='window.menu',
                                                     after='tools.menu'),
+                                     SchemaAddition(id='procedures.menu',
+                                                    before='window.menu',
+                                                    after='spectrometer.menu',
+                                                    factory=lambda: SMenu(name='Procedures', id='procedures.menu'),
+                                                    path='MenuBar'),
                                      SchemaAddition(id='update_mftable',
                                                     path='MenuBar/spectrometer.menu',
                                                     factory=PopulateMFTableAction),
