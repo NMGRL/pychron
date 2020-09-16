@@ -111,8 +111,8 @@ class ExperimentPlugin(BaseTaskPlugin):
                 # if not eflag and ai.id.startswith('pychron.experiment.edit'):
                 if ai.id.startswith('pychron.experiment.edit'):
                     # eflag = True
-                    additions.append(SchemaAddition(id='experiment.edit',
-                                                    factory=lambda: SGroup(id='experiment.group'),
+                    additions.append(SchemaAddition(id='experiment_edit.group',
+                                                    factory=lambda: SGroup(id='experiment_edit.group'),
                                                     path='MenuBar/edit.menu'), )
                     break
 
@@ -158,11 +158,11 @@ class ExperimentPlugin(BaseTaskPlugin):
                                               path=path))
 
         eactions = []
-        for path, fs in (('edit.menu/experiment.group', ((DeselectAction, 'deselect'),
-                                                         (ResetQueuesAction, 'reset'),
-                                                         (SyncQueueAction, 'sync'),
-                                                         (UndoAction, 'undo'),
-                                                         (ConfigureEditorTableAction, 'configure'))),
+        for path, fs in (('edit.menu/experiment_edit.group', ((DeselectAction, 'deselect'),
+                                                              (ResetQueuesAction, 'reset'),
+                                                              (SyncQueueAction, 'sync'),
+                                                              (UndoAction, 'undo'),
+                                                              (ConfigureEditorTableAction, 'configure'))),
                          ('file.menu/Save', ((SaveAsCurrentExperimentAction, 'save_as_current_experiment'),))):
             path = 'MenuBar/{}'.format(path)
             for f, t in fs:

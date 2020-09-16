@@ -21,19 +21,24 @@ from threading import Thread
 # ============= enthought library imports =======================
 from envisage.extension_point import ExtensionPoint
 from envisage.ui.tasks.action.exit_action import ExitAction
-from envisage.ui.tasks.action.preferences_action import PreferencesAction
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.tasks_plugin import TasksPlugin
+from pyface.action.group import Group
 from pyface.confirmation_dialog import confirm
 from pyface.constant import NO
 from pyface.tasks.action.dock_pane_toggle_group import DockPaneToggleGroup
+from pyface.tasks.action.schema import SMenu, SGroup
 from pyface.tasks.action.schema_addition import SchemaAddition
 from traits.api import List, Tuple, HasTraits, Password
 from traitsui.api import View, Item
 
 from pychron.envisage.resources import icon
-from pychron.envisage.tasks.actions import ToggleFullWindowAction, EditInitializationAction, EditTaskExtensionsAction
+from pychron.envisage.tasks.actions import ToggleFullWindowAction, EditInitializationAction, EditTaskExtensionsAction, \
+    GenericFindAction, GenericSaveAsAction, GenericSaveAction, ShareSettingsAction, ApplySettingsAction, CloseAction, \
+    CloseOthersAction, OpenAdditionalWindow, MinimizeAction, ResetLayoutAction, PositionAction, IssueAction, NoteAction, \
+    AboutAction, DocumentationAction, ChangeLogAction, RestartAction, StartupTestsAction
 from pychron.envisage.tasks.base_plugin import BasePlugin
+from pychron.envisage.tasks.base_task import WindowGroup
 from pychron.envisage.tasks.preferences import GeneralPreferencesPane, BrowserPreferencesPane
 from pychron.globals import globalv
 from pychron.paths import paths
@@ -113,8 +118,8 @@ class PychronTasksPlugin(BasePlugin):
         return [TaskExtension(actions=actions)]
 
 
-class mPreferencesAction(PreferencesAction):
-    image = icon('preferences-desktop')
+# class mPreferencesAction(PreferencesAction):
+#     image = icon('preferences-desktop')
 
 
 class ConfirmApplicationExit(HasTraits):
@@ -151,22 +156,90 @@ class mExitAction(ExitAction):
 class myTasksPlugin(TasksPlugin):
     def _my_task_extensions_default(self):
         from pyface.tasks.action.api import SchemaAddition
+        from envisage.ui.tasks.action.preferences_action import PreferencesGroup
 
-        actions = [SchemaAddition(id='Exit',
-                                  factory=mExitAction,
-                                  path='MenuBar/file.menu'),
-                   SchemaAddition(id='preferences',
-                                  factory=mPreferencesAction,
-                                  path='MenuBar/file.menu'),
-                   SchemaAddition(id='DockPaneToggleGroup',
-                                  factory=DockPaneToggleGroup,
-                                  path='MenuBar/view.menu'),
-                   SchemaAddition(factory=ToggleFullWindowAction,
-                                  id='toggle_full_window',
-                                  path='MenuBar/window.menu'),
-                   SchemaAddition(factory=EditTaskExtensionsAction,
-                                  id='edit_task_extensions',
-                                  path='MenuBar/help.menu')]
+        def edit_menu():
+            return SMenu(GenericFindAction(), id='edit.menu', name='&Edit')
+
+        def file_menu():
+            return SMenu(SGroup(id='Open'),
+                         SGroup(id='New'),
+                         SGroup(
+                             GenericSaveAsAction(),
+                             GenericSaveAction(),
+                             id='Save'),
+                         mExitAction(),
+                         PreferencesGroup(),
+                         id='file.menu', name='&File')
+
+        def tools_menu():
+            return SMenu(ShareSettingsAction(),
+                         ApplySettingsAction(),
+                         id='tools.menu', name='Tools')
+
+        def window_menu():
+            return SMenu(WindowGroup(),
+                         Group(CloseAction(),
+                               CloseOthersAction(),
+                               id='Close'),
+                         OpenAdditionalWindow(),
+                         Group(MinimizeAction(),
+                               ResetLayoutAction(),
+                               PositionAction()),
+                         ToggleFullWindowAction(),
+                         # SplitEditorAction(),
+                         id='window.menu',
+                         name='Window')
+
+        def help_menu():
+            return SMenu(IssueAction(),
+                         NoteAction(),
+                         AboutAction(),
+                         DocumentationAction(),
+                         ChangeLogAction(),
+                         RestartAction(),
+
+                         # KeyBindingsAction(),
+                         # SwitchUserAction(),
+
+                         StartupTestsAction(),
+                         EditTaskExtensionsAction(),
+                         id='help.menu',
+                         name='&Help')
+
+        def view_menu():
+            return SMenu(id='view.menu', name='&View')
+
+        actions = [
+            SchemaAddition(id='DockPaneToggleGroup',
+                           factory=DockPaneToggleGroup,
+                           path='MenuBar/view.menu'),
+            SchemaAddition(path='MenuBar',
+                           factory=file_menu,
+                           absolute_position='first'),
+
+            SchemaAddition(path='MenuBar',
+                           after='file.menu',
+                           before='view.menu',
+                           factory=edit_menu),
+
+            SchemaAddition(path='MenuBar',
+                           after='edit.menu',
+                           factory=view_menu),
+
+            SchemaAddition(path='MenuBar',
+                           factory=tools_menu,
+                           absolute_position='last'),
+
+            SchemaAddition(path='MenuBar',
+                           factory=window_menu,
+                           absolute_position='last'),
+
+            SchemaAddition(path='MenuBar',
+                           factory=help_menu,
+                           absolute_position='last'),
+
+        ]
 
         return [TaskExtension(actions=actions)]
 

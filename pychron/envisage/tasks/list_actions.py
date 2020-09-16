@@ -243,6 +243,8 @@ class ProcedureAction(ListAction):
 
 
 class CancelProcedureAction(TaskAction):
+    name = 'Cancel Procedure'
+
     def perform(self, event):
         app = event.task.application
         script_executor = app.get_service('pychron.pyscripts.tasks.pyscript_task.ScriptExecutor')
