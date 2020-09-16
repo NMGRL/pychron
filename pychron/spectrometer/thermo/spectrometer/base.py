@@ -88,13 +88,22 @@ class ThermoSpectrometer(BaseSpectrometer):
 
     _test_connect_command = 'GetIntegrationTime'
 
+    def hardware_names(self):
+        return dict(ion_repeller='Ion Repeller',
+                    electron_energy='Electron Energy',
+                    y_symmetry='Y-Symmetry',
+                    z_symmetry='Z-Symmetry',
+                    extraction_lens='Extraction Lens',
+                    z_focus='Z-Focus',
+                    hv='HV')
+
     def make_deflection_dict(self):
         names = self.detector_names
         values = self.read_deflection_word(names)
         return dict(list(zip(names, values)))
 
     def make_configuration_dict(self):
-        keys = list(self.get_command_map().values())
+        keys = list(self.hardware_names().values())
         values = self.get_parameter_word(keys)
         d = dict(list(zip(keys, values)))
 
@@ -189,7 +198,12 @@ class ThermoSpectrometer(BaseSpectrometer):
         return it
 
     def set_parameter(self, name, v, post_delay=None):
-        cmd = '{} {}'.format(name, v)
+        if not name.startswith('Set'):
+            mk = self.hardware_names()
+            cmd = 'SetParameter {} Set,{}'.format(mk.get(name, name), v)
+        else:
+            cmd = '{} {}'.format(name, v)
+
         self.ask(cmd)
         if post_delay:
             time.sleep(post_delay)
@@ -198,7 +212,7 @@ class ThermoSpectrometer(BaseSpectrometer):
         if hasattr(self.source, 'read_{}'.format(cmd.lower())):
             return getattr(self.source, 'read_{}'.format(cmd.lower()))()
         else:
-            return self.ask('Get{}'.format(cmd))
+            return self.ask('GetParameter {}'.format(cmd))
 
     def set_deflection(self, name, value):
         det = self.get_detector(name)
@@ -394,11 +408,11 @@ class ThermoSpectrometer(BaseSpectrometer):
 
         self.clear_cached_config()
 
-    def _get_source_parameter_value(self, mk, k):
+    def _get_source_parameter_value(self, k, hardware_name):
         try:
             ret = getattr(self.source, 'read_{}'.format(k.lower()))()
         except AttributeError:
-            ret = self.get_parameter(mk[k.lower()])
+            ret = self.get_parameter(hardware_name)
         return ret
 
     def verify_configuration(self, **kw):
@@ -406,7 +420,7 @@ class ThermoSpectrometer(BaseSpectrometer):
         readout_comp, defl_comp = self._load_configuration_comparisons()
         mismatch = False
         if self.microcontroller:
-            command_map = self.get_command_map()
+            hardware_names = self.hardware_names()
             args = self._get_cached_config()
             if args is not None:
                 specparams, defl, trap, magnet = args
@@ -419,23 +433,22 @@ class ThermoSpectrometer(BaseSpectrometer):
                             self.warning('verify failed {}. current={}, config={}'.format(k, current, v))
                             mismatch = True
 
-                print('asdffffff', readout_comp)
                 for k, v in specparams.items():
                     try:
-                        mk = command_map[k]
+                        mk = hardware_names[k]
                     except KeyError:
-                        self.debug('--- Not checking {}. Not in command_map'.format(k))
+                        self.debug('--- Not checking {}. Not in hardware_names'.format(k))
                         continue
 
-                    comp = readout_comp.get(mk, {})
+                    comp = readout_comp.get(k, {})
                     if comp.get('compare', True):
-                        current = self._get_source_parameter_value(command_map, mk)
+                        current = self._get_source_parameter_value(k, mk)
                         try:
                             current = float(current)
                         except ValueError:
                             self.warning('invalid float value {}, {}'.format(mk, current))
                             continue
-                        print('asdf', mk, comp)
+
                         dev = self._get_config_dev(current, v, comp)
                         if dev:
                             self.warning('verify failed {}. current={}, config={}'.format(mk, current, v))
@@ -518,7 +531,7 @@ class ThermoSpectrometer(BaseSpectrometer):
             self.debug('Not setting {:<20s} current={}, config={}'.format(k, c, v))
 
         if self.microcontroller:
-            command_map = self.get_command_map()
+            hardware_names = self.hardware_names()
             ret = self._get_cached_config()
             if ret is not None:
                 specparams, defl, trap, magnet = ret
@@ -538,21 +551,19 @@ class ThermoSpectrometer(BaseSpectrometer):
 
                 for k, v in specparams.items():
                     try:
-                        mk = command_map[k]
+                        mk = hardware_names[k]
                     except KeyError:
-                        self.debug('--- Not setting {}. Not in command_map'.format(k))
+                        self.debug('--- Not setting {}. Not in hardware_names'.format(k))
                         continue
 
                     if not self.force_send_configuration:
-                        comp = readout_comp.get(mk, {})
+                        comp = readout_comp.get(k, {})
                         if comp.get('compare', True):
-                            # cmd = 'Get{}'.format(mk)
-                            # current = self.get_parameter(cmd)
-                            current = self._get_source_parameter_value(mk, k)
+                            current = self._get_source_parameter_value(k, mk)
                             try:
                                 current = float(current)
                             except (ValueError, TypeError):
-                                self.warning('invalid value {}, {}'.format(mk, current))
+                                self.warning('invalid value {}, {}'.format(k, current))
                                 continue
 
                             dev = self._get_config_dev(current, v, comp)
