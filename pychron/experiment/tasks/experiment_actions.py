@@ -49,7 +49,7 @@ class ExperimentAction(UIAction):
 
 
 class ConfigureEditorTableAction(UITaskAction):
-    name = 'Configure Experiment Table'
+    name = 'Experiment Table Configuration'
     method = 'configure_experiment_table'
 
 

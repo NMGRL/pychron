@@ -180,13 +180,9 @@ def xy_func(p):
 XY_REGEX = (
 re.compile(r'([-\d+]+(\.\d)+(,[-\d+]+(\.\d)+){1,2})(;([-\d+]+(\.\d)+(,[-\d+]+(\.\d+)){1,2}))*$'), xy_func, None, 'XY')
 
-'''
-    e.g d1
-        d2
-        D34
-'''
-DRILL_REGEX = re.compile('[dD]\d+$')
-POINT_REGEX = re.compile('p\d+$')
+DRILL_REGEX = re.compile(r'^(?P<id>[dD]\d+)$')
+POINT_REGEX = re.compile(r'^(?P<id>[pP]\d+)$')
+SCAN_REGEX = re.compile(r'^(?P<id>[sS]\d+)$')
 
 if __name__ == '__main__':
     for pos in ('-1.0,2.0;', '1.0;', '1.0;2.0', '1.0,2.0;3.0,4.0'):

@@ -17,6 +17,7 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from __future__ import absolute_import
+
 from pychron.hardware.thermo_spectrometer_controller import ArgusController
 from pychron.spectrometer.thermo.detector.argus import ArgusDetector
 from pychron.spectrometer.thermo.magnet.argus import ArgusMagnet
@@ -38,14 +39,4 @@ class ArgusSpectrometer(ThermoSpectrometer):
     detector_klass = ArgusDetector
     microcontroller_klass = ArgusController
 
-    def get_command_map(self):
-        command_map = dict(ionrepeller='IonRepeller',
-                           electronenergy='ElectronEnergy',
-                           ysymmetry='YSymmetry',
-                           zsymmetry='ZSymmetry',
-                           extractionlens='ExtractionLens',
-                           ioncountervoltage='IonCounterVoltage',
-                           zfocus='ZFocus',
-                           hv='HV')
-        return command_map
 # ============= EOF =============================================

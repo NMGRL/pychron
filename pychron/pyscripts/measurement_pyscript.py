@@ -724,17 +724,22 @@ class MeasurementPyScript(ValvePyScript):
             if dn.lower() == name.lower():
                 return config.getfloat(section, dn)
 
-    def _set_from_file(self, attrs, section, **user_params):
+    def _set_from_file(self, section, **user_params):
         func = self._set_spectrometer_parameter
         config = self._get_config()
-        for attr in attrs:
-            if attr in user_params:
-                v = user_params[attr]
-            else:
-                v = config.getfloat(section, attr)
+        for name, value in config.items(section):
+            if name in user_params:
+                value = user_params[name]
+            func(name, value)
 
-            if v is not None:
-                func('Set{}'.format(attr), v)
+        # for attr in attrs:
+        #     if attr in user_params:
+        #         v = user_params[attr]
+        #     else:
+        #         v = config.getfloat(section, attr)
+        #
+        #     if v is not None:
+        #         func('SetParameter {}'.format(attr), v)
 
     def _get_config(self):
         config = ConfigParser()

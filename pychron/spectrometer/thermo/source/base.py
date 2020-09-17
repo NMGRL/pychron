@@ -57,10 +57,10 @@ class ThermoSource(BaseSource):
         return self._read_value('GetParameter Trap Current Readback', '_trap_current')
 
     def read_y_symmetry(self):
-        return self._read_value('GetYSymmetry', '_y_symmetry')
+        return self._read_value('GetParameter Y-Symmetry Set', '_y_symmetry')
 
     def read_z_symmetry(self):
-        return self._read_value('GetZSymmetry', '_z_symmetry')
+        return self._read_value('GetParameter Z-Symmetry Set', '_z_symmetry')
 
     def read_trap_voltage(self):
         return self._read_value('GetParameter Trap Voltage Readback', '_trap_voltage')
