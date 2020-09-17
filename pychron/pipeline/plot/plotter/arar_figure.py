@@ -390,6 +390,10 @@ class BaseArArFigure(SelectionFigure):
         k = 'kcl'
         return self._plot_aux('K/Cl', k, po, pid)
 
+    def _plot_clk(self, po, pobj, pid):
+        k = 'clk'
+        return self._plot_aux('Cl/K', k, po, pid)
+
     def _plot_kca(self, po, pobj, pid):
         k = 'kca'
         return self._plot_aux('K/Ca', k, po, pid)
