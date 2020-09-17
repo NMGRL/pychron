@@ -38,11 +38,11 @@ class HelixSpectrometer(ThermoSpectrometer):
         hn = super(HelixSpectrometer, self).hardware_names()
         hn['flatapole'] = 'Flatapole'
         hn['rotation_quad'] = 'RotationQuad'
-        hn['vertical_deflection_n'] = 'VerticalDeflection N'
-        hn['vertical_deflection_s'] = 'VerticalDeflection S'
-        hn['horizontal_symmetry'] = 'Horizontal Symmetry'
-        hn['extraction_focus'] = 'Extraction Focus'
-        hn['extraction_symmetry'] = 'Extraction Symmetry'
+        hn['vertical_deflection_n'] = 'VerticalDeflection N Set'
+        hn['vertical_deflection_s'] = 'VerticalDeflection S Set'
+        hn['horizontal_symmetry'] = 'Horizontal Symmetry Set'
+        hn['extraction_focus'] = 'Extraction Focus Set'
+        hn['extraction_symmetry'] = 'Extraction Symmetry Set'
 
         return hn
 

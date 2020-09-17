@@ -409,7 +409,7 @@ class BaseSpectrometer(SpectrometerDevice):
             if 'hv' in d:
                 self.source.nominal_hv = d['hv']
 
-            self._config = (d, defl, trap, magnet)
+            self._config = dict(source=d, deflection=defl, trap=trap, magnet=magnet)
 
         return self._config
 
