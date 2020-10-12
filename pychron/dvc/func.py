@@ -161,6 +161,7 @@ def make_interpreted_age_dict(ia):
     # make analyses
     def analysis_factory(x):
         return dict(uuid=x.uuid,
+                    rundate=x.rundate.isoformat(),
                     record_id=x.record_id,
                     extract_value=x.extract_value,
                     age=x.age,
