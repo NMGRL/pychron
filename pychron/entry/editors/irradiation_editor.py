@@ -164,7 +164,8 @@ class IrradiationEditor(PackageEditor):
         v = self._edit_view_klass(model=self)
         info = v.edit_traits()
         if info.result:
-            self._add_irradiation()
+            self.debug('add irradiation={}'.format(self.name))
+            self.dvc.add_irradiation(self.name, self.chronology.get_doses(), verbose=False)
             if self.selected_reactor_name:
                 self.dvc.add_production_to_irradiation(self.name, self.reactor.name, self.reactor.get_params())
 
@@ -172,11 +173,11 @@ class IrradiationEditor(PackageEditor):
 
         return self.name
 
-    def _add_package(self):
-        self.debug('add irradiation={}'.format(self.name))
-        self.dvc.add_irradiation(self.name, self.chronology.get_doses(), verbose=False)
-        if self.selected_reactor_name:
-            self.dvc.add_production_to_irradiation(self.name, self.reactor.name, self.reactor.get_params())
+    #def _add_irradiation(self):
+    #    self.debug('add irradiation={}'.format(self.name))
+    #    self.dvc.add_irradiation(self.name, self.chronology.get_doses(), verbose=False)
+    #    if self.selected_reactor_name:
+    #        self.dvc.add_production_to_irradiation(self.name, self.reactor.name, self.reactor.get_params())
 
     def _load_reactors(self):
 

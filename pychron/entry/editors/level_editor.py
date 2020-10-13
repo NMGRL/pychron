@@ -19,7 +19,7 @@ import os
 # ============= enthought library imports =======================
 from enable.component_editor import ComponentEditor
 from pyface.constant import YES, NO
-from traits.api import List, Instance, Str, Button, Property, HasTraits, Dict, Enum
+from traits.api import List, Instance, Str, Button, Property, HasTraits, Dict, Enum, Float
 from traitsui.api import View, Item, TabularEditor, HGroup, UItem, Group, VGroup, \
     HSplit, EnumEditor
 from traitsui.tabular_adapter import TabularAdapter
@@ -130,6 +130,7 @@ class UpdateReactorView(ModelView):
 
 
 class IrradiationLevelEditor(PackageLevelEditor):
+    z = Float
     selected_production = Instance(IrradiationProduction, ())
 
     new_production_name = Str
