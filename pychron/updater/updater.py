@@ -83,7 +83,8 @@ class Updater(Loggable):
             return self._validate_origin(self.remote)
 
     def set_revisions(self):
-        self._check_for_updates()
+        self.debug('setting revisions from local repository. not fetching latest commit from remote')
+        self._get_local_remote_commits(fetch=False)
 
     def check_for_updates(self, inform=False, restart=True):
         self.debug('checking for updates')
@@ -111,7 +112,7 @@ class Updater(Loggable):
             if remote and branch:
                 if self._validate_origin(remote):
                     if self._validate_branch(branch):
-                        lc, rc = self._check_for_updates()
+                        lc, rc = self._get_local_remote_commits()
                         hexsha = self._out_of_date(lc, rc)
                         if hexsha:
                             # tag this commit so we can easily jump back
@@ -261,15 +262,15 @@ class Updater(Loggable):
             print('excepiton validating origin', cmd, e)
             return
 
-    def _check_for_updates(self):
-        branchname = self.branch
-        self.debug('checking for updates on {}'.format(branchname))
-        local_commit, remote_commit = self._get_local_remote_commits()
-
-        self.debug('local  commit ={}'.format(local_commit))
-        self.debug('remote commit ={}'.format(remote_commit))
-        self.application.set_revisions(local_commit, remote_commit)
-        return local_commit, remote_commit
+    # def _check_for_updates(self):
+    #     branchname = self.branch
+    #     self.debug('checking for updates on {}'.format(branchname))
+    #     local_commit, remote_commit = self._get_local_remote_commits()
+    #
+    #     self.debug('local  commit ={}'.format(local_commit))
+    #     self.debug('remote commit ={}'.format(remote_commit))
+    #     self.application.set_revisions(local_commit, remote_commit)
+    #     return local_commit, remote_commit
 
     def _out_of_date(self, lc, rc, restart=True):
         if rc and lc != rc:
@@ -296,13 +297,18 @@ class Updater(Loggable):
             branch = repo.create_head(name, commit=oref.commit)
         return branch
 
-    def _get_local_remote_commits(self):
+    def _get_local_remote_commits(self, fetch=True):
+        branchname = self.branch
+        self.debug('checking for updates on {}'.format(branchname))
+
         if self.use_tag:
-            return self._repo.tags[self.version_tag], self._repo[self.version_tag]
+            local_commit, remote_commit = self._repo.tags[self.version_tag], self._repo[self.version_tag]
             # return self.version_tag, self.version_tag
         else:
             repo = self._get_working_repo()
-            repo.git.fetch()
+            if fetch:
+                repo.git.fetch()
+
             branchname = self.branch
             origin = repo.remotes.origin
             try:
@@ -314,7 +320,11 @@ class Updater(Loggable):
             branch = self._get_branch(branchname)
 
             local_commit = branch.commit
-            return local_commit, remote_commit
+
+        self.debug('local  commit ={}'.format(local_commit))
+        self.debug('remote commit ={}'.format(remote_commit))
+        self.application.set_revisions(local_commit, remote_commit)
+        return local_commit, remote_commit
 
     def _get_local_commit(self):
         repo = self._get_working_repo()

@@ -151,13 +151,13 @@ class DVCPlugin(BaseTaskPlugin):
                    SchemaAddition(factory=ShareChangesAction,
                                   path='MenuBar/tools.menu'),
                    SchemaAddition(factory=ClearCacheAction,
-                                  path='MenuBar/tools.menu'),
-                   SchemaAddition(factory=GenerateCurrentsAction,
-                                  path='MenuBar/tools.menu'),
-                   # SchemaAddition(factory=MapRunIDsAction,
-                   #                path='MenuBar/tools.menu')
+                                  path='MenuBar/tools.menu')
                    ]
 
-        return [TaskExtension(actions=actions), ]
+        pipeline_actions = [SchemaAddition(factory=GenerateCurrentsAction,
+                                           path='MenuBar/tools.menu')]
+
+        return [TaskExtension(actions=actions),
+                TaskExtension(actions=pipeline_actions, task_id='pychron.pipeline.task')]
 
 # ============= EOF =============================================

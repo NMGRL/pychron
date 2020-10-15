@@ -341,11 +341,13 @@ class TagAction(TaskAction):
 class SetInvalidAction(TaskAction):
     name = 'Set Invalid'
     method = 'set_invalid'
+    image = icon('edit-delete-2')
 
 
 class SetFilteringTagAction(TaskAction):
     name = 'Set Filtering Tag'
     method = 'set_filtering_tag'
+    image = icon('flag')
 
 
 # ============= Interperted Age =================================
@@ -353,6 +355,7 @@ class SetInterpretedAgeAction(TaskAction):
     name = 'Set Interpreted Age'
     method = 'set_interpreted_age'
     enabled_name = 'set_interpreted_enabled'
+    image = icon('brick-add')
 
 
 class SavePDFAction(TaskAction):
