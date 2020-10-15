@@ -81,6 +81,8 @@ class PipelineTreeNode(TreeNode):
         if name in ICON_MAP:
             i = ICON_MAP[name]
         else:
+            if not name:
+                name = 'large_tiles'
             i = icon(name)
             ICON_MAP[name] = i
 

@@ -89,7 +89,6 @@ nodes:
 """
 
 CSV_IDEO = """
-icon: ideo
 required:
 nodes:
   - klass: CSVNode
@@ -98,7 +97,6 @@ nodes:
 """
 
 ARAR_IDEO = """
-icon: ideo
 required:
 nodes:
   - klass: UnknownNode
@@ -108,7 +106,6 @@ nodes:
 """
 
 CORRELATION_IDEO = """
-icon: ideo
 required:
 nodes:
   - klass: UnknownNode
@@ -117,7 +114,6 @@ nodes:
 """
 
 IDEO = """
-icon: ideo
 required:
 nodes:
   - klass: UnknownNode
@@ -192,7 +188,6 @@ nodes:
 """
 
 XY_SCATTER = """
-icon: chart_curve
 required:
 nodes:
   - klass: UnknownNode
@@ -256,7 +251,6 @@ nodes:
 """
 
 INTERPRETED_AGE_IDEOGRAM = """
-icon: ideo
 required:
 nodes:
   - klass: InterpretedAgeNode
@@ -264,7 +258,6 @@ nodes:
 """
 
 HYBRID_IDEOGRAM = """
-icon: ideo
 required:
 nodes:
   - klass: UnknownNode
@@ -274,7 +267,6 @@ nodes:
 """
 
 SUBGROUP_IDEOGRAM = """
-icon: ideo
 required:
 nodes:
   - klass: UnknownNode
@@ -286,7 +278,6 @@ nodes:
 """
 
 HISTORY_IDEOGRAM = """
-icon: ideo
 required:
 nodes:
   - klass: UnknownNode
@@ -310,7 +301,6 @@ nodes:
 """
 
 SERIES = """
-icon: chart_curve
 required:
 nodes:
   - klass: UnknownNode
@@ -402,7 +392,6 @@ nodes:
 """
 
 PYSCRIPT = """
-icon: script
 required:
 nodes:
   - klass: UnknownNode
@@ -411,7 +400,6 @@ nodes:
 """
 
 RUNID_EDIT = """
-icon: hammer
 required:
 nodes: 
   - klass: UnknownNode

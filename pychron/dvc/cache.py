@@ -24,6 +24,12 @@ class DVCCache(object):
     def clear(self):
         self._cache.clear()
 
+    def remove(self, key):
+        try:
+            self._cache.pop(key)
+        except KeyError:
+            pass
+
     def clean(self):
         t = 60 * 15  # 15 minutes
         now = datetime.now()
