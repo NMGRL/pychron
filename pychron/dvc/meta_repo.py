@@ -591,7 +591,7 @@ class MetaRepo(GitRepoManager):
                 chron.use_irradiation_endtime = self.application.get_boolean_preference(
                     'pychron.arar.constants.use_irradiation_endtime', False)
         except MetaObjectException:
-            if name != 'NoIrradiation':
+            if name != 'NoIrradiation' and not name.startswith('Package'):
                 self.warning('Could not locate the irradiation chronology "{}"'.format(name))
         return chron
 

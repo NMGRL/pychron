@@ -139,7 +139,7 @@ class PipelinePlugin(BaseTaskPlugin):
         extensions.append(TaskExtension(actions=additions))
 
         debug_additions = [SchemaAddition(factory=IdentifyPeaksDemoAction, path='MenuBar/tools.menu')]
-        extensions.append(TaskExtension(actions=debug_additions))
+        extensions.append(TaskExtension(actions=debug_additions, task_id='pychron.pipeline.task'))
         return extensions
 
     def _available_task_extensions_default(self):

@@ -66,7 +66,7 @@ class dirty_ctx(object):
 
 class LabnumberEntry(DVCIrradiationable):
     use_dvc = Bool
-    mode = Str
+    mode = Str(AR_AR)
 
     irradiation_tray = Str
     # trays = Property
