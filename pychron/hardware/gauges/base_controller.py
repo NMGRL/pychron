@@ -173,7 +173,7 @@ class BaseGaugeController(HasTraits):
                        label=self.display_name))
         return v
 
-    def graph_builder(self, g):
+    def graph_builder(self, g, **kw):
         for i, gi in enumerate(self.gauges):
             g.new_plot(padding=[50, 5, 5, 35],
                        zoom=True,

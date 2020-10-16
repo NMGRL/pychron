@@ -132,7 +132,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                 ds += self.read(16)
             except BaseException:
                 self.debug_exception()
-                self.debug(f'data left: {ds}')
+                self.debug('data left: {}'.format(ds))
 
             if ds.endswith('\r\n'):
                 return ds.strip()
@@ -162,7 +162,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
 
         # self.microcontroller.lock.acquire()
         # self.debug(f'acquired mcir lock {self.microcontroller.lock}')
-        target = f'#EVENT:{target},{self.rcs_id}'
+        target = '#EVENT:{},{}'.format(target, self.rcs_id)
         if resp is not None:
             keys = self.detector_names[::-1]
             while 1:
@@ -171,7 +171,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                     break
 
                 if verbose:
-                    self.debug(f'raw: {line}')
+                    self.debug('raw: {}'.format(line))
                 if line and line.startswith(target):
                     args = line[:-1].split(',')
                     ct = datetime.strptime(args[4], '%H:%M:%S.%f')
@@ -184,10 +184,10 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                     try:
                         signals = [float(i) for i in args[5:]]
                     except ValueError as e:
-                        self.warning(f'Failed getting data. error={e}')
+                        self.warning('Failed getting data. error={}'.format(e))
 
                     if verbose:
-                        self.debug(f'line: {line[:15]}')
+                        self.debug('line: {}'.format(line[:15]))
                     break
 
         # self.microcontroller.lock.release()

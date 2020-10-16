@@ -218,11 +218,9 @@ class ChromiumLaserManager(EthernetLaserManager):
         return r
 
     def _stage_manager_default(self):
-
-        name = 'chromium'
         args = dict(name='stage',
                     configuration_name='stage',
-                    configuration_dir_name=name,
+                    configuration_dir_name=self.configuration_dir_name,
                     parent=self)
         return self._stage_manager_factory(args)
 
@@ -255,7 +253,7 @@ class ChromiumDiodeManager(ChromiumLaserManager):
 
 
 class ChromiumUVManager(ChromiumLaserManager):
-
+    configuration_dir_name = 'chromium_uv'
     _active_scan = None
 
     def extract(self, *args, **kw):
