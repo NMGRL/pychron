@@ -182,7 +182,8 @@ re.compile(r'([-\d+]+(\.\d)+(,[-\d+]+(\.\d)+){1,2})(;([-\d+]+(\.\d)+(,[-\d+]+(\.
 
 DRILL_REGEX = re.compile(r'^(?P<id>[dD]\d+)$')
 POINT_REGEX = re.compile(r'^(?P<id>[pP]\d+)$')
-SCAN_REGEX = re.compile(r'^(?P<id>[sS]\d+)$')
+
+SCAN_REGEX = (re.compile(r'^(?P<id>[sS]\d+)$'), None, None, 'Scan')
 
 if __name__ == '__main__':
     for pos in ('-1.0,2.0;', '1.0;', '1.0;2.0', '1.0,2.0;3.0,4.0'):
