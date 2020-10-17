@@ -958,27 +958,28 @@ class DVC(Loggable):
             self.debug('examining {}'.format(name))
 
             r = Repo(repository_path(name))
-            lc = r.commit(branch).hexsha
+            if branch in [b.name for b in r.branches]:
+                lc = r.commit(branch).hexsha
 
-            for gi in gs:
-                outdated, sha = gi.up_to_date(self.organization, name, lc, branch)
-                if outdated:
-                    try:
-                        fsha = r.commit('FETCH_HEAD').hexsha
-                    except BaseException:
-                        fsha = None
+                for gi in gs:
+                    outdated, sha = gi.up_to_date(self.organization, name, lc, branch)
+                    if outdated:
+                        try:
+                            fsha = r.commit('FETCH_HEAD').hexsha
+                        except BaseException:
+                            fsha = None
 
-                    try:
-                        if fsha != sha:
-                            self.debug('fetching {}'.format(name))
-                            r.git.fetch()
+                        try:
+                            if fsha != sha:
+                                self.debug('fetching {}'.format(name))
+                                r.git.fetch()
 
-                        item.dirty = True
+                            item.dirty = True
+                            item.update(fetch=False)
+                        except GitCommandError as e:
+                            self.warning('error examining {}. {}'.format(name, e))
+                    else:
                         item.update(fetch=False)
-                    except GitCommandError as e:
-                        self.warning('error examining {}. {}'.format(name, e))
-                else:
-                    item.update(fetch=False)
 
         progress_loader(names, func, threshold=1)
         for gi in gs:
