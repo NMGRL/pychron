@@ -83,14 +83,14 @@ class ChromiumLaserManager(EthernetLaserManager):
 
     def get_position(self):
         x, y, z = self._x, self._y, self._z
-        xyz_microns = self.ask('stage.pos?\n')
+        xyz_microns = self.ask('stage.pos?')
         if xyz_microns:
             x, y, z = [float(v) / 1000. for v in xyz_microns.split(',')]
             if self.stage_manager.use_sign_position_correction:
                 x = x * self.stage_manager.x_sign
                 y = y * self.stage_manager.y_sign
                 z = z * self.stage_manager.z_sign
-        return x, y, z
+            return x, y, z
 
     def ask(self, cmd, **kw):
         return self._ask('{}\n'.format(cmd), **kw)
@@ -257,8 +257,13 @@ class ChromiumUVManager(ChromiumLaserManager):
     _active_scan = None
 
     def extract(self, *args, **kw):
+        self.ask('Scans.Status_Verbosity 1\n')
         if self._active_scan:
             self.ask('Scans.Run {}'.format(self._active_scan))
+            def func(r):
+                return r.lower() !='idle: idle'
+
+            self._block(cmd='Scans.Status?\n', cmpfunc=func, timeout=120)
             return True
         else:
             return super(ChromiumUVManager, self).extract(*args, **kw)
@@ -271,6 +276,10 @@ class ChromiumUVManager(ChromiumLaserManager):
         if scan_id:
             self._active_scan = scan_id
             self.ask('Scans.MoveTo {}'.format(scan_id))
+            def func(r):
+                return not bool(int(r))
+
+            self._block(cmd='Scans.InPos? {}\n'.format(scan_id), cmpfunc=func)
         else:
             self._active_scan = None
             return super(ChromiumUVManager, self)._move_to_position(pos, *args, **kw)
@@ -280,7 +289,7 @@ class ChromiumUVManager(ChromiumLaserManager):
         super(ChromiumUVManager, self).disable_laser()
 
     def _get_scan_id(self, pos):
-        m = SCAN_REGEX.match(pos)
+        m = SCAN_REGEX[0].match(pos)
         if m:
             return int(m.group('id')[1:])
         return

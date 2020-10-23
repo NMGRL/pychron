@@ -34,7 +34,7 @@ from pychron.experiment.utilities.runid import make_rid, make_runid
 from pychron.pychron_constants import SCRIPT_KEYS, SCRIPT_NAMES, DETECTOR_IC, DURATION, EXTRACT_VALUE, EXTRACT_UNITS, \
     RAMP_RATE, RAMP_DURATION, BEAM_DIAMETER, PRECLEANUP, CLEANUP, POSTCLEANUP, DELAY_AFTER, PATTERN, LIGHT_VALUE, TRAY, \
     MASS_SPECTROMETER, POSITION, USE_CDD_WARMING, EXTRACT_DEVICE, COLLECTION_TIME_ZERO_OFFSET, WEIGHT, COMMENT, PROJECT, \
-    SAMPLE, MATERIAL, REPOSITORY_IDENTIFIER, DISABLE_BETWEEN_POSITIONS, USERNAME
+    SAMPLE, MATERIAL, REPOSITORY_IDENTIFIER, DISABLE_BETWEEN_POSITIONS, USERNAME, NULL_STR
 
 logger = new_logger('AutomatedRunSpec')
 
@@ -687,4 +687,6 @@ post_equilibration_script, extraction_script, script_options, position, duration
             md5.update(str(v).encode('utf-8'))
         return md5
 
+    def __getattr__(self, item):
+        return NULL_STR
 # ============= EOF =============================================
