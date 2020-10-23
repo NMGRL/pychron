@@ -24,7 +24,7 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 from traits.api import List, Str
 
 from pychron.core.helpers.filetools import glob_list_directory
-from pychron.core.helpers.strtools import to_bool
+from pychron.core.helpers.strtools import to_bool, to_terminator
 from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.envisage.tasks.list_actions import PatternAction, ShowMotionConfigureAction
@@ -108,7 +108,7 @@ class BaseLaserPlugin(BaseTaskPlugin):
                              'parity',
                              'stopbits',
                              'message_frame',
-                             'write_terminator',
+                             ('write_terminator', to_terminator),
                              ('use_end', to_bool)]:
                     func = None
                     if isinstance(attr, tuple):

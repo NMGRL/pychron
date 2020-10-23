@@ -29,7 +29,7 @@ class RemoteDeviceMixin(Loggable):
     kind = Str
     message_frame = Str
     use_end = Bool
-    write_terminator = Str('\r')
+    write_terminator = chr(10)
 
     def open(self):
         return self.setup_communicator()

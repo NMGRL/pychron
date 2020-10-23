@@ -29,6 +29,12 @@ class ChromiumLaserManager(EthernetLaserManager):
     configuration_dir_name = 'chromium'
     _alive = False
 
+    def setup_communicator(self):
+        com = super(ChromiumLaserManager, self).setup_communicator()
+        if self.communicator:
+            self.communicator.write_terminator='\n\r'
+        return com
+
     def set_tray(self, t):
         if self.stage_manager:
             self.stage_manager.stage_map_name = t
@@ -268,7 +274,7 @@ class ChromiumUVManager(ChromiumLaserManager):
                 self.ask_active_scan('Run')
 
             def func(r):
-                return r.lower() !='idle: idle'
+                return str(r).strip().lower() !='idle: idle'
 
             self._block(cmd=scans('Status?'), cmpfunc=func, timeout=120)
             self._warmed=False
