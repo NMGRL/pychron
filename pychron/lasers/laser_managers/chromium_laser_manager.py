@@ -255,15 +255,29 @@ class ChromiumDiodeManager(ChromiumLaserManager):
 class ChromiumUVManager(ChromiumLaserManager):
     configuration_dir_name = 'chromium_uv'
     _active_scan = None
+    def _opened_hook(self):
+        self.ask('Scans.Status_Verbosity 1\n')
+
+    def warmup(self, block=None):
+        if self._active_scan:
+            self._warmed = True
+            self.ask('Scans.Run {}'.format(self._active_scan))
+            if block:
+                def func(r):
+                    return r.lower() !='running: warming up laser...'
+
+                self._block(cmd='Scans.Status?\n', cmpfunc=func, timeout=120)
 
     def extract(self, *args, **kw):
-        self.ask('Scans.Status_Verbosity 1\n')
         if self._active_scan:
-            self.ask('Scans.Run {}'.format(self._active_scan))
+            if not self._warmed:
+                self.ask('Scans.Run {}'.format(self._active_scan))
+
             def func(r):
                 return r.lower() !='idle: idle'
 
             self._block(cmd='Scans.Status?\n', cmpfunc=func, timeout=120)
+            self._warmed=False
             return True
         else:
             return super(ChromiumUVManager, self).extract(*args, **kw)
