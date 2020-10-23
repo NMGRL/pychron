@@ -15,9 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
-
 import os
 
 from envisage.ui.tasks.task_extension import TaskExtension
@@ -110,7 +107,9 @@ class BaseLaserPlugin(BaseTaskPlugin):
                              'baudrate',
                              'parity',
                              'stopbits',
-                             'message_frame', ('use_end', to_bool)]:
+                             'message_frame',
+                             'write_terminator',
+                             ('use_end', to_bool)]:
                     func = None
                     if isinstance(attr, tuple):
                         attr, func = attr

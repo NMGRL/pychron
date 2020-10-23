@@ -29,6 +29,7 @@ class RemoteDeviceMixin(Loggable):
     kind = Str
     message_frame = Str
     use_end = Bool
+    write_terminator = Str('\r')
 
     def open(self):
         return self.setup_communicator()
@@ -85,7 +86,8 @@ class EthernetDeviceMixin(RemoteDeviceMixin):
                                                       port=self.port,
                                                       kind=self.kind,
                                                       use_end=self.use_end,
-                                                      message_frame=self.message_frame)
+                                                      message_frame=self.message_frame,
+                                                      write_terminator=self.write_terminator)
 
         r = ec.open()
         # if r:
