@@ -276,7 +276,7 @@ class ChromiumUVManager(ChromiumLaserManager):
             def func(r):
                 return str(r).strip().lower() !='idle: idle'
 
-            self._block(cmd=scans('Status?'), cmpfunc=func, timeout=120)
+            self._block(cmd=scans('Status?'), cmpfunc=func, timeout=kw.get('block', 300) or 300)
             self._warmed=False
             return True
         else:
