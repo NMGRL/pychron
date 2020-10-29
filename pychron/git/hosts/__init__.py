@@ -139,14 +139,15 @@ class GitHostService(BaseGitHostService):
         os.chmod(askpass, st.st_mode | stat.S_IXUSR)
 
         if self.oauth_token:
-            u = ''
-            p = self.oauth_token
+            u = self.oauth_token
+            p = ''
         else:
             u = self.username
             p = self.password
 
         os.environ['GIT_ASKPASS_USERNAME'] = u
         os.environ['GIT_ASKPASS_PASSWORD'] = p
+        self.debug(os.environ)
 
     def up_to_date(self, organization, name, sha, branch='master'):
         return True, None

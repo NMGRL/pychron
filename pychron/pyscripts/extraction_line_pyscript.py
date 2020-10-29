@@ -639,7 +639,12 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def extract(self, power='', units=''):
+    def warmup(self, block=False):
+        self._extraction_action(('warmup', (), {'block': block, }))
+
+    @verbose_skip
+    @command_register
+    def extract(self, power='', units='', block=None):
         if power == '':
             power = self.extract_value
         if units == '':
@@ -655,7 +660,7 @@ class ExtractionPyScript(ValvePyScript):
         msg = '{} ON! {}({})'.format(ed, power, units)
         self._set_extraction_state(msg)
         self.console_info('extract sample to {} ({})'.format(power, units))
-        self._extraction_action(('extract', (power,), {'units': units, }))
+        self._extraction_action(('extract', (power,), {'units': units, 'block': block}))
 
     @verbose_skip
     @command_register
