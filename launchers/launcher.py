@@ -20,6 +20,7 @@ from helpers import entry_point
 appname = os.environ.get('PYCHRON_APPNAME', 'pycrunch')
 debug = os.environ.get('PYCHRON_DEBUG', False)
 
+
 entry_point(appname, debug=debug)
 
 # ============= EOF =============================================
