@@ -15,14 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traitsui.api import View, UItem, InstanceEditor, TableEditor, \
-    ObjectColumn, HGroup, VGroup, Item, UReadonly
-
+    ObjectColumn, HGroup, VGroup, Item, UReadonly, TabularEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from traitsui.tabular_adapter import TabularAdapter
+
 from pychron.envisage.icon_button_editor import icon_button_editor
 
 
@@ -34,6 +34,23 @@ class CurrentDevicePane(TraitsTaskPane):
             UItem('selected',
                   style='custom',
                   editor=InstanceEditor(view='current_state_view')))
+        return v
+
+
+class ResponseAdapter(TabularAdapter):
+    columns = [('Command', 'command'),
+               ('Response', 'response')]
+
+
+class TerminalPane(TraitsDockPane):
+    id = 'hardware.terminal'
+    name = 'Terminal'
+
+    def traits_view(self):
+        v = View(VGroup(HGroup(UItem('command'), icon_button_editor('send_command_button', 'arrow_right',
+                                                                    tooltip='Send command to device',
+                                                                    enabled_when='command')),
+                        UItem('responses', editor=TabularEditor(adapter=ResponseAdapter()))))
         return v
 
 

@@ -54,7 +54,7 @@ from pychron.pipeline.pipeline_defaults import ISOEVO, BLANKS, ICFACTOR, IDEO, S
     CSV_ANALYSES_EXPORT, BULK_EDIT, HISTORY_IDEOGRAM, HISTORY_SPECTRUM, AUDIT, SUBGROUP_IDEOGRAM, HYBRID_IDEOGRAM, \
     MASSSPEC_REDUCED, DEFINE_EQUILIBRATION, CA_CORRECTION_FACTORS, K_CORRECTION_FACTORS, \
     FLUX_VISUALIZATION, CSV_RAW_DATA_EXPORT, COMPOSITE, SIMPLE_ANALYSIS_TABLE, MASS_SPEC_FLUX, PYSCRIPT, RATIO_SERIES, \
-    CSV_SPEC, ARAR_IDEO, ARAR_SPEC, ARAR_INVERSE_ISOCHRON, ARAR_SIMPLE_ANALYSIS_TABLE, RUNID_EDIT, CORRELATION_IDEO
+    CSV_SPEC, ARAR_IDEO, ARAR_SPEC, ARAR_INVERSE_ISOCHRON, ARAR_SIMPLE_ANALYSIS_TABLE, RUNID_EDIT, CORRELATION_IDEO, MAP
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
 from pychron.pipeline.plot.editors.spectrum_editor import SpectrumEditor
@@ -872,7 +872,8 @@ class PipelineEngine(Loggable):
                      ('XY Scatter', XY_SCATTER),
                      ('Regression', REGRESSION_SERIES),
                      ('Flux Visualization', FLUX_VISUALIZATION),
-                     ('Vertical Flux', VERTICAL_FLUX))
+                     ('Vertical Flux', VERTICAL_FLUX),
+                     ('Map', MAP))
             tables = (('SubGrouped Analyses', ANALYSIS_TABLE),
                       ('Grouped Analyses', SIMPLE_ANALYSIS_TABLE),
                       ('Interpreted Age', INTERPRETED_AGE_TABLE),

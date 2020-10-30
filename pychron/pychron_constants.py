@@ -32,7 +32,7 @@ EL_PROTOCOL = 'pychron.extraction_line.extraction_line_manager.ExtractionLineMan
 DVC_PROTOCOL = 'pychron.dvc.dvc.DVC'
 FURNACE_PROTOCOL = 'pychron.furnace.furnace_manager.BaseFurnaceManager'
 ILASER_PROTOCOL = 'pychron.lasers.laser_managers.ilaser_manager.ILaserManager'
-IFURNACE_PROTOCOL = 'pychron.furnace.ifurnace_manager.IFurnaceManager',
+IFURNACE_PROTOCOL = 'pychron.furnace.ifurnace_manager.IFurnaceManager'
 IPIPETTE_PROTOCOL = 'pychron.external_pipette.protocol.IPipetteManager'
 CRYO_PROTOCOL = 'pychron.extraction_line.cryo_manager.CryoManager'
 

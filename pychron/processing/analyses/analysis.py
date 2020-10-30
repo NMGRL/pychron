@@ -372,8 +372,6 @@ class Analysis(ArArAge, IdeogramPlotable):
     grainsize = ''
     project = ''
     principal_investigator = ''
-    latitude = 0
-    longitude = 0
     elevation = 0
     igsn = ''
     lithology = ''

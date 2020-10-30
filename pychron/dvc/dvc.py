@@ -316,39 +316,40 @@ class DVC(Loggable):
         db = self.db
         with db.session_ctx():
             ip = db.get_identifier(ln)
-            dblevel = ip.level
-            irrad = dblevel.irradiation.name
-            level = dblevel.name
-            pos = ip.position
+            if ip is not None:
+                dblevel = ip.level
+                irrad = dblevel.irradiation.name
+                level = dblevel.name
+                pos = ip.position
 
-            fd = self.meta_repo.get_flux(irrad, level, pos)
-            _, prod = self.meta_repo.get_production(irrad, level, allow_null=True)
-            cs = self.meta_repo.get_chronology(irrad, allow_null=True)
+                fd = self.meta_repo.get_flux(irrad, level, pos)
+                _, prod = self.meta_repo.get_production(irrad, level, allow_null=True)
+                cs = self.meta_repo.get_chronology(irrad, allow_null=True)
 
-            x = datetime.now()
-            now = time.mktime(x.timetuple())
-            if fd['lambda_k']:
-                isotope_group.arar_constants.lambda_k = fd['lambda_k']
+                x = datetime.now()
+                now = time.mktime(x.timetuple())
+                if fd['lambda_k']:
+                    isotope_group.arar_constants.lambda_k = fd['lambda_k']
 
-            try:
-                pr = prod.to_dict(RATIO_KEYS)
-            except BaseException as e:
-                self.debug('invalid production. error={}'.format(e))
-                pr = {}
+                try:
+                    pr = prod.to_dict(RATIO_KEYS)
+                except BaseException as e:
+                    self.debug('invalid production. error={}'.format(e))
+                    pr = {}
 
-            try:
-                ic = prod.to_dict(INTERFERENCE_KEYS)
-            except BaseException as e:
-                self.debug('invalid production. error={}'.format(e))
-                ic = {}
+                try:
+                    ic = prod.to_dict(INTERFERENCE_KEYS)
+                except BaseException as e:
+                    self.debug('invalid production. error={}'.format(e))
+                    ic = {}
 
-            isotope_group.trait_set(j=fd['j'],
-                                    # lambda_k=lambda_k,
-                                    production_ratios=pr,
-                                    interference_corrections=ic,
-                                    chron_segments=cs.get_chron_segments(x),
-                                    irradiation_time=cs.irradiation_time,
-                                    timestamp=now)
+                isotope_group.trait_set(j=fd['j'],
+                                        # lambda_k=lambda_k,
+                                        production_ratios=pr,
+                                        interference_corrections=ic,
+                                        chron_segments=cs.get_chron_segments(x),
+                                        irradiation_time=cs.irradiation_time,
+                                        timestamp=now)
         return True
 
     def analyses_db_sync(self, ln, ais, reponame):
@@ -957,27 +958,28 @@ class DVC(Loggable):
             self.debug('examining {}'.format(name))
 
             r = Repo(repository_path(name))
-            lc = r.commit(branch).hexsha
+            if branch in [b.name for b in r.branches]:
+                lc = r.commit(branch).hexsha
 
-            for gi in gs:
-                outdated, sha = gi.up_to_date(self.organization, name, lc, branch)
-                if outdated:
-                    try:
-                        fsha = r.commit('FETCH_HEAD').hexsha
-                    except BaseException:
-                        fsha = None
+                for gi in gs:
+                    outdated, sha = gi.up_to_date(self.organization, name, lc, branch)
+                    if outdated:
+                        try:
+                            fsha = r.commit('FETCH_HEAD').hexsha
+                        except BaseException:
+                            fsha = None
 
-                    try:
-                        if fsha != sha:
-                            self.debug('fetching {}'.format(name))
-                            r.git.fetch()
+                        try:
+                            if fsha != sha:
+                                self.debug('fetching {}'.format(name))
+                                r.git.fetch()
 
-                        item.dirty = True
+                            item.dirty = True
+                            item.update(fetch=False)
+                        except GitCommandError as e:
+                            self.warning('error examining {}. {}'.format(name, e))
+                    else:
                         item.update(fetch=False)
-                    except GitCommandError as e:
-                        self.warning('error examining {}. {}'.format(name, e))
-                else:
-                    item.update(fetch=False)
 
         progress_loader(names, func, threshold=1)
         for gi in gs:

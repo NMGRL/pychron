@@ -19,6 +19,7 @@ from traits.api import Instance, Button, Bool, Property, DelegatesTo, List, Str
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.pychron_traits import PositiveInteger
 from pychron.dvc.dvc_irradiationable import DVCAble
 from pychron.experiment.automated_run.cryo.factory import CryoAutomatedRunFactory
 from pychron.experiment.automated_run.factory import AutomatedRunFactory
@@ -47,6 +48,7 @@ class ExperimentFactory(DVCAble):
     edit_enabled = DelegatesTo('run_factory')
 
     auto_increment_id = Bool(False)
+    auto_increment_id_count = PositiveInteger(1)
     auto_increment_position = Bool(False)
 
     queue = Instance(ExperimentQueue, ())
@@ -159,7 +161,7 @@ class ExperimentFactory(DVCAble):
         rf = self.run_factory
         new_runs, freq = rf.new_runs(q, positions=positions,
                                      auto_increment_position=self.auto_increment_position,
-                                     auto_increment_id=self.auto_increment_id)
+                                     auto_increment_id=self.auto_increment_id_count if self.auto_increment_id else 0)
 
         if new_runs:
             aruns = q.automated_runs

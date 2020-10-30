@@ -194,6 +194,13 @@ nodes:
   - klass: XYScatterNode
 """
 
+MAP = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: MapNode
+"""
+
 ANALYSIS_TABLE = """
 required:
 nodes:

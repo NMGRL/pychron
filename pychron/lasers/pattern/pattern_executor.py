@@ -22,8 +22,6 @@ from io import StringIO
 from threading import Event
 
 from numpy import polyfit, array, average, uint8, zeros_like
-from skimage.color import gray2rgb
-from skimage.draw import circle
 from traits.api import Any, Bool
 
 from pychron.core.ui.gui import invoke_in_main_thread
@@ -353,6 +351,8 @@ class PatternExecutor(Patternable):
         GUI.invoke_later(self._info.dispose)
 
     def _dragonfly_peak(self, st, pattern, lm, controller):
+        from skimage.color import gray2rgb
+        from skimage.draw import circle
 
         # imgplot, imgplot2, imgplot3 = pattern.setup_execution_graph()
         # imgplot, imgplot2 = pattern.setup_execution_graph()

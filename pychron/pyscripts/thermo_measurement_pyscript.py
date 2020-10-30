@@ -170,14 +170,12 @@ class ThermoMeasurementPyScript(MeasurementPyScript):
             set_source_optics(YSymmetry=10.0)
 
         """
-        attrs = ['YSymmetry', 'ZSymmetry', 'ZFocus', 'ExtractionLens']
-        self._set_from_file(attrs, 'SourceOptics', **kw)
+        self._set_from_file('SourceOptics', **kw)
 
     @verbose_skip
     @command_register
     def set_source_parameters(self, **kw):
-        attrs = ['IonRepeller', 'ElectronVolts']
-        self._set_from_file(attrs, 'SourceParameters', **kw)
+        self._set_from_file('SourceParameters', **kw)
 
     @verbose_skip
     @command_register

@@ -19,7 +19,7 @@ from random import random
 import yaml
 from numpy import array
 from traits.api import Any, cached_property, List, TraitError, Str, Property, Bool
-from yaml import FullLoader
+from yaml import SafeLoader
 
 from pychron.core.helpers.filetools import glob_list_directory
 from pychron.core.yaml import yload
@@ -409,7 +409,7 @@ class BaseSpectrometer(SpectrometerDevice):
             if 'hv' in d:
                 self.source.nominal_hv = d['hv']
 
-            self._config = (d, defl, trap, magnet)
+            self._config = dict(source=d, deflection=defl, trap=trap, magnet=magnet)
 
         return self._config
 
@@ -495,9 +495,8 @@ class BaseSpectrometer(SpectrometerDevice):
 
     def _load_detectors_yaml(self, ypath):
         with open(ypath, 'r') as rfile:
-            for i, det in enumerate(yaml.load(rfile, Loader=FullLoader)):
+            for i, det in enumerate(yaml.load(rfile, Loader=SafeLoader)):
                 name = det.get('name')
-                relative_position = float(det.get('relative_position', 0))
                 software_gain = float(det.get('software_gain', 1.0))
 
                 color = det.get('color', 'black')
@@ -520,7 +519,6 @@ class BaseSpectrometer(SpectrometerDevice):
                                    index=index,
                                    software_gain=software_gain,
                                    serial_id=serial_id,
-                                   relative_position=relative_position,
                                    use_deflection=use_deflection,
                                    protection_threshold=pt,
                                    deflection_correction_sign=deflection_correction_sign,
@@ -595,6 +593,7 @@ class BaseSpectrometer(SpectrometerDevice):
         """
         keys = []
         signals = []
+        t = None
         if self.microcontroller and not self.microcontroller.simulation:
             keys, signals, t = self.read_intensities(trigger=trigger, **kw)
 
@@ -697,10 +696,14 @@ class BaseSpectrometer(SpectrometerDevice):
     def read_parameter_word(self):
         pass
 
+    def clear_cached_config(self):
+        self._config = None
+
     # private
     def _spectrometer_configuration_changed(self, new):
         if new:
             set_spectrometer_config_name(new)
+            self.clear_cached_config()
 
     def _add_detector(self, **kw):
         d = self.detector_klass(spectrometer=self, microcontroller=self.microcontroller, **kw)

@@ -27,6 +27,7 @@ from traits.api import Int, Property, List, \
 from pychron.core.helpers.strtools import csv_to_floats
 from pychron.core.progress import open_progress
 from pychron.core.ramper import StepRamper
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.yaml import yload
 from pychron.paths import paths
 from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES, \
@@ -87,13 +88,24 @@ class ThermoSpectrometer(BaseSpectrometer):
 
     _test_connect_command = 'GetIntegrationTime'
 
+    def hardware_names(self):
+        return {'ion_repeller': 'Ion Repeller Set',
+                'electron_energy': 'Electron Energy Set',
+                'y_symmetry': 'Y-Symmetry Set',
+                'z_symmetry': 'Z-Symmetry Set',
+                'extraction_lens': 'Extraction Lens Set',
+                'z_focus': 'Z-Focus Set',
+                'hv': 'HV',
+                'trap.voltage': 'Trap Voltage Readback',
+                'trap.current': 'Trap Current Readback'}
+
     def make_deflection_dict(self):
         names = self.detector_names
         values = self.read_deflection_word(names)
         return dict(list(zip(names, values)))
 
     def make_configuration_dict(self):
-        keys = list(self.get_command_map().values())
+        keys = list(self.hardware_names().values())
         values = self.get_parameter_word(keys)
         d = dict(list(zip(keys, values)))
 
@@ -188,16 +200,25 @@ class ThermoSpectrometer(BaseSpectrometer):
         return it
 
     def set_parameter(self, name, v, post_delay=None):
-        cmd = '{} {}'.format(name, v)
+        if not name.startswith('Set'):
+            mk = self.hardware_names()
+            cmd = 'SetParameter {},{}'.format(mk.get(name, name), v)
+        else:
+            cmd = '{} {}'.format(name, v)
+
         self.ask(cmd)
         if post_delay:
             time.sleep(post_delay)
+
+    def get_hardware_name(self, k):
+        d = self.hardware_names()
+        return d.get(k)
 
     def get_parameter(self, cmd):
         if hasattr(self.source, 'read_{}'.format(cmd.lower())):
             return getattr(self.source, 'read_{}'.format(cmd.lower()))()
         else:
-            return self.ask('Get{}'.format(cmd))
+            return self.ask('GetParameter {}'.format(cmd))
 
     def set_deflection(self, name, value):
         det = self.get_detector(name)
@@ -236,27 +257,33 @@ class ThermoSpectrometer(BaseSpectrometer):
         return x
 
     def get_configuration_value(self, key):
-        values = self._get_cached_config()
-        if values is not None:
-            for d in values:
+        config = self._get_cached_config()
+        ret = 0
+        if config is not None:
+            if '.' in key:
+                section, key = key.split('.')
                 try:
-                    return d[key]
+                    opt = config[section]
+                    ret = opt.get(key, opt.get(key.lower(), 0))
                 except KeyError:
-                    try:
-                        return d[key.lower()]
-                    except KeyError:
-                        pass
+                    pass
+
             else:
-                return 0
-        else:
-            return 0
+                for d in config.values():
+                    try:
+                        ret = d[key]
+                    except KeyError:
+                        try:
+                            ret = d[key.lower()]
+                        except KeyError:
+                            pass
+        return ret
 
     def set_debug_configuration_values(self):
         if self.simulation:
-
-            ret = self._get_cached_config()
-            if ret is not None:
-                d = ret[0]
+            config = self._get_cached_config()
+            if config is not None:
+                d = config['source']
                 keys = ('ElectronEnergy', 'YSymmetry', 'ZSymmetry', 'ZFocus', 'IonRepeller', 'ExtractionLens')
                 ds = [0] + [d[k.lower()] for k in keys]
                 self._debug_values = ds
@@ -377,9 +404,6 @@ class ThermoSpectrometer(BaseSpectrometer):
                 return func(dkeys)
                 # return signals[keys.index(dkeys)] if dkeys in keys else 0
 
-    def clear_cached_config(self):
-        self._config = None
-
     def update_config(self, **kw):
         # p = os.path.join(paths.spectrometer_dir, 'config.cfg')
         p = get_spectrometer_config_path()
@@ -396,11 +420,12 @@ class ThermoSpectrometer(BaseSpectrometer):
 
         self.clear_cached_config()
 
-    def _get_source_parameter_value(self, mk, k):
+    def _get_source_parameter_value(self, k, hardware_name):
+        self.debug('get source parameter k={}, hw={}'.format(k, hardware_name))
         try:
             ret = getattr(self.source, 'read_{}'.format(k.lower()))()
         except AttributeError:
-            ret = self.get_parameter(mk[k.lower()])
+            ret = self.get_parameter(hardware_name)
         return ret
 
     def verify_configuration(self, **kw):
@@ -408,11 +433,11 @@ class ThermoSpectrometer(BaseSpectrometer):
         readout_comp, defl_comp = self._load_configuration_comparisons()
         mismatch = False
         if self.microcontroller:
-            command_map = self.get_command_map()
-            args = self._get_cached_config()
-            if args is not None:
-                specparams, defl, trap, magnet = args
-                for k, v in defl.items():
+            hardware_names = self.hardware_names()
+            config = self._get_cached_config()
+            if config is not None:
+                # specparams, defl, trap, magnet = args
+                for k, v in config['deflection'].items():
                     comp = defl_comp.get(k, {})
                     if comp.get('compare', True):
                         current = self.get_deflection(k, current=True)
@@ -421,28 +446,28 @@ class ThermoSpectrometer(BaseSpectrometer):
                             self.warning('verify failed {}. current={}, config={}'.format(k, current, v))
                             mismatch = True
 
-                print('asdffffff', readout_comp)
-                for k, v in specparams.items():
+                for k, v in config['source'].items():
                     try:
-                        mk = command_map[k]
+                        mk = hardware_names[k]
                     except KeyError:
-                        self.debug('--- Not checking {}. Not in command_map'.format(k))
+                        self.debug('--- Not checking {}. Not in hardware_names'.format(k))
                         continue
 
-                    comp = readout_comp.get(mk, {})
+                    comp = readout_comp.get(k, {})
                     if comp.get('compare', True):
-                        current = self._get_source_parameter_value(command_map, mk)
+                        current = self._get_source_parameter_value(k, mk)
                         try:
                             current = float(current)
                         except ValueError:
                             self.warning('invalid float value {}, {}'.format(mk, current))
                             continue
-                        print('asdf', mk, comp)
+
                         dev = self._get_config_dev(current, v, comp)
                         if dev:
                             self.warning('verify failed {}. current={}, config={}'.format(mk, current, v))
                             mismatch = True
 
+                trap = config['trap']
                 for tag in ('voltage', 'current'):
                     v = trap.get(tag)
                     if v is not None:
@@ -520,11 +545,11 @@ class ThermoSpectrometer(BaseSpectrometer):
             self.debug('Not setting {:<20s} current={}, config={}'.format(k, c, v))
 
         if self.microcontroller:
-            command_map = self.get_command_map()
-            ret = self._get_cached_config()
-            if ret is not None:
-                specparams, defl, trap, magnet = ret
-                for k, v in defl.items():
+            hardware_names = self.hardware_names()
+            config = self._get_cached_config()
+            if config is not None:
+                # specparams, defl, trap, magnet = ret
+                for k, v in config['deflection'].items():
                     if not self.force_send_configuration:
                         comp = defl_comp.get(k, {})
                         if comp.get('compare', True):
@@ -538,23 +563,22 @@ class ThermoSpectrometer(BaseSpectrometer):
                     v = '{},{}'.format(k, v)
                     self.set_parameter(cmd, v, post_delay=0.05)
 
-                for k, v in specparams.items():
+                for k, v in config['source'].items():
                     try:
-                        mk = command_map[k]
+                        mk = hardware_names[k]
                     except KeyError:
-                        self.debug('--- Not setting {}. Not in command_map'.format(k))
+                        self.debug('--- Not setting {}. Not in hardware_names'.format(k))
                         continue
 
                     if not self.force_send_configuration:
-                        comp = readout_comp.get(mk, {})
+                        comp = readout_comp.get(k, {})
                         if comp.get('compare', True):
-                            # cmd = 'Get{}'.format(mk)
-                            # current = self.get_parameter(cmd)
-                            current = self._get_source_parameter_value(mk, k)
+
+                            current = self._get_source_parameter_value(k, mk)
                             try:
                                 current = float(current)
                             except (ValueError, TypeError):
-                                self.warning('invalid value {}, {}'.format(mk, current))
+                                self.warning('invalid value {}, {}'.format(k, current))
                                 continue
 
                             dev = self._get_config_dev(current, v, comp)
@@ -562,9 +586,9 @@ class ThermoSpectrometer(BaseSpectrometer):
                                 not_setting(mk, current, v)
                                 continue
 
-                    cmd = 'Set{}'.format(mk)
-                    self.set_parameter(cmd, v, post_delay=0.05)
+                    self.set_parameter(mk, v, post_delay=0.05)
 
+                trap = config['trap']
                 for tag, func in (('voltage', self.source.read_trap_voltage),
                                   ('current', self.source.read_trap_current)):
                     # set trap voltage
@@ -588,16 +612,17 @@ class ThermoSpectrometer(BaseSpectrometer):
                                 v = None
 
                         if v is not None:
-                            setattr(self.source, 'trap_{}'.format(tag), v)
-
-                v = trap.get('current')
-                if v is not None:
-                    step = trap.get('ramp_step', 1)
-                    period = trap.get('ramp_period', 1)
-                    tol = trap.get('ramp_tolerance', 10)
-                    self._ramp_trap_current(v, step, period, use_ramp, tol, ramp_confirm)
+                            if tag == 'current':
+                                step = trap.get('ramp_step', 1)
+                                period = trap.get('ramp_period', 1)
+                                tol = trap.get('ramp_tolerance', 10)
+                                use_ramp = use_ramp and trap.get('use_ramp', True)
+                                self._ramp_trap_current(v, step, period, use_ramp, tol, ramp_confirm)
+                            else:
+                                setattr(self.source, 'trap_{}'.format(tag), v)
 
                 # set the mftable
+                magnet = config['magnet']
                 mftable_name = magnet.get('mftable')
                 if mftable_name:
                     self.debug('updating mftable name {}'.format(mftable_name))
@@ -616,26 +641,35 @@ class ThermoSpectrometer(BaseSpectrometer):
                 self.debug('could not read current trap. skipping ramp')
                 return
 
-            if v - current >= tol:
+            if abs(v - current) >= tol:
                 ok = True
+                show_progress = False
+
                 if confirm:
                     ok = self.confirmation_dialog('Would you like to ramp up the '
                                                   'Trap current from {} to {}'.format(current, v))
-                if ok:
-                    prog = open_progress(1)
+                    show_progress = True
 
-                    def func(x):
-                        prog.change_message('Set Trap Current {}'.format(x))
-                        self.source.trap_current = x
-                        if not prog.accepted and not prog.canceled:
-                            return True
+                if ok:
 
                     r = StepRamper()
+                    steps = abs(v - current) / step
+                    if show_progress:
+                        prog = open_progress(int(steps))
 
-                    steps = (v - current) / step
-                    prog.max = int(steps)
+                    def func(x):
+                        self.source.trap_current = x
+                        if show_progress:
+                            invoke_in_main_thread(prog.change_message, 'Set Trap Current {}'.format(x))
+                            if not prog.accepted and not prog.canceled:
+                                return True
+                        else:
+                            return True
+
+                    self.debug('current={}, target={}, step={}, period={}'.format(current, v, step, period))
                     r.ramp(func, current, v, step, period)
-                    prog.close()
+                    if show_progress:
+                        prog.close()
                     return True
             else:
                 self.debug('trap current is up-to-date')

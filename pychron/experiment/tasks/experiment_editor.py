@@ -34,6 +34,9 @@ from pychron.experiment.utilities.repository_identifier import get_curtag, popul
 class ExperimentEditorHandler(TabularEditorHandler):
     refresh_name = 'refresh_table_needed'
 
+    def select_special(self, info, obj):
+        obj.select_special()
+
     def select_unknowns(self, info, obj):
         obj.select_unknowns()
 

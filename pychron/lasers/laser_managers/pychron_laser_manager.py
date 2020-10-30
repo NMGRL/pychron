@@ -302,12 +302,17 @@ class PychronLaserManager(EthernetLaserManager):
             return 0, 0, 0
 
     # handlers
-    @on_trait_change('pattern_executor:pattern:canceled')
-    def pattern_canceled(self):
-        """
-            this patterning window was closed so cancel the blocking loop
-        """
-        self._cancel_blocking = True
+    # @on_trait_change('pattern_executor:pattern:canceled')
+    # def pattern_canceled(self):
+    #     """
+    #         this patterning window was closed so cancel the blocking loop
+    #     """
+    #     self._cancel_blocking = True
+    def _pattern_executor_init_hook(self, pm):
+        def handle():
+            self._cancel_blocking = True
+
+        pm.on_trait_change(handle, 'pattern:canceled')
 
     def _snapshot_button_fired(self):
         self.take_snapshot('test', view_snapshot=True)
@@ -386,7 +391,7 @@ class PychronLaserManager(EthernetLaserManager):
         self.debug('image len {}'.format(len(s3)))
         return s1, s2, s3
 
-    def _move_to_position(self, pos, autocenter):
+    def _move_to_position(self, pos, autocenter, block):
         cmd = 'GoToHole {},{}'.format(pos, autocenter)
         if isinstance(pos, tuple):
             cmd = 'SetXY {}'.format(pos[:2])
@@ -398,7 +403,7 @@ class PychronLaserManager(EthernetLaserManager):
         time.sleep(0.5)
         r = self._block(nsuccess=3, period=0.5)
         time.sleep(0.5)
-        if autocenter:
+        if autocenter and block:
             r = self._block(cmd='GetAutoCorrecting', period=0.5)
             self._ask('CancelAutoCorrecting')
 
@@ -533,7 +538,7 @@ class PychronUVLaserManager(PychronLaserManager):
 
         self._mask = 0
 
-    def _move_to_position(self, pos, autocenter):
+    def _move_to_position(self, pos, autocenter, block):
 
         cmd = 'GoToPoint'
 

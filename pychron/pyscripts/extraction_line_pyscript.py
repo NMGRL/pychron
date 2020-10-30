@@ -639,7 +639,12 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def extract(self, power='', units=''):
+    def warmup(self, block=False):
+        self._extraction_action(('warmup', (), {'block': block, }))
+
+    @verbose_skip
+    @command_register
+    def extract(self, power='', units='', block=None):
         if power == '':
             power = self.extract_value
         if units == '':
@@ -652,18 +657,15 @@ class ExtractionPyScript(ValvePyScript):
         pos = self._extraction_action(('get_position', (), {}))
         self._extraction_positions.append(pos)
 
-        # set an experiment message
-        # if self.manager:
-        #     msg = '{} ON! {}({})'.format(ed, power, units)
-        #     self.manager.set_extract_state(msg, color='red')
         msg = '{} ON! {}({})'.format(ed, power, units)
         self._set_extraction_state(msg)
         self.console_info('extract sample to {} ({})'.format(power, units))
-        self._extraction_action(('extract', (power,), {'units': units, }))
+        self._extraction_action(('extract', (power,), {'units': units, 'block': block}))
 
     @verbose_skip
     @command_register
     def end_extract(self):
+        self._set_extraction_state(False)
         self._extraction_action(('end_extract',))
 
     @verbose_skip
@@ -848,6 +850,11 @@ class ExtractionPyScript(ValvePyScript):
     @command_register
     def set_intensity_scalar(self, v):
         return self._automated_run_call('py_set_intensity_scalar', v)
+
+    @verbose_skip
+    @command_register
+    def get_device(self, name):
+        return self._get_device(name)
 
     # ==========================================================================
     # properties

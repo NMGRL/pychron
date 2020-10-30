@@ -46,7 +46,7 @@ from pychron.experiment.utilities.frequency_edit_view import FrequencyModel
 from pychron.experiment.utilities.identifier import convert_special_name, ANALYSIS_MAPPING, NON_EXTRACTABLE, \
     make_special_identifier, make_standard_identifier, SPECIAL_KEYS
 from pychron.experiment.utilities.position_regex import SLICE_REGEX, PSLICE_REGEX, \
-    SSLICE_REGEX, TRANSECT_REGEX, POSITION_REGEX, XY_REGEX
+    SSLICE_REGEX, TRANSECT_REGEX, POSITION_REGEX, XY_REGEX, SCAN_REGEX
 from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceLoggable
@@ -92,6 +92,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     auto_save_needed = Event
 
     labnumbers = Property(depends_on='project, selected_level, _identifiers')
+    display_labnumbers = Property(depends_on='project, selected_level, _identifiers')
     _identifiers = List
 
     use_project_based_repository_identifier = Bool(True)
@@ -282,8 +283,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
         super(AutomatedRunFactory, self).__init__(*args, **kw)
 
-    def set_identifiers(self, v):
-        self._identifiers = v
+    # def set_identifiers(self, v):
+    #     self._identifiers = v
 
     def setup_files(self):
         self.load_templates()
@@ -386,7 +387,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             arvs, freq = self._new_runs(exp_queue, positions=positions)
 
         if auto_increment_id:
-            v = increment_value(self.labnumber)
+            v = increment_value(self.labnumber, increment=auto_increment_id)
             self.debug('auto increment labnumber: prev={}, new={}'.format(self.labnumber, v))
             self.labnumber = v
 
@@ -847,7 +848,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
         extract_device = self.extract_device.replace(' ', '')
 
-        is_extractable = labnumber_tag in ('u', 'bu', 'dg') and extract_device not in NULL_EXTRACT_DEVICES or \
+        is_extractable = labnumber_tag in ('u', 'bu', 'dg') and \
+                         extract_device not in NULL_EXTRACT_DEVICES and \
                          extract_device != 'ExternalPipette'
 
         # labnumber_tag = str(labnumber_tag).lower()
@@ -964,7 +966,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
                 ipp = self.irradiation_project_prefix
                 d['project'] = project_name
-
+                d['repository_identifier'] = ''
                 self.debug('trying to set repository based on project name={}'.format(project_name))
                 # if project_name == 'J-Curve':
                 #     irrad = ip.level.irradiation.name
@@ -1090,6 +1092,19 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
         return lns
 
+    @cached_property
+    def _get_display_labnumbers(self):
+        lns = {}
+        if self.selected_level and self.selected_level not in ('Level', LINE_STR):
+            db = self.get_database()
+            if db is not None and db.connect():
+                with db.session_ctx(use_parent_session=False):
+                    lns = db.get_level_identifiers(self.selected_irradiation, self.selected_level, with_summary=True)
+                if lns:
+                    lns = dict(lns)
+
+        return lns
+
     def _get_position(self):
         return self._position
 
@@ -1104,7 +1119,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             return ''
 
         for r, _, _, name in (SLICE_REGEX, SSLICE_REGEX, PSLICE_REGEX,
-                              TRANSECT_REGEX, POSITION_REGEX, XY_REGEX):
+                              TRANSECT_REGEX, POSITION_REGEX, XY_REGEX, SCAN_REGEX):
             if r.match(pos):
                 self.debug('matched {} to {}'.format(name, pos))
                 return pos
@@ -1305,8 +1320,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
         for idn, runs in groupby_key(self._selected_runs, 'identifier'):
 
-            with self.db.session_ctx():
-                ipos = self.db.get_identifier(idn)
+            with self.dvc.session_ctx():
+                ipos = self.dvc.get_identifier(idn)
 
                 if ipos:
                     level = ipos.level

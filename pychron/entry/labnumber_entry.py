@@ -1032,14 +1032,15 @@ THIS CHANGE CANNOT BE UNDONE')
             self.level = ''
 
             chron = self.dvc.meta_repo.get_chronology(self.irradiation)
-            j = chron.duration * self.j_multiplier
-            self.total_irradiation_hours = '{:0.1f}'.format(chron.duration)
-            self._estimated_j_value = j
-            self.estimated_j_value = u'{} {}{}'.format(floatfmt(j),
-                                                       PLUSMINUS,
-                                                       floatfmt(j * 0.001))
-            items = [NeutronDose(*args) for args in chron.get_doses()]
-            self.chronology_items = items
+            if chron:
+                j = chron.duration * self.j_multiplier
+                self.total_irradiation_hours = '{:0.1f}'.format(chron.duration)
+                self._estimated_j_value = j
+                self.estimated_j_value = u'{} {}{}'.format(floatfmt(j),
+                                                           PLUSMINUS,
+                                                           floatfmt(j * 0.001))
+                items = [NeutronDose(*args) for args in chron.get_doses()]
+                self.chronology_items = items
 
     def _level_changed(self, old, new):
         if self.dirty:

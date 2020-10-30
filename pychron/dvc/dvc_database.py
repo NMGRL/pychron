@@ -1158,17 +1158,20 @@ class DVCDatabase(DatabaseAdapter):
                     self.debug('no analyses for get_last_analysis')
 
                 return 0
-
-    def get_greatest_aliquot(self, identifier):
-        with self.session_ctx(use_parent_session=False) as sess:
-            if identifier:
-                if not self.get_identifier(identifier):
-                    return
-
+        
+    def get_greatest_aliquot(self, identifier):            
+        if identifier:
+            with self.session_ctx(use_parent_session=False) as sess:
                 q = sess.query(AnalysisTbl.aliquot)
-                q = q.join(IrradiationPositionTbl)
-
-                q = q.filter(IrradiationPositionTbl.identifier == identifier)
+                
+                idn = self.get_identifier(identifier)
+                print('-----------------idn', idn, identifier)
+                if not self.get_identifier(identifier):
+                    q = q.filter(AnalysisTbl.simple_identifier== int(identifier))
+                else:
+                    q = q.join(IrradiationPositionTbl)
+                    q = q.filter(IrradiationPositionTbl.identifier == identifier)
+                
                 q = q.order_by(AnalysisTbl.aliquot.desc())
                 result = self._query_one(q)
                 if result:
@@ -2074,14 +2077,21 @@ class DVCDatabase(DatabaseAdapter):
             q = in_func(q, RepositoryTbl.name, repositories)
             return self._query_all(q)
 
-    def get_level_identifiers(self, irrad, level):
+    def get_level_identifiers(self, irrad, level, with_summary=False):
         lns = []
         with self.session_ctx():
             level = self.get_irradiation_level(irrad, level)
             if level:
-                lns = [str(pi.identifier).strip()
-                       for pi in level.positions if pi.identifier]
-                lns = [li for li in lns if li]
+
+                if with_summary:
+                    lns = [(pi.identifier.strip(),
+                               '{} -- {}{:02n} -- {}'.format(pi.identifier.strip(), level.name, pi.position, pi.sample.name))
+                           for pi in level.positions if pi.identifier and pi.identifier.strip()]
+
+                else:
+                    lns = [pi.identifier.strip()
+                           for pi in level.positions if pi.identifier and pi.identifier.strip()]
+
                 lns = sorted(lns)
         return lns
 

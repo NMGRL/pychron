@@ -82,6 +82,7 @@ DEFAULT_CONFIG = '''-
 
 class BaseReadout(HasTraits):
     name = Str
+    id = Str
     value = Either(Str, Float)
     spectrometer = Any
     compare = Bool(True)
@@ -89,6 +90,7 @@ class BaseReadout(HasTraits):
     tolerance = Float
     percent_tol = Float
     display_tolerance = Str
+
     # use_word = Bool(True)
 
     @property
@@ -101,7 +103,7 @@ class BaseReadout(HasTraits):
     @property
     def percent_dev(self):
         try:
-            return abs(self.dev/self.config_value*100)
+            return abs(self.dev / self.config_value * 100)
         except ZeroDivisionError:
             return NULL_STR
 
@@ -116,9 +118,9 @@ class BaseReadout(HasTraits):
         tolerance = self.percent_tol
         if tolerance:
             try:
-                self.display_tolerance = '{:0.2f}%'.format(tolerance*100)
+                self.display_tolerance = '{:0.2f}%'.format(tolerance * 100)
                 try:
-                    if abs(self.value-self.config_value)/self.config_value > tolerance:
+                    if abs(self.value - self.config_value) / self.config_value > tolerance:
                         return self.name, self.value, self.config_value
                 except TypeError:
                     pass
@@ -151,9 +153,11 @@ class Readout(BaseReadout):
 
     def query_value(self):
         if self.query_needed and self.compare:
-            v = self.spectrometer.get_parameter(self.query_name)
-            self.set_value(v)
-            self._last_query = time.time()
+            parameter = self.spectrometer.get_hardware_name(self.id)
+            if parameter:
+                v = self.spectrometer.get_parameter(parameter)
+                self.set_value(v)
+                self._last_query = time.time()
 
     def get_percent_value(self):
         try:
@@ -162,20 +166,8 @@ class Readout(BaseReadout):
             return 0
 
     @property
-    def query_name(self):
-        n = self.name
-        if self.hardware_name:
-            q = self.hardware_name
-        elif ',' in n:
-            _, q = n.split(',')
-        else:
-            q = n
-
-        return q.strip()
-
-    @property
     def query_needed(self):
-        return not self._last_query or (time.time()-self._last_query)>self.query_timeout
+        return not self._last_query or (time.time() - self._last_query) > self.query_timeout
 
 
 class DeflectionReadout(BaseReadout):
@@ -246,10 +238,12 @@ class ReadoutView(PersistenceLoggable):
             for rd in yl:
                 rr = Readout(spectrometer=self.spectrometer,
                              name=rd['name'],
+                             id=rd.get('id', rd['name']),
                              hardware_name=rd.get('hardware_name'),
                              min_value=rd.get('min', 0),
                              max_value=rd.get('max', 1),
                              tolerance=rd.get('tolerance', 0.01),
+                             percent_tol=rd.get('percent_tolerance', 0.0),
                              compare=rd.get('compare', True),
                              query_timeout=self.refresh_period)
                 self.readouts.append(rr)
@@ -257,6 +251,7 @@ class ReadoutView(PersistenceLoggable):
             for rd in yd:
                 rr = DeflectionReadout(spectrometer=self.spectrometer,
                                        name=rd['name'],
+                                       id=rd.get('id', rd['name']),
                                        tolerance=rd.get('tolerance', 1),
                                        compare=rd.get('compare', True))
                 self.deflections.append(rr)
@@ -300,9 +295,9 @@ class ReadoutView(PersistenceLoggable):
                 r.set_value(d)
 
         st = time.time()
-        timeout = self.refresh_period*0.95
+        timeout = self.refresh_period * 0.95
         for rd in self.readouts:
-            if time.time()-st > timeout:
+            if time.time() - st > timeout:
                 break
             rd.query_value()
 
@@ -315,8 +310,7 @@ class ReadoutView(PersistenceLoggable):
         if not spec.simulation and self.compare_to_config_enabled:
             for nn, rs in ((ne, self.readouts), (nd, self.deflections)):
                 for r in rs:
-                    name = r.name
-                    cv = spec.get_configuration_value(name)
+                    cv = spec.get_configuration_value(r.id)
                     r.config_value = cv
                     if r.compare:
                         args = r.config_compare()

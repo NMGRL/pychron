@@ -147,7 +147,7 @@ class _TableView(TableView):
     _dragging = None
     _cut_indices = None
     option_select = False
-    drag_enabled = True
+    drag_move = True
 
     def __init__(self, editor, layout=None, *args, **kw):
         super(_TableView, self).__init__(editor, *args, **kw)
@@ -202,11 +202,6 @@ class _TableView(TableView):
         fnt = QtGui.QFont(fnt)
         vheader = self.horizontalHeader()
         vheader.setFont(fnt)
-
-    def set_drag_enabled(self, d):
-        if d:
-            self.setDragDropMode(QtGui.QAbstractItemView.DragDrop)
-            self.setDragEnabled(True)
 
     def startDrag(self, actions):
         if self._editor.factory.drag_external:
@@ -504,7 +499,7 @@ class _TabularEditor(qtTabularEditor):
         # Create the control
         control = self.control = self.widget_factory(self, layout=layout)
 
-        control.set_drag_enabled(factory.drag_enabled)
+        # control.set_drag_enabled(factory.drag_enabled)
 
         # Set up the selection listener
         if factory.multi_select:
