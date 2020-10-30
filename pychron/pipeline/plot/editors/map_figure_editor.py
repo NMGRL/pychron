@@ -81,6 +81,11 @@ class FoliumMap(HasTraits):
         super(FoliumMap, self).__init__(*args, **kw)
         m = folium.Map(location=self.center.location,
                        zoom_start=self.center.zoom)
+
+        folium.TileLayer(tiles='OpenStreetMap').add_to(m)
+        folium.TileLayer(tiles='Stamen Terrain').add_to(m)
+        folium.LayerControl().add_to(m)
+
         self._map = m
 
     def render(self):
@@ -97,19 +102,24 @@ class MapFigureEditor(BaseEditor):
     refresh = Event
 
     def load(self):
+        lats, lons = [], []
+        for name, ans in groupby_key(self.items, key=attrgetter('sample')):
+            record = list(ans)[0]
+            # samples = [(35, -116.15), (35.23, -116.34)]
+            if record.latitude and record.longitude:
+                lats.append(record.latitude)
+                lons.append(record.longitude)
+                self.fmap.add_marker(location=(record.latitude, record.longitude),
+                                     popup='<b>{}</b>'.format(record.sample))
+        if lats:
+            self.fmap.center.x = sum(lons)/len(lons)
+            self.fmap.center.y = sum(lats)/len(lats)
 
-        for name, samples in groupby_key(self.items, key=attrgetter('sample')):
-            print(name, len(list(samples)))
-
-        samples = [(35, -116.15), (35.23, -116.34)]
-
-        for sam in samples:
-            self.fmap.add_marker(location=sam)
-
-        self.refresh = True
+            self.refresh = True
 
     @on_trait_change('fmap.center.[x,y,zoom]')
     def center_changed(self):
+        self.fmap._map.location = self.fmap.center.location
         self.refresh = True
 
     def traits_view(self):
