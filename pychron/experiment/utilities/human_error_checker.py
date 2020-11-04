@@ -17,13 +17,17 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 
+import os
+
 from traits.api import Bool
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.preference_binding import bind_preference
+from pychron.core.yaml import yload
 from pychron.experiment.utilities.identifier import get_analysis_type
 from pychron.loggable import Loggable
+from pychron.paths import paths
 from pychron.pychron_constants import SCRIPT_NAMES, NULL_STR, NULL_EXTRACT_DEVICES
 
 
@@ -35,6 +39,8 @@ class HumanErrorChecker(Loggable):
     runs_enabled = Bool
     non_fatal_enabled = Bool
     spectrometer_manager = None
+    modifier_check_enabled = Bool(True)
+    _modifiers = None
 
     def __init__(self, *args, **kw):
         super(HumanErrorChecker, self).__init__(*args, **kw)
@@ -57,7 +63,7 @@ class HumanErrorChecker(Loggable):
 
         if self._mass_spec_required:
             if not qi.mass_spectrometer or \
-                            qi.mass_spectrometer in ('Spectrometer',):
+                    qi.mass_spectrometer in ('Spectrometer',):
                 msg = '"Spectrometer" is not set. Not saving experiment!'
                 return msg
 
@@ -132,7 +138,28 @@ class HumanErrorChecker(Loggable):
             elif run.analysis_type == 'air' and es and 'air' not in es:
                 return 'Air analysis is not using an "air" extraction script'
 
+        if self.modifier_check_enabled:
+            if not self._modifiers:
+                self._load_modifiers()
+
+            if self._modifiers:
+                idargs = run.identifier.split('-')
+                ln = idargs[0].lower()
+                self.debug('checking {}. {}'.format(ln, self._modifiers))
+                if ln in self._modifiers:
+                    rm = int(idargs[1])
+                    dm = int(self._modifiers[ln])
+                    if rm != dm:
+                        return 'Improper Modifier.  The run modifier is {} but the default modifier is {}. ' \
+                               'Please you the most up to date run identifier for Airs and Cocktails'.format(rm, dm)
+
     # private
+    def _load_modifiers(self):
+        p = os.path.join(paths.scripts_dir, 'defaults.yaml')
+        if os.path.isfile(p):
+            yd = yload(p)
+            self._modifiers = {k.lower(): v.get('modifier') for k,v in yd.items() if v.get('modifier')}
+
     def _bind_preferences(self):
         bind_preference(self, 'extraction_script_enabled', 'pychron.experiment.extraction_script_enabled')
         bind_preference(self, 'runs_enabled', 'pychron.experiment.runs_enabled')

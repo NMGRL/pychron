@@ -724,8 +724,17 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         if script is None:
             script = self.extraction_script
 
+        mod = None
         if '##' in self.labnumber:
-            mod = script.get_parameter('modifier')
+            defaults = self._load_default_file()
+            if defaults:
+                ln = self.labnumber.split('-')[0]
+                if ln in defaults:
+                    grp = defaults[ln]
+                    mod = grp.get('modifier')
+
+            if mod is None:
+                mod = script.get_parameter('modifier')
             if mod is not None:
                 if isinstance(mod, int):
                     mod = '{:02d}'.format(mod)
