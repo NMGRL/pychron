@@ -40,6 +40,8 @@ class HumanErrorChecker(Loggable):
     non_fatal_enabled = Bool
     spectrometer_manager = None
     modifier_check_enabled = Bool(True)
+    repairable_enabled = Bool(True)
+
     _modifiers = None
 
     def __init__(self, *args, **kw):
@@ -66,6 +68,35 @@ class HumanErrorChecker(Loggable):
                     qi.mass_spectrometer in ('Spectrometer',):
                 msg = '"Spectrometer" is not set. Not saving experiment!'
                 return msg
+
+    def check_runs_repairable(self, runs):
+        if not self.repairable_enabled:
+            self.info('check runs repairable disabled')
+            return
+
+        repairs = {}
+        for i, r in enumerate(runs):
+            repair = self._check_repairable(i, r)
+            if repair:
+                repairs[i] = repair
+
+        self.debug(repairs)
+        if repairs:
+            if self.confirmation_dialog('You have issues but they can be repaired. Would you like to auto repair?'):
+                try:
+                    for k, v in repairs.items():
+                        run = runs[k]
+                        if v['kind'] == 'modifier':
+                            mod = v['value']
+                            args = run.identifier.split('-')
+                            idn, m, a = args[0], args[1], '-'.join(args[2:])
+                            old = run.identifier
+                            run.identifier = '-'.join((idn, '{:02n}'.format(mod), a))
+                            self.debug('repairing identifier. old={}, new={}'.format(old, run.identifier))
+
+                    self.information_dialog('Auto repair complete')
+                except BaseException:
+                    self.warning_dialog('Auto repair failed. Issues too extreme. Contact an expert')
 
     def check_runs_non_fatal(self, runs):
         if not self.non_fatal_enabled:
@@ -115,6 +146,21 @@ class HumanErrorChecker(Loggable):
     def check_run(self, run, inform=True, test=False):
         return self._check_run(run, inform, test)
 
+    def _check_repairable(self, idx, run):
+        if self.modifier_check_enabled:
+            if not self._modifiers:
+                self._load_modifiers()
+
+            if self._modifiers:
+                idargs = run.identifier.split('-')
+                ln = idargs[0].lower()
+                self.debug('checking {}. {}'.format(ln, self._modifiers))
+                if ln in self._modifiers:
+                    rm = int(idargs[1])
+                    dm = int(self._modifiers[ln])
+                    if rm != dm:
+                        return {'kind': 'modifier', 'value': dm}
+
     def _check_run_non_fatal(self, idx, run):
         es = run.extraction_script
         if es:
@@ -138,27 +184,12 @@ class HumanErrorChecker(Loggable):
             elif run.analysis_type == 'air' and es and 'air' not in es:
                 return 'Air analysis is not using an "air" extraction script'
 
-        if self.modifier_check_enabled:
-            if not self._modifiers:
-                self._load_modifiers()
-
-            if self._modifiers:
-                idargs = run.identifier.split('-')
-                ln = idargs[0].lower()
-                self.debug('checking {}. {}'.format(ln, self._modifiers))
-                if ln in self._modifiers:
-                    rm = int(idargs[1])
-                    dm = int(self._modifiers[ln])
-                    if rm != dm:
-                        return 'Improper Modifier.  The run modifier is {} but the default modifier is {}. ' \
-                               'Please you the most up to date run identifier for Airs and Cocktails'.format(rm, dm)
-
     # private
     def _load_modifiers(self):
         p = os.path.join(paths.scripts_dir, 'defaults.yaml')
         if os.path.isfile(p):
             yd = yload(p)
-            self._modifiers = {k.lower(): v.get('modifier') for k,v in yd.items() if v.get('modifier')}
+            self._modifiers = {k.lower(): v.get('modifier') for k, v in yd.items() if v.get('modifier')}
 
     def _bind_preferences(self):
         bind_preference(self, 'extraction_script_enabled', 'pychron.experiment.extraction_script_enabled')

@@ -241,7 +241,7 @@ class EthernetCommunicator(Communicator):
 
         with self._lock:
             handler = self.get_handler()
-        print('asfd', handler)
+
         # send a test command so see if wer have connection
         cmd = self.test_cmd
 
