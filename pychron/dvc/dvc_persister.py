@@ -175,7 +175,7 @@ class DVCPersister(BasePersister):
                         self.debug('no extraction position for {}'.format(pp))
                     except TypeError:
                         self.debug('invalid extraction position')
-                        continue
+
                 pd = {'x': x, 'y': y, 'z': z, 'position': pos, 'is_degas': per_spec.run_spec.identifier == 'dg'}
                 ps.append(pd)
 
