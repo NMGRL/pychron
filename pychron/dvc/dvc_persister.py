@@ -173,7 +173,6 @@ class DVCPersister(BasePersister):
                             z = ep[2]
                     except IndexError:
                         self.debug('no extraction position for {}'.format(pp))
-                        continue
                     except TypeError:
                         self.debug('invalid extraction position')
                         continue
