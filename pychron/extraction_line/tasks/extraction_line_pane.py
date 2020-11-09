@@ -147,6 +147,7 @@ class EditorPane(TraitsDockPane):
                                            selected='selected_group',
                                            editor=InstanceEditor())))
 
-        v = View(VGroup(g, agrp, egrp))
+        v = View(VGroup(UItem('edit_mode'),
+                        VGroup(g, agrp, egrp, enabled_when='edit_mode')))
         return v
 # ============= EOF =============================================
