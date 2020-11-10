@@ -1277,7 +1277,7 @@ class DVCDatabase(DatabaseAdapter):
 
                 q = q.filter(AnalysisTbl.increment == step)
             if aliquot:
-                q = q.filter(AnalysisTbl.aliquot == aliquot)
+                q = q.filter(AnalysisTbl.aliquot == int(aliquot))
 
             q = q.filter(IrradiationPositionTbl.identifier == idn)
             return self._query_one(q)
