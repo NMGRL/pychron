@@ -22,6 +22,7 @@ try:
 except ImportError:
     NullHandleException = BaseException
 
+
 # ============= local library imports  ==========================
 
 
@@ -31,18 +32,27 @@ class BaseU3LV:
 
     def load(self, *args, **kw):
         self._dio_mapping = {}
-
-        try:
-            self._device = u3.U3()
-        except NullHandleException:
-            return
-
         config = self.get_configuration()
         if config:
+            section = 'Communications'
+            conn = {'autoOpen': False}
+            if config.has_section(section):
+                conn['localId'] = config.get(section, 'localId')
+                conn['serial'] = config.get(section, 'serialNum')
+                conn['firstFound'] = False
+
+            try:
+                self._device = u3.U3(**conn)
+            except NullHandleException:
+                return
             return self.load_additional_args(config)
 
     def open(self, *args, **kw):
-        return True
+        try:
+            self._device.open()
+            return True
+        except BaseException:
+            pass
 
     def load_additional_args(self, config):
         mapping = {}
@@ -99,6 +109,3 @@ class BaseU3LV:
             self.warning('DIOMapping {}'.format(self._dio_mapping))
 
 # ============= EOF =============================================
-
-
-
