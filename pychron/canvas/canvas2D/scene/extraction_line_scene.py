@@ -22,7 +22,7 @@ from numpy.core.numeric import Inf
 from traits.api import Dict
 
 # ============= local library imports  ==========================
-from pychron.canvas.canvas2D.scene.canvas_parser import get_volume
+from pychron.canvas.canvas2D.scene.canvas_parser import get_volume, CanvasParser
 from pychron.canvas.canvas2D.scene.primitives.connections import Tee, Fork, Elbow, Connection
 from pychron.canvas.canvas2D.scene.primitives.lasers import Laser, CircleLaser
 from pychron.canvas.canvas2D.scene.primitives.primitives import Label, BorderLine, Line, Image, ValueLabel
@@ -31,6 +31,7 @@ from pychron.canvas.canvas2D.scene.primitives.rounded import RoundedRectangle, C
 from pychron.canvas.canvas2D.scene.primitives.valves import RoughValve, Valve, Switch, ManualSwitch
 from pychron.canvas.canvas2D.scene.scene import Scene
 from pychron.core.helpers.strtools import to_bool
+from pychron.core.yaml import yload
 from pychron.extraction_line.switch_parser import SwitchParser
 from pychron.paths import paths
 
@@ -76,42 +77,29 @@ class ExtractionLineScene(Scene):
     valves = Dict
     rects = Dict
 
-    valve_dimension = 2, 2
-
     def load(self, pathname, configpath, valvepath, canvas):
         self.overlays = []
         self.reset_layers()
 
         origin, color_dict = self._load_config(configpath, canvas)
+        if pathname.endswith('.yaml') or pathname.endswith('.yml'):
+            klass = YAMLLoader
+        else:
+            klass = XMLLoader
 
-        cp = self._get_canvas_parser(pathname)
+        loader = klass(pathname, origin, color_dict)
 
-        self._load_switchables(cp, origin, valvepath)
-
-        self._load_rects(cp, origin, color_dict)
-
-        # xv = canvas.view_x_range
-        # yv = canvas.view_y_range
-        # x, y = xv[0], yv[0]
-        # w = xv[1] - xv[0]
-        # h = yv[1] - yv[0]
-
-        # brect = Rectangle(x, y, width=w-0.1, height=h-0.1,
-        # identifier='bounds_rect',
-        # fill=False, line_width=20, default_color=(0, 0, 102))
-        # self.add_item(brect)
-
-        self._load_pipettes(cp, origin, color_dict)
-
-        self._load_markup(cp, origin, color_dict)
-
-        # need to load all components that will be connected
-        # before loading connections
-
-        self._load_connections(cp, origin, color_dict)
-        self._load_legend(cp, origin, color_dict)
-
-        # self.set_canvas(canvas)
+        loader.load_switchables(self, valvepath)
+        loader.load_rects(self)
+        #
+        # loader.load_pipettes()
+        # loader.load_markup()
+        #
+        # # need to load all components that will be connected
+        # # before loading connections
+        #
+        loader.load_connections(self)
+        # loader.load_legend()
 
     def get_is_in(self, px, py, exclude=None):
         if exclude is None:
@@ -130,7 +118,171 @@ class ExtractionLineScene(Scene):
                 # if x <= px <= x + w and y <= py <= y + h:
                 # return c
 
-    def _new_rectangle(self, cp, elem, c, bw=3,
+    def _load_config(self, p, canvas):
+        color_dict = dict()
+        ox, oy = 0, 0
+        if os.path.isfile(p):
+            cp = self._get_canvas_parser(p)
+
+            tree = cp.get_tree()
+            if tree:
+                xv, yv = self._get_canvas_view_range(cp)
+
+                canvas.view_x_range = xv
+                canvas.view_y_range = yv
+                dim = tree.find('valve_dimension')
+                if dim is not None:
+                    self.valve_dimension = floatify(dim)
+
+                # get label font
+                font = tree.find('font')
+                if font is not None:
+                    self.font = font.text.strip()
+
+                # get default colors
+                for c in tree.findall('color'):
+                    k = c.get('tag')
+
+                    color = colorify(c)
+                    if k == 'bgcolor':
+                        if ',' in color:
+                            color = [i / 255. for i in floatify(color)]
+                        # if isinstance(color, list):
+                        #     color = [ti / 255. for ti in color]
+                        canvas.bgcolor = color
+                    else:
+                        color_dict[k] = color
+
+                # get an origin offset
+
+                o = tree.find('origin')
+                if o is not None:
+                    ox, oy = floatify(o)
+
+                for i, image in enumerate(cp.get_elements('image')):
+                    self._new_image(cp, image)
+
+        return (ox, oy), color_dict
+
+
+class BaseLoader:
+    valve_dimension = 2, 2
+
+    def __init__(self, path, origin, color_dict):
+        self._path = path
+        self._origin = origin
+        self._color_dict = color_dict
+
+    def _get_items(self, key):
+        raise NotImplementedError
+
+    def load_rects(self, scene):
+        for key in RECT_TAGS:
+            for b in self._get_items(key):
+                c = self._color_dict.get(key, (204, 204, 204))
+                klass = KLASS_MAP.get(key, RoundedRectangle)
+                self._new_rectangle(scene, b, c, bw=5,
+                                    origin=self._origin,
+                                    klass=klass, type_tag=key)
+
+    def _new_rectangle(self, *args, **kw):
+        raise NotImplementedError
+
+
+class YAMLLoader(BaseLoader):
+    def __init__(self, *args, **kw):
+        super(YAMLLoader, self).__init__(*args, **kw)
+        self._yd = yload(self._path)
+
+    def _get_items(self, key, default=None):
+        if default is None:
+            default = []
+
+        return self._yd.get(key, default)
+
+    def _get_translation(self, v):
+        return self._get_floats(v)
+
+    def _get_floats(self, v, key='translation', default=None):
+        if default is None:
+            default = '0,0'
+
+        if isinstance(default, tuple):
+            default = ','.join([str(d) for d in default])
+
+        return [float(i) for i in v.get(key, default).split(',')]
+
+    def load_switchables(self, scene, valvepath):
+        vp = SwitchParser(valvepath)
+        ndict = dict()
+        ox, oy = self._origin
+
+        for s in self._yd.get('switch'):
+            pass
+
+        for v in self._yd.get('valve'):
+            key = v['name'].strip()
+            # x, y = self._get_floats(v, 'translation')
+            x, y = self._get_translation(v)
+
+            w, h = self._get_floats(v, 'dimension', default=self.valve_dimension)
+
+            # get the description from valves.xml
+            vv = vp.get_valve(key)
+            desc = ''
+            if vv is not None:
+                desc = vv.find('description')
+                desc = desc.text.strip() if desc is not None else ''
+
+            v = Valve(x + ox, y + oy,
+                      name=key,
+                      width=w, height=h,
+                      description=desc,
+                      border_width=3)
+
+            # sync the states
+            if key in scene.valves:
+                vv = scene.valves[key]
+                v.state = vv.state
+                v.soft_lock = vv.soft_lock
+
+            scene.add_item(v, layer=1)
+            ndict[key] = v
+
+        # scene.valves = ndict
+
+    def load_pipettes(self):
+        pass
+
+    def load_markup(self):
+        pass
+
+    # need to load all components that will be connected
+    # before loading connections
+
+    def load_connections(self, scene):
+        for tag, od in (('connection', None),
+                        ('hconnection', 'horizontal'),
+                        ('vconnection', 'vertical')):
+            for conn in self._yd.get(tag, []):
+                self._new_connection(scene, conn, orientation_default=od)
+
+        for i, conn in enumerate(self._yd.get('elbow', [])):
+            l = self._new_connection(scene, conn, Elbow)
+            corner = conn.get('corner', 'ul')
+            if corner is not None:
+                c = corner.strip()
+            l.corner = c
+
+        for tag, klass in (('tee', Tee), ('fork', Fork)):
+            for conn in self._yd.get('{}_connection'.format(tag), []):
+                self._new_fork(scene, klass, conn)
+
+    def load_legend(self):
+        pass
+
+    # private
+    def _new_rectangle(self, scene, elem, c, bw=3,
                        layer=1,
                        origin=None, klass=None, type_tag=''):
         if klass is None:
@@ -141,7 +293,7 @@ class ExtractionLineScene(Scene):
             ox, oy = origin
 
         try:
-            key = elem.text.strip()
+            key = elem['name'].strip()
         except AttributeError:
             key = ''
 
@@ -150,99 +302,63 @@ class ExtractionLineScene(Scene):
         fill = to_bool(elem.get('fill', 'T'))
 
         # x, y = self._get_floats(elem, 'translation')
-        x, y = self._get_translation(cp, elem)
+        x, y = self._get_translation(elem)
         w, h = self._get_floats(elem, 'dimension')
+        if not w or not h:
+            w, h = 5, 5
 
-        color = elem.find('color')
+        color = elem.get('color')
         if color is not None:
-            c = color.text.strip()
-            cobj = self.get_item(c)
+            c = color.strip()
+            cobj = scene.get_item(c)
             if cobj is not None:
                 c = cobj.default_color
             else:
                 c = colorify(c)
 
         else:
-            c = self._make_color(c)
-        # if type_tag == 'turbo':
-        # klass = Turbo
-        # elif
-        # else:
-        # klass = RoundedRectangle
+            c = scene._make_color(c)
 
         rect = klass(x + ox, y + oy, width=w, height=h,
                      name=key,
                      border_width=bw,
                      display_name=display_name,
-                     volume=get_volume(elem),
+                     volume=elem.get('volume', 0),
                      default_color=c,
                      type_tag=type_tag,
                      fill=fill)
-        font = elem.find('font')
+        font = elem.get('font')
         if font is not None:
-            rect.font = font.text.strip()
+            rect.font = font.strip()
 
         if type_tag in ('turbo', 'laser'):
-            self.overlays.append(rect)
+            scene.overlays.append(rect)
             rect.scene_visible = False
 
         if rect.name:
-            self.rects[rect.name] = rect
+            scene.rects[rect.name] = rect
 
-        self.add_item(rect, layer=layer)
+        scene.add_item(rect, layer=layer)
 
         return rect
 
-    def _new_fork(self, klass, conn):
-        left = conn.find('left')
-        right = conn.find('right')
-        mid = conn.find('mid')
-        key = '{}-{}-{}'.format(left.text.strip(), mid.text.strip(), right.text.strip())
-
-        height = 4
-        dim = conn.find('dimension')
-        if dim is not None:
-            height = float(dim.text.strip())
-        # klass = BorderLine
-        tt = klass(0, 0,
-                   default_color=(204, 204, 204),
-                   name=key, height=height)
-
-        lf = self.get_item(left.text.strip())
-        rt = self.get_item(right.text.strip())
-        mm = self.get_item(mid.text.strip())
-        lf.connections.append(('left', tt))
-        rt.connections.append(('right', tt))
-        mm.connections.append(('mid', tt))
-
-        def get_xy(item, elem):
-            default = item.width / 2., item.height / 2.
-            ox, oy = get_offset(elem, default=default)
-            return item.x + ox, item.y + oy
-
-        lx, ly = get_xy(lf, left)
-        rx, ry = get_xy(rt, right)
-        mx, my = get_xy(mm, mid)
-        tt.set_points(lx, ly, rx, ry, mx, my)
-        self.add_item(tt, layer=0)
-
-    def _new_connection(self, conn, klass=None, orientation_default=None):
+    def _new_connection(self, scene, conn, klass=None, orientation_default=None):
         if klass is None:
             klass = Connection
 
-        start = conn.find('start')
-        end = conn.find('end')
-        key = '{}_{}'.format(start.text, end.text)
+        start = conn.get('start')
+        end = conn.get('end')
 
-        skey = start.text.strip()
-        ekey = end.text.strip()
+        skey = start['name'].strip()
+        ekey = end['name'].strip()
+        key = '{}_{}'.format(skey, ekey)
 
         orient = conn.get('orientation')
         if orient is None:
             orient = orientation_default
 
         x, y = 0, 0
-        sanchor = self.get_item(skey)
+        sanchor = scene.get_item(skey)
         if sanchor:
             x, y = sanchor.x, sanchor.y
             # try:
@@ -258,7 +374,7 @@ class ExtractionLineScene(Scene):
             y += oy
 
         x1, y1 = x, y
-        eanchor = self.get_item(ekey)
+        eanchor = scene.get_item(ekey)
         if eanchor:
             x1, y1 = eanchor.x, eanchor.y
 
@@ -288,7 +404,177 @@ class ExtractionLineScene(Scene):
         if eanchor:
             eanchor.connections.append(('end', connection))
 
-        self.add_item(connection, layer=0)
+        scene.add_item(connection, layer=0)
+        return connection
+
+
+class XMLLoader(BaseLoader, Scene):
+
+    def __init__(self, *args, **kw):
+        super(XMLLoader, self).__init__(*args, **kw)
+        print('asdf path', self._path)
+        self._cp = CanvasParser(self._path)
+
+    def _new_rectangle(self, scene, elem, c, bw=3,
+                       layer=1,
+                       origin=None, klass=None, type_tag=''):
+
+        if klass is None:
+            klass = RoundedRectangle
+        if origin is None:
+            ox, oy = 0, 0
+        else:
+            ox, oy = origin
+
+        try:
+            key = elem.text.strip()
+        except AttributeError:
+            key = ''
+
+        display_name = elem.get('display_name', key)
+        # print key, display_name
+        fill = to_bool(elem.get('fill', 'T'))
+
+        # x, y = self._get_floats(elem, 'translation')
+        x, y = self._get_translation(cp, elem)
+        w, h = self._get_floats(elem, 'dimension')
+
+        color = elem.find('color')
+        if color is not None:
+            c = color.text.strip()
+            cobj = scene.get_item(c)
+            if cobj is not None:
+                c = cobj.default_color
+            else:
+                c = colorify(c)
+
+        else:
+            c = scene._make_color(c)
+        # if type_tag == 'turbo':
+        # klass = Turbo
+        # elif
+        # else:
+        # klass = RoundedRectangle
+
+        rect = klass(x + ox, y + oy, width=w, height=h,
+                     name=key,
+                     border_width=bw,
+                     display_name=display_name,
+                     volume=get_volume(elem),
+                     default_color=c,
+                     type_tag=type_tag,
+                     fill=fill)
+        font = elem.find('font')
+        if font is not None:
+            rect.font = font.text.strip()
+
+        if type_tag in ('turbo', 'laser'):
+            scene.overlays.append(rect)
+            rect.scene_visible = False
+
+        if rect.name:
+            scene.rects[rect.name] = rect
+
+        scene.add_item(rect, layer=layer)
+
+        return rect
+
+    def _new_fork(self, scene, klass, conn):
+        left = conn.find('left')
+        right = conn.find('right')
+        mid = conn.find('mid')
+        key = '{}-{}-{}'.format(left.text.strip(), mid.text.strip(), right.text.strip())
+
+        height = 4
+        dim = conn.find('dimension')
+        if dim is not None:
+            height = float(dim.text.strip())
+        # klass = BorderLine
+        tt = klass(0, 0,
+                   default_color=(204, 204, 204),
+                   name=key, height=height)
+
+        lf = scene.get_item(left.text.strip())
+        rt = scene.get_item(right.text.strip())
+        mm = scene.get_item(mid.text.strip())
+        lf.connections.append(('left', tt))
+        rt.connections.append(('right', tt))
+        mm.connections.append(('mid', tt))
+
+        def get_xy(item, elem):
+            default = item.width / 2., item.height / 2.
+            ox, oy = get_offset(elem, default=default)
+            return item.x + ox, item.y + oy
+
+        lx, ly = get_xy(lf, left)
+        rx, ry = get_xy(rt, right)
+        mx, my = get_xy(mm, mid)
+        tt.set_points(lx, ly, rx, ry, mx, my)
+        scene.add_item(tt, layer=0)
+
+    def _new_connection(self, scene, conn, klass=None, orientation_default=None):
+        if klass is None:
+            klass = Connection
+
+        start = conn.find('start')
+        end = conn.find('end')
+        key = '{}_{}'.format(start.text, end.text)
+
+        skey = start.text.strip()
+        ekey = end.text.strip()
+
+        orient = conn.get('orientation')
+        if orient is None:
+            orient = orientation_default
+
+        x, y = 0, 0
+        sanchor = scene.get_item(skey)
+        if sanchor:
+            x, y = sanchor.x, sanchor.y
+            # try:
+            #     ox, oy = list(map(float, start.get('offset').split(',')))
+            # except AttributeError:
+            #     ox = sanchor.width / 2.0
+            #     oy = sanchor.height / 2.0
+
+            default = sanchor.width / 2.0, sanchor.height / 2.0
+            ox, oy = get_offset(start, default=default)
+
+            x += ox
+            y += oy
+
+        x1, y1 = x, y
+        eanchor = scene.get_item(ekey)
+        if eanchor:
+            x1, y1 = eanchor.x, eanchor.y
+
+            # try:
+            #     ox, oy = list(map(float, end.get('offset').split(',')))
+            # except AttributeError:
+            #     ox = eanchor.width / 2.0
+            #     oy = eanchor.height / 2.0
+            default = eanchor.width / 2.0, eanchor.height / 2.0
+            ox, oy = get_offset(end, default=default)
+
+            x1 += ox
+            y1 += oy
+
+        if orient == 'vertical':
+            x1 = x
+        elif orient == 'horizontal':
+            y1 = y
+
+        connection = klass((x, y), (x1, y1),
+                           default_color=(204, 204, 204),
+                           name=key,
+                           width=10)
+
+        if sanchor:
+            sanchor.connections.append(('start', connection))
+        if eanchor:
+            eanchor.connections.append(('end', connection))
+
+        scene.add_item(connection, layer=0)
         return connection
 
     def _new_line(self, line, name,
@@ -363,8 +649,9 @@ class ExtractionLineScene(Scene):
             im = Image(x, y, path=path, scale=scale)
             self.add_item(im, 0)
 
-    def _load_switchables(self, cp, origin, vpath):
-        ox, oy = origin
+    def load_switchables(self, scene, vpath):
+        cp = self._cp
+        ox, oy = self._origin
         ndict = dict()
         vp = SwitchParser(vpath)
 
@@ -394,7 +681,7 @@ class ExtractionLineScene(Scene):
                 for a in associations:
                     v.associations.append(a.text.strip())
 
-            self.add_item(v, layer=1)
+            scene.add_item(v, layer=1)
             ndict[key] = v
 
         for v in cp.get_elements('valve'):
@@ -420,12 +707,12 @@ class ExtractionLineScene(Scene):
 
             # v.translate = x + ox, y + oy
             # sync the states
-            if key in self.valves:
-                vv = self.valves[key]
+            if key in scene.valves:
+                vv = scene.valves[key]
                 v.state = vv.state
                 v.soft_lock = vv.soft_lock
 
-            self.add_item(v, layer=1)
+            scene.add_item(v, layer=1)
             ndict[key] = v
 
         for rv in cp.get_elements('rough_valve'):
@@ -433,7 +720,7 @@ class ExtractionLineScene(Scene):
             # x, y = self._get_floats(rv, 'translation')
             x, y = self._get_translation(cp, rv)
             v = RoughValve(x + ox, y + oy, name=key)
-            self.add_item(v, layer=1)
+            scene.add_item(v, layer=1)
             ndict[key] = v
 
         for mv in cp.get_elements('manual_valve'):
@@ -449,10 +736,10 @@ class ExtractionLineScene(Scene):
             v = ManualSwitch(x + ox, y + oy,
                              display_name=desc,
                              name=key)
-            self.add_item(v, layer=1)
+            scene.add_item(v, layer=1)
             ndict[key] = v
 
-        self.valves = ndict
+        scene.valves = ndict
 
     def _load_markup(self, cp, origin, color_dict):
         """
@@ -472,15 +759,16 @@ class ExtractionLineScene(Scene):
         for i, image in enumerate(cp.get_elements('image')):
             self._new_image(cp, image)
 
-    def _load_connections(self, cp, origin, color_dict):
+    def load_connections(self, scene):
+        cp = self._cp
         for tag, od in (('connection', None),
                         ('hconnection', 'horizontal'),
                         ('vconnection', 'vertical')):
             for conn in cp.get_elements(tag):
-                self._new_connection(conn, orientation_default=od)
+                self._new_connection(scene, conn, orientation_default=od)
 
         for i, conn in enumerate(cp.get_elements('elbow')):
-            l = self._new_connection(conn, Elbow)
+            l = self._new_connection(scene, conn, Elbow)
             corner = conn.find('corner')
             c = 'ul'
             if corner is not None:
@@ -489,18 +777,7 @@ class ExtractionLineScene(Scene):
 
         for tag, klass in (('tee', Tee), ('fork', Fork)):
             for conn in cp.get_elements('{}_connection'.format(tag)):
-                self._new_fork(klass, conn)
-
-    def _load_rects(self, cp, origin, color_dict):
-        for key in RECT_TAGS:
-            for b in cp.get_elements(key):
-                if key in color_dict:
-                    c = color_dict[key]
-                else:
-                    c = (204, 204, 204)
-
-                klass = KLASS_MAP.get(key, RoundedRectangle)
-                self._new_rectangle(cp, b, c, bw=5, origin=origin, klass=klass, type_tag=key)
+                self._new_fork(scene, klass, conn)
 
     def _load_pipettes(self, cp, origin, color_dict):
         if 'pipette' in color_dict:
@@ -576,51 +853,5 @@ class ExtractionLineScene(Scene):
                                     default_color=self._make_color((0, 0, 0)))
 
             self.add_item(rect, layer='legend')
-
-    def _load_config(self, p, canvas):
-        color_dict = dict()
-        ox, oy = 0, 0
-        if os.path.isfile(p):
-            cp = self._get_canvas_parser(p)
-
-            tree = cp.get_tree()
-            if tree:
-                xv, yv = self._get_canvas_view_range(cp)
-
-                canvas.view_x_range = xv
-                canvas.view_y_range = yv
-                dim = tree.find('valve_dimension')
-                if dim is not None:
-                    self.valve_dimension = floatify(dim)
-
-                # get label font
-                font = tree.find('font')
-                if font is not None:
-                    self.font = font.text.strip()
-
-                # get default colors
-                for c in tree.findall('color'):
-                    k = c.get('tag')
-
-                    color = colorify(c)
-                    if k == 'bgcolor':
-                        if ',' in color:
-                            color = [i / 255. for i in floatify(color)]
-                        # if isinstance(color, list):
-                        #     color = [ti / 255. for ti in color]
-                        canvas.bgcolor = color
-                    else:
-                        color_dict[k] = color
-
-                # get an origin offset
-
-                o = tree.find('origin')
-                if o is not None:
-                    ox, oy = floatify(o)
-
-                for i, image in enumerate(cp.get_elements('image')):
-                    self._new_image(cp, image)
-
-        return (ox, oy), color_dict
 
 # ============= EOF =============================================

@@ -43,64 +43,64 @@ class CanvasParser(XMLParser):
     """
     pass
 
-
-class Text(object):
-    def __init__(self, t):
-        self.text = t
-
-
-class Element(object):
-    def __init__(self, obj):
-        self._obj = obj
-        if obj:
-            self.text = str(self._obj['name'])
-            self.translation = Text(self._obj['translation'])
-            self.description = str(self._obj.get('description', ''))
-
-    def find(self, key):
-        if self._obj:
-            if key == 'translation':
-                ret = self.translation
-            elif key == 'description':
-                ret = self.description
-            else:
-                ret = Element(self._obj.get(key))
-            return ret
-
-
-class YAMLCanvasParser(object):
-    def __init__(self, p, load=True):
-        self._path = p
-        if load:
-            self._yd = yload(p)
-
-    def get_elements(self, key):
-        es = []
-        if key in self._yd:
-            es = [Element(ei) for ei in self._yd[key]]
-        return es
-
-    def find(self, key):
-        if key in self._yd:
-            return Element(self._yd[key])
-
-    def get_root(self):
-        return self
-
-    def dump(self, scene):
-        obj = {}
-
-        def factory(i):
-            return {'name': i.name,
-                    'translation': '{},{}'.format(i.x, i.y)}
-
-        for klass, key in ((Switch, 'switch'), (Valve, 'valve'), (ManualSwitch, 'manualswitch')):
-            items = [factory(i) for i in scene.get_items(klass)]
-            obj[key] = items
-
-        for c in scene.get_items(Connection):
-            print(c, c.start, c.end)
-
-        with open(self._path, 'w') as wfile:
-            yaml.dump(obj, wfile)
 # ============= EOF ====================================
+#
+# class Text(object):
+#     def __init__(self, t):
+#         self.text = t
+#
+#
+# class Element(object):
+#     def __init__(self, obj):
+#         self._obj = obj
+#         if obj:
+#             self.text = str(self._obj['name'])
+#             self.translation = Text(self._obj['translation'])
+#             self.description = str(self._obj.get('description', ''))
+#
+#     def find(self, key):
+#         if self._obj:
+#             if key == 'translation':
+#                 ret = self.translation
+#             elif key == 'description':
+#                 ret = self.description
+#             else:
+#                 ret = Element(self._obj.get(key))
+#             return ret
+#
+#
+# class YAMLCanvasParser(object):
+#     def __init__(self, p, load=True):
+#         self._path = p
+#         if load:
+#             self._yd = yload(p)
+#
+#     def get_elements(self, key):
+#         es = []
+#         if key in self._yd:
+#             es = [Element(ei) for ei in self._yd[key]]
+#         return es
+#
+#     def find(self, key):
+#         if key in self._yd:
+#             return Element(self._yd[key])
+#
+#     def get_root(self):
+#         return self
+#
+#     def dump(self, scene):
+#         obj = {}
+#
+#         def factory(i):
+#             return {'name': i.name,
+#                     'translation': '{},{}'.format(i.x, i.y)}
+#
+#         for klass, key in ((Switch, 'switch'), (Valve, 'valve'), (ManualSwitch, 'manualswitch')):
+#             items = [factory(i) for i in scene.get_items(klass)]
+#             obj[key] = items
+#
+#         for c in scene.get_items(Connection):
+#             print(c, c.start, c.end)
+#
+#         with open(self._path, 'w') as wfile:
+#             yaml.dump(obj, wfile)

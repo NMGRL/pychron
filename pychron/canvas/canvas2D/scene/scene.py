@@ -19,7 +19,7 @@ from traits.api import HasTraits, List, on_trait_change, Any, Event
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.canvas.canvas2D.scene.canvas_parser import CanvasParser, YAMLCanvasParser
+from pychron.canvas.canvas2D.scene.canvas_parser import CanvasParser
 from pychron.canvas.canvas2D.scene.layer import Layer
 from pychron.canvas.canvas2D.scene.primitives.primitives import Primitive
 
@@ -148,7 +148,6 @@ class Scene(HasTraits):
                 self.layers.append(Layer(name='{}'.format(n)))
 
             layer = self.layers[layer]
-
         layer.add_item(v)
 
     def remove_klass(self, klass, layer=None):
@@ -253,10 +252,7 @@ class Scene(HasTraits):
 
     def _get_canvas_parser(self, p=None):
         if p is not None:
-            if p.endswith('.yaml') or p.endswith('.yml'):
-                cp = YAMLCanvasParser(p)
-            else:
-                cp = CanvasParser(p)
+            cp = CanvasParser(p)
             self.parser = cp
         elif self.parser:
             cp = self.parser

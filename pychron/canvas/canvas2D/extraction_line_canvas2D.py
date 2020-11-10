@@ -81,7 +81,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
     drag_pointer = Pointer('bullseye')
     snap_to_grid = True
     grid_interval = 0.5
-    edit_mode = Bool(True)
+    edit_mode = Bool(False)
     _constrain = False
 
     _px = None
