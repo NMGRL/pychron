@@ -142,7 +142,6 @@ class WaitControl(Loggable):
             self.end_evt.set()
 
     def _update_time(self):
-        print('updads', self._paused)
         if self._paused:
             return
 

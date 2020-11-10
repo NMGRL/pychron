@@ -176,6 +176,11 @@ class DVCPersister(BasePersister):
                     except TypeError:
                         self.debug('invalid extraction position')
 
+                try:
+                    pos = int(pos)
+                except BaseException:
+                    pos = None
+
                 pd = {'x': x, 'y': y, 'z': z, 'position': pos, 'is_degas': per_spec.run_spec.identifier == 'dg'}
                 ps.append(pd)
 
@@ -420,10 +425,7 @@ class DVCPersister(BasePersister):
 
                 for position in self._positions:
                     self.debug('adding measured position {}'.format(position))
-                    dbpos = db.add_measured_position(load=load_name, **position)
-                    if dbpos:
-                        an.measured_positions.append(dbpos)
-                    else:
+                    if not db.add_measured_position(an, load=load_name, **position):
                         self.warning('failed adding position {}, load={}'.format(position, load_name))
 
         # all associations are handled by the ExperimentExecutor._retroactive_experiment_identifiers

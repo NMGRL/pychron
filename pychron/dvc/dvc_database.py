@@ -460,13 +460,14 @@ class DVCDatabase(DatabaseAdapter):
                 obj = UserTbl(name=self.save_username)
                 self._add_item(obj)
 
-    def add_measured_position(self, position=None, load=None, **kw):
+    def add_measured_position(self, an, position=None, load=None, **kw):
         with self.session_ctx():
-            a = MeasuredPositionTbl(**kw)
+            a = MeasuredPositionTbl(analysis=an, **kw)
             if position:
                 a.position = position
             if load:
                 a.loadName = load
+
             return self._add_item(a)
 
     def add_load(self, name, holder, username):

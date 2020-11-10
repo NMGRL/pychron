@@ -48,9 +48,8 @@ def fix_load(dvc, sess, load, ms):
         print('added measured position for {},{},{}'.format(load_name, i, a.id, a.timestamp))
         # add new measured position
         if not DRY:
-            dbpos = dvc.add_measured_position(load=load_name)
-            if dbpos:
-                a.measured_positions.append(dbpos)
+            dvc.add_measured_position(a, load=load_name)
+
 
 
 def main():
