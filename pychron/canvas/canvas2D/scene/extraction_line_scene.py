@@ -81,13 +81,13 @@ class ExtractionLineScene(Scene):
         self.overlays = []
         self.reset_layers()
 
-        origin, color_dict = self._load_config(configpath, canvas)
+        origin, color_dict, valve_dimension = self._load_config(configpath, canvas)
         if pathname.endswith('.yaml') or pathname.endswith('.yml'):
             klass = YAMLLoader
         else:
             klass = XMLLoader
 
-        loader = klass(pathname, origin, color_dict)
+        loader = klass(pathname, origin, color_dict, valve_dimension)
 
         loader.load_switchables(self, valvepath)
         loader.load_rects(self)
@@ -131,8 +131,9 @@ class ExtractionLineScene(Scene):
                 canvas.view_x_range = xv
                 canvas.view_y_range = yv
                 dim = tree.find('valve_dimension')
+                valve_dimension = 2,2
                 if dim is not None:
-                    self.valve_dimension = floatify(dim)
+                    valve_dimension = floatify(dim)
 
                 # get label font
                 font = tree.find('font')
@@ -162,16 +163,15 @@ class ExtractionLineScene(Scene):
                 for i, image in enumerate(cp.get_elements('image')):
                     self._new_image(cp, image)
 
-        return (ox, oy), color_dict
+        return (ox, oy), color_dict, valve_dimension
 
 
 class BaseLoader:
-    valve_dimension = 2, 2
-
-    def __init__(self, path, origin, color_dict):
+    def __init__(self, path, origin, color_dict, valve_dimension):
         self._path = path
         self._origin = origin
         self._color_dict = color_dict
+        self._valve_dimension = valve_dimension
 
     def _get_items(self, key):
         raise NotImplementedError
@@ -207,7 +207,7 @@ class YAMLLoader(BaseLoader):
         if default is None:
             default = '0,0'
 
-        if isinstance(default, tuple):
+        if isinstance(default, (tuple, list)):
             default = ','.join([str(d) for d in default])
 
         return [float(i) for i in v.get(key, default).split(',')]
@@ -224,8 +224,7 @@ class YAMLLoader(BaseLoader):
             key = v['name'].strip()
             # x, y = self._get_floats(v, 'translation')
             x, y = self._get_translation(v)
-
-            w, h = self._get_floats(v, 'dimension', default=self.valve_dimension)
+            w, h = self._get_floats(v, 'dimension', default=self._valve_dimension)
 
             # get the description from valves.xml
             vv = vp.get_valve(key)
@@ -436,7 +435,7 @@ class XMLLoader(BaseLoader, Scene):
         fill = to_bool(elem.get('fill', 'T'))
 
         # x, y = self._get_floats(elem, 'translation')
-        x, y = self._get_translation(cp, elem)
+        x, y = self._get_translation(self._cp, elem)
         w, h = self._get_floats(elem, 'dimension')
 
         color = elem.find('color')
