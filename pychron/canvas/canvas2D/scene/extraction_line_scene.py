@@ -26,8 +26,8 @@ from pychron.canvas.canvas2D.scene.canvas_parser import get_volume, CanvasParser
 from pychron.canvas.canvas2D.scene.primitives.connections import Tee, Fork, Elbow, Connection
 from pychron.canvas.canvas2D.scene.primitives.lasers import Laser, CircleLaser
 from pychron.canvas.canvas2D.scene.primitives.primitives import Label, BorderLine, Line, Image, ValueLabel
-from pychron.canvas.canvas2D.scene.primitives.pumps import Turbo
-from pychron.canvas.canvas2D.scene.primitives.rounded import RoundedRectangle, CircleStage
+from pychron.canvas.canvas2D.scene.primitives.pumps import Turbo, IonPump
+from pychron.canvas.canvas2D.scene.primitives.rounded import RoundedRectangle, CircleStage, Spectrometer, Getter
 from pychron.canvas.canvas2D.scene.primitives.valves import RoughValve, Valve, Switch, ManualSwitch
 from pychron.canvas.canvas2D.scene.scene import Scene
 from pychron.core.helpers.strtools import to_bool
@@ -35,7 +35,13 @@ from pychron.core.yaml import yload
 from pychron.extraction_line.switch_parser import SwitchParser
 from pychron.paths import paths
 
-KLASS_MAP = {'turbo': Turbo, 'laser': Laser, 'circle_stage': CircleStage, 'circle_laser': CircleLaser}
+KLASS_MAP = {'turbo': Turbo,
+             'laser': Laser,
+             'ionpump': IonPump,
+             'getter': Getter,
+             'spectrometer': Spectrometer,
+             'circle_stage': CircleStage,
+             'circle_laser': CircleLaser}
 
 RECT_TAGS = ('stage', 'laser', 'spectrometer',
              'turbo', 'getter', 'tank',
@@ -50,11 +56,13 @@ def get_offset(elem, default=None):
     if default is None:
         default = 0, 0
 
+    txt = ''
     if offset:
+        txt = offset
         x, y = floatify(offset)
     else:
         x, y = default
-    return x, y
+    return x, y, txt
 
 
 def floatify(a, delim=','):
@@ -131,7 +139,7 @@ class ExtractionLineScene(Scene):
                 canvas.view_x_range = xv
                 canvas.view_y_range = yv
                 dim = tree.find('valve_dimension')
-                valve_dimension = 2,2
+                valve_dimension = 2, 2
                 if dim is not None:
                     valve_dimension = floatify(dim)
 
@@ -360,33 +368,20 @@ class YAMLLoader(BaseLoader):
         sanchor = scene.get_item(skey)
         if sanchor:
             x, y = sanchor.x, sanchor.y
-            # try:
-            #     ox, oy = list(map(float, start.get('offset').split(',')))
-            # except AttributeError:
-            #     ox = sanchor.width / 2.0
-            #     oy = sanchor.height / 2.0
-
             default = sanchor.width / 2.0, sanchor.height / 2.0
-            ox, oy = get_offset(start, default=default)
+            sox, soy, start_offset = get_offset(start, default=default)
 
-            x += ox
-            y += oy
+            x += sox
+            y += soy
 
         x1, y1 = x, y
         eanchor = scene.get_item(ekey)
         if eanchor:
             x1, y1 = eanchor.x, eanchor.y
-
-            # try:
-            #     ox, oy = list(map(float, end.get('offset').split(',')))
-            # except AttributeError:
-            #     ox = eanchor.width / 2.0
-            #     oy = eanchor.height / 2.0
             default = eanchor.width / 2.0, eanchor.height / 2.0
-            ox, oy = get_offset(end, default=default)
-
-            x1 += ox
-            y1 += oy
+            eox, eoy, end_offset = get_offset(end, default=default)
+            x1 += eox
+            y1 += eoy
 
         if orient == 'vertical':
             x1 = x
@@ -394,6 +389,11 @@ class YAMLLoader(BaseLoader):
             y1 = y
 
         connection = klass((x, y), (x1, y1),
+                           orientation=orient,
+                           start=skey,
+                           end=ekey,
+                           start_offset=start_offset,
+                           end_offset=end_offset,
                            default_color=(204, 204, 204),
                            name=key,
                            width=10)
@@ -502,7 +502,7 @@ class XMLLoader(BaseLoader, Scene):
 
         def get_xy(item, elem):
             default = item.width / 2., item.height / 2.
-            ox, oy = get_offset(elem, default=default)
+            ox, oy, txt = get_offset(elem, default=default)
             return item.x + ox, item.y + oy
 
         lx, ly = get_xy(lf, left)
@@ -537,7 +537,7 @@ class XMLLoader(BaseLoader, Scene):
             #     oy = sanchor.height / 2.0
 
             default = sanchor.width / 2.0, sanchor.height / 2.0
-            ox, oy = get_offset(start, default=default)
+            ox, oy, txt = get_offset(start, default=default)
 
             x += ox
             y += oy
@@ -553,7 +553,7 @@ class XMLLoader(BaseLoader, Scene):
             #     ox = eanchor.width / 2.0
             #     oy = eanchor.height / 2.0
             default = eanchor.width / 2.0, eanchor.height / 2.0
-            ox, oy = get_offset(end, default=default)
+            ox, oy, txt = get_offset(end, default=default)
 
             x1 += ox
             y1 += oy
@@ -672,7 +672,7 @@ class XMLLoader(BaseLoader, Scene):
                 # else:
                 #     x = 0
                 #     y = 22
-                x, y = get_offset(l, default=(0, 22))
+                x, y, txt = get_offset(l, default=(0, 22))
                 v.set_label(label, x, y)
 
             associations = s.findall('association')

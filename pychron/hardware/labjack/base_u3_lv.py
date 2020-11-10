@@ -37,8 +37,8 @@ class BaseU3LV:
             section = 'Communications'
             conn = {'autoOpen': False}
             if config.has_section(section):
-                conn['localId'] = config.get(section, 'localId')
-                conn['serial'] = config.get(section, 'serialNum')
+                conn['localId'] = config.get(section, 'localId', fallback=None)
+                conn['serial'] = config.get(section, 'serialNum', fallback=None)
                 conn['firstFound'] = False
 
             try:

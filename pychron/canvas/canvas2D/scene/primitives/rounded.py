@@ -53,6 +53,14 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
     fill = True
     use_border_gaps = True
 
+    def toyaml(self):
+        y = super(RoundedRectangle, self).toyaml()
+        y['display_name'] = self.display_name
+        y['fill'] = self.fill
+        y['color'] = ','.join([str(a) for a in self.default_color.getRgb()])
+        y['border_width'] = self.border_width
+        return y
+
     def get_tooltip_text(self):
         return 'Stage={}\nVolume={}'.format(self.name, self.volume)
 
@@ -281,4 +289,7 @@ class CircleStage(Connectable, Bordered):
                     gc.arc(cx, cy, r, theta - dw, theta + dw)
                     gc.stroke_path()
 
+
+class Getter(RoundedRectangle):
+    pass
 # ============= EOF =============================================

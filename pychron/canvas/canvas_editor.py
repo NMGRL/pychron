@@ -13,8 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+import shutil
 from operator import attrgetter
 
+import yaml
 from enable.colors import ColorTrait
 from traits.api import HasTraits, List, on_trait_change, Button, Float, Enum, Instance, Str, Bool
 from traitsui.api import View, UItem, TableEditor
@@ -24,8 +26,10 @@ from pychron.canvas.canvas2D.scene.canvas_parser import CanvasParser
 from pychron.canvas.canvas2D.scene.extraction_line_scene import RECT_TAGS, SWITCH_TAGS
 from pychron.canvas.canvas2D.scene.primitives.base import Primitive
 from pychron.canvas.canvas2D.scene.primitives.connections import Connection
-from pychron.canvas.canvas2D.scene.primitives.rounded import Spectrometer, Stage
-from pychron.canvas.canvas2D.scene.primitives.valves import BaseValve, Valve
+from pychron.canvas.canvas2D.scene.primitives.lasers import Laser
+from pychron.canvas.canvas2D.scene.primitives.pumps import Turbo, IonPump
+from pychron.canvas.canvas2D.scene.primitives.rounded import Spectrometer, Stage, Getter
+from pychron.canvas.canvas2D.scene.primitives.valves import BaseValve, Valve, Switch, ManualSwitch
 from pychron.loggable import Loggable
 from pychron.pychron_constants import NULL_STR
 
@@ -145,7 +149,29 @@ class CanvasEditor(Loggable):
     def _save_button_fired(self):
         p = self.path
         if p.endswith('.yaml') or p.endswith('.yml'):
-            self.warning_dialog('Save not yet implemented')
+            obj = {}
+
+            for klass, key in ((Switch, 'switch'),
+                               (Valve, 'valve'),
+                               (ManualSwitch, 'manualswitch'),
+                               (Turbo, 'turbo'),
+                               (IonPump, 'ionpump'),
+                               (Getter, 'getter'),
+                               (Laser, 'laser'),
+                               (Stage, 'stage'),
+                               (Spectrometer, 'spectrometer')):
+                items = [i.toyaml() for i in self.canvas.scene.get_items(klass)]
+                obj[key] = items
+
+            for tag, orientation in (('connection', NULL_STR),
+                                     ('hconnection', 'horizontal'),
+                                     ('vconnection', 'vertical')):
+                obj[tag] = [i.toyaml() for i in self.canvas.scene.get_items(Connection) if i.orientation == orientation]
+
+            shutil.copyfile(p, '{}.bak'.format(p))
+
+            with open(p, 'w') as wfile:
+                yaml.dump(obj, wfile)
         else:
             self.warning_dialog('The xml canvas format is deprecated. Please consider switching to YAML')
 
