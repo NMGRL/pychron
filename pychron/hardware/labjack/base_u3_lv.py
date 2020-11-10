@@ -16,8 +16,12 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-import u3
-from LabJackPython import NullHandleException
+try:
+    import u3
+    from LabJackPython import NullHandleException
+except ImportError:
+    NullHandleException = BaseException
+
 # ============= local library imports  ==========================
 
 

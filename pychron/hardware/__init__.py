@@ -69,7 +69,8 @@ HW_PACKAGE_MAP = {
 
     'GenericDevice': 'pychron.hardware.generic_device',
 
-    'T4Actuator': 'pychron.hardware.actuators.t4_actuator'
+    'T4Actuator': 'pychron.hardware.actuators.t4_actuator',
+    'U3Actuator': 'pychron.hardware.actuators.u3_actuator'
 
 }
 

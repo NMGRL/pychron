@@ -89,4 +89,6 @@ PACKAGES = dict(AgilentGPActuator='{}.agilent.agilent_gp_actuator'.format(base),
                 NMGRLFurnaceActuator='{}.nmgrl_furnace_actuator'.format(abase),
                 DummyGPActuator='{}.dummy_gp_actuator'.format(abase),
                 RPiGPIO='{}.rpi_gpio'.format(base),
-                T4Actuator='{}.t4_actuator'.format(abase))
+                T4Actuator='{}.t4_actuator'.format(abase),
+                U3Actuator='{}.u3_actuator'.format(abase),
+                )
