@@ -18,7 +18,7 @@ from operator import attrgetter
 
 from PyQt5.QtCore import Qt, QVariant
 from PyQt5.QtWidgets import QMessageBox, QMenu, QSplitter
-from qgis.coref import QgsVectorLayer, QgsPointXY, QgsGeometry, QgsFeature, QgsProject, QgsRasterLayer, \
+from qgis.core import QgsVectorLayer, QgsPointXY, QgsGeometry, QgsFeature, QgsProject, QgsRasterLayer, \
     QgsApplication, \
     QgsCoordinateReferenceSystem, QgsField, QgsMarkerSymbol
 from qgis.gui import QgsMapCanvas, QgsLayerTreeViewMenuProvider, QgsMapToolIdentifyFeature
