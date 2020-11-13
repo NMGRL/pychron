@@ -13,10 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traitsui.api import View, Item, UItem, HGroup, Heading, spring
+from traitsui.api import View, Item, UItem, HGroup, Heading, spring, FileEditor
 
 from pychron.core.pychron_traits import BorderVGroup
 from pychron.options.options import SubOptions
+from pychron.paths import paths
 from pychron.pychron_constants import MAIN, APPEARANCE
 
 
@@ -26,7 +27,7 @@ class MainView(SubOptions):
         v = View(BorderVGroup(Item('basemap_uri_template', label='Base Map URI'),
                               label='Web Map Services'),
                  HGroup(spring, Heading('or'), spring),
-                 BorderVGroup(Item('basemap_path'),
+                 BorderVGroup(Item('basemap_path', editor=FileEditor(root_path=paths.data_dir)),
                               label='Local Raster'),
                  UItem('basemap_uri', style='custom'))
         return v
