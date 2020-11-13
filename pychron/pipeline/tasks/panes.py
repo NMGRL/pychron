@@ -302,7 +302,8 @@ class PipelinePane(TraitsDockPane):
                                        FitBlanksNode,
                                        FitFluxNode], menu=ffind_menu_factory()),
                  ReviewTreeNode(node_for=[ReviewNode], menu=enable_disable_menu_factory()),
-                 PipelineTreeNode(node_for=[BaseNode], label='name')]
+                 PipelineTreeNode(node_for=[BaseNode], label='name'),
+                 ]
 
         editor = PipelineEditor(nodes=nodes,
                                 editable=False,

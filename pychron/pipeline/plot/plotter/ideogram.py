@@ -172,7 +172,6 @@ class Ideogram(BaseArArFigure):
         selection = self.analysis_group.get_omitted_by_tag(self.sorted_analyses)
         # else:
         #     selection = []
-        print('asdffff', plots)
         for pid, (plotobj, po) in enumerate(zip(graph.plots, plots)):
             # plotobj.group_id = self.group_id
             # print(id(plotobj), plotobj.group_id)

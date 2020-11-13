@@ -15,12 +15,6 @@
 # ===============================================================================
 import os
 
-from PyQt5.QtWebEngineWidgets import QWebEngineView
-
-# stop from being removed during import optimization
-QWebEngineView
-
-
 from helpers import entry_point
 
 appname = os.environ.get('PYCHRON_APPNAME', 'pycrunch')

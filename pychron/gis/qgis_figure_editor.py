@@ -13,18 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-import os
 import uuid
 from operator import attrgetter
 
 from PyQt5.QtCore import Qt, QVariant
 from PyQt5.QtWidgets import QMessageBox, QMenu, QSplitter
-from qgis.core import QgsVectorLayer, QgsPointXY, QgsGeometry, QgsFeature, QgsProject, QgsRasterLayer, QgsApplication, \
-    QgsLayerTreeModel, QgsCoordinateReferenceSystem, QgsField
-from qgis.gui import QgsMapCanvas, QgsLayerTreeView, QgsLayerTreeViewMenuProvider, QgsMapToolIdentifyFeature
+from qgis.coref import QgsVectorLayer, QgsPointXY, QgsGeometry, QgsFeature, QgsProject, QgsRasterLayer, \
+    QgsApplication, \
+    QgsCoordinateReferenceSystem, QgsField, QgsMarkerSymbol
+from qgis.gui import QgsMapCanvas, QgsLayerTreeViewMenuProvider, QgsMapToolIdentifyFeature
 from traits.api import HasTraits, Instance, Str, Event, Float, Any, List, Button
-from traitsui.api import View, Item, HGroup, VGroup
-from traitsui.item import UItem
+from traitsui.api import View, Item, UItem, HSplit
 from traitsui.qt4.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
 
@@ -175,38 +174,46 @@ class _QGISEditor(Editor):
         layer = QgsVectorLayer(uri, "Data", "memory")
         provider = layer.dataProvider()
 
-        provider.addAttributes([
-            # QgsField("id", QVariant.Int),
-            QgsField("uuid", QVariant.String)])
+        provider.addAttributes([QgsField("uuid", QVariant.String)])
         layer.updateFields()
 
         self.data_layer = layer
-        symbol = layer.renderer().symbol()
-        symbol.setSize(4)
+
+        sd = getattr(self.value, 'symbol_style')
+        if sd is None:
+            sd = {'name': 'circle', 'size': '4', 'color': 'blue'}
+
+        layer.renderer().setSymbol(QgsMarkerSymbol.createSimple(sd))
+
         qproject.addMapLayer(layer)
 
-        rlayer = QgsRasterLayer(getattr(self.value, 'basemap'), 'BaseMap')
-        qproject.addMapLayer(rlayer)
+        args = getattr(self.value, 'basemap')
+        rlayer = QgsRasterLayer(*args)
+        if rlayer.isValid():
+            qproject.addMapLayer(rlayer)
+        else:
+            print('basemap layer invalid', rlayer, args)
 
-        self.root = root = qproject.layerTreeRoot()
-        self.view = view = QgsLayerTreeView()
-        self.model = model = QgsLayerTreeModel(root)
-        view.setModel(model)
-        view.collapseAll()
+        # self.root = root = qproject.layerTreeRoot()
+        # self.view = view = QgsLayerTreeView()
+        # self.model = model = QgsLayerTreeModel(root)
+        # view.setModel(model)
+        # view.collapseAll()
 
-        provider = MyMenuProvider(canvas, root, view)
-        view.setMenuProvider(provider)
+        # provider = MyMenuProvider(canvas, root, view)
+        # view.setMenuProvider(provider)
 
-        layout.addWidget(view)
-        layout.addWidget(canvas)
+        # layout.addWidget(view)
+        # layout.addWidget(canvas)
 
         self.toolInfo.setLayer(layer)
         canvas.setLayers([layer, rlayer])
         self.canvas = canvas
 
-        return layout
+        return canvas
 
     def update_editor(self):
+
         layer = self.data_layer
 
         fets = []
@@ -246,7 +253,18 @@ class Feature(HasTraits):
 
 class QGISMap(HasTraits):
     features = List
-    basemap = os.path.join(os.getcwd(), 'data', 'NMBGMR-500k-geology.tif')
+    symbol_style = None
+    uri = Str('type=xyz&url=http://tile.openstreetmap.org/{z}/{x}/{y}.png&zmax=19&zmin=5')
+
+    @property
+    def basemap(self):
+        uri = self.uri
+        if any(uri.endswith(e) for e in ('.png', '.tif', '.tiff', '.jpeg', '.jpg')):
+            args = (uri, 'BaseMap')
+        else:
+            args = (uri, 'BaseMap', 'wms')
+
+        return args
 
 
 class GISFigureEditor(BaseEditor):
@@ -256,6 +274,10 @@ class GISFigureEditor(BaseEditor):
     refresh_button = Button
     active_feature = Instance(Feature, ())
     ideogram = Instance(IdeogramEditor, ())
+    options = Any
+
+    qgs = QgsApplication([], False)
+    qgs.initQgis()
 
     def _selected_feature_changed(self, new):
         u = new.attribute('uuid')
@@ -270,6 +292,7 @@ class GISFigureEditor(BaseEditor):
         self.ideogram.refresh_needed = True
 
     def load(self):
+
         features = []
 
         p = IdeogramOptionsManager()
@@ -279,8 +302,12 @@ class GISFigureEditor(BaseEditor):
                           padding_right=10,
                           padding_top=20,
                           padding_bottom=40)
-        ap = options.aux_plots[0]
+        ap = options.aux_plots[1]
         ap.name = 'Ideogram'
+        ap.plot_enabled = True
+
+        ap = options.aux_plots[0]
+        ap.name = 'Analysis Number'
         ap.plot_enabled = True
 
         self.ideogram.plotter_options = options
@@ -298,42 +325,29 @@ class GISFigureEditor(BaseEditor):
                                     analyses=ans
                                     ))
 
+        self.qmap.uri = self.options.basemap_uri
         self.qmap.features = features
+        self.qmap.symbol_style = self.options.symbol_style()
         self.refresh = True
-        # if record.latitude and record.longitude:
-        #     lats.append(record.latitude)
-        #     lons.append(record.longitude)
-        #     self.qmap.add_marker(location=(record.latitude, record.longitude),
-        #                          popup='<b>{}</b>'.format(record.sample))
-        # if lats:
-        #     self.fmap.center.x = sum(lons) / len(lons)
-        #     self.fmap.center.y = sum(lats) / len(lats)
-        #
-        #     self.refresh = True
 
-    # @on_trait_change('fmap.center.[x,y,zoom]')
-    # def center_changed(self):
-    #     self.fmap._map.location = self.fmap.center.location
-    #     self.refresh = True
     # def _refresh_button_fired(self):
+    #     self.load()
     #     self.refresh = True
     #     self.ideogram.refresh_needed = True
 
     def traits_view(self):
+
         # center_grp = VGroup(HGroup(
         #     UReadonly('object.fmap.center.ylabel'), UItem('object.fmap.center.y'),
         #     UReadonly('object.fmap.center.xlabel'), UItem('object.fmap.center.x')))
         #
         # ctrl_grp = VGroup(center_grp)
+        # UItem('active_feature', style='custom')
         v = View(
-            VGroup(
-                # UItem('refresh_button'),
-                UItem('active_feature', style='custom'),
-                HGroup(UItem('qmap', editor=QGISEditor(refresh='refresh',
-                                                       selected_feature='selected_feature')),
-                       UItem('ideogram', style='custom')
-                       )
-            ),
+            HSplit(UItem('qmap', editor=QGISEditor(refresh='refresh',
+                                                   selected_feature='selected_feature')),
+                   UItem('ideogram', style='custom')
+                   ),
             # width=500, height=500,
             resizable=True)
         return v
@@ -347,31 +361,43 @@ if __name__ == '__main__':
     from pychron.paths import paths
 
     paths.build('PychronDev')
+    class Options:
+        basemap_uri = 'type=xyz&url=http://tile.openstreetmap.org/{z}/{x}/{y}.png&zmax=19&zmin=5'
+        basemap_uri = 'type=xyz&url=http://a.tile.stamen.com/terrain/{z}/{x}/{y}.png&zmax=19&zmin=5'
+        basemap_uri = 'type=xyz&url=http://a.tile.opentopomap.org/{z}/{x}/{y}.png&zmax=19&zmin=5'
+        basemap_uri = 'type=xyz&url=https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{Z}/{Y}/{X}&zmax=19&zmin=5'
+        basemap_uri = 'type=xyz&url=https://tileserver.maptiler.com/nasa/{Z}/{X}/{Y}.jpg&zmax=19&zmin=5'
+        basemap_uri = 'url=https://landsatlook.usgs.gov/arcgis/services/LandsatLook/ImageServer/WMSServer'
+        basemap_uri = 'type=xyz&url=http://tiles.wmflabs.org/hillshading/{z}/{x}/{y}.png&zmax=19&zmin=5'
 
 
     class MockItem(NonDBAnalysis):
-        def __init__(self, sample, lat, lon, age):
+        def __init__(self, sample, lat, lon, age, omit=False):
             self.latitude = lat
             self.longitude = lon
             self.sample = sample
             self.age = age
             self.age_err = 0.1
+            if omit:
+                self.set_tag('omit')
             super(MockItem, self).__init__()
 
+
     m.items = [
-                MockItem('foo', 34, -106, 1.5),
-                MockItem('foo', 34, -106, 1.3),
-                MockItem('foo', 34, -106, 1.1),
+        MockItem('foo', 34, -106, 1.5),
+        MockItem('foo', 34, -106, 1.3),
+        MockItem('foo', 34, -106, 1.1),
 
-               MockItem('bar', 35.1, -106.1, 21.1),
-               MockItem('bar', 35.1, -106.1, 21.2),
-               MockItem('bar', 35.1, -106.1, 21.4),
+        MockItem('bar', 35.1, -106.1, 21.1),
+        MockItem('bar', 35.1, -106.1, 21.2),
+        MockItem('bar', 35.1, -106.1, 21.4),
 
-               MockItem('moo', 35.3, -106.5, 1.4),
-               MockItem('moo', 35.3, -106.5, 1.2),
-               MockItem('moo', 35.3, -106.5, 1.5),
-               MockItem('moo', 35.3, -106.5, 1.6),
-               ]
+        MockItem('moo', 35.3, -106.5, 1.4),
+        MockItem('moo', 35.3, -106.5, 1.2, omit=True),
+        MockItem('moo', 35.3, -106.5, 1.5),
+        MockItem('moo', 35.3, -106.5, 1.6),
+    ]
+    m.options = Options()
     m.load()
     m.configure_traits()
 # ============= EOF =============================================
