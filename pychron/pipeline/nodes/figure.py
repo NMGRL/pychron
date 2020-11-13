@@ -31,7 +31,6 @@ from pychron.options.options_manager import IdeogramOptionsManager, OptionsContr
 from pychron.options.views.views import view
 from pychron.pipeline.editors.flux_visualization_editor import FluxVisualizationEditor
 from pychron.pipeline.nodes.base import SortableNode
-from pychron.pipeline.plot.editors.map_figure_editor import MapFigureEditor
 from pychron.pipeline.plot.plotter.series import RADIOGENIC_YIELD, PEAK_CENTER, \
     ANALYSIS_TYPE, AGE, LAB_TEMP, LAB_HUM, EXTRACT_VALUE, EXTRACT_DURATION, CLEANUP
 from pychron.pipeline.state import get_isotope_set
@@ -226,15 +225,15 @@ class FluxVisualizationNode(FigureNode):
             editor.name = 'Flux Visualization: {}{}'.format(state.irradiation, state.level)
 
 
-class MapNode(SortableNode):
-    configurable = False
-    name = 'Map'
-
-    def run(self, state):
-        editor = MapFigureEditor()
-        editor.set_items(state.unknowns)
-        editor.load()
-        state.editors.append(editor)
+# class MapNode(SortableNode):
+#     configurable = False
+#     name = 'Map'
+#
+#     def run(self, state):
+#         editor = MapFigureEditor()
+#         editor.set_items(state.unknowns)
+#         editor.load()
+#         state.editors.append(editor)
 
 
 class IdeogramNode(FigureNode):

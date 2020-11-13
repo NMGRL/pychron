@@ -13,14 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-import os
-
-from helpers import entry_point
-
-appname = os.environ.get('PYCHRON_APPNAME', 'pycrunch')
-debug = os.environ.get('PYCHRON_DEBUG', False)
 
 
-entry_point(appname, debug=debug)
+# ============= MDD =============================================
+GIS = """
+icon: map
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: GISNode
 
+"""
 # ============= EOF =============================================

@@ -112,8 +112,8 @@ class MapFigureEditor(BaseEditor):
                 self.fmap.add_marker(location=(record.latitude, record.longitude),
                                      popup='<b>{}</b>'.format(record.sample))
         if lats:
-            self.fmap.center.x = sum(lons)/len(lons)
-            self.fmap.center.y = sum(lats)/len(lats)
+            self.fmap.center.x = sum(lons) / len(lons)
+            self.fmap.center.y = sum(lats) / len(lats)
 
             self.refresh = True
 
