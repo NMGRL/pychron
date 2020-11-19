@@ -139,7 +139,9 @@ def ask_config():
               'conda_distro': distro,
               'conda_env_name': 'pychron3',
               'update_db': 0,
-              'alembic_url': 'mysql+pymysql://<user>:<pwd>@<host>/<db>'}
+              'alembic_url': 'mysql+pymysql://<user>:<pwd>@<host>/<db>',
+              'install_gis_plugin': False
+              }
 
     ask(config, 'use_all_defaults', 'Use all defaults')
     if config['use_all_defaults'] not in YES:
@@ -162,6 +164,7 @@ def ask_config():
         ask(config, 'conda_distro', 'Conda Distro Path')
         ask(config, 'conda_env_name', 'Conda environment name')
         ask(config, 'update_db', 'Update Database automatically')
+        ask(config, 'install_gis_plugin', 'Install GIS Plugin')
         if config['update_db'] in YES:
             ask(config, 'alembic_url', 'Database URL')
         else:
@@ -175,9 +178,14 @@ def ask_config():
     config['pip_requirements'] = 'uncertainties peakutils qimage2ndarray chaco'
     creq = 'pip qt numpy statsmodels scikit-learn PyYAML yaml traitsui envisage sqlalchemy ' \
            'Reportlab lxml xlrd xlwt xlsxwriter requests keyring pillow gitpython cython pytables ' \
+            'pyproj'\
            'pymysql certifi jinja2 swig=3 {}'.format(config['qt_bindings'])
     if IS_MAC:
-        creq = '{}\npython.app'.format(creq)
+        creq = '{} python.app'.format(creq)
+
+    if config['install_gis_plugin']:
+        creq = '{} '.format('qgis')
+
 
     config['conda_requirements'] = creq
 

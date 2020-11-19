@@ -92,12 +92,15 @@ class TitleSubOptions(SubOptions):
 
 
 class GroupSubOptions(SubOptions):
+    def _make_group(self):
+        return UItem('groups',
+                     style='custom',
+                     editor=ListEditor(mutable=False,
+                                       style='custom',
+                                       editor=InstanceEditor())),
+
     def traits_view(self):
-        g = UItem('groups',
-                  style='custom',
-                  editor=ListEditor(mutable=False,
-                                    style='custom',
-                                    editor=InstanceEditor())),
+        g = self._make_group()
         # buttons=['OK', 'Cancel', 'Revert'],
         # kind='livemodal', resizable=True,
         # height=700,
@@ -436,7 +439,29 @@ class BaseOptions(HasTraits):
                 setattr(self, k, v)
 
 
-class FigureOptions(BaseOptions):
+class GroupMixin(HasTraits):
+    group_options_klass = None
+    groups = List
+
+    def setup(self):
+        if self.group_options_klass:
+            if len(self.groups) < len(colornames):
+                start = len(self.groups)
+                new_groups = [self.group_options_klass(color=ci,
+                                                       line_color=ci,
+                                                       group_id=start + i) for i, ci in enumerate(colornames[start:])]
+                self.groups.extend(new_groups)
+
+    def _groups_default(self):
+        if self.group_options_klass:
+            return [self.group_options_klass(color=ci,
+                                             line_color=ci,
+                                             group_id=i) for i, ci in enumerate(colornames)]
+        else:
+            return []
+
+
+class FigureOptions(BaseOptions, GroupMixin):
     bgcolor = Color
     plot_bgcolor = Color
     plot_spacing = Range(0, 50)
@@ -487,10 +512,9 @@ class FigureOptions(BaseOptions):
 
     layout = Instance(FigureLayout, ())
 
-    groups = List
     # group = Property
     # group_editor_klass = None
-    group_options_klass = None
+
     # refresh_colors = Event
 
     xpadding = Property
@@ -503,14 +527,6 @@ class FigureOptions(BaseOptions):
     # def initialize(self):
     #     if not self.groups:
     #         self.groups = self._groups_default()
-    def setup(self):
-        if self.group_options_klass:
-            if len(self.groups) < len(colornames):
-                start = len(self.groups)
-                new_groups = [self.group_options_klass(color=ci,
-                                                       line_color=ci,
-                                                       group_id=start + i) for i, ci in enumerate(colornames[start:])]
-                self.groups.extend(new_groups)
 
     def get_paddings(self):
         return self.padding_left, self.padding_right, self.padding_top, self.padding_bottom
@@ -574,13 +590,6 @@ class FigureOptions(BaseOptions):
         return t
 
     # private
-    def _groups_default(self):
-        if self.group_options_klass:
-            return [self.group_options_klass(color=ci,
-                                             line_color=ci,
-                                             group_id=i) for i, ci in enumerate(colornames)]
-        else:
-            return []
 
     def _edit_title_format_button_fired(self):
         from pychron.options.label_maker import TitleTemplater, TitleTemplateView

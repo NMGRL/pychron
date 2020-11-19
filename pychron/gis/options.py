@@ -14,12 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-from traits.api import Str, Enum, Dict, File, Int, Color
+from traits.api import Str, Enum, Dict, File, Float, Range
+from traitsui.api import HGroup, Item, View, UItem
 
+from pychron.core.pychron_traits import BorderVGroup
 from pychron.gis.views import VIEWS
-from pychron.options.options import BaseOptions
+from pychron.options.group.base_group_options import BaseGroupOptions
+from pychron.options.options import BaseOptions, GroupMixin
 from pychron.options.options_manager import OptionsManager
-from pychron.pychron_constants import MAIN, APPEARANCE
+from pychron.pychron_constants import MAIN
 
 
 def make_uri(url, t='xyz', zmax=19, zmin=5):
@@ -43,21 +46,54 @@ def extract_url(uri):
             return a[4:]
 
 
-class GISOptions(BaseOptions):
+class GISGroup(BaseGroupOptions):
+    marker = Enum('Square', 'Circle', 'Pentagon', 'Triangle', 'Star')
+    marker_size = Float
+    angle = Range(0, 360, 0)
+    opacity = Range(0.0, 1.0, 1.0)
+
+    def todict(self):
+        return {'name': self.marker.lower(),
+                'size': str(self.marker_size),
+                'color': self.color.name(),
+                'angle': str(self.angle),
+                'opacity': str(self.opacity)}
+
+    def traits_view(self):
+        g = BorderVGroup(HGroup(Item('marker'),
+                                UItem('marker_size'),Item('angle')),
+                         HGroup(UItem('color'), Item('opacity')),
+                         label='Group {}'.format(self.group_id + 1))
+        v = View(g)
+        return v
+
+
+class GISOptions(BaseOptions, GroupMixin):
     basemap_uri = Str('type=xyz&url=https://tile.openstreetmap.org/{z}/{x}/{y}.png&zmax=19&zmin=5')
     basemap_uri_template = Enum(list(PREDEFINED.keys()), transient=True)
     basemap_path = File
 
-    symbol_size = Int(5)
-    symbol_color = Color('blue')
-    symbol_kind = Enum('circle', 'square')
+    # symbol_size = Int(5)
+    # symbol_color = Color('blue')
+    # symbol_kind = Enum('circle', 'square')
+    group_options_klass = GISGroup
+    grouping_attribute = Enum('Material',
+                              'Sample',
+                              'Comment',
+                              'SubGroup',
+                              'Group Name',
+                              'Label Name',
+                              'No Grouping')
 
     _predefined = Dict(transient=True)
 
     _suppress_template_update = False
 
-    def symbol_style(self):
-        return {'name': self.symbol_kind, 'size': str(self.symbol_size), 'color': str(self.symbol_color.name())}
+    def get_feature_options(self, gid):
+        n = len(self.groups)
+        gid = gid % n
+        fg = self.groups[gid]
+        return fg.todict()
 
     def _basemap_uri_changed(self, new):
         n = extract_url(new)
@@ -77,7 +113,7 @@ class GISOptions(BaseOptions):
         self.basemap_uri = PREDEFINED.get(new, '')
 
     def initialize(self):
-        self.subview_names = [MAIN, APPEARANCE ]
+        self.subview_names = [MAIN, 'Groups']
 
     def _get_subview(self, name):
         return VIEWS[name]

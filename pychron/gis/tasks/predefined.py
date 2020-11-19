@@ -21,6 +21,7 @@ icon: map
 required:
 nodes:
   - klass: UnknownNode
+  - klass: SampleGroupingNode
   - klass: GISNode
 
 """

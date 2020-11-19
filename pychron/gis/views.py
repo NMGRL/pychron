@@ -16,9 +16,9 @@
 from traitsui.api import View, Item, UItem, HGroup, Heading, spring, FileEditor
 
 from pychron.core.pychron_traits import BorderVGroup
-from pychron.options.options import SubOptions
+from pychron.options.options import SubOptions, GroupSubOptions as _GroupSubOptions
 from pychron.paths import paths
-from pychron.pychron_constants import MAIN, APPEARANCE
+from pychron.pychron_constants import MAIN
 
 
 class MainView(SubOptions):
@@ -33,14 +33,23 @@ class MainView(SubOptions):
         return v
 
 
-class AppearanceView(SubOptions):
+# class AppearanceView(SubOptions):
+#     def traits_view(self):
+#         v = View(BorderVGroup(Item('symbol_size'),
+#                               Item('symbol_kind'),
+#                               Item('symbol_color')))
+#         return v
+
+
+class GroupSubOptions(_GroupSubOptions):
     def traits_view(self):
-        v = View(BorderVGroup(Item('symbol_size'),
-                              Item('symbol_kind'),
-                              Item('symbol_color')))
-        return v
+        g = self._make_group()
+
+        return self._make_view(g)
 
 
-VIEWS = {MAIN.lower(): MainView, APPEARANCE.lower(): AppearanceView}
+VIEWS = {MAIN.lower(): MainView,
+         # APPEARANCE.lower(): AppearanceView,
+         'groups': GroupSubOptions}
 
 # ============= EOF =============================================

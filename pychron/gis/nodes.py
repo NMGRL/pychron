@@ -13,9 +13,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from traits.api import Enum
+
 from pychron.gis.options import GISOptionsManager
 from pychron.gis.qgis_figure_editor import GISFigureEditor
+from pychron.pipeline.nodes import GroupingNode
 from pychron.pipeline.nodes.figure import FigureNode
+
+
+class SampleGroupingNode(GroupingNode):
+    name = 'Sample Grouping'
+    keys = ('Material',
+            'Sample',
+            'Comment',
+            'SubGroup',
+            'Group Name',
+            'Label Name',
+            'No Grouping')
+    attribute = Enum('FeatureGroup',)
 
 
 class GISNode(FigureNode):
@@ -23,11 +38,15 @@ class GISNode(FigureNode):
     editor_klass = 'pychron.gis.qgis_figure_editor, GISFigureEditor'
     plotter_options_manager_klass = GISOptionsManager
 
+    def refresh(self):
+        self.editor.refresh_map()
+
     def run(self, state):
         editor = GISFigureEditor()
-        editor.options = self.plotter_options
+        editor.plotter_options = self.plotter_options
         editor.set_items(state.unknowns)
         editor.load()
         state.editors.append(editor)
+        self.editor = editor
 
 # ============= EOF =============================================

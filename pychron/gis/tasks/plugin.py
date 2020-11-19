@@ -16,7 +16,7 @@
 from traits.api import List
 
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-from pychron.gis.nodes import GISNode
+from pychron.gis.nodes import GISNode, SampleGroupingNode
 from pychron.gis.tasks.predefined import GIS
 
 
@@ -36,6 +36,6 @@ class GISPlugin(BaseTaskPlugin):
                          ))]
 
     def _nodes_default(self):
-        return [GISNode]
+        return [GISNode, SampleGroupingNode]
 
 # ============= EOF =============================================
