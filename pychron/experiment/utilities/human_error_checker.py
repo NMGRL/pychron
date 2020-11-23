@@ -225,8 +225,11 @@ class HumanErrorChecker(Loggable):
                     return 'post measurement script required for overlap'
         # if ant in ('unknown', 'background') or ant.startswith('blank'):
         # self._mass_spec_required = True
+        self._set_extraction_line_required(run)
 
-        if run.extract_value or run.cleanup or run.duration or run.post_cleanup or run.pre_cleanup:
+    def _set_extraction_line_required(self, run):
+        if any((getattr(run, a) for a in ('extract_value', 'cleanup', 'duration',
+                                          'post_cleanup', 'pre_cleanup', 'cryo_temperature'))):
             self._extraction_line_required = True
 
     def _check_attr(self, run, attr, inform):

@@ -24,7 +24,8 @@ from pychron.core.configurable_tabular_adapter import ConfigurableMixin
 from pychron.core.helpers.color_generators import colornames
 from pychron.core.helpers.formatting import floatfmt
 from pychron.envisage.resources import icon
-from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, PRECLEANUP, POSTCLEANUP, CLEANUP, EXTRACT_VALUE, DURATION
+from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, PRECLEANUP, POSTCLEANUP, CLEANUP, EXTRACT_VALUE, DURATION, \
+    CRYO_TEMP
 
 
 class BrowserAdapter(TabularAdapter, ConfigurableMixin):
@@ -132,6 +133,7 @@ class AnalysisAdapter(BrowserAdapter):
                    ('Cleanup', CLEANUP),
                    ('Pre Cleanup', PRECLEANUP),
                    ('Post Cleanup', POSTCLEANUP),
+                   ('Cryo Temp', CRYO_TEMP),
                    ('Dur', DURATION),
                    ('Position', 'position'),
                    ('Device', 'extract_device'),

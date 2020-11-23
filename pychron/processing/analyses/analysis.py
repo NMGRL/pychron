@@ -415,6 +415,7 @@ class Analysis(ArArAge, IdeogramPlotable):
     cleanup_duration = 0
     pre_cleanup_duration = 0
     post_cleanup_duration = 0
+    cryo_temperature = 0
     extract_duration = 0
     extract_device = ''
     position = ''

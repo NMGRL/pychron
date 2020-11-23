@@ -2379,15 +2379,15 @@ class DVCDatabase(DatabaseAdapter):
                 li.archived = state
             self.commit()
 
-    def _version_warn_hook(self, vers):
+    def _version_warn_hook(self):
         # ver = ver.version_num
         # aver = version.__alembic__
 
         # vers is a list of all the supported versions of pychron for this database
+        vers = self.get_versions()
+        lver = version.__dvc_alembic__
 
-        lver = version.__version__
-
-        self.debug('testing database versions. pychron version={}, db_versions={}'.format(lver, vers))
+        self.debug('testing database versions. pychronl version={}, db_versions={}'.format(lver, vers))
         if not vers:
             self.debug('not versions in the database. added a default one')
             self.add_default_version('19.6')

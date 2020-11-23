@@ -54,7 +54,8 @@ from pychron.pychron_constants import NULL_STR, SCRIPT_KEYS, SCRIPT_NAMES, LINE_
     BLANK_UNKNOWN, BLANK_EXTRACTIONLINE, UNKNOWN, PAUSE, DEGAS, SIMPLE, NULL_EXTRACT_DEVICES, FUSIONS_CO2, \
     FUSIONS_DIODE, CLEANUP, PRECLEANUP, POSTCLEANUP, EXTRACT_VALUE, EXTRACT_UNITS, DURATION, WEIGHT, POSITION, PATTERN, \
     BEAM_DIAMETER, LIGHT_VALUE, COMMENT, DELAY_AFTER, EXTRACT_DEVICE, MATERIAL, PROJECT, SAMPLE, MASS_SPECTROMETER, \
-    COLLECTION_TIME_ZERO_OFFSET, USE_CDD_WARMING, SKIP, OVERLAP, REPOSITORY_IDENTIFIER, RAMP_DURATION
+    COLLECTION_TIME_ZERO_OFFSET, USE_CDD_WARMING, SKIP, OVERLAP, REPOSITORY_IDENTIFIER, RAMP_DURATION, CRYO_TEMP, \
+    TEMPLATE, USERNAME
 
 
 class AutomatedRunFactory(DVCAble, PersistenceLoggable):
@@ -153,6 +154,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     cleanup = EKlass(Float)
     pre_cleanup = EKlass(Float)
     post_cleanup = EKlass(Float)
+    cryo_temperature = EKlass(Float)
     light_value = EKlass(Float)
     beam_diameter = Property(EKlass(String), depends_on='_beam_diameter')
     _beam_diameter = String
@@ -245,14 +247,15 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     pattributes = ('collection_time_zero_offset',
                    'selected_irradiation', 'selected_level',
                    CLEANUP, PRECLEANUP, POSTCLEANUP, EXTRACT_VALUE, EXTRACT_UNITS, DURATION, WEIGHT,
-                   'light_value',
-                   'beam_diameter',
-                   'ramp_duration',
-                   'overlap',
-                   'pattern',
-                   'position',
-                   'comment',
-                   'template',
+                   LIGHT_VALUE,
+                   BEAM_DIAMETER,
+                   RAMP_DURATION,
+                   CRYO_TEMP,
+                   OVERLAP,
+                   PATTERN,
+                   POSITION,
+                   COMMENT,
+                   TEMPLATE,
                    'use_simple_truncation', 'conditionals_path',
                    'use_project_based_repository_identifier', 'delay_after')
 
@@ -538,13 +541,14 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 CLEANUP,
                 PRECLEANUP,
                 POSTCLEANUP,
+                CRYO_TEMP,
                 DURATION,
                 LIGHT_VALUE,
                 PATTERN,
                 BEAM_DIAMETER,
                 POSITION,
                 COLLECTION_TIME_ZERO_OFFSET,
-                'use_cdd_warming',
+                USE_CDD_WARMING,
                 WEIGHT,
                 COMMENT,
                 DELAY_AFTER
@@ -568,13 +572,14 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 POSITION,
                 POSTCLEANUP,
                 PRECLEANUP,
+                CRYO_TEMP,
                 PROJECT,
-                'ramp_duration',
+                RAMP_DURATION,
                 'repository_identifier',
                 SAMPLE,
                 'skip',
-                'use_cdd_warming',
-                'username',
+                USE_CDD_WARMING,
+                USERNAME,
                 WEIGHT]
 
     def _set_run_values(self, arv, excludes=None):
@@ -802,7 +807,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     def _load_defaults(self, ln, attrs=None, overwrite=True):
         if attrs is None:
             attrs = (EXTRACT_VALUE, EXTRACT_UNITS, CLEANUP, PRECLEANUP,
-                     POSTCLEANUP, DURATION, BEAM_DIAMETER, LIGHT_VALUE)
+                     POSTCLEANUP, DURATION, BEAM_DIAMETER, LIGHT_VALUE, CRYO_TEMP)
 
         self.debug('loading defaults for {}. ed={} attrs={}'.format(ln, self.extract_device, attrs))
         defaults = self._load_default_file()
@@ -1491,6 +1496,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     # ''')
     @on_trait_change(','.join((CLEANUP, COLLECTION_TIME_ZERO_OFFSET, COMMENT, DELAY_AFTER, DURATION, EXTRACT_VALUE,
                                EXTRACT_UNITS, LIGHT_VALUE, OVERLAP, PATTERN, PRECLEANUP, POSITION, POSTCLEANUP,
+                               CRYO_TEMP,
                                RAMP_DURATION, REPOSITORY_IDENTIFIER, SKIP, USE_CDD_WARMING, WEIGHT)))
     def _edit_handler(self, name, new):
         if name == PATTERN:
