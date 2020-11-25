@@ -332,6 +332,8 @@ class ConnectionPreferencesPane(PreferencesPane):
                              sortable=False)
         if edit_view:
             editor.edit_view = edit_view
+            editor.orientation = 'vertical'
+            editor.edit_view_height = 0.25
 
         fav_grp = VGroup(UItem('_fav_items',
                                width=100,

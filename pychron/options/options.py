@@ -291,7 +291,12 @@ class BaseOptions(HasTraits):
         except KeyError:
             pass
 
-        for tag in ('groups', 'aux_plots', 'selected'):
+        tags = ('groups', 'aux_plots', 'selected')
+        atags = self._get_tags()
+        if atags:
+            tags += atags
+
+        for tag in tags:
             try:
                 items = state.pop(tag)
                 if items:
@@ -328,7 +333,11 @@ class BaseOptions(HasTraits):
             except ValueError:
                 pass
 
-        for key in ('aux_plots', 'groups', 'selected'):
+        tags = ('aux_plots', 'groups', 'selected')
+        atags = self._get_tags()
+        if atags:
+            tags += atags
+        for key in tags:
             if key in state:
                 state[key] = [inst(a, key) for a in state.pop(key)]
 
@@ -340,6 +349,9 @@ class BaseOptions(HasTraits):
             except BaseException:
                 warning(None, 'Pychron options changed and your saved options are incompatible.  Unable to fully load. '
                               'You will need to check/rebuild this saved options set')
+
+    def _get_tags(self):
+        return None
 
     def _setstate(self, state):
 

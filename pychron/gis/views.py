@@ -14,6 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 from traitsui.api import View, Item, UItem, HGroup, Heading, spring, FileEditor
+from traitsui.editors import InstanceEditor, ListEditor
+from traitsui.group import VGroup
 
 from pychron.core.pychron_traits import BorderVGroup
 from pychron.options.options import SubOptions, GroupSubOptions as _GroupSubOptions
@@ -48,8 +50,17 @@ class GroupSubOptions(_GroupSubOptions):
         return self._make_view(g)
 
 
+class LayersSubOptions(SubOptions):
+    def traits_view(self):
+        v = View(VGroup(HGroup(UItem('add_layer_button')),
+                        UItem('layers', editor=ListEditor(mutable=False, style='custom',
+                                                          editor=InstanceEditor()))))
+        return v
+
+
 VIEWS = {MAIN.lower(): MainView,
          # APPEARANCE.lower(): AppearanceView,
-         'groups': GroupSubOptions}
+         'groups': GroupSubOptions,
+         'layers': LayersSubOptions}
 
 # ============= EOF =============================================

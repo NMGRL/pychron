@@ -158,7 +158,6 @@ class TableConfigurer(HasTraits):
         p = os.path.join(paths.appdata_dir, self.id)
         state = None
 
-        print('asfdasdfasfasdf', p)
         if os.path.isfile(p):
             try:
                 with open(p, 'rb') as rfile:

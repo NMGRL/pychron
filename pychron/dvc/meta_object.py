@@ -223,8 +223,8 @@ class Production(MetaObject):
             self.attrs = attrs
 
     def to_dict(self, keys):
-        return {t: ufloat(getattr(self, t),
-                          getattr(self, '{}_err'.format(t)),
+        return {t: ufloat(getattr(self, t, 0),
+                          getattr(self, '{}_err'.format(t), 0),
                           tag=t) for t in keys}
 
     def dump(self, path=None):

@@ -16,13 +16,15 @@
 import uuid
 from operator import attrgetter
 
+from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt, QVariant
-from PyQt5.QtWidgets import QMessageBox, QMenu, QSplitter
+from PyQt5.QtWidgets import QMenu, QSplitter
 from qgis.core import QgsVectorLayer, QgsPointXY, QgsGeometry, QgsFeature, QgsProject, QgsRasterLayer, \
     QgsApplication, \
-    QgsCoordinateReferenceSystem, QgsField, QgsMarkerSymbol, QgsCategorizedSymbolRenderer, QgsRendererCategory
-from qgis.gui import QgsMapCanvas, QgsLayerTreeViewMenuProvider, QgsMapToolIdentifyFeature
-from traits.api import HasTraits, Instance, Str, Event, Float, Any, List, Button
+    QgsCoordinateReferenceSystem, QgsField, QgsMarkerSymbol, QgsCategorizedSymbolRenderer, QgsRendererCategory, \
+    QgsLayerTreeModel
+from qgis.gui import QgsMapCanvas, QgsLayerTreeViewMenuProvider, QgsMapToolIdentifyFeature, QgsLayerTreeView
+from traits.api import HasTraits, Instance, Str, Event, Float, Any, List, Button, Bool
 from traitsui.api import View, Item, UItem, HSplit, HGroup
 from traitsui.qt4.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
@@ -48,7 +50,7 @@ class MyMenuProvider(QgsLayerTreeViewMenuProvider):
             return None
 
         m = QMenu()
-        m.addAction("Show Extent", self.showExtent)
+        # m.addAction("Show Extent", self.showExtent)
         m.addAction("Position to Extent", self.position_to_extent)
         m.addAction("Toggle Visible", self.toggle_visible)
         return m
@@ -56,6 +58,7 @@ class MyMenuProvider(QgsLayerTreeViewMenuProvider):
     def position_to_extent(self):
         layer = self.view.currentLayer()
         r = layer.extent()
+        print(r)
         r.grow(0.5)
         layer.triggerRepaint()
         self.canvas.setExtent(r)
@@ -80,9 +83,11 @@ class MyMenuProvider(QgsLayerTreeViewMenuProvider):
 
         self.canvas.refresh()
 
-    def showExtent(self):
-        r = self.view.currentLayer().extent()
-        QMessageBox.information(None, "Extent", r.toString())
+
+#
+#     def showExtent(self):
+#         r = self.view.currentLayer().extent()
+#         QMessageBox.information(None, "Extent", r.toString())
 
 
 class _QGISEditor(Editor):
@@ -93,14 +98,14 @@ class _QGISEditor(Editor):
     view = Any
     root = Any
     model = Any
-    toolZoomIn = Any
-    toolZoomOut = Any
-    toolPan = Any
+    # toolZoomIn = Any
+    # toolZoomOut = Any
+    # toolPan = Any
     toolInfo = Any
-    actionZoomIn = Any
-    actionZoomOut = Any
-    actionPan = Any
-    actionInfo = Any
+    # actionZoomIn = Any
+    # actionZoomOut = Any
+    # actionPan = Any
+    # actionInfo = Any
     toolbar = Any
     canvas = Any
 
@@ -173,42 +178,45 @@ class _QGISEditor(Editor):
 
         qproject = QgsProject.instance()
         uri = 'Point?crs=epsg:4326&field=id:integer'
-        layer = QgsVectorLayer(uri, 'Data', 'memory')
+        self.data_layer = layer = QgsVectorLayer(uri, 'Data', 'memory')
         provider = layer.dataProvider()
 
         provider.addAttributes([QgsField('uuid', QVariant.String),
                                 QgsField('group_id', QVariant.Int)])
         layer.updateFields()
 
-        self.data_layer = layer
-
         self.set_symbol()
-        qproject.addMapLayer(layer)
 
-        args = getattr(self.value, 'basemap')
-        rlayer = QgsRasterLayer(*args)
+        # args = getattr(self.value, 'basemap')
+        self.rlayer = rlayer = QgsRasterLayer(*self.value.basemap)
         if rlayer.isValid():
             qproject.addMapLayer(rlayer)
         else:
-            print('basemap layer invalid', rlayer, args)
+            print('basemap layer invalid', rlayer, self.value.basemap)
 
-        # self.root = root = qproject.layerTreeRoot()
-        # self.view = view = QgsLayerTreeView()
-        # self.model = model = QgsLayerTreeModel(root)
-        # view.setModel(model)
-        # view.collapseAll()
+        qproject.addMapLayer(layer)
+        canvas.setLayers([layer, rlayer])
 
-        # provider = MyMenuProvider(canvas, root, view)
-        # view.setMenuProvider(provider)
+        self.root = root = qproject.layerTreeRoot()
+        self.view = view = QgsLayerTreeView()
+        self.model = model = QgsLayerTreeModel(root)
 
-        # layout.addWidget(view)
-        # layout.addWidget(canvas)
+        view.setModel(model)
+        view.collapseAll()
+
+        provider = MyMenuProvider(canvas, root, view)
+        view.setMenuProvider(provider)
+
+        layout.addWidget(view)
+        view.setMaximumWidth(200)
+        layout.addWidget(canvas)
+        layout.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,
+                                                   QtWidgets.QSizePolicy.MinimumExpanding))
 
         self.toolInfo.setLayer(layer)
-        canvas.setLayers([layer, rlayer])
         self.canvas = canvas
 
-        return canvas
+        return layout
 
     def set_symbol(self, layer=None, options=None):
         if layer is None:
@@ -226,8 +234,42 @@ class _QGISEditor(Editor):
         layer.setRenderer(renderer)
 
     def update_editor(self):
-        layer = self.data_layer
+        layers = [self.data_layer, self.rlayer]
+        project = QgsProject.instance()
 
+        self.rlayer.dataProvider().setDataSourceUri(self.value.uri)
+        mext = None
+        for l in self.value.layers:
+            if l.is_vector:
+                for key in project.mapLayers():
+                    el = project.mapLayer(key)
+                    if el.dataProvider().dataSourceUri() == l.uri:
+                        project.removeMapLayer(key)
+                        break
+
+                ll = QgsVectorLayer(l.uri, l.label, l.provider)
+                ll.renderer().setSymbol(QgsMarkerSymbol.createSimple(l.symbolargs))
+            else:
+                ll = QgsRasterLayer(l.uri, l.label)
+
+            if ll.isValid():
+                project.addMapLayer(ll)
+                ext = ll.extent()
+
+                ext.grow(1.75)
+                if mext is None:
+                    mext = ext
+                else:
+                    mext.combineExtentWith(ext)
+
+                ll.triggerRepaint()
+            else:
+                print('not valid')
+
+            if l.visible:
+                layers.insert(0, ll)
+
+        layer = self.data_layer
         fgs, options = zip(*self.value.feature_groups)
 
         self.set_symbol(options=options)
@@ -244,12 +286,16 @@ class _QGISEditor(Editor):
                 fet.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(f.x, f.y)))
                 fets.append(fet)
 
-        res, out = provider.addFeatures(fets)
-        ext = layer.extent()
-        ext.grow(0.5)
+        provider.addFeatures(fets)
+        dext = self.data_layer.extent()
+        dext.grow(0.5)
+        if mext is not None:
+            dext.combineExtentWith(mext)
 
-        self.canvas.setExtent(ext)
+        print('dext', dext)
         layer.triggerRepaint()
+        self.canvas.setLayers(layers)
+        self.canvas.setExtent(dext)
 
     def _refresh_fired(self):
         self.update_editor()
@@ -259,6 +305,7 @@ class QGISEditor(BasicEditorFactory):
     klass = _QGISEditor
     refresh = Str
     selected_feature = Str
+    tree_enabled = Bool(True)
 
 
 class Feature(HasTraits):
@@ -278,7 +325,7 @@ class Feature(HasTraits):
 
 class QGISMap(HasTraits):
     feature_groups = List
-    symbol_style = None
+    layers = List
     uri = Str('type=xyz&url=http://tile.openstreetmap.org/{z}/{x}/{y}.png&zmax=19&zmin=5')
     crs = Str('EPSG:4326')
 
@@ -305,8 +352,7 @@ class GISFigureEditor(BaseEditor):
     qgs.initQgis()
 
     def refresh_map(self):
-        self.qmap.symbol_style = self.plotter_options.symbol_style()
-        self.refresh = True
+        self._load_qmap()
 
     def _selected_feature_changed(self, new):
         u = new.attribute('uuid')
@@ -348,6 +394,9 @@ class GISFigureEditor(BaseEditor):
         # force generation of component
         self.ideogram.component
 
+        self._load_qmap()
+
+    def _load_qmap(self):
         ags = []
         # get the groups from the ideogram
         for p in self.ideogram.figure_model.panels:
@@ -369,6 +418,8 @@ class GISFigureEditor(BaseEditor):
 
         self.qmap.uri = self.plotter_options.basemap_uri
         self.qmap.feature_groups = feature_groups
+        self.qmap.layers = self.plotter_options.layers
+
         self.refresh = True
 
     def _refresh_button_fired(self):
@@ -413,7 +464,7 @@ if __name__ == '__main__':
         # basemap_uri = 'type=xyz&url=https://tileserver.maptiler.com/nasa/{Z}/{X}/{Y}.jpg&zmax=19&zmin=5'
         # basemap_uri = 'url=https://landsatlook.usgs.gov/arcgis/services/LandsatLook/ImageServer/WMSServer'
         # basemap_uri = 'type=xyz&url=http://tiles.wmflabs.org/hillshading/{z}/{x}/{y}.png&zmax=19&zmin=5'
-
+        layers = []
         symbol_kind = 'circle'
 
         # def symbol_style(self):
@@ -422,7 +473,8 @@ if __name__ == '__main__':
             return {'name': 'pentagon', 'size': '10',
                     'angle': '25',
                     'opacity': '.25',
-                    'color': colornames[i+2]}
+                    'color': colornames[i + 2]}
+
 
     class MockItem(NonDBAnalysis):
         def __init__(self, sample, gid, mid, lat, lon, age, omit=False):

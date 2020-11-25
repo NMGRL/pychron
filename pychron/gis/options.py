@@ -13,11 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+import csv
+import os
 
-from traits.api import Str, Enum, Dict, File, Float, Range
+from traits.api import Str, Enum, Dict, File, Float, Range, List, HasTraits, Button, Int, Color, Bool
 from traitsui.api import HGroup, Item, View, UItem
+from traitsui.editors import EnumEditor
 
-from pychron.core.pychron_traits import BorderVGroup
+from pychron.base_fs import BaseFS
+from pychron.core.pychron_traits import BorderVGroup, BorderHGroup
 from pychron.gis.views import VIEWS
 from pychron.options.group.base_group_options import BaseGroupOptions
 from pychron.options.options import BaseOptions, GroupMixin
@@ -28,6 +32,8 @@ from pychron.pychron_constants import MAIN
 def make_uri(url, t='xyz', zmax=19, zmin=5):
     return 'type={}&url={}&zmax={}&zmin={}'.format(t, url, zmax, zmin)
 
+
+MARKERS = 'Square', 'Circle', 'Pentagon', 'Triangle', 'Star'
 
 PREDEFINED = {"OpenStreetMap": make_uri('https://tile.openstreetmap.org/{z}/{x}/{y}.png'),
               'OpenTopoMap': make_uri('http://a.tile.opentopomap.org/{z}/{x}/{y}.png'),
@@ -47,7 +53,7 @@ def extract_url(uri):
 
 
 class GISGroup(BaseGroupOptions):
-    marker = Enum('Square', 'Circle', 'Pentagon', 'Triangle', 'Star')
+    marker = Enum(MARKERS)
     marker_size = Float
     angle = Range(0, 360, 0)
     opacity = Range(0.0, 1.0, 1.0)
@@ -61,18 +67,79 @@ class GISGroup(BaseGroupOptions):
 
     def traits_view(self):
         g = BorderVGroup(HGroup(Item('marker'),
-                                UItem('marker_size'),Item('angle')),
+                                UItem('marker_size'), Item('angle')),
                          HGroup(UItem('color'), Item('opacity')),
                          label='Group {}'.format(self.group_id + 1))
         v = View(g)
         return v
 
 
-class GISOptions(BaseOptions, GroupMixin):
+class LayerOption(HasTraits):
+    path = File
+    is_vector = False
+    visible = Bool(True)
+
+
+class VectorLayerOption(LayerOption):
+    is_vector = True
+
+
+class CSVLayerOption(VectorLayerOption):
+    provider = 'delimitedtext'
+    xfield = Str
+    yfield = Str
+    _fields = List
+    label = Str
+    size = Int
+    kind = Enum(MARKERS)
+    color = Color
+
+    def __init__(self, *args, **kw):
+        super(CSVLayerOption, self).__init__(*args, **kw)
+        self._parse()
+
+    @property
+    def symbolargs(self):
+        return {'name': self.kind.lower(), 'size': str(self.size), 'color': self.color.name()}
+
+    @property
+    def uri(self):
+        return 'file://{}?delimiter={}&xField={}&yField={}'.format(self.path,
+                                                                   self.delimiter,
+                                                                   self.xfield, self.yfield)
+
+    def _parse(self):
+        self.label = os.path.basename(self.path)
+        with open(self.path, 'r') as rfile:
+            dialect = csv.Sniffer().sniff(rfile.read(1024))
+            rfile.seek(0)
+            reader = csv.DictReader(rfile, dialect=dialect)
+            self._fields = reader.fieldnames
+            self.delimiter = dialect.delimiter
+
+    def traits_view(self):
+        v = View(BorderVGroup(Item('path'),
+                              HGroup(Item('xfield', editor=EnumEditor(name='_fields')),
+                                     Item('yfield', editor=EnumEditor(name='_fields'))),
+                              BorderHGroup(Item('kind'), Item('size'), UItem('color'), label='symbol')))
+        return v
+
+
+class GPXLayerOption(VectorLayerOption):
+    provider = 'gpx'
+    kind = Str
+
+    @property
+    def uri(self):
+        return '{}?type={}'.format(self.path, self.kind)
+
+
+class GISOptions(BaseOptions, GroupMixin, BaseFS):
     basemap_uri = Str('type=xyz&url=https://tile.openstreetmap.org/{z}/{x}/{y}.png&zmax=19&zmin=5')
     basemap_uri_template = Enum(list(PREDEFINED.keys()), transient=True)
     basemap_path = File
 
+    layers = List
     # symbol_size = Int(5)
     # symbol_color = Color('blue')
     # symbol_kind = Enum('circle', 'square')
@@ -88,6 +155,21 @@ class GISOptions(BaseOptions, GroupMixin):
     _predefined = Dict(transient=True)
 
     _suppress_template_update = False
+
+    add_layer_button = Button(transient=True)
+
+    def _get_tags(self):
+        return ('layers',)
+
+    def _add_layer_button_fired(self):
+        p = self.open_file_dialog()
+        if p:
+            if p.endswith('csv') or p.endswith('txt'):
+                l = CSVLayerOption(path=p)
+            else:
+                l = LayerOption()
+
+            self.layers.append(l)
 
     def get_feature_options(self, gid):
         n = len(self.groups)
@@ -113,7 +195,7 @@ class GISOptions(BaseOptions, GroupMixin):
         self.basemap_uri = PREDEFINED.get(new, '')
 
     def initialize(self):
-        self.subview_names = [MAIN, 'Groups']
+        self.subview_names = [MAIN, 'Groups', 'Layers']
 
     def _get_subview(self, name):
         return VIEWS[name]

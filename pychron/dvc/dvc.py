@@ -1659,13 +1659,9 @@ class DVC(Loggable):
             try:
                 a = DVCAnalysis(uuid, rid, expid)
             except AnalysisNotAnvailableError:
-
-                try:
-                    a = DVCAnalysis(uuid, rid, expid)
-                except AnalysisNotAnvailableError:
-                    self.warning_dialog('Analysis {} not in repository {}. '
-                                        'You many need to pull changes'.format(rid, expid))
-                    return
+                self.warning_dialog('Analysis {} not in repository {}. '
+                                    'You many need to pull changes'.format(rid, expid))
+                return
 
             a.group_id = record.group_id
             a.set_tag(record.tag)

@@ -162,7 +162,7 @@ def _analysis_path(runid, repository, modifier=None, extension='.json', mode='r'
             os.mkdir(root)
 
     if UUID_RE.match(runid):
-        sublen = 5
+        sublen = 2, 5
     elif WISCAR_ID_RE.match(runid):
         sublen = 3
     else:
@@ -176,9 +176,8 @@ def _analysis_path(runid, repository, modifier=None, extension='.json', mode='r'
 
     try:
         root, tail = subdirize(root, runid, sublen=sublen, mode=mode)
-    except TypeError:
+    except TypeError as e:
         raise AnalysisNotAnvailableError(root, runid)
-
     if modifier:
         d = os.path.join(root, modifier)
         if not os.path.isdir(d):
