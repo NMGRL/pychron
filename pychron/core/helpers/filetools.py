@@ -32,9 +32,10 @@ def subdirize(root, name, sublen=2, mode='r'):
     if not isinstance(sublen,  (tuple, list)):
         sublen = (sublen, )
 
+    oroot = root
     for si in sublen:
         d, nname = name[:si], name[si:]
-        path = os.path.join(root, d)
+        path = os.path.join(oroot, d)
         if not os.path.isdir(path):
             if mode == 'r':
                 root = None
@@ -43,7 +44,6 @@ def subdirize(root, name, sublen=2, mode='r'):
             os.mkdir(path)
 
         root = path
-
         # use the first sublen if in write mode
         # if in read mode need to continue checking other sublens
         if mode != 'r' or os.path.isdir(root):
