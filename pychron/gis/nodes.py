@@ -39,7 +39,8 @@ class GISNode(FigureNode):
     plotter_options_manager_klass = GISOptionsManager
 
     def refresh(self):
-        self.editor.refresh_map()
+        if self.editor:
+            self.editor.refresh_map()
 
     def run(self, state):
         editor = GISFigureEditor()

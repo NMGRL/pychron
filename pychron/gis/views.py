@@ -53,13 +53,12 @@ class GroupSubOptions(_GroupSubOptions):
 class LayersSubOptions(SubOptions):
     def traits_view(self):
         v = View(VGroup(HGroup(UItem('add_layer_button')),
-                        UItem('layers', editor=ListEditor(mutable=False, style='custom',
+                        UItem('layers', editor=ListEditor(mutable=True, style='custom',
                                                           editor=InstanceEditor()))))
         return v
 
 
 VIEWS = {MAIN.lower(): MainView,
-         # APPEARANCE.lower(): AppearanceView,
          'groups': GroupSubOptions,
          'layers': LayersSubOptions}
 

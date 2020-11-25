@@ -16,9 +16,10 @@
 import csv
 import os
 
-from traits.api import Str, Enum, Dict, File, Float, Range, List, HasTraits, Button, Int, Color, Bool
+from traits.api import Str, Enum, Dict, File, Float, Range, List, HasTraits, Button, Int, Color, Bool, on_trait_change
 from traitsui.api import HGroup, Item, View, UItem
 from traitsui.editors import EnumEditor
+from traitsui.item import spring
 
 from pychron.base_fs import BaseFS
 from pychron.core.pychron_traits import BorderVGroup, BorderHGroup
@@ -76,12 +77,25 @@ class GISGroup(BaseGroupOptions):
 
 class LayerOption(HasTraits):
     path = File
+    label = Str
     is_vector = False
     visible = Bool(True)
+    remove_layer_button = Button('Remove Layer')
+
+    @property
+    def uri(self):
+        raise NotImplementedError
 
 
 class VectorLayerOption(LayerOption):
     is_vector = True
+    size = Int
+    kind = Enum(MARKERS)
+    color = Color
+
+    @property
+    def symbolargs(self):
+        return {'name': self.kind.lower(), 'size': str(self.size), 'color': self.color.name()}
 
 
 class CSVLayerOption(VectorLayerOption):
@@ -89,18 +103,10 @@ class CSVLayerOption(VectorLayerOption):
     xfield = Str
     yfield = Str
     _fields = List
-    label = Str
-    size = Int
-    kind = Enum(MARKERS)
-    color = Color
 
     def __init__(self, *args, **kw):
         super(CSVLayerOption, self).__init__(*args, **kw)
         self._parse()
-
-    @property
-    def symbolargs(self):
-        return {'name': self.kind.lower(), 'size': str(self.size), 'color': self.color.name()}
 
     @property
     def uri(self):
@@ -121,7 +127,27 @@ class CSVLayerOption(VectorLayerOption):
         v = View(BorderVGroup(Item('path'),
                               HGroup(Item('xfield', editor=EnumEditor(name='_fields')),
                                      Item('yfield', editor=EnumEditor(name='_fields'))),
-                              BorderHGroup(Item('kind'), Item('size'), UItem('color'), label='symbol')))
+                              BorderHGroup(Item('kind'), Item('size'), UItem('color'), label='symbol'),
+                              HGroup(UItem('remove_layer_button'), spring)))
+        return v
+
+
+class OGRLayerOption(VectorLayerOption):
+    provider = 'ogr'
+
+    def __init__(self, *args, **kw):
+        super(OGRLayerOption, self).__init__(*args, **kw)
+        if self.path:
+            self.label = os.path.basename(self.path)
+
+    @property
+    def uri(self):
+        return self.path
+
+    def traits_view(self):
+        v = View(BorderVGroup(Item('path'),
+                              BorderHGroup(Item('kind'), Item('size'), UItem('color'), label='symbol'),
+                              HGroup(UItem('remove_layer_button'), spring)))
         return v
 
 
@@ -156,7 +182,7 @@ class GISOptions(BaseOptions, GroupMixin, BaseFS):
 
     _suppress_template_update = False
 
-    add_layer_button = Button(transient=True)
+    add_layer_button = Button('Add Layer', transient=True)
 
     def _get_tags(self):
         return ('layers',)
@@ -164,12 +190,21 @@ class GISOptions(BaseOptions, GroupMixin, BaseFS):
     def _add_layer_button_fired(self):
         p = self.open_file_dialog()
         if p:
-            if p.endswith('csv') or p.endswith('txt'):
-                l = CSVLayerOption(path=p)
+            if p.endswith('.csv') or p.endswith('.txt'):
+                # layer = CSVLayerOption(path=p)
+                klass = CSVLayerOption
+            elif p.endswith('.shp'):
+                klass = OGRLayerOption
+                # layer = OGRLayerOption(path=p)
             else:
-                l = LayerOption()
+                klass = LayerOption
+                # layer = LayerOption(path=p)
+            layer = klass(path=p)
+            self.layers.append(layer)
 
-            self.layers.append(l)
+    @on_trait_change('layers:remove_layer_button')
+    def _handle_remove_layer(self, layer, name, old, new):
+        self.layers.remove(layer)
 
     def get_feature_options(self, gid):
         n = len(self.groups)

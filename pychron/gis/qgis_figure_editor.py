@@ -239,61 +239,63 @@ class _QGISEditor(Editor):
 
         self.rlayer.dataProvider().setDataSourceUri(self.value.uri)
         mext = None
-        for l in self.value.layers:
-            if l.is_vector:
+        for loption in self.value.layers:
+            if loption.is_vector:
                 for key in project.mapLayers():
                     el = project.mapLayer(key)
-                    if el.dataProvider().dataSourceUri() == l.uri:
+                    if el.dataProvider().dataSourceUri() == loption.uri:
                         project.removeMapLayer(key)
                         break
 
-                ll = QgsVectorLayer(l.uri, l.label, l.provider)
-                ll.renderer().setSymbol(QgsMarkerSymbol.createSimple(l.symbolargs))
-            else:
-                ll = QgsRasterLayer(l.uri, l.label)
+                layer = QgsVectorLayer(loption.uri, loption.label, loption.provider)
 
-            if ll.isValid():
-                project.addMapLayer(ll)
-                ext = ll.extent()
+            else:
+                layer = QgsRasterLayer(loption.uri, loption.label)
+
+            if layer.isValid():
+                layer.renderer().setSymbol(QgsMarkerSymbol.createSimple(loption.symbolargs))
+
+                # make sure to add layer after setting renderer
+                # probably a way to sync the tree view with the renderer but by
+                # setting the renderer before adding the tree view is up to date
+                project.addMapLayer(layer)
+
+                ext = layer.extent()
 
                 ext.grow(1.75)
                 if mext is None:
                     mext = ext
                 else:
                     mext.combineExtentWith(ext)
-
-                ll.triggerRepaint()
             else:
-                print('not valid')
+                print('not valid', layer, loption.uri)
 
-            if l.visible:
-                layers.insert(0, ll)
+            if loption.visible:
+                layers.insert(0, layer)
 
-        layer = self.data_layer
+        dlayer = self.data_layer
         fgs, options = zip(*self.value.feature_groups)
 
         self.set_symbol(options=options)
-        provider = layer.dataProvider()
+        provider = dlayer.dataProvider()
         provider.truncate()
 
         fets = []
 
         for i, fs in enumerate(fgs):
             for f in fs:
-                fet = QgsFeature(layer.fields())
+                fet = QgsFeature(dlayer.fields())
                 fet.setAttribute('uuid', f.uuid)
                 fet.setAttribute('group_id', i)
                 fet.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(f.x, f.y)))
                 fets.append(fet)
 
         provider.addFeatures(fets)
-        dext = self.data_layer.extent()
+        dext = dlayer.extent()
         dext.grow(0.5)
         if mext is not None:
             dext.combineExtentWith(mext)
 
-        print('dext', dext)
-        layer.triggerRepaint()
         self.canvas.setLayers(layers)
         self.canvas.setExtent(dext)
 
