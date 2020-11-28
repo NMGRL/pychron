@@ -89,10 +89,10 @@ class ICFactor(ReferencesSeries):
                 if self.options.use_source_correction:
                     # this is all hard coded stuff and would need to be
                     # made much more configurable in the future
+                    # see comment in `set_beta`
                     m40 = 39.9624
                     m36 = 35.9675
                     ic = 1 / ufloat(v, e)
-                    # ic = ufloat(v, e)
                     beta = umath.log(ic) / umath.log(m40 / m36)
                     ui.set_beta(beta, is_peak_hop)
                 else:

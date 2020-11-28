@@ -302,6 +302,15 @@ class ArArAge(IsotopeGroup):
         self.temporary_ic_factors[k] = uv
 
     def set_beta(self, beta, is_peak_hop):
+        """
+        this is a source discrimination correction and assumes detectors are already "perfectly" calibrated
+        Requested by WiscAr for NGX.  They do detector calibration in IsoLinx (Iconia) and assume the detectors stay in
+        calibration.  Measure Air to generate a source mass discrimination correction.
+
+        :param beta:
+        :param is_peak_hop:
+        :return:
+        """
         self.info('calculated beta value={}'.format(beta))
 
         m40 = 39.9624
