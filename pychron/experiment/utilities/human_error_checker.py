@@ -156,10 +156,13 @@ class HumanErrorChecker(Loggable):
                 ln = idargs[0].lower()
                 self.debug('checking {}. {}'.format(ln, self._modifiers))
                 if ln in self._modifiers:
-                    rm = int(idargs[1])
-                    dm = int(self._modifiers[ln])
-                    if rm != dm:
-                        return {'kind': 'modifier', 'value': dm}
+                    try:
+                        rm = int(idargs[1])
+                        dm = int(self._modifiers[ln])
+                        if rm != dm:
+                            return {'kind': 'modifier', 'value': dm}
+                    except ValueError as e:
+                        self.debug('check rempaiable: error={}'.format(e))
 
     def _check_run_non_fatal(self, idx, run):
         es = run.extraction_script
