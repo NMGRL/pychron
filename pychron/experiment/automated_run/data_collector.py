@@ -336,6 +336,10 @@ class DataCollector(Consoleable):
         for g, name, fit, series, fit_series in gs:
 
             pid = g.get_plotid_by_ytitle(name)
+            if pid is None:
+                self.critical('failed to locate {}, ytitles={}'.format(name, g.get_plot_ytitles()))
+                continue
+
             g.add_datum((x, signal),
                         series=series,
                         plotid=pid,
