@@ -13,23 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from pychron.hardware.actuators import get_switch_address
 from pychron.hardware.actuators.gp_actuator import GPActuator
-from pychron.hardware.labjack.base_t4 import BaseT4
 from pychron.hardware.labjack.base_u3_lv import BaseU3LV
 
 
 class U3Actuator(BaseU3LV, GPActuator):
     def _actuate(self, obj, action):
-        self.set_channel_state(obj.address, action.lower()=='open')
+        self.set_channel_state(get_switch_address(obj), action.lower() == 'open')
         return True
 
     def get_channel_state(self, obj, **kw):
-        if isinstance(obj, str):
-            addr = obj
-        else:
-            addr = obj.state_address
-            if not addr:
-                addr = obj.address
-                
-        return BaseU3LV.get_channel_state(self, addr, **kw)
+        return BaseU3LV.get_channel_state(self, get_switch_address(obj), **kw)
 # ============= EOF =============================================

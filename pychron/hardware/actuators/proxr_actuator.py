@@ -13,25 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from pychron.hardware.actuators import get_switch_address
 from pychron.hardware.actuators.gp_actuator import GPActuator
 from pychron.hardware.ncd.relay import ProXR
 
 
 class ProXRActuator(ProXR, GPActuator):
     def _actuate(self, obj, action):
+        addr = get_switch_address(obj)
         if action.lower() == 'open':
-            self.open_channel(obj.address)
+            self.open_channel(addr)
         else:
-            self.close_channel(obj.address)
+            self.close_channel(addr)
         return True
 
     def get_channel_state(self, obj, **kw):
-        if isinstance(obj, str):
-            addr = obj
-        else:
-            addr = obj.state_address
-            if not addr:
-                addr = obj.address
-
-        return ProXR.get_channel_state(self, addr, **kw)
+        return ProXR.get_channel_state(self, get_switch_address(obj), **kw)
 # ============= EOF =============================================
