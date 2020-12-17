@@ -1,5 +1,5 @@
 ---
-title: Pychron: Automated Data Collection and Reduction for Noble Gas and Ar/Ar Geochronology
+title: 'Pychron: Automated Data Collection and Reduction for Noble Gas and Ar/Ar Geochronology' 
 tags:
   - python
   - geochronology
@@ -22,6 +22,7 @@ affiliations:
     index: 2
 date: 15 December 2020
 bibliography: paper.bib
+   
 ---
 
 # Summary
@@ -49,7 +50,7 @@ Starting in 2008, Pychron has been under developed at New Mexico Geochronology R
 for a sustainable software ecosystem for noble gas geochemistry. Pychron is a fully featured, open source, python-based
 application used for data acquisition and processing in noble gas geochemistry and is now being used at a growing number
 of laboratories around the world. Written in python, Pychron uses many standard and third party libraries such as
-numpy [@2020NumPy-Array], scipy [@2020SciPy-NMeth], uncertainties [@lebigot2010uncertainties]
+numpy [@2020NumPy-Array:2020], scipy [@2020SciPy-NMeth:2020], uncertainties [@lebigot2010uncertainties:2010]
 for computational aspects and Enthought Tool Suite/Qt for a rich customizable UI.
 
 Pychron supports single and multi-collector automated real-time data collection with mass spectrometers from Thermo
