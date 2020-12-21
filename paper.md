@@ -1,28 +1,27 @@
 ---
-title: 'Pychron: Automated Data Collection and Reduction for Noble Gas and Ar/Ar Geochronology' 
+title: 'Pychron: Automated Data Collection and Reduction for Noble Gas Geochemistry and Ar/Ar Geochronology'
 tags:
   - python
   - geochronology
   - geoscience
-  - noble gas
+  - noble gas 
 authors:
-  - name: Jake Ross
-    orcid: 0000-0003-4727-7472
+  - name: Jake Ross 
+    orcid: 0000-0003-4727-7472 
     affiliation: "1, 2"
-  - name: William McIntosh
-    orcid:
+  - name: William McIntosh 
+    orcid: 0000-0002-5647-2483 
     affiliation: "1, 2"
-  - name: Matt Heizler
-    orcid:
+  - name: Matthew Heizler 
+    orcid: 0000-0002-3911-4932 
     affiliation: "1, 2"
-affiliations: 
-  - name: New Mexico Bureau of Geology
+affiliations:
+  - name: New Mexico Bureau of Geology 
     index: 1
-  - name: New Mexico Institute of Mining and Technology
-    index: 2
-date: 15 December 2020
+  - name: New Mexico Institute of Mining and Technology 
+    index: 2 
+date: 15 December 2020 
 bibliography: paper.bib
-   
 ---
 
 # Summary
