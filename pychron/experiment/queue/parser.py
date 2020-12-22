@@ -21,7 +21,7 @@ from pychron.core.helpers.strtools import to_bool
 from pychron.loggable import Loggable
 from pychron.pychron_constants import EXTRACT_VALUE, COLLECTION_TIME_ZERO_OFFSET, DELAY_AFTER, WEIGHT, RAMP_DURATION, \
     POSTCLEANUP, PRECLEANUP, CLEANUP, DURATION, LIGHT_VALUE, BEAM_DIAMETER, USE_CDD_WARMING, POSITION, PATTERN, COMMENT, \
-    REPOSITORY_IDENTIFIER, OVERLAP, EXTRACT_UNITS
+    REPOSITORY_IDENTIFIER, OVERLAP, EXTRACT_UNITS, CRYO_TEMP
 from pychron.regex import ALIQUOT_REGEX
 
 
@@ -98,6 +98,7 @@ class RunParser(Loggable):
                      CLEANUP,
                      PRECLEANUP,
                      POSTCLEANUP,
+                     CRYO_TEMP,
                      (RAMP_DURATION, 'ramp'),
                      WEIGHT,
                      DELAY_AFTER,
@@ -141,6 +142,7 @@ class UVRunParser(RunParser):
             line = line.split(delim)
 
         args = [l.strip() for l in line]
+
         def _set(attr, cast):
             try:
                 idx = self._get_idx(header, attr)

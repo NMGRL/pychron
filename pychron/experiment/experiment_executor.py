@@ -1354,9 +1354,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 ms = self.experiment_queue.mass_spectrometer
                 try:
                     checks = yload(p)
-                    for ci in checks:
-                        if self._check_ratio_change(ms, atype, ci):
-                            return True
+                    if checks:
+                        for ci in checks:
+                            if self._check_ratio_change(ms, atype, ci):
+                                return True
                 except BaseException as e:
                     import traceback
                     traceback.print_exc()

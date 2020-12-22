@@ -159,8 +159,8 @@ class Script(Loggable):
     def _load_script_names(self):
         p = self._get_root()
         if os.path.isdir(p):
-            return [s for s in os.listdir(p)
-                    if not s.startswith('.') and s.endswith('.py') and s != '__init__.py']
+            return sorted([s for s in os.listdir(p)
+                           if not s.startswith('.') and s.endswith('.py') and s != '__init__.py'])
         else:
             self.warning_dialog('{} script directory does not exist!'.format(p))
 

@@ -312,8 +312,10 @@ class BaseSpectrometer(SpectrometerDevice):
                 self.debug('cannot update detector "{}"'.format(detector))
             else:
                 det.isotope = isotope
-                det.mass = self.map_mass(isotope)
-                self.debug('molweights={}'.format(self.molecular_weights))
+                try:
+                    det.mass = self.map_mass(isotope)
+                except TraitError:
+                    self.warning('isotope={} molweights={}'.format(isotope, self.molecular_weights))
 
                 try:
                     self._update_isotopes_hook(isotope, det.index)

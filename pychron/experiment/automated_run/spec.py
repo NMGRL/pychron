@@ -34,7 +34,7 @@ from pychron.experiment.utilities.runid import make_rid, make_runid
 from pychron.pychron_constants import SCRIPT_KEYS, SCRIPT_NAMES, DETECTOR_IC, DURATION, EXTRACT_VALUE, EXTRACT_UNITS, \
     RAMP_RATE, RAMP_DURATION, BEAM_DIAMETER, PRECLEANUP, CLEANUP, POSTCLEANUP, DELAY_AFTER, PATTERN, LIGHT_VALUE, TRAY, \
     MASS_SPECTROMETER, POSITION, USE_CDD_WARMING, EXTRACT_DEVICE, COLLECTION_TIME_ZERO_OFFSET, WEIGHT, COMMENT, PROJECT, \
-    SAMPLE, MATERIAL, REPOSITORY_IDENTIFIER, DISABLE_BETWEEN_POSITIONS, USERNAME, NULL_STR
+    SAMPLE, MATERIAL, REPOSITORY_IDENTIFIER, DISABLE_BETWEEN_POSITIONS, USERNAME, NULL_STR, CRYO_TEMP
 
 logger = new_logger('AutomatedRunSpec')
 
@@ -105,7 +105,7 @@ class AutomatedRunSpec(HasTraits):
     cleanup = Float
     pre_cleanup = Float
     post_cleanup = Float
-
+    cryo_temperature = Float
     post_analysis_delay = Float
 
     pattern = Str
@@ -436,9 +436,10 @@ class AutomatedRunSpec(HasTraits):
                   POSITION,
                   'xyz_position',
                   DURATION,
-                  'cleanup',
+                  CLEANUP,
                   PRECLEANUP,
                   POSTCLEANUP,
+                  CRYO_TEMP,
                   PATTERN,
                   BEAM_DIAMETER,
                   RAMP_DURATION,

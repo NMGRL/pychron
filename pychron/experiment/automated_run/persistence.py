@@ -783,6 +783,7 @@ class AutomatedRunPersister(BasePersister):
                  cleanup_duration=spec.cleanup,
                  pre_cleanup_duration=spec.pre_cleanup,
                  post_cleanup_duration=spec.post_cleanup,
+                 cryo_temperature=spec.cryo_temperature,
                  weight=spec.weight,
                  response_blob=response_blob or '',
                  output_blob=output_blob or '',
