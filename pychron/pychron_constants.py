@@ -287,6 +287,11 @@ if paths.setup_dir:
                 pass
 
 AR_AR = 'Ar/Ar'
+HE = 'He'
+NE = 'Ne'
+KR = 'Kr'
+XE = 'Xe'
+GENERIC = 'Generic'
 
 QTEGRA_SOURCE_KEYS = ('extraction_lens', 'ysymmetry', 'zsymmetry', 'zfocus')
 QTEGRA_SOURCE_NAMES = ('ExtractionLens', 'Y-Symmetry', 'Z-Symmetry', 'Z-Focus')

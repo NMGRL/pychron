@@ -145,6 +145,7 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     cleanup_width = Int(70)
     pre_cleanup_width = Int(70)
     post_cleanup_width = Int(70)
+    cryo_temperature_width = Int(70)
 
     pattern_width = Int(80)
     beam_diameter_width = Int(65)
