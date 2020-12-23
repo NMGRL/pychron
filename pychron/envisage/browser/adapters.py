@@ -164,6 +164,7 @@ class AnalysisAdapter(BrowserAdapter):
     cleanup_width = Int
     pre_cleanup_width = Int
     post_cleanup_width = Int
+    cryo_temperature_width = Int
     duration_width = Int
     position_width = Int
     extract_device_width = Int
