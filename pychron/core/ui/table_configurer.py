@@ -165,7 +165,6 @@ class TableConfigurer(HasTraits):
             except (pickle.PickleError, OSError, EOFError, TraitError):
                 return
         elif os.path.isfile('{}.yaml'.format(p)):
-            print('log yaml')
             state = yload('{}.yaml'.format(p))
 
         return state
