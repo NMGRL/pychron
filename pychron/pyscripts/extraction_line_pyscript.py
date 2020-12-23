@@ -200,8 +200,8 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def set_cryo(self, value):
-        result = self._manager_action(('set_cryo', (value,), {}), protocol=EL_PROTOCOL)
+    def set_cryo(self, value, block=False):
+        result = self._manager_action(('set_cryo', (value,), {'block': block}), protocol=EL_PROTOCOL)
         self.debug('set cyro result={}'.format(result))
         return result
 
