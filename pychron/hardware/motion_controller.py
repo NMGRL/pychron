@@ -15,15 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
+from traits.api import Property, Dict, Float, Any, Instance, Bool
+from traitsui.api import View, VGroup, Item, RangeEditor
 
-# from pyface.timer.api import Timer
 # ============= standard library imports ========================
 import os
 import time
-
-from traits.api import Property, Dict, Float, Any, Instance
-from traitsui.api import View, VGroup, Item, RangeEditor
 
 # ============= local library imports  ==========================
 from pychron.core.codetools.inspection import caller
@@ -93,6 +90,8 @@ class MotionController(CoreDevice):
     groupobj = None
     _not_moving_count = 0
     _homing = False
+    _stopped = True
+    nonstoppable = Bool(False)
 
     def update_position(self):
         pass
@@ -117,7 +116,7 @@ class MotionController(CoreDevice):
             reuse timer if func is the same
 
         """
-
+        self._stopped = False
         timer = self.timer
         if func is None:
             func = self._inprogress_update
@@ -269,7 +268,7 @@ class MotionController(CoreDevice):
         self.z_progress = z
 
     def _check_moving(self, axis=None, verbose=True):
-        m = self._moving(axis=axis, verbose=False)
+        m = self._moving(axis=axis, verbose=verbose)
         if verbose:
             self.debug('is moving={}'.format(m))
 
@@ -343,7 +342,7 @@ class MotionController(CoreDevice):
                 return self.timer.isActive()
         else:
             self.debug('check moving={}'.format(axis))
-            period = 0.25
+            period = 0.15
 
             def func():
                 return self._moving(axis=axis, verbose=False)
@@ -351,9 +350,11 @@ class MotionController(CoreDevice):
         cnt = 0
         threshold = 0 if timer else 1
         while 1:
-            st = time.time()
 
+            st = time.time()
             a = func()
+            et = time.time() - st
+
             if not a:
                 cnt += 1
                 if cnt > threshold:
@@ -361,8 +362,9 @@ class MotionController(CoreDevice):
             else:
                 cnt = 0
 
-            p = max(0, period - (time.time() - st))
-            time.sleep(p)
+            s = max(0, period - et)
+            if s:
+                time.sleep(s)
 
         self.debug('block finished')
 

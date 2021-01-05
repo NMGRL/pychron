@@ -123,12 +123,15 @@ class _ImageEditor(Editor):
 
             if isinstance(image, FrameImage):
                 image = image.source_frame
+            try:
+                im = convert_bitmap(image, w)
 
-            im = convert_bitmap(image, w)
-            if im:
-                self.image_ctrl.setPixmap(im)
-            else:
-                self.image_ctrl.setText('No Image')
+                if im:
+                    self.image_ctrl.setPixmap(im)
+                else:
+                    self.image_ctrl.setText('No Image')
+            except ValueError:
+                pass
 
 
 class ImageEditor(BasicEditorFactory):
