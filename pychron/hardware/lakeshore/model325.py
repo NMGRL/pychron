@@ -13,10 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
 from pychron.hardware.lakeshore.base_controller import BaseLakeShoreController
 
 
-class Model335TemperatureController(BaseLakeShoreController):
+class Model325TemperatureController(BaseLakeShoreController):
     pass
 # ============= EOF =============================================

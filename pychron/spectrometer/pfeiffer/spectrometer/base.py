@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2018 ross
+# Copyright 2017 ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,10 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from traits.api import Any, Instance
 
-from pychron.hardware.lakeshore.base_controller import BaseLakeShoreController
+from pychron.loggable import Loggable
+from pychron.spectrometer.pfeiffer.magnet.quadera import QuaderaMagnet
+from pychron.spectrometer.pfeiffer.source.quadera import QuaderaSource
 
 
-class Model335TemperatureController(BaseLakeShoreController):
-    pass
+class BasSpectrometer(Loggable):
+    magnet = Instance(QuaderaMagnet)
+    source = Instance(QuaderaSource)
+    magnet_klass = Any
+    source_klass = Any
+    detector_klass = Any
+
 # ============= EOF =============================================

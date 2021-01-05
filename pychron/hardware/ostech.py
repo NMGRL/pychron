@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2018 ross
+# Copyright 2020 ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,10 +13,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from pychron.hardware.core.core_device import CoreDevice
 
-from pychron.hardware.lakeshore.base_controller import BaseLakeShoreController
 
+class OsTechLaserController(CoreDevice):
+    def initialize(self):
+        # switch to reduced mode
+        self.ask('GMS32768')
+        return True
 
-class Model335TemperatureController(BaseLakeShoreController):
-    pass
+    def enable(self):
+        self.ask('LR')
+
+    def disable(self):
+        self.ask('LS')
+
 # ============= EOF =============================================

@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2018 ross
+# Copyright 2017 ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,10 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
+from traitsui.api import View, Item
+from pychron.spectrometer.base_source import BaseSource
 
-from pychron.hardware.lakeshore.base_controller import BaseLakeShoreController
 
+class PfeifferSource(BaseSource):
+    def traits_view(self):
+        v = View(Item('nominal_hv', format_str='%0.4f'),
+                 Item('current_hv', format_str='%0.4f', style='readonly'))
+        return v
 
-class Model335TemperatureController(BaseLakeShoreController):
-    pass
 # ============= EOF =============================================

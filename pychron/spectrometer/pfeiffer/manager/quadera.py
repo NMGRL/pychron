@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2018 ross
+# Copyright 2017 ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,10 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from pychron.spectrometer.base_spectrometer_manager import BaseSpectrometerManager
+from pychron.spectrometer.pfeiffer.spectrometer.quadera import QuaderaSpectrometer
 
-from pychron.hardware.lakeshore.base_controller import BaseLakeShoreController
 
-
-class Model335TemperatureController(BaseLakeShoreController):
-    pass
+class QuaderaSpectrometerManager(BaseSpectrometerManager):
+    spectrometer_klass = QuaderaSpectrometer
 # ============= EOF =============================================

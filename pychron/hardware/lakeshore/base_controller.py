@@ -13,11 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+
 from traits.api import Enum, Float, Property, List, Int
+from traitsui.api import Item, UItem, HGroup, VGroup, Spring
+
+from pychron.core.ui.lcd_editor import LCDEditor
+from pychron.graph.plot_record import PlotRecord
+from pychron.graph.stream_graph import StreamStackedGraph
 from pychron.hardware import get_float
 from pychron.hardware.core.core_device import CoreDevice
 import re
-from time import sleep
+from time import sleep, time
 import string
 
 IDN_RE = re.compile(r'\w{4},\w{8},\w{7}\/[\w\#]{7},\d.\d')
@@ -54,6 +60,8 @@ class BaseLakeShoreController(CoreDevice):
     ionames = List
     iolist = List
     iomap = List
+
+    graph_klass = StreamStackedGraph
 
     def load_additional_args(self, config):
         self.set_attribute(config, 'units', 'General', 'units', default='K')
@@ -135,11 +143,17 @@ class BaseLakeShoreController(CoreDevice):
         if output is not None:
             return self.ask('SETP? {}'.format(re.sub('[^0-9]', '', output)), verbose=verbose)
 
-    def set_setpoints(self, *setpoints):
+    def set_setpoints(self, *setpoints, block=False):
         for i, v in enumerate(setpoints):
             if v is not None:
                 idx = i + 1
                 setattr(self, 'setpoint{}'.format(idx), v)
+
+        if block:
+            while 1:
+                if self.setpoints_achieved():
+                    break
+                time.sleep(1)
 
     def set_setpoint(self, v, output=1):
         self.set_range(v, output)
@@ -181,4 +195,30 @@ class BaseLakeShoreController(CoreDevice):
 
     def _setpoint2_changed(self):
         self.set_setpoint(self.setpoint2, 2)
+
+    def _update_hook(self):
+        r = PlotRecord((self.input_a, self.input_b), (0, 1), ('a', 'b'))
+        return r
+
+    def get_control_group(self):
+        grp = VGroup(Spring(height=10, springy=False),
+                     HGroup(Item('input_a', style='readonly', editor=LCDEditor(width=120, ndigits=6, height=30)),
+                            Item('setpoint1'),
+                            UItem('setpoint1_readback', editor=LCDEditor(width=120, height=30),
+                                  style='readonly'), Spring(width=10, springy=False)),
+                     HGroup(Item('input_b', style='readonly', editor=LCDEditor(width=120, ndigits=6, height=30)),
+                            Item('setpoint2'),
+                            UItem('setpoint2_readback', editor=LCDEditor(width=120, height=30),
+                                  style='readonly'), Spring(width=10, springy=False)))
+        return grp
+
+    def graph_builder(self, g, **kw):
+        g.plotcontainer.spacing = 10
+        g.new_plot(xtitle='Time (s)', ytitle='InputA',
+                   padding=[100, 10, 0, 60])
+        g.new_series()
+
+        g.new_plot(ytitle='InputB',
+                   padding=[100, 10, 60, 0])
+        g.new_series(plotid=1)
 # ============= EOF =============================================

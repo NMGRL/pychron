@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2018 ross
+# Copyright 2020 ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,9 +14,5 @@
 # limitations under the License.
 # ===============================================================================
 
-from pychron.hardware.lakeshore.base_controller import BaseLakeShoreController
 
-
-class Model335TemperatureController(BaseLakeShoreController):
-    pass
 # ============= EOF =============================================

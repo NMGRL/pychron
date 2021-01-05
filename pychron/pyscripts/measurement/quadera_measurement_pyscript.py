@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2018 ross
+# Copyright 2020 ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,10 +13,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from pychron.pyscripts.decorators import makeRegistry
+from pychron.pyscripts.measurement_pyscript import MeasurementPyScript
 
-from pychron.hardware.lakeshore.base_controller import BaseLakeShoreController
+command_register = makeRegistry()
 
 
-class Model335TemperatureController(BaseLakeShoreController):
-    pass
+class QuaderaMeasurementPyScript(MeasurementPyScript):
+
+    @command_register
+    def measure(self):
+        """
+        pass control to Quadera.
+
+        poll for measurement completion
+        """
+
+        pass
 # ============= EOF =============================================
