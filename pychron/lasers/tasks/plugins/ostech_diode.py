@@ -19,8 +19,10 @@
 from envisage.ui.tasks.task_extension import TaskExtension
 from pyface.action.group import Group
 from pyface.tasks.action.schema_addition import SchemaAddition
-from pychron.lasers.tasks.laser_preferences import FusionsDiodePreferencesPane
+from pychron.lasers.tasks.laser_preferences import FusionsDiodePreferencesPane, OsTechDiodePreferencesPane
 from pychron.lasers.tasks.plugins.laser_plugin import FusionsPlugin, BaseLaserPlugin
+from pychron.lasers.tasks.laser_task import OsTechDiodeTask
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.pychron_constants import FUSIONS_DIODE, OSTECH_DIODE
@@ -57,11 +59,10 @@ class OsTechDiodePlugin(BaseLaserPlugin):
     #
     #     return exts + [ext1]
 
-    # def _preferences_panes_default(self):
-    #     return [OsTechDiodePreferencesPane]
+    def _preferences_panes_default(self):
+        return [OsTechDiodePreferencesPane]
 
     def _task_factory(self):
-        from pychron.lasers.tasks.laser_task import OsTechDiodeTask
         t = OsTechDiodeTask(manager=self._get_manager(), application=self.application)
         return t
 

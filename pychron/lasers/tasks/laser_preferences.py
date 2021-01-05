@@ -23,14 +23,10 @@ from traits.api import Bool, Enum, Directory, \
 from traitsui.api import View, Item, VGroup, HGroup, Group, UItem
 
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
-from pychron.pychron_constants import SIZES, FUSIONS_DIODE, FUSIONS_CO2, FUSIONS_UV
+from pychron.pychron_constants import SIZES, FUSIONS_DIODE, FUSIONS_CO2, FUSIONS_UV, OSTECH_DIODE
 
 
 class LaserPreferences(BasePreferencesHelper):
-    pass
-
-
-class FusionsLaserPreferences(LaserPreferences):
     use_video = Bool(False)
     # video_output_mode = Enum('MPEG', 'Raw')
     # ffmpeg_path = File
@@ -96,6 +92,9 @@ class FusionsLaserPreferences(LaserPreferences):
     use_calibrated_power = Bool(True)
     show_bounds_rect = Bool(True)
 
+
+class FusionsLaserPreferences(LaserPreferences):
+    pass
     # def _get_value(self, name, value):
     #     if 'color' in name:
     #         value = value.split('(')[1]
@@ -122,10 +121,15 @@ class FusionsUVPreferences(FusionsLaserPreferences):
     preferences_path = 'pychron.fusions.uv'
 
 
+class OsTechDiodePreferences(LaserPreferences):
+    name = OSTECH_DIODE
+    preferences_path = 'pychron.ostech.diode'
+
+
 # ===============================================================================
 # Panes
 # ===============================================================================
-class FusionsLaserPreferencesPane(PreferencesPane):
+class LaserPreferencesPane(PreferencesPane):
     def traits_view(self):
         grps = self.get_additional_groups()
         v = View(Group(*grps, layout='tabbed'))
@@ -183,7 +187,8 @@ class FusionsLaserPreferencesPane(PreferencesPane):
                               # Item('video_output_mode', label='Output Mode'),
                               # Item('ffmpeg_path', label='FFmpeg Location'),
                               Item('render_with_markup', label='Render Snapshot with markup'),
-                              Item('burst_delay', label='Burst Delay (ms)', tooltip='delay between snapshots in burst mode'),
+                              Item('burst_delay', label='Burst Delay (ms)',
+                                   tooltip='delay between snapshots in burst mode'),
                               recgrp,
                               archivergrp,
                               media_storage_grp,
@@ -222,6 +227,10 @@ class FusionsLaserPreferencesPane(PreferencesPane):
                 patgrp, powergrp]
 
 
+class FusionsLaserPreferencesPane(PreferencesPane):
+    pass
+
+
 class FusionsDiodePreferencesPane(FusionsLaserPreferencesPane):
     category = FUSIONS_DIODE
     model_factory = FusionsDiodePreferences
@@ -236,4 +245,8 @@ class FusionsUVPreferencesPane(FusionsLaserPreferencesPane):
     category = FUSIONS_UV
     model_factory = FusionsUVPreferences
 
+
+class OsTechDiodePreferencesPane(LaserPreferencesPane):
+    category = OSTECH_DIODE
+    model_factory = OsTechDiodePreferences
 # ============= EOF =============================================
