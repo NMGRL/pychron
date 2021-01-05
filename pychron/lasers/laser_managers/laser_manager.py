@@ -15,8 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from traits.api import Instance, Bool, Str
+from traits.api import Instance, Bool, Str, Button
 # import apptools.sweet_pickle as pickle
 # ============= standard library imports ========================
 from threading import Event, Thread
@@ -56,6 +55,9 @@ class LaserManager(BaseLaserManager):
 
     auxilary_graph = Instance(Component)
     degasser = Instance(Degasser)
+
+    degas_test_button = Button('test')
+    _test_state = False
 
     # ===============================================================================
     # public interface
@@ -275,6 +277,13 @@ class LaserManager(BaseLaserManager):
     #    def update_status_bar(self, obj, name, old, new):
     #        if isinstance(new, tuple):
     #            self.status_text = 'x = {:n} ({:0.4f} mm), y = {:n} ({:0.4f} mm)'.format(*new)
+
+    def _degas_test_button_fired(self):
+        if self._test_state:
+            self.disable_laser()
+        else:
+            self.luminosity_degas_test()
+        self._test_state = not self._test_state
 
     def _enable_fired(self):
         """

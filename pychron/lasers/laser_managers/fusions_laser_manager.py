@@ -104,16 +104,6 @@ class FusionsLaserManager(LaserManager):
 
     motor_event = Event
 
-    degas_test_button = Button('test')
-    _test_state = False
-
-    def _degas_test_button_fired(self):
-        if self._test_state:
-            self.disable_laser()
-        else:
-            self.luminosity_degas_test()
-        self._test_state = not self._test_state
-
     def finish_loading(self):
         super(FusionsLaserManager, self).finish_loading()
         self.do_motor_initialization()
