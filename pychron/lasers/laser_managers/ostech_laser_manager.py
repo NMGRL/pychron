@@ -13,10 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from pychron.lasers.laser_managers.base_lase_manager import BaseLaserManager
+from pychron.lasers.laser_managers.laser_manager import LaserManager
 
 
-class OsTechLaserManager(BaseLaserManager):
+class OsTechLaserManager(LaserManager):
     pass
 
 

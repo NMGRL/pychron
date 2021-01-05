@@ -28,6 +28,7 @@ from pychron.core.pid import PID
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.monitors.laser_monitor import LaserMonitor
 from pychron.lasers.laser_managers.pulse import Pulse
+from pychron.mv.degas.degasser import Degasser
 from pychron.paths import paths
 from pychron.lasers.laser_managers.laser_script_executor import LaserScriptExecutor
 from pychron.lasers.laser_managers.base_lase_manager import BaseLaserManager
@@ -54,6 +55,7 @@ class LaserManager(BaseLaserManager):
     pulse = Instance(Pulse)
 
     auxilary_graph = Instance(Component)
+    degasser = Instance(Degasser)
 
     # ===============================================================================
     # public interface
@@ -354,6 +356,10 @@ class LaserManager(BaseLaserManager):
         return LaserScriptExecutor(laser_manager=self,
                                    name=self.name)
 
+    def _degasser_default(self):
+        d = Degasser(laser_manager=self)
+        d.load()
+        return d
 
 # ===============================================================================
 # zobed

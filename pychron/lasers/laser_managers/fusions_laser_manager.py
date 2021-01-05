@@ -104,8 +104,6 @@ class FusionsLaserManager(LaserManager):
 
     motor_event = Event
 
-    degasser = Instance(Degasser)
-
     degas_test_button = Button('test')
     _test_state = False
 
@@ -437,10 +435,7 @@ class FusionsLaserManager(LaserManager):
         """
         return FiberLight(name='fiber_light')
 
-    def _degasser_default(self):
-        d = Degasser(laser_manager=self)
-        d.load()
-        return d
+
 
 
 if __name__ == '__main__':
