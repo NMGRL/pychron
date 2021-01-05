@@ -291,6 +291,10 @@ class ArArAge(IsotopeGroup):
 
         return r
 
+    def set_cosmogenic_correction(self, rs, rc):
+        self.arar_constants.set_cosmogenic_ratios(rs, rc)
+        self.recalculate_age(force=True)
+
     def set_sensitivity(self, sens):
         for si in sorted(sens, key=itemgetter('create_date'), reverse=True):
             if si['create_date'] < self.rundate:

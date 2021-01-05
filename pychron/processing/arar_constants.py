@@ -81,6 +81,16 @@ class ArArConstants(HasTraits):
     allow_negative_ca_correction = Bool(True)
     trapped_atm4036 = None
 
+    # cosmogenic
+    use_cosmogenic_correction = Bool(False)
+    solar3836 = Property(depends_on='solar3836_v,solar43836_e')
+    solar3836_v = Float
+    solar3836_e = Float
+
+    cosmo3836 = Property(depends_on='cosmo3836_v, cosmo3836_e')
+    cosmo3836_v = Float
+    cosmo3836_e = Float
+
     def __init__(self, *args, **kw):
         try:
             from pychron.core.ui.preference_binding import bind_preference
@@ -164,6 +174,20 @@ class ArArConstants(HasTraits):
         d['abundance_sensitivity'] = self.abundance_sensitivity
         return d
 
+    def cosmo_dict(self):
+        d = {}
+        for a in ('cosmo', 'solar'):
+            tag = '{}_3836'.format(a)
+            uv = getattr(self, tag)
+            d[tag] = float(nominal_value(uv))
+            d['{}_err'.format(tag)] = float(std_dev(uv))
+        return d
+
+    def set_cosmogenic_ratios(self, rs, rc):
+        self.use_cosmogenic_correction = True
+        self.solar3836_v, self.solar3836_e = rs
+        self.cosmo3836_v, self.cosmo3836_e = rc
+
     @property
     def atm3836_v(self):
         return nominal_value(self.atm3836)
@@ -191,6 +215,12 @@ class ArArConstants(HasTraits):
 
     def _get_atm4038(self):
         return self._get_ufloat('atm4038')
+
+    def _get_solar3836(self):
+        return self._get_ufloat('solar3836')
+
+    def _get_cosmo3836(self):
+        return self._get_ufloat('cosmo3836')
 
     def _get_lambda_Cl36(self):
         return self._get_ufloat('lambda_Cl36')

@@ -726,6 +726,9 @@ class DVC(Loggable):
 
         return p
 
+    def save_cosmogenic_correction(self, ai):
+        ai.dump_cosmogenic()
+
     def remove_irradiation_position(self, irradiation, level, hole):
         db = self.db
 

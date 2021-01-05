@@ -507,6 +507,12 @@ class DVCAnalysis(Analysis):
                        }
         self._dump(jd, path)
 
+    def dump_cosmogenic(self):
+        path = self._analysis_path(modifier='cosmo', mode='w')
+
+        jd = self.arar_constants.cosmo_dict()
+        self._dump(jd, path)
+
     def make_path(self, modifier):
         return self._analysis_path(modifier=modifier)
 
