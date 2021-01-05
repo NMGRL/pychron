@@ -44,6 +44,8 @@ BASELINES = 'baselines'
 BLANKS = 'blanks'
 ICFACTORS = 'icfactors'
 INTERCEPTS = 'intercepts'
+PEAKCENTER = 'peakcenter'
+COSMOGENIC = 'cosmogenic'
 
 HISTORY_PATHS = (None,
                  DATA,
@@ -53,7 +55,7 @@ HISTORY_PATHS = (None,
                  INTERCEPTS,
                  TAGS)
 
-static = ('peakcenter', 'extraction', 'monitor')
+static = (PEAKCENTER, 'extraction', 'monitor')
 PATH_MODIFIERS = HISTORY_PATHS + static
 NPATH_MODIFIERS = (None, DATA, TAGS) + static
 

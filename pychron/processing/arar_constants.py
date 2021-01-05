@@ -174,14 +174,23 @@ class ArArConstants(HasTraits):
         d['abundance_sensitivity'] = self.abundance_sensitivity
         return d
 
-    def cosmo_dict(self):
-        d = {}
+    def cosmo_to_dict(self):
+        d = {'use_cosmogenic_correction': self.use_cosmogenic_correction}
         for a in ('cosmo', 'solar'):
             tag = '{}_3836'.format(a)
             uv = getattr(self, tag)
             d[tag] = float(nominal_value(uv))
             d['{}_err'.format(tag)] = float(std_dev(uv))
+
         return d
+
+    def cosmo_from_dict(self, jd):
+        for a in ('cosmo', 'solar'):
+            tag = '{}_3836'.format(a)
+            setattr(self, '{}_3836_v'.format(a), jd.get(tag, 0))
+            setattr(self, '{}_3836_e'.format(a), jd.get('{}_err'.format(tag),0))
+
+        self.use_cosmogenic_correction = jd.get('use_cosmogenic_correction', False)
 
     def set_cosmogenic_ratios(self, rs, rc):
         self.use_cosmogenic_correction = True

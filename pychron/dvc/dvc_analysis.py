@@ -28,7 +28,7 @@ from pychron.core.helpers.datetime_tools import make_timef
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.iterfuncs import partition
 from pychron.core.helpers.strtools import to_csv_str
-from pychron.dvc import USE_GIT_TAGGING
+from pychron.dvc import USE_GIT_TAGGING, INTERCEPTS, BASELINES, BLANKS, ICFACTORS, PEAKCENTER, COSMOGENIC
 from pychron.dvc import dvc_dump, dvc_load, analysis_path, make_ref_list, get_spec_sha, get_masses, repository_path, \
     AnalysisNotAnvailableError
 from pychron.experiment.utilities.environmentals import set_environmentals
@@ -185,7 +185,7 @@ class DVCAnalysis(Analysis):
 
     def load_paths(self, modifiers=None):
         if modifiers is None:
-            modifiers = ('intercepts', 'baselines', 'blanks', 'icfactors', 'peakcenter')
+            modifiers = (INTERCEPTS, BASELINES, BLANKS, ICFACTORS, PEAKCENTER, COSMOGENIC)
 
         if USE_GIT_TAGGING:
             modifiers += ('tags',)
@@ -498,7 +498,7 @@ class DVCAnalysis(Analysis):
         self._dump(jd, path)
 
     def dump_source_correction_icfactors(self, refs=None):
-        jd, path = self._get_json('icfactors')
+        jd, path = self._get_json(ICFACTORS)
         for det, value in self.temporary_ic_factors.items():
             v, e = nominal_value(value), std_dev(value)
             jd[det] = {'value': float(v), 'error': float(e), 'reviewed': True,
@@ -508,15 +508,18 @@ class DVCAnalysis(Analysis):
         self._dump(jd, path)
 
     def dump_cosmogenic(self):
-        path = self._analysis_path(modifier='cosmo', mode='w')
+        path = self._analysis_path(modifier=COSMOGENIC, mode='w')
 
-        jd = self.arar_constants.cosmo_dict()
+        jd = self.arar_constants.cosmo_to_dict()
         self._dump(jd, path)
 
     def make_path(self, modifier):
         return self._analysis_path(modifier=modifier)
 
     # private
+    def _load_cosmogenic(self, jd):
+        self.arar_constants.cosmo_from_dict(jd)
+
     def _load_peakcenter(self, jd):
 
         refdet = jd.get('reference_detector')
