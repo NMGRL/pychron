@@ -18,4 +18,8 @@ from pychron.lasers.laser_managers.base_lase_manager import BaseLaserManager
 
 class OsTechLaserManager(BaseLaserManager):
     pass
+
+
+class OsTechDiodeManager(OsTechLaserManager):
+    pass
 # ============= EOF =============================================

@@ -66,6 +66,15 @@ PACKAGE_DICT = dict(
     ClientExtractionLinePlugin='pychron.extraction_line.tasks.client_extraction_line_plugin',
     ExternalPipettePlugin='pychron.external_pipette.tasks.external_pipette_plugin',
     ExtractionLinePlugin='pychron.extraction_line.tasks.extraction_line_plugin',
+    NMGRLFurnacePlugin='pychron.furnace.tasks.nmgrl.furnace_plugin',
+    NMGRLFurnaceControlPlugin='pychron.furnace.tasks.nmgrl.furnace_control_plugin',
+    LDEOFurnacePlugin='pychron.furnace.tasks.ldeo.furnace_plugin',
+    LDEOFurnaceControlPlugin='pychron.furnace.tasks.ldeo.furnace_control_plugin',
+    ThermoFurnacePlugin='pychron.furnace.tasks.thermo.furnace_plugin',
+
+    # hardware-lasers
+    OsTechDiodePlugin='pychron.lasers.tasks.plugins.ostech_diode',
+    AblationCO2Plugin='pychron.lasers.tasks.plugins.ablation_co2',
     ChromiumCO2Plugin='pychron.lasers.tasks.plugins.chromium_co2',
     ChromiumDiodePlugin='pychron.lasers.tasks.plugins.chromium_diode',
     ChromiumUVPlugin='pychron.lasers.tasks.plugins.chromium_uv',
@@ -75,12 +84,6 @@ PACKAGE_DICT = dict(
     LoadingPlugin='pychron.loading.tasks.loading_plugin',
     CoreLaserPlugin='pychron.lasers.tasks.plugins.laser_plugin',
     CoreClientLaserPlugin='pychron.lasers.tasks.plugins.laser_plugin',
-    NMGRLFurnacePlugin='pychron.furnace.tasks.nmgrl.furnace_plugin',
-    NMGRLFurnaceControlPlugin='pychron.furnace.tasks.nmgrl.furnace_control_plugin',
-    LDEOFurnacePlugin='pychron.furnace.tasks.ldeo.furnace_plugin',
-    LDEOFurnaceControlPlugin='pychron.furnace.tasks.ldeo.furnace_control_plugin',
-    ThermoFurnacePlugin='pychron.furnace.tasks.thermo.furnace_plugin',
-    AblationCO2Plugin='pychron.lasers.tasks.plugins.ablation_co2',
 
     # spectrometers
     ArgusSpectrometerPlugin='pychron.spectrometer.tasks.thermo.argus',

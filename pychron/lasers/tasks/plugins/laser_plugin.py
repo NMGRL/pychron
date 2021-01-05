@@ -75,6 +75,10 @@ class BaseLaserPlugin(BaseTaskPlugin):
 
     mode = None
 
+    def test_communication(self):
+        man = self._get_manager()
+        return man.test_connection()
+
     def _service_offers_default(self):
         """
         """
@@ -212,10 +216,6 @@ class BaseLaserPlugin(BaseTaskPlugin):
 class FusionsPlugin(BaseLaserPlugin):
     task_name = Str
     sources = List(contributes_to='pychron.video.sources')
-
-    def test_communication(self):
-        man = self._get_manager()
-        return man.test_connection()
 
     def _tasks_default(self):
         return [TaskFactory(id=self.id,
