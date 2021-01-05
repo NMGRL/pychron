@@ -72,8 +72,19 @@ class CoreLaserPlugin(BaseTaskPlugin):
 class BaseLaserPlugin(BaseTaskPlugin):
     managers = List(contributes_to='pychron.hardware.managers')
     klass = None
-
     mode = None
+
+    task_name = None
+    accelerator = None
+
+    def _tasks_default(self):
+        return [TaskFactory(id=self.id,
+                            task_group='hardware',
+                            factory=self._task_factory,
+                            name=self.task_name,
+                            image='laser',
+                            accelerator=self.accelerator),
+                ]
 
     def test_communication(self):
         man = self._get_manager()
@@ -214,22 +225,7 @@ class BaseLaserPlugin(BaseTaskPlugin):
 
 
 class FusionsPlugin(BaseLaserPlugin):
-    task_name = Str
     sources = List(contributes_to='pychron.video.sources')
-
-    def _tasks_default(self):
-        return [TaskFactory(id=self.id,
-                            task_group='hardware',
-                            factory=self._task_factory,
-                            name=self.task_name,
-                            image='laser',
-                            accelerator=self.accelerator),
-                # TaskFactory(id='pychron.laser.calibration',
-                #             task_group='hardware',
-                #             factory=self._calibration_task_factory,
-                #             name='Laser Calibration',
-                #             accelerator='Ctrl+Shift+2')
-                ]
 
     def _sources_default(self):
         ip = InitializationParser()
