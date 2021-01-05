@@ -188,9 +188,16 @@ class MotionController(CoreDevice):
 
             self.axes[a] = na
 
-            # ===============================================================================
-            # define in subclass
-            # ===============================================================================
+    def get_current_xy(self):
+        x = self.get_current_position('x')
+        y = self.get_current_position('y')
+        if x is None or y is None:
+            return
+        return x, y
+
+    # ===============================================================================
+    # define in subclass
+    # ===============================================================================
 
     def save_axes_parameters(self):
         pass
@@ -228,11 +235,11 @@ class MotionController(CoreDevice):
     def define_home(self):
         pass
 
-    def set_single_axis_motion_parameters(self, *args, **kw):
+    def home(self, *args, **kw):
         pass
 
-    def get_current_xy(self):
-        return
+    def set_single_axis_motion_parameters(self, *args, **kw):
+        pass
 
     # ===============================================================================
     # private
