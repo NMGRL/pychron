@@ -23,6 +23,7 @@ import sys
 import time
 from datetime import datetime
 
+import git
 from git import Repo
 from git.exc import GitCommandError
 from traits.api import Any, Str, List, Event
@@ -884,7 +885,11 @@ You like to delete them and try again?'''.format(clean)):
         self.debug('commit message={}'.format(msg))
         index = self.index
         if index:
-            index.commit(msg)
+            try:
+                index.commit(msg)
+                return True
+            except git.exc.GitError as e:
+                self.warning('Commit failed: {}'.format(e))
 
     def add(self, p, msg=None, msg_prefix=None, verbose=True, **kw):
         repo = self._repo

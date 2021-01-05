@@ -590,8 +590,11 @@ class DVC(Loggable):
         for expid, ais in groupby_repo(ans):
             ps = [analysis_path(x, x.repository_identifier, modifier=modifier) for x in ais for modifier in modifiers]
             if self.repository_add_paths(expid, ps):
-                self.repository_commit(expid, msg)
-                mod_repositories.append(expid)
+                if self.repository_commit(expid, msg):
+                    mod_repositories.append(expid)
+                else:
+                    self.warning_dialog('There is an issue with your repository. {}. Please fix it before '
+                                        'trying to save any changes'.format(expid))
         return mod_repositories
 
     def update_tag(self, an, add=True, **kw):
@@ -995,7 +998,7 @@ class DVC(Loggable):
     def repository_commit(self, repository, msg):
         self.debug('Repository commit: {} msg: {}'.format(repository, msg))
         repo = self._get_repository(repository)
-        repo.commit(msg)
+        return repo.commit(msg)
 
     def remote_repositories(self):
         rs = []
