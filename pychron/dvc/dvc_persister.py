@@ -33,7 +33,8 @@ from pychron.experiment.automated_run.persistence import BasePersister
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths
 from pychron.pychron_constants import DVC_PROTOCOL, NULL_STR, ARGON_KEYS, ARAR_MAPPING, EXTRACTION_ATTRS, \
-    META_ATTRS, NULL_EXTRACT_DEVICES, POSTCLEANUP, PRECLEANUP, CLEANUP, EXTRACT_UNITS, EXTRACT_VALUE, DURATION, WEIGHT
+    META_ATTRS, NULL_EXTRACT_DEVICES, POSTCLEANUP, PRECLEANUP, CLEANUP, EXTRACT_UNITS, EXTRACT_VALUE, DURATION, WEIGHT, \
+    CRYO_TEMP
 
 
 def format_repository_identifier(project):
@@ -109,7 +110,11 @@ class DVCPersister(BasePersister):
         remote = 'origin'
         if repo.has_remote(remote) and pull:
             self.info('pulling changes from repo: {}'.format(repository))
-            self.active_repository.pull(remote=remote, use_progress=False)
+            try:
+                self.active_repository.pull(remote=remote, use_progress=False)
+            except GitCommandError:
+                self.warning('failed pulling changes')
+                self.debug_exception()
 
     def pre_extraction_save(self):
         pass
@@ -169,9 +174,18 @@ class DVCPersister(BasePersister):
                             z = ep[2]
                     except IndexError:
                         self.debug('no extraction position for {}'.format(pp))
+                    except TypeError:
+                        self.debug('invalid extraction position')
+
+                try:
+                    pos = int(pos)
+                except BaseException:
+                    pos = None
+
                 pd = {'x': x, 'y': y, 'z': z, 'position': pos, 'is_degas': per_spec.run_spec.identifier == 'dg'}
                 ps.append(pd)
-                obj['positions'] = ps
+
+        obj['positions'] = ps
 
         self._positions = ps
 
@@ -292,7 +306,7 @@ class DVCPersister(BasePersister):
                         ret = False
 
         with dvc.session_ctx():
-            ret = self._save_analysis_db(timestamp)
+            ret = self._save_analysis_db(timestamp) and ret
 
         self.info('================= post measurement save finished =================')
         return ret
@@ -361,7 +375,7 @@ class DVCPersister(BasePersister):
         d = {k: getattr(rs, k) for k in ('uuid', 'analysis_type', 'aliquot',
                                          'increment', 'mass_spectrometer',
                                          WEIGHT,
-                                         CLEANUP, PRECLEANUP, POSTCLEANUP,
+                                         CLEANUP, PRECLEANUP, POSTCLEANUP, CRYO_TEMP,
                                          DURATION, EXTRACT_VALUE, EXTRACT_UNITS)}
         d['comment'] = rs.comment[:200] if rs.comment else ''
 
@@ -412,10 +426,7 @@ class DVCPersister(BasePersister):
 
                 for position in self._positions:
                     self.debug('adding measured position {}'.format(position))
-                    dbpos = db.add_measured_position(load=load_name, **position)
-                    if dbpos:
-                        an.measured_positions.append(dbpos)
-                    else:
+                    if not db.add_measured_position(an, load=load_name, **position):
                         self.warning('failed adding position {}, load={}'.format(position, load_name))
 
         # all associations are handled by the ExperimentExecutor._retroactive_experiment_identifiers
@@ -427,7 +438,10 @@ class DVCPersister(BasePersister):
         self.debug('get identifier "{}"'.format(rs.identifier))
         pos = db.get_identifier(rs.identifier)
         self.debug('setting analysis irradiation position={}'.format(pos))
-        an.irradiation_position = pos
+        if pos is None:
+            an.simple_identifier=int(rs.identifier)
+        else:
+            an.irradiation_position = pos
 
         t = ps.tag
 

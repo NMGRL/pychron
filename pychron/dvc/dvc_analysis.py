@@ -170,10 +170,12 @@ class DVCAnalysis(Analysis):
 
         pd = jd.get('positions')
         if pd:
-            ps = sorted(pd, key=itemgetter('position'))
-            self.position = to_csv_str([pp['position'] for pp in ps])
-            self.xyz_position = to_csv_str(['{},{},{}'.format(pp['x'], pp['y'], pp['z'])
-                                            for pp in ps if pp['x'] is not None], delimiter=';')
+            pd = [p for p in pd if p]
+            if pd:
+                ps = sorted(pd, key=itemgetter('position'))
+                self.position = to_csv_str([pp['position'] for pp in ps])
+                self.xyz_position = to_csv_str(['{},{},{}'.format(pp['x'], pp['y'], pp['z'])
+                                                for pp in ps if pp['x'] is not None], delimiter=';')
         if not self.extract_units:
             self.extract_units = 'W'
 

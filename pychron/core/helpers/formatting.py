@@ -55,7 +55,10 @@ def errorfmt(v, e):
 def standard_sigfigsfmt(v, e):
     sf = 0
     if abs(e) < 1:
-        sf = math.ceil((abs(math.log10(e))))
+        try:
+            sf = math.ceil((abs(math.log10(e))))
+        except ValueError:
+            pass
 
     fmt = '{{:0.{}f}}'.format(sf)
     return fmt.format(v), fmt.format(e)

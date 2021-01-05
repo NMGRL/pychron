@@ -16,22 +16,24 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-import six.moves.configparser
+
 import os
 
+import six.moves.configparser
 from traits.api import HasTraits, Button, Instance, List, Str, \
     Enum, Int, Float
 from traits.trait_types import Bool
 from traitsui.api import View, Item, VGroup
-
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 
 from pychron.core.helpers.filetools import backup
 from pychron.core.pychron_traits import IPAddress
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.loggable import Loggable
 from pychron.paths import paths
+
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 class ConfigGroup(HasTraits):
@@ -182,10 +184,27 @@ class DeviceConfigurer(Loggable):
         self.info('{} - saving a backup copy to {}'.format(bp, pp))
 
 
+class CommandResponse(HasTraits):
+    command = Str
+    response = Str
+
+
 class Hardwarer(Loggable):
     devices = List
     selected = Instance(ICoreDevice)
     device_configurer = Instance(DeviceConfigurer, ())
+
+    command = Str
+    responses = List
+    send_command_button = Button
+
+    def _send_command_button_fired(self):
+        if self.selected:
+            c = CommandResponse(command=self.command)
+            self.responses.insert(0, c)
+            resp = self.selected.ask(self.command)
+            if resp is not None:
+                c.response = resp
 
     def _selected_changed(self, new):
         if new:

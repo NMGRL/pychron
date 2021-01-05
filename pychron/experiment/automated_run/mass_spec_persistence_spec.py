@@ -23,6 +23,7 @@ from uncertainties import ufloat
 # ============= local library imports  ==========================
 from pychron.core.helpers.strtools import csv_to_ints
 from pychron.loggable import Loggable
+from pychron.pychron_constants import NULL_STR
 
 
 class MassSpecPersistenceSpec(Loggable):
@@ -109,19 +110,21 @@ class MassSpecPersistenceSpec(Loggable):
                  ('age_err_wo_j', 'age_err_wo_j'),
                  ('age_err_wo_j_irrad', 'age_err_wo_j_irrad'),
                  ('ar39decayfactor', 'ar39decayfactor'),
-                 ('ar37decayfactor', 'ar37decayfactor')]
-
-        # if hasattr(record, 'spec'):
-        # spec = record.spec
-        # else:
-        # spec = record
+                 ('ar37decayfactor', 'ar37decayfactor'),
+                 ('chron_segments', 'chron_segments'),
+                 ('production_ratios', 'production_ratios',),
+                 ('interference_corrections', 'interference_corrections'),
+                 ('production_name', 'production_name'),
+                 ('j', 'j'),
+                 ]
 
         for exp_attr, run_attr in attrs:
             if hasattr(record, run_attr):
                 try:
                     v = getattr(record, run_attr)
-                    self.debug('setting {} to {}'.format(exp_attr, v))
-                    setattr(self, exp_attr, v)
+                    if v != NULL_STR:
+                        self.debug('setting {} to {}'.format(exp_attr, v))
+                        setattr(self, exp_attr, v)
                 except TraitError as e:
                     self.debug(e)
 
@@ -136,14 +139,17 @@ class MassSpecPersistenceSpec(Loggable):
         # else:
         #     self.debug('{} has no ic_factor attribute'.format(record, ))
 
-        for a in ('chron_segments',
-                  'production_ratios',
-                  'interference_corrections',
-                  'production_name', 'j'):
-            if hasattr(record, a):
-                setattr(self, a, getattr(record, a))
-            else:
-                self.debug('no attribute {}'.format(a))
+        # for a in ('chron_segments',
+        #           'production_ratios',
+        #           'interference_corrections',
+        #           'production_name', 'j'):
+        #     if hasattr(record, a):
+        #         try:
+        #             v = getattr(record, a)
+        #             setattr(self, a, getattr(record, a))
+        #         except TraitError:
+        #     else:
+        #         self.debug('no attribute {}'.format(a))
 
     # def open_file(self):
     # return self.data_manager.open_file(self.data_path)

@@ -21,7 +21,7 @@ import yaml
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import HasTraits, Str, Bool, Property, Event, cached_property, \
-    Button, String, Instance, List, Float, on_trait_change
+    Button, String, Instance, List, Float, on_trait_change, Int
 from traitsui.api import UItem, Item, VGroup, HGroup, EnumEditor
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
@@ -205,6 +205,10 @@ class SampleEntry(DVCAble):
     note = Str
     lat = LatFloat
     lon = LonFloat
+    northing = Int
+    easting = Int
+    utm_zone = Int
+
     igsn = Str
     unit = Str
 
@@ -659,7 +663,8 @@ class SampleEntry(DVCAble):
 
     def _add_material_button_fired(self):
         if self.material:
-            from pychron.entry.dvc_import.model import Mapper
+            # from pychron.entry.dvc_import.model import Mapper
+            from pychron.data_mapper.model import Mapper
             mapper = Mapper()
             nm = mapper.material(self.material)
             if nm != self.material:

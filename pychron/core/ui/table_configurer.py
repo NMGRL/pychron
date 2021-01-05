@@ -157,6 +157,7 @@ class TableConfigurer(HasTraits):
     def _get_state(self):
         p = os.path.join(paths.appdata_dir, self.id)
         state = None
+
         if os.path.isfile(p):
             try:
                 with open(p, 'rb') as rfile:
@@ -204,9 +205,9 @@ class TableConfigurer(HasTraits):
             shutil.move(p, os.path.join(paths.appdata_dir, '~{}'.format(self.id)))
 
     def _get_dump(self):
-        obj = dict(columns=self.columns,
+        obj = dict(columns=list(self.columns),
                    font=self.font,
-                   sparse_columns=self.sparse_columns)
+                   sparse_columns=list(self.sparse_columns))
 
         cws = {w: getattr(self, w) for w in self.trait_names(kind='column_width')}
         obj['column_widths'] = cws

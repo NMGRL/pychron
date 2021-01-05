@@ -398,6 +398,10 @@ class BaseLaserManager(Manager):
         pm = PatternExecutor(application=self.application,
                              controller=controller,
                              laser_manager=self)
+        self._pattern_executor_init_hook(pm)
         return pm
+
+    def _pattern_executor_init_hook(self, pm):
+        pass
 
 # ============= EOF =============================================

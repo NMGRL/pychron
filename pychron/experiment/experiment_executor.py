@@ -1354,9 +1354,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 ms = self.experiment_queue.mass_spectrometer
                 try:
                     checks = yload(p)
-                    for ci in checks:
-                        if self._check_ratio_change(ms, atype, ci):
-                            return True
+                    if checks:
+                        for ci in checks:
+                            if self._check_ratio_change(ms, atype, ci):
+                                return True
                 except BaseException as e:
                     import traceback
                     traceback.print_exc()
@@ -2076,12 +2077,16 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.cancel(confirm=False)
 
     def _get_preceding_blank_or_background(self, inform=True):
+        #temporarily disable for now
+        # need to come up with a better way of handling blanks with SimpleIDs
+        return True
+        
         exp = self.experiment_queue
 
         types = ['air', 'unknown', 'cocktail']
         # get first air, unknown or cocktail
         aruns = exp.cleaned_automated_runs
-
+        
         if aruns[0].analysis_type.startswith('blank'):
             return True
 

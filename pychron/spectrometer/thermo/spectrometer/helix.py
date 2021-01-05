@@ -15,8 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+from traits.api import Str
 
 from pychron.hardware.thermo_spectrometer_controller import HelixController
 from pychron.spectrometer.thermo.detector.helix import HelixDetector
@@ -25,26 +24,27 @@ from pychron.spectrometer.thermo.source.helix import HelixSource, HelixSFTSource
 from pychron.spectrometer.thermo.spectrometer.base import ThermoSpectrometer
 
 
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+
+
 class HelixSpectrometer(ThermoSpectrometer):
     magnet_klass = HelixMagnet
     source_klass = HelixSource
     detector_klass = HelixDetector
     microcontroller_klass = HelixController
 
-    def get_command_map(self):
-        command_map = dict(ionrepeller='IonRepeller',
-                           electronenergy='ElectronEnergy',
-                           horizontalsymmetry='HorizontalSymmetry',
-                           extractionfocus='ExtractionFocus',
-                           extractionsymmetry='ExtractionSymmetry',
-                           extractionlens='ExtractionLens',
-                           ioncountervoltage='IonCounterVoltage',
-                           hv='HV',
-                           flatapole='Flatapole',
-                           rotation_quad='RotationQuad',
-                           vertical_deflection_n='VerticalDeflectionN',
-                           vertical_deflection_s='VerticalDeflectionS')
-        return command_map
+    def hardware_names(self):
+        hn = super(HelixSpectrometer, self).hardware_names()
+        hn['flatapole'] = 'Flatapole'
+        hn['rotation_quad'] = 'RotationQuad'
+        hn['vertical_deflection_n'] = 'VerticalDeflection N Set'
+        hn['vertical_deflection_s'] = 'VerticalDeflection S Set'
+        hn['horizontal_symmetry'] = 'Horizontal Symmetry Set'
+        hn['extraction_focus'] = 'Extraction Focus Set'
+        hn['extraction_symmetry'] = 'Extraction Symmetry Set'
+
+        return hn
 
 
 class HelixPlusSpectrometer(HelixSpectrometer):
@@ -52,5 +52,7 @@ class HelixPlusSpectrometer(HelixSpectrometer):
 
 
 class HelixSFTSpectrometer(HelixSpectrometer):
-    source_klass=HelixSFTSource
+    source_klass = HelixSFTSource
+    reference_detector = Str('Cup')
+
 # ============= EOF =============================================

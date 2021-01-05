@@ -72,15 +72,15 @@ class ValvePyScript(PyScript):
 
     @verbose_skip
     @named_register('open')
-    def _m_open(self, name=None, description='', cancel_on_failed_actuation=True):
-        self._valve_actuation('open', name, description, cancel_on_failed_actuation)
+    def _m_open(self, name=None, description='', cancel_on_failed_actuation=True, ntries=100):
+        self._valve_actuation('open', name, description, cancel_on_failed_actuation, ntries)
 
     @verbose_skip
     @command_register
-    def close(self, name=None, description='', cancel_on_failed_actuation=True):
-        self._valve_actuation('close', name, description, cancel_on_failed_actuation)
+    def close(self, name=None, description='', cancel_on_failed_actuation=True, ntries=100):
+        self._valve_actuation('close', name, description, cancel_on_failed_actuation, ntries)
 
-    def _valve_actuation(self, action, name, description, cancel_on_failed_actuation):
+    def _valve_actuation(self, action, name, description, cancel_on_failed_actuation, ntries):
         self.console_info('{} name={} desc={}'.format(action, name or NULL_STR, description or NULL_STR))
 
         result = self._manager_actions([('{}_valve'.format(action), (name,),
@@ -88,19 +88,22 @@ class ValvePyScript(PyScript):
 
         self.debug('-------------------------- {} {} ({}) result={}'.format(action, name, description, result))
         if result is not None:
-            if not self._finish_valve_change(action, result, name, description):
+            if not self._finish_valve_change(action, result, name, description, ntries=ntries):
                 if not globalv.experiment_debug:
 
                     if cancel_on_failed_actuation:
                         self.cancel()
+                        msg = 'Failed to {} valve name="{}", description="{}"'.format(action, name, description)
+
                     else:
                         # certain valves can fail to actuate but still you'd want to analyses the gas in the
                         # extraction line. So we dont want to cancel. but we dont want to run another analysis either.
                         # setting "end_at_run_completion" should do it
                         self._failed_actuation_hook()
+                        msg = 'Failed to {} valve name="{}", description="{}". Continuing'.format(action, name,
+                                                                                                  description)
 
                     from pychron.core.ui.gui import invoke_in_main_thread
-                    msg = 'Failed to {} valve name="{}", description="{}"'.format(action, name, description)
 
                     invoke_in_main_thread(self.warning_dialog, msg)
 
@@ -129,7 +132,7 @@ class ValvePyScript(PyScript):
     def _failed_actuation_hook(self):
         pass
 
-    def _finish_valve_change(self, action, result, name, description, retry=1):
+    def _finish_valve_change(self, action, result, name, description, retry=1, ntries=100):
         """
         :param action: 
         :param result: 
@@ -153,7 +156,7 @@ class ValvePyScript(PyScript):
             msg = 'Failed to {} valve Name="{}", Description="{}"'.format(action, name or '', description or '')
             self.console_info(msg)
             change_ok = False
-            if self.retry_actuation and retry < 100:
+            if self.retry_actuation and retry < ntries:
                 time.sleep(1)
                 msg = 'Retry actuation. i={} Action="{}", Name="{}", Description="{}"'.format(retry, action, name or '',
                                                                                               description or '')
@@ -163,7 +166,8 @@ class ValvePyScript(PyScript):
                                                  dict(mode='script', description=description))], protocol=EL_PROTOCOL)
 
                 if result is not None:
-                    change_ok = self._finish_valve_change(action, result, name, description, retry=retry + 1)
+                    change_ok = self._finish_valve_change(action, result, name, description,
+                                                          retry=retry + 1, ntries=ntries)
 
         return change_ok
 

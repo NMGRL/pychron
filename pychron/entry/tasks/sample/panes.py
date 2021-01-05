@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Int, Property
@@ -89,6 +90,16 @@ class DBSampleAdapter(TabularAdapter):
     lithology_text = Property
     location_text = Property
     storage_location_text = Property
+    lat_text = Property
+    lon_text = Property
+
+    def _get_lat_text(self):
+        if self.item.lat is not None:
+            return '{:0.5f}'.format(self.item.lat)
+
+    def _get_lon_text(self):
+        if self.item.lon is not None:
+            return '{:0.5f}'.format(self.item.lon)
 
     def _get_elevation_text(self):
         return self._get_value('elevation')

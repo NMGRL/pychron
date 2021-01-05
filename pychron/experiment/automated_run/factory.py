@@ -46,7 +46,7 @@ from pychron.experiment.utilities.frequency_edit_view import FrequencyModel
 from pychron.experiment.utilities.identifier import convert_special_name, ANALYSIS_MAPPING, NON_EXTRACTABLE, \
     make_special_identifier, make_standard_identifier, SPECIAL_KEYS
 from pychron.experiment.utilities.position_regex import SLICE_REGEX, PSLICE_REGEX, \
-    SSLICE_REGEX, TRANSECT_REGEX, POSITION_REGEX, XY_REGEX
+    SSLICE_REGEX, TRANSECT_REGEX, POSITION_REGEX, XY_REGEX, SCAN_REGEX
 from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceLoggable
@@ -54,7 +54,8 @@ from pychron.pychron_constants import NULL_STR, SCRIPT_KEYS, SCRIPT_NAMES, LINE_
     BLANK_UNKNOWN, BLANK_EXTRACTIONLINE, UNKNOWN, PAUSE, DEGAS, SIMPLE, NULL_EXTRACT_DEVICES, FUSIONS_CO2, \
     FUSIONS_DIODE, CLEANUP, PRECLEANUP, POSTCLEANUP, EXTRACT_VALUE, EXTRACT_UNITS, DURATION, WEIGHT, POSITION, PATTERN, \
     BEAM_DIAMETER, LIGHT_VALUE, COMMENT, DELAY_AFTER, EXTRACT_DEVICE, MATERIAL, PROJECT, SAMPLE, MASS_SPECTROMETER, \
-    COLLECTION_TIME_ZERO_OFFSET, USE_CDD_WARMING, SKIP, OVERLAP, REPOSITORY_IDENTIFIER, RAMP_DURATION
+    COLLECTION_TIME_ZERO_OFFSET, USE_CDD_WARMING, SKIP, OVERLAP, REPOSITORY_IDENTIFIER, RAMP_DURATION, CRYO_TEMP, \
+    TEMPLATE, USERNAME
 
 
 class AutomatedRunFactory(DVCAble, PersistenceLoggable):
@@ -92,6 +93,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     auto_save_needed = Event
 
     labnumbers = Property(depends_on='project, selected_level, _identifiers')
+    display_labnumbers = Property(depends_on='project, selected_level, _identifiers')
     _identifiers = List
 
     use_project_based_repository_identifier = Bool(True)
@@ -152,6 +154,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     cleanup = EKlass(Float)
     pre_cleanup = EKlass(Float)
     post_cleanup = EKlass(Float)
+    cryo_temperature = EKlass(Float)
     light_value = EKlass(Float)
     beam_diameter = Property(EKlass(String), depends_on='_beam_diameter')
     _beam_diameter = String
@@ -244,14 +247,15 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     pattributes = ('collection_time_zero_offset',
                    'selected_irradiation', 'selected_level',
                    CLEANUP, PRECLEANUP, POSTCLEANUP, EXTRACT_VALUE, EXTRACT_UNITS, DURATION, WEIGHT,
-                   'light_value',
-                   'beam_diameter',
-                   'ramp_duration',
-                   'overlap',
-                   'pattern',
-                   'position',
-                   'comment',
-                   'template',
+                   LIGHT_VALUE,
+                   BEAM_DIAMETER,
+                   RAMP_DURATION,
+                   CRYO_TEMP,
+                   OVERLAP,
+                   PATTERN,
+                   POSITION,
+                   COMMENT,
+                   TEMPLATE,
                    'use_simple_truncation', 'conditionals_path',
                    'use_project_based_repository_identifier', 'delay_after')
 
@@ -282,8 +286,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
         super(AutomatedRunFactory, self).__init__(*args, **kw)
 
-    def set_identifiers(self, v):
-        self._identifiers = v
+    # def set_identifiers(self, v):
+    #     self._identifiers = v
 
     def setup_files(self):
         self.load_templates()
@@ -386,7 +390,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             arvs, freq = self._new_runs(exp_queue, positions=positions)
 
         if auto_increment_id:
-            v = increment_value(self.labnumber)
+            v = increment_value(self.labnumber, increment=auto_increment_id)
             self.debug('auto increment labnumber: prev={}, new={}'.format(self.labnumber, v))
             self.labnumber = v
 
@@ -537,13 +541,14 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 CLEANUP,
                 PRECLEANUP,
                 POSTCLEANUP,
+                CRYO_TEMP,
                 DURATION,
                 LIGHT_VALUE,
                 PATTERN,
                 BEAM_DIAMETER,
                 POSITION,
                 COLLECTION_TIME_ZERO_OFFSET,
-                'use_cdd_warming',
+                USE_CDD_WARMING,
                 WEIGHT,
                 COMMENT,
                 DELAY_AFTER
@@ -567,13 +572,14 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 POSITION,
                 POSTCLEANUP,
                 PRECLEANUP,
+                CRYO_TEMP,
                 PROJECT,
-                'ramp_duration',
+                RAMP_DURATION,
                 'repository_identifier',
                 SAMPLE,
                 'skip',
-                'use_cdd_warming',
-                'username',
+                USE_CDD_WARMING,
+                USERNAME,
                 WEIGHT]
 
     def _set_run_values(self, arv, excludes=None):
@@ -723,8 +729,17 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         if script is None:
             script = self.extraction_script
 
+        mod = None
         if '##' in self.labnumber:
-            mod = script.get_parameter('modifier')
+            defaults = self._load_default_file()
+            if defaults:
+                ln = self.labnumber.split('-')[0]
+                if ln in defaults:
+                    grp = defaults[ln]
+                    mod = grp.get('modifier')
+
+            if mod is None:
+                mod = script.get_parameter('modifier')
             if mod is not None:
                 if isinstance(mod, int):
                     mod = '{:02d}'.format(mod)
@@ -792,7 +807,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     def _load_defaults(self, ln, attrs=None, overwrite=True):
         if attrs is None:
             attrs = (EXTRACT_VALUE, EXTRACT_UNITS, CLEANUP, PRECLEANUP,
-                     POSTCLEANUP, DURATION, BEAM_DIAMETER, LIGHT_VALUE)
+                     POSTCLEANUP, DURATION, BEAM_DIAMETER, LIGHT_VALUE, CRYO_TEMP)
 
         self.debug('loading defaults for {}. ed={} attrs={}'.format(ln, self.extract_device, attrs))
         defaults = self._load_default_file()
@@ -847,7 +862,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
         extract_device = self.extract_device.replace(' ', '')
 
-        is_extractable = labnumber_tag in ('u', 'bu', 'dg') and extract_device not in NULL_EXTRACT_DEVICES or \
+        is_extractable = labnumber_tag in ('u', 'bu', 'dg') and \
+                         extract_device not in NULL_EXTRACT_DEVICES and \
                          extract_device != 'ExternalPipette'
 
         # labnumber_tag = str(labnumber_tag).lower()
@@ -964,7 +980,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
                 ipp = self.irradiation_project_prefix
                 d['project'] = project_name
-
+                d['repository_identifier'] = ''
                 self.debug('trying to set repository based on project name={}'.format(project_name))
                 # if project_name == 'J-Curve':
                 #     irrad = ip.level.irradiation.name
@@ -1090,6 +1106,19 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
         return lns
 
+    @cached_property
+    def _get_display_labnumbers(self):
+        lns = {}
+        if self.selected_level and self.selected_level not in ('Level', LINE_STR):
+            db = self.get_database()
+            if db is not None and db.connect():
+                with db.session_ctx(use_parent_session=False):
+                    lns = db.get_level_identifiers(self.selected_irradiation, self.selected_level, with_summary=True)
+                if lns:
+                    lns = dict(lns)
+
+        return lns
+
     def _get_position(self):
         return self._position
 
@@ -1104,7 +1133,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             return ''
 
         for r, _, _, name in (SLICE_REGEX, SSLICE_REGEX, PSLICE_REGEX,
-                              TRANSECT_REGEX, POSITION_REGEX, XY_REGEX):
+                              TRANSECT_REGEX, POSITION_REGEX, XY_REGEX, SCAN_REGEX):
             if r.match(pos):
                 self.debug('matched {} to {}'.format(name, pos))
                 return pos
@@ -1305,8 +1334,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
         for idn, runs in groupby_key(self._selected_runs, 'identifier'):
 
-            with self.db.session_ctx():
-                ipos = self.db.get_identifier(idn)
+            with self.dvc.session_ctx():
+                ipos = self.dvc.get_identifier(idn)
 
                 if ipos:
                     level = ipos.level
@@ -1467,6 +1496,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     # ''')
     @on_trait_change(','.join((CLEANUP, COLLECTION_TIME_ZERO_OFFSET, COMMENT, DELAY_AFTER, DURATION, EXTRACT_VALUE,
                                EXTRACT_UNITS, LIGHT_VALUE, OVERLAP, PATTERN, PRECLEANUP, POSITION, POSTCLEANUP,
+                               CRYO_TEMP,
                                RAMP_DURATION, REPOSITORY_IDENTIFIER, SKIP, USE_CDD_WARMING, WEIGHT)))
     def _edit_handler(self, name, new):
         if name == PATTERN:

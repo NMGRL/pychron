@@ -172,6 +172,9 @@ class MainView(HasTraits):
               ExtractionValue(name='Post Cleanup',
                               value=an.post_cleanup_duration,
                               units='s'),
+              ExtractionValue(name='Cryo Temp.',
+                              value=an.cryo_temperature,
+                              units='K'),
               ExtractionValue(name='T_o',
                               value=an.collection_time_zero_offset,
                               units='s'),
@@ -491,8 +494,9 @@ class MainView(HasTraits):
             age = an.uage
             nage, sage = nominal_value(age), std_dev(age)
             try:
-                ss = u'Age={} {}{}({}%)'.format(floatfmt(nage), PLUSMINUS,
-                                                floatfmt(sage), format_percent_error(nage, sage))
+                ss = u'Age={} {}{}({}%) {}'.format(floatfmt(nage), PLUSMINUS,
+                                                   floatfmt(sage), format_percent_error(nage, sage),
+                                                   an.arar_constants.age_units)
                 self._set_summary_str(ss)
             except:
                 pass
@@ -524,16 +528,16 @@ class MainView(HasTraits):
     def _get_editors(self):
 
         ceditor = TabularEditor(adapter=self.computed_adapter,
-                                  editable=False,
-                                  refresh='refresh_needed')
+                                editable=False,
+                                refresh='refresh_needed')
 
         eeditor = TabularEditor(adapter=self.extraction_adapter,
-                                  editable=False,
-                                  refresh='refresh_needed')
+                                editable=False,
+                                refresh='refresh_needed')
 
         meditor = TabularEditor(adapter=self.measurement_adapter,
-                                  editable=False,
-                                  refresh='refresh_needed')
+                                editable=False,
+                                refresh='refresh_needed')
 
         return ceditor, eeditor, meditor
 

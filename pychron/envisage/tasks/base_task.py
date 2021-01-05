@@ -192,69 +192,11 @@ class BaseTask(Task, Loggable, PreferenceMixin):
             # self.debug('$$$$$$$$$$$$$ show pane {}'.format(p.id))
             invoke_in_main_thread(do_later, _show)
 
-    def _menu_bar_factory(self, menus=None):
-        if not menus:
-            menus = []
-
-        edit_menu = SMenu(GenericFindAction(),
-                          id='edit.menu', name='&Edit')
-
-        file_menu = SMenu(SGroup(id='Open'),
-                          SGroup(id='New'),
-                          SGroup(
-                              GenericSaveAsAction(),
-                              GenericSaveAction(),
-                              id='Save'),
-                          # SGroup(),
-                          id='file.menu', name='File')
-
-        tools_menu = SMenu(ShareSettingsAction(),
-                           ApplySettingsAction(),
-                           id='tools.menu', name='Tools')
-
-        window_menu = SMenu(WindowGroup(),
-                            Group(CloseAction(),
-                                  CloseOthersAction(),
-                                  id='Close'),
-                            OpenAdditionalWindow(),
-                            Group(MinimizeAction(),
-                                  ResetLayoutAction(),
-                                  PositionAction()),
-
-                            # SplitEditorAction(),
-                            id='window.menu',
-                            name='Window')
-        help_menu = SMenu(IssueAction(),
-                          NoteAction(),
-                          AboutAction(),
-                          DocumentationAction(),
-                          ChangeLogAction(),
-                          RestartAction(),
-
-                          # KeyBindingsAction(),
-                          # SwitchUserAction(),
-
-                          StartupTestsAction(),
-                          id='help.menu',
-                          name='Help')
-
-        grps = self._view_groups()
-        view_menu = SMenu(*grps, id='view.menu', name='&View')
-
-        mb = SMenuBar(file_menu,
-                      edit_menu,
-                      view_menu,
-                      tools_menu,
-                      window_menu,
-                      help_menu)
-        if menus:
-            for mi in reversed(menus):
-                mb.items.insert(4, mi)
-
-        return mb
-
     def _menu_bar_default(self):
-        return self._menu_bar_factory()
+        view_menu = SMenu(*self._view_groups(),
+                          id='view.menu', name='&View')
+        mb = SMenuBar(view_menu)
+        return mb
 
     def _view_groups(self):
         def groupfunc(task_factory):

@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traits.api import Str, List, Enum
 from traitsui.api import Item, VGroup, CheckListEditor
 
@@ -56,7 +57,7 @@ class UserEntry(BaseEntry):
         with db.session_ctx():
             dbuser = db.get_user(name)
             if dbuser:
-                self._edit_user(dbuser)
+                self._edit_user(db, dbuser)
             else:
                 self.user = name
                 self._add_item(db)
@@ -70,7 +71,7 @@ class UserEntry(BaseEntry):
         else:
             self.warning_dialog('{} already exists'.format(name))
 
-    def _edit_user(self, dbuser):
+    def _edit_user(self, db, dbuser):
         self.info('editing user "{}"'.format(dbuser.name))
 
         self.user = dbuser.name
@@ -89,7 +90,7 @@ class UserEntry(BaseEntry):
                 dbuser.category = make_categories(self.categories, self.available_categories)
                 dbuser.affiliation = self.affiliation
             else:
-                self._add_item(self.db)
+                self._add_item(db)
 
     def _add_user_db(self, db, name):
         with db.session_ctx():

@@ -16,8 +16,11 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from pychron.experiment.utilities.human_error_checker import HumanErrorChecker
 from pychron.experiment.utilities.identifier import get_analysis_type
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -46,8 +49,7 @@ class UVHumanErrorChecker(HumanErrorChecker):
                 if not run.extract_value:
                     return 'position but no extract value'
 
-        if run.extract_value or run.cleanup or run.duration or run.post_cleanup or run.pre_cleanup:
-            self._extraction_line_required = True
+        self._set_extraction_line_required(run)
 
     def _check_attr(self, run, attr, inform):
         if not getattr(run, attr):

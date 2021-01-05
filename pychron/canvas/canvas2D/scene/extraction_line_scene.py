@@ -160,7 +160,6 @@ class ExtractionLineScene(Scene):
             if cobj is not None:
                 c = cobj.default_color
             else:
-                print('asdf', c)
                 c = colorify(c)
 
         else:

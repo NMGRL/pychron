@@ -28,7 +28,7 @@ from pychron.pychron_constants import EXTRACTION_COLOR, MEASUREMENT_COLOR, SUCCE
     SKIP_COLOR, NOT_EXECUTABLE_COLOR, CANCELED_COLOR, TRUNCATED_COLOR, \
     FAILED_COLOR, END_AFTER_COLOR, BLANK_UNKNOWN, DEGAS, UNKNOWN, PRECLEANUP, WEIGHT, POSTCLEANUP, CLEANUP, DURATION, \
     BEAM_DIAMETER, EXTRACT_VALUE, RAMP_DURATION, EXTRACT_UNITS, POSITION, REPOSITORY_IDENTIFIER, MATERIAL, PROJECT, \
-    SAMPLE, OVERLAP, PATTERN, USE_CDD_WARMING, DELAY_AFTER, COMMENT
+    SAMPLE, OVERLAP, PATTERN, USE_CDD_WARMING, DELAY_AFTER, COMMENT, CRYO_TEMP
 
 # ============= local library imports  ==========================
 COLORS = {'success': SUCCESS_COLOR,
@@ -65,6 +65,7 @@ blocks = MenuManager(Action(name='Make Block', action='make_block'),
                      name='Blocks')
 
 selects = MenuManager(Action(name='Select Unknowns', action='select_unknowns'),
+                      Action(name='Select Special', action='select_special'),
                       Action(name='Select Same Identifier', action='select_same'),
                       Action(name='Select Same Attributes...', action='select_same_attr'),
                       name='Select')
@@ -104,6 +105,7 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
         ('Cleanup (s)', CLEANUP),
         ('Pre Cleanup (s)', PRECLEANUP),
         ('Post Cleanup (s)', POSTCLEANUP),
+        ('Cryo Temp. (K)', CRYO_TEMP),
         ('Overlap (s)', OVERLAP),
         ('Beam (mm)', BEAM_DIAMETER),
         ('Pattern', PATTERN),
@@ -143,6 +145,7 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     cleanup_width = Int(70)
     pre_cleanup_width = Int(70)
     post_cleanup_width = Int(70)
+    cryo_temperature_width = Int(70)
 
     pattern_width = Int(80)
     beam_diameter_width = Int(65)
@@ -170,6 +173,7 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     cleanup_text = Property
     pre_cleanup_text = Property
     post_cleanup_text = Property
+    cryo_temperature_text = Property
 
     aliquot_text = Property
     overlap_text = Property
@@ -310,6 +314,9 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
 
     def _get_post_cleanup_text(self):
         return self._get_number(POSTCLEANUP)
+
+    def _get_cyro_tempurature_text(self):
+        return self._get_number(CRYO_TEMP)
 
     def _get_weight_text(self):
         return self._get_number(WEIGHT)

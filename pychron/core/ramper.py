@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import math
 import time
 
@@ -29,12 +30,19 @@ def calculate_steps(duration, period=1):
 
 
 class StepRamper(object):
-    def ramp(self, func, start, end, step, period=1):
+    def ramp(self, func, start, end, step, period=1, tolerance=None):
+        if tolerance is None:
+            tolerance = abs(step)
+
+        if start > end:
+            if step > 0:
+                step = -step
+
         current = start
         canceled = False
         while 1:
             ct = time.time()
-            if current >= end:
+            if abs(current - end) < tolerance:
                 break
 
             if not func(current):

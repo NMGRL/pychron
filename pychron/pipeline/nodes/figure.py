@@ -225,6 +225,17 @@ class FluxVisualizationNode(FigureNode):
             editor.name = 'Flux Visualization: {}{}'.format(state.irradiation, state.level)
 
 
+# class MapNode(SortableNode):
+#     configurable = False
+#     name = 'Map'
+#
+#     def run(self, state):
+#         editor = MapFigureEditor()
+#         editor.set_items(state.unknowns)
+#         editor.load()
+#         state.editors.append(editor)
+
+
 class IdeogramNode(FigureNode):
     name = 'Ideogram'
     editor_klass = 'pychron.pipeline.plot.editors.ideogram_editor,IdeogramEditor'
@@ -261,6 +272,7 @@ class SeriesNode(FigureNode):
                 names.extend(['{}ic'.format(ki) for ki in iso_keys])
 
                 names.extend(ratio(iso_keys))
+                names.extend(ratio(iso_keys, invert=True))
 
                 if unk.analysis_type in (UNKNOWN, COCKTAIL):
                     names.append(AGE)

@@ -372,8 +372,6 @@ class Analysis(ArArAge, IdeogramPlotable):
     grainsize = ''
     project = ''
     principal_investigator = ''
-    latitude = 0
-    longitude = 0
     elevation = 0
     igsn = ''
     lithology = ''
@@ -384,6 +382,9 @@ class Analysis(ArArAge, IdeogramPlotable):
     longitude = 0
     reference = ''
     rlocation = ''
+    mask_position = ''
+    mask_name = ''
+    reprate = ''
 
     # collection
     experiment_type = AR_AR
@@ -415,6 +416,7 @@ class Analysis(ArArAge, IdeogramPlotable):
     cleanup_duration = 0
     pre_cleanup_duration = 0
     post_cleanup_duration = 0
+    cryo_temperature = 0
     extract_duration = 0
     extract_device = ''
     position = ''

@@ -48,6 +48,7 @@ PACKAGE_DICT = dict(
     PipelinePlugin='pychron.pipeline.tasks.plugin',
     SparrowPlugin='pychron.sparrow.tasks.plugin',
 
+    GISPlugin='pychron.gis.tasks.plugin',
     ClassifierPlugin='pychron.classifier.tasks.plugin',
     MDDPlugin='pychron.mdd.tasks.plugin',
     AutoPlugin='pychron.pipeline.tasks.auto_plugin',
@@ -146,10 +147,13 @@ def get_klass(package, name):
     except ImportError as e:
         import traceback
 
-        traceback.print_exc()
         klass = None
-        logger.warning('****** {} could not be imported {} ******'.format(name, e),
+        msg='****** {} could not be imported {} ******'.format(name, e)
+        logger.warning(msg,
                        extra={'threadName_': 'Launcher'})
+        warning(None, msg)
+        logger.debug(traceback.format_exc())
+
     return klass
 
 
