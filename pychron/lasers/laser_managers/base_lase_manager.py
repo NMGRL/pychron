@@ -404,4 +404,13 @@ class BaseLaserManager(Manager):
     def _pattern_executor_init_hook(self, pm):
         pass
 
+    def _stage_manager_default(self):
+        """
+        """
+        args = dict(name='stage',
+                    configuration_name='stage',
+                    configuration_dir_name=self.configuration_dir_name,
+                    parent=self)
+
+        return self._stage_manager_factory(args)
 # ============= EOF =============================================

@@ -217,13 +217,6 @@ class ChromiumLaserManager(EthernetLaserManager):
             self.update_position()
         return r
 
-    def _stage_manager_default(self):
-        args = dict(name='stage',
-                    configuration_name='stage',
-                    configuration_dir_name=self.configuration_dir_name,
-                    parent=self)
-        return self._stage_manager_factory(args)
-
     def _stage_manager_factory(self, args):
         from pychron.lasers.stage_managers.chromium_stage_manager import ChromiumStageManager
 

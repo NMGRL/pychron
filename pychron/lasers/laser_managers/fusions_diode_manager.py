@@ -213,13 +213,6 @@ class FusionsDiodeManager(FusionsLaserManager):
                                    configuration_dir_name=self.configuration_dir_name)
         return b
 
-    def _stage_manager_default(self):
-        args = dict(name='stage',
-                    configuration_name='stage',
-                    configuration_dir_name=self.configuration_dir_name,
-                    parent=self)
-        return self._stage_manager_factory(args)
-
     def _temperature_controller_default(self):
         w = WatlowEZZone(name='temperature_controller',
                          use_calibrated_temperature=self.use_calibrated_temperature,
