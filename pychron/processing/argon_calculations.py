@@ -409,7 +409,8 @@ def calculate_f(isotopes, decay_time, interferences=None, arar_constants=None, f
                                                          decay_time,
                                                          pr,
                                                          arar_constants)
-
+        cosmo38 = None
+        cosmo36 = None
         if arar_constants.use_cosmogenic_correction:
             # calculate cosmogenic components
             cosmo36, cosmo38, atm36, atm38 = calculate_cosmogenic_components(atm36, atm38, arar_constants)
