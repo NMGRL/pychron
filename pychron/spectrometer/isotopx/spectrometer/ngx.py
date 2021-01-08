@@ -22,7 +22,7 @@ from datetime import datetime
 from traits.api import List
 
 from pychron.hardware.isotopx_spectrometer_controller import NGXController
-from pychron.pychron_constants import ISOTOPX_DEFAULT_INTEGRATION_TIME, ISOTOPX_INTEGRATION_TIMES, NULL_STR
+from pychron.pychron_constants import ISOTOPX_DEFAULT_INTEGRATION_TIME, ISOTOPX_INTEGRATION_TIMES, NULL_STR, ATONA
 from pychron.spectrometer.base_spectrometer import BaseSpectrometer
 from pychron.spectrometer.isotopx import SOURCE_CONTROL_PARAMETERS, IsotopxMixin
 from pychron.spectrometer.isotopx.detector.ngx import NGXDetector
@@ -47,6 +47,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
     _read_enabled = True
     use_deflection_correction = False
     use_hv_correction = False
+    _triggered = True
 
     def _microcontroller_default(self):
         service = 'pychron.hardware.isotopx_spectrometer_controller.NGXController'
@@ -108,9 +109,10 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         # while self.microcontroller.lock.locked():
         #    time.sleep(0.25)
 
-        self.ask('StopAcq', verbose=verbose)
-        # return self.ask('StartAcq 1,{}'.format(self.rcs_id), verbose=verbose)
-        return self.ask('StartAcq {},{}'.format(int(self.integration_time), self.rcs_id))
+        if not self._triggered:
+            self.ask('StopAcq', verbose=verbose)
+            # return self.ask('StartAcq 1,{}'.format(self.rcs_id), verbose=verbose)
+            return self.ask('StartAcq {},{}'.format(int(self.integration_time), self.rcs_id))
 
     def readline(self, verbose=False):
         if verbose:
@@ -161,7 +163,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
 
         # self.microcontroller.lock.acquire()
         # self.debug(f'acquired mcir lock {self.microcontroller.lock}')
-        target = f'#EVENT:{target},{self.rcs_id}'
+        target = '#EVENT:{},{}'.format(target, self.rcs_id)
         if resp is not None:
             keys = self.detector_names[::-1]
             while 1:
@@ -170,8 +172,9 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                     break
 
                 if verbose:
-                    self.debug(f'raw: {line}')
-                if line and line.startswith(target):
+                    self.debug('raw: {}'.format(line))
+
+                if line:
                     args = line[:-1].split(',')
                     ct = datetime.strptime(args[4], '%H:%M:%S.%f')
 
@@ -181,8 +184,17 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                     collection_time.replace(hour=ct.hour, minute=ct.minute, second=ct.second,
                                             microsecond=ct.microsecond)
                     signals = [float(i) for i in args[5:]]
-                    if verbose:
-                        self.debug(f'line: {line[:15]}')
+
+                    if not line.startswith(target):
+                        nsignals, keys = [], []
+                        for i, di in enumerate(self.detectors[::-1]):
+                            if di.kind == ATONA:
+                                nsignals.append(signals[i])
+                                keys.append(di.name)
+                        signals = nsignals
+                    else:
+                        self._triggered = False
+
                     break
 
         # self.microcontroller.lock.release()
