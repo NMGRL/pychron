@@ -13,5 +13,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from traits.api import Str, CInt, Enum
+
+from pychron.hardware.motion_controller import MotionController
+from zaber_motion import Units
+from pychron.hardware.axis import Axis
+
+import os
+
+
+class ZaberAxis(Axis):
+    device_id = None
+    def load(self, path):
+        if not os.path.isfile(path):
+            path = os.path.join(path, '{}axis.cfg'.format(self.name))
+
+        config = self.get_configuration(path)
+        self.set_attribute(config, 'device_id', 'General', 'device_id', cast='int')
 
 # ============= EOF =============================================

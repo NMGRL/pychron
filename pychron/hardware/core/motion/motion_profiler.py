@@ -57,7 +57,7 @@ class MotionProfiler(ConfigLoadable):
             config = self.configparser_factory()
             config.add_section('General')
             for attr in attrs:
-                config.set('General', attr, getattr(self, attr))
+                config.set('General', attr, str(getattr(self, attr)))
             self.write_configuration(config)
 
     def check_motion(self, displacement, obj, force=False):

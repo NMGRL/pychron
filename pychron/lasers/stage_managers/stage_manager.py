@@ -975,8 +975,10 @@ class StageManager(BaseStageManager):
             factory = NewportMotionController
         elif self.stage_controller_klass == 'Aerotech':
             from pychron.hardware.aerotech.aerotech_motion_controller import AerotechMotionController
-
             factory = AerotechMotionController
+        elif self.stage_controller_klass == 'Zaber':
+            from pychron.hardware.zaber.zaber_motion_controller import ZaberMotionController
+            factory = ZaberMotionController
 
         m = factory(name='{}controller'.format(self.name),
                     configuration_name='stage_controller',

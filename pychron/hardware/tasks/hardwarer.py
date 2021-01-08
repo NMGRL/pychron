@@ -120,27 +120,28 @@ class DeviceConfigurer(Loggable):
 
         section = 'Communications'
         if cfg.has_section(section):
-            kind = cfg.get(section, 'type')
-            klass = CKLASS_DICT.get(kind)
-            if klass:
-                self.communication_grp = klass()
+            if cfg.has_option(section, 'type'):
+                kind = cfg.get(section, 'type')
+                klass = CKLASS_DICT.get(kind)
+                if klass:
+                    self.communication_grp = klass()
 
-                def func(option, cast=None, default=None, **kw):
-                    f = getattr(cfg, 'get{}'.format(cast if cast else ''))
-                    try:
-                        v = f(section, option, **kw)
-                    except six.moves.configparser.NoOptionError:
-                        v = default
-                        if v is None:
-                            if cast == 'boolean':
-                                v = False
-                            elif cast in ('float', 'int'):
-                                v = 0
-                    return v
+                    def func(option, cast=None, default=None, **kw):
+                        f = getattr(cfg, 'get{}'.format(cast if cast else ''))
+                        try:
+                            v = f(section, option, **kw)
+                        except six.moves.configparser.NoOptionError:
+                            v = default
+                            if v is None:
+                                if cast == 'boolean':
+                                    v = False
+                                elif cast in ('float', 'int'):
+                                    v = 0
+                        return v
 
-                self.communication_grp.load_from_config(func)
-                self.communication_grp.config_obj = cfg
-                self.comms_visible = True
+                    self.communication_grp.load_from_config(func)
+                    self.communication_grp.config_obj = cfg
+                    self.comms_visible = True
         else:
             self.comms_visible = False
             self.communication_grp = CommunicationGroup()

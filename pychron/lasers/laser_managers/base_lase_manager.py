@@ -41,6 +41,7 @@ class BaseLaserManager(Manager):
     enabled = Bool(False)
 
     stage_manager = Instance('pychron.lasers.stage_managers.stage_manager.StageManager')
+    stage_controller_klass = 'Newport'
 
     requested_power = Any
     status_text = Property(depends_on='_requested_power, enabled')
@@ -410,6 +411,7 @@ class BaseLaserManager(Manager):
         args = dict(name='stage',
                     configuration_name='stage',
                     configuration_dir_name=self.configuration_dir_name,
+                    stage_controller_klass = self.stage_controller_klass,
                     parent=self)
 
         return self._stage_manager_factory(args)

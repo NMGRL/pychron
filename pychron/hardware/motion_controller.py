@@ -187,6 +187,7 @@ class MotionController(CoreDevice):
                                     )
 
             self.axes[a] = na
+            self.debug('asdfasdfsafsadf {}'.format(self.axes))
 
     def get_current_xy(self):
         x = self.get_current_position('x')

@@ -21,5 +21,7 @@ class OsTechLaserManager(LaserManager):
 
 
 class OsTechDiodeManager(OsTechLaserManager):
-    pass
+    stage_manager_id = 'ostech.diode'
+    configuration_dir_name = 'ostech_diode'
+    stage_controller_klass = 'Zaber'
 # ============= EOF =============================================

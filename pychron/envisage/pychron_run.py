@@ -27,6 +27,7 @@ from pychron.envisage.tasks.base_plugin import BasePlugin
 from pychron.envisage.tasks.tasks_plugin import PychronTasksPlugin, myTasksPlugin
 from pychron.logger.tasks.logger_plugin import LoggerPlugin
 from pychron.user.tasks.plugin import UsersPlugin
+from pychron.pychron_constants import LASER_PLUGINS
 
 logger = logging.getLogger()
 
@@ -196,7 +197,7 @@ def get_user_plugins():
     core_added = False
     for p in ps:
         # if laser plugin add CoreLaserPlugin
-        if p in ('FusionsCO2', 'FusionsDiode', 'ChromiumCO2', 'AblationCO2'):
+        if p in LASER_PLUGINS:
 
             plugint = ip.get_plugin(p, category='hardware')
             mode = ip.get_parameter(plugint, 'mode')
