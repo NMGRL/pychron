@@ -959,7 +959,11 @@ class DVC(Loggable):
 
             r = Repo(repository_path(name))
             if branch in [b.name for b in r.branches]:
-                lc = r.commit(branch).hexsha
+                try:
+                    lc = r.commit(branch).hexsha
+                except BaseException as e:
+                    self.warning('skipping {}. {}'.format(name, e))
+                    return
 
                 for gi in gs:
                     outdated, sha = gi.up_to_date(self.organization, name, lc, branch)
@@ -1315,6 +1319,21 @@ class DVC(Loggable):
         for gi in gs:
             if gi.remote_exists(self.organization, name):
                 return True
+
+    def add_readme(self, identifier):
+        self.debug('adding readme to repository identifier={}'.format(identifier))
+        root = repository_path(identifier)
+        if os.path.isdir(root):
+            p = os.path.join(root, 'README.md')
+            if not os.path.isfile(p):
+                with open(p, 'w') as wfile:
+                    wfile.write('{}\n###############'.format(identifier))
+            repo = self._get_repository(identifier, as_current=False)
+            repo.add(p)
+            repo.commit('initial commit')
+
+        else:
+            self.critical('Repository does not exist {}. {}'.format(identifier, root))
 
     def add_repository(self, identifier, principal_investigator, inform=True):
         self.debug('trying to add repository identifier={}, pi={}'.format(identifier, principal_investigator))
