@@ -73,14 +73,14 @@ class BasePeakCenter(HasTraits):
     use_dac_offset = False
     dac_offset = 0
     calculate_all_peaks = False
+    reference_plot_kind = Enum('line_scatter', 'line', 'scatter')
+    additional_plot_kind = Enum('line_scatter', 'line', 'scatter')
 
     canceled = False
     show_label = False
     result = None
     directions = None
     use_extend = False
-
-    _markup_idx = 1
 
     results = List
 
@@ -179,17 +179,17 @@ class BasePeakCenter(HasTraits):
         # this is assuming the current intensity is on peak.
         # but this is not always the case.
         # jump to center dac position to get on peak then jump to start
-        spec.magnet.set_dac((end-start)/2.0+start)
-        time.sleep(spec.integration_time*2)
+        spec.magnet.set_dac((end - start) / 2.0 + start)
+        time.sleep(spec.integration_time * 2)
         cur_intensity = get_reference_intensity()
 
         # move to start position
         self.info('Moving to starting dac {}'.format(start))
         spec.magnet.set_dac(start)
-        time.sleep(spec.integration_time*2)
+        time.sleep(spec.integration_time * 2)
 
         # tol = min(0, cur_intensity * (1 - self.percent / 100.))
-        tol = cur_intensity * (1 - self.percent / 100.)/2.
+        tol = cur_intensity * (1 - self.percent / 100.) / 2.
         # print('asfasdf', cur_intensity, 1-self.percent/100., tol)
         timeout = 1 if spec.simulation else 10
         self.info('Wait until signal near baseline. tol= {}. timeout= {}'.format(tol, timeout))
@@ -209,8 +209,8 @@ class BasePeakCenter(HasTraits):
 
         center, smart_shift, success = None, False, False
         self.debug('pre sweep, dataspace={}'.format(self.dataspace))
-        
-        #ok = self._do_sweep(start, end, width, directions=self.directions, map_mass=self.dataspace == 'mass')
+
+        # ok = self._do_sweep(start, end, width, directions=self.directions, map_mass=self.dataspace == 'mass')
         ok = self._do_sweep(start, end, width, directions=self.directions, map_mass=False)
         self.debug('result of _do_sweep={}'.format(ok))
 
@@ -347,12 +347,23 @@ class BasePeakCenter(HasTraits):
         graph.set_data(ys, series=s1, axis=1)
 
         if self.use_interpolation:
-            for i, det in enumerate(self.active_detectors):
-                xs = graph.get_data(series=i)
-                ys = graph.get_data(series=i, axis=1)
+            # for dets, line_width in ((self.reference_detector, 2), (self.additional_detectors, 1))
+
+            # for i, det in enumerate(self.active_detectors):
+
+            def func(idx, line_width):
+                xs = graph.get_data(series=idx)
+                ys = graph.get_data(series=idx, axis=1)
 
                 x, y = self._interpolate(xs, ys)
-                graph.new_series(x, y, line_width=1, color=colornames[i])
+                graph.new_series(x, y, line_width=line_width, color=colornames[idx])
+
+            # add interpolation in for ref detector
+            func(0, 2)
+
+            # add interpolation lines for additional detectors
+            for i, _ in enumerate(self.additional_detectors):
+                func(i + 1, 1)
 
         graph.set_data([mx], series=s1 + 1)
         graph.set_data([my], series=s1 + 1, axis=1)
@@ -426,25 +437,23 @@ class BasePeakCenter(HasTraits):
                           container_dict=dict(padding=5, bgcolor='lightgray'))
 
         graph.new_plot(padding=[50, 5, 5, 50],
-                       xtitle='DAC (V)' if self.dataspace=='dac' else 'Mass (AMU)',
-                       ytitle='Intensity (fA)',
+                       xtitle='DAC (V)' if self.dataspace == 'dac' else 'Mass (AMU)',
+                       ytitle='Intensity',
                        zoom=False,
                        show_legend='ul',
                        legend_kw=dict(font='modern 8', line_spacing=1))
 
-        kind = 'line'
-        if self.use_interpolation:
-            kind = 'scatter'
+        # kind = 'line'
+        # if self.use_interpolation:
+        #     kind = 'scatter'
 
-        self._series_factory(graph, kind=kind)
+        self._series_factory(graph, kind=self.reference_plot_kind or 'line_scatter')
 
         graph.set_series_label('*{}'.format(self.reference_detector.name))
-        self._markup_idx = 1
         spec = self.spectrometer
         for di in self.additional_detectors:
             det = spec.get_detector(di)
-            c = det.color
-            self._series_factory(graph, line_color=c, kind='scatter')
+            self._series_factory(graph, line_color=det.color, kind=self.additional_plot_kind or 'line_scatter')
             graph.set_series_label(di)
 
         if self.show_label:
