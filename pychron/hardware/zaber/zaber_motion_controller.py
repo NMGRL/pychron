@@ -16,15 +16,17 @@
 from traits.api import Str, CInt, Enum
 
 from zaber_motion import Library
+
 Library.enable_device_db_store()
 
 from pychron.hardware.motion_controller import MotionController
 from pychron.hardware.zaber.axis import ZaberAxis
 from zaber_motion import Units
 
+
 class AsciiWrapper:
     def __init__(self, devices):
-        self._device=devices[0]
+        self._device = devices[0]
 
     def get_axis(self, a):
         return self._device.get_axis(a)
@@ -72,7 +74,7 @@ class ZaberMotionController(MotionController):
 
     def open(self, *args, **kw):
         self.debug('scanning port {}'.format(self.port))
-        if self.protocol=='ASCII':
+        if self.protocol == 'ASCII':
             from zaber_motion.ascii import Connection
         else:
             from zaber_motion.binary import Connection

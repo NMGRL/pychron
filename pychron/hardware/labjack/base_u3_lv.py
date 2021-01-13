@@ -88,9 +88,9 @@ class BaseU3LV:
         if pin is not None:
             return self._device.getDIOState(pin)
 
-    def read_dac_channel(self, ch):
-        v = self._device.getFIOState(ch)
-        return v
+    # def read_dac_channel(self, ch):
+    #     v = self._device.getFIOState(ch)
+    #     return v
 
     def read_temperature(self):
         v = self._device.getTemperature()
@@ -99,6 +99,15 @@ class BaseU3LV:
     def close(self):
         self._device.reset(True)
         self._device.close()
+
+    def read_adc_channel(self, ch):
+        if not isinstance(ch, int):
+            ch = self._get_pin(ch)
+        return self._device.getAIN(ch)
+
+    def set_dac_channel(self, dac_id, v):
+        v = self._device.voltageToDACBits(v, dacNumber=dac_id, is16Bits=False)
+        self._device.getFeedback(u3.DAC0_8(v))
 
     # private
     def _get_pin(self, ch):
