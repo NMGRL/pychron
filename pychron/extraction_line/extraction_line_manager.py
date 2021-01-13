@@ -59,6 +59,7 @@ class ExtractionLineManager(Manager, Consoleable):
     cryo_manager = Any
     multiplexer_manager = Any
     manometer_manager = Any
+    pump_manager = Any
 
     network = Instance(ExtractionLineGraph)
     readback_items = List
@@ -730,23 +731,21 @@ class ExtractionLineManager(Manager, Consoleable):
         else:
             package = 'pychron.managers.{}'.format(manager)
 
-        if manager in ('switch_manager', 'gauge_manager', 'multiplexer_manager', 'cryo_manager', 'manometer_manager'):
-            if manager == 'switch_manager':
-                man = self._switch_manager_factory()
-                self.switch_manager = man
-                return man
-            else:
-                return getattr(self, manager)
+        if manager in ('switch_manager', 'gauge_manager', 'multiplexer_manager',
+                       'cryo_manager', 'manometer_manager', 'pump_manager'):
+
+            factory = getattr(self, '_{}_factory'.format(manager))
+            man = factory()
+            setattr(self, manager, man)
+            return man
         else:
             class_factory = self.get_manager_factory(package, klass, warn=False)
             if class_factory is None:
                 package = 'pychron.extraction_line.{}'.format(manager)
                 class_factory = self.get_manager_factory(package, klass)
-
             if class_factory:
                 m = class_factory(**params)
                 self.add_trait(manager, m)
-
                 return m
             else:
                 self.debug('could not create manager {}, {},{},{}'.format(klass, manager, params, kw))
@@ -772,7 +771,7 @@ class ExtractionLineManager(Manager, Consoleable):
         if self.use_hardware_update:
             do_after(1000, self._update)
 
-    @on_trait_change('switch_manager:pipette_trackers:counts')
+    # @on_trait_change('switch_manager:pipette_trackers:counts')
     def _update_pipette_counts(self, obj, name, old, new):
         self._set_pipette_counts(obj.name, new)
 
@@ -835,19 +834,22 @@ class ExtractionLineManager(Manager, Consoleable):
             self.console_display.add_text(msg, color=color)
 
     # ===============================================================================
-    # defaults
+    # factories
     # ===============================================================================
-    def _manometer_manager_default(self):
+    def _pump_manager_factory(self):
+        from pychron.extraction_line.pump_manager import PumpManager
+        return PumpManager(application=self.application)
+
+    def _manometer_manager_factory(self):
         from pychron.extraction_line.manometer_manager import ManometerManager
         return ManometerManager(application=self.application)
     
-    def _cryo_manager_default(self):
+    def _cryo_manager_factory(self):
         from pychron.extraction_line.cryo_manager import CryoManager
         return CryoManager(application=self.application)
 
-    def _gauge_manager_default(self):
+    def _gauge_manager_factory(self):
         from pychron.extraction_line.gauge_manager import GaugeManager
-
         return GaugeManager(application=self.application)
 
     def _switch_manager_factory(self):
@@ -858,7 +860,7 @@ class ExtractionLineManager(Manager, Consoleable):
         vm.on_trait_change(self._handle_owned_state, 'refresh_owned_state')
         vm.on_trait_change(self._handle_refresh_canvas, 'refresh_canvas_needed')
         vm.on_trait_change(self._handle_console_message, 'console_message')
-
+        vm.on_trait_change(self._update_pipette_counts, 'pipette_trackers:counts')
         bind_preference(vm, 'valves_path', 'pychron.extraction_line.valves_path')
 
         return vm

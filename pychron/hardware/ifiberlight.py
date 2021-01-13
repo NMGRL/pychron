@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2015 Jake Ross
+# Copyright 2021 ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,24 +13,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
-# ============= enthought library imports =======================
 from traits.api import Interface
 
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-class IChiller(Interface):
-    def get_faults(self):
+class IFiberLight(Interface):
+    def power_on(self):
         pass
 
-    def get_coolant_out_temperature(self):
+    def power_off(self):
         pass
 
-    def get_setpoint(self):
+    def set_intensity(self, v):
         pass
 
-    def set_setpoint(self, v):
+    def read_intensity(self):
         pass
 
+    def read_state(self):
+        pass
 # ============= EOF =============================================

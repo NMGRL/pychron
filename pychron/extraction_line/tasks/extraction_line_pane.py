@@ -82,6 +82,19 @@ class GaugePane(TraitsDockPane):
         return v
 
 
+class PumpPane(TraitsDockPane):
+    name = 'Pumps'
+    id = 'pychron.extraction_line.pumps'
+
+    def traits_view(self):
+        v = View(UItem('pump_manager',
+                       editor=InstanceEditor(),
+                       style='custom',
+                       height=125,
+                       defined_when='pump_manager'))
+        return v
+
+
 class ExplanationPane(TraitsDockPane):
     name = 'Explanation'
     id = 'pychron.extraction_line.explanation'
