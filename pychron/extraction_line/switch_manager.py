@@ -141,7 +141,7 @@ class SwitchManager(Manager):
             if dev is not None:
                 self.actuators.append(dev)
 
-            return dev
+        return dev
 
     def finish_loading(self, update=False):
         """

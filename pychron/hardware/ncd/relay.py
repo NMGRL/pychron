@@ -80,7 +80,9 @@ class ProXR(NCDDevice):
             local_idx = STATE_MAP[name]
             cmdstr = self._make_cmdstr(254, local_idx)
             resp = self.ask(cmdstr, nchars=1)  # returns 1 or 0
-            return bool(int(resp))
+            resp = ord(resp)
+            self.debug('get changell state ={} {}'.format(bool(resp), resp))
+            return bool(resp)
 
     def get_channel_states(self, *args, **kw):
         cmdstr = self._make_cmdstr(254, 24)
@@ -109,11 +111,11 @@ class ProXR(NCDDevice):
         elif isinstance(channel, int):
             idx = channel
         else:
-            idx = channel.name
-        return idx
+            idx = channel.address
+        return int(idx)
 
     def _get_bank_idx(self, channel):
-        idx = self._get_bank_idx(channel)
+        idx = self._get_channel_idx(channel)
         bank = idx / 8 + 1
         return idx, bank
 
