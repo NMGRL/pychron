@@ -47,13 +47,17 @@ class Spectrum(BaseArArFigure):
         ag = self.analysis_group
 
         for pid, (plotobj, po) in enumerate(zip(graph.plots, plots)):
-            plot = getattr(self, '_plot_{}'.format(po.plot_name))(po, plotobj, pid)
+            plot_name = po.plot_name
+            if not plot_name:
+                continue
+
+            plot = getattr(self, '_plot_{}'.format(plot_name))(po, plotobj, pid)
 
             if pid == 0:
                 # self._set_ml_title('Cumulative %<sup>39</sup>Ar<sub>K</sub>', 0, 'x')
                 graph.set_x_title('Cumulative %<sup>39</sup>Ar<sub>K</sub>', plotid=0)
 
-            if legend and po.plot_name == 'age_spectrum':
+            if legend and plot_name == 'age_spectrum':
                 ident = ag.identifier
                 sample = ag.sample
 

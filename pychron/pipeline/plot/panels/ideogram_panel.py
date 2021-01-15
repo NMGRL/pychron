@@ -37,27 +37,27 @@ class IdeogramPanel(FigurePanel):
         fi = self.figures[0]
         plots = list(fi.options.get_plotable_aux_plots())
         tag = plots[idx].plot_name
+        if tag:
+            n = len(self.figures)
 
-        n = len(self.figures)
+            r, c = filled_grid(n)
+            g = RegressionGraph(container_dict={'kind': 'g', 'shape': (r, c)}, window_title='Correlation')
+            for i, fi in enumerate(self.figures):
+                gi = fi.analysis_group
+                p = g.new_plot(xtitle='age', ytitle=ytitle, title='{}({})'.format(gi.sample, gi.identifier))
 
-        r, c = filled_grid(n)
-        g = RegressionGraph(container_dict={'kind': 'g', 'shape': (r, c)}, window_title='Correlation')
-        for i, fi in enumerate(self.figures):
-            gi = fi.analysis_group
-            p = g.new_plot(xtitle='age', ytitle=ytitle, title='{}({})'.format(gi.sample, gi.identifier))
+                xs = [nominal_value(a.uage) for a in gi.clean_analyses()]
+                ys = [nominal_value(a.get_value(tag)) for a in gi.clean_analyses()]
 
-            xs = [nominal_value(a.uage) for a in gi.clean_analyses()]
-            ys = [nominal_value(a.get_value(tag)) for a in gi.clean_analyses()]
+                g.new_series(xs, ys, fit='linear', use_error_envelope=False, plotid=i)
+                g.add_correlation_statistics(plotid=i)
 
-            g.new_series(xs, ys, fit='linear', use_error_envelope=False, plotid=i)
-            g.add_correlation_statistics(plotid=i)
+                g.set_x_limits(pad='0.1', plotid=i)
+                g.set_y_limits(pad='0.1', plotid=i)
 
-            g.set_x_limits(pad='0.1', plotid=i)
-            g.set_y_limits(pad='0.1', plotid=i)
+            g.refresh()
 
-        g.refresh()
-
-        open_view(g)
+            open_view(g)
 
     def _handle_figure_event(self, evt):
         kind, args = evt

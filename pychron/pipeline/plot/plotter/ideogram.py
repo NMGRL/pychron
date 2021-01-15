@@ -179,8 +179,12 @@ class Ideogram(BaseArArFigure):
             if self.options.reverse_x_axis:
                 plotobj.default_origin = 'bottom right'
 
+            plot_name = po.plot_name
+            if not plot_name:
+                continue
+
             try:
-                args = getattr(self, '_plot_{}'.format(po.plot_name))(po, plotobj, pid)
+                args = getattr(self, '_plot_{}'.format(plot_name))(po, plotobj, pid)
             except AttributeError:
                 import traceback
 
