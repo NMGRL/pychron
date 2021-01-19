@@ -315,7 +315,7 @@ class ArArAge(IsotopeGroup):
         :param is_peak_hop:
         :return:
         """
-        self.info('calculated beta value={}'.format(beta))
+        self.info('calculated beta value={} ispeakhop={}'.format(beta, is_peak_hop))
 
         m40 = 39.9624
 
