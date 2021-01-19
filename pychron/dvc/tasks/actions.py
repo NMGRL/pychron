@@ -102,6 +102,12 @@ class DeleteChangesAction(LocalRepositoryAction):
     image = icon('trashcan')
 
 
+class RevertCommitAction(LocalRepositoryAction):
+    name = 'Revert Selected Commit'
+    method = 'revert_selected_commit'
+    image = icon('trashcan')
+
+
 class ArchiveRepositoryAction(LocalRepositoryAction):
     name = 'Archive Repository'
     method = 'archive_repository'

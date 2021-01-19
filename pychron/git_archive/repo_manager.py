@@ -426,11 +426,10 @@ class GitRepoManager(Loggable):
         return a.diff(b, **kw)
 
     def diff(self, a, b, *args):
-        repo = self._repo
-        return repo.git.diff(a, b, *args)
+        return self._git_command(lambda g: g.diff(a,b, *args), 'diff')
 
     def status(self):
-        return self._git_command(self._repo.git.status, 'status')
+        return self._git_command(lambda g: g.status(), 'status')
 
     def report_local_changes(self):
         self.debug('Local Changes to {}'.format(self.path))
@@ -753,7 +752,7 @@ class GitRepoManager(Loggable):
         repo = self._repo
         rr = self._get_remote(remote)
         if rr:
-            self._git_command(lambda: repo.git.push(remote, branch), tag='GitRepoManager.push')
+            self._git_command(lambda g: g.push(remote, branch), tag='GitRepoManager.push')
             if inform:
                 self.information_dialog('{} push complete'.format(self.name))
         else:
@@ -761,7 +760,7 @@ class GitRepoManager(Loggable):
 
     def _git_command(self, func, tag):
         try:
-            return func()
+            return func(self._repo.git)
         except GitCommandError as e:
             self.warning('Git command failed. {}, {}'.format(e, tag))
 
@@ -847,7 +846,7 @@ You like to delete them and try again?'''.format(clean)):
                 self._resolve_conflicts(branch, remote, accept_our, accept_their, quiet)
             else:
                 self.debug('merging {} commits'.format(behind))
-                self._git_command(lambda: repo.git.merge('FETCH_HEAD'), 'GitRepoManager.smart_pull/!ahead')
+                self._git_command(lambda g: g.merge('FETCH_HEAD'), 'GitRepoManager.smart_pull/!ahead')
         else:
             self.debug('Up-to-date with {}'.format(remote))
             if not quiet:
@@ -857,7 +856,7 @@ You like to delete them and try again?'''.format(clean)):
 
     def fetch(self, remote='origin'):
         if self._repo:
-            return self._git_command(lambda: self._repo.git.fetch(remote), 'GitRepoManager.fetch')
+            return self._git_command(lambda g: g.fetch(remote), 'GitRepoManager.fetch')
             # return self._repo.git.fetch(remote)
 
     def ahead_behind(self, remote='origin'):
@@ -875,7 +874,7 @@ You like to delete them and try again?'''.format(clean)):
 
         src = getattr(repo.branches, src)
         # repo.git.merge(src.commit)
-        self._git_command(lambda: repo.git.merge(src.commit), 'GitRepoManager.merge')
+        self._git_command(lambda g: g.merge(src.commit), 'GitRepoManager.merge')
 
     def commit(self, msg):
         self.debug('commit message={}'.format(msg))
@@ -992,6 +991,9 @@ You like to delete them and try again?'''.format(clean)):
         self.path_dirty = path
         self._set_active_commit()
 
+    def revert_commit(self, hexsha):
+        self._git_command(lambda g: g.revert(hexsha), 'revert_commit')
+
     def load_file_history(self, p):
         repo = self._repo
         try:
@@ -1004,10 +1006,8 @@ You like to delete them and try again?'''.format(clean)):
             self.selected_path_commits = []
 
     def get_modified_files(self, hexsha):
-        repo = self._repo
-
-        def func():
-            return repo.git.diff_tree('--no-commit-id', '--name-only', '-r', hexsha)
+        def func(git):
+            return git.diff_tree('--no-commit-id', '--name-only', '-r', hexsha)
 
         txt = self._git_command(func, 'get_modified_files')
         return txt.split('\n')
@@ -1033,8 +1033,8 @@ You like to delete them and try again?'''.format(clean)):
                 self.information_dialog('There were no conflicts identified')
 
     def _get_conflict_paths(self):
-        def func():
-            return self._repo.git.diff('--name-only', '--diff-filter=U')
+        def func(git):
+            return git.diff('--name-only', '--diff-filter=U')
 
         txt = self._git_command(func, 'get_modified_files')
         return txt.split('\n')
