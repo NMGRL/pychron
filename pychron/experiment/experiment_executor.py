@@ -1640,6 +1640,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             for tag in ('air', 'cocktail', 'blank'):
                 repo = '{}_{}{}'.format(ms, tag, curtag)
                 dvc.add_repository(repo, self.default_principal_investigator, inform=False)
+                dvc.add_readme(repo)
 
             no_repo = []
             for i, ai in enumerate(runs):

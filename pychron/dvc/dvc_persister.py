@@ -22,6 +22,7 @@ from datetime import datetime
 from apptools.preferences.preference_binding import bind_preference
 from git.exc import GitCommandError
 # ============= enthought library imports =======================
+from sqlalchemy.exc import OperationalError, DatabaseError
 from traits.api import Instance, Bool, Str
 from uncertainties import std_dev, nominal_value
 from yaml import YAMLError
@@ -111,7 +112,7 @@ class DVCPersister(BasePersister):
         if repo.has_remote(remote) and pull:
             self.info('pulling changes from repo: {}'.format(repository))
             try:
-                self.active_repository.pull(remote=remote, use_progress=False)
+                repo.pull(remote=remote, use_progress=False, use_auto_pull=self.dvc.use_auto_pull)
             except GitCommandError:
                 self.warning('failed pulling changes')
                 self.debug_exception()
@@ -306,7 +307,12 @@ class DVCPersister(BasePersister):
                         ret = False
 
         with dvc.session_ctx():
-            ret = self._save_analysis_db(timestamp) and ret
+            try:
+                ret = self._save_analysis_db(timestamp) and ret
+            except DatabaseError as e:
+                self.warning_dialog('Fatal Error. Cannot save analysis to database. Cancelling '
+                                    'experiment.  {}'.format(e))
+                ret = False
 
         self.info('================= post measurement save finished =================')
         return ret
