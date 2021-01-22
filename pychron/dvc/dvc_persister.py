@@ -44,7 +44,7 @@ def format_repository_identifier(project):
 
 def spectrometer_sha(settings, src, defl, gains):
     sha = hashlib.sha1()
-    for d in settings + (src, defl, gains):
+    for d in (settings, src, defl, gains):
         for k, v in sorted(d.items()):
             sha.update(k.encode('utf-8'))
             sha.update(str(v).encode('utf-8'))
@@ -713,7 +713,7 @@ class DVCPersister(BasePersister):
         else:
             name = runid, runid
 
-        return analysis_path(name, repository_identifier, modifier, extension, mode='w')
+        return analysis_path(name, repository_identifier, modifier, extension, mode='w', force_sublen=2)
 
     def _make_analysis_dict(self, keys=None):
         if keys is None:

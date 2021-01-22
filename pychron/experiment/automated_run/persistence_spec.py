@@ -62,7 +62,7 @@ class PersistenceSpec(HasTraits):
     runscript_name = Str
     runscript_blob = Str
 
-    settings = Tuple
+    settings = Dict
     spec_dict = Dict
     defl_dict = Dict
     gains = Dict
