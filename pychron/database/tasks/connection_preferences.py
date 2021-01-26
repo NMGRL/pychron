@@ -60,9 +60,9 @@ def show_databases(kind, host, user, password, schema_identifier='AnalysisTbl', 
 
             cur.execute(sql)
             records = cur.fetchall()
-
-        except BaseException:
-            pass
+            print('dfadf', records)
+        except BaseException as e:
+            print('ezafa', e)
     elif kind == 'mssql':
         import pymssql
         if exclude is None:
@@ -112,23 +112,26 @@ class ConnectionMixin(HasTraits):
     def _test_connection(self, kw):
         klass = self._get_adapter()
         db = klass(**kw)
-        self._connected_label = ''
         if self._test_func:
             db.test_func = self._test_func
 
-        return db.connect(warn=False)
+        c = db.connect(warn=False)
+        e = db.connection_exception
+
+        return c, e
 
     def _test_connection_button_fired(self):
         kw = self._get_connection_dict()
-        self._connected_label = 'Not Connected'
         self._connected_color = 'red'
+        self._connected_label = 'Not Connected'
 
         if kw is not None:
-            c = self._test_connection(kw)
-
+            c,e = self._test_connection(kw)
             if c:
                 self._connected_color = 'green'
                 self._connected_label = 'Connected'
+            else:
+                warning(None, 'Not connected to database. {}. See log for more details'.format(e))
         else:
             warning(None, 'Please select a connection to test')
 

@@ -617,13 +617,13 @@ class DVC(Loggable):
 
             self._update_current_age(ai)
 
-    def save_icfactors(self, ai, dets, fits, refs, use_source_correction):
+    def save_icfactors(self, ai, dets, fits, refs, use_source_correction, standard_ratios):
         if use_source_correction:
             ai.dump_source_correction_icfactors(refs)
         else:
             if fits and dets:
                 self.info('Saving icfactors for {}'.format(ai))
-                ai.dump_icfactors(dets, fits, refs, reviewed=True)
+                ai.dump_icfactors(dets, fits, refs, reviewed=True, standard_ratios=standard_ratios)
 
         if self._cache:
             self._cache.remove(ai.uiid)

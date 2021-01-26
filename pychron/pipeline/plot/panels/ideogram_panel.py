@@ -77,6 +77,7 @@ class IdeogramPanel(FigurePanel):
         g.on_trait_change(self._handle_figure_event, 'figure_event')
 
     def _handle_rescale(self, obj, name, new):
+        print('asd,', obj, name, new)
         if new == 'y':
             m = -1
             for f in self.figures:

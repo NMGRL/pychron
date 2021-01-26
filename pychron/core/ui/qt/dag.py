@@ -528,7 +528,6 @@ class DAGraphView(QGraphicsView):
 
         if not selected and self.commits:
             commit = self.commits[0]
-            print('asdf', commit.oid)
             items.append(self.items[commit.oid])
 
         self.setSceneRect(self.scene().itemsBoundingRect())

@@ -319,7 +319,11 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
     def get_flux(self, labnumber):
         with self.session_ctx():
             obj = self.get_irradiation_position(labnumber)
-            return obj.J, obj.JEr
+            if obj is None:
+                v, e = 0, 0
+            else:
+                v, e = obj.J, obj.JEr
+            return v, e
 
     def get_irradiation_position(self, value):
         return self._retrieve_item(IrradiationPositionTable, value,

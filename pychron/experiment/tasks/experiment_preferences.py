@@ -26,7 +26,7 @@ from pychron.core.pychron_traits import PositiveInteger, PositiveFloat
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper, BaseConsolePreferences, \
     BaseConsolePreferencesPane
-from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES
+from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES, XE, NE, KR, HE, AR_AR
 
 
 class ExperimentPreferences(BasePreferencesHelper):
@@ -34,7 +34,7 @@ class ExperimentPreferences(BasePreferencesHelper):
     id = 'pychron.experiment.preferences_page'
 
     laboratory = Str
-    experiment_type = Enum('Ar/Ar', 'Generic', 'He', 'Kr', 'Ne', 'Xe')
+    experiment_type = Enum(AR_AR, GENERIC, HE, KR, NE, XE)
     instrument_name = Str
 
     use_uuid_path_name = Bool
