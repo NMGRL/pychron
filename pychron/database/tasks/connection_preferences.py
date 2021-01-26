@@ -237,8 +237,12 @@ class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
 
                 item = self._fav_factory(kind='sqlite', path=path, enabled=True)
                 item.trait_set(**{k: yd[k] for k in ['organization',
-                                                     'meta_repo_name']})
-                item.meta_repo_dir = '{}MetaData'.format(item.organization)
+                                                     'meta_repo_name',
+                                                     ]})
+                try:
+                    item.meta_repo_dir = yd['meta_repo_dirname']
+                except KeyError:
+                    item.meta_repo_dir = '{}MetaData'.format(item.organization)
 
                 self._fav_items.append(item)
                 self._set_favorites()
@@ -318,7 +322,7 @@ class ConnectionPreferencesPane(PreferencesPane):
                       icon_button_editor('add_favorite_path', 'dbs_sqlite',
                                          tooltip='Add sqlite database'),
                       icon_button_editor('add_favorite_shareable_archive',
-                                         'add_archive',
+                                         'add_package',
                                          tooltip='Add a shareable archive'),
                       icon_button_editor('delete_favorite', 'delete',
                                          tooltip='Delete saved connection'),
