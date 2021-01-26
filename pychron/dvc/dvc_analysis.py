@@ -491,6 +491,7 @@ class DVCAnalysis(Analysis):
             if ':' in dk:
                 _, dk = dk.split(':')
 
+            standard_ratio = None
             if standard_ratios:
                 try:
                     standard_ratio = standard_ratios[i]
