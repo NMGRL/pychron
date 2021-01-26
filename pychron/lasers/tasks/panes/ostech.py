@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traitsui.api import View, UItem, VGroup, InstanceEditor
+from traitsui.api import View, UItem, VGroup, InstanceEditor, UCustom
 
 from pychron.lasers.tasks.laser_panes import ClientPane, BaseLaserPane, \
     StageControlPane, ControlPane, AxesPane, SupplementalPane
@@ -48,21 +48,18 @@ class OsTechDiodeSupplementalPane(SupplementalPane):
     name = 'Diode'
 
     def traits_view(self):
-        v = View(VGroup(UItem('temperature_controller', style='custom',
+        v = View(VGroup(UCustom('temperature_controller',
                         editor=InstanceEditor(view='control_view')),
                    label='Watlow'),
-            VGroup(UItem('pyrometer', style='custom'),
-                   label='Pyrometer',
-                   ),
+            # VGroup(UItem('pyrometer', style='custom'),
+            #        label='Pyrometer',
+            #        ),
             # VGroup(Item('control_module_manager', show_label=False, style='custom',
             #             ),
             #        #                      show_border = True,
             #        label='ControlModule',
             #
             #        ),
-            # VGroup(Item('fiber_light', style='custom', show_label=False),
-            #        label='FiberLight'
-            #        )
-        )
+            VGroup(UCustom('fiber_light'), label='FiberLight'))
         return v
 # ============= EOF =============================================

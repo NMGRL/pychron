@@ -47,7 +47,7 @@ class U3FiberLight(BaseU3LV, CoreDevice):
         self._power(False)
 
     def set_intensity(self, v):
-        self.set_dac_channel(self.dac_id, int(v * 255))
+        self.set_dac_channel(self.dac_id, 5*v)
 
     def read_intensity(self):
         return self.read_adc_channel(self.dac_id)

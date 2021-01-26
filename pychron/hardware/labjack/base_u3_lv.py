@@ -43,10 +43,12 @@ class BaseU3LV:
                 conn['localId'] = config.get(section, 'localId', fallback=None)
                 conn['serial'] = config.get(section, 'serialNum', fallback=None)
                 conn['firstFound'] = False
-
+            self.debug('connection={}'.format(conn))
             try:
                 self._device = u3.U3(**conn)
             except NullHandleException:
+
+                self.debug_exception()
                 return
             return self.load_additional_args(config)
 
@@ -54,8 +56,8 @@ class BaseU3LV:
         try:
             self._device.open()
             return True
-        except BaseException:
-            pass
+        except BaseException as e:
+            self.debug_exception()
 
     def load_additional_args(self, config):
         mapping = {}
@@ -125,8 +127,9 @@ class BaseU3LV:
         return self._device.getAIN(ch)
 
     def set_dac_channel(self, dac_id, v):
-        v = self._device.voltageToDACBits(v, dacNumber=dac_id, is16Bits=False)
-        self._device.getFeedback(u3.DAC0_8(v))
+        bits = self._device.voltageToDACBits(v, dacNumber=dac_id, is16Bits=False)
+        self.debug('setting voltage={}, {}'.format(v, bits))
+        self._device.getFeedback(u3.DAC0_8(bits))
 
     # private
     def _get_pin(self, ch):
