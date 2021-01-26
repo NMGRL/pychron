@@ -14,9 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 from traitsui.api import UCustom, UItem, VGroup, InstanceEditor
+from traits.api import Instance
+from pychron.hardware.fiber_light import FiberLight
 from pychron.lasers.laser_managers.laser_manager import LaserManager
 from pychron.lasers.laser_managers.watlow_mixin import WatlowMixin
-
 
 class OsTechLaserManager(LaserManager):
     pass
@@ -26,6 +27,7 @@ class OsTechDiodeManager(OsTechLaserManager, WatlowMixin):
     stage_manager_id = 'ostech.diode'
     configuration_dir_name = 'ostech_diode'
     stage_controller_klass = 'Zaber'
+    fiber_light = Instance(FiberLight)
 
     def _enable_hook(self, clear_setpoint=True):
         if super(OsTechDiodeManager, self)._enable_hook():
@@ -46,4 +48,8 @@ class OsTechDiodeManager(OsTechLaserManager, WatlowMixin):
                      label='Watlow'),
               VGroup(UCustom('fiber_light'), label='FiberLight')]
         return gs
+
+    def _fiber_light_default(self):
+        return FiberLight(name='fiber_light',
+                          configuration_dir_name=self.configuration_dir_name)
 # ============= EOF =============================================
