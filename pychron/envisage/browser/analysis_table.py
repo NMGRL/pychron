@@ -302,7 +302,6 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
 
     def _analysis_set_changed(self, new):
         if self.suppress_load_analysis_set or not new:
-            self.debug('suppressing loading analysis set')
             return
 
         try:
