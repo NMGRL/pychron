@@ -22,6 +22,10 @@ command_register = makeRegistry()
 class QuaderaMeasurementPyScript(MeasurementPyScript):
 
     @command_register
+    def opc_command(self, command, value):
+        self._automated_run_call('opc_')
+
+    @command_register
     def measure(self):
         """
         pass control to Quadera.
@@ -29,5 +33,5 @@ class QuaderaMeasurementPyScript(MeasurementPyScript):
         poll for measurement completion
         """
 
-        pass
+        self._automated_run_call('py_controlless_measure')
 # ============= EOF =============================================

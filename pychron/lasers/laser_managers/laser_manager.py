@@ -188,7 +188,7 @@ class LaserManager(BaseLaserManager):
         """
         self.warning('Emergency shutoff')
         self.disable_laser()
-
+        self.emergency_shutoff_hook()
         if reason is not None:
             self.warning('EMERGENCY SHUTOFF reason: {}'.format(reason))
 
@@ -198,6 +198,9 @@ class LaserManager(BaseLaserManager):
             self.error_code = LaserMonitorErrorCode(reason)
 
             invoke_in_main_thread(self.warning_dialog, reason, title='AUTOMATIC LASER SHUTOFF')
+
+    def emergency_shutoff_hook(self):
+        pass
 
     def start_video_recording(self, *args, **kw):
         pass

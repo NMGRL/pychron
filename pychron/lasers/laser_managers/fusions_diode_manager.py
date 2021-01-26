@@ -22,6 +22,7 @@ from threading import Timer
 from traits.api import Instance, Button, Bool, Float
 from traitsui.api import VGroup, Item, InstanceEditor
 
+from pychron.lasers.laser_managers.watlow_mixin import WatlowMixin
 from .fusions_laser_manager import FusionsLaserManager
 from pychron.hardware.fusions.fusions_diode_logic_board import FusionsDiodeLogicBoard
 from pychron.hardware.mikron_pyrometer import MikronGA140Pyrometer
@@ -33,7 +34,7 @@ from pychron.monitors.fusions_diode_laser_monitor import FusionsDiodeLaserMonito
 from pychron.response_recorder import ResponseRecorder
 
 
-class FusionsDiodeManager(FusionsLaserManager):
+class FusionsDiodeManager(FusionsLaserManager, WatlowMixin):
     """
     """
     stage_manager_id = 'fusions.diode'
@@ -43,7 +44,6 @@ class FusionsDiodeManager(FusionsLaserManager):
     configuration_dir_name = 'fusions_diode'
 
     pyrometer = Instance(MikronGA140Pyrometer)
-    temperature_controller = Instance(WatlowEZZone)
     temperature_monitor = Instance(DPi32TemperatureMonitor)
 
     control_module_manager = Instance(VueMetrixManager)
@@ -70,17 +70,6 @@ class FusionsDiodeManager(FusionsLaserManager):
     # dbname = paths.diodelaser_db
     # db_root = paths.diodelaser_db_root
 
-    use_calibrated_temperature = Bool(False)
-
-    def _use_calibrated_temperature_changed(self, new):
-        if self.temperature_controller:
-            self.temperature_controller.use_calibrated_temperature = new
-
-    def map_temperature(self, v):
-        # if self.use_calibrated_temperature:
-        v = self.temperature_controller.map_temperature(v)
-        return v
-
     def get_pyrometer_temperature(self, **kw):
         """
         """
@@ -103,38 +92,12 @@ class FusionsDiodeManager(FusionsLaserManager):
         pass
 
     def emergency_shutoff(self, *args, **kw):
-
         super(FusionsDiodeManager, self).emergency_shutoff(*args, **kw)
         self.control_module_manager.disable()
-
-        self.temperature_controller.set_control_mode('open')
-        self.temperature_controller.set_open_loop_setpoint(0.0)
-
-    def set_laser_output(self, value, units):
-        self.debug('set laser output value={} units={}'.format(value, units))
-        if units == 'temp':
-            self.set_laser_temperature(value)
-        else:
-            self.set_laser_power(value, units)
-
-    def set_laser_temperature(self, temp, set_pid=True):
-        return self._set_laser_power_hook(temp, mode='closed', set_pid=set_pid)
-        # use_calibration=self.use_calibrated_temperature)
 
     # ===============================================================================
     # private
     # ===============================================================================
-    def _set_laser_power_hook(self, power, mode='open', set_pid=True, **kw):
-        tc = self.temperature_controller
-        if tc.control_mode != mode:
-            tc.set_control_mode(mode)
-
-        power = float(power)
-        if mode == 'closed' and set_pid and power:
-            tc.set_pid(power)
-
-        func = getattr(tc, 'set_{}_loop_setpoint'.format(mode))
-        func(power, set_pid=set_pid, **kw)
 
     def _enable_hook(self, clear_setpoint=True):
         if super(FusionsDiodeManager, self)._enable_hook():  # logic board sucessfully enabled
@@ -212,12 +175,6 @@ class FusionsDiodeManager(FusionsLaserManager):
                                    configuration_name='laser_controller',
                                    configuration_dir_name=self.configuration_dir_name)
         return b
-
-    def _temperature_controller_default(self):
-        w = WatlowEZZone(name='temperature_controller',
-                         use_calibrated_temperature=self.use_calibrated_temperature,
-                         configuration_dir_name=self.configuration_dir_name)
-        return w
 
     def _pyrometer_temperature_monitor_default(self):
         py = PyrometerTemperatureMonitor(name='pyrometer_tm',

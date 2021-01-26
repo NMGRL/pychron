@@ -13,15 +13,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from traitsui.api import UCustom, UItem, VGroup, InstanceEditor
 from pychron.lasers.laser_managers.laser_manager import LaserManager
+from pychron.lasers.laser_managers.watlow_mixin import WatlowMixin
 
 
 class OsTechLaserManager(LaserManager):
     pass
 
 
-class OsTechDiodeManager(OsTechLaserManager):
+class OsTechDiodeManager(OsTechLaserManager, WatlowMixin):
     stage_manager_id = 'ostech.diode'
     configuration_dir_name = 'ostech_diode'
     stage_controller_klass = 'Zaber'
+
+    def _enable_hook(self, clear_setpoint=True):
+        if super(OsTechDiodeManager, self)._enable_hook():
+            # logic board sucessfully enabled
+            if clear_setpoint:
+                # disable the temperature_controller unit a value is set
+                self.temperature_controller.disable()
+
+            return True
+
+    def _disable_hook(self):
+        self.temperature_controller.disable()
+        return super(OsTechDiodeManager, self)._disable_hook()
+
+    def get_additional_controls(self):
+        gs = [VGroup(UCustom('temperature_controller',
+                             editor=InstanceEditor(view='control_view'),),
+                     label='Watlow'),
+              VGroup(UCustom('fiber_light'), label='FiberLight')]
+        return gs
 # ============= EOF =============================================

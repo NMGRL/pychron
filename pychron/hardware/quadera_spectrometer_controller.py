@@ -26,18 +26,19 @@ from pychron.hardware.core.core_device import CoreDevice
 
 
 class QuaderaController(CoreDevice):
-    lock = None
-
-    def set(self, *args, **kw):
-        return HasTraits.set(self, *args, **kw)
-
-    def initialize(self, *args, **kw):
-        ret = super(QuaderaController, self).initialize(*args, **kw)
-
-        # trying a new locking mechanism see ngx.trigger for more details
-        # self.lock = Lock()
-
-        return ret
+    pass
+    # lock = None
+    #
+    # def set(self, *args, **kw):
+    #     return HasTraits.set(self, *args, **kw)
+    #
+    # def initialize(self, *args, **kw):
+    #     ret = super(QuaderaController, self).initialize(*args, **kw)
+    #
+    #     # trying a new locking mechanism see ngx.trigger for more details
+    #     # self.lock = Lock()
+    #
+    #     return ret
 
 
 # ============= EOF =============================================

@@ -19,7 +19,8 @@ from datetime import datetime
 from traits.api import List
 
 from pychron.hardware.quadera_spectrometer_controller import QuaderaController
-from pychron.pychron_constants import ISOTOPX_DEFAULT_INTEGRATION_TIME, ISOTOPX_INTEGRATION_TIMES, NULL_STR
+from pychron.pychron_constants import ISOTOPX_DEFAULT_INTEGRATION_TIME, ISOTOPX_INTEGRATION_TIMES, NULL_STR, \
+    QUADERA_DEFAULT_INTEGRATION_TIME, QUADERA_INTEGRATION_TIMES
 from pychron.spectrometer.base_spectrometer import BaseSpectrometer
 # from pychron.spectrometer.isotopx import SOURCE_CONTROL_PARAMETERS, IsotopxMixin
 
@@ -31,15 +32,15 @@ from pychron.spectrometer.pfeiffer.source.quadera import QuaderaSource
 
 class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
     # integration_time = Int
-    integration_times = List(ISOTOPX_INTEGRATION_TIMES)
+    integration_times = List(QUADERA_INTEGRATION_TIMES)
 
     magnet_klass = QuaderaMagnet
     detector_klass = QuaderaDetector
     source_klass = QuaderaSource
     microcontroller_klass = QuaderaController
 
-    _test_connect_command = 'GETMASS'
-    _read_enabled = True
+    # _test_connect_command = 'GETMASS'
+    # _read_enabled = True
     use_deflection_correction = False
     use_hv_correction = False
 
@@ -57,84 +58,31 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
     def make_deflection_dict(self):
         return {}
 
-    def convert_to_axial(self, det, v):
-        print('asdfsadf', det, det.index, v)
-        v = v - (det.index - 2)
-        return v
+    # def start(self):
+        # self.set_integration_time(1, force=True)
 
-    def start(self):
-        self.set_integration_time(1, force=True)
-
-    def finish_loading(self):
-        super(QuaderaSpectrometer, self).finish_loading()
-        config = self._get_cached_config()
-        if config is not None:
-            magnet = config['magnet']
-            # specparams, defl, trap, magnet = ret
-            mftable_name = magnet.get('mftable')
-            if mftable_name:
-                self.debug('updating mftable name {}'.format(mftable_name))
-                self.magnet.field_table.path = mftable_name
-                self.magnet.field_table.load_table(load_items=True)
+    # def finish_loading(self):
+    #     super(QuaderaSpectrometer, self).finish_loading()
+        # config = self._get_cached_config()
+        # if config is not None:
+        #     magnet = config['magnet']
+        #     # specparams, defl, trap, magnet = ret
+        #     mftable_name = magnet.get('mftable')
+        #     if mftable_name:
+        #         self.debug('updating mftable name {}'.format(mftable_name))
+        #         self.magnet.field_table.path = mftable_name
+        #         self.magnet.field_table.load_table(load_items=True)
 
     def _send_configuration(self, **kw):
         pass
 
-    def get_update_period(self, it=None, is_scan=False):
-        """
-        acquisition period is always set to 1s so update period always needs to be <1s
-        """
+    # def get_update_period(self, it=None, is_scan=False):
+    #     return self.integration_time * 0.95
 
-        if is_scan:
-            return 0.1
+    # def cancel(self):
+    #     self.debug('canceling')
 
-        return 0.95
-        # return self.integration_time * 0.95
-    #
-    # def trigger_acq(self, verbose=False):
-    #     # self.debug('trigger acquie {}'.format(self.microcontroller.lock))
-    #     # locking the microcontroller not necessary and detrimental when doing long integration times
-    #     # other commands can be executed when waiting 10-20 sec integration period.
-    #     # locking prevents those other command from happening. locking only ok when integration time < 5 seconds
-    #     # probably (min time probably has to do with the update valve state frequency).
-    #     # Disable locking complete for now
-    #
-    #     # another trick could be to make it an rlock. if lock is acquired by reading data then valve commands ok.
-    #     # but not vis versa.
-    #     # while self.microcontroller.lock.locked():
-    #     #    time.sleep(0.25)
-    #
-    #     self.ask('StopAcq', verbose=verbose)
-    #     # return self.ask('StartAcq 1,{}'.format(self.rcs_id), verbose=verbose)
-    #     return self.ask('StartAcq {},{}'.format(int(self.integration_time), self.rcs_id))
-    #
-    # def readline(self, verbose=False):
-    #     if verbose:
-    #         self.debug('readline')
-    #     st = time.time()
-    #     ds = ''
-    #     while 1:
-    #         if time.time() - st > (1.25 * self.integration_time):
-    #             if verbose:
-    #                 self.debug('readline timeout')
-    #             return
-    #
-    #         if not self._read_enabled:
-    #             self.debug('readline canceled')
-    #             return
-    #
-    #         try:
-    #             ds += self.read(16)
-    #         except BaseException:
-    #             self.debug_exception()
-    #             self.debug('data left: {}'.format(ds))
-    #
-    #         if ds.endswith('\r\n'):
-    #             return ds.strip()
-
-    def cancel(self):
-        self.debug('canceling')
-        self._read_enabled = False
+    # def read_intensities(self, *args, **kw):
 
     # def read_intensities(self, timeout=60, trigger=False, target='ACQ.B', verbose=False):
     #     self._read_enabled = True
@@ -201,7 +149,7 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
         :return: float, integration time
         """
         self.debug('acquisition period set to 1 second.  integration time set to {}'.format(it))
-        self.ask('SetAcqPeriod 1000')
+        # self.ask('SetAcqPeriod 1000')
         self.integration_time = it
 
         # if self.integration_time != it or force:
@@ -238,7 +186,7 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
         return keys, signals, None
 
     def _integration_time_default(self):
-        self.default_integration_time = ISOTOPX_DEFAULT_INTEGRATION_TIME
-        return ISOTOPX_DEFAULT_INTEGRATION_TIME
+        self.default_integration_time = QUADERA_DEFAULT_INTEGRATION_TIME
+        return QUADERA_DEFAULT_INTEGRATION_TIME
 
 # ============= EOF =============================================
