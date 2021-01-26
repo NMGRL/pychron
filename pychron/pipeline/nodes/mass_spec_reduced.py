@@ -96,7 +96,7 @@ class MassSpecReducedNode(BaseMassSpecNode):
                     self._freeze_flux(repo, unks)
                     self._import_reduced(unks)
                     self._save(repo)
-                    return
+                return
 
             state.veto_message = self.recaller.db.connection_error
         else:
