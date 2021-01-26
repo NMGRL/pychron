@@ -38,7 +38,7 @@ from pychron.pychron_constants import DVC_PROTOCOL, NULL_STR, ARGON_KEYS, ARAR_M
 
 
 def format_repository_identifier(project):
-    return project.replace('/', '_').replace('\\', '_')
+    return project.replace('/', '_').replace('\\', '_').replace(' ', '_')
 
 
 def spectrometer_sha(settings, src, defl, gains):
@@ -64,12 +64,13 @@ class DVCPersister(BasePersister):
     save_log_enabled = Bool(False)
     arar_mapping = None
 
-    def __init__(self, bind=True, *args, **kw):
+    def __init__(self, bind=True, load_mapping=True, *args, **kw):
         super(DVCPersister, self).__init__(*args, **kw)
         if bind:
             bind_preference(self, 'use_uuid_path_name', 'pychron.experiment.use_uuid_path_name')
 
-        self._load_arar_mapping()
+        if load_mapping:
+            self._load_arar_mapping()
 
     def per_spec_save(self, pr, repository_identifier=None, commit=False, commit_tag=None, push=True):
         self.per_spec = pr

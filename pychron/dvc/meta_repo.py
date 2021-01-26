@@ -164,10 +164,15 @@ class MetaRepo(GitRepoManager):
 
     def add_production_to_irradiation(self, irrad, name, params, add=True, commit=False):
         self.debug('adding production {} to irradiation={}'.format(name, irrad))
-        p = os.path.join(paths.meta_root, irrad, 'productions', add_extension(name, '.json'))
-        prod = Production(p, new=not os.path.isfile(p))
 
-        prod.update(params)
+        p = os.path.join(paths.meta_root, irrad, 'productions', add_extension(name, '.json'))
+        if isinstance(params, Production):
+            prod = params
+            prod.path = p
+        else:
+            prod = Production(p, new=not os.path.isfile(p))
+            prod.update(params)
+
         prod.dump()
         if add:
             self.add(p, commit=commit)

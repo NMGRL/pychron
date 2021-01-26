@@ -200,6 +200,7 @@ class FitICFactorNode(FitReferencesNode):
         super(FitICFactorNode, self)._set_saveable(state)
         ps = self.plotter_options.get_saveable_aux_plots()
         state.saveable_keys = [p.denominator for p in ps]
+        state.standard_ratios = [p.standard_ratio for p in ps]
 
     def _check_refit(self, ai):
         for k in self._keys:
