@@ -23,6 +23,7 @@ from pychron.envisage.view_util import open_view
 from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.lasers.tasks.panes.ostech import OsTechDiodeSupplementalPane, OsTechDiodeControlPane
 from pychron.pychron_constants import FUSIONS_CO2, FUSIONS_DIODE, OSTECH_DIODE
 
 
@@ -131,8 +132,8 @@ class OsTechDiodeTask(BaseLaserTask):
 
             return [
                 OsTechDiodeStagePane(model=self.manager),
-                # FusionsDiodeControlPane(model=self.manager),
-                # FusionsDiodeSupplementalPane(model=self.manager),
+                OsTechDiodeControlPane(model=self.manager),
+                OsTechDiodeSupplementalPane(model=self.manager),
 
                 # PulsePane(model=self.manager),
                 # OpticsPane(model=self.manager),
