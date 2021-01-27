@@ -244,6 +244,11 @@ class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
                 except KeyError:
                     item.meta_repo_dir = '{}MetaData'.format(item.organization)
 
+                try:
+                    item.name = yd['name']
+                except KeyError:
+                    pass
+
                 self._fav_items.append(item)
                 self._set_favorites()
 
