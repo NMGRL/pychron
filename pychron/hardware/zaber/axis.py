@@ -16,7 +16,6 @@
 from traits.api import Str, CInt, Enum
 
 from pychron.hardware.motion_controller import MotionController
-from zaber_motion import Units
 from pychron.hardware.axis import Axis
 
 import os
@@ -24,11 +23,25 @@ import os
 
 class ZaberAxis(Axis):
     device_id = None
+    microstep_size = 0.1905
+    device = None
+
+    def get_position(self):
+        steps = self.device.get_position()
+        mm = self.convert_to_mm(steps)
+        return mm
+
+    def convert_to_mm(self, steps):
+        return float(steps*self.microstep_size/1000.)
+
+    def convert_to_steps(self, mm):
+        return int(mm*1000/self.microstep_size)
+
     def load(self, path):
         if not os.path.isfile(path):
             path = os.path.join(path, '{}axis.cfg'.format(self.name))
 
         config = self.get_configuration(path)
         self.set_attribute(config, 'device_id', 'General', 'device_id', cast='int')
-
+        self.set_attribute(config, 'microstep_size', 'General', 'microstep_size', cast='float')
 # ============= EOF =============================================
