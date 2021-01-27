@@ -1812,6 +1812,7 @@ class DVC(Loggable):
         bind_preference(self, 'favorites', '{}.favorites'.format(prefid))
         self._favorites_changed(self.favorites)
         self._set_meta_repo_name()
+        self._repository_root_changed()
 
         prefid = 'pychron.dvc'
         bind_preference(self, 'use_cocktail_irradiation', '{}.use_cocktail_irradiation'.format(prefid))
@@ -1861,10 +1862,15 @@ class DVC(Loggable):
             self.organization = new.organization
             self.meta_repo_name = new.meta_repo_name
             self.meta_repo_dirname = new.meta_repo_dir
+            self.repository_root = new.repository_root
             self.db.reset_connection()
             if old:
                 self.db.connect()
                 self.db.create_session()
+
+    def _repository_root_changed(self):
+        if self.repository_root:
+            paths.repository_dataset_dir = os.path.join(paths.dvc_dir, self.repository_root)
 
     def _meta_repo_dirname_changed(self):
         self._set_meta_repo_name()

@@ -249,8 +249,14 @@ class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
                 except KeyError:
                     pass
 
+                try:
+                    item.repository_root = yd['repository_root']
+                except KeyError:
+                    pass
+
                 self._fav_items.append(item)
                 self._set_favorites()
+                item.default = True
                 information(None, 'Please restart to complete the addition of this archive')
 
     def _add_favorite_path_fired(self):
