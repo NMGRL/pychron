@@ -19,7 +19,7 @@ import os
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
-from pyface.message_dialog import warning
+from pyface.message_dialog import warning, information
 from pyface.timer.do_later import do_later
 from traits.api import Str, Password, Enum, Button, on_trait_change, Color, String, List, File, HasTraits, Bool, Int
 from traitsui.api import View, VGroup, HGroup, spring, Label, Spring, \
@@ -251,6 +251,7 @@ class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
 
                 self._fav_items.append(item)
                 self._set_favorites()
+                information(None, 'Please restart to complete the addition of this archive')
 
     def _add_favorite_path_fired(self):
         dlg = FileDialog(action='open')
