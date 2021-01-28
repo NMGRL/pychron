@@ -86,9 +86,12 @@ class BaseSweep(SpectrometerTask):
             kw['type'] = 'scatter'
             kw['marker'] = 'circle'
             kw['marker_size'] = 1.5
+        elif kind == 'line_scatter':
+            kw['type'] = 'line_scatter'
+            kw['marker'] = 'circle'
+            kw['marker_size'] = 1.5
 
         graph.new_series(**kw)
-        self._markup_idx += 1
 
     def _test_sweep(self, s, e, step):
         forward = self._calc_step_values(s, e, step)
