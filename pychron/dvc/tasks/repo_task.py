@@ -31,7 +31,7 @@ from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.fuzzyfinder import fuzzyfinder
 from pychron.core.helpers.datetime_tools import format_iso_datetime
 from pychron.core.helpers.filetools import unique_dir
-from pychron.dvc import repository_path
+from pychron.dvc import repository_path, UUID_RE
 from pychron.dvc.tasks import list_local_repos
 from pychron.dvc.tasks.actions import CloneAction, AddBranchAction, CheckoutBranchAction, PushAction, PullAction, \
     FindChangesAction, LoadOriginAction, DeleteLocalChangesAction, ArchiveRepositoryAction, SyncSampleInfoAction, \
@@ -460,9 +460,16 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
                 uuids.append('{}{}'.format(head, tail))
                 continue
 
-        tag_ans = self.dvc.convert_uuid_runids(uuids)
         ans = list({an for an in (func(*a) for a in ans) if an})
-        self.analyses = ans + tag_ans
+
+        nans = []
+        for ai in ans:
+            if UUID_RE.match(ai):
+                uuids.append(ai)
+            else:
+                nans.append(ai)
+
+        self.analyses = sorted(nans + self.dvc.convert_uuid_runids(uuids))
 
     def _make_diff_changes(self, rev, d):
         rev = self._repo.get_commit(rev)

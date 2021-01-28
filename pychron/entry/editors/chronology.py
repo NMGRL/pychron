@@ -39,14 +39,26 @@ class IrradiationDosage(HasTraits):
         if not self.end_time:
             self.end_time = time(hour=17)
 
+    def set_end(self, hours):
+        ed = self.sdt + timedelta(hours=hours)
+        ed = ed.replace(microsecond=0)
+        self.end_date = ed.date()
+        self.end_time = ed.time()
+
+    @property
+    def sdt(self):
+        return datetime.combine(self.start_date, self.start_time)
+
+    @property
+    def edt(self):
+        return datetime.combine(self.end_date, self.end_time)
+
     def duration(self):
         """
         return duration of this dose in hours
         :return:
         """
-        st = datetime.combine(self.start_date, self.start_time)
-        et = datetime.combine(self.end_date, self.end_time)
-        return (et-st).total_seconds()/3600.
+        return (self.edt - self.sdt).total_seconds() / 3600.
 
     def _start_date_default(self):
         return date.today()
@@ -68,6 +80,9 @@ class IrradiationDosage(HasTraits):
         print('tooo', str(self.power), self.start(), self.end())
         return str(self.power), self.start(), self.end()
 
+    def __repr__(self):
+        return '{}, {}'.format(self.sdt.isoformat(), self.duration())
+
 
 class IrradiationChronology(HasTraits):
     dosages = List(IrradiationDosage)
@@ -84,6 +99,7 @@ class IrradiationChronology(HasTraits):
         :param ds: list of 3-tuples (power, start, end)
         :return:
         """
+
         def dose_factory(di):
             p, s, e = di
             return IrradiationDosage(start_date=s.date(),
@@ -163,4 +179,3 @@ if __name__ == '__main__':
     c = IrradiationChronology()
     c.configure_traits()
 # ============= EOF =============================================
-

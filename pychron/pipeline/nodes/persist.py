@@ -209,7 +209,7 @@ class ICFactorPersistNode(DVCPersistNode):
             self.dvc.delete_existing_icfactors(ai, state.saveable_keys)
 
         self.dvc.save_icfactors(ai, state.saveable_keys, state.saveable_fits,
-                                state.references, state.use_source_correction)
+                                state.references, state.use_source_correction, state.standard_ratios)
 
 
 class FluxPersistNode(DVCPersistNode):

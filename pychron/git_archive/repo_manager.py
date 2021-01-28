@@ -69,6 +69,7 @@ def isoformat_date(d):
 class StashCTX(object):
     def __init__(self, repo):
         self._repo = repo
+        self._error = None
 
     def __enter__(self):
         try:

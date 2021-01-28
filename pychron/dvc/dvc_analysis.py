@@ -477,10 +477,10 @@ class DVCAnalysis(Analysis):
 
         self._dump(jd, path)
 
-    def dump_icfactors(self, dkeys, fits, refs=None, reviewed=False):
+    def dump_icfactors(self, dkeys, fits, refs=None, reviewed=False, standard_ratios=None):
         jd, path = self._get_json('icfactors')
 
-        for dk, fi in zip(dkeys, fits):
+        for i, (dk, fi) in enumerate(zip(dkeys, fits)):
             v = self.temporary_ic_factors.get(dk)
             if v is None:
                 v, e = 1, 0
@@ -491,18 +491,28 @@ class DVCAnalysis(Analysis):
             if ':' in dk:
                 _, dk = dk.split(':')
 
+            standard_ratio = None
+            if standard_ratios:
+                try:
+                    standard_ratio = standard_ratios[i]
+                except IndexError:
+                    standard_ratio = None
+
             jd[dk] = {'value': float(v), 'error': float(e),
                       'reviewed': reviewed,
                       'fit': fi,
+                      'standard_ratio': standard_ratio,
                       'references': make_ref_list(refs)}
         self._dump(jd, path)
 
-    def dump_source_correction_icfactors(self, refs=None):
+    def dump_source_correction_icfactors(self, refs=None, standard_ratio=None):
         jd, path = self._get_json(ICFACTORS)
         for det, value in self.temporary_ic_factors.items():
             v, e = nominal_value(value), std_dev(value)
             jd[det] = {'value': float(v), 'error': float(e), 'reviewed': True,
                        'fit': 'exponential',
+                       'standard_ratio': standard_ratio,
+                       'source_correction': True,
                        'references': make_ref_list(refs)
                        }
         self._dump(jd, path)
