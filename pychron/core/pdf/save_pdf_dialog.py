@@ -19,7 +19,11 @@ import os
 
 from chaco.plot_label import PlotLabel
 from chaco.svg_graphics_context import SVGGraphicsContext
-from kiva.fonttools.font_manager import findfont, FontProperties
+try:
+    from kiva.fonttools.font_manager import findfont, FontProperties
+except ImportError:
+    findfont = None
+
 from kiva.ps import PSGC
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
@@ -35,16 +39,17 @@ from pychron.core.helpers.filetools import view_file, add_extension
 from pychron.core.pdf.options import BasePDFOptions, PDFLayoutView
 from pychron.core.pdf.pdf_graphics_context import PdfPlotGraphicsContext
 
-for face in pychron_constants.TTF_FONTS:
-    for face_name in (face, face.lower()):
-        family = face_name
-        font = findfont(FontProperties(family=face_name, style='normal', weight='normal'))
-        try:
-            tf = TTFont(face_name, font)
-            pdfmetrics.registerFont(tf)
-            pdfmetrics.registerTypeFace(TypeFace(face_name))
-        except TTFError as e:
-            print('invalid font', font, e)
+if findfont:
+    for face in pychron_constants.TTF_FONTS:
+        for face_name in (face, face.lower()):
+            family = face_name
+            font = findfont(FontProperties(family=face_name, style='normal', weight='normal'))
+            try:
+                tf = TTFont(face_name, font)
+                pdfmetrics.registerFont(tf)
+                pdfmetrics.registerTypeFace(TypeFace(face_name))
+            except TTFError as e:
+                print('invalid font', font, e)
 
 
 class myPdfPlotGraphicsContext(PdfPlotGraphicsContext):
