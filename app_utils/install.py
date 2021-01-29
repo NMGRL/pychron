@@ -127,8 +127,8 @@ def ask_config():
               'github_token': '',
               'massspec_db_version': 16,
               'fork': 'NMGRL',
-              'branch': 'develop',
-              'app_name': 'pyexperiment',
+              'branch': 'dev/dr',
+              'app_name': 'pycrunch',
               'qt_bindings': 'pyqt=5',
               'qt_api': 'pyqt5',
               'use_all_defaults': 'no',
@@ -241,15 +241,16 @@ def install_conda(cfg):
     # create env
     env_name = cfg['conda_env_name']
     subprocess.call(['conda', 'create', '-n', env_name, '--yes', 'python=3.7'])
-    # subprocess.call(['conda', 'activate', cfg['conda_env_name']])
 
     # install deps
     subprocess.call(['conda', 'install', '--yes',
                      '--name', env_name] + cfg['conda_requirements'].split(' '))
 
     if IS_MAC:
+        subprocess.call(['conda', 'activate', cfg['conda_env_name']])
         # install pip deps
-        pip_path = os.path.join(cfg['conda_distro'], 'envs', env_name, 'bin', 'pip')
+        # pip_path = os.path.join(cfg['conda_distro'], 'envs', env_name, 'bin', 'pip')
+        pip_path = 'pip'
         subprocess.call([pip_path, 'install'] + cfg['pip_requirements'].split(' '))
         for r in cfg['pip_git_requirements']:
             subprocess.call([pip_path, 'install', '-e', r])
@@ -296,8 +297,9 @@ export QT_API={qt_api:}
 export PYCHRON_APPNAME={app_name:}
 export PYCHRON_DATABASE_UPDATE={update_db:}
 export PYCHRON_ALEMBIC_URL={alembic_url:}
+export PYCHRON_USE_LOGIN=0
 
-ROOT=${pychron_path:}
+ROOT={pychron_path:}
 export PYTHONPATH=$ROOT
 
 {conda_distro:}/envs/{conda_env_name:}/bin/pythonw $ROOT/launchers/launcher.py

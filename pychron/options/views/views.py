@@ -67,7 +67,7 @@ def view(title):
 
     v = okcancel_view(VGroup(agrp, bgrp),
                       width=800,
-                      height=750,
+                      height=0.75,
                       resizable=True,
                       title=title)
     return v
