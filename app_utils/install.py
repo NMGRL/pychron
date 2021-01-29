@@ -175,11 +175,14 @@ def ask_config():
     for k, v in config.items():
         print('{:<20s}: {}'.format(k, v))
 
-    config['pip_requirements'] = 'uncertainties peakutils qimage2ndarray chaco'
+    config['pip_requirements'] = 'uncertainties peakutils qimage2ndarray'
+    config['pip_git_requirements'] = ['git+https://github.com/enthought/chaco.git#egg=chaco',
+                                      'git+https://github.com/enthought/enable.git#egg=enable']
+
     creq = 'pip qt numpy statsmodels scikit-learn PyYAML yaml traitsui envisage sqlalchemy ' \
            'Reportlab lxml xlrd xlwt xlsxwriter requests keyring pillow gitpython cython pytables ' \
-            'pyproj'\
-           'pymysql certifi jinja2 swig=3 {}'.format(config['qt_bindings'])
+            'pyproj pymysql certifi jinja2 swig {}'.format(config['qt_bindings'])
+
     if IS_MAC:
         creq = '{} python.app'.format(creq)
 
@@ -248,6 +251,8 @@ def install_conda(cfg):
         # install pip deps
         pip_path = os.path.join(cfg['conda_distro'], 'envs', env_name, 'bin', 'pip')
         subprocess.call([pip_path, 'install'] + cfg['pip_requirements'].split(' '))
+        for r in cfg['pip_git_requirements']:
+            subprocess.call([pip_path, 'install', '-e', r])
     else:
         print('WARNING!!!! Installing PIP dependencies on Windows currently not available. Please consult Pychron '
               'documentation or contact Pychron Labs for further instructions')

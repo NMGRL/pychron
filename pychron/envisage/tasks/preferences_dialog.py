@@ -60,7 +60,8 @@ ICON_MAP = {'Database': icon('database'),
             'Loading': icon('caterpillar'),
             'Scripts': icon('scripts_text'),
             'Dashboard': icon('dashboard'),
-            'NMGRL Furnace': icon('furnace')
+            'NMGRL Furnace': icon('furnace'),
+            'Repositories': icon('git')
             }
 
 
@@ -113,8 +114,8 @@ class PreferencesDialog(PD):
                                          selected='_selected'))
         b = UItem('_selected', style='custom')
         v = okcancel_view(HGroup(a, b),
-                          height=500,
-                          width=800,
+                          height=0.75,
+                          width=1200,
                           title='Preferences')
         return v
 

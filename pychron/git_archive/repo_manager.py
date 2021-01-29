@@ -750,7 +750,6 @@ class GitRepoManager(Loggable):
         if remote is None:
             remote = 'origin'
 
-        repo = self._repo
         rr = self._get_remote(remote)
         if rr:
             self._git_command(lambda g: g.push(remote, branch), tag='GitRepoManager.push')
