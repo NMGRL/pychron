@@ -265,12 +265,12 @@ class AutomatedRunConditional(BaseConditional):
         if self.analysis_types:
             # check if checking should be done on this run based on analysis_type
             atype = run.spec.analysis_type.lower()
-            if 'blank' in self.analysis_types:
-                if atype.startswith('blank'):
+            if atype.startswith('blank'):
+                if 'blank' not in self.analysis_types:
                     return
-
-            if atype not in self.analysis_types:
-                return
+            else:
+                if atype not in self.analysis_types:
+                    return
 
         if self.active:
             if isinstance(cnt, bool):
@@ -452,6 +452,11 @@ def get_extraction_steps(s):
 
 
 class QueueModificationConditional(AutomatedRunConditional):
+    """
+    use to modify the queue. for example if blank to large run another blank.
+
+    """
+
     use_truncation = Bool
     use_termination = Bool
     nskip = Int
