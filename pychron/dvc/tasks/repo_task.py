@@ -45,7 +45,7 @@ from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.git_archive.utils import ahead_behind, get_tags
 from pychron.git_archive.views import CommitFactory
 from pychron.paths import paths
-from pychron.pychron_constants import NULL_STR
+from pychron.pychron_constants import NULL_STR, STARTUP_MESSAGE_POSITION
 from pychron.regex import RUNID_PATH_REGEX, TAG_PATH_REGEX
 
 
@@ -146,7 +146,7 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
 
         self.refresh_local_names()
         if self.check_for_changes:
-            if self.confirmation_dialog('Check all Repositories for changes'):
+            if self.confirmation_dialog('Check all Repositories for changes', position=STARTUP_MESSAGE_POSITION):
                 self.find_changes()
 
     def sort_repos(self):

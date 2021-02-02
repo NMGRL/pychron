@@ -807,16 +807,11 @@ class GitRepoManager(Loggable):
 
                     # do merge
                     try:
-                        repo.git.rebase('--preserve-merges', '{}/{}'.format(remote, branch))
+                        # repo.git.rebase('--preserve-merges', '{}/{}'.format(remote, branch))
+                        repo.git.merge('{}/{}'.format(remote, branch))
                     except GitCommandError:
-                        try:
-                            repo.git.rebase('--abort')
-                        except GitCommandError:
-                            pass
-
                         if self.confirmation_dialog('There appears to be a problem with {}.'
-                                                    '\n\nWould you like to accept the master copy'.format(self.name)):
-
+                                                                            '\n\nWould you like to accept the master copy'.format(self.name)):
                             try:
                                 repo.git.pull('-X', 'theirs', '--commit', '--no-edit')
                                 return True
@@ -825,7 +820,7 @@ class GitRepoManager(Loggable):
                                 if clean:
                                     if self.confirmation_dialog('''You have untracked files that could be an issue. 
 {}
- 
+
 You like to delete them and try again?'''.format(clean)):
                                         try:
                                             repo.git.clean('-fd')
@@ -841,9 +836,45 @@ You like to delete them and try again?'''.format(clean)):
                                 else:
                                     self.warning_dialog('Failed pulling changes for {}'.format(self.name))
                                 return
+
                         else:
-                            return
-                self._resolve_conflicts(branch, remote, accept_our, accept_their, quiet)
+                            self._resolve_conflicts(branch, remote, accept_our, accept_their, quiet)
+
+                        # try:
+                        #     repo.git.merge('--abort')
+                        # except GitCommandError:
+                        #     pass
+#
+#                         if self.confirmation_dialog('There appears to be a problem with {}.'
+#                                                     '\n\nWould you like to accept the master copy'.format(self.name)):
+#
+#                             try:
+#                                 repo.git.pull('-X', 'theirs', '--commit', '--no-edit')
+#                                 return True
+#                             except GitCommandError:
+#                                 clean = repo.git.clean('-n')
+#                                 if clean:
+#                                     if self.confirmation_dialog('''You have untracked files that could be an issue.
+# {}
+#
+# You like to delete them and try again?'''.format(clean)):
+#                                         try:
+#                                             repo.git.clean('-fd')
+#                                         except GitCommandError:
+#                                             self.warning_dialog('Failed to clean repository')
+#                                             return
+#
+#                                         try:
+#                                             repo.git.pull('-X', 'theirs', '--commit', '--no-edit')
+#                                             return True
+#                                         except GitCommandError:
+#                                             self.warning_dialog('Failed pulling changes for {}'.format(self.name))
+#                                 else:
+#                                     self.warning_dialog('Failed pulling changes for {}'.format(self.name))
+#                                 return
+#                         else:
+#                             return
+#                 self._resolve_conflicts(branch, remote, accept_our, accept_their, quiet)
             else:
                 self.debug('merging {} commits'.format(behind))
                 self._git_command(lambda g: g.merge('FETCH_HEAD'), 'GitRepoManager.smart_pull/!ahead')
@@ -1015,7 +1046,7 @@ You like to delete them and try again?'''.format(clean)):
     # private
     def _resolve_conflicts(self, branch, remote, accept_our, accept_their, quiet):
         conflict_paths = self._get_conflict_paths()
-        self.debug('conflict_paths: {}'.format(conflict_paths))
+        self.debug('resolve conflict_paths: {}'.format(conflict_paths))
         if conflict_paths:
             mm = MergeModel(conflict_paths,
                             branch=branch,
@@ -1027,7 +1058,7 @@ You like to delete them and try again?'''.format(clean)):
                 mm.accept_their()
             else:
                 mv = MergeView(model=mm)
-                mv.edit_traits()
+                mv.edit_traits(kind='livemodal')
         else:
             if not quiet:
                 self.information_dialog('There were no conflicts identified')
@@ -1036,8 +1067,8 @@ You like to delete them and try again?'''.format(clean)):
         def func(git):
             return git.diff('--name-only', '--diff-filter=U')
 
-        txt = self._git_command(func, 'get_modified_files')
-        return txt.split('\n')
+        txt = self._git_command(func, 'get conflict paths')
+        return [line for line in txt.split('\n') if line.strip()]
 
     def _validate_diff(self):
         return True
