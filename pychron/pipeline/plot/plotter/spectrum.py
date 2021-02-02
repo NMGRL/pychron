@@ -461,10 +461,12 @@ class Spectrum(BaseArArFigure):
         mswd_args = ag.get_plateau_mswd_tuple()
         plateau_mswd, valid_mswd, nsteps, pvalue = mswd_args
 
-        e = plateau_age.std_dev * self.options.nsigma
+        op = self.options
+        e = plateau_age.std_dev * op.nsigma
         text = self._build_label_text(nominal_value(plateau_age), e, nsteps,
                                       mswd_args=mswd_args,
-                                      sig_figs=self.options.plateau_sig_figs)
+                                      mswd_sig_figs=op.mswd_sig_figs,
+                                      sig_figs=op.plateau_sig_figs)
 
         sample = ag.sample
         identifier = ag.identifier
@@ -476,12 +478,12 @@ class Spectrum(BaseArArFigure):
 
         text = '{}Plateau= {}'.format(fixed, text)
 
-        if self.options.include_plateau_sample:
-            if self.options.include_plateau_identifier:
+        if op.include_plateau_sample:
+            if op.include_plateau_identifier:
                 text = u'{}({}) {}'.format(sample, identifier, text)
             else:
                 text = u'{} {}'.format(sample, text)
-        elif self.options.include_plateau_identifier:
+        elif op.include_plateau_identifier:
             text = u'{} {}'.format(identifier, text)
 
         return text
@@ -497,6 +499,7 @@ class Spectrum(BaseArArFigure):
         text = self._build_label_text(nominal_value(a),
                                       std_dev(a) * op.nsigma, n,
                                       mswd_args=mswd_args,
+                                      mswd_sig_figs=op.mswd_sig_figs,
                                       sig_figs=op.weighted_mean_sig_figs,
                                       total_n=ag.total_n)
         text = u'Weighted Mean= {}'.format(text)

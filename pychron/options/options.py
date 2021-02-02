@@ -41,7 +41,7 @@ from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.layout import FigureLayout
 from pychron.processing.j_error_mixin import JErrorMixin
-from pychron.pychron_constants import NULL_STR, ERROR_TYPES, FONTS, SIZES
+from pychron.pychron_constants import NULL_STR, ERROR_TYPES, FONTS, SIZES, SIG_FIGS
 
 
 def importklass(klass):
@@ -778,6 +778,8 @@ class AgeOptions(AuxPlotFigureOptions, JErrorMixin):
     inset_y_bounds = Property
     inset_ymin = Float
     inset_ymax = Float
+
+    mswd_sig_figs = Enum(*SIG_FIGS)
 
     def make_legend_key(self, ident, sample):
         key = ident

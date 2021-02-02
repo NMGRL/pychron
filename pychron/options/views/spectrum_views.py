@@ -100,6 +100,7 @@ class DisplaySubOptions(TitleSubOptions):
                            label='Labels')
 
         age_grp = HGroup(Item('nsigma', tooltip='NSigma to display for Plateau and Integrated ages'),
+                         Item('mswd_sig_figs', label='MSWD SigFIgs'),
                          show_border=True,
                          label='Age Info')
 
