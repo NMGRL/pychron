@@ -272,7 +272,7 @@ class ExperimentFactoryPane(TraitsDockPane):
                                                    label='Path'),
 
                                   icon_button_editor(run_factory_name('edit_conditionals_button'), 'table_edit',
-                                                     enabled_when=run_factory_name('conditionals_path'),
+                                                     # enabled_when=run_factory_name('conditionals_path_enabled'),
                                                      tooltip='Edit the selected conditionals file'),
                                   icon_button_editor(run_factory_name('new_conditionals_button'), 'table_add',
                                                      tooltip='Add a new conditionals file. Duplicated currently '

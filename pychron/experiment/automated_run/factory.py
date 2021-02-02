@@ -1456,11 +1456,14 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             self.conditionals_path = os.path.splitext(name)[0]
 
     def _edit_conditionals_button_fired(self):
-        edit_conditionals(self.conditionals_path,
-                          root=paths.conditionals_dir,
-                          title='Edit Run Conditionals',
-                          kinds=('actions', 'cancelations', 'terminations', 'truncations'))
-        self.load_conditionals()
+        if self.conditionals_path and self.conditionals_path!=NULL_STR:
+            edit_conditionals(self.conditionals_path,
+                              root=paths.conditionals_dir,
+                              title='Edit Run Conditionals',
+                              kinds=('actions', 'cancelations', 'terminations', 'truncations'))
+            self.load_conditionals()
+        else:
+            self.information_dialog('Please select conditionals to edit')
 
     @on_trait_change('trunc_+, conditionals_path, apply_conditionals_button')
     def _handle_conditionals(self, obj, name, old, new):

@@ -262,17 +262,25 @@ class AutomatedRunConditional(BaseConditional):
         return {'teststr': self._teststr, 'context': self.value_context, 'hash_id': hash_id}
 
     def _should_check(self, run, data, cnt):
-        if self.analysis_types:
-            # check if checking should be done on this run based on analysis_type
-            atype = run.spec.analysis_type.lower()
-            if atype.startswith('blank'):
-                if 'blank' not in self.analysis_types:
+        if self.active:
+            if self.analysis_types:
+                # check if checking should be done on this run based on analysis_type
+                atype = run.spec.analysis_type.lower()
+
+                self.debug('analysis_type={}, target_types={}'.format(atype, self.analysis_types))
+                should = False
+                for target_type in self.analysis_types:
+                    if target_type.lower() == 'blank':
+                        if atype.startswith('blank'):
+                            should = True
+                            break
+
+                if not should:
                     return
-            else:
+
                 if atype not in self.analysis_types:
                     return
 
-        if self.active:
             if isinstance(cnt, bool):
                 return cnt
             else:

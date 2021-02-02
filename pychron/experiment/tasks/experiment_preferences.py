@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Str, Int, \
     Bool, Password, Color, Property, Float, Enum
@@ -26,7 +24,7 @@ from pychron.core.pychron_traits import PositiveInteger, PositiveFloat
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper, BaseConsolePreferences, \
     BaseConsolePreferencesPane
-from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES, XE, NE, KR, HE, AR_AR
+from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES, XE, NE, KR, HE, AR_AR, GENERIC
 
 
 class ExperimentPreferences(BasePreferencesHelper):
