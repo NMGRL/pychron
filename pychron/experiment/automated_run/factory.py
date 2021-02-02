@@ -746,8 +746,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 self.labnumber = self.labnumber.replace('##', str(mod))
 
     def _clear_labnumber(self):
-        self.debug('clear labnumber')
         if not self._no_clear_labnumber:
+            self.debug('clear labnumber')
             self.labnumber = ''
             self.display_irradiation = ''
             self.sample = ''
@@ -930,10 +930,12 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                     self.debug('cache={}'.format(d))
 
             if self.mode != SIMPLE:
+                self._no_clear_labnumber = True
                 self.selected_irradiation = LINE_STR
                 self.selected_irradiation = d['irradiation']
                 self.selected_level = d['irradiation_level']
                 self.irrad_hole = d['irradiation_position']
+                self._no_clear_labnumber = False
 
             if self.use_project_based_repository_identifier:
                 ipp = self.irradiation_project_prefix
@@ -1563,13 +1565,16 @@ post_equilibration_script:name''')
             self.sample = ''
 
     def _project_changed(self):
+        self.debug('project changed')
         self._clear_labnumber()
 
     def _selected_irradiation_changed(self):
+        self.debug('irradiation changed')
         self._clear_labnumber()
         self.selected_level = 'Level'
 
     def _selected_level_changed(self):
+        self.debug('level changed')
         self._clear_labnumber()
 
     def _special_labnumber_changed(self):
