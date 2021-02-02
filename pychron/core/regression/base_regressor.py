@@ -475,7 +475,10 @@ class BaseRegressor(HasTraits):
 
     def _clean_array(self, v):
         exc = self.get_excluded()
-        return delete(v, list(exc), 0)
+        try:
+            return delete(v, list(exc), 0)
+        except IndexError:
+            return v
 
     def _check_integrity(self, x, y, verbose=False):
         nx, ny = len(x), len(y)
