@@ -30,9 +30,11 @@ class DVCConnectionItem(ConnectionFavoriteItem):
     organization = Str
     meta_repo_name = Str
     meta_repo_dir = Str
+    repository_root = Str
     attributes = ('name', 'kind', 'username', 'host',
                   'dbname', 'password', 'enabled', 'default', 'path',
-                  'organization', 'meta_repo_name', 'meta_repo_dir', 'timeout')
+                  'organization', 'meta_repo_name', 'meta_repo_dir', 'timeout',
+                  'repository_root')
 
     def __init__(self, schema_identifier='', attrs=None, load_names=False):
         super(ConnectionFavoriteItem, self).__init__()
@@ -50,10 +52,16 @@ class DVCConnectionItem(ConnectionFavoriteItem):
                      self.password, enabled, default, self.path, self.organization,
                      self.meta_repo_name, self.meta_repo_dir) = attrs
                 except ValueError:
-                    (self.name, self.kind, self.username, self.host, self.dbname,
-                     self.password, enabled, default, self.path, self.organization,
-                     self.meta_repo_name, self.meta_repo_dir, timeout) = attrs
-                    self.timeout = int(timeout)
+                    try:
+                        (self.name, self.kind, self.username, self.host, self.dbname,
+                         self.password, enabled, default, self.path, self.organization,
+                         self.meta_repo_name, self.meta_repo_dir, timeout) = attrs
+                        self.timeout = int(timeout)
+                    except ValueError:
+                        (self.name, self.kind, self.username, self.host, self.dbname,
+                         self.password, enabled, default, self.path, self.organization,
+                         self.meta_repo_name, self.meta_repo_dir, timeout, self.repository_root) = attrs
+                        self.timeout = int(timeout)
 
             self.enabled = to_bool(enabled)
             self.default = to_bool(default)
@@ -74,8 +82,9 @@ class DVCConnectionPreferencesPane(ConnectionPreferencesPane):
 
     def traits_view(self):
         ev = View(Item('organization'),
-                  Item('meta_repo_name'),
-                  Item('meta_repo_dir'))
+                  Item('meta_repo_name', label='MetaData Name'),
+                  Item('meta_repo_dir', label='MetaData Directory'),
+                  Item('repository_root', label='Repository Directory'))
         fav_grp = self.get_fav_group(edit_view=ev)
 
         return View(fav_grp)

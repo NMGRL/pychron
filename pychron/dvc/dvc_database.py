@@ -1888,7 +1888,7 @@ class DVCDatabase(DatabaseAdapter):
 
     def get_last_identifiers(self, sample=None, limit=1000, excludes=None):
         with self.session_ctx() as sess:
-            q = sess.query(IrradiationPositionTbl)
+            q = sess.query(IrradiationPositionTbl.identifier)
             if sample:
                 q = q.join(SampleTbl)
                 q = q.filter(SampleTbl.name == sample)
@@ -1900,7 +1900,7 @@ class DVCDatabase(DatabaseAdapter):
             q = q.filter(IrradiationPositionTbl.identifier.isnot(None))
             q = q.order_by(func.abs(IrradiationPositionTbl.identifier).desc())
             q = q.limit(limit)
-            return [ni.identifier for ni in self._query_all(q)]
+            return [ni[0] for ni in self._query_all(q)]
 
     def get_load_names(self, *args, **kw):
         with self.session_ctx():

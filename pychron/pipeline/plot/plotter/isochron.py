@@ -201,7 +201,10 @@ class InverseIsochron(Isochron):
             self.analysis_group.do_omit_non_plateau()
 
         for pid, (plotobj, po) in enumerate(zip(graph.plots, plots)):
-            getattr(self, '_plot_{}'.format(po.plot_name))(po, plotobj, pid)
+            plot_name = po.plot_name
+            if not plot_name:
+                continue
+            getattr(self, '_plot_{}'.format(plot_name))(po, plotobj, pid)
 
     # ===============================================================================
     # plotters

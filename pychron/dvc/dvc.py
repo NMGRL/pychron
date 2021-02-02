@@ -590,8 +590,11 @@ class DVC(Loggable):
         for expid, ais in groupby_repo(ans):
             ps = [analysis_path(x, x.repository_identifier, modifier=modifier) for x in ais for modifier in modifiers]
             if self.repository_add_paths(expid, ps):
-                self.repository_commit(expid, msg)
-                mod_repositories.append(expid)
+                if self.repository_commit(expid, msg):
+                    mod_repositories.append(expid)
+                else:
+                    self.warning_dialog('There is an issue with your repository. {}. Please fix it before '
+                                        'trying to save any changes'.format(expid))
         return mod_repositories
 
     def update_tag(self, an, add=True, **kw):
@@ -614,13 +617,13 @@ class DVC(Loggable):
 
             self._update_current_age(ai)
 
-    def save_icfactors(self, ai, dets, fits, refs, use_source_correction):
+    def save_icfactors(self, ai, dets, fits, refs, use_source_correction, standard_ratios):
         if use_source_correction:
             ai.dump_source_correction_icfactors(refs)
         else:
             if fits and dets:
                 self.info('Saving icfactors for {}'.format(ai))
-                ai.dump_icfactors(dets, fits, refs, reviewed=True)
+                ai.dump_icfactors(dets, fits, refs, reviewed=True, standard_ratios=standard_ratios)
 
         if self._cache:
             self._cache.remove(ai.uiid)
@@ -725,6 +728,9 @@ class DVC(Loggable):
                 repo.commit('<CSV> {} dataset "{}"'.format('Modified' if exists else 'Added', name))
 
         return p
+
+    def save_cosmogenic_correction(self, ai):
+        ai.dump_cosmogenic()
 
     def remove_irradiation_position(self, irradiation, level, hole):
         db = self.db
@@ -996,7 +1002,7 @@ class DVC(Loggable):
     def repository_commit(self, repository, msg):
         self.debug('Repository commit: {} msg: {}'.format(repository, msg))
         repo = self._get_repository(repository)
-        repo.commit(msg)
+        return repo.commit(msg)
 
     def remote_repositories(self):
         rs = []
@@ -1678,13 +1684,9 @@ class DVC(Loggable):
             try:
                 a = DVCAnalysis(uuid, rid, expid)
             except AnalysisNotAnvailableError:
-
-                try:
-                    a = DVCAnalysis(uuid, rid, expid)
-                except AnalysisNotAnvailableError:
-                    self.warning_dialog('Analysis {} not in repository {}. '
-                                        'You many need to pull changes'.format(rid, expid))
-                    return
+                self.warning_dialog('Analysis {} not in repository {}. '
+                                    'You many need to pull changes'.format(rid, expid))
+                return
 
             a.group_id = record.group_id
             a.set_tag(record.tag)
@@ -1810,6 +1812,7 @@ class DVC(Loggable):
         bind_preference(self, 'favorites', '{}.favorites'.format(prefid))
         self._favorites_changed(self.favorites)
         self._set_meta_repo_name()
+        self._repository_root_changed()
 
         prefid = 'pychron.dvc'
         bind_preference(self, 'use_cocktail_irradiation', '{}.use_cocktail_irradiation'.format(prefid))
@@ -1859,10 +1862,15 @@ class DVC(Loggable):
             self.organization = new.organization
             self.meta_repo_name = new.meta_repo_name
             self.meta_repo_dirname = new.meta_repo_dir
+            self.repository_root = new.repository_root
             self.db.reset_connection()
             if old:
                 self.db.connect()
                 self.db.create_session()
+
+    def _repository_root_changed(self):
+        if self.repository_root:
+            paths.repository_dataset_dir = os.path.join(paths.dvc_dir, self.repository_root)
 
     def _meta_repo_dirname_changed(self):
         self._set_meta_repo_name()

@@ -178,6 +178,7 @@ class Commit(object):
     root_generation = 0
 
     __slots__ = ('oid',
+                 'hexsha',
                  'summary',
                  'parents',
                  'children',
@@ -195,6 +196,7 @@ class Commit(object):
         super(Commit, self).__init__()
 
         self.oid = oid
+        self.hexsha = oid
         self.summary = ''
         self.parents = []
         self.children = []
@@ -213,7 +215,7 @@ class Commit(object):
     def parse(self, log_entry, sep=logsep):
 
         oid, authdate, rauthdate, summary, author, email, tags, parents = log_entry.split(sep)
-
+        self.hexsha = oid
         self.oid = oid[:40]
         self.summary = summary if summary else ''
         self.author = author if author else ''

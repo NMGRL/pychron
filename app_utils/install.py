@@ -127,8 +127,8 @@ def ask_config():
               'github_token': '',
               'massspec_db_version': 16,
               'fork': 'NMGRL',
-              'branch': 'develop',
-              'app_name': 'pyexperiment',
+              'branch': 'dev/dr',
+              'app_name': 'pycrunch',
               'qt_bindings': 'pyqt=5',
               'qt_api': 'pyqt5',
               'use_all_defaults': 'no',
@@ -139,7 +139,9 @@ def ask_config():
               'conda_distro': distro,
               'conda_env_name': 'pychron3',
               'update_db': 0,
-              'alembic_url': 'mysql+pymysql://<user>:<pwd>@<host>/<db>'}
+              'alembic_url': 'mysql+pymysql://<user>:<pwd>@<host>/<db>',
+              'install_gis_plugin': False
+              }
 
     ask(config, 'use_all_defaults', 'Use all defaults')
     if config['use_all_defaults'] not in YES:
@@ -162,6 +164,7 @@ def ask_config():
         ask(config, 'conda_distro', 'Conda Distro Path')
         ask(config, 'conda_env_name', 'Conda environment name')
         ask(config, 'update_db', 'Update Database automatically')
+        ask(config, 'install_gis_plugin', 'Install GIS Plugin')
         if config['update_db'] in YES:
             ask(config, 'alembic_url', 'Database URL')
         else:
@@ -172,12 +175,20 @@ def ask_config():
     for k, v in config.items():
         print('{:<20s}: {}'.format(k, v))
 
-    config['pip_requirements'] = 'uncertainties peakutils qimage2ndarray chaco'
+    config['pip_requirements'] = 'uncertainties peakutils qimage2ndarray'
+    config['pip_git_requirements'] = ['git+https://github.com/enthought/chaco.git#egg=chaco',
+                                      'git+https://github.com/enthought/enable.git#egg=enable']
+
     creq = 'pip qt numpy statsmodels scikit-learn PyYAML yaml traitsui envisage sqlalchemy ' \
            'Reportlab lxml xlrd xlwt xlsxwriter requests keyring pillow gitpython cython pytables ' \
-           'pymysql certifi jinja2 swig=3 {}'.format(config['qt_bindings'])
+            'pyproj pymysql certifi jinja2 swig {}'.format(config['qt_bindings'])
+
     if IS_MAC:
-        creq = '{}\npython.app'.format(creq)
+        creq = '{} python.app'.format(creq)
+
+    if config['install_gis_plugin']:
+        creq = '{} '.format('qgis')
+
 
     config['conda_requirements'] = creq
 
@@ -230,16 +241,19 @@ def install_conda(cfg):
     # create env
     env_name = cfg['conda_env_name']
     subprocess.call(['conda', 'create', '-n', env_name, '--yes', 'python=3.7'])
-    # subprocess.call(['conda', 'activate', cfg['conda_env_name']])
 
     # install deps
     subprocess.call(['conda', 'install', '--yes',
                      '--name', env_name] + cfg['conda_requirements'].split(' '))
 
     if IS_MAC:
+        subprocess.call(['conda', 'activate', cfg['conda_env_name']])
         # install pip deps
-        pip_path = os.path.join(cfg['conda_distro'], 'envs', env_name, 'bin', 'pip')
+        # pip_path = os.path.join(cfg['conda_distro'], 'envs', env_name, 'bin', 'pip')
+        pip_path = 'pip'
         subprocess.call([pip_path, 'install'] + cfg['pip_requirements'].split(' '))
+        for r in cfg['pip_git_requirements']:
+            subprocess.call([pip_path, 'install', '-e', r])
     else:
         print('WARNING!!!! Installing PIP dependencies on Windows currently not available. Please consult Pychron '
               'documentation or contact Pychron Labs for further instructions')
@@ -283,8 +297,9 @@ export QT_API={qt_api:}
 export PYCHRON_APPNAME={app_name:}
 export PYCHRON_DATABASE_UPDATE={update_db:}
 export PYCHRON_ALEMBIC_URL={alembic_url:}
+export PYCHRON_USE_LOGIN=0
 
-ROOT=${pychron_path:}
+ROOT={pychron_path:}
 export PYTHONPATH=$ROOT
 
 {conda_distro:}/envs/{conda_env_name:}/bin/pythonw $ROOT/launchers/launcher.py

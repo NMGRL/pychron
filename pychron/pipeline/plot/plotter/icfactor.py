@@ -77,22 +77,25 @@ class ICFactor(ReferencesSeries):
         n, d = iso.split('/')
 
         is_peak_hop = False
-        for ai in ans:
+        for ai in self.references:
             dets = ai.detectors()
+            
+            print('dets', dets, len(dets) , len(set(dets)))
             # a detector is used more than once
             if len(dets) > len(set(dets)):
                 is_peak_hop = True
                 break
-
+                
+        print('---------------- ispeakhop', is_peak_hop)
         for ui, v, e in zip(ans, p_uys, p_ues):
             if v is not None and e is not None:
                 if self.options.use_source_correction:
                     # this is all hard coded stuff and would need to be
                     # made much more configurable in the future
+                    # see comment in `set_beta`
                     m40 = 39.9624
                     m36 = 35.9675
                     ic = 1 / ufloat(v, e)
-                    # ic = ufloat(v, e)
                     beta = umath.log(ic) / umath.log(m40 / m36)
                     ui.set_beta(beta, is_peak_hop)
                 else:

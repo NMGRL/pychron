@@ -209,7 +209,7 @@ class ICFactorPersistNode(DVCPersistNode):
             self.dvc.delete_existing_icfactors(ai, state.saveable_keys)
 
         self.dvc.save_icfactors(ai, state.saveable_keys, state.saveable_fits,
-                                state.references, state.use_source_correction)
+                                state.references, state.use_source_correction, state.standard_ratios)
 
 
 class FluxPersistNode(DVCPersistNode):
@@ -343,6 +343,13 @@ class InterpretedAgePersistNode(BaseDVCNode):
                 for ia in e.groups:
                     if ia.use:
                         dvc.add_interpreted_age(ia)
+
+
+class CosmogenicCorrectionPersistNode(DVCPersistNode):
+    name = 'Save Cosmogenic Correction'
+
+    def run(self, state):
+        self.dvc.save_cosmogenic_correction(state.unknowns)
 
 # class TablePersistNode(FileNode):
 #     pass

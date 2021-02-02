@@ -96,7 +96,6 @@ class FigureEditor(GraphEditor):
             self.figure_container.model_changed()
 
         self._get_component_hook(model)
-
         return self.figure_container.component
 
     def _figure_model_factory(self):

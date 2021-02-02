@@ -180,7 +180,7 @@ def _analysis_path(runid, repository, modifier=None, extension='.json', mode='r'
                 sublen = 5
     try:
         root, tail = subdirize(root, runid, sublen=sublen, mode=mode)
-    except TypeError:
+    except TypeError as e:
         raise AnalysisNotAnvailableError(root, runid)
 
     if modifier:

@@ -326,6 +326,14 @@ nodes:
   - klass: FluxPersistNode
 """
 
+COSMOGENIC = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: CosmogenicCorrectionNode
+  - klass: CosmogenicCorrectionPersistNode
+"""
+
 CSV_ANALYSES_EXPORT = """
 required:
 nodes:

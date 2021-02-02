@@ -69,8 +69,12 @@ class GroupingNode(BaseNode):
                 key = 'group'
             elif key == 'Label Name':
                 key = 'label_name'
-
+            else:
+                key = self._generate_key_hook(key)
             return attrgetter(key.lower())
+
+    def _generate_key_hook(self, key):
+        return key
 
     def run(self, state):
         self._run(state)

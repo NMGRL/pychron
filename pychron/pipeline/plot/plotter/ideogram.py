@@ -172,7 +172,6 @@ class Ideogram(BaseArArFigure):
         selection = self.analysis_group.get_omitted_by_tag(self.sorted_analyses)
         # else:
         #     selection = []
-
         for pid, (plotobj, po) in enumerate(zip(graph.plots, plots)):
             # plotobj.group_id = self.group_id
             # print(id(plotobj), plotobj.group_id)
@@ -180,8 +179,12 @@ class Ideogram(BaseArArFigure):
             if self.options.reverse_x_axis:
                 plotobj.default_origin = 'bottom right'
 
+            plot_name = po.plot_name
+            if not plot_name:
+                continue
+
             try:
-                args = getattr(self, '_plot_{}'.format(po.plot_name))(po, plotobj, pid)
+                args = getattr(self, '_plot_{}'.format(plot_name))(po, plotobj, pid)
             except AttributeError:
                 import traceback
 
