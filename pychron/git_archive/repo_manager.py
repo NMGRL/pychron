@@ -721,7 +721,8 @@ class GitRepoManager(Loggable):
             def merge():
                 try:
                     repo.git.merge('FETCH_HEAD')
-                except GitCommandError:
+                except GitCommandError as e:
+                    self.critical('Pull-merge FETCH_HEAD={}'.format(e))
                     self.smart_pull(branch=branch, remote=remote)
 
             if not use_auto_pull:
@@ -807,10 +808,11 @@ class GitRepoManager(Loggable):
 
                     # do merge
                     try:
-                        repo.git.rebase('--preserve-merges', '{}/{}'.format(remote, branch))
+                        # repo.git.rebase('--preserve-merges', '{}/{}'.format(remote, branch))
+                        repo.git.merge('{}/{}'.format(remote, branch))
                     except GitCommandError:
                         try:
-                            repo.git.rebase('--abort')
+                            repo.git.merge('--abort')
                         except GitCommandError:
                             pass
 

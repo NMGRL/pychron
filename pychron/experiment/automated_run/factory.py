@@ -259,8 +259,6 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                    'use_simple_truncation', 'conditionals_path',
                    'use_project_based_repository_identifier', 'delay_after')
 
-    suppress_meta = False
-
     use_name_prefix = Bool
     name_prefix = Str
     # ===========================================================================
@@ -509,6 +507,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 irrad_level = ''
 
             self._no_clear_labnumber = True
+            self.selected_irradiation = LINE_STR
             self.selected_irradiation = irradname
             self.selected_level = irrad_level
             self._no_clear_labnumber = False
@@ -920,9 +919,6 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         if '-##-' in labnumber:
             return True
 
-        if self.suppress_meta:
-            return True
-
         if labnumber in self._meta_cache:
             self.debug('using cached meta values for {}'.format(labnumber))
             d = self._meta_cache[labnumber]
@@ -934,6 +930,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                     self.debug('cache={}'.format(d))
 
             if self.mode != SIMPLE:
+                self.selected_irradiation = LINE_STR
                 self.selected_irradiation = d['irradiation']
                 self.selected_level = d['irradiation_level']
                 self.irrad_hole = d['irradiation_position']
@@ -1252,7 +1249,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
         identifier = self.labnumber
 
-        if not (self.suppress_meta or '-##-' in identifier):
+        if '-##-' not in identifier:
             if identifier and self.irrad_hole:
                 j = self.dvc.get_flux(self.selected_irradiation, self.selected_level, int(self.irrad_hole)) or 0
                 if attr == 'err':
@@ -1591,6 +1588,7 @@ post_equilibration_script:name''')
                             edname = ''.join([x[0].capitalize() for x in ed.split(' ')])
                         ln = make_special_identifier(ln, edname, msname)
 
+                self._labnumber_changed(self.labnumber, ln)
                 self.labnumber = ln
 
             self._frequency_enabled = True

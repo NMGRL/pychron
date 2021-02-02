@@ -24,6 +24,7 @@ from pychron.experiment.automated_run.factory_view import FactoryView
 
 class CryoFactoryView(FactoryView):
     model = Instance('pychron.experiment.automated_run.cryo.factory.CryoAutomatedRunFactory')
+
     def _get_group(self):
         post_measurement_group = BorderVGroup(Item('delay_after'), label='Post Measurement')
         return post_measurement_group

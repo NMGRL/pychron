@@ -35,7 +35,7 @@ from pychron.core.helpers.filetools import add_extension, get_path, unique_path2
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.helpers.logger_setup import add_root_handler, remove_root_handler
 from pychron.core.progress import open_progress
-from pychron.core.stats import calculate_weighted_mean
+from pychron.core.stats import calculate_weighted_mean, calculate_mswd
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.wait.wait_group import WaitGroup
 from pychron.core.yaml import yload
@@ -1379,6 +1379,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             nominal_ratio = check.get('nominal_ratio')
             nanalyses = check['nanalyses'] + 1
             pthreshold = check.get('percent_threshold', 0)
+            mswd_threshold = check.get('mswd_threshold', 0)
+            send_email_only = check.get('send_email_only', False)
 
             if not threshold and not nsigma:
                 self.warning('invalid ratio change check. need to specify either threshold or nsigma')
@@ -1429,7 +1431,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     xs = [nominal_value(ri[2]) for ri in ratios[:-1]]
                     es = [std_dev(ri[2]) for ri in ratios[:-1]]
                     wm, werr = calculate_weighted_mean(xs, es)
-
+                    mswd = calculate_mswd(xs, es, wm=wm)
                     cur = nominal_value(ratios[-1][2])
                     dev = abs(wm - cur)
                     if pthreshold:
@@ -1438,7 +1440,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
                     if not threshold:
                         threshold = nsigma * werr
-                    msg = 'wm={}+/-{}, cur={}, dev={}, threshold={}'.format(wm, werr, cur, dev, threshold)
+
+                    if mswd_threshold:
+                        threshold = mswd_threshold
+                        dev = mswd
+                    msg = 'wm={}+/-{}, mswd={}, cur={}, dev={}, threshold={}'.format(wm, werr, mswd, cur, dev,
+                                                                                     threshold)
                 else:
                     return
 
@@ -1453,9 +1460,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 msg = 'Ratio change detected. {}, Total failures={}/{}'.format(msg, fc, failure_cnt)
                 self.debug(msg)
                 if fc >= failure_cnt:
-                    self._err_message = msg
-                    invoke_in_main_thread(self.warning_dialog, msg)
-                    return True
+                    if send_email_only:
+                        pass
+                    else:
+                        self._err_message = msg
+                        invoke_in_main_thread(self.warning_dialog, msg)
+                        return True
             else:
                 if consecutive_failure:
                     self._failure_counts[atype] = 0

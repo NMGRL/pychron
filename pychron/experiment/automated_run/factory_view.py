@@ -39,7 +39,7 @@ Examples:
 10. 1.0,2.0 (goto the point defined by x,y[,z]. Use ";" to treat multiple points as one analysis e.g 1.0,2.0;3.0,4.0)
 '''
 
-PATTERN_TOOLTIP = 'Select a pattern from Remote or Local Patterns. \
+PATTERN_TOOLTIP = 'Please select a pattern from Remote or Local Patterns. \
 If unsure from which group to choice use a "Remote" pattern'
 
 
@@ -54,21 +54,18 @@ class FactoryView(HasTraits):
         return v
 
     def _get_group(self):
-        sspring = lambda width=17: Spring(springy=False, width=width)
-
-        egrp = BorderVGroup(
-            HGroup(sspring(width=33),
-                   Item(EXTRACT_VALUE, label='Extract',
-                        tooltip='Set the extract value in extract units',
-                        enabled_when='extractable'),
-                   Item(EXTRACT_UNITS,
-                        show_label=False,
-                        editor=myEnumEditor(name='extract_units_names')),
-                   Item(RAMP_DURATION, label='Ramp Dur. (s)'), ),
-            Item(DURATION, label='Extract Duration (s)',
-                 tooltip='Set the number of seconds to run the extraction device.'),
-            Item(BEAM_DIAMETER),
-            label='')
+        egrp = BorderVGroup(HGroup(Spring(springy=False, width=33),
+                                   Item(EXTRACT_VALUE, label='Extract',
+                                        tooltip='Set the extract value in extract units',
+                                        enabled_when='extractable'),
+                                   Item(EXTRACT_UNITS,
+                                        show_label=False,
+                                        editor=myEnumEditor(name='extract_units_names')),
+                                   Item(RAMP_DURATION, label='Ramp Dur. (s)'), ),
+                            Item(DURATION, label='Extract Duration (s)',
+                                 tooltip='Set the number of seconds to run the extraction device.'),
+                            Item(BEAM_DIAMETER),
+                            label='Fusion')
 
         extract_grp = BorderVGroup(egrp,
                                    self._step_heat_group(),
