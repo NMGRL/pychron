@@ -373,8 +373,10 @@ class DataCollector(Consoleable):
                 return ti
 
     def _modification_func(self, tr):
-        queue = self.automated_run.experiment_executor.experiment_queue
-        tr.do_modifications(queue, self.automated_run)
+        run = self.automated_run
+        ex = run.experiment_executor
+        queue = ex.experiment_queue
+        tr.do_modifications(run, ex, queue)
 
         self.measurement_script.abbreviated_count_ratio = tr.abbreviated_count_ratio
         if tr.use_truncation:
