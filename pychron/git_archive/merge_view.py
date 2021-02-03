@@ -15,14 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 import os
 
 from traits.api import HasTraits, Button, Str, Any, List
 from traitsui.api import View, UItem, HGroup, VGroup, Controller, TabularEditor
-
-
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.editors import TextEditor
@@ -67,12 +63,6 @@ class MergeModel(HasTraits):
 
         self.our_text = ''.join(ourtext)
         self.their_text = ''.join(theirtext)
-
-        # return
-        # cc = repo.rev_parse(ourhexsha)
-        # self.left_text = cc.data_stream.read()
-        # cc = repo.rev_parse(theirhexsha)
-        # self.right_text = cc.data_stream.read()
 
     def accept_their(self, fl=None):
         self._merge_accept(fl, 'theirs')

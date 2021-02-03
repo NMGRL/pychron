@@ -427,7 +427,7 @@ class GitRepoManager(Loggable):
         return a.diff(b, **kw)
 
     def diff(self, a, b, *args):
-        return self._git_command(lambda g: g.diff(a,b, *args), 'diff')
+        return self._git_command(lambda g: g.diff(a, b, *args), 'diff')
 
     def status(self):
         return self._git_command(lambda g: g.status(), 'status')
@@ -795,14 +795,18 @@ class GitRepoManager(Loggable):
                         return
 
                 # check for unresolved conflicts
-                self._resolve_conflicts(branch, remote, accept_our, accept_their, True)
+                # self._resolve_conflicts(branch, remote, accept_our, accept_their, True)
+                try:
+                    repo.git.merge('--abort')
+                except GitCommandError:
+                    pass
 
                 # potentially conflicts
                 with StashCTX(repo) as error:
                     if error:
                         self.warning_dialog('Failed stashing your local changes. '
                                             'Fix repository {} '
-                                            'before proceeding. {}'.format(os.path.basename(repo.path), error))
+                                            'before proceeding. {}'.format(os.path.basename(repo.working_dir), error))
 
                         return
 
@@ -811,13 +815,14 @@ class GitRepoManager(Loggable):
                         # repo.git.rebase('--preserve-merges', '{}/{}'.format(remote, branch))
                         repo.git.merge('{}/{}'.format(remote, branch))
                     except GitCommandError:
-                        try:
-                            repo.git.merge('--abort')
-                        except GitCommandError:
-                            pass
+                        if self.confirmation_dialog('There appears to be a conflict with {}.'
+                                                    '\n\nWould you like to accept the master copy. Otherwise '
+                                                    'you will need to merge the changes manually'.format(self.name)):
+                            try:
+                                repo.git.merge('--abort')
+                            except GitCommandError:
+                                pass
 
-                        if self.confirmation_dialog('There appears to be a problem with {}.'
-                                                                            '\n\nWould you like to accept the master copy'.format(self.name)):
                             try:
                                 repo.git.pull('-X', 'theirs', '--commit', '--no-edit')
                                 return True
@@ -842,45 +847,7 @@ You like to delete them and try again?'''.format(clean)):
                                 else:
                                     self.warning_dialog('Failed pulling changes for {}'.format(self.name))
                                 return
-
-                        else:
-                            self._resolve_conflicts(branch, remote, accept_our, accept_their, quiet)
-
-                        # try:
-                        #     repo.git.merge('--abort')
-                        # except GitCommandError:
-                        #     pass
-#
-#                         if self.confirmation_dialog('There appears to be a problem with {}.'
-#                                                     '\n\nWould you like to accept the master copy'.format(self.name)):
-#
-#                             try:
-#                                 repo.git.pull('-X', 'theirs', '--commit', '--no-edit')
-#                                 return True
-#                             except GitCommandError:
-#                                 clean = repo.git.clean('-n')
-#                                 if clean:
-#                                     if self.confirmation_dialog('''You have untracked files that could be an issue.
-# {}
-#
-# You like to delete them and try again?'''.format(clean)):
-#                                         try:
-#                                             repo.git.clean('-fd')
-#                                         except GitCommandError:
-#                                             self.warning_dialog('Failed to clean repository')
-#                                             return
-#
-#                                         try:
-#                                             repo.git.pull('-X', 'theirs', '--commit', '--no-edit')
-#                                             return True
-#                                         except GitCommandError:
-#                                             self.warning_dialog('Failed pulling changes for {}'.format(self.name))
-#                                 else:
-#                                     self.warning_dialog('Failed pulling changes for {}'.format(self.name))
-#                                 return
-#                         else:
-#                             return
-#                 self._resolve_conflicts(branch, remote, accept_our, accept_their, quiet)
+                self._resolve_conflicts(branch, remote, accept_our, accept_their, quiet)
             else:
                 self.debug('merging {} commits'.format(behind))
                 self._git_command(lambda g: g.merge('FETCH_HEAD'), 'GitRepoManager.smart_pull/!ahead')

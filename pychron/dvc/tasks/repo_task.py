@@ -171,30 +171,13 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
         self.o_local_repos = None
 
     def find_changes(self, names=None, remote='origin', branch='master'):
-        self.debug('find changes')
-
-        # def func(item, prog, i, n):
-
-        # def func(item, prog, i, n):
-        #     name = item.name
-        #     if prog:
-        #         prog.change_message('Examining: {}({}/{})'.format(name, i, n))
-        #     self.debug('examining {}'.format(name))
-        #     r = Repo(repository_path(name))
-        #     try:
-        #         r.git.fetch()
-        #         line = r.git.log('{}/{}..HEAD'.format(remote, branch), '--oneline')
-        #         item.dirty = bool(line)
-        #         item.update(fetch=False)
-        #     except GitCommandError as e:
-        #         self.warning('error examining {}. {}'.format(name, e))
+        self.debug('find changes. names={}'.format(names))
         if names:
             names = [n for n in self.local_names if n.name in names]
         else:
             names = self.selected_local_repositories
             if not names:
                 names = self.local_names
-
         self.dvc.find_changes(names, remote, branch)
 
         # progress_loader(names, func)
@@ -205,6 +188,7 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
 
     def pull(self):
         self._repo.smart_pull(quiet=False)
+        self.find_changes(names=[self.selected_local_repository_name.name])
 
     def push(self):
         if not self._repo.has_remote():

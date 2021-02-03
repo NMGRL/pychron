@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
-from traits.api import Property
+from traits.api import Property, Int
 from traitsui.api import View, UItem, VGroup, TabularEditor, EnumEditor, VSplit, Item, HSplit, HGroup, Tabbed
 from traitsui.editors import ListStrEditor
 from traitsui.tabular_adapter import TabularAdapter
@@ -68,6 +68,10 @@ class RepoAdapter(TabularAdapter):
     columns = [('Name', 'name'),
                ('Branch', 'active_branch'),
                ('Status (Ahead,Behind)', 'status')]
+
+    name_width = Int(180)
+    active_branch_width = Int(100)
+    status = Int(100)
 
     # name_text = Property
     # def _get_name_text(self):
@@ -125,6 +129,7 @@ class SelectionPane(TraitsDockPane):
                                                             selected='selected_local_repositories',
                                                             editable=False,
                                                             multi_select=True,
+                                                            stretch_last_section=False
                                                             )),
                                  label='Local')
 
