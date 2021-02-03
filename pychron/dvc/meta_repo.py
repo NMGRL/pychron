@@ -161,6 +161,7 @@ class MetaRepo(GitRepoManager):
         obj['positions'] = positions
 
         dvc_dump(obj, path)
+        self.add(path)
 
     def add_production_to_irradiation(self, irrad, name, params, add=True, commit=False):
         self.debug('adding production {} to irradiation={}'.format(name, irrad))

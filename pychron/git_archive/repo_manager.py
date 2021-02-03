@@ -791,7 +791,7 @@ class GitRepoManager(Loggable):
                 if not quiet:
                     if not self.confirmation_dialog('You are {} behind and {} commits ahead. '
                                                     'There are potential conflicts that you will have to resolve.'
-                                                    'Would you like to Continue?'.format(behind, ahead)):
+                                                    '\n\nWould you like to Continue?'.format(behind, ahead)):
                         return
 
                 # check for unresolved conflicts
@@ -816,8 +816,8 @@ class GitRepoManager(Loggable):
                         repo.git.merge('{}/{}'.format(remote, branch))
                     except GitCommandError:
                         if self.confirmation_dialog('There appears to be a conflict with {}.'
-                                                    '\n\nWould you like to accept the master copy. Otherwise '
-                                                    'you will need to merge the changes manually'.format(self.name)):
+                                                    '\n\nWould you like to accept the master copy (Yes).\n\nOtherwise '
+                                                    'you will need to merge the changes manually (No)'.format(self.name)):
                             try:
                                 repo.git.merge('--abort')
                             except GitCommandError:

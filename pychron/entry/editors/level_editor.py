@@ -246,10 +246,10 @@ class IrradiationLevelEditor(PackageLevelEditor):
                     self.dvc.meta_repo.update_level_production(self.irradiation, self.name, prname, self.level_note)
                 if self.selected_monitor:
                     self.dvc.meta_repo.update_level_monitor(self.irradiation,
-                                                        self.name,
-                                                        self.monitor_name, self.monitor_material,
-                                                        self.monitor_age,
-                                                        self.lambda_k)
+                                                            self.name,
+                                                            self.monitor_name, self.monitor_material,
+                                                            self.monitor_age,
+                                                            self.lambda_k)
 
                 if original_tray != self.selected_tray:
                     self._save_tray(level, original_tray)
@@ -262,7 +262,7 @@ class IrradiationLevelEditor(PackageLevelEditor):
         self.debug('changes {}'.format(changes))
         if changes:
             self.dvc.meta_repo.smart_pull()
-            # self.dvc.meta_repo.commit('Edited level {}'.format(self.name))
+            self.dvc.meta_repo.commit('Edited level {}'.format(self.name))
             # self.dvc.meta_repo.push()
             db.commit()
 
@@ -402,14 +402,14 @@ class IrradiationLevelEditor(PackageLevelEditor):
         self.dvc.meta_repo.add_level(self.irradiation, self.name)
         self.dvc.meta_repo.update_productions(self.irradiation, self.name, prname)
         self.dvc.meta_repo.add_production_to_irradiation(self.irradiation, prname,
-                                                     self.selected_production.get_params())
+                                                         self.selected_production.get_params())
 
         self.dvc.meta_repo.commit('Added level {} to {}'.format(self.name, self.irradiation))
 
         self._refresh_production()
         return True
 
-    def _save_production(self, name=None):
+    def _save_production(self, name=None, commit=True):
         prod = self.selected_production
         self.debug('Saving production={}, dirty={}, keywordname={}'.format(prod.name, prod.dirty, name))
         if prod.dirty or name:  # or prod.name.startswith('Global'):
@@ -423,15 +423,19 @@ class IrradiationLevelEditor(PackageLevelEditor):
             self.debug('saving production {}'.format(prname))
 
             self.dvc.meta_repo.add_production_to_irradiation(self.irradiation, prname,
-                                                         self.selected_production.get_params())
-            self.dvc.meta_repo.commit('Edited production {} for Irradiation {}'.format(prname, self.irradiation))
+                                                             self.selected_production.get_params())
+            if commit:
+                self.dvc.meta_repo.commit('Edited production {} for Irradiation {}'.format(prname, self.irradiation))
 
     def _add_production_button_fired(self):
         v = okcancel_view(Item('new_production_name', label='Name'), title='New Production')
         info = self.edit_traits(v)
         if info.result:
-            self._save_production(name=self.new_production_name)
+            name = self.new_production_name
+            self._save_production(name=name, commit=False)
+            self.dvc.meta_repo.commit('Added production {} for Irradiation {}'.format(name, self.irradiation))
             self._load_productions()
+            self.selected_production_name = name
 
     def _update_reactor_default_button_fired(self):
         self._update_reactor()
@@ -463,7 +467,7 @@ class IrradiationLevelEditor(PackageLevelEditor):
         if self.selected_reactor_name:
             prod = self.reactors[self.selected_reactor_name]
             self.dvc.meta_repo.add_production_to_irradiation(self.irradiation,
-                                                         self.selected_reactor_name, prod.get_params())
+                                                             self.selected_reactor_name, prod.get_params())
             self._load_productions(load_reactors=False)
 
         # dlg = FileDialog(action='open', default_directory=paths.irradiation_tray_maps_dir)
