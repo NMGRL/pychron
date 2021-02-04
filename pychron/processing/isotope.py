@@ -33,6 +33,7 @@ from pychron.core.helpers.fits import natural_name_fit, fit_to_degree
 from pychron.core.regression.least_squares_regressor import ExponentialRegressor, FitError, LeastSquaresRegressor
 from pychron.core.regression.mean_regressor import MeanRegressor
 from pychron.core.regression.ols_regressor import PolynomialRegressor
+from pychron.pychron_constants import AUTO_N
 
 
 def fit_abbreviation(fit, ):
@@ -344,7 +345,7 @@ class IsotopicMeasurement(BaseMeasurement):
             else:
 
                 fitname = fit.fit
-                if fitname == 'Auto':
+                if fitname == AUTO_N:
                     fitname = fit.auto_fit(self.n)
                 elif fitname == 'Custom':
                     fitname = 'custom:{}'.format(fit.fitfunc)
@@ -439,7 +440,6 @@ class IsotopicMeasurement(BaseMeasurement):
 
     def _regressor_factory(self, fit):
         lfit = fit.lower()
-
         reg = self._regressor
 
         if 'average' in lfit:
@@ -454,7 +454,7 @@ class IsotopicMeasurement(BaseMeasurement):
                 reg.construct_fitfunc(lfit)
         elif not isinstance(reg, PolynomialRegressor):
             reg = PolynomialRegressor()
-            reg.set_degree(fit_to_degree(fit), refresh=False)
+            reg.set_degree(fit, refresh=False)
 
         xs, ys = self.get_data()
         reg.trait_set(xs=xs, ys=ys,
@@ -465,6 +465,8 @@ class IsotopicMeasurement(BaseMeasurement):
         if self.truncate:
             reg.set_truncate(self.truncate)
         try:
+            fit = reg.determine_fit()
+            self.fit = fit
             reg.calculate()
         except FitError as e:
             reg = self._regressor_factory('average')

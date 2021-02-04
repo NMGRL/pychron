@@ -20,7 +20,7 @@ from traitsui.api import EnumEditor, Item, HGroup, UItem, View, VGroup, Tabbed
 
 from pychron.core.pychron_traits import BorderVGroup, BorderHGroup
 from pychron.options.options import AppearanceSubOptions, SubOptions, MainOptions, object_column, checkbox_column
-from pychron.pychron_constants import FIT_TYPES, FIT_ERROR_TYPES
+from pychron.pychron_constants import FIT_TYPES, FIT_ERROR_TYPES, AUTO_N, AUTO_LINEAR_PARABOLIC
 
 
 class IsoEvoSubOptions(SubOptions):
@@ -51,15 +51,24 @@ class IsoEvoMainOptions(MainOptions):
 
     def _get_edit_view(self):
         main = VGroup(HGroup(Item('name', editor=EnumEditor(name='names')),
-                             Item('fit', editor=EnumEditor(values=FIT_TYPES)),
+                             Item('fit', editor=EnumEditor(values=FIT_TYPES+[AUTO_N,])),
                              UItem('error_type', editor=EnumEditor(values=FIT_ERROR_TYPES)),
                              ),
                       Item('fitfunc', visible_when='fit=="Custom"'),
                       label='Fits')
 
-        goodness = VGroup(Item('goodness_threshold', label='Intercept',
-                               tooltip='If % error is greater than "Goodness Threshold" '
+        goodness = VGroup(Item('goodness_threshold', label='Intercept Error',
+                               tooltip='If % error is greater than "Intercept Error" '
                                        'mark regression as "Bad"'),
+                          HGroup(Item('signal_to_baseline_goodness',
+                                      label='Bs Error/Signal %',
+                                      tooltip='Check intercept error only if baseline_error/signal*100 > "Bs '
+                                              'Error/Signal %"'
+                                      ),
+                                 Item('signal_to_baseline_percent_goodness',
+                                      label='Intercept Error',
+                                      tooltip='If % error is greater than "Intercept Error" '
+                                              'mark regression as "Bad"')),
                           HGroup(Item('slope_goodness', label='Slope',
                                       tooltip='If slope of regression is positive and the isotope '
                                               'intensity is greater than "Slope Goodness Intensity" '
@@ -79,7 +88,7 @@ class IsoEvoMainOptions(MainOptions):
                              Item('n_true', label='N>=', tooltip='Fit when ncounts > Threshold'),
                              Item('n_false', label='N<', tooltip='Fit when ncounts < Threshold'),
                              label='N'),
-                      label='Auto', enabled_when='fit=="Auto"')
+                      label=AUTO_N, enabled_when='fit=="{}"'.format(AUTO_N))
         v = View(Tabbed(main, goodness, auto))
         return v
 

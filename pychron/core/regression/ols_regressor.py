@@ -21,9 +21,9 @@ from statsmodels.api import OLS
 from traits.api import Int, Property
 
 # ============= local library imports  ==========================
-from pychron.core.helpers.fits import FITS
+from pychron.core.helpers.fits import FITS, fit_to_degree
 from pychron.core.regression.base_regressor import BaseRegressor
-from pychron.pychron_constants import MSEM, SEM
+from pychron.pychron_constants import MSEM, SEM, AUTO_LINEAR_PARABOLIC
 
 logger = logging.getLogger('Regressor')
 
@@ -36,19 +36,20 @@ class OLSRegressor(BaseRegressor):
 
     def set_degree(self, d, refresh=True):
         if isinstance(d, str):
-            d = d.lower()
-            fits = ['linear', 'parabolic', 'cubic']
-            if d in fits:
-                d = fits.index(d) + 1
-            else:
-                d = None
+            self._fit = d
+            try:
+                d = fit_to_degree(d)
+            except ValueError:
+                d = 1
 
         if d is None:
             d = 1
 
-        self._degree = d
         if refresh:
             self.dirty = True
+            self._degree = d
+        else:
+            self.trait_setq(_degree=d)
 
     def get_exog(self, x):
         return self._get_X(x)
@@ -79,12 +80,32 @@ class OLSRegressor(BaseRegressor):
 
         return dot(exog, beta)
 
+    def determine_fit(self):
+        if self._fit == AUTO_LINEAR_PARABOLIC:
+            self.set_degree('linear', refresh=False)
+            self.calculate()
+
+            linear_r = self.rsquared_adj
+
+            self.set_degree('parabolic', refresh=False)
+            self.calculate()
+            parabolic_r = self.rsquared_adj
+
+            if linear_r > parabolic_r:
+                self.fit = 'linear'
+                self.set_degree('linear')
+            else:
+                self.fit = 'parabolic'
+                self.set_degree('parabolic')
+
+        return self.fit
+
     def calculate(self, filtering=False):
         cxs = self.clean_xs
         cys = self.clean_ys
 
         integrity_check = True
-        if not self._check_integrity(cxs, cys):
+        if not self._check_integrity(cxs, cys, verbose=True):
             if len(cxs) == 1 and len(cys) == 1:
                 cxs = hstack((cxs, cxs[0]))
                 cys = hstack((cys, cys[0]))
@@ -92,9 +113,9 @@ class OLSRegressor(BaseRegressor):
                 # cys.append(cys[0])
             else:
                 self._result = None
-                # logger.debug('A integrity check failed')
-                # import traceback
-                # traceback.print_stack()
+                logger.debug('A integrity check failed')
+                import traceback
+                traceback.print_stack()
                 return
 
         if integrity_check:
@@ -115,14 +136,14 @@ class OLSRegressor(BaseRegressor):
                 # self.debug('B integrity check failed')
                 return
 
-            try:
-                ols = self._engine_factory(fy, X, check_integrity=integrity_check)
-                self._ols = ols
-                self._result = ols.fit()
-            except Exception as e:
-                import traceback
-
-                traceback.print_exc()
+            # try:
+            ols = self._engine_factory(fy, X, check_integrity=integrity_check)
+            self._ols = ols
+            self._result = ols.fit()
+            # except Exception as e:
+            #     import traceback
+            #
+            #     traceback.print_exc()
 
     def calculate_prediction_envelope(self, fx, fy):
         from statsmodels.sandbox.regression.predstd import wls_prediction_std
@@ -211,6 +232,7 @@ class OLSRegressor(BaseRegressor):
         sef = self.calculate_standard_error_fit()
 
         covarM = array(self.var_covar)
+
         def calc_hat(xi):
             Xk = self._get_X(xi).T
             varY_hat = (Xk.T.dot(covarM).dot(Xk))
@@ -282,6 +304,7 @@ class OLSRegressor(BaseRegressor):
 
         # def calculate_x(self, y):
         # return 0
+
     def _get_rsquared(self):
         if self._result:
             return self._result.rsquared
@@ -369,6 +392,7 @@ class MultipleLinearRegressor(OLSRegressor):
         if you have a tuple of x,y pairs
         X=array(xy)
     """
+
     def fast_predict2(self, endog, pexog, **kw):
         # OLSRegressor fast_predict2 is not working for multiplelinear regressor
         # use fast_predict instead

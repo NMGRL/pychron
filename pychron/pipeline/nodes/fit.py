@@ -327,6 +327,15 @@ class FitIsotopeEvolutionNode(FitNode):
                 if goodness_threshold:
                     int_err_goodness = bool(pe < goodness_threshold)
 
+                signal_to_baseline_threshold = f.signal_to_baseline_goodness
+                signal_to_baseline_percent_threshold = f.signal_to_baseline_percent_goodness
+                signal_to_baseline_goodness = None
+                bs = iso.baseline.error
+                signal_to_baseline = abs(bs / i * 100)
+                if signal_to_baseline_threshold and signal_to_baseline_percent_threshold:
+                    if signal_to_baseline > signal_to_baseline_threshold:
+                        signal_to_baseline_goodness = bool(pe < signal_to_baseline_percent_threshold)
+
                 slope = None
                 slope_goodness = None
                 slope_threshold = None
@@ -400,6 +409,11 @@ class FitIsotopeEvolutionNode(FitNode):
                                    signal_to_blank=signal_to_blank,
                                    signal_to_blank_threshold=signal_to_blank_threshold,
                                    signal_to_blank_goodness=signal_to_blank_goodness,
+
+                                   signal_to_baseline=signal_to_baseline,
+                                   signal_to_baseline_goodness=signal_to_baseline_goodness,
+                                   signal_to_baseline_threshold=signal_to_baseline_threshold,
+                                   signal_to_baseline_percent_threshold=signal_to_baseline_percent_threshold,
 
                                    regression_str=iso.regressor.tostring(),
                                    fit=iso.fit,
