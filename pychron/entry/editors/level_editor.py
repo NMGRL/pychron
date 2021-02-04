@@ -263,7 +263,7 @@ class IrradiationLevelEditor(PackageLevelEditor):
         if changes:
             self.dvc.meta_repo.smart_pull()
             self.dvc.meta_repo.commit('Edited level {}'.format(self.name))
-            # self.dvc.meta_repo.push()
+            self.dvc.meta_repo.push()
             db.commit()
 
         self._refresh_production()
