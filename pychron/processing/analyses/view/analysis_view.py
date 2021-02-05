@@ -18,11 +18,14 @@
 
 from __future__ import absolute_import
 
+from numpy.ma import arange
 from traits.api import HasTraits, Instance, Event, Str, Bool, List, Any, on_trait_change
 from traitsui.api import View, UItem, VGroup, Group, Handler, spring, HGroup, ListEditor, Spring
 
 from pychron.core.helpers.binpack import unpack
+from pychron.core.regression.ols_regressor import PolynomialRegressor
 from pychron.core.ui.tabular_editor import myTabularEditor
+from pychron.envisage.view_util import open_view
 from pychron.graph.stacked_graph import StackedGraph
 from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter, IntermediateTabularAdapter
 from pychron.processing.analyses.view.detector_ic_view import DetectorICView
@@ -50,6 +53,12 @@ class AnalysisViewHandler(Handler):
     def show_isotope_evolution_with_baseline(self, uiinfo, obj):
         # obj.show_iso_evolutions(show_baseline=True)
         obj.updated = {'show_baseline': True}
+
+    def show_residuals(self, uiinfo, obj):
+        obj.updated = {'show_residuals': True}
+
+    def show_inspection(self, uiinfo, obj):
+        obj.updated = {'show_inspection': True}
 
     def show_baseline(self, uiinfo, obj):
         obj.updated = {'show_evo': False, 'show_baseline': True}
@@ -180,10 +189,14 @@ class AnalysisView(HasTraits):
 
     groups = List
 
-    def show_iso_evolutions(self, show_evo=True, show_equilibration=False, show_baseline=False):
+    def show_iso_evolutions(self, show_evo=True, show_equilibration=False, show_baseline=False,
+                            show_inspection=False, show_residuals=False):
         isotopes = self.isotope_view.selected
         return self.model.show_isotope_evolutions(isotopes, show_evo=show_evo,
-                                                  show_equilibration=show_equilibration, show_baseline=show_baseline)
+                                                  show_equilibration=show_equilibration,
+                                                  show_baseline=show_baseline,
+                                                  show_inspection=show_inspection,
+                                                  show_residuals=show_residuals)
 
     def update_fontsize(self, view, size):
         if 'main' in view:

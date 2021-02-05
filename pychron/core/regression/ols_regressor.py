@@ -114,8 +114,8 @@ class OLSRegressor(BaseRegressor):
             else:
                 self._result = None
                 logger.debug('A integrity check failed')
-                import traceback
-                traceback.print_stack()
+                # import traceback
+                # traceback.print_stack()
                 return
 
         if integrity_check:

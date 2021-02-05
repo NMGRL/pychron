@@ -20,7 +20,7 @@ from math import ceil
 from operator import attrgetter
 
 import six
-from numpy import Inf, polyfit, polyval
+from numpy import Inf, polyfit, polyval, arange, argmin
 from pyface.message_dialog import information
 from pyface.qt import QtCore
 from traits.api import Event, Dict, List, Str
@@ -32,8 +32,11 @@ from pychron.core.helpers.fits import convert_fit
 from pychron.core.helpers.formatting import format_percent_error, floatfmt
 from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.core.helpers.logger_setup import new_logger
+from pychron.core.regression.ols_regressor import PolynomialRegressor
 from pychron.envisage.view_util import open_view
 from pychron.experiment.utilities.runid import make_runid, make_aliquot_step
+from pychron.graph.residuals_graph import ResidualsGraph
+from pychron.graph.stacked_graph import StackedGraph
 from pychron.graph.stacked_regression_graph import ColumnStackedRegressionGraph, StackedRegressionGraph
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.arar_constants import ArArConstants
@@ -68,6 +71,79 @@ class CloseHandler(Handler):
         global WINDOW_CNT
         WINDOW_CNT += 1
         info.ui.control.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+
+
+def show_inspection_factory(record_id, isotopes):
+    def calculate(dxs, dys, fit):
+        reg = PolynomialRegressor(xs=dxs, ys=dys)
+        reg.fit = fit
+        ts = arange(4, len(dxs), 10)
+        ys, iys = [], []
+        for ti in ts:
+            reg.set_truncate(str(ti))
+            reg.calculate()
+            ys.append(reg.predict_error(0))
+            iys.append(reg.predict(0))
+
+        return ts, ys, iys
+
+    iso = isotopes[0]
+    dxs, dys = iso.offset_xs, iso.ys
+
+    g = StackedGraph()
+
+    g.new_plot(show_legend='ur')
+    g.new_plot()
+
+    g.set_y_title('Intercept Error %', plotid=0)
+    g.set_y_title('T-zero Intensity', plotid=1)
+
+    xs, ys, iys = calculate(dxs, dys, 'linear')
+    lmin, lidx = min(ys), argmin(ys)
+
+    g.new_series(xs, ys, plotid=0)
+    g.new_series(xs, iys, plotid=1)
+    g.set_series_label('Linear', plotid=0)
+
+    xs, ys, iys = calculate(dxs, dys, 'parabolic')
+    pmin, pidx = min(ys), argmin(ys)
+
+    g.new_series(xs, ys, plotid=0)
+    g.new_series(xs, iys, plotid=1)
+    g.set_series_label('Parabolic', plotid=0)
+
+    # g.add_vertical_rule(lidx, plotid=0, color='black')
+    # g.add_vertical_rule(pidx, plotid=0, color='green')
+
+    g.set_y_limits(min_=0, plotid=0)
+    g.window_title = '{} Inspection'.format(make_title(record_id, isotopes))
+    return g
+
+
+def show_residuals_factory(record_id, isotopes):
+    iso = isotopes[0]
+
+    g = ResidualsGraph()
+    g.new_plot(padding_right=75, padding_left=100)
+    g.set_x_title('Time (s)')
+    g.set_y_title('Intensity ({})'.format(iso.units))
+
+    if iso.fit is None:
+        iso.fit = 'linear'
+
+    xs, ys = iso.get_data()
+    g.new_series(xs, ys,
+                 fit=iso.efit,
+                 truncate=iso.truncate,
+                 filter_outliers_dict=iso.filter_outliers_dict,
+                 color='black')
+    g.set_regressor(iso.regressor, 0)
+    g.set_x_limits(min_=0, pad='0.1', pad_style='upper')
+    g.set_y_limits(pad='0.1')
+    g.refresh()
+
+    g.window_title = '{} Residuals'.format(make_title(record_id, isotopes))
+    return g
 
 
 def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibration=False, show_baseline=False,
@@ -120,15 +196,18 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
 
     make_graph(*args)
 
-    g.window_title = '{} {}'.format(record_id, ','.join([i.name for i in reversed(isotopes)]))
+    g.window_title = make_title(record_id, isotopes)
 
     return g
+
+
+def make_title(record_id, isotopes):
+    return '{} {}'.format(record_id, ','.join([i.name for i in reversed(isotopes)]))
 
 
 def make_graph(g, isotopes, resizable, show_evo=True, show_equilibration=False, show_baseline=False,
                show_statistics=False,
                scale_to_equilibration=False):
-
     g.clear()
 
     if not show_evo:
@@ -535,7 +614,12 @@ class Analysis(ArArAge, IdeogramPlotable):
             keys = ['{}{}'.format(k.name, k.detector) for k in isotopes]
             self.load_raw_data(keys=keys)
 
-        return show_evolutions_factory(self.record_id, isotopes, **kw)
+        if kw.get('show_inspection'):
+            return show_inspection_factory(self.record_id, isotopes)
+        elif kw.get('show_residuals'):
+            return show_residuals_factory(self.record_id, isotopes)
+        else:
+            return show_evolutions_factory(self.record_id, isotopes, **kw)
 
     def show_isotope_evolutions(self, *args, **kw):
         g = self.get_isotope_evolutions(*args, **kw)

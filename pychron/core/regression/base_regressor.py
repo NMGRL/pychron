@@ -222,6 +222,15 @@ class BaseRegressor(HasTraits):
                 excludes = list(exclude.nonzero()[0])
                 self.truncate_excluded = excludes
                 self.dirty = True
+            else:
+                try:
+                    trunc = int(trunc)
+                    excludes = [i for i, _ in enumerate(self.xs) if i>trunc]
+
+                    self.truncate_excluded = excludes
+                    self.dirty = True
+                except ValueError:
+                    pass
 
     def calculate(self, *args, **kw):
         pass

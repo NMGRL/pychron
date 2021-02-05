@@ -476,7 +476,11 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
                            Action(name='Show Equilibration',
                                   action='show_sniff'),
                            Action(name='Show All',
-                                  action='show_all'))
+                                  action='show_all'),
+                           Action(name='Show Inspection',
+                                  action='show_inspection'),
+                           Action(name='Show Residuals',
+                                  action='show_residuals'))
 
     def _get_ic_factor_text(self):
         ic = self.item.ic_factor
