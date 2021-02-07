@@ -53,6 +53,7 @@ class IsoEvoResult(BaseResult):
     curvature = None
     rsquared = None
     signal_to_blank = None
+    signal_to_baseline = None
 
     @property
     def goodness(self):
