@@ -330,11 +330,12 @@ class FitIsotopeEvolutionNode(FitNode):
                 signal_to_baseline_threshold = f.signal_to_baseline_goodness
                 signal_to_baseline_percent_threshold = f.signal_to_baseline_percent_goodness
                 signal_to_baseline_goodness = None
-                bs = iso.baseline.error
-                signal_to_baseline = abs(bs / i * 100)
-                if signal_to_baseline_threshold and signal_to_baseline_percent_threshold:
-                    if signal_to_baseline > signal_to_baseline_threshold:
-                        signal_to_baseline_goodness = bool(pe < signal_to_baseline_percent_threshold)
+                if hasattr(iso, 'baseline'):
+                    bs = iso.baseline.error
+                    signal_to_baseline = abs(bs / i * 100)
+                    if signal_to_baseline_threshold and signal_to_baseline_percent_threshold:
+                        if signal_to_baseline > signal_to_baseline_threshold:
+                            signal_to_baseline_goodness = bool(pe < signal_to_baseline_percent_threshold)
 
                 slope = None
                 slope_goodness = None

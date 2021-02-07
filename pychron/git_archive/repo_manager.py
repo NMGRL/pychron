@@ -824,29 +824,37 @@ class GitRepoManager(Loggable):
                                 pass
 
                             try:
-                                repo.git.pull('-X', 'theirs', '--commit', '--no-edit')
-                                return True
+                                repo.git.reset('--hard', '{}/{}'.format(remote, branch))
                             except GitCommandError:
-                                clean = repo.git.clean('-n')
-                                if clean:
-                                    if self.confirmation_dialog('''You have untracked files that could be an issue. 
-{}
+                                pass
+                        elif self.confirmation_dialog('Would you like to accept all of your current changes even '
+                                                      'though there are newer changes available?'):
+                            accept_our = True
+#                             try:
+#                                 repo.git.pull('-X', 'theirs', '--commit', '--no-edit')
+#                                 return True
+#                             except GitCommandError:
+#                                 clean = repo.git.clean('-n')
+#                                 if clean:
+#                                     if self.confirmation_dialog('''You have untracked files that could be an issue.
+# {}
+#
+# You like to delete them and try again?'''.format(clean)):
+#                                         try:
+#                                             repo.git.clean('-fd')
+#                                         except GitCommandError:
+#                                             self.warning_dialog('Failed to clean repository')
+#                                             return
+#
+#                                         try:
+#                                             repo.git.pull('-X', 'theirs', '--commit', '--no-edit')
+#                                             return True
+#                                         except GitCommandError:
+#                                             self.warning_dialog('Failed pulling changes for {}'.format(self.name))
+#                                 else:
+#                                     self.warning_dialog('Failed pulling changes for {}'.format(self.name))
+#                                 return
 
-You like to delete them and try again?'''.format(clean)):
-                                        try:
-                                            repo.git.clean('-fd')
-                                        except GitCommandError:
-                                            self.warning_dialog('Failed to clean repository')
-                                            return
-
-                                        try:
-                                            repo.git.pull('-X', 'theirs', '--commit', '--no-edit')
-                                            return True
-                                        except GitCommandError:
-                                            self.warning_dialog('Failed pulling changes for {}'.format(self.name))
-                                else:
-                                    self.warning_dialog('Failed pulling changes for {}'.format(self.name))
-                                return
                 self._resolve_conflicts(branch, remote, accept_our, accept_their, quiet)
             else:
                 self.debug('merging {} commits'.format(behind))

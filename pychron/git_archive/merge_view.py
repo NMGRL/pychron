@@ -73,15 +73,17 @@ class MergeModel(HasTraits):
     def commit(self):
         self.repo.commit('merged {}/{} with local/{}'.format(self.remote, self.branch, self.branch))
 
-    def _merge_accept(self, fl, k):
+    def _merge_accept(self, fl, strategy):
         if fl is None:
             fl = self.conflicts
 
         repo = self.repo.active_repo
         for fi in fl:
-            repo.git.checkout('--{}'.format(k), fi.path)
+            repo.git.checkout('--{}'.format(strategy), fi.path)
             self.repo.add(fi.path, commit=False)
             self.conflicts.remove(fi)
+
+        self.repo.commit('merged {} with local/{}. strategy={}'.format(self.remote, self.branch, strategy))
 
 
 class ConflictAdapter(TabularAdapter):

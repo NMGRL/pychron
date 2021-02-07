@@ -1311,11 +1311,12 @@ class DVC(Loggable):
         self.meta_repo.update_level_production(irradiation, name, production_name)
         return added
 
-    def clone_repository(self, identifier):
+    def clone_repository(self, identifier, url=None):
         root = repository_path(identifier)
         if not os.path.isdir(root):
             self.debug('cloning {}'.format(root))
-            url = self.make_url(identifier)
+            if not url:
+                url = self.make_url(identifier)
             Repo.clone_from(url, root)
         else:
             self.debug('{} already exists'.format(identifier))
@@ -1340,6 +1341,10 @@ class DVC(Loggable):
 
         else:
             self.critical('Repository does not exist {}. {}'.format(identifier, root))
+
+    def branch_repo(self, repo, branch):
+        repo = self._get_repository(repo)
+        repo.create_branch(branch, inform=False)
 
     def add_repository(self, identifier, principal_investigator, inform=True):
         self.debug('trying to add repository identifier={}, pi={}'.format(identifier, principal_investigator))
