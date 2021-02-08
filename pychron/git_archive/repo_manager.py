@@ -608,7 +608,18 @@ class GitRepoManager(Loggable):
 
     def checkout_branch(self, name, inform=True):
         repo = self._repo
-        branch = getattr(repo.heads, name)
+        if name.startswith('origin'):
+            name = name[7:]
+            remote = repo.remote()
+            rref = getattr(remote.refs, name)
+            repo.create_head(name, rref)
+
+            branch = repo.heads[name]
+            branch.set_tracking_branch(rref)
+
+        else:
+            branch = getattr(repo.heads, name)
+
         try:
             branch.checkout()
             self.selected_branch = name
@@ -663,7 +674,7 @@ class GitRepoManager(Loggable):
                 repo.delete_remote(name)
 
     def get_branch_names(self):
-        return [b.name for b in self._repo.branches]
+        return [b.name for b in self._repo.branches] + [b.name for b in self._repo.remote().refs]
 
     def git_history_view(self, branchname):
         repo = self._repo

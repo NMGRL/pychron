@@ -264,7 +264,8 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
                 r.active_branch = branch
                 names.append(r.name)
             except BaseException:
-                pass
+                self.debug_exception()
+                self.warning('failed checking out {}, branch={}'.format(r.name, branch))
 
         self.information_dialog('{} now on branch "{}"'.format(','.join(names), branch))
 
