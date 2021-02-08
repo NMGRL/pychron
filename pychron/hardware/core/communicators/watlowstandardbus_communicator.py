@@ -17,13 +17,15 @@ from pychron.hardware.core.communicators.serial_communicator import SerialCommun
 from pywatlow.watlow import Watlow
 
 
-class WatlowStandardBusCommunicator(SerialCommunicator):
+class WatlowstandardbusCommunicator(SerialCommunicator):
     def open(self, **kw):
-        self.handle = Watlow(port=self.port,
-                             address=self.address)
+        self.handle = Watlow(port=self.port)
         return True
 
-    def read(self, param, response_type='int', *args, **kw):
+    def _generate_comms_report(self):
+        pass
+
+    def read(self, param, response_type='float', *args, **kw):
         rt = float
         if response_type == 'int':
             rt = int
@@ -33,5 +35,13 @@ class WatlowStandardBusCommunicator(SerialCommunicator):
             return resp['data']
 
     def write(self, param, value, *args, **kw):
-        self.handle.writeParam(param, value, type(value))
+        if type(value)==int:
+            dt = int
+        else:
+            dt = float
+
+        self.handle.writeParam(param, value, dt)
+
+    def tell(self, *args, **kw):
+        self.write(*args, **kw)
 # ============= EOF =============================================

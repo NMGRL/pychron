@@ -73,7 +73,7 @@ class LegacyBinaryZaberMotionController(MotionController):
 
     def open(self, *args, **kw):
         self.debug('scanning port {}'.format(self.port))
-        bs = BinarySerial(self.port)
+        bs = BinarySerial(self.port, timeout=200, inter_char_timeout=2)
 
         for a in self.axes.values():
             a.device = BinaryDevice(bs, a.device_id)
@@ -86,6 +86,7 @@ class LegacyBinaryZaberMotionController(MotionController):
     def linear_move(self, x, y, block=True, *args, **kw):
         xaxis = self.single_axis_move('x', x, block=False)
         yaxis = self.single_axis_move('y', y, block=False)
+        self.update_axes()
         return
 
         # if block:
@@ -96,9 +97,10 @@ class LegacyBinaryZaberMotionController(MotionController):
     def single_axis_move(self, key, value, block=True, *args, **kw):
         axis = self.axes[key]
         steps = axis.convert_to_steps(value)
-        self.debug('calculated ')
+        self.debug('calculated steps={} value={}'.format(steps, value))
         axis.device.move_abs(steps)
-
+        if block:
+            self.update_axes()
         return axis
 
     def home(self, axes, block=True, *args, **kw):
@@ -108,8 +110,8 @@ class LegacyBinaryZaberMotionController(MotionController):
             #     axis = self._wrapper.get_axis(a.device_id)
             #     axis.home(wait_until_idle=block)
 
-    def get_current_position(self, axis, *args, **kw):
-        axis = self._get_device_axis(axis)
+    def get_current_position(self, key, *args, **kw):
+        axis = self.axes[key]
         return axis.get_position()
 
     def _moving(self, axis=None, verbose=False):

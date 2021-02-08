@@ -48,10 +48,23 @@ class StandardProtocol(Protocol):
                'osp': 7002,
                'cm': 8001,
                'hag': 8003,
+               'hpb': 8009,
                'cpb': 8012,
                'ti': 8006,
                'td': 8007,
-               'db': 8008}
+               'db': 8008,
+               'sen1': 4005,
+               'sen2': 4005,  # sen1 not defined in docs
+               'tc1': 4006,
+               'tc2': 4006,
+               'hhy': 8010,
+               'atsp': 8025,
+               'tagr': 8024,
+               'ttun': 8022,
+               'tbnd': 8034,
+               'tgn': 8035,
+               'fn': 18002
+               }
 
 
 class ModbusProtocol(Protocol):
@@ -64,7 +77,19 @@ class ModbusProtocol(Protocol):
                'cpb': 1892,
                'ti': 1894,
                'td': 1896,
-               'db': 1898}
+               'db': 1898,
+               'sen1': 368,
+               'sen2': 448,
+               'tc1': 370,
+               'tc2': 450,
+               'hhy': 1900,
+               'atsp': 1918,
+               'tagr': 1916,
+               'ttun': 8022,
+               'tbnd': 1912,
+               'tgn': 1914,
+               'fn': 722
+               }
 
 
 class BaseWatlowEZZone(HasTraits):
@@ -315,8 +340,9 @@ class BaseWatlowEZZone(HasTraits):
     def report_pid(self):
 
         self.info('read pid parameters')
+        pid_attrs = ['_Ph_', '_Pc_', '_I_', '_D_']
+
         if self.use_modbus:
-            pid_attrs = ['_Ph_', '_Pc_', '_I_', '_D_']
             pid_vals = self.read(1890, nregisters=8, nbytes=21, response_type='float')
         else:
             ph = self.read_heat_proportional_band()
@@ -489,13 +515,7 @@ class BaseWatlowEZZone(HasTraits):
         self.set_attribute(config, 'setpointmax', 'Setpoint', 'max', cast='float')
 
         self.set_attribute(config, 'memory_blocks_enabled', 'MemoryBlock', 'enabled', cast='boolean')
-        if self.memory_blocks_enabled:
-            self.set_attribute(config, 'program_memory_blocks', 'MemoryBlock', 'program', cast='boolean')
-            #            if self.program_memory_blocks:
-        #                self.memory_blocks=[]
-        #                for option in config.options('MemoryBlock'):
-        #                    if option.startswith('block'):
-        #                        self.memory_blocks.append(config.get('MemoryBlock',option))
+        self.set_attribute(config, 'program_memory_blocks', 'MemoryBlock', 'program', cast='boolean')
 
         coeffs = self.config_get(config, 'Calibration', 'coefficients')
         if coeffs:
@@ -760,7 +780,7 @@ class BaseWatlowEZZone(HasTraits):
             A positive value keeps heating and cooling outputs from fighting each other.
         """
         self.info('setting dead_band = {:0.3f}'.format(v))
-        register =self.protocol.get_register('db')
+        register = self.protocol.get_register('db')
         self.write(register, v, nregisters=2, **kw)
 
     # ===============================================================================
@@ -792,7 +812,7 @@ class BaseWatlowEZZone(HasTraits):
 
     def set_analog_input_sensor_type(self, input_id, value, **kw):
         self.info('set input sensor type {}'.format(value))
-        register = 368 if input_id == 1 else 448
+        register = self.protocol.get_register('sen{}'.format(input_id))
         v = value if isinstance(value, int) else isensor_map[value]
         self.write(register, v, **kw)
         if v == 95:
@@ -827,7 +847,8 @@ class BaseWatlowEZZone(HasTraits):
         return self.read(register, nregisters=2, nbytes=9, **kw)
 
     def read_heat_hystersis(self, **kw):
-        return self.read(1900, nregisters=2, nbytes=9, **kw)
+        register = self.protocol.get_register('hhy')
+        return self.read(register, nregisters=2, nbytes=9, **kw)
 
     def read_output_state(self, **kw):
         rid = str(self.read(1012, response_type='int', **kw))
@@ -866,18 +887,11 @@ class BaseWatlowEZZone(HasTraits):
         return self.read(register, nregisters=2, **kw)
 
     def read_analog_input_sensor_type(self, input_id, **kw):
-        if input_id == 1:
-            register = 368
-        else:
-            register = 448
-
+        register = self.protocol.get_register('sen{}'.format(input_id))
         return self.read(register, response_type='int', **kw)
 
     def read_thermocouple_type(self, input_id, **kw):
-        if input_id == 1:
-            register = 370
-        else:
-            register = 450
+        register = self.protocol.get_register('tc{}'.format(input_id))
         rid = self.read(register, response_type='int', **kw)
         return rid
 
@@ -903,11 +917,13 @@ class BaseWatlowEZZone(HasTraits):
         return units_map[rid] if rid in units_map else None
 
     def read_control_mode(self, **kw):
-        rid = self.read(1880, response_type='int', **kw)
+        register = self.protocol.get_register('cm')
+        rid = self.read(register, response_type='int', **kw)
         return 'closed' if rid == 10 else 'open'
 
     def read_heat_algorithm(self, **kw):
-        rid = str(self.read(1884, response_type='int', **kw))
+        register = self.protocol.get_register('hag')
+        rid = str(self.read(register, response_type='int', **kw))
         return heat_algorithm_map[rid] if rid in heat_algorithm_map else None
 
     def read_open_loop_detect_enable(self, **kw):
@@ -932,7 +948,9 @@ class BaseWatlowEZZone(HasTraits):
         return r_map[rid] if rid in r_map else None
 
     def read_output_function(self, **kw):
-        rid = str(self.read(722, response_type='int', **kw))
+
+        register = self.protocol.get_register('fn')
+        rid = str(self.read(register, response_type='int', **kw))
         r_map = {'36': 'heat', '62': 'off'}
 
         return r_map[rid] if rid in r_map else None
@@ -942,16 +960,18 @@ class BaseWatlowEZZone(HasTraits):
 
     def read_autotune_setpoint(self, **kw):
         self.debug('read autotune setpoint')
-        #        r = self.read(1998, nregisters=2, **kw)
-        r = self.read(1998, nregisters=2, nbytes=9, **kw)
+        register = self.protocol.get_register('atsp')
+        r = self.read(register, nregisters=2, nbytes=9, **kw)
         return r
 
     def read_autotune_aggressiveness(self, **kw):
-        rid = str(self.read(1884, response_type='int', **kw))
+        register = self.protocol.get_register('tagr')
+        rid = str(self.read(register, response_type='int', **kw))
         return heat_algorithm_map[rid] if rid in heat_algorithm_map else None
 
     def read_tru_tune_enabled(self, **kw):
-        r = self.read(1910, response_type='int', **kw)
+        register = self.protocol.get_register('ttun')
+        r = self.read(register, response_type='int', **kw)
         r = str(r)
 
         try:
@@ -960,11 +980,13 @@ class BaseWatlowEZZone(HasTraits):
             pass
 
     def read_tru_tune_band(self, **kw):
-        return self.read(1912, response_type='int', **kw)
+        register=self.protocol.get_register('tbnd')
+        return self.read(register, response_type='int', **kw)
 
     def read_tru_tune_gain(self, **kw):
+        register = self.protocol.get_register('tgn')
         try:
-            return str(self.read(1914, response_type='int', **kw))
+            return str(self.read(register, response_type='int', **kw))
         except ValueError:
             pass
 
