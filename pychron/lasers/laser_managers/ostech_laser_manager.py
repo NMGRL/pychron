@@ -24,6 +24,12 @@ from pychron.lasers.laser_managers.watlow_mixin import WatlowMixin
 class OsTechLaserManager(LaserManager):
     laser_controller = Instance(OsTechLaserController)
 
+    def _laser_controller_default(self):
+        return OsTechLaserController(name='laser_controller',
+                                     configuration_name='laser_controller',
+                                     configuration_dir_name=self.configuration_dir_name
+                                     )
+
 
 class OsTechDiodeManager(OsTechLaserManager, WatlowMixin):
     stage_manager_id = 'ostech.diode'

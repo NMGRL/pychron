@@ -76,6 +76,7 @@ class SerialCommunicator(Communicator):
     read_terminator = None
     read_terminator_position = None
     clear_output = False
+    echos_command = False
 
     _config = None
     _comms_report_attrs = ('port', 'baudrate', 'bytesize', 'parity', 'stopbits', 'timeout')
@@ -443,7 +444,10 @@ class SerialCommunicator(Communicator):
         def func(r):
             terminated = False
             try:
-                inw = self.handle.inWaiting()
+                if self.echos_command:
+                    inw = 1
+                else:
+                    inw = self.handle.inWaiting()
                 r += self.handle.read(inw)
                 if r and r.strip():
                     for ti in terminator:
@@ -458,6 +462,9 @@ class SerialCommunicator(Communicator):
             except BaseException as e:
                 self.warning(e)
             return r, terminated
+
+        if self.echos_command:
+            self._read_loop(func, delay, timeout)
 
         return self._read_loop(func, delay, timeout)
 
