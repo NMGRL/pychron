@@ -312,10 +312,19 @@ class LaserManager(BaseLaserManager):
     #         self.pulse.dump()
 
     def _enable_hook(self, **kw):
-        return True
+        resp = True
+        if self.laser_controller:
+            resp = self.laser_controller.enable(**kw)
+            if self.laser_controller.simulation:
+                resp = True
+        return resp
 
     def _disable_hook(self):
-        pass
+        if self.laser_controller:
+            resp = self.laser_controller.disable()
+            if self.laser_controller.simulation:
+                resp = True
+            return resp
 
     def _set_laser_power_hook(self, *args, **kw):
         pass

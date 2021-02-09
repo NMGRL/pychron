@@ -16,11 +16,13 @@
 from traitsui.api import UCustom, UItem, VGroup, InstanceEditor
 from traits.api import Instance
 from pychron.hardware.fiber_light import FiberLight
+from pychron.hardware.ostech import OsTechLaserController
 from pychron.lasers.laser_managers.laser_manager import LaserManager
 from pychron.lasers.laser_managers.watlow_mixin import WatlowMixin
 
+
 class OsTechLaserManager(LaserManager):
-    pass
+    laser_controller = Instance(OsTechLaserController)
 
 
 class OsTechDiodeManager(OsTechLaserManager, WatlowMixin):
@@ -44,7 +46,7 @@ class OsTechDiodeManager(OsTechLaserManager, WatlowMixin):
 
     def get_additional_controls(self):
         gs = [VGroup(UCustom('temperature_controller',
-                             editor=InstanceEditor(view='control_view'),),
+                             editor=InstanceEditor(view='control_view'), ),
                      label='Watlow'),
               VGroup(UCustom('fiber_light'), label='FiberLight')]
         return gs

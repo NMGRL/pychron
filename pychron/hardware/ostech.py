@@ -22,10 +22,10 @@ class OsTechLaserController(CoreDevice):
         self.ask('GMS32768')
         return True
 
-    def enable(self):
+    def enable(self, *args, **kw):
         self.ask('LR')
 
-    def disable(self):
+    def disable(self, *args, **kw):
         self.ask('LS')
 
 # ============= EOF =============================================

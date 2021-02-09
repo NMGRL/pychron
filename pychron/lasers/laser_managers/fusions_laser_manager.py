@@ -364,21 +364,16 @@ class FusionsLaserManager(LaserManager):
                 self.stage_manager.move_to_hole(position)
             return True
 
-    def _enable_hook(self, **kw):
-        resp = self.laser_controller._enable_laser(**kw)
-        if self.laser_controller.simulation:
-            resp = True
-
-        return resp
+    # def _enable_hook(self, **kw):
+    #     resp = self.laser_controller._enable_laser(**kw)
+    #     if self.laser_controller.simulation:
+    #         resp = True
+    #
+    #     return resp
 
     def _disable_hook(self):
         self.degasser.stop()
-
-        resp = self.laser_controller._disable_laser()
-        if self.laser_controller.simulation:
-            resp = True
-
-        return resp
+        return super(FusionsLaserManager, self)._disable_hook()
 
     # ========================= views =========================
     def get_control_buttons(self):
