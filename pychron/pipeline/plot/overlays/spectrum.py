@@ -453,7 +453,8 @@ class PlateauOverlay(BasePlateauOverlay):
             x = x1 + (x2 - x1) * 0.5
 
             dummy_gc = font_metrics_provider()
-            l = Label(text=self.info_txt)
+            l = Label(text=self.info_txt,
+                      font=self.label_font)
             w, h = l.get_bounding_box(dummy_gc)
 
             xa = x + w / 2.
@@ -468,7 +469,6 @@ class PlateauOverlay(BasePlateauOverlay):
             x = max(comp.x, x)
             p = PlotLabel(text=self.info_txt,
                           font=self.label_font,
-                          # font='modern {}'.format(self.label_font_size),
                           color=self.line_color,
                           hjustify=hjustify,
                           border_visible=True,
