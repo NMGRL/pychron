@@ -156,20 +156,21 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                    Column(label='N', attr='aliquot_step_str', enabled=options.analysis_label_enabled),
                    Column(label='Tag', attr='tag', enabled=options.tag_enabled),
                    Column(visible=ubit, label='Power', units=options.power_units, attr='extract_value'),
-                   SigFigColumn(visible=ubit, label='Age', units=age_units, attr='age', func=age_func),
+                   SigFigColumn(visible=ubit, label='Age', units=age_units, attr='age', func=age_func,
+                                sigformat='age'),
                    SigFigEColumn(visible=ubit, units=age_units, attr='age_err_wo_j', func=age_func,
                                  sigformat='age'),
 
                    SigFigColumn(visible=kcabit, label=kca_label, attr=kca_attr),
-                   SigFigEColumn(visible=ubit, attr=kca_attr),
+                   SigFigEColumn(visible=ubit and kcabit, attr=kca_attr),
                    SigFigColumn(visible=kclbit, label=kcl_label, attr=kcl_attr),
-                   SigFigEColumn(visible=ubit, attr=kcl_attr),
+                   SigFigEColumn(visible=ubit and kclbit, attr=kcl_attr),
 
                    VColumn(visible=ubit and options.include_percent_ar39,
                            label=('Cum. %', '<sup>39</sup>', 'Ar'),
                            units='(%)', attr='cumulative_ar39'),
                    VColumn(visible=ubit and options.include_radiogenic_yield,
-                           label=('%', '<sup>40</sup>', 'Ar'),
+                           label=('%', '<sup>40</sup>', 'Ar*'),
                            units='(%)', attr='radiogenic_yield'),
                    SigFigColumn(visible=ubit and options.include_F,
                                 label=('<sup>40</sup>', 'Ar*/', '<sup>39</sup>', 'Ar', '<sub>K</sub>'),
@@ -449,6 +450,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
                 Column(visible=opt.include_summary_n, label='N', attr='nratio'),
                 Column(visible=opt.include_summary_percent_ar39, label=('%', '<sup>39</sup>', 'Ar'),
+                       sigformat='summary_percent_ar39',
                        func=get_plateau_ar39),
                 Column(visible=opt.include_summary_mswd,
                        sigformat='summary_mswd',
@@ -649,7 +651,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                         self._make_analysis(worksheet, cols, item,
                                             is_last=False,
                                             is_plateau_step=is_plateau_step,
-                                            cum=a.cumulative_ar39(ii) if a else '')
+                                            cum=a.cumulative_ar39(ii))
 
                     self._make_intermediate_summary(worksheet, a, cols, label)
                     self._current_row += 1
@@ -657,12 +659,11 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                     pv = group.get_preferred_obj('age')
                     label = pv.computed_kind.lower()
                     is_plateau_step = None
-                    cum = ''
                     if label == 'plateau':
                         is_plateau_step = group.get_is_plateau_step(j)
-                        cum = group.cumulative_ar39(j)
+
                     self._make_analysis(worksheet, cols, a,
-                                        cum=cum,
+                                        cum=group.cumulative_ar39(j),
                                         is_last=j == n - 1, is_plateau_step=is_plateau_step)
 
             if nsubgroups == 1 and isinstance(a, InterpretedAgeGroup):
