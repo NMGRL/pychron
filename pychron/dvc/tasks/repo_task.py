@@ -24,7 +24,7 @@ from apptools.preferences.preference_binding import bind_preference
 from git import GitCommandError, InvalidGitRepositoryError
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem
-from traits.api import List, Str, Any, HasTraits, Bool, Instance, Int, Event, Date, Property
+from traits.api import List, Str, Any, HasTraits, Bool, Instance, Int, Event, Date, Property, Button
 
 # ============= local library imports  ==========================
 from pychron.column_sorter_mixin import ColumnSorterMixin
@@ -134,6 +134,8 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
     o_origin_repos = None
     check_for_changes = Bool(True)
     origin_column_clicked = Any
+    auto_fetch = Bool(False)
+    refresh_branch_button = Button
 
     files = List
     selected_file = Str
@@ -143,7 +145,7 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
 
     def activated(self):
         bind_preference(self, 'check_for_changes', 'pychron.dvc.repository.check_for_changes')
-
+        bind_preference(self, 'auto_fetch', 'pychron.dvc.repository.auto_fetch')
         self.refresh_local_names()
         if self.check_for_changes:
             if self.confirmation_dialog('Check all Repositories for changes', position=STARTUP_MESSAGE_POSITION):
@@ -370,7 +372,11 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
     def _refresh_tags(self):
         self.git_tags = get_tags(self._repo.active_repo)
 
-    def _refresh_branches(self):
+    def _refresh_branches(self, fetch=False):
+        self.debug('refresh branches fetch={}'.format(fetch))
+        if self.auto_fetch or fetch:
+            self._repo.fetch()
+
         self.branches = [NULL_STR] + self._repo.get_branch_names()
         b = self._repo.get_active_branch()
 
@@ -485,7 +491,11 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
         # d = ''
         # ds.append(d)
         # self.diffs = ds
+
     # handlers
+    def _refresh_branch_button_changed(self):
+        self._refresh_branches(fetch=True)
+
     def _selected_file_changed(self, new):
         if new:
             oid = self.selected_commit.oid

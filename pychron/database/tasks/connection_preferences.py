@@ -60,7 +60,6 @@ def show_databases(kind, host, user, password, schema_identifier='AnalysisTbl', 
 
             cur.execute(sql)
             records = cur.fetchall()
-            print('dfadf', records)
         except BaseException as e:
             print('ezafa', e)
     elif kind == 'mssql':

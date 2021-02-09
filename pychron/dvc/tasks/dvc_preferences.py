@@ -139,6 +139,7 @@ class DVCExperimentPreferencesPane(PreferencesPane):
 class DVCRepositoryPreferences(BasePreferencesHelper):
     preferences_path = 'pychron.dvc.repository'
     check_for_changes = Bool
+    auto_fetch = Bool
 
 
 class DVCRepositoryPreferencesPane(PreferencesPane):
@@ -147,6 +148,9 @@ class DVCRepositoryPreferencesPane(PreferencesPane):
 
     def traits_view(self):
         v = View(BorderVGroup(Item('check_for_changes', label='Check for Changes'),
+                              Item('auto_fetch', label='Auto Fetch',
+                                   tooltip='Automatically "fetch" when a local repository is selected. Turn this off '
+                                           'if fetching speed is an issue'),
                               label=''))
         return v
 # ============= EOF =============================================
