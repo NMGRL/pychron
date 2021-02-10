@@ -171,6 +171,13 @@ nodes:
   - klass: CompositeNode
 """
 
+FLUX_EXPORT = """
+required:
+nodes:
+ - klass: FindFluxMonitorMeansNode
+ - klass: FluxMonitorMeansPersistNode
+"""
+
 FLUX_VISUALIZATION = """
 required:
 nodes:

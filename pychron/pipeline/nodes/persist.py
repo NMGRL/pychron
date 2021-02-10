@@ -20,8 +20,9 @@ from traitsui.api import Item, HGroup, EnumEditor, View, VGroup, UItem
 from traitsui.editors import DirectoryEditor
 from uncertainties import ufloat, std_dev, nominal_value
 
+from pychron.base_fs import BaseFS
 from pychron.core.confirmation import confirmation_dialog
-from pychron.core.helpers.filetools import unique_path2
+from pychron.core.helpers.filetools import unique_path2, add_extension
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.progress import progress_iterator, progress_loader
 from pychron.envisage.icon_button_editor import icon_button_editor
@@ -350,6 +351,26 @@ class CosmogenicCorrectionPersistNode(DVCPersistNode):
 
     def run(self, state):
         self.dvc.save_cosmogenic_correction(state.unknowns)
+
+
+class FluxMonitorMeansPersistNode(BaseNode):
+    configurable = False
+    name = 'Save Flux CSV'
+
+    def run(self, state):
+        b = BaseFS()
+        p = b.save_file_dialog(default_directory=paths.data_dir)
+        if p:
+            p = add_extension(p, '.csv')
+            with open(p, 'w') as wfile:
+                header = 'identifier,irradiation,level,sample,hole_id,' \
+                         'saved_j,saved_jerr,mean_j,mean_jerr,model_kind,x,y'
+                attrs = header.split(',')
+                wfile.write('{}\n'.format(header))
+                for mp in state.monitor_positions:
+                    line = ','.join([str(getattr(mp, attr)) for attr in attrs])
+                    wfile.write('{}\n'.format(line))
+
 
 # class TablePersistNode(FileNode):
 #     pass
