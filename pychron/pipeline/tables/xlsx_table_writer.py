@@ -34,7 +34,7 @@ from pychron.pipeline.tables.util import iso_value, icf_value, icf_error, correc
     subreg, interpolate_noteline, value
 from pychron.pipeline.tables.xlsx_table_options import XLSXAnalysisTableWriterOptions
 from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
-from pychron.pychron_constants import PLUSMINUS_NSIGMA, NULL_STR, DESCENDING, format_mswd as FM
+from pychron.pychron_constants import PLUSMINUS_NSIGMA, NULL_STR, DESCENDING, format_mswd as FM, PLUSMINUS_ONE_SIGMA
 
 
 def format_mswd(t):
@@ -444,6 +444,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 Column(visible=opt.include_summary_unit, label='Unit', attr='unit'),
                 Column(visible=opt.include_summary_location, label='Location', attr='location'),
                 Column(visible=opt.include_summary_irradiation, label='Irradiation', attr='irradiation_label'),
+                Column(visible=opt.include_summary_j, label='J', attr='j'),
+                Column(visible=opt.include_summary_j, label=PLUSMINUS_ONE_SIGMA, attr='j_err'),
                 Column(visible=opt.include_summary_material, label='Material', attr='material'),
 
                 Column(visible=opt.include_summary_age, label='Age Type', func=get_preferred_age_kind),

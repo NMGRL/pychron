@@ -134,6 +134,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
     include_summary_age_type = dumpable(Bool(True))
     include_summary_material = dumpable(Bool(True))
     include_summary_sample = dumpable(Bool(True))
+    include_summary_j = dumpable(Bool(True))
 
     include_summary_identifier = dumpable(Bool(True))
     include_summary_unit = dumpable(Bool(True))
@@ -386,6 +387,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                                        iisum('location', 'Location'),
                                        iisum('material', 'Material'),
                                        iisum('irradiation', 'Irradiation'),
+                                       iisum('j', 'J'),
                                        iisum('age_type', 'Age Type'),
                                        iisum('n', 'N'),
                                        iisum('percent_ar39', '%39Ar'),
