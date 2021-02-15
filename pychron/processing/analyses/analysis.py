@@ -147,7 +147,7 @@ def show_residuals_factory(record_id, isotopes):
 
 
 def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibration=False, show_baseline=False,
-                            show_statistics=False, ncols=1, scale_to_equilibration=False):
+                            show_statistics=False, ncols=1, scale_to_equilibration=False, **kw):
     if WINDOW_CNT > 20:
         information(None, 'You have too many Isotope Evolution windows open. Close some before proceeding')
         return
