@@ -18,6 +18,7 @@ from traits.api import Instance
 from pychron.hardware.fiber_light import FiberLight
 from pychron.hardware.ostech import OsTechLaserController
 from pychron.lasers.laser_managers.laser_manager import LaserManager
+from pychron.lasers.laser_managers.pyrometer_mixin import PyrometerMixin
 from pychron.lasers.laser_managers.watlow_mixin import WatlowMixin
 
 
@@ -27,22 +28,20 @@ class OsTechLaserManager(LaserManager):
     def _laser_controller_default(self):
         return OsTechLaserController(name='laser_controller',
                                      configuration_name='laser_controller',
-                                     configuration_dir_name=self.configuration_dir_name
-                                     )
+                                     configuration_dir_name=self.configuration_dir_name)
 
 
-class OsTechDiodeManager(OsTechLaserManager, WatlowMixin):
+class OsTechDiodeManager(OsTechLaserManager, WatlowMixin, PyrometerMixin):
     stage_manager_id = 'ostech.diode'
     configuration_dir_name = 'ostech_diode'
     stage_controller_klass = 'Zaber'
     fiber_light = Instance(FiberLight)
 
-    def _enable_hook(self, clear_setpoint=True):
+    def _enable_hook(self):
         if super(OsTechDiodeManager, self)._enable_hook():
-            # logic board sucessfully enabled
-            if clear_setpoint:
-                # disable the temperature_controller unit a value is set
-                self.temperature_controller.disable()
+            # logic board successfully enabled
+            # disable the temperature_controller unit a value is set
+            self.temperature_controller.disable()
 
             return True
 
@@ -52,8 +51,10 @@ class OsTechDiodeManager(OsTechLaserManager, WatlowMixin):
 
     def get_additional_controls(self):
         gs = [VGroup(UCustom('temperature_controller',
-                             editor=InstanceEditor(view='control_view'), ),
+                             editor=InstanceEditor(view='control_view')),
                      label='Watlow'),
+              VGroup(UCustom('pyrometer', style='custom'),
+                     label='Pyrometer'),
               VGroup(UCustom('fiber_light'), label='FiberLight')]
         return gs
 

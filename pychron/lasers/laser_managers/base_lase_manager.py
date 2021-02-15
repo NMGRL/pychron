@@ -124,6 +124,9 @@ class BaseLaserManager(Manager):
     def disable_laser(self):
         pass
 
+    def get_pyrometer_temperature(self):
+        pass
+
     def get_pattern_names(self):
         p = paths.pattern_dir
         extension = '.lp,.txt'

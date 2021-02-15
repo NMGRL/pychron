@@ -15,66 +15,45 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-
-from __future__ import absolute_import
-from threading import Timer
-
 from traits.api import Instance, Button, Bool, Float
 from traitsui.api import VGroup, Item, InstanceEditor
 
+from pychron.lasers.laser_managers.pyrometer_mixin import PyrometerMixin
 from pychron.lasers.laser_managers.watlow_mixin import WatlowMixin
 from .fusions_laser_manager import FusionsLaserManager
 from pychron.hardware.fusions.fusions_diode_logic_board import FusionsDiodeLogicBoard
 from pychron.hardware.mikron_pyrometer import MikronGA140Pyrometer
 from pychron.hardware.pyrometer_temperature_monitor import PyrometerTemperatureMonitor
 from pychron.hardware.temperature_monitor import DPi32TemperatureMonitor
-from pychron.hardware.watlow.watlow_ezzone import WatlowEZZone
 from pychron.lasers.laser_managers.vue_metrix_manager import VueMetrixManager
 from pychron.monitors.fusions_diode_laser_monitor import FusionsDiodeLaserMonitor
 from pychron.response_recorder import ResponseRecorder
 
 
-class FusionsDiodeManager(FusionsLaserManager, WatlowMixin):
+class FusionsDiodeManager(FusionsLaserManager, WatlowMixin, PyrometerMixin):
     """
     """
     stage_manager_id = 'fusions.diode'
     id = 'pychron.fusions.diode'
-    # name = 'fusions_diode'
     name = 'FusionsDiode'
     configuration_dir_name = 'fusions_diode'
 
-    pyrometer = Instance(MikronGA140Pyrometer)
     temperature_monitor = Instance(DPi32TemperatureMonitor)
-
     control_module_manager = Instance(VueMetrixManager)
-
     pyrometer_temperature_monitor = Instance(PyrometerTemperatureMonitor)
 
     tune = Button
     configure = Button
     tuning = Bool
 
-    # laser_measured_power = Float
-    #    thermocouple_temp = Float
-
-    #    update_timers = List
     monitor_name = 'diode_laser_monitor'
     monitor_klass = FusionsDiodeLaserMonitor
-
-    use_power_slider = Bool(True)
 
     request_power = Float
     request_powermin = Float(0)
     request_powermax = Float(1500)
 
-    # dbname = paths.diodelaser_db
-    # db_root = paths.diodelaser_db_root
-
-    def get_pyrometer_temperature(self, **kw):
-        """
-        """
-        return self._try('pyrometer',
-                         'read_temperature', kw)
+    pyrometer_klass = MikronGA140Pyrometer
 
     def get_laser_internal_temperature(self, **kw):
         """
@@ -85,12 +64,6 @@ class FusionsDiodeManager(FusionsLaserManager, WatlowMixin):
     def get_power_slider(self):
         return None
 
-    def get_lens_configuration_group(self):
-        return None
-
-    def load_lens_configurations(self):
-        pass
-
     def emergency_shutoff(self, *args, **kw):
         super(FusionsDiodeManager, self).emergency_shutoff(*args, **kw)
         self.control_module_manager.disable()
@@ -99,12 +72,11 @@ class FusionsDiodeManager(FusionsLaserManager, WatlowMixin):
     # private
     # ===============================================================================
 
-    def _enable_hook(self, clear_setpoint=True):
+    def _enable_hook(self):
         if super(FusionsDiodeManager, self)._enable_hook():  # logic board sucessfully enabled
 
-            if clear_setpoint:
-                # disable the temperature_controller unit a value is set
-                self.temperature_controller.disable()
+            # disable the temperature_controller unit a value is set
+            self.temperature_controller.disable()
 
             self.response_recorder.start('diode_response_tc_control')
             if self.pyrometer:
@@ -164,11 +136,6 @@ class FusionsDiodeManager(FusionsLaserManager, WatlowMixin):
         tm = DPi32TemperatureMonitor(name='temperature_monitor',
                                      configuration_dir_name=self.configuration_dir_name)
         return tm
-
-    def _pyrometer_default(self):
-        p = MikronGA140Pyrometer(name='pyrometer',
-                                 configuration_dir_name=self.configuration_dir_name)
-        return p
 
     def _laser_controller_default(self):
         b = FusionsDiodeLogicBoard(name='laser_controller',
