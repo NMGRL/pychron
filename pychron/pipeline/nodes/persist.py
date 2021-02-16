@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.message_dialog import information
 from traits.api import Str, Instance
 from traitsui.api import Item, HGroup, EnumEditor, View, VGroup, UItem
 from traitsui.editors import DirectoryEditor
@@ -359,7 +360,9 @@ class FluxMonitorMeansPersistNode(BaseNode):
 
     def run(self, state):
         b = BaseFS()
-        p = b.save_file_dialog(default_directory=paths.data_dir)
+
+        p = b.save_file_dialog(default_filename='{}{}_flux.csv'.format(state.irradiation, state.level),
+                               default_directory=paths.data_dir)
         if p:
             p = add_extension(p, '.csv')
             with open(p, 'w') as wfile:
@@ -371,6 +374,7 @@ class FluxMonitorMeansPersistNode(BaseNode):
                     line = ','.join([str(getattr(mp, attr)) for attr in attrs])
                     wfile.write('{}\n'.format(line))
 
+            information(None, 'Flux saved to\n\n{}'.format(p))
 
 # class TablePersistNode(FileNode):
 #     pass

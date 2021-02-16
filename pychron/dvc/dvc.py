@@ -52,7 +52,7 @@ from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.paths import paths, r_mkdir
 from pychron.processing.interpreted_age import InterpretedAge
-from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS, STARTUP_MESSAGE_POSITION
+from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS, STARTUP_MESSAGE_POSITION, DATE_FORMAT
 
 HOST_WARNING_MESSAGE = 'GitLab or GitHub or LocalGit plugin is required'
 
@@ -876,6 +876,7 @@ class DVC(Loggable):
         except NoSuchPathError:
             return []
 
+        flux_histories = {}
         fluxes = {}
         productions = {}
         chronos = {}
@@ -914,6 +915,12 @@ class DVC(Loggable):
                         fluxes[irrad] = flux_levels
                         productions[irrad] = prod_levels
 
+                    key = '{}{}'.format(irrad, level)
+                    c = meta_repo.get_flux_history(irrad, level, max_count=1)
+                    if c:
+                        c=c[0]
+                        flux_histories[key] = '{} ({})'.format(c.date.strftime(DATE_FORMAT), c.author)
+
                 if use_cocktail_irradiation and r.analysis_type == 'cocktail' and 'cocktail' not in chronos:
                     cirr = meta_repo.get_cocktail_irradiation()
                     chronos['cocktail'] = cirr.get('chronology')
@@ -926,6 +933,7 @@ class DVC(Loggable):
                 return self._make_record(branches=branches, chronos=chronos, productions=productions,
                                          fluxes=fluxes, calculate_f_only=calculate_f_only, sens=sens,
                                          frozen_fluxes=frozen_fluxes, frozen_productions=frozen_productions,
+                                         flux_histories=flux_histories,
                                          quick=quick,
                                          reload=reload, *args)
             except BaseException:
@@ -1655,7 +1663,7 @@ class DVC(Loggable):
         self.sync_repo(expid)
 
     def _make_record(self, record, prog, i, n, productions=None, chronos=None, branches=None, fluxes=None, sens=None,
-                     frozen_fluxes=None, frozen_productions=None,
+                     frozen_fluxes=None, frozen_productions=None, flux_histories=None,
                      calculate_f_only=False, reload=False, quick=False):
         meta_repo = self.meta_repo
         if prog:
@@ -1761,6 +1769,10 @@ class DVC(Loggable):
                             fd = meta_repo.get_flux(a.irradiation,
                                                     a.irradiation_level,
                                                     a.irradiation_position_position)
+
+                    if flux_histories:
+                        a.flux_history = flux_histories['{}{}'.format(a.irradiation, a.irradiation_level)]
+
                     a.j = fd.get('j', ufloat(0, 0))
                     a.position_jerr = fd.get('position_jerr', 0)
 

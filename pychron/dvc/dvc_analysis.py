@@ -36,7 +36,7 @@ from pychron.experiment.utilities.runid import make_aliquot_step, make_step
 from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.isotope import Isotope
 from pychron.pychron_constants import INTERFERENCE_KEYS, NULL_STR, ARAR_MAPPING, EXTRACTION_ATTRS, META_ATTRS, \
-    NO_BLANK_CORRECT
+    NO_BLANK_CORRECT, DATE_FORMAT
 
 
 class Blank:
@@ -122,7 +122,7 @@ class DVCAnalysis(Analysis):
             self.step = make_step(self.increment)
 
         ts = jd['timestamp']
-        for fmt in ('%Y-%m-%dT%H:%M:%S', '%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%d %H:%M:%S'):
+        for fmt in ('%Y-%m-%dT%H:%M:%S', '%Y-%m-%dT%H:%M:%S.%f', DATE_FORMAT):
             try:
                 self.rundate = datetime.datetime.strptime(ts, fmt)
                 break

@@ -524,6 +524,7 @@ class Analysis(ArArAge, IdeogramPlotable):
     deflections = Dict
     gains = Dict
     repository_identifier = ''
+    flux_history = ''
 
     admit_delay = 0
     # processing

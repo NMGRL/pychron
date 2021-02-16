@@ -248,6 +248,8 @@ class FindFluxMonitorMeansNode(BaseFindFluxNode):
                                      for ip in ips if ip.identifier]
 
             state.monitor_positions = monitor_positions
+            state.irradiation = self.irradiation
+            state.level = self.level
 
     def traits_view(self):
         v = self._view_factory(Item('irradiation', editor=EnumEditor(name='irradiations')),

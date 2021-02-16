@@ -504,11 +504,7 @@ class LabnumberEntry(DVCIrradiationable):
             self.information_dialog('No recover file for {}'.format(irradiation, level))
 
     def load_history(self, **kw):
-        repo = self.dvc.meta_repo
-
-        greps = ['fit flux for {}{}'.format(self.irradiation, self.level)]
-
-        cs = repo.get_commits_from_log(greps, **kw)
+        cs = self.dvc.meta_repo.get_flux_history(self.irradiation, self.level, **kw)
         self.flux_commits = cs
         if not cs:
             irradlabel = '{}{}'.format(self.irradiation, self.level)

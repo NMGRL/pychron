@@ -21,7 +21,7 @@ from datetime import datetime
 from uncertainties import ufloat, std_dev
 
 from pychron.dvc import dvc_dump
-from pychron.pychron_constants import INTERFERENCE_KEYS, RATIO_KEYS
+from pychron.pychron_constants import INTERFERENCE_KEYS, RATIO_KEYS, DATE_FORMAT
 
 
 class MetaObjectException(BaseException):
@@ -84,8 +84,8 @@ class Chronology(MetaObject):
             except ValueError:
                 continue
 
-            start = datetime.strptime(start, '%Y-%m-%d %H:%M:%S')
-            end = datetime.strptime(end, '%Y-%m-%d %H:%M:%S')
+            start = datetime.strptime(start, DATE_FORMAT)
+            end = datetime.strptime(end, DATE_FORMAT)
             ds = (end - start).total_seconds()
             d += ds
             self._doses.append((float(power), start, end))

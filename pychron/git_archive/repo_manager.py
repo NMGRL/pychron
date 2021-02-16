@@ -62,7 +62,7 @@ def isoformat_date(d):
     if isinstance(d, (float, int)):
         d = datetime.fromtimestamp(d)
 
-    return d.strftime('%Y-%m-%d %H:%M:%S')
+    return d.strftime(DATE_FORMAT)
     # return time.mktime(time.gmtime(d))
 
 
@@ -967,7 +967,9 @@ class GitRepoManager(Loggable):
             args.append('--grep=^{}'.format(greps))
 
         args.append('--pretty=%H|%cn|%ce|%ct|%s')
-        txt = self.cmd('log', *args)
+        # txt = self.cmd('log', *args)
+        # self.debug('git log {}'.format(' '.join(args)))
+        txt = self._git_command(lambda g: g.log(*args), 'log')
 
         cs = []
         if txt:

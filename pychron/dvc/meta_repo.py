@@ -490,6 +490,11 @@ class MetaRepo(GitRepoManager):
 
         return dvc_load(p)
 
+    def get_flux_history(self, irradiation, level, **kw):
+        greps = ['fit flux for {}{}'.format(irradiation, level)]
+        cs = self.get_commits_from_log(greps, **kw)
+        return cs
+
     def get_flux_positions(self, irradiation, level):
         positions = self._get_level_positions(irradiation, level)
         return positions

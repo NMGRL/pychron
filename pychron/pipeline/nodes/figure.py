@@ -201,17 +201,17 @@ class FluxVisualizationNode(FigureNode):
         return view('Flux Options')
 
     def run(self, state):
-        self.editor = editor = self._editor_factory()
-        state.editors.append(editor)
+        editor = self._editor_factory()
         if not editor:
             state.canceled = True
             return
+        self.editor = editor
+        state.editors.append(editor)
 
         self.name = 'Flux Visualization {}'.format(state.irradiation, state.level)
         geom = state.geometry
 
         ps = state.monitor_positions
-
         if ps:
             po = self.plotter_options
 

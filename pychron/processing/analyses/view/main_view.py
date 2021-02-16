@@ -28,7 +28,7 @@ from pychron.processing.analyses.view.values import ExtractionValue, ComputedVal
 #     def show_isotope_evolution(self, uiinfo, obj):
 #         isos = obj.selected
 #         obj.show_iso_evo_needed = isos
-from pychron.pychron_constants import PLUSMINUS, COCKTAIL, BLANK_TYPES, UNKNOWN, AIR, AR_AR
+from pychron.pychron_constants import PLUSMINUS, COCKTAIL, BLANK_TYPES, UNKNOWN, AIR, AR_AR, DATE_FORMAT
 
 
 class MainView(HasTraits):
@@ -108,11 +108,13 @@ class MainView(HasTraits):
               MeasurementValue(name='Spectrometer',
                                value=an.mass_spectrometer),
               MeasurementValue(name='Run Date',
-                               value=an.rundate.strftime('%Y-%m-%d %H:%M:%S')),
+                               value=an.rundate.strftime(DATE_FORMAT)),
               MeasurementValue(name='Irradiation',
                                value=self._get_irradiation(an)),
               MeasurementValue(name='J',
                                value=jf),
+              MeasurementValue(name='J History',
+                               value=an.flux_history),
               MeasurementValue(name='Position Error',
                                value=floatfmt(an.position_jerr, use_scientific=True)),
               MeasurementValue(name='Lambda K',

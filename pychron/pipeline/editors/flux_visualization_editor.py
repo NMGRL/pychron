@@ -861,7 +861,8 @@ class FluxVisualizationEditor(BaseFluxVisualizationEditor):
         dl, dh = 0, 0
         for poss in self._group_rings():
             poss = list(poss)
-
+            # print(len(poss))
+            # continue
             x, y, z, ze, j, je, sj, sje = self._extract_position_arrays(poss)
 
             fx, fy, mx, my = self.model_plane(x, y, z, ze)
@@ -940,8 +941,7 @@ class FluxVisualizationEditor(BaseFluxVisualizationEditor):
 
     def _group_rings(self):
         rs = array([p.x ** 2 + p.y ** 2 for p in self.monitor_positions])
-
-        split_idx = abs(diff(rs)) > 1e-3
+        split_idx = abs(diff(rs)) > 1e-2
 
         pidx = 0
         for idx in argwhere(split_idx):
@@ -970,14 +970,15 @@ class FluxVisualizationEditor(BaseFluxVisualizationEditor):
                 ObjectColumn(name='j', label='Pred. J', format='%0.5e'),
                 ObjectColumn(name='mean_dev', label='Mean Dev.', format='%0.2f')
                 ]
-        g3d = VGroup(UItem('rotation'),
-                     HGroup(UItem('graph', style='custom'),
+        g3d = VGroup(HGroup(UItem('graph', style='custom'),
                             UItem('monitor_positions',
                                   width=-400,
-                                  editor=TableEditor(columns=cols, sortable=False))))
+                                  editor=TableEditor(columns=cols, sortable=False))),
+                     label='Main')
 
         rings = VGroup(HGroup(UItem('ring_graph', style='custom'),
                               UItem('deviation_graph', style='custom'),
-                              UItem('spoke_graph', style='custom')))
-        return View(Tabbed(rings, g3d))
+                              UItem('spoke_graph', style='custom')),
+                       label='Aux Plots')
+        return View(Tabbed(g3d, rings))
 # ============= EOF =============================================
