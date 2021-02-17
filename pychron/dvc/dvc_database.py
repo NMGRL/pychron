@@ -2348,13 +2348,17 @@ class DVCDatabase(DatabaseAdapter):
     def _flux_positions(self, irradiation, level, sample, invert=False):
         with self.session_ctx() as sess:
             q = sess.query(IrradiationPositionTbl)
-            q = q.join(LevelTbl, IrradiationTbl, SampleTbl)
+            if sample:
+                q = q.join(LevelTbl, IrradiationTbl, SampleTbl)
+                if invert:
+                    q = q.filter(not_(SampleTbl.name == sample))
+                else:
+                    q = q.filter(SampleTbl.name == sample)
+            else:
+                q = q.join(LevelTbl, IrradiationTbl)
+
             q = q.filter(IrradiationTbl.name == irradiation)
             q = q.filter(LevelTbl.name == level)
-            if invert:
-                q = q.filter(not_(SampleTbl.name == sample))
-            else:
-                q = q.filter(SampleTbl.name == sample)
 
             return self._query_all(q)
 

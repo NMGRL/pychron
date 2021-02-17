@@ -213,6 +213,7 @@ class TransferFluxMonitorMeansNode(FindIrradiationNode):
 class FindFluxMonitorMeansNode(BaseFindFluxNode):
     name = 'Find Flux Monitor Means'
     exclude = None
+    include_all_positions = Bool
 
     def _load_hook(self, nodedict):
         self.level = nodedict.get('level', '')
@@ -236,13 +237,24 @@ class FindFluxMonitorMeansNode(BaseFindFluxNode):
             if not msn:
                 msn = 'FC-2'
 
+            include_all = self.include_all_positions
+
             fluxes = dvc.get_flux_positions(self.irradiation, self.level)
             if self.irradiation.endswith('_MST'):
+                def check(ip):
+                    ret = True
+                    if not include_all:
+                        ret = ip['sample'] == msn
+                    return ret
+
                 monitor_positions = [self._fp_factory(state.geometry, self.irradiation, self.level,
                                                       ip['identifier'], ip['sample'], ip['position'], fluxes)
-                                     for ip in fluxes if ip['sample'] == msn]
+                                     for ip in fluxes if check(ip)]
             else:
+                if include_all:
+                    msn = None
                 ips = dvc.get_flux_monitors(self.irradiation, self.level, msn)
+
                 monitor_positions = [self._fp_factory(state.geometry, self.irradiation, self.level,
                                                       ip.identifier, ip.sample.name, ip.position, fluxes)
                                      for ip in ips if ip.identifier]
@@ -254,7 +266,9 @@ class FindFluxMonitorMeansNode(BaseFindFluxNode):
     def traits_view(self):
         v = self._view_factory(Item('irradiation', editor=EnumEditor(name='irradiations')),
                                Item('level', editor=EnumEditor(name='levels')),
-                               Item('monitor_sample_name', editor=EnumEditor(name='samples')),
+                               Item('include_all_positions', label='Include All Positions'),
+                               Item('monitor_sample_name', editor=EnumEditor(name='samples'),
+                                    enabled_when='not include_all_positions'),
                                width=300,
                                title='Select Irradiation and Level')
         return v
