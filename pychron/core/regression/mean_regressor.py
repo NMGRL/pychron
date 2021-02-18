@@ -97,17 +97,21 @@ sem={}
         m = self.mean
         std = self.std
         sem = self.sem
+        se = self.se
 
         sm = floatfmt(m, n=9)
         sstd = floatfmt(std, n=9)
         ssem = floatfmt(sem, n=9)
+        sse = floatfmt(se, n=9)
 
         pstd = self.format_percent_error(m, std)
         psem = self.format_percent_error(m, sem)
+        pse = self.format_percent_error(m, se)
 
         n = self.n
         tn = self.xs.shape[0]
-        s = 'mean={}, n={}({}), std={} ({}), sem={} ({})'.format(sm, n, tn, sstd, pstd, ssem, psem)
+        s = 'mean={}, n={}({}), std={} ({}), sem={} ({}) se={} ({})'.format(sm, n, tn, sstd, pstd, ssem, psem,
+                                                                            sse, pse)
         # s = fmt.format(m, std, self.percent_error(m, std),
         #                sem, self.percent_error(m, sem))
         return s
@@ -122,14 +126,14 @@ sem={}
                 error_calc = 'SEM' if 'sem' in self.fit.lower() else 'SD'
 
         error_calc = error_calc.lower()
-
         if error_calc == SEM.lower():
             e = self.sem
         elif error_calc in (MSEM.lower(), 'msem'):
-            e = self.sem * (self.mswd ** 0.5 if self.mswd > 1 else 1)
+            e = self.se * (self.mswd ** 0.5 if self.mswd > 1 else 1)
         else:
             e = self.std
 
+        print(error_calc, e, self.sem, self.std, self.mswd)
         if isinstance(x, (float, int)):
             return e
         else:
