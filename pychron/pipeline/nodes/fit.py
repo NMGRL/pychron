@@ -545,7 +545,8 @@ class FitFluxNode(FitNode):
             editor.holder = state.holder
 
             editor.set_positions(monitors, state.unknown_positions)
-            state.saveable_irradiation_positions = editor.monitor_positions + state.unknown_positions
+            # state.saveable_irradiation_positions = editor.monitor_positions + state.unknown_positions
+            state.monitor_positions = editor.monitor_positions
             editor.predict_values()
             editor.name = 'Flux: {}{}'.format(state.irradiation, state.level)
 

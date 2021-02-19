@@ -133,7 +133,6 @@ sem={}
         else:
             e = self.std
 
-        print(error_calc, e, self.sem, self.std, self.mswd)
         if isinstance(x, (float, int)):
             return e
         else:

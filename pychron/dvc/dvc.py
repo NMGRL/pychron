@@ -677,7 +677,7 @@ class DVC(Loggable):
                 self.meta_commit('User manual edited flux')
         self.meta_push()
 
-    def save_flux_position(self, flux_position, options, decay_constants, add=False):
+    def save_flux_position(self, flux_position, options, decay_constants, add=False, save_predicted=True):
         """
         save flux called from FluxPersistNode
 
@@ -700,7 +700,7 @@ class DVC(Loggable):
         position_jerr = flux_position.position_jerr
 
         self._save_j(irradiation, level, pos, identifier, j, e, mj, me, position_jerr, decay_constants, analyses,
-                     options, add)
+                     options, add, save_predicted)
 
     def save_csv_dataset(self, name, repository, lines, local_path=False):
 
@@ -1627,19 +1627,20 @@ class DVC(Loggable):
                     ci.refresh_view()
 
     def _save_j(self, irradiation, level, pos, identifier, j, e, mj, me, position_jerr, decay_constants, analyses,
-                options, add):
+                options, add, save_predicted):
         self.info('Saving j for {}{}:{} {}, j={} +/-{}'.format(irradiation, level,
                                                                pos, identifier, j, e))
         self.meta_repo.update_flux(irradiation, level, pos, identifier, j, e, mj, me,
                                    decay=decay_constants,
                                    analyses=analyses,
                                    options=options, add=add,
-                                   position_jerr=position_jerr)
+                                   position_jerr=position_jerr,
+                                   save_predicted=save_predicted)
 
-        if self.update_currents_enabed:
-            ans = self.db.get_labnumber_analyses([identifier])
-            for ai in self.make_analyses(ans):
-                self._update_current_age(ai)
+        # if self.update_currents_enabled:
+        #     ans, _ = self.db.get_labnumber_analyses([identifier])
+        #     for ai in self.make_analyses(ans):
+        #         self._update_current_age(ai)
 
     def _add_interpreted_age(self, ia, d):
         rid = ia.repository_identifier

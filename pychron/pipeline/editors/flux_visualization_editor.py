@@ -128,8 +128,13 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
     _analyses = List
     _individual_analyses_enabled = True
 
+    _suppress_predict = False
+
     @on_trait_change('monitor_positions:use')
     def handle_use(self):
+        if self._suppress_predict:
+            return
+
         self.predict_values()
 
     def _rotation_changed(self):

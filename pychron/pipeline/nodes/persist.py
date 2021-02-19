@@ -219,24 +219,27 @@ class FluxPersistNode(DVCPersistNode):
     commit_tag = 'FLUX'
 
     def run(self, state):
-        if state.saveable_irradiation_positions:
-            xs = [x for x in state.saveable_irradiation_positions if x.save]
-            if xs:
+        if state.monitor_positions:
+            self.dvc.meta_repo.smart_pull()
+
+            progress_iterator(state.monitor_positions,
+                              lambda *args: self._save_j(state, *args),
+                              threshold=1)
+
+            progress_iterator(state.unknown_positions,
+                              lambda *args: self._save_j(state, *args),
+                              threshold=1)
+
+            p = self.dvc.meta_repo.get_level_path(state.irradiation, state.level)
+            self.dvc.meta_repo.add(p, commit=False)
+            self.dvc.meta_commit('fit flux for {}{}'.format(state.irradiation, state.level))
+
+            if confirmation_dialog('Would you like to share your changes?'):
                 self.dvc.meta_repo.smart_pull()
-
-                progress_iterator(xs,
-                                  lambda *args: self._save_j(state, *args),
-                                  threshold=1)
-
-                p = self.dvc.meta_repo.get_level_path(state.irradiation, state.level)
-                self.dvc.meta_repo.add(p, commit=False)
-                self.dvc.meta_commit('fit flux for {}{}'.format(state.irradiation, state.level))
-
-                if confirmation_dialog('Would you like to share your changes?'):
-                    self.dvc.meta_repo.smart_pull()
-                    self.dvc.meta_repo.push()
+                self.dvc.meta_repo.push()
 
     def _save_j(self, state, irp, prog, i, n):
+
         if prog:
             prog.change_message('Save J for {} {}/{}'.format(irp.identifier, i, n))
 
@@ -254,7 +257,7 @@ class FluxPersistNode(DVCPersistNode):
                        monitor_material=po.monitor_name,
                        monitor_reference=po.selected_monitor)
 
-        self.dvc.save_flux_position(irp, options, decay_constants, add=False)
+        self.dvc.save_flux_position(irp, options, decay_constants, add=False, save_predicted=irp.save)
         # self.dvc.save_j(irp.irradiation, irp.level, irp.hole_id, irp.identifier,
         #                 irp.j, irp.jerr,
         #                 irp.mean_j, irp.mean_jerr,irp.

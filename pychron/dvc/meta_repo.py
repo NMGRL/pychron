@@ -405,7 +405,7 @@ class MetaRepo(GitRepoManager):
 
     def update_flux(self, irradiation, level, pos, identifier, j, e, mj, me, decay=None,
                     position_jerr=None,
-                    analyses=None, options=None, add=True):
+                    analyses=None, options=None, add=True, save_predicted=True):
 
         if options is None:
             options = {}
@@ -423,6 +423,9 @@ class MetaRepo(GitRepoManager):
         else:
             positions = jd.get('positions', [])
             z = jd.get('z', 0)
+
+        if not save_predicted:
+            j, e = jd.get('j', 0), jd.get('j_err', 0)
 
         npos = {'position': pos, 'j': j, 'j_err': e,
                 'mean_j': mj, 'mean_j_err': me,

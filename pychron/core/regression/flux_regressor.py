@@ -56,7 +56,7 @@ class NearestNeighborFluxRegressor(SpecialFluxRegressor):
             get the n positions that are closest (eucledian distance) to x,y
             """
 
-            v2 = array([[x,y]])
+            v2 = array([[x, y]])
             ds = ravel(calc_distances(self.clean_xs, v2))
             idx = sorted(enumerate(ds), key=itemgetter(1))
             idx, ds = zip(*idx[:self.n])
