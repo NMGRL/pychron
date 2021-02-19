@@ -17,14 +17,15 @@ from operator import itemgetter
 
 from numpy import linspace, meshgrid, arctan2, sin, cos, vstack, array, zeros, diff, argwhere
 from traits.api import Instance, Int, Str, Float, Property, List, on_trait_change
-from traitsui.api import View, UItem, VGroup, HGroup, TableEditor, Tabbed
+from traitsui.api import View, UItem, VGroup, HGroup, TableEditor, Tabbed, HSplit
 from traitsui.table_column import ObjectColumn
 from uncertainties import nominal_value, std_dev
 
 from pychron.core.fits.fit_selector import CheckboxColumn
 from pychron.core.geometry.affine import AffineTransform
 from pychron.core.helpers.formatting import floatfmt
-from pychron.core.regression.flux_regressor import BowlFluxRegressor, PlaneFluxRegressor, NearestNeighborFluxRegressor
+from pychron.core.regression.flux_regressor import BowlFluxRegressor, PlaneFluxRegressor, NearestNeighborFluxRegressor, \
+    BSplineRegressor, RBFRegressor, GridDataRegressor, IDWRegressor
 from pychron.core.regression.mean_regressor import WeightedMeanRegressor
 from pychron.core.regression.ols_regressor import OLSRegressor
 from pychron.core.stats.monte_carlo import FluxEstimator
@@ -40,7 +41,7 @@ from pychron.graph.tools.data_tool import DataTool, DataToolOverlay
 from pychron.options.layout import FigureLayout
 from pychron.pipeline.editors.irradiation_tray_overlay import IrradiationTrayOverlay
 from pychron.pychron_constants import LEAST_SQUARES_1D, MATCHING, BRACKETING, WEIGHTED_MEAN, BOWL, PLANE, \
-    WEIGHTED_MEAN_1D, MSEM, NN, format_mswd
+    WEIGHTED_MEAN_1D, MSEM, NN, format_mswd, BSPLINE, RBF, GRIDDATA, IDW
 
 
 def make_grid(r, n):
@@ -105,7 +106,7 @@ def add_axes_tools(g, p):
 
 class BaseFluxVisualizationEditor(BaseTraitsEditor):
     graph = Instance('pychron.graph.graph.Graph')
-    levels = 10
+    levels = Int(10)
     show_labels = False
 
     color_map_name = 'jet'
@@ -198,6 +199,8 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
                     p.jerr = je
                     p.position_jerr = pe
                     p.dev = (oj - j) / j * 100
+        elif options.model_kind in (BSPLINE, RBF, GRIDDATA, IDW):
+            pass
         else:
             js = reg.predict(pts)
             jes = reg.predict_error(pts)
@@ -255,6 +258,16 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
             elif model_kind == NN:
                 klass = NearestNeighborFluxRegressor
                 kw['n'] = po.n_neighbors
+            elif model_kind == BSPLINE:
+                klass = BSplineRegressor
+            elif model_kind == RBF:
+                klass = RBFRegressor
+                kw['rbf_kind'] = po.rbf_kind
+            elif model_kind == GRIDDATA:
+                klass = GridDataRegressor
+                kw['method'] = po.griddata_method
+            elif model_kind == IDW:
+                klass = IDWRegressor
 
             xs = vstack((x, y)).T
 
@@ -269,18 +282,24 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         return reg
 
     def _model_flux(self, reg, r):
-
         n = reg.n * 10
         gx, gy = make_grid(r, n)
 
         nz = zeros((n, n))
         ne = zeros((n, n))
-        for i in range(n):
-            pts = vstack((gx[i], gy[i])).T
+        if isinstance(reg, (BSplineRegressor,)):
+            g = linspace(-r, r, n)
+            nz = reg.predict_grid(g, g)
+        elif isinstance(reg, (RBFRegressor, GridDataRegressor)):
+            nz = reg.predict_grid(gx, gy)
+        else:
+            for i in range(n):
+                pts = vstack((gx[i], gy[i])).T
 
-            nominals = reg.predict(pts)
-            nz[i] = nominals
+                nominals = reg.predict(pts)
+                nz[i] = nominals
 
+        print(nz.shape)
         self.max_j = nz.max()
         self.min_j = nz.min()
 
@@ -316,14 +335,15 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         s, p = cg.new_series(z=m,
                              xbounds=(-r, r),
                              ybounds=(-r, r),
-                             levels=self.levels,
-                             cmap=self.color_map_name,
+                             levels=self.plotter_options.levels,
+                             cmap=self.plotter_options.color_map_name,
                              colorbar=True,
                              style='contour')
 
         # add data tool
         def predict_func(ptx, pty):
-            return floatfmt(reg.predict([(ptx, pty)])[0], n=2, use_scientific=True, s=6)
+            return ''
+            # return floatfmt(reg.predict([(ptx, pty)])[0], n=2, use_scientific=True, s=6)
 
         dt = DataTool(plot=s,
                       filter_components=False,
@@ -959,7 +979,7 @@ class FluxVisualizationEditor(BaseFluxVisualizationEditor):
 
     def predict_values(self, refresh=False):
         super(FluxVisualizationEditor, self).predict_values()
-        self._update_ring_graph()
+        # self._update_ring_graph()
         # self._update_half_ring_graph()
 
     def set_positions(self, pos):
@@ -975,9 +995,9 @@ class FluxVisualizationEditor(BaseFluxVisualizationEditor):
                 ObjectColumn(name='j', label='Pred. J', format='%0.5e'),
                 ObjectColumn(name='mean_dev', label='Mean Dev.', format='%0.2f')
                 ]
-        g3d = VGroup(HGroup(UItem('graph', style='custom'),
+        g3d = VGroup(HSplit(UItem('graph', style='custom'),
                             UItem('monitor_positions',
-                                  width=-400,
+                                  width=400,
                                   editor=TableEditor(columns=cols, sortable=False))),
                      label='Main')
 

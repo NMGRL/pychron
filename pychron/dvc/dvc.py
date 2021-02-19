@@ -677,30 +677,44 @@ class DVC(Loggable):
                 self.meta_commit('User manual edited flux')
         self.meta_push()
 
-    def save_flux_position(self, flux_position, options, decay_constants, add=False, save_predicted=True):
-        """
-        save flux called from FluxPersistNode
+    # def save_flux_position(self, flux_position, options, decay_constants, add=False, save_predicted=True):
+    #     """
+    #     save flux called from FluxPersistNode
+    #
+    #     :param flux_position:
+    #     :param options:
+    #     :param decay_constants:
+    #     :param add:
+    #     :return:
+    #     """
+    #
+    #     irradiation = flux_position.irradiation
+    #     level = flux_position.level
+    #     pos = flux_position.hole_id
+    #     identifier = flux_position.identifier
+    #     j = flux_position.j
+    #     e = flux_position.jerr
+    #     mj = flux_position.mean_j
+    #     me = flux_position.mean_jerr
+    #     analyses = flux_position.analyses
+    #     position_jerr = flux_position.position_jerr
+    #
+    #     # self._save_j(irradiation, level, pos, identifier, j, e, mj, me, position_jerr, decay_constants, analyses,
+    #     #              options, add, save_predicted)
+    #     self.info('Saving j for {}{}:{} {}, j={} +/-{}'.format(irradiation, level,
+    #                                                            pos, identifier, j, e))
+    #
+    #     self.meta_repo.update_flux(irradiation, level, pos, identifier, j, e, mj, me,
+    #                                decay=decay_constants,
+    #                                analyses=analyses,
+    #                                options=options, add=add,
+    #                                position_jerr=position_jerr,
+    #                                save_predicted=save_predicted)
 
-        :param flux_position:
-        :param options:
-        :param decay_constants:
-        :param add:
-        :return:
-        """
-
-        irradiation = flux_position.irradiation
-        level = flux_position.level
-        pos = flux_position.hole_id
-        identifier = flux_position.identifier
-        j = flux_position.j
-        e = flux_position.jerr
-        mj = flux_position.mean_j
-        me = flux_position.mean_jerr
-        analyses = flux_position.analyses
-        position_jerr = flux_position.position_jerr
-
-        self._save_j(irradiation, level, pos, identifier, j, e, mj, me, position_jerr, decay_constants, analyses,
-                     options, add, save_predicted)
+        # if self.update_currents_enabled:
+        #     ans, _ = self.db.get_labnumber_analyses([identifier])
+        #     for ai in self.make_analyses(ans):
+        #         self._update_current_age(ai)
 
     def save_csv_dataset(self, name, repository, lines, local_path=False):
 
@@ -1626,21 +1640,8 @@ class DVC(Loggable):
                 for ci in cs:
                     ci.refresh_view()
 
-    def _save_j(self, irradiation, level, pos, identifier, j, e, mj, me, position_jerr, decay_constants, analyses,
-                options, add, save_predicted):
-        self.info('Saving j for {}{}:{} {}, j={} +/-{}'.format(irradiation, level,
-                                                               pos, identifier, j, e))
-        self.meta_repo.update_flux(irradiation, level, pos, identifier, j, e, mj, me,
-                                   decay=decay_constants,
-                                   analyses=analyses,
-                                   options=options, add=add,
-                                   position_jerr=position_jerr,
-                                   save_predicted=save_predicted)
-
-        # if self.update_currents_enabled:
-        #     ans, _ = self.db.get_labnumber_analyses([identifier])
-        #     for ai in self.make_analyses(ans):
-        #         self._update_current_age(ai)
+    # def _save_j(self, irradiation, level, pos, identifier, j, e, mj, me, position_jerr, decay_constants, analyses,
+    #             options, add, save_predicted):
 
     def _add_interpreted_age(self, ia, d):
         rid = ia.repository_identifier

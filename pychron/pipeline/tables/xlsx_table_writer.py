@@ -305,10 +305,10 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         detectors = self._get_detectors(grps)
 
         ubit = name in ('Unknowns', 'Monitor')
-        bkbit = ubit and options.include_blanks
+        bkbit = ubit
         ibit = options.include_intercepts
 
-        kcabit = ubit and options.include_kca
+        kcabit = ubit
         age_units = '({})'.format(options.age_units)
         age_func = age_value(options.age_units)
 
@@ -326,15 +326,15 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
                    Column(visible=ubit, label='Age', units=age_units, attr='age', func=age_func),
                    EColumn(visible=ubit, units=age_units, attr='age_err_wo_j', func=age_func),
-                   VColumn(visible=kcabit, label='K/Ca', attr='kca'),
+                   VColumn(visible=ubit, label='K/Ca', attr='kca'),
                    EColumn(visible=ubit, attr='kca'),
-                   VColumn(visible=ubit and options.include_radiogenic_yield,
+                   VColumn(visible=ubit,
                            label=('%', '<sup>40</sup>', 'Ar'),
                            units='(%)', attr='radiogenic_yield'),
-                   VColumn(visible=ubit and options.include_F,
+                   VColumn(visible=ubit,
                            label=('<sup>40</sup>', 'Ar*/', '<sup>39</sup>', 'Ar', '<sub>K</sub>'),
                            attr='uF'),
-                   VColumn(visible=ubit and options.include_k2o,
+                   VColumn(visible=ubit,
                            label=('K', '<sub>2</sub>', 'O'),
                            units='(wt. %)',
                            attr='k2o'),
@@ -359,6 +359,9 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         else:
             c = Column(visible=ubit, label='Irradiation', attr='irradiation_label')
             columns.append(c)
+
+        columns.extend((Column(visible=ubit, label='J', attr='j'),
+                        EColumn(visible=ubit, attr='j_err')))
 
         return columns
 

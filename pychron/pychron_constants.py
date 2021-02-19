@@ -275,7 +275,12 @@ BRACKETING = 'Bracketing'
 NN = 'Nearest Neighbors'
 PLANE = 'Plane'
 BOWL = 'Bowl'
-FLUX_MODEL_KINDS = PLANE, BOWL, WEIGHTED_MEAN, MATCHING, NN, BRACKETING, LEAST_SQUARES_1D, WEIGHTED_MEAN_1D
+BSPLINE = 'BSpline'
+RBF = 'RBF'
+GRIDDATA = 'GridData'
+IDW = 'IDW'
+FLUX_MODEL_KINDS = PLANE, BOWL, WEIGHTED_MEAN, MATCHING, NN, BRACKETING, LEAST_SQUARES_1D, \
+                   WEIGHTED_MEAN_1D
 
 if paths.setup_dir:
     flux_constants = os.path.join(paths.setup_dir, 'flux_constants.yaml')

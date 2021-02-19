@@ -52,6 +52,8 @@ def ff(x):
 MONITOR_COLUMNS = [
     column(klass=CheckboxColumn, name='use', label='Use', editable=True, width=30),
     column(klass=CheckboxColumn, name='save', label='Save', editable=True, width=30),
+    column(klass=CheckboxColumn, name='save_predicted', label='Save Pred.',
+           editable=True, width=60),
     column(name='hole_id', label='Hole'),
     column(name='identifier', label='Identifier'),
     column(name='sample', label='Sample', width=115),
@@ -126,7 +128,9 @@ class FluxPosition(HasTraits):
 
     use = Bool(True)
     save = Bool(True)
+    save_predicted = Bool(True)
     dev = Float
+    mean_dev = Float
 
     percent_saved_error = Property
     percent_mean_error = Property
@@ -169,6 +173,13 @@ class FluxPosition(HasTraits):
     def _get_percent_position_jerr(self):
         if self.j and self.position_jerr:
             return calc_percent_error(self.j, self.position_jerr)
+
+    def _save_changed(self, new):
+        self.save_predicted = new
+
+    def _save_predicted_changed(self, new):
+        if new:
+            self.save = new
 
 
 class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):

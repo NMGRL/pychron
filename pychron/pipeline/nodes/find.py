@@ -216,8 +216,10 @@ class FindFluxMonitorMeansNode(BaseFindFluxNode):
     include_all_positions = Bool
 
     def _load_hook(self, nodedict):
-        self.level = nodedict.get('level', '')
         self.irradiation = nodedict.get('irradiation', '')
+        self.level = nodedict.get('level', '')
+        if self.level and self.level not in self.levels:
+            self.dirty = True
 
     def run(self, state):
         if not self.irradiation or not self.level:

@@ -286,7 +286,7 @@ class LabnumberEntry(DVCIrradiationable):
             with db.session_ctx(use_parent_session=False):
                 dbirrad = db.get_irradiation(self.irradiation)
                 for level in dbirrad.levels:
-                    db.update_fluxes(self.irradiation, level.name, j, j * 1e-3)
+                    db.update_flux_simple(self.irradiation, level.name, j, j * 1e-3)
             self.save()
 
         self.refresh_table = True

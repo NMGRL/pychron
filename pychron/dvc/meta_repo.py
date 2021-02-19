@@ -146,8 +146,7 @@ class MetaRepo(GitRepoManager):
             self.warning_dialog('Invalid production name'.format(prname))
 
     def update_level_monitor(self, irradiation, level, monitor_name, monitor_material, monitor_age, lambda_k):
-        path = self.get_level_path(irradiation, level)
-        obj = dvc_load(path)
+        obj, path = self.get_level_obj(irradiation, level)
         positions = self._get_level_positions(irradiation, level)
 
         options = {'monitor_name': monitor_name,
@@ -234,8 +233,9 @@ class MetaRepo(GitRepoManager):
                 self.add(p, commit=False)
 
     def set_identifier(self, irradiation, level, pos, identifier):
-        p = self.get_level_path(irradiation, level)
-        jd = dvc_load(p)
+        # p = self.get_level_path(irradiation, level)
+        # jd = dvc_load(p)
+        jd, p = self.get_level_obj(irradiation, level)
         positions = self._get_level_positions(irradiation, level)
 
         d = next((p for p in positions if p['position'] == pos), None)
@@ -348,8 +348,9 @@ class MetaRepo(GitRepoManager):
             self.add(p, commit=commit)
 
     def update_level_z(self, irradiation, level, z):
-        p = self.get_level_path(irradiation, level)
-        obj = dvc_load(p)
+        # p = self.get_level_path(irradiation, level)
+        # obj = dvc_load(p)
+        obj, p = self.get_level_obj(irradiation, level)
 
         try:
             add = obj['z'] != z
@@ -363,8 +364,10 @@ class MetaRepo(GitRepoManager):
             self.add(p, commit=False)
 
     def remove_irradiation_position(self, irradiation, level, hole):
-        p = self.get_level_path(irradiation, level)
-        jd = dvc_load(p)
+        # p = self.get_level_path(irradiation, level)
+        # jd = dvc_load(p)
+        jd, p = self.get_level_obj(irradiation, level)
+
         if jd:
             if isinstance(jd, list):
                 positions = jd
@@ -385,9 +388,10 @@ class MetaRepo(GitRepoManager):
         if add:
             self.add(p, commit=False)
 
-    def update_fluxes(self, irradiation, level, j, e, add=True):
-        p = self.get_level_path(irradiation, level)
-        jd = dvc_load(p)
+    def update_flux_simple(self, irradiation, level, j, e, add=True):
+        # p = self.get_level_path(irradiation, level)
+        # jd = dvc_load(p)
+        jd, p = self.get_level_obj(irradiation, level)
 
         if isinstance(jd, list):
             positions = jd
@@ -405,7 +409,10 @@ class MetaRepo(GitRepoManager):
 
     def update_flux(self, irradiation, level, pos, identifier, j, e, mj, me, decay=None,
                     position_jerr=None,
-                    analyses=None, options=None, add=True, save_predicted=True):
+                    analyses=None, options=None, add=True, save_predicted=True,
+                    jd=None):
+
+        self.info('Saving j for {}{}:{} {}, j={} +/-{}'.format(irradiation, level, pos, identifier, j, e))
 
         if options is None:
             options = {}
@@ -415,8 +422,12 @@ class MetaRepo(GitRepoManager):
         if analyses is None:
             analyses = []
 
-        p = self.get_level_path(irradiation, level)
-        jd = dvc_load(p)
+        dump = False
+        if jd is None:
+            dump = True
+            p = self.get_level_path(irradiation, level)
+            jd = dvc_load(p)
+
         if isinstance(jd, list):
             positions = jd
             z = 0
@@ -446,7 +457,12 @@ class MetaRepo(GitRepoManager):
             npositions = [npos]
 
         obj = {'z': z, 'positions': npositions}
-        dvc_dump(obj, p)
+        if dump:
+            dvc_dump(obj, p)
+        else:
+            jd['z'] = z
+            jd['positions'] = npositions
+
         if add:
             self.add(p, commit=False)
 
@@ -501,6 +517,10 @@ class MetaRepo(GitRepoManager):
     def get_flux_positions(self, irradiation, level):
         positions = self._get_level_positions(irradiation, level)
         return positions
+
+    def get_level_obj(self, irradiation, level):
+        p = self.get_level_path(irradiation, level)
+        return dvc_load(p), p
 
     def get_flux(self, irradiation, level, position):
         positions = self.get_flux_positions(irradiation, level)
@@ -625,8 +645,7 @@ class MetaRepo(GitRepoManager):
 
     # private
     def _get_level_positions(self, irrad, level):
-        p = self.get_level_path(irrad, level)
-        obj = dvc_load(p)
+        obj, p = self.get_level_obj(irrad, level)
         if isinstance(obj, list):
             positions = obj
         else:

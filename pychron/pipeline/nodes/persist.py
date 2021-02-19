@@ -26,6 +26,7 @@ from pychron.core.confirmation import confirmation_dialog
 from pychron.core.helpers.filetools import unique_path2, add_extension
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.progress import progress_iterator, progress_loader
+from pychron.dvc import dvc_dump
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.options_manager import OptionsController
 from pychron.paths import paths
@@ -220,58 +221,69 @@ class FluxPersistNode(DVCPersistNode):
 
     def run(self, state):
         if state.monitor_positions:
-            self.dvc.meta_repo.smart_pull()
+            meta_repo = self.dvc.meta_repo
+            meta_repo.smart_pull()
+            xs = [xi for xi in state.monitor_positions + state.unknown_positions if xi.save]
 
-            progress_iterator(state.monitor_positions,
-                              lambda *args: self._save_j(state, *args),
+            level_obj, p = self.dvc.meta_repo.get_level_obj(state.irradiation, state.level)
+
+            po = state.flux_options
+            options = dict(model_kind=po.model_kind,
+                           predicted_j_error_type=po.predicted_j_error_type,
+                           use_weighted_fit=po.use_weighted_fit,
+                           monte_carlo_ntrials=po.monte_carlo_ntrials,
+                           use_monte_carlo=po.use_monte_carlo,
+                           monitor_name=po.monitor_name,
+                           monitor_age=po.monitor_age,
+                           monitor_material=po.monitor_name,
+                           monitor_reference=po.selected_monitor)
+
+            lk = po.lambda_k
+            decay_constants = {'lambda_k_total': nominal_value(lk), 'lambda_k_total_error': std_dev(lk)}
+
+            def update(irp, prog, i, n):
+                if prog:
+                    prog.change_message('Save J for {} {}/{}'.format(irp.identifier, i, n))
+
+                irradiation = irp.irradiation
+                level = irp.level
+                pos = irp.hole_id
+                identifier = irp.identifier
+                j = irp.j
+                e = irp.jerr
+                mj = irp.mean_j
+                me = irp.mean_jerr
+                analyses = irp.analyses
+                position_jerr = irp.position_jerr
+
+                meta_repo.update_flux(irradiation, level, pos, identifier, j, e, mj, me,
+                                      decay=decay_constants,
+                                      analyses=analyses,
+                                      options=options, add=False,
+                                      position_jerr=position_jerr,
+                                      save_predicted=irp.save_predicted,
+                                      jd=level_obj)
+
+                uj = ufloat(j, e, tag='j')
+                for i in state.unknowns:
+                    if i.identifier == irp.identifier:
+                        i.j = uj
+                        i.arar_constants.lambda_k = lk
+                        i.recalculate_age()
+
+            progress_iterator(xs,
+                              update,
+                              # lambda *args: self._save_j(state, level_obj, p, *args),
                               threshold=1)
 
-            progress_iterator(state.unknown_positions,
-                              lambda *args: self._save_j(state, *args),
-                              threshold=1)
+            dvc_dump(level_obj, p)
 
-            p = self.dvc.meta_repo.get_level_path(state.irradiation, state.level)
-            self.dvc.meta_repo.add(p, commit=False)
+            meta_repo.add(p, commit=False)
             self.dvc.meta_commit('fit flux for {}{}'.format(state.irradiation, state.level))
 
             if confirmation_dialog('Would you like to share your changes?'):
                 self.dvc.meta_repo.smart_pull()
                 self.dvc.meta_repo.push()
-
-    def _save_j(self, state, irp, prog, i, n):
-
-        if prog:
-            prog.change_message('Save J for {} {}/{}'.format(irp.identifier, i, n))
-
-        po = state.flux_options
-        lk = po.lambda_k
-
-        decay_constants = {'lambda_k_total': nominal_value(lk), 'lambda_k_total_error': std_dev(lk)}
-        options = dict(model_kind=po.model_kind,
-                       predicted_j_error_type=po.predicted_j_error_type,
-                       use_weighted_fit=po.use_weighted_fit,
-                       monte_carlo_ntrials=po.monte_carlo_ntrials,
-                       use_monte_carlo=po.use_monte_carlo,
-                       monitor_name=po.monitor_name,
-                       monitor_age=po.monitor_age,
-                       monitor_material=po.monitor_name,
-                       monitor_reference=po.selected_monitor)
-
-        self.dvc.save_flux_position(irp, options, decay_constants, add=False, save_predicted=irp.save)
-        # self.dvc.save_j(irp.irradiation, irp.level, irp.hole_id, irp.identifier,
-        #                 irp.j, irp.jerr,
-        #                 irp.mean_j, irp.mean_jerr,irp.
-        #                 decay_constants,
-        #                 analyses=irp.analyses,
-        #                 options=options,
-        #                 add=False)
-
-        j = ufloat(irp.j, irp.jerr, tag='j')
-        for i in state.unknowns:
-            if i.identifier == irp.identifier:
-                i.j = j
-                i.arar_constants.lambda_k = lk
-                i.recalculate_age()
 
 
 class XLSXAnalysisTablePersistNode(BaseDVCNode):
