@@ -16,6 +16,7 @@
 from traitsui.api import UCustom, UItem, VGroup, InstanceEditor
 from traits.api import Instance
 from pychron.hardware.fiber_light import FiberLight
+from pychron.hardware.micro_epsilon_pyrometer import MicroEpsilonPyrometer
 from pychron.hardware.ostech import OsTechLaserController
 from pychron.lasers.laser_managers.laser_manager import LaserManager
 from pychron.lasers.laser_managers.pyrometer_mixin import PyrometerMixin
@@ -36,6 +37,7 @@ class OsTechDiodeManager(OsTechLaserManager, WatlowMixin, PyrometerMixin):
     configuration_dir_name = 'ostech_diode'
     stage_controller_klass = 'Zaber'
     fiber_light = Instance(FiberLight)
+    pyrometer_klass = MicroEpsilonPyrometer
 
     def _enable_hook(self):
         if super(OsTechDiodeManager, self)._enable_hook():
