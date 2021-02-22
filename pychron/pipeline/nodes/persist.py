@@ -255,8 +255,9 @@ class FluxPersistNode(DVCPersistNode):
                 me = irp.mean_jerr
                 analyses = irp.analyses
                 position_jerr = irp.position_jerr
+                mmswd = irp.mean_j_mswd
 
-                meta_repo.update_flux(irradiation, level, pos, identifier, j, e, mj, me,
+                meta_repo.update_flux(irradiation, level, pos, identifier, j, e, mj, me, mmswd,
                                       decay=decay_constants,
                                       analyses=analyses,
                                       options=options, add=False,
@@ -382,7 +383,7 @@ class FluxMonitorMeansPersistNode(BaseNode):
             p = add_extension(p, '.csv')
             with open(p, 'w') as wfile:
                 header = 'identifier,irradiation,level,sample,hole_id,' \
-                         'saved_j,saved_jerr,mean_j,mean_jerr,model_kind,x,y'
+                         'saved_j,saved_jerr,mean_j,mean_jerr,mean_j_mswd,model_kind,x,y'
                 attrs = header.split(',')
                 wfile.write('{}\n'.format(header))
                 for mp in state.monitor_positions:

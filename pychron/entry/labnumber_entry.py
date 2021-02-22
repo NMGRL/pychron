@@ -653,7 +653,7 @@ class LabnumberEntry(DVCIrradiationable):
 
                 # add the flux file to the index only on the last iteration
                 self.dvc.meta_repo.update_flux(irradiation, level,
-                                               ir.hole, ir.identifier, ir.j, ir.j_err, 0, 0,
+                                               ir.hole, ir.identifier, ir.j, ir.j_err,
                                                add=i == n - 1)
 
                 dbpos.weight = float(ir.weight or 0)

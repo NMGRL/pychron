@@ -407,7 +407,9 @@ class MetaRepo(GitRepoManager):
             if add:
                 self.add(p, commit=False)
 
-    def update_flux(self, irradiation, level, pos, identifier, j, e, mj, me, decay=None,
+    def update_flux(self, irradiation, level, pos, identifier, j, e,
+                    mj=0, me=0, mmwsd=0,
+                    decay=None,
                     position_jerr=None,
                     analyses=None, options=None, add=True, save_predicted=True,
                     jd=None):
@@ -439,7 +441,7 @@ class MetaRepo(GitRepoManager):
             j, e = jd.get('j', 0), jd.get('j_err', 0)
 
         npos = {'position': pos, 'j': j, 'j_err': e,
-                'mean_j': mj, 'mean_j_err': me,
+                'mean_j': mj, 'mean_j_err': me, 'mean_j_mswd': mmwsd,
                 'position_jerr': position_jerr,
                 'decay_constants': decay,
                 'identifier': identifier,

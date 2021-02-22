@@ -32,7 +32,7 @@ from pychron.processing.arar_age import ArArAge
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
 from pychron.pychron_constants import MSEM, SD, SUBGROUPING_ATTRS, ERROR_TYPES, WEIGHTED_MEAN, \
     DEFAULT_INTEGRATED, SUBGROUPINGS, ARITHMETIC_MEAN, PLATEAU_ELSE_WEIGHTED_MEAN, WEIGHTINGS, FLECK, NULL_STR, \
-    ISOCHRON, MSE, SE
+    ISOCHRON, MSE, SE, INTEGRATED
 
 
 def AGProperty(*depends):
@@ -980,7 +980,7 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
                     if naliquots > 1:
                         vk, ek = WEIGHTED_MEAN, MSEM
                     else:
-                        vk, ek = PLATEAU_ELSE_WEIGHTED_MEAN, MSEM
+                        vk, ek = DEFAULT_INTEGRATED, MSEM
                 else:
                     vk = default_vk
                     ek = default_ek
@@ -1044,6 +1044,12 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
             if not self.plateau_steps:
                 pa = self.weighted_age
                 pv.computed_kind = WEIGHTED_MEAN
+        elif pak == 'plateau_else_valid_integrated':
+            pa = self.plateau_age
+            pv.computed_kind = 'Plateau'
+            if not self.plateau_steps:
+                pa = self.integrated_age
+                pv.computed_kind = INTEGRATED
 
         return pa
 

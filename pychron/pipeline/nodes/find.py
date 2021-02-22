@@ -118,7 +118,7 @@ class BaseFindFluxNode(FindNode):
             j_err = pp.get('j_err', 0)
             mean_j = pp.get('mean_j', 0)
             mean_j_err = pp.get('mean_j_err', 0)
-
+            mean_j_mswd = pp.get('mean_j_mswd', 0)
             options = pp.get('options')
             if options:
                 model_kind = options.get('model_kind', '')
@@ -132,6 +132,7 @@ class BaseFindFluxNode(FindNode):
                           saved_jerr=j_err or 0,
                           mean_j=mean_j or 0,
                           mean_jerr=mean_j_err or 0,
+                          mean_j_mswd=mean_j_mswd or 0,
                           model_kind=model_kind,
                           x=x, y=y)
         return fp

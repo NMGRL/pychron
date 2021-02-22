@@ -361,7 +361,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             columns.append(c)
 
         columns.extend((Column(visible=ubit, label='J', attr='j'),
-                        EColumn(visible=ubit, attr='j_err')))
+                        EColumn(visible=ubit, attr='j')))
 
         return columns
 
