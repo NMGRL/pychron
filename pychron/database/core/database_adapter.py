@@ -671,8 +671,8 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
 
     def _query(self, q, func, reraise=False, verbose_query=False):
         if verbose_query:
-            cq = compile_query(q)
             try:
+                cq = compile_query(q)
                 self.debug(cq)
             except BaseException:
                 cq = 'Query failed to compile'
