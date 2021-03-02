@@ -20,17 +20,23 @@ from pywatlow.watlow import Watlow
 class WatlowstandardbusCommunicator(SerialCommunicator):
     def open(self, **kw):
         self.handle = Watlow(port=self.port)
+        self.simulation = False
         return True
 
     def _generate_comms_report(self):
         pass
 
-    def read(self, param, response_type='float', *args, **kw):
+    def read_temperature(self):
+        return self.handle.read(instance='01')
+
+    def read(self, param, response_type='float', verbose=False, *args, **kw):
         rt = float
         if response_type == 'int':
             rt = int
 
         resp = self.handle.readParam(param, rt)
+        if verbose:
+            self.debug('param={}, resp={}'.format(param, resp))
         if resp['error'] is None:
             return resp['data']
 

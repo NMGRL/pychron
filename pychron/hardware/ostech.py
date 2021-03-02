@@ -64,8 +64,8 @@ class OsTechLaserController(CoreDevice):
         return failures
 
     def enable(self, *args, **kw):
-        if self.check_interlocks():
-            return bool(self.ask('LR'))
+        if not self.check_interlocks():
+            return bool(self.ask('LR', verbose=True))
 
     def disable(self, *args, **kw):
         return bool(self.ask('LS'))

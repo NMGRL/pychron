@@ -29,7 +29,7 @@ def checksum(t):
 class MicroEpsilonPyrometer(Pyrometer):
     def read_temperature(self):
         cmd = '01'
-        resp = self.ask(cmd, is_hex=True)
+        resp = self.ask(cmd, is_hex=True, nbytes=1)
         t = (int(resp, 16)-1000)/10
         t = float(t)
         return t
@@ -41,7 +41,7 @@ class MicroEpsilonPyrometer(Pyrometer):
         chk = checksum(pc)
 
         c = '{}{}'.format(pc, chk)
-        self.ask(c, is_hex=True)
+        self.ask(c, is_hex=True, nbytes=1)
 
     def traits_view(self):
         v = View(UItem('pointer', editor=ButtonEditor(label_value='pointer_label')),)
