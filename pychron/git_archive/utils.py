@@ -30,6 +30,7 @@ from pychron.git_archive.git_objects import GitSha, GitTag
 
 TAG_RE = re.compile(r'(?P<tag>^\<[\w ]+\>)')
 
+LOGFMT = '--pretty=%H|%cn|%ce|%ct|%s'
 
 def from_gitlog(obj, tag=None):
     hexsha, author, email, ct, message = obj.split('|')

@@ -35,7 +35,7 @@ from pychron.git_archive.diff_view import DiffView, DiffModel
 from pychron.git_archive.git_objects import GitSha
 from pychron.git_archive.history import BaseGitHistory
 from pychron.git_archive.merge_view import MergeModel, MergeView
-from pychron.git_archive.utils import get_head_commit, ahead_behind, from_gitlog
+from pychron.git_archive.utils import get_head_commit, ahead_behind, from_gitlog, LOGFMT
 from pychron.git_archive.views import NewBranchView
 from pychron.loggable import Loggable
 from pychron.pychron_constants import DATE_FORMAT, NULL_STR
@@ -765,9 +765,16 @@ class GitRepoManager(Loggable):
 
         rr = self._get_remote(remote)
         if rr:
-            self._git_command(lambda g: g.push(remote, branch), tag='GitRepoManager.push')
-            if inform:
-                self.information_dialog('{} push complete'.format(self.name))
+
+            try:
+                self._repo.git.push(remote, branch)
+                if inform:
+                    self.information_dialog('{} push complete'.format(self.name))
+            except GitCommandError as e:
+                self.debug_exception()
+                if inform:
+                    self.warning_dialog('{} push failed. See log file for more details'.format(self.name))
+            # self._git_command(lambda g: g.push(remote, branch), tag='GitRepoManager.push')
         else:
             self.warning('No remote called "{}"'.format(remote))
 
@@ -892,14 +899,21 @@ class GitRepoManager(Loggable):
 
         return ahead, behind
 
-    def merge(self, src, dest):
+    def merge(self, from_, to_=None, inform=True):
         repo = self._repo
-        dest = getattr(repo.branches, dest)
-        dest.checkout()
 
-        src = getattr(repo.branches, src)
-        # repo.git.merge(src.commit)
-        self._git_command(lambda g: g.merge(src.commit), 'GitRepoManager.merge')
+        if to_:
+            dest = getattr(repo.branches, to_)
+            dest.checkout()
+
+        src = getattr(repo.branches, from_)
+
+        try:
+            repo.git.merge(src.commit)
+        except GitCommandError:
+            self.debug_exception()
+            if inform:
+                self.warning_dialog('Merging {} into {} failed. See log file for more details'.format(from_, to_))
 
     def commit(self, msg):
         self.debug('commit message={}'.format(msg))
@@ -966,14 +980,11 @@ class GitRepoManager(Loggable):
             greps = '\|'.join(greps)
             args.append('--grep=^{}'.format(greps))
 
-        args.append('--pretty=%H|%cn|%ce|%ct|%s')
+        args.append(LOGFMT)
         # txt = self.cmd('log', *args)
         # self.debug('git log {}'.format(' '.join(args)))
-        txt = self._git_command(lambda g: g.log(*args), 'log')
 
-        cs = []
-        if txt:
-            cs = [from_gitlog(l.strip()) for l in txt.split('\n')]
+        cs = self._gitlog_commits(args)
         return cs
 
     def get_active_branch(self):
@@ -990,6 +1001,10 @@ class GitRepoManager(Loggable):
                 pass
 
         return sha
+
+    def get_branch_diff(self, from_, to_):
+        args = ('{}..{}'.format(from_, to_), LOGFMT)
+        return self._gitlog_commits(args)
 
     def add_tag(self, name, message, hexsha=None):
         args = ('-a', name, '-m', message)
@@ -1040,6 +1055,14 @@ class GitRepoManager(Loggable):
         return txt.split('\n')
 
     # private
+    def _gitlog_commits(self, args):
+        txt = self._git_command(lambda g: g.log(*args), 'log')
+
+        cs = []
+        if txt:
+            cs = [from_gitlog(l.strip()) for l in txt.split('\n')]
+        return cs
+
     def _resolve_conflicts(self, branch, remote, accept_our, accept_their, quiet):
         conflict_paths = self._get_conflict_paths()
         self.debug('resolve conflict_paths: {}'.format(conflict_paths))

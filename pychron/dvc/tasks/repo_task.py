@@ -36,7 +36,8 @@ from pychron.dvc.tasks import list_local_repos
 from pychron.dvc.tasks.actions import CloneAction, AddBranchAction, CheckoutBranchAction, PushAction, PullAction, \
     FindChangesAction, LoadOriginAction, DeleteLocalChangesAction, ArchiveRepositoryAction, SyncSampleInfoAction, \
     SyncRepoAction, RepoStatusAction, BookmarkAction, RebaseAction, DeleteChangesAction, SortLocalReposAction, \
-    RevertCommitAction
+    RevertCommitAction, MergeAction
+from pychron.dvc.tasks.branch_merge_view import BranchMergeView
 from pychron.dvc.tasks.panes import RepoCentralPane, SelectionPane
 from pychron.envisage.tasks.base_task import BaseTask
 # from pychron.git_archive.history import from_gitlog
@@ -110,7 +111,8 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
                           SyncRepoAction(),
                           PushAction(),
                           PullAction(),
-                          RebaseAction(),
+                          MergeAction(),
+                          # RebaseAction(),
                           FindChangesAction(),
                           DeleteLocalChangesAction(),
                           ArchiveRepositoryAction(),
@@ -187,6 +189,20 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
 
     def rebase(self):
         self._repo.rebase()
+
+    def merge(self):
+        if self._repo.smart_pull(quiet=False):
+            bmv = BranchMergeView(repo=self._repo,
+                                  to_=self.branch,
+                                  branches=[b for b in self.branches if not b.startswith('origin')
+                                            and b != self.branch])
+
+            info = bmv.edit_traits()
+            if info.result and bmv.from_:
+                if self.confirmation_dialog('Are you sure you want to merge?'):
+                    self.debug('merge {} into {}'.format(bmv.from_, bmv.to_))
+                    self._repo.merge(bmv.from_)
+                    self.find_changes(names=[self.selected_local_repository_name])
 
     def pull(self):
         self._repo.smart_pull(quiet=False)
@@ -474,18 +490,18 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
         # item = None
         # for line in txt.split('\n'):
         #     pass
-            # if line[:2] == '- ':
-            #     if item is None:
-            #         item = DiffItem()
-            #     item.subtraction = line[2:]
-            # elif line[:2] == '+ ':
-            #     if item is None:
-            #         item = DiffItem()
-            #     item.addition = line[2:]
-            #
-            # if item and item.complete:
-            #     ds.append(item)
-            #     item = None
+        # if line[:2] == '- ':
+        #     if item is None:
+        #         item = DiffItem()
+        #     item.subtraction = line[2:]
+        # elif line[:2] == '+ ':
+        #     if item is None:
+        #         item = DiffItem()
+        #     item.addition = line[2:]
+        #
+        # if item and item.complete:
+        #     ds.append(item)
+        #     item = None
 
         # ds = []
         # d = ''
