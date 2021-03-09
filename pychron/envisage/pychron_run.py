@@ -92,6 +92,7 @@ PACKAGE_DICT = dict(
     HelixSFTSpectrometerPlugin='pychron.spectrometer.tasks.thermo.helix',
     MapSpectrometerPlugin='pychron.spectrometer.tasks.map_spectrometer_plugin',
     NGXSpectrometerPlugin='pychron.spectrometer.tasks.isotopx.ngx',
+    OPCSpectrometerPlugin='pychron.spectrometer.tasks.opc.opc',
     # resources
     MediaStoragePlugin='pychron.media_storage.tasks.plugin',
     ImagePlugin='pychron.image.tasks.image_plugin',
