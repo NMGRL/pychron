@@ -143,17 +143,22 @@ class BaseLakeShoreController(CoreDevice):
         if output is not None:
             return self.ask('SETP? {}'.format(re.sub('[^0-9]', '', output)), verbose=verbose)
 
-    def set_setpoints(self, *setpoints, block=False):
+    def set_setpoints(self, *setpoints, block=False, delay=1):
         for i, v in enumerate(setpoints):
             if v is not None:
                 idx = i + 1
                 setattr(self, 'setpoint{}'.format(idx), v)
 
         if block:
+            delay = max(0.5, delay)
+            tol = 1
+            if isinstance(block, (int, float)):
+                tol = block
+
             while 1:
-                if self.setpoints_achieved():
+                if self.setpoints_achieved(tol):
                     break
-                time.sleep(1)
+                time.sleep(delay)
 
     def set_setpoint(self, v, output=1):
         self.set_range(v, output)

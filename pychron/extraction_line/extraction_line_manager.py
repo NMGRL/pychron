@@ -505,10 +505,10 @@ class ExtractionLineManager(Manager, Consoleable):
             self.cryo_manager.species = v
 
     # =========== Cryo ==============================================================
-    def set_cryo(self, v, v2=None, block=False):
+    def set_cryo(self, v, v2=None, **kw):
         self.debug('setting cryo to {}, {}'.format(v, v2))
         if self.cryo_manager:
-            return self.cryo_manager.set_setpoint(v, v2, block=block)
+            return self.cryo_manager.set_setpoint(v, v2, **kw)
         else:
             self.warning('cryo manager not available')
             return 0, 0
