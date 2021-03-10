@@ -951,8 +951,8 @@ class DVC(Loggable):
                                          reload=reload, *args)
             except BaseException:
                 record = args[0]
-                self.debug('make analysis exception: repo={}, record_id={}'.format(record.repository_identifier,
-                                                                                   record.record_id))
+                self.warning('make analysis exception: repo={}, record_id={}'.format(record.repository_identifier,
+                                                                                     record.record_id))
                 self.debug_exception()
 
         if use_progress:
@@ -965,6 +965,12 @@ class DVC(Loggable):
         n = len(ret)
         if n:
             self.debug('Make analysis time, total: {}, n: {}, average: {}'.format(et, n, et / float(n)))
+
+        nn = len(records)
+        if len(records) != n:
+            if not self.confirmation_dialog('Failed making {} of {} analyses. '
+                                            'Are you sure you want to continue?'.format(nn-n, nn)):
+                return
 
         if self.use_cache:
             cache.clean()
@@ -1772,7 +1778,7 @@ class DVC(Loggable):
                                                     a.irradiation_position_position)
 
                     if flux_histories:
-                        a.flux_history = flux_histories.get('{}{}'.format(a.irradiation, a.irradiation_level),'')
+                        a.flux_history = flux_histories.get('{}{}'.format(a.irradiation, a.irradiation_level), '')
 
                     a.j = fd.get('j', ufloat(0, 0))
                     a.position_jerr = fd.get('position_jerr', 0)
