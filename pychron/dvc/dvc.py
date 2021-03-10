@@ -57,7 +57,6 @@ from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS, STARTUP_MES
 HOST_WARNING_MESSAGE = 'GitLab or GitHub or LocalGit plugin is required'
 
 
-
 @provides(IDatastore)
 class DVC(Loggable):
     """
@@ -711,10 +710,10 @@ class DVC(Loggable):
     #                                position_jerr=position_jerr,
     #                                save_predicted=save_predicted)
 
-        # if self.update_currents_enabled:
-        #     ans, _ = self.db.get_labnumber_analyses([identifier])
-        #     for ai in self.make_analyses(ans):
-        #         self._update_current_age(ai)
+    # if self.update_currents_enabled:
+    #     ans, _ = self.db.get_labnumber_analyses([identifier])
+    #     for ai in self.make_analyses(ans):
+    #         self._update_current_age(ai)
 
     def save_csv_dataset(self, name, repository, lines, local_path=False):
 
@@ -932,7 +931,7 @@ class DVC(Loggable):
                     key = '{}{}'.format(irrad, level)
                     c = meta_repo.get_flux_history(irrad, level, max_count=1)
                     if c:
-                        c=c[0]
+                        c = c[0]
                         flux_histories[key] = '{} ({})'.format(c.date.strftime(DATE_FORMAT), c.author)
 
                 if use_cocktail_irradiation and r.analysis_type == 'cocktail' and 'cocktail' not in chronos:
@@ -1773,7 +1772,7 @@ class DVC(Loggable):
                                                     a.irradiation_position_position)
 
                     if flux_histories:
-                        a.flux_history = flux_histories['{}{}'.format(a.irradiation, a.irradiation_level)]
+                        a.flux_history = flux_histories.get('{}{}'.format(a.irradiation, a.irradiation_level),'')
 
                     a.j = fd.get('j', ufloat(0, 0))
                     a.position_jerr = fd.get('position_jerr', 0)
