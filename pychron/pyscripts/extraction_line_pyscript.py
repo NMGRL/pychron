@@ -326,8 +326,7 @@ class ExtractionPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def pause(self, delay=2):
-        self.sleep(delay)
-        self._wait_control.pause()
+        self._sleep(delay, paused=True)
 
     @verbose_skip
     @command_register
