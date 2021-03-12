@@ -129,6 +129,7 @@ class ExtractionLineScene(Scene):
     def _load_config(self, p, canvas):
         color_dict = dict()
         ox, oy = 0, 0
+        valve_dimension = 2, 2
         if os.path.isfile(p):
             cp = self._get_canvas_parser(p)
 

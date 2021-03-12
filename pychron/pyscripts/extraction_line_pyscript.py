@@ -325,6 +325,12 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
+    def pause(self, delay=2):
+        self.sleep(delay)
+        self._wait_control.pause()
+
+    @verbose_skip
+    @command_register
     def waitfor(self, func_or_tuple, start_message='', end_message='',
                 check_period=1, timeout=0, func_kw=None):
         """

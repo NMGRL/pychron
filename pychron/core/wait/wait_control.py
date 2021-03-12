@@ -19,7 +19,7 @@ import time
 from threading import Event
 
 # ============= enthought library imports =======================
-from traits.api import Str, Color, Button, Float, Bool, Property, Int
+from traits.api import Str, Color, Button, Float, Bool, Property, Int, Event as TEvent
 
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
@@ -43,7 +43,7 @@ class WaitControl(Loggable):
     end_evt = None
 
     continue_button = Button('Continue')
-    pause_button = Event
+    pause_button = TEvent
     pause_label = Property(depends_on='_paused')
     _paused = Bool
     _continued = Bool
@@ -123,6 +123,8 @@ class WaitControl(Loggable):
             self.current_time = self.duration
             self._paused = False
 
+    def pause(self):
+        self._paused = True
     # ===============================================================================
     # private
     # ===============================================================================

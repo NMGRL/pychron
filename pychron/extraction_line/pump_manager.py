@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traitsui.api import View, Item, ListEditor, InstanceEditor
+from traitsui.api import View, Item, ListEditor, InstanceEditor, VGroup, UCustom
 from pychron.managers.manager import Manager
 
 
@@ -29,12 +29,11 @@ class PumpManager(Manager):
 
     def traits_view(self):
         if self.devices:
-            v = View(Item('devices', style='custom',
-                          show_label=False,
-                          editor=ListEditor(mutable=False,
-                                            columns=len(self.devices),
-                                            style='custom',
-                                            editor=InstanceEditor(view='pump_view'))),
+            v = View(VGroup(UCustom('devices',
+                                    editor=ListEditor(mutable=False,
+                                                      columns=len(self.devices),
+                                                      style='custom',
+                                                      editor=InstanceEditor(view='pump_view')))),
                      height=-100)
         else:
             v = View()

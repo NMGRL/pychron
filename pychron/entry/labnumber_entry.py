@@ -790,14 +790,15 @@ THIS CHANGE CANNOT BE UNDONE')
 
         # self.level_note = level.note.decode('utf-8') or ''
         # self.level_production_name = level.production.name if level.production else ''
-        try:
-            pname, prod = meta_repo.get_production(self.irradiation, name)
-            self.level_production_name = prod.name
-            self.level_note = prod.note
-        except MetaObjectException:
-            self.warning_dialog('Failed loading the Irradiation Production values from file. Contact an expert.')
+        if self.mode == AR_AR:
+            try:
+                pname, prod = meta_repo.get_production(self.irradiation, name)
+                self.level_production_name = prod.name
+                self.level_note = prod.note
+            except MetaObjectException:
+                self.warning_dialog('Failed loading the Irradiation Production values from file. Contact an expert.')
 
-        self.monitor_age, self.monitor_decay_constant = meta_repo.get_monitor_info(self.irradiation, name)
+            self.monitor_age, self.monitor_decay_constant = meta_repo.get_monitor_info(self.irradiation, name)
 
         if level.holder:
             self.irradiation_tray = level.holder
@@ -968,7 +969,7 @@ THIS CHANGE CANNOT BE UNDONE')
         irrad = self._get_irradiation_editor(name=name)
         new_irrad = irrad.add()
         if new_irrad:
-            if self.mode == 'Ar/Ar':
+            if self.mode == AR_AR:
                 pname = '{}{}'.format(self.irradiation_project_prefix, new_irrad)
                 sname = self.monitor_name
 

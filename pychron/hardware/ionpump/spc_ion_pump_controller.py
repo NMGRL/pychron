@@ -32,13 +32,13 @@ class SPCIonPumpController(CoreDevice):
     high = 1e-7
 
     def load_additional_args(self, config):
-        self.set_attribute(config, 'General', 'address', cast='int')
-        self.set_attribute(config, 'General', 'display_name')
+        self.set_attribute(config, 'address', 'General', 'address', cast='int')
+        self.set_attribute(config, 'display_name', 'General', 'display_name')
 
         return True
 
-    def update(self):
-        self.get_pressure()
+    def update(self, *args, **kw):
+        return self.get_pressure()
 
     def get_pressure(self):
         r = self._read_pressure()
@@ -49,10 +49,17 @@ class SPCIonPumpController(CoreDevice):
     @get_float(0)
     def _read_pressure(self):
         cmd = self._make_command('0B')
-        return self.ask(cmd)
+        resp = self.ask(cmd, verbose=False)
+        if resp:
+            addr, status, err, data, unit, chk = resp.split(' ')
+            return data
 
     def _make_command(self, cmd):
-        return '~ {:02X} {} 00'.format(self.address, cmd)
+        a = ' '.join(('~', '{:02X}'.format(self.address), cmd))
+        return '{} {}'.format(a, self._calculate_checksum(a))
+
+    def _calculate_checksum(self, a):
+        return '00'
 
     def pump_view(self):
         v = View(HGroup(UReadonly('display_name', width=-30, ),
@@ -62,10 +69,11 @@ class SPCIonPumpController(CoreDevice):
                              style='readonly'),
                         Item('pressure',
                              show_label=False,
-                             width=self.width,
+                             width=100,
                              editor=BarGaugeEditor(low=1e-10,
                                                    high=1e-7,
                                                    scale='power',
+                                                   width=100,
                                                    color_scalar=1))))
 
         return v

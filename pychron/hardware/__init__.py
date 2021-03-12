@@ -75,7 +75,7 @@ HW_PACKAGE_MAP = {
     'ProXRActuator': 'pychron.hardware.actuators.proxr_actuator',
     'U3GaugeController': 'pychron.hardware.labjack.u3_gauge_controller',
 
-    'SPCIonPumpController': 'pychron.ionpump.spc_ion_pump_controller'
+    'SPCIonPumpController': 'pychron.hardware.ionpump.spc_ion_pump_controller'
 }
 
 

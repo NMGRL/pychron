@@ -31,6 +31,7 @@ from pychron.database.adapters.local_lab_adapter import LocalLabAdapter
 from pychron.experiment.automated_run.hop_util import parse_hops
 from pychron.experiment.automated_run.mass_spec_persistence_spec import MassSpecPersistenceSpec
 from pychron.loggable import Loggable
+from pychron.managers.data_managers.h5_data_manager import H5DataManager
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR, DETECTOR_IC
 
@@ -214,7 +215,7 @@ class AutomatedRunPersister(BasePersister):
     # local_lab_db = Instance(LocalLabAdapter)
     datahub = Instance('pychron.experiment.datahub.Datahub')
 
-    data_manager = Instance('pychron.managers.data_managers.h5_data_manager.H5DataManager', ())
+    data_manager = Instance(H5DataManager, ())
 
     secondary_database_fail = False
     use_massspec_database = Bool(False)

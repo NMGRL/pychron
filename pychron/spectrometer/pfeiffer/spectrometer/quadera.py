@@ -45,8 +45,12 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
     use_hv_correction = False
 
     def _microcontroller_default(self):
-        service = 'pychron.hardware.quadera_spectrometer_controller.QuaderaController'
-        s = self.application.get_service(service)
+        #service = 'pychron.hardware.quadera_spectrometer_controller.QuaderaController'
+        #s = self.application.get_service(service)
+
+        s = QuaderaController(name='spectrometer_microcontroller')
+        s.bootstrap()
+        s.communicator.simulation = True
         return s
 
     def make_configuration_dict(self):
@@ -75,6 +79,9 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
 
     def _send_configuration(self, **kw):
         pass
+
+    def _get_cached_config(self):
+        return {}
 
     # def get_update_period(self, it=None, is_scan=False):
     #     return self.integration_time * 0.95
