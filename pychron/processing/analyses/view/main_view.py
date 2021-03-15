@@ -21,6 +21,7 @@ from uncertainties import std_dev, nominal_value, ufloat
 
 from pychron.core.helpers.formatting import floatfmt, format_percent_error
 from pychron.core.ui.gui import invoke_in_main_thread
+from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.processing.analyses.view.adapters import ComputedValueTabularAdapter, \
     DetectorRatioTabularAdapter, ExtractionTabularAdapter, MeasurementTabularAdapter
 from pychron.processing.analyses.view.values import ExtractionValue, ComputedValue, MeasurementValue, DetectorRatio
@@ -529,15 +530,15 @@ class MainView(HasTraits):
 
     def _get_editors(self):
 
-        ceditor = TabularEditor(adapter=self.computed_adapter,
+        ceditor = myTabularEditor(adapter=self.computed_adapter,
                                 editable=False,
                                 refresh='refresh_needed')
 
-        eeditor = TabularEditor(adapter=self.extraction_adapter,
+        eeditor = myTabularEditor(adapter=self.extraction_adapter,
                                 editable=False,
                                 refresh='refresh_needed')
 
-        meditor = TabularEditor(adapter=self.measurement_adapter,
+        meditor = myTabularEditor(adapter=self.measurement_adapter,
                                 editable=False,
                                 refresh='refresh_needed')
 

@@ -295,8 +295,7 @@ class FitIsotopeEvolutionNode(FitNode):
 
             self._set_saveable(state)
             if fs:
-                e = IsoEvolutionResultsEditor(fs)
-                # e.plotter_options = po
+                e = IsoEvolutionResultsEditor(fs, self._fits)
                 state.editors.append(e)
 
     def _assemble_result(self, xi, prog, i, n):
@@ -321,6 +320,11 @@ class FitIsotopeEvolutionNode(FitNode):
                     pe = abs(e / i * 100)
                 except ZeroDivisionError:
                     pe = inf
+
+                smart_filter_coefficients = f.get_filter_coefficients()
+                if smart_filter_coefficients:
+                    smart_filter_threshold = f.smart_filter_values(i)
+                    smart_filter_goodness = e < f.smart_filter_values(i)
 
                 goodness_threshold = f.goodness_threshold
                 int_err_goodness = None
@@ -417,6 +421,9 @@ class FitIsotopeEvolutionNode(FitNode):
                                    signal_to_baseline_threshold=signal_to_baseline_threshold,
                                    signal_to_baseline_percent_threshold=signal_to_baseline_percent_threshold,
 
+                                   smart_filter_goodness=smart_filter_goodness,
+                                   smart_filter_threshold=smart_filter_threshold,
+                                   smart_filter=e,
                                    regression_str=iso.regressor.tostring(),
                                    fit=iso.fit,
                                    isotope=k)

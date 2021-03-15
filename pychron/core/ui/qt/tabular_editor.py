@@ -305,6 +305,12 @@ class _TableView(TableView):
 
             self._key_press_hook(event)
 
+    def resizeColumnsToContents(self):
+        try:
+            super(_TableView, self).resizeColumnsToContents()
+        except AttributeError:
+            pass
+
     # private
     def _copy(self):
         rows = sorted({ri.row() for ri in self.selectedIndexes()})

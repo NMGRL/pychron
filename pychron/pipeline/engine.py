@@ -55,7 +55,7 @@ from pychron.pipeline.pipeline_defaults import ISOEVO, BLANKS, ICFACTOR, IDEO, S
     MASSSPEC_REDUCED, DEFINE_EQUILIBRATION, CA_CORRECTION_FACTORS, K_CORRECTION_FACTORS, \
     FLUX_VISUALIZATION, CSV_RAW_DATA_EXPORT, COMPOSITE, SIMPLE_ANALYSIS_TABLE, MASS_SPEC_FLUX, PYSCRIPT, RATIO_SERIES, \
     CSV_SPEC, ARAR_IDEO, ARAR_SPEC, ARAR_INVERSE_ISOCHRON, ARAR_SIMPLE_ANALYSIS_TABLE, RUNID_EDIT, CORRELATION_IDEO, \
-    COSMOGENIC, FLUX_EXPORT
+    COSMOGENIC, FLUX_EXPORT, RECENT_RUNS
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
 from pychron.pipeline.plot.editors.spectrum_editor import SpectrumEditor
@@ -858,7 +858,8 @@ class PipelineEngine(Loggable):
                       ('Interpreted Age', INTERPRETED_AGE_TABLE),
                       ('Report', REPORT))
         else:
-            plots = (('Ideogram', IDEO),
+            plots = (('Recent Recall', RECENT_RUNS),
+                     ('Ideogram', IDEO),
                      ('Correlation Ideogram', CORRELATION_IDEO),
                      ('CSV Ideogram', CSV_IDEO),
                      ('Interpreted Age Ideogram', INTERPRETED_AGE_IDEOGRAM),

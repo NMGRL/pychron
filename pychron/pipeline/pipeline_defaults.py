@@ -20,6 +20,12 @@ nodes:
   - klass: MLRegressionNode
 """
 
+RECENT_RUNS = """
+required:
+nodes:
+    - klass: RecentRunsNode
+"""
+
 REGRESSION_SERIES = """
 required:
 nodes:

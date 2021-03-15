@@ -15,16 +15,24 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
+from itertools import groupby
+from operator import attrgetter
+
 from enable.component_editor import ComponentEditor
+from numpy import poly1d, linspace
 from traits.api import Int, Property, List, Instance, Event, Bool, Button, List
-from traitsui.api import View, UItem, TabularEditor, VGroup, HGroup, Item
+from traitsui.api import View, UItem, TabularEditor, VGroup, HGroup, Item, Tabbed
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.helpers.formatting import floatfmt
+from pychron.core.helpers.isotope_utils import sort_isotopes
+from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor, grouped_name
+from pychron.graph.graph import Graph
+from pychron.graph.stacked_graph import StackedGraph
+from pychron.options.layout import filled_grid
 from pychron.options.options_manager import RegressionSeriesOptionsManager, OptionsController
 from pychron.options.views.views import view
 from pychron.pipeline.plot.figure_container import FigureContainer
@@ -91,15 +99,45 @@ class IsoEvolutionResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
     view_bad_button = Button('View Flagged')
     view_selected_button = Button('View Selected')
     selected = List
+    graph = Instance(Graph)
 
-    def __init__(self, results, *args, **kw):
+    def __init__(self, results, fits, *args, **kw):
         super(IsoEvolutionResultsEditor, self).__init__(*args, **kw)
 
         na = grouped_name([r.identifier for r in results if r.identifier])
         self.name = 'IsoEvo Results {}'.format(na)
 
         self.oresults = self.results = results
+        self.fits = fits
+        self._make_graph()
         # self.results = sorted(results, key=lambda x: x.goodness)
+
+    def _make_graph(self):
+        results = self.results
+        fits = self.fits
+        # a = 0.0003
+        # b = 0.5
+        # c = 0.00005
+        # d = 0.015
+        isos = len({r.isotope for r in results})
+        g = Graph(container_dict={'kind': 'g',
+                                  'shape': filled_grid(isos)})
+        key = attrgetter('isotope')
+        for i, (iso, gg) in enumerate(groupby(sort_isotopes(results, key=key),
+                                              key=key)):
+            fit = next((fi for fi in fits if fi.name == iso))
+            x, y = zip(*((r.intercept_value, r.intercept_error) for r in gg))
+            xx = linspace(min(x), max(x))
+
+            yy = fit.smart_filter_values(xx)
+            g.new_plot()
+            g.new_series(x, y, plotid=i, type='scatter', marker='plus')
+            g.new_series(xx, yy, plotid=i)
+            g.set_x_title('Intensity', plotid=i)
+            g.set_y_title('Error', plotid=i)
+            g.set_plot_title(iso, plotid=i)
+
+        self.graph = g
 
     def _view_selected_button_fired(self):
         ans = list({r.analysis for r in self.selected})
@@ -121,7 +159,6 @@ class IsoEvolutionResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
         info = OptionsController(model=pom).edit_traits(view=view('Regression Options'),
                                                         kind='livemodal')
         if info.result:
-
             m = RegressionSeriesModel(analyses=ans, plot_options=pom.selected_options)
             c.model = m
             v = View(UItem('component',
@@ -149,13 +186,17 @@ class IsoEvolutionResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
         filter_grp = HGroup(Item('display_only_bad', label='Show Flagged Only'),
                             UItem('view_bad_button'),
                             UItem('view_selected_button'))
-        v = View(VGroup(filter_grp,
-                        UItem('results', editor=TabularEditor(adapter=self.adapter,
-                                                              editable=False,
-                                                              multi_select=True,
-                                                              selected='selected',
-                                                              column_clicked='column_clicked',
-                                                              dclicked='dclicked'))))
+        ggrp = VGroup(UItem('graph', style='custom'),
+                      label='Graph')
+        tgrp = VGroup(filter_grp,
+                      UItem('results', editor=TabularEditor(adapter=self.adapter,
+                                                            editable=False,
+                                                            multi_select=True,
+                                                            selected='selected',
+                                                            column_clicked='column_clicked',
+                                                            dclicked='dclicked')),
+                      label='Table')
+        v = View(Tabbed(ggrp, tgrp))
         return v
 
 # ============= EOF =============================================

@@ -821,6 +821,11 @@ class DVC(Loggable):
 
         return progress_loader(ias, func, step=25)
 
+    def get_adjacent_analysis(self, uuid, ts, spectrometer, previous=True):
+        an = self.db.get_adjacent_analysis(uuid, ts, spectrometer, previous)
+        if an:
+            return self.make_analysis(an)
+
     def get_analysis(self, uuid):
         an = self.db.get_analysis_uuid(uuid)
         if an:

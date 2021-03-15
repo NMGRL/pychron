@@ -1109,6 +1109,21 @@ class DVCDatabase(DatabaseAdapter):
             q = q.limit(n)
             return self._query_all(q, verbose_query=verbose)
 
+    def get_adjacent_analysis(self, uuid, ts, spectrometer, previous):
+        with self.session_ctx() as sess:
+            q = sess.query(AnalysisTbl)
+            q = q.filter(AnalysisTbl.mass_spectrometer == spectrometer)
+            q = q.filter(AnalysisTbl.uuid!=uuid)
+            if previous:
+                q = q.filter(AnalysisTbl.timestamp < ts)
+                q = q.order_by(AnalysisTbl.timestamp.desc())
+            else:
+                q = q.filter(AnalysisTbl.timestamp > ts)
+                q = q.order_by(AnalysisTbl.timestamp.asc())
+
+            q = q.limit(1)
+            return self._query_one(q)
+
     def get_last_analysis(self, ln=None, aliquot=None, spectrometer=None,
                           hours_limit=None,
                           analysis_type=None):
@@ -1144,7 +1159,7 @@ class DVCDatabase(DatabaseAdapter):
             q = q.limit(1)
             try:
                 r = q.one()
-                self.debug('got last analysis {}-{}'.format(r.labnumber.identifier, r.aliquot))
+                self.debug('got last analysis {}-{}'.format(r.irradiation_position.identifier, r.aliquot))
                 return r
 
             except NoResultFound as e:
@@ -1159,20 +1174,20 @@ class DVCDatabase(DatabaseAdapter):
                     self.debug('no analyses for get_last_analysis')
 
                 return 0
-        
-    def get_greatest_aliquot(self, identifier):            
+
+    def get_greatest_aliquot(self, identifier):
         if identifier:
             with self.session_ctx(use_parent_session=False) as sess:
                 q = sess.query(AnalysisTbl.aliquot)
-                
+
                 idn = self.get_identifier(identifier)
                 print('-----------------idn', idn, identifier)
                 if not self.get_identifier(identifier):
-                    q = q.filter(AnalysisTbl.simple_identifier== int(identifier))
+                    q = q.filter(AnalysisTbl.simple_identifier == int(identifier))
                 else:
                     q = q.join(IrradiationPositionTbl)
                     q = q.filter(IrradiationPositionTbl.identifier == identifier)
-                
+
                 q = q.order_by(AnalysisTbl.aliquot.desc())
                 result = self._query_one(q)
                 if result:
@@ -2086,7 +2101,8 @@ class DVCDatabase(DatabaseAdapter):
 
                 if with_summary:
                     lns = [(pi.identifier.strip(),
-                               '{} -- {}{:02n} -- {}'.format(pi.identifier.strip(), level.name, pi.position, pi.sample.name))
+                            '{} -- {}{:02n} -- {}'.format(pi.identifier.strip(), level.name, pi.position,
+                                                          pi.sample.name))
                            for pi in level.positions if pi.identifier and pi.identifier.strip()]
 
                 else:
