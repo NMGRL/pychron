@@ -26,4 +26,7 @@ class ModbustcpCommunicator(Communicator):
 
     def initialize(self, *args, **kw):
         return self.handle.connect()
+
+    def __getattr__(self, item):
+        return getattr(self.handle, item)
 # ============= EOF =============================================

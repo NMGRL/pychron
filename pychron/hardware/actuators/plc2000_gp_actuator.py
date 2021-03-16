@@ -19,12 +19,18 @@ from pychron.hardware.actuators.gp_actuator import GPActuator
 
 class PLC2000GPActuator(GPActuator, ClientMixin):
     def _actuate(self, obj, action):
-        handle = self.communicator.handle
-        handle.write_coil(int(obj.address), action.lower() == 'open')
+        self._write_coil(int(obj.address), action.lower() == 'open')
 
     def get_channel_state(self, obj, *args, **kw):
-        handle = self.communicator.handle
-        resp = handle.read_coils(int(obj.address), 1)
-        return resp.bits[0]
+        resp = self._read_coils(int(obj.address))
+        return bool(resp.bits[0])
+
+    def _read_coils(self, *args, **kw):
+        if self.communicator:
+            return self.communicator.read_coils(*args, **kw)
+
+    def _write_coil(self, *args, **kw):
+        if self.communicator:
+            return self.communicator.write_coil(*args, **kw)
 
 # ============= EOF =============================================
