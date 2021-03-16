@@ -490,7 +490,7 @@ class Ideogram(BaseArArFigure):
         line, _ = graph.new_series(x=bins, y=probs, plotid=pid, **plotkw)
         line.history_id = self.group_id
 
-        self._add_peak_labels(line)
+        self._add_peak_labels(line, self.xs)
 
         graph.set_series_label('Current-{}'.format(gid), series=sgid, plotid=pid)
 
@@ -597,13 +597,18 @@ class Ideogram(BaseArArFigure):
 
         plot.overlays.append(legend)
 
-    def _add_peak_labels(self, line):
+    def _add_peak_labels(self, line, fxs):
         opt = self.options
 
         xs = line.index.get_data()
         ys = line.value.get_data()
         if xs.shape[0]:
-            xp, yp = fast_find_peaks(ys, xs)
+            xp, yp, xr = fast_find_peaks(ys, xs)
+            ntxt = ''
+            for xmin, xmax in xr:
+                ans = [a for a in fxs if xmin <= a <= xmax]
+                n = len(ans)
+                ntxt = ' n={}'.format(n)
 
             self.peaks = xp
 
@@ -614,9 +619,11 @@ class Ideogram(BaseArArFigure):
                 bgcolor = opt.peak_label_bgcolor if opt.peak_label_bgcolor_enabled else 'transparent'
 
                 for xi, yi in zip(xp, yp):
+                    p = floatfmt(xi, n=opt.peak_label_sigfigs)
+                    txt = '{}{}'.format(p, ntxt)
                     label = PeakLabel(line,
                                       data_point=(xi, yi),
-                                      label_text=floatfmt(xi, n=opt.peak_label_sigfigs),
+                                      label_text=txt,
                                       border_visible=bool(border),
                                       border_width=border,
                                       border_color=border_color,
@@ -748,7 +755,7 @@ class Ideogram(BaseArArFigure):
 
         lp.overlays = [o for o in lp.overlays if not isinstance(o, PeakLabel)]
 
-        self._add_peak_labels(lp)
+        self._add_peak_labels(lp, fxs)
 
         try:
             mi, ma = min(ys), max(ys)
@@ -831,11 +838,11 @@ class Ideogram(BaseArArFigure):
                                 bind_id=self.group_id,
                                 plotid=pid, **kw)
 
-        if self.options.show_correlation_ellipses and title=='K/Ca':
-                o = CorrelationEllipsesOverlay(self.options._correlation_ellipses,
-                                               self.options.get_colors(),
-                                               component=s)
-                s.overlays.append(o)
+        if self.options.show_correlation_ellipses and title == 'K/Ca':
+            o = CorrelationEllipsesOverlay(self.options._correlation_ellipses,
+                                           self.options.get_colors(),
+                                           component=s)
+            s.overlays.append(o)
 
         if es is not None:
             s.yerror = array(es)
@@ -987,7 +994,7 @@ class Ideogram(BaseArArFigure):
 
         if options.mean_calculation_kind == 'kernel':
             wm, we = 0, 0
-            peak_xs, peak_ys = fast_find_peaks(ys, xs)
+            peak_xs, peak_ys, xr = fast_find_peaks(ys, xs)
             wm = peak_xs[0]
             # wm = np_max(maxs, axis=1)[0]
         else:

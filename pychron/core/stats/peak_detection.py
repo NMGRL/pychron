@@ -295,14 +295,37 @@ def fast_find_peaks(ys, xs, **kw):
 
     ys, xs = asarray(ys), asarray(xs)
     idx = indexes(ys, **kw)
-    peaks_x = interpolate(xs, ys, ind=idx)
+    peaks_x, pidx = interpolate(xs, ys, ind=idx)
+    peak_x_ranges = []
+
+    for i in pidx:
+        ymax = ys[i]
+        # search forward
+        py = ymax
+        for ji, yi in enumerate(ys[i:]):
+            if yi / ymax < 0.1 or yi > py:
+                xmax = xs[i + ji]
+                break
+            py = yi
+
+        py = ymax
+        # search backward
+        nys = ys[:i]
+        n = len(nys)
+        for ji, yi in enumerate(reversed(nys)):
+            if yi / ymax < 0.1 or yi > py:
+                xmin = xs[n - ji]
+                break
+            py = yi
+        peak_x_ranges.append((xmin, xmax))
+
     try:
 
-        return peaks_x, ys[idx]
+        return peaks_x, ys[idx], peak_x_ranges
     except IndexError:
         # from pyface.message_dialog import warning
         # warning(None, 'There was an issue finding the peaks')
-        return [], []
+        return [], [], []
 
 
 def interpolate(x, y, ind=None, width=10, func=None):
@@ -333,7 +356,7 @@ def interpolate(x, y, ind=None, width=10, func=None):
     ndarray :
         Array with the adjusted peak positions (in *x*)
     """
-
+    pidx = []
     out = []
     try:
         if func is None:
@@ -343,11 +366,11 @@ def interpolate(x, y, ind=None, width=10, func=None):
         if ind is None:
             from peakutils import indexes
             ind = indexes(y)
-
-        for slice_ in (slice(max(0, i - width), min(i + width, y.shape[0])) for i in ind):
+        for i, slice_ in ((i, slice(max(0, i - width), min(i + width, y.shape[0]))) for i in ind):
             try:
                 fit = func(x[slice_], y[slice_])
                 out.append(fit)
+                pidx.append(i)
             except Exception:
                 pass
     except ImportError:
@@ -355,6 +378,6 @@ def interpolate(x, y, ind=None, width=10, func=None):
         warning(None, 'PeakUtils required to identify and label peaks.\n\n'
                       'Please install PeakUtils. From commandline use "pip install peakutils"')
 
-    return array(out)
+    return array(out), pidx
 
 # ============= EOF =============================================
