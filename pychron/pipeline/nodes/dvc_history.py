@@ -19,6 +19,7 @@ from traitsui.api import UItem, TabularEditor, EnumEditor, VGroup
 
 from pychron.core.helpers.iterfuncs import groupby_repo
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+from pychron.dvc import HISTORY_PATHS, HISTORY_TAGS
 from pychron.git_archive.utils import get_commits
 from pychron.git_archive.views import CommitAdapter
 from pychron.pipeline.nodes.data import BaseDVCNode
@@ -36,8 +37,13 @@ class CommitSelector(HasTraits):
         b = self.repo.get_active_branch()
         self.branch = b
 
-    def load_commits(self):
-        cs = get_commits(self.repo.path, self.branch, None, '')
+    def load_commits(self, unks):
+        paths = [a.make_path(p) for p in HISTORY_PATHS for a in unks]
+        greps = ['<{}>'.format(t) for t in HISTORY_TAGS]
+        greps = '\|'.join(greps)
+        greps = '^{}'.format(greps)
+
+        cs = get_commits(self.repo.path, self.branch, paths, '', greps=greps)
         self.commits = cs
 
     def traits_view(self):
@@ -67,7 +73,7 @@ class DVCHistoryNode(BaseDVCNode):
             repo = self.dvc.get_repository(repo)
             cv.repo = repo
             cv.load_branches()
-            cv.load_commits()
+            cv.load_commits(unks)
 
             info = cv.edit_traits(kind='livemodal')
             if not info.result:
