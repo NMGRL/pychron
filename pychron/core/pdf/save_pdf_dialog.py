@@ -35,16 +35,20 @@ from pychron.core.helpers.filetools import view_file, add_extension
 from pychron.core.pdf.options import BasePDFOptions, PDFLayoutView
 from pychron.core.pdf.pdf_graphics_context import PdfPlotGraphicsContext
 
+from kiva.api import Font, NORMAL
+
 for face in pychron_constants.TTF_FONTS:
     for face_name in (face, face.lower()):
-        family = face_name
-        font = findfont(FontProperties(family=face_name, style='normal', weight='normal'))
+        spec = Font(face_name=face_name, style=NORMAL, weight=NORMAL).findfont()
         try:
-            tf = TTFont(face_name, font)
+            if isinstance(spec, str):
+                tf = TTFont(face_name, spec)
+            else:
+                tf = TTFont(face_name, spec.filename, subfontIndex=spec.face_index)
             pdfmetrics.registerFont(tf)
             pdfmetrics.registerTypeFace(TypeFace(face_name))
         except TTFError as e:
-            print('invalid font', font, e)
+            print('invalid font', spec, e)
 
 
 class myPdfPlotGraphicsContext(PdfPlotGraphicsContext):
