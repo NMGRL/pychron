@@ -331,36 +331,33 @@ class FitIsotopeEvolutionNode(FitNode):
                 if goodness_threshold:
                     int_err_goodness = bool(pe < goodness_threshold)
 
+                bs = iso.baseline.error
+                signal_to_baseline = abs(bs / i * 100)
                 signal_to_baseline_threshold = f.signal_to_baseline_goodness
                 signal_to_baseline_percent_threshold = f.signal_to_baseline_percent_goodness
                 signal_to_baseline_goodness = None
-                signal_to_baseline = None
                 if hasattr(iso, 'baseline'):
-                    bs = iso.baseline.error
-                    signal_to_baseline = abs(bs / i * 100)
                     if signal_to_baseline_threshold and signal_to_baseline_percent_threshold:
                         if signal_to_baseline > signal_to_baseline_threshold:
                             signal_to_baseline_goodness = bool(pe < signal_to_baseline_percent_threshold)
 
-                slope = None
+                slope = iso.get_slope()
                 slope_goodness = None
                 slope_threshold = None
                 if f.slope_goodness:
                     if f.slope_goodness_intensity < i:
                         slope_threshold = f.slope_goodness
-                        slope = iso.get_slope()
                         slope_goodness = bool(slope < 0 or slope < slope_threshold)
 
-                outliers = None
+                outliers = iso.noutliers()
                 outliers_threshold = None
                 outlier_goodness = None
                 if f.outlier_goodness:
-                    outlier = iso.noutliers()
                     outliers_threshold = f.outlier_goodness
-                    outlier_goodness = bool(outlier < f.outlier_goodness)
+                    outlier_goodness = bool(outliers < f.outlier_goodness)
 
                 curvature_goodness = None
-                curvature = None
+                curvature = 0
                 curvature_threshold = None
                 if f.curvature_goodness:
                     curvature = iso.get_curvature(f.curvature_goodness_at)
@@ -371,23 +368,22 @@ class FitIsotopeEvolutionNode(FitNode):
                 if iso.noutliers():
                     nstr = '{}({})'.format(iso.n - iso.noutliers(), nstr)
 
+                rsquared = iso.rsquared_adj
                 rsquared_goodness = None
-                rsquared = 0
                 rsquared_threshold = 0
                 if f.rsquared_goodness:
-                    rsquared = iso.rsquared_adj
                     rsquared_threshold = f.rsquared_goodness
                     rsquared_goodness = rsquared > rsquared_threshold
 
+                signal_to_blank = iso.blank.value / iso.value * 100
                 signal_to_blank_goodness = None
-                signal_to_blank = 0
                 signal_to_blank_threshold = 0
                 if f.signal_to_blank_goodness:
-                    signal_to_blank = iso.blank.value / iso.value * 100
                     signal_to_blank_threshold = f.signal_to_blank_goodness
                     signal_to_blank_goodness = signal_to_blank < signal_to_blank_threshold
 
                 yield IsoEvoResult(analysis=xi,
+                                   isotope_obj=iso,
                                    nstr=nstr,
                                    intercept_value=i,
                                    intercept_error=e,
@@ -400,8 +396,8 @@ class FitIsotopeEvolutionNode(FitNode):
                                    slope_threshold=slope_threshold,
                                    slope_goodness=slope_goodness,
 
-                                   outliers=outliers,
-                                   outliers_threshold=outliers_threshold,
+                                   outlier=outliers,
+                                   outlier_threshold=outliers_threshold,
                                    outlier_goodness=outlier_goodness,
 
                                    curvature=curvature,

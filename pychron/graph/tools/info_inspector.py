@@ -18,6 +18,7 @@
 from __future__ import absolute_import
 
 from chaco.abstract_overlay import AbstractOverlay
+from chaco.tools.scatter_inspector import ScatterInspector, ScatterInspectorEvent
 from enable.base_tool import BaseTool
 from kiva.fonttools import Font
 # from pychron.pipeline.plot.inspector_item import BaseInspectorItem
@@ -41,15 +42,22 @@ def intersperse(m, delim):
         yield x
 
 
-class InfoInspector(BaseTool):
+class InfoInspector(ScatterInspector):
+# class InfoInspector(BaseTool):
     metadata_changed = Event
     current_position = None
     current_screen = None
     # use_pane = False
-    inspector_item = Event
+    # inspector_item = Event
     # inspector_item_klass = BaseInspectorItem
     event_queue = None
     hittest_threshold = 5
+    # select_event = Event
+
+    def normal_left_dclick(self, event):
+        for sel in self.component.index.metadata[self.selection_metadata_name]:
+            self.inspector_event = ScatterInspectorEvent(event_type='deselect', event_index=sel)
+        self.component.index.metadata[self.selection_metadata_name] = []
 
     def normal_mouse_move(self, event):
         xy = event.x, event.y

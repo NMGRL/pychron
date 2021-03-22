@@ -38,10 +38,18 @@ class IsoFilterFitAuxPlot(AuxPlot, IsoFilterFit):
     signal_to_baseline_goodness = Float
     signal_to_baseline_percent_goodness = Float
     fitfunc = Str
+    filter_coefficients = Str('0.0003,0.5,0.00005,0.015')
 
     n_threshold = Int
     n_true = Enum(FIT_TYPES)
     n_false = Enum(FIT_TYPES)
+
+    def smart_filter_values(self, xx):
+        a, b, c, d = self.get_filter_coefficients()
+        return a * xx ** b + c * xx + d
+
+    def get_filter_coefficients(self):
+        return (float(f) for f in self.filter_coefficients.split(','))
 
     @cached_property
     def _get_fit_types(self):

@@ -49,6 +49,7 @@ class IsoEvoMainOptions(MainOptions):
     signal_to_blank_goodness = Float
     global_goodness_visible = Bool
 
+
     def _get_edit_view(self):
         main = VGroup(HGroup(Item('name', editor=EnumEditor(name='names')),
                              Item('fit', editor=EnumEditor(values=FIT_TYPES+[AUTO_N,])),
@@ -57,7 +58,8 @@ class IsoEvoMainOptions(MainOptions):
                       Item('fitfunc', visible_when='fit=="Custom"'),
                       label='Fits')
 
-        goodness = VGroup(Item('goodness_threshold', label='Intercept Error',
+        goodness = VGroup(Item('filter_coefficients', label='Smart Filter'),
+                          Item('goodness_threshold', label='Intercept Error',
                                tooltip='If % error is greater than "Intercept Error" '
                                        'mark regression as "Bad"'),
                           HGroup(Item('signal_to_baseline_goodness',
