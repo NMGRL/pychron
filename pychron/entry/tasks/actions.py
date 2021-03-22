@@ -289,9 +289,9 @@ class TransferJAction(TaskAction):
     method = 'transfer_j'
 
 
-class GetIGSNAction(TaskAction):
-    name = 'Get IGSNs'
-    method = 'get_igsns'
+# class GetIGSNAction(TaskAction):
+#     name = 'Get IGSNs'
+#     method = 'get_igsns'
 
 
 class GenerateStatusReportAction(TaskAction):

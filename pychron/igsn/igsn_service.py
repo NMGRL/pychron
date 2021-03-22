@@ -233,32 +233,31 @@ class IGSNService(Loggable):
         if bind:
             self._bind_preferences()
 
-    def get_new_igsn(self, sample='', material='Rock'):
+    def get_new_igsn(self, sample='', material=''):
+        if not material:
+            material = 'Rock'
 
-        igsn = None
-        # if sample:
+        if sample:
             # check for existing igsn
-            # eigsns = self.get_existing_igsn(sample)
-            # if eigsns:
-            #     self.information_dialog('Existing IGSN for sample: {} igsn: {}'.format(sample, ','.join(eigsns)))
-            #     return
-
-        if igsn is None:
-
-            model = IGSNSampleModel(name=sample, material=material,
-                                    user_code=self.user_code,
-                                    sample_type='Individual Sample')
-
-            info = model.edit_traits(kind='livemodal')
-            if not info.result:
+            eigsns = self.get_existing_igsn(sample)
+            if eigsns:
+                self.information_dialog('Existing IGSN for sample: {} igsn: {}'.format(sample, ','.join(eigsns)))
                 return
 
-            content = model.assemble_content()
-            locator = 'webservices/upload.php'
-            r = self._post(locator,
-                           data={'content': content})
+        model = IGSNSampleModel(name=sample, material=material,
+                                user_code=self.user_code,
+                                sample_type='Individual Sample')
 
-            igsn = self._parse_response(r, single=True)
+        info = model.edit_traits(kind='livemodal')
+        if not info.result:
+            return
+
+        content = model.assemble_content()
+        locator = 'webservices/upload.php'
+        r = self._post(locator,
+                       data={'content': content})
+
+        igsn = self._parse_response(r, single=True)
 
         return igsn
 

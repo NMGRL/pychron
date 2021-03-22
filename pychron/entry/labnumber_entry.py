@@ -205,43 +205,43 @@ class LabnumberEntry(DVCIrradiationable):
             sv = IrradiationStatusView(model=sm)
             sv.edit_traits()
 
-    def get_igsns(self):
-        srv = self.application.get_service('pychron.igsn.igsn_service.IGSNService')
-        if srv is None:
-            self.warning_dialog('IGSN Plugin is required. Enable used "Help>Edit Initialization"')
-            return
-
-        self.info('get igsn')
-        items = self.selected
-        if not items:
-            items = self.irradiated_positions
-
-        def key(x):
-            return x.sample, x.material, x.project
-
-        items = [x for x in items if not x.igsn]
-
-        no_save = False
-        for (sample, material, project), poss in groupby_key(items):
-            if not sample:
-                continue
-
-            self.debug('Get IGSN for sample={}, material={}, project={}'.format(sample, material, project))
-            igsn = srv.get_new_igsn(sample)
-            if igsn:
-                for item in poss:
-                    item.igsn = igsn
-            else:
-                no_save = True
-                break
-                # need to check for existing IGSN for sample
-                # if igsn is not None:
-                #     item.igsn = igsn
-        if not no_save:
-            self.save()
-        self.refresh_table = True
-        # self.warning('IGSN Not fully implemented')
-        # raise NotImplementedError
+    # def get_igsns(self):
+    #     srv = self.application.get_service('pychron.igsn.igsn_service.IGSNService')
+    #     if srv is None:
+    #         self.warning_dialog('IGSN Plugin is required. Enable used "Help>Edit Initialization"')
+    #         return
+    #
+    #     self.info('get igsn')
+    #     items = self.selected
+    #     if not items:
+    #         items = self.irradiated_positions
+    #
+    #     def key(x):
+    #         return x.sample, x.material, x.project
+    #
+    #     items = [x for x in items if not x.igsn]
+    #
+    #     no_save = False
+    #     for (sample, material, project), poss in groupby_key(items, key):
+    #         if not sample:
+    #             continue
+    #
+    #         self.debug('Get IGSN for sample={}, material={}, project={}'.format(sample, material, project))
+    #         igsn = srv.get_new_igsn(sample)
+    #         if igsn:
+    #             for item in poss:
+    #                 item.igsn = igsn
+    #         else:
+    #             no_save = True
+    #             break
+    #             # need to check for existing IGSN for sample
+    #             # if igsn is not None:
+    #             #     item.igsn = igsn
+    #     if not no_save:
+    #         self.save()
+    #     self.refresh_table = True
+    #     # self.warning('IGSN Not fully implemented')
+    #     # raise NotImplementedError
 
     def transfer_j(self):
         items = self.selected
