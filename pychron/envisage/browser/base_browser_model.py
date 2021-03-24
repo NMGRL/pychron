@@ -94,6 +94,7 @@ def extract_mass_spectrometer_name(name):
 class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     dvc = Instance('pychron.dvc.dvc.DVC')
     plot_selected = Event
+    use_quick_recall = Bool(True)
 
     selected_principal_investigators = Any
     principal_investigators = List

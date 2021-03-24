@@ -167,8 +167,11 @@ class IsoEvolutionResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
             # xx = linspace(min(x), max(x))
             # yy = fit.smart_filter_values(xx)
 
-            g.new_plot()
-            scatter, plot = g.new_series(x, y, plotid=i, type='scatter', marker='plus')
+            p = g.new_plot()
+            g.add_limit_tool(p, 'x')
+            g.add_limit_tool(p, 'y')
+
+            scatter, _ = g.new_series(x, y, plotid=i, type='scatter', marker='plus')
 
             inspector = IsoResultInspector(scatter,
                                            # use_pane=False,
@@ -188,6 +191,8 @@ class IsoEvolutionResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
 
             overlay = ScatterInspectorOverlay(scatter)
             scatter.overlays.append(overlay)
+
+
 
             # g.new_series(xx, yy, plotid=i)
             g.set_x_title(self.xarg, plotid=i)

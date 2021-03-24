@@ -19,6 +19,7 @@
 from pickle import dumps
 
 import six
+from PyQt5.QtCore import QSize
 from pyface.qt import QtCore, QtGui
 from pyface.qt.QtGui import QHeaderView, QApplication
 from traits.api import Bool, Str, List, Any, Instance, Property, Int, HasTraits, Color, Either, Callable, Event
@@ -80,8 +81,15 @@ class MoveToRow(HasTraits):
 class TabularKeyEvent(object):
     def __init__(self, event):
         self.text = event.text().strip()
+        self.key = event.key()
         mods = QtGui.QApplication.keyboardModifiers()
-        self.shift = mods == QtCore.Qt.ShiftModifier
+        self.shift = mods & QtCore.Qt.ShiftModifier
+        self.control = mods & QtCore.Qt.ControlModifier
+
+    def is_key(self, k):
+        if isinstance(k, str):
+            k = ord(k)
+        return self.key == k
 
 
 class UnselectTabularEditorHandler(Handler):
@@ -288,19 +296,33 @@ class _TableView(TableView):
         return self._editor.factory.drag_external  # and not self._dragging
 
     def keyPressEvent(self, event):
+        # print('asfd', event, event.key(), event.modifiers(), QtGui.QKeySequence('Cmd+N'))
+        # print(int(event.modifiers() & QtCore.Qt.MetaModifier),
+        #       int(event.modifiers() & QtCore.Qt.ControlModifier),
+        #
+        #       # int(event.modifiers() & QtCore.Qt.Key_Control),
+        #       # int(event.modifiers() & QtCore.Qt.Key_Shift),
+        #       bin(int(event.modifiers())),
+        #       # bin(int(QtCore.Qt.Key_Control)),
+        #       bin(int(QtCore.Qt.MetaModifier)),
+        #       bin(int(QtCore.Qt.ControlModifier))
+        #       )
+        selection_idx = [ci.row() for ci in self.selectedIndexes()]
         if event.matches(QtGui.QKeySequence.Copy):
             self._cut_indices = None
 
             # add the selected rows to the clipboard
             self._copy()
-
+        # elif event.key() == 78 and event.modifiers() & QtCore.Qt.ControlModifier:
+        #     print('asfasdfasdfsafasdf')
+        #     self._editor.key_pressed = TabularKeyEvent(event)
         elif event.matches(QtGui.QKeySequence.Cut):
-            self._cut_indices = [ci.row() for ci in self.selectionModel().selectedRows()]
-
+            self._cut_indices = selection_idx
         elif event.matches(QtGui.QKeySequence.Paste):
             if self.pastable:
                 self._paste()
         else:
+
             self._editor.key_pressed = TabularKeyEvent(event)
 
             self._key_press_hook(event)
@@ -310,6 +332,18 @@ class _TableView(TableView):
             super(_TableView, self).resizeColumnsToContents()
         except AttributeError:
             pass
+
+    def sizeHintForColumn(self, column):
+        try:
+            return super(_TableView, self).sizeHintForColumn(column)
+        except AttributeError:
+            pass
+
+    def sizeHint(self):
+        try:
+            return super(_TableView, self).sizeHint()
+        except TypeError:
+            return QSize()
 
     # private
     def _copy(self):
@@ -645,6 +679,7 @@ class _TabularEditor(qtTabularEditor):
                 for idx, col in enumerate(self.adapter.columns):
                     if '{}_width'.format(col[1]) == k:
                         self.control.setColumnWidth(idx, v)
+
     # private
     def _add_image(self, image_resource):
         """ Adds a new image to the image map.

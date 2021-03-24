@@ -927,7 +927,7 @@ class DVCDatabase(DatabaseAdapter):
             q = sess.query(AnalysisTbl)
             q = q.join(IrradiationPositionTbl)
             q = q.filter(IrradiationPositionTbl.identifier.in_(lns))
-            q = q.filter(distinct(AnalysisTbl.mass_spectrometer.name))
+            q = q.filter(distinct(AnalysisTbl.mass_spectrometer))
             return self._query_all(q)
 
     def get_analysis_date_ranges(self, lns, hours):

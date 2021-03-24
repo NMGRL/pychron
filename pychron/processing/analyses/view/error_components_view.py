@@ -24,6 +24,7 @@ from traitsui.table_column import ObjectColumn
 # ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.pychron_traits import BorderVGroup
+from pychron.core.ui.table_editor import myTableEditor
 from pychron.processing.analyses.view.magnitude_editor import MagnitudeColumn
 from pychron.pychron_constants import INTERFERENCE_KEYS
 
@@ -92,9 +93,9 @@ class ErrorComponentsView(HasTraits):
                 ObjectColumn(name='value', label='Value',
                              width=100,
                              format_func=lambda x: floatfmt(x, n=5))]
-        editor = TableEditor(columns=cols,
-                             sortable=False,
-                             editable=False)
+        editor = myTableEditor(columns=cols,
+                               sortable=False,
+                               editable=False)
 
         e1 = BorderVGroup(UItem('error_components', editor=editor), label='With J Err.')
         e2 = BorderVGroup(UItem('error_components2', editor=editor), label='With Position Err.')

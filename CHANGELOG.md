@@ -1,5 +1,12 @@
 CHANGELOG
 =========
+3/24/2021
+### Features ####
+* added ability to view a single recalled analysis at a time in the browser window
+* started Iso Evo discriminator
+* added limits tools to iso evo discriminator
+
+
 2/19/2021
 ### Bug fixes ###
 * fixed Weighted mean SEM if MSWD<1 else SEM*SQRT(MSWD). SEM is not SD/sqrt(N) SEM is Taylor Error i.e. sum of 

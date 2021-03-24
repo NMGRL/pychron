@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.timer.do_later import do_later
 from traits.api import Any, on_trait_change, Date, Time, Instance, Bool
 
 from pychron.envisage.browser.interpreted_age_recall_editor import InterpretedAgeRecallEditor
@@ -128,15 +129,15 @@ class BaseBrowserTask(BaseEditorTask):
             records = self._open_existing_recall_editors(records)
             if records:
                 try:
-                    ans = self.dvc.make_analyses(records)
+                    records = self.dvc.make_analyses(records)
                 except BaseException:
-                    ans = None
+                    records = None
                     self.debug_exception()
 
-                if ans:
-                    self._open_recall_editors(ans)
-                else:
-                    self.warning('failed making records')
+        if records:
+            self._open_recall_editors(records)
+        else:
+            self.warning('failed making records')
 
     def interpreted_age_recall(self, record):
         existing = [e.basename for e in self.get_editors(InterpretedAgeRecallEditor)]
@@ -295,26 +296,35 @@ class BaseBrowserTask(BaseEditorTask):
 
         existing = [e.basename for e in self.get_recall_editors()]
         if ans:
+            quick = self.browser_model.use_quick_recall
             for rec in ans:
-                av = rec.analysis_view
 
+                av = rec.analysis_view_factory(quick=False)
                 av.isotope_view.isotope_adapter = self.isotope_adapter
                 av.isotope_view.intermediate_adapter = self.intermediate_adapter
                 av.isotope_view.show_intermediate = self.recall_configurer.show_intermediate
 
                 self.recall_configurer.set_fonts(av)
                 av.main_view.set_options(rec, self.recall_configurer.recall_options)
-                # av.main_view.recall_options = self.recall_configurer.recall_options
 
-                editor = RecallEditor(rec, av)
+                if quick:
+                    editor = self.browser_model.recall_editor
+                    if not editor:
+                        editor = RecallEditor(rec, av)
+                        self.browser_model.recall_editor = editor
+                    else:
+                        editor.init(rec, av)
+                    break
+                else:
+                    editor = RecallEditor(rec, av)
 
-                # editor.analysis_view = av
-                # editor.basename = rec.record_id
-                if existing and editor.basename in existing:
-                    editor.instance_id = existing.count(editor.basename)
-                editor.set_name(rec.record_id)
+                    # editor.analysis_view = av
+                    # editor.basename = rec.record_id
+                    if existing and editor.basename in existing:
+                        editor.instance_id = existing.count(editor.basename)
+                    editor.set_name(rec.record_id)
 
-                self._open_editor(editor, activate=False)
+                    self._open_editor(editor, activate=False)
 
         else:
             self.warning('could not load records')
@@ -346,6 +356,16 @@ class BaseBrowserTask(BaseEditorTask):
                 import traceback
                 traceback.print_exc()
                 self.critical('interpeted_age_table:dclicked error {}'.format(str(e)))
+
+    @on_trait_change('browser_model:[analysis_table:key_pressed]')
+    def _handle_key_pressed(self, new):
+        if new.control:
+            if new.is_key('N'):
+                d = 1
+            elif new.is_key('B'):
+                d = -1
+            item = self.browser_model.analysis_table.increment_selected(d)
+            self.recall(item)
 
     @on_trait_change('browser_model:[analysis_table:dclicked]')
     def _handle_dclicked(self, new):

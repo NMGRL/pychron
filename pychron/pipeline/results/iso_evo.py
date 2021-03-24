@@ -25,7 +25,10 @@ GOODNESS_NAMES = ('Intercept Error', 'Slope', 'Outliers', 'Curvature', 'RSquared
                   'Baseline/Signal %', 'Smart Filter')
 INVERTED_GOODNESS = ('rsquared',)
 
-ISO_EVO_RESULT_ARGS = ('intercept_value', 'intercept_error', 'slope', 'outlier', 'curvature', 'rsquared')
+ISO_EVO_RESULT_ARGS = ('intercept_value',
+                       'intercept_error',
+                       'normalized_error',
+                       'slope', 'outlier', 'curvature', 'rsquared')
 
 
 class IsoEvoResult(BaseResult):
@@ -60,6 +63,7 @@ class IsoEvoResult(BaseResult):
     outlier = None
     curvature = None
     rsquared = None
+    normalized_err = None
     signal_to_blank = None
     signal_to_baseline = None
     smart_filter = None

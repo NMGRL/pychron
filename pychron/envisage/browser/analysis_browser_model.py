@@ -20,6 +20,7 @@ from pychron.core.ui.preference_binding import bind_preference
 from pychron.envisage.browser.advanced_filter_view import AdvancedFilterView
 from pychron.envisage.browser.analysis_table import AnalysisTable
 from pychron.envisage.browser.browser_model import BrowserModel
+from pychron.envisage.browser.recall_editor import RecallEditor
 from pychron.envisage.browser.view import BrowserView
 
 
@@ -27,6 +28,7 @@ class AnalysisBrowserModel(BrowserModel):
     analysis_table = Instance(AnalysisTable)
     advanced_filter = Instance(AdvancedFilterView, ())
     browser_view = Instance(BrowserView)
+    recall_editor = Instance(RecallEditor)
 
     load_recent_button = Button
     # toggle_view = Button

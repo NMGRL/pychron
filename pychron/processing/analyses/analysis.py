@@ -667,24 +667,28 @@ class Analysis(ArArAge, IdeogramPlotable):
     def analysis_view(self):
         v = self._analysis_view
         if v is None:
-            mod, klass = self.analysis_view_klass
-            mod = __import__(mod, fromlist=[klass, ])
-            klass = getattr(mod, klass)
-            # v = self.analysis_view_klass()
-            v = klass()
-            self._analysis_view = v
-            self._sync_view(v)
+            v = self.analysis_view_factory()
 
+        return v
+
+    def analysis_view_factory(self, quick=False):
+        mod, klass = self.analysis_view_klass
+        mod = __import__(mod, fromlist=[klass, ])
+        klass = getattr(mod, klass)
+        # v = self.analysis_view_klass()
+        v = klass()
+        self._analysis_view = v
+        self._sync_view(v, quick=quick)
         return v
 
     def sync_view(self, **kw):
         self._sync_view(**kw)
 
-    def _sync_view(self, av=None, **kw):
+    def _sync_view(self, av=None, quick=False, **kw):
         if av is None:
             av = self.analysis_view
         try:
-            av.load(self)
+            av.load(self, quick=quick)
         except BaseException as e:
             import traceback
 

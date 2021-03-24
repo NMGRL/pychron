@@ -16,11 +16,11 @@
 
 # ============= enthought library imports =======================
 from pyface.action.menu_manager import MenuManager
-from traits.api import Button
-from traits.api import Str, Instance, Any
+
+from traits.api import Str, Instance, Any, Button
 from traitsui.api import InstanceEditor, Controller
 from traitsui.api import View, UItem, VGroup, EnumEditor, \
-    HGroup, CheckListEditor, spring, Group, HSplit, Tabbed
+    HGroup, CheckListEditor, spring, Group, HSplit, Tabbed, Item, VSplit
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
@@ -203,7 +203,8 @@ class AnalysisGroupView(GroupView):
                                        icon_button_editor('analysis_table.scroll_to_bottom', 'arrow_down',
                                                           tooltip='Scroll to bottom'),
                                        icon_button_editor('analysis_table.scroll_to_top', 'arrow_up',
-                                                          tooltip='Scroll to top')))
+                                                          tooltip='Scroll to top'),
+                                       Item('use_quick_recall', label='Quick Recall')))
 
         agrp = Group(VGroup(analysis_tools,
                             UItem('analysis_table.analyses',
@@ -218,7 +219,25 @@ class AnalysisGroupView(GroupView):
                                                          scroll_to_row='analysis_table.scroll_to_row',
                                                          scroll_to_bottom='analysis_table.scroll_to_bottom',
                                                          scroll_to_top='analysis_table.scroll_to_top',
-                                                         stretch_last_section=False)),
+                                                         stretch_last_section=False),
+                                  visible_when='not use_quick_recall'),
+                            VSplit(UItem('analysis_table.analyses',
+                                         height=0.75,
+                                         editor=myTabularEditor(adapter=self.model.analysis_table.tabular_adapter,
+                                                                operations=['move', 'delete'],
+                                                                column_clicked='analysis_table.column_clicked',
+                                                                refresh='analysis_table.refresh_needed',
+                                                                selected='analysis_table.selected',
+                                                                dclicked='analysis_table.dclicked',
+                                                                key_pressed='analysis_table.key_pressed',
+                                                                multi_select=self.pane.multi_select,
+                                                                scroll_to_row='analysis_table.scroll_to_row',
+                                                                scroll_to_bottom='analysis_table.scroll_to_bottom',
+                                                                scroll_to_top='analysis_table.scroll_to_top',
+                                                                stretch_last_section=False)),
+                                   UItem('recall_editor',
+                                         height=0.25, style='custom', visible_when='recall_editor'),
+                                   visible_when='use_quick_recall'),
                             defined_when=self.pane.analyses_defined,
                             show_border=True,
                             label='Analyses'))
