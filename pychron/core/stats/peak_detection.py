@@ -307,6 +307,8 @@ def fast_find_peaks(ys, xs, **kw):
                 xmax = xs[i + ji]
                 break
             py = yi
+        else:
+            xmax = xs.max()
 
         py = ymax
         # search backward
@@ -317,6 +319,9 @@ def fast_find_peaks(ys, xs, **kw):
                 xmin = xs[n - ji]
                 break
             py = yi
+        else:
+            xmin = xs.min()
+
         peak_x_ranges.append((xmin, xmax))
 
     try:
