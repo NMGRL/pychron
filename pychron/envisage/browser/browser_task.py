@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pyface.timer.do_later import do_later
 from traits.api import Any, on_trait_change, Date, Time, Instance, Bool
 
 from pychron.envisage.browser.interpreted_age_recall_editor import InterpretedAgeRecallEditor
@@ -128,8 +127,12 @@ class BaseBrowserTask(BaseEditorTask):
         if not open_copy:
             records = self._open_existing_recall_editors(records)
             if records:
+                pf = None
+                if self.browser_model.use_quick_recall:
+                    pf = 60
+
                 try:
-                    records = self.dvc.make_analyses(records)
+                    records = self.dvc.make_analyses(records, pull_frequency=pf, use_progress=False)
                 except BaseException:
                     records = None
                     self.debug_exception()
@@ -235,6 +238,7 @@ class BaseBrowserTask(BaseEditorTask):
             self.browser_model.reattach()
 
     def _closed_hook(self):
+        self.dvc.clear_pull_cache()
         self.dvc.close_session()
 
     def _get_editor_by_uuid(self, uuid):
@@ -359,7 +363,7 @@ class BaseBrowserTask(BaseEditorTask):
 
     @on_trait_change('browser_model:[analysis_table:key_pressed]')
     def _handle_key_pressed(self, new):
-        if new.control:
+        if new and new.control:
             if new.is_key('N'):
                 d = 1
             elif new.is_key('B'):

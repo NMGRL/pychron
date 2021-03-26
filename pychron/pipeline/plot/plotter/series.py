@@ -24,6 +24,7 @@ from numpy import array, Inf, arange
 from traits.api import Array
 from uncertainties import nominal_value, std_dev
 
+from pychron.core.helpers.color_generators import colornames
 from pychron.experiment.utilities.identifier import ANALYSIS_MAPPING_INTS
 from pychron.pipeline.plot.flow_label import FlowPlotLabel
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
@@ -121,7 +122,7 @@ class BaseSeries(BaseArArFigure):
         omits = self.analysis_group.get_omitted_by_tag(self.sorted_analyses)
         for o in omits:
             self.sorted_analyses[o].set_temp_status('omit')
-
+        print('plot', plots)
         if plots:
             self.xs = self._get_xs(plots, self.sorted_analyses)
             for i, po in enumerate(plots):
@@ -162,6 +163,10 @@ class BaseSeries(BaseArArFigure):
 
             n = [ai.record_id for ai in self.sorted_analyses]
 
+            color = po.marker_color
+            if self.group_id:
+                color =colornames[self.group_id+1]
+
             args = graph.new_series(x=self.xs,
                                     display_index=ArrayDataSource(data=n),
                                     plotid=pid,
@@ -170,7 +175,7 @@ class BaseSeries(BaseArArFigure):
                                     add_point_inspector=False,
                                     marker=po.marker,
                                     marker_size=po.marker_size,
-                                    color=po.marker_color,
+                                    color=color,
                                     **kw)
             if len(args) == 2:
                 scatter, p = args

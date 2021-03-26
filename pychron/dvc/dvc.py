@@ -88,11 +88,13 @@ class DVC(Loggable):
     irradiation_prefix = Str
 
     _cache = None
-    _uuid_runid_cache = {}
+    _uuid_runid_cache = None
+    _pull_cache = None
 
     def __init__(self, bind=True, *args, **kw):
         super(DVC, self).__init__(*args, **kw)
-
+        self._uuid_runid_cache = {}
+        self._pull_cache = {}
         if bind:
             self._bind_preferences()
 
@@ -836,7 +838,9 @@ class DVC(Loggable):
         if a:
             return a[0]
 
-    def make_analyses(self, records, calculate_f_only=False, reload=False, quick=False, use_progress=True):
+    def make_analyses(self, records, calculate_f_only=False,
+                      reload=False, quick=False, use_progress=True,
+                      pull_frequency=None):
         if not records:
             return []
 
@@ -864,7 +868,7 @@ class DVC(Loggable):
             if prog:
                 prog.change_message('Syncing repository= {}'.format(xi))
             try:
-                self.sync_repo(xi, use_progress=False)
+                self.sync_repo(xi, use_progress=False, pull_frequency=pull_frequency)
             except BaseException:
                 pass
 
@@ -1070,16 +1074,31 @@ class DVC(Loggable):
     def git_session_ctx(self, repository_identifier, message):
         return GitSessionCTX(self, repository_identifier, message)
 
-    def sync_repo(self, name, use_progress=True):
+    def clear_pull_cache(self):
+        self._pull_cache = {}
+
+    def sync_repo(self, name, use_progress=True, pull_frequency=None):
         """
         pull or clone an repo
 
         """
         root = repository_path(name)
         exists = os.path.isdir(os.path.join(root, '.git'))
-        self.debug('sync repository {}. exists={}'.format(name, exists))
+        self.debug('sync repository {}. exists={} pull_frequency={}'.format(name, exists, pull_frequency))
 
         if exists:
+            if pull_frequency:
+                now = datetime.now()
+                last_pull = self._pull_cache.get(name)
+                self._pull_cache[name] = now
+                args = last_pull, (datetime.now() - last_pull).seconds, \
+                       (datetime.now() - last_pull).seconds < pull_frequency
+
+                self.debug(' '.join([str(a) for a in args]))
+
+                if last_pull and (datetime.now() - last_pull).seconds < pull_frequency:
+                    return True
+
             repo = self._get_repository(name)
             repo.pull(use_progress=use_progress, use_auto_pull=self.use_auto_pull)
             return True

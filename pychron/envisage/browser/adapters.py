@@ -30,6 +30,7 @@ from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, PRECLEANUP, POSTCLEAN
 
 class BrowserAdapter(TabularAdapter, ConfigurableMixin):
     font = 'arial 10'
+    name_width = Int(200)
 
     def get_tooltip(self, obj, trait, row, column):
         name = self.column_map[column]
@@ -39,6 +40,7 @@ class BrowserAdapter(TabularAdapter, ConfigurableMixin):
 class ProjectAdapter(BrowserAdapter):
     columns = [('Name', 'name'),
                ('IR', 'unique_id')]
+    unique_id_width = Int(75)
 
     def get_menu(self, obj, trait, row, column):
         return MenuManager(Action(name='Unselect', action='unselect_projects'))
@@ -46,6 +48,7 @@ class ProjectAdapter(BrowserAdapter):
 
 class PrincipalInvestigatorAdapter(BrowserAdapter):
     columns = [('Name', 'name')]
+    # name_width = Int(10)
 
 
 class LoadAdapter(BrowserAdapter):

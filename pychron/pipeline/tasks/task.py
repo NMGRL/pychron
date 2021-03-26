@@ -23,6 +23,7 @@ from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter
 from traits.api import Instance, Bool, on_trait_change, Any
 
 from pychron.core.pdf.save_pdf_dialog import save_pdf
+from pychron.core.printer.printer import print_component
 from pychron.dvc import dvc_dump
 from pychron.dvc.func import repository_has_staged
 from pychron.dvc.util import DVCInterpretedAge
@@ -328,6 +329,14 @@ class PipelineTask(BaseBrowserTask):
 
                 run_groups = {'unknowns': ggs, 'machine_unknowns': ggs}
                 writer.build(run_groups, options=options)
+
+    def print_figure(self):
+        self.debug('print figure')
+        if not self.has_active_editor():
+            return
+        ed = self.active_editor
+        if isinstance(ed, FigureEditor):
+            print_component(ed.component)
 
     def save_figure_pdf(self):
         self.debug('save figure pdf')
