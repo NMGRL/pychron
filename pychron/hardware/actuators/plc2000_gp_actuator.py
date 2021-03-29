@@ -21,8 +21,8 @@ class PLC2000GPActuator(GPActuator, ClientMixin):
     def _actuate(self, obj, action):
         self._write_coil(int(obj.address), action.lower() == 'open')
 
-    def get_channel_state(self, obj, *args, **kw):
-        resp = self._read_coils(int(obj.address))
+    def get_channel_state(self, address, *args, **kw):
+        resp = self._read_coils(int(address))
         return bool(resp.bits[0])
 
     def _read_coils(self, *args, **kw):
