@@ -15,22 +15,15 @@
 # ===============================================================================
 from pychron.hardware.actuators.client_gp_actuator import ClientMixin
 from pychron.hardware.actuators.gp_actuator import GPActuator
+from pychron.hardware.core.modbus import ModbusMixin
 
 
-class PLC2000GPActuator(GPActuator, ClientMixin):
+class PLC2000GPActuator(GPActuator, ModbusMixin, ClientMixin):
     def _actuate(self, obj, action):
         self._write_coil(int(obj.address), action.lower() == 'open')
 
     def get_channel_state(self, address, *args, **kw):
         resp = self._read_coils(int(address))
         return bool(resp.bits[0])
-
-    def _read_coils(self, *args, **kw):
-        if self.communicator:
-            return self.communicator.read_coils(*args, **kw)
-
-    def _write_coil(self, *args, **kw):
-        if self.communicator:
-            return self.communicator.write_coil(*args, **kw)
 
 # ============= EOF =============================================

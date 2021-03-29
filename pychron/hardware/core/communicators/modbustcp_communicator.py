@@ -20,10 +20,11 @@ from pychron.hardware.core.communicators.communicator import Communicator
 
 class ModbustcpCommunicator(Communicator):
     host = None
+
     def load(self, config, path):
         self.host = self.config_get(config, 'Communications', 'host')
         return super(ModbustcpCommunicator, self).load(config, path)
-        
+
     def open(self, *args, **kw):
         a = self.host
         self.handle = ModbusTcpClient(a)

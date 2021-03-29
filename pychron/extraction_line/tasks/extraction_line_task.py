@@ -54,6 +54,7 @@ class ExtractionLineTask(BaseHardwareTask):
                  ExplanationPane(model=self.manager),
                  ConsolePane(model=self.manager),
                  ReadbackPane(model=self.manager),
+                 HeaterPane(model=self.manager),
                  EditorPane(model=self.manager.canvas_editor),
                  self.wait_pane
                  ]
