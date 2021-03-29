@@ -21,7 +21,7 @@ class ModbusMixin:
 
     def _func(self, funcname, *args, **kw):
         if self.communicator:
-            return getattr(self.communicator, funcname, *args, **kw)
+            return getattr(self.communicator, funcname)(*args, **kw)
 
     def _read_coils(self, *args, **kw):
         return self._func('read_coils', *args, **kw)

@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 import time
-
+from threading import Thread
 from traits.api import List, Float, Event, Bool, Property
 from traitsui.api import View, Item, UItem, ButtonEditor, InstanceEditor, ListEditor
 
@@ -26,6 +26,10 @@ class HeaterManager(Manager):
     is_alive = Bool
 
     def start_scans(self):
+        self._thread = Thread(target=self._scan)
+        self._thread.start()
+
+    def _scan(self):
         self.is_alive = True
         if self.devices:
             while self.is_alive:
@@ -37,15 +41,13 @@ class HeaterManager(Manager):
         self.is_alive = False
 
     def traits_view(self):
-        if self.devices:
-            v = View(Item('devices', style='custom',
+        v = View(Item('devices', style='custom',
                           show_label=False,
                           editor=ListEditor(mutable=False,
                                             style='custom',
-                                            editor=InstanceEditor())),
-                     height=-100)
-        else:
-            v = View()
+                                            editor=InstanceEditor(view='heater_view'))),
+                     )
+
         return v
 
 # ============= EOF =============================================

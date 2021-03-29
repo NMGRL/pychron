@@ -13,15 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.api import Float, Event, Bool, Property, Int
-from traitsui.api import View, Item, UItem, ButtonEditor
+from traits.api import Float, Event, Bool, Property, Int, HasTraits
+from traitsui.api import View, Item, UItem, ButtonEditor, HGroup
 
+from pychron.core.ui.lcd_editor import LCDEditor
 from pychron.hardware import get_float
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.core.modbus import ModbusMixin
 
 
-class HeaterMixin:
+class HeaterMixin(HasTraits):
     setpoint = Float
     readback = Float
     onoff_button = Event
@@ -61,12 +62,12 @@ class HeaterMixin:
     def _get_onoff_label(self):
         return 'Off' if self.onoff_state else 'On'
 
-    def traits_view(self):
+    def heater_view(self):
         v = View(UItem('name'),
                  UItem('onoff_button',
-                       editor=ButtonEditor(name='onoff_label')),
-                 Item('setpoint'),
-                 UItem('readback'))
+                       editor=ButtonEditor(label_value='onoff_label')),
+                 HGroup(Item('setpoint'),
+                 UItem('readback', editor=LCDEditor(height=30))))
         return v
 
 
@@ -81,6 +82,7 @@ class PLC2000Heater(CoreDevice, ModbusMixin, HeaterMixin):
         self.set_attribute(config, 'readback_address', 'Register', 'readback', cast='int')
         self.set_attribute(config, 'use_pid_address', 'Register', 'use_pid', cast='int')
         self.set_attribute(config, 'enable_address', 'Register', 'enable', cast='int')
+        return True
 
     def set_sepoint(self, v):
         self._write_register(self.setpoint_address, v)

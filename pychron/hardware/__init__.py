@@ -67,7 +67,8 @@ HW_PACKAGE_MAP = {
     'Model336TemperatureController': 'pychron.hardware.lakeshore.model336',
     'MKSSRG': 'pychron.hardware.gauges.mks.srg',
 
-    'GenericDevice': 'pychron.hardware.generic_device'
+    'GenericDevice': 'pychron.hardware.generic_device',
+    'PLC2000Heater': 'pychron.hardware.heater'
 }
 
 

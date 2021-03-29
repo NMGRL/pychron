@@ -43,7 +43,7 @@ from pychron.pychron_constants import NULL_STR
 MANAGERS = {'manometer_manager': ('pychron.extraction_line.manometer_manager', 'ManometerManager'),
             'cryo_manager': ('pychron.extraction_line.cryo_manager', 'CryoManager'),
             'gauge_manager': ('pychron.extraction_line.gauge_manager', 'GaugeManager'),
-            'heater_manager': ('pychron.extraction_line.heater_gauge', 'HeaterManager')}
+            'heater_manager': ('pychron.extraction_line.heater_manager', 'HeaterManager')}
 
 
 class ExtractionLineManager(Manager, Consoleable):

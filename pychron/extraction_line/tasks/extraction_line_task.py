@@ -28,7 +28,7 @@ from pychron.envisage.tasks.pane_helpers import ConsolePane
 from pychron.envisage.tasks.wait_pane import WaitPane
 from pychron.extraction_line.tasks.extraction_line_actions import SampleLoadingAction, AutoReloadAction
 from pychron.extraction_line.tasks.extraction_line_pane import CanvasPane, GaugePane, \
-    ExplanationPane, CryoPane, ReadbackPane, EditorPane
+    ExplanationPane, CryoPane, ReadbackPane, EditorPane, HeaterPane
 
 
 class ExtractionLineTask(BaseHardwareTask):
