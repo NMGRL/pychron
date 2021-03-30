@@ -14,9 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 from traits.api import Float, Event, Bool, Property, Int, HasTraits
-from traitsui.api import View, Item, UItem, ButtonEditor, HGroup
+from traitsui.api import View, Item, UItem, ButtonEditor, HGroup, VGroup
 
 from pychron.core.ui.lcd_editor import LCDEditor
+from pychron.graph.stream_graph import StreamGraph
 from pychron.hardware import get_float
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.core.modbus import ModbusMixin
@@ -30,6 +31,7 @@ class HeaterMixin(HasTraits):
     onoff_label = Property(depends_on='onoff_state')
 
     use_pid = Bool
+    graph = Instance(StreamGraph)
 
     # heater interface
     def set_sepoint(self, v):
@@ -51,6 +53,7 @@ class HeaterMixin(HasTraits):
         if self.onoff_state:
             v = self.read_readback()
             self.readback = v
+            self.graph.record(v)
 
     def _use_pid_changed(self, v):
         self.set_use_pid(v)
@@ -62,12 +65,19 @@ class HeaterMixin(HasTraits):
     def _get_onoff_label(self):
         return 'Off' if self.onoff_state else 'On'
 
+    def _graph_default(self):
+        g = StreamGraph()
+        g.new_plot(ytitle='Readback', xtitle='Time (s)')
+        g.new_series()
+        return g
+
     def heater_view(self):
-        v = View(UItem('name'),
-                 UItem('onoff_button',
-                       editor=ButtonEditor(label_value='onoff_label')),
-                 HGroup(Item('setpoint'),
-                 UItem('readback', editor=LCDEditor(height=30))))
+        v = View(VGroup(HGroup(UItem('name'),
+                               UItem('onoff_button',
+                                     editor=ButtonEditor(name='onoff_label'))),
+                        HGroup(Item('setpoint'),
+                               UItem('readback', editor=LCDEditor(height=30))),
+                        UItem('graph', style='custom')))
         return v
 
 
