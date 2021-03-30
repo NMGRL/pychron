@@ -223,13 +223,14 @@ class Manager(Viewable, ConfigLoadable):
         #        print package, klass
         class_factory = None
         try:
-            m = __import__(package, globals(), locals(), [klass], -1)
+            m = __import__(package, globals(), locals(), [klass])
             class_factory = getattr(m, klass)
         except ImportError:
             if warn:
                 self.warning(' Invalid manager class {} {}'.format(package, klass))
 
-        except:
+        except BaseException as e:
+            self.debug_exception()
             if warn:
                 self.warning('Problem with manager class {} source'.format(klass))
 

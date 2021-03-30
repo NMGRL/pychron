@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2019 ross
+# Copyright 2021 ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,22 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from pychron.hardware.actuators.gp_actuator import GPActuator
-from pychron.hardware.labjack.base_t4 import BaseT4
 
 
-class T4Actuator(BaseT4, GPActuator):
-    def _actuate(self, obj, action):
-        self.set_channel_state(obj.address, action.lower() == 'open')
-        return True
-
-    def get_channel_state(self, obj, **kw):
-        if isinstance(obj, str):
-            addr = obj
-        else:
-            addr = obj.state_address
-            if not addr:
-                addr = obj.address
-
-        return BaseT4.get_channel_state(self, addr, **kw)
 # ============= EOF =============================================

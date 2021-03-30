@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2019 ross
+# Copyright 2021 ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,22 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from pychron.hardware.actuators.client_gp_actuator import ClientMixin
 from pychron.hardware.actuators.gp_actuator import GPActuator
-from pychron.hardware.labjack.base_t4 import BaseT4
+from pychron.hardware.core.modbus import ModbusMixin
 
 
-class T4Actuator(BaseT4, GPActuator):
+class PLC2000GPActuator(GPActuator, ModbusMixin, ClientMixin):
     def _actuate(self, obj, action):
-        self.set_channel_state(obj.address, action.lower() == 'open')
-        return True
+        self._write_coil(int(obj.address), action.lower() == 'open')
 
-    def get_channel_state(self, obj, **kw):
-        if isinstance(obj, str):
-            addr = obj
-        else:
-            addr = obj.state_address
-            if not addr:
-                addr = obj.address
+    def get_channel_state(self, address, *args, **kw):
+        resp = self._read_coils(int(address))
+        return bool(resp.bits[0])
 
-        return BaseT4.get_channel_state(self, addr, **kw)
 # ============= EOF =============================================

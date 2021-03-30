@@ -19,55 +19,65 @@
 # Q_ = ureg.Quantity
 from pychron.core.helpers.binpack import format_blob
 
+
+def hardware_pkg(k):
+    return 'pychron.hardware.{}'.format(k)
+
+
+def gauge_pkg(k):
+    return hardware_pkg('gauges.{}'.format(k))
+
+
 HW_PACKAGE_MAP = {
     'CommandProcessor': 'pychron.messaging.command_processor',
     'RemoteCommandServer': 'pychron.messaging.remote_command_server',
 
-    'DPi32TemperatureMonitor': 'pychron.hardware.temperature_monitor',
-    'SwitchController': 'pychron.hardware.actuators.switch_controller',
-    'DummyController': 'pychron.hardware.actuators.dummy_controller',
-    'AnalogPowerMeter': 'pychron.hardware.analog_power_meter',
-    'ADC': 'pychron.hardware.adc.adc_device',
-    'AgilentADC': 'pychron.hardware.adc.analog_digital_converter',
-    'Eurotherm': 'pychron.hardware.eurotherm',
-    'ThermoRack': 'pychron.hardware.thermorack',
-    'MicroIonController': 'pychron.hardware.gauges.granville_phillips.micro_ion_controller',
-    'PychronMicroIonController': 'pychron.hardware.gauges.granville_phillips.pychron_micro_ion_controller',
+    'DPi32TemperatureMonitor': hardware_pkg('temperature_monitor'),
+    'SwitchController': hardware_pkg('actuators.switch_controller'),
+    'DummyController': hardware_pkg('actuators.dummy_controller'),
+    'AnalogPowerMeter': hardware_pkg('analog_power_meter'),
+    'ADC': hardware_pkg('adc.adc_device'),
+    'AgilentADC': hardware_pkg('adc.analog_digital_converter'),
+    'Eurotherm': hardware_pkg('eurotherm'),
+    'ThermoRack': hardware_pkg('thermorack'),
 
+    'MicroIonController': gauge_pkg('granville_phillips.micro_ion_controller'),
+    'PychronMicroIonController': gauge_pkg('granville_phillips.pychron_micro_ion_controller'),
     # QtegraMicroIonController is deprecated use QtegraGaugeController instead
-    'QtegraMicroIonController': 'pychron.hardware.gauges.granville_phillips.pychron_micro_ion_controller',
-    'QtegraGaugeController': 'pychron.hardware.gauges.qtegra.qtegra_gauge_controller',
+    'QtegraMicroIonController': gauge_pkg('granville_phillips.pychron_micro_ion_controller'),
+    'QtegraGaugeController': gauge_pkg('qtegra.qtegra_gauge_controller'),
+    'MKSController': gauge_pkg('mks.controller'),
+    'PfeifferMaxiGaugeController': gauge_pkg('pfeiffer.maxi_gauge_controller'),
+    'XGS600GaugeController': gauge_pkg('varian.varian_gauge_controller'),
 
-    'MKSController': 'pychron.hardware.gauges.mks.controller',
-    'PfeifferMaxiGaugeController': 'pychron.hardware.gauges.pfeiffer.maxi_gauge_controller',
-    'XGS600GaugeController': 'pychron.hardware.gauges.varian.varian_gauge_controller',
+    'ArgusController': hardware_pkg('thermo_spectrometer_controller'),
+    'HelixController': hardware_pkg('thermo_spectrometer_controller'),
+    'FerrupsUPS': hardware_pkg('FerrupsUPS'),
+    'QtegraDevice': hardware_pkg('qtegra_device'),
+    'PidController': hardware_pkg('pid_controller'),
+    'PychronLaser': hardware_pkg('pychron_laser'),
+    'AgilentMultiplexer': hardware_pkg('agilent.agilent_multiplexer'),
+    'Transducer': hardware_pkg('transducer'),
+    'ApisController': hardware_pkg('apis_controller'),
 
-    'ArgusController': 'pychron.hardware.thermo_spectrometer_controller',
-    'HelixController': 'pychron.hardware.thermo_spectrometer_controller',
-    'FerrupsUPS': 'pychron.hardware.FerrupsUPS',
-    'QtegraDevice': 'pychron.hardware.qtegra_device',
-    'PidController': 'pychron.hardware.pid_controller',
-    'PychronLaser': 'pychron.hardware.pychron_laser',
-    'AgilentMultiplexer': 'pychron.hardware.agilent.agilent_multiplexer',
-    'Transducer': 'pychron.hardware.transducer',
-    'ApisController': 'pychron.hardware.apis_controller',
+    'Pneumatics': hardware_pkg('pneumatics'),
+    'PychronPneumatics': hardware_pkg('pneumatics'),
+    'PychronChiller': hardware_pkg('pychron_chiller'),
 
-    'Pneumatics': 'pychron.hardware.pneumatics',
-    'PychronPneumatics': 'pychron.hardware.pneumatics',
-    'PychronChiller': 'pychron.hardware.pychron_chiller',
+    'RemoteNewportMotionController': hardware_pkg('remote.newport_motion_controller'),
 
-    'RemoteNewportMotionController': 'pychron.hardware.remote.newport_motion_controller',
-
-    'TempHumMicroServer': 'pychron.hardware.environmental_probe',
-    'AirTransducer': 'pychron.hardware.transducer',
+    'TempHumMicroServer': hardware_pkg('environmental_probe'),
+    'AirTransducer': hardware_pkg('transducer'),
     'NMGRLMagnetDumper': 'pychron.furnace.magnet_dumper',
-    'LamontFurnaceControl': 'pychron.hardware.labjack.ldeo_furnace',
+    'LamontFurnaceControl': hardware_pkg('labjack.ldeo_furnace'),
 
-    'Model335TemperatureController': 'pychron.hardware.lakeshore.model335',
-    'Model336TemperatureController': 'pychron.hardware.lakeshore.model336',
-    'MKSSRG': 'pychron.hardware.gauges.mks.srg',
+    'Model335TemperatureController': hardware_pkg('lakeshore.model335'),
+    'Model336TemperatureController': hardware_pkg('lakeshore.model336'),
+    'MKSSRG': gauge_pkg('mks.srg'),
 
-    'GenericDevice': 'pychron.hardware.generic_device'
+    'GenericDevice': hardware_pkg('generic_device'),
+    'PLC2000Heater': hardware_pkg('heater'),
+    'PLC2000GaugeController': gauge_pkg('plc2000')
 }
 
 
