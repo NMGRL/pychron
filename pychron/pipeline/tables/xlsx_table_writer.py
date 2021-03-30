@@ -37,9 +37,9 @@ from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
 from pychron.pychron_constants import PLUSMINUS_NSIGMA, NULL_STR, DESCENDING, format_mswd as FM, PLUSMINUS_ONE_SIGMA
 
 
-def format_mswd(t):
+def format_mswd(t, n=3):
     m, v, _, p = t
-    return FM(m, v, include_tag=True)
+    return FM(m, v, include_tag=True, n=n)
 
 
 class XLSXAnalysisTableWriter(BaseTableWriter):
@@ -960,7 +960,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         fmt = self._bold
         start_col = 0
         if self._options.include_summary_kca:
-            nfmt = self._get_number_format('summary_kca')
+            nfmt = self._get_number_format('asummary_kca')
             nfmt.set_bold(True)
 
             kcalabel = 'Ca/K' if self._options.invert_kca_kcl else 'K/Ca'
@@ -990,7 +990,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             sh.write_string(self._current_row, idx + 2, pv.error_kind, fmt)
             self._current_row += 1
 
-        nfmt = self._get_number_format('summary_age')
+        nfmt = self._get_number_format('asummary_age')
         nfmt.set_bold(True)
 
         idx = next((i for i, c in enumerate(cols) if c.label == 'Age'))
@@ -1013,7 +1013,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                                                                      group.total_n), fmt)
 
         mt = group.get_preferred_mswd_tuple()
-        sh.write_string(self._current_row, idx + 3, format_mswd(mt), fmt)
+        n = self._options.asummary_mswd_sig_figs
+        sh.write_string(self._current_row, idx + 3, format_mswd(mt, n=n), fmt)
 
         if ageobj.computed_kind == 'Plateau':
             if self._options.include_plateau_age and hasattr(group, 'plateau_age'):
@@ -1054,7 +1055,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             except ZeroDivisionError:
                 trapped_value, trapped_error = 'NaN', 'NaN'
 
-            sh.write_string(self._current_row, idx + 3, format_mswd(mt), fmt)
+            n = self._options.asummary_mswd_sig_figs
+            sh.write_string(self._current_row, idx + 3, format_mswd(mt, n=n), fmt)
 
             self._current_row += 1
 

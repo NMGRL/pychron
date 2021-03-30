@@ -41,7 +41,8 @@ from pychron.pipeline.state import EngineState
 from pychron.pipeline.tasks.actions import RunAction, ResumeAction, ResetAction, \
     ConfigureRecallAction, TagAction, SetInterpretedAgeAction, ClearAction, SavePDFAction, SetInvalidAction, \
     SetFilteringTagAction, \
-    EditAnalysisAction, RunFromAction, PipelineRecallAction, LoadReviewStatusAction, DiffViewAction, SaveTableAction
+    EditAnalysisAction, RunFromAction, PipelineRecallAction, LoadReviewStatusAction, DiffViewAction, SaveTableAction, \
+    PrintFigureAction
 from pychron.pipeline.tasks.interpreted_age_factory import set_interpreted_age
 from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane, RepositoryPane, EditorOptionsPane
 from pychron.pychron_constants import PLATEAU, ISOCHRON, WEIGHTED_MEAN, MSEM
@@ -69,6 +70,7 @@ class PipelineTask(BaseBrowserTask):
                           name='Pipeline'),
                  SToolBar(SavePDFAction(),
                           # SaveFigureAction(),
+                          PrintFigureAction(),
                           name='Save'),
                  SToolBar(EditAnalysisAction(),
                           name='Edit'),
@@ -89,6 +91,7 @@ class PipelineTask(BaseBrowserTask):
     modified = False
     projects = None
     diff_enabled = Bool
+    is_figure_editor = Bool
 
     _browser_info = None
     _interpreted_age_browser_info = None
@@ -590,9 +593,11 @@ class PipelineTask(BaseBrowserTask):
         self.reset()
 
     def _active_editor_changed(self, new):
+        self.is_figure_editor = False
         if new:
             self.engine.select_node_by_editor(new)
             if isinstance(new, FigureEditor):
+                self.is_figure_editor = True
                 if hasattr(new.plotter_options, 'get_group_colors'):
                     self.analyses_pane.unknowns_adapter.set_colors(new.plotter_options.get_group_colors())
                     self.engine.refresh_table_needed = True

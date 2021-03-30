@@ -17,7 +17,7 @@ import os
 
 from traits.api import Enum, Bool, Str, Int, Float, Color, List, Directory
 from traitsui.api import VGroup, HGroup, Tabbed, Item, UItem, EnumEditor
-from traitsui.item import UCustom
+from traitsui.item import UCustom, spring
 
 from pychron.core.helpers.filetools import unique_path2, add_extension
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
@@ -156,6 +156,10 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
     asummary_kca_nsigma = dumpable(Enum(1, 2, 3))
     asummary_age_nsigma = dumpable(Enum(1, 2, 3))
     asummary_trapped_ratio_nsigma = dumpable(Enum(1, 2, 3))
+    asummary_age_sig_figs = dumpable(Int(3))
+    asummary_mswd_sig_figs = dumpable(Int(3))
+    asummary_kca_sig_figs = dumpable(Int(3))
+    asummary_kcl_sig_figs = dumpable(Int(3))
 
     plateau_nsteps = dumpable(Int(3))
     plateau_gas_fraction = dumpable(Float(50))
@@ -281,10 +285,15 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                                  HGroup(Item('intensity_units', label='Intensity Units'),
                                         Item('sensitivity_units', label='Sensitivity Units')),
                                  label='Units')
-        sigma_grp = BorderHGroup(Item('asummary_kca_nsigma', label='K/Ca'),
-                                 Item('asummary_age_nsigma', label='Age'),
-                                 Item('asummary_trapped_ratio_nsigma', label='Trapped'),
+
+        def asummary(k, label, **kw):
+            return Item('asummary_{}_nsigma'.format(k), label=label, **kw)
+
+        sigma_grp = BorderHGroup(asummary('kca', 'K/Ca'),
+                                 asummary('age', 'Age'),
+                                 asummary('trapped_ratio', 'Trapped'),
                                  label='N. Sigma')
+
         sort_grp = BorderVGroup(HGroup(Item('group_age_sorting', label='Group'),
                                        Item('subgroup_age_sorting', label='SubGroup')),
                                 Item('individual_age_sorting', label='Individual'),
@@ -307,11 +316,13 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
         sig_figs_grp = BorderVGroup(Item('use_standard_sigfigs'),
                                     VGroup(Item('sig_figs', label='Default'),
                                     HGroup(isigfig('age', 'Age'),
-                                           isigfig('summary_age', 'Summary Age')),
+                                           isigfig('asummary_age', 'Summary Age')),
                                     HGroup(isigfig('kca', 'K/Ca'),
-                                           isigfig('summary_kca', 'Summary K/Ca')),
+                                           isigfig('asummary_kca', 'Summary K/Ca')),
                                     HGroup(isigfig('kcl', 'K/Cl'),
-                                           isigfig('summary_kcl', 'Summary K/Cl')),
+                                           isigfig('asummary_kcl', 'Summary K/Cl')),
+                                    HGroup(spring,
+                                           isigfig('asummary_mswd', 'Summary MSWD')),
                                     HGroup(isigfig('radiogenic_yield', '%40Ar*'),
                                            isigfig('cumulative_ar39', 'Cum. %39Ar')),
                                     HGroup(isigfig('signal', 'Signal'),

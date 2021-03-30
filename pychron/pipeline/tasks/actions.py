@@ -27,6 +27,14 @@ from pychron.envisage.resources import icon
 from pychron.envisage.ui_actions import UIAction, UITaskAction
 
 
+class EditorAction(TaskAction):
+    enabled_name = 'active_editor'
+
+
+class FigureAction(TaskAction):
+    enabled_name = 'is_figure_editor'
+
+
 class IdentifyPeaksDemoAction(TaskAction):
     name = 'Id peaks'
     method = 'identify_peaks'
@@ -358,15 +366,21 @@ class SetInterpretedAgeAction(TaskAction):
     image = icon('brick-add')
 
 
-class SavePDFAction(TaskAction):
+class SavePDFAction(FigureAction):
     name = 'Save PDF'
     method = 'save_figure_pdf'
     image = icon('file_pdf')
 
 
-class SaveFigureAction(TaskAction):
+class SaveFigureAction(FigureAction):
     name = 'Save Figure'
     method = 'save_figure'
+
+
+class PrintFigureAction(FigureAction):
+    name = 'Print'
+    method = 'print_figure'
+    image = icon('print')
 
 
 class SaveTableAction(TaskAction):
