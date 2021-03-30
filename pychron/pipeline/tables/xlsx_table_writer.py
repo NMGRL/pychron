@@ -630,7 +630,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             nsubgroups = len([a for a in ans if isinstance(a, InterpretedAgeGroup)])
             sgsorting = self._options.subgroup_age_sorting
             igsorting = self._options.individual_age_sorting
-            if self._options.individual_age_sorting:
+            if igsorting != NULL_STR:
                 ans = sorted(ans, key=lambda i: i.age,
                              reverse=igsorting == DESCENDING)
 
