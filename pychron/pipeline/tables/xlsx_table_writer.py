@@ -15,6 +15,7 @@
 # ===============================================================================
 import math
 import os
+from operator import attrgetter
 
 import six
 import xlsxwriter
@@ -617,8 +618,17 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
         groups = self._sort_groups(groups)
         ngroups = []
+
+        def age_sorter(items, reverse_key):
+            rv = getattr(self._options, '{}_age_sorting'.format(reverse_key))
+            if rv != NULL_STR:
+                items = sorted(items, key=attrgetter('age'), reverse=rv == DESCENDING)
+            return items
+
         for i, group in enumerate(groups):
             ans = group.analyses
+            group_label = group.get_preferred_obj('age').computed_kind.lower()
+
             n = len(ans)
             if not n:
                 continue
@@ -628,20 +638,14 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 self._make_column_header(worksheet, cols, i)
 
             nsubgroups = len([a for a in ans if isinstance(a, InterpretedAgeGroup)])
-            sgsorting = self._options.subgroup_age_sorting
-            igsorting = self._options.individual_age_sorting
-            if igsorting != NULL_STR:
-                ans = sorted(ans, key=lambda i: i.age,
-                             reverse=igsorting == DESCENDING)
+
+            ans = age_sorter(ans, 'individual')
 
             for j, a in enumerate(ans):
                 if isinstance(a, InterpretedAgeGroup):
                     items = a.analyses
 
-                    if sgsorting != NULL_STR:
-                        items = sorted(items,
-                                       key=lambda i: i.age,
-                                       reverse=sgsorting == DESCENDING)
+                    items = age_sorter(items, 'subgroup')
 
                     pv = a.get_preferred_obj('age')
                     label = pv.computed_kind.lower()
@@ -661,10 +665,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                     self._make_intermediate_summary(worksheet, a, cols, label)
                     self._current_row += 1
                 else:
-                    pv = group.get_preferred_obj('age')
-                    label = pv.computed_kind.lower()
                     is_plateau_step = None
-                    if label == 'plateau':
+                    if group_label == 'plateau':
                         is_plateau_step = group.get_is_plateau_step(j)
 
                     self._make_analysis(worksheet, cols, a,

@@ -17,12 +17,12 @@
 from apptools.preferences.preference_binding import bind_preference
 from pyface.action.menu_manager import MenuManager
 from traits.api import Property, Str, Int, List, on_trait_change, Bool
-from traitsui.api import View, UItem, VGroup, Handler, InstanceEditor, Item
+from traitsui.api import View, UItem, VGroup, Handler, InstanceEditor, Item, HGroup
 from traitsui.menu import Action
 
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.helpers.iterfuncs import groupby_group_id
-from pychron.core.pychron_traits import BorderVGroup
+from pychron.core.pychron_traits import BorderVGroup, BorderHGroup
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.persistence_loggable import PersistenceMixin
 from pychron.pipeline.editors.base_adapter import BaseAdapter
@@ -155,10 +155,12 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin, PersistenceMixin):
     include_j_error_in_mean = Bool(False)
     include_decay_error_in_mean = Bool(False)
 
-    def make_groups(self, bind=True):
+    def __init__(self, bind=True, *args, **kw):
+        super(GroupAgeEditor, self).__init__(*args, **kw)
         if bind:
             bind_preference(self, 'skip_meaning', 'pychron.pipeline.skip_meaning')
 
+    def make_groups(self):
         gs = []
         unks = []
         for gid, ans in groupby_group_id(self.items):
@@ -195,14 +197,14 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin, PersistenceMixin):
         for a in self.selected:
             a.group_id = gid
 
-        self.make_groups(False)
+        self.make_groups()
 
     def clear_grouping(self):
         for a in self.selected:
             a.group_id = 0
             a.subgroup = None
 
-        self.make_groups(False)
+        self.make_groups()
 
     # private
     def _include_j_error_in_mean_changed(self):
@@ -251,15 +253,19 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin, PersistenceMixin):
                                                                          editable=False,
                                                                          selected='selected_group')),
                             UItem('selected_group_item',
-                                  style='custom', editor=InstanceEditor(view=View(get_preferred_grp()))),
+                                  style='custom', editor=InstanceEditor(view=View(
+                                    VGroup(BorderHGroup(Item('fixed_step_low', label='Start'),
+                                                        Item('fixed_step_high', label='End'),
+                                                        label='Calculate Plateau'),
+                                           get_preferred_grp())))),
                             label='Groups')
         return ggrp
 
     def get_options_group(self):
-        return BorderVGroup(#Item('include_j_position_error'),
-                            Item('include_j_error_in_mean'),
-                            #Item('include_decay_error_in_mean'),
-                            label='Options')
+        return BorderVGroup(  # Item('include_j_position_error'),
+            Item('include_j_error_in_mean'),
+            # Item('include_decay_error_in_mean'),
+            label='Options')
 
     #     return BorderVGroup(HGroup(BorderVGroup(Item('integrated_include_omitted',
     #                                           tooltip='Include omitted steps in the integrated age',
@@ -318,7 +324,7 @@ class SubGroupAgeEditor(GroupAgeEditor):
         for a in self.selected:
             a.subgroup = {'name': sgid}
 
-        self.make_groups(False)
+        self.make_groups()
 
     @on_trait_change('selected_subgroup_item:preferred_values:[+]')
     def _group_change(self, obj, name, old, new):

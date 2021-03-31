@@ -38,8 +38,8 @@ from pychron.pychron_constants import MSEM, SD, SUBGROUPING_ATTRS, ERROR_TYPES, 
 def AGProperty(*depends):
     d = 'dirty,analyses:[temp_status]'
     if depends:
-        d = '{},{}'.format(','.join(depends), d)
-
+        d = '{},{}'.format(d, ','.join(depends))
+    print(d)
     return Property(depends_on=d)
 
 
@@ -627,7 +627,7 @@ class AnalysisGroup(IdeogramPlotable):
 
 
 class StepHeatAnalysisGroup(AnalysisGroup):
-    plateau_age = AGProperty()
+    plateau_age = AGProperty('fixed_step_low', 'fixed_step_high')
     integrated_age = AGProperty()
 
     integrated_include_omitted = Bool(True)
@@ -917,6 +917,11 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
                 pv.kinds = [WEIGHTED_MEAN, ARITHMETIC_MEAN]
             else:
                 pv.kinds = SUBGROUPINGS
+
+    @on_trait_change('fixed_step_low, fixed_step_high')
+    def handle_fixed_step_change(self, obj, name, old, new):
+        pv = self.get_preferred_obj('age')
+        pv.dirty = True
 
     @on_trait_change('preferred_values:[kind, error_kind, dirty, weighting]')
     def handle_preferred_change(self, obj, name, old, new):
