@@ -39,7 +39,6 @@ def AGProperty(*depends):
     d = 'dirty,analyses:[temp_status]'
     if depends:
         d = '{},{}'.format(d, ','.join(depends))
-    print(d)
     return Property(depends_on=d)
 
 
