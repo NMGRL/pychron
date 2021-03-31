@@ -22,6 +22,7 @@ from numpy import array, nan, average
 from traits.api import List, Property, cached_property, Str, Bool, Int, Event, Float, Any, Enum, on_trait_change
 from uncertainties import ufloat, nominal_value, std_dev
 
+from pychron.core.pychron_traits import StepStr
 from pychron.core.stats import calculate_mswd_probability
 from pychron.core.stats.core import calculate_mswd, calculate_weighted_mean, validate_mswd
 from pychron.core.utils import alphas
@@ -635,8 +636,8 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     plateau_steps = None
 
     nsteps = Int
-    fixed_step_low = Str
-    fixed_step_high = Str
+    fixed_step_low = StepStr
+    fixed_step_high = StepStr
     plateau_age_error_kind = Str
 
     plateau_nsteps = Int(3)

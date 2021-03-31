@@ -17,7 +17,7 @@
 from apptools.preferences.preference_binding import bind_preference
 from pyface.action.menu_manager import MenuManager
 from traits.api import Property, Str, Int, List, on_trait_change, Bool
-from traitsui.api import View, UItem, VGroup, Handler, InstanceEditor, Item, HGroup
+from traitsui.api import View, UItem, VGroup, Handler, InstanceEditor, Item, HGroup, spring
 from traitsui.menu import Action
 
 from pychron.column_sorter_mixin import ColumnSorterMixin
@@ -256,6 +256,7 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin, PersistenceMixin):
                                   style='custom', editor=InstanceEditor(view=View(
                                     VGroup(BorderHGroup(Item('fixed_step_low', label='Start'),
                                                         Item('fixed_step_high', label='End'),
+                                                        spring,
                                                         label='Calculate Plateau'),
                                            get_preferred_grp())))),
                             label='Groups')

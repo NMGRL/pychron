@@ -163,8 +163,6 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
 
     plateau_nsteps = dumpable(Int(3))
     plateau_gas_fraction = dumpable(Float(50))
-    fixed_step_low = dumpable(SingleStr)
-    fixed_step_high = dumpable(SingleStr)
 
     group_age_sorting = dumpable(Enum(*AGE_SORT_KEYS))
     subgroup_age_sorting = dumpable(Enum(*AGE_SORT_KEYS))
