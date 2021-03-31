@@ -1015,8 +1015,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                                                                      group.total_n), fmt)
 
         mt = group.get_preferred_mswd_tuple()
-        n = self._options.asummary_mswd_sig_figs
-        sh.write_string(self._current_row, idx + 3, format_mswd(mt, n=n), fmt)
+        mswd_sigfigs = self._options.asummary_mswd_sig_figs
+        sh.write_string(self._current_row, idx + 3, format_mswd(mt, n=mswd_sigfigs), fmt)
 
         if ageobj.computed_kind == 'Plateau':
             if self._options.include_plateau_age and hasattr(group, 'plateau_age'):
@@ -1057,8 +1057,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             except ZeroDivisionError:
                 trapped_value, trapped_error = 'NaN', 'NaN'
 
-            n = self._options.asummary_mswd_sig_figs
-            sh.write_string(self._current_row, idx + 3, format_mswd(mt, n=n), fmt)
+            sh.write_string(self._current_row, idx + 3, format_mswd(mt, n=mswd_sigfigs), fmt)
 
             self._current_row += 1
 
@@ -1073,7 +1072,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                                  self._bold, 'Ar)',
                                  self._bsubscript, 'trapped',
                                  self._bold, ' {}'.format(PLUSMINUS_NSIGMA.format(nsigma)))
-            nfmt = self._get_number_format()
+
+            nfmt = self._get_number_format('asummary_trapped_ratio')
             nfmt.set_bold(True)
             sh.write_number(self._current_row, idx, trapped_value, nfmt)
             sh.write_number(self._current_row, idx + 1, trapped_error * nsigma, nfmt)

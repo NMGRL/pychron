@@ -160,6 +160,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
     asummary_mswd_sig_figs = dumpable(Int(3))
     asummary_kca_sig_figs = dumpable(Int(3))
     asummary_kcl_sig_figs = dumpable(Int(3))
+    asummary_trapped_ratio_sig_figs = dumpable(Int(3))
 
     plateau_nsteps = dumpable(Int(3))
     plateau_gas_fraction = dumpable(Float(50))
@@ -319,7 +320,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                                            isigfig('asummary_kca', 'Summary K/Ca')),
                                     HGroup(isigfig('kcl', 'K/Cl'),
                                            isigfig('asummary_kcl', 'Summary K/Cl')),
-                                    HGroup(spring,
+                                    HGroup(isigfig('asummary_trapped_ratio', 'Trapped 40/36'),
                                            isigfig('asummary_mswd', 'Summary MSWD')),
                                     HGroup(isigfig('radiogenic_yield', '%40Ar*'),
                                            isigfig('cumulative_ar39', 'Cum. %39Ar')),
@@ -331,7 +332,6 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                                            isigfig('correction', 'Correction Factors')),
                                     HGroup(isigfig('sens', 'Sensitivity'),
                                            isigfig('k2o', 'K2O')), enabled_when='not use_standard_sigfigs'),
-                                    # Item('ensure_trailing_zeros', label='Ensure Trailing Zeros'),
                                     label='Significant Figures')
 
         def inc(k):
@@ -376,7 +376,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                                         iinc('plateau_age', 'Plateau Age'),
                                         iinc('integrated_age', 'Total Integrated Age'),
                                         iinc('isochron_age', 'Isochron Age'),
-                                        iinc('trapped_ratio', 'Trapped (40/36)atm'),
+                                        iinc('trapped_ratio', 'Trapped 40/36'),
                                         label='Summary Rows')
         columns_grp = BorderHGroup(general_col_grp, arar_col_grp,
                                    label='Columns')

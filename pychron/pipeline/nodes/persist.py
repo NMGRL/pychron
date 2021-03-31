@@ -347,6 +347,7 @@ class XLSXAnalysisTablePersistNode(BaseDVCNode):
         return okcancel_view(VGroup(agrp, UItem('selected_options', style='custom')),
                              title='XLS Table Options',
                              height=0.75,
+                             width=0.75,
                              resizable=True)
 
 
