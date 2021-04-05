@@ -35,7 +35,7 @@ from pychron.core.helpers.filetools import add_extension, get_path, unique_path2
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.helpers.logger_setup import add_root_handler, remove_root_handler
 from pychron.core.progress import open_progress
-from pychron.core.stats import calculate_weighted_mean
+from pychron.core.stats import calculate_weighted_mean, calculate_mswd
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.wait.wait_group import WaitGroup
 from pychron.core.yaml import yload
@@ -171,6 +171,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     ratio_change_detection_enabled = Bool(False)
     execute_open_queues = Bool(True)
+    use_preceding_blank = Bool(True)
 
     # dvc
     use_dvc_persistence = Bool(False)
@@ -190,9 +191,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     _prev_blanks = Dict
     _prev_baselines = Dict
-    _prev_blank_runid = String
     _err_message = String
-    _prev_blank_id = Long
+
     _ratios = Dict
     _failure_counts = Dict
     _excluded_uuids = Dict
@@ -253,6 +253,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                  'experiment_type',
                  'laboratory',
                  'ratio_change_detection_enabled',
+                 'use_preceding_blank',
                  'execute_open_queues')
         self._preference_binder(prefid, attrs)
 
@@ -750,18 +751,29 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.debug('{} finished'.format(run.runid))
         if self.is_alive():
             self.debug('spec analysis type {}'.format(spec.analysis_type))
-            if spec.analysis_type.startswith('blank'):
-                pb = run.get_baseline_corrected_signals()
-                if pb is not None:
-                    self._prev_blank_runid = run.spec.runid
-                    # self._prev_blank_id = run.spec.analysis_dbid
-                    self._prev_blanks = pb
-                    self.debug('previous blanks ={}'.format(pb))
+            self._set_prev(run)
 
         run.teardown()
 
         self.measuring_run = None
         self.debug('join run finished')
+
+    def _set_prev(self, run):
+        if hasattr(run, 'get_baseline_corrected_signal_dict'):
+            d = (run.record_id, run.get_baseline_corrected_signal_dict())
+            self._prev_blanks[run.analysis_type] = d
+            self._prev_blanks['blank'] = d
+            self._prev_baselines = run.get_baseline_dict()
+        else:
+            if run.analysis_type.startswith('blank'):
+                pb = run.get_baseline_corrected_signals()
+                if pb is not None:
+                    d = (run.spec.runid, pb)
+                    self._prev_blanks[run.spec.analysis_type] = d
+                    self._prev_blanks['blank'] = d
+                    self.debug('previous blanks ={}'.format(d))
+
+            self._prev_baselines = run.get_baselines()
 
     def _do_run(self, run):
         self._set_thread_name(run.runid)
@@ -888,10 +900,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         t.join()
 
         self.debug('{} finished'.format(run.runid))
-        if run.analysis_type.startswith('blank'):
-            pb = run.get_baseline_corrected_signals()
-            if pb is not None:
-                self._prev_blanks = pb
+        self._set_prev(run)
+        # if run.analysis_type.startswith('blank'):
+        #     pb = run.get_baseline_corrected_signals()
+        #     if pb is not None:
+        #         self._prev_blanks[run.spec.analysis_type] = (run.spec.runid, pb)
+        #         self._prev_blanks['blank'] = (run.spec.runid, pb)
 
         do_after(1000, run.teardown)
 
@@ -1178,7 +1192,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                   'use_db_persistence', 'use_dvc_persistence', 'use_xls_persistence'):
             setattr(arun, k, getattr(self, k))
 
-        arun.previous_blanks = self._prev_blank_id, self._prev_blanks, self._prev_blank_runid
+        try:
+            pb = self._prev_blanks[spec.analysis_type]
+        except KeyError:
+            pb = self._prev_blanks['blank']
+
+        arun.previous_blanks = pb
         arun.previous_baselines = self._prev_baselines
         arun.on_trait_change(self._handle_executor_event, 'executor_event')
 
@@ -1354,9 +1373,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 ms = self.experiment_queue.mass_spectrometer
                 try:
                     checks = yload(p)
-                    for ci in checks:
-                        if self._check_ratio_change(ms, atype, ci):
-                            return True
+                    if checks:
+                        for ci in checks:
+                            if self._check_ratio_change(ms, atype, ci):
+                                return True
                 except BaseException as e:
                     import traceback
                     traceback.print_exc()
@@ -1378,6 +1398,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             nominal_ratio = check.get('nominal_ratio')
             nanalyses = check['nanalyses'] + 1
             pthreshold = check.get('percent_threshold', 0)
+            mswd_threshold = check.get('mswd_threshold', 0)
+            send_email_only = check.get('send_email_only', False)
 
             if not threshold and not nsigma:
                 self.warning('invalid ratio change check. need to specify either threshold or nsigma')
@@ -1428,7 +1450,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     xs = [nominal_value(ri[2]) for ri in ratios[:-1]]
                     es = [std_dev(ri[2]) for ri in ratios[:-1]]
                     wm, werr = calculate_weighted_mean(xs, es)
-
+                    mswd = calculate_mswd(xs, es, wm=wm)
                     cur = nominal_value(ratios[-1][2])
                     dev = abs(wm - cur)
                     if pthreshold:
@@ -1437,7 +1459,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
                     if not threshold:
                         threshold = nsigma * werr
-                    msg = 'wm={}+/-{}, cur={}, dev={}, threshold={}'.format(wm, werr, cur, dev, threshold)
+
+                    if mswd_threshold:
+                        threshold = mswd_threshold
+                        dev = mswd
+                    msg = 'wm={}+/-{}, mswd={}, cur={}, dev={}, threshold={}'.format(wm, werr, mswd, cur, dev,
+                                                                                     threshold)
                 else:
                     return
 
@@ -1452,9 +1479,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 msg = 'Ratio change detected. {}, Total failures={}/{}'.format(msg, fc, failure_cnt)
                 self.debug(msg)
                 if fc >= failure_cnt:
-                    self._err_message = msg
-                    invoke_in_main_thread(self.warning_dialog, msg)
-                    return True
+                    if send_email_only:
+                        pass
+                    else:
+                        self._err_message = msg
+                        invoke_in_main_thread(self.warning_dialog, msg)
+                        return True
             else:
                 if consecutive_failure:
                     self._failure_counts[atype] = 0
@@ -1639,6 +1669,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             for tag in ('air', 'cocktail', 'blank'):
                 repo = '{}_{}{}'.format(ms, tag, curtag)
                 dvc.add_repository(repo, self.default_principal_investigator, inform=False)
+                dvc.add_readme(repo)
 
             no_repo = []
             for i, ai in enumerate(runs):
@@ -1677,16 +1708,15 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     def _check_preceding_blank(self, inform):
         mainstore = self.datahub.mainstore
         with mainstore.session_ctx(use_parent_session=True):
-            an = self._get_preceding_blank_or_background(inform=inform)
+            an = self._get_previous_blank_from_db(inform=inform)
             if an is not True:
                 if an is None:
                     return
                 else:
                     self.info('using {} as the previous blank'.format(an.record_id))
                     try:
-                        # self._prev_blank_id = an.meas_analysis_id
-                        self._prev_blanks = an.get_baseline_corrected_signal_dict()
-                        self._prev_baselines = an.get_baseline_dict()
+                        self._set_prev(an)
+
                     except TraitError:
                         self.debug_exception()
                         self.warning('failed loading previous blank')
@@ -2075,11 +2105,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         elif action.action == 'cancel':
             self.cancel(confirm=False)
 
-    def _get_preceding_blank_or_background(self, inform=True):
-        #temporarily disable for now
-        # need to come up with a better way of handling blanks with SimpleIDs
-        return True
-        
+    def _get_previous_blank_from_db(self, inform=True):
+        if not self.use_preceding_blank:
+            return True
+
         exp = self.experiment_queue
 
         types = ['air', 'unknown', 'cocktail']
@@ -2119,13 +2148,11 @@ Use Last "blank_{}"= {}
                         self.debug('use user selected blank {}'.format(pdbr.record_id))
                         return pdbr
                     else:
-                        msg = msg.format(an.analysis_type,
-                                         an.analysis_type,
-                                         pdbr.record_id)
-
                         retval = NO
                         if inform:
-                            retval = self.confirmation_dialog(msg,
+                            retval = self.confirmation_dialog(msg.format(an.analysis_type,
+                                                                         an.analysis_type,
+                                                                         pdbr.record_id),
                                                               no_label='Select From Database',
                                                               cancel=True,
                                                               return_retval=True)
@@ -2226,10 +2253,10 @@ Use Last "blank_{}"= {}
                 self.ms_pumptime_start = new['time']
             elif kind == 'cancel':
                 self.cancel(**new)
-            elif kind == 'previous_baselines':
-                self._prev_baselines = new['baselines']
-            elif kind == 'previous_blanks':
-                self._prev_baselines = new['baselines']
+            # elif kind == 'previous_baselines':
+            #     self._prev_baselines = new['baselines']
+            # elif kind == 'previous_blanks':
+            #     self._prev_baselines = new['baselines']
             elif kind == 'show_conditionals':
                 self.show_conditionals(active_run=obj, **new)
             elif kind == 'end_after':

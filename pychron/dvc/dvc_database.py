@@ -460,13 +460,14 @@ class DVCDatabase(DatabaseAdapter):
                 obj = UserTbl(name=self.save_username)
                 self._add_item(obj)
 
-    def add_measured_position(self, position=None, load=None, **kw):
+    def add_measured_position(self, an, position=None, load=None, **kw):
         with self.session_ctx():
-            a = MeasuredPositionTbl(**kw)
+            a = MeasuredPositionTbl(analysis=an, **kw)
             if position:
                 a.position = position
             if load:
                 a.loadName = load
+
             return self._add_item(a)
 
     def add_load(self, name, holder, username):
@@ -1277,7 +1278,7 @@ class DVCDatabase(DatabaseAdapter):
 
                 q = q.filter(AnalysisTbl.increment == step)
             if aliquot:
-                q = q.filter(AnalysisTbl.aliquot == aliquot)
+                q = q.filter(AnalysisTbl.aliquot == int(aliquot))
 
             q = q.filter(IrradiationPositionTbl.identifier == idn)
             return self._query_one(q)
@@ -1887,7 +1888,7 @@ class DVCDatabase(DatabaseAdapter):
 
     def get_last_identifiers(self, sample=None, limit=1000, excludes=None):
         with self.session_ctx() as sess:
-            q = sess.query(IrradiationPositionTbl)
+            q = sess.query(IrradiationPositionTbl.identifier)
             if sample:
                 q = q.join(SampleTbl)
                 q = q.filter(SampleTbl.name == sample)
@@ -1899,7 +1900,7 @@ class DVCDatabase(DatabaseAdapter):
             q = q.filter(IrradiationPositionTbl.identifier.isnot(None))
             q = q.order_by(func.abs(IrradiationPositionTbl.identifier).desc())
             q = q.limit(limit)
-            return [ni.identifier for ni in self._query_all(q)]
+            return [ni[0] for ni in self._query_all(q)]
 
     def get_load_names(self, *args, **kw):
         with self.session_ctx():
@@ -2378,15 +2379,15 @@ class DVCDatabase(DatabaseAdapter):
                 li.archived = state
             self.commit()
 
-    def _version_warn_hook(self, vers):
+    def _version_warn_hook(self):
         # ver = ver.version_num
         # aver = version.__alembic__
 
         # vers is a list of all the supported versions of pychron for this database
+        vers = self.get_versions()
+        lver = version.__dvc_alembic__
 
-        lver = version.__version__
-
-        self.debug('testing database versions. pychron version={}, db_versions={}'.format(lver, vers))
+        self.debug('testing database versions. pychronl version={}, db_versions={}'.format(lver, vers))
         if not vers:
             self.debug('not versions in the database. added a default one')
             self.add_default_version('19.6')

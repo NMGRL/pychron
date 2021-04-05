@@ -22,11 +22,12 @@ from pychron.core.helpers.strtools import csv_to_floats
 from pychron.core.yaml import yload
 from pychron.managers.manager import Manager
 from pychron.paths import paths
+from pychron.pychron_constants import AR_AR, NE, HE, GENERIC
 
 
 class CryoManager(Manager):
     name = 'Cryo'
-    species = Enum('He', 'Ar/Ar', 'Ne', 'Generic')
+    species = Enum(HE, AR_AR, NE, GENERIC)
 
     def finish_loading(self, *args, **kw):
         pass
@@ -109,7 +110,7 @@ class CryoManager(Manager):
         """
 
         if v in ('freeze', 'pump', 'release'):
-            s = 'Ar' if self.species == 'Ar/Ar' else self.species
+            s = 'Ar' if self.species == AR_AR else self.species
             v = '{}_{}'.format(s, v)
 
         p = os.path.join(paths.device_dir, 'cryotemps.yaml')

@@ -57,6 +57,18 @@ class CanvasDockPane(TraitsDockPane):
         return v
 
 
+class HeaterPane(TraitsDockPane):
+    name = 'Heaters'
+    id = 'pychron.extraction_line.heater'
+
+    def traits_view(self):
+        v = View(UItem('heater_manager',
+                       editor=InstanceEditor(),
+                       style='custom',
+                       defined_when='heater_manager'))
+        return v
+
+
 class CryoPane(TraitsDockPane):
     name = 'Cryo'
     id = 'pychron.extraction_line.cryo'

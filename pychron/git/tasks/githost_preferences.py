@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 import requests
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import Str, Password, Button, Color
+from traits.api import Str, Password, Button, Color, Bool
 from traitsui.api import View, Item, VGroup, HGroup
 
 from pychron.core.ui.custom_label_editor import CustomLabel
@@ -32,7 +32,7 @@ class GitHostPreferences(BasePreferencesHelper):
     oauth_token = Str
     default_remote_name = Str
     organization = Str
-
+    disable_authentication_message = Bool
     test_connection = Button
     _remote_status = Str
     _remote_status_color = Color
@@ -85,10 +85,15 @@ class GitLabPreferences(GitHostPreferences):
 class GitHostPreferencesPane(PreferencesPane):
     def _cred_group(self):
         g = VGroup(Item('organization'),
-                   VGroup(Item('username'),
-                          Item('password'),
-                          show_border=True, label='Basic'),
+                   # VGroup(Item('username'),
+                   #        Item('password'),
+                   #        show_border=True, label='Basic'),
+                   Item('disable_authentication_message',
+                        tooltip='This message is displayed to Windows users on start up as a reminder to setup '
+                                'authentication',
+                        label='Disable Authentication Message'),
                    VGroup(Item('oauth_token',
+                               tooltip='Enter a Personal Access Token',
                                resizable=True, label='Token'),
                           show_border=True, label='OAuth'),
                    HGroup(test_connection_item(),

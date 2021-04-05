@@ -130,6 +130,29 @@ class DataNode(DVCNode):
         return self.set_browser_analyses()
 
 
+class SampleNode(BaseDVCNode):
+    name = 'Sample'
+    samples = List
+
+    def configure(self, pre_run=False, **kw):
+        if pre_run and self.samples and self.index == 0:
+            return True
+
+        if not pre_run:
+            self._manual_configured = True
+
+        return self.set_browser_samples()
+
+    def set_browser_samples(self):
+        samples = []
+        self.samples = samples
+
+        return True
+
+    def run(self, state):
+        state.samples = self.samples
+
+
 class BaseCSVNode(BaseDVCNode):
     path = Str
     _factory_klass = CSVDataSetFactory

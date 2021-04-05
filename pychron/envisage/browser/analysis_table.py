@@ -23,7 +23,7 @@ from operator import attrgetter
 
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
-from pyface.message_dialog import warning
+from pyface.message_dialog import warning, information
 from traits.api import List, Any, Str, Enum, Bool, Event, Property, cached_property, Instance, DelegatesTo, \
     CStr, Int, Button
 
@@ -122,9 +122,8 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
                 json.dump(self._analysis_sets, wfile)
 
         p = paths.hidden_path('selected_analysis_set')
-        if self.analysis_set:
-            with open(p, 'w') as wfile:
-                wfile.write(self.analysis_set)
+        with open(p, 'w') as wfile:
+            wfile.write(self.analysis_set or '')
 
     def get_selected_analyses(self):
         if self.analyses:
@@ -302,8 +301,7 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
         self.analysis_filter = ''
 
     def _analysis_set_changed(self, new):
-        if self.suppress_load_analysis_set:
-            self.debug('suppressing loading analysis set')
+        if self.suppress_load_analysis_set or not new:
             return
 
         try:
@@ -314,8 +312,12 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
 
             ans = self.dvc.get_analyses_uuid([a[0] for a in ans])
             if not ans:
-                warning(None, 'Analyses not in database')
+                information(None, 'Previously selected analyses not in the current database. This is not fatal. Its '
+                                  'ok to continue')
+                self.analysis_set = ''
+                self.dump()
                 return
+
 
             ans = progress_bind_records(ans)
             self.set_analyses(ans)

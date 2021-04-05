@@ -23,6 +23,7 @@ import sys
 import time
 from datetime import datetime
 
+import git
 from git import Repo
 from git.exc import GitCommandError
 from traits.api import Any, Str, List, Event
@@ -68,15 +69,21 @@ def isoformat_date(d):
 class StashCTX(object):
     def __init__(self, repo):
         self._repo = repo
+        self._error = None
 
     def __enter__(self):
-        self._repo.git.stash()
+        try:
+            self._repo.git.stash()
+        except GitCommandError as e:
+            self._error = e
+            return e
 
     def __exit__(self, *args, **kw):
-        try:
-            self._repo.git.stash('pop')
-        except GitCommandError:
-            pass
+        if not self._error:
+            try:
+                self._repo.git.stash('pop')
+            except GitCommandError:
+                pass
 
 
 class GitRepoManager(Loggable):
@@ -322,7 +329,7 @@ class GitRepoManager(Loggable):
             self._repo = Repo.clone_from(url, path)
         except GitCommandError as e:
             self.warning_dialog('Cloning error: {}, url={}, path={}'.format(e, url, path),
-                                position=(100,100))
+                                position=(100, 100))
             if reraise:
                 raise
 
@@ -420,11 +427,10 @@ class GitRepoManager(Loggable):
         return a.diff(b, **kw)
 
     def diff(self, a, b, *args):
-        repo = self._repo
-        return repo.git.diff(a, b, *args)
+        return self._git_command(lambda g: g.diff(a,b, *args), 'diff')
 
     def status(self):
-        return self._git_command(self._repo.git.status, 'status')
+        return self._git_command(lambda g: g.status(), 'status')
 
     def report_local_changes(self):
         self.debug('Local Changes to {}'.format(self.path))
@@ -717,14 +723,16 @@ class GitRepoManager(Loggable):
             def merge():
                 try:
                     repo.git.merge('FETCH_HEAD')
-                except GitCommandError:
+                except GitCommandError as e:
+                    self.critical('Pull-merge FETCH_HEAD={}'.format(e))
                     self.smart_pull(branch=branch, remote=remote)
 
             if not use_auto_pull:
                 ahead, behind = self.ahead_behind(remote)
                 if behind:
                     if self.confirmation_dialog('Repository "{}" is behind the official version by {} changes.\n'
-                                                'Would you like to pull the available changes?'.format(self.name, behind)):
+                                                'Would you like to pull the available changes?'.format(self.name,
+                                                                                                       behind)):
                         # show the changes
                         h = self.git_history_view(branch)
                         info = h.edit_traits(kind='livemodal')
@@ -745,10 +753,9 @@ class GitRepoManager(Loggable):
         if remote is None:
             remote = 'origin'
 
-        repo = self._repo
         rr = self._get_remote(remote)
         if rr:
-            self._git_command(lambda: repo.git.push(remote, branch), tag='GitRepoManager.push')
+            self._git_command(lambda g: g.push(remote, branch), tag='GitRepoManager.push')
             if inform:
                 self.information_dialog('{} push complete'.format(self.name))
         else:
@@ -756,7 +763,7 @@ class GitRepoManager(Loggable):
 
     def _git_command(self, func, tag):
         try:
-            return func()
+            return func(self._repo.git)
         except GitCommandError as e:
             self.warning('Git command failed. {}, {}'.format(e, tag))
 
@@ -793,14 +800,25 @@ class GitRepoManager(Loggable):
                                                     'Would you like to Continue?'.format(behind, ahead)):
                         return
 
+                # check for unresolved conflicts
+                self._resolve_conflicts(branch, remote, accept_our, accept_their, True)
+
                 # potentially conflicts
-                with StashCTX(repo):
+                with StashCTX(repo) as error:
+                    if error:
+                        self.warning_dialog('Failed stashing your local changes. '
+                                            'Fix repository {} '
+                                            'before proceeding. {}'.format(os.path.basename(repo.path), error))
+
+                        return
+
                     # do merge
                     try:
-                        repo.git.rebase('--preserve-merges', '{}/{}'.format(remote, branch))
+                        # repo.git.rebase('--preserve-merges', '{}/{}'.format(remote, branch))
+                        repo.git.merge('{}/{}'.format(remote, branch))
                     except GitCommandError:
                         try:
-                            repo.git.rebase('--abort')
+                            repo.git.merge('--abort')
                         except GitCommandError:
                             pass
 
@@ -833,30 +851,10 @@ You like to delete them and try again?'''.format(clean)):
                                 return
                         else:
                             return
-
-                # get conflicted files
-                out, err = grep('<<<<<<<', self.path)
-                conflict_paths = [os.path.relpath(x, self.path) for x in out.splitlines()]
-                self.debug('conflict_paths: {}'.format(conflict_paths))
-                if conflict_paths:
-                    mm = MergeModel(conflict_paths,
-                                    branch=branch,
-                                    remote=remote,
-                                    repo=self)
-                    if accept_our:
-                        mm.accept_our()
-                    elif accept_their:
-                        mm.accept_their()
-                    else:
-                        mv = MergeView(model=mm)
-                        mv.edit_traits()
-                else:
-                    if not quiet:
-                        self.information_dialog('There were no conflicts identified')
+                self._resolve_conflicts(branch, remote, accept_our, accept_their, quiet)
             else:
                 self.debug('merging {} commits'.format(behind))
-                self._git_command(lambda: repo.git.merge('FETCH_HEAD'), 'GitRepoManager.smart_pull/!ahead')
-                # repo.git.merge('FETCH_HEAD')
+                self._git_command(lambda g: g.merge('FETCH_HEAD'), 'GitRepoManager.smart_pull/!ahead')
         else:
             self.debug('Up-to-date with {}'.format(remote))
             if not quiet:
@@ -866,7 +864,7 @@ You like to delete them and try again?'''.format(clean)):
 
     def fetch(self, remote='origin'):
         if self._repo:
-            return self._git_command(lambda: self._repo.git.fetch(remote), 'GitRepoManager.fetch')
+            return self._git_command(lambda g: g.fetch(remote), 'GitRepoManager.fetch')
             # return self._repo.git.fetch(remote)
 
     def ahead_behind(self, remote='origin'):
@@ -884,13 +882,17 @@ You like to delete them and try again?'''.format(clean)):
 
         src = getattr(repo.branches, src)
         # repo.git.merge(src.commit)
-        self._git_command(lambda: repo.git.merge(src.commit), 'GitRepoManager.merge')
+        self._git_command(lambda g: g.merge(src.commit), 'GitRepoManager.merge')
 
     def commit(self, msg):
         self.debug('commit message={}'.format(msg))
         index = self.index
         if index:
-            index.commit(msg)
+            try:
+                index.commit(msg)
+                return True
+            except git.exc.GitError as e:
+                self.warning('Commit failed: {}'.format(e))
 
     def add(self, p, msg=None, msg_prefix=None, verbose=True, **kw):
         repo = self._repo
@@ -997,6 +999,9 @@ You like to delete them and try again?'''.format(clean)):
         self.path_dirty = path
         self._set_active_commit()
 
+    def revert_commit(self, hexsha):
+        self._git_command(lambda g: g.revert(hexsha), 'revert_commit')
+
     def load_file_history(self, p):
         repo = self._repo
         try:
@@ -1009,15 +1014,39 @@ You like to delete them and try again?'''.format(clean)):
             self.selected_path_commits = []
 
     def get_modified_files(self, hexsha):
-        repo = self._repo
-
-        def func():
-            return repo.git.diff_tree('--no-commit-id', '--name-only', '-r', hexsha)
+        def func(git):
+            return git.diff_tree('--no-commit-id', '--name-only', '-r', hexsha)
 
         txt = self._git_command(func, 'get_modified_files')
         return txt.split('\n')
 
     # private
+    def _resolve_conflicts(self, branch, remote, accept_our, accept_their, quiet):
+        conflict_paths = self._get_conflict_paths()
+        self.debug('conflict_paths: {}'.format(conflict_paths))
+        if conflict_paths:
+            mm = MergeModel(conflict_paths,
+                            branch=branch,
+                            remote=remote,
+                            repo=self)
+            if accept_our:
+                mm.accept_our()
+            elif accept_their:
+                mm.accept_their()
+            else:
+                mv = MergeView(model=mm)
+                mv.edit_traits()
+        else:
+            if not quiet:
+                self.information_dialog('There were no conflicts identified')
+
+    def _get_conflict_paths(self):
+        def func(git):
+            return git.diff('--name-only', '--diff-filter=U')
+
+        txt = self._git_command(func, 'get_modified_files')
+        return txt.split('\n')
+
     def _validate_diff(self):
         return True
 

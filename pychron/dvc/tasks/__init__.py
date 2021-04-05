@@ -39,8 +39,8 @@ def list_local_repos():
             gd = os.path.join(d, '.git')
             if os.path.isdir(gd):
                 r = Repo(d)
-
-                yield i, r.active_branch.name
+                if r.branches:
+                    yield i, r.active_branch.name
 # ============= EOF =============================================
 
 

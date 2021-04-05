@@ -78,7 +78,7 @@ class FusionsLaserManager(LaserManager):
     def get_grain_polygon_blob(self):
         return self.stage_manager.get_grain_polygon_blob()
 
-    def extract(self, power, units=None):
+    def extract(self, power, units=None, **kw):
         if self.enable_laser():
             self.set_laser_power(power, units=units)
 

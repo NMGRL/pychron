@@ -347,7 +347,7 @@ class BaseIncrementalHeatTemplate(Viewable):
         #                    selection_mode='rows', sortable=False)
 
         v = View(VGroup(HGroup(UItem('name', editor=myEnumEditor(name='names')),
-                               icon_button_editor('add_row', 'table_add'), spring,
+                               icon_button_editor('add_row', 'table_add', tooltip='Add a step'), spring,
                                Item('gduration', label='Duration'),
                                Item('gcleanup', label='Cleanup'),
                                Item('units')),

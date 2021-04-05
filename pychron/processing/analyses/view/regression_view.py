@@ -44,7 +44,10 @@ class RegressionView(HasTraits):
         sisos = [iso for iso in isos if iso.sniff.offset_xs.shape[0]]
         for i, iso in enumerate(sisos):
             sniff = iso.sniff
-            sg.new_plot(ytitle=iso.name, xtitle='Time (s)', title='Equilibration')
+            p = sg.new_plot(ytitle=iso.name, xtitle='Time (s)', title='Equilibration')
+            sg.add_axis_tool(p, p.x_axis)
+            sg.add_axis_tool(p, p.y_axis)
+
             sg.new_series(sniff.offset_xs, sniff.ys, marker='circle', type='scatter')
             sg.set_y_limits(pad='0.1', plotid=i)
             sg.set_x_limits(min_=0, max_=max(sniff.offset_xs) * 1.05, plotid=i)
@@ -54,7 +57,11 @@ class RegressionView(HasTraits):
         for i, iso in enumerate(iisos):
             if iso.baseline.offset_xs.shape[0]:
                 baselines.append(iso.baseline)
-            ig.new_plot(ytitle='{}({})'.format(iso.name, iso.detector), xtitle='Time (s)', title='Isotope')
+
+            p = ig.new_plot(ytitle='{}({})'.format(iso.name, iso.detector), xtitle='Time (s)', title='Isotope')
+            ig.add_axis_tool(p, p.x_axis)
+            ig.add_axis_tool(p, p.y_axis)
+
             ig.new_series(iso.offset_xs, iso.ys,
                           display_filter_bounds=True,
                           filter_outliers_dict=iso.filter_outliers_dict,
@@ -67,7 +74,9 @@ class RegressionView(HasTraits):
 
         for i, baseline in enumerate(baselines):
 
-            bg.new_plot(ytitle=baseline.detector, xtitle='Time (s)', title='Baseline')
+            p = bg.new_plot(ytitle=baseline.detector, xtitle='Time (s)', title='Baseline')
+            bg.add_axis_tool(p, p.x_axis)
+            bg.add_axis_tool(p, p.y_axis)
             bg.new_series(baseline.offset_xs, baseline.ys,
                           filter_outliers_dict=baseline.filter_outliers_dict,
                           display_filter_bounds=True,

@@ -29,7 +29,7 @@ from pychron.hardware.core.exceptions import TimeoutError
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.pychron_constants import EXTRACTION_COLOR, LINE_STR, NULL_STR, EL_PROTOCOL, PATTERN, POSTCLEANUP, \
-    PRECLEANUP, CLEANUP, DURATION
+    PRECLEANUP, CLEANUP, DURATION, CRYO_TEMP
 from pychron.pyscripts.context_managers import RecordingCTX, LightingCTX, GrainPolygonCTX
 from pychron.pyscripts.decorators import verbose_skip, makeRegistry, calculate_duration
 from pychron.pyscripts.valve_pyscript import ValvePyScript
@@ -171,6 +171,7 @@ class ExtractionPyScript(ValvePyScript):
                            cleanup=0,
                            pre_cleanup=0,
                            post_cleanup=0,
+                           cryo_temperature=0,
                            light_value=0,
                            beam_diameter=None,
                            load_identifier='default_load',
@@ -645,7 +646,12 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def extract(self, power='', units=''):
+    def warmup(self, block=False):
+        self._extraction_action(('warmup', (), {'block': block, }))
+
+    @verbose_skip
+    @command_register
+    def extract(self, power='', units='', block=None):
         if power == '':
             power = self.extract_value
         if units == '':
@@ -661,7 +667,7 @@ class ExtractionPyScript(ValvePyScript):
         msg = '{} ON! {}({})'.format(ed, power, units)
         self._set_extraction_state(msg)
         self.console_info('extract sample to {} ({})'.format(power, units))
-        self._extraction_action(('extract', (power,), {'units': units, }))
+        self._extraction_action(('extract', (power,), {'units': units, 'block': block}))
 
     @verbose_skip
     @command_register
@@ -879,6 +885,10 @@ class ExtractionPyScript(ValvePyScript):
     @property
     def post_cleanup(self):
         return self._get_property(POSTCLEANUP)
+
+    @property
+    def cryo_temperature(self):
+        return self._get_property(CRYO_TEMP)
 
     @property
     def pattern(self):

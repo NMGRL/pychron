@@ -174,6 +174,7 @@ class WaitControl(Loggable):
     # handlers
     # ===============================================================================
     def _pause_button_fired(self):
+        print('asdfas', self._paused)
         self._paused = not self._paused
 
     def _continue_button_fired(self):

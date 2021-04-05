@@ -18,6 +18,7 @@
 # =============enthought library imports=======================
 
 from chaco.scatterplot import ScatterPlot
+from numpy import Inf
 from traits.api import Bool, on_trait_change, Event, Int
 
 # =============local library imports  ==========================
@@ -43,6 +44,20 @@ class StackedGraph(Graph):
 
     metadata_updated = Event
     vertical_resize = Bool(True)
+
+    def get_rescale_actions(self):
+        return [('Rescale All Y', 'rescale_all_y', {})]
+
+    def rescale_all_y(self):
+        ymi = Inf
+        yma = -Inf
+        for plot in self.plots:
+            yma = max(yma, plot.value_range.high)
+            ymi = min(ymi, plot.value_range.low)
+
+        for i, plot in enumerate(self.plots):
+            self.set_y_limits(ymi, yma, plotid=i)
+        self.refresh()
 
     @on_trait_change('plots:value_axis:title_spacing')
     def _update_value_axis(self, obj, name, old, new):

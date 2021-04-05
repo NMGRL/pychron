@@ -482,10 +482,6 @@ class AutomatedRun(Loggable):
                                check_conditionals, self.baseline_color)
 
         if self.plot_panel:
-            bs = dict([(iso.name, (iso.detector, iso.baseline.uvalue)) for iso in
-                       self.isotope_group.values()])
-            # self.set_previous_baselines(bs)
-            self.executor_event = {'kind': 'baselines', 'baselines': bs}
             self.plot_panel.is_baseline = False
 
         self.multi_collector.is_baseline = False
@@ -783,10 +779,10 @@ class AutomatedRun(Loggable):
         if self.peak_center:
             self.debug('cancel peak center')
             self.peak_center.cancel()
-            
+
         if self.spectrometer_manager:
             self.spectrometer_manager.spectrometer.cancel()
-            
+
         self.do_post_termination(do_post_equilibration=do_post_equilibration)
 
         self.finish()
@@ -1364,6 +1360,12 @@ anaylsis_type={}
            self.spec.analysis_type,
            signal_string, age_string)
 
+    def get_baselines(self):
+        if self.isotope_group:
+            return {iso.name: (iso.detector, iso.baseline.uvalue) for iso in self.isotope_group.values()}
+            # return dict([(iso.name, (iso.detector, iso.baseline.uvalue)) for iso in
+            #              self.isotope_group.values()])
+
     def get_baseline_corrected_signals(self):
         if self.isotope_group:
             d = dict()
@@ -1794,14 +1796,13 @@ anaylsis_type={}
 
     def _load_previous(self):
         if not self.spec.analysis_type.startswith('blank') and not self.spec.analysis_type.startswith('background'):
-            pid, blanks, runid = self.previous_blanks
+            blanks, runid = self.previous_blanks
 
             self.debug('setting previous blanks')
             for iso, v in blanks.items():
                 self.isotope_group.set_blank(iso, v[0], v[1])
 
-            self._update_persister_spec(previous_blank_id=pid,
-                                        previous_blanks=blanks,
+            self._update_persister_spec(previous_blanks=blanks,
                                         previous_blank_runid=runid)
 
         self.isotope_group.clear_baselines()

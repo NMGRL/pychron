@@ -27,6 +27,7 @@ from pychron.core.helpers.datetime_tools import make_timef
 from pychron.core.utils import alphas
 from pychron.database.orms import stringcolumn, primary_key
 from pychron.experiment.utilities.runid import make_runid
+from pychron.pychron_constants import PRECLEANUP, POSTCLEANUP, CRYO_TEMP
 
 Base = declarative_base()
 
@@ -131,8 +132,9 @@ class AnalysisTbl(Base, IDMixin):
     load_holder = ''
     _temporary_tag = None
 
-    pre_cleanup = Column('pre_cleanup', Float)
-    post_cleanup = Column('post_cleanup', Float)
+    pre_cleanup = Column(PRECLEANUP, Float)
+    post_cleanup = Column(POSTCLEANUP, Float)
+    cryo_temperature = Column(CRYO_TEMP, Float)
 
     @property
     def step(self):

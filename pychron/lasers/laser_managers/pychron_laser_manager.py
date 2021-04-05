@@ -253,7 +253,7 @@ class PychronLaserManager(EthernetLaserManager):
         if self._patterning:
             self.stop_pattern()
 
-    def extract(self, value, units='', process=None):
+    def extract(self, value, units='', process=None, **kw):
         self.info('set laser output')
 
         cmd = {'command': 'SetLaserOutput',

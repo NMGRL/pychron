@@ -54,7 +54,8 @@ from pychron.pychron_constants import NULL_STR, SCRIPT_KEYS, SCRIPT_NAMES, LINE_
     BLANK_UNKNOWN, BLANK_EXTRACTIONLINE, UNKNOWN, PAUSE, DEGAS, SIMPLE, NULL_EXTRACT_DEVICES, FUSIONS_CO2, \
     FUSIONS_DIODE, CLEANUP, PRECLEANUP, POSTCLEANUP, EXTRACT_VALUE, EXTRACT_UNITS, DURATION, WEIGHT, POSITION, PATTERN, \
     BEAM_DIAMETER, LIGHT_VALUE, COMMENT, DELAY_AFTER, EXTRACT_DEVICE, MATERIAL, PROJECT, SAMPLE, MASS_SPECTROMETER, \
-    COLLECTION_TIME_ZERO_OFFSET, USE_CDD_WARMING, SKIP, OVERLAP, REPOSITORY_IDENTIFIER, RAMP_DURATION
+    COLLECTION_TIME_ZERO_OFFSET, USE_CDD_WARMING, SKIP, OVERLAP, REPOSITORY_IDENTIFIER, RAMP_DURATION, CRYO_TEMP, \
+    TEMPLATE, USERNAME
 
 
 class AutomatedRunFactory(DVCAble, PersistenceLoggable):
@@ -153,6 +154,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     cleanup = EKlass(Float)
     pre_cleanup = EKlass(Float)
     post_cleanup = EKlass(Float)
+    cryo_temperature = EKlass(Float)
     light_value = EKlass(Float)
     beam_diameter = Property(EKlass(String), depends_on='_beam_diameter')
     _beam_diameter = String
@@ -245,18 +247,17 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     pattributes = ('collection_time_zero_offset',
                    'selected_irradiation', 'selected_level',
                    CLEANUP, PRECLEANUP, POSTCLEANUP, EXTRACT_VALUE, EXTRACT_UNITS, DURATION, WEIGHT,
-                   'light_value',
-                   'beam_diameter',
-                   'ramp_duration',
-                   'overlap',
-                   'pattern',
-                   'position',
-                   'comment',
-                   'template',
+                   LIGHT_VALUE,
+                   BEAM_DIAMETER,
+                   RAMP_DURATION,
+                   CRYO_TEMP,
+                   OVERLAP,
+                   PATTERN,
+                   POSITION,
+                   COMMENT,
+                   TEMPLATE,
                    'use_simple_truncation', 'conditionals_path',
                    'use_project_based_repository_identifier', 'delay_after')
-
-    suppress_meta = False
 
     use_name_prefix = Bool
     name_prefix = Str
@@ -506,6 +507,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 irrad_level = ''
 
             self._no_clear_labnumber = True
+            self.selected_irradiation = LINE_STR
             self.selected_irradiation = irradname
             self.selected_level = irrad_level
             self._no_clear_labnumber = False
@@ -538,13 +540,14 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 CLEANUP,
                 PRECLEANUP,
                 POSTCLEANUP,
+                CRYO_TEMP,
                 DURATION,
                 LIGHT_VALUE,
                 PATTERN,
                 BEAM_DIAMETER,
                 POSITION,
                 COLLECTION_TIME_ZERO_OFFSET,
-                'use_cdd_warming',
+                USE_CDD_WARMING,
                 WEIGHT,
                 COMMENT,
                 DELAY_AFTER
@@ -568,13 +571,14 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 POSITION,
                 POSTCLEANUP,
                 PRECLEANUP,
+                CRYO_TEMP,
                 PROJECT,
-                'ramp_duration',
+                RAMP_DURATION,
                 'repository_identifier',
                 SAMPLE,
                 'skip',
-                'use_cdd_warming',
-                'username',
+                USE_CDD_WARMING,
+                USERNAME,
                 WEIGHT]
 
     def _set_run_values(self, arv, excludes=None):
@@ -724,8 +728,17 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         if script is None:
             script = self.extraction_script
 
+        mod = None
         if '##' in self.labnumber:
-            mod = script.get_parameter('modifier')
+            defaults = self._load_default_file()
+            if defaults:
+                ln = self.labnumber.split('-')[0]
+                if ln in defaults:
+                    grp = defaults[ln]
+                    mod = grp.get('modifier')
+
+            if mod is None:
+                mod = script.get_parameter('modifier')
             if mod is not None:
                 if isinstance(mod, int):
                     mod = '{:02d}'.format(mod)
@@ -733,8 +746,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 self.labnumber = self.labnumber.replace('##', str(mod))
 
     def _clear_labnumber(self):
-        self.debug('clear labnumber')
         if not self._no_clear_labnumber:
+            self.debug('clear labnumber')
             self.labnumber = ''
             self.display_irradiation = ''
             self.sample = ''
@@ -793,7 +806,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     def _load_defaults(self, ln, attrs=None, overwrite=True):
         if attrs is None:
             attrs = (EXTRACT_VALUE, EXTRACT_UNITS, CLEANUP, PRECLEANUP,
-                     POSTCLEANUP, DURATION, BEAM_DIAMETER, LIGHT_VALUE)
+                     POSTCLEANUP, DURATION, BEAM_DIAMETER, LIGHT_VALUE, CRYO_TEMP)
 
         self.debug('loading defaults for {}. ed={} attrs={}'.format(ln, self.extract_device, attrs))
         defaults = self._load_default_file()
@@ -906,9 +919,6 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         if '-##-' in labnumber:
             return True
 
-        if self.suppress_meta:
-            return True
-
         if labnumber in self._meta_cache:
             self.debug('using cached meta values for {}'.format(labnumber))
             d = self._meta_cache[labnumber]
@@ -920,9 +930,12 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                     self.debug('cache={}'.format(d))
 
             if self.mode != SIMPLE:
+                self._no_clear_labnumber = True
+                self.selected_irradiation = LINE_STR
                 self.selected_irradiation = d['irradiation']
                 self.selected_level = d['irradiation_level']
                 self.irrad_hole = d['irradiation_position']
+                self._no_clear_labnumber = False
 
             if self.use_project_based_repository_identifier:
                 ipp = self.irradiation_project_prefix
@@ -1238,7 +1251,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
         identifier = self.labnumber
 
-        if not (self.suppress_meta or '-##-' in identifier):
+        if '-##-' not in identifier:
             if identifier and self.irrad_hole:
                 j = self.dvc.get_flux(self.selected_irradiation, self.selected_level, int(self.irrad_hole)) or 0
                 if attr == 'err':
@@ -1445,11 +1458,14 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             self.conditionals_path = os.path.splitext(name)[0]
 
     def _edit_conditionals_button_fired(self):
-        edit_conditionals(self.conditionals_path,
-                          root=paths.conditionals_dir,
-                          title='Edit Run Conditionals',
-                          kinds=('actions', 'cancelations', 'terminations', 'truncations'))
-        self.load_conditionals()
+        if self.conditionals_path and self.conditionals_path!=NULL_STR:
+            edit_conditionals(self.conditionals_path,
+                              root=paths.conditionals_dir,
+                              title='Edit Run Conditionals',
+                              kinds=('actions', 'cancelations', 'terminations', 'truncations'))
+            self.load_conditionals()
+        else:
+            self.information_dialog('Please select conditionals to edit')
 
     @on_trait_change('trunc_+, conditionals_path, apply_conditionals_button')
     def _handle_conditionals(self, obj, name, old, new):
@@ -1482,6 +1498,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     # ''')
     @on_trait_change(','.join((CLEANUP, COLLECTION_TIME_ZERO_OFFSET, COMMENT, DELAY_AFTER, DURATION, EXTRACT_VALUE,
                                EXTRACT_UNITS, LIGHT_VALUE, OVERLAP, PATTERN, PRECLEANUP, POSITION, POSTCLEANUP,
+                               CRYO_TEMP,
                                RAMP_DURATION, REPOSITORY_IDENTIFIER, SKIP, USE_CDD_WARMING, WEIGHT)))
     def _edit_handler(self, name, new):
         if name == PATTERN:
@@ -1548,13 +1565,16 @@ post_equilibration_script:name''')
             self.sample = ''
 
     def _project_changed(self):
+        self.debug('project changed')
         self._clear_labnumber()
 
     def _selected_irradiation_changed(self):
+        self.debug('irradiation changed')
         self._clear_labnumber()
         self.selected_level = 'Level'
 
     def _selected_level_changed(self):
+        self.debug('level changed')
         self._clear_labnumber()
 
     def _special_labnumber_changed(self):
@@ -1576,6 +1596,7 @@ post_equilibration_script:name''')
                             edname = ''.join([x[0].capitalize() for x in ed.split(' ')])
                         ln = make_special_identifier(ln, edname, msname)
 
+                self._labnumber_changed(self.labnumber, ln)
                 self.labnumber = ln
 
             self._frequency_enabled = True

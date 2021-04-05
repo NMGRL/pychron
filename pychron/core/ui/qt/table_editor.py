@@ -16,8 +16,10 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
+from pyface.qt import QtGui
 from pyface.qt.QtCore import Qt
-from pyface.qt.QtGui import QFont, QFontMetrics
+from pyface.qt.QtGui import QFont, QFontMetrics, QApplication
 from traits.api import Event, Callable, Bool
 from traitsui.editors.table_editor import TableEditor
 from traitsui.qt4.table_editor import TableView
@@ -44,13 +46,15 @@ class myTableView(TableView):
             hheader = self.horizontalHeader()
 
             vheader.setDefaultSectionSize(size.height() + 2)
-            #hheader.setStretchLastSection(editor.factory.stretch_last_section)
+            # hheader.setStretchLastSection(editor.factory.stretch_last_section)
 
             hheader.setFont(fnt)
 
     def keyPressEvent(self, event):
         if event.modifiers() & Qt.ControlModifier:
             self._editor.factory.command_key = True
+            if event.matches(QtGui.QKeySequence.Paste):
+                self._paste()
         else:
             return TableView.keyPressEvent(self, event)
 
@@ -62,12 +66,26 @@ class myTableView(TableView):
         if self.clear_selection_on_dclicked:
             self.clearSelection()
 
+    def _paste(self):
+        if self._editor.factory.paste_factory:
+            clipboard = QApplication.clipboard()
+            md = clipboard.mimeData()
+            if md.hasFormat('text/plain'):
+                txt = md.data('text/plain')
+
+                rows = txt.split('\n')
+                if len({len(row.split('\t')) for row in rows}) <= 1:
+                    vs = [self._editor.factory.paste_factory(i, row.data().decode('utf8')) for i, row in enumerate(
+                        rows)]
+                    self._editor.value.extend(vs)
+
 
 class myTableEditor(TableEditor):
     table_view_factory = myTableView
     command_key = Event
     on_command_key = Callable
     clear_selection_on_dclicked = Bool
+    paste_factory = Callable
 
     def _command_key_changed(self, new):
         if self.on_command_key:

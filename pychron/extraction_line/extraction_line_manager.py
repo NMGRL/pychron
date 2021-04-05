@@ -40,6 +40,12 @@ from pychron.monitors.system_monitor import SystemMonitor
 from pychron.pychron_constants import NULL_STR
 
 
+MANAGERS = {'manometer_manager': ('pychron.extraction_line.manometer_manager', 'ManometerManager'),
+            'cryo_manager': ('pychron.extraction_line.cryo_manager', 'CryoManager'),
+            'gauge_manager': ('pychron.extraction_line.gauge_manager', 'GaugeManager'),
+            'heater_manager': ('pychron.extraction_line.heater_manager', 'HeaterManager')}
+
+
 class ExtractionLineManager(Manager, Consoleable):
     """
     Manager for interacting with the extraction line
@@ -60,6 +66,7 @@ class ExtractionLineManager(Manager, Consoleable):
     multiplexer_manager = Any
     manometer_manager = Any
     pump_manager = Any
+    heater_manager = Any
 
     network = Instance(ExtractionLineGraph)
     readback_items = List
@@ -113,6 +120,8 @@ class ExtractionLineManager(Manager, Consoleable):
     def deactivate(self):
         if self.gauge_manager:
             self.gauge_manager.stop_scans()
+        if self.heater_manager:
+            self.heater_manager.stop_scans()
 
         if self.monitor:
             self.monitor.stop()
@@ -520,6 +529,7 @@ class ExtractionLineManager(Manager, Consoleable):
         else:
             self.warning('cryo manager not available')
             return 0
+
     # ===============================================================================
 
     # ============= Manometer =======================================================
@@ -552,6 +562,10 @@ class ExtractionLineManager(Manager, Consoleable):
         if self.gauge_manager:
             self.info('start gauge scans')
             self.gauge_manager.start_scans()
+
+        if self.heater_manager:
+            self.info('start heater scans')
+            self.heater_manager.start_scans()
 
         if self.switch_manager and self.use_hardware_update:
             do_after(1000, self._update)
@@ -732,12 +746,18 @@ class ExtractionLineManager(Manager, Consoleable):
             package = 'pychron.managers.{}'.format(manager)
 
         if manager in ('switch_manager', 'gauge_manager', 'multiplexer_manager',
-                       'cryo_manager', 'manometer_manager', 'pump_manager'):
-
-            factory = getattr(self, '_{}_factory'.format(manager))
-            man = factory()
-            setattr(self, manager, man)
-            return man
+                       'cryo_manager', 'manometer_manager', 'heater_manager'):
+            if manager == 'switch_manager':
+                man = self._switch_manager_factory()
+                self.switch_manager = man
+                return man
+            else:
+                package, klass = MANAGERS[manager]
+                factory = self.get_manager_factory(package, klass)
+                man = factory(application=self.application)
+                setattr(self, manager, man)
+                return man
+                # return getattr(self, manag/er)
         else:
             class_factory = self.get_manager_factory(package, klass, warn=False)
             if class_factory is None:
@@ -836,22 +856,6 @@ class ExtractionLineManager(Manager, Consoleable):
     # ===============================================================================
     # factories
     # ===============================================================================
-    def _pump_manager_factory(self):
-        from pychron.extraction_line.pump_manager import PumpManager
-        return PumpManager(application=self.application)
-
-    def _manometer_manager_factory(self):
-        from pychron.extraction_line.manometer_manager import ManometerManager
-        return ManometerManager(application=self.application)
-    
-    def _cryo_manager_factory(self):
-        from pychron.extraction_line.cryo_manager import CryoManager
-        return CryoManager(application=self.application)
-
-    def _gauge_manager_factory(self):
-        from pychron.extraction_line.gauge_manager import GaugeManager
-        return GaugeManager(application=self.application)
-
     def _switch_manager_factory(self):
         klass = self._get_switch_manager_klass()
         vm = klass(application=self.application)
