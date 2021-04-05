@@ -23,10 +23,10 @@ from pychron.pychron_constants import NULL_STR
 
 class ConnectionMixin:
     orientation = Enum(NULL_STR, 'vertical', 'horizontal')
-    start = Str
-    end = Str
-    start_offset = Str
-    end_offset = Str
+    start = Str('')
+    end = Str('')
+    start_offset = Str('')
+    end_offset = Str('')
 
     def edit_view(self):
         v = View(Item('orientation'),
@@ -37,6 +37,15 @@ class ConnectionMixin:
 
 class Connection(BorderLine, ConnectionMixin):
     tag = 'connection'
+
+    def toyaml(self):
+        y = super(Connection, self).toyaml()
+        del y['dimension']
+        del y['translation']
+
+        y['start'] = {'name': str(self.start), 'offset': str(self.start_offset)}
+        y['end'] = {'name': str(self.end), 'offset': str(self.end_offset)}
+        return y
 
 
 def fork(gc, lx, ly, rx, ry, mx, my, h):

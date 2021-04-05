@@ -77,7 +77,12 @@ HW_PACKAGE_MAP = {
 
     'GenericDevice': hardware_pkg('generic_device'),
     'PLC2000Heater': hardware_pkg('heater'),
-    'PLC2000GaugeController': gauge_pkg('plc2000')
+    'PLC2000GaugeController': gauge_pkg('plc2000'),
+    'T4Actuator': hardware_pkg('actuators.t4_actuator'),
+    'U3Actuator': hardware_pkg('actuators.u3_actuator'),
+    'ProXRActuator': hardware_pkg('actuators.proxr_actuator'),
+    'U3GaugeController': hardware_pkg('labjack.u3_gauge_controller'),
+    'SPCIonPumpController': hardware_pkg('ionpump.spc_ion_pump_controller'),
 }
 
 

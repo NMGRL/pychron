@@ -148,7 +148,6 @@ class Scene(HasTraits):
                 self.layers.append(Layer(name='{}'.format(n)))
 
             layer = self.layers[layer]
-
         layer.add_item(v)
 
     def remove_klass(self, klass, layer=None):

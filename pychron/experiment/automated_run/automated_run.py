@@ -52,6 +52,9 @@ from pychron.pychron_constants import NULL_STR, MEASUREMENT_COLOR, \
     EXTRACTION_COLOR, SCRIPT_KEYS, AR_AR, NO_BLANK_CORRECT, EXTRACTION, MEASUREMENT, EM_SCRIPT_KEYS, SCRIPT_NAMES, \
     POST_MEASUREMENT, POST_EQUILIBRATION
 from pychron.spectrometer.base_spectrometer import NoIntensityChange
+from pychron.spectrometer.isotopx.manager.ngx import NGXSpectrometerManager
+from pychron.spectrometer.pfeiffer.manager.quadera import QuaderaSpectrometerManager
+from pychron.spectrometer.thermo.manager.base import ThermoSpectrometerManager
 
 DEBUG = False
 
@@ -232,6 +235,9 @@ class AutomatedRun(Loggable):
     # ===============================================================================
     # pyscript interface
     # ===============================================================================
+    def py_measure(self):
+        return self.spectrometer_manager.measure()
+
     def py_get_intensity(self, detector):
         if self._intensities:
             try:
@@ -2484,16 +2490,16 @@ anaylsis_type={}
         sname = self.script_info.measurement_script_name
         sname = self._make_script_name(sname)
 
-        from pychron.spectrometer.thermo.manager.base import ThermoSpectrometerManager
-        from pychron.spectrometer.isotopx.manager.ngx import NGXSpectrometerManager
-
         klass = MeasurementPyScript
         if isinstance(self.spectrometer_manager, ThermoSpectrometerManager):
-            from pychron.pyscripts.thermo_measurement_pyscript import ThermoMeasurementPyScript
+            from pychron.pyscripts.measurement.thermo_measurement_pyscript import ThermoMeasurementPyScript
             klass = ThermoMeasurementPyScript
         elif isinstance(self.spectrometer_manager, NGXSpectrometerManager):
-            from pychron.pyscripts.ngx_measurement_pyscript import NGXMeasurementPyScript
+            from pychron.pyscripts.measurement.ngx_measurement_pyscript import NGXMeasurementPyScript
             klass = NGXMeasurementPyScript
+        elif isinstance(self.spectrometer_manager, QuaderaSpectrometerManager):
+            from pychron.pyscripts.measurement.quadera_measurement_pyscript import QuaderaMeasurementPyScript
+            klass = QuaderaMeasurementPyScript
 
         ms = klass(root=paths.measurement_dir, name=sname, automated_run=self, runner=self.runner)
         return ms

@@ -117,6 +117,8 @@ class ViewableDevice(HasTraits):
         if hasattr(self.communicator, 'host'):
             return self.communicator.host
         elif hasattr(self, 'port'):
+            return self.port
+        elif hasattr(self.communicator, 'port'):
             return self.communicator.port
 
         return ''

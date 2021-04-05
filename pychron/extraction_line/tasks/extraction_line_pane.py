@@ -94,6 +94,19 @@ class GaugePane(TraitsDockPane):
         return v
 
 
+class PumpPane(TraitsDockPane):
+    name = 'Pumps'
+    id = 'pychron.extraction_line.pumps'
+
+    def traits_view(self):
+        v = View(UItem('pump_manager',
+                       editor=InstanceEditor(),
+                       style='custom',
+                       height=125,
+                       defined_when='pump_manager'))
+        return v
+
+
 class ExplanationPane(TraitsDockPane):
     name = 'Explanation'
     id = 'pychron.extraction_line.explanation'
@@ -159,6 +172,7 @@ class EditorPane(TraitsDockPane):
                                            selected='selected_group',
                                            editor=InstanceEditor())))
 
-        v = View(VGroup(g, agrp, egrp))
+        v = View(VGroup(UItem('edit_mode'),
+                        VGroup(g, agrp, egrp, enabled_when='edit_mode')))
         return v
 # ============= EOF =============================================

@@ -185,7 +185,7 @@ class ScanableDevice(ViewableDevice):
 
         if self.record_scan_data:
             self.info('Recording scan enabled')
-
+            dm = self.data_manager
             dm.delimiter = '\t'
 
             dw = DataWarehouse(root=paths.device_scan_dir)

@@ -74,7 +74,7 @@ class FusionsLogicBoard(CoreDevice):
         # no handle or response is none
         resp = True
         if self._test_comms:
-            resp =bool(self.ask(';LB.VER'))
+            resp = bool(self.ask(';LB.VER'))
 
         #        resp = self._disable_laser_()
         if self.communicator.handle is None or resp is not True:
@@ -159,6 +159,12 @@ class FusionsLogicBoard(CoreDevice):
         m = __import__(pkg, fromlist=[klass])
         m = getattr(m, klass)
         return m(parent=self, name=name)
+
+    def enable(self, *args, **kw):
+        return self._enable_laser(**kw)
+
+    def disable(self, *args, **kw):
+        return self._disable_laser()
 
     # ==============================================================================
     # laser methods
@@ -336,7 +342,6 @@ class FusionsLogicBoard(CoreDevice):
 #
 #                                      show_label=False),
 #                     )
-
 
 
 #        be = RangeEditor(low_name='beammin',

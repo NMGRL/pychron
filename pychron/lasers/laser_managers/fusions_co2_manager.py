@@ -74,20 +74,11 @@ class FusionsCO2Manager(FusionsLaserManager):
                                  configuration_dir_name=self.configuration_dir_name)
         return b
 
-    def _stage_manager_default(self):
-        """
-        """
-        args = dict(name='stage',
-                    configuration_name='stage',
-                    configuration_dir_name=self.configuration_dir_name,
-                    parent=self)
-
-        return self._stage_manager_factory(args)
-
     def _response_recorder_default(self):
         r = ResponseRecorder(response_device=self.laser_controller,
                              output_device=self.laser_controller)
         return r
+
 
 if __name__ == '__main__':
     from pychron.core.helpers.logger_setup import logging_setup

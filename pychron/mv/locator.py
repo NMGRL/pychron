@@ -65,6 +65,12 @@ class Locator(Loggable):
     step_signal = None
     pixel_depth = 255
 
+    alive = True
+
+    def cancel(self):
+        self.debug('canceling')
+        self.alive = False
+
     def wait(self):
         if self.step_signal:
             self.step_signal.wait()
@@ -99,6 +105,7 @@ class Locator(Loggable):
             1. find polygons
 
         """
+        self.alive = True
         dx, dy = None, None
 
         targets = self._find_targets(image, frame, dim, shape=shape, **kw)
@@ -150,7 +157,7 @@ class Locator(Loggable):
             src = grayspace(frame)
 
         if src is None:
-            print('Locator: src is None')
+            self.debug('Locator: src is None')
             return
 
         if mask:
@@ -159,63 +166,96 @@ class Locator(Loggable):
         if inverted:
             src = invert(src)
 
-        start = search.get('start')
-        if start is None:
-            w = search.get('width', 10)
-            start = int(mean(src[src > 0])) - search.get('start_offset_scalar', 3) * w
-
-        step = search.get('step', 2)
-        n = search.get('n', 20)
-
         blocksize_step = search.get('blocksize_step', 5)
         seg = RegionSegmenter(use_adaptive_threshold=search.get('use_adaptive_threshold', False),
                               blocksize=search.get('blocksize', 20))
         fa = self._get_filter_target_area(shape, dim)
         phigh, plow = None, None
 
-        for j in range(n):
-            ww = w * (j + 1)
-            self.debug('start intensity={}, width={}'.format(start, ww))
-            for i in range(n):
+        for low, high in self._generate_steps(src, search)():
+            if not self.alive:
+                self.debug('canceled')
+                return
 
-                low = max((0, start + i * step - ww))
-                high = max((1, min((255, start + i * step + ww))))
-                if inverted:
-                    low = 255-low
-                    high = 255-high
+            self.debug('bandwidth low={}, high={}'.format(low, high))
 
-                seg.threshold_low = low
-                seg.threshold_high = high
+            if inverted:
+                low = 255 - low
+                high = 255 - high
 
-                if seg.threshold_low == plow and seg.threshold_high == phigh:
-                    break
+            seg.threshold_low = low
+            seg.threshold_high = high
 
-                plow = seg.threshold_low
-                phigh = seg.threshold_high
+            if seg.threshold_low == plow and seg.threshold_high == phigh:
+                return
 
-                nsrc = seg.segment(src)
-                seg.blocksize += blocksize_step
+            plow = seg.threshold_low
+            phigh = seg.threshold_high
 
-                nf = colorspace(nsrc)
+            nsrc = seg.segment(src)
+            seg.blocksize += blocksize_step
 
-                # draw contours
-                targets = self._find_polygon_targets(nsrc, frame=nf)
-                if set_image and image is not None:
-                    image.set_frame(nf)
+            nf = colorspace(nsrc)
 
-                if targets:
+            # draw contours
+            targets = self._find_polygon_targets(nsrc, frame=nf)
+            if set_image and image is not None:
+                image.set_frame(nf)
 
-                    # filter targets
-                    if filter_targets:
-                        targets = self._filter_targets(image, frame, dim, targets, fa)
-                    elif convexity_filter:
-                        # for t in targets:
-                        #     print t.convexity, t.area, t.min_enclose_area, t.perimeter_convexity
-                        targets = [t for t in targets if t.perimeter_convexity > convexity_filter]
+            if targets:
 
-                if targets:
-                    return sorted(targets, key=attrgetter('area'), reverse=True)
-                    # time.sleep(0.5)
+                # filter targets
+                if filter_targets:
+                    targets = self._filter_targets(image, frame, dim, targets, fa)
+                elif convexity_filter:
+                    # for t in targets:
+                    #     print t.convexity, t.area, t.min_enclose_area, t.perimeter_convexity
+                    targets = [t for t in targets if t.perimeter_convexity > convexity_filter]
+
+            if targets:
+                return sorted(targets, key=attrgetter('area'), reverse=True)
+                # time.sleep(0.5)
+
+    def _generate_steps(self, src, search):
+        if search.get('use_adaptive_threshold'):
+            def func():
+                yield 0, 255
+
+        elif search.get('use_new_style', True):
+            def func():
+                me = int(mean(src[src > 0]))
+                bands = [2 ** n for n in range(7, 1, -1)]
+                shifts = [2, 4, 8]
+
+                for band in bands:
+                    for shift in shifts:
+                        for shift_dir in (1, -1):
+                            for i in range(1, 128):
+                                m = me - shift * i * shift_dir
+                                low = m - band / 2
+                                high = low + band
+                                if low < 0 or high > 255:
+                                    break
+
+                                yield low, high
+        else:
+            def func():
+                start = search.get('start')
+                if start is None:
+                    w = search.get('width', 10)
+                    start = int(mean(src[src > 0])) - search.get('start_offset_scalar', 3) * w
+
+                step = search.get('step', 2)
+                n = search.get('n', 20)
+
+                for j in range(n):
+                    ww = w * (j + 1)
+                    for i in range(n):
+                        low = max((0, start + i * step - ww))
+                        high = max((1, min((255, start + i * step + ww))))
+                        yield low, high
+
+        return func
 
     def _mask(self, src, radius=None):
 
@@ -522,7 +562,7 @@ class Locator(Loggable):
             mi = miholedim ** 2 * 3.1415
             ma = maholedim ** 2 * 3.1415
         else:
-            d = (2*dim)**2
+            d = (2 * dim) ** 2
             mi = 0.5 * d
             ma = 1.25 * d
 

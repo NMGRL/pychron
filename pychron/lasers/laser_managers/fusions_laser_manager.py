@@ -15,34 +15,17 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from __future__ import absolute_import
-from __future__ import print_function
 from apptools.preferences.preference_binding import bind_preference
-from traits.api import DelegatesTo, Property, Instance, Str, List, Dict, \
-    on_trait_change, Event, Bool, Any, Button
-from traitsui.api import VGroup, Item, HGroup, spring
+from traits.api import DelegatesTo, Instance, Str, List, Dict, \
+    on_trait_change, Event, Bool, Any
+from traitsui.api import HGroup, spring, UReadonly, Readonly
 
-from .laser_manager import LaserManager
 from pychron.core.helpers.strtools import to_bool
-from pychron.core.ui.thread import Thread
+from pychron.core.pychron_traits import BorderVGroup
 from pychron.hardware.fiber_light import FiberLight
 from pychron.hardware.fusions.fusions_logic_board import FusionsLogicBoard
-from pychron.mv.degas.degasser import Degasser
+from pychron.lasers.laser_managers.laser_manager import LaserManager
 from pychron.response_recorder import ResponseRecorder
-
-
-# from pychron.core.ui.gui import invoke_in_main_thread
-# from pychron.lasers.laser_managers.degas_manager import DegasManager
-
-
-# class OpticsView(Viewable):
-# #    title = 'Optics'
-#    laser_controller = Instance(FusionsLogicBoard)
-#    def traits_view(self):
-#        item = Item('laser_controller', show_label=False,
-#                    editor=InstanceEditor(view='control_view'),
-#                    style='custom')
-#        return self.view_factory(item, id='optics_view')
 
 
 class FusionsLaserManager(LaserManager):
@@ -52,32 +35,6 @@ class FusionsLaserManager(LaserManager):
     laser_controller = Instance(FusionsLogicBoard)
     fiber_light = Instance(FiberLight)
     response_recorder = Instance(ResponseRecorder)
-
-    #    optics_view = Instance(OpticsView)
-
-    #    beam = DelegatesTo('laser_controller')
-    #    beammin = DelegatesTo('laser_controller')
-    #    beammax = DelegatesTo('laser_controller')
-    #    update_beam = DelegatesTo('laser_controller')
-    #    beam_enabled = DelegatesTo('laser_controller')
-    # #    beam_enabled = Bool(True)
-    #
-    #    zoom = DelegatesTo('laser_controller')
-    #    zoommin = DelegatesTo('laser_controller')
-    #    zoommax = DelegatesTo('laser_controller')
-    #    update_zoom = DelegatesTo('laser_controller')
-    #    execute_button = DelegatesTo('laser_script_executor')
-    #    execute_label = DelegatesTo('laser_script_executor')
-
-    pointer = Event
-    pointer_state = Bool(False)
-    pointer_label = Property(depends_on='pointer_state')
-
-    step_heat_manager = None
-
-    lens_configuration = Str('gaussian')
-    lens_configuration_dict = Dict
-    lens_configuration_names = List
 
     power_timer = None
     brightness_timer = None
@@ -98,23 +55,9 @@ class FusionsLaserManager(LaserManager):
 
     _current_rid = None
 
-    #    brightness_meter = Instance(BrightnessPIDManager)
-
     chiller = Any
 
     motor_event = Event
-
-    degasser = Instance(Degasser)
-
-    degas_test_button = Button('test')
-    _test_state = False
-
-    def _degas_test_button_fired(self):
-        if self._test_state:
-            self.disable_laser()
-        else:
-            self.luminosity_degas_test()
-        self._test_state = not self._test_state
 
     def finish_loading(self):
         super(FusionsLaserManager, self).finish_loading()
@@ -146,17 +89,6 @@ class FusionsLaserManager(LaserManager):
     def open_motor_configure(self):
         self.laser_controller.open_motor_configure()
 
-    #     def _record_fired(self):
-    #         if self._recording_power_state:
-    #             save = self.db_save_dialog()
-    #             self.stop_power_recording(delay=0, save=save)
-    #         else:
-    #             t = Thread(name='fusions.power_record',
-    #                        target=self.start_power_recording, args=('Manual',))
-    #             t.start()
-
-    #        self._recording_power_state = not self._recording_power_state
-
     def bind_preferences(self, pref_id):
         self.debug('binding preferences')
         super(FusionsLaserManager, self).bind_preferences(pref_id)
@@ -185,16 +117,15 @@ class FusionsLaserManager(LaserManager):
 
     @on_trait_change('laser_controller:refresh_canvas')
     def refresh_canvas(self):
-        print('frefasdfeasdfasd')
         if self.stage_manager:
             self.stage_manager.canvas.request_redraw()
 
-    @on_trait_change('pointer')
-    def pointer_ononff(self):
-        """
-        """
-        self.pointer_state = not self.pointer_state
-        self.laser_controller.set_pointer_onoff(self.pointer_state)
+    # @on_trait_change('pointer')
+    # def pointer_ononff(self):
+    #     """
+    #     """
+    #     self.pointer_state = not self.pointer_state
+    #     self.laser_controller.set_pointer_onoff(self.pointer_state)
 
     def get_laser_watts(self):
         return self._requested_power
@@ -234,8 +165,7 @@ class FusionsLaserManager(LaserManager):
             if motor.enabled or force:
                 self.set_motor('beam', bd, **kw)
                 result = True
-            else:
-                self.info('beam disabled by lens configuration {}'.format(self.lens_configuration))
+
         return result
 
     def set_zoom(self, z, **kw):
@@ -318,8 +248,6 @@ class FusionsLaserManager(LaserManager):
         if self.stage_manager is not None:
             self.stage_manager.set_stage_map(mapname)
 
-    def get_pyrometer_temperature(self):
-        pass
     # ===============================================================================
     # pyscript interface
     # ===============================================================================
@@ -376,21 +304,9 @@ class FusionsLaserManager(LaserManager):
                 self.stage_manager.move_to_hole(position)
             return True
 
-    def _enable_hook(self, **kw):
-        resp = self.laser_controller._enable_laser(**kw)
-        if self.laser_controller.simulation:
-            resp = True
-
-        return resp
-
     def _disable_hook(self):
         self.degasser.stop()
-
-        resp = self.laser_controller._disable_laser()
-        if self.laser_controller.simulation:
-            resp = True
-
-        return resp
+        return super(FusionsLaserManager, self)._disable_hook()
 
     # ========================= views =========================
     def get_control_buttons(self):
@@ -399,31 +315,14 @@ class FusionsLaserManager(LaserManager):
         return [('enable', 'enable_label', None), ]
 
     def get_power_group(self):
-        power_grp = VGroup(
-            self.get_control_button_group(),
-            HGroup(
-                Item('requested_power', style='readonly',
-                     format_str='%0.2f',
-                     width=100),
-                spring,
-                Item('units', show_label=False, style='readonly'),
-                spring),
-            #                           Item('laser_script_executor', show_label=False, style='custom'),
-            #                           self._button_factory('execute_button', 'execute_label'),
-            show_border=True,
-            #                           springy=True,
-            label='Power')
+        power_grp = BorderVGroup(self.get_control_button_group(),
+                                 HGroup(Readonly('requested_power', format_str='%0.2f', width=100),
+                                        spring,
+                                        UReadonly('units'),
+                                        spring),
+                                 label='Power')
 
-        ps = self.get_power_slider()
-        if ps:
-            #            ps.springy = True
-            power_grp.content.append(ps)
         return power_grp
-
-    def _get_pointer_label(self):
-        """
-        """
-        return 'Pointer ON' if not self.pointer_state else 'Pointer OFF'
 
     def _get_record_label(self):
         return 'Record' if not self._recording_power_state else 'Stop'
@@ -436,11 +335,6 @@ class FusionsLaserManager(LaserManager):
         """
         """
         return FiberLight(name='fiber_light')
-
-    def _degasser_default(self):
-        d = Degasser(laser_manager=self)
-        d.load()
-        return d
 
 
 if __name__ == '__main__':
