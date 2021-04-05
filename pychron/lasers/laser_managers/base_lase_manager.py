@@ -127,6 +127,9 @@ class BaseLaserManager(Manager):
     def get_pyrometer_temperature(self):
         pass
 
+    def get_grain_polygon_blob(self):
+        pass
+
     def get_pattern_names(self):
         p = paths.pattern_dir
         extension = '.lp,.txt'
