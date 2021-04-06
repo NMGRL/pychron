@@ -323,7 +323,8 @@ class InverseIsochron(Isochron):
 
             return u'39Ar/40Ar= {} {}{} {}'.format(floatfmt(v, n=6), PLUSMINUS, floatfmt(e, n=7), pe)
 
-        self._add_scatter_inspector(scatter, additional_info=ad)
+        self._add_scatter_inspector(scatter,
+                                    additional_info=ad)
         p.index_mapper.on_trait_change(self.update_index_mapper, 'updated')
 
         # sel = self._get_omitted_by_tag(self.analyses)
@@ -570,10 +571,13 @@ class InverseIsochron(Isochron):
                     o.value.set_data(rys)
 
     def update_graph_metadata(self, obj, name, old, new):
+        print('asdfsdfasdfasd', obj, name, new)
+
         if obj:
-            self._filter_metadata_changes(obj, self.analyses, self._rebuild_iso)
+            self._filter_metadata_changes(obj, self.sorted_analyses, self._rebuild_iso)
 
     def update_index_mapper(self, obj, name, old, new):
+        print('asdf', obj, name, new)
         if new:
             self.update_graph_metadata(None, name, old, new)
 
