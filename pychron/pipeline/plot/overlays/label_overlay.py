@@ -84,13 +84,12 @@ class SpectrumLabelOverlay(AbstractOverlay):
     user_color = Color
 
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
-        labels = self._get_labels()
+        labels = self._cached_labels
         for label in labels:
             label.overlay(other_component, gc)
 
-    def _get_labels(self):
+    def _do_layout(self):
         if self._layout_needed or not self._cached_labels:
-            self._layout_needed = False
             labels = []
             nsigma = self.nsigma
             # spec = self.spectrum
@@ -117,7 +116,7 @@ class SpectrumLabelOverlay(AbstractOverlay):
                 yl = yi - ei * nsigma
                 yu = yi + ei * nsigma
 
-                (x, yl), (_, yu) = comp.map_screen([(x, yl), (x, yu)])
+                (xi, yl), (_, yu) = comp.map_screen([(x, yl), (x, yu)])
                 y = yl - 15
                 if y < 0:
                     y = yu + 10
@@ -129,12 +128,10 @@ class SpectrumLabelOverlay(AbstractOverlay):
                                         font=self.font,
                                         # font='modern {}'.format(self.font_size),
                                         color=color,
-                                        x=x,
+                                        x=xi,
                                         y=y))
 
             self._cached_labels = labels
-
-        return self._cached_labels
 
     def _assemble_text(self, ai):
         ts = []
@@ -148,8 +145,9 @@ class SpectrumLabelOverlay(AbstractOverlay):
 
     @on_trait_change('component.+')
     def _handle_component_change(self, name, new):
-        self._layout_needed = True
-        self.request_redraw()
+        if name in ('bounds', ):
+            self._layout_needed = True
+            self.invalidate_and_redraw()
 
     @on_trait_change('display_extract_value, display_step')
     def _update_visible(self):
