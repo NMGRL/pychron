@@ -666,7 +666,7 @@ class PipelineTask(BaseBrowserTask):
     @on_trait_change('engine:recall_analyses_needed')
     def _handle_recall(self, new):
         if not isinstance(new, DVCInterpretedAge):
-            self.recall(new)
+            self.recall(new, use_quick=False)
 
     def _prompt_for_save(self):
         if globalv.ignore_shareable:

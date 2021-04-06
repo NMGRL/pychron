@@ -105,7 +105,7 @@ class BaseBrowserTask(BaseEditorTask):
             e.control = info.control
             editor.edit_view = e
 
-    def recall(self, records, open_copy=False):
+    def recall(self, records, open_copy=False, use_quick=True):
         """
             if analysis is already open activate the editor
             otherwise open a new editor
@@ -138,7 +138,7 @@ class BaseBrowserTask(BaseEditorTask):
                     self.debug_exception()
 
         if records:
-            self._open_recall_editors(records)
+            self._open_recall_editors(records, use_quick=use_quick)
         else:
             self.warning('failed making records')
 
@@ -295,12 +295,12 @@ class BaseBrowserTask(BaseEditorTask):
         self.isotope_adapter.sig_figs = self.recall_configurer.recall_options.isotope_sig_figs
         self.intermediate_adapter.sig_figs = self.recall_configurer.recall_options.intermediate_sig_figs
 
-    def _open_recall_editors(self, ans):
+    def _open_recall_editors(self, ans, use_quick=True):
         self._set_adapter_sig_figs()
 
         existing = [e.basename for e in self.get_recall_editors()]
         if ans:
-            quick = self.browser_model.use_quick_recall
+            quick = self.browser_model.use_quick_recall and use_quick
             for rec in ans:
 
                 av = rec.analysis_view_factory(quick=False)
