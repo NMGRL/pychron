@@ -376,7 +376,11 @@ class FitIsotopeEvolutionNode(FitNode):
                     rsquared_threshold = f.rsquared_goodness
                     rsquared_goodness = rsquared > rsquared_threshold
 
-                signal_to_blank = iso.blank.value / iso.value * 100
+                if hasattr(iso, 'blank'):
+                    signal_to_blank = iso.blank.value / iso.value * 100
+                else:
+                    signal_to_blank = 0
+
                 signal_to_blank_goodness = None
                 signal_to_blank_threshold = 0
                 if f.signal_to_blank_goodness:
