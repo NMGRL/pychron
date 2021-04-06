@@ -22,8 +22,8 @@ from traits.api import HasTraits, List, on_trait_change, Button, Float, Enum, In
 from traitsui.api import View, UItem, TableEditor
 from traitsui.table_column import ObjectColumn
 
+from pychron.canvas.canvas2D.scene.base_scene_loader import SWITCH_TAGS, RECT_TAGS
 from pychron.canvas.canvas2D.scene.canvas_parser import CanvasParser
-from pychron.canvas.canvas2D.scene.extraction_line_scene import RECT_TAGS, SWITCH_TAGS
 from pychron.canvas.canvas2D.scene.primitives.base import Primitive
 from pychron.canvas.canvas2D.scene.primitives.connections import Connection
 from pychron.canvas.canvas2D.scene.primitives.lasers import Laser

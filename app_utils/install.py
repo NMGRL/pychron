@@ -275,6 +275,33 @@ def main():
         
 """
 
+CANVAS_XML = """<?xml version="1.0" ?>
+<root>
+    <!-- Spectrometer -->
+    <spectrometer>Spec
+        <translation>-24,0</translation><dimension>8,8</dimension><color>85,110,180</color>
+    </spectrometer>
+    
+    <!-- Valves -->
+    <valve>A
+        <translation>-23,-3</translation>
+    </valve>
+    <valve>B
+        <translation>-14,3</translation>
+    </valve>
+    
+    <!-- pump -->
+    <ionpump>IonPump
+        <translation>-24,-8</translation><dimension>8,3</dimension><color>234,165,57</color>
+    </ionpump>
+
+    <!-- connections -->
+    <connection orientation="vertical"><start>A</start><end>Spec</end></connection>
+    <connection orientation="vertical"><start>A</start><end>IonPump</end></connection>
+    <connection orientation="horizontal"><start>B</start><end>Spec</end></connection>
+</root>
+"""
+
 CANVAS_TXT = """connection: []
 getter: []
 hconnection:
@@ -697,28 +724,50 @@ def ask_config():
     for k, v in config.items():
         print('{:<20s}: {}'.format(k, v))
 
-    config['pip_requirements'] = 'uncertainties peakutils qimage2ndarray'
-    config['pip_git_requirements'] = ['git+https://github.com/enthought/chaco.git#egg=chaco',
-                                      'git+https://github.com/enthought/enable.git#egg=enable']
-
-    creq = 'pip qt numpy statsmodels scikit-learn PyYAML yaml traitsui envisage sqlalchemy ' \
-           'Reportlab lxml xlrd xlwt xlsxwriter requests keyring pillow gitpython cython pytables ' \
-            'pyproj pymysql certifi jinja2 swig {}'.format(config['qt_bindings'])
-
-    if IS_MAC:
-        creq = '{} python.app'.format(creq)
-
-    if config['install_gis_plugin']:
-        creq = '{} '.format('qgis')
-
-
-    config['conda_requirements'] = creq
+    build_requirements(config)
 
     print()
     print()
     if yes('Continue? [y]/n >> '):
         return config
 
+
+def build_requirements(cfg):
+    pip_reqs = ['uncertainties',
+                'peakutils',
+                'qimage2ndarray']
+    pip_git_reqs = ['git+https://github.com/enthought/chaco.git#egg=chaco',
+                    'git+https://github.com/enthought/enable.git#egg=enable']
+
+    conda_reqs = ['numpy', 'statsmodels', 'scikit-learn', 'PyYAML', 'yaml', 'traits=5', 'traitsui=6', 'pyface=6',
+                  'envisage', 'sqlalchemy', 'Reportlab', 'lxml', 'xlrd', 'xlwt', 'xlsxwriter', 'requests', 'keyring',
+                  'pillow', 'gitpython', 'cython', 'pytables', 'pyproj', 'pymysql', 'certifi', 'jinja2', 'swig=3',
+                  cfg['qt_bindings']]
+
+    if IS_MAC:
+        conda_reqs.append('python.app')
+
+    if cfg['install_gis_plugin']:
+        conda_reqs.append('qgis')
+
+    cfg['pip_requirements'] = pip_reqs
+    cfg['pip_git_requirements'] = pip_git_reqs
+    cfg['conda_requirements'] = conda_reqs
+
+# config['pip_requirements'] = 'uncertainties peakutils qimage2ndarray'
+# config['pip_git_requirements'] =
+#
+# creq = 'pip qt numpy statsmodels scikit-learn PyYAML yaml traits=5 traitsui=6 pyface=6 envisage sqlalchemy ' \
+#        'Reportlab lxml xlrd xlwt xlsxwriter requests keyring pillow gitpython cython pytables ' \
+#         'pyproj pymysql certifi jinja2 swig=3 {}'.format(config['qt_bindings'])
+#
+# if IS_MAC:
+#     creq = '{} python.app'.format(creq)
+#
+# if config['install_gis_plugin']:
+#     creq = '{} '.format('qgis')
+
+# config['conda_requirements'] = creq
 
 def yes(msg):
     return input(msg) in ('', 'y', 'yes', 'Yes', 'YES')
@@ -766,14 +815,14 @@ def install_conda(cfg):
 
     # install deps
     subprocess.call(['conda', 'install', '--yes',
-                     '--name', env_name] + cfg['conda_requirements'].split(' '))
+                     '--name', env_name] + cfg['conda_requirements'])
 
     if IS_MAC:
-        subprocess.call(['conda', 'activate', cfg['conda_env_name']])
+        subprocess.call(['conda', 'activate', env_name])
         # install pip deps
         # pip_path = os.path.join(cfg['conda_distro'], 'envs', env_name, 'bin', 'pip')
         pip_path = 'pip'
-        subprocess.call([pip_path, 'install'] + cfg['pip_requirements'].split(' '))
+        subprocess.call([pip_path, 'install'] + cfg['pip_requirements'])
         for r in cfg['pip_git_requirements']:
             subprocess.call([pip_path, 'install', '-e', r])
     else:
@@ -860,6 +909,8 @@ def install_setupfiles(cfg):
         make_dir(canvas)
         p = os.path.join(root, canvas, 'canvas.yaml')
         write(p, CANVAS_TXT)
+        p = os.path.join(root, canvas, 'canvas.xml')
+        write(p, CANVAS_XML)
 
         p = os.path.join(root, canvas, 'canvas_config.xml')
         write(p, CANVAS_CONFIG_TXT)

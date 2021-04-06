@@ -71,6 +71,7 @@ class ScanableDevice(ViewableDevice):
     # streamin interface
     # ===============================================================================
     def setup_scan(self):
+        self.debug('setup scan')
         # should get scan settings from the config file not the initialization.xml
         config = self.get_configuration()
         if config.has_section('Scan'):
@@ -89,6 +90,7 @@ class ScanableDevice(ViewableDevice):
                     self.scan_func = func
 
     def setup_alarms(self):
+        self.debug('setup alarms')
         config = self.get_configuration()
         if config.has_section('Alarms'):
             for opt in config.options('Alarms'):

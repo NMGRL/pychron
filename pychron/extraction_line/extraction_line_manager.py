@@ -659,22 +659,22 @@ class ExtractionLineManager(Manager, Consoleable):
             if result:
                 if all(result):
                     valve = vm.get_switch_by_name(name)
+                    if valve:
+                        description = valve.description
+                        self._log_spec_event(name, action)
 
-                    description = valve.description
-                    self._log_spec_event(name, action)
+                        self.info('{:<6s} {} ({})'.format(action.upper(), valve.name, description),
+                                  color='red' if action == 'close' else 'green')
 
-                    self.info('{:<6s} {} ({})'.format(action.upper(), valve.name, description),
-                              color='red' if action == 'close' else 'green')
-
-                    vm.actuate_children(name, action, mode)
-                    ld = self.link_valve_actuation_dict
-                    if ld:
-                        try:
-                            func = ld[name]
-                            func(name, action)
-                        except KeyError:
-                            self.debug('name="{}" not in '
-                                       'link_valve_actuation_dict. keys={}'.format(name, ','.join(list(ld.keys()))))
+                        vm.actuate_children(name, action, mode)
+                        ld = self.link_valve_actuation_dict
+                        if ld:
+                            try:
+                                func = ld[name]
+                                func(name, action)
+                            except KeyError:
+                                self.debug('name="{}" not in '
+                                           'link_valve_actuation_dict. keys={}'.format(name, ','.join(list(ld.keys()))))
 
             return result
 

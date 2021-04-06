@@ -59,6 +59,9 @@ class Turbo(RoundedRectangle, Animation):
         # if self.refresh_required():
 
 
+class IonPump(RoundedRectangle):
+    pass
+
 # ============= EOF =============================================
 
 
