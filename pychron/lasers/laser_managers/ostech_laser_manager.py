@@ -39,6 +39,12 @@ class OsTechDiodeManager(OsTechLaserManager, WatlowMixin, PyrometerMixin):
     fiber_light = Instance(FiberLight)
     pyrometer_klass = MicroEpsilonPyrometer
 
+    def set_laser_output(self, v, *args, **kw):
+        if not v or self.enable_laser():
+            super(OsTechDiodeManager, self).set_laser_output(v, *args, **kw)
+            if not v:
+                self.disable_laser()
+
     def _enable_hook(self):
         if super(OsTechDiodeManager, self)._enable_hook():
             # logic board successfully enabled
