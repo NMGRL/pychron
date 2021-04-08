@@ -188,7 +188,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                     if not line.startswith(target):
                         nsignals, keys = [], []
                         for i, di in enumerate(self.detectors[::-1]):
-                            if di.kind == ATONA:
+                            if di.kind != ATONA:
                                 nsignals.append(signals[i])
                                 keys.append(di.name)
                         signals = nsignals
