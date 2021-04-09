@@ -162,8 +162,8 @@ class InfoOverlay(AbstractOverlay):
 
         lws, lhs = list(zip(*[gc.get_full_text_extent(mi)[:2] for mi in lines]))
 
-        rect_width = max(lws) + 4
-        rect_height = (max(lhs) + 2) * len(lhs)
+        rect_width = max(lws) + 12
+        rect_height = (max(lhs)+4) * len(lhs)+2
 
         xoffset = 15
         yoffset = -15
@@ -178,7 +178,7 @@ class InfoOverlay(AbstractOverlay):
             x = x2 - rect_width - xoffset - 1
 
         multi_column = 0
-        h = max(lhs) + 2
+        h = max(lhs) + 4
         cheight = self.component.height
         if rect_height > cheight+5*h:
             multi_column = 2
@@ -218,7 +218,7 @@ class InfoOverlay(AbstractOverlay):
                     i += 1
         else:
             for i, mi in enumerate(lines[::-1]):
-                gc.set_text_position(0, h * i)
+                gc.set_text_position(5, h * i+5)
                 gc.show_text(mi)
 
     def _tool_changed(self, old, new):

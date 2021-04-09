@@ -247,13 +247,17 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
         return plot, scatter, line
 
+    def regression_inspector_factory(self, line):
+        tool = RegressionInspectorTool(component=line)
+        return tool
+
     def add_tools(self, plot, scatter, line=None,
                   convert_index=None, add_inspector=True, add_point_inspector=True, add_selection=True):
 
         if add_inspector:
             # add a regression inspector tool to the line
             if line:
-                tool = RegressionInspectorTool(component=line)
+                tool = self.regression_inspector_factory(line)
                 overlay = RegressionInspectorOverlay(component=line,
                                                      tool=tool)
                 line.tools.append(tool)
@@ -335,7 +339,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                     line = plot.plots[lkey][0]
                     line.regressor = None
 
-                print('fit for {}={}, {}'.format(key, fi, scatter))
+                # print('fit for {}={}, {}'.format(key, fi, scatter))
                 scatter.ofit = scatter.fit
                 scatter.fit = fi
 

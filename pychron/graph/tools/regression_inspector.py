@@ -18,7 +18,7 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.helpers.formatting import floatfmt, format_percent_error
+from pychron.core.helpers.formatting import floatfmt, format_percent_error, errorfmt
 from pychron.core.regression.mean_regressor import MeanRegressor, WeightedMeanRegressor
 from pychron.graph.tools.info_inspector import InfoInspector, InfoOverlay
 from pychron.pychron_constants import PLUSMINUS
@@ -38,16 +38,13 @@ def make_statistics(reg, x=None, options=None):
     v, e = reg.predict(0), reg.predict_error(0)
 
     lines = [reg.make_equation(),
-             'x=0, y={} {}{}({}%)'.format(floatfmt(v, n=6),
+             'x=0, y={} {}{}'.format(floatfmt(v, n=6),
                                           PLUSMINUS,
-                                          floatfmt(e, n=6),
-                                          format_percent_error(v, e))]
+                                          errorfmt(v, e))]
     if x is not None:
         vv, ee = reg.predict(x), reg.predict_error(x)
 
-        lines.append('x={}, y={} +/-{}({}%)'.format(x, floatfmt(vv, n=6),
-                                                    floatfmt(ee, n=6),
-                                                    format_percent_error(vv, ee)))
+        lines.append('x={:0.5f}, y={} {}{}'.format(x, floatfmt(vv, n=6), PLUSMINUS, errorfmt(vv, ee)))
 
     if reg.mswd not in ('NaN', None):
         lines.append('Fit MSWD={}, N={}'.format(reg.format_mswd(), reg.n))

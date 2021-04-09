@@ -342,6 +342,8 @@ class IsotopicMeasurement(BaseMeasurement):
 
             if isinstance(fit, (int, str, six.text_type)):
                 self.attr_set(fit=fit)
+            elif isinstance(fit, dict):
+                self.attr_set(**fit)
             else:
 
                 fitname = fit.fit
@@ -355,14 +357,14 @@ class IsotopicMeasurement(BaseMeasurement):
                               error_type=fit.error_type or 'SEM',
                               include_baseline_error=fit.include_baseline_error or False)
 
-                self._regressor = None
-
                 self.set_filter_outliers_dict(filter_outliers=bool(fit.filter_outliers),
                                               iterations=int(fit.filter_outlier_iterations or 0),
                                               std_devs=int(fit.filter_outlier_std_devs or 0),
                                               use_standard_deviation_filtering=fit.use_standard_deviation_filtering,
                                               use_iqr_filtering=fit.use_iqr_filtering)
                 self.truncate = fit.truncate
+
+            self._regressor = None
 
     def set_uvalue(self, v):
         if isinstance(v, tuple):

@@ -178,6 +178,9 @@ class BaseRegressor(HasTraits):
     def _get_rsquared_adj(self):
         return 0
 
+    def get_fit_dict(self):
+        return {'fit': self.fit, 'error_type': self.error_calc_type}
+
     def determine_fit(self):
         return self.fit
 
