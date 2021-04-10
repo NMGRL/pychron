@@ -364,12 +364,15 @@ class BaseBrowserTask(BaseEditorTask):
     @on_trait_change('browser_model:[analysis_table:key_pressed]')
     def _handle_key_pressed(self, new):
         if new and new.control:
+            d = None
             if new.is_key('N'):
                 d = 1
             elif new.is_key('B'):
                 d = -1
-            item = self.browser_model.analysis_table.increment_selected(d)
-            self.recall(item)
+
+            if d:
+                item = self.browser_model.analysis_table.increment_selected(d)
+                self.recall(item)
 
     @on_trait_change('browser_model:[analysis_table:dclicked]')
     def _handle_dclicked(self, new):

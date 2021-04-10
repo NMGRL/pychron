@@ -21,6 +21,7 @@ from traits.traits import Color
 from traitsui.api import View, Item, VGroup
 
 from pychron.core.ui.combobox_editor import ComboboxEditor
+from pychron.core.ui.strings import SpacelessStr
 from pychron.envisage.tasks.base_preferences_helper import GitRepoPreferencesHelper, remote_status_item, \
     BasePreferencesHelper
 from pychron.envisage.user_login import get_usernames
@@ -39,7 +40,7 @@ class GeneralPreferences(GitRepoPreferencesHelper):
     show_random_tip = Bool
     # use_advanced_ui = Bool
 
-    organization = String(enter_set=True, auto_set=False)
+    organization = SpacelessStr(enter_set=True, auto_set=False)
     default_principal_investigator = String
     lab_name = String
 

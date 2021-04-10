@@ -28,7 +28,7 @@ from uncertainties import std_dev, nominal_value, ufloat
 from pychron.core.filtering import filter_ufloats, sigma_filter
 from pychron.core.helpers.formatting import floatfmt, format_percent_error, standard_sigfigsfmt
 from pychron.graph.error_bar_overlay import ErrorBarOverlay
-from pychron.graph.ticks import SparseLogTicks
+from pychron.graph.ticks import SparseLogTicks, IntTickGenerator, IntSparseTicks
 from pychron.graph.ticks import SparseTicks
 from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
 from pychron.graph.tools.point_inspector import PointInspectorOverlay
@@ -233,9 +233,17 @@ class BaseArArFigure(SelectionFigure):
                     pp.value_axis.tick_generator = st
                     pp.value_grid.tick_generator = st
             else:
+                st = None
                 pp.value_axis.tick_interval = po.ytick_interval
                 if po.use_sparse_yticks:
-                    st = SparseTicks(step=po.sparse_yticks_step)
+                    if po.use_integer_ticks:
+                        st = IntSparseTicks(step=po.sparse_yticks_step)
+                    else:
+                        st = SparseTicks(step=po.sparse_yticks_step)
+                elif po.use_integer_ticks:
+                    st = IntTickGenerator()
+
+                if st is not None:
                     pp.value_axis.tick_generator = st
                     pp.value_grid.tick_generator = st
 

@@ -19,7 +19,7 @@ import math
 
 from numpy import array, nan, average
 # ============= enthought library imports =======================
-from traits.api import List, Property, cached_property, Str, Bool, Int, Event, Float, Any, Enum, on_trait_change
+from traits.api import List, Property, cached_property, Str, Bool, Int, Event, Float, Any, Enum, on_trait_change, Color
 from uncertainties import ufloat, nominal_value, std_dev
 
 from pychron.core.pychron_traits import StepStr
@@ -127,6 +127,8 @@ class AnalysisGroup(IdeogramPlotable):
 
     exclude_non_plateau = Bool(False)
     omit_by_tag = Bool(True)
+
+    color = Color('black')
 
     def __init__(self, *args, **kw):
         super(AnalysisGroup, self).__init__(make_arar_constants=False, *args, **kw)
@@ -271,6 +273,17 @@ class AnalysisGroup(IdeogramPlotable):
             mswd, v, n, p = reg.mswd, reg.valid_mswd, reg.n, reg.mswd_pvalue
 
         return mswd, v, n, p
+
+    def get_value(self, attr):
+        return getattr(self, attr)
+
+    @property
+    def age(self):
+        return self.weighted_age
+
+    @property
+    def uage(self):
+        return self.age
 
     @property
     def featuregroup_id(self):

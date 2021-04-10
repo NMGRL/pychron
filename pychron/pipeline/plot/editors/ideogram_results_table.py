@@ -20,11 +20,12 @@ from uncertainties import std_dev, nominal_value
 
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.pychron_traits import BorderVGroup
-from pychron.pychron_constants import format_mswd
+from pychron.processing.analyses.analysis_group import AnalysisGroup, InterpretedAgeGroup
+from pychron.pychron_constants import format_mswd, NULL_STR, WEIGHTED_MEAN, MSEM
 
 
 class IdeogramResultsAdapter(TabularAdapter):
-    columns = [('Name', 'group_id'),
+    columns = [('GroupID', 'group_id'),
                ('Identifier', 'identifier'),
                ('Sample', 'sample'),
                ('Age Span', 'age_span'),
@@ -72,6 +73,13 @@ class IdeogramResultsTable(HasTraits):
 
     def __init__(self, analysis_groups, nsigma, *args, **kw):
         super(IdeogramResultsTable, self).__init__(*args, **kw)
+
+        sgroup = InterpretedAgeGroup(analyses=analysis_groups)
+        sgroup.set_preferred_age(WEIGHTED_MEAN, MSEM)
+        sgroup.sample = NULL_STR
+        sgroup.identifier = 'Summary'
+
+        analysis_groups.append(sgroup)
         self.analysis_groups = analysis_groups
         self.adapter = IdeogramResultsAdapter(nsigma=nsigma)
 

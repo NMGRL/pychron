@@ -37,6 +37,9 @@ class IdeogramAuxPlot(AuxPlot):
                         'cak', 'clk',
                         'moles_k39', 'signal_k39', 'relative_probability'],
                        transient=True)
+    @property
+    def use_integer_ticks(self):
+        return self.plot_name.startswith('analysis_number')
 
 
 class IdeogramOptions(AgeOptions):
