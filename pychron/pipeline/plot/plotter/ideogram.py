@@ -669,6 +669,8 @@ class Ideogram(BaseArArFigure):
                                  error=we,
                                  nsigma=opt.nsigma,
                                  color=plotkw['color'],
+                                 group_id=gid,
+                                 location=opt.display_mean_location,
                                  visible=opt.display_mean_indicator,
                                  id='mean_{}'.format(self.group_id))
 

@@ -867,10 +867,6 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
         return self.preferred_age
 
     @property
-    def uage(self):
-        return self.age
-
-    @property
     def uage_w_j_err(self):
         return self.age
 

@@ -37,6 +37,7 @@ class IdeogramAuxPlot(AuxPlot):
                         'cak', 'clk',
                         'moles_k39', 'signal_k39', 'relative_probability'],
                        transient=True)
+
     @property
     def use_integer_ticks(self):
         return self.plot_name.startswith('analysis_number')
@@ -71,6 +72,7 @@ class IdeogramOptions(AgeOptions):
     display_mean_n = Bool(True)
     display_mswd_pvalue = Bool(True)
     display_percent_error = Bool(True)
+    display_mean_location = Enum('Mean', 'Upper Right', 'Upper Left', 'Lower Right', 'Lower Left')
     # display_identifier_on_mean = Bool(False)
     # display_sample_on_mean = Bool(False)
     label_all_peaks = Bool(True)

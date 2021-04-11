@@ -18,7 +18,7 @@
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.plot_label import PlotLabel
 from chaco.scatterplot import render_markers
-from traits.api import Color, Instance, Str, Float, Int, Any
+from traits.api import Color, Instance, Str, Float, Int, Any, Enum
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -142,6 +142,7 @@ try:
         color = Color
         label = Instance(PlotLabel)
         text = Str
+        location = Enum('Mean', 'Upper Right')
         # font = KivaFont('modern 15')
         x = Float
         error = Float
@@ -150,6 +151,7 @@ try:
         marker = Str('vertical')
         end_cap_length = Int(4)
         label_tool = Any
+        group_id = Int
 
         def clear(self):
             self.altered_screen_point = None
@@ -220,11 +222,26 @@ try:
         def _gather_data(self):
             comp = self.component
             x = comp.map_screen([(self.x, 0)])[0, 0]
+
             if self.altered_screen_point is None:
                 if self.label:
                     if not self.label.altered_screen_point:
+                        y = self.y
+                        if self.location == 'Upper Right':
+                            x = comp.x2 - self.label.width
+                            y = comp.y2 - 20*self.group_id
+                        elif self.location == 'Upper Left':
+                            x = comp.x+10
+                            y = comp.y2 - 20*self.group_id
+                        elif self.location == 'Lower Right':
+                            x = comp.x2 - self.label.width
+                            y = 20*self.group_id
+                        elif self.location == 'Lower Left':
+                            x = comp.x+10
+                            y = 20*self.group_id
+
                         self.label.sx = x
-                        self.label.sy = self.y
+                        self.label.sy = y
                 self.current_screen_point = (x, self.y)
 
                 return [(x, self.y)]
