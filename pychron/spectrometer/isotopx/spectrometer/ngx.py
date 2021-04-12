@@ -47,7 +47,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
     _read_enabled = True
     use_deflection_correction = False
     use_hv_correction = False
-    _triggered = True
+    _triggered = False
 
     def _microcontroller_default(self):
         service = 'pychron.hardware.isotopx_spectrometer_controller.NGXController'
@@ -112,8 +112,11 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
 #<<<<<<< Updated upstream
         if not self._triggered:
             self.ask('StopAcq', verbose=verbose)
+            self._triggered = True
             # return self.ask('StartAcq 1,{}'.format(self.rcs_id), verbose=verbose)
             return self.ask('StartAcq {},{}'.format(int(self.integration_time), self.rcs_id))
+        return True
+    
 #=======
 #        self.ask('StopAcq', verbose=verbose)
 #        # return self.ask('StartAcq 1,{}'.format(self.rcs_id), verbose=verbose)
@@ -158,7 +161,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         verbose = True
 
         if verbose:
-            self.debug('read intensities')
+            self.debug('read intensities trigger={} triggered={}'.format(trigger, self._triggered))
         resp = True
         if trigger:
             resp = self.trigger_acq()
@@ -176,39 +179,43 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         collection_time = None
         
         # self.debug(f'acquired mcir lock {self.microcontroller.lock}')
-        target = '#EVENT:{},{}'.format(target, self.rcs_id)
+        targetb = '#EVENT:ACQ.B,{}'.format(self.rcs_id)
+        targeta = '#EVENT:ACQ,{}'.format(self.rcs_id)
         if resp is not None:
             keys = self.detector_names[::-1]
-            # while 1:
-            line = self.readline()
-            # if line is None:
-            #     break
+            while 1:
+                line = self.readline()
+                # if line is None:
+                #     break
 
-            if verbose:
-                self.debug('raw: {}'.format(line))
+                if verbose:
+                    self.debug('raw: {}'.format(line))
 
-            if line:
-                args = line[:-1].split(',')
-                ct = datetime.strptime(args[4], '%H:%M:%S.%f')
+                if line and (line.startswith(targeta) or line.startswith(targetb)):
 
-                collection_time = datetime.now()
+                    args = line[:-1].split(',')
+                    ct = datetime.strptime(args[4], '%H:%M:%S.%f')
 
-                # copy to collection time
-                collection_time.replace(hour=ct.hour, minute=ct.minute, second=ct.second,
-                                        microsecond=ct.microsecond)
-                signals = [float(i) for i in args[5:]]
+                    collection_time = datetime.now()
 
-                if not line.startswith(target):
-                    nsignals, keys = [], []
-                    for i, di in enumerate(self.detectors[::-1]):
-                        if di.kind != ATONA:
-                            nsignals.append(signals[i])
-                            keys.append(di.name)
-                    signals = nsignals
-                else:
-                    self._triggered = False
+                    # copy to collection time
+                    collection_time.replace(hour=ct.hour, minute=ct.minute, second=ct.second,
+                                            microsecond=ct.microsecond)
+                    signals = [float(i) for i in args[5:]]
 
-                    # break
+                    if line.startswith(targeta):
+                        nsignals, keys = [], []
+                        for i, di in enumerate(self.detectors[::-1]):
+                            if di.kind == 'CDD':
+                                nsignals.append(signals[i])
+                                keys.append(di.name)
+                        signals = nsignals
+                        break
+
+                    elif line.startswith(targetb):
+                        self._triggered = False
+
+                        break
 
         #self.microcontroller.lock.release()
         if len(signals) != len(keys):
