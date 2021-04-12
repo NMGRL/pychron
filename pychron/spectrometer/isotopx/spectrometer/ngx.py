@@ -144,6 +144,9 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
 
     def read_intensities(self, timeout=60, trigger=False, target='ACQ.B', verbose=False):
         self._read_enabled = True
+
+        verbose = True
+
         if verbose:
             self.debug('read intensities')
         resp = True
@@ -166,40 +169,46 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         target = '#EVENT:{},{}'.format(target, self.rcs_id)
         if resp is not None:
             keys = self.detector_names[::-1]
-            while 1:
-                line = self.readline()
-                if line is None:
-                    break
+            # while 1:
+            line = self.readline()
+            # if line is None:
+            #     break
 
-                if verbose:
-                    self.debug('raw: {}'.format(line))
+            if verbose:
+                self.debug('raw: {}'.format(line))
 
-                if line:
-                    args = line[:-1].split(',')
-                    ct = datetime.strptime(args[4], '%H:%M:%S.%f')
+            if line:
+                args = line[:-1].split(',')
+                ct = datetime.strptime(args[4], '%H:%M:%S.%f')
 
-                    collection_time = datetime.now()
+                collection_time = datetime.now()
 
-                    # copy to collection time
-                    collection_time.replace(hour=ct.hour, minute=ct.minute, second=ct.second,
-                                            microsecond=ct.microsecond)
-                    signals = [float(i) for i in args[5:]]
+                # copy to collection time
+                collection_time.replace(hour=ct.hour, minute=ct.minute, second=ct.second,
+                                        microsecond=ct.microsecond)
+                signals = [float(i) for i in args[5:]]
 
-                    if not line.startswith(target):
-                        nsignals, keys = [], []
-                        for i, di in enumerate(self.detectors[::-1]):
-                            if di.kind != ATONA:
-                                nsignals.append(signals[i])
-                                keys.append(di.name)
-                        signals = nsignals
-                    else:
-                        self._triggered = False
+                if not line.startswith(target):
+                    nsignals, keys = [], []
+                    for i, di in enumerate(self.detectors[::-1]):
+                        if di.kind != ATONA:
+                            nsignals.append(signals[i])
+                            keys.append(di.name)
+                    signals = nsignals
+                else:
+                    self._triggered = False
 
-                    break
+                    # break
 
         # self.microcontroller.lock.release()
         if len(signals) != len(keys):
             keys, signals = [], []
+
+        if verbose:
+            self.debug('collection time: {}'.format(collection_time))
+            self.debug('keys: {}'.format(keys))
+            self.debug('signals: {}'.format(signals))
+
         return keys, signals, collection_time
 
     def read_integration_time(self):
