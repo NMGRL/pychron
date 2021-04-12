@@ -96,7 +96,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         return 0.95
         # return self.integration_time * 0.95
 
-    def trigger_acq(self, verbose=False):
+    def trigger_acq(self, verbose=True):
         # self.debug('trigger acquie {}'.format(self.microcontroller.lock))
         # locking the microcontroller not necessary and detrimental when doing long integration times
         # other commands can be executed when waiting 10-20 sec integration period.
@@ -109,10 +109,16 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         # while self.microcontroller.lock.locked():
         #    time.sleep(0.25)
 
+#<<<<<<< Updated upstream
         if not self._triggered:
             self.ask('StopAcq', verbose=verbose)
             # return self.ask('StartAcq 1,{}'.format(self.rcs_id), verbose=verbose)
             return self.ask('StartAcq {},{}'.format(int(self.integration_time), self.rcs_id))
+#=======
+#        self.ask('StopAcq', verbose=verbose)
+#        # return self.ask('StartAcq 1,{}'.format(self.rcs_id), verbose=verbose)
+#        return self.ask('StartAcq {},{}'.format(int(self.integration_time), #self.rcs_id), verbose=verbose)
+#>>>>>>> Stashed changes
 
     def readline(self, verbose=False):
         if verbose:
@@ -125,15 +131,17 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                     self.debug('readline timeout')
                 return
 
-            if not self._read_enabled:
+            if not self._read_enabled or self.microcontroller.canceled:
+                self.microcontroller.canceled=False
                 self.debug('readline canceled')
                 return
 
             try:
-                ds += self.read(16)
+                ds += self.read(2)
             except BaseException:
-                self.debug_exception()
-                self.debug(f'data left: {ds}')
+                if not self.microcontroller.canceled:
+                    self.debug_exception()
+                    self.debug(f'data left: {ds}')
 
             if ds.endswith('\r\n'):
                 return ds.strip()
@@ -143,6 +151,8 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         self._read_enabled = False
 
     def read_intensities(self, timeout=60, trigger=False, target='ACQ.B', verbose=False):
+        #self.microcontroller.lock.acquire()
+        #verbose=True
         self._read_enabled = True
 
         verbose = True
@@ -152,6 +162,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         resp = True
         if trigger:
             resp = self.trigger_acq()
+            #self.microcontroller.lock.release()
             if resp is not None:
                 # if verbose:
                 #     self.debug(f'waiting {self.integration_time * 0.95} before trying to get data')
@@ -163,8 +174,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         keys = []
         signals = []
         collection_time = None
-
-        # self.microcontroller.lock.acquire()
+        
         # self.debug(f'acquired mcir lock {self.microcontroller.lock}')
         target = '#EVENT:{},{}'.format(target, self.rcs_id)
         if resp is not None:
@@ -200,7 +210,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
 
                     # break
 
-        # self.microcontroller.lock.release()
+        #self.microcontroller.lock.release()
         if len(signals) != len(keys):
             keys, signals = [], []
 
