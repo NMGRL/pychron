@@ -2103,7 +2103,7 @@ anaylsis_type={}
         self._intensities = {}
         while 1:
             try:
-                k, s, t = spec.get_intensities(tagged=True, trigger=False)
+                k, s, t, inc = spec.get_intensities(tagged=True, trigger=False)
             except NoIntensityChange:
                 self.warning('Canceling Run. Intensity from mass spectrometer not changing')
 
@@ -2144,7 +2144,7 @@ anaylsis_type={}
                 self._intensities['tags'] = k
                 self._intensities['signals'] = s
 
-                yield k, s, t
+                yield k, s, t, inc
 
         # return gen()
 
@@ -2258,7 +2258,7 @@ anaylsis_type={}
             m.trait_set(trigger=self.spectrometer_manager.spectrometer.trigger_acq)
 
         if self.plot_panel:
-            self.plot_panel.integration_time = period
+            self.plot_panel.integration_time = self._integration_seconds
             self.plot_panel.set_ncounts(ncounts)
 
             if grpname == 'sniff':

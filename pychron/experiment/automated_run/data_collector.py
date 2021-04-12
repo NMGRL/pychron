@@ -163,11 +163,13 @@ class DataCollector(Consoleable):
 
                 evt.wait(period)
                 self.automated_run.plot_panel.counts = i
-                if not self._iter_hook(i):
+                inc = self._iter_hook(i)
+                if inc is None:
                     break
 
                 self._post_iter_hook(i)
-                i += 1
+                if inc:
+                    i += 1
             else:
                 if result == 'cancel':
                     self.canceled = True
@@ -187,7 +189,7 @@ class DataCollector(Consoleable):
     def _post_iter_hook(self, i):
         if self.experiment_type == AR_AR and self.refresh_age and not i % 5:
             self.isotope_group.calculate_age(force=True)
-
+            
     def _pre_trigger_hook(self):
         return True
 
@@ -197,11 +199,10 @@ class DataCollector(Consoleable):
     def _iteration(self, i, detectors=None):
         try:
             data = self._get_data(detectors)
-            
             if not data:
                 return
 
-            k, s, t = data
+            k, s, t, inc = data
         except (AttributeError, TypeError, ValueError) as e:
             self.debug('failed getting data {}'.format(e))
             return
@@ -211,7 +212,7 @@ class DataCollector(Consoleable):
             self._save_data(x, k, s)
             self._plot_data(i, x, k, s)
 
-        return True
+        return inc
 
     def _get_time(self, t):
         if t is None:
@@ -233,9 +234,8 @@ class DataCollector(Consoleable):
         except StopIteration:
             self.debug('data generator stopped')
             return
-
         if data:
-            keys, signals, ct = data
+            keys, signals, ct, inc = data
             if detectors:
                 # data = list(zip(*(d for d in zip(*data) if d[0] in detectors)))
                 nkeys, nsignals = [], []
@@ -244,7 +244,7 @@ class DataCollector(Consoleable):
                         nkeys.append(k)
                         nsignals.append(s)
 
-                data = (nkeys, nsignals, ct)
+                data = (nkeys, nsignals, ct, inc)
                 self._data = (nkeys, nsignals)
             else:
                 self._data = (keys, signals)

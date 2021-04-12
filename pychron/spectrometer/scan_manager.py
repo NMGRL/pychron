@@ -90,7 +90,7 @@ class ScanManager(StreamGraphManager):
     _suppress_isotope_change = False
 
     settings_name = 'scan_settings'
-
+    _active = False
     def _bind_listeners(self, remove=False):
         self.on_trait_change(self._update_magnet, 'magnet:dac_changed',
                              remove=remove)
@@ -98,6 +98,7 @@ class ScanManager(StreamGraphManager):
                              remove=remove)
 
     def prepare_destroy(self):
+        self._active=False
         self.stop_scan()
         self.log_events_enabled = False
         self._bind_listeners(remove=True)
@@ -132,6 +133,7 @@ class ScanManager(StreamGraphManager):
         # del self.graph_scan_width
 
     def activate(self):
+        self._active = True
         self.bind_preferences()
 
         self.load_event_marker_config()

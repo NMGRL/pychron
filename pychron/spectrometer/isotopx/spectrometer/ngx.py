@@ -28,6 +28,7 @@ from pychron.spectrometer.isotopx import SOURCE_CONTROL_PARAMETERS, IsotopxMixin
 from pychron.spectrometer.isotopx.detector.ngx import NGXDetector
 from pychron.spectrometer.isotopx.magnet.ngx import NGXMagnet
 from pychron.spectrometer.isotopx.source.ngx import NGXSource
+from pychron.core.codetools.inspection import caller
 
 
 class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
@@ -84,7 +85,10 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
 
     def _send_configuration(self, **kw):
         pass
-
+    
+    def _check_intensity_no_change(self, signals):
+        return 
+    
     def get_update_period(self, it=None, is_scan=False):
         """
         acquisition period is always set to 1s so update period always needs to be <1s
@@ -134,27 +138,33 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                     self.debug('readline timeout')
                 return
 
-            if not self._read_enabled or self.microcontroller.canceled:
-                self.microcontroller.canceled=False
-                self.debug('readline canceled')
-                return
+            #if not self._read_enabled or self.microcontroller.canceled:
+             #   self.microcontroller.canceled=False
+             #   self.debug('readline canceled')
+             #   return
 
             try:
                 ds += self.read(2)
+                #print('ds', ds)
+                #time.sleep(0.0001)
             except BaseException:
                 if not self.microcontroller.canceled:
                     self.debug_exception()
                     self.debug(f'data left: {ds}')
-
-            if ds.endswith('\r\n'):
-                return ds.strip()
+                    
+            if '#\r\n' in ds:
+                
+                ds = ds.split('#\r\n')[0]
+                return ds
+            #if ds.endswith('\r\n'):
+            #    return ds.strip()
 
     def cancel(self):
         self.debug('canceling')
         self._read_enabled = False
-
+    
     def read_intensities(self, timeout=60, trigger=False, target='ACQ.B', verbose=False):
-        #self.microcontroller.lock.acquire()
+        self.microcontroller.lock.acquire()
         #verbose=True
         self._read_enabled = True
 
@@ -177,47 +187,52 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         keys = []
         signals = []
         collection_time = None
-        
+        inc = False
         # self.debug(f'acquired mcir lock {self.microcontroller.lock}')
         targetb = '#EVENT:ACQ.B,{}'.format(self.rcs_id)
         targeta = '#EVENT:ACQ,{}'.format(self.rcs_id)
         if resp is not None:
             keys = self.detector_names[::-1]
-            while 1:
-                line = self.readline()
-                # if line is None:
-                #     break
-
+            while self._read_enabled:
+                line = self.readline(verbose=True)
+                
                 if verbose:
                     self.debug('raw: {}'.format(line))
+                
+                if line is None:
+                    break
 
                 if line and (line.startswith(targeta) or line.startswith(targetb)):
+                    try:
+                        args = line[:-1].split(',')
 
-                    args = line[:-1].split(',')
-                    ct = datetime.strptime(args[4], '%H:%M:%S.%f')
+                        ct = datetime.strptime(args[4], '%H:%M:%S.%f')
 
-                    collection_time = datetime.now()
+                        collection_time = datetime.now()
 
-                    # copy to collection time
-                    collection_time.replace(hour=ct.hour, minute=ct.minute, second=ct.second,
-                                            microsecond=ct.microsecond)
-                    signals = [float(i) for i in args[5:]]
+                        # copy to collection time
+                        collection_time.replace(hour=ct.hour, minute=ct.minute, second=ct.second,
+                                                microsecond=ct.microsecond)
+                        signals = [float(i) for i in args[5:]]
 
-                    if line.startswith(targeta):
-                        nsignals, keys = [], []
-                        for i, di in enumerate(self.detectors[::-1]):
-                            if di.kind == 'CDD':
-                                nsignals.append(signals[i])
-                                keys.append(di.name)
-                        signals = nsignals
-                        break
+                        if line.startswith(targeta):
+                            nsignals, keys = [], []
+                            for i, di in enumerate(self.detectors[::-1]):
+                                if di.kind == 'CDD':
+                                    nsignals.append(signals[i])
+                                    keys.append(di.name)
+                            signals = nsignals
+                            break
 
-                    elif line.startswith(targetb):
-                        self._triggered = False
+                        elif line.startswith(targetb):
+                            self._triggered = False
+                            inc = True
 
-                        break
+                            break
+                    except BaseException as e:
+                        self.debug('read intensities errror={}'.format(e))
 
-        #self.microcontroller.lock.release()
+        self.microcontroller.lock.release()
         if len(signals) != len(keys):
             keys, signals = [], []
 
@@ -226,7 +241,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
             self.debug('keys: {}'.format(keys))
             self.debug('signals: {}'.format(signals))
 
-        return keys, signals, collection_time
+        return keys, signals, collection_time, inc
 
     def read_integration_time(self):
         return self.integration_time
@@ -239,7 +254,10 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         :return: float, integration time
         """
         self.debug('acquisition period set to 1 second.  integration time set to {}'.format(it))
+        self.ask('StopAcq')
         self.ask('SetAcqPeriod 1000')
+        self._read_enabled=False
+        self._triggered=False
         self.integration_time = it
 
         # if self.integration_time != it or force:

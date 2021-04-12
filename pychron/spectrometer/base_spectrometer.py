@@ -596,7 +596,7 @@ class BaseSpectrometer(SpectrometerDevice):
         keys = []
         signals = []
         if self.microcontroller and not self.microcontroller.simulation:
-            keys, signals, t = self.read_intensities(trigger=trigger, **kw)
+            keys, signals, t, inc = self.read_intensities(trigger=trigger, **kw)
 
         if not keys and globalv.communication_simulation:
             keys, signals, t = self._get_simulation_data()
@@ -611,7 +611,7 @@ class BaseSpectrometer(SpectrometerDevice):
             det.set_intensity(v)
             gsignals.append(v * det.software_gain)
 
-        return keys, array(gsignals), t
+        return keys, array(gsignals), t, inc
 
     def _check_intensity_no_change(self, signals):
         if self.simulation:
@@ -657,7 +657,7 @@ class BaseSpectrometer(SpectrometerDevice):
 
         """
         try:
-            keys, signals, t = self.get_intensities()
+            keys, signals, t, inc = self.get_intensities()
         except ValueError:
             self.debug('failed getting intensities')
             self.debug_exception()
