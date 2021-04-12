@@ -133,9 +133,9 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         st = time.time()
         ds = ''
         while 1:
-            if time.time() - st > (1.25 * self.integration_time):
+            if time.time() - st > 3: #(1.25 * self.integration_time):
                 if verbose:
-                    self.debug('readline timeout')
+                    self.debug('readline timeout. raw={}'.format(ds))
                 return
 
             #if not self._read_enabled or self.microcontroller.canceled:
@@ -144,7 +144,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
              #   return
 
             try:
-                ds += self.read(2)
+                ds += self.read(1)
                 #print('ds', ds)
                 #time.sleep(0.0001)
             except BaseException:
@@ -164,7 +164,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         self._read_enabled = False
     
     def read_intensities(self, timeout=60, trigger=False, target='ACQ.B', verbose=False):
-        self.microcontroller.lock.acquire()
+        #self.microcontroller.lock.acquire()
         #verbose=True
         self._read_enabled = True
 
@@ -194,7 +194,8 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         if resp is not None:
             keys = self.detector_names[::-1]
             while self._read_enabled:
-                line = self.readline(verbose=True)
+                with self.microcontroller.lock:
+                    line = self.readline(verbose=True)
                 
                 if verbose:
                     self.debug('raw: {}'.format(line))
@@ -232,7 +233,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                     except BaseException as e:
                         self.debug('read intensities errror={}'.format(e))
 
-        self.microcontroller.lock.release()
+        #self.microcontroller.lock.release()
         if len(signals) != len(keys):
             keys, signals = [], []
 

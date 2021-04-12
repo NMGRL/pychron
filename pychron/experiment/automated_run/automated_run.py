@@ -2134,7 +2134,7 @@ anaylsis_type={}
                     self.cancel_run(state='failed')
                     yield None
                 else:
-                    yield None, None, None
+                    yield None, None, None, False
             else:
                 # reset the counter
                 cnt = 0
