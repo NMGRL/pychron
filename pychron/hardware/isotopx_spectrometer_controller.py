@@ -32,6 +32,7 @@ class NGXController(CoreDevice):
     password = Str('')
     lock = None
     canceled = False
+    triggered = False
     
     def ask(self, cmd, *args, **kw):
         resp = super(NGXController, self).ask(cmd, *args, **kw)

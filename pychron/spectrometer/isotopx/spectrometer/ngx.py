@@ -114,9 +114,9 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         #    time.sleep(0.25)
 
 #<<<<<<< Updated upstream
-        if not self._triggered:
+        if not self.microcontroller.triggered:
             self.ask('StopAcq', verbose=verbose)
-            self._triggered = True
+            self.microcontroller.triggered = True
             # return self.ask('StartAcq 1,{}'.format(self.rcs_id), verbose=verbose)
             return self.ask('StartAcq {},{}'.format(int(self.integration_time), self.rcs_id))
         return True
@@ -171,7 +171,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         verbose = True
 
         if verbose:
-            self.debug('read intensities trigger={} triggered={}'.format(trigger, self._triggered))
+            self.debug('read intensities trigger={} triggered={}'.format(trigger, self.microcontroller.triggered))
         resp = True
         if trigger:
             resp = self.trigger_acq()
@@ -226,7 +226,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                             break
 
                         elif line.startswith(targetb):
-                            self._triggered = False
+                            self.microcontroller.triggered = False
                             inc = True
 
                             break
@@ -258,7 +258,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         self.ask('StopAcq')
         self.ask('SetAcqPeriod 1000')
         self._read_enabled=False
-        self._triggered=False
+        self.microcontroller.triggered=False
         self.integration_time = it
 
         # if self.integration_time != it or force:

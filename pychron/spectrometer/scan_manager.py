@@ -325,7 +325,7 @@ class ScanManager(StreamGraphManager):
     #     self._prev_signals = signals
 
     def _update(self, data):
-        keys, signals, _ = data
+        keys, signals, _, _ = data
         if keys:
             self._signal_failed_cnt = 0
             # if self._check_intensity_no_change(signals):
