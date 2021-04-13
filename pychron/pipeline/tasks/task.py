@@ -43,7 +43,7 @@ from pychron.pipeline.tasks.actions import RunAction, ResumeAction, ResetAction,
     ConfigureRecallAction, TagAction, SetInterpretedAgeAction, ClearAction, SavePDFAction, SetInvalidAction, \
     SetFilteringTagAction, \
     EditAnalysisAction, RunFromAction, PipelineRecallAction, LoadReviewStatusAction, DiffViewAction, SaveTableAction, \
-    PrintFigureAction
+    PrintFigureAction, PlayVideoAction
 from pychron.pipeline.tasks.interpreted_age_factory import set_interpreted_age
 from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane, RepositoryPane, EditorOptionsPane
 from pychron.pychron_constants import PLATEAU, ISOCHRON, WEIGHTED_MEAN, MSEM
@@ -60,6 +60,7 @@ class PipelineTask(BaseBrowserTask):
 
     tool_bars = [SToolBar(PipelineRecallAction(),
                           ConfigureRecallAction(),
+                          PlayVideoAction(),
                           name='Recall'
                           ),
                  SToolBar(RunAction(),
@@ -689,6 +690,11 @@ class PipelineTask(BaseBrowserTask):
     def _handle_recall(self, new):
         if not isinstance(new, DVCInterpretedAge):
             self.recall(new, use_quick=False)
+
+    @on_trait_change('engine:play_analysis_video_needed')
+    def _handle_video(self, new):
+        if not isinstance(new, DVCInterpretedAge):
+            self.play_analysis_video(new)
 
     def _prompt_for_save(self):
         if globalv.ignore_shareable:

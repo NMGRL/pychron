@@ -242,6 +242,7 @@ class PipelineEngine(Loggable):
     dclicked_references = Event
 
     recall_analyses_needed = Event
+    play_analysis_video_needed = Event
     reset_event = Event
 
     state = Instance(EngineState)
@@ -324,6 +325,11 @@ class PipelineEngine(Loggable):
             i.temp_status = 'ok' if i.temp_status == 'omit' else 'omit'
             if hasattr(self.selected, 'editor') and self.selected.editor:
                 self.selected.editor.refresh_needed = True
+
+    def play_analysis_video(self):
+        self.debug('play analysis video')
+        self.play_analysis_video_needed = self.selected_unknowns
+
 
     def recall_unknowns(self):
         self.debug('recall unks')

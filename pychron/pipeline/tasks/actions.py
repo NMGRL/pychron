@@ -90,6 +90,10 @@ class ConfigureRecallAction(UITaskAction):
     image = icon('cog')
 
 
+class PlayVideoAction(UITaskAction):
+    name = 'Video'
+    method = 'play_analysis_video'
+    # image = icon('cog')
 # class ConfigureAnalysesTableAction(TaskAction):
 #     name = 'Configure Analyses Table'
 #     dname = 'Configure Analyses Table'

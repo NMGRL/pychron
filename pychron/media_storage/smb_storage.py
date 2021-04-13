@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
 import os
 import socket
 
@@ -26,7 +24,6 @@ from traits.api import Str
 
 from pychron.media_storage.storage import RemoteStorage
 from pychron.paths import paths
-import six
 
 
 def cache_path(src):
@@ -57,7 +54,7 @@ class SMBStorage(RemoteStorage):
 
         src = ':'.join(src.split(':')[2:])
 
-        if isinstance(dest, (str, six.text_type)):
+        if isinstance(dest, str):
             dest = open(dest, 'wb')
 
         self._get_file(src, dest, use_cache)
@@ -69,7 +66,7 @@ class SMBStorage(RemoteStorage):
             if os.path.basename(dest) != dest:
                 self._r_mkdir(os.path.dirname(dest), conn)
 
-            if not isinstance(src, (str, six.text_type)):
+            if not isinstance(src, str):
                 conn.storeFile(self.service_name, dest, src)
             else:
                 with open(src, 'rb') as rfile:

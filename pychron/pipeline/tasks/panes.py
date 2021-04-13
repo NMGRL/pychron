@@ -431,6 +431,7 @@ class UnknownsAdapter(BaseAnalysesAdapter):
                            Action(name='Save Analysis Group', action='save_analysis_group'),
                            Action(name='Toggle Status', action='unknowns_toggle_status'),
                            Action(name='Configure', action='configure_unknowns'),
+                           Action(name='Play Video...', action='play_analysis_video'),
                            grp)
 
     def _get_f_text(self):
@@ -541,6 +542,10 @@ class AnalysesPaneHandler(Handler):
     def save_analysis_group(self, info, obj):
         obj = info.ui.context['object']
         obj.save_analysis_group()
+
+    def play_analysis_video(self, info, obj):
+        obj = info.ui.context['object']
+        obj.play_analysis_video()
 
     def recall_unknowns(self, info, obj):
         obj = info.ui.context['object']

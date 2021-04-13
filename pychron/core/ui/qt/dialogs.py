@@ -36,11 +36,20 @@ from pychron.core.ui.gui import invoke_in_main_thread
 
 
 class PrinterDialog(Dialog):
+    printer = None
+
+    def is_landscape(self):
+        layout = self.printer.pageLayout()
+        return bool(layout.orientation())
+
+    def pagesize(self):
+        r = self.printer.pageRect()
+        return r.width(), r.height()
+
     def print_enabled(self):
         return self.return_code == 10
 
     def open(self):
-        print('ppen')
         super(PrinterDialog, self).open()
         return self.print_enabled()
 

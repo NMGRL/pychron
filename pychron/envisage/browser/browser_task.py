@@ -15,13 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Any, on_trait_change, Date, Time, Instance, Bool
+import os
+
+from apptools.preferences.preference_binding import bind_preference
+from traits.api import Any, on_trait_change, Date, Time, Instance, Bool, Str
 
 from pychron.envisage.browser.interpreted_age_recall_editor import InterpretedAgeRecallEditor
 from pychron.envisage.browser.recall_editor import RecallEditor
 from pychron.envisage.browser.recall_table_configurer import RecallTableConfigurer
 from pychron.envisage.tasks.editor_task import BaseEditorTask
 from pychron.envisage.view_util import open_view
+from pychron.paths import paths
 from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter, IntermediateTabularAdapter
 from pychron.processing.analyses.view.edit_analysis_view import AnalysisEditView
 
@@ -47,6 +51,14 @@ def unique_list(seq):
     return [x for x in seq if not (x.name in seen or seen_add(x.name))]
 
 
+def listify(records):
+    if not isinstance(records, (list, tuple)):
+        records = [records]
+    elif isinstance(records, tuple):
+        records = list(records)
+    return records
+
+
 class BaseBrowserTask(BaseEditorTask):
     default_task_name = 'Recall'
     browser_model = Instance('pychron.envisage.browser.base_browser_model.BaseBrowserModel')
@@ -67,12 +79,15 @@ class BaseBrowserTask(BaseEditorTask):
     browser_pane = Any
     diff_enabled = Bool
 
+    mounted_media_root = Str
+
     _activated = False
     _top_level_filter = None
     _append_replace_analyses_enabled = True
 
     def __init__(self, *args, **kw):
         super(BaseBrowserTask, self).__init__(*args, **kw)
+        bind_preference(self, 'mounted_media_root', 'pychron.browser.mounted_media_root')
 
     def prepare_destroy(self):
         if self.browser_model:
@@ -105,6 +120,54 @@ class BaseBrowserTask(BaseEditorTask):
             e.control = info.control
             editor.edit_view = e
 
+    def play_analysis_video(self, records=None):
+        try:
+            from pychron.image.video_player import VideoPlayer
+        except ImportError:
+            self.warning_dialog('Failed setting up VideoPlayer. Please verify python-vlc is installed')
+            return
+
+        if records is None:
+            if not self.has_active_editor(klass=RecallEditor):
+                return
+            r = self.active_editor.analysis
+
+        else:
+            records = listify(records)
+            r = records[0]
+
+        # find video
+        rid = r.record_id
+        load = r.load_name
+        subdirname = 'FusionsCO2'
+        name = '{}-001.avi'.format(rid)
+        lp = os.path.join(paths.video_dir, name)
+        if not os.path.isfile(lp):
+            # check our mounted media directory
+            d = self.mounted_media_root
+            if d and os.path.isdir(d):
+                mp = os.path.join(d, subdirname, load, name)
+                if os.path.isfile(mp):
+                    lp = mp
+
+            if not os.path.isfile(lp):
+                # use MediaStorage to grab data
+                msm = self.application.get_service('pychron.media_storage.manager.MediaStorageManager')
+                if not msm:
+                    self.warning_dialog('Media Storage Plugin is required. Please enable and try again')
+                    return
+
+                rp = os.path.join(subdirname, load, name)
+                self.debug('looking for path={}'.format(rp))
+                if msm.exists(rp):
+                    msm.get(rp, lp)
+
+        if os.path.isfile(lp):
+            vp = VideoPlayer(video_path=lp, title=name)
+            vp.edit_traits()
+        else:
+            self.information_dialog('No Video available for {}'.format(rid))
+
     def recall(self, records, open_copy=False, use_quick=True):
         """
             if analysis is already open activate the editor
@@ -112,10 +175,7 @@ class BaseBrowserTask(BaseEditorTask):
 
             if open_copy is True, allow multiple instances of the same analysis
         """
-        if not isinstance(records, (list, tuple)):
-            records = [records]
-        elif isinstance(records, tuple):
-            records = list(records)
+        records = listify(records)
 
         for ri in records:
             try:

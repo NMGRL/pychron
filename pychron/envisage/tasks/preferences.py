@@ -98,6 +98,7 @@ class BrowserPreferences(BasePreferencesHelper):
     reference_hours_padding = Float
     auto_load_database = Bool
     load_selection_enabled = Bool
+    mounted_media_root = Directory
 
     max_history = Int
     unknown_color = Color
@@ -141,6 +142,7 @@ class BrowserPreferencesPane(PreferencesPane):
                  Item('one_selected_is_all', tooltip='If enabled and only one analysis is selected pychron assumes '
                                                      'you actually want the entire dataset'),
                  Item('auto_scroll_kind', label='AutoScroll'),
+                 Item('mounted_media_root', label='Mounted Media'),
                  acgrp, load_grp)
         return v
 
