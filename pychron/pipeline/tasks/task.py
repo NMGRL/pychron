@@ -31,6 +31,7 @@ from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.envisage.browser.recall_editor import RecallEditor
 from pychron.envisage.browser.view import InterpretedAgeBrowserView
 from pychron.globals import globalv
+from pychron.options.options_manager import options_load_json
 from pychron.paths import paths
 from pychron.pipeline.engine import PipelineEngine, Pipeline, NodeGroup
 from pychron.pipeline.nodes.figure import FigureNode
@@ -385,6 +386,27 @@ class PipelineTask(BaseBrowserTask):
         self.engine.save_pipeline_template()
 
     # action handlers
+    def import_options(self):
+        p = self.open_file_dialog(default_directory=os.path.join(paths.home, 'Desktop'),
+                                  wildcard_args=('JSON', '*.json'))
+        if p and os.path.isfile(p):
+            try:
+                obj = options_load_json(p)
+            except BaseException as e:
+                self.debug('invalid options json file. {}'.format(e))
+                self.information_dialog('Failed adding {}'.format(p))
+                return
+
+            if obj.manager_id:
+                op = os.path.join(paths.plotter_options_dir, globalv.username, obj.manager_id,
+                                  '{}.json'.format(obj.name))
+                self.debug('dumping to {}'.format(op))
+                with open(op, 'w') as wfile:
+                    obj.dump(wfile)
+                self.information_dialog('Options {} added successfully'.format(obj.name))
+            else:
+                self.information_dialog('Failed adding {}. Manager ID missing from file'.format(p))
+
     def edit_runid(self):
         self._set_action_template('Edit RunID')
 

@@ -35,7 +35,7 @@ class AnalysisRegressionInspectorTool(RegressionInspectorTool):
 
         ef = errorfmt(a, an.age_err)
         ef_wo_j = errorfmt(a, an.age_err_wo_j)
-        lines.insert(0, 'Age={:0.4f} {}{} w/o_J={}'.format(a, PLUSMINUS, ef, ef_wo_j))
+        lines.insert(0, 'Date={:0.4f} {}{} w/o_J={}'.format(a, PLUSMINUS, ef, ef_wo_j))
         return lines
 
 

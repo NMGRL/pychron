@@ -310,6 +310,10 @@ class MassSpecReducedAction(PipelineAction):
     action = 'mass_spec_reduced_transfer'
 
 
+class ImportOptionsActions(PipelineAction):
+    name = 'Import Options...'
+    action = 'import_options'
+
 # ============= Quick Series ====================================
 # class LastNAnalysesSeriesAction(PipelineAction):
 #     name = 'Last N...'
@@ -380,7 +384,7 @@ class SaveFigureAction(FigureAction):
 class PrintFigureAction(FigureAction):
     name = 'Print'
     method = 'print_figure'
-    image = icon('print')
+    image = icon('printer')
 
 
 class SaveTableAction(TaskAction):

@@ -269,7 +269,7 @@ class BaseOptions(HasTraits):
     fontname = Enum(*FONTS)
     _main_options_klass = MainOptions
     subview_names = List(transient=True)
-
+    manager_id = Str
     _subview_cache = None
 
     def dump(self, wfile):

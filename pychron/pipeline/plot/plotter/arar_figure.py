@@ -112,6 +112,7 @@ class BaseArArFigure(SelectionFigure):
         if not title:
             title = self.options.title
 
+        nplots = len(plots)
         for i, po in enumerate(plots):
             kw = {'ytitle': po.name}
             if plot_dict:
@@ -120,7 +121,11 @@ class BaseArArFigure(SelectionFigure):
             if po.height:
                 kw['bounds'] = [50, po.height]
 
-            if i == (len(plots) - 1):
+            if self.options.layout.fixed_width:
+                kw['bounds'] = [self.options.layout.fixed_width, kw['bounds'][1]]
+                kw['resizable'] = ''
+
+            if i == nplots-1:
                 kw['title'] = title
 
             if i == 0 and self.ytitle:

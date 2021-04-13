@@ -243,9 +243,26 @@ class BaseOptionsManager(Loggable):
             if v not in self.names:
                 return v
 
-    @property
-    def persistence_root(self):
-        return os.path.join(paths.appdata_dir, globalv.username, self.id)
+    @classmethod
+    def persistence_root(cls):
+        return os.path.join(paths.appdata_dir, globalv.username, cls.id)
+
+
+def options_load_json(p):
+    with open(p, 'r') as rfile:
+        try:
+            j = json.load(rfile)
+        except json.JSONDecodeError:
+            return
+
+    klass = j.get('klass')
+    if klass is None:
+        return
+
+    cls = importklass(klass)
+    obj = cls()
+    obj.load(j)
+    return obj
 
 
 class OptionsManager(BaseOptionsManager):
@@ -366,22 +383,6 @@ class OptionsManager(BaseOptionsManager):
         # with open(p, 'wb') as wfile:
         #     spickle.dump(obj, wfile)
 
-    def _load_json(self, p):
-        with open(p, 'r') as rfile:
-            try:
-                j = json.load(rfile)
-            except json.JSONDecodeError:
-                return
-
-        klass = j.get('klass')
-        if klass is None:
-            return
-
-        cls = importklass(klass)
-        obj = cls()
-        obj.load(j)
-        return obj
-
     def _selected_changed(self, new):
         if new:
             obj = None
@@ -389,7 +390,8 @@ class OptionsManager(BaseOptionsManager):
 
             yp = self._pname(name, '.json')
             if os.path.isfile(yp):
-                obj = self._load_json(yp)
+                obj = options_load_json(yp)
+                obj.manager_id = self.id
                 if obj:
                     p = self._pname(name)
                     if os.path.isfile(p):
