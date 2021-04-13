@@ -81,6 +81,8 @@ class AuxPlot(HasTraits):
     calculated_ymax = Any(transient=True)
     calculated_ymin = Any(transient=True)
 
+    use_integer_ticks = False
+
     def to_dict(self):
         keys = [k for k in self.traits(transient=False)]
         return {key: getattr(self, key) for key in keys}
