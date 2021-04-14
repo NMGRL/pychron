@@ -582,7 +582,7 @@ class BaseSpectrometer(SpectrometerDevice):
                                kind=kind,
                                ypadding=ypadding)
 
-    def get_intensities(self, tagged=True, trigger=False, **kw):
+    def get_intensities(self, tagged=True, trigger=False, integrated_intensity=False, **kw):
         """
         keys, list of strings
         signals, list of floats::
@@ -596,7 +596,13 @@ class BaseSpectrometer(SpectrometerDevice):
         keys = []
         signals = []
         if self.microcontroller and not self.microcontroller.simulation:
-            keys, signals, t, inc = self.read_intensities(trigger=trigger, **kw)
+            while 1:
+                keys, signals, t, inc = self.read_intensities(trigger=trigger, **kw)
+                if integrated_intensity:
+                    if inc:
+                        break
+                else:
+                    break
 
         if not keys and globalv.communication_simulation:
             keys, signals, t = self._get_simulation_data()
@@ -651,13 +657,13 @@ class BaseSpectrometer(SpectrometerDevice):
         import time
         time.sleep(self.integration_time)
 
-    def get_intensity(self, dkeys, **kw):
+    def get_intensity(self, dkeys, integrated_intensity=True, **kw):
         """
             dkeys: str or tuple of strs
 
         """
         try:
-            keys, signals, t, inc = self.get_intensities()
+            keys, signals, t, inc = self.get_intensities(integrated_intensity=integrated_intensity)
         except ValueError:
             self.debug('failed getting intensities')
             self.debug_exception()

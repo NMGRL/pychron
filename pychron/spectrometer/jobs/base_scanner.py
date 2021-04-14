@@ -110,11 +110,8 @@ class BaseScanner(PersistenceLoggable):
             if i == 0:
                 time.sleep(3)
             
-            while 1:
-                ks, ss, t, inc = spec.get_intensities()
-                if inc:
-                    break
-                    
+            ks, ss, t, inc = spec.get_intensities(integrated_intensity=True)
+
             refsig = refdet.intensity
             refk = '{}y{}'.format(refdet, self.plotid)
             rys = plot.data.get_data(refk)
