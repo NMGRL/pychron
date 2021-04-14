@@ -113,7 +113,6 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         # while self.microcontroller.lock.locked():
         #    time.sleep(0.25)
 
-#<<<<<<< Updated upstream
         if not self.microcontroller.triggered:
             self.ask('StopAcq', verbose=verbose)
             self.microcontroller.triggered = True
@@ -121,12 +120,6 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
             return self.ask('StartAcq {},{}'.format(int(self.integration_time), self.rcs_id))
         return True
     
-#=======
-#        self.ask('StopAcq', verbose=verbose)
-#        # return self.ask('StartAcq 1,{}'.format(self.rcs_id), verbose=verbose)
-#        return self.ask('StartAcq {},{}'.format(int(self.integration_time), #self.rcs_id), verbose=verbose)
-#>>>>>>> Stashed changes
-
     def readline(self, verbose=False):
         if verbose:
             self.debug('readline')
@@ -138,15 +131,13 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                     self.debug('readline timeout. raw={}'.format(ds))
                 return
 
-            #if not self._read_enabled or self.microcontroller.canceled:
-             #   self.microcontroller.canceled=False
-             #   self.debug('readline canceled')
-             #   return
+            if not self._read_enabled or self.microcontroller.canceled:
+                self.microcontroller.canceled=False
+                self.debug('readline canceled')
+                return
 
             try:
                 ds += self.read(1)
-                #print('ds', ds)
-                #time.sleep(0.0001)
             except BaseException:
                 if not self.microcontroller.canceled:
                     self.debug_exception()
@@ -156,8 +147,6 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                 
                 ds = ds.split('#\r\n')[0]
                 return ds
-            #if ds.endswith('\r\n'):
-            #    return ds.strip()
 
     def cancel(self):
         self.debug('canceling')
