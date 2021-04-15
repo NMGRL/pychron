@@ -194,7 +194,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
 
                 if line and (line.startswith(targeta) or line.startswith(targetb)):
                     try:
-                        args = line[:-1].split(',')
+                        args = line.split(',')
 
                         ct = datetime.strptime(args[4], '%H:%M:%S.%f')
 
@@ -203,7 +203,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                         # copy to collection time
                         collection_time.replace(hour=ct.hour, minute=ct.minute, second=ct.second,
                                                 microsecond=ct.microsecond)
-                        signals = [float(i) for i in args[5:]]
+                        signals = [float(i.strip()) for i in args[5:]]
 
                         if line.startswith(targeta):
                             nsignals, keys = [], []
