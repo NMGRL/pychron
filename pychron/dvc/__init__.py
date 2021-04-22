@@ -44,6 +44,8 @@ BASELINES = 'baselines'
 BLANKS = 'blanks'
 ICFACTORS = 'icfactors'
 INTERCEPTS = 'intercepts'
+PEAKCENTER = 'peakcenter'
+COSMOGENIC = 'cosmogenic'
 
 HISTORY_PATHS = (None,
                  DATA,
@@ -53,7 +55,7 @@ HISTORY_PATHS = (None,
                  INTERCEPTS,
                  TAGS)
 
-static = ('peakcenter', 'extraction', 'monitor')
+static = (PEAKCENTER, 'extraction', 'monitor')
 PATH_MODIFIERS = HISTORY_PATHS + static
 NPATH_MODIFIERS = (None, DATA, TAGS) + static
 
@@ -151,7 +153,8 @@ def analysis_path(analysis, *args, **kw):
 UUID_RE = re.compile(r'^[0-9a-f]{8}\-[0-9a-f]{4}\-4[0-9a-f]{3}\-[89ab][0-9a-f]{3}\-[0-9a-f]{12}$', re.IGNORECASE)
 
 
-def _analysis_path(runid, repository, modifier=None, extension='.json', mode='r', root=None, is_temp=False):
+def _analysis_path(runid, repository, modifier=None, extension='.json', mode='r', root=None, is_temp=False,
+                   force_sublen=False):
     if root is None:
         root = paths.repository_dataset_dir
 
@@ -161,8 +164,10 @@ def _analysis_path(runid, repository, modifier=None, extension='.json', mode='r'
         if not os.path.isdir(root):
             os.mkdir(root)
 
-    if UUID_RE.match(runid):
-        sublen = 5
+    if force_sublen:
+        sublen = force_sublen
+    elif UUID_RE.match(runid):
+        sublen = 5, 2
     elif WISCAR_ID_RE.match(runid):
         sublen = 3
     else:
@@ -173,10 +178,9 @@ def _analysis_path(runid, repository, modifier=None, extension='.json', mode='r'
                 sublen = 4
             else:
                 sublen = 5
-
     try:
         root, tail = subdirize(root, runid, sublen=sublen, mode=mode)
-    except TypeError:
+    except TypeError as e:
         raise AnalysisNotAnvailableError(root, runid)
 
     if modifier:

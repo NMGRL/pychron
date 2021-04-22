@@ -100,7 +100,7 @@ class Handler(object):
         data = b''
         while 1:
             s = recv(datasize)
-           
+
             if not s:
                 break
 
@@ -155,14 +155,14 @@ class UDPHandler(Handler):
         if globalv.communication_simulation:
             timeout = 0.01
         self.sock.settimeout(timeout)
-            
+
         try:
             if bind:
                 addr = '', addr[1]
                 self.sock.bind(addr)
         except BaseException:
             print('failed binding', addr)
-        
+
     def get_packet(self, **kw):
         def recv(ds):
             rx, _ = self.sock.recvfrom(ds)
@@ -264,10 +264,10 @@ class EthernetCommunicator(Communicator):
         return ret
 
     def get_read_handler(self, handler, **kw):
-        
+
         if self.read_port:
             handler = self.get_handler(addrs=(self.host, self.read_port), bind=True, **kw)
-        
+
         return handler
 
     def get_handler(self, addrs=None, timeout=None, bind=False):
@@ -277,9 +277,9 @@ class EthernetCommunicator(Communicator):
             addrs = (self.host, self.port)
 
         try:
-            
+
             h = self.handler
-            if h is None or h.address!=addrs:
+            if h is None or h.address != addrs:
                 if self.kind.lower() == 'udp':
                     h = UDPHandler()
                 else:
@@ -287,7 +287,7 @@ class EthernetCommunicator(Communicator):
 
                 # self.debug('get handler cmd={}, {},{} {}'.format(cmd.strip() if cmd is not None else '---', self.host,
                 #                                                  self.port, timeout))
-                h.open_socket(addrs, timeout=timeout, bind=bind)
+                h.open_socket(addrs, timeout=timeout or 1, bind=bind)
                 h.set_frame(self.message_frame)
                 self.handler = h
             return h

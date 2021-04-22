@@ -18,6 +18,8 @@
 # ============= standard library imports ========================
 from __future__ import absolute_import
 
+from logging import warning
+
 from numpy import array
 from six.moves import zip
 # ============= local library imports  ==========================
@@ -75,22 +77,25 @@ class ICFactor(ReferencesSeries):
         n, d = iso.split('/')
 
         is_peak_hop = False
-        for ai in ans:
+        for ai in self.references:
             dets = ai.detectors()
+            
+            print('dets', dets, len(dets) , len(set(dets)))
             # a detector is used more than once
             if len(dets) > len(set(dets)):
                 is_peak_hop = True
                 break
-
+                
+        print('---------------- ispeakhop', is_peak_hop)
         for ui, v, e in zip(ans, p_uys, p_ues):
             if v is not None and e is not None:
                 if self.options.use_source_correction:
                     # this is all hard coded stuff and would need to be
                     # made much more configurable in the future
+                    # see comment in `set_beta`
                     m40 = 39.9624
                     m36 = 35.9675
                     ic = 1 / ufloat(v, e)
-                    # ic = ufloat(v, e)
                     beta = umath.log(ic) / umath.log(m40 / m36)
                     ui.set_beta(beta, is_peak_hop)
                 else:
@@ -112,13 +117,14 @@ class ICFactor(ReferencesSeries):
             nys = [ri.get_isotope(detector=n) for ri in self.sorted_references]
             dys = [ri.get_isotope(detector=d) for ri in self.sorted_references]
 
-            # nys = array([ni.get_non_detector_corrected_value() for ni in nys if ni is not None])
-            # dys = array([di.get_non_detector_corrected_value() for di in dys if di is not None])
-
             nys = array([ni.get_decay_corrected_value() for ni in nys if ni is not None])
             dys = array([di.get_decay_corrected_value() for di in dys if di is not None])
-
-            rys = nys / dys
+            try:
+                rys = nys / dys
+            except ZeroDivisionError:
+                warning(None, 'The data you trying to fit is not complete. One or more analyses are missing '
+                              'measurements for detector {}. Can not proceed'.format(d))
+                return
         else:
             rys = array([ri.get_value(po.name) for ri in self.sorted_references])
         rys = rys / po.standard_ratio

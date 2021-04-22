@@ -14,34 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 # =============enthought library imports=======================
-from __future__ import absolute_import
-from traits.api import Str, HasTraits
 # =============standard library imports ========================
 # =============local library imports  ==========================
 
 from pychron.hardware.core.abstract_device import AbstractDevice
-from pychron.hardware.polyinomial_mapper import PolynomialMapper
-
-
-class PolynomialMapperMixin(HasTraits):
-    poly_mapper = None
-    mapped_name = Str
-
-    def load_mapping(self, config):
-        conv = 'Conversion'
-        if config.has_section(conv):
-            pmapper = PolynomialMapper()
-            coeffs = self.config_get(config, conv, 'coefficients')
-            pmapper.parse_coefficient_string(coeffs)
-            pmapper.output_low = self.config_get(config, conv, 'output_low', cast='float')
-            pmapper.output_high = self.config_get(config, conv, 'output_high', cast='float')
-
-            self.poly_mapper = pmapper
-            self.set_attribute(config, 'mapped_name', conv, 'name')
-
-            if self.mapped_name:
-                u = self.config_get(config, conv, 'units', default='')
-                self.graph_ytitle = '{} ({})'.format(self.mapped_name.capitalize(), u)
+from pychron.hardware.polyinomial_mapper import PolynomialMapperMixin
 
 
 class ADCDevice(AbstractDevice, PolynomialMapperMixin):

@@ -30,4 +30,8 @@ class ChromiumCO2ClientPane(ChromiumClientPane):
 
 class ChromiumDiodeClientPane(ChromiumClientPane):
     pass
+
+
+class ChromiumUVClientPane(ChromiumClientPane):
+    pass
 # ============= EOF =============================================

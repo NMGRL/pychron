@@ -70,4 +70,5 @@ class EngineState(HasTraits):
     mdd_workspace = None
     arar_calculation_options = None
 
+    correlation_ellipses = None
 # ============= EOF =============================================

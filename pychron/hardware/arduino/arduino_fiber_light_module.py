@@ -14,17 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-
-
 # ============= enthought library imports =======================
-
+from traits.api import provides
 # ============= standard library imports ========================
 
 # ============= local library imports  ==========================
-
-from __future__ import absolute_import
-from __future__ import print_function
 from pychron.hardware.core.arduino_core_device import ArduinoCoreDevice
+from pychron.hardware.ifiberlight import IFiberLight
+
 '''
 Arduino Sketch fiberlightbox
 
@@ -38,7 +35,7 @@ FiberLight Protocol ver 0.2
 
 '''
 
-
+@provides(IFiberLight)
 class ArduinoFiberLightModule(ArduinoCoreDevice):
     def power_on(self):
         cmd = 4
@@ -52,7 +49,7 @@ class ArduinoFiberLightModule(ArduinoCoreDevice):
 
     def set_intensity(self, v):
         cmd = 6
-        cmd = self._build_command(cmd, int(v))
+        cmd = self._build_command(cmd, int(v * 255))
         self.ask(cmd)
 
     def read_intensity(self):

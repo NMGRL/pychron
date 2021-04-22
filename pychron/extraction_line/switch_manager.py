@@ -141,7 +141,7 @@ class SwitchManager(Manager):
             if dev is not None:
                 self.actuators.append(dev)
 
-            return dev
+        return dev
 
     def finish_loading(self, update=False):
         """
@@ -149,7 +149,8 @@ class SwitchManager(Manager):
         if self.actuators:
             for a in self.actuators:
                 self.info('setting actuator {}'.format(a.name))
-                self.info('comm. device = {} '.format(a.com_device_name))
+                if hasattr(a, 'com_device_name'):
+                    self.info('comm. device = {} '.format(a.com_device_name))
 
         # open config file
         # setup_file = os.path.join(paths.extraction_line_dir, add_extension(self.setup_name, '.xml'))
@@ -474,7 +475,7 @@ class SwitchManager(Manager):
     def load_valve_lock_states(self, *args, **kw):
         self._load_soft_lock_states()
 
-    def load_valve_owners(self, verbose=False, **kw):
+    def load_valve_owners(self, verbose=False, refresh_canvas=True, **kw):
         """
 
         :return:
@@ -497,7 +498,9 @@ class SwitchManager(Manager):
 
         if states:
             self.refresh_owned_state = states
-            self.refresh_canvas_needed = True
+            if refresh_canvas:
+                self.refresh_canvas_needed = True
+            return True
 
     def _verbose(self, msg):
         self.log(msg, VERBOSE)
@@ -505,7 +508,7 @@ class SwitchManager(Manager):
     def _verbose_debug(self, msg):
         self.log(msg, VERBOSE_DEBUG)
 
-    def load_hardware_states(self, force=False, verbose=False):
+    def load_hardware_states(self, force=False, verbose=False, refresh_canvas=True):
         """
         """
         states = []
@@ -544,7 +547,10 @@ class SwitchManager(Manager):
 
         if states:
             self.refresh_state = states
-            self.refresh_canvas_needed = True
+            if refresh_canvas:
+                self.refresh_canvas_needed = True
+
+            return True
 
     def load_hardware_states_old(self, force=False, verbose=False):
         self._verbose('load hardware states')
@@ -1035,7 +1041,7 @@ class SwitchManager(Manager):
             return name, hv
 
     def _make_switch_yaml_ctx(self, vobj, klass):
-        name = vobj.get('name')
+        name = str(vobj.get('name'))
         if not name:
             self.warning('Must specify a name for all switches.')
             return

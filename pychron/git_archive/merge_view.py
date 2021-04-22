@@ -46,7 +46,6 @@ class MergeModel(HasTraits):
         self.conflicts = [Conflict(path=p) for p in paths]
 
     def set_conflict(self, c):
-        repo = self.repo._repo
         ourtext = []
         theirtext = []
         with open(os.path.join(self.repo.path, c.path), 'r') as rfile:
@@ -88,7 +87,7 @@ class MergeModel(HasTraits):
         if fl is None:
             fl = self.conflicts
 
-        repo = self.repo._repo
+        repo = self.repo.active_repo
         for fi in fl:
             repo.git.checkout('--{}'.format(k), fi.path)
             self.repo.add(fi.path, commit=False)

@@ -27,6 +27,7 @@ from pychron.envisage.tasks.base_plugin import BasePlugin
 from pychron.envisage.tasks.tasks_plugin import PychronTasksPlugin, myTasksPlugin
 from pychron.logger.tasks.logger_plugin import LoggerPlugin
 from pychron.user.tasks.plugin import UsersPlugin
+from pychron.pychron_constants import LASER_PLUGINS
 
 logger = logging.getLogger()
 
@@ -48,6 +49,7 @@ PACKAGE_DICT = dict(
     PipelinePlugin='pychron.pipeline.tasks.plugin',
     SparrowPlugin='pychron.sparrow.tasks.plugin',
 
+    GISPlugin='pychron.gis.tasks.plugin',
     ClassifierPlugin='pychron.classifier.tasks.plugin',
     MDDPlugin='pychron.mdd.tasks.plugin',
     AutoPlugin='pychron.pipeline.tasks.auto_plugin',
@@ -61,12 +63,20 @@ PACKAGE_DICT = dict(
     EntryPlugin='pychron.entry.tasks.entry_plugin',
     ExperimentPlugin='pychron.experiment.tasks.experiment_plugin',
     PyScriptPlugin='pychron.pyscripts.tasks.pyscript_plugin',
-    SimpleIdentifierPlugin='pychron.entry.tasks.simple_identifier.plugin',
 
     # hardware
     ClientExtractionLinePlugin='pychron.extraction_line.tasks.client_extraction_line_plugin',
     ExternalPipettePlugin='pychron.external_pipette.tasks.external_pipette_plugin',
     ExtractionLinePlugin='pychron.extraction_line.tasks.extraction_line_plugin',
+    NMGRLFurnacePlugin='pychron.furnace.tasks.nmgrl.furnace_plugin',
+    NMGRLFurnaceControlPlugin='pychron.furnace.tasks.nmgrl.furnace_control_plugin',
+    LDEOFurnacePlugin='pychron.furnace.tasks.ldeo.furnace_plugin',
+    LDEOFurnaceControlPlugin='pychron.furnace.tasks.ldeo.furnace_control_plugin',
+    ThermoFurnacePlugin='pychron.furnace.tasks.thermo.furnace_plugin',
+
+    # hardware-lasers
+    OsTechDiodePlugin='pychron.lasers.tasks.plugins.ostech_diode',
+    AblationCO2Plugin='pychron.lasers.tasks.plugins.ablation_co2',
     ChromiumCO2Plugin='pychron.lasers.tasks.plugins.chromium_co2',
     ChromiumDiodePlugin='pychron.lasers.tasks.plugins.chromium_diode',
     ChromiumUVPlugin='pychron.lasers.tasks.plugins.chromium_uv',
@@ -76,12 +86,6 @@ PACKAGE_DICT = dict(
     LoadingPlugin='pychron.loading.tasks.loading_plugin',
     CoreLaserPlugin='pychron.lasers.tasks.plugins.laser_plugin',
     CoreClientLaserPlugin='pychron.lasers.tasks.plugins.laser_plugin',
-    NMGRLFurnacePlugin='pychron.furnace.tasks.nmgrl.furnace_plugin',
-    NMGRLFurnaceControlPlugin='pychron.furnace.tasks.nmgrl.furnace_control_plugin',
-    LDEOFurnacePlugin='pychron.furnace.tasks.ldeo.furnace_plugin',
-    LDEOFurnaceControlPlugin='pychron.furnace.tasks.ldeo.furnace_control_plugin',
-    ThermoFurnacePlugin='pychron.furnace.tasks.thermo.furnace_plugin',
-    AblationCO2Plugin='pychron.lasers.tasks.plugins.ablation_co2',
 
     # spectrometers
     ArgusSpectrometerPlugin='pychron.spectrometer.tasks.thermo.argus',
@@ -89,6 +93,7 @@ PACKAGE_DICT = dict(
     HelixSFTSpectrometerPlugin='pychron.spectrometer.tasks.thermo.helix',
     MapSpectrometerPlugin='pychron.spectrometer.tasks.map_spectrometer_plugin',
     NGXSpectrometerPlugin='pychron.spectrometer.tasks.isotopx.ngx',
+    OPCSpectrometerPlugin='pychron.spectrometer.tasks.opc.base',
     # resources
     MediaStoragePlugin='pychron.media_storage.tasks.plugin',
     ImagePlugin='pychron.image.tasks.image_plugin',
@@ -147,10 +152,13 @@ def get_klass(package, name):
     except ImportError as e:
         import traceback
 
-        traceback.print_exc()
         klass = None
-        logger.warning('****** {} could not be imported {} ******'.format(name, e),
+        msg='****** {} could not be imported {} ******'.format(name, e)
+        logger.warning(msg,
                        extra={'threadName_': 'Launcher'})
+        warning(None, msg)
+        logger.debug(traceback.format_exc())
+
     return klass
 
 
@@ -193,7 +201,7 @@ def get_user_plugins():
     core_added = False
     for p in ps:
         # if laser plugin add CoreLaserPlugin
-        if p in ('FusionsCO2', 'FusionsDiode', 'ChromiumCO2', 'AblationCO2'):
+        if p in LASER_PLUGINS:
 
             plugint = ip.get_plugin(p, category='hardware')
             mode = ip.get_parameter(plugint, 'mode')

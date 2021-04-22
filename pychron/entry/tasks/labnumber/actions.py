@@ -21,7 +21,7 @@ from pychron.envisage.ui_actions import UIAction
 
 
 class LabnumberEntryAction(UIAction):
-    name = 'Irradiation'
+    name = 'Package'
     # accelerator = 'Ctrl+Shift+l'
     id = 'pychron.labnumber_entry'
 

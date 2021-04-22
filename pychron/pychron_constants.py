@@ -32,7 +32,7 @@ EL_PROTOCOL = 'pychron.extraction_line.extraction_line_manager.ExtractionLineMan
 DVC_PROTOCOL = 'pychron.dvc.dvc.DVC'
 FURNACE_PROTOCOL = 'pychron.furnace.furnace_manager.BaseFurnaceManager'
 ILASER_PROTOCOL = 'pychron.lasers.laser_managers.ilaser_manager.ILaserManager'
-IFURNACE_PROTOCOL = 'pychron.furnace.ifurnace_manager.IFurnaceManager',
+IFURNACE_PROTOCOL = 'pychron.furnace.ifurnace_manager.IFurnaceManager'
 IPIPETTE_PROTOCOL = 'pychron.external_pipette.protocol.IPipetteManager'
 CRYO_PROTOCOL = 'pychron.extraction_line.cryo_manager.CryoManager'
 
@@ -186,8 +186,12 @@ NULL_EXTRACT_DEVICES = [EXTRACT_DEVICE, LINE_STR, NO_EXTRACT_DEVICE, None, '']
 CRYO = 'Cryo'
 FUSIONS_UV = 'Fusions UV'
 FUSIONS_DIODE = 'Fusions Diode'
+OSTECH_DIODE = 'OsTech Diode'
 FUSIONS_CO2 = 'Fusions CO2'
+CHROMIUM_CO2 = 'Chromium CO2'
+ABLATION_CO2 = 'Ablation CO2'
 FUSIONS = [FUSIONS_CO2, FUSIONS_DIODE, FUSIONS_UV]
+LASER_PLUGINS = [a.replace(' ', '') for a in (FUSIONS_CO2, FUSIONS_DIODE, CHROMIUM_CO2, ABLATION_CO2, OSTECH_DIODE)]
 
 NO_BLANK_CORRECT = (BLANK, DETECTOR_IC, BACKGROUND)
 
@@ -250,10 +254,10 @@ QTEGRA_INTEGRATION_TIMES = [0.065536, 0.131072, 0.262144, 0.524288,
 
 QTEGRA_DEFAULT_INTEGRATION_TIME = 1.048576
 ISOTOPX_INTEGRATION_TIMES = [1.0, 2.0, 3.0, 4.0, 5.0, 10.0, 20.0, 100.0]
+QUADERA_INTEGRATION_TIMES = [1.0,]
 ISOTOPX_DEFAULT_INTEGRATION_TIME = 1
-
 ATONA = 'ATONA'
-
+QUADERA_DEFAULT_INTEGRATION_TIME = 1
 DEFAULT_INTEGRATION_TIME = 1
 
 K_DECAY_CONSTANTS = {'Min et al., 2000': (5.80e-11, 0.099e-10, 4.883e-10, 0.014e-10),
@@ -289,6 +293,11 @@ if paths.setup_dir:
                 pass
 
 AR_AR = 'Ar/Ar'
+HE = 'He'
+NE = 'Ne'
+KR = 'Kr'
+XE = 'Xe'
+GENERIC = 'Generic'
 
 QTEGRA_SOURCE_KEYS = ('extraction_lens', 'ysymmetry', 'zsymmetry', 'zfocus')
 QTEGRA_SOURCE_NAMES = ('ExtractionLens', 'Y-Symmetry', 'Z-Symmetry', 'Z-Focus')
@@ -337,9 +346,11 @@ SAMPLE_METADATA = (SAMPLE,
 CLEANUP = 'cleanup'
 PRECLEANUP = 'pre_cleanup'
 POSTCLEANUP = 'post_cleanup'
+CRYO_TEMP = 'cryo_temperature'
 EXTRACT_VALUE = 'extract_value'
 EXTRACT_UNITS = 'extract_units'
 EXTRACT_DEVICE = 'extract_device'
+EXTRACT = 'extract'
 MASS_SPECTROMETER = 'mass_spectrometer'
 COLLECTION_TIME_ZERO_OFFSET = 'collection_time_zero_offset'
 DURATION = 'duration'
@@ -357,24 +368,38 @@ RAMP_DURATION = 'ramp_duration'
 RAMP_RATE = 'ramp_rate'
 TRAY = 'tray'
 USERNAME = 'username'
+TEMPLATE = 'template'
 DISABLE_BETWEEN_POSITIONS = 'disable_between_positions'
-EXTRACTION_ATTRS = (WEIGHT, EXTRACT_DEVICE, 'tray',
+
+
+def duration(k):
+    return '{}_duration'.format(k)
+
+
+EXTRACTION_ATTRS = (WEIGHT, EXTRACT_DEVICE, TRAY,
                     EXTRACT_VALUE, EXTRACT_UNITS,
                     'load_name',
                     'load_holder',
-                    'extract_duration',
-                    'cleanup_duration',
-                    'pre_cleanup_duration',
-                    'post_cleanup_duration',
+                    duration(EXTRACT),
+                    duration(CLEANUP),
+                    duration(PRECLEANUP),
+                    duration(POSTCLEANUP),
+                    CRYO_TEMP,
                     LIGHT_VALUE,
                     PATTERN, BEAM_DIAMETER, RAMP_DURATION, RAMP_RATE)
 
-META_ATTRS = ('analysis_type', 'uuid', 'identifier', 'aliquot', 'increment',
-              'comment', 'mass_spectrometer',
+LABORATORY = 'laboratory'
+INSTRUMENT_NAME = 'instrument_name'
+EXPERIMENT_TYPE = 'experiment_type'
+ALIQUOT = 'aliquot'
+INCREMENT = 'increment'
+
+META_ATTRS = ('analysis_type', 'uuid', 'identifier', ALIQUOT, INCREMENT,
+              COMMENT, MASS_SPECTROMETER,
               'username', 'queue_conditionals_name',
               REPOSITORY_IDENTIFIER,
               'acquisition_software',
-              'data_reduction_software', 'instrument_name', 'laboratory',
-              'experiment_queue_name', 'experiment_type') + SAMPLE_METADATA
+              'data_reduction_software', INSTRUMENT_NAME, LABORATORY,
+              'experiment_queue_name', EXPERIMENT_TYPE) + SAMPLE_METADATA
 
 # ============= EOF =============================================

@@ -27,7 +27,7 @@ from pychron.core.helpers.datetime_tools import make_timef
 from pychron.core.utils import alphas
 from pychron.database.orms import stringcolumn, primary_key
 from pychron.experiment.utilities.runid import make_runid
-from pychron.pychron_constants import NULL_STR
+from pychron.pychron_constants import PRECLEANUP, POSTCLEANUP, CRYO_TEMP
 
 Base = declarative_base()
 
@@ -95,7 +95,6 @@ class AnalysisTbl(Base, IDMixin):
     increment = Column(Integer)
 
     irradiation_positionID = Column(Integer, ForeignKey('IrradiationPositionTbl.id'))
-    # simple_identifier = Column(Integer, ForeignKey('SimpleIdentifier.identifier'))
     measurementName = stringcolumn(45)
     extractionName = stringcolumn(45)
     postEqName = stringcolumn(45)
@@ -133,8 +132,9 @@ class AnalysisTbl(Base, IDMixin):
     load_holder = ''
     _temporary_tag = None
 
-    pre_cleanup = Column('pre_cleanup', Float)
-    post_cleanup = Column('post_cleanup', Float)
+    pre_cleanup = Column(PRECLEANUP, Float)
+    post_cleanup = Column(POSTCLEANUP, Float)
+    cryo_temperature = Column(CRYO_TEMP, Float)
 
     @property
     def step(self):
@@ -579,29 +579,6 @@ class MediaTbl(Base, IDMixin):
 
     username = Column(String(140), ForeignKey('UserTbl.name'))
     create_date = Column(TIMESTAMP, default=func.now())
-
-
-# ======================= Simple Identifier ================================
-class SimpleIdentifierTbl(Base, IDMixin):
-    identifier = Column(String(140), unique=True)
-    sampleID = Column(Integer, ForeignKey('SampleTbl.id'))
-
-    sample = relationship('SampleTbl', uselist=False)
-
-    @property
-    def sample_name(self):
-        if self.sample:
-            return self.sample.name
-
-    @property
-    def project_name(self):
-        if self.sample and self.sample.project:
-            return self.sample.project.name
-
-    @property
-    def principal_investigator_name(self):
-        if self.sample and self.sample.project and self.sample.project.principal_investigator:
-            return self.sample.project.principal_investigator.name
 
 
 # ======================= Current ================================

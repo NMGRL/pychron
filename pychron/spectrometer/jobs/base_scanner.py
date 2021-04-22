@@ -63,7 +63,7 @@ class BaseScanner(PersistenceLoggable):
         """
         # if self.plotid>0:
         # self.graph.new_series()
-        self.set_plot_visiblity()
+        self.set_plot_visibility()
 
         self._cancel_event = Event()
 
@@ -98,7 +98,9 @@ class BaseScanner(PersistenceLoggable):
 
         limits = self._get_limits()
         graph.set_x_limits(*limits, pad='0.1')
-        refdet = self.spectrometer.reference_detector
+        
+        self.debug('reference detector {}'.format(spec.reference_detector))
+        refdet = spec.get_detector(spec.reference_detector)
 
         for i, si in enumerate(self._calculate_steps(*limits)):
             if self._cancel_event.is_set():
@@ -112,7 +114,7 @@ class BaseScanner(PersistenceLoggable):
             
             ks, ss, t, inc = spec.get_intensities(integrated_intensity=True)
 
-            refsig = refdet.intensity
+            refsig = float(refdet.intensity)
             refk = '{}y{}'.format(refdet, self.plotid)
             rys = plot.data.get_data(refk)
             if i == 0:
@@ -121,7 +123,9 @@ class BaseScanner(PersistenceLoggable):
             else:
                 rys = hstack((rys, refsig))
                 xs = hstack((xs, si))
-
+            
+            #self.debug('dsfa {}, {}'.format(refsig, rys))
+            
             plot.data.update_data({'x{}'.format(self.plotid): xs})
             plot.data.set_data(refk, rys)
 

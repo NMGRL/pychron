@@ -27,10 +27,15 @@ from pychron.pychron_constants import NULL_STR, FONTS, SIZES, SIG_FIGS, MAIN, AP
 
 class IdeogramAuxPlot(AuxPlot):
     names = List([NULL_STR, 'Analysis Number Nonsorted', 'Analysis Number',
-                  'Radiogenic 40Ar', 'K/Ca', 'K/Cl', 'Mol K39', 'Signal K39', 'Ideogram'],
+                  'Radiogenic 40Ar',
+                  'K/Ca', 'K/Cl',
+                  'Ca/K', 'Cl/K',
+                  'Mol K39', 'Signal K39', 'Ideogram'],
                  transient=True)
     _plot_names = List(['', 'analysis_number_nonsorted', 'analysis_number', 'radiogenic_yield',
-                        'kca', 'kcl', 'moles_k39', 'signal_k39', 'relative_probability'],
+                        'kca', 'kcl',
+                        'cak', 'clk',
+                        'moles_k39', 'signal_k39', 'relative_probability'],
                        transient=True)
 
 
@@ -93,6 +98,10 @@ class IdeogramOptions(AgeOptions):
     show_ttest_table = Bool(False)
     show_rvalues = Bool(False)
 
+    # correlation
+    show_correlation_ellipses = Bool(False)
+    _correlation_ellipses = List
+
     group_options_klass = IdeogramGroupOptions
 
     include_group_legend = Bool(True)
@@ -121,6 +130,9 @@ class IdeogramOptions(AgeOptions):
 
     def to_dict_test(self, k):
         return k not in ('_suppress_xlimits_clear', 'aux_plots', 'groups', 'index_attrs')
+
+    def get_colors(self):
+        return [fg.color for fg in self.groups]
 
     def get_plot_dict(self, group_id, subgroup_id):
 

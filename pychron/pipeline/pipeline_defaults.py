@@ -89,7 +89,6 @@ nodes:
 """
 
 CSV_IDEO = """
-icon: ideo
 required:
 nodes:
   - klass: CSVNode
@@ -98,7 +97,6 @@ nodes:
 """
 
 ARAR_IDEO = """
-icon: ideo
 required:
 nodes:
   - klass: UnknownNode
@@ -107,8 +105,15 @@ nodes:
   - klass: IdeogramNode
 """
 
+CORRELATION_IDEO = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: DSCorrelationNode
+  - klass: IdeogramNode
+"""
+
 IDEO = """
-icon: ideo
 required:
 nodes:
   - klass: UnknownNode
@@ -183,7 +188,6 @@ nodes:
 """
 
 XY_SCATTER = """
-icon: chart_curve
 required:
 nodes:
   - klass: UnknownNode
@@ -247,7 +251,6 @@ nodes:
 """
 
 INTERPRETED_AGE_IDEOGRAM = """
-icon: ideo
 required:
 nodes:
   - klass: InterpretedAgeNode
@@ -255,7 +258,6 @@ nodes:
 """
 
 HYBRID_IDEOGRAM = """
-icon: ideo
 required:
 nodes:
   - klass: UnknownNode
@@ -265,7 +267,6 @@ nodes:
 """
 
 SUBGROUP_IDEOGRAM = """
-icon: ideo
 required:
 nodes:
   - klass: UnknownNode
@@ -277,7 +278,6 @@ nodes:
 """
 
 HISTORY_IDEOGRAM = """
-icon: ideo
 required:
 nodes:
   - klass: UnknownNode
@@ -301,7 +301,6 @@ nodes:
 """
 
 SERIES = """
-icon: chart_curve
 required:
 nodes:
   - klass: UnknownNode
@@ -325,6 +324,14 @@ nodes:
   - klass: FitFluxNode
   - klass: ReviewNode
   - klass: FluxPersistNode
+"""
+
+COSMOGENIC = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: CosmogenicCorrectionNode
+  - klass: CosmogenicCorrectionPersistNode
 """
 
 CSV_ANALYSES_EXPORT = """
@@ -393,7 +400,6 @@ nodes:
 """
 
 PYSCRIPT = """
-icon: script
 required:
 nodes:
   - klass: UnknownNode
@@ -402,7 +408,6 @@ nodes:
 """
 
 RUNID_EDIT = """
-icon: hammer
 required:
 nodes: 
   - klass: UnknownNode

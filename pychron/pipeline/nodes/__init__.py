@@ -22,10 +22,12 @@ from pychron.pipeline.nodes.arar_calculations import ArArCalculationsNode
 from pychron.pipeline.nodes.audit import AuditNode
 from pychron.pipeline.nodes.bulk_edit import BulkEditNode
 from pychron.pipeline.nodes.correction_factors import CaCorrectionFactorsNode, KCorrectionFactorsNode
+from pychron.pipeline.nodes.cosmogenic_correction import CosmogenicCorrectionNode
 from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode, FluxMonitorsNode, ListenUnknownNode, CSVNode, \
     InterpretedAgeNode, CalendarUnknownNode, CSVSpectrumNode
 from pychron.pipeline.nodes.detector_yield import YieldNode
 from pychron.pipeline.nodes.diff import DiffNode
+from pychron.pipeline.nodes.ds_correlation import DSCorrelationNode
 from pychron.pipeline.nodes.dvc_history import DVCHistoryNode
 from pychron.pipeline.nodes.email_node import EmailNode
 from pychron.pipeline.nodes.export import CSVAnalysesExportNode, CSVRawDataExportNode
@@ -43,6 +45,7 @@ from pychron.pipeline.nodes.grouping import GroupingNode, GraphGroupingNode, Sub
 from pychron.pipeline.nodes.ia import SetInterpretedAgeNode
 from pychron.pipeline.nodes.mass_spec_reduced import MassSpecReducedNode, MassSpecFluxNode
 from pychron.pipeline.nodes.ml import MLDataNode, MLRegressionNode
+from pychron.pipeline.nodes.persist import CosmogenicCorrectionPersistNode
 from pychron.pipeline.nodes.persist import DVCPersistNode, PDFFigureNode, \
     BlanksPersistNode, IsotopeEvolutionPersistNode, ICFactorPersistNode, FluxPersistNode, \
     XLSXAnalysisTablePersistNode, InterpretedAgePersistNode, DefineEquilibrationPersistNode

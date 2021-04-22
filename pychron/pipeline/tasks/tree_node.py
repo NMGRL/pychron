@@ -61,14 +61,9 @@ class PipelineTreeNode(TreeNode):
             if not obj.enabled:
                 c = QColor('lightblue')
             elif obj.visited:
-                c = QColor(Qt.green)
+                c = QColor('#0dbf81')
             elif obj.active:
                 c = QColor('orange')
-
-        # if obj.status == 'ran':
-        #     c = QColor('green')
-        # elif obj.status == 'paused':
-        #     c = QColor('orange')
         return c
 
     def get_icon(self, obj, is_expanded):
@@ -81,6 +76,8 @@ class PipelineTreeNode(TreeNode):
         if name in ICON_MAP:
             i = ICON_MAP[name]
         else:
+            if not name:
+                name = 'large_tiles'
             i = icon(name)
             ICON_MAP[name] = i
 

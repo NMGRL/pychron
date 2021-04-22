@@ -241,7 +241,7 @@ class BaseMagnet(SpectrometerDevice, FieldMixin):
         ct = self.confirmation_threshold_mass
 
         move_ok = True
-        if abs(cm - m) > ct:
+        if ct and abs(cm - m) > ct:
             move_ok = False
             self.info('Requested move greater than threshold. Current={}, Request={}, Threshold={}'.format(cm, m, ct))
             if self.confirmation_dialog('Requested magnet move is greater than threshold.\n'

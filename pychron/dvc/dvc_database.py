@@ -40,7 +40,7 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
     RepositoryTbl, AnalysisChangeTbl, \
     PrincipalInvestigatorTbl, SamplePrepWorkerTbl, SamplePrepSessionTbl, \
     SamplePrepStepTbl, SamplePrepImageTbl, RestrictedNameTbl, AnalysisGroupTbl, AnalysisGroupSetTbl, \
-    SimpleIdentifierTbl, SamplePrepChoicesTbl, CurrentTbl, ParameterTbl, UnitsTbl
+    SamplePrepChoicesTbl, CurrentTbl, ParameterTbl, UnitsTbl
 from pychron.experiment.utilities.identifier import strip_runid
 from pychron.globals import globalv
 from pychron.pychron_constants import NULL_STR, EXTRACT_DEVICE, NO_EXTRACT_DEVICE, \
@@ -400,15 +400,6 @@ class DVCDatabase(DatabaseAdapter):
         self._archive_loads(names, False)
 
     # adders
-    def add_simple_identifier(self, sid, identifier=''):
-        with self.session_ctx():
-            obj = SimpleIdentifierTbl()
-            obj.sampleID = sid
-            obj.identifier = identifier
-            self._add_item(obj)
-            if not identifier:
-                obj.identifier = str(obj.id)
-                self.commit()
 
     def add_sample_prep_choice(self, tag, value):
         with self.session_ctx() as sess:
@@ -469,13 +460,14 @@ class DVCDatabase(DatabaseAdapter):
                 obj = UserTbl(name=self.save_username)
                 self._add_item(obj)
 
-    def add_measured_position(self, position=None, load=None, **kw):
+    def add_measured_position(self, an, position=None, load=None, **kw):
         with self.session_ctx():
-            a = MeasuredPositionTbl(**kw)
+            a = MeasuredPositionTbl(analysis=an, **kw)
             if position:
                 a.position = position
             if load:
                 a.loadName = load
+
             return self._add_item(a)
 
     def add_load(self, name, holder, username):
@@ -859,54 +851,23 @@ class DVCDatabase(DatabaseAdapter):
             q = q.limit(limit)
             return self._query_all(q)
 
-    def get_simple_identifier(self, sid):
-        with self.session_ctx() as sess:
-            q = sess.query(SimpleIdentifierTbl)
-            q = q.filter(SimpleIdentifierTbl.identifier == sid)
-            return self._query_one(q)
-
-    def get_simple_identifier_by_sample(self, sid):
-        with self.session_ctx() as sess:
-            q = sess.query(SimpleIdentifierTbl)
-            q = q.join(SampleTbl)
-            q = q.filter(SampleTbl.id == sid)
-            return self._query_one(q)
-
-    def get_sample_simple_identifiers(self, sid):
-        with self.session_ctx() as sess:
-            q = sess.query(SimpleIdentifierTbl)
-            q = q.join(SampleTbl)
-            q = q.filter(SampleTbl.id == sid)
-            return self._query_all(q, verbose_query=True)
-
-    def get_simple_identifiers(self):
-        with self.session_ctx() as sess:
-            q = sess.query(SimpleIdentifierTbl)
-            return self._query_all(q)
-
     def get_repository_analyses(self, repo):
         with self.session_ctx():
             r = self.get_repository(repo)
             return [a.analysis for a in r.repository_associations]
 
-    def get_identifier_info(self, li, simple=None):
+    def get_identifier_info(self, li):
         with self.session_ctx():
             info = {}
 
-            if simple:
-                dbpos = self.get_simple_identifier(li)
-                if not dbpos:
-                    self.warning('{} is not an simple identifier in the database'.format(li))
-                    return None
-            else:
-                dbpos = self.get_identifier(li)
-                if not dbpos:
-                    self.warning('{} is not an identifier in the database'.format(li))
-                    return None
+            dbpos = self.get_identifier(li)
+            if not dbpos:
+                self.warning('{} is not an identifier in the database'.format(li))
+                return None
 
-                info['irradiation_level'] = dbpos.level.name
-                info['irradiation_position'] = dbpos.position
-                info['irradiation'] = dbpos.level.irradiation.name
+            info['irradiation_level'] = dbpos.level.name
+            info['irradiation_position'] = dbpos.position
+            info['irradiation'] = dbpos.level.irradiation.name
 
             sample = dbpos.sample
             if sample:
@@ -1198,17 +1159,20 @@ class DVCDatabase(DatabaseAdapter):
                     self.debug('no analyses for get_last_analysis')
 
                 return 0
-
-    def get_greatest_aliquot(self, identifier):
-        with self.session_ctx(use_parent_session=False) as sess:
-            if identifier:
-                if not self.get_identifier(identifier):
-                    return
-
+        
+    def get_greatest_aliquot(self, identifier):            
+        if identifier:
+            with self.session_ctx(use_parent_session=False) as sess:
                 q = sess.query(AnalysisTbl.aliquot)
-                q = q.join(IrradiationPositionTbl)
-
-                q = q.filter(IrradiationPositionTbl.identifier == identifier)
+                
+                idn = self.get_identifier(identifier)
+                print('-----------------idn', idn, identifier)
+                if not self.get_identifier(identifier):
+                    q = q.filter(AnalysisTbl.simple_identifier== int(identifier))
+                else:
+                    q = q.join(IrradiationPositionTbl)
+                    q = q.filter(IrradiationPositionTbl.identifier == identifier)
+                
                 q = q.order_by(AnalysisTbl.aliquot.desc())
                 result = self._query_one(q)
                 if result:
@@ -1314,7 +1278,7 @@ class DVCDatabase(DatabaseAdapter):
 
                 q = q.filter(AnalysisTbl.increment == step)
             if aliquot:
-                q = q.filter(AnalysisTbl.aliquot == aliquot)
+                q = q.filter(AnalysisTbl.aliquot == int(aliquot))
 
             q = q.filter(IrradiationPositionTbl.identifier == idn)
             return self._query_one(q)
@@ -1924,7 +1888,7 @@ class DVCDatabase(DatabaseAdapter):
 
     def get_last_identifiers(self, sample=None, limit=1000, excludes=None):
         with self.session_ctx() as sess:
-            q = sess.query(IrradiationPositionTbl)
+            q = sess.query(IrradiationPositionTbl.identifier)
             if sample:
                 q = q.join(SampleTbl)
                 q = q.filter(SampleTbl.name == sample)
@@ -1936,7 +1900,7 @@ class DVCDatabase(DatabaseAdapter):
             q = q.filter(IrradiationPositionTbl.identifier.isnot(None))
             q = q.order_by(func.abs(IrradiationPositionTbl.identifier).desc())
             q = q.limit(limit)
-            return [ni.identifier for ni in self._query_all(q)]
+            return [ni[0] for ni in self._query_all(q)]
 
     def get_load_names(self, *args, **kw):
         with self.session_ctx():
@@ -2114,14 +2078,21 @@ class DVCDatabase(DatabaseAdapter):
             q = in_func(q, RepositoryTbl.name, repositories)
             return self._query_all(q)
 
-    def get_level_identifiers(self, irrad, level):
+    def get_level_identifiers(self, irrad, level, with_summary=False):
         lns = []
         with self.session_ctx():
             level = self.get_irradiation_level(irrad, level)
             if level:
-                lns = [str(pi.identifier).strip()
-                       for pi in level.positions if pi.identifier]
-                lns = [li for li in lns if li]
+
+                if with_summary:
+                    lns = [(pi.identifier.strip(),
+                               '{} -- {}{:02n} -- {}'.format(pi.identifier.strip(), level.name, pi.position, pi.sample.name))
+                           for pi in level.positions if pi.identifier and pi.identifier.strip()]
+
+                else:
+                    lns = [pi.identifier.strip()
+                           for pi in level.positions if pi.identifier and pi.identifier.strip()]
+
                 lns = sorted(lns)
         return lns
 
@@ -2408,15 +2379,15 @@ class DVCDatabase(DatabaseAdapter):
                 li.archived = state
             self.commit()
 
-    def _version_warn_hook(self, vers):
+    def _version_warn_hook(self):
         # ver = ver.version_num
         # aver = version.__alembic__
 
         # vers is a list of all the supported versions of pychron for this database
+        vers = self.get_versions()
+        lver = version.__dvc_alembic__
 
-        lver = version.__version__
-
-        self.debug('testing database versions. pychron version={}, db_versions={}'.format(lver, vers))
+        self.debug('testing database versions. pychronl version={}, db_versions={}'.format(lver, vers))
         if not vers:
             self.debug('not versions in the database. added a default one')
             self.add_default_version('19.6')

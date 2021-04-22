@@ -35,6 +35,7 @@ from pychron.core.stats.peak_detection import fast_find_peaks
 from pychron.core.stats.probability_curves import cumulative_probability, kernel_density
 from pychron.graph.explicit_legend import ExplicitLegend
 from pychron.graph.ticks import IntTickGenerator
+from pychron.pipeline.plot.overlays.correlation_ellipses_overlay import CorrelationEllipsesOverlay
 from pychron.pipeline.plot.overlays.ideogram_inset_overlay import IdeogramInset, IdeogramPointsInset
 from pychron.pipeline.plot.overlays.mean_indicator_overlay import MeanIndicatorOverlay
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
@@ -171,7 +172,6 @@ class Ideogram(BaseArArFigure):
         selection = self.analysis_group.get_omitted_by_tag(self.sorted_analyses)
         # else:
         #     selection = []
-
         for pid, (plotobj, po) in enumerate(zip(graph.plots, plots)):
             # plotobj.group_id = self.group_id
             # print(id(plotobj), plotobj.group_id)
@@ -179,8 +179,12 @@ class Ideogram(BaseArArFigure):
             if self.options.reverse_x_axis:
                 plotobj.default_origin = 'bottom right'
 
+            plot_name = po.plot_name
+            if not plot_name:
+                continue
+
             try:
-                args = getattr(self, '_plot_{}'.format(po.plot_name))(po, plotobj, pid)
+                args = getattr(self, '_plot_{}'.format(plot_name))(po, plotobj, pid)
             except AttributeError:
                 import traceback
 
@@ -827,15 +831,18 @@ class Ideogram(BaseArArFigure):
                                 bind_id=self.group_id,
                                 plotid=pid, **kw)
 
+        if self.options.show_correlation_ellipses and title=='K/Ca':
+                o = CorrelationEllipsesOverlay(self.options._correlation_ellipses,
+                                               self.options.get_colors(),
+                                               component=s)
+                s.overlays.append(o)
+
         if es is not None:
             s.yerror = array(es)
 
         if not po.ytitle_visible:
             title = ''
 
-        # if '<sup>' in title or '<sub>' in title:
-        #     self._set_ml_title(title, pid, 'y')
-        # else:
         graph.set_y_title(title, plotid=pid)
         graph.set_series_label('{}-{}'.format(title, self.group_id + 1),
                                plotid=pid)

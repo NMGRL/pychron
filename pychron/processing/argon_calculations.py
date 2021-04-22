@@ -367,14 +367,31 @@ def calculate_atmospheric(a38, a36, k38, ca38, ca36, decay_time, production_rati
         arar_constants = ArArConstants()
 
     pr = production_ratios
+
     m = pr.get('Cl3638', 0) * nominal_value(arar_constants.lambda_Cl36) * decay_time
     atm3836 = nominal_value(arar_constants.atm3836)
     atm36 = (a36 - ca36 - m * (a38 - k38 - ca38)) / (1 - m * atm3836)
-    ar38atm = atm3836 * atm36
-    cl38 = a38 - ar38atm - k38 - ca38
+    atm38 = atm3836 * atm36
+    cl38 = a38 - atm38 - k38 - ca38
     cl36 = cl38 * m
 
-    return atm36, cl36, cl38
+    return atm36, atm38, cl36, cl38
+
+
+def calculate_cosmogenic_components(c36, c38, arar_constants):
+    rm = c38 / c36
+    rs = arar_constants.r3836_target
+    rc = arar_constants.r3836_cosmogenic
+
+    fs = rc - rm / (rc - rs)
+    fc = 1 - fs
+
+    noncosmo38 = fs * c38
+    cosmo38 = c38 - noncosmo38
+    cosmo36 = fc * c36
+    noncosmo36 = c36 - cosmo36
+
+    return cosmo36, cosmo38, noncosmo36, noncosmo38
 
 
 def calculate_f(isotopes, decay_time, interferences=None, arar_constants=None, fixed_k3739=False):
@@ -387,10 +404,16 @@ def calculate_f(isotopes, decay_time, interferences=None, arar_constants=None, f
 
     def calc_f(pr):
         k37, k38, k39, ca36, ca37, ca38, ca39 = interference_corrections(a39, a37, pr, arar_constants, fixed_k3739)
-        atm36, cl36, cl38 = calculate_atmospheric(a38, a36, k38, ca38, ca36,
-                                                  decay_time,
-                                                  pr,
-                                                  arar_constants)
+
+        atm36, atm38, cl36, cl38 = calculate_atmospheric(a38, a36, k38, ca38, ca36,
+                                                         decay_time,
+                                                         pr,
+                                                         arar_constants)
+        cosmo38 = None
+        cosmo36 = None
+        if arar_constants.use_cosmogenic_correction:
+            # calculate cosmogenic components
+            cosmo36, cosmo38, atm36, atm38 = calculate_cosmogenic_components(atm36, atm38, arar_constants)
 
         # calculate radiogenic
         trapped_4036 = ufloat(nominal_value(arar_constants.atm4036), std_dev(arar_constants.atm4036))
@@ -408,7 +431,8 @@ def calculate_f(isotopes, decay_time, interferences=None, arar_constants=None, f
 
         nar = {'k40': k40, 'ca39': ca39, 'k38': k38, 'ca38': ca38,
                'cl38': cl38, 'k37': k37, 'ca37': ca37, 'ca36': ca36,
-               'cl36': cl36}
+               'cl36': cl36,
+               'cosmo38': cosmo38, 'cosmo36': cosmo36}
         try:
             rp = rad40 / a40 * 100
         except ZeroDivisionError:
@@ -437,7 +461,6 @@ def calculate_f(isotopes, decay_time, interferences=None, arar_constants=None, f
 
 
 def convert_age(uage, original_monitor_age, original_lambda_k, new_monitor_age, new_lambda_k):
-
     converter.setup(original_monitor_age, original_lambda_k)
     if new_monitor_age is None:
         age, err = converter.convert(nominal_value(uage), std_dev(uage))

@@ -497,7 +497,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
             self.info('testing database connection {}'.format(self.test_func))
             vers = getattr(self, self.test_func)(reraise=True)
             if version_warn:
-                self._version_warn_hook(vers)
+                self._version_warn_hook()
 
             connected = True
         except OperationalError:
@@ -516,7 +516,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
 
         return connected
 
-    def _version_warn_hook(self, vers):
+    def _version_warn_hook(self):
         pass
     # def test_version(self):
     #     ver = getattr(self, self.version_func)()

@@ -140,6 +140,9 @@ class StageManager(BaseStageManager):
     def is_auto_correcting(self):
         return False
 
+    def cancel_auto_correcting(self):
+        return True
+
     def bind_preferences(self, pref_id):
         bind_preference(self.canvas, 'show_grids', '{}.show_grids'.format(pref_id))
         self.canvas.change_grid_visibility()
@@ -811,8 +814,7 @@ class StageManager(BaseStageManager):
                 except ZeroDisplacementException:
                     correct_position = False
         try:
-            self._move_to_hole_hook(key, correct_position,
-                                autocentered_position)
+            self._move_to_hole_hook(key, correct_position, autocentered_position)
         except TargetPositionError as e:
             self.warning('(002) Move failed. {}'.format(e))
             self.parent.emergency_shutoff(str(e))
@@ -973,8 +975,10 @@ class StageManager(BaseStageManager):
             factory = NewportMotionController
         elif self.stage_controller_klass == 'Aerotech':
             from pychron.hardware.aerotech.aerotech_motion_controller import AerotechMotionController
-
             factory = AerotechMotionController
+        elif self.stage_controller_klass == 'Zaber':
+            from pychron.hardware.zaber.zaber_motion_controller import LegacyBinaryZaberMotionController
+            factory = LegacyBinaryZaberMotionController
 
         m = factory(name='{}controller'.format(self.name),
                     configuration_name='stage_controller',

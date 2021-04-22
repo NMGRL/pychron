@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2017 ross
+# Copyright 2021 ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,17 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traitsui.menu import Action
+from pychron.hardware.actuators.client_gp_actuator import ClientMixin
+from pychron.hardware.actuators.gp_actuator import GPActuator
+from pychron.hardware.core.modbus import ModbusMixin
 
 
-class SimpleIdentifierAction(Action):
-    name = 'Simple Identifier'
-    dname = 'Simple Identifier'
-    id = 'pychron.simple_identifier'
+class PLC2000GPActuator(GPActuator, ModbusMixin, ClientMixin):
+    def _actuate(self, obj, action):
+        self._write_coil(int(obj.address), action.lower() == 'open')
 
-    def perform(self, event):
-        pid = 'pychron.entry.simple_identifier.task'
-        app = event.task.window.application
-        app.get_task(pid)
+    def get_channel_state(self, address, *args, **kw):
+        resp = self._read_coils(int(address))
+        return bool(resp.bits[0])
 
 # ============= EOF =============================================

@@ -49,7 +49,7 @@ def unique_list(seq):
 
 class BaseBrowserTask(BaseEditorTask):
     default_task_name = 'Recall'
-    browser_model = Instance('pychron.envisage.browser.sample_browser_model.SampleBrowserModel')
+    browser_model = Instance('pychron.envisage.browser.base_browser_model.BaseBrowserModel')
     interpreted_age_browser_model = Instance('pychron.envisage.browser.'
                                              'interpreted_age_browser_model.InterpretedAgeBrowserModel')
     dvc = Instance('pychron.dvc.dvc.DVC')
@@ -319,7 +319,8 @@ class BaseBrowserTask(BaseEditorTask):
         else:
             self.warning('could not load records')
 
-    @on_trait_change('browser_model:[analysis_table:context_menu_event, time_view_model:context_menu_event]')
+    # @on_trait_change('browser_model:[analysis_table:context_menu_event, time_view_model:context_menu_event]')
+    @on_trait_change('browser_model:analysis_table:context_menu_event')
     def _handle_analysis_table_context_menu(self, new):
         if new:
             sel = self.browser_model.analysis_table.selected

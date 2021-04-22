@@ -56,7 +56,7 @@ class BaseGaugeController(HasTraits):
     gauge_klass = BaseGauge
     graph_klass = TimeSeriesStreamStackedGraph
 
-    def initialize(self):
+    def initialize(self, *args, **kw):
         self.scan_func = 'update_pressures'
         self.graph_y_title = 'Pressure (torr)'
 
@@ -116,8 +116,8 @@ class BaseGaugeController(HasTraits):
     def _update_pressure(self, gauge, verbose=False):
         if isinstance(gauge, str):
             gauge = self.get_gauge(gauge)
-
-        self.debug('_update_pressure: {}'.format(gauge))
+        if verbose:
+            self.debug('_update_pressure: {}'.format(gauge))
         if gauge:
             p = self._read_pressure(gauge, verbose)
             if self._set_gauge_pressure(gauge, p):
@@ -173,7 +173,7 @@ class BaseGaugeController(HasTraits):
                        label=self.display_name))
         return v
 
-    def graph_builder(self, g):
+    def graph_builder(self, g, **kw):
         for i, gi in enumerate(self.gauges):
             g.new_plot(padding=[50, 5, 5, 35],
                        zoom=True,
@@ -181,8 +181,7 @@ class BaseGaugeController(HasTraits):
 
             g.set_y_title(self.graph_ytitle, plotid=i)
             g.set_x_title('Time')
-            g.new_plot()
-            g.new_series()
+            g.new_series(plotid=i)
             g.set_series_label(gi.display_name, plotid=i)
 
 # ============= EOF =============================================

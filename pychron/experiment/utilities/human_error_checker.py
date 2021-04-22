@@ -17,13 +17,17 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 
+import os
+
 from traits.api import Bool
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.preference_binding import bind_preference
+from pychron.core.yaml import yload
 from pychron.experiment.utilities.identifier import get_analysis_type
 from pychron.loggable import Loggable
+from pychron.paths import paths
 from pychron.pychron_constants import SCRIPT_NAMES, NULL_STR, NULL_EXTRACT_DEVICES
 
 
@@ -35,6 +39,10 @@ class HumanErrorChecker(Loggable):
     runs_enabled = Bool
     non_fatal_enabled = Bool
     spectrometer_manager = None
+    modifier_check_enabled = Bool(True)
+    repairable_enabled = Bool(True)
+
+    _modifiers = None
 
     def __init__(self, *args, **kw):
         super(HumanErrorChecker, self).__init__(*args, **kw)
@@ -57,9 +65,38 @@ class HumanErrorChecker(Loggable):
 
         if self._mass_spec_required:
             if not qi.mass_spectrometer or \
-                            qi.mass_spectrometer in ('Spectrometer',):
+                    qi.mass_spectrometer in ('Spectrometer',):
                 msg = '"Spectrometer" is not set. Not saving experiment!'
                 return msg
+
+    def check_runs_repairable(self, runs):
+        if not self.repairable_enabled:
+            self.info('check runs repairable disabled')
+            return
+
+        repairs = {}
+        for i, r in enumerate(runs):
+            repair = self._check_repairable(i, r)
+            if repair:
+                repairs[i] = repair
+
+        self.debug(repairs)
+        if repairs:
+            if self.confirmation_dialog('You have issues but they can be repaired. Would you like to auto repair?'):
+                try:
+                    for k, v in repairs.items():
+                        run = runs[k]
+                        if v['kind'] == 'modifier':
+                            mod = v['value']
+                            args = run.identifier.split('-')
+                            idn, m, a = args[0], args[1], '-'.join(args[2:])
+                            old = run.identifier
+                            run.identifier = '-'.join((idn, '{:02n}'.format(mod), a))
+                            self.debug('repairing identifier. old={}, new={}'.format(old, run.identifier))
+
+                    self.information_dialog('Auto repair complete')
+                except BaseException:
+                    self.warning_dialog('Auto repair failed. Issues too extreme. Contact an expert')
 
     def check_runs_non_fatal(self, runs):
         if not self.non_fatal_enabled:
@@ -109,6 +146,24 @@ class HumanErrorChecker(Loggable):
     def check_run(self, run, inform=True, test=False):
         return self._check_run(run, inform, test)
 
+    def _check_repairable(self, idx, run):
+        if self.modifier_check_enabled:
+            if not self._modifiers:
+                self._load_modifiers()
+
+            if self._modifiers:
+                idargs = run.identifier.split('-')
+                ln = idargs[0].lower()
+                self.debug('checking {}. {}'.format(ln, self._modifiers))
+                if ln in self._modifiers:
+                    try:
+                        rm = int(idargs[1])
+                        dm = int(self._modifiers[ln])
+                        if rm != dm:
+                            return {'kind': 'modifier', 'value': dm}
+                    except ValueError as e:
+                        self.debug('check rempaiable: error={}'.format(e))
+
     def _check_run_non_fatal(self, idx, run):
         es = run.extraction_script
         if es:
@@ -133,6 +188,12 @@ class HumanErrorChecker(Loggable):
                 return 'Air analysis is not using an "air" extraction script'
 
     # private
+    def _load_modifiers(self):
+        p = os.path.join(paths.scripts_dir, 'defaults.yaml')
+        if os.path.isfile(p):
+            yd = yload(p)
+            self._modifiers = {k.lower(): v.get('modifier') for k, v in yd.items() if v.get('modifier')}
+
     def _bind_preferences(self):
         bind_preference(self, 'extraction_script_enabled', 'pychron.experiment.extraction_script_enabled')
         bind_preference(self, 'runs_enabled', 'pychron.experiment.runs_enabled')
@@ -167,8 +228,11 @@ class HumanErrorChecker(Loggable):
                     return 'post measurement script required for overlap'
         # if ant in ('unknown', 'background') or ant.startswith('blank'):
         # self._mass_spec_required = True
+        self._set_extraction_line_required(run)
 
-        if run.extract_value or run.cleanup or run.duration or run.post_cleanup or run.pre_cleanup:
+    def _set_extraction_line_required(self, run):
+        if any((getattr(run, a) for a in ('extract_value', 'cleanup', 'duration',
+                                          'post_cleanup', 'pre_cleanup', 'cryo_temperature'))):
             self._extraction_line_required = True
 
     def _check_attr(self, run, attr, inform):

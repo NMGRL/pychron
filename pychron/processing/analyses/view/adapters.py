@@ -45,7 +45,7 @@ def sigmaf(s):
 def handle_error(func):
     def wrapper(self, *args, **kw):
         try:
-            return func(self, *args, **kw)
+            return func(self)
         except ValueError:
             return ''
 

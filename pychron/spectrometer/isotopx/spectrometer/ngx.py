@@ -74,9 +74,10 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
 
     def finish_loading(self):
         super(NGXSpectrometer, self).finish_loading()
-        ret = self._get_cached_config()
-        if ret is not None:
-            specparams, defl, trap, magnet = ret
+        config = self._get_cached_config()
+        if config is not None:
+            magnet = config['magnet']
+            # specparams, defl, trap, magnet = ret
             mftable_name = magnet.get('mftable')
             if mftable_name:
                 self.debug('updating mftable name {}'.format(mftable_name))

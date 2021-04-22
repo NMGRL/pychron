@@ -15,9 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
-
 import os
 
 from envisage.ui.tasks.task_extension import TaskExtension
@@ -27,7 +24,7 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 from traits.api import List, Str
 
 from pychron.core.helpers.filetools import glob_list_directory
-from pychron.core.helpers.strtools import to_bool
+from pychron.core.helpers.strtools import to_bool, to_terminator
 from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.envisage.tasks.list_actions import PatternAction, ShowMotionConfigureAction
@@ -72,8 +69,23 @@ class CoreLaserPlugin(BaseTaskPlugin):
 class BaseLaserPlugin(BaseTaskPlugin):
     managers = List(contributes_to='pychron.hardware.managers')
     klass = None
-
     mode = None
+
+    task_name = None
+    accelerator = None
+
+    def _tasks_default(self):
+        return [TaskFactory(id=self.id,
+                            task_group='hardware',
+                            factory=self._task_factory,
+                            name=self.task_name,
+                            image='laser',
+                            accelerator=self.accelerator),
+                ]
+
+    def test_communication(self):
+        man = self._get_manager()
+        return man.test_connection()
 
     def _service_offers_default(self):
         """
@@ -110,7 +122,9 @@ class BaseLaserPlugin(BaseTaskPlugin):
                              'baudrate',
                              'parity',
                              'stopbits',
-                             'message_frame', ('use_end', to_bool)]:
+                             'message_frame',
+                             ('write_terminator', to_terminator),
+                             ('use_end', to_bool)]:
                     func = None
                     if isinstance(attr, tuple):
                         attr, func = attr
@@ -210,26 +224,7 @@ class BaseLaserPlugin(BaseTaskPlugin):
 
 
 class FusionsPlugin(BaseLaserPlugin):
-    task_name = Str
     sources = List(contributes_to='pychron.video.sources')
-
-    def test_communication(self):
-        man = self._get_manager()
-        return man.test_connection()
-
-    def _tasks_default(self):
-        return [TaskFactory(id=self.id,
-                            task_group='hardware',
-                            factory=self._task_factory,
-                            name=self.task_name,
-                            image='laser',
-                            accelerator=self.accelerator),
-                # TaskFactory(id='pychron.laser.calibration',
-                #             task_group='hardware',
-                #             factory=self._calibration_task_factory,
-                #             name='Laser Calibration',
-                #             accelerator='Ctrl+Shift+2')
-                ]
 
     def _sources_default(self):
         ip = InitializationParser()

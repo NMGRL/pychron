@@ -19,7 +19,7 @@ import time
 from threading import Event
 
 # ============= enthought library imports =======================
-from traits.api import Str, Color, Button, Float, Bool, Property, Int
+from traits.api import Str, Color, Button, Float, Bool, Property, Int, Event as TEvent
 
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
@@ -43,7 +43,7 @@ class WaitControl(Loggable):
     end_evt = None
 
     continue_button = Button('Continue')
-    pause_button = Event
+    pause_button = TEvent
     pause_label = Property(depends_on='_paused')
     _paused = Bool
     _continued = Bool
@@ -78,7 +78,7 @@ class WaitControl(Loggable):
 
         self.debug('Join finished')
 
-    def start(self, block=True, evt=None, duration=None, message=None):
+    def start(self, block=True, evt=None, duration=None, message=None, paused=False):
         if self.end_evt:
             self.end_evt.set()
 
@@ -103,6 +103,7 @@ class WaitControl(Loggable):
 
         self.timer = Timer(1000, self._update_time, delay=1000)
         self._continued = False
+        self._paused = paused
 
         if block:
             self.join(evt=evt)
@@ -123,6 +124,8 @@ class WaitControl(Loggable):
             self.current_time = self.duration
             self._paused = False
 
+    def pause(self):
+        self._paused = True
     # ===============================================================================
     # private
     # ===============================================================================
@@ -171,6 +174,7 @@ class WaitControl(Loggable):
     # handlers
     # ===============================================================================
     def _pause_button_fired(self):
+        print('asdfas', self._paused)
         self._paused = not self._paused
 
     def _continue_button_fired(self):

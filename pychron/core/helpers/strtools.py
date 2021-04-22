@@ -38,6 +38,15 @@ def to_list(a, delimiter=',', mapping=None):
     return l
 
 
+def to_terminator(t):
+    if t=='\n' or '\\n' or t=='chr(10)':
+        t=chr(10)
+    elif t=='\r' or t=='\\r' or t=='char(13)':
+        t=chr(13)
+
+    return t
+
+
 def to_bool(a):
     """
         a: a str or bool object
@@ -85,12 +94,16 @@ def to_csv_str(iterable, delimiter=','):
     return delimiter.join([str(v) for v in iterable])
 
 
-def ratio(xs, ys=None):
+def ratio(xs, ys=None, invert=False):
     def r(a, b):
         return '{}/{}'.format(a, b)
 
     if ys is None:
         ys = xs
+
+    if invert:
+        xs = xs[::-1]
+        ys = ys[::-1]
 
     ret = []
     for iso in xs:

@@ -52,6 +52,9 @@ from pychron.pychron_constants import NULL_STR, MEASUREMENT_COLOR, \
     EXTRACTION_COLOR, SCRIPT_KEYS, AR_AR, NO_BLANK_CORRECT, EXTRACTION, MEASUREMENT, EM_SCRIPT_KEYS, SCRIPT_NAMES, \
     POST_MEASUREMENT, POST_EQUILIBRATION
 from pychron.spectrometer.base_spectrometer import NoIntensityChange
+from pychron.spectrometer.isotopx.manager.ngx import NGXSpectrometerManager
+from pychron.spectrometer.pfeiffer.manager.quadera import QuaderaSpectrometerManager
+from pychron.spectrometer.thermo.manager.base import ThermoSpectrometerManager
 
 DEBUG = False
 
@@ -232,6 +235,9 @@ class AutomatedRun(Loggable):
     # ===============================================================================
     # pyscript interface
     # ===============================================================================
+    def py_measure(self):
+        return self.spectrometer_manager.measure()
+
     def py_get_intensity(self, detector):
         if self._intensities:
             try:
@@ -259,9 +265,11 @@ class AutomatedRun(Loggable):
         self.debug('reset data')
         self._persister_action('pre_measurement_save')
 
+    def py_clear_cached_configuration(self):
+        self.spectrometer_manager.spectrometer.clear_cached_config()
+
     def py_send_spectrometer_configuration(self):
         self.spectrometer_manager.spectrometer.send_configuration()
-        self.spectrometer_manager.spectrometer.clear_cached_config()
 
     def py_reload_mftable(self):
         self.spectrometer_manager.spectrometer.reload_mftable()
@@ -474,10 +482,6 @@ class AutomatedRun(Loggable):
                                check_conditionals, self.baseline_color)
 
         if self.plot_panel:
-            bs = dict([(iso.name, (iso.detector, iso.baseline.uvalue)) for iso in
-                       self.isotope_group.values()])
-            # self.set_previous_baselines(bs)
-            self.executor_event = {'kind': 'baselines', 'baselines': bs}
             self.plot_panel.is_baseline = False
 
         self.multi_collector.is_baseline = False
@@ -775,10 +779,10 @@ class AutomatedRun(Loggable):
         if self.peak_center:
             self.debug('cancel peak center')
             self.peak_center.cancel()
-            
+
         if self.spectrometer_manager:
             self.spectrometer_manager.spectrometer.cancel()
-            
+
         self.do_post_termination(do_post_equilibration=do_post_equilibration)
 
         self.finish()
@@ -1190,6 +1194,7 @@ class AutomatedRun(Loggable):
             grain_polygons = script.get_grain_polygons() or []
             self.debug('grain polygons n={}'.format(len(grain_polygons)))
 
+            ext_pos = script.get_extraction_positions()
             pid = script.get_active_pid_parameters()
             self._update_persister_spec(pid=pid or '',
                                         grain_polygons=grain_polygons,
@@ -1199,6 +1204,7 @@ class AutomatedRun(Loggable):
                                         setpoint_blob=sblob,
                                         snapshots=snapshots,
                                         videos=videos,
+                                        extraction_positions=ext_pos,
                                         extraction_context=extraction_context)
 
             self._persister_save_action('post_extraction_save')
@@ -1353,6 +1359,12 @@ anaylsis_type={}
 '''.format(self.runid, self.persister.rundate, self.persister.runtime,
            self.spec.analysis_type,
            signal_string, age_string)
+
+    def get_baselines(self):
+        if self.isotope_group:
+            return {iso.name: (iso.detector, iso.baseline.uvalue) for iso in self.isotope_group.values()}
+            # return dict([(iso.name, (iso.detector, iso.baseline.uvalue)) for iso in
+            #              self.isotope_group.values()])
 
     def get_baseline_corrected_signals(self):
         if self.isotope_group:
@@ -1784,14 +1796,13 @@ anaylsis_type={}
 
     def _load_previous(self):
         if not self.spec.analysis_type.startswith('blank') and not self.spec.analysis_type.startswith('background'):
-            pid, blanks, runid = self.previous_blanks
+            blanks, runid = self.previous_blanks
 
             self.debug('setting previous blanks')
             for iso, v in blanks.items():
                 self.isotope_group.set_blank(iso, v[0], v[1])
 
-            self._update_persister_spec(previous_blank_id=pid,
-                                        previous_blanks=blanks,
+            self._update_persister_spec(previous_blanks=blanks,
                                         previous_blank_runid=runid)
 
         self.isotope_group.clear_baselines()
@@ -2479,16 +2490,16 @@ anaylsis_type={}
         sname = self.script_info.measurement_script_name
         sname = self._make_script_name(sname)
 
-        from pychron.spectrometer.thermo.manager.base import ThermoSpectrometerManager
-        from pychron.spectrometer.isotopx.manager.ngx import NGXSpectrometerManager
-
         klass = MeasurementPyScript
         if isinstance(self.spectrometer_manager, ThermoSpectrometerManager):
-            from pychron.pyscripts.thermo_measurement_pyscript import ThermoMeasurementPyScript
+            from pychron.pyscripts.measurement.thermo_measurement_pyscript import ThermoMeasurementPyScript
             klass = ThermoMeasurementPyScript
         elif isinstance(self.spectrometer_manager, NGXSpectrometerManager):
-            from pychron.pyscripts.ngx_measurement_pyscript import NGXMeasurementPyScript
+            from pychron.pyscripts.measurement.ngx_measurement_pyscript import NGXMeasurementPyScript
             klass = NGXMeasurementPyScript
+        elif isinstance(self.spectrometer_manager, QuaderaSpectrometerManager):
+            from pychron.pyscripts.measurement.quadera_measurement_pyscript import QuaderaMeasurementPyScript
+            klass = QuaderaMeasurementPyScript
 
         ms = klass(root=paths.measurement_dir, name=sname, automated_run=self, runner=self.runner)
         return ms

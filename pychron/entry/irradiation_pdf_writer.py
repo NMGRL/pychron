@@ -23,13 +23,12 @@ from traits.api import Bool, Float, Str
 from traitsui.api import VGroup, Tabbed, Item
 
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
-from pychron.canvas.utils import markup_canvas
+from pychron.canvas.utils import markup_canvas, load_holder_canvas
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pdf.base_table_pdf_writer import BasePDFTableWriter
 from pychron.core.pdf.items import Row
 from pychron.core.pdf.options import BasePDFOptions, dumpable
 from pychron.dvc.meta_repo import irradiation_geometry_holes, irradiation_chronology
-from pychron.entry.editors.level_editor import load_holder_canvas
 from pychron.loading.component_flowable import ComponentFlowable
 from pychron.pychron_constants import DEFAULT_MONITOR_NAME
 

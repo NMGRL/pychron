@@ -77,7 +77,7 @@ def trim_affirmative(func):
 
 
 base = 'pychron.hardware'
-abase='{}.actuators'.format(base)
+abase = '{}.actuators'.format(base)
 
 PACKAGES = dict(AgilentGPActuator='{}.agilent.agilent_gp_actuator'.format(base),
                 AgilentMultifunction='{}.agilent.agilent_multifunction'.format(base),
@@ -89,4 +89,7 @@ PACKAGES = dict(AgilentGPActuator='{}.agilent.agilent_gp_actuator'.format(base),
                 NMGRLFurnaceActuator='{}.nmgrl_furnace_actuator'.format(abase),
                 DummyGPActuator='{}.dummy_gp_actuator'.format(abase),
                 RPiGPIO='{}.rpi_gpio'.format(base),
-                T4Actuator='{}.t4_actuator'.format(abase))
+                T4Actuator='{}.t4_actuator'.format(abase),
+                U3Actuator='{}.u3_actuator'.format(abase),
+                ProXRActuator='{}.proxr_actuator'.format(abase),
+                PLC2000GPActuator='{}.plc2000_gp_actuator'.format(abase))

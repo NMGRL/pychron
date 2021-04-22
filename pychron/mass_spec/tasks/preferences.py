@@ -15,10 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import Str, Bool, Password, List
+from traits.api import Str, Bool, Password, List, Button
 from traitsui.api import View, Item, HGroup, VGroup, Spring, Label, EnumEditor
 
 # ============= standard library imports ========================
@@ -39,6 +38,7 @@ class MassSpecConnectionPreferences(BasePreferencesHelper, ConnectionMixin):
     enabled = Bool
     _schema_identifier = 'AnalysesTable'
     _names = List
+    load_names_button = Button
 
     def __init__(self, *args, **kw):
         super(MassSpecConnectionPreferences, self).__init__(*args, **kw)
@@ -49,15 +49,18 @@ class MassSpecConnectionPreferences(BasePreferencesHelper, ConnectionMixin):
             if self.host:
                 self._names = show_databases('mysql', self.host, self.username, self.password, self._schema_identifier)
 
-    def _anytrait_changed(self, name, old, new):
-        if name not in ('_connected_label', '_connected_color',
-                        '_connected_color_',
-                        'test_connection'):
-            self._reset_connection_label(False)
-            if name in ('username', 'host', 'password'):
-                self._load_names()
+    # def _anytrait_changed(self, name, old, new):
+    #     if name not in ('_connected_label', '_connected_color',
+    #                     '_connected_color_',
+    #                     'test_connection'):
+    #         self._reset_connection_label(False)
+    #         if name in ('username', 'host', 'password'):
+    #             self._load_names()
+    #
+    #     super(MassSpecConnectionPreferences, self)._anytrait_changed(name, old, new)
 
-        super(MassSpecConnectionPreferences, self)._anytrait_changed(name, old, new)
+    def _load_names_button_fired(self):
+        self._load_names()
 
     def _get_connection_dict(self):
         return dict(username=self.username,
@@ -106,6 +109,7 @@ class MassSpecConnectionPane(PreferencesPane):
         cgrp = HGroup(Spring(width=10, springy=False),
                       icon_button_editor('test_connection_button', 'database_connect',
                                          tooltip='Test connection'),
+                      icon_button_editor('load_names_button', 'arrow_refresh'),
                       Spring(width=10, springy=False),
                       Label('Status:'),
                       CustomLabel('_connected_label',

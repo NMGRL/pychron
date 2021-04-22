@@ -22,11 +22,12 @@ from pychron.core.helpers.strtools import csv_to_floats
 from pychron.core.yaml import yload
 from pychron.managers.manager import Manager
 from pychron.paths import paths
+from pychron.pychron_constants import AR_AR, NE, HE, GENERIC
 
 
 class CryoManager(Manager):
     name = 'Cryo'
-    species = Enum('He', 'Ar/Ar', 'Ne')
+    species = Enum(HE, AR_AR, NE, GENERIC)
 
     def finish_loading(self, *args, **kw):
         pass
@@ -42,10 +43,11 @@ class CryoManager(Manager):
     def test_connection(self):
         for di in self.devices:
             if not di.test_connection():
-                self.debug('Failed connection to "{}" '.format(di.name))
-                return False
+                msg = 'Failed connection to "{}" '.format(di.name)
+                self.debug(msg)
+                return False, msg
         else:
-            return True
+            return True, None
 
     # def stop_scans(self):
     #     for k in self.devices:
@@ -74,7 +76,7 @@ class CryoManager(Manager):
         dev = self.devices[idx]
         return dev.read_input(iput)
 
-    def set_setpoint(self, v1, v2=None, idx=0):
+    def set_setpoint(self, v1, v2=None, idx=0, block=False):
         """
         v is either a float or a str
         if float interpret as degrees K
@@ -88,7 +90,7 @@ class CryoManager(Manager):
             v1, v2 = self._lookup_species_temp(v1)
 
         if v1 is not None:
-            self.devices[idx].set_setpoints(v1, v2)
+            self.devices[idx].set_setpoints(v1, v2, block=block)
 
         self.debug('set_setpoint returning "{}","{}"'.format(v1, v2))
         return v1, v2
@@ -108,7 +110,7 @@ class CryoManager(Manager):
         """
 
         if v in ('freeze', 'pump', 'release'):
-            s = 'Ar' if self.species == 'Ar/Ar' else self.species
+            s = 'Ar' if self.species == AR_AR else self.species
             v = '{}_{}'.format(s, v)
 
         p = os.path.join(paths.device_dir, 'cryotemps.yaml')

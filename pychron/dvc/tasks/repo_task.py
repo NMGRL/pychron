@@ -31,11 +31,12 @@ from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.fuzzyfinder import fuzzyfinder
 from pychron.core.helpers.datetime_tools import format_iso_datetime
 from pychron.core.helpers.filetools import unique_dir
-from pychron.dvc import repository_path
+from pychron.dvc import repository_path, UUID_RE
 from pychron.dvc.tasks import list_local_repos
 from pychron.dvc.tasks.actions import CloneAction, AddBranchAction, CheckoutBranchAction, PushAction, PullAction, \
     FindChangesAction, LoadOriginAction, DeleteLocalChangesAction, ArchiveRepositoryAction, SyncSampleInfoAction, \
-    SyncRepoAction, RepoStatusAction, BookmarkAction, RebaseAction, DeleteChangesAction, SortLocalReposAction
+    SyncRepoAction, RepoStatusAction, BookmarkAction, RebaseAction, DeleteChangesAction, SortLocalReposAction, \
+    RevertCommitAction
 from pychron.dvc.tasks.panes import RepoCentralPane, SelectionPane
 from pychron.envisage.tasks.base_task import BaseTask
 # from pychron.git_archive.history import from_gitlog
@@ -114,6 +115,7 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
                           DeleteLocalChangesAction(),
                           ArchiveRepositoryAction(),
                           DeleteChangesAction(),
+                          RevertCommitAction(),
                           RepoStatusAction(),
                           BookmarkAction(),
                           SortLocalReposAction()),
@@ -159,16 +161,8 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
             self.local_names.insert(0, lr)
 
     def archive_repository(self):
-        self.debug('archive repository')
+        name, dst = self._archive_repository()
 
-        root = os.path.join(paths.dvc_dir, 'archived_repositories')
-        if not os.path.isdir(root):
-            os.mkdir(root)
-
-        src = self._repo.path
-        name = os.path.basename(src)
-        dst = unique_dir(root, name, make=False)
-        shutil.move(self._repo.path, dst)
         self.refresh_local_names()
         self.information_dialog('"{}" Successfully archived to {}'.format(name, dst))
 
@@ -349,12 +343,21 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
                 else:
                     self.warning_dialog('A name is required to add a bookmark. Please try again')
 
+    def revert_selected_commit(self):
+        selected = self._has_selected_local()
+        if selected and self.selected_commit:
+            hexsha = self.selected_commit.hexsha
+            self._repo.revert_commit(hexsha)
+
     def delete_commits(self):
         selected = self._has_selected_local()
         if selected and self.selected_commit:
             hexsha = self.selected_commit.hexsha
-            msg = 'Are you sure you want to permanently delete your changes in "{}"'.format(selected.name)
+            msg = 'Are you sure you want to permanently delete your changes in "{}". This will delete all ' \
+                  'changes later than the selected row. ' \
+                  'To undo an individual commit use "Revert Selected Commit"'.format(selected.name)
             if self.confirmation_dialog(msg):
+                self._archive_repository()
                 self._repo.delete_commits(hexsha)
 
     # task
@@ -365,6 +368,20 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
         return [SelectionPane(model=self)]
 
     # private
+    def _archive_repository(self, src=None):
+        if src is None:
+            src = self._repo.path
+        self.debug('archive repository')
+
+        root = os.path.join(paths.dvc_dir, 'archived_repositories')
+        if not os.path.isdir(root):
+            os.mkdir(root)
+
+        name = os.path.basename(src)
+        dst = unique_dir(root, name, make=False)
+        shutil.move(self._repo.path, dst)
+        return name, dst
+
     def _refresh_tags(self):
         self.git_tags = get_tags(self._repo.active_repo)
 
@@ -443,9 +460,16 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
                 uuids.append('{}{}'.format(head, tail))
                 continue
 
-        tag_ans = self.dvc.convert_uuid_runids(uuids)
         ans = list({an for an in (func(*a) for a in ans) if an})
-        self.analyses = ans + tag_ans
+
+        nans = []
+        for ai in ans:
+            if UUID_RE.match(ai):
+                uuids.append(ai)
+            else:
+                nans.append(ai)
+
+        self.analyses = sorted(nans + self.dvc.convert_uuid_runids(uuids))
 
     def _make_diff_changes(self, rev, d):
         rev = self._repo.get_commit(rev)

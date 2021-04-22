@@ -83,19 +83,21 @@ class Updater(Loggable):
             return self._validate_origin(self.remote)
 
     def set_revisions(self):
-        self._check_for_updates()
+        self.debug('setting revisions from local repository. not fetching latest commit from remote')
+        self._get_local_remote_commits(fetch=False)
 
     def check_for_updates(self, inform=False, restart=True):
         self.debug('checking for updates')
         branch = self.branch
         remote = self.remote
 
+        repo = self._repo
+        if not repo:
+            return
+
         if self.use_tag:
             # check for new tags
             self._fetch(prune=True)
-            repo = self._repo
-            if not repo:
-                return
 
             tags = repo.tags
             ctag = tags[self.version_tag]
@@ -110,16 +112,23 @@ class Updater(Loggable):
             if remote and branch:
                 if self._validate_origin(remote):
                     if self._validate_branch(branch):
-                        lc, rc = self._check_for_updates()
+                        lc, rc = self._get_local_remote_commits()
                         hexsha = self._out_of_date(lc, rc)
                         if hexsha:
-                            origin = self._repo.remotes.origin
+                            # tag this commit so we can easily jump back
+                            # however since the update may break pychron
+                            # the only reliable way to revert is using an external process
+                            tagids = [int(t.name.split('/')[1]) for t in repo.tags if t.name.startswith('recovery')]
+                            rid = max(tagids)+1 if tagids else 1
+                            repo.create_tag('recovery/{}'.format(rid))
+
+                            origin = repo.remotes.origin
                             self.debug('pulling changes from {} to {}'.format(origin.url, branch))
 
                             try:
-                                with StashCTX(self._repo):
-                                    gitcommand(self._repo, self._repo.head.name, 'pull',
-                                               lambda: self._repo.git.pull(origin, hexsha))
+                                with StashCTX(repo):
+                                    gitcommand(repo, repo.head.name, 'pull',
+                                               lambda: repo.git.pull(origin, hexsha))
                             except BaseException:
                                 self.debug_exception()
                                 self.warning_dialog('Failed installing updates. Please contact pychron developers')
@@ -253,15 +262,15 @@ class Updater(Loggable):
             print('excepiton validating origin', cmd, e)
             return
 
-    def _check_for_updates(self):
-        branchname = self.branch
-        self.debug('checking for updates on {}'.format(branchname))
-        local_commit, remote_commit = self._get_local_remote_commits()
-
-        self.debug('local  commit ={}'.format(local_commit))
-        self.debug('remote commit ={}'.format(remote_commit))
-        self.application.set_revisions(local_commit, remote_commit)
-        return local_commit, remote_commit
+    # def _check_for_updates(self):
+    #     branchname = self.branch
+    #     self.debug('checking for updates on {}'.format(branchname))
+    #     local_commit, remote_commit = self._get_local_remote_commits()
+    #
+    #     self.debug('local  commit ={}'.format(local_commit))
+    #     self.debug('remote commit ={}'.format(remote_commit))
+    #     self.application.set_revisions(local_commit, remote_commit)
+    #     return local_commit, remote_commit
 
     def _out_of_date(self, lc, rc, restart=True):
         if rc and lc != rc:
@@ -288,13 +297,18 @@ class Updater(Loggable):
             branch = repo.create_head(name, commit=oref.commit)
         return branch
 
-    def _get_local_remote_commits(self):
+    def _get_local_remote_commits(self, fetch=True):
+        branchname = self.branch
+        self.debug('checking for updates on {}'.format(branchname))
+
         if self.use_tag:
-            return self._repo.tags[self.version_tag], self._repo[self.version_tag]
+            local_commit, remote_commit = self._repo.tags[self.version_tag], self._repo[self.version_tag]
             # return self.version_tag, self.version_tag
         else:
             repo = self._get_working_repo()
-            repo.git.fetch()
+            if fetch:
+                repo.git.fetch()
+
             branchname = self.branch
             origin = repo.remotes.origin
             try:
@@ -306,7 +320,11 @@ class Updater(Loggable):
             branch = self._get_branch(branchname)
 
             local_commit = branch.commit
-            return local_commit, remote_commit
+
+        self.debug('local  commit ={}'.format(local_commit))
+        self.debug('remote commit ={}'.format(remote_commit))
+        self.application.set_revisions(local_commit, remote_commit)
+        return local_commit, remote_commit
 
     def _get_local_commit(self):
         repo = self._get_working_repo()

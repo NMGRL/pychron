@@ -177,8 +177,11 @@ class ReferencesSeries(BaseSeries):
             scatter._layout_needed = True
 
     def reference_data(self, po):
-        ans, xs, ys = self._get_reference_data(po)
-        return ans, array(xs), array([nominal_value(ri) for ri in ys]), array([std_dev(ri) for ri in ys])
+
+        data = self._get_reference_data(po)
+        if data:
+            ans, xs, ys = data
+            return ans, array(xs), array([nominal_value(ri) for ri in ys]), array([std_dev(ri) for ri in ys])
 
     def current_data(self, po):
         data = self._get_current_data(po)

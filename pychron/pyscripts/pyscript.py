@@ -707,11 +707,11 @@ class PyScript(Loggable):
     # ==============================================================================
     # Sleep/ Wait
     # ==============================================================================
-    def _sleep(self, v, message=None):
+    def _sleep(self, v, message=None, paused=False):
         v = float(v)
         self._estimated_duration += v
-        if v > 1:
-            self._block(v, message=message, dialog=True)
+        if v > 1 or paused:
+            self._block(v, message=message, dialog=True, paused=paused)
         else:
             time.sleep(v)
 
@@ -736,7 +736,7 @@ class PyScript(Loggable):
 
         return wd
 
-    def _block(self, timeout, message=None, dialog=False):
+    def _block(self, timeout, message=None, dialog=False, paused=False):
         self.debug('block started')
         st = time.time()
         if dialog:
@@ -757,7 +757,8 @@ class PyScript(Loggable):
             msg = 'WaitControl setup for {:03d}  {}'.format(int(timeout), message)
 
             self.debug(msg)
-            wd.start(duration=timeout, message=msg)
+
+            wd.start(duration=timeout, message=msg, paused=paused)
             # wd.join()
 
             if self.manager:

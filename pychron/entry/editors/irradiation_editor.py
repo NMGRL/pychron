@@ -33,19 +33,19 @@ from pychron.loggable import Loggable
 from pychron.paths import paths
 
 
-class AddView(ModelView):
+class IrradiationAddView(ModelView):
     def traits_view(self):
         v = okcancel_view(VGroup(VGroup(Item('name'),
                                         BorderVGroup(UItem('chronology', style='custom'),
                                                      label='Chronology')),
                                  BorderHGroup(UItem('selected_reactor_name', editor=EnumEditor(name='reactor_names')),
                                               label='Reactor')),
-                          title='Add Irradiation',
+                          title='Add Package',
                           width=500)
         return v
 
 
-class EditView(ModelView):
+class IrradiationEditView(ModelView):
     def traits_view(self):
         v = okcancel_view(VGroup(Item('name', style='readonly'),
                                  BorderVGroup(UItem('chronology', style='custom'),
@@ -55,25 +55,39 @@ class EditView(ModelView):
         return v
 
 
-class IrradiationEditor(Loggable):
-    """
-        class used to create/edit an irradiation
+class PackageAddView(ModelView):
+    def traits_view(self):
+        v = okcancel_view(Item('name'),
+                          title='Add Package',
+                          width=500)
+        return v
 
-    """
-    chronology = Instance(IrradiationChronology, ())
+
+class PackageEditView(ModelView):
+    def traits_view(self):
+        v = okcancel_view(Item('name', style='readonly'),
+                          title='Edit Irradiation',
+                          width=500)
+        return v
+
+
+class PackageEditor(Loggable):
     dvc = Instance('pychron.dvc.dvc.DVC')
-
-    reactors = Dict
-    reactor_names = List
-    selected_reactor_name = Str
-
     name = SpacelessStr
+    tagname = 'Package'
+    _add_view_klass = PackageAddView
+    _edit_view_klass = PackageEditView
+
+    def _pre_add_hook(self):
+        pass
+
+    def _add_hook(self, v):
+        pass
 
     def add(self):
+        self._pre_add_hook()
 
-        self._load_reactors()
-
-        v = AddView(model=self)
+        v = self._add_view_klass(model=self)
         info = v.edit_traits()
 
         while 1:
@@ -87,17 +101,16 @@ class IrradiationEditor(Loggable):
                         break
 
                 if not self.dvc.get_irradiation(name):
-                    if not self.selected_reactor_name:
-                        self.information_dialog('Please select a reactor')
-                        info = v.edit_traits()
+                    info = self._add_hook(v)
+                    if info:
                         continue
 
-                    self._add_irradiation()
+                    self._add_package()
                     return name
 
                 else:
-                    if self.confirmation_dialog('Irradiation "{}" already exists. '
-                                                'Would you like to try again ?'.format(name)):
+                    if self.confirmation_dialog('{} "{}" already exists. '
+                                                'Would you like to try again ?'.format(self.tagname, name)):
                         info = v.edit_traits()
                         continue
                     else:
@@ -106,14 +119,53 @@ class IrradiationEditor(Loggable):
                 break
 
     def edit(self):
+        v = self._edit_view_klass(model=self)
+        info = v.edit_traits()
+        if info.result:
+            self._add_package()
+
+        return self.name
+
+    def _add_package(self):
+        self.debug('add package={}'.format(self.name))
+        self.dvc.add_irradiation(self.name, [], verbose=False)
+        self.dvc.add_production_to_irradiation(self.name, 'NoReactor', {})
+
+
+class IrradiationEditor(PackageEditor):
+    """
+        class used to create/edit an irradiation
+
+    """
+    _add_view_klass = IrradiationAddView
+    _edit_view_klass = IrradiationEditView
+
+    chronology = Instance(IrradiationChronology, ())
+
+    reactors = Dict
+    reactor_names = List
+    selected_reactor_name = Str
+    tagname = 'Irradiation'
+
+    def _pre_add_hook(self):
+        self._load_reactors()
+
+    def _add_hook(self, v):
+        if not self.selected_reactor_name:
+            self.information_dialog('Please select a reactor')
+            info = v.edit_traits()
+            return info
+
+    def edit(self):
         self._load_reactors()
 
         chronology = self.dvc.get_chronology(self.name)
         self.chronology.set_dosages(chronology.get_doses())
-        v = EditView(model=self)
+        v = self._edit_view_klass(model=self)
         info = v.edit_traits()
         if info.result:
-            self._add_irradiation()
+            self.debug('add irradiation={}'.format(self.name))
+            self.dvc.add_irradiation(self.name, self.chronology.get_doses(), verbose=False)
             if self.selected_reactor_name:
                 self.dvc.add_production_to_irradiation(self.name, self.reactor.name, self.reactor.get_params())
 
@@ -121,11 +173,11 @@ class IrradiationEditor(Loggable):
 
         return self.name
 
-    def _add_irradiation(self):
-        self.debug('add irradiation={}'.format(self.name))
-        self.dvc.add_irradiation(self.name, self.chronology.get_doses(), verbose=False)
-        if self.selected_reactor_name:
-            self.dvc.add_production_to_irradiation(self.name, self.reactor.name, self.reactor.get_params())
+    #def _add_irradiation(self):
+    #    self.debug('add irradiation={}'.format(self.name))
+    #    self.dvc.add_irradiation(self.name, self.chronology.get_doses(), verbose=False)
+    #    if self.selected_reactor_name:
+    #        self.dvc.add_production_to_irradiation(self.name, self.reactor.name, self.reactor.get_params())
 
     def _load_reactors(self):
 

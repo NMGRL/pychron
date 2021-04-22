@@ -143,9 +143,7 @@ class Experimentor(DVCIrradiationable):
 
                 # is run in cache
                 if ln not in cache:
-                    print('selfasdf', self.experiment_factory)
-                    simple = bool(self.experiment_factory.simple_identifier_manager)
-                    info = db.get_identifier_info(ln, simple)
+                    info = db.get_identifier_info(ln)
                     self.debug('Info for {}={}'.format(ln, info))
                     if not info:
                         cache[ln] = dict(identifier_error=True)

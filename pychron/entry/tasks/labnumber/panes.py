@@ -278,14 +278,15 @@ class IrradiationPane(TraitsDockPane):
         irrad = HGroup(spacer(),
                        Item('irradiation',
                             width=-150,
-                            editor=myEnumEditor(name='irradiations')),
+                            editor=myEnumEditor(name='irradiations'),
+                            label='Package'),
                        icon_button_editor('edit_irradiation_button', 'database_edit',
                                           enabled_when='edit_irradiation_enabled',
-                                          tooltip='Edit irradiation'),
+                                          tooltip='Edit Package'),
                        icon_button_editor('add_irradiation_button', 'database_add',
-                                          tooltip='Add irradiation'),
+                                          tooltip='Add Package'),
                        icon_button_editor('import_irradiation_button', 'database_go',
-                                          tooltip='Import irradiation'))
+                                          tooltip='Import Package'))
 
         level = HGroup(spacer(),
                        Label('Level:'),

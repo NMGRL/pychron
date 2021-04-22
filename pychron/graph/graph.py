@@ -219,15 +219,20 @@ class Graph(ContextMenuMixin):
         """
         txt = str(txt)
         if startswith:
-            is_equal = lambda x: x.startswith(txt)
+            def is_equal(x):
+                return x.startswith(txt)
         else:
-            is_equal = lambda x: x.__eq__(txt)
+            def is_equal(x):
+                return x.__eq__(txt)
 
         for po in self.plots:
             if is_equal(po.y_axis.title):
                 return po
         else:
-            print('plot titles txt={} {}'.format(txt, [po.y_axis.title for po in self.plots]))
+            print('plot titles txt={} {}'.format(txt, self.get_plot_ytitles()))
+
+    def get_plot_ytitles(self):
+        return [po.y_axis.title for po in self.plots]
 
     def get_num_plots(self):
         """
@@ -836,9 +841,7 @@ class Graph(ContextMenuMixin):
             plotlist = range(len(data))
 
         for pi, d in zip(plotlist, data):
-            self.add_datum(d,
-                           plotid=pi,
-                           **kw)
+            self.add_datum(d, plotid=pi, **kw)
 
     def add_bulk_data(self, xs, ys, plotid=0, series=0,
                       ypadding='0.1',

@@ -290,10 +290,11 @@ class DVC(Loggable):
                 mrepo.open_repo(root)
             else:
                 url = self.make_url(self.meta_repo_name)
-                if url:
-                    self.debug('cloning meta repo url={}'.format(url))
-                    path = os.path.join(paths.dvc_dir, name)
-                    self.meta_repo.clone(url, path)
+                if url is not None:
+                    if url:
+                        self.debug('cloning meta repo url={}'.format(url))
+                        path = os.path.join(paths.dvc_dir, name)
+                        self.meta_repo.clone(url, path)
                 else:
                     self.debug('no url returned for MetaData repository. You need to clone your MetaData repository '
                                'manually')
@@ -316,39 +317,40 @@ class DVC(Loggable):
         db = self.db
         with db.session_ctx():
             ip = db.get_identifier(ln)
-            dblevel = ip.level
-            irrad = dblevel.irradiation.name
-            level = dblevel.name
-            pos = ip.position
+            if ip is not None:
+                dblevel = ip.level
+                irrad = dblevel.irradiation.name
+                level = dblevel.name
+                pos = ip.position
 
-            fd = self.meta_repo.get_flux(irrad, level, pos)
-            _, prod = self.meta_repo.get_production(irrad, level, allow_null=True)
-            cs = self.meta_repo.get_chronology(irrad, allow_null=True)
+                fd = self.meta_repo.get_flux(irrad, level, pos)
+                _, prod = self.meta_repo.get_production(irrad, level, allow_null=True)
+                cs = self.meta_repo.get_chronology(irrad, allow_null=True)
 
-            x = datetime.now()
-            now = time.mktime(x.timetuple())
-            if fd['lambda_k']:
-                isotope_group.arar_constants.lambda_k = fd['lambda_k']
+                x = datetime.now()
+                now = time.mktime(x.timetuple())
+                if fd['lambda_k']:
+                    isotope_group.arar_constants.lambda_k = fd['lambda_k']
 
-            try:
-                pr = prod.to_dict(RATIO_KEYS)
-            except BaseException as e:
-                self.debug('invalid production. error={}'.format(e))
-                pr = {}
+                try:
+                    pr = prod.to_dict(RATIO_KEYS)
+                except BaseException as e:
+                    self.debug('invalid production. error={}'.format(e))
+                    pr = {}
 
-            try:
-                ic = prod.to_dict(INTERFERENCE_KEYS)
-            except BaseException as e:
-                self.debug('invalid production. error={}'.format(e))
-                ic = {}
+                try:
+                    ic = prod.to_dict(INTERFERENCE_KEYS)
+                except BaseException as e:
+                    self.debug('invalid production. error={}'.format(e))
+                    ic = {}
 
-            isotope_group.trait_set(j=fd['j'],
-                                    # lambda_k=lambda_k,
-                                    production_ratios=pr,
-                                    interference_corrections=ic,
-                                    chron_segments=cs.get_chron_segments(x),
-                                    irradiation_time=cs.irradiation_time,
-                                    timestamp=now)
+                isotope_group.trait_set(j=fd['j'],
+                                        # lambda_k=lambda_k,
+                                        production_ratios=pr,
+                                        interference_corrections=ic,
+                                        chron_segments=cs.get_chron_segments(x),
+                                        irradiation_time=cs.irradiation_time,
+                                        timestamp=now)
         return True
 
     def analyses_db_sync(self, ln, ais, reponame):
@@ -589,8 +591,11 @@ class DVC(Loggable):
         for expid, ais in groupby_repo(ans):
             ps = [analysis_path(x, x.repository_identifier, modifier=modifier) for x in ais for modifier in modifiers]
             if self.repository_add_paths(expid, ps):
-                self.repository_commit(expid, msg)
-                mod_repositories.append(expid)
+                if self.repository_commit(expid, msg):
+                    mod_repositories.append(expid)
+                else:
+                    self.warning_dialog('There is an issue with your repository. {}. Please fix it before '
+                                        'trying to save any changes'.format(expid))
         return mod_repositories
 
     def update_tag(self, an, add=True, **kw):
@@ -613,13 +618,13 @@ class DVC(Loggable):
 
             self._update_current_age(ai)
 
-    def save_icfactors(self, ai, dets, fits, refs, use_source_correction):
+    def save_icfactors(self, ai, dets, fits, refs, use_source_correction, standard_ratios):
         if use_source_correction:
             ai.dump_source_correction_icfactors(refs)
         else:
             if fits and dets:
                 self.info('Saving icfactors for {}'.format(ai))
-                ai.dump_icfactors(dets, fits, refs, reviewed=True)
+                ai.dump_icfactors(dets, fits, refs, reviewed=True, standard_ratios=standard_ratios)
 
         if self._cache:
             self._cache.remove(ai.uiid)
@@ -724,6 +729,9 @@ class DVC(Loggable):
                 repo.commit('<CSV> {} dataset "{}"'.format('Modified' if exists else 'Added', name))
 
         return p
+
+    def save_cosmogenic_correction(self, ai):
+        ai.dump_cosmogenic()
 
     def remove_irradiation_position(self, irradiation, level, hole):
         db = self.db
@@ -957,27 +965,32 @@ class DVC(Loggable):
             self.debug('examining {}'.format(name))
 
             r = Repo(repository_path(name))
-            lc = r.commit(branch).hexsha
+            if branch in [b.name for b in r.branches]:
+                try:
+                    lc = r.commit(branch).hexsha
+                except BaseException as e:
+                    self.warning('skipping {}. {}'.format(name, e))
+                    return
 
-            for gi in gs:
-                outdated, sha = gi.up_to_date(self.organization, name, lc, branch)
-                if outdated:
-                    try:
-                        fsha = r.commit('FETCH_HEAD').hexsha
-                    except BaseException:
-                        fsha = None
+                for gi in gs:
+                    outdated, sha = gi.up_to_date(self.organization, name, lc, branch)
+                    if outdated:
+                        try:
+                            fsha = r.commit('FETCH_HEAD').hexsha
+                        except BaseException:
+                            fsha = None
 
-                    try:
-                        if fsha != sha:
-                            self.debug('fetching {}'.format(name))
-                            r.git.fetch()
+                        try:
+                            if fsha != sha:
+                                self.debug('fetching {}'.format(name))
+                                r.git.fetch()
 
-                        item.dirty = True
+                            item.dirty = True
+                            item.update(fetch=False)
+                        except GitCommandError as e:
+                            self.warning('error examining {}. {}'.format(name, e))
+                    else:
                         item.update(fetch=False)
-                    except GitCommandError as e:
-                        self.warning('error examining {}. {}'.format(name, e))
-                else:
-                    item.update(fetch=False)
 
         progress_loader(names, func, threshold=1)
         for gi in gs:
@@ -990,7 +1003,7 @@ class DVC(Loggable):
     def repository_commit(self, repository, msg):
         self.debug('Repository commit: {} msg: {}'.format(repository, msg))
         repo = self._get_repository(repository)
-        repo.commit(msg)
+        return repo.commit(msg)
 
     def remote_repositories(self):
         rs = []
@@ -1313,6 +1326,21 @@ class DVC(Loggable):
         for gi in gs:
             if gi.remote_exists(self.organization, name):
                 return True
+
+    def add_readme(self, identifier):
+        self.debug('adding readme to repository identifier={}'.format(identifier))
+        root = repository_path(identifier)
+        if os.path.isdir(root):
+            p = os.path.join(root, 'README.md')
+            if not os.path.isfile(p):
+                with open(p, 'w') as wfile:
+                    wfile.write('{}\n###############'.format(identifier))
+            repo = self._get_repository(identifier, as_current=False)
+            repo.add(p)
+            repo.commit('initial commit')
+
+        else:
+            self.critical('Repository does not exist {}. {}'.format(identifier, root))
 
     def add_repository(self, identifier, principal_investigator, inform=True):
         self.debug('trying to add repository identifier={}, pi={}'.format(identifier, principal_investigator))
@@ -1657,13 +1685,9 @@ class DVC(Loggable):
             try:
                 a = DVCAnalysis(uuid, rid, expid)
             except AnalysisNotAnvailableError:
-
-                try:
-                    a = DVCAnalysis(uuid, rid, expid)
-                except AnalysisNotAnvailableError:
-                    self.warning_dialog('Analysis {} not in repository {}. '
-                                        'You many need to pull changes'.format(rid, expid))
-                    return
+                self.warning_dialog('Analysis {} not in repository {}. '
+                                    'You many need to pull changes'.format(rid, expid))
+                return
 
             a.group_id = record.group_id
             a.set_tag(record.tag)
@@ -1789,6 +1813,7 @@ class DVC(Loggable):
         bind_preference(self, 'favorites', '{}.favorites'.format(prefid))
         self._favorites_changed(self.favorites)
         self._set_meta_repo_name()
+        self._repository_root_changed()
 
         prefid = 'pychron.dvc'
         bind_preference(self, 'use_cocktail_irradiation', '{}.use_cocktail_irradiation'.format(prefid))
@@ -1838,10 +1863,15 @@ class DVC(Loggable):
             self.organization = new.organization
             self.meta_repo_name = new.meta_repo_name
             self.meta_repo_dirname = new.meta_repo_dir
+            self.repository_root = new.repository_root
             self.db.reset_connection()
             if old:
                 self.db.connect()
                 self.db.create_session()
+
+    def _repository_root_changed(self):
+        if self.repository_root:
+            paths.repository_dataset_dir = os.path.join(paths.dvc_dir, self.repository_root)
 
     def _meta_repo_dirname_changed(self):
         self._set_meta_repo_name()

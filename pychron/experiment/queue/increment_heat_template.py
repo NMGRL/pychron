@@ -196,8 +196,10 @@ class BaseIncrementalHeatTemplate(Viewable):
     # private
     def _parse_row(self, row, header):
         params = dict()
-        for a, cast in (('value', float), ('units', str),
-                        ('duration', float), ('cleanup', float)):
+        for a, cast in (('value', float),
+                        ('units', str),
+                        ('duration', float),
+                        ('cleanup', float)):
             idx = header.index(a)
             params[a] = cast(row[idx])
         return params
@@ -345,7 +347,7 @@ class BaseIncrementalHeatTemplate(Viewable):
         #                    selection_mode='rows', sortable=False)
 
         v = View(VGroup(HGroup(UItem('name', editor=myEnumEditor(name='names')),
-                               icon_button_editor('add_row', 'table_add'), spring,
+                               icon_button_editor('add_row', 'table_add', tooltip='Add a step'), spring,
                                Item('gduration', label='Duration'),
                                Item('gcleanup', label='Cleanup'),
                                Item('units')),
@@ -375,7 +377,11 @@ class LaserIncrementalHeatTemplate(BaseIncrementalHeatTemplate):
             idx = None
 
         if idx is not None:
-            v = row[idx]
+            try:
+                v = row[idx]
+            except IndexError:
+                v = ''
+
             if v.strip():
                 try:
                     params['beam_diameter'] = float(v)

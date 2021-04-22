@@ -19,10 +19,6 @@ from pychron.lasers.tasks.plugins.laser_plugin import BaseLaserPlugin
 
 
 class RemoteLaserPlugin(BaseLaserPlugin):
-    def test_communication(self):
-        man = self._get_manager()
-        return man.test_connection()
-
     def _get_task_klass(self):
         factory = __import__(self.task_klass[0], fromlist=[self.task_klass[1]])
         klassfactory = getattr(factory, self.task_klass[1])

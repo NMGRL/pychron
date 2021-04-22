@@ -24,9 +24,11 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 from pyface.tasks.action.task_action import TaskAction
 
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
+from pychron.envisage.tasks.list_actions import CancelProcedureAction
 from pychron.pyscripts.tasks.pyscript_actions import OpenPyScriptAction, \
     NewPyScriptAction, OpenHopsEditorAction, NewHopsEditorAction
 from pychron.pyscripts.tasks.pyscript_preferences import PyScriptPreferencesPane
+from pychron.pyscripts.tasks.pyscript_task import ScriptExecutor
 from pychron.pyscripts.tasks.visual_el_programmer.actions import OpenVisualELScriptAction, NewVisualELScriptAction, \
     SwitchRenamerAction
 
@@ -35,9 +37,16 @@ class PyScriptPlugin(BaseTaskPlugin):
     name = 'PyScript'
     id = 'pychron.pyscript.plugin'
 
+    def _service_offers_default(self):
+        so = self.service_offer_factory(factory=self._executor_factory, protocol=ScriptExecutor)
+        return [so]
+
+    def _executor_factory(self):
+        return ScriptExecutor(application=self.application)
+
     def _actions_default(self):
         return [('pychron.open_pyscript', 'Ctrl+Shift+O', 'Open PyScript'),
-                ('pychron.new_pyscript', 'Ctrl+Shift+N', 'New PyScript'),]
+                ('pychron.new_pyscript', 'Ctrl+Shift+N', 'New PyScript'), ]
 
     def _task_extensions_default(self):
         def _replace_action():
@@ -70,9 +79,13 @@ class PyScriptPlugin(BaseTaskPlugin):
                     SchemaAddition(id='open_visual',
                                    path='MenuBar/file.menu/Open',
                                    factory=OpenVisualELScriptAction),
-                SchemaAddition(id='switch_renamer',
-                               path='MenuBar/tools.menu',
-                               factory=SwitchRenamerAction)])]
+                    SchemaAddition(id='switch_renamer',
+                                   path='MenuBar/tools.menu',
+                                   factory=SwitchRenamerAction),
+                    SchemaAddition(id='cancel_procedure',
+                                   path='MenuBar/tools.menu',
+                                   factory=CancelProcedureAction),
+                ])]
         return exts
 
     def _tasks_default(self):

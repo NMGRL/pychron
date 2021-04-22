@@ -28,7 +28,7 @@ from pychron.entry.tasks.actions import MakeIrradiationBookPDFAction, MakeIrradi
     GenerateTrayAction, \
     ImportIrradiationGeometryAction, ExportIrradiationAction, ImportIrradiationAction, \
     TransferJAction, ImportIrradiationFileAction, GetIGSNAction, GenerateIrradiationTableAction, \
-    GenerateStatusReportAction, ImportAnalysesAction, EditIrradiationGeometryAction
+    GenerateStatusReportAction, ImportAnalysesAction, CorrelationEllipsesAction
 from pychron.entry.tasks.basic.actions import BasicEntryAction
 from pychron.entry.tasks.labnumber.actions import LabnumberEntryAction
 from pychron.entry.tasks.preferences import LabnumberEntryPreferencesPane, SamplePrepPreferencesPane, \
@@ -54,9 +54,9 @@ class EntryPlugin(BaseTaskPlugin):
                 'Once the Labnumber window is activated additional Menu actions are available including, '
                 'Transfer J and Generate Labbook.']
 
-    def _actions_default(self):
-        return [('pychron.labnumber_entry', 'Ctrl+Shift+l', 'Open Labnumber Entry Window'),
-                ('pychron.sensitivity', 'Ctrl+Shift+\\', 'Open Sensistivity Window'), ]
+    # def _actions_default(self):
+    #     return [('pychron.labnumber_entry', 'Ctrl+Shift+l', 'Open Labnumber Entry Window'),
+    #             ('pychron.sensitivity', 'Ctrl+Shift+\\', 'Open Sensistivity Window'), ]
 
     def _service_offers_default(self):
         def factory2():
@@ -137,8 +137,6 @@ class EntryPlugin(BaseTaskPlugin):
                                  path=gpath),
                   SchemaAddition(id='pychron.entry1.import_irradiation_geom', factory=ImportIrradiationGeometryAction,
                                  path=gpath),
-                  SchemaAddition(id='pychron.entry1.edit_irradiation_geom', factory=EditIrradiationGeometryAction,
-                                 path=gpath),
                   SchemaAddition(id='pychron.entry1.sensitivity_entry', factory=SensitivityEntryAction,
                                  path=gpath),
                   # SchemaAddition(id='pychron.entry1.molecular_weight_entry', factory=AddMolecularWeightAction,
@@ -146,7 +144,9 @@ class EntryPlugin(BaseTaskPlugin):
                   SchemaAddition(id='pychron.entry1.flux_monitor', factory=AddFluxMonitorAction,
                                  path=gpath),
                   SchemaAddition(id='pychron.entry2.generate_tray', factory=GenerateTrayAction, path=g2path),
-
+                  SchemaAddition(id='pychron.entry2.edit_correlation_ellipses',
+                                 factory=CorrelationEllipsesAction,
+                                 path=g2path),
                   ])]
 
     def _tasks_default(self):

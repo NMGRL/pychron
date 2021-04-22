@@ -16,22 +16,24 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-import six.moves.configparser
+
 import os
 
+import six.moves.configparser
 from traits.api import HasTraits, Button, Instance, List, Str, \
     Enum, Int, Float
 from traits.trait_types import Bool
 from traitsui.api import View, Item, VGroup
-
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 
 from pychron.core.helpers.filetools import backup
 from pychron.core.pychron_traits import IPAddress
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.loggable import Loggable
 from pychron.paths import paths
+
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 class ConfigGroup(HasTraits):
@@ -118,27 +120,28 @@ class DeviceConfigurer(Loggable):
 
         section = 'Communications'
         if cfg.has_section(section):
-            kind = cfg.get(section, 'type')
-            klass = CKLASS_DICT.get(kind)
-            if klass:
-                self.communication_grp = klass()
+            if cfg.has_option(section, 'type'):
+                kind = cfg.get(section, 'type')
+                klass = CKLASS_DICT.get(kind)
+                if klass:
+                    self.communication_grp = klass()
 
-                def func(option, cast=None, default=None, **kw):
-                    f = getattr(cfg, 'get{}'.format(cast if cast else ''))
-                    try:
-                        v = f(section, option, **kw)
-                    except six.moves.configparser.NoOptionError:
-                        v = default
-                        if v is None:
-                            if cast == 'boolean':
-                                v = False
-                            elif cast in ('float', 'int'):
-                                v = 0
-                    return v
+                    def func(option, cast=None, default=None, **kw):
+                        f = getattr(cfg, 'get{}'.format(cast if cast else ''))
+                        try:
+                            v = f(section, option, **kw)
+                        except six.moves.configparser.NoOptionError:
+                            v = default
+                            if v is None:
+                                if cast == 'boolean':
+                                    v = False
+                                elif cast in ('float', 'int'):
+                                    v = 0
+                        return v
 
-                self.communication_grp.load_from_config(func)
-                self.communication_grp.config_obj = cfg
-                self.comms_visible = True
+                    self.communication_grp.load_from_config(func)
+                    self.communication_grp.config_obj = cfg
+                    self.comms_visible = True
         else:
             self.comms_visible = False
             self.communication_grp = CommunicationGroup()
@@ -182,10 +185,27 @@ class DeviceConfigurer(Loggable):
         self.info('{} - saving a backup copy to {}'.format(bp, pp))
 
 
+class CommandResponse(HasTraits):
+    command = Str
+    response = Str
+
+
 class Hardwarer(Loggable):
     devices = List
     selected = Instance(ICoreDevice)
     device_configurer = Instance(DeviceConfigurer, ())
+
+    command = Str
+    responses = List
+    send_command_button = Button
+
+    def _send_command_button_fired(self):
+        if self.selected:
+            c = CommandResponse(command=self.command)
+            self.responses.insert(0, c)
+            resp = self.selected.ask(self.command)
+            if resp is not None:
+                c.response = resp
 
     def _selected_changed(self, new):
         if new:
