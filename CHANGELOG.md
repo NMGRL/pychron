@@ -1,5 +1,12 @@
 CHANGELOG
 =========
+
+4/22/2021
+### Features ###
+* added ability to play analysis videos from pycrunch
+* added ability to display group marker with mean label on an ideogram
+* added ability to display y ticks on both sides of the figure
+
 3/24/2021
 ### Features ####
 * added ability to view a single recalled analysis at a time in the browser window

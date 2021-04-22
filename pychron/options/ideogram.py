@@ -66,6 +66,7 @@ class IdeogramOptions(AgeOptions):
 
     centered_range = Float(0.5)
 
+    display_group_marker = Bool(True)
     display_mean_indicator = Bool(True)
     display_mean = Bool(True)
     display_mean_mswd = Bool(True)

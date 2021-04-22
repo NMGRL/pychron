@@ -76,7 +76,8 @@ class DisplaySubOptions(TitleSubOptions):
                             icon_button_editor('edit_mean_format_button', 'cog',
                                                tooltip='Open Mean Label maker'))
 
-        submean = HGroup(VGroup(Item('display_mean', label='Value', ),
+        submean = HGroup(VGroup(Item('display_group_marker', label='Group Marker')),
+                         VGroup(Item('display_mean', label='Value', ),
                                 Item('display_percent_error', label='%Error', )),
                          VGroup(Item('display_mean_mswd', label='MSWD', ),
                                 Item('display_mean_n', label='N'),

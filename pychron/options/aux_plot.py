@@ -47,6 +47,7 @@ class AuxPlot(HasTraits):
     ytick_visible = Bool(True)
     show_labels = Bool(False)
     y_axis_right = Bool(False)
+    yticks_both_sides = Bool(True)
 
     use_sparse_yticks = Bool(True)
     sparse_yticks_step = Int(2)

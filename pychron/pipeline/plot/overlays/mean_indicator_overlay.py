@@ -18,7 +18,8 @@
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.plot_label import PlotLabel
 from chaco.scatterplot import render_markers
-from traits.api import Color, Instance, Str, Float, Int, Any, Enum
+from enable.markers import MarkerNameDict
+from traits.api import Color, Instance, Str, Float, Int, Any, Enum, Bool
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -57,6 +58,55 @@ try:
     class XYPlotLabel(PlotLabel, MovableMixin):
         sx = Float
         sy = Float
+        marker = None
+        marker_size = None
+        display_marker = False
+
+        def _draw_overlay(self, gc, view_bounds=None, mode="normal"):
+            """ Draws the overlay layer of a component.
+
+            Overrides PlotComponent.
+            """
+            # Perform justification and compute the correct offsets for
+            # the label position
+            width, height = self._label.get_bounding_box(gc)
+            if self.hjustify == "left":
+                x_offset = 0
+            elif self.hjustify == "right":
+                x_offset = self.width - width
+            elif self.hjustify == "center":
+                x_offset = int((self.width - width) / 2)
+
+            if self.vjustify == "bottom":
+                y_offset = 0
+            elif self.vjustify == "top":
+                y_offset = self.height - height
+            elif self.vjustify == "center":
+                y_offset = int((self.height - height) / 2)
+
+            with gc:
+                # XXX: Uncomment this after we fix kiva GL backend's clip stack
+                # gc.clip_to_rect(self.x, self.y, self.width, self.height)
+
+                # We have to translate to our position because the label
+                # tries to draw at (0,0).
+                gc.translate_ctm(self.x + x_offset, self.y + y_offset)
+                if self.marker and self.display_marker:
+                    self._draw_marker(gc, height)
+                self._label.draw(gc)
+
+            return
+
+        def _draw_marker(self, gc, height):
+            marker = self.marker
+            marker_size = self.marker_size
+            points = [(-10-self.marker_size/2, (height+marker_size)/2)]
+            # points = [(0, 100)]
+            color = self.color
+            line_width = 1
+            outline_color = self.color
+            render_markers(gc, points, marker, marker_size,
+                           color, line_width, outline_color)
 
         def do_layout(self):
             """ Tells this component to do layout.
@@ -152,6 +202,9 @@ try:
         end_cap_length = Int(4)
         label_tool = Any
         group_id = Int
+        group_marker = Str('circle')
+        group_marker_size = Float(1)
+        display_group_marker = Bool(True)
 
         def clear(self):
             self.altered_screen_point = None
@@ -172,7 +225,11 @@ try:
                                     font=self.font,
                                     text=self.text,
                                     color=self.color,
+                                    marker=self.group_marker,
+                                    marker_size=self.group_marker_size,
+                                    display_marker=self.display_group_marker,
                                     id='{}_label'.format(self.id))
+
                 self.label = label
                 self.overlays.append(label)
                 tool = LabelMoveTool(component=label)
@@ -229,16 +286,16 @@ try:
                         y = self.y
                         if self.location == 'Upper Right':
                             x = comp.x2 - self.label.width
-                            y = comp.y2 - 20*self.group_id
+                            y = comp.y2 - 20 * self.group_id
                         elif self.location == 'Upper Left':
-                            x = comp.x+10
-                            y = comp.y2 - 20*self.group_id
+                            x = comp.x + 10
+                            y = comp.y2 - 20 * self.group_id
                         elif self.location == 'Lower Right':
                             x = comp.x2 - self.label.width
-                            y = 20*self.group_id
+                            y = 20 * self.group_id
                         elif self.location == 'Lower Left':
-                            x = comp.x+10
-                            y = 20*self.group_id
+                            x = comp.x + 10
+                            y = 20 * self.group_id
 
                         self.label.sx = x
                         self.label.sy = y

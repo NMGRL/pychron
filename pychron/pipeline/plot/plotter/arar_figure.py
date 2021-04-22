@@ -18,6 +18,7 @@ import math
 
 # ============= enthought library imports =======================
 from chaco.array_data_source import ArrayDataSource
+from chaco.axis import PlotAxis
 from chaco.tools.broadcaster import BroadcasterTool
 from chaco.tools.data_label_tool import DataLabelTool
 from numpy import Inf, vstack, zeros_like, ma
@@ -223,13 +224,24 @@ class BaseArArFigure(SelectionFigure):
         pp.y_grid.visible = options.use_ygrid
 
         if po:
-            if not po.ytick_visible:
-                pp.y_axis.tick_visible = False
-                pp.y_axis.tick_label_formatter = lambda x: ''
-
+            alt_axis = None
             if po.y_axis_right:
                 pp.y_axis.orientation = 'right'
                 pp.y_axis.axis_line_visible = False
+
+            if po.yticks_both_sides:
+                alt_axis = PlotAxis(pp, orientation='left' if po.y_axis_right else 'right')
+                alt_axis.tick_label_formatter = lambda x: ''
+                alt_axis.axis_line_visible = False
+                pp.underlays.append(alt_axis)
+                pp.add(alt_axis)
+
+            if not po.ytick_visible:
+                pp.y_axis.tick_visible = False
+                pp.y_axis.tick_label_formatter = lambda x: ''
+                if alt_axis:
+                    alt_axis.tick_visible = False
+
 
             pp.value_scale = po.scale
             if po.scale == 'log':

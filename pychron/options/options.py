@@ -190,6 +190,7 @@ class MainOptions(SubOptions):
                 checkbox_column(name='ytick_visible', label='Y Tick'),
                 checkbox_column(name='ytitle_visible', label='Y Title'),
                 checkbox_column(name='y_axis_right', label='Y Right'),
+                checkbox_column(name='yticks_both_sides', label='Y Ticks Both'),
                 object_column(name='scalar', label='Multiplier',
                               format_func=lambda x: floatfmt(x, n=2, s=2, use_scientific=True)),
                 checkbox_column(name='has_filter', label='Filter', editable=False)
