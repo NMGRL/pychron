@@ -255,36 +255,6 @@ class XMLLoader(BaseLoader):
                             width=width)
                 scene.add_item(line, layer=layer)
 
-    def _new_label(self, scene, label, name, c,
-                   layer=1,
-                   origin=None, klass=None, **kw):
-        if origin is None:
-            ox, oy = 0, 0
-        else:
-            ox, oy = origin
-        if klass is None:
-            klass = Label
-
-        x, y = self._get_translation(label)
-        # x, y = 0, 0
-        # trans = label.find('translation')
-        # if trans is not None:
-        #     x, y = map(float, trans.text.split(','))
-
-        c = make_color(c)
-        l = klass(ox + x, oy + y,
-                  bgcolor=c,
-                  use_border=to_bool(label.get('use_border', 'T')),
-                  name=name,
-                  text=label.text.strip(),
-                  **kw)
-        font = label.find('font')
-        if font is not None:
-            l.font = font.text.strip()
-
-        scene.add_item(l, layer=layer)
-        return l
-
     def _new_image(self, scene, image):
         path = image.text.strip()
         if not os.path.isfile(path):
@@ -304,6 +274,18 @@ class XMLLoader(BaseLoader):
 
             im = Image(x, y, path=path, scale=scale)
             scene.add_item(im, 0)
+
+    def _new_label(self, scene, label, name, c, **kw):
+        label_dict = {}
+        label_dict['use_border']=to_bool(label.get('use_border', 'T'))
+        label_dict['text'] = label.text.strip()
+        label_dict['translation'] = self
+
+        font = label.find('font')
+        if font is not None:
+            label_dict['font'] = font.text.strip()
+
+        super(XMLLoader, self)._new_label(scene, label_dict, name, c **kw)
 
     def load_switchables(self, scene, vpath):
         cp = self._cp
@@ -442,11 +424,11 @@ class XMLLoader(BaseLoader):
         color_dict = self._color_dict
         cp = self._cp
         origin = self._origin
+        ox, oy = 0, 0
+        if origin:
+            ox, oy = origin
 
-        if 'pipette' in color_dict:
-            c = color_dict['pipette']
-        else:
-            c = (204, 204, 204)
+        c = color_dict.get('pipette', (204, 204, 204))
 
         for p in cp.get_elements('pipette'):
             rect = self._new_rectangle(scene, p, c, bw=5,
@@ -455,10 +437,6 @@ class XMLLoader(BaseLoader):
             vlabel = p.find('vlabel')
             if vlabel is not None:
                 name = 'vlabel_{}'.format(rect.name)
-                ox, oy = 0, 0
-                if origin:
-                    ox, oy = origin
-
                 self._new_label(scene, vlabel, name, c,
                                 origin=(ox + rect.x, oy + rect.y),
                                 klass=ValueLabel,

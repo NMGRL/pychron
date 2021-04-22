@@ -404,8 +404,8 @@ class LoadIndicator(Circle):
             r = self.map_dimension(r)
 
         f = 2 ** 0.5 / 2
-        self.name_offsetx = (r*f)+8
-        self.name_offsety = (r*f)+8
+        self.name_offsetx = (r * f) + 8
+        self.name_offsety = (r * f) + 8
 
         if self.state:
             with gc:
@@ -438,7 +438,7 @@ class LoadIndicator(Circle):
             with gc:
                 gc.set_line_width(2)
                 gc.set_stroke_color(self._convert_color(self.measured_color))
-                gc.arc(x, y, r+1, 0, 360)
+                gc.arc(x, y, r + 1, 0, 360)
                 gc.stroke_path()
 
         for pm in self.primitives:
@@ -512,7 +512,10 @@ class ValueLabel(Label):
     value = Either(Int, Float, Str)
 
     def _get_text(self):
-        return self.text.format(self.value)
+        t = ''
+        if self.text and self.value is not None:
+            t = self.text.format(self.value)
+        return t
 
 
 class Indicator(QPrimitive):
@@ -814,7 +817,7 @@ class Animation(object):
 
     def refresh_required(self):
         if not self._last_refresh or \
-                                time.time() - self._last_refresh > self.tol:
+                time.time() - self._last_refresh > self.tol:
             self._last_refresh = time.time()
             return True
 

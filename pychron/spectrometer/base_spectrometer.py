@@ -508,6 +508,7 @@ class BaseSpectrometer(SpectrometerDevice):
                 pt = det.get('protection_threshold', 0)
                 serial_id = str(det.get('serial_id', '00000'))
                 index = float(det.get('index', i))
+                units = det.get('units', 'fA')
 
                 use_deflection = bool(det.get('use_deflection', True))
                 deflection_correction_sign = 1
@@ -529,6 +530,7 @@ class BaseSpectrometer(SpectrometerDevice):
                                    active=default_state,
                                    isotope=isotope,
                                    kind=kind,
+                                   units=units,
                                    ypadding=ypadding)
 
     def _load_detectors_cfg(self, path):

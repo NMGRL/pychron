@@ -255,7 +255,7 @@ class ScanableDevice(ViewableDevice):
         g.set_x_title('Time')
         g.new_series()
 
-    def current_state_view(self):
+    def get_additional_tabs(self):
         g = VGroup(Item('graph', show_label=False, style='custom'),
                    VGroup(Item('scan_func', label='Function', style='readonly'),
 
@@ -275,8 +275,9 @@ class ScanableDevice(ViewableDevice):
                        visible_when='object.is_scanable'),
 
                    label='Scan')
-        v = super(ScanableDevice, self).current_state_view()
-        v.content.content.append(g)
-        return v
+        return g,
+        # v = super(ScanableDevice, self).current_state_view()
+        # v.content.content.content.append(g)
+        # return v
 
         # ============= EOF =============================================

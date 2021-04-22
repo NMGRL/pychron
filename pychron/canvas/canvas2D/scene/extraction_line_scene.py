@@ -35,11 +35,11 @@ from pychron.canvas.canvas2D.scene.yaml_scene_loader import YAMLLoader
 class ExtractionLineScene(Scene):
     valves = Dict
     rects = Dict
+    widgets = Dict
 
     def load(self, pathname, configpath, valvepath, canvas):
         self.overlays = []
         self.reset_layers()
-
         origin, color_dict, valve_dimension, images = self._load_config(configpath, canvas)
         if pathname.endswith('.yaml') or pathname.endswith('.yml'):
             klass = YAMLLoader
@@ -52,6 +52,7 @@ class ExtractionLineScene(Scene):
         loader.load_rects(self)
         loader.load_pipettes(self)
         loader.load_markup(self)
+        loader.load_widgets(self, canvas)
         #
         # # need to load all components that will be connected
         # # before loading connections

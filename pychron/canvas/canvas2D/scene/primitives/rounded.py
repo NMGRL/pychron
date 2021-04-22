@@ -188,7 +188,7 @@ class Stage(RoundedRectangle):
     def __init__(self, *args, **kw):
         self.width = 10
         self.height = 5
-        super(Spectrometer, self).__init__(*args, **kw)
+        super(Stage, self).__init__(*args, **kw)
 
 
 class CircleStage(Connectable, Bordered):

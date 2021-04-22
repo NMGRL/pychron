@@ -528,6 +528,7 @@ class DVCPersister(BasePersister):
             detector = next((d for d in per_spec.active_detectors if d.name == iso.detector), None)
 
             isod = {'detector': iso.detector, 'name': iso.name,
+                    'units': detector.units,
                     'serial_id': detector.serial_id if detector else '00000'}
 
             if clf is not None:

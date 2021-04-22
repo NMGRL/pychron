@@ -20,7 +20,7 @@ import os
 from enable.enable_traits import Pointer
 from pyface.action.menu_manager import MenuManager
 from pyface.qt.QtGui import QToolTip
-from traits.api import Any, Str, on_trait_change, Bool
+from traits.api import Any, Str, on_trait_change, Bool, List
 from traitsui.menu import Action
 
 from pychron.canvas.canvas2D.overlays.extraction_line_overlay import ExtractionLineInfoTool, ExtractionLineInfoOverlay

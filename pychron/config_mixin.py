@@ -58,7 +58,6 @@ class YAMLParser:
     def getboolean(self, *args, **kw):
         return bool(self.get(*args, **kw))
 
-
 class ParserWrapper:
     _parser = None
 

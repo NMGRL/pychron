@@ -90,7 +90,7 @@ class ScanManager(StreamGraphManager):
     _suppress_isotope_change = False
 
     settings_name = 'scan_settings'
-    _active = False
+
     def _bind_listeners(self, remove=False):
         self.on_trait_change(self._update_magnet, 'magnet:dac_changed',
                              remove=remove)
@@ -98,7 +98,7 @@ class ScanManager(StreamGraphManager):
                              remove=remove)
 
     def prepare_destroy(self):
-        self._active=False
+        self.set_streaming_active(False)
         self.stop_scan()
         self.log_events_enabled = False
         self._bind_listeners(remove=True)
@@ -133,7 +133,7 @@ class ScanManager(StreamGraphManager):
         # del self.graph_scan_width
 
     def activate(self):
-        self._active = True
+        self.set_streaming_active(False)
         self.bind_preferences()
 
         self.load_event_marker_config()
@@ -532,8 +532,9 @@ class ScanManager(StreamGraphManager):
             self.debug('setting integration time={}'.format(self.integration_time))
 
             if not self.timer:
-                self.spectrometer.set_integration_time(self.integration_time, force=True)
-                self.reset_scan_timer()
+                if self._is_active:
+                    self.spectrometer.set_integration_time(self.integration_time, force=True)
+                    self.reset_scan_timer()
             else:
                 self._integration_time_flag = True
 

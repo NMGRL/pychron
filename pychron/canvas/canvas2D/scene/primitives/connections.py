@@ -31,6 +31,14 @@ class ConnectionMixin:
     end_offsetx = Float
     end_offsety = Float
 
+    @property
+    def end_offset(self):
+        return '{:0.2f},{:0.2f}'.format(self.end_offsetx, self.end_offsety)
+
+    @property
+    def start_offset(self):
+        return '{:0.2f},{:0.2f}'.format(self.start_offsetx, self.start_offsety)
+
     def edit_view(self):
         v = View(Item('orientation'),
                  HGroup(Item('start'), Label('Offset'), UItem('start_offsetx'), UItem('start_offsety')),
@@ -45,6 +53,7 @@ class Connection(ConnectionMixin, BorderLine):
         y = super(Connection, self).toyaml()
         del y['dimension']
         del y['translation']
+        del y['name']
 
         y['start'] = {'name': str(self.start), 'offset': str(self.start_offset)}
         y['end'] = {'name': str(self.end), 'offset': str(self.end_offset)}

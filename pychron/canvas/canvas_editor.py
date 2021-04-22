@@ -153,7 +153,7 @@ class CanvasEditor(Loggable):
 
             for klass, key in ((Switch, 'switch'),
                                (Valve, 'valve'),
-                               (ManualSwitch, 'manualswitch'),
+                               (ManualSwitch, 'manual_valve'),
                                (Turbo, 'turbo'),
                                (IonPump, 'ionpump'),
                                (Getter, 'getter'),

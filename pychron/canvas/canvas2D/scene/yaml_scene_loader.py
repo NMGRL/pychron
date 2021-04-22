@@ -16,14 +16,18 @@
 
 
 # ============= EOF =============================================
+from random import random
 
-from pychron.canvas.canvas2D.scene.base_scene_loader import BaseLoader, colorify, get_offset
+from pychron.canvas.canvas2D.scene.base_scene_loader import BaseLoader, colorify, get_offset, make_color
 from pychron.canvas.canvas2D.scene.primitives.connections import Elbow, Tee, Fork, Connection
+from pychron.canvas.canvas2D.scene.primitives.primitives import ValueLabel
 from pychron.canvas.canvas2D.scene.primitives.rounded import RoundedRectangle
-from pychron.canvas.canvas2D.scene.primitives.valves import Valve
+from pychron.canvas.canvas2D.scene.primitives.valves import Valve, RoughValve, ManualSwitch
+from pychron.canvas.canvas2D.scene.primitives.widgets import Widget
 from pychron.core.helpers.strtools import to_bool
 from pychron.core.yaml import yload
 from pychron.extraction_line.switch_parser import SwitchParser
+from pychron.hardware.core.i_core_device import ICoreDevice
 
 
 class YAMLLoader(BaseLoader):
@@ -49,15 +53,34 @@ class YAMLLoader(BaseLoader):
 
         return [float(i) for i in v.get(key, default).split(',')]
 
+    def load_widgets(self, scene, canvas):
+        app = canvas.manager.application
+        for wi in self._yd.get('widget') or []:
+            key = wi['name']
+            x, y = self._get_translation(wi)
+
+            devname = wi['devname']
+            funcname = wi['funcname']
+            dev = app.get_service(ICoreDevice, query="name=='{}'".format(devname))
+            if dev:
+                func = getattr(dev, funcname)
+            else:
+                def func():
+                    return 'NoDevice'
+
+            v = Widget(func, x, y, text='value={}')
+            scene.add_item(v)
+            scene.widgets[key] = v
+
     def load_switchables(self, scene, valvepath):
         vp = SwitchParser(valvepath)
         ndict = dict()
         ox, oy = self._origin
 
-        for s in self._yd.get('switch'):
+        for s in self._yd.get('switch') or []:
             pass
 
-        for v in self._yd.get('valve'):
+        for v in self._yd.get('valve') or []:
             key = v['name'].strip()
             # x, y = self._get_floats(v, 'translation')
             x, y = self._get_translation(v)
@@ -85,12 +108,48 @@ class YAMLLoader(BaseLoader):
             scene.add_item(v, layer=1)
             ndict[key] = v
 
-        # scene.valves = ndict
+        for rv in self._yd.get('rough_valve') or []:
+            key = rv['name'].strip()
+            # x, y = self._get_floats(rv, 'translation')
+            x, y = self._get_translation(rv)
+            v = RoughValve(x + ox, y + oy, name=key)
+            scene.add_item(v, layer=1)
+            ndict[key] = v
 
-    def load_pipettes(self):
-        pass
+        for mv in self._yd.get('manual_valve') or []:
+            key = mv['name'].strip()
+            x, y = self._get_translation(mv)
+            # x, y = self._get_floats(mv, 'translation')
+            vv = vp.get_manual_valve(key)
+            desc = ''
+            if vv is not None:
+                desc = vv.find('description')
+                desc = desc.text.strip() if desc is not None else ''
+            v = ManualSwitch(x + ox, y + oy,
+                             display_name=desc,
+                             name=key)
+            scene.add_item(v, layer=1)
+            ndict[key] = v
 
-    def load_markup(self):
+        scene.valves = ndict
+
+    def load_pipettes(self, scene):
+        origin = self._origin
+        c = self._color_dict.get('pipette', (204, 204, 204))
+        ox, oy = origin
+        for p in self._yd.get('pipette') or []:
+            rect = self._new_rectangle(scene, p, c,
+                                       origin=origin, type_tag='pipette')
+
+            vlabel = p.get('vlabel')
+            if vlabel is not None:
+                name = 'vlabel_{}'.format(rect.name)
+                self._new_label(scene, vlabel, name, c,
+                                origin=(ox + rect.x, oy + rect.y),
+                                klass=ValueLabel,
+                                value=0)
+
+    def load_markup(self, scene):
         pass
 
     # need to load all components that will be connected
@@ -114,7 +173,7 @@ class YAMLLoader(BaseLoader):
             for conn in self._yd.get('{}_connection'.format(tag), []):
                 self._new_fork(scene, klass, conn)
 
-    def load_legend(self):
+    def load_legend(self, scene):
         pass
 
     # private
@@ -123,8 +182,9 @@ class YAMLLoader(BaseLoader):
                        origin=None, klass=None, type_tag=''):
         if klass is None:
             klass = RoundedRectangle
+
         if origin is None:
-            ox, oy = 0, 0
+            ox, oy = self._origin
         else:
             ox, oy = origin
 
@@ -153,7 +213,7 @@ class YAMLLoader(BaseLoader):
                 c = colorify(c)
 
         else:
-            c = scene._make_color(c)
+            c = make_color(c)
 
         rect = klass(x + ox, y + oy, width=w, height=h,
                      name=key,
@@ -194,6 +254,7 @@ class YAMLLoader(BaseLoader):
             orient = orientation_default
 
         x, y = 0, 0
+        sox, soy, start_offset = 0, 0, '0,0'
         sanchor = scene.get_item(skey)
         if sanchor:
             x, y = sanchor.x, sanchor.y
@@ -204,6 +265,7 @@ class YAMLLoader(BaseLoader):
             y += soy
 
         x1, y1 = x, y
+        eox, eoy, end_offset = 0, 0, '0,0'
         eanchor = scene.get_item(ekey)
         if eanchor:
             x1, y1 = eanchor.x, eanchor.y

@@ -40,7 +40,7 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
     RepositoryTbl, AnalysisChangeTbl, \
     PrincipalInvestigatorTbl, SamplePrepWorkerTbl, SamplePrepSessionTbl, \
     SamplePrepStepTbl, SamplePrepImageTbl, RestrictedNameTbl, AnalysisGroupTbl, AnalysisGroupSetTbl, \
-    SamplePrepChoicesTbl, CurrentTbl, ParameterTbl, UnitsTbl
+    SamplePrepChoicesTbl, CurrentTbl, ParameterTbl, UnitsTbl, MediaTbl
 from pychron.experiment.utilities.identifier import strip_runid
 from pychron.globals import globalv
 from pychron.pychron_constants import NULL_STR, EXTRACT_DEVICE, NO_EXTRACT_DEVICE, \
@@ -534,6 +534,12 @@ class DVCDatabase(DatabaseAdapter):
 
             c.units = units
             self._add_item(c)
+
+    def add_media(self, p, an):
+        m = MediaTbl(url=p)
+        m.analysis = an
+
+        return self._add_item(m)
 
     def add_analysis(self, **kw):
         with self.session_ctx():

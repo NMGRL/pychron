@@ -108,7 +108,7 @@ class BaseScanner(PersistenceLoggable):
                 break
 
             self._do_step(magnet, si)
-            time.sleep(period)
+            time.sleep(max(0, period))
             if i == 0:
                 time.sleep(3)
             

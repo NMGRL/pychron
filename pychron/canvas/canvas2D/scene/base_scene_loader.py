@@ -14,9 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 from pychron.canvas.canvas2D.scene.primitives.lasers import Laser, CircleLaser
+from pychron.canvas.canvas2D.scene.primitives.primitives import Label
 from pychron.canvas.canvas2D.scene.primitives.pumps import Turbo, IonPump
-from pychron.canvas.canvas2D.scene.primitives.rounded import CircleStage, Spectrometer, Getter
+from pychron.canvas.canvas2D.scene.primitives.rounded import CircleStage, Spectrometer, Getter, Stage
 from pychron.canvas.canvas2D.scene.primitives.rounded import RoundedRectangle
+from pychron.core.helpers.strtools import to_bool
 
 KLASS_MAP = {'turbo': Turbo,
              'laser': Laser,
@@ -24,7 +26,8 @@ KLASS_MAP = {'turbo': Turbo,
              'getter': Getter,
              'spectrometer': Spectrometer,
              'circle_stage': CircleStage,
-             'circle_laser': CircleLaser}
+             'circle_laser': CircleLaser,
+             'stage': Stage}
 
 RECT_TAGS = ('stage', 'laser', 'spectrometer',
              'turbo', 'getter', 'tank',
@@ -108,4 +111,36 @@ class BaseLoader:
 
     def _new_rectangle(self, *args, **kw):
         raise NotImplementedError
+
+    def _new_label(self, scene, label_dict, name, c,
+                   layer=1,
+                   origin=None, klass=None, **kw):
+        if origin is None:
+            ox, oy = 0, 0
+        else:
+            ox, oy = origin
+        if klass is None:
+            klass = Label
+
+        # tran = label_dict['translation']
+        x, y = self._get_translation(label_dict)
+        # x, y = 0, 0
+        # trans = label.find('translation')
+        # if trans is not None:
+        #     x, y = map(float, trans.text.split(','))
+
+        c = make_color(c)
+        l = klass(ox + x, oy + y,
+                  bgcolor=c,
+                  use_border=label_dict.get('use_border', True),
+                  name=name,
+                  text=label_dict.get('text', ''),
+                  **kw)
+
+        font = label_dict.get('font')
+        if font is not None:
+            l.font = font
+
+        scene.add_item(l, layer=layer)
+        return l
 # ============= EOF =============================================
