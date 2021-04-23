@@ -187,8 +187,9 @@ class MainOptions(SubOptions):
                 checkbox_column(name='show_labels', label='Labels'),
                 checkbox_column(name='x_error', label='X Err.'),
                 checkbox_column(name='y_error', label='Y Err.'),
+                object_column(name='ytitle', label='Y Title'),
                 checkbox_column(name='ytick_visible', label='Y Tick'),
-                checkbox_column(name='ytitle_visible', label='Y Title'),
+                checkbox_column(name='ytitle_visible', label='Y Title Visible'),
                 checkbox_column(name='y_axis_right', label='Y Right'),
                 checkbox_column(name='yticks_both_sides', label='Y Ticks Both'),
                 object_column(name='scalar', label='Multiplier',
@@ -200,9 +201,10 @@ class MainOptions(SubOptions):
         return cols
 
     def _get_name_grp(self):
-        grp = HGroup(Item('name', editor=EnumEditor(name='names')),
-                     Item('scale', editor=EnumEditor(values=['linear', 'log'])),
-                     Item('height'))
+        grp = BorderVGroup(HGroup(Item('name', editor=EnumEditor(name='names')),
+                                  Item('ytitle', label='Y Title')),
+                           HGroup(Item('scale', editor=EnumEditor(values=['linear', 'log'])),
+                                  Item('height')))
         return grp
 
     def _get_yticks_grp(self):
@@ -693,6 +695,7 @@ class AuxPlotFigureOptions(FigureOptions):
     x_end_caps = Bool(False)
     y_end_caps = Bool(False)
     error_bar_nsigma = Enum(1, 2, 3)
+    error_bar_line_width = Float(1.0)
 
     def setup(self):
         super(AuxPlotFigureOptions, self).setup()

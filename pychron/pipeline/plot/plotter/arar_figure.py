@@ -70,6 +70,7 @@ class BaseArArFigure(SelectionFigure):
     _analysis_group_klass = AnalysisGroup
 
     group_id = Int
+    subgroup_id = Int
     ytitle = Str
     title = Str
     xtitle = Str
@@ -126,7 +127,7 @@ class BaseArArFigure(SelectionFigure):
                 kw['bounds'] = [self.options.layout.fixed_width, kw['bounds'][1]]
                 kw['resizable'] = ''
 
-            if i == nplots-1:
+            if i == nplots - 1:
                 kw['title'] = title
 
             if i == 0 and self.ytitle:
@@ -230,18 +231,18 @@ class BaseArArFigure(SelectionFigure):
                 pp.y_axis.axis_line_visible = False
 
             if po.yticks_both_sides:
-                alt_axis = PlotAxis(pp, orientation='left' if po.y_axis_right else 'right')
-                alt_axis.tick_label_formatter = lambda x: ''
-                alt_axis.axis_line_visible = False
-                pp.underlays.append(alt_axis)
-                pp.add(alt_axis)
+                if self.group_id == 0 and self.subgroup_id == 0:
+                    alt_axis = PlotAxis(pp, orientation='left' if po.y_axis_right else 'right')
+                    alt_axis.tick_label_formatter = lambda x: ''
+                    alt_axis.axis_line_visible = False
+                    pp.underlays.append(alt_axis)
+                    pp.add(alt_axis)
 
             if not po.ytick_visible:
                 pp.y_axis.tick_visible = False
                 pp.y_axis.tick_label_formatter = lambda x: ''
                 if alt_axis:
                     alt_axis.tick_visible = False
-
 
             pp.value_scale = po.scale
             if po.scale == 'log':
@@ -396,48 +397,38 @@ class BaseArArFigure(SelectionFigure):
         return omits, invalids, outliers
 
     def _plot_raw_40_36(self, po, pid):
-        k = 'uAr40/Ar36'
-        return self._plot_aux('noncor. <sup>40</sup>Ar/<sup>36</sup>Ar', k, po, pid)
+        return self._plot_aux('uAr40/Ar36', po, pid)
 
     def _plot_ic_40_36(self, po, pobj, pid):
-        k = 'Ar40/Ar36'
-        return self._plot_aux('<sup>40</sup>Ar/<sup>36</sup>Ar', k, po, pid)
+        return self._plot_aux('Ar40/Ar36', po, pid)
 
     def _plot_icf_40_36(self, po, pobj, pid):
-        k = 'icf_40_36'
-        return self._plot_aux('ifc <sup>40</sup>Ar/<sup>36</sup>Ar', k, po, pid)
+        return self._plot_aux('icf_40_36', po, pid)
 
     def _plot_radiogenic_yield(self, po, pobj, pid):
-        k = 'radiogenic_yield'
-        return self._plot_aux('%<sup>40</sup>Ar*', k, po, pid)
+        return self._plot_aux('radiogenic_yield', po, pid)
 
     def _plot_kcl(self, po, pobj, pid):
-        k = 'kcl'
-        return self._plot_aux('K/Cl', k, po, pid)
+        return self._plot_aux('kcl', po, pid)
 
     def _plot_clk(self, po, pobj, pid):
-        k = 'clk'
-        return self._plot_aux('Cl/K', k, po, pid)
+        return self._plot_aux('clk', po, pid)
 
     def _plot_kca(self, po, pobj, pid):
         k = 'kca'
         return self._plot_aux('K/Ca', k, po, pid)
 
     def _plot_signal_k39(self, po, pobj, pid):
-        k = 'k39'
-        return self._plot_aux('<sup>39</sup>Ar<sub>K</sub>(fA)', k, po, pid)
+        return self._plot_aux('k39', po, pid)
 
     def _plot_moles_k39(self, po, pobj, pid):
-        k = 'moles_k39'
-        return self._plot_aux('<sup>39</sup>Ar<sub>K</sub>(mol)', k, po, pid)
+        return self._plot_aux('moles_k39', po, pid)
 
     def _plot_moles_ar40(self, po, pobj, pid):
-        k = 'Ar40'
-        return self._plot_aux('<sup>40</sup>Ar<sub>tot</sub>(fA)', k, po, pid)
+        return self._plot_aux('Ar40', po, pid)
 
     def _plot_moles_ar36(self, po, pobj, pid):
-        k = 'Ar36'
-        return self._plot_aux('<sup>36</sup>Ar<sub>tot</sub>(fA)', k, po, pid)
+        return self._plot_aux('Ar36', po, pid)
 
     def _plot_extract_value(self, po, pobj, pid):
         k = 'extract_value'
@@ -475,12 +466,14 @@ class BaseArArFigure(SelectionFigure):
         scatter.underlays.append(ov)
 
     def _add_error_bars(self, scatter, errors, axis, nsigma,
+                        line_width=1,
                         end_caps=True,
                         visible=True):
         ebo = ErrorBarOverlay(component=scatter,
                               orientation=axis,
                               nsigma=nsigma,
                               visible=visible,
+                              line_width=line_width,
                               use_end_caps=end_caps)
 
         scatter.underlays.append(ebo)

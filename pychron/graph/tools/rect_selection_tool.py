@@ -94,7 +94,6 @@ class RectSelectionTool(BaseTool):
             self.component.index.metadata[self.selection_metadata_name] = []
 
     def normal_left_down(self, event):
-        print('rect', event, id(event))
         if not event.handled:
             token = self._get_selection_token(event)
             if token is None:
@@ -106,8 +105,6 @@ class RectSelectionTool(BaseTool):
                 else:
                     self._select_token(token)
                 event.handled = True
-
-            print('recadsf', event, id(event))
 
     def select_mouse_leave(self, event):
         self._end_select(event)

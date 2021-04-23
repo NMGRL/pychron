@@ -6,6 +6,10 @@ CHANGELOG
 * added ability to play analysis videos from pycrunch
 * added ability to display group marker with mean label on an ideogram
 * added ability to display y ticks on both sides of the figure
+* added custom ytitles for aux plots
+* added subgroup ideogram overlay to aux plots
+* added error bar line width
+
 
 3/24/2021
 ### Features ####

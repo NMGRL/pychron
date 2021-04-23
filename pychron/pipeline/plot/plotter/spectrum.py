@@ -141,12 +141,13 @@ class Spectrum(BaseArArFigure):
     # plotters
     # ===============================================================================
 
-    def _plot_aux(self, title, vk, po, pid):
+    def _plot_aux(self, vk, po, pid):
         graph = self.graph
         # if '<sup>' in title or '<sub>' in title:
         #     self._set_ml_title(title, pid, 'y')
         # else:
 
+        title = po.get_ytitle(vk)
         graph.set_y_title(title, plotid=pid)
         xs, ys, es, c39s, s39, vs = self._calculate_spectrum(value_key=vk)
         self.spectrum_values[pid] = xs, ys, es, c39s, s39, vs

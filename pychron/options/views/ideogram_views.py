@@ -27,7 +27,8 @@ class DisplaySubOptions(TitleSubOptions):
 
     def traits_view(self):
         errbar_grp = VGroup(HGroup(Item('x_end_caps', label='X End Caps'),
-                                   Item('y_end_caps', label='Y End Caps'),
+                                   Item('y_end_caps', label='Y End Caps')),
+                            HGroup(Item('error_bar_line_width', label='Line Width'),
                                    Item('error_bar_nsigma', label='NSigma')),
                             show_border=True,
                             label='Error Bars')

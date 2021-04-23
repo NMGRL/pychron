@@ -38,8 +38,11 @@ from pychron.graph.ticks import IntTickGenerator
 from pychron.pipeline.plot.overlays.correlation_ellipses_overlay import CorrelationEllipsesOverlay
 from pychron.pipeline.plot.overlays.ideogram_inset_overlay import IdeogramInset, IdeogramPointsInset
 from pychron.pipeline.plot.overlays.mean_indicator_overlay import MeanIndicatorOverlay
+from pychron.pipeline.plot.overlays.subgroup_overlay import SubGroupPointOverlay
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 from pychron.pipeline.plot.point_move_tool import OverlayMoveTool
+from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
+from pychron.processing.interpreted_age import InterpretedAge
 from pychron.pychron_constants import PLUSMINUS, SIGMA
 from pychron.regex import ORDER_PREFIX_REGEX
 
@@ -138,7 +141,7 @@ class Ideogram(BaseArArFigure):
     xs = Array
     xes = Array
     ytitle = 'Relative Probability'
-    subgroup_id = 0
+
     subgroup = None
     peaks = None
 
@@ -291,21 +294,27 @@ class Ideogram(BaseArArFigure):
 
         return gen()
 
-    def _plot_aux(self, title, vk, po, pid):
+    def _plot_aux(self, vk, po, pid):
+        title = po.get_ytitle(vk)
+
         for aux_id, items, xs, xes, ys, yes in self._get_aux_plot_data(vk, po.scalar):
             scatter = self._add_aux_plot(ys, title, po, pid, gid=self.group_id or aux_id, es=yes, xs=xs)
             nsigma = self.options.error_bar_nsigma
             if xes:
                 self._add_error_bars(scatter, xes, 'x', nsigma,
                                      end_caps=self.options.x_end_caps,
+                                     line_width=self.options.error_bar_line_width,
                                      visible=po.x_error)
             if yes:
                 self._add_error_bars(scatter, yes, 'y', nsigma,
                                      end_caps=self.options.y_end_caps,
+                                     line_width=self.options.error_bar_line_width,
                                      visible=po.y_error)
 
             if po.show_labels:
                 self._add_point_labels(scatter, ans=items)
+
+            self._add_subgroup_overlay(scatter, items)
 
             func = self._get_index_attr_label_func()
             self._add_scatter_inspector(scatter,
@@ -328,15 +337,15 @@ class Ideogram(BaseArArFigure):
             index_attr = 'uage_w_position_err'
 
         if nonsorted:
-            name = 'A# Nonsorted'
+            # ytitle = 'A# Nonsorted'
             tag = 'Analysis Number Nonsorted'
             # xs = [nominal_value(x) for x in self._get_xs(key=index_attr, nonsorted=True)]
         else:
-            name = 'Analysis #'
+            # ytitle = 'Analysis #'
             tag = 'Analysis Number'
             # xs = self.xs
-
-        selection = []
+        ytitle = po.get_ytitle(tag)
+        # selection = []
 
         startidx = 1
         for p in self.graph.plots:
@@ -344,7 +353,7 @@ class Ideogram(BaseArArFigure):
             if p.y_axis.tag == tag:
                 for k, rend in p.plots.items():
                     # if title is not visible k == e.g '-1' instead of 'Analysis #-1'
-                    if k.startswith(name) or k.startswith('-'):
+                    if k.startswith(ytitle) or k.startswith('-'):
                         startidx += rend[0].index.get_size()
 
         items = self.sorted_analyses
@@ -410,7 +419,7 @@ class Ideogram(BaseArArFigure):
                     data = sorted(zip(xs, ys), key=lambda x: x[0])
                     xs, ys = list(zip(*data))
 
-            scatter = self._add_aux_plot(ys, name, po, pid,
+            scatter = self._add_aux_plot(ys, ytitle, po, pid,
                                          gid=max(0, self.group_id or (aux_id - 1)), xs=xs, **kw)
 
             if opt.include_group_legend:
@@ -437,11 +446,14 @@ class Ideogram(BaseArArFigure):
                 scatter.overlays.append(LatestOverlay(component=scatter,
                                                       data_position=array([(dx, dy)])))
             self._add_error_bars(scatter, xes, 'x', opt.error_bar_nsigma,
+                                 line_width=self.options.error_bar_line_width,
                                  end_caps=opt.x_end_caps,
                                  visible=po.x_error)
 
             if po.show_labels:
                 self._add_point_labels(scatter, ans=ais)
+
+            self._add_subgroup_overlay(scatter, ais)
 
             # set tick generator
             gen = IntTickGenerator()
@@ -465,6 +477,12 @@ class Ideogram(BaseArArFigure):
             # selection = omits + outliers
             # selection.extend(omits)
             # selection.extend(outliers)
+
+    def _add_subgroup_overlay(self, scatter, ans):
+        idx = [i for i, a in enumerate(ans) if isinstance(a, InterpretedAgeGroup)]
+        if idx:
+            o = SubGroupPointOverlay(component=scatter, indexes=idx)
+            scatter.overlays.append(o)
 
     def _get_index_attr_label_func(self):
         ia = self.options.index_attr
