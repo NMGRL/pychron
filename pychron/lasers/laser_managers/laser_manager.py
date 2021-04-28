@@ -131,12 +131,12 @@ class LaserManager(BaseLaserManager):
 
         return enabled
 
-    def set_laser_output(self, *args, **kw):
-        """
-            by default set_laser_output simply uses set_laser_power
-            but subclasses can override for different units
-        """
-        self.set_laser_power(*args, **kw)
+    # def set_laser_output(self, *args, **kw):
+    #     """
+    #         by default set_laser_output simply uses set_laser_power
+    #         but subclasses can override for different units
+    #     """
+    #     self.set_laser_power(*args, **kw)
 
     def set_laser_power(self, power, verbose=True, units=None, *args, **kw):
         """
@@ -326,8 +326,8 @@ class LaserManager(BaseLaserManager):
                 resp = True
             return resp
 
-    def _set_laser_power_hook(self, *args, **kw):
-        pass
+    #def _set_laser_power_hook(self, *args, **kw):
+    #    pass
 
     def set_laser_power_hook(self, *args, **kw):
         self._set_laser_power_hook(*args, **kw)

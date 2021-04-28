@@ -92,7 +92,7 @@ class BaseLaserManager(Manager):
         pass
 
     def end_extract(self, *args, **kw):
-        pass
+        self.disable_laser()
 
     def extract(self, *args, **kw):
         pass
