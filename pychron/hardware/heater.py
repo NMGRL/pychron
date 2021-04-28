@@ -112,7 +112,5 @@ class PLC2000Heater(CoreDevice, ModbusMixin, HeaterMixin):
 
     @get_float()
     def read_readback(self):
-        resp = self._read_holding_registers(self.readback_address)
-        print('sadf', resp)
-        return resp.registers[0]
+        return self._read_float(self.readback_address)
 # ============= EOF =============================================

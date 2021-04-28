@@ -13,11 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from pymodbus.constants import Endian
+from pymodbus.payload import BinaryPayloadDecoder
+
 
 class ModbusMixin:
     """
     simple mapper of the Modbus commands
     """
+    def _read_float(self, register, *args, **kw):
+        result = self._read_holding_registers(int(register), 2, *args, **kw)
+        decoder = BinaryPayloadDecoder.fromRegisters(result.registers, Endian.Big, wordorder=Endian.Little)
+        return decoder.decode_32bit_float()
 
     def _func(self, funcname, *args, **kw):
         if self.communicator:

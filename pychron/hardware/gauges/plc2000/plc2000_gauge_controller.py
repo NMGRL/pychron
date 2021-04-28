@@ -16,9 +16,7 @@
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.core.modbus import ModbusMixin
 from pychron.hardware.gauges.base_controller import BaseGaugeController
-from pymodbus.constants import Endian
-from pymodbus.payload import BinaryPayloadDecoder
-from pymodbus.payload import BinaryPayloadBuilder
+
 
 class PLC2000GaugeController(BaseGaugeController, CoreDevice, ModbusMixin):
     def load_additional_args(self, config, *args, **kw):
@@ -41,9 +39,7 @@ class PLC2000GaugeController(BaseGaugeController, CoreDevice, ModbusMixin):
 
         if name is not None:
             try:
-                result = self._read_holding_registers(int(register), 2)
-                decoder = BinaryPayloadDecoder.fromRegisters(result.registers, Endian.Big, wordorder=Endian.Little)
-                pressure = decoder.decode_32bit_float()
+                pressure = self._read_float(register)
             except BaseException as e:
                 self.debug_exception()
                 self.debug('failed reading register={}, error={}'.format(register, e))
