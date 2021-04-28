@@ -33,7 +33,7 @@ class BaseGauge(HasTraits):
 
     def traits_view(self):
         v = View(HGroup(Item('display_name', show_label=False, style='readonly',
-                             width=-30, ),
+                             width=-100, ),
                         Item('pressure',
                              format_str='%0.2e',
                              show_label=False,

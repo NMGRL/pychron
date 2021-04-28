@@ -77,7 +77,7 @@ HW_PACKAGE_MAP = {
 
     'GenericDevice': hardware_pkg('generic_device'),
     'PLC2000Heater': hardware_pkg('heater'),
-    'PLC2000GaugeController': gauge_pkg('plc2000')
+    'PLC2000GaugeController': gauge_pkg('plc2000.plc2000_gauge_controller')
 }
 
 
