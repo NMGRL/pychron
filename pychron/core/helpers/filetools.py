@@ -261,7 +261,7 @@ def max_file_cnt(root, excludes=None):
     return len(ps) + 1
 
 
-def max_path_cnt(root, base, delimiter='-', extension='.txt'):
+def max_path_cnt(root, base, delimiter='-', extension='.txt', ndigits=5):
     """
 
     :param root:
@@ -269,7 +269,8 @@ def max_path_cnt(root, base, delimiter='-', extension='.txt'):
     :param extension:
     :return: int max+1
     """
-    basename = '{}{}[0123456789][0123456789][0123456789]{}'.format(base, delimiter, extension)
+    ndigits = '[0-9]' * ndigits
+    basename = '{}{}{}{}'.format(base, delimiter, ndigits, extension)
     cnt = 0
     for p in glob.iglob(os.path.join(root, basename)):
         p = os.path.basename(p)

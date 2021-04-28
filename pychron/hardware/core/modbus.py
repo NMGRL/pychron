@@ -21,13 +21,14 @@ class ModbusMixin:
 
     def _func(self, funcname, *args, **kw):
         if self.communicator:
+            self.debug('ModbusMixin: {} {} {}'.format(funcname, args, kw))
             return getattr(self.communicator, funcname)(*args, **kw)
 
     def _read_coils(self, *args, **kw):
         return self._func('read_coils', *args, **kw)
 
     def _write_coil(self, *args, **kw):
-        return self._func('write_coils', *args, **kw)
+        return self._func('write_coil', *args, **kw)
 
     def _read_holding_registers(self, *args, **kw):
         return self._func('read_holding_registers', *args, **kw)

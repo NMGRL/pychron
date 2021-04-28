@@ -366,7 +366,8 @@ class ExtractionLineScene(Scene):
     def _load_switchables(self, cp, origin, vpath):
         ox, oy = origin
         ndict = dict()
-        vp = SwitchParser(vpath)
+        vp = SwitchParser()
+        vp.load(vpath)
 
         for s in cp.get_elements('switch'):
             key = s.text.strip()

@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.api import Float, Event, Bool, Property, Int, HasTraits
+from traits.api import Float, Event, Bool, Property, Int, HasTraits, Instance
 from traitsui.api import View, Item, UItem, ButtonEditor, HGroup, VGroup
 
 from pychron.core.ui.lcd_editor import LCDEditor
@@ -56,10 +56,12 @@ class HeaterMixin(HasTraits):
             self.graph.record(v)
 
     def _use_pid_changed(self, v):
+        self.debug('set use_pid={}'.format(v))
         self.set_use_pid(v)
 
     def _onoff_button_fired(self):
         self.onoff_state = not self.onoff_state
+        self.debug('set state = {}'.format(self.onoff_state))
         self.set_active(self.onoff_state)
 
     def _get_onoff_label(self):
@@ -72,12 +74,14 @@ class HeaterMixin(HasTraits):
         return g
 
     def heater_view(self):
-        v = View(VGroup(HGroup(UItem('name'),
+        v = View(VGroup(HGroup(UItem('name', style='readonly'),
+                               Item('use_pid', label='Use PID'),
                                UItem('onoff_button',
-                                     editor=ButtonEditor(name='onoff_label'))),
+                                     editor=ButtonEditor(label_value='onoff_label'))),
                         HGroup(Item('setpoint'),
-                               UItem('readback', editor=LCDEditor(height=30))),
-                        UItem('graph', style='custom')))
+                               UItem('readback', editor=LCDEditor(width=100, height=30))),
+                        UItem('graph',
+                              style='custom')))
         return v
 
 
@@ -109,5 +113,6 @@ class PLC2000Heater(CoreDevice, ModbusMixin, HeaterMixin):
     @get_float()
     def read_readback(self):
         resp = self._read_holding_registers(self.readback_address)
-        return resp
+        print('sadf', resp)
+        return resp.registers[0]
 # ============= EOF =============================================

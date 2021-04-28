@@ -156,6 +156,7 @@ class XMLParser(object):
             return True
         except XMLSyntaxError as e:
             self._syntax_error = str(e)
+            print('asdfasdfas', p, self._syntax_error)
 
     def load(self, rfile):
         return self._parse_file(rfile)
