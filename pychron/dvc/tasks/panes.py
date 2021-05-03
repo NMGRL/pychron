@@ -19,7 +19,7 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Property, Int
 from traitsui.api import View, UItem, VGroup, TabularEditor, EnumEditor, VSplit, Item, HSplit, HGroup, Tabbed
-from traitsui.editors import ListStrEditor
+from traitsui.editors.api import ListStrEditor
 from traitsui.tabular_adapter import TabularAdapter
 
 # ============= standard library imports ========================

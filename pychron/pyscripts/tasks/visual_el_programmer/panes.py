@@ -20,7 +20,7 @@ from enable.component_editor import ComponentEditor
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traitsui.api import View, Item, HGroup, VGroup, UItem, Group
-from traitsui.editors import TabularEditor
+from traitsui.editors.api import TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
 
 # ============= standard library imports ========================

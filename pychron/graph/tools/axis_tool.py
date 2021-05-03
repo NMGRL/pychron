@@ -23,7 +23,7 @@ from traitsui.api import View, Item, HGroup, VGroup, TextEditor, Handler
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from traitsui.editors import FontEditor
+from traitsui.editors.api import FontEditor
 
 limit_grp = VGroup(Item('object.mapper.range.high', label='Upper',
                         springy=True,

@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from traits.api import HasTraits, List, Str, Float
 from traitsui.api import View, UItem, HGroup
-from traitsui.editors import TableEditor
+from traitsui.editors.api import TableEditor
 from traitsui.table_column import ObjectColumn
 
 # ============= standard library imports ========================

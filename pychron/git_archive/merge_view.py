@@ -21,7 +21,7 @@ from traits.api import HasTraits, Button, Str, Any, List
 from traitsui.api import View, UItem, HGroup, VGroup, Controller, TabularEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from traitsui.editors import TextEditor
+from traitsui.editors.api import TextEditor
 from traitsui.tabular_adapter import TabularAdapter
 
 

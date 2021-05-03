@@ -18,7 +18,7 @@
 from pyface.message_dialog import information
 from traits.api import Str, Instance
 from traitsui.api import Item, HGroup, EnumEditor, View, VGroup, UItem
-from traitsui.editors import DirectoryEditor
+from traitsui.editors.api import DirectoryEditor
 from uncertainties import ufloat, std_dev, nominal_value
 
 from pychron.base_fs import BaseFS

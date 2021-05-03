@@ -24,7 +24,7 @@ from pyface.timer.do_later import do_later
 from traits.api import Str, Password, Enum, Button, on_trait_change, Color, String, List, File, HasTraits, Bool, Int
 from traitsui.api import View, VGroup, HGroup, spring, Label, Spring, \
     EnumEditor, ObjectColumn, TableEditor, UItem
-from traitsui.editors import TextEditor
+from traitsui.editors.api import TextEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn

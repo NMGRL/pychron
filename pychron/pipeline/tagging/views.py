@@ -19,7 +19,7 @@ from __future__ import absolute_import
 
 from traits.api import Instance
 from traitsui.api import Item, UItem, VGroup, HGroup
-from traitsui.editors import TabularEditor
+from traitsui.editors.api import TabularEditor
 from traitsui.handler import Controller
 from traitsui.tabular_adapter import TabularAdapter
 

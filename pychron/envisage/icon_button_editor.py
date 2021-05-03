@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-# from traitsui.editors import ButtonEditor
+# from traitsui.editors.api import ButtonEditor
 from __future__ import absolute_import
 from traitsui.item import Item
 
