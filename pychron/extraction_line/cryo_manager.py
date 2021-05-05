@@ -75,7 +75,7 @@ class CryoManager(Manager):
         dev = self.devices[idx]
         return dev.read_input(iput)
 
-    def set_setpoint(self, v1, v2=None, idx=0, block=False):
+    def set_setpoint(self, v1, v2=None, idx=0, block=False, **kw):
         """
         v is either a float or a str
         if float interpret as degrees K
@@ -89,7 +89,7 @@ class CryoManager(Manager):
             v1, v2 = self._lookup_species_temp(v1)
 
         if v1 is not None:
-            self.devices[idx].set_setpoints(v1, v2, block=block)
+            self.devices[idx].set_setpoints(v1, v2, block=block, **kw)
 
         self.debug('set_setpoint returning "{}","{}"'.format(v1, v2))
         return v1, v2

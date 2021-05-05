@@ -24,7 +24,12 @@ from pychron.lasers.tasks.laser_panes import ClientPane, BaseLaserPane, \
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 class OsTechDiodeClientPane(ClientPane):
-    pass
+    xmin = 0.0
+    xmax = 152.0
+    ymin = 0.0
+    ymax = 152.0
+    zmin = 0.0
+    zmax = 152.0
 
 
 class OsTechDiodePane(BaseLaserPane):

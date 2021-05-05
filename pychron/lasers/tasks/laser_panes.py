@@ -321,6 +321,12 @@ class OpticsPane(TraitsDockPane):
 class ClientMixin(object):
     name = Property(depends_on='model')
     id = 'pychron.lasers.client'
+    xmax = 25
+    xmin = -25
+    ymax = 25
+    ymin = -25
+    zmax = 25
+    zmin = -25
 
     def _get_name(self):
         n = 'Laser Client'
@@ -337,11 +343,11 @@ class ClientMixin(object):
                                                name='object.stage_manager.stage_map_names')),
                                        UItem('stage_stop_button')),
                                 Item('x',
-                                     editor=RangeEditor(low=-25.0, high=25.0)),
+                                     editor=RangeEditor(low=self.xmin, high=self.xmax)),
                                 Item('y',
-                                     editor=RangeEditor(low=-25.0, high=25.0)),
+                                     editor=RangeEditor(low=self.ymin, high=self.ymax)),
                                 Item('z',
-                                     editor=RangeEditor(low=-25.0, high=25.0)),
+                                     editor=RangeEditor(low=self.zmin, high=self.zmax)),
                                 enabled_when='_move_enabled'),
                          label='Positioning')
 
