@@ -87,7 +87,6 @@ class EthernetDeviceMixin(RemoteDeviceMixin):
         self.communicator = ec = EthernetCommunicator(host=self.host,
                                                       port=self.port,
                                                       kind=self.kind,
-                                                      timeout=self.timeout,
                                                       use_end=self.use_end,
                                                       message_frame=self.message_frame,
                                                       write_terminator=self.write_terminator,
